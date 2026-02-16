@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrightsville &amp; Carolina Beach Fishing Forecast</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>24‑Hour Surf &amp; Pier Fishing Outlook</h1>
+        <p class="location">Wrightsville Beach &amp; Carolina Beach, NC</p>
+        {% if cached %}
+        <div class="banner">Serving cached forecast generated at {{ forecast.generated_at }}</div>
+        {% endif %}
+    </header>
+
+    <section class="conditions">
+        <h2>Marine Conditions</h2>
+        <ul>
+            <li><strong>Wind (next 24 h):</strong> {{ forecast.conditions.wind }}</li>
+            <li><strong>Wave height (next 24 h):</strong> {{ forecast.conditions.waves }}</li>
+            <li><strong>Fishability verdict:</strong> <span class="verdict {{ forecast.conditions.verdict|lower }}">{{ forecast.conditions.verdict }}</span></li>
+        </ul>
+    </section>
+
+    <section class="species">
+        <h2>Ranked Species Forecast</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Species</th>
+                    <th>Why They’re Biting</th>
+                    <th>Best Natural Bait</th>
+                    <th>Recommended Rig</th>
+                    <th>Hook&nbsp;Size</th>
+                    <th>Sinker&nbsp;Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in forecast.species %}
+                <tr>
+                    <td>{{ sp.rank }}</td>
+                    <td>{{ sp.name }}</td>
+                    <td>{{ sp.explanation }}</td>
+                    <td>{{ sp.bait }}</td>
+                    <td>{{ sp.rig }}</td>
+                    <td>{{ sp.hook_size }}</td>
+                    <td>{{ sp.sinker }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="rigs">
+        <h2>Bottom‑Rig Templates</h2>
+        <div class="rig-cards">
+            {% for rig in forecast.rig_templates %}
+            <div class="rig-card">
+                <h3>{{ rig.name }}</h3>
+                <p>{{ rig.description }}</p>
+                <ul>
+                    <li><strong>Mainline:</strong> {{ rig.mainline }}</li>
+                    <li><strong>Leader:</strong> {{ rig.leader }}</li>
+                    <li><strong>Hook:</strong> {{ rig.hook }}</li>
+                    <li><strong>Sinker:</strong> {{ rig.sinker }}</li>
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="bait">
+        <h2>Natural Bait Recommendations</h2>
+        <ol>
+            {% for item in forecast.bait_rankings %}
+            <li><strong>{{ item.bait }}</strong> – {{ item.notes }}</li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    <section class="refresh">
+        <form method="post" action="{{ url_for('api_refresh') }}">
+            <button type="submit">Refresh Forecast</button>
+        </form>
+        <p class="timestamp">Last generated: {{ forecast.generated_at }}</p>
+    </section>
+
+    <footer>
+        <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook</p>
+    </footer>
+</body>
+</html>
