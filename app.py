@@ -73,7 +73,7 @@ def fetch_marine_forecast() -> str:
     return response.text
 
 
-def parse_conditions(text: str) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]]]:
+def parse_conditions(text: str) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
     """Parse the forecast text and extract wind and wave ranges for the next 24 hours.
 
     The NDBC forecast page lists several time periods such as THIS AFTERNOON,
@@ -112,19 +112,34 @@ def parse_conditions(text: str) -> Tuple[Optional[Tuple[float, float]], Optional
             break
     wind_ranges: List[Tuple[float, float]] = []
     wave_ranges: List[Tuple[float, float]] = []
+    wind_directions: List[str] = []
     for seg in selected:
-        # Extract sustained wind range (kt)
-        wind_match = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*kt", seg)
+        # Extract wind direction (e.g. "N WINDS", "SW WINDS", "VARIABLE")
+        dir_match = re.search(
+            r"(N|NE|NW|E|SE|S|SW|W|VARIABLE)\s+WIND",
+            seg, re.IGNORECASE,
+        )
+        if dir_match:
+            wind_directions.append(dir_match.group(1).upper())
+
+        # Extract sustained wind range (kt) -- case-insensitive for NOAA's
+        # ALL-CAPS format (e.g. "10 TO 15 KT" or "AROUND 10 KT")
+        wind_match = re.search(
+            r"(\d+)(?:\s*to\s*(\d+))?\s*kt", seg, re.IGNORECASE,
+        )
         if wind_match:
             low = float(wind_match.group(1))
             high = float(wind_match.group(2)) if wind_match.group(2) else low
             wind_ranges.append((low, high))
         # Extract seas (wave height) range (ft)
-        sea_match = re.search(r"seas?\s*(\d+)(?:\s*to\s*(\d+))?\s*ft", seg)
+        sea_match = re.search(
+            r"seas?\s*(\d+)(?:\s*to\s*(\d+))?\s*ft", seg, re.IGNORECASE,
+        )
         if sea_match:
             low = float(sea_match.group(1))
             high = float(sea_match.group(2)) if sea_match.group(2) else low
             wave_ranges.append((low, high))
+    wind_dir = wind_directions[0] if wind_directions else None
     if wind_ranges:
         wind_min = min(w[0] for w in wind_ranges)
         wind_max = max(w[1] for w in wind_ranges)
@@ -137,7 +152,7 @@ def parse_conditions(text: str) -> Tuple[Optional[Tuple[float, float]], Optional
         wave_range = (wave_min, wave_max)
     else:
         wave_range = None
-    return wind_range, wave_range
+    return wind_range, wave_range, wind_dir
 
 
 def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: Optional[Tuple[float, float]]) -> str:
@@ -929,7 +944,7 @@ def generate_forecast() -> Dict[str, Any]:
     month and water temperature.
     """
     raw_text = fetch_marine_forecast()
-    wind_range, wave_range = parse_conditions(raw_text)
+    wind_range, wave_range, wind_dir = parse_conditions(raw_text)
     verdict = classify_conditions(wind_range, wave_range)
     tz = ZoneInfo("America/New_York")
     now = datetime.now(tz)
@@ -961,8 +976,12 @@ def generate_forecast() -> Dict[str, Any]:
     except Exception:
         sun_str = "Unavailable"
 
+    wind_str = format_range(wind_range, "kt")
+    if wind_dir and wind_str != "Unknown":
+        wind_str = f"{wind_dir} {wind_str}"
+
     conditions = {
-        "wind": format_range(wind_range, "kt"),
+        "wind": wind_str,
         "waves": format_range(wave_range, "ft"),
         "verdict": verdict,
         "water_temp_f": round(water_temp, 1),
@@ -1006,27 +1025,74 @@ def save_forecast(data: Dict[str, Any]) -> None:
         json.dump(data, f, indent=2)
 
 
+# Maximum age (in hours) before a cached forecast is considered stale
+# and automatically refreshed on the next page load.
+CACHE_MAX_AGE_HOURS = 4
+
+
+def _forecast_age_minutes(forecast: Dict[str, Any]) -> Optional[float]:
+    """Return the age of a cached forecast in minutes, or None."""
+    try:
+        generated = datetime.fromisoformat(forecast["generated_at"])
+        now = datetime.now(ZoneInfo("America/New_York"))
+        return (now - generated).total_seconds() / 60
+    except Exception:
+        return None
+
+
+def _human_age(minutes: Optional[float]) -> str:
+    """Convert a duration in minutes to a human-friendly string."""
+    if minutes is None:
+        return ""
+    if minutes < 1:
+        return "just now"
+    if minutes < 60:
+        m = int(minutes)
+        return f"{m} min ago"
+    hours = minutes / 60
+    if hours < 24:
+        h = int(hours)
+        return f"{h} hr ago" if h == 1 else f"{h} hrs ago"
+    days = int(hours / 24)
+    return f"{days} day ago" if days == 1 else f"{days} days ago"
+
+
 @app.route("/")
 def index() -> str:
     """Render the dashboard with the current forecast.
 
-    If the query parameter ``cached`` is present, a banner will be
-    displayed indicating that a cached forecast is being served.  This
-    parameter is set when a refresh fails and the user is redirected
-    back to this route.
+    If the cached forecast is older than ``CACHE_MAX_AGE_HOURS`` the
+    server automatically attempts a refresh.  If the query parameter
+    ``cached`` is present, a banner indicates that a stale/cached
+    forecast is being served (e.g. after a failed refresh).
     """
     cached_flag = request.args.get("cached")
     forecast = load_cached_forecast()
-    if not forecast:
-        # If no cached forecast exists, attempt to generate one immediately
+
+    # Auto-refresh if cache is missing or stale
+    needs_refresh = forecast is None
+    if forecast and not needs_refresh:
+        age = _forecast_age_minutes(forecast)
+        if age is not None and age > CACHE_MAX_AGE_HOURS * 60:
+            needs_refresh = True
+
+    if needs_refresh:
         try:
             forecast = generate_forecast()
             save_forecast(forecast)
-        except Exception as exc:
-            return render_template(
-                "error.html",
-                message="Could not load forecast. Please try refreshing later.",
-            ), 500
+            cached_flag = None  # Fresh data
+        except Exception:
+            if forecast is None:
+                return render_template(
+                    "error.html",
+                    message="Could not load forecast. Please try refreshing later.",
+                ), 500
+            # Fall through to serve stale cache
+            cached_flag = "true"
+
+    # Attach human-readable age for the template
+    forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
+
     return render_template("index.html", forecast=forecast, cached=cached_flag)
 
 

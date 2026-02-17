@@ -198,7 +198,7 @@
             <form method="post" action="{{ url_for('api_refresh') }}">
                 <button type="submit">Refresh Forecast</button>
             </form>
-            <p class="timestamp">Last generated: {{ forecast.generated_at }}</p>
+            <p class="timestamp">Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}</p>
         </section>
     </main>
 
