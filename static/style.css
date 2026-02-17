@@ -65,6 +65,64 @@ table tbody tr:nth-child(even) {
   background-color: #f2f9fd;
 }
 
+.tide-moon-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0 1.5rem;
+}
+
+.tide-moon-row section {
+  flex: 1 1 300px;
+  padding: 1rem;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.tide-table {
+  width: 100%;
+}
+
+.tide-type {
+  font-weight: bold;
+}
+
+.tide-type.tide-high {
+  color: #0a567e;
+}
+
+.tide-type.tide-low {
+  color: #8a6d3b;
+}
+
+.solunar {
+  font-weight: bold;
+}
+
+.solunar-excellent {
+  color: #007a00;
+}
+
+.solunar-good {
+  color: #0a567e;
+}
+
+.solunar-fair {
+  color: #b36b00;
+}
+
+.solunar-poor {
+  color: #b50000;
+}
+
+.solunar-tip {
+  font-size: 0.85rem;
+  color: #555;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
 .rig-cards {
   display: flex;
   flex-wrap: wrap;

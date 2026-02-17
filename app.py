@@ -33,9 +33,10 @@ month and water temperature.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
@@ -211,6 +212,146 @@ def get_water_temp(month: int) -> Tuple[float, bool]:
     if live is not None:
         return live, True
     return float(MONTHLY_AVG_WATER_TEMP_F[month]), False
+
+
+# ---------------------------------------------------------------------------
+# NOAA tide predictions (free, no API key)
+# ---------------------------------------------------------------------------
+
+TIDE_PREDICTIONS_URL = (
+    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    "?begin_date={begin}&end_date={end}&station={station}"
+    "&product=predictions&datum=MLLW&units=english"
+    "&time_zone=lst_ldt&format=json&interval=hilo"
+)
+
+
+def fetch_tide_predictions() -> List[Dict[str, Any]]:
+    """Fetch today's and tomorrow's high/low tide predictions from NOAA CO-OPS.
+
+    Uses the same Wrightsville Beach station (8658163).  Returns a list of
+    dicts with keys ``time``, ``height_ft`` and ``type`` ("High" or "Low").
+    Returns an empty list on any failure.
+    """
+    tz = ZoneInfo("America/New_York")
+    now = datetime.now(tz)
+    date_str = now.strftime("%Y%m%d")
+    tomorrow = now + timedelta(days=1)
+    end_str = tomorrow.strftime("%Y%m%d")
+
+    try:
+        url = TIDE_PREDICTIONS_URL.format(
+            begin=date_str, end=end_str, station=WATER_TEMP_STATION,
+        )
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        result: List[Dict[str, Any]] = []
+        for p in data.get("predictions", []):
+            result.append({
+                "time": p["t"],
+                "height_ft": round(float(p["v"]), 1),
+                "type": "High" if p["type"] == "H" else "Low",
+            })
+        return result
+    except Exception:
+        return []
+
+
+def get_current_tide_trend(tides: List[Dict[str, Any]]) -> str:
+    """Determine the current tide trend based on the next tide event.
+
+    Returns a human-readable string like "Incoming (rising toward high tide
+    at 2:34 PM)" or "Unknown" when data is unavailable.
+    """
+    if not tides:
+        return "Unknown"
+
+    tz = ZoneInfo("America/New_York")
+    now = datetime.now(tz)
+
+    for tide in tides:
+        try:
+            tide_time = datetime.strptime(tide["time"], "%Y-%m-%d %H:%M")
+            tide_time = tide_time.replace(tzinfo=tz)
+        except (ValueError, KeyError):
+            continue
+        if tide_time > now:
+            time_str = tide_time.strftime("%-I:%M %p")
+            if tide["type"] == "High":
+                return f"Incoming (rising toward high tide at {time_str})"
+            else:
+                return f"Outgoing (falling toward low tide at {time_str})"
+
+    return "Unknown"
+
+
+# ---------------------------------------------------------------------------
+# Moon phase and solunar fishing rating (pure math, no API)
+# ---------------------------------------------------------------------------
+
+def _moon_phase_angle(dt: datetime) -> float:
+    """Return the moon phase angle in degrees for a given datetime.
+
+    Uses the known new-moon reference of 2000-01-06 18:14 UTC and the
+    synodic month (29.53059 days).  0/360 = new moon, 180 = full moon.
+    """
+    ref = datetime(2000, 1, 6, 18, 14, tzinfo=ZoneInfo("UTC"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    diff_seconds = (dt - ref).total_seconds()
+    synodic_seconds = 29.53058770576 * 86400
+    phase = (diff_seconds % synodic_seconds) / synodic_seconds
+    return phase * 360.0
+
+
+def get_moon_info(dt: datetime) -> Dict[str, Any]:
+    """Compute moon phase name, illumination and solunar fishing rating.
+
+    The solunar rating is based on proximity to new/full moon:
+    - New/Full moon (+/- ~2 days): Excellent
+    - First/Last quarter approaching: Good
+    - Mid-quarter phases: Fair / Poor
+    """
+    angle = _moon_phase_angle(dt)
+
+    if angle < 22.5 or angle >= 337.5:
+        phase_name = "New Moon"
+    elif angle < 67.5:
+        phase_name = "Waxing Crescent"
+    elif angle < 112.5:
+        phase_name = "First Quarter"
+    elif angle < 157.5:
+        phase_name = "Waxing Gibbous"
+    elif angle < 202.5:
+        phase_name = "Full Moon"
+    elif angle < 247.5:
+        phase_name = "Waning Gibbous"
+    elif angle < 292.5:
+        phase_name = "Last Quarter"
+    else:
+        phase_name = "Waning Crescent"
+
+    illumination = round((1 - math.cos(math.radians(angle))) / 2 * 100)
+
+    dist_from_new = min(angle, 360 - angle)
+    dist_from_full = abs(angle - 180)
+    min_dist = min(dist_from_new, dist_from_full)
+
+    if min_dist < 30:
+        solunar_rating = "Excellent"
+    elif min_dist < 60:
+        solunar_rating = "Good"
+    elif min_dist < 90:
+        solunar_rating = "Fair"
+    else:
+        solunar_rating = "Poor"
+
+    return {
+        "phase_name": phase_name,
+        "illumination_pct": illumination,
+        "solunar_rating": solunar_rating,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -620,6 +761,13 @@ def generate_forecast() -> Dict[str, Any]:
     # Fetch live water temperature; fall back to monthly average
     water_temp, temp_is_live = get_water_temp(month)
 
+    # Fetch tide predictions and determine current trend
+    tides = fetch_tide_predictions()
+    tide_trend = get_current_tide_trend(tides)
+
+    # Moon phase and solunar rating
+    moon = get_moon_info(now)
+
     # Format ranges for display
     def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
         if r is None:
@@ -635,6 +783,7 @@ def generate_forecast() -> Dict[str, Any]:
         "verdict": verdict,
         "water_temp_f": round(water_temp, 1),
         "water_temp_live": temp_is_live,
+        "tide_trend": tide_trend,
     }
 
     species = build_species_ranking(month, water_temp)
@@ -642,6 +791,8 @@ def generate_forecast() -> Dict[str, Any]:
     forecast: Dict[str, Any] = {
         "generated_at": now.isoformat(),
         "conditions": conditions,
+        "tides": tides,
+        "moon": moon,
         "species": species,
         "rig_templates": RIG_TEMPLATES,
         "bait_rankings": build_bait_ranking(species),

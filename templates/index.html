@@ -21,9 +21,60 @@
             <li><strong>Wind (next 24 h):</strong> {{ forecast.conditions.wind }}</li>
             <li><strong>Wave height (next 24 h):</strong> {{ forecast.conditions.waves }}</li>
             <li><strong>Water temperature:</strong> {{ forecast.conditions.water_temp_f }}&deg;F{% if not forecast.conditions.water_temp_live %} <span class="temp-source">(monthly avg)</span>{% endif %}</li>
+            <li><strong>Current tide:</strong> {{ forecast.conditions.tide_trend }}</li>
             <li><strong>Fishability verdict:</strong> <span class="verdict {{ forecast.conditions.verdict|lower|replace(' ', '-') }}">{{ forecast.conditions.verdict }}</span></li>
         </ul>
     </section>
+
+    <div class="tide-moon-row">
+        <section class="tides">
+            <h2>Tide Schedule</h2>
+            {% if forecast.tides %}
+            <table class="tide-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Height</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in forecast.tides %}
+                    <tr>
+                        <td>{{ t.time }}</td>
+                        <td><span class="tide-type tide-{{ t.type|lower }}">{{ t.type }}</span></td>
+                        <td>{{ t.height_ft }} ft</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Tide data unavailable</p>
+            {% endif %}
+        </section>
+
+        <section class="moon-solunar">
+            <h2>Moon &amp; Solunar</h2>
+            {% if forecast.moon %}
+            <ul>
+                <li><strong>Moon phase:</strong> {{ forecast.moon.phase_name }}</li>
+                <li><strong>Illumination:</strong> {{ forecast.moon.illumination_pct }}%</li>
+                <li><strong>Solunar fishing rating:</strong> <span class="solunar solunar-{{ forecast.moon.solunar_rating|lower }}">{{ forecast.moon.solunar_rating }}</span></li>
+            </ul>
+            <p class="solunar-tip">
+                {% if forecast.moon.solunar_rating == "Excellent" %}
+                New/full moon phase drives strong tidal movement and aggressive feeding. Expect above-average bite activity.
+                {% elif forecast.moon.solunar_rating == "Good" %}
+                Moon phase is favorable for feeding activity. Good tidal flow should produce steady action.
+                {% elif forecast.moon.solunar_rating == "Fair" %}
+                Mid-quarter moon produces moderate tidal flow. Focus on tide changes for best results.
+                {% else %}
+                Weak solunar period. Fish during tide changes (first hour of incoming/outgoing) for best results.
+                {% endif %}
+            </p>
+            {% endif %}
+        </section>
+    </div>
 
     <section class="species">
         <h2>Ranked Species Forecast</h2>
