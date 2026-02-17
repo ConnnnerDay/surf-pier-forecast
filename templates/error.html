@@ -4,21 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forecast Unavailable</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header>
-        <h1>24-Hour Surf &amp; Pier Fishing Outlook</h1>
-        <p class="location">Wrightsville Beach &amp; Carolina Beach, NC</p>
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <p class="subtitle">Wrightsville Beach &amp; Carolina Beach, NC</p>
+        </div>
     </header>
 
-    <section class="error-message">
-        <h2>Forecast Unavailable</h2>
-        <p>{{ message }}</p>
-        <form method="post" action="{{ url_for('api_refresh') }}">
-            <button type="submit">Try Again</button>
-        </form>
-    </section>
+    <main>
+        <section class="error-message">
+            <h2>Forecast Unavailable</h2>
+            <p>{{ message }}</p>
+            <form method="post" action="{{ url_for('api_refresh') }}">
+                <button type="submit">Try Again</button>
+            </form>
+        </section>
+    </main>
 
     <footer>
         <p>Surf &amp; Pier Fishing Outlook</p>
