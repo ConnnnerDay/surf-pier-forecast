@@ -1,90 +1,182 @@
-# Surf & Pier Fishing Forecast for Wrightsville and Carolina Beach
+# Surf & Pier Fishing Forecast
 
-This project is a self‑contained Python application that generates and serves a 24‑hour surf and pier fishing outlook for **Wrightsville Beach and Carolina Beach, North Carolina**.  It combines official marine conditions with seasonal fishing patterns to rank species, recommend natural baits and bottom rigs, classify fishability, and present the results on a simple web dashboard.
+A self-hosted dashboard that generates a 24-hour surf and pier fishing outlook for **Wrightsville Beach & Carolina Beach, NC**.  All data comes from free public sources -- no API keys, no accounts, no subscriptions.
 
-## Features
+Once installed the dashboard runs as a background service that starts on boot. Open a browser, check the forecast, go fishing.
 
-* **Real‑time forecast generation** – fetches the latest National Weather Service marine forecast for the local zones and parses wind and wave ranges for the next 24 hours.
-* **Species ranking** – identifies up to ten species most likely to bite based on winter seasonality, official North Carolina species profiles and current conditions.
-* **Rig and bait recommendations** – suggests natural bait (no lures) and bottom‑rig setups with hook and sinker sizes, including when live bait offers an advantage.
-* **Fishability verdict** – classifies conditions as *Fishable*, *Marginal* or *Not worth it* using reasonable thresholds for sustained wind speed and wave height.
-* **Web dashboard** – renders an HTML page at the root URL with a manual **Refresh** button.  If forecast generation fails, the last successful forecast is cached and served with a banner showing when it was generated.
-* **JSON API** – endpoints to view the current forecast (`/api/forecast`) and trigger a refresh (`/api/refresh`).
+## What it shows
 
-## Getting started
+- **Fishability verdict** -- Fishable / Marginal / Not worth it based on wind and wave thresholds
+- **Marine conditions** -- wind speed & direction, wave height, live water temperature (NOAA CO-OPS)
+- **Tide schedule** -- high/low tide times and heights for the next 24 hours
+- **Sunrise & sunset** -- computed from solar position math, no API needed
+- **Moon phase & solunar rating** -- lunar illumination and a fishing-specific feeding activity rating (Excellent / Good / Fair / Poor)
+- **Best fishing windows** -- tide changes overlapping dawn/dusk are flagged as Prime
+- **Ranked species forecast** -- 15 species scored dynamically on water temperature, season, and solunar conditions
+- **Bait recommendations** -- ranked by relevance to the top species
+- **Bottom-rig templates** -- Carolina rig, double-dropper, pier structure rig, etc. with specs
 
-These instructions assume Python 3.9 or later is installed.  A virtual environment is recommended to avoid polluting the global Python installation.
+## Quick start (one command)
 
-### 1. Clone or copy the project
-
-Copy the repository contents into a working directory.  The important files are:
-
-* `app.py` – Flask application and forecast logic.
-* `templates/` – Jinja2 templates for the web UI.
-* `static/` – CSS for styling the dashboard.
-* `data/forecast.json` – cached forecast data (created on first run).
-* `requirements.txt` – Python dependencies.
-
-### 2. Create and activate a virtual environment (optional but recommended)
+Requires **Python 3.9+** and a Linux system with systemd (Ubuntu, Debian, Raspberry Pi OS, etc.).
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
+cd surf-pier-forecast
+./install.sh
 ```
 
-### 3. Install dependencies
+That's it. The install script:
 
-Install the required Python packages using `pip`:
+1. Creates a Python virtual environment and installs dependencies
+2. Installs a systemd service that starts on boot
+3. Starts the dashboard immediately
+
+Open **http://localhost:5757** in your browser.
+
+To access from your phone or another device on the same Wi-Fi, use your machine's local IP (the install script prints it):
+
+```
+http://192.168.x.x:5757
+```
+
+## Manual setup
+
+If you prefer to set things up by hand or aren't on a systemd-based Linux system.
+
+### 1. Clone and install
 
 ```bash
-pip install --upgrade pip
+git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
+cd surf-pier-forecast
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Run the server
-
-Launch the Flask application using the provided script.  The server binds to `0.0.0.0` on port **5757** by default so that it is reachable on the local machine and across your network.
+### 2. Run (foreground)
 
 ```bash
 python app.py
 ```
 
-Navigate to `http://localhost:5757/` in your browser.  The dashboard will display the current forecast.  Click **Refresh Forecast** to regenerate the report on demand.  If the refresh fails (for example due to a network error) the cached forecast stored in `data/forecast.json` will be served with a banner indicating the timestamp of the cached report.
+Dashboard is at **http://localhost:5757**.  Press Ctrl+C to stop.
 
-### Optional: Create a systemd service
+### 3. Run as a service (always-on)
 
-On Linux systems you can run the server continuously in the background using systemd.  Create a unit file at `/etc/systemd/system/surf_forecast.service` with contents similar to:
-
-```ini
-[Unit]
-Description=Surf & Pier Fishing Forecast Service
-After=network.target
-
-[Service]
-WorkingDirectory=/path/to/your/project
-ExecStart=/path/to/your/python -m flask --app app run --host 0.0.0.0 --port 5757
-Restart=on-failure
-User=www-data
-Environment=FLASK_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Then reload systemd and start the service:
+The repo includes a systemd unit file template. Install it:
 
 ```bash
+# Fill in your username and project path
+sed -e "s|REPLACE_USER|$(whoami)|g" \
+    -e "s|REPLACE_DIR|$(pwd)|g" \
+    surf-forecast.service > /tmp/surf-forecast.service
+
+sudo cp /tmp/surf-forecast.service /etc/systemd/system/surf-forecast.service
 sudo systemctl daemon-reload
-sudo systemctl enable surf_forecast.service
-sudo systemctl start surf_forecast.service
+sudo systemctl enable surf-forecast.service
+sudo systemctl start surf-forecast.service
 ```
 
-Adjust the paths and user to match your environment.  This step is optional; running via `python app.py` is sufficient for local use.
+The dashboard now starts automatically on every boot. Check status:
 
-## Notes
+```bash
+sudo systemctl status surf-forecast
+```
 
-* The application uses only public sources and requires no API keys or accounts.
-* By default the server stores the cached forecast in `data/forecast.json`.  Deleting this file forces the app to generate a new forecast on the next request.
-* The first forecast build may take several seconds while it fetches the marine forecast and assembles the report.
+View logs:
 
-Enjoy tight lines and successful outings!
+```bash
+sudo journalctl -u surf-forecast -f
+```
+
+### 4. Change the port
+
+Set the `PORT` environment variable before running:
+
+```bash
+PORT=8080 python app.py
+```
+
+Or for the systemd service, edit `/etc/systemd/system/surf-forecast.service` and add under `[Service]`:
+
+```ini
+Environment=PORT=8080
+```
+
+Then `sudo systemctl daemon-reload && sudo systemctl restart surf-forecast`.
+
+## Running on a Raspberry Pi
+
+This project is lightweight and runs well on a Raspberry Pi (any model with network access). A Pi on your home network makes a great always-on fishing dashboard.
+
+```bash
+# On a fresh Raspberry Pi OS install:
+sudo apt update && sudo apt install -y python3 python3-venv git
+git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
+cd surf-pier-forecast
+./install.sh
+```
+
+Access from any device on your network at `http://<pi-ip>:5757`.
+
+## How it works
+
+The app fetches data from three free NOAA endpoints (no keys required):
+
+| Data | Source | Update frequency |
+|------|--------|-----------------|
+| Wind & wave forecast | [NDBC FZUS52.KILM](https://www.ndbc.noaa.gov/data/Forecasts/FZUS52.KILM.html) | Every few hours |
+| Water temperature | [NOAA CO-OPS Station 8658163](https://tidesandcurrents.noaa.gov/stationhome.html?id=8658163) | Every 6 minutes |
+| Tide predictions | NOAA CO-OPS Predictions API | Pre-computed |
+
+Sunrise/sunset and moon phase are calculated with pure math (NOAA solar algorithm and synodic month), no external API.
+
+The dashboard auto-refreshes its cache every 4 hours on page load. You can also click **Refresh Forecast** at any time.
+
+## API endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | HTML dashboard |
+| `/api/forecast` | GET | Current forecast as JSON |
+| `/api/refresh` | POST | Regenerate forecast and redirect to dashboard |
+
+## Project structure
+
+```
+surf-pier-forecast/
+  app.py                  # Flask app + all forecast logic
+  requirements.txt        # Python dependencies (Flask, requests)
+  install.sh              # One-command setup script
+  surf-forecast.service   # systemd unit file template
+  templates/
+    index.html            # Dashboard template
+    error.html            # Error page template
+  static/
+    style.css             # Dashboard styles
+  data/
+    forecast.json         # Cached forecast (auto-generated)
+```
+
+## Useful commands
+
+```bash
+# Check if service is running
+sudo systemctl status surf-forecast
+
+# Restart after code changes
+sudo systemctl restart surf-forecast
+
+# Stop the service
+sudo systemctl stop surf-forecast
+
+# Disable auto-start on boot
+sudo systemctl disable surf-forecast
+
+# View live logs
+sudo journalctl -u surf-forecast -f
+
+# Force a fresh forecast (delete cache)
+rm data/forecast.json && sudo systemctl restart surf-forecast
+```
