@@ -1,274 +1,783 @@
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f7f7f7;
-  color: #333;
-  line-height: 1.5;
+/* ==========================================================================
+   Surf & Pier Fishing Forecast -- Dashboard Styles
+   ========================================================================== */
+
+:root {
+  --ocean: #0b4f6c;
+  --ocean-dark: #083a50;
+  --ocean-light: #e8f4f8;
+  --sand: #f5f0e8;
+  --sand-dark: #e8dfd3;
+  --coral: #e05830;
+  --sea-green: #1a8a5c;
+  --amber: #d4920b;
+  --red: #c0392b;
+  --text: #2c3e50;
+  --text-muted: #6b7b8d;
+  --white: #ffffff;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 10px;
+  --radius-sm: 6px;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, var(--sand) 0%, #eef2f3 100%);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ---------- Header ---------- */
+
 header {
-  background-color: #0a567e;
-  color: #fff;
-  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--ocean) 0%, #14738c 50%, var(--ocean-dark) 100%);
+  color: var(--white);
+  padding: 2rem 1.5rem 2.5rem;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+header::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -30%;
+  width: 160%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.header-inner {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 header h1 {
+  font-family: 'DM Serif Display', Georgia, serif;
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
-header .location {
-  font-size: 0.9rem;
-  margin-top: 0.25rem;
-  font-style: italic;
+header .subtitle {
+  font-size: 0.95rem;
+  margin: 0.3rem 0 0;
+  opacity: 0.85;
+  font-weight: 400;
 }
 
 .banner {
-  margin-top: 0.5rem;
-  background-color: #ffd966;
+  display: inline-block;
+  margin-top: 0.75rem;
+  background-color: rgba(255, 217, 102, 0.9);
   color: #5a3802;
-  padding: 0.5rem;
-  border-radius: 4px;
-  font-weight: bold;
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-section {
-  padding: 1rem 1.5rem;
+/* ---------- Main ---------- */
+
+main {
+  max-width: 960px;
+  margin: -1.5rem auto 2rem;
+  padding: 0 1rem;
+  position: relative;
 }
 
-section h2 {
-  margin-top: 0;
-  color: #0a567e;
+main > section,
+main > div {
+  margin-bottom: 1.5rem;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
+h2 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  font-size: 1.35rem;
+  color: var(--ocean);
+  margin: 0 0 1rem;
 }
 
-table th, table td {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  text-align: left;
-  vertical-align: top;
-  font-size: 0.9rem;
+/* ---------- Card base ---------- */
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
 }
 
-table th {
-  background-color: #e1eff9;
+/* ---------- Verdict hero ---------- */
+
+.verdict-hero {
+  text-align: center;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem 1rem;
 }
 
-table tbody tr:nth-child(even) {
-  background-color: #f2f9fd;
+.verdict-badge {
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 0.5rem 2rem;
+  border-radius: 40px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
-.tide-moon-row {
+.verdict-badge.verdict-fishable {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: 2px solid #a3d9b1;
+}
+
+.verdict-badge.verdict-marginal {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+  color: #856404;
+  border: 2px solid #f0d77e;
+}
+
+.verdict-badge.verdict-not-worth-it {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+  border: 2px solid #f1aeb5;
+}
+
+.verdict-badge.verdict-unknown {
+  background: #eee;
+  color: #666;
+  border: 2px solid #ccc;
+}
+
+.verdict-sub {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+/* ---------- Conditions stat grid ---------- */
+
+.conditions-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-card {
+  background: var(--ocean-light);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0 1.5rem;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.tide-moon-row section {
-  flex: 1 1 300px;
-  padding: 1rem;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ocean);
+  margin-bottom: 0.2rem;
 }
 
-.tide-table {
-  width: 100%;
+.stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.tide-type {
-  font-weight: bold;
+.stat-value-sm {
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.tide-type.tide-high {
-  color: #0a567e;
+.stat-detail {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
 }
 
-.tide-type.tide-low {
-  color: #8a6d3b;
+/* ---------- Two-column layout ---------- */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
 }
 
-.solunar {
-  font-weight: bold;
+@media (max-width: 640px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
 }
 
-.solunar-excellent {
-  color: #007a00;
+/* ---------- Solunar card ---------- */
+
+.solunar-card {
+  text-align: center;
 }
 
-.solunar-good {
-  color: #0a567e;
+.solunar-badge {
+  display: inline-block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.4rem 1.5rem;
+  border-radius: 30px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.solunar-fair {
-  color: #b36b00;
+.solunar-badge.solunar-excellent {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
 }
 
-.solunar-poor {
-  color: #b50000;
+.solunar-badge.solunar-good {
+  background: linear-gradient(135deg, #d6eaf8, #aed6f1);
+  color: var(--ocean-dark);
+}
+
+.solunar-badge.solunar-fair {
+  background: linear-gradient(135deg, #fff3cd, #ffeeba);
+  color: #856404;
+}
+
+.solunar-badge.solunar-poor {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
 }
 
 .solunar-tip {
   font-size: 0.85rem;
-  color: #555;
-  font-style: italic;
-  margin-top: 0.5rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0.75rem 0 0;
 }
 
-.window-cards {
+/* ---------- Fishing windows ---------- */
+
+.windows-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
 }
 
-.window-card {
-  background-color: #fff;
-  border: 2px solid #ccc;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  flex: 1 1 250px;
-  position: relative;
+.window-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
 }
 
-.window-card.window-prime {
-  border-color: #007a00;
-  background-color: #f0fff0;
+.window-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid #ccc;
+  background: #fafafa;
 }
 
-.window-card.window-good {
-  border-color: #0a567e;
-  background-color: #f0f8ff;
+.window-item.window-prime {
+  border-left-color: var(--sea-green);
+  background: #f0faf5;
+}
+
+.window-item.window-good {
+  border-left-color: var(--ocean);
+  background: var(--ocean-light);
 }
 
 .window-quality {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: bold;
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.15rem 0.5rem;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
   border-radius: 3px;
-  margin-bottom: 0.25rem;
+  margin-top: 0.1rem;
 }
 
 .window-prime .window-quality {
-  background-color: #007a00;
-  color: #fff;
+  background: var(--sea-green);
+  color: var(--white);
 }
 
 .window-good .window-quality {
-  background-color: #0a567e;
-  color: #fff;
+  background: var(--ocean);
+  color: var(--white);
 }
 
-.window-card p {
-  margin: 0.35rem 0 0;
-  font-size: 0.85rem;
-  color: #555;
+.window-info {
+  display: flex;
+  flex-direction: column;
 }
 
-.rig-cards {
+.window-info strong {
+  font-size: 0.9rem;
+}
+
+.window-info span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Tide timeline ---------- */
+
+.tide-card {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.tide-timeline {
   display: flex;
   flex-wrap: wrap;
+  gap: 0;
+  position: relative;
+}
+
+.tide-event {
+  flex: 1 1 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  position: relative;
+}
+
+.tide-event::before {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--sand-dark);
+}
+
+.tide-event:first-child::before {
+  left: 50%;
+}
+
+.tide-event:last-child::before {
+  right: 50%;
+}
+
+.tide-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: var(--white);
+  position: relative;
+  z-index: 1;
+  margin-bottom: 0.5rem;
+}
+
+.tide-high .tide-marker {
+  border-color: var(--ocean);
+  background: var(--ocean-light);
+}
+
+.tide-low .tide-marker {
+  border-color: var(--amber);
+  background: #fef9e7;
+}
+
+.tide-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tide-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.tide-high .tide-label {
+  color: var(--ocean);
+}
+
+.tide-low .tide-label {
+  color: var(--amber);
+}
+
+.tide-height {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Species cards ---------- */
+
+.species-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.species-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.species-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e8ecef;
+  background: #fcfcfc;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.species-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #c8d6e5;
+}
+
+.species-rank {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  border-radius: 50%;
+}
+
+.species-card:nth-child(1) .species-rank {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+}
+
+.species-card:nth-child(2) .species-rank {
+  background: linear-gradient(135deg, var(--coral), #e87b5f);
+}
+
+.species-card:nth-child(3) .species-rank {
+  background: linear-gradient(135deg, var(--amber), #e8b731);
+}
+
+.species-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.species-body h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.species-why {
+  margin: 0.25rem 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.species-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1rem;
+}
+
+@media (max-width: 480px) {
+  .species-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ocean);
+}
+
+.meta-value {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+/* ---------- Rig cards ---------- */
+
+.rig-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
 }
 
 .rig-card {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 1rem;
-  flex: 1 1 220px;
+  background: var(--white);
+  border: 1px solid #e8ecef;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease;
+}
+
+.rig-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .rig-card h3 {
-  margin-top: 0;
-  color: #0a567e;
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ocean);
 }
+
+.rig-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.rig-specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.rig-specs dt {
+  font-weight: 600;
+  color: var(--ocean);
+}
+
+.rig-specs dd {
+  margin: 0;
+  color: var(--text);
+}
+
+/* ---------- Bait list ---------- */
+
+.bait-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bait-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  border: 1px solid #e8ecef;
+  box-shadow: var(--shadow-sm);
+}
+
+.bait-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ocean);
+  background: var(--ocean-light);
+  border-radius: 50%;
+}
+
+.bait-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bait-info strong {
+  font-size: 0.9rem;
+}
+
+.bait-info span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+  line-height: 1.45;
+}
+
+/* ---------- Refresh ---------- */
 
 .refresh {
   text-align: center;
-  margin-top: 1rem;
+  padding: 1.5rem 1rem;
 }
 
 .refresh button {
-  background-color: #0a567e;
-  color: #fff;
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  color: var(--white);
   border: none;
-  padding: 0.7rem 1.2rem;
-  font-size: 1rem;
-  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 30px;
   cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
 }
 
 .refresh button:hover {
-  background-color: #084466;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
-.verdict.fishable {
-  color: #007a00;
-  font-weight: bold;
-}
-
-.verdict.marginal {
-  color: #b36b00;
-  font-weight: bold;
-}
-
-.verdict.not-worth-it {
-  color: #b50000;
-  font-weight: bold;
-}
-
-.verdict.unknown {
-  color: #666;
-  font-weight: bold;
-}
-
-.temp-source {
-  font-size: 0.85em;
-  color: #888;
-  font-style: italic;
-}
-
-.error-message {
-  text-align: center;
-  padding: 2rem 1.5rem;
-}
-
-.error-message button {
-  background-color: #0a567e;
-  color: #fff;
-  border: none;
-  padding: 0.7rem 1.2rem;
-  font-size: 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
-}
-
-.error-message button:hover {
-  background-color: #084466;
+.refresh button:active {
+  transform: translateY(0);
 }
 
 .timestamp {
-  font-size: 0.8rem;
-  color: #555;
-  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.6rem;
 }
 
+/* ---------- Footer ---------- */
+
 footer {
-  background-color: #0a567e;
-  color: #fff;
+  background: var(--ocean-dark);
+  color: rgba(255, 255, 255, 0.7);
   text-align: center;
-  padding: 0.5rem;
+  padding: 1rem;
   font-size: 0.75rem;
+}
+
+footer p {
+  margin: 0;
+}
+
+/* ---------- Error page ---------- */
+
+.error-message {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  max-width: 500px;
+  margin: 2rem auto;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.error-message h2 {
+  margin-bottom: 0.5rem;
+}
+
+.error-message p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.error-message button {
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.error-message button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  main {
+    padding: 0 0.75rem;
+    margin-top: -1rem;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .species-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .species-rank {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .tide-timeline {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tide-event {
+    flex-direction: row;
+    text-align: left;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  .tide-event::before {
+    display: none;
+  }
 }
