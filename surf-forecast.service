@@ -1,0 +1,25 @@
+[Unit]
+Description=Surf & Pier Fishing Forecast
+Documentation=https://github.com/ConnnnerDay/surf-pier-forecast
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=REPLACE_USER
+WorkingDirectory=REPLACE_DIR
+ExecStart=REPLACE_DIR/.venv/bin/python app.py
+Restart=on-failure
+RestartSec=10
+
+# Auto-restart once a day at 4 AM to pick up fresh forecast data
+# (handled by the companion .timer if desired, otherwise the app
+#  auto-refreshes stale cache every 4 hours on page load)
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=REPLACE_DIR/data
+
+[Install]
+WantedBy=multi-user.target
