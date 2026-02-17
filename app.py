@@ -355,6 +355,168 @@ def get_moon_info(dt: datetime) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Sunrise / sunset (pure math, no API)
+# ---------------------------------------------------------------------------
+
+# Wrightsville Beach coordinates
+_LAT = 34.2104
+_LNG = -77.7964
+
+
+def _sun_times(dt: datetime) -> Tuple[datetime, datetime]:
+    """Compute approximate sunrise and sunset for Wrightsville Beach.
+
+    Uses the simplified NOAA algorithm based on the day-of-year, latitude,
+    and an approximate equation of time.  Returns (sunrise, sunset) as
+    timezone-aware datetimes in America/New_York.  Accuracy is within a few
+    minutes -- good enough for fishing planning.
+    """
+    tz = ZoneInfo("America/New_York")
+    # Day of year (1-365)
+    n = dt.timetuple().tm_yday
+
+    # Fractional year in radians
+    gamma = 2 * math.pi / 365 * (n - 1)
+
+    # Equation of time (minutes)
+    eqtime = 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(gamma)
+        - 0.032077 * math.sin(gamma)
+        - 0.014615 * math.cos(2 * gamma)
+        - 0.040849 * math.sin(2 * gamma)
+    )
+
+    # Solar declination (radians)
+    decl = (
+        0.006918
+        - 0.399912 * math.cos(gamma)
+        + 0.070257 * math.sin(gamma)
+        - 0.006758 * math.cos(2 * gamma)
+        + 0.000907 * math.sin(2 * gamma)
+        - 0.002697 * math.cos(3 * gamma)
+        + 0.00148 * math.sin(3 * gamma)
+    )
+
+    lat_rad = math.radians(_LAT)
+
+    # Hour angle at sunrise/sunset (degrees)
+    cos_ha = (
+        math.cos(math.radians(90.833)) / (math.cos(lat_rad) * math.cos(decl))
+        - math.tan(lat_rad) * math.tan(decl)
+    )
+    # Clamp for polar regions (shouldn't happen at 34°N)
+    cos_ha = max(-1.0, min(1.0, cos_ha))
+    ha = math.degrees(math.acos(cos_ha))
+
+    # Sunrise and sunset in minutes from midnight UTC
+    sunrise_utc = 720 - 4 * (_LNG + ha) - eqtime
+    sunset_utc = 720 - 4 * (_LNG - ha) - eqtime
+
+    base = datetime(dt.year, dt.month, dt.day, tzinfo=ZoneInfo("UTC"))
+    sunrise = base + timedelta(minutes=sunrise_utc)
+    sunset = base + timedelta(minutes=sunset_utc)
+
+    return sunrise.astimezone(tz), sunset.astimezone(tz)
+
+
+# ---------------------------------------------------------------------------
+# Best fishing windows
+# ---------------------------------------------------------------------------
+
+def compute_best_windows(
+    tides: List[Dict[str, Any]],
+    moon: Dict[str, Any],
+    dt: datetime,
+) -> List[Dict[str, str]]:
+    """Identify the best fishing windows for the next 24 hours.
+
+    Prime fishing windows are:
+    1. **Tide changes**: 1 hour before through 1 hour after each high/low
+       tide -- moving water stirs up bait and triggers feeding.
+    2. **Dawn / dusk**: the classic low-light feeding periods.
+    3. **Overlap**: when a tide change coincides with dawn or dusk, that
+       window gets the highest priority.
+
+    Returns a list of dicts with ``window``, ``time``, and ``reason``.
+    """
+    tz = ZoneInfo("America/New_York")
+    now = dt if dt.tzinfo else dt.replace(tzinfo=tz)
+
+    try:
+        sunrise, sunset = _sun_times(now)
+    except Exception:
+        sunrise = sunset = None
+
+    windows: List[Dict[str, str]] = []
+
+    # Tide-change windows
+    for tide in tides:
+        try:
+            tide_time = datetime.strptime(tide["time"], "%Y-%m-%d %H:%M")
+            tide_time = tide_time.replace(tzinfo=tz)
+        except (ValueError, KeyError):
+            continue
+
+        # Only include future events within ~24 hours
+        if tide_time < now or tide_time > now + timedelta(hours=26):
+            continue
+
+        start = tide_time - timedelta(hours=1)
+        end = tide_time + timedelta(hours=1)
+        time_str = f"{start.strftime('%-I:%M %p')} - {end.strftime('%-I:%M %p')}"
+
+        # Check for dawn/dusk overlap
+        near_dawn = sunrise and abs((tide_time - sunrise).total_seconds()) < 5400
+        near_dusk = sunset and abs((tide_time - sunset).total_seconds()) < 5400
+
+        if near_dawn:
+            quality = "Prime"
+            reason = f"{tide['type']} tide change at dawn -- peak feeding window"
+        elif near_dusk:
+            quality = "Prime"
+            reason = f"{tide['type']} tide change at dusk -- peak feeding window"
+        else:
+            quality = "Good"
+            reason = f"{tide['type']} tide change -- moving water triggers feeding"
+
+        windows.append({
+            "quality": quality,
+            "time": time_str,
+            "reason": reason,
+        })
+
+    # Add dawn and dusk if they don't already overlap with a tide window
+    if sunrise and sunrise > now:
+        dawn_start = sunrise - timedelta(minutes=30)
+        dawn_end = sunrise + timedelta(minutes=90)
+        already_covered = any("dawn" in w["reason"].lower() for w in windows)
+        if not already_covered:
+            windows.append({
+                "quality": "Good",
+                "time": f"{dawn_start.strftime('%-I:%M %p')} - {dawn_end.strftime('%-I:%M %p')}",
+                "reason": "Dawn -- low-light feeding period",
+            })
+
+    if sunset and sunset > now:
+        dusk_start = sunset - timedelta(minutes=90)
+        dusk_end = sunset + timedelta(minutes=30)
+        already_covered = any("dusk" in w["reason"].lower() for w in windows)
+        if not already_covered:
+            windows.append({
+                "quality": "Good",
+                "time": f"{dusk_start.strftime('%-I:%M %p')} - {dusk_end.strftime('%-I:%M %p')}",
+                "reason": "Dusk -- low-light feeding period",
+            })
+
+    # Sort by quality (Prime first) then by time
+    quality_order = {"Prime": 0, "Good": 1}
+    windows.sort(key=lambda w: quality_order.get(w["quality"], 2))
+
+    return windows
+
+
+# ---------------------------------------------------------------------------
 # Species database -- each entry carries scoring variables instead of a
 # hard-coded rank.  The actual ranking is computed at forecast time based
 # on the current month and water temperature.
@@ -644,7 +806,12 @@ BAIT_DB: List[Dict[str, Any]] = [
 ]
 
 
-def _score_species(sp: Dict[str, Any], month: int, water_temp: float) -> float:
+def _score_species(
+    sp: Dict[str, Any],
+    month: int,
+    water_temp: float,
+    solunar_rating: str = "Fair",
+) -> float:
     """Compute a bite-likelihood score for a species given current conditions.
 
     Score components:
@@ -652,6 +819,7 @@ def _score_species(sp: Dict[str, Any], month: int, water_temp: float) -> float:
       species' ideal range.
     - Seasonal fit (0-30): whether the current month is a peak, good,
       or off month.
+    - Solunar bonus (0-15): stronger moon phases boost feeding activity.
     - Presence penalty (-100): species gets a large penalty if water temp
       is outside its survivable range entirely.
     """
@@ -681,11 +849,20 @@ def _score_species(sp: Dict[str, Any], month: int, water_temp: float) -> float:
         score += 15.0
     # Off-season months get 0
 
+    # Solunar bonus -- stronger moon phases increase feeding aggression
+    solunar_bonus = {"Excellent": 15.0, "Good": 10.0, "Fair": 5.0, "Poor": 0.0}
+    score += solunar_bonus.get(solunar_rating, 0.0)
+
     return score
 
 
-def build_species_ranking(month: int, water_temp: float) -> List[Dict[str, Any]]:
-    """Dynamically rank species based on current month and water temperature.
+def build_species_ranking(
+    month: int,
+    water_temp: float,
+    solunar_rating: str = "Fair",
+) -> List[Dict[str, Any]]:
+    """Dynamically rank species based on current month, water temperature and
+    solunar conditions.
 
     Species with negative scores (outside survivable temp range) are
     excluded.  The rest are sorted by score descending and assigned ranks.
@@ -694,7 +871,7 @@ def build_species_ranking(month: int, water_temp: float) -> List[Dict[str, Any]]
 
     scored = []
     for sp in SPECIES_DB:
-        s = _score_species(sp, month, water_temp)
+        s = _score_species(sp, month, water_temp, solunar_rating)
         if s >= 0:
             explanation = sp["explanation_cold"] if is_cold else sp["explanation_warm"]
             scored.append((s, sp, explanation))
@@ -777,6 +954,13 @@ def generate_forecast() -> Dict[str, Any]:
             return f"{low:.0f} {unit}"
         return f"{low:.0f}-{high:.0f} {unit}"
 
+    # Compute sunrise / sunset for display
+    try:
+        sunrise, sunset = _sun_times(now)
+        sun_str = f"{sunrise.strftime('%-I:%M %p')} / {sunset.strftime('%-I:%M %p')}"
+    except Exception:
+        sun_str = "Unavailable"
+
     conditions = {
         "wind": format_range(wind_range, "kt"),
         "waves": format_range(wave_range, "ft"),
@@ -784,15 +968,20 @@ def generate_forecast() -> Dict[str, Any]:
         "water_temp_f": round(water_temp, 1),
         "water_temp_live": temp_is_live,
         "tide_trend": tide_trend,
+        "sunrise_sunset": sun_str,
     }
 
-    species = build_species_ranking(month, water_temp)
+    species = build_species_ranking(month, water_temp, moon["solunar_rating"])
+
+    # Best fishing windows (tides + dawn/dusk + solunar overlap)
+    windows = compute_best_windows(tides, moon, now)
 
     forecast: Dict[str, Any] = {
         "generated_at": now.isoformat(),
         "conditions": conditions,
         "tides": tides,
         "moon": moon,
+        "windows": windows,
         "species": species,
         "rig_templates": RIG_TEMPLATES,
         "bait_rankings": build_bait_ranking(species),

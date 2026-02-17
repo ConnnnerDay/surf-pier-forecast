@@ -123,6 +123,58 @@ table tbody tr:nth-child(even) {
   margin-top: 0.5rem;
 }
 
+.window-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.window-card {
+  background-color: #fff;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  flex: 1 1 250px;
+  position: relative;
+}
+
+.window-card.window-prime {
+  border-color: #007a00;
+  background-color: #f0fff0;
+}
+
+.window-card.window-good {
+  border-color: #0a567e;
+  background-color: #f0f8ff;
+}
+
+.window-quality {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  margin-bottom: 0.25rem;
+}
+
+.window-prime .window-quality {
+  background-color: #007a00;
+  color: #fff;
+}
+
+.window-good .window-quality {
+  background-color: #0a567e;
+  color: #fff;
+}
+
+.window-card p {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
 .rig-cards {
   display: flex;
   flex-wrap: wrap;
