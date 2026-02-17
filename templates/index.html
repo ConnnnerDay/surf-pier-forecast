@@ -8,7 +8,7 @@
 </head>
 <body>
     <header>
-        <h1>24‑Hour Surf &amp; Pier Fishing Outlook</h1>
+        <h1>24-Hour Surf &amp; Pier Fishing Outlook</h1>
         <p class="location">Wrightsville Beach &amp; Carolina Beach, NC</p>
         {% if cached %}
         <div class="banner">Serving cached forecast generated at {{ forecast.generated_at }}</div>
@@ -18,9 +18,10 @@
     <section class="conditions">
         <h2>Marine Conditions</h2>
         <ul>
-            <li><strong>Wind (next 24 h):</strong> {{ forecast.conditions.wind }}</li>
-            <li><strong>Wave height (next 24 h):</strong> {{ forecast.conditions.waves }}</li>
-            <li><strong>Fishability verdict:</strong> <span class="verdict {{ forecast.conditions.verdict|lower }}">{{ forecast.conditions.verdict }}</span></li>
+            <li><strong>Wind (next 24 h):</strong> {{ forecast.conditions.wind }}</li>
+            <li><strong>Wave height (next 24 h):</strong> {{ forecast.conditions.waves }}</li>
+            <li><strong>Water temperature:</strong> {{ forecast.conditions.water_temp_f }}&deg;F{% if not forecast.conditions.water_temp_live %} <span class="temp-source">(monthly avg)</span>{% endif %}</li>
+            <li><strong>Fishability verdict:</strong> <span class="verdict {{ forecast.conditions.verdict|lower|replace(' ', '-') }}">{{ forecast.conditions.verdict }}</span></li>
         </ul>
     </section>
 
@@ -31,7 +32,7 @@
                 <tr>
                     <th>Rank</th>
                     <th>Species</th>
-                    <th>Why They’re Biting</th>
+                    <th>Why They're Biting</th>
                     <th>Best Natural Bait</th>
                     <th>Recommended Rig</th>
                     <th>Hook&nbsp;Size</th>
@@ -55,7 +56,7 @@
     </section>
 
     <section class="rigs">
-        <h2>Bottom‑Rig Templates</h2>
+        <h2>Bottom-Rig Templates</h2>
         <div class="rig-cards">
             {% for rig in forecast.rig_templates %}
             <div class="rig-card">
@@ -76,7 +77,7 @@
         <h2>Natural Bait Recommendations</h2>
         <ol>
             {% for item in forecast.bait_rankings %}
-            <li><strong>{{ item.bait }}</strong> – {{ item.notes }}</li>
+            <li><strong>{{ item.bait }}</strong> -- {{ item.notes }}</li>
             {% endfor %}
         </ol>
     </section>
