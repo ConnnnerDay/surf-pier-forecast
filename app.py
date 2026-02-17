@@ -2,18 +2,18 @@
 Surf and Pier Fishing Forecast Application
 ----------------------------------------
 
-This Flask application generates and serves a 24‑hour surf and pier fishing
+This Flask application generates and serves a 24-hour surf and pier fishing
 outlook for Wrightsville Beach and Carolina Beach, North Carolina.  The
 forecast combines NOAA marine conditions with seasonal fishing patterns to
-rank the species most likely to bite, recommends bait and bottom rigs,
-assesses fishability, and caches the most recent report.  A simple web
+dynamically rank the species most likely to bite, recommend bait and bottom
+rigs, assess fishability, and cache the most recent report.  A simple web
 interface allows manual refreshes on demand.
 
 The application exposes three endpoints:
 
-* ``/`` – HTML dashboard showing the latest forecast with a refresh button.
-* ``/api/forecast`` – Returns the current forecast in JSON format.
-* ``/api/refresh`` – POST endpoint that triggers regeneration of the
+* ``/`` -- HTML dashboard showing the latest forecast with a refresh button.
+* ``/api/forecast`` -- Returns the current forecast in JSON format.
+* ``/api/refresh`` -- POST endpoint that triggers regeneration of the
   forecast.  On success the browser is redirected back to ``/``; on
   failure the cached forecast remains untouched.
 
@@ -23,11 +23,11 @@ forecast and indicates the timestamp when it was generated.
 
 The forecast generation routine fetches the National Weather Service
 marine zone forecast (KILM FZUS52) for the next 24 hours and derives
-maximum sustained wind and wave height values.  Based on predetermined
-thresholds the conditions are classified as Fishable, Marginal or
-Not worth it.  Species rankings and rig recommendations are based on
-research from official North Carolina Department of Environmental Quality
-(DEQ) species profiles and other reputable sources.
+maximum sustained wind and wave height values.  It also fetches the current
+water temperature from NOAA CO-OPS (free, no API key).  Based on
+predetermined thresholds the conditions are classified as Fishable, Marginal
+or Not worth it.  Species rankings are computed dynamically from the current
+month and water temperature.
 """
 
 from __future__ import annotations
@@ -76,8 +76,8 @@ def parse_conditions(text: str) -> Tuple[Optional[Tuple[float, float]], Optional
     """Parse the forecast text and extract wind and wave ranges for the next 24 hours.
 
     The NDBC forecast page lists several time periods such as THIS AFTERNOON,
-    TONIGHT and TUE.  This function collects the first three relevant
-    segments (covering roughly the next 24 hours) and extracts numeric
+    TONIGHT and the upcoming day name.  This function collects the first three
+    relevant segments (covering roughly the next 24 hours) and extracts numeric
     ranges for sustained winds (knots) and seas (feet).  If a range is
     specified (e.g. "10 to 15 kt") the minimum and maximum values are
     captured; otherwise both values are identical.  Returns a tuple
@@ -86,28 +86,26 @@ def parse_conditions(text: str) -> Tuple[Optional[Tuple[float, float]], Optional
     """
     # Normalize whitespace to simplify regex searches
     cleaned = "\n".join(line.strip() for line in text.splitlines())
-    # Build a regex that matches segments beginning with our target time
-    # windows.  We capture a reasonable amount of text after each heading
-    # until the next capitalized heading or double newline.
-    pattern = re.compile(
-        r"(THIS AFTERNOON|TONIGHT|TUE|TUE NIGHT)[^A-Z]{0,100}", re.MULTILINE
-    )
-    segments = pattern.findall(cleaned)
-    # The regex above only returns the heading itself; we need the full
-    # lines for each matched heading.  A simpler approach is to search the
-    # page line by line and pick lines starting with our keywords.
+
+    # Build dynamic day-name keywords based on the current date.
+    # The NOAA forecast uses abbreviated day names like MON, TUE, WED etc.
+    tz = ZoneInfo("America/New_York")
+    now = datetime.now(tz)
+    day_abbrevs = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    today_abbrev = day_abbrevs[now.weekday()]
+    tomorrow_abbrev = day_abbrevs[(now.weekday() + 1) % 7]
+
+    # Keywords that mark forecast time-period headings
+    heading_keywords = {"THIS", "TONIGHT", "TODAY", today_abbrev, tomorrow_abbrev}
+
     lines = cleaned.split("\n")
     selected: List[str] = []
     for line in lines:
-        token = line.split()
-        if not token:
+        tokens = line.split()
+        if not tokens:
             continue
-        key = token[0]
-        # Compare first word to targeted headings
-        if key in {"THIS", "TONIGHT", "TUE"}:
-            # Ensure the full heading is considered (THIS AFTERNOON, TUE NIGHT etc.)
-            selected.append(line)
-        elif key == "TUE" and len(token) > 1 and token[1] == "NIGHT":
+        first = tokens[0]
+        if first in heading_keywords:
             selected.append(line)
         if len(selected) >= 3:
             break
@@ -146,9 +144,9 @@ def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: O
 
     The policy uses the following rules:
 
-    * Fishable – maximum sustained wind < 15 kt **and** maximum sea height < 3 ft.
-    * Marginal – maximum sustained wind ≤ 20 kt **or** maximum sea height ≤ 5 ft.
-    * Not worth it – winds > 20 kt **or** seas > 5 ft (small craft advisory
+    * Fishable -- maximum sustained wind < 15 kt **and** maximum sea height < 3 ft.
+    * Marginal -- maximum sustained wind <= 20 kt **and** maximum sea height <= 5 ft.
+    * Not worth it -- winds > 20 kt **or** seas > 5 ft (small craft advisory
       conditions).
     """
     if wind_range is None or wave_range is None:
@@ -157,247 +155,471 @@ def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: O
     wave_max = wave_range[1]
     if wind_max < 15 and wave_max < 3:
         return "Fishable"
-    elif wind_max <= 20 or wave_max <= 5:
+    elif wind_max <= 20 and wave_max <= 5:
         return "Marginal"
     else:
         return "Not worth it"
 
 
-def build_species_ranking() -> List[Dict[str, Any]]:
-    """Construct a ranked list of species with bait and rig recommendations.
+# ---------------------------------------------------------------------------
+# NOAA water temperature (free, no API key)
+# ---------------------------------------------------------------------------
 
-    The ranking is tailored for mid-February nearshore fishing around
-    Wrightsville Beach and Carolina Beach.  Species are ordered by
-    likelihood of biting given seasonal patterns, official reports and
-    typical winter behaviour.
+# Wrightsville Beach NOAA CO-OPS station
+WATER_TEMP_STATION = "8658163"
+WATER_TEMP_URL = (
+    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    "?date=latest&station={station}"
+    "&product=water_temperature&units=english"
+    "&time_zone=lst_ldt&format=json"
+)
+
+# Historical average water temperatures (F) for Wrightsville Beach, NC by month.
+# Used as fallback when the live NOAA reading is unavailable.
+MONTHLY_AVG_WATER_TEMP_F = {
+    1: 50, 2: 50, 3: 54, 4: 62, 5: 70, 6: 78,
+    7: 82, 8: 83, 9: 80, 10: 72, 11: 62, 12: 54,
+}
+
+
+def fetch_water_temperature() -> Optional[float]:
+    """Fetch the latest water temperature (F) from NOAA CO-OPS.
+
+    Uses the free Tides & Currents API for station 8658163
+    (Wrightsville Beach, NC).  Returns None on any failure.
     """
-    return [
-        {
-            "rank": 1,
-            "name": "Red drum (puppy drum)",
-            "explanation": (
-                "Winter red drum congregate in deeper marsh channels and holes. "
-                "They forage along the bottom for shrimp, crabs and small fish."
-            ),
-            "bait": "Cut menhaden or mullet strips; fresh shrimp; live finger mullet when available",
-            "rig": "Carolina/fishfinder rig with sliding egg sinker",
-            "hook_size": "2/0–5/0 circle hook",
-            "sinker": "2–4 oz egg sinker",
-        },
-        {
-            "rank": 2,
-            "name": "Speckled trout (spotted seatrout)",
-            "explanation": (
-                "Speckled trout remain active in deeper holes and backwater creeks. "
-                "Live shrimp or finger mullet entice sluggish winter fish."
-            ),
-            "bait": "Live shrimp (most productive); finger mullet; small menhaden",
-            "rig": "Popping‑cork or fishfinder rig on light leader",
-            "hook_size": "1/0–2/0 circle hook",
-            "sinker": "1–2 oz",  # light weight to allow natural presentation
-        },
-        {
-            "rank": 3,
-            "name": "Black drum",
-            "explanation": (
-                "Black drum are bottom feeders that locate prey with chin barbels. "
-                "They prefer mollusks, shrimp and crab pieces and are rarely fooled by lures."
-            ),
-            "bait": "Cut shrimp, clams, blood worms, cut mullet, menhaden or crab pieces",
-            "rig": "Double‑dropper (hi‑lo) or Carolina rig",
-            "hook_size": "1/0–3/0 circle hook",
-            "sinker": "2–4 oz pyramid or bank sinker",
-        },
-        {
-            "rank": 4,
-            "name": "Sheepshead",
-            "explanation": (
-                "Sheepshead feed around pilings and rock structures, nibbling barnacles and crustaceans. "
-                "Bites are subtle; anglers fish straight down."
-            ),
-            "bait": "Live fiddler crabs; sand fleas; small pieces of shrimp",
-            "rig": "Carolina rig with short fluorocarbon leader",
-            "hook_size": "1/0–3/0 J‑style or circle hook",
-            "sinker": "1–3 oz egg sinker",
-        },
-        {
-            "rank": 5,
-            "name": "Tautog",
-            "explanation": (
-                "Tautog (blackfish) cling to jetties and rock piles in winter and feed on crustaceans. "
-                "They require strong tackle and small, strong hooks."
-            ),
-            "bait": "Pieces of fresh shrimp, sand fleas, fiddler or rock crabs, clams",
-            "rig": "Two‑hook bottom rig or Carolina rig with heavy leader",
-            "hook_size": "#6–#2 strong hook",
-            "sinker": "2–4 oz bank or egg sinker",
-        },
-        {
-            "rank": 6,
-            "name": "Black sea bass",
-            "explanation": (
-                "Inshore black sea bass inhabit wrecks and hard bottom. "
-                "They feed on crabs, shrimp and small fish; anglers bottom‑fish using strips of squid or fish."
-            ),
-            "bait": "Strips of squid or cut fish; shrimp",
-            "rig": "Double‑dropper bottom rig on braided line",
-            "hook_size": "2/0–3/0 circle hook",
-            "sinker": "3–4 oz pyramid or bank sinker",
-        },
-        {
-            "rank": 7,
-            "name": "Bluefish",
-            "explanation": (
-                "Bluefish schools roam nearshore waters and readily hit cut bait. "
-                "Sharp teeth require wire or heavy mono leaders."
-            ),
-            "bait": "Cut menhaden or mullet; small fish pieces",
-            "rig": "Fishfinder rig with steel leader",
-            "hook_size": "3/0–5/0 J‑hook",
-            "sinker": "2–4 oz pyramid sinker",
-        },
-        {
-            "rank": 8,
-            "name": "Whiting (sea mullet, kingfish)",
-            "explanation": (
-                "Whiting patrol sandy bottoms along beaches and piers. "
-                "They feed on shrimp, mole crabs and worms; two‑hook bottom rigs are ideal."
-            ),
-            "bait": "Fresh shrimp, mole crabs (sand fleas), bloodworms, squid",
-            "rig": "Double‑dropper rig with small hooks",
-            "hook_size": "#4–#2 circle hook",
-            "sinker": "1–3 oz pyramid sinker",
-        },
-        {
-            "rank": 9,
-            "name": "Northern puffer (blowfish)",
-            "explanation": (
-                "These small, delicious fish are common in late winter. "
-                "They nibble on shrimp and squid pieces presented on small hooks."
-            ),
-            "bait": "Small pieces of shrimp, bloodworms or squid",
-            "rig": "Two‑hook bottom rig",
-            "hook_size": "#6–#4 baitholder or circle hook",
-            "sinker": "1–2 oz pyramid sinker",
-        },
-        {
-            "rank": 10,
-            "name": "Striped bass (rockfish)",
-            "explanation": (
-                "Striped bass are opportunistic predators found around piers, jetties and surf troughs. "
-                "Winter surf anglers use cut or live bait on heavy tackle."
-            ),
-            "bait": "Cut menhaden, mullet or shad; live mullet or eels",
-            "rig": "Fishfinder or chunk bait rig with heavy leader",
-            "hook_size": "5/0–7/0 circle hook",
-            "sinker": "3–5 oz pyramid or bank sinker",
-        },
-    ]
+    try:
+        url = WATER_TEMP_URL.format(station=WATER_TEMP_STATION)
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        reading = data.get("data", [{}])[0].get("v")
+        if reading is not None:
+            return float(reading)
+    except Exception:
+        pass
+    return None
 
 
-def build_rig_templates() -> List[Dict[str, str]]:
-    """Define bottom rig templates for surf and pier fishing."""
-    return [
-        {
-            "name": "Carolina/Fishfinder Rig",
-            "description": (
-                "A sliding egg sinker rides on the main line above a swivel. "
-                "Tie 18–24 inches of 20–30 lb fluorocarbon leader and finish with a circle hook. "
-                "Ideal for red drum, black drum, bluefish and striped bass."
-            ),
-            "mainline": "20–30 lb braid with 40 lb shock leader",
-            "leader": "18–24 in 20–30 lb fluorocarbon",
-            "hook": "2/0–5/0 circle hook",
-            "sinker": "Sliding egg sinker 1–4 oz",
-        },
-        {
-            "name": "Double‑Dropper (Hi‑Lo) Rig",
-            "description": (
-                "Two dropper loops spaced along a 30–40 lb mono leader with a weight at the bottom. "
-                "Effective for whiting, black drum and sea bass when baited with shrimp, squid or worms."
-            ),
-            "mainline": "15–20 lb mono or braid",
-            "leader": "30–40 lb mono with two dropper loops",
-            "hook": "#4–3/0 circle hooks on each dropper",
-            "sinker": "Pyramid or bank sinker 2–4 oz",
-        },
-        {
-            "name": "Simple Surf Rig",
-            "description": (
-                "A lightweight rig for small species such as puffer and spot. "
-                "Attach a short leader and small hook below a pyramid weight."
-            ),
-            "mainline": "10–15 lb mono or braid",
-            "leader": "12–18 in 15–20 lb mono",
-            "hook": "#6–#4 baitholder or circle hook",
-            "sinker": "Pyramid sinker 1–2 oz",
-        },
-        {
-            "name": "Pier Structure Rig",
-            "description": (
-                "Designed for fishing around pilings and rock structure. "
-                "Use heavy braid and fluorocarbon leader with a short drop to minimize snags. "
-                "Perfect for sheepshead and tautog."
-            ),
-            "mainline": "30–50 lb braid",
-            "leader": "1–2 ft 30–50 lb fluorocarbon",
-            "hook": "#2–3/0 J‑hook or circle hook",
-            "sinker": "Egg or bank sinker 2–4 oz",
-        },
-    ]
+def get_water_temp(month: int) -> Tuple[float, bool]:
+    """Return (water_temp_f, is_live).
+
+    Tries the live NOAA reading first.  Falls back to the historical
+    monthly average when the API is unreachable.
+    """
+    live = fetch_water_temperature()
+    if live is not None:
+        return live, True
+    return float(MONTHLY_AVG_WATER_TEMP_F[month]), False
 
 
-def build_bait_ranking() -> List[Dict[str, str]]:
-    """Compile a ranking of natural baits with notes on seasonal availability."""
-    return [
-        {
-            "bait": "Live shrimp",
-            "notes": "Top choice for speckled trout and versatile for many species; use under a popping cork or on bottom rigs."
-        },
-        {
-            "bait": "Cut mullet",
-            "notes": "Excellent for red drum and black drum; fresh cut strips release scent and stay on the hook."
-        },
-        {
-            "bait": "Menhaden (live or cut)",
-            "notes": "Prime bait for red drum, bluefish and striped bass; live menhaden offer a distinct advantage in calm conditions."
-        },
-        {
-            "bait": "Sand fleas (mole crabs)",
-            "notes": "Effective for whiting and pompano; dig in the swash zone for fresh fleas."
-        },
-        {
-            "bait": "Squid strips",
-            "notes": "Durable on the hook; attract black sea bass, whiting and puffer fish."
-        },
-        {
-            "bait": "Fiddler crabs", 
-            "notes": "Essential for sheepshead and tautog; use whole crabs on small strong hooks."
-        },
-        {
-            "bait": "Bloodworms",
-            "notes": "Popular for whiting, black drum and puffer fish; cut into small pieces for double‑dropper rigs."
-        },
-        {
-            "bait": "Clams and crab pieces",
-            "notes": "Best for black drum; larger pieces stay on the hook and deter small pickers."
-        },
-    ]
+# ---------------------------------------------------------------------------
+# Species database -- each entry carries scoring variables instead of a
+# hard-coded rank.  The actual ranking is computed at forecast time based
+# on the current month and water temperature.
+# ---------------------------------------------------------------------------
+
+SPECIES_DB: List[Dict[str, Any]] = [
+    {
+        "name": "Red drum (puppy drum)",
+        "temp_min": 45, "temp_max": 85, "temp_ideal_low": 55, "temp_ideal_high": 75,
+        "peak_months": [3, 4, 5, 9, 10, 11],
+        "good_months": [1, 2, 6, 7, 8, 12],
+        "bait": "Cut menhaden or mullet strips; fresh shrimp; live finger mullet when available",
+        "rig": "Carolina/fishfinder rig with sliding egg sinker",
+        "hook_size": "2/0-5/0 circle hook",
+        "sinker": "2-4 oz egg sinker",
+        "explanation_cold": "Winter red drum congregate in deeper marsh channels and holes, foraging along the bottom for shrimp, crabs and small fish.",
+        "explanation_warm": "Red drum actively feed in the surf zone and around inlets, chasing mullet, menhaden and crabs in warmer water.",
+    },
+    {
+        "name": "Speckled trout (spotted seatrout)",
+        "temp_min": 45, "temp_max": 82, "temp_ideal_low": 58, "temp_ideal_high": 75,
+        "peak_months": [3, 4, 5, 10, 11],
+        "good_months": [1, 2, 6, 9, 12],
+        "bait": "Live shrimp (most productive); finger mullet; small menhaden",
+        "rig": "Popping-cork or fishfinder rig on light leader",
+        "hook_size": "1/0-2/0 circle hook",
+        "sinker": "1-2 oz",
+        "explanation_cold": "Speckled trout hold in deeper holes and backwater creeks; live shrimp or finger mullet entice sluggish winter fish.",
+        "explanation_warm": "Speckled trout are aggressively feeding on shrimp and small baitfish in the shallows and around grass flats.",
+    },
+    {
+        "name": "Black drum",
+        "temp_min": 48, "temp_max": 85, "temp_ideal_low": 55, "temp_ideal_high": 78,
+        "peak_months": [2, 3, 4, 10, 11],
+        "good_months": [1, 5, 9, 12],
+        "bait": "Cut shrimp, clams, blood worms, cut mullet, menhaden or crab pieces",
+        "rig": "Double-dropper (hi-lo) or Carolina rig",
+        "hook_size": "1/0-3/0 circle hook",
+        "sinker": "2-4 oz pyramid or bank sinker",
+        "explanation_cold": "Black drum are bottom feeders that locate prey with chin barbels; they prefer mollusks, shrimp and crab pieces in cooler water.",
+        "explanation_warm": "Black drum move through inlets and along structure, actively rooting for crabs, clams and shrimp in warming water.",
+    },
+    {
+        "name": "Sheepshead",
+        "temp_min": 50, "temp_max": 80, "temp_ideal_low": 55, "temp_ideal_high": 72,
+        "peak_months": [1, 2, 3, 12],
+        "good_months": [4, 11],
+        "bait": "Live fiddler crabs; sand fleas; small pieces of shrimp",
+        "rig": "Carolina rig with short fluorocarbon leader",
+        "hook_size": "1/0-3/0 J-style or circle hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Sheepshead feed around pilings and rock structures, nibbling barnacles and crustaceans; bites are subtle and require fishing straight down.",
+        "explanation_warm": "Sheepshead stack up around nearshore structure and pilings, picking at barnacles and crabs before moving offshore for spawning.",
+    },
+    {
+        "name": "Tautog (blackfish)",
+        "temp_min": 42, "temp_max": 72, "temp_ideal_low": 48, "temp_ideal_high": 62,
+        "peak_months": [1, 2, 3, 11, 12],
+        "good_months": [4, 10],
+        "bait": "Pieces of fresh shrimp, sand fleas, fiddler or rock crabs, clams",
+        "rig": "Two-hook bottom rig or Carolina rig with heavy leader",
+        "hook_size": "#6-#2 strong hook",
+        "sinker": "2-4 oz bank or egg sinker",
+        "explanation_cold": "Tautog cling to jetties and rock piles in winter, feeding on crustaceans; they require strong tackle and small, strong hooks.",
+        "explanation_warm": "Tautog become less active as water warms and move to deeper structure; early spring offers a window before they thin out.",
+    },
+    {
+        "name": "Black sea bass",
+        "temp_min": 46, "temp_max": 78, "temp_ideal_low": 52, "temp_ideal_high": 68,
+        "peak_months": [1, 2, 3, 11, 12],
+        "good_months": [4, 10],
+        "bait": "Strips of squid or cut fish; shrimp",
+        "rig": "Double-dropper bottom rig on braided line",
+        "hook_size": "2/0-3/0 circle hook",
+        "sinker": "3-4 oz pyramid or bank sinker",
+        "explanation_cold": "Inshore black sea bass inhabit wrecks and hard bottom, feeding on crabs, shrimp and small fish; bottom-fish with squid or cut bait.",
+        "explanation_warm": "Black sea bass are abundant over nearshore reefs and wrecks, aggressively hitting squid strips and cut bait.",
+    },
+    {
+        "name": "Bluefish",
+        "temp_min": 50, "temp_max": 84, "temp_ideal_low": 60, "temp_ideal_high": 78,
+        "peak_months": [4, 5, 10, 11],
+        "good_months": [3, 6, 9, 12],
+        "bait": "Cut menhaden or mullet; small fish pieces",
+        "rig": "Fishfinder rig with steel leader",
+        "hook_size": "3/0-5/0 J-hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Smaller bluefish (snappers/tailors) roam nearshore waters and readily hit cut bait; wire or heavy leaders are essential.",
+        "explanation_warm": "Bluefish schools are actively chasing baitfish along the surf line and around piers; cut menhaden and mullet draw explosive strikes.",
+    },
+    {
+        "name": "Whiting (sea mullet, kingfish)",
+        "temp_min": 48, "temp_max": 82, "temp_ideal_low": 58, "temp_ideal_high": 74,
+        "peak_months": [3, 4, 5, 10, 11],
+        "good_months": [2, 6, 9, 12],
+        "bait": "Fresh shrimp, mole crabs (sand fleas), bloodworms, squid",
+        "rig": "Double-dropper rig with small hooks",
+        "hook_size": "#4-#2 circle hook",
+        "sinker": "1-3 oz pyramid sinker",
+        "explanation_cold": "Whiting patrol sandy bottoms along beaches and piers; they feed on shrimp, mole crabs and worms in the winter surf.",
+        "explanation_warm": "Whiting are schooling up along the beach and biting aggressively on shrimp and sand fleas in the wash zone.",
+    },
+    {
+        "name": "Northern puffer (blowfish)",
+        "temp_min": 45, "temp_max": 78, "temp_ideal_low": 50, "temp_ideal_high": 68,
+        "peak_months": [1, 2, 3, 11, 12],
+        "good_months": [4, 10],
+        "bait": "Small pieces of shrimp, bloodworms or squid",
+        "rig": "Two-hook bottom rig",
+        "hook_size": "#6-#4 baitholder or circle hook",
+        "sinker": "1-2 oz pyramid sinker",
+        "explanation_cold": "These small, delicious fish are common in late fall and winter; they nibble shrimp and squid pieces on small hooks.",
+        "explanation_warm": "Northern puffers move inshore with warming water, readily biting small pieces of shrimp or squid near structure.",
+    },
+    {
+        "name": "Striped bass (rockfish)",
+        "temp_min": 40, "temp_max": 70, "temp_ideal_low": 48, "temp_ideal_high": 62,
+        "peak_months": [1, 2, 3, 11, 12],
+        "good_months": [4, 10],
+        "bait": "Cut menhaden, mullet or shad; live mullet or eels",
+        "rig": "Fishfinder or chunk bait rig with heavy leader",
+        "hook_size": "5/0-7/0 circle hook",
+        "sinker": "3-5 oz pyramid or bank sinker",
+        "explanation_cold": "Striped bass are found around piers, jetties and surf troughs; winter surf anglers use cut or live bait on heavy tackle.",
+        "explanation_warm": "Striped bass push through inlets chasing schools of mullet and menhaden; they are most active at dawn and dusk.",
+    },
+    {
+        "name": "Flounder (summer flounder)",
+        "temp_min": 55, "temp_max": 82, "temp_ideal_low": 62, "temp_ideal_high": 76,
+        "peak_months": [4, 5, 9, 10],
+        "good_months": [3, 6, 7, 8, 11],
+        "bait": "Live finger mullet; live minnows; fresh shrimp under a bucktail jig",
+        "rig": "Carolina rig with 24-36 in fluorocarbon leader",
+        "hook_size": "2/0-4/0 circle or wide-gap hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Flounder are mostly offshore in cold water; stragglers around inlets may bite live mullet drifted slowly along the bottom.",
+        "explanation_warm": "Flounder are ambushing baitfish in the surf, around inlets and near pier pilings; live finger mullet is the top producer.",
+    },
+    {
+        "name": "Spanish mackerel",
+        "temp_min": 65, "temp_max": 88, "temp_ideal_low": 72, "temp_ideal_high": 82,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Shiny spoons; live baitfish; small plugs; fresh shrimp on a long-shank hook",
+        "rig": "Long-shank hook with wire leader, free-lined or under float",
+        "hook_size": "#1-2/0 long-shank hook",
+        "sinker": "None or 1/2 oz split shot",
+        "explanation_cold": "Spanish mackerel have migrated south; they are not present in nearshore NC waters during cold months.",
+        "explanation_warm": "Spanish mackerel are blitzing baitfish just behind the breakers and around piers; they hit flashy spoons and small baits.",
+    },
+    {
+        "name": "Pompano",
+        "temp_min": 60, "temp_max": 85, "temp_ideal_low": 68, "temp_ideal_high": 78,
+        "peak_months": [4, 5, 10, 11],
+        "good_months": [3, 6, 9],
+        "bait": "Sand fleas (mole crabs); fresh shrimp; Fishbites",
+        "rig": "Double-dropper rig with floats above hooks",
+        "hook_size": "#2-#1 circle hook",
+        "sinker": "2-3 oz pyramid sinker",
+        "explanation_cold": "Pompano are scarce inshore during cold months; occasional catches occur on warmer days near the surf zone.",
+        "explanation_warm": "Pompano are running the surf line feeding on sand fleas and small crustaceans; target the troughs and holes along the beach.",
+    },
+    {
+        "name": "Spot",
+        "temp_min": 50, "temp_max": 80, "temp_ideal_low": 58, "temp_ideal_high": 72,
+        "peak_months": [9, 10, 11],
+        "good_months": [3, 4, 5, 8, 12],
+        "bait": "Bloodworms; small pieces of shrimp; Fishbites",
+        "rig": "Double-dropper rig with small hooks",
+        "hook_size": "#6-#4 circle or bait hook",
+        "sinker": "1-2 oz pyramid sinker",
+        "explanation_cold": "Spot are mostly offshore or in deeper channels during winter; occasional catches from piers on warmer days.",
+        "explanation_warm": "Spot are schooling along the beach and around piers, biting aggressively on bloodworms and shrimp pieces.",
+    },
+    {
+        "name": "Cobia",
+        "temp_min": 68, "temp_max": 88, "temp_ideal_low": 72, "temp_ideal_high": 84,
+        "peak_months": [5, 6, 7],
+        "good_months": [4, 8, 9],
+        "bait": "Live eels; live menhaden; large live shrimp",
+        "rig": "Heavy fishfinder rig or free-lined live bait",
+        "hook_size": "5/0-8/0 circle hook",
+        "sinker": "2-4 oz egg sinker or none for free-lining",
+        "explanation_cold": "Cobia have migrated south and are not present in NC waters during cold months.",
+        "explanation_warm": "Cobia are cruising near the surface around piers, buoys and structure; sight-cast live eels or large baits to visible fish.",
+    },
+]
+
+# Static rig templates -- these don't change with conditions
+RIG_TEMPLATES: List[Dict[str, str]] = [
+    {
+        "name": "Carolina/Fishfinder Rig",
+        "description": (
+            "A sliding egg sinker rides on the main line above a swivel. "
+            "Tie 18-24 inches of 20-30 lb fluorocarbon leader and finish with a circle hook. "
+            "Ideal for red drum, black drum, bluefish and striped bass."
+        ),
+        "mainline": "20-30 lb braid with 40 lb shock leader",
+        "leader": "18-24 in 20-30 lb fluorocarbon",
+        "hook": "2/0-5/0 circle hook",
+        "sinker": "Sliding egg sinker 1-4 oz",
+    },
+    {
+        "name": "Double-Dropper (Hi-Lo) Rig",
+        "description": (
+            "Two dropper loops spaced along a 30-40 lb mono leader with a weight at the bottom. "
+            "Effective for whiting, black drum and sea bass when baited with shrimp, squid or worms."
+        ),
+        "mainline": "15-20 lb mono or braid",
+        "leader": "30-40 lb mono with two dropper loops",
+        "hook": "#4-3/0 circle hooks on each dropper",
+        "sinker": "Pyramid or bank sinker 2-4 oz",
+    },
+    {
+        "name": "Simple Surf Rig",
+        "description": (
+            "A lightweight rig for small species such as puffer and spot. "
+            "Attach a short leader and small hook below a pyramid weight."
+        ),
+        "mainline": "10-15 lb mono or braid",
+        "leader": "12-18 in 15-20 lb mono",
+        "hook": "#6-#4 baitholder or circle hook",
+        "sinker": "Pyramid sinker 1-2 oz",
+    },
+    {
+        "name": "Pier Structure Rig",
+        "description": (
+            "Designed for fishing around pilings and rock structure. "
+            "Use heavy braid and fluorocarbon leader with a short drop to minimize snags. "
+            "Perfect for sheepshead and tautog."
+        ),
+        "mainline": "30-50 lb braid",
+        "leader": "1-2 ft 30-50 lb fluorocarbon",
+        "hook": "#2-3/0 J-hook or circle hook",
+        "sinker": "Egg or bank sinker 2-4 oz",
+    },
+]
+
+# Natural baits with the species they target.  Baits whose target species
+# rank highly in the current forecast are promoted automatically.
+BAIT_DB: List[Dict[str, Any]] = [
+    {
+        "bait": "Live shrimp",
+        "notes": "Top choice for speckled trout and versatile for many species; use under a popping cork or on bottom rigs.",
+        "targets": ["Speckled trout", "Red drum", "Sheepshead", "Black drum"],
+    },
+    {
+        "bait": "Cut mullet",
+        "notes": "Excellent for red drum and black drum; fresh cut strips release scent and stay on the hook.",
+        "targets": ["Red drum", "Black drum", "Bluefish", "Striped bass"],
+    },
+    {
+        "bait": "Menhaden (live or cut)",
+        "notes": "Prime bait for red drum, bluefish and striped bass; live menhaden offer a distinct advantage in calm conditions.",
+        "targets": ["Red drum", "Bluefish", "Striped bass", "Cobia"],
+    },
+    {
+        "bait": "Sand fleas (mole crabs)",
+        "notes": "Effective for whiting and pompano; dig in the swash zone for fresh fleas.",
+        "targets": ["Whiting", "Pompano", "Sheepshead"],
+    },
+    {
+        "bait": "Squid strips",
+        "notes": "Durable on the hook; attract black sea bass, whiting and puffer fish.",
+        "targets": ["Black sea bass", "Whiting", "Northern puffer"],
+    },
+    {
+        "bait": "Fiddler crabs",
+        "notes": "Essential for sheepshead and tautog; use whole crabs on small strong hooks.",
+        "targets": ["Sheepshead", "Tautog"],
+    },
+    {
+        "bait": "Bloodworms",
+        "notes": "Popular for whiting, black drum, spot and puffer fish; cut into small pieces for double-dropper rigs.",
+        "targets": ["Whiting", "Black drum", "Northern puffer", "Spot"],
+    },
+    {
+        "bait": "Clams and crab pieces",
+        "notes": "Best for black drum; larger pieces stay on the hook and deter small pickers.",
+        "targets": ["Black drum", "Tautog", "Sheepshead"],
+    },
+    {
+        "bait": "Live finger mullet",
+        "notes": "Top producer for flounder and red drum; hook through the lips and drift slowly along the bottom.",
+        "targets": ["Flounder", "Red drum", "Speckled trout"],
+    },
+]
+
+
+def _score_species(sp: Dict[str, Any], month: int, water_temp: float) -> float:
+    """Compute a bite-likelihood score for a species given current conditions.
+
+    Score components:
+    - Temperature fit (0-50): how close current water temp is to the
+      species' ideal range.
+    - Seasonal fit (0-30): whether the current month is a peak, good,
+      or off month.
+    - Presence penalty (-100): species gets a large penalty if water temp
+      is outside its survivable range entirely.
+    """
+    score = 0.0
+
+    # Temperature scoring
+    if water_temp < sp["temp_min"] or water_temp > sp["temp_max"]:
+        return -100.0  # Species not present at this temperature
+
+    ideal_low = sp["temp_ideal_low"]
+    ideal_high = sp["temp_ideal_high"]
+    if ideal_low <= water_temp <= ideal_high:
+        score += 50.0
+    elif water_temp < ideal_low:
+        distance = ideal_low - water_temp
+        temp_range = ideal_low - sp["temp_min"]
+        score += max(0, 50.0 * (1 - distance / temp_range)) if temp_range > 0 else 25.0
+    else:
+        distance = water_temp - ideal_high
+        temp_range = sp["temp_max"] - ideal_high
+        score += max(0, 50.0 * (1 - distance / temp_range)) if temp_range > 0 else 25.0
+
+    # Seasonal scoring
+    if month in sp["peak_months"]:
+        score += 30.0
+    elif month in sp["good_months"]:
+        score += 15.0
+    # Off-season months get 0
+
+    return score
+
+
+def build_species_ranking(month: int, water_temp: float) -> List[Dict[str, Any]]:
+    """Dynamically rank species based on current month and water temperature.
+
+    Species with negative scores (outside survivable temp range) are
+    excluded.  The rest are sorted by score descending and assigned ranks.
+    """
+    is_cold = water_temp < 65
+
+    scored = []
+    for sp in SPECIES_DB:
+        s = _score_species(sp, month, water_temp)
+        if s >= 0:
+            explanation = sp["explanation_cold"] if is_cold else sp["explanation_warm"]
+            scored.append((s, sp, explanation))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    result: List[Dict[str, Any]] = []
+    for rank, (score, sp, explanation) in enumerate(scored, start=1):
+        result.append({
+            "rank": rank,
+            "name": sp["name"],
+            "explanation": explanation,
+            "bait": sp["bait"],
+            "rig": sp["rig"],
+            "hook_size": sp["hook_size"],
+            "sinker": sp["sinker"],
+        })
+
+    return result
+
+
+def build_bait_ranking(species_ranking: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """Rank baits by relevance to the current top species.
+
+    Baits whose target species appear higher in the species ranking
+    receive a higher score and are listed first.
+    """
+    # Map species short names to their rank for quick lookup.
+    # The short name is derived from the first word(s) before any parenthetical.
+    species_ranks: Dict[str, int] = {}
+    for sp in species_ranking:
+        short = sp["name"].split("(")[0].strip()
+        species_ranks[short] = sp["rank"]
+
+    scored_baits: List[Tuple[float, Dict[str, str]]] = []
+    for bait_entry in BAIT_DB:
+        bait_score = 0.0
+        for target in bait_entry["targets"]:
+            rank = species_ranks.get(target)
+            if rank is not None:
+                # Higher-ranked (lower number) targets contribute more
+                bait_score += max(0, 20 - rank)
+        scored_baits.append((bait_score, {"bait": bait_entry["bait"], "notes": bait_entry["notes"]}))
+
+    scored_baits.sort(key=lambda x: x[0], reverse=True)
+    return [b for _, b in scored_baits]
 
 
 def generate_forecast() -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
-    Fetches marine conditions, computes wind and wave ranges, classifies
-    fishability, then assembles species rankings, rig templates and bait
-    recommendations.  Raises requests.HTTPError if the marine forecast
-    cannot be retrieved.
+    Fetches marine conditions and water temperature, computes wind and wave
+    ranges, classifies fishability, then dynamically assembles species
+    rankings, rig templates and bait recommendations based on the current
+    month and water temperature.
     """
     raw_text = fetch_marine_forecast()
     wind_range, wave_range = parse_conditions(raw_text)
     verdict = classify_conditions(wind_range, wave_range)
     tz = ZoneInfo("America/New_York")
     now = datetime.now(tz)
+    month = now.month
+
+    # Fetch live water temperature; fall back to monthly average
+    water_temp, temp_is_live = get_water_temp(month)
+
     # Format ranges for display
     def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
         if r is None:
@@ -405,19 +627,24 @@ def generate_forecast() -> Dict[str, Any]:
         low, high = r
         if low == high:
             return f"{low:.0f} {unit}"
-        return f"{low:.0f}–{high:.0f} {unit}"
+        return f"{low:.0f}-{high:.0f} {unit}"
 
     conditions = {
         "wind": format_range(wind_range, "kt"),
         "waves": format_range(wave_range, "ft"),
         "verdict": verdict,
+        "water_temp_f": round(water_temp, 1),
+        "water_temp_live": temp_is_live,
     }
+
+    species = build_species_ranking(month, water_temp)
+
     forecast: Dict[str, Any] = {
         "generated_at": now.isoformat(),
         "conditions": conditions,
-        "species": build_species_ranking(),
-        "rig_templates": build_rig_templates(),
-        "bait_rankings": build_bait_ranking(),
+        "species": species,
+        "rig_templates": RIG_TEMPLATES,
+        "bait_rankings": build_bait_ranking(species),
     }
     return forecast
 
@@ -456,8 +683,10 @@ def index() -> str:
             forecast = generate_forecast()
             save_forecast(forecast)
         except Exception as exc:
-            # Without any data, display a minimal error message
-            return f"<h1>Error loading forecast</h1><p>{exc}</p>", 500
+            return render_template(
+                "error.html",
+                message="Could not load forecast. Please try refreshing later.",
+            ), 500
     return render_template("index.html", forecast=forecast, cached=cached_flag)
 
 
@@ -485,12 +714,10 @@ def api_refresh() -> Any:
         save_forecast(new_forecast)
         return redirect(url_for("index"))
     except Exception as exc:
-        # Log the error to console and redirect back with cached flag
         print(f"Error refreshing forecast: {exc}")
         return redirect(url_for("index", cached="true"))
 
 
 if __name__ == "__main__":
-    # Bind to all interfaces on the specified port
     port = int(os.environ.get("PORT", 5757))
     app.run(host="0.0.0.0", port=port)

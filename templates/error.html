@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast Unavailable</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>24-Hour Surf &amp; Pier Fishing Outlook</h1>
+        <p class="location">Wrightsville Beach &amp; Carolina Beach, NC</p>
+    </header>
+
+    <section class="error-message">
+        <h2>Forecast Unavailable</h2>
+        <p>{{ message }}</p>
+        <form method="post" action="{{ url_for('api_refresh') }}">
+            <button type="submit">Try Again</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>Surf &amp; Pier Fishing Outlook</p>
+    </footer>
+</body>
+</html>
