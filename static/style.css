@@ -114,6 +114,12 @@ h2 {
   margin: 0 0 1rem;
 }
 
+.section-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: -0.5rem 0 1rem;
+}
+
 /* ---------- Card base ---------- */
 
 .card {
@@ -216,228 +222,10 @@ h2 {
   color: var(--text);
 }
 
-.stat-value-sm {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .stat-detail {
   font-size: 0.7rem;
   color: var(--text-muted);
   margin-top: 0.15rem;
-}
-
-/* ---------- Two-column layout ---------- */
-
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-}
-
-@media (max-width: 640px) {
-  .two-col {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ---------- Solunar card ---------- */
-
-.solunar-card {
-  text-align: center;
-}
-
-.solunar-badge {
-  display: inline-block;
-  font-size: 1.25rem;
-  font-weight: 700;
-  padding: 0.4rem 1.5rem;
-  border-radius: 30px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.solunar-badge.solunar-excellent {
-  background: linear-gradient(135deg, #d4edda, #c3e6cb);
-  color: #155724;
-}
-
-.solunar-badge.solunar-good {
-  background: linear-gradient(135deg, #d6eaf8, #aed6f1);
-  color: var(--ocean-dark);
-}
-
-.solunar-badge.solunar-fair {
-  background: linear-gradient(135deg, #fff3cd, #ffeeba);
-  color: #856404;
-}
-
-.solunar-badge.solunar-poor {
-  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-  color: #721c24;
-}
-
-.solunar-tip {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin: 0.75rem 0 0;
-}
-
-/* ---------- Fishing windows ---------- */
-
-.windows-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.window-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  flex: 1;
-}
-
-.window-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: var(--radius-sm);
-  border-left: 4px solid #ccc;
-  background: #fafafa;
-}
-
-.window-item.window-prime {
-  border-left-color: var(--sea-green);
-  background: #f0faf5;
-}
-
-.window-item.window-good {
-  border-left-color: var(--ocean);
-  background: var(--ocean-light);
-}
-
-.window-quality {
-  flex-shrink: 0;
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.2rem 0.5rem;
-  border-radius: 3px;
-  margin-top: 0.1rem;
-}
-
-.window-prime .window-quality {
-  background: var(--sea-green);
-  color: var(--white);
-}
-
-.window-good .window-quality {
-  background: var(--ocean);
-  color: var(--white);
-}
-
-.window-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.window-info strong {
-  font-size: 0.9rem;
-}
-
-.window-info span {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-/* ---------- Tide timeline ---------- */
-
-.tide-card {
-  margin-left: 1rem;
-  margin-right: 1rem;
-}
-
-.tide-timeline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  position: relative;
-}
-
-.tide-event {
-  flex: 1 1 0;
-  min-width: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 0.75rem 0.5rem;
-  position: relative;
-}
-
-.tide-event::before {
-  content: "";
-  position: absolute;
-  top: 1.25rem;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--sand-dark);
-}
-
-.tide-event:first-child::before {
-  left: 50%;
-}
-
-.tide-event:last-child::before {
-  right: 50%;
-}
-
-.tide-marker {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 3px solid;
-  background: var(--white);
-  position: relative;
-  z-index: 1;
-  margin-bottom: 0.5rem;
-}
-
-.tide-high .tide-marker {
-  border-color: var(--ocean);
-  background: var(--ocean-light);
-}
-
-.tide-low .tide-marker {
-  border-color: var(--amber);
-  background: #fef9e7;
-}
-
-.tide-time {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.tide-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.tide-high .tide-label {
-  color: var(--ocean);
-}
-
-.tide-low .tide-label {
-  color: var(--amber);
-}
-
-.tide-height {
-  font-size: 0.8rem;
-  color: var(--text-muted);
 }
 
 /* ---------- Species cards ---------- */
@@ -470,8 +258,15 @@ h2 {
   border-color: #c8d6e5;
 }
 
-.species-rank {
+.species-rank-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
   flex-shrink: 0;
+}
+
+.species-rank {
   width: 44px;
   height: 44px;
   display: flex;
@@ -495,6 +290,33 @@ h2 {
 
 .species-card:nth-child(3) .species-rank {
   background: linear-gradient(135deg, var(--amber), #e8b731);
+}
+
+/* Activity badges */
+
+.activity-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.activity-badge.activity-hot {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: var(--white);
+}
+
+.activity-badge.activity-active {
+  background: linear-gradient(135deg, #27ae60, #1a8a5c);
+  color: var(--white);
+}
+
+.activity-badge.activity-possible {
+  background: linear-gradient(135deg, #f0d77e, #d4920b);
+  color: #5a3802;
 }
 
 .species-body {
@@ -579,6 +401,32 @@ h2 {
   color: var(--text-muted);
   margin: 0 0 0.75rem;
   line-height: 1.5;
+}
+
+.rig-targets {
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rig-targets-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ocean);
+  margin-right: 0.25rem;
+}
+
+.rig-target-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  background: var(--ocean-light);
+  color: var(--ocean-dark);
+  border-radius: 12px;
+  white-space: nowrap;
 }
 
 .rig-specs {
@@ -759,25 +607,14 @@ footer p {
     align-items: flex-start;
   }
 
+  .species-rank-area {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
   .species-rank {
     width: 36px;
     height: 36px;
     font-size: 0.9rem;
-  }
-
-  .tide-timeline {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .tide-event {
-    flex-direction: row;
-    text-align: left;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
-  }
-
-  .tide-event::before {
-    display: none;
   }
 }
