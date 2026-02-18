@@ -48,7 +48,7 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 
 
 # ---------------------------------------------------------------------------
-# NWS marine zone forecast (free, no API key, requires User-Agent)
+# Marine conditions -- multiple sources with automatic fallback
 # ---------------------------------------------------------------------------
 
 # AMZ158 = Coastal waters from Surf City to Cape Fear NC out 20 NM
@@ -56,6 +56,28 @@ NWS_MARINE_ZONE = "AMZ158"
 NWS_FORECAST_URL = (
     f"https://api.weather.gov/zones/forecast/{NWS_MARINE_ZONE}/forecast"
 )
+
+# NDBC Station 41110 -- Masonboro Inlet, NC (right next to Wrightsville Beach)
+# Real-time observations: wind speed (m/s), wave height (m), wind direction (deg)
+NDBC_STATION = "41110"
+NDBC_REALTIME_URL = (
+    f"https://www.ndbc.noaa.gov/data/realtime2/{NDBC_STATION}.txt"
+)
+
+_MS_TO_KNOTS = 1.94384
+_M_TO_FEET = 3.28084
+
+# Map compass degrees to abbreviations
+_DEG_TO_DIR = [
+    "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+]
+
+
+def _deg_to_compass(deg: float) -> str:
+    """Convert wind direction in degrees to a compass abbreviation."""
+    idx = round(deg / 22.5) % 16
+    return _DEG_TO_DIR[idx]
 
 
 def fetch_marine_forecast() -> List[Dict[str, Any]]:
@@ -65,12 +87,96 @@ def fetch_marine_forecast() -> List[Dict[str, Any]]:
     """
     headers = {
         "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
-        "Accept": "application/geo+json",
+        "Accept": "application/ld+json",
     }
     response = requests.get(NWS_FORECAST_URL, headers=headers, timeout=15)
     response.raise_for_status()
     data = response.json()
     return data["properties"]["periods"]
+
+
+def fetch_ndbc_conditions() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """Fetch current wind and wave observations from NDBC buoy.
+
+    Returns (wind_range, wave_range, wind_dir) using real-time observations
+    from NDBC Station 41110 (Masonboro Inlet, near Wrightsville Beach).
+    Returns the latest valid observation as a single-value range.
+    """
+    headers = {
+        "User-Agent": "SurfPierForecast/1.0",
+    }
+    resp = requests.get(NDBC_REALTIME_URL, headers=headers, timeout=15)
+    resp.raise_for_status()
+
+    lines = resp.text.strip().split("\n")
+    if len(lines) < 3:
+        return None, None, None
+
+    # Header row has column names: #YY MM DD hh mm WDIR WSPD GST WVHT DPD ...
+    header = lines[0].replace("#", "").split()
+    col = {name: idx for idx, name in enumerate(header)}
+
+    # Try the latest few observations to find valid readings
+    wind_range = None
+    wave_range = None
+    wind_dir = None
+
+    for line in lines[2:7]:  # Check up to 5 recent observations
+        fields = line.split()
+        if len(fields) < len(header):
+            continue
+
+        # Wind speed in m/s -> knots (99.0 = missing)
+        wspd_raw = fields[col.get("WSPD", -1)] if "WSPD" in col else "MM"
+        gst_raw = fields[col.get("GST", -1)] if "GST" in col else "MM"
+        wdir_raw = fields[col.get("WDIR", -1)] if "WDIR" in col else "MM"
+        wvht_raw = fields[col.get("WVHT", -1)] if "WVHT" in col else "MM"
+
+        if wind_range is None and wspd_raw not in ("MM", "99.0", "999.0", "999"):
+            wspd_kt = float(wspd_raw) * _MS_TO_KNOTS
+            if gst_raw not in ("MM", "99.0", "999.0", "999"):
+                gst_kt = float(gst_raw) * _MS_TO_KNOTS
+                wind_range = (round(wspd_kt, 1), round(gst_kt, 1))
+            else:
+                wind_range = (round(wspd_kt, 1), round(wspd_kt, 1))
+
+        if wind_dir is None and wdir_raw not in ("MM", "999", "999.0"):
+            wind_dir = _deg_to_compass(float(wdir_raw))
+
+        if wave_range is None and wvht_raw not in ("MM", "99.0", "99.00", "999"):
+            wvht_ft = float(wvht_raw) * _M_TO_FEET
+            wave_range = (round(wvht_ft, 1), round(wvht_ft, 1))
+
+        if wind_range and wave_range and wind_dir:
+            break
+
+    return wind_range, wave_range, wind_dir
+
+
+def get_marine_conditions() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """Get marine conditions from the best available source.
+
+    Tries the NWS zone forecast API first (provides 24-hour forecast ranges).
+    Falls back to NDBC buoy real-time observations if the NWS API fails.
+    """
+    # Source 1: NWS zone forecast (24-hour forecast ranges)
+    try:
+        periods = fetch_marine_forecast()
+        wind_range, wave_range, wind_dir = parse_conditions(periods)
+        if wind_range is not None or wave_range is not None:
+            return wind_range, wave_range, wind_dir
+    except Exception as exc:
+        print(f"NWS forecast unavailable: {exc}")
+
+    # Source 2: NDBC buoy real-time observations
+    try:
+        wind_range, wave_range, wind_dir = fetch_ndbc_conditions()
+        if wind_range is not None or wave_range is not None:
+            return wind_range, wave_range, wind_dir
+    except Exception as exc:
+        print(f"NDBC observations unavailable: {exc}")
+
+    return None, None, None
 
 
 def parse_conditions(
@@ -1559,14 +1665,7 @@ def generate_forecast() -> Dict[str, Any]:
     month and water temperature.  Rig recommendations are matched to active
     species.
     """
-    # Marine forecast is best-effort -- if the NWS API is down the rest of
-    # the forecast (species, rigs, baits) still works.
-    try:
-        periods = fetch_marine_forecast()
-        wind_range, wave_range, wind_dir = parse_conditions(periods)
-    except Exception as exc:
-        print(f"Marine forecast unavailable: {exc}")
-        wind_range, wave_range, wind_dir = None, None, None
+    wind_range, wave_range, wind_dir = get_marine_conditions()
     verdict = classify_conditions(wind_range, wave_range)
     tz = ZoneInfo("America/New_York")
     now = datetime.now(tz)
