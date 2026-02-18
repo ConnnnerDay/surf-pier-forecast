@@ -1559,8 +1559,14 @@ def generate_forecast() -> Dict[str, Any]:
     month and water temperature.  Rig recommendations are matched to active
     species.
     """
-    periods = fetch_marine_forecast()
-    wind_range, wave_range, wind_dir = parse_conditions(periods)
+    # Marine forecast is best-effort -- if the NWS API is down the rest of
+    # the forecast (species, rigs, baits) still works.
+    try:
+        periods = fetch_marine_forecast()
+        wind_range, wave_range, wind_dir = parse_conditions(periods)
+    except Exception as exc:
+        print(f"Marine forecast unavailable: {exc}")
+        wind_range, wave_range, wind_dir = None, None, None
     verdict = classify_conditions(wind_range, wave_range)
     tz = ZoneInfo("America/New_York")
     now = datetime.now(tz)
