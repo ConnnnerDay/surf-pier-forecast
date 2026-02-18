@@ -816,7 +816,7 @@ def build_species_ranking(
     scored.sort(key=lambda x: x[0], reverse=True)
 
     result: List[Dict[str, Any]] = []
-    for rank, (score, sp, explanation) in enumerate(scored, start=1):
+    for rank, (score, sp, explanation) in enumerate(scored[:10], start=1):
         if score >= 65:
             activity = "Hot"
         elif score >= 50:

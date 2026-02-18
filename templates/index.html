@@ -59,7 +59,7 @@
         <!-- Species ranking -->
         <section class="species-section">
             <h2>What's Biting Now</h2>
-            <p class="section-sub">{{ forecast.species|length }} species likely active in current conditions</p>
+            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions</p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
                 <div class="species-card">
