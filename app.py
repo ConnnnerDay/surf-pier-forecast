@@ -88,26 +88,38 @@ def parse_conditions(
     for period in periods[:3]:
         text = period.get("detailedForecast", "")
 
-        # Wind direction (e.g. "SW winds", "N winds", "Variable winds")
+        # Wind direction -- handle both abbreviated (SW, NE) and spelled out
+        # (Southwest, Northeast) forms that the NWS API may return.
         dir_match = re.search(
-            r"(N|NE|NW|E|SE|S|SW|W|VARIABLE)\s+wind",
+            r"(north(?:east|west)?|south(?:east|west)?|east|west|"
+            r"NE|NW|SE|SW|N|E|S|W|VARIABLE)\s+wind",
             text, re.IGNORECASE,
         )
         if dir_match:
-            wind_directions.append(dir_match.group(1).upper())
+            _DIR_MAP = {
+                "north": "N", "northeast": "NE", "northwest": "NW",
+                "south": "S", "southeast": "SE", "southwest": "SW",
+                "east": "E", "west": "W", "variable": "VARIABLE",
+            }
+            raw = dir_match.group(1)
+            wind_directions.append(_DIR_MAP.get(raw.lower(), raw.upper()))
 
-        # Wind speed in knots
+        # Wind speed -- match "10 to 15 kt", "10 to 15 knots",
+        # "around 10 kt", "around 10 knots", etc.
         wind_match = re.search(
-            r"(\d+)(?:\s*to\s*(\d+))?\s*kt", text, re.IGNORECASE,
+            r"(\d+)(?:\s*to\s*(\d+))?\s*(?:kt|knots?)",
+            text, re.IGNORECASE,
         )
         if wind_match:
             low = float(wind_match.group(1))
             high = float(wind_match.group(2)) if wind_match.group(2) else low
             wind_ranges.append((low, high))
 
-        # Sea/wave height in feet
+        # Sea/wave height -- match "seas 2 to 3 ft", "seas 2 to 3 feet",
+        # "seas around 2 feet", "waves 1 to 2 ft", etc.
         sea_match = re.search(
-            r"seas?\s*(\d+)(?:\s*to\s*(\d+))?\s*ft", text, re.IGNORECASE,
+            r"(?:seas?|waves?)\s*(?:around\s+)?(\d+)(?:\s*to\s*(\d+))?\s*(?:ft|feet|foot)",
+            text, re.IGNORECASE,
         )
         if sea_match:
             low = float(sea_match.group(1))
