@@ -49,88 +49,24 @@
                     <span class="stat-detail">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Tide</span>
-                    <span class="stat-value stat-value-sm">{{ forecast.conditions.tide_trend }}</span>
-                </div>
-                <div class="stat-card">
                     <span class="stat-label">Sun</span>
                     <span class="stat-value">{{ forecast.conditions.sunrise_sunset }}</span>
                     <span class="stat-detail">sunrise / sunset</span>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Moon</span>
-                    <span class="stat-value">{{ forecast.moon.phase_name }}</span>
-                    <span class="stat-detail">{{ forecast.moon.illumination_pct }}% illumination</span>
-                </div>
             </div>
         </section>
-
-        <!-- Solunar + Fishing Windows row -->
-        <div class="two-col">
-            <section class="card solunar-card">
-                <h2>Solunar Rating</h2>
-                {% if forecast.moon %}
-                <div class="solunar-badge solunar-{{ forecast.moon.solunar_rating|lower }}">
-                    {{ forecast.moon.solunar_rating }}
-                </div>
-                <p class="solunar-tip">
-                    {% if forecast.moon.solunar_rating == "Excellent" %}
-                    New/full moon drives strong tidal movement and aggressive feeding. Expect above-average bite activity.
-                    {% elif forecast.moon.solunar_rating == "Good" %}
-                    Moon phase is favorable for feeding. Good tidal flow should produce steady action.
-                    {% elif forecast.moon.solunar_rating == "Fair" %}
-                    Mid-quarter moon produces moderate tidal flow. Focus on tide changes for best results.
-                    {% else %}
-                    Weak solunar period. Fish during tide changes for best results.
-                    {% endif %}
-                </p>
-                {% endif %}
-            </section>
-
-            {% if forecast.windows %}
-            <section class="card windows-card">
-                <h2>Best Fishing Windows</h2>
-                <div class="window-list">
-                    {% for w in forecast.windows %}
-                    <div class="window-item window-{{ w.quality|lower }}">
-                        <span class="window-quality">{{ w.quality }}</span>
-                        <div class="window-info">
-                            <strong>{{ w.time }}</strong>
-                            <span>{{ w.reason }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-            {% endif %}
-        </div>
-
-        <!-- Tide schedule -->
-        {% if forecast.tides %}
-        <section class="card tide-card">
-            <h2>Tide Schedule</h2>
-            <div class="tide-timeline">
-                {% for t in forecast.tides %}
-                <div class="tide-event tide-{{ t.type|lower }}">
-                    <div class="tide-marker"></div>
-                    <div class="tide-detail">
-                        <span class="tide-time">{{ t.time }}</span>
-                        <span class="tide-label">{{ t.type }} Tide</span>
-                        <span class="tide-height">{{ t.height_ft }} ft</span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
 
         <!-- Species ranking -->
         <section class="species-section">
-            <h2>Ranked Species Forecast</h2>
+            <h2>What's Biting Now</h2>
+            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions</p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
                 <div class="species-card">
-                    <div class="species-rank">#{{ sp.rank }}</div>
+                    <div class="species-rank-area">
+                        <div class="species-rank">#{{ sp.rank }}</div>
+                        <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
+                    </div>
                     <div class="species-body">
                         <h3>{{ sp.name }}</h3>
                         <p class="species-why">{{ sp.explanation }}</p>
@@ -158,14 +94,22 @@
             </div>
         </section>
 
-        <!-- Rig templates -->
+        <!-- Recommended Rigs -->
+        {% if forecast.rig_recommendations %}
         <section>
-            <h2>Bottom-Rig Templates</h2>
+            <h2>Recommended Rigs</h2>
+            <p class="section-sub">Matched to species biting now</p>
             <div class="rig-cards">
-                {% for rig in forecast.rig_templates %}
+                {% for rig in forecast.rig_recommendations %}
                 <div class="rig-card">
                     <h3>{{ rig.name }}</h3>
                     <p class="rig-desc">{{ rig.description }}</p>
+                    <div class="rig-targets">
+                        <span class="rig-targets-label">Good for:</span>
+                        {% for t in rig.targets %}
+                        <span class="rig-target-tag">{{ t }}</span>
+                        {% endfor %}
+                    </div>
                     <dl class="rig-specs">
                         <dt>Mainline</dt><dd>{{ rig.mainline }}</dd>
                         <dt>Leader</dt><dd>{{ rig.leader }}</dd>
@@ -176,6 +120,7 @@
                 {% endfor %}
             </div>
         </section>
+        {% endif %}
 
         <!-- Bait recommendations -->
         <section>
