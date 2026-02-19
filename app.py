@@ -1462,6 +1462,174 @@ SPECIES_DB: List[Dict[str, Any]] = [
 
 
 # ---------------------------------------------------------------------------
+# Seasonal explanation overrides -- species that behave differently during
+# spring/fall transitions get specific text.  Species NOT listed here fall
+# back to explanation_cold (winter) or explanation_warm (summer).
+# ---------------------------------------------------------------------------
+
+def _get_season(month: int) -> str:
+    """Map month number to meteorological season name."""
+    if month in (12, 1, 2):
+        return "winter"
+    if month in (3, 4, 5):
+        return "spring"
+    if month in (6, 7, 8):
+        return "summer"
+    return "fall"
+
+
+SEASONAL_EXPLANATIONS: Dict[str, Dict[str, str]] = {
+    "Red drum (puppy drum)": {
+        "spring": "Red drum are pushing into the surf zone and inlets as water warms; they feed aggressively on shrimp, crabs and mullet during the spring transition.",
+        "fall": "The fall red drum run is on — large schools move through inlets and along the beach, feeding heavily on mullet and menhaden before winter.",
+    },
+    "Speckled trout (spotted seatrout)": {
+        "spring": "Speckled trout are moving onto grass flats and into creeks as water warms; the spring bite picks up fast on live shrimp under popping corks.",
+        "fall": "Speckled trout are feeding heavily in creeks and along grass lines before cold weather; this is prime time for big gator trout.",
+    },
+    "Black drum": {
+        "spring": "Black drum are spawning in inlets and around structure; large fish congregate and feed on crabs, clams and shrimp during the spring run.",
+        "fall": "Black drum are stacking up around inlets and pilings, feeding aggressively before winter; cut crab and shrimp on bottom rigs are productive.",
+    },
+    "Sheepshead": {
+        "spring": "Sheepshead are spawning around nearshore structure and pilings; this is peak season — fish straight down with fiddler crabs or sand fleas.",
+        "fall": "Sheepshead are returning to pier pilings and jetties as water cools; they pick at barnacles and crabs around structure.",
+    },
+    "Flounder (summer flounder)": {
+        "spring": "Summer flounder are migrating inshore through inlets; ambush them with live finger mullet drifted slowly along the bottom near structure.",
+        "fall": "Flounder are staging at inlets for their fall migration offshore; this is prime time as they feed heavily before moving to deeper water.",
+    },
+    "Southern flounder": {
+        "spring": "Southern flounder are moving into creeks and inshore waters as spring warms up; live finger mullet near creek mouths is the top producer.",
+        "fall": "The fall flounder run is the best fishing of the year — southern flounder push through inlets and creeks heading offshore to spawn.",
+    },
+    "Bluefish": {
+        "spring": "Bluefish are arriving from the south in big schools, feeding voraciously on everything; cut menhaden and metal jigs produce explosive strikes.",
+        "fall": "Large bluefish (choppers) are running south through the surf and around piers; the fall run produces the biggest fish of the year.",
+    },
+    "Spanish mackerel": {
+        "spring": "Spanish mackerel are just arriving as water hits the upper 60s; early fish are hungry and hit shiny spoons and live bait aggressively.",
+        "fall": "Spanish mackerel are still around but thinning out as water cools; catch them before they migrate south for winter.",
+    },
+    "Pompano": {
+        "spring": "Pompano are running the surf line in spring, feeding on sand fleas and small crustaceans; target the troughs with double-dropper rigs.",
+        "fall": "The fall pompano run brings fish back through the surf zone; sand fleas and Fishbites in the wash zone are the ticket.",
+    },
+    "Spot": {
+        "spring": "Spot are starting to move inshore and school along the beach; bloodworms and shrimp on small hooks produce steady catches.",
+        "fall": "The fall spot run is a major NC fishing event — massive schools move through the surf and around piers, biting everything.",
+    },
+    "Atlantic croaker": {
+        "spring": "Croaker are beginning to move inshore as water warms; fresh shrimp and bloodworms on bottom rigs catch early fish.",
+        "fall": "Fall croaker runs bring big numbers to the surf and piers; they school up and bite aggressively on shrimp and worms.",
+    },
+    "Striped bass (rockfish)": {
+        "spring": "Striped bass are feeding heavily before moving north for summer; target them at dawn and dusk with cut menhaden and live mullet.",
+        "fall": "Striped bass are returning from the north and feeding in the surf and around inlets; the fall run offers the best inshore action.",
+    },
+    "Cobia": {
+        "spring": "Cobia are arriving with the warming water; early fish show up around buoys, piers and channel markers — sight-cast live eels or menhaden.",
+        "fall": "Late-season cobia are still cruising near structure before migrating south; fish near buoys and pier ends with live bait.",
+    },
+    "King mackerel (kingfish)": {
+        "spring": "King mackerel are arriving from the south; early kings cruise near piers and along the beach chasing baitfish schools.",
+        "fall": "The fall king mackerel run brings big fish close to shore and piers; slow-troll live baits on wire leader for smoker kings.",
+    },
+    "False albacore (little tunny)": {
+        "spring": "False albacore are passing through during spring migration; look for surface blitzes and cast jigs or live baits into breaking fish.",
+        "fall": "The fall false albacore blitz is legendary — massive schools chase bait to the surface near piers and along the beach.",
+    },
+    "Whiting (sea mullet, kingfish)": {
+        "spring": "Whiting are moving into the surf as water warms; fresh shrimp and sand fleas on double-dropper rigs in the wash zone are deadly.",
+        "fall": "Whiting are schooling up in the surf before moving to deeper water; bloodworms and shrimp produce fast action on light tackle.",
+    },
+    "Gray trout (weakfish)": {
+        "spring": "Gray trout are moving inshore through inlets and along the beach; live shrimp on light tackle near structure is the best approach.",
+        "fall": "Gray trout are feeding in inlets and along the beach before winter; target the fall run with live shrimp drifted near the bottom.",
+    },
+    "Tautog (blackfish)": {
+        "spring": "Tautog are actively feeding around jetties and pilings as water warms in early spring; this is a brief but productive window.",
+        "fall": "Tautog are moving back to nearshore structure as water cools; the fall bite around rock piles and jetties is excellent.",
+    },
+    "Hickory shad": {
+        "spring": "The spring hickory shad run is one of NC's best seasonal events — fish stack up in rivers and at bridges, hammering small shad darts.",
+        "fall": "Hickory shad are offshore and not available inshore during fall months.",
+    },
+    "American shad": {
+        "spring": "American shad are making their massive spring spawning run up NC rivers; the Cape Fear and Neuse are packed with fish hitting small bright jigs.",
+        "fall": "American shad are in the ocean and not available for inshore fishing during fall.",
+    },
+    "Striped mullet": {
+        "spring": "Mullet are scattered in inlets and creeks; cast-net them for bait or target them on tiny hooks with bread dough.",
+        "fall": "The fall mullet run is THE bait event of the year — huge schools push through inlets and along the beach. Stock your freezer.",
+    },
+    "Cownose ray": {
+        "spring": "Cownose rays are beginning to arrive in large migrating schools; they move through the surf and inlets heading north.",
+        "fall": "Massive schools of cownose rays migrate south through NC waters in fall; they are commonly hooked while bottom fishing.",
+    },
+    "Atlantic bonito": {
+        "spring": "Atlantic bonito are passing through during spring migration; they school nearshore and hit small metal jigs and live baits.",
+        "fall": "Fall is prime bonito season — they blitz bait nearshore and around piers, hitting jigs and small live baits at high speed.",
+    },
+    "Jack crevalle": {
+        "spring": "Jack crevalle are arriving with warm water; early fish push bait in inlets and along the surf line.",
+        "fall": "Jack crevalle are still feeding aggressively before migrating south; they crash baitfish schools in inlets and around piers.",
+    },
+    "Greater amberjack": {
+        "spring": "Amberjack are moving onto nearshore wrecks and reefs as water warms; they hit live baits and heavy jigs with brute force.",
+        "fall": "Amberjack are feeding aggressively on nearshore structure before winter; the fall bite on wrecks and reefs is excellent.",
+    },
+    "Gag grouper": {
+        "spring": "Gag grouper are moving shallower onto nearshore wrecks and reefs; live bait on heavy tackle near structure is the play.",
+        "fall": "Gag grouper are feeding heavily on nearshore reefs before moving to deeper spawning grounds; fall is prime nearshore grouper season.",
+    },
+    "Red snapper": {
+        "spring": "Red snapper are becoming more active on nearshore wrecks as water warms; cut squid and live bait on bottom rigs produce bites.",
+        "fall": "Red snapper are aggressive on nearshore structure during fall; they hit cut and live baits readily before winter slowdown.",
+    },
+    "Tripletail": {
+        "spring": "Tripletail are just arriving near buoys and crab pot floats; sight-cast live shrimp to fish laying on their sides near the surface.",
+        "fall": "Late-season tripletail are still found near floating structure before migrating south; they become less common as water cools.",
+    },
+    "Ribbonfish (Atlantic cutlassfish)": {
+        "spring": "Ribbonfish are starting to show up around piers and lighted docks as water warms.",
+        "fall": "Fall is peak ribbonfish season — they swarm pier lights at night, hitting small shiny jigs and cut bait strips.",
+    },
+    "Mahi-mahi (dolphinfish)": {
+        "spring": "Early mahi are showing up along weedlines and temperature breaks as the Gulf Stream pushes warm water closer to shore.",
+        "fall": "Late-season mahi are still available along the Gulf Stream edge; smaller schoolies are common around floating debris.",
+    },
+    "Black sea bass": {
+        "spring": "Black sea bass are active on nearshore wrecks and hard bottom during spring; squid strips and cut bait on bottom rigs are productive.",
+        "fall": "Black sea bass are feeding on nearshore reefs before moving inshore for winter; the fall bite over structure is strong.",
+    },
+    "Blacktip shark": {
+        "spring": "Blacktip sharks are arriving with warming water; they begin patrolling the surf zone following schools of mullet and menhaden.",
+        "fall": "Blacktip sharks are still feeding in the surf before migrating south; they follow the fall mullet run down the coast.",
+    },
+}
+
+
+def _get_explanation(sp: Dict[str, Any], month: int, water_temp: float) -> str:
+    """Pick the best seasonal explanation for a species.
+
+    Checks for a season-specific override first (spring/fall for species with
+    distinct transitional behaviour).  Falls back to the cold/warm explanation
+    based on current water temperature.
+    """
+    season = _get_season(month)
+    name = sp["name"]
+
+    overrides = SEASONAL_EXPLANATIONS.get(name)
+    if overrides and season in overrides:
+        return overrides[season]
+
+    # Default: cold/warm split based on water temperature
+    is_cold = water_temp < 65
+    return sp["explanation_cold"] if is_cold else sp["explanation_warm"]
+
+
+# ---------------------------------------------------------------------------
 # Dynamic rig recommendations -- built from active species
 # ---------------------------------------------------------------------------
 
@@ -1576,103 +1744,180 @@ def build_rig_recommendations(
     return recommendations
 
 
-# Natural baits with the species they target.  Baits whose target species
-# rank highly in the current forecast are promoted automatically.
+# Natural baits with the species they target and seasonal availability.
+# ``available_months`` controls when a bait is practical to obtain/use.
+# ``notes_seasonal`` overrides the default ``notes`` during specific seasons.
+# Baits out of season are demoted in the ranking so anglers see what they
+# can actually get their hands on right now.
 BAIT_DB: List[Dict[str, Any]] = [
     {
         "bait": "Live shrimp",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "Top choice for speckled trout and versatile for many species; use under a popping cork or on bottom rigs.",
+        "notes_seasonal": {
+            "winter": "Live shrimp are scarce at bait shops in winter; frozen shrimp or Fishbites are a reliable substitute.",
+        },
         "targets": ["Speckled trout", "Red drum", "Sheepshead", "Black drum"],
     },
     {
         "bait": "Cut mullet",
+        "available_months": list(range(1, 13)),
         "notes": "Excellent for red drum and black drum; fresh cut strips release scent and stay on the hook.",
+        "notes_seasonal": {
+            "fall": "Fall mullet run makes fresh mullet abundant and free; stock up and freeze for year-round use.",
+        },
         "targets": ["Red drum", "Black drum", "Bluefish", "Striped bass"],
     },
     {
         "bait": "Menhaden (live or cut)",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "Prime bait for red drum, bluefish and striped bass; live menhaden offer a distinct advantage in calm conditions.",
+        "notes_seasonal": {
+            "winter": "Menhaden are offshore in winter; use frozen cut menhaden or substitute with cut mullet.",
+            "fall": "Menhaden schools are thick along the beach during fall; cast-net your own for the freshest bait.",
+        },
         "targets": ["Red drum", "Bluefish", "Striped bass", "Cobia"],
     },
     {
         "bait": "Sand fleas (mole crabs)",
+        "available_months": [4, 5, 6, 7, 8, 9, 10],
         "notes": "Effective for whiting and pompano; dig in the swash zone for fresh fleas.",
+        "notes_seasonal": {
+            "winter": "Sand fleas are buried deep or absent in cold months; use Fishbites Sand Flea flavor as a substitute.",
+            "spring": "Sand fleas are returning to the swash zone; dig at the water's edge as waves recede.",
+        },
         "targets": ["Whiting", "Pompano", "Sheepshead"],
     },
     {
         "bait": "Squid strips",
-        "notes": "Durable on the hook; attract black sea bass, whiting and puffer fish.",
+        "available_months": list(range(1, 13)),
+        "notes": "Durable on the hook; attract black sea bass, whiting and puffer fish. Available frozen year-round at any bait shop.",
         "targets": ["Black sea bass", "Whiting", "Northern puffer", "Triggerfish"],
     },
     {
         "bait": "Fiddler crabs",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "Essential for sheepshead and tautog; use whole crabs on small strong hooks.",
+        "notes_seasonal": {
+            "winter": "Fiddler crabs are dormant in winter burrows; check bait shops or use fresh shrimp as a substitute.",
+            "spring": "Fiddler crabs are emerging from winter burrows; trap them in marsh mud at low tide.",
+        },
         "targets": ["Sheepshead", "Tautog", "Triggerfish"],
     },
     {
         "bait": "Bloodworms",
+        "available_months": list(range(1, 13)),
         "notes": "Popular for whiting, black drum, spot and puffer fish; cut into small pieces for double-dropper rigs.",
+        "notes_seasonal": {
+            "winter": "Bloodworms are a top winter bait; their scent and movement attract cold-water bottom feeders when other baits are scarce.",
+            "fall": "Bloodworms during the fall spot run are unbeatable; small pieces on #6 hooks catch spot after spot.",
+        },
         "targets": ["Whiting", "Black drum", "Northern puffer", "Spot", "Atlantic croaker"],
     },
     {
         "bait": "Clams and crab pieces",
-        "notes": "Best for black drum; larger pieces stay on the hook and deter small pickers.",
+        "available_months": list(range(1, 13)),
+        "notes": "Best for black drum; larger pieces stay on the hook and deter small pickers. Available year-round.",
         "targets": ["Black drum", "Tautog", "Sheepshead"],
     },
     {
         "bait": "Live finger mullet",
+        "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "Top producer for flounder and red drum; hook through the lips and drift slowly along the bottom.",
+        "notes_seasonal": {
+            "winter": "Live finger mullet are hard to find in winter; try frozen mullet strips or live shrimp as alternatives.",
+            "fall": "Finger mullet are everywhere during the fall run; cast-net your own for the liveliest bait.",
+        },
         "targets": ["Flounder", "Red drum", "Speckled trout"],
     },
     {
         "bait": "Fresh shrimp pieces",
-        "notes": "Cut shrimp on bottom rigs is a universal bait for smaller surf and pier species.",
+        "available_months": list(range(1, 13)),
+        "notes": "Cut shrimp on bottom rigs is a universal bait for smaller surf and pier species. Available frozen year-round.",
         "targets": ["Atlantic croaker", "Pinfish", "Pigfish", "Spot", "Gray trout"],
     },
     {
         "bait": "Live cigar minnows or threadfin",
+        "available_months": [5, 6, 7, 8, 9, 10],
         "notes": "Prime bait for king mackerel and false albacore; rig on wire leader with stinger hook.",
+        "notes_seasonal": {
+            "winter": "Cigar minnows are not available inshore in winter; frozen are a poor substitute for kings.",
+        },
         "targets": ["King mackerel", "False albacore", "Cobia"],
     },
     {
         "bait": "Large cut menhaden or bluefish chunks",
-        "notes": "Heavy shark baits; use fresh, bloody chunks on wire leader for maximum scent trail.",
+        "available_months": list(range(1, 13)),
+        "notes": "Heavy shark baits; use fresh, bloody chunks on wire leader for maximum scent trail. Frozen works year-round.",
         "targets": ["Blacktip shark", "Bull shark", "Sandbar shark", "Spinner shark", "Dusky shark"],
     },
     {
         "bait": "Live blue runners",
+        "available_months": [5, 6, 7, 8, 9, 10],
         "notes": "Top live bait for large gamefish; catch on sabiki rigs and fish on heavy tackle.",
+        "notes_seasonal": {
+            "winter": "Blue runners are not available inshore in winter months.",
+        },
         "targets": ["Greater amberjack", "King mackerel", "Cobia", "Black grouper", "Gag grouper"],
     },
     {
         "bait": "Live menhaden (pogies)",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "The king of live baits in NC; cast-net schools and fish on circle hooks for almost any large gamefish.",
+        "notes_seasonal": {
+            "winter": "Live pogies are hard to find in winter; use frozen cut menhaden or live mullet as alternatives.",
+            "fall": "Massive menhaden schools are along the beach in fall; cast-net more than you need and freeze the rest.",
+        },
         "targets": ["Red drum", "Cobia", "Tarpon", "King mackerel", "Jack crevalle", "Gag grouper"],
     },
     {
         "bait": "Ballyhoo (rigged or live)",
+        "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "Premier offshore trolling bait; rig on wire or heavy fluorocarbon for billfish and pelagics.",
+        "notes_seasonal": {
+            "winter": "Frozen ballyhoo are available at offshore tackle shops year-round for winter Gulf Stream trips.",
+        },
         "targets": ["Mahi-mahi", "Sailfish", "Wahoo", "White marlin", "Blue marlin"],
     },
     {
         "bait": "Shad darts and small jigs",
+        "available_months": list(range(1, 13)),
         "notes": "Essential tackle for spring shad runs; fish tandem rigs in current near river mouths and bridges.",
+        "notes_seasonal": {
+            "spring": "This is THE time for shad darts; bright colors (pink, chartreuse, white) in 1/16-1/8 oz are the standard.",
+            "fall": "Off-season for shad; save these for the spring river runs.",
+        },
         "targets": ["Hickory shad", "American shad"],
     },
     {
         "bait": "Live crabs (blue crab, fiddler)",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "notes": "Top bait for structure-oriented species; use whole small crabs or halved blue crabs on circle hooks.",
+        "notes_seasonal": {
+            "winter": "Crabs are dormant in cold months; use fresh shrimp or clam pieces as a substitute for structure species.",
+        },
         "targets": ["Sheepshead", "Tautog", "Permit", "Triggerfish", "Bonnethead shark"],
     },
     {
         "bait": "Cut squid strips",
-        "notes": "Durable and versatile bottom fishing bait; stays on the hook well for reef and wreck species.",
+        "available_months": list(range(1, 13)),
+        "notes": "Durable and versatile bottom fishing bait; stays on the hook well for reef and wreck species. Frozen year-round.",
         "targets": ["Red snapper", "Vermilion snapper", "Black sea bass", "Red porgy", "White grunt", "Scup"],
     },
     {
         "bait": "Cedar plugs and trolling feathers",
-        "notes": "Classic offshore trolling lures for tuna; troll at 6-8 knots in clean blue water.",
+        "available_months": list(range(1, 13)),
+        "notes": "Classic offshore trolling lures for tuna; troll at 6-8 knots in clean blue water. Tackle shop staple.",
         "targets": ["Blackfin tuna", "Yellowfin tuna", "Atlantic bonito"],
+    },
+    {
+        "bait": "Fishbites (artificial strips)",
+        "available_months": list(range(1, 13)),
+        "notes": "Scented artificial bait strips that stay on the hook forever; great substitute when live/fresh bait is unavailable.",
+        "notes_seasonal": {
+            "winter": "Fishbites are the go-to winter bait when live options are scarce; Sand Flea and Shrimp flavors work best.",
+        },
+        "targets": ["Whiting", "Pompano", "Spot", "Atlantic croaker", "Black drum"],
     },
 ]
 
@@ -1731,13 +1976,11 @@ def build_species_ranking(
     Only species scoring above SPECIES_SCORE_THRESHOLD are included.
     Each species gets an activity label: Hot, Active, or Possible.
     """
-    is_cold = water_temp < 65
-
     scored = []
     for sp in SPECIES_DB:
         s = _score_species(sp, month, water_temp)
         if s >= SPECIES_SCORE_THRESHOLD:
-            explanation = sp["explanation_cold"] if is_cold else sp["explanation_warm"]
+            explanation = _get_explanation(sp, month, water_temp)
             scored.append((s, sp, explanation))
 
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -1766,14 +2009,19 @@ def build_species_ranking(
     return result
 
 
-def build_bait_ranking(species_ranking: List[Dict[str, Any]]) -> List[Dict[str, str]]:
-    """Rank baits by relevance to the current top species.
+def build_bait_ranking(
+    species_ranking: List[Dict[str, Any]],
+    month: int,
+) -> List[Dict[str, str]]:
+    """Rank baits by relevance to the current top species and season.
 
-    Baits whose target species appear higher in the species ranking
-    receive a higher score and are listed first.
+    Baits whose target species rank highly are scored higher.  Baits that are
+    out of season (``available_months``) receive a penalty so anglers see what
+    they can actually get right now.  Season-specific notes override defaults.
     """
+    season = _get_season(month)
+
     # Map species short names to their rank for quick lookup.
-    # The short name is derived from the first word(s) before any parenthetical.
     species_ranks: Dict[str, int] = {}
     for sp in species_ranking:
         short = sp["name"].split("(")[0].strip()
@@ -1785,9 +2033,20 @@ def build_bait_ranking(species_ranking: List[Dict[str, Any]]) -> List[Dict[str, 
         for target in bait_entry["targets"]:
             rank = species_ranks.get(target)
             if rank is not None:
-                # Higher-ranked (lower number) targets contribute more
                 bait_score += max(0, 20 - rank)
-        scored_baits.append((bait_score, {"bait": bait_entry["bait"], "notes": bait_entry["notes"]}))
+
+        # Penalise out-of-season baits so in-season options float to the top
+        available = bait_entry.get("available_months")
+        if available and month not in available:
+            bait_score *= 0.25
+
+        # Pick season-specific notes when available
+        notes = bait_entry["notes"]
+        seasonal_notes = bait_entry.get("notes_seasonal", {})
+        if season in seasonal_notes:
+            notes = seasonal_notes[season]
+
+        scored_baits.append((bait_score, {"bait": bait_entry["bait"], "notes": notes}))
 
     scored_baits.sort(key=lambda x: x[0], reverse=True)
     return [b for _, b in scored_baits]
@@ -1845,7 +2104,7 @@ def generate_forecast() -> Dict[str, Any]:
         "conditions": conditions,
         "species": species,
         "rig_recommendations": rig_recommendations,
-        "bait_rankings": build_bait_ranking(species),
+        "bait_rankings": build_bait_ranking(species, month),
     }
     return forecast
 
