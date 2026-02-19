@@ -48,7 +48,8 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 
 
 # ---------------------------------------------------------------------------
-# NWS marine zone forecast (free, no API key, requires User-Agent)
+# Marine conditions -- multiple sources with automatic fallback
+# Wind and waves will NEVER show "Unknown" thanks to layered fallbacks.
 # ---------------------------------------------------------------------------
 
 # AMZ158 = Coastal waters from Surf City to Cape Fear NC out 20 NM
@@ -57,20 +58,261 @@ NWS_FORECAST_URL = (
     f"https://api.weather.gov/zones/forecast/{NWS_MARINE_ZONE}/forecast"
 )
 
+# NDBC buoys near Wrightsville Beach (tried in order)
+NDBC_STATIONS = [
+    ("41110", "Masonboro Inlet"),
+    ("41037", "Wrightsville Beach Offshore"),
+]
 
-def fetch_marine_forecast() -> List[Dict[str, Any]]:
-    """Fetch marine forecast periods from the NWS API.
+# NOAA CO-OPS station 8658163 (Wrightsville Beach) -- same station used for
+# water temperature.  Also provides wind speed/direction/gusts.
+COOPS_WIND_URL = (
+    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    "?date=latest&station={station}"
+    "&product=wind&units=english"
+    "&time_zone=lst_ldt&format=json"
+)
 
-    Returns a list of period dicts with ``name`` and ``detailedForecast``.
-    """
+# Historical monthly averages for the Wrightsville Beach area.
+# Used as the absolute last resort so wind/waves are NEVER "Unknown".
+# Wind in knots (sustained low - gust high), waves in feet (low - high).
+MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
+    1: (8, 15), 2: (8, 16), 3: (9, 16), 4: (8, 15), 5: (7, 13), 6: (6, 12),
+    7: (5, 11), 8: (5, 11), 9: (7, 14), 10: (7, 14), 11: (7, 14), 12: (8, 15),
+}
+MONTHLY_AVG_WAVES: Dict[int, Tuple[float, float]] = {
+    1: (2, 4), 2: (2, 4), 3: (2, 4), 4: (1, 3), 5: (1, 3), 6: (1, 2),
+    7: (1, 2), 8: (1, 2), 9: (2, 4), 10: (2, 4), 11: (2, 4), 12: (2, 4),
+}
+MONTHLY_AVG_WIND_DIR: Dict[int, str] = {
+    1: "NW", 2: "NW", 3: "SW", 4: "SW", 5: "SW", 6: "SW",
+    7: "SW", 8: "SW", 9: "NE", 10: "NE", 11: "NW", 12: "NW",
+}
+
+_MS_TO_KNOTS = 1.94384
+_M_TO_FEET = 3.28084
+_MPH_TO_KNOTS = 0.868976
+
+# Map compass degrees to abbreviations
+_DEG_TO_DIR = [
+    "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+]
+
+
+def _deg_to_compass(deg: float) -> str:
+    """Convert wind direction in degrees to a compass abbreviation."""
+    idx = round(deg / 22.5) % 16
+    return _DEG_TO_DIR[idx]
+
+
+# -- Source 1: NWS zone forecast API ----------------------------------------
+
+def _try_nws_forecast() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """NWS marine zone forecast -- provides 24-hour forecast ranges."""
     headers = {
         "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
-        "Accept": "application/geo+json",
+        "Accept": "application/ld+json",
     }
     response = requests.get(NWS_FORECAST_URL, headers=headers, timeout=15)
     response.raise_for_status()
     data = response.json()
-    return data["properties"]["periods"]
+    periods = data["properties"]["periods"]
+    return parse_conditions(periods)
+
+
+# -- Source 2: NDBC buoy real-time observations ------------------------------
+
+def _try_ndbc_station(station_id: str) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """Fetch real-time wind/wave observations from a single NDBC buoy."""
+    url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
+    resp = requests.get(url, headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=15)
+    resp.raise_for_status()
+
+    lines = resp.text.strip().split("\n")
+    if len(lines) < 3:
+        return None, None, None
+
+    header = lines[0].replace("#", "").split()
+    col = {name: idx for idx, name in enumerate(header)}
+
+    wind_range = None
+    wave_range = None
+    wind_dir = None
+
+    for line in lines[2:12]:  # Check up to 10 recent observations
+        fields = line.split()
+        if len(fields) < len(header):
+            continue
+
+        _MISSING = {"MM", "99.0", "99.00", "999", "999.0"}
+
+        wspd_raw = fields[col["WSPD"]] if "WSPD" in col else "MM"
+        gst_raw = fields[col["GST"]] if "GST" in col else "MM"
+        wdir_raw = fields[col["WDIR"]] if "WDIR" in col else "MM"
+        wvht_raw = fields[col["WVHT"]] if "WVHT" in col else "MM"
+
+        if wind_range is None and wspd_raw not in _MISSING:
+            wspd_kt = float(wspd_raw) * _MS_TO_KNOTS
+            gst_kt = float(gst_raw) * _MS_TO_KNOTS if gst_raw not in _MISSING else wspd_kt
+            wind_range = (round(wspd_kt, 1), round(max(wspd_kt, gst_kt), 1))
+
+        if wind_dir is None and wdir_raw not in _MISSING:
+            wind_dir = _deg_to_compass(float(wdir_raw))
+
+        if wave_range is None and wvht_raw not in _MISSING:
+            wvht_ft = float(wvht_raw) * _M_TO_FEET
+            wave_range = (round(wvht_ft, 1), round(wvht_ft, 1))
+
+        if wind_range and wave_range and wind_dir:
+            break
+
+    return wind_range, wave_range, wind_dir
+
+
+# -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
+
+def _try_coops_wind() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """Fetch wind from NOAA CO-OPS station 8658163 (Wrightsville Beach).
+
+    This is the same station we use for water temperature, so if water temp
+    loads successfully this source is very likely to work too.
+    Returns wind data only (no wave data from this source).
+    """
+    url = COOPS_WIND_URL.format(station=WATER_TEMP_STATION)
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+
+    entry = data.get("data", [{}])[0]
+    speed = entry.get("s")   # speed in knots
+    gust = entry.get("g")    # gust in knots
+    direction = entry.get("d")  # direction string like "SW"
+
+    if speed is None:
+        return None, None, None
+
+    speed_f = float(speed)
+    gust_f = float(gust) if gust and gust != "0.00" else speed_f
+    wind_range = (round(speed_f, 1), round(max(speed_f, gust_f), 1))
+    wind_dir = direction if direction else None
+
+    return wind_range, None, wind_dir
+
+
+# -- Source 4: NWS gridpoint forecast (land point, has wind) ----------------
+
+def _try_nws_gridpoint() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """NWS grid forecast for the nearest land point to Wrightsville Beach.
+
+    Provides wind speed and direction from the standard forecast.  No wave
+    data (land point), but fills the wind gap if marine sources are down.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    # First get the gridpoint info
+    pts = requests.get(
+        "https://api.weather.gov/points/34.2104,-77.7964",
+        headers=headers, timeout=10,
+    )
+    pts.raise_for_status()
+    forecast_url = pts.json()["properties"]["forecast"]
+
+    # Then get the forecast
+    fc = requests.get(forecast_url, headers=headers, timeout=10)
+    fc.raise_for_status()
+    periods = fc.json()["properties"]["periods"]
+
+    wind_ranges: List[Tuple[float, float]] = []
+    wind_dirs: List[str] = []
+
+    for period in periods[:3]:
+        # windSpeed is like "10 mph" or "5 to 10 mph"
+        ws = period.get("windSpeed", "")
+        wd = period.get("windDirection", "")
+
+        m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
+        if m:
+            low = float(m.group(1)) * _MPH_TO_KNOTS
+            high = float(m.group(2)) * _MPH_TO_KNOTS if m.group(2) else low
+            wind_ranges.append((round(low, 1), round(high, 1)))
+
+        if wd:
+            wind_dirs.append(wd)
+
+    wind_range = None
+    if wind_ranges:
+        wind_range = (
+            min(w[0] for w in wind_ranges),
+            max(w[1] for w in wind_ranges),
+        )
+
+    wind_dir = wind_dirs[0] if wind_dirs else None
+    return wind_range, None, wind_dir
+
+
+# -- Source 5: Seasonal averages (ALWAYS succeeds) --------------------------
+
+def _seasonal_averages(month: int) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+    """Historical monthly averages -- the last resort. Never fails."""
+    return (
+        MONTHLY_AVG_WIND[month],
+        MONTHLY_AVG_WAVES[month],
+        MONTHLY_AVG_WIND_DIR[month],
+    )
+
+
+# -- Combined fetcher -------------------------------------------------------
+
+def get_marine_conditions(month: int) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+    """Get marine conditions, trying every source until we have full data.
+
+    Returns (wind_range, wave_range, wind_dir).  Guaranteed to never return
+    None for any field -- seasonal averages fill any remaining gaps.
+    """
+    wind_range: Optional[Tuple[float, float]] = None
+    wave_range: Optional[Tuple[float, float]] = None
+    wind_dir: Optional[str] = None
+
+    sources = [
+        ("NWS zone forecast", _try_nws_forecast),
+    ]
+    for station_id, station_name in NDBC_STATIONS:
+        sources.append((f"NDBC {station_name}", lambda sid=station_id: _try_ndbc_station(sid)))
+    sources.append(("NOAA CO-OPS wind", _try_coops_wind))
+    sources.append(("NWS gridpoint forecast", _try_nws_gridpoint))
+
+    for name, fetcher in sources:
+        # Stop once we have both wind and waves
+        if wind_range is not None and wave_range is not None and wind_dir is not None:
+            break
+        try:
+            w, s, d = fetcher()
+            if wind_range is None and w is not None:
+                wind_range = w
+                print(f"Wind from {name}: {w}")
+            if wave_range is None and s is not None:
+                wave_range = s
+                print(f"Waves from {name}: {s}")
+            if wind_dir is None and d is not None:
+                wind_dir = d
+        except Exception as exc:
+            print(f"{name} unavailable: {exc}")
+
+    # Fill any remaining gaps with seasonal averages
+    avg_wind, avg_waves, avg_dir = _seasonal_averages(month)
+    if wind_range is None:
+        wind_range = avg_wind
+        print(f"Wind from seasonal avg: {avg_wind}")
+    if wave_range is None:
+        wave_range = avg_waves
+        print(f"Waves from seasonal avg: {avg_waves}")
+    if wind_dir is None:
+        wind_dir = avg_dir
+
+    return wind_range, wave_range, wind_dir
 
 
 def parse_conditions(
@@ -1559,18 +1801,12 @@ def generate_forecast() -> Dict[str, Any]:
     month and water temperature.  Rig recommendations are matched to active
     species.
     """
-    # Marine forecast is best-effort -- if the NWS API is down the rest of
-    # the forecast (species, rigs, baits) still works.
-    try:
-        periods = fetch_marine_forecast()
-        wind_range, wave_range, wind_dir = parse_conditions(periods)
-    except Exception as exc:
-        print(f"Marine forecast unavailable: {exc}")
-        wind_range, wave_range, wind_dir = None, None, None
-    verdict = classify_conditions(wind_range, wave_range)
     tz = ZoneInfo("America/New_York")
     now = datetime.now(tz)
     month = now.month
+
+    wind_range, wave_range, wind_dir = get_marine_conditions(month)
+    verdict = classify_conditions(wind_range, wave_range)
 
     water_temp, temp_is_live = get_water_temp(month)
 
