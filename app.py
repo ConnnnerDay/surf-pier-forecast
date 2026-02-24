@@ -3778,14 +3778,20 @@ def _score_species(
     sp: Dict[str, Any],
     month: int,
     water_temp: float,
+    wind_dir: Optional[str] = None,
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
 ) -> float:
     """Compute a bite-likelihood score for a species given current conditions.
 
-    Score components (max 80):
+    Score components (max ~100):
     - Temperature fit (0-50): how close current water temp is to the
       species' ideal range.
     - Seasonal fit (0-30): whether the current month is a peak, good,
       or off month.
+    - Conditions modifier (-5 to +15): wind direction, wind speed,
+      wave height, and time-of-day adjustments.
     - Presence penalty (-100): water temp outside survivable range.
     """
     score = 0.0
@@ -3811,10 +3817,145 @@ def _score_species(
     elif month in sp["good_months"]:
         score += 15.0
 
+    # --- Dynamic conditions modifiers ---
+    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour)
+
     return score
 
 
-# Minimum score (out of 80) to include a species in the forecast.
+# ---------------------------------------------------------------------------
+# Conditions-based scoring modifiers
+# ---------------------------------------------------------------------------
+# These tables classify species by their preferred fishing conditions.
+# Species not explicitly listed get no conditions bonus or penalty.
+# ---------------------------------------------------------------------------
+
+# Species that bite better on an incoming (onshore) wind -- the wind pushes
+# bait and turbid water toward shore, stimulating feeding.
+_ONSHORE_WIND_SPECIES: set = {
+    "Red drum (puppy drum)", "Bluefish", "Pompano", "Whiting (sea mullet, kingfish)",
+    "Spot", "Atlantic croaker", "Flounder (summer flounder)", "Southern flounder",
+    "Gulf flounder", "Spanish mackerel", "Jack crevalle", "Cobia",
+    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Blacktip shark", "Spinner shark", "Bull shark",
+    "Striped bass (rockfish)", "Black drum",
+}
+
+# Species that prefer calmer conditions and/or offshore wind (clearer water).
+_CALM_WATER_SPECIES: set = {
+    "Sheepshead", "Tautog (blackfish)", "Triggerfish (gray)", "Spadefish (Atlantic)",
+    "Mangrove snapper (gray snapper)", "Hogfish", "Bermuda chub (sea chub)",
+    "Lookdown", "Sergeant major (damselfish)", "Planehead filefish",
+    "Scrawled cowfish", "Ocean triggerfish", "Queen triggerfish",
+    "Gray snapper (juvenile)", "Speckled trout (spotted seatrout)",
+    "Tarpon", "Tripletail", "Permit", "Snook",
+}
+
+# Species that feed more actively in rougher surf.
+_ROUGH_SURF_SPECIES: set = {
+    "Red drum (puppy drum)", "Bluefish", "Striped bass (rockfish)",
+    "Whiting (sea mullet, kingfish)", "Pompano", "Black drum",
+    "Smooth dogfish", "Atlantic croaker", "Spot",
+    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+}
+
+# Species that feed best in low-light conditions (dawn, dusk, night).
+_LOW_LIGHT_SPECIES: set = {
+    "Striped bass (rockfish)", "Speckled trout (spotted seatrout)",
+    "Red drum (puppy drum)", "Cobia", "Tarpon", "Flounder (summer flounder)",
+    "Southern flounder", "Gulf flounder", "Ribbonfish (Atlantic cutlassfish)",
+    "Spotted moray eel", "Green moray eel", "American eel", "Conger eel",
+    "Squirrelfish", "Bigeye (Priacanthus arenatus)", "Short bigeye",
+    "Blacktip shark", "Bull shark", "Sandbar shark", "Lemon shark",
+}
+
+# Species that are more active during bright midday conditions.
+_DAYTIME_SPECIES: set = {
+    "Spanish mackerel", "King mackerel (kingfish)", "Cero mackerel",
+    "False albacore (little tunny)", "Mahi-mahi (dolphinfish)",
+    "Sergeant major (damselfish)", "Blue tang (surgeonfish)",
+    "Spotfin butterflyfish", "Gray angelfish",
+    "Bermuda chub (sea chub)", "Pinfish", "Pigfish",
+}
+
+# Compass directions grouped for onshore/offshore determination.
+# For Wrightsville Beach, NC facing roughly ESE:
+#   Onshore winds: S, SE, E, SSE, ESE, SSW
+#   Offshore winds: N, NW, W, NNW, WNW, NNE
+_ONSHORE_DIRS: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE"}
+_OFFSHORE_DIRS: set = {"N", "NW", "W", "NNW", "WNW", "NNE", "NE"}
+
+
+def _conditions_modifier(
+    sp: Dict[str, Any],
+    wind_dir: Optional[str],
+    wind_range: Optional[Tuple[float, float]],
+    wave_range: Optional[Tuple[float, float]],
+    hour: int,
+) -> float:
+    """Compute a conditions-based score modifier for a species.
+
+    Returns a value between roughly -5 and +15 based on how well current
+    wind direction, wind speed, wave height, and time of day match the
+    species' preferred conditions.
+    """
+    modifier = 0.0
+    name = sp["name"]
+
+    # --- Wind direction modifier (up to +5 / -3) ---
+    if wind_dir:
+        is_onshore = wind_dir in _ONSHORE_DIRS
+        is_offshore = wind_dir in _OFFSHORE_DIRS
+
+        if name in _ONSHORE_WIND_SPECIES:
+            modifier += 5.0 if is_onshore else (-3.0 if is_offshore else 0.0)
+        elif name in _CALM_WATER_SPECIES:
+            modifier += 5.0 if is_offshore else (-3.0 if is_onshore else 0.0)
+
+    # --- Wind speed modifier (up to +3 / -2) ---
+    if wind_range:
+        wind_avg = (wind_range[0] + wind_range[1]) / 2.0
+        if name in _ROUGH_SURF_SPECIES:
+            # Moderate wind (10-18 kt) stirs up bait -- bonus
+            if 10 <= wind_avg <= 18:
+                modifier += 3.0
+            elif wind_avg < 5:
+                modifier -= 2.0
+        elif name in _CALM_WATER_SPECIES:
+            # Calm conditions (< 8 kt) are ideal
+            if wind_avg < 8:
+                modifier += 3.0
+            elif wind_avg > 15:
+                modifier -= 2.0
+
+    # --- Wave height modifier (up to +4 / -2) ---
+    if wave_range:
+        wave_avg = (wave_range[0] + wave_range[1]) / 2.0
+        if name in _ROUGH_SURF_SPECIES:
+            # Moderate surf (2-5 ft) concentrates bait in troughs
+            if 2 <= wave_avg <= 5:
+                modifier += 4.0
+            elif wave_avg < 1:
+                modifier -= 1.0
+        elif name in _CALM_WATER_SPECIES:
+            if wave_avg < 2:
+                modifier += 4.0
+            elif wave_avg > 4:
+                modifier -= 2.0
+
+    # --- Time of day modifier (up to +3 / -1) ---
+    is_low_light = hour < 7 or hour > 18  # before 7am or after 6pm
+    is_midday = 10 <= hour <= 15
+
+    if name in _LOW_LIGHT_SPECIES:
+        modifier += 3.0 if is_low_light else (-1.0 if is_midday else 0.0)
+    elif name in _DAYTIME_SPECIES:
+        modifier += 3.0 if is_midday else (-1.0 if is_low_light else 0.0)
+
+    return modifier
+
+
+# Minimum score to include a species in the forecast.
 # This filters out species that technically survive but aren't really biting.
 SPECIES_SCORE_THRESHOLD = 30
 
@@ -3822,15 +3963,27 @@ SPECIES_SCORE_THRESHOLD = 30
 def build_species_ranking(
     month: int,
     water_temp: float,
+    wind_dir: Optional[str] = None,
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
 ) -> List[Dict[str, Any]]:
-    """Dynamically rank species based on current month and water temperature.
+    """Dynamically rank species based on conditions.
 
-    Only species scoring above SPECIES_SCORE_THRESHOLD are included.
-    Each species gets an activity label: Hot, Active, or Possible.
+    Factors in water temperature, month, wind direction, wind speed,
+    wave height, and time of day.  Only species scoring above
+    SPECIES_SCORE_THRESHOLD are included.  Each species gets an
+    activity label: Hot, Active, or Possible.
     """
     scored = []
     for sp in SPECIES_DB:
-        s = _score_species(sp, month, water_temp)
+        s = _score_species(
+            sp, month, water_temp,
+            wind_dir=wind_dir,
+            wind_range=wind_range,
+            wave_range=wave_range,
+            hour=hour,
+        )
         if s >= SPECIES_SCORE_THRESHOLD:
             explanation = _get_explanation(sp, month, water_temp)
             scored.append((s, sp, explanation))
@@ -3948,7 +4101,13 @@ def generate_forecast() -> Dict[str, Any]:
         "sunrise_sunset": sun_str,
     }
 
-    species = build_species_ranking(month, water_temp)
+    species = build_species_ranking(
+        month, water_temp,
+        wind_dir=wind_dir,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        hour=now.hour,
+    )
     rig_recommendations = build_rig_recommendations(species)
 
     forecast: Dict[str, Any] = {
