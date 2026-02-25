@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 420" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Sabiki Rig (Bait Catcher)</text>
+
+  <!-- Main line from rod -->
+  <line x1="30" y1="55" x2="200" y2="55" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="115" y="47" text-anchor="middle" font-size="11" fill="#555">Main line (10-15 lb)</text>
+
+  <!-- Snap swivel at top -->
+  <rect x="205" y="48" width="28" height="14" rx="7" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <text x="219" y="42" text-anchor="middle" font-size="10" fill="#555">Snap swivel</text>
+
+  <!-- Vertical main rig line -->
+  <line x1="219" y1="62" x2="219" y2="370" stroke="#68b" stroke-width="2"/>
+
+  <!-- Hook 1 -->
+  <g>
+    <line x1="219" y1="90" x2="170" y2="95" stroke="#68b" stroke-width="1.5"/>
+    <g transform="translate(150, 88)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+      <!-- Feather/flash -->
+      <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8"/>
+      <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
+    </g>
+  </g>
+
+  <!-- Hook 2 -->
+  <g>
+    <line x1="219" y1="140" x2="275" y2="145" stroke="#68b" stroke-width="1.5"/>
+    <g transform="translate(278, 138)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+      <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#3498db" stroke="#2980b9" stroke-width="0.8"/>
+      <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#f39c12" stroke="#e67e22" stroke-width="0.8"/>
+    </g>
+    <text x="300" y="148" font-size="10" fill="#555">Tiny hooks with</text>
+    <text x="300" y="160" font-size="10" fill="#555">flash / feathers</text>
+  </g>
+
+  <!-- Hook 3 -->
+  <g>
+    <line x1="219" y1="190" x2="170" y2="195" stroke="#68b" stroke-width="1.5"/>
+    <g transform="translate(150, 188)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+      <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#2ecc71" stroke="#27ae60" stroke-width="0.8"/>
+      <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
+    </g>
+  </g>
+
+  <!-- Hook 4 -->
+  <g>
+    <line x1="219" y1="240" x2="275" y2="245" stroke="#68b" stroke-width="1.5"/>
+    <g transform="translate(278, 238)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+      <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8"/>
+      <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#9b59b6" stroke="#8e44ad" stroke-width="0.8"/>
+    </g>
+  </g>
+
+  <!-- Hook 5 -->
+  <g>
+    <line x1="219" y1="290" x2="170" y2="295" stroke="#68b" stroke-width="1.5"/>
+    <g transform="translate(150, 288)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+      <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
+      <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8"/>
+    </g>
+  </g>
+
+  <!-- Hook 6 -->
+  <g>
+    <line x1="219" y1="340" x2="275" y2="345" stroke="#68b" stroke-width="1.5"/>
+    <g transform="translate(278, 338)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12 Q10 8 7 6" fill="none" stroke="#444" stroke-width="1.8"/>
+      <path d="M-2 0 Q-10 -5 -5 2 Q-10 0 -3 5" fill="#3498db" stroke="#2980b9" stroke-width="0.8"/>
+      <path d="M2 -2 Q5 -10 4 -3 Q8 -8 3 -1" fill="#2ecc71" stroke="#27ae60" stroke-width="0.8"/>
+    </g>
+  </g>
+
+  <!-- Hook size label -->
+  <text x="130" y="97" text-anchor="end" font-size="10" fill="#888">Size #6-#10</text>
+
+  <!-- Weight at bottom -->
+  <g transform="translate(207, 370)">
+    <ellipse cx="12" cy="12" rx="12" ry="15" fill="#a0a0a0" stroke="#666" stroke-width="1.5"/>
+    <text x="12" y="40" text-anchor="middle" font-size="11" fill="#555">Small weight</text>
+    <text x="12" y="53" text-anchor="middle" font-size="10" fill="#888">(1-2 oz)</text>
+  </g>
+
+  <!-- Jig motion arrows -->
+  <g transform="translate(80, 130)">
+    <path d="M0 30 L10 0" stroke="#c44" stroke-width="2"/>
+    <polygon points="10,0 5,8 15,8" fill="#c44"/>
+    <path d="M10 0 L20 30" stroke="#c44" stroke-width="2"/>
+    <polygon points="20,30 15,22 25,22" fill="#c44"/>
+    <text x="10" y="45" text-anchor="middle" font-size="10" fill="#c44">Jig up</text>
+    <text x="10" y="57" text-anchor="middle" font-size="10" fill="#c44">and down</text>
+  </g>
+
+  <!-- Baitfish illustrations near hooks -->
+  <g transform="translate(315, 190)" opacity="0.5">
+    <path d="M0 5 Q5 0 12 3 Q18 5 20 5 Q18 5 12 7 Q5 10 0 5" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1"/>
+  </g>
+  <g transform="translate(105, 240)" opacity="0.5">
+    <path d="M0 5 Q5 0 12 3 Q18 5 20 5 Q18 5 12 7 Q5 10 0 5" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1"/>
+  </g>
+
+  <!-- Legend -->
+  <rect x="30" y="80" width="100" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="40" y="96" font-size="10" fill="#333" font-weight="bold">Pre-tied rig</text>
+  <text x="40" y="108" font-size="9" fill="#555">4-8 hooks total</text>
+</svg>

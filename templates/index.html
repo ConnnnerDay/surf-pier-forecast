@@ -103,6 +103,11 @@
                 {% for rig in forecast.rig_recommendations %}
                 <div class="rig-card">
                     <h3>{{ rig.name }}</h3>
+                    {% if rig.image %}
+                    <div class="rig-diagram">
+                        <img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy">
+                    </div>
+                    {% endif %}
                     <p class="rig-desc">{{ rig.description }}</p>
                     <div class="rig-targets">
                         <span class="rig-targets-label">Good for:</span>

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">King Mackerel Stinger Rig</text>
+
+  <!-- Water surface -->
+  <path d="M30 80 Q80 70 130 80 Q180 90 230 80 Q280 70 330 80 Q380 90 430 80 Q460 75 470 80" fill="none" stroke="#4a9eda" stroke-width="2" opacity="0.5"/>
+
+  <!-- Main line -->
+  <line x1="30" y1="60" x2="170" y2="60" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="100" y="52" text-anchor="middle" font-size="11" fill="#555">Main line (20-30 lb)</text>
+
+  <!-- Float/balloon -->
+  <g transform="translate(180, 40)">
+    <ellipse cx="18" cy="18" rx="22" ry="18" fill="#e74c3c" stroke="#c0392b" stroke-width="2" opacity="0.8"/>
+    <text x="18" y="22" text-anchor="middle" font-size="10" fill="#fff" font-weight="bold">Float</text>
+  </g>
+
+  <!-- Swivel -->
+  <rect x="175" y="72" width="30" height="14" rx="7" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <text x="190" y="100" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
+
+  <!-- Wire leader down to baitfish -->
+  <line x1="190" y1="86" x2="190" y2="135" stroke="#888" stroke-width="2"/>
+  <text x="210" y="120" font-size="10" fill="#555">Wire leader</text>
+  <text x="210" y="133" font-size="9" fill="#888">#4-#7 wire</text>
+
+  <!-- Nose hook -->
+  <g transform="translate(180, 135)">
+    <path d="M10 0 L10 12 Q10 20 16 20 Q22 20 22 14 Q22 9 18 7" fill="none" stroke="#444" stroke-width="2.2"/>
+    <circle cx="17" cy="6" r="1.5" fill="#444"/>
+  </g>
+  <text x="140" y="148" text-anchor="end" font-size="11" fill="#555">Nose hook</text>
+
+  <!-- Baitfish body -->
+  <g transform="translate(158, 150)">
+    <path d="M0 22 Q15 5 50 10 Q80 12 105 18 Q120 22 130 22 Q120 22 105 26 Q80 32 50 34 Q15 39 0 22" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1.5"/>
+    <!-- Eye -->
+    <circle cx="18" cy="22" r="5" fill="#fff" stroke="#555" stroke-width="1"/>
+    <circle cx="19" cy="22" r="2.5" fill="#333"/>
+    <!-- Tail -->
+    <path d="M130 22 L148 12 L148 32 Z" fill="#9bc1d8" stroke="#7aa8c4" stroke-width="1"/>
+    <!-- Fins -->
+    <path d="M45 12 L55 2 L65 10" fill="#9bc1d8" stroke="#7aa8c4" stroke-width="1"/>
+    <text x="65" y="52" text-anchor="middle" font-size="11" fill="#555">Live baitfish (menhaden/mullet)</text>
+  </g>
+
+  <!-- Short wire to stinger treble -->
+  <line x1="280" y1="170" x2="310" y2="172" stroke="#888" stroke-width="1.5"/>
+  <text x="330" y="160" font-size="10" fill="#555">Short wire</text>
+
+  <!-- Treble stinger hook near tail -->
+  <g transform="translate(305, 165)">
+    <line x1="8" y1="0" x2="8" y2="8" stroke="#444" stroke-width="2"/>
+    <!-- Three prongs -->
+    <path d="M8 8 L8 20 Q8 26 12 26 Q16 26 16 22" fill="none" stroke="#444" stroke-width="2"/>
+    <path d="M8 8 L2 18 Q-1 24 3 26 Q7 26 8 22" fill="none" stroke="#444" stroke-width="2"/>
+    <path d="M8 8 L14 18 Q17 24 13 26 Q9 26 8 22" fill="none" stroke="#444" stroke-width="2"/>
+    <circle cx="16" cy="21" r="1.2" fill="#444"/>
+    <circle cx="2" cy="22" r="1.2" fill="#444"/>
+    <circle cx="16" cy="22" r="1.2" fill="#444"/>
+  </g>
+  <text x="340" y="192" font-size="11" fill="#c44" font-weight="bold">Stinger treble</text>
+  <text x="340" y="206" font-size="10" fill="#888">(catches short strikes)</text>
+
+  <!-- Annotation arrow showing king strike pattern -->
+  <g transform="translate(50, 210)">
+    <path d="M0 20 Q40 0 80 15 Q120 30 160 10" fill="none" stroke="#c44" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <polygon points="160,10 148,8 152,18" fill="#c44"/>
+    <text x="80" y="50" text-anchor="middle" font-size="10" fill="#c44">King strikes at tail first</text>
+  </g>
+
+  <!-- Legend -->
+  <rect x="15" y="280" width="470" height="68" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="300" font-size="11" fill="#333" font-weight="bold">Why a stinger?</text>
+  <text x="30" y="318" font-size="10.5" fill="#555">King mackerel attack from behind, slashing at the tail of the baitfish. A single</text>
+  <text x="30" y="333" font-size="10.5" fill="#555">nose hook misses most strikes. The trailing treble catches these short-strikers.</text>
+</svg>

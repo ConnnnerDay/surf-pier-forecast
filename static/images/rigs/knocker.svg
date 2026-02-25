@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 340" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Knocker Rig</text>
+
+  <!-- Main line -->
+  <line x1="30" y1="80" x2="150" y2="80" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="90" y="70" text-anchor="middle" font-size="11" fill="#555">Main line (30-50 lb braid)</text>
+
+  <!-- Barrel swivel -->
+  <rect x="155" y="72" width="34" height="16" rx="8" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <circle cx="160" cy="80" r="4" fill="#555" stroke="#444" stroke-width="1"/>
+  <circle cx="184" cy="80" r="4" fill="#555" stroke="#444" stroke-width="1"/>
+  <text x="172" y="104" text-anchor="middle" font-size="10" fill="#555">Barrel swivel</text>
+
+  <!-- Leader going down -->
+  <line x1="189" y1="80" x2="250" y2="100" stroke="#5da" stroke-width="2.5"/>
+  <line x1="250" y1="100" x2="250" y2="220" stroke="#5da" stroke-width="2.5"/>
+  <text x="290" y="130" font-size="11" fill="#555">Fluorocarbon</text>
+  <text x="290" y="145" font-size="11" fill="#555">leader (12-24 in)</text>
+
+  <!-- Egg sinker on leader - at the bottom near hook -->
+  <ellipse cx="250" cy="195" rx="22" ry="12" fill="#a0a0a0" stroke="#666" stroke-width="1.5"/>
+  <ellipse cx="250" cy="195" rx="4" ry="12" fill="#888" stroke="#666" stroke-width="1"/>
+  <text x="175" y="195" text-anchor="end" font-size="11" fill="#555">Egg sinker</text>
+  <text x="175" y="210" text-anchor="end" font-size="10" fill="#888">(slides on leader)</text>
+
+  <!-- Arrow showing sinker rests against hook -->
+  <path d="M250 210 L250 222" stroke="#c44" stroke-width="1.5"/>
+  <text x="310" y="218" font-size="10" fill="#c44">Sinker rests against</text>
+  <text x="310" y="230" font-size="10" fill="#c44">hook eye (key feature)</text>
+
+  <!-- Hook -->
+  <g transform="translate(237, 222)">
+    <path d="M13 0 L13 25 Q13 42 26 42 Q38 42 38 28 Q38 18 30 14" fill="none" stroke="#444" stroke-width="2.5"/>
+    <circle cx="29" cy="13" r="2" fill="#444"/>
+    <text x="48" y="18" font-size="11" fill="#555">Circle hook</text>
+    <text x="48" y="32" font-size="10" fill="#888">1/0 - 3/0</text>
+  </g>
+
+  <!-- Bait on hook -->
+  <g transform="translate(244, 260)">
+    <ellipse cx="8" cy="8" rx="14" ry="8" fill="#f5c6a0" stroke="#d4956a" stroke-width="1"/>
+    <text x="8" y="28" text-anchor="middle" font-size="10" fill="#888">Fiddler crab / shrimp</text>
+  </g>
+
+  <!-- Pier piling illustration -->
+  <rect x="400" y="40" width="30" height="260" rx="4" fill="#8B7355" stroke="#6B5335" stroke-width="2"/>
+  <text x="415" y="35" text-anchor="middle" font-size="10" fill="#6B5335">Piling</text>
+  <!-- Barnacles -->
+  <circle cx="405" cy="120" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
+  <circle cx="420" cy="150" r="4" fill="#9a9" stroke="#686" stroke-width="1"/>
+  <circle cx="408" cy="200" r="3" fill="#9a9" stroke="#686" stroke-width="1"/>
+
+  <!-- Legend -->
+  <rect x="15" y="290" width="470" height="40" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="30" y="308" font-size="11" fill="#333" font-weight="bold">Key:</text>
+  <text x="68" y="308" font-size="10.5" fill="#555">Sinker at the hook keeps bait tight to structure. Fish vertically alongside pilings for sheepshead and tautog.</text>
+</svg>

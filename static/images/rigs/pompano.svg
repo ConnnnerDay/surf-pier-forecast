@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Pompano Rig</text>
+
+  <!-- Main line -->
+  <line x1="30" y1="60" x2="150" y2="60" stroke="#2a6" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="90" y="52" text-anchor="middle" font-size="11" fill="#555">Main line</text>
+
+  <!-- Swivel -->
+  <rect x="155" y="52" width="34" height="16" rx="8" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <text x="172" y="46" text-anchor="middle" font-size="10" fill="#555">Swivel</text>
+
+  <!-- Vertical leader -->
+  <line x1="189" y1="60" x2="250" y2="80" stroke="#68b" stroke-width="2.5"/>
+  <line x1="250" y1="80" x2="250" y2="320" stroke="#68b" stroke-width="2.5"/>
+  <text x="278" y="100" font-size="11" fill="#555">30-40 lb mono</text>
+
+  <!-- Upper dropper with float bead -->
+  <g>
+    <ellipse cx="250" cy="140" rx="6" ry="8" fill="none" stroke="#68b" stroke-width="2"/>
+    <line x1="244" y1="140" x2="135" y2="140" stroke="#68b" stroke-width="2"/>
+    <!-- Float bead (bright colored) -->
+    <ellipse cx="158" cy="133" rx="10" ry="7" fill="#FF6B35" stroke="#e55520" stroke-width="1.5"/>
+    <text x="158" y="120" text-anchor="middle" font-size="10" fill="#FF6B35">Float bead</text>
+    <!-- Teaser beads -->
+    <circle cx="140" cy="137" r="4" fill="#f1c40f" stroke="#d4ac0d" stroke-width="1"/>
+    <circle cx="140" cy="145" r="4" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+    <text x="118" y="143" text-anchor="end" font-size="9" fill="#888">Beads</text>
+    <!-- Hook -->
+    <g transform="translate(108, 130)">
+      <path d="M0 0 L0 16 Q0 26 8 26 Q16 26 16 18 Q16 12 12 9" fill="none" stroke="#444" stroke-width="2"/>
+      <circle cx="11" cy="8" r="1.5" fill="#444"/>
+    </g>
+    <text x="85" y="158" text-anchor="middle" font-size="10" fill="#555">Hook #1</text>
+  </g>
+
+  <!-- Float lifts bait annotation -->
+  <path d="M160 126 L160 108 L200 108" fill="none" stroke="#c44" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="205" y="112" font-size="9" fill="#c44">Float lifts bait off bottom</text>
+
+  <!-- Gap label -->
+  <line x1="270" y1="148" x2="270" y2="215" stroke="#c44" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="302" y="185" font-size="10" fill="#c44">12-18 in</text>
+
+  <!-- Lower dropper with float bead -->
+  <g>
+    <ellipse cx="250" cy="222" rx="6" ry="8" fill="none" stroke="#68b" stroke-width="2"/>
+    <line x1="244" y1="222" x2="135" y2="222" stroke="#68b" stroke-width="2"/>
+    <ellipse cx="158" cy="215" rx="10" ry="7" fill="#FF6B35" stroke="#e55520" stroke-width="1.5"/>
+    <circle cx="140" cy="219" r="4" fill="#f1c40f" stroke="#d4ac0d" stroke-width="1"/>
+    <circle cx="140" cy="227" r="4" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+    <g transform="translate(108, 212)">
+      <path d="M0 0 L0 16 Q0 26 8 26 Q16 26 16 18 Q16 12 12 9" fill="none" stroke="#444" stroke-width="2"/>
+      <circle cx="11" cy="8" r="1.5" fill="#444"/>
+    </g>
+    <text x="85" y="240" text-anchor="middle" font-size="10" fill="#555">Hook #2</text>
+  </g>
+
+  <!-- Pyramid sinker -->
+  <g transform="translate(232, 320)">
+    <polygon points="18,0 0,40 36,40" fill="#a0a0a0" stroke="#666" stroke-width="1.5"/>
+    <text x="18" y="55" text-anchor="middle" font-size="11" fill="#555">Pyramid sinker</text>
+    <text x="18" y="68" text-anchor="middle" font-size="10" fill="#888">(2-4 oz)</text>
+  </g>
+
+  <!-- Sand bottom -->
+  <line x1="30" y1="360" x2="470" y2="360" stroke="#d4b483" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="420" y="375" font-size="10" fill="#d4b483">Sand bottom</text>
+
+  <!-- Legend -->
+  <rect x="300" y="130" width="185" height="60" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="315" y="150" font-size="11" fill="#333" font-weight="bold">Key difference:</text>
+  <text x="315" y="167" font-size="10.5" fill="#555">Float beads lift hooks off</text>
+  <text x="315" y="181" font-size="10.5" fill="#555">sand into the surf wash zone</text>
+</svg>
