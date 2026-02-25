@@ -70,8 +70,14 @@
                     <div class="species-body">
                         <h3>{{ sp.name }}</h3>
                         <p class="species-why">{{ sp.explanation }}</p>
+                        <div class="species-score-bar">
+                            <div class="score-track">
+                                <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
+                            </div>
+                            <span class="score-label">{{ sp.score }}/100</span>
+                        </div>
                         <div class="species-meta">
-                            <div class="meta-item">
+                            <div class="meta-item meta-item--bait">
                                 <span class="meta-label">Bait</span>
                                 <span class="meta-value">{{ sp.bait }}</span>
                             </div>
@@ -96,7 +102,7 @@
 
         <!-- Recommended Rigs -->
         {% if forecast.rig_recommendations %}
-        <section>
+        <section class="rig-section">
             <h2>Recommended Rigs</h2>
             <p class="section-sub">Matched to species biting now</p>
             <div class="rig-cards">
@@ -128,7 +134,7 @@
         {% endif %}
 
         <!-- Bait recommendations -->
-        <section>
+        <section class="bait-section">
             <h2>Natural Bait Recommendations</h2>
             <div class="bait-list">
                 {% for item in forecast.bait_rankings %}

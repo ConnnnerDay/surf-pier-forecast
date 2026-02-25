@@ -368,7 +368,60 @@ h2 {
   color: var(--text);
 }
 
-/* ---------- Rig cards ---------- */
+/* Bait spans full width since descriptions are long */
+.meta-item--bait {
+  grid-column: 1 / -1;
+}
+
+/* Score bar */
+.species-score-bar {
+  margin: 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.score-track {
+  flex: 1;
+  height: 6px;
+  background: #e8ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.score-fill--hot {
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.score-fill--active {
+  background: linear-gradient(90deg, #27ae60, #1a8a5c);
+}
+
+.score-fill--possible {
+  background: linear-gradient(90deg, #f0d77e, #d4920b);
+}
+
+.score-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ---------- Rig section ---------- */
+
+.rig-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
 
 .rig-cards {
   display: grid;
@@ -377,16 +430,16 @@ h2 {
 }
 
 .rig-card {
-  background: var(--white);
+  background: #fcfcfc;
   border: 1px solid #e8ecef;
   border-radius: var(--radius);
   padding: 1.25rem;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .rig-card:hover {
   box-shadow: var(--shadow-md);
+  border-color: #c8d6e5;
 }
 
 .rig-card h3 {
@@ -466,9 +519,16 @@ h2 {
 
 /* ---------- Bait list ---------- */
 
+.bait-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
 .bait-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
 }
 
@@ -477,10 +537,15 @@ h2 {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: var(--white);
+  background: #fcfcfc;
   border-radius: var(--radius-sm);
   border: 1px solid #e8ecef;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.bait-item:hover {
   box-shadow: var(--shadow-sm);
+  border-color: #c8d6e5;
 }
 
 .bait-num {
@@ -633,5 +698,13 @@ footer p {
     width: 36px;
     height: 36px;
     font-size: 0.9rem;
+  }
+
+  .bait-list {
+    grid-template-columns: 1fr;
+  }
+
+  .rig-cards {
+    grid-template-columns: 1fr;
   }
 }
