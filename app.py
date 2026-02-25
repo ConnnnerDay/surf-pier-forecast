@@ -32,14 +32,25 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 from zoneinfo import ZoneInfo
 
+from locations import (
+    all_locations_sorted,
+    find_nearest_locations,
+    geocode_zip,
+    get_fallback_conditions,
+    get_location,
+    get_monthly_water_temps,
+)
+
 
 # Set up Flask app
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "replace_this_with_a_secure_key"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
 
 # Path to the cached forecast JSON
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -108,13 +119,15 @@ def _deg_to_compass(deg: float) -> str:
 
 # -- Source 1: NWS zone forecast API ----------------------------------------
 
-def _try_nws_forecast() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+def _try_nws_forecast(zone: str = "") -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
     """NWS marine zone forecast -- provides 24-hour forecast ranges."""
+    zone = zone or NWS_MARINE_ZONE
+    url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
     headers = {
         "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
         "Accept": "application/ld+json",
     }
-    response = requests.get(NWS_FORECAST_URL, headers=headers, timeout=15)
+    response = requests.get(url, headers=headers, timeout=15)
     response.raise_for_status()
     data = response.json()
     periods = data["properties"]["periods"]
@@ -172,14 +185,14 @@ def _try_ndbc_station(station_id: str) -> Tuple[Optional[Tuple[float, float]], O
 
 # -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
 
-def _try_coops_wind() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
-    """Fetch wind from NOAA CO-OPS station 8658163 (Wrightsville Beach).
+def _try_coops_wind(station_id: str = "") -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """Fetch wind from a NOAA CO-OPS station.
 
     This is the same station we use for water temperature, so if water temp
     loads successfully this source is very likely to work too.
     Returns wind data only (no wave data from this source).
     """
-    url = COOPS_WIND_URL.format(station=WATER_TEMP_STATION)
+    url = COOPS_WIND_URL.format(station=station_id or WATER_TEMP_STATION)
     resp = requests.get(url, timeout=10)
     resp.raise_for_status()
     data = resp.json()
@@ -202,19 +215,23 @@ def _try_coops_wind() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[flo
 
 # -- Source 4: NWS gridpoint forecast (land point, has wind) ----------------
 
-def _try_nws_gridpoint() -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
-    """NWS grid forecast for the nearest land point to Wrightsville Beach.
+def _try_nws_gridpoint(lat: float = 0, lng: float = 0) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    """NWS grid forecast for the nearest land point to a location.
 
     Provides wind speed and direction from the standard forecast.  No wave
     data (land point), but fills the wind gap if marine sources are down.
     """
+    if lat == 0:
+        lat = _LAT
+    if lng == 0:
+        lng = _LNG
     headers = {
         "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
         "Accept": "application/ld+json",
     }
     # First get the gridpoint info
     pts = requests.get(
-        "https://api.weather.gov/points/34.2104,-77.7964",
+        f"https://api.weather.gov/points/{lat},{lng}",
         headers=headers, timeout=10,
     )
     pts.raise_for_status()
@@ -266,23 +283,32 @@ def _seasonal_averages(month: int) -> Tuple[Tuple[float, float], Tuple[float, fl
 
 # -- Combined fetcher -------------------------------------------------------
 
-def get_marine_conditions(month: int) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+def get_marine_conditions(
+    month: int,
+    location: Optional[Dict[str, Any]] = None,
+) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
     """Get marine conditions, trying every source until we have full data.
 
     Returns (wind_range, wave_range, wind_dir).  Guaranteed to never return
     None for any field -- seasonal averages fill any remaining gaps.
     """
+    nws_zone = (location or {}).get("nws_zone", NWS_MARINE_ZONE)
+    ndbc_list = (location or {}).get("ndbc_stations", [s[0] for s in NDBC_STATIONS])
+    coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+
     wind_range: Optional[Tuple[float, float]] = None
     wave_range: Optional[Tuple[float, float]] = None
     wind_dir: Optional[str] = None
 
-    sources = [
-        ("NWS zone forecast", _try_nws_forecast),
+    sources: List[Tuple[str, Any]] = [
+        ("NWS zone forecast", lambda: _try_nws_forecast(nws_zone)),
     ]
-    for station_id, station_name in NDBC_STATIONS:
-        sources.append((f"NDBC {station_name}", lambda sid=station_id: _try_ndbc_station(sid)))
-    sources.append(("NOAA CO-OPS wind", _try_coops_wind))
-    sources.append(("NWS gridpoint forecast", _try_nws_gridpoint))
+    for sid in ndbc_list:
+        sources.append((f"NDBC {sid}", lambda s=sid: _try_ndbc_station(s)))
+    sources.append(("NOAA CO-OPS wind", lambda: _try_coops_wind(coops_id)))
+    sources.append(("NWS gridpoint forecast", lambda: _try_nws_gridpoint(loc_lat, loc_lng)))
 
     for name, fetcher in sources:
         # Stop once we have both wind and waves
@@ -301,8 +327,11 @@ def get_marine_conditions(month: int) -> Tuple[Tuple[float, float], Tuple[float,
         except Exception as exc:
             print(f"{name} unavailable: {exc}")
 
-    # Fill any remaining gaps with seasonal averages
-    avg_wind, avg_waves, avg_dir = _seasonal_averages(month)
+    # Fill any remaining gaps with location-specific or default averages
+    if location:
+        avg_wind, avg_waves, avg_dir = get_fallback_conditions(location, month)
+    else:
+        avg_wind, avg_waves, avg_dir = _seasonal_averages(month)
     if wind_range is None:
         wind_range = avg_wind
         print(f"Wind from seasonal avg: {avg_wind}")
@@ -432,14 +461,14 @@ MONTHLY_AVG_WATER_TEMP_F = {
 }
 
 
-def fetch_water_temperature() -> Optional[float]:
+def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     """Fetch the latest water temperature (F) from NOAA CO-OPS.
 
-    Uses the free Tides & Currents API for station 8658163
-    (Wrightsville Beach, NC).  Returns None on any failure.
+    Uses the free Tides & Currents API for the given station.
+    Returns None on any failure.
     """
     try:
-        url = WATER_TEMP_URL.format(station=WATER_TEMP_STATION)
+        url = WATER_TEMP_URL.format(station=station_id or WATER_TEMP_STATION)
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         data = resp.json()
@@ -451,15 +480,22 @@ def fetch_water_temperature() -> Optional[float]:
     return None
 
 
-def get_water_temp(month: int) -> Tuple[float, bool]:
+def get_water_temp(
+    month: int,
+    location: Optional[Dict[str, Any]] = None,
+) -> Tuple[float, bool]:
     """Return (water_temp_f, is_live).
 
     Tries the live NOAA reading first.  Falls back to the historical
     monthly average when the API is unreachable.
     """
-    live = fetch_water_temperature()
+    station_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    live = fetch_water_temperature(station_id)
     if live is not None:
         return live, True
+    if location:
+        temps = get_monthly_water_temps(location)
+        return float(temps[month]), False
     return float(MONTHLY_AVG_WATER_TEMP_F[month]), False
 
 
@@ -472,15 +508,24 @@ _LAT = 34.2104
 _LNG = -77.7964
 
 
-def _sun_times(dt: datetime) -> Tuple[datetime, datetime]:
-    """Compute approximate sunrise and sunset for Wrightsville Beach.
+def _sun_times(
+    dt: datetime,
+    lat: float = 0,
+    lng: float = 0,
+    tz_name: str = "America/New_York",
+) -> Tuple[datetime, datetime]:
+    """Compute approximate sunrise and sunset for a coastal location.
 
     Uses the simplified NOAA algorithm based on the day-of-year, latitude,
     and an approximate equation of time.  Returns (sunrise, sunset) as
-    timezone-aware datetimes in America/New_York.  Accuracy is within a few
-    minutes -- good enough for fishing planning.
+    timezone-aware datetimes.  Accuracy is within a few minutes -- good
+    enough for fishing planning.
     """
-    tz = ZoneInfo("America/New_York")
+    if lat == 0:
+        lat = _LAT
+    if lng == 0:
+        lng = _LNG
+    tz = ZoneInfo(tz_name)
     # Day of year (1-365)
     n = dt.timetuple().tm_yday
 
@@ -507,20 +552,20 @@ def _sun_times(dt: datetime) -> Tuple[datetime, datetime]:
         + 0.00148 * math.sin(3 * gamma)
     )
 
-    lat_rad = math.radians(_LAT)
+    lat_rad = math.radians(lat)
 
     # Hour angle at sunrise/sunset (degrees)
     cos_ha = (
         math.cos(math.radians(90.833)) / (math.cos(lat_rad) * math.cos(decl))
         - math.tan(lat_rad) * math.tan(decl)
     )
-    # Clamp for polar regions (shouldn't happen at 34°N)
+    # Clamp for polar regions
     cos_ha = max(-1.0, min(1.0, cos_ha))
     ha = math.degrees(math.acos(cos_ha))
 
     # Sunrise and sunset in minutes from midnight UTC
-    sunrise_utc = 720 - 4 * (_LNG + ha) - eqtime
-    sunset_utc = 720 - 4 * (_LNG - ha) - eqtime
+    sunrise_utc = 720 - 4 * (lng + ha) - eqtime
+    sunset_utc = 720 - 4 * (lng - ha) - eqtime
 
     base = datetime(dt.year, dt.month, dt.day, tzinfo=ZoneInfo("UTC"))
     sunrise = base + timedelta(minutes=sunrise_utc)
@@ -4521,7 +4566,7 @@ def build_bait_ranking(
     return [b for _, b in scored_baits]
 
 
-def generate_forecast() -> Dict[str, Any]:
+def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
     Fetches marine conditions and water temperature, classifies fishability,
@@ -4529,14 +4574,15 @@ def generate_forecast() -> Dict[str, Any]:
     month and water temperature.  Rig recommendations are matched to active
     species.
     """
-    tz = ZoneInfo("America/New_York")
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
     now = datetime.now(tz)
     month = now.month
 
-    wind_range, wave_range, wind_dir = get_marine_conditions(month)
+    wind_range, wave_range, wind_dir = get_marine_conditions(month, location)
     verdict = classify_conditions(wind_range, wave_range)
 
-    water_temp, temp_is_live = get_water_temp(month)
+    water_temp, temp_is_live = get_water_temp(month, location)
 
     def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
         if r is None:
@@ -4547,7 +4593,9 @@ def generate_forecast() -> Dict[str, Any]:
         return f"{low:.0f}-{high:.0f} {unit}"
 
     try:
-        sunrise, sunset = _sun_times(now)
+        loc_lat = (location or {}).get("lat", _LAT)
+        loc_lng = (location or {}).get("lng", _LNG)
+        sunrise, sunset = _sun_times(now, loc_lat, loc_lng, tz_name)
         sun_str = f"{sunrise.strftime('%-I:%M %p')} / {sunset.strftime('%-I:%M %p')}"
     except Exception:
         sun_str = "Unavailable"
@@ -4574,8 +4622,14 @@ def generate_forecast() -> Dict[str, Any]:
     )
     rig_recommendations = build_rig_recommendations(species)
 
+    loc_name = ""
+    if location:
+        loc_name = f"{location['name']}, {location['state']}"
+
     forecast: Dict[str, Any] = {
         "generated_at": now.isoformat(),
+        "location_name": loc_name,
+        "location_id": (location or {}).get("id", ""),
         "conditions": conditions,
         "species": species,
         "rig_recommendations": rig_recommendations,
@@ -4584,20 +4638,29 @@ def generate_forecast() -> Dict[str, Any]:
     return forecast
 
 
-def load_cached_forecast() -> Optional[Dict[str, Any]]:
+def _cache_path(location_id: str = "") -> str:
+    """Return the cache file path for a given location."""
+    if location_id:
+        return os.path.join(CACHE_DIR, f"forecast_{location_id}.json")
+    return CACHE_FILE
+
+
+def load_cached_forecast(location_id: str = "") -> Optional[Dict[str, Any]]:
     """Load the cached forecast from disk if present."""
-    if os.path.exists(CACHE_FILE):
+    path = _cache_path(location_id)
+    if os.path.exists(path):
         try:
-            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return None
     return None
 
 
-def save_forecast(data: Dict[str, Any]) -> None:
+def save_forecast(data: Dict[str, Any], location_id: str = "") -> None:
     """Persist the forecast to disk."""
-    with open(CACHE_FILE, "w", encoding="utf-8") as f:
+    path = _cache_path(location_id)
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
 
@@ -4633,17 +4696,94 @@ def _human_age(minutes: Optional[float]) -> str:
     return f"{days} day ago" if days == 1 else f"{days} days ago"
 
 
+def _get_session_location() -> Optional[Dict[str, Any]]:
+    """Return the location config from the user's session, or None."""
+    loc_id = session.get("location_id")
+    if loc_id:
+        return get_location(loc_id)
+    return None
+
+
+# -- Setup routes -----------------------------------------------------------
+
+@app.route("/setup")
+def setup() -> str:
+    """Show the location setup page (zip code entry or browse)."""
+    return render_template(
+        "setup.html",
+        results=None,
+        all_locations=all_locations_sorted(),
+        error=None,
+    )
+
+
+@app.route("/setup/search", methods=["POST"])
+def setup_search() -> str:
+    """Process a zip code search and show nearby locations."""
+    zipcode = request.form.get("zipcode", "").strip()
+    if not zipcode or not zipcode.isdigit() or len(zipcode) != 5:
+        return render_template(
+            "setup.html",
+            results=None,
+            all_locations=all_locations_sorted(),
+            error="Please enter a valid 5-digit US zip code.",
+        )
+
+    coords = geocode_zip(zipcode)
+    if coords is None:
+        return render_template(
+            "setup.html",
+            results=None,
+            all_locations=all_locations_sorted(),
+            error=f"Could not find zip code {zipcode}. Please try another.",
+        )
+
+    lat, lng = coords
+    nearby = find_nearest_locations(lat, lng, n=6)
+    if not nearby:
+        return render_template(
+            "setup.html",
+            results=None,
+            all_locations=all_locations_sorted(),
+            error="No supported fishing locations found within 300 miles. Try a coastal zip code.",
+        )
+
+    return render_template(
+        "setup.html",
+        results=nearby,
+        zipcode=zipcode,
+        all_locations=all_locations_sorted(),
+        error=None,
+    )
+
+
+@app.route("/setup/select/<location_id>", methods=["POST"])
+def setup_select(location_id: str) -> Any:
+    """Save the selected location to the session and redirect to forecast."""
+    loc = get_location(location_id)
+    if loc is None:
+        return redirect(url_for("setup"))
+    session["location_id"] = location_id
+    session.permanent = True
+    return redirect(url_for("index"))
+
+
+# -- Main routes ------------------------------------------------------------
+
 @app.route("/")
 def index() -> str:
     """Render the dashboard with the current forecast.
 
-    If the cached forecast is older than ``CACHE_MAX_AGE_HOURS`` the
-    server automatically attempts a refresh.  If the query parameter
-    ``cached`` is present, a banner indicates that a stale/cached
-    forecast is being served (e.g. after a failed refresh).
+    If no location is set, redirect to the setup page.
+    If the cached forecast is stale, auto-refresh it.
     """
+    location = _get_session_location()
+    if location is None:
+        return redirect(url_for("setup"))
+
+    loc_id = location["id"]
     cached_flag = request.args.get("cached")
-    forecast = load_cached_forecast()
+    forecast = load_cached_forecast(loc_id)
 
     # Auto-refresh if cache is missing or stale
     needs_refresh = forecast is None
@@ -4654,8 +4794,8 @@ def index() -> str:
 
     if needs_refresh:
         try:
-            forecast = generate_forecast()
-            save_forecast(forecast)
+            forecast = generate_forecast(location)
+            save_forecast(forecast, loc_id)
             cached_flag = None  # Fresh data
         except Exception:
             if forecast is None:
@@ -4675,25 +4815,23 @@ def index() -> str:
 @app.route("/api/forecast")
 def api_forecast() -> Any:
     """Return the current forecast as JSON."""
-    forecast = load_cached_forecast()
+    location = _get_session_location()
+    loc_id = location["id"] if location else ""
+    forecast = load_cached_forecast(loc_id)
     if forecast:
         return jsonify(forecast)
-    # Return 503 if no forecast is available
     return jsonify({"error": "No forecast available"}), 503
 
 
 @app.route("/api/refresh", methods=["POST"])
 def api_refresh() -> Any:
-    """Trigger generation of a new forecast.
-
-    On success the new forecast is saved and the user is redirected
-    back to the dashboard.  If an exception occurs, the user is
-    redirected back with a `cached` flag indicating the cached
-    forecast is being served.
-    """
+    """Trigger generation of a new forecast."""
+    location = _get_session_location()
+    if location is None:
+        return redirect(url_for("setup"))
     try:
-        new_forecast = generate_forecast()
-        save_forecast(new_forecast)
+        new_forecast = generate_forecast(location)
+        save_forecast(new_forecast, location["id"])
         return redirect(url_for("index"))
     except Exception as exc:
         print(f"Error refreshing forecast: {exc}")

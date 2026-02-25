@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wrightsville &amp; Carolina Beach Fishing Forecast</title>
+    <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -13,7 +13,8 @@
     <header>
         <div class="header-inner">
             <h1>Surf &amp; Pier Fishing Outlook</h1>
-            <p class="subtitle">Wrightsville Beach &amp; Carolina Beach, NC</p>
+            <p class="subtitle">{{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
+            <a href="{{ url_for('setup') }}" class="change-location">Change location</a>
             {% if cached %}
             <div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
             {% endif %}
@@ -159,7 +160,7 @@
     </main>
 
     <footer>
-        <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; Wrightsville Beach &amp; Carolina Beach, NC</p>
+        <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; {{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
     </footer>
 </body>
 </html>
