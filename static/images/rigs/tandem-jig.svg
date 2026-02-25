@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Tandem Jig Rig (Shad Dart Rig)</text>
+
+  <!-- Main line -->
+  <line x1="30" y1="70" x2="170" y2="70" stroke="#2a6" stroke-width="2.5" stroke-dasharray="8,4"/>
+  <text x="100" y="60" text-anchor="middle" font-size="11" fill="#555">Main line (6-10 lb)</text>
+
+  <!-- Swivel (optional) -->
+  <rect x="175" y="63" width="24" height="14" rx="7" fill="#666" stroke="#444" stroke-width="1.5"/>
+  <text x="187" y="58" text-anchor="middle" font-size="9" fill="#555">Swivel</text>
+
+  <!-- Leader to first jig -->
+  <line x1="199" y1="70" x2="270" y2="70" stroke="#5da" stroke-width="2"/>
+  <line x1="270" y1="70" x2="270" y2="120" stroke="#5da" stroke-width="2"/>
+
+  <!-- First shad dart / jig -->
+  <g transform="translate(255, 120)">
+    <!-- Jig head -->
+    <circle cx="15" cy="8" r="10" fill="#f39c12" stroke="#e67e22" stroke-width="1.5"/>
+    <!-- Hook shank and bend -->
+    <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="#444" stroke-width="2.2"/>
+    <circle cx="25" cy="19" r="1.8" fill="#444"/>
+    <!-- Tail/body dressing -->
+    <path d="M5 8 Q-5 3 -8 8 Q-5 13 5 8" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
+    <path d="M3 5 Q-8 0 -12 5 Q-8 10 3 12" fill="#f1c40f" stroke="#d4ac0d" stroke-width="0.8" opacity="0.7"/>
+    <text x="45" y="15" font-size="11" fill="#555" font-weight="bold">Jig #1</text>
+    <text x="45" y="30" font-size="10" fill="#888">Shad dart</text>
+    <text x="45" y="43" font-size="10" fill="#888">(1/16 - 1/4 oz)</text>
+  </g>
+
+  <!-- Leader between jigs -->
+  <line x1="270" y1="162" x2="270" y2="220" stroke="#5da" stroke-width="2"/>
+  <!-- Gap label -->
+  <line x1="290" y1="165" x2="290" y2="217" stroke="#c44" stroke-width="1" stroke-dasharray="4,3"/>
+  <path d="M290 168 L286 175 M290 168 L294 175" fill="none" stroke="#c44" stroke-width="1.2"/>
+  <path d="M290 214 L286 207 M290 214 L294 207" fill="none" stroke="#c44" stroke-width="1.2"/>
+  <text x="305" y="195" font-size="10" fill="#c44">18 in leader</text>
+  <text x="305" y="208" font-size="9" fill="#888">(8-12 lb mono)</text>
+
+  <!-- Second shad dart / jig -->
+  <g transform="translate(255, 220)">
+    <circle cx="15" cy="8" r="10" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
+    <path d="M15 18 L15 30 Q15 42 24 42 Q32 42 32 32 Q32 24 26 20" fill="none" stroke="#444" stroke-width="2.2"/>
+    <circle cx="25" cy="19" r="1.8" fill="#444"/>
+    <path d="M5 8 Q-5 3 -8 8 Q-5 13 5 8" fill="#f39c12" stroke="#e67e22" stroke-width="0.8"/>
+    <path d="M3 5 Q-8 0 -12 5 Q-8 10 3 12" fill="#fff" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+    <text x="45" y="15" font-size="11" fill="#555" font-weight="bold">Jig #2</text>
+    <text x="45" y="30" font-size="10" fill="#888">Different color</text>
+    <text x="45" y="43" font-size="10" fill="#888">to test preferences</text>
+  </g>
+
+  <!-- Current flow arrows -->
+  <g transform="translate(120, 130)">
+    <line x1="0" y1="0" x2="40" y2="0" stroke="#4a9eda" stroke-width="1.5"/>
+    <polygon points="40,0 34,-4 34,4" fill="#4a9eda"/>
+    <line x1="0" y1="20" x2="40" y2="20" stroke="#4a9eda" stroke-width="1.5"/>
+    <polygon points="40,20 34,16 34,24" fill="#4a9eda"/>
+    <line x1="0" y1="40" x2="40" y2="40" stroke="#4a9eda" stroke-width="1.5"/>
+    <polygon points="40,40 34,36 34,44" fill="#4a9eda"/>
+    <text x="20" y="60" text-anchor="middle" font-size="10" fill="#4a9eda">Current</text>
+  </g>
+
+  <!-- Legend -->
+  <rect x="30" y="278" width="440" height="35" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="45" y="298" font-size="11" fill="#333" font-weight="bold">Technique:</text>
+  <text x="120" y="298" font-size="10.5" fill="#555">Cast upstream and retrieve through current, or jig vertically. Standard for spring shad runs.</text>
+</svg>

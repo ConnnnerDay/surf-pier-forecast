@@ -372,7 +372,7 @@ h2 {
 
 .rig-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1rem;
 }
 
@@ -394,6 +394,23 @@ h2 {
   font-size: 1rem;
   font-weight: 600;
   color: var(--ocean);
+}
+
+.rig-diagram {
+  margin: 0.5rem 0 0.75rem;
+  border: 1px solid #e8ecef;
+  border-radius: var(--radius-sm);
+  background: #fafbfc;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+.rig-diagram img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: contain;
 }
 
 .rig-desc {

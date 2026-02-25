@@ -3835,10 +3835,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "20-30 lb braid with 40-50 lb shock leader",
         "leader": "18-36 in of 20-30 lb fluorocarbon",
-        "diagram": (
-            "Main line ─── [Sliding Egg Sinker] ─── (Bead) ─── |Barrel Swivel|\n"
-            "              ─── 18-36 in Fluorocarbon Leader ─── (Circle Hook)"
-        ),
+        "image": "images/rigs/fishfinder.svg",
     },
     "hi-lo": {
         "name": "Hi-Lo Rig (Double Drop / Bottom Rig)",
@@ -3851,13 +3848,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "15-20 lb mono or braid",
         "leader": "30-40 lb mono with two dropper loops",
-        "diagram": (
-            "Main line ─── |Swivel| ─── 30-40 lb Mono\n"
-            "                           ├── Dropper Loop ─ (Hook #1)\n"
-            "                           │   (12-18 in gap)\n"
-            "                           ├── Dropper Loop ─ (Hook #2)\n"
-            "                           └── [Pyramid Sinker]"
-        ),
+        "image": "images/rigs/hi-lo.svg",
     },
     "knocker": {
         "name": "Knocker Rig",
@@ -3870,11 +3861,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "30-50 lb braid",
         "leader": "12-24 in of 30-50 lb fluorocarbon",
-        "diagram": (
-            "Main line ─── |Barrel Swivel| ─── Fluorocarbon Leader\n"
-            "              ─── [Egg Sinker slides on leader] ─── (Circle Hook)\n"
-            "              Sinker rests against hook eye for vertical jigging"
-        ),
+        "image": "images/rigs/knocker.svg",
     },
     "pompano": {
         "name": "Pompano Rig",
@@ -3887,13 +3874,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "15-20 lb mono or braid",
         "leader": "30-40 lb mono with two dropper loops and float beads",
-        "diagram": (
-            "Main line ─── |Swivel| ─── 30-40 lb Mono\n"
-            "                           ├── Dropper Loop ─ {Float Bead} ─ (Hook #1)\n"
-            "                           │   (12-18 in gap)\n"
-            "                           ├── Dropper Loop ─ {Float Bead} ─ (Hook #2)\n"
-            "                           └── [Pyramid Sinker]"
-        ),
+        "image": "images/rigs/pompano.svg",
     },
     "float": {
         "name": "Float Rig (Bobber Rig)",
@@ -3906,13 +3887,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "15-30 lb mono or braid",
         "leader": "2-4 ft of wire or 30-50 lb fluorocarbon",
-        "diagram": (
-            "Main line ─── {Float / Popping Cork / Balloon}\n"
-            "              │\n"
-            "              2-4 ft Leader (wire or fluorocarbon)\n"
-            "              │\n"
-            "              (Circle Hook or J-Hook with bait)"
-        ),
+        "image": "images/rigs/float.svg",
     },
     "popping-cork": {
         "name": "Popping Cork Rig",
@@ -3925,13 +3900,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "15-20 lb braid",
         "leader": "18-36 in of 15-20 lb fluorocarbon",
-        "diagram": (
-            "Main line ─── {Popping Cork (concave top)}\n"
-            "              │\n"
-            "              18-36 in Fluorocarbon Leader\n"
-            "              │\n"
-            "              (Circle Hook with live shrimp / bait)"
-        ),
+        "image": "images/rigs/popping-cork.svg",
     },
     "kingfish-stinger": {
         "name": "King Mackerel Stinger Rig",
@@ -3944,12 +3913,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "20-30 lb mono or braid",
         "leader": "#4-#7 wire with nose hook and trailing stinger treble",
-        "diagram": (
-            "Main line ─── {Float or Balloon}\n"
-            "              │\n"
-            "              Wire Leader ─── (Nose Hook through bait's nose)\n"
-            "              └── short wire ─── (Treble Stinger near bait's tail)"
-        ),
+        "image": "images/rigs/kingfish-stinger.svg",
     },
     "shark": {
         "name": "Shark Rig (Heavy Bottom Rig)",
@@ -3962,11 +3926,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "50-80 lb braid with 80-100 lb shock leader",
         "leader": "3-6 ft of #9-#19 coated wire or 200+ lb cable",
-        "diagram": (
-            "Main line ─── [Heavy Pyramid Sinker (4-16 oz)] ─── (Bead)\n"
-            "              ─── |Heavy Swivel| ─── 3-6 ft Wire Leader\n"
-            "              ─── (Large Circle Hook 7/0-20/0)"
-        ),
+        "image": "images/rigs/shark.svg",
     },
     "sabiki": {
         "name": "Sabiki Rig (Bait Catcher)",
@@ -3979,14 +3939,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "10-15 lb mono or braid",
         "leader": "Pre-tied sabiki rig (size #6-#10 hooks)",
-        "diagram": (
-            "Main line ─── Sabiki Rig (pre-tied)\n"
-            "              ├── Tiny Hook #1 (with flash/feather)\n"
-            "              ├── Tiny Hook #2\n"
-            "              ├── Tiny Hook #3\n"
-            "              ├── Tiny Hook #4 (up to 8 hooks)\n"
-            "              └── [Small Weight (1-2 oz)]"
-        ),
+        "image": "images/rigs/sabiki.svg",
     },
     "deep-drop": {
         "name": "Deep Drop Rig",
@@ -3999,12 +3952,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "80-130 lb braid on electric reel",
         "leader": "100-200 lb mono with 2-3 dropper loops",
-        "diagram": (
-            "Main line (electric reel) ─── |Heavy Swivel|\n"
-            "              ├── Dropper Loop ─ (Circle Hook + LED light)\n"
-            "              ├── Dropper Loop ─ (Circle Hook)\n"
-            "              └── [Heavy Bank Sinker (2-8 lbs)]"
-        ),
+        "image": "images/rigs/deep-drop.svg",
     },
     "trolling": {
         "name": "Trolling Rig",
@@ -4016,11 +3964,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "30-80 lb mono or braid",
         "leader": "6-15 ft of 60-200 lb fluorocarbon or wire",
-        "diagram": (
-            "Main line ─── (Outrigger / Flat Line / Downrigger)\n"
-            "              ─── |Snap Swivel| ─── 6-15 ft Leader\n"
-            "              ─── (Trolling Lure / Rigged Ballyhoo / Skirted Bait)"
-        ),
+        "image": "images/rigs/trolling.svg",
     },
     "tandem-jig": {
         "name": "Tandem Jig Rig (Shad Dart Rig)",
@@ -4032,11 +3976,7 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         ),
         "mainline": "6-10 lb mono or braid",
         "leader": "8-12 lb mono, 18 in between jigs",
-        "diagram": (
-            "Main line ─── (Shad Dart / Jig #1)\n"
-            "              ─── 18 in Leader\n"
-            "              ─── (Shad Dart / Jig #2)"
-        ),
+        "image": "images/rigs/tandem-jig.svg",
     },
 }
 
@@ -4114,6 +4054,7 @@ def build_rig_recommendations(
             "hook": " or ".join(hooks[:3]),
             "sinker": " or ".join(sinkers[:3]),
             "targets": species_names,
+            "image": category.get("image", ""),
         })
 
     return recommendations

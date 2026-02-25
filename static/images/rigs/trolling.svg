@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" font-family="Arial, sans-serif">
+  <text x="250" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a3a5c">Trolling Rig</text>
+
+  <!-- Water surface -->
+  <path d="M30 100 Q80 90 130 100 Q180 110 230 100 Q280 90 330 100 Q380 110 430 100 Q460 95 470 100" fill="none" stroke="#4a9eda" stroke-width="2" opacity="0.5"/>
+
+  <!-- Boat silhouette -->
+  <g transform="translate(30, 50)">
+    <path d="M0 45 Q10 55 50 55 L120 55 Q140 55 145 45 L150 35 L130 35 L120 20 L110 35 L0 35 Z" fill="#6B5335" stroke="#4a3520" stroke-width="1.5"/>
+    <!-- Tower -->
+    <line x1="80" y1="20" x2="80" y2="-10" stroke="#4a3520" stroke-width="2"/>
+    <line x1="60" y1="-10" x2="100" y2="-10" stroke="#4a3520" stroke-width="2"/>
+    <!-- Outrigger -->
+    <line x1="80" y1="-10" x2="180" y2="30" stroke="#888" stroke-width="1.5"/>
+    <line x1="80" y1="-10" x2="30" y2="30" stroke="#888" stroke-width="1.5"/>
+    <text x="75" y="68" text-anchor="middle" font-size="10" fill="#555">Boat (5-8 knots)</text>
+  </g>
+
+  <!-- Direction arrow -->
+  <g transform="translate(200, 60)">
+    <line x1="0" y1="0" x2="50" y2="0" stroke="#c44" stroke-width="2"/>
+    <polygon points="50,0 42,-5 42,5" fill="#c44"/>
+    <text x="25" y="15" text-anchor="middle" font-size="10" fill="#c44">Direction</text>
+  </g>
+
+  <!-- Flat line (from rod tip down into water) -->
+  <g>
+    <line x1="155" y1="82" x2="220" y2="100" stroke="#2a6" stroke-width="2"/>
+    <line x1="220" y1="100" x2="350" y2="160" stroke="#2a6" stroke-width="2"/>
+    <text x="285" y="118" font-size="10" fill="#555" transform="rotate(18, 285, 118)">30-80 lb line</text>
+  </g>
+
+  <!-- Snap swivel -->
+  <g transform="translate(348, 155)">
+    <rect x="0" y="0" width="20" height="10" rx="5" fill="#666" stroke="#444" stroke-width="1"/>
+    <text x="10" y="22" text-anchor="middle" font-size="9" fill="#555">Snap swivel</text>
+  </g>
+
+  <!-- Long fluorocarbon leader -->
+  <line x1="368" y1="165" x2="430" y2="200" stroke="#5da" stroke-width="2"/>
+  <text x="420" y="180" font-size="10" fill="#555">Leader</text>
+  <text x="420" y="193" font-size="9" fill="#888">6-15 ft fluoro</text>
+
+  <!-- Trolling lure -->
+  <g transform="translate(420, 200)">
+    <!-- Lure head -->
+    <ellipse cx="15" cy="10" rx="15" ry="8" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>
+    <!-- Skirt -->
+    <path d="M30 5 Q50 -5 55 8 Q60 12 55 15 Q50 25 30 15" fill="#f39c12" stroke="#e67e22" stroke-width="1" opacity="0.8"/>
+    <path d="M30 8 Q45 0 52 10 Q55 15 48 18 Q40 22 30 14" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8" opacity="0.6"/>
+    <!-- Hook -->
+    <g transform="translate(35, 12)">
+      <path d="M0 0 L0 10 Q0 16 5 16 Q10 16 10 12" fill="none" stroke="#444" stroke-width="1.8"/>
+    </g>
+    <text x="30" y="38" text-anchor="middle" font-size="10" fill="#555">Skirted lure</text>
+  </g>
+
+  <!-- Outrigger line (higher) -->
+  <g>
+    <line x1="210" y1="80" x2="300" y2="110" stroke="#2a6" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <line x1="300" y1="110" x2="400" y2="130" stroke="#2a6" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <!-- Release clip -->
+    <circle cx="300" cy="110" r="4" fill="#f39c12" stroke="#e67e22" stroke-width="1.5"/>
+    <text x="300" y="103" text-anchor="middle" font-size="9" fill="#e67e22">Release clip</text>
+
+    <!-- Rigged ballyhoo at end -->
+    <g transform="translate(400, 125)">
+      <path d="M0 5 Q10 0 22 3 Q35 5 40 5 Q35 5 22 7 Q10 10 0 5" fill="#b8d4e8" stroke="#7aa8c4" stroke-width="1"/>
+      <line x1="0" y1="5" x2="-8" y2="5" stroke="#7aa8c4" stroke-width="1"/>
+      <text x="20" y="20" text-anchor="middle" font-size="9" fill="#555">Ballyhoo</text>
+    </g>
+    <text x="360" y="100" font-size="9" fill="#888">Outrigger line</text>
+  </g>
+
+  <!-- Legend -->
+  <rect x="30" y="255" width="440" height="55" rx="6" fill="#f7f9fc" stroke="#ccd" stroke-width="1"/>
+  <text x="45" y="275" font-size="11" fill="#333" font-weight="bold">Common setups:</text>
+  <text x="45" y="292" font-size="10.5" fill="#555">Flat line (closest to boat) + outrigger lines (spread wider). Lures include skirted</text>
+  <text x="45" y="306" font-size="10.5" fill="#555">trolling heads, rigged ballyhoo, cedar plugs, and diving plugs at various depths.</text>
+</svg>
