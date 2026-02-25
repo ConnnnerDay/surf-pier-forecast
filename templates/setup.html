@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Location &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <p class="subtitle">Choose your fishing location</p>
+        </div>
+    </header>
+
+    <main>
+        <!-- Zip code search -->
+        <section class="setup-section">
+            <h2>Find Your Spot</h2>
+            <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
+
+            <form method="post" action="{{ url_for('setup_search') }}" class="zip-form">
+                <div class="zip-input-group">
+                    <input type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
+                           value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required>
+                    <button type="submit" class="zip-btn">Search</button>
+                </div>
+            </form>
+
+            {% if error %}
+            <div class="setup-error">{{ error }}</div>
+            {% endif %}
+        </section>
+
+        <!-- Search results -->
+        {% if results %}
+        <section class="setup-section">
+            <h2>Nearby Locations</h2>
+            <p class="section-sub">Select a location to get your fishing forecast</p>
+
+            <div class="location-results">
+                {% for loc in results %}
+                <form method="post" action="{{ url_for('setup_select', location_id=loc.id) }}" class="location-card-form">
+                    <button type="submit" class="location-card">
+                        <div class="location-card-body">
+                            <h3>{{ loc.name }}</h3>
+                            <span class="location-state">{{ loc.state }}</span>
+                        </div>
+                        <span class="location-distance">{{ loc.distance_miles }} mi</span>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Browse all -->
+        <section class="setup-section">
+            <h2>Or Browse All Locations</h2>
+            <p class="section-sub">{{ all_locations|length }} coastal fishing areas available</p>
+
+            <div class="location-browse">
+                {% set ns = namespace(current_state='') %}
+                {% for loc in all_locations %}
+                    {% if loc.state != ns.current_state %}
+                        {% if ns.current_state != '' %}
+                        </div>
+                        {% endif %}
+                        {% set ns.current_state = loc.state %}
+                        <div class="state-group">
+                            <h3 class="state-label">{{ loc.state }}</h3>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('setup_select', location_id=loc.id) }}" class="browse-item-form">
+                        <button type="submit" class="browse-item">{{ loc.name }}</button>
+                    </form>
+                {% endfor %}
+                {% if ns.current_state != '' %}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Surf &amp; Pier Fishing Outlook</p>
+    </footer>
+</body>
+</html>

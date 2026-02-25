@@ -368,7 +368,60 @@ h2 {
   color: var(--text);
 }
 
-/* ---------- Rig cards ---------- */
+/* Bait spans full width since descriptions are long */
+.meta-item--bait {
+  grid-column: 1 / -1;
+}
+
+/* Score bar */
+.species-score-bar {
+  margin: 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.score-track {
+  flex: 1;
+  height: 6px;
+  background: #e8ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.score-fill--hot {
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.score-fill--active {
+  background: linear-gradient(90deg, #27ae60, #1a8a5c);
+}
+
+.score-fill--possible {
+  background: linear-gradient(90deg, #f0d77e, #d4920b);
+}
+
+.score-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ---------- Rig section ---------- */
+
+.rig-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
 
 .rig-cards {
   display: grid;
@@ -377,16 +430,16 @@ h2 {
 }
 
 .rig-card {
-  background: var(--white);
+  background: #fcfcfc;
   border: 1px solid #e8ecef;
   border-radius: var(--radius);
   padding: 1.25rem;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .rig-card:hover {
   box-shadow: var(--shadow-md);
+  border-color: #c8d6e5;
 }
 
 .rig-card h3 {
@@ -466,9 +519,16 @@ h2 {
 
 /* ---------- Bait list ---------- */
 
+.bait-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
 .bait-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
 }
 
@@ -477,10 +537,15 @@ h2 {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: var(--white);
+  background: #fcfcfc;
   border-radius: var(--radius-sm);
   border: 1px solid #e8ecef;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.bait-item:hover {
   box-shadow: var(--shadow-sm);
+  border-color: #c8d6e5;
 }
 
 .bait-num {
@@ -603,6 +668,191 @@ footer p {
   box-shadow: var(--shadow-lg);
 }
 
+/* ---------- Change location link ---------- */
+
+.change-location {
+  display: inline-block;
+  margin-top: 0.4rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.change-location:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* ---------- Setup page ---------- */
+
+.setup-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.zip-form {
+  margin: 0.75rem 0 0;
+}
+
+.zip-input-group {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 320px;
+}
+
+.zip-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 2px solid #d1d9e0;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.zip-input:focus {
+  border-color: var(--ocean);
+}
+
+.zip-btn {
+  padding: 0.7rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zip-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.setup-error {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #fdf0f0;
+  border: 1px solid #f1aeb5;
+  border-radius: var(--radius-sm);
+  color: #721c24;
+  font-size: 0.85rem;
+}
+
+/* -- Location result cards -- */
+
+.location-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+.location-card-form {
+  display: contents;
+}
+
+.location-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: #fcfcfc;
+  border: 2px solid #e8ecef;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.location-card:hover {
+  border-color: var(--ocean);
+  box-shadow: var(--shadow-md);
+  background: var(--ocean-light);
+}
+
+.location-card-body h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.location-state {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.location-distance {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ocean);
+  white-space: nowrap;
+  padding: 0.3rem 0.7rem;
+  background: var(--ocean-light);
+  border-radius: 20px;
+}
+
+/* -- Browse all locations -- */
+
+.location-browse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.state-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.state-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ocean);
+  width: 36px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.browse-item-form {
+  display: contents;
+}
+
+.browse-item {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--ocean-dark);
+  background: var(--ocean-light);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.browse-item:hover {
+  background: #d0eaf3;
+  border-color: var(--ocean);
+  box-shadow: var(--shadow-sm);
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 640px) {
@@ -633,5 +883,13 @@ footer p {
     width: 36px;
     height: 36px;
     font-size: 0.9rem;
+  }
+
+  .bait-list {
+    grid-template-columns: 1fr;
+  }
+
+  .rig-cards {
+    grid-template-columns: 1fr;
   }
 }
