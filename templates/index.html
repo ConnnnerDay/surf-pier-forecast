@@ -89,8 +89,17 @@
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Water Temp</span>
-                    <span class="stat-value">{{ forecast.conditions.water_temp_f }}&deg;F</span>
-                    <span class="stat-detail">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}</span>
+                    <span class="stat-value">
+                        {{ forecast.conditions.water_temp_f }}&deg;F
+                        {% if forecast.conditions.water_temp_trend == 'warming' %}
+                        <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><path d="M8 3l4 5H4z" fill="#e05830"/></svg>
+                        {% elif forecast.conditions.water_temp_trend == 'cooling' %}
+                        <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><path d="M8 13l4-5H4z" fill="#2980b9"/></svg>
+                        {% elif forecast.conditions.water_temp_trend == 'stable' %}
+                        <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><rect x="2" y="7" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
+                        {% endif %}
+                    </span>
+                    <span class="stat-detail" title="{{ forecast.conditions.water_temp_trend_detail }}">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}{% if forecast.conditions.water_temp_trend %} &middot; {{ forecast.conditions.water_temp_trend }}{% endif %}</span>
                 </div>
                 {% if forecast.conditions.wind_dir %}
                 <div class="stat-card stat-card--compass">

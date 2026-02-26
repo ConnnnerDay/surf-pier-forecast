@@ -364,6 +364,11 @@ h2 {
   margin-top: 0.15rem;
 }
 
+.temp-trend-icon {
+  vertical-align: -1px;
+  margin-left: 0.15rem;
+}
+
 /* Wind compass card */
 .stat-card--compass {
   justify-content: center;
@@ -1725,5 +1730,38 @@ footer p {
 
   .location-results {
     grid-template-columns: 1fr;
+  }
+
+  .best-times-cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .best-time-card {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .share-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .share-btn {
+    width: 100%;
+    max-width: 250px;
+    justify-content: center;
+  }
+
+  .alert-headline {
+    font-size: 0.7rem;
+  }
+
+  .tide-timeline {
+    flex-direction: column;
+  }
+
+  .tide-point {
+    min-width: auto;
   }
 }

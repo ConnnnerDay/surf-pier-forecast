@@ -5722,6 +5722,34 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     if wind_dir and wind_str != "Unknown":
         wind_str = f"{wind_dir} {wind_str}"
 
+    # Water temperature trend (compare to monthly avg and next month)
+    temp_trend = ""
+    temp_trend_detail = ""
+    if location:
+        monthly = get_monthly_water_temps(location)
+        avg_this = monthly.get(month, water_temp)
+        prev_month = month - 1 if month > 1 else 12
+        next_month = month + 1 if month < 12 else 1
+        avg_prev = monthly.get(prev_month, avg_this)
+        avg_next = monthly.get(next_month, avg_this)
+        seasonal_direction = avg_next - avg_prev  # positive = warming season
+        diff = water_temp - avg_this
+        if seasonal_direction > 1.5:
+            temp_trend = "warming"
+            temp_trend_detail = f"Warming trend — avg {avg_this:.0f}°F this month"
+        elif seasonal_direction < -1.5:
+            temp_trend = "cooling"
+            temp_trend_detail = f"Cooling trend — avg {avg_this:.0f}°F this month"
+        else:
+            temp_trend = "stable"
+            temp_trend_detail = f"Stable — avg {avg_this:.0f}°F this month"
+
+        if abs(diff) >= 2:
+            if diff > 0:
+                temp_trend_detail += f", currently {diff:+.0f}°F above avg"
+            else:
+                temp_trend_detail += f", currently {diff:.0f}°F below avg"
+
     conditions = {
         "wind": wind_str,
         "wind_dir": wind_dir or "",
@@ -5729,6 +5757,8 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         "verdict": verdict,
         "water_temp_f": round(water_temp, 1),
         "water_temp_live": temp_is_live,
+        "water_temp_trend": temp_trend,
+        "water_temp_trend_detail": temp_trend_detail,
         "sunrise_sunset": sun_str,
     }
 
