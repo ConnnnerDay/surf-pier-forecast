@@ -22,6 +22,27 @@
     </header>
 
     <main>
+        <!-- Weather Alerts -->
+        {% if forecast.alerts %}
+        <div class="alerts-banner">
+            {% for alert in forecast.alerts %}
+            <div class="alert-item alert-{{ alert.severity|lower }}">
+                <div class="alert-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <div class="alert-body">
+                    <strong class="alert-event">{{ alert.event }}</strong>
+                    <span class="alert-headline">{{ alert.headline }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Verdict hero -->
         <section class="verdict-hero">
             <div class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }}">
@@ -29,6 +50,28 @@
             </div>
             <p class="verdict-sub">24-hour fishability outlook</p>
         </section>
+
+        <!-- Best Fishing Times -->
+        {% if forecast.best_times %}
+        <section class="best-times-section">
+            <h2>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px; margin-right:0.3rem;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                When to Fish
+            </h2>
+            <div class="best-times-cards">
+                {% for bt in forecast.best_times %}
+                <div class="best-time-card best-time--{{ bt.quality|lower }}">
+                    <div class="bt-quality">{{ bt.quality }}</div>
+                    <div class="bt-window">{{ bt.window }}</div>
+                    <div class="bt-reason">{{ bt.reason }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
         <!-- Conditions grid -->
         <section class="conditions-section">
@@ -119,6 +162,35 @@
                 </div>
                 {% endfor %}
             </div>
+
+            {% if forecast.tide_chart %}
+            {% set chart = forecast.tide_chart|tojson|safe %}
+            <div class="tide-chart-wrap" id="tide-chart-wrap">
+                <div class="tide-chart" id="tide-chart"></div>
+            </div>
+            <script>
+            (function() {
+                var data = JSON.parse({{ chart }});
+                var svg = '<svg viewBox="' + data.viewBox + '" preserveAspectRatio="xMidYMid meet" class="tide-chart-svg">';
+                svg += '<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">';
+                svg += '<stop offset="0%" stop-color="var(--ocean)" stop-opacity="0.15"/>';
+                svg += '<stop offset="100%" stop-color="var(--ocean)" stop-opacity="0.02"/>';
+                svg += '</linearGradient></defs>';
+                svg += '<path d="' + data.fill_path + '" fill="url(#tg)"/>';
+                svg += '<path d="' + data.path + '" fill="none" stroke="var(--ocean)" stroke-width="2.5" stroke-linecap="round"/>';
+                data.markers.forEach(function(m) {
+                    var col = m.type === 'High' ? 'var(--ocean)' : 'var(--sea-green)';
+                    svg += '<circle cx="' + m.cx + '" cy="' + m.cy + '" r="5" fill="' + col + '" stroke="#fff" stroke-width="2"/>';
+                    var anchor = parseFloat(m.cx) > data.width / 2 ? 'end' : 'start';
+                    var dx = anchor === 'end' ? -8 : 8;
+                    svg += '<text x="' + (parseFloat(m.cx) + dx) + '" y="' + (parseFloat(m.cy) - 10) + '" text-anchor="' + anchor + '" class="tide-chart-label">' + m.time + '</text>';
+                    svg += '<text x="' + (parseFloat(m.cx) + dx) + '" y="' + (parseFloat(m.cy) - 22) + '" text-anchor="' + anchor + '" class="tide-chart-height">' + m.height + ' ft</text>';
+                });
+                svg += '</svg>';
+                document.getElementById('tide-chart').innerHTML = svg;
+            })();
+            </script>
+            {% endif %}
         </section>
         {% endif %}
 

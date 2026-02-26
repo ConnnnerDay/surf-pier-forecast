@@ -5252,10 +5252,88 @@ def fetch_tide_predictions(
                 "time": time_str,
                 "type": tide_type,
                 "height_ft": f"{float(height):.1f}",
+                "hour": dt.hour + dt.minute / 60 if isinstance(dt, datetime) else 12.0,
+                "height_num": float(height),
             })
         return tides
     except Exception:
         return []
+
+
+def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
+    """Build an SVG path string for a smooth tide curve.
+
+    Returns a dict with 'path' (SVG path d attribute), 'points' (list of
+    {cx, cy, label, height} for the markers), 'viewBox', and 'fill_path'.
+    Only considers tides within a 24-hour window.
+    """
+    if len(tides) < 2:
+        return ""
+
+    # Chart dimensions
+    W, H = 600, 140
+    PAD_X, PAD_TOP, PAD_BOT = 50, 20, 30
+
+    # Filter to reasonable 24h range and extract numeric data
+    pts = []
+    for t in tides:
+        h = t.get("hour", 12.0)
+        ht = t.get("height_num", 0.0)
+        if 0 <= h <= 30:  # Allow some overflow for next-day tides
+            pts.append((h, ht, t["type"], t["time"], t["height_ft"]))
+    if len(pts) < 2:
+        return ""
+
+    # Compute bounds
+    min_h = min(p[1] for p in pts)
+    max_h = max(p[1] for p in pts)
+    h_range = max_h - min_h if max_h != min_h else 1.0
+    min_hour = min(p[0] for p in pts)
+    max_hour = max(p[0] for p in pts)
+    hour_range = max_hour - min_hour if max_hour != min_hour else 24.0
+
+    def to_x(hr: float) -> float:
+        return PAD_X + (hr - min_hour) / hour_range * (W - 2 * PAD_X)
+
+    def to_y(ht: float) -> float:
+        return PAD_TOP + (1 - (ht - min_h) / h_range) * (H - PAD_TOP - PAD_BOT)
+
+    # Build smooth curve using cubic bezier through points
+    coords = [(to_x(p[0]), to_y(p[1])) for p in pts]
+    path_parts = [f"M{coords[0][0]:.1f},{coords[0][1]:.1f}"]
+    for i in range(1, len(coords)):
+        # Simple smooth curve: control points at 1/3 intervals
+        x0, y0 = coords[i - 1]
+        x1, y1 = coords[i]
+        cx1 = x0 + (x1 - x0) * 0.4
+        cx2 = x1 - (x1 - x0) * 0.4
+        path_parts.append(f"C{cx1:.1f},{y0:.1f} {cx2:.1f},{y1:.1f} {x1:.1f},{y1:.1f}")
+
+    path_d = " ".join(path_parts)
+
+    # Fill path (close to bottom)
+    fill_d = path_d + f" L{coords[-1][0]:.1f},{H - PAD_BOT:.1f} L{coords[0][0]:.1f},{H - PAD_BOT:.1f} Z"
+
+    # Build point markers
+    markers = []
+    for i, p in enumerate(pts):
+        markers.append({
+            "cx": f"{coords[i][0]:.1f}",
+            "cy": f"{coords[i][1]:.1f}",
+            "type": p[2],
+            "time": p[3],
+            "height": p[4],
+        })
+
+    import json as _json
+    return _json.dumps({
+        "viewBox": f"0 0 {W} {H}",
+        "path": path_d,
+        "fill_path": fill_d,
+        "markers": markers,
+        "width": W,
+        "height": H,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -5401,6 +5479,41 @@ def compute_solunar_times(
 # ---------------------------------------------------------------------------
 # Multi-day forecast outlook
 # ---------------------------------------------------------------------------
+
+def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
+    """Fetch active weather alerts from NWS for a lat/lng.
+
+    Returns a list of dicts with: event, severity, headline, description.
+    Only includes marine and weather-relevant alerts.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    try:
+        resp = requests.get(
+            f"https://api.weather.gov/alerts/active?point={lat},{lng}",
+            headers=headers, timeout=10,
+        )
+        resp.raise_for_status()
+        features = resp.json().get("@graph", [])
+        alerts = []
+        for f in features[:5]:
+            event = f.get("event", "")
+            severity = f.get("severity", "")
+            headline = f.get("headline", "")
+            description = (f.get("description", "") or "")[:300]
+            if event:
+                alerts.append({
+                    "event": event,
+                    "severity": severity,
+                    "headline": headline,
+                    "description": description,
+                })
+        return alerts
+    except Exception:
+        return []
+
 
 def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
     """Fetch the NWS 7-day forecast for a lat/lng.
@@ -5649,11 +5762,22 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         "bait_rankings": build_bait_ranking(species, month),
     }
 
+    # Weather alerts
+    try:
+        alerts = fetch_weather_alerts(loc_lat, loc_lng)
+        if alerts:
+            forecast["alerts"] = alerts
+    except Exception:
+        pass
+
     # Tide predictions
     coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     tides = fetch_tide_predictions(coops_id, tz_name)
     if tides:
         forecast["tides"] = tides
+        chart_json = build_tide_chart_svg(tides)
+        if chart_json:
+            forecast["tide_chart"] = chart_json
 
     # Solunar fishing times
     try:
@@ -5673,7 +5797,155 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     # Species availability calendar
     forecast["calendar"] = build_species_calendar(species, location)
 
+    # Best fishing times (synthesize solunar + tides + sunrise/sunset)
+    forecast["best_times"] = build_best_times(forecast)
+
     return forecast
+
+
+def _parse_time_str(s: str) -> float:
+    """Parse a time string like '6:32 AM' to decimal hour."""
+    try:
+        s = s.strip().upper()
+        parts = s.replace(":", " ").replace("AM", "").replace("PM", "").split()
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+        is_pm = "PM" in s
+        if h == 12:
+            h = 0 if not is_pm else 12
+        elif is_pm:
+            h += 12
+        return h + m / 60.0
+    except Exception:
+        return 12.0
+
+
+def build_best_times(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Build a list of recommended fishing windows.
+
+    Combines solunar major/minor periods with tide change windows and
+    low-light periods (dawn/dusk) to suggest the best 2-3 windows.
+    Each entry: {"window": "5:30 - 7:30 AM", "reason": "...", "quality": "Prime"}
+    """
+    windows: List[Dict[str, Any]] = []
+
+    # Sunrise/sunset windows (dawn and dusk are prime fishing)
+    sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
+    if "/" in sun_str:
+        parts = sun_str.split("/")
+        sunrise_str = parts[0].strip()
+        sunset_str = parts[1].strip()
+        sr_h = _parse_time_str(sunrise_str)
+        ss_h = _parse_time_str(sunset_str)
+
+        # Dawn window: 30 min before to 60 min after sunrise
+        dawn_start = sr_h - 0.5
+        dawn_end = sr_h + 1.0
+        windows.append({
+            "start_h": dawn_start,
+            "end_h": dawn_end,
+            "label": f"{sunrise_str} window",
+            "reason": "Dawn — fish feed actively in low light",
+            "score": 3,
+        })
+
+        # Dusk window: 60 min before to 30 min after sunset
+        dusk_start = ss_h - 1.0
+        dusk_end = ss_h + 0.5
+        windows.append({
+            "start_h": dusk_start,
+            "end_h": dusk_end,
+            "label": f"{sunset_str} window",
+            "reason": "Dusk — prime low-light feeding period",
+            "score": 3,
+        })
+
+    # Solunar major periods
+    solunar = forecast.get("solunar", {})
+    for mp in solunar.get("major_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        windows.append({
+            "start_h": s_h,
+            "end_h": e_h,
+            "label": f"{mp['start']} – {mp['end']}",
+            "reason": "Solunar major — peak lunar activity",
+            "score": 4,
+        })
+
+    for mp in solunar.get("minor_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        windows.append({
+            "start_h": s_h,
+            "end_h": e_h,
+            "label": f"{mp['start']} – {mp['end']}",
+            "reason": "Solunar minor — elevated activity",
+            "score": 2,
+        })
+
+    # Tide change windows (best fishing near high tides)
+    tides = forecast.get("tides", [])
+    for t in tides:
+        if t.get("type") == "High":
+            t_h = t.get("hour", _parse_time_str(t["time"]))
+            windows.append({
+                "start_h": t_h - 1.0,
+                "end_h": t_h + 1.0,
+                "label": f"{t['time']}",
+                "reason": "Incoming high tide pushes bait into range",
+                "score": 2,
+            })
+
+    if not windows:
+        return []
+
+    # Score each window: boost when multiple factors overlap
+    # Check for overlaps between windows
+    scored_windows: List[Dict[str, Any]] = []
+    for w in windows:
+        overlap_bonus = 0
+        for other in windows:
+            if other is w:
+                continue
+            # Check if windows overlap
+            if w["start_h"] < other["end_h"] and w["end_h"] > other["start_h"]:
+                overlap_bonus += other["score"]
+        w["total_score"] = w["score"] + overlap_bonus
+        scored_windows.append(w)
+
+    # Sort by total score and pick the best 3 non-overlapping windows
+    scored_windows.sort(key=lambda x: x["total_score"], reverse=True)
+    selected: List[Dict[str, str]] = []
+    used_hours: List[Tuple[float, float]] = []
+    for w in scored_windows:
+        # Skip if too close to an already-selected window
+        skip = False
+        for uh_s, uh_e in used_hours:
+            if w["start_h"] < uh_e + 0.5 and w["end_h"] > uh_s - 0.5:
+                skip = True
+                break
+        if skip:
+            continue
+
+        total = w["total_score"]
+        if total >= 6:
+            quality = "Prime"
+        elif total >= 4:
+            quality = "Good"
+        else:
+            quality = "Fair"
+
+        selected.append({
+            "window": w["label"],
+            "reason": w["reason"],
+            "quality": quality,
+        })
+        used_hours.append((w["start_h"], w["end_h"]))
+        if len(selected) >= 3:
+            break
+
+    return selected
 
 
 def _cache_path(location_id: str = "") -> str:
