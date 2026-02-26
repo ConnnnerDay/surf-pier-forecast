@@ -339,6 +339,43 @@ h2 {
   padding: 1.25rem 1.5rem;
 }
 
+.solunar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.solunar-header h2 {
+  margin-bottom: 0;
+}
+
+.solunar-header .section-sub {
+  margin-bottom: 0;
+}
+
+.moon-phase-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.moon-icon {
+  display: block;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));
+}
+
+.moon-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
 .solunar-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -593,6 +630,63 @@ h2 {
   font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* ---------- Regulation info ---------- */
+
+.species-regs {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: #fafbfc;
+  border: 1px solid #e8ecef;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--sea-green);
+}
+
+.regs-header {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sea-green);
+  margin-bottom: 0.4rem;
+}
+
+.regs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.25rem 0.75rem;
+}
+
+.reg-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.reg-item--full {
+  grid-column: 1 / -1;
+}
+
+.reg-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sea-green);
+}
+
+.reg-value {
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.reg-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 /* ---------- Rig section ---------- */
@@ -952,6 +1046,26 @@ footer p {
 .error-message button:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
+}
+
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.error-change-location {
+  color: var(--ocean);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.error-change-location:hover {
+  border-bottom-color: var(--ocean);
 }
 
 /* ---------- Change location link ---------- */

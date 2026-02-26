@@ -45,6 +45,7 @@ from locations import (
     get_location,
     get_monthly_water_temps,
 )
+from regulations import lookup_regulation
 
 
 # Set up Flask app
@@ -5103,6 +5104,7 @@ def build_species_ranking(
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
     coast: str = "east",
+    state: str = "",
 ) -> List[Dict[str, Any]]:
     """Dynamically rank species based on conditions.
 
@@ -5110,6 +5112,9 @@ def build_species_ranking(
     wave height, and time of day.  Only species scoring above
     SPECIES_SCORE_THRESHOLD are included.  Each species gets an
     activity label: Hot, Active, or Possible.
+
+    If ``state`` is provided, regulation data (size/bag limits) is
+    attached to each species entry.
     """
     scored = []
     for sp in SPECIES_DB:
@@ -5136,7 +5141,7 @@ def build_species_ranking(
         else:
             activity = "Possible"
 
-        result.append({
+        entry: Dict[str, Any] = {
             "rank": rank,
             "name": sp["name"],
             "score": round(score, 1),
@@ -5146,7 +5151,15 @@ def build_species_ranking(
             "rig": sp["rig"],
             "hook_size": sp["hook_size"],
             "sinker": sp["sinker"],
-        })
+        }
+
+        # Attach regulation data if available
+        if state:
+            reg = lookup_regulation(sp["name"], state)
+            if reg:
+                entry["regulation"] = reg
+
+        result.append(entry)
 
     return result
 
@@ -5546,6 +5559,7 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
     coast = "west" if conditions_region.startswith("pacific") else "east"
 
+    loc_state = (location or {}).get("state", "")
     species = build_species_ranking(
         month, water_temp,
         wind_dir=wind_dir,
@@ -5553,6 +5567,7 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         wave_range=wave_range,
         hour=now.hour,
         coast=coast,
+        state=loc_state,
     )
     rig_recommendations = build_rig_recommendations(species)
 

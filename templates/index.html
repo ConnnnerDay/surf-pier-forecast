@@ -125,8 +125,41 @@
         <!-- Solunar fishing times -->
         {% if forecast.solunar %}
         <section class="solunar-section">
-            <h2>Best Fishing Times</h2>
-            <p class="section-sub">Solunar forecast &mdash; {{ forecast.solunar.moon_phase }} &mdash; {{ forecast.solunar.rating }} day</p>
+            <div class="solunar-header">
+                <div>
+                    <h2>Best Fishing Times</h2>
+                    <p class="section-sub">Solunar forecast &mdash; {{ forecast.solunar.rating }} day</p>
+                </div>
+                <div class="moon-phase-badge">
+                    <svg class="moon-icon" viewBox="0 0 40 40" width="36" height="36">
+                        {% set phase = forecast.solunar.moon_phase %}
+                        {% if 'New' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#2c3e50" stroke="#6b7b8d" stroke-width="1"/>
+                        {% elif 'Full' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#fef9e7" stroke="#d4920b" stroke-width="1"/>
+                        {% elif 'Waxing Crescent' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#2c3e50" stroke="#6b7b8d" stroke-width="1"/>
+                        <path d="M20,3 A17,17 0 0,1 20,37 A10,17 0 0,0 20,3" fill="#fef9e7"/>
+                        {% elif 'First Quarter' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#2c3e50" stroke="#6b7b8d" stroke-width="1"/>
+                        <path d="M20,3 A17,17 0 0,1 20,37 A0,17 0 0,0 20,3" fill="#fef9e7"/>
+                        {% elif 'Waxing Gibbous' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#fef9e7" stroke="#d4920b" stroke-width="1"/>
+                        <path d="M20,3 A17,17 0 0,0 20,37 A10,17 0 0,1 20,3" fill="#2c3e50"/>
+                        {% elif 'Waning Gibbous' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#fef9e7" stroke="#d4920b" stroke-width="1"/>
+                        <path d="M20,3 A17,17 0 0,1 20,37 A10,17 0 0,0 20,3" fill="#2c3e50"/>
+                        {% elif 'Last Quarter' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#2c3e50" stroke="#6b7b8d" stroke-width="1"/>
+                        <path d="M20,3 A17,17 0 0,0 20,37 A0,17 0 0,1 20,3" fill="#fef9e7"/>
+                        {% elif 'Waning Crescent' in phase %}
+                        <circle cx="20" cy="20" r="17" fill="#2c3e50" stroke="#6b7b8d" stroke-width="1"/>
+                        <path d="M20,3 A17,17 0 0,0 20,37 A10,17 0 0,1 20,3" fill="#fef9e7"/>
+                        {% endif %}
+                    </svg>
+                    <span class="moon-label">{{ forecast.solunar.moon_phase }}</span>
+                </div>
+            </div>
 
             <div class="solunar-grid">
                 <!-- Major periods -->
@@ -204,6 +237,41 @@
                                 <span class="meta-value">{{ sp.sinker }}</span>
                             </div>
                         </div>
+                        {% if sp.regulation %}
+                        <div class="species-regs">
+                            <div class="regs-header">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                                <span>Regulations</span>
+                            </div>
+                            <div class="regs-grid">
+                                {% if sp.regulation.min_size %}
+                                <div class="reg-item">
+                                    <span class="reg-label">Min Size</span>
+                                    <span class="reg-value">{{ sp.regulation.min_size }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sp.regulation.bag_limit %}
+                                <div class="reg-item">
+                                    <span class="reg-label">Bag Limit</span>
+                                    <span class="reg-value">{{ sp.regulation.bag_limit }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sp.regulation.season %}
+                                <div class="reg-item">
+                                    <span class="reg-label">Season</span>
+                                    <span class="reg-value">{{ sp.regulation.season }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sp.regulation.notes %}
+                                <div class="reg-item reg-item--full">
+                                    <span class="reg-value reg-note">{{ sp.regulation.notes }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
