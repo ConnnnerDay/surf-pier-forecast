@@ -5809,6 +5809,27 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         if chart_json:
             forecast["tide_chart"] = chart_json
 
+        # Determine current tide state
+        current_hour = now.hour + now.minute / 60
+        tide_state = ""
+        for i in range(len(tides) - 1):
+            t_now = tides[i].get("hour", 0)
+            t_next = tides[i + 1].get("hour", 24)
+            if t_now <= current_hour < t_next:
+                if tides[i + 1]["type"] == "High":
+                    tide_state = "Rising"
+                else:
+                    tide_state = "Falling"
+                break
+        if not tide_state and tides:
+            # Before first tide or after last
+            if current_hour < tides[0].get("hour", 12):
+                tide_state = "Falling" if tides[0]["type"] == "Low" else "Rising"
+            else:
+                tide_state = "Falling" if tides[-1]["type"] == "High" else "Rising"
+        if tide_state:
+            forecast["tide_state"] = tide_state
+
     # Solunar fishing times
     try:
         solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)

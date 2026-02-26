@@ -14,6 +14,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.svg') }}">
     <meta name="description" content="Surf and pier fishing forecast with real-time conditions, species rankings, tide charts, and solunar times for {{ forecast.location_name or 'your location' }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
+    <meta property="og:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}{% if forecast.species %} | Top: {{ forecast.species[0].name }}{% endif %}">
+    <meta property="og:image" content="{{ url_for('static', filename='icons/icon-192.svg', _external=True) }}">
+    {% if share_id %}<meta property="og:url" content="{{ url_for('shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
+    <meta name="twitter:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}">
 </head>
 <body>
     <header>
@@ -144,6 +154,20 @@
                     <span class="stat-label">Sun</span>
                     <span class="stat-value">{{ forecast.conditions.sunrise_sunset }}</span>
                     <span class="stat-detail">sunrise / sunset</span>
+                </div>
+                {% endif %}
+                {% if forecast.tide_state %}
+                <div class="stat-card">
+                    <span class="stat-label">Tide</span>
+                    <span class="stat-value">
+                        {% if forecast.tide_state == 'Rising' %}
+                        <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><path d="M10 4l5 6H5z" fill="var(--ocean)"/></svg>
+                        {% else %}
+                        <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><path d="M10 16l5-6H5z" fill="var(--amber)"/></svg>
+                        {% endif %}
+                        {{ forecast.tide_state }}
+                    </span>
+                    <span class="stat-detail">current tidal flow</span>
                 </div>
                 {% endif %}
             </div>
