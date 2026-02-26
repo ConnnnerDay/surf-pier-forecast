@@ -5534,6 +5534,7 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
 
     conditions = {
         "wind": wind_str,
+        "wind_dir": wind_dir or "",
         "waves": format_range(wave_range, "ft"),
         "verdict": verdict,
         "water_temp_f": round(water_temp, 1),

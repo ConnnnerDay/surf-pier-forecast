@@ -49,11 +49,45 @@
                     <span class="stat-value">{{ forecast.conditions.water_temp_f }}&deg;F</span>
                     <span class="stat-detail">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}</span>
                 </div>
+                {% if forecast.conditions.wind_dir %}
+                <div class="stat-card stat-card--compass">
+                    <span class="stat-label">Direction</span>
+                    <div class="wind-compass">
+                        <svg class="compass-svg" viewBox="0 0 80 80" width="56" height="56">
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="#d1d9e0" stroke-width="1.5"/>
+                            <text x="40" y="10" text-anchor="middle" font-size="7" font-weight="600" fill="#6b7b8d">N</text>
+                            <text x="72" y="43" text-anchor="middle" font-size="7" font-weight="600" fill="#6b7b8d">E</text>
+                            <text x="40" y="76" text-anchor="middle" font-size="7" font-weight="600" fill="#6b7b8d">S</text>
+                            <text x="8" y="43" text-anchor="middle" font-size="7" font-weight="600" fill="#6b7b8d">W</text>
+                            {% set dir_degrees = {
+                                'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5,
+                                'E': 90, 'ESE': 112.5, 'SE': 135, 'SSE': 157.5,
+                                'S': 180, 'SSW': 202.5, 'SW': 225, 'WSW': 247.5,
+                                'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5
+                            } %}
+                            <g transform="rotate({{ dir_degrees.get(forecast.conditions.wind_dir, 0) }}, 40, 40)">
+                                <polygon points="40,12 35,40 40,36 45,40" fill="#e05830" stroke="#c0392b" stroke-width="0.5"/>
+                                <polygon points="40,68 35,40 40,44 45,40" fill="#d1d9e0" stroke="#b0bec5" stroke-width="0.5"/>
+                            </g>
+                            <circle cx="40" cy="40" r="3" fill="#e05830"/>
+                        </svg>
+                    </div>
+                    <span class="stat-detail">{{ forecast.conditions.wind_dir }} wind</span>
+                </div>
+                {% else %}
                 <div class="stat-card">
                     <span class="stat-label">Sun</span>
                     <span class="stat-value">{{ forecast.conditions.sunrise_sunset }}</span>
                     <span class="stat-detail">sunrise / sunset</span>
                 </div>
+                {% endif %}
+                {% if forecast.conditions.wind_dir %}
+                <div class="stat-card">
+                    <span class="stat-label">Sun</span>
+                    <span class="stat-value">{{ forecast.conditions.sunrise_sunset }}</span>
+                    <span class="stat-detail">sunrise / sunset</span>
+                </div>
+                {% endif %}
             </div>
         </section>
 
