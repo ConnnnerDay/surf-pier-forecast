@@ -5385,6 +5385,115 @@ def compute_solunar_times(
     }
 
 
+# ---------------------------------------------------------------------------
+# Multi-day forecast outlook
+# ---------------------------------------------------------------------------
+
+def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
+    """Fetch the NWS 7-day forecast for a lat/lng.
+
+    Returns a list of period dicts with name, detailedForecast, temperature, etc.
+    Returns an empty list on failure.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    try:
+        pts = requests.get(
+            f"https://api.weather.gov/points/{lat},{lng}",
+            headers=headers, timeout=10,
+        )
+        pts.raise_for_status()
+        forecast_url = pts.json()["properties"]["forecast"]
+        fc = requests.get(forecast_url, headers=headers, timeout=10)
+        fc.raise_for_status()
+        return fc.json()["properties"]["periods"]
+    except Exception:
+        return []
+
+
+def build_multiday_outlook(
+    now: datetime,
+    location: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Build a 3-day outlook with conditions and fishability.
+
+    Each day includes: day_label, wind summary, wave estimate,
+    water temp estimate, and a fishability verdict.
+    """
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+
+    # Try NWS extended forecast for wind data
+    nws_periods = _fetch_nws_extended(loc_lat, loc_lng)
+
+    days = []
+    for offset_days in range(1, 4):  # tomorrow, day after, day 3
+        future = now + timedelta(days=offset_days)
+        future_month = future.month
+
+        day_label = future.strftime("%A")  # e.g., "Thursday"
+        date_label = future.strftime("%b %d")  # e.g., "Feb 27"
+
+        # --- Wind from NWS or fallback ---
+        wind_str = ""
+        wind_range = None
+        if nws_periods:
+            for p in nws_periods:
+                if p.get("isDaytime") and p.get("name", "").lower().startswith(day_label[:3].lower()):
+                    ws = p.get("windSpeed", "")
+                    wd = p.get("windDirection", "")
+                    m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
+                    if m:
+                        low_mph = float(m.group(1))
+                        high_mph = float(m.group(2)) if m.group(2) else low_mph
+                        low_kt = round(low_mph * _MPH_TO_KNOTS)
+                        high_kt = round(high_mph * _MPH_TO_KNOTS)
+                        wind_range = (low_kt, high_kt)
+                        wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
+                    break
+
+        if not wind_str:
+            # Use regional fallback
+            fb_wind, fb_waves, fb_dir = get_fallback_conditions(
+                location or {}, future_month,
+            ) if location else (
+                MONTHLY_AVG_WIND[future_month],
+                MONTHLY_AVG_WAVES[future_month],
+                MONTHLY_AVG_WIND_DIR[future_month],
+            )
+            if isinstance(fb_wind, tuple):
+                wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
+                wind_range = fb_wind
+
+        # --- Wave estimate ---
+        wave_str = ""
+        if location:
+            fb_wind_r, fb_wave_r, _ = get_fallback_conditions(location, future_month)
+            wave_str = f"{int(fb_wave_r[0])}-{int(fb_wave_r[1])} ft"
+            wave_range = fb_wave_r
+        else:
+            wave_avg = MONTHLY_AVG_WAVES.get(future_month, (1, 3))
+            wave_str = f"{int(wave_avg[0])}-{int(wave_avg[1])} ft"
+            wave_range = wave_avg
+
+        # --- Fishability verdict ---
+        verdict = classify_conditions(wind_range, wave_range) if wind_range and wave_range else "Unknown"
+
+        days.append({
+            "day": day_label,
+            "date": date_label,
+            "wind": wind_str,
+            "waves": wave_str,
+            "verdict": verdict,
+        })
+
+    return days
+
+
 def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
@@ -5470,6 +5579,14 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     try:
         solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)
         forecast["solunar"] = solunar
+    except Exception:
+        pass
+
+    # Multi-day outlook (3 days)
+    try:
+        outlook = build_multiday_outlook(now, location)
+        if outlook:
+            forecast["outlook"] = outlook
     except Exception:
         pass
 

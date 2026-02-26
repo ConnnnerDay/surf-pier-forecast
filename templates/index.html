@@ -225,6 +225,37 @@
             </div>
         </section>
 
+        <!-- 3-Day Outlook -->
+        {% if forecast.outlook %}
+        <section class="outlook-section">
+            <h2>3-Day Outlook</h2>
+            <p class="section-sub">Upcoming conditions forecast</p>
+            <div class="outlook-grid">
+                {% for day in forecast.outlook %}
+                <div class="outlook-card">
+                    <div class="outlook-header">
+                        <span class="outlook-day">{{ day.day }}</span>
+                        <span class="outlook-date">{{ day.date }}</span>
+                    </div>
+                    <div class="outlook-verdict verdict-badge verdict-{{ day.verdict|lower|replace(' ', '-') }}">
+                        {{ day.verdict }}
+                    </div>
+                    <div class="outlook-details">
+                        <div class="outlook-detail">
+                            <span class="outlook-detail-label">Wind</span>
+                            <span class="outlook-detail-value">{{ day.wind }}</span>
+                        </div>
+                        <div class="outlook-detail">
+                            <span class="outlook-detail-label">Waves</span>
+                            <span class="outlook-detail-value">{{ day.waves }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
         <!-- Refresh -->
         <section class="refresh">
             <form method="post" action="{{ url_for('api_refresh') }}">

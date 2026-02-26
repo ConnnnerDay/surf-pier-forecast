@@ -746,6 +746,111 @@ h2 {
   line-height: 1.45;
 }
 
+/* ---------- 3-Day Outlook ---------- */
+
+.outlook-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.outlook-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.outlook-card {
+  background: #fcfcfc;
+  border: 1px solid #e8ecef;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.outlook-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.outlook-day {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.outlook-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.outlook-card .outlook-verdict {
+  font-size: 0.75rem;
+  padding: 0.3rem 1rem;
+}
+
+.outlook-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+}
+
+.outlook-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.outlook-detail-label {
+  font-weight: 600;
+  color: var(--ocean);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.outlook-detail-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .outlook-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .outlook-card {
+    flex-direction: row;
+    text-align: left;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .outlook-header {
+    align-items: flex-start;
+    min-width: 80px;
+  }
+
+  .outlook-details {
+    flex-direction: row;
+    gap: 1rem;
+    width: auto;
+  }
+
+  .outlook-detail {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
 /* ---------- Refresh ---------- */
 
 .refresh {
