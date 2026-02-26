@@ -228,6 +228,95 @@ h2 {
   margin-top: 0.15rem;
 }
 
+/* ---------- Tide section ---------- */
+
+.tide-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.tide-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.tide-point {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e8ecef;
+  background: #fcfcfc;
+  flex: 1 1 180px;
+  min-width: 180px;
+}
+
+.tide-point.tide-high {
+  border-left: 3px solid var(--ocean);
+}
+
+.tide-point.tide-low {
+  border-left: 3px solid var(--amber);
+}
+
+.tide-type-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.tide-high .tide-type-icon {
+  background: var(--ocean-light);
+  color: var(--ocean);
+}
+
+.tide-low .tide-type-icon {
+  background: #fef5e0;
+  color: var(--amber);
+}
+
+.tide-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.tide-type {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tide-high .tide-type {
+  color: var(--ocean);
+}
+
+.tide-low .tide-type {
+  color: var(--amber);
+}
+
+.tide-time {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tide-height {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* ---------- Species cards ---------- */
 
 .species-section {
@@ -687,6 +776,56 @@ footer p {
 
 /* ---------- Setup page ---------- */
 
+.setup-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: linear-gradient(135deg, var(--ocean-light), #d0eaf3);
+  border: 2px solid var(--ocean);
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+}
+
+.current-location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.current-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ocean);
+}
+
+.current-location-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.current-keep-btn {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  border-radius: 30px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.current-keep-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 .setup-section {
   background: var(--white);
   border-radius: var(--radius);
@@ -780,6 +919,27 @@ footer p {
   background: var(--ocean-light);
 }
 
+.location-card--active {
+  border-color: var(--sea-green);
+  background: #edf8f3;
+}
+
+.location-card--active::after {
+  content: "Current";
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sea-green);
+}
+
+.location-card--active {
+  position: relative;
+}
+
 .location-card-body h3 {
   margin: 0;
   font-size: 1rem;
@@ -853,6 +1013,13 @@ footer p {
   box-shadow: var(--shadow-sm);
 }
 
+.browse-item--active {
+  background: #d0f0dc;
+  border-color: var(--sea-green);
+  color: #155724;
+  font-weight: 600;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 640px) {
@@ -890,6 +1057,15 @@ footer p {
   }
 
   .rig-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-current {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .location-results {
     grid-template-columns: 1fr;
   }
 }
