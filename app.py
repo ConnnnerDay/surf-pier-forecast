@@ -4566,6 +4566,57 @@ def build_bait_ranking(
     return [b for _, b in scored_baits]
 
 
+# ---------------------------------------------------------------------------
+# Tide predictions (NOAA CO-OPS)
+# ---------------------------------------------------------------------------
+
+def fetch_tide_predictions(
+    station_id: str,
+    tz_name: str = "America/New_York",
+) -> List[Dict[str, str]]:
+    """Fetch today's tide predictions from NOAA CO-OPS.
+
+    Returns a list of dicts like:
+        [{"time": "6:32 AM", "type": "High", "height_ft": "5.2"}, ...]
+    Returns an empty list on any error.
+    """
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    today_str = now.strftime("%Y%m%d")
+    tomorrow_str = (now + timedelta(days=1)).strftime("%Y%m%d")
+    url = (
+        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+        f"?begin_date={today_str}&end_date={tomorrow_str}"
+        f"&station={station_id}"
+        "&product=predictions&datum=MLLW&units=english"
+        "&time_zone=lst_ldt&format=json&interval=hilo"
+    )
+    try:
+        resp = requests.get(url, timeout=12)
+        resp.raise_for_status()
+        data = resp.json()
+        predictions = data.get("predictions", [])
+        tides = []
+        for p in predictions:
+            raw_time = p.get("t", "")
+            height = p.get("v", "0")
+            tide_type = "High" if p.get("type") == "H" else "Low"
+            try:
+                dt = datetime.strptime(raw_time, "%Y-%m-%d %H:%M")
+                dt = dt.replace(tzinfo=tz)
+                time_str = dt.strftime("%-I:%M %p")
+            except Exception:
+                time_str = raw_time
+            tides.append({
+                "time": time_str,
+                "type": tide_type,
+                "height_ft": f"{float(height):.1f}",
+            })
+        return tides
+    except Exception:
+        return []
+
+
 def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
@@ -4635,6 +4686,13 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         "rig_recommendations": rig_recommendations,
         "bait_rankings": build_bait_ranking(species, month),
     }
+
+    # Tide predictions
+    coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    tides = fetch_tide_predictions(coops_id, tz_name)
+    if tides:
+        forecast["tides"] = tides
+
     return forecast
 
 
@@ -4709,10 +4767,12 @@ def _get_session_location() -> Optional[Dict[str, Any]]:
 @app.route("/setup")
 def setup() -> str:
     """Show the location setup page (zip code entry or browse)."""
+    current_loc = _get_session_location()
     return render_template(
         "setup.html",
         results=None,
         all_locations=all_locations_sorted(),
+        current_location=current_loc,
         error=None,
     )
 

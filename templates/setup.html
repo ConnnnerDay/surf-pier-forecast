@@ -18,6 +18,17 @@
     </header>
 
     <main>
+        <!-- Current location banner -->
+        {% if current_location %}
+        <section class="setup-current">
+            <div class="current-location-info">
+                <span class="current-label">Current location</span>
+                <h3>{{ current_location.name }}, {{ current_location.state }}</h3>
+            </div>
+            <a href="{{ url_for('index') }}" class="current-keep-btn">Back to Forecast</a>
+        </section>
+        {% endif %}
+
         <!-- Zip code search -->
         <section class="setup-section">
             <h2>Find Your Spot</h2>
@@ -26,7 +37,8 @@
             <form method="post" action="{{ url_for('setup_search') }}" class="zip-form">
                 <div class="zip-input-group">
                     <input type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
-                           value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required>
+                           value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required
+                           autofocus>
                     <button type="submit" class="zip-btn">Search</button>
                 </div>
             </form>
@@ -45,7 +57,7 @@
             <div class="location-results">
                 {% for loc in results %}
                 <form method="post" action="{{ url_for('setup_select', location_id=loc.id) }}" class="location-card-form">
-                    <button type="submit" class="location-card">
+                    <button type="submit" class="location-card{% if current_location and loc.id == current_location.id %} location-card--active{% endif %}">
                         <div class="location-card-body">
                             <h3>{{ loc.name }}</h3>
                             <span class="location-state">{{ loc.state }}</span>
@@ -61,7 +73,7 @@
         <!-- Browse all -->
         <section class="setup-section">
             <h2>Or Browse All Locations</h2>
-            <p class="section-sub">{{ all_locations|length }} coastal fishing areas available</p>
+            <p class="section-sub">{{ all_locations|length }} coastal fishing areas across the US</p>
 
             <div class="location-browse">
                 {% set ns = namespace(current_state='') %}
@@ -75,7 +87,7 @@
                             <h3 class="state-label">{{ loc.state }}</h3>
                     {% endif %}
                     <form method="post" action="{{ url_for('setup_select', location_id=loc.id) }}" class="browse-item-form">
-                        <button type="submit" class="browse-item">{{ loc.name }}</button>
+                        <button type="submit" class="browse-item{% if current_location and loc.id == current_location.id %} browse-item--active{% endif %}">{{ loc.name }}</button>
                     </form>
                 {% endfor %}
                 {% if ns.current_state != '' %}
@@ -86,7 +98,7 @@
     </main>
 
     <footer>
-        <p>Surf &amp; Pier Fishing Outlook</p>
+        <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
 </body>
 </html>
