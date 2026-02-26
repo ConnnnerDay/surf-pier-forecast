@@ -358,7 +358,71 @@
         </section>
         {% endif %}
 
-        <!-- Refresh -->
+        <!-- Species Availability Calendar -->
+        {% if forecast.calendar %}
+        <section class="calendar-section">
+            <h2>Species Calendar</h2>
+            <p class="section-sub">Monthly availability at {{ forecast.location_name or 'this location' }}</p>
+            <div class="calendar-table-wrap">
+                <table class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th class="cal-species-col">Species</th>
+                            {% for m in ['J','F','M','A','M','J','J','A','S','O','N','D'] %}
+                            <th class="cal-month-col">{{ m }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sp in forecast.calendar %}
+                        <tr>
+                            <td class="cal-species-name">{{ sp.name }}</td>
+                            {% for mo in sp.months %}
+                            <td>
+                                {% if mo.level == 'peak' %}
+                                <span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak season"></span>
+                                {% elif mo.level == 'good' %}
+                                <span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good season"></span>
+                                {% else %}
+                                <span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off season"></span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="calendar-legend">
+                <span class="cal-legend-item"><span class="cal-dot cal-dot--peak"></span> Peak</span>
+                <span class="cal-legend-item"><span class="cal-dot cal-dot--good"></span> Good</span>
+                <span class="cal-legend-item"><span class="cal-dot cal-dot--off"></span> Off season</span>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Share & Refresh -->
+        <section class="share-section">
+            <h2>Share This Forecast</h2>
+            <div class="share-buttons">
+                <button class="share-btn share-btn--link" onclick="shareLink()" title="Copy shareable link">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                    <span>Copy Link</span>
+                </button>
+                <button class="share-btn share-btn--text" onclick="shareText()" title="Copy forecast summary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M7 7h10M7 12h10M7 17h6"/>
+                    </svg>
+                    <span>Copy Summary</span>
+                </button>
+            </div>
+            <div id="share-toast" class="share-toast" style="display:none;">Copied!</div>
+        </section>
+
         <section class="refresh">
             <form method="post" action="{{ url_for('api_refresh') }}">
                 <button type="submit">Refresh Forecast</button>
@@ -370,5 +434,46 @@
     <footer>
         <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; {{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
     </footer>
+
+    <script>
+    function showToast(msg) {
+        var t = document.getElementById('share-toast');
+        t.textContent = msg;
+        t.style.display = 'block';
+        setTimeout(function() { t.style.display = 'none'; }, 2200);
+    }
+
+    function shareLink() {
+        var shareId = {{ share_id|tojson }};
+        var url = window.location.origin + '/f/' + shareId;
+        if (navigator.share) {
+            navigator.share({ title: 'Fishing Forecast', url: url }).catch(function(){});
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(function() {
+                showToast('Link copied!');
+            });
+        } else {
+            prompt('Copy this link:', url);
+        }
+    }
+
+    function shareText() {
+        fetch('{{ url_for("api_share_text") }}')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.text) {
+                    var url = window.location.origin + '/f/' + data.location_id;
+                    var full = data.text + '\n\n' + url;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(full).then(function() {
+                            showToast('Summary copied!');
+                        });
+                    } else {
+                        prompt('Copy this summary:', full);
+                    }
+                }
+            });
+    }
+    </script>
 </body>
 </html>

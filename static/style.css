@@ -958,6 +958,185 @@ h2 {
   }
 }
 
+/* ---------- Species Calendar ---------- */
+
+.calendar-section {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1rem 1.5rem;
+}
+
+.calendar-section h2 {
+  text-align: center;
+}
+
+.calendar-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.75rem 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  min-width: 480px;
+}
+
+.calendar-table thead {
+  background: var(--bg-subtle);
+}
+
+.calendar-table th {
+  padding: 0.45rem 0.25rem;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.cal-species-col {
+  text-align: left !important;
+  padding-left: 0.75rem !important;
+  width: 35%;
+}
+
+.calendar-table td {
+  padding: 0.4rem 0.25rem;
+  text-align: center;
+  border-top: 1px solid var(--bg-subtle);
+}
+
+.cal-species-name {
+  text-align: left !important;
+  padding-left: 0.75rem !important;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.cal-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.cal-dot--peak {
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  box-shadow: 0 1px 3px rgba(14, 95, 120, 0.35);
+}
+
+.cal-dot--good {
+  background: var(--sea-green);
+  opacity: 0.7;
+}
+
+.cal-dot--off {
+  background: var(--bg-subtle);
+  opacity: 0.6;
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.cal-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.cal-legend-item .cal-dot {
+  width: 10px;
+  height: 10px;
+}
+
+@media (max-width: 500px) {
+  .cal-species-name {
+    max-width: 100px;
+    font-size: 0.68rem;
+  }
+  .cal-dot {
+    width: 11px;
+    height: 11px;
+  }
+}
+
+/* ---------- Share ---------- */
+
+.share-section {
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.share-section h2 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 24px;
+  cursor: pointer;
+  border: 2px solid var(--ocean);
+  background: var(--white);
+  color: var(--ocean);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  font-family: inherit;
+}
+
+.share-btn:hover {
+  background: var(--ocean);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+.share-btn:active {
+  transform: translateY(0);
+}
+
+.share-toast {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sea-green);
+  animation: toast-fade 2.2s ease forwards;
+}
+
+@keyframes toast-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* ---------- Refresh ---------- */
 
 .refresh {

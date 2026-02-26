@@ -5507,6 +5507,70 @@ def build_multiday_outlook(
     return days
 
 
+# -- Species availability calendar ------------------------------------------
+
+_MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def build_species_calendar(
+    species_list: List[Dict[str, Any]],
+    location: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Build a 12-month availability calendar for the top ranked species.
+
+    For each species in *species_list* (already scored/ranked), looks up
+    peak_months and good_months from SPECIES_DB and returns a list of dicts:
+
+        {
+            "name": "Red drum",
+            "months": [
+                {"abbr": "Jan", "level": "good"},   # "peak", "good", or ""
+                ...
+            ]
+        }
+
+    Temperature feasibility is also considered: months where the regional
+    average water temp falls outside the species' temp range are marked empty.
+    """
+    # Build a name → SPECIES_DB entry lookup
+    db_map: Dict[str, Dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
+
+    # Get regional water temps (12 months) for temp filtering
+    monthly_temps: Dict[int, float] = {}
+    if location:
+        monthly_temps = get_monthly_water_temps(location)
+
+    calendar: List[Dict[str, Any]] = []
+    for ranked_sp in species_list[:10]:
+        sp = db_map.get(ranked_sp["name"])
+        if not sp:
+            continue
+        months = []
+        for m in range(1, 13):
+            # Check if water temp makes this species viable this month
+            if monthly_temps:
+                t = monthly_temps.get(m, 65)
+                if t < sp["temp_min"] - 5 or t > sp["temp_max"] + 5:
+                    months.append({"abbr": _MONTH_ABBR[m - 1], "level": ""})
+                    continue
+
+            if m in sp.get("peak_months", []):
+                level = "peak"
+            elif m in sp.get("good_months", []):
+                level = "good"
+            else:
+                level = ""
+            months.append({"abbr": _MONTH_ABBR[m - 1], "level": level})
+
+        calendar.append({
+            "name": ranked_sp["name"],
+            "months": months,
+        })
+
+    return calendar
+
+
 def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
@@ -5605,6 +5669,9 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
             forecast["outlook"] = outlook
     except Exception:
         pass
+
+    # Species availability calendar
+    forecast["calendar"] = build_species_calendar(species, location)
 
     return forecast
 
@@ -5782,7 +5849,8 @@ def index() -> str:
     # Attach human-readable age for the template
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
 
-    return render_template("index.html", forecast=forecast, cached=cached_flag)
+    return render_template("index.html", forecast=forecast, cached=cached_flag,
+                           share_id=loc_id)
 
 
 @app.route("/api/forecast")
@@ -5809,6 +5877,101 @@ def api_refresh() -> Any:
     except Exception as exc:
         print(f"Error refreshing forecast: {exc}")
         return redirect(url_for("index", cached="true"))
+
+
+# -- Shareable forecast route -----------------------------------------------
+
+@app.route("/f/<location_id>")
+def shared_forecast(location_id: str) -> str:
+    """View a forecast for a specific location via shareable link.
+
+    This route doesn't require a session — anyone with the link can view the
+    forecast.  It also sets the viewer's session to this location so they can
+    continue browsing.
+    """
+    location = get_location(location_id)
+    if location is None:
+        return render_template(
+            "error.html",
+            message="Location not found. It may have been removed.",
+        ), 404
+
+    # Set the viewer's session to this location
+    session["location_id"] = location_id
+
+    loc_id = location["id"]
+    forecast = load_cached_forecast(loc_id)
+
+    needs_refresh = forecast is None
+    if forecast and not needs_refresh:
+        age = _forecast_age_minutes(forecast)
+        if age is not None and age > CACHE_MAX_AGE_HOURS * 60:
+            needs_refresh = True
+
+    if needs_refresh:
+        try:
+            forecast = generate_forecast(location)
+            save_forecast(forecast, loc_id)
+        except Exception:
+            if forecast is None:
+                return render_template(
+                    "error.html",
+                    message="Could not load forecast for this location.",
+                ), 500
+
+    forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
+
+    return render_template("index.html", forecast=forecast, cached=None,
+                           share_id=location_id)
+
+
+def build_share_text(forecast: Dict[str, Any]) -> str:
+    """Build a plain-text summary of the forecast for sharing."""
+    lines = []
+    loc = forecast.get("location_name", "")
+    if loc:
+        lines.append(f"Fishing Forecast — {loc}")
+    else:
+        lines.append("Fishing Forecast")
+
+    c = forecast.get("conditions", {})
+    verdict = c.get("verdict", "")
+    if verdict:
+        lines.append(f"Verdict: {verdict}")
+
+    wind = c.get("wind", "")
+    waves = c.get("waves", "")
+    temp = c.get("water_temp_f", "")
+    if wind:
+        lines.append(f"Wind: {wind}")
+    if waves:
+        lines.append(f"Waves: {waves}")
+    if temp:
+        lines.append(f"Water: {temp}°F")
+
+    species = forecast.get("species", [])
+    if species:
+        top = species[:5]
+        lines.append("")
+        lines.append("Top Species:")
+        for sp in top:
+            activity = sp.get("activity", "")
+            tag = f" [{activity}]" if activity else ""
+            lines.append(f"  • {sp['name']}{tag}")
+
+    return "\n".join(lines)
+
+
+@app.route("/api/share-text")
+def api_share_text() -> Any:
+    """Return a plain-text forecast summary for copy/paste sharing."""
+    location = _get_session_location()
+    loc_id = location["id"] if location else ""
+    forecast = load_cached_forecast(loc_id)
+    if not forecast:
+        return jsonify({"error": "No forecast available"}), 503
+    text = build_share_text(forecast)
+    return jsonify({"text": text, "location_id": loc_id})
 
 
 if __name__ == "__main__":
