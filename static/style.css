@@ -317,6 +317,85 @@ h2 {
   white-space: nowrap;
 }
 
+/* ---------- Solunar section ---------- */
+
+.solunar-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.solunar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.solunar-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e8ecef;
+  background: #fcfcfc;
+}
+
+.solunar-major {
+  border-left: 3px solid var(--coral);
+}
+
+.solunar-minor {
+  border-left: 3px solid var(--ocean);
+}
+
+.solunar-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.solunar-major .solunar-icon {
+  background: #fef0ec;
+  color: var(--coral);
+}
+
+.solunar-minor .solunar-icon {
+  background: var(--ocean-light);
+  color: var(--ocean);
+}
+
+.solunar-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.solunar-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.solunar-major .solunar-label {
+  color: var(--coral);
+}
+
+.solunar-minor .solunar-label {
+  color: var(--ocean);
+}
+
+.solunar-times {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 /* ---------- Species cards ---------- */
 
 .species-section {

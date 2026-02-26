@@ -3628,6 +3628,596 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "explanation_cold": "Longnose gar are sluggish in deep holes during cold months.",
         "explanation_warm": "Longnose gar enter brackish tidal rivers near the coast; these armored, prehistoric fish have needle-like snouts and are tough to hook conventionally.",
     },
+    # ═══════════════════════════════════════════════════════════════════════
+    # PACIFIC COAST SPECIES
+    # ═══════════════════════════════════════════════════════════════════════
+    # --- Surfperch ---
+    {
+        "name": "Barred surfperch",
+        "temp_min": 48, "temp_max": 68, "temp_ideal_low": 54, "temp_ideal_high": 64,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 5, 10],
+        "bait": "Sand crabs (mole crabs); bloodworms; Gulp! sandworms; small pieces of mussel",
+        "rig": "Carolina rig with light leader; sliding sinker rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Barred surfperch are actively spawning and feeding aggressively in the winter surf zone -- this is peak season on the Pacific Coast.",
+        "explanation_warm": "Barred surfperch are present but less concentrated; they move to deeper water as surf warms.",
+    },
+    {
+        "name": "Redtail surfperch",
+        "temp_min": 46, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [10, 11, 12, 1, 2, 3],
+        "good_months": [4, 5, 9],
+        "bait": "Sand crabs; sand shrimp; pile worms; Gulp! sandworms",
+        "rig": "Carolina rig or double dropper loop rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-3 oz pyramid sinker",
+        "explanation_cold": "Redtail surfperch school up in the surf zone during winter and early spring, feeding heavily on sand crabs in the wash.",
+        "explanation_warm": "Redtail surfperch are less common in the surf during warmer months; try rocky areas and jetties.",
+    },
+    {
+        "name": "Calico surfperch",
+        "temp_min": 48, "temp_max": 64, "temp_ideal_low": 52, "temp_ideal_high": 60,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 10],
+        "bait": "Sand crabs; bloodworms; small pieces of shrimp",
+        "rig": "Carolina rig with light line",
+        "hook_size": "#8-#4 baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Calico surfperch are abundant in the Northern California and Oregon surf during winter months.",
+        "explanation_warm": "Calico surfperch move to slightly deeper water but can still be found near jetties.",
+    },
+    {
+        "name": "Rubberlip seaperch",
+        "temp_min": 50, "temp_max": 66, "temp_ideal_low": 54, "temp_ideal_high": 62,
+        "peak_months": [3, 4, 5, 6],
+        "good_months": [2, 7, 8],
+        "bait": "Pile worms; mussels; small pieces of shrimp; sand crabs",
+        "rig": "Light Carolina rig; hi-lo rig around structure",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-2 oz egg or bank sinker",
+        "explanation_cold": "Rubberlip seaperch hold near rocky structure and pilings during winter.",
+        "explanation_warm": "Rubberlip seaperch feed actively around piers, jetties, and rocky shorelines; they are one of the largest surfperch species.",
+    },
+    # --- California Halibut & Flatfish ---
+    {
+        "name": "California halibut",
+        "temp_min": 52, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 68,
+        "peak_months": [3, 4, 5, 6, 7],
+        "good_months": [8, 9, 10],
+        "bait": "Live anchovy; live smelt; squid strips; Gulp! grubs; swim baits",
+        "rig": "Sliding sinker rig with fluorocarbon leader; Carolina rig; jig head",
+        "hook_size": "#2-2/0 circle or octopus hook",
+        "sinker": "1-3 oz sliding egg or banana sinker",
+        "explanation_cold": "California halibut are in deeper water during cold months and less accessible from shore.",
+        "explanation_warm": "California halibut move into shallow sandy areas near piers, jetties, and in the surf zone to ambush baitfish; cast parallel to shore and retrieve slowly along the bottom.",
+    },
+    {
+        "name": "Starry flounder",
+        "temp_min": 44, "temp_max": 64, "temp_ideal_low": 48, "temp_ideal_high": 58,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 10],
+        "bait": "Pile worms; sand shrimp; clam necks; cut anchovy",
+        "rig": "Sliding sinker rig; spreader bar",
+        "hook_size": "#4-1/0 baitholder",
+        "sinker": "1-3 oz pyramid sinker",
+        "explanation_cold": "Starry flounder move into bays and estuaries during winter and are a popular pier catch from NorCal through Washington.",
+        "explanation_warm": "Starry flounder retreat to deeper, cooler water during summer months.",
+    },
+    # --- Rockfish (Sebastes) ---
+    {
+        "name": "Lingcod",
+        "temp_min": 44, "temp_max": 62, "temp_ideal_low": 48, "temp_ideal_high": 56,
+        "peak_months": [10, 11, 12, 1, 2],
+        "good_months": [3, 9],
+        "bait": "Live bait (smelt, anchovy); large swimbaits; jigs tipped with squid",
+        "rig": "Heavy jig head or dropper loop rig with large swimbait",
+        "hook_size": "3/0-6/0 circle or octopus hook",
+        "sinker": "4-8 oz depending on current",
+        "explanation_cold": "Lingcod move into shallower rocky reefs during fall and winter to spawn; they are aggressive ambush predators accessible from jetties and rocky points.",
+        "explanation_warm": "Lingcod retreat to deeper water offshore during warm months; less accessible from shore.",
+    },
+    {
+        "name": "Vermilion rockfish",
+        "temp_min": 48, "temp_max": 64, "temp_ideal_low": 52, "temp_ideal_high": 60,
+        "peak_months": [4, 5, 6, 7, 8, 9],
+        "good_months": [3, 10],
+        "bait": "Squid strips; cut anchovy; shrimp; Gulp! baits",
+        "rig": "Hi-lo rig; dropper loop rig; shrimp fly rigs",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "4-8 oz bank or cannon ball sinker",
+        "explanation_cold": "Vermilion rockfish are deeper and less accessible in cold months.",
+        "explanation_warm": "Vermilion rockfish (red snapper of the Pacific) are found around rocky structure; they're a prized catch from deepwater piers and jetties.",
+    },
+    {
+        "name": "Blue rockfish",
+        "temp_min": 48, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10, 11],
+        "bait": "Small pieces of squid; cut anchovy; shrimp; Sabiki rig (artificial)",
+        "rig": "Hi-lo rig; shrimp fly rigs; small jigs",
+        "hook_size": "#6-#1 octopus hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Blue rockfish hold deep during winter but can be caught from deep piers.",
+        "explanation_warm": "Blue rockfish are common around kelp beds, piers, and rocky structures in NorCal and Oregon; they school up and can be caught readily on small baits.",
+    },
+    {
+        "name": "Copper rockfish",
+        "temp_min": 46, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Squid strips; shrimp; cut anchovy; live bait",
+        "rig": "Hi-lo rig; dropper loop rig",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "4-8 oz bank sinker",
+        "explanation_cold": "Copper rockfish hold near rocky structure year-round but are less active in cold months.",
+        "explanation_warm": "Copper rockfish are solitary ambush predators found around kelp and rocky reefs; they're accessible from deep piers and jetties.",
+    },
+    {
+        "name": "Grass rockfish",
+        "temp_min": 48, "temp_max": 64, "temp_ideal_low": 52, "temp_ideal_high": 60,
+        "peak_months": [4, 5, 6, 7, 8, 9],
+        "good_months": [3, 10, 11],
+        "bait": "Pile worms; shrimp; cut squid; mussels",
+        "rig": "Sliding sinker rig near rocks; hi-lo rig",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Grass rockfish hunker in rocky crevices during winter.",
+        "explanation_warm": "Grass rockfish inhabit shallow rocky areas and tide pools; they are common from piers and jetties along central and northern California.",
+    },
+    {
+        "name": "Cabezon",
+        "temp_min": 46, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [10, 11, 12, 1, 2, 3],
+        "good_months": [4, 9],
+        "bait": "Shrimp; squid; mussels; cut fish; pile worms",
+        "rig": "Sliding sinker rig near rocks; dropper loop",
+        "hook_size": "1/0-4/0 octopus hook",
+        "sinker": "2-6 oz bank sinker",
+        "explanation_cold": "Cabezon move into shallower water during fall and winter to spawn; they're one of the largest sculpin family fish on the Pacific Coast and are aggressive biters.",
+        "explanation_warm": "Cabezon are present but in deeper water; focus on rocky jetties and deepwater piers.",
+    },
+    # --- Pacific Mackerel / Pelagics ---
+    {
+        "name": "Pacific mackerel (chub mackerel)",
+        "temp_min": 55, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9, 10],
+        "good_months": [5, 11],
+        "bait": "Small pieces of cut squid; Sabiki rigs; small chrome jigs; cut anchovy",
+        "rig": "Sabiki rig; small metal jig on light line",
+        "hook_size": "#8-#2 Sabiki or small treble",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Pacific mackerel move offshore during winter.",
+        "explanation_warm": "Pacific mackerel run in large schools around piers and harbors in SoCal; they're fun to catch on Sabiki rigs and make excellent live bait for larger fish.",
+    },
+    {
+        "name": "Jack mackerel (Spanish jack)",
+        "temp_min": 56, "temp_max": 70, "temp_ideal_low": 60, "temp_ideal_high": 66,
+        "peak_months": [7, 8, 9, 10],
+        "good_months": [5, 6, 11],
+        "bait": "Sabiki rigs; small jigs; cut squid; cut anchovy",
+        "rig": "Sabiki rig or light jig setup",
+        "hook_size": "#8-#4 Sabiki hooks",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Jack mackerel are offshore and not typically available from piers in winter.",
+        "explanation_warm": "Jack mackerel school around SoCal piers in summer and fall; they are aggressive feeders and excellent for bait or eating.",
+    },
+    {
+        "name": "Pacific bonito",
+        "temp_min": 58, "temp_max": 72, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [7, 8, 9, 10],
+        "good_months": [6, 11],
+        "bait": "Live anchovy; Sabiki-caught bait; metal jigs; feathered lures",
+        "rig": "Live bait on sliding sinker; casting jig; trolling feather",
+        "hook_size": "#2-2/0 treble or live bait hook",
+        "sinker": "None or 1 oz rubber-core sinker",
+        "explanation_cold": "Pacific bonito are offshore during cool months.",
+        "explanation_warm": "Pacific bonito (a small tuna relative) chase baitfish schools past SoCal piers; they fight hard and are great on light tackle.",
+    },
+    {
+        "name": "Yellowtail (California yellowtail)",
+        "temp_min": 60, "temp_max": 76, "temp_ideal_low": 64, "temp_ideal_high": 72,
+        "peak_months": [7, 8, 9, 10],
+        "good_months": [6, 11],
+        "bait": "Live sardine; live mackerel; iron jigs; surface poppers",
+        "rig": "Live bait on heavy fluorocarbon leader; yo-yo iron jig",
+        "hook_size": "1/0-4/0 circle or live bait hook",
+        "sinker": "None (free-lined live bait) or 1-2 oz sliding sinker",
+        "explanation_cold": "Yellowtail migrate south to Baja during cold months.",
+        "explanation_warm": "Yellowtail cruise past SoCal piers and kelp beds chasing baitfish; these are powerful fighters and one of the most prized pier catches on the West Coast.",
+    },
+    {
+        "name": "White seabass",
+        "temp_min": 56, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [3, 4, 5, 6],
+        "good_months": [2, 7, 8],
+        "bait": "Live squid; live sardine; cut squid; swimbaits",
+        "rig": "Live bait rig with fluorocarbon leader; heavy sliding sinker rig",
+        "hook_size": "2/0-5/0 circle or octopus hook",
+        "sinker": "1-4 oz sliding egg sinker",
+        "explanation_cold": "White seabass are offshore during cold months.",
+        "explanation_warm": "White seabass move inshore to spawn in spring; they follow squid runs near piers and kelp beds and are a trophy catch from shore.",
+    },
+    {
+        "name": "Corbina",
+        "temp_min": 58, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Sand crabs; bloodworms; mussels; clam",
+        "rig": "Carolina rig with light fluorocarbon leader",
+        "hook_size": "#6-#2 circle or baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Corbina move to deeper water and are hard to reach from shore in winter.",
+        "explanation_warm": "Corbina cruise the SoCal surf zone rooting for sand crabs and worms in the wash; they are the prized surf species of Southern California.",
+    },
+    {
+        "name": "Spotfin croaker",
+        "temp_min": 58, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [7, 8, 9],
+        "good_months": [6, 10],
+        "bait": "Sand crabs; mussels; bloodworms; ghost shrimp",
+        "rig": "Carolina rig; sliding sinker rig",
+        "hook_size": "#4-1/0 circle or baitholder",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Spotfin croaker move to deeper bays and offshore during cold months.",
+        "explanation_warm": "Spotfin croaker feed in the SoCal surf zone; their distinctive high-pitched croaking and golden body make them easy to identify.",
+    },
+    {
+        "name": "Yellowfin croaker",
+        "temp_min": 56, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Sand crabs; mussels; bloodworms; cut squid",
+        "rig": "Carolina rig; sliding sinker rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Yellowfin croaker are deeper and less active during cold months.",
+        "explanation_warm": "Yellowfin croaker are common in the SoCal and central CA surf zone; they school up and feed aggressively on sand crabs.",
+    },
+    # --- Pacific Sharks & Rays ---
+    {
+        "name": "Leopard shark",
+        "temp_min": 54, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Squid; cut mackerel; anchovy; shrimp; sand crabs",
+        "rig": "Sliding sinker rig with wire or heavy fluorocarbon leader",
+        "hook_size": "2/0-5/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Leopard sharks are in deeper water and less active during winter.",
+        "explanation_warm": "Leopard sharks cruise shallow bays and surf zones in summer; La Jolla and Pacifica are famous spots. They are beautiful, spotted sharks and fight well.",
+    },
+    {
+        "name": "Shovelnose guitarfish",
+        "temp_min": 56, "temp_max": 74, "temp_ideal_low": 60, "temp_ideal_high": 70,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Sand crabs; squid; cut fish; shrimp; bloodworms",
+        "rig": "Sliding sinker rig; Carolina rig",
+        "hook_size": "#2-2/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Shovelnose guitarfish are in deeper water during winter.",
+        "explanation_warm": "Shovelnose guitarfish are common in SoCal surf and bays; these ray-shark hybrids root through sand for crabs and worms.",
+    },
+    {
+        "name": "Bat ray",
+        "temp_min": 52, "temp_max": 72, "temp_ideal_low": 56, "temp_ideal_high": 66,
+        "peak_months": [4, 5, 6, 7, 8, 9],
+        "good_months": [3, 10],
+        "bait": "Squid; shrimp; cut mackerel; ghost shrimp; mussels",
+        "rig": "Heavy sliding sinker rig with wire leader",
+        "hook_size": "3/0-6/0 circle hook",
+        "sinker": "3-6 oz pyramid sinker",
+        "explanation_cold": "Bat rays are in deeper water and less accessible during winter.",
+        "explanation_warm": "Bat rays are powerful fighters caught from piers and surf in California bays; they can exceed 100 lbs and will test your tackle.",
+    },
+    {
+        "name": "Thornback ray",
+        "temp_min": 50, "temp_max": 66, "temp_ideal_low": 54, "temp_ideal_high": 62,
+        "peak_months": [3, 4, 5, 6, 7],
+        "good_months": [2, 8],
+        "bait": "Squid; shrimp; cut fish; sand crabs",
+        "rig": "Sliding sinker rig; heavy Carolina rig",
+        "hook_size": "1/0-4/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Thornback rays are deeper during cold months but occasionally taken from piers.",
+        "explanation_warm": "Thornback rays are a common catch from NorCal piers; they have distinctive thorny spines on their back and tail.",
+    },
+    # --- Greenling & Sculpin ---
+    {
+        "name": "Kelp greenling",
+        "temp_min": 44, "temp_max": 60, "temp_ideal_low": 48, "temp_ideal_high": 56,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Shrimp; pile worms; mussels; cut squid; small crabs",
+        "rig": "Hi-lo rig; dropper loop near bottom",
+        "hook_size": "#4-1/0 baitholder",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Kelp greenling hold near rocky structure year-round but bite less aggressively in winter.",
+        "explanation_warm": "Kelp greenling are colorful bottom fish found around kelp and rocky piers from Central CA to Washington; the males have bright blue spots.",
+    },
+    {
+        "name": "Rock greenling",
+        "temp_min": 44, "temp_max": 58, "temp_ideal_low": 46, "temp_ideal_high": 54,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Shrimp; pile worms; mussels; cut fish",
+        "rig": "Hi-lo rig; dropper loop near rocks",
+        "hook_size": "#4-1/0 baitholder",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Rock greenling shelter in rocky crevices during cold months.",
+        "explanation_warm": "Rock greenling are common along Oregon and Washington rocky shores and jetties; they are aggressive biters on natural baits.",
+    },
+    {
+        "name": "Pacific staghorn sculpin",
+        "temp_min": 44, "temp_max": 64, "temp_ideal_low": 48, "temp_ideal_high": 58,
+        "peak_months": [10, 11, 12, 1, 2, 3],
+        "good_months": [4, 5, 9],
+        "bait": "Pile worms; small shrimp; cut fish; sand crabs",
+        "rig": "Hi-lo rig; small hook near bottom",
+        "hook_size": "#8-#4 baitholder",
+        "sinker": "1-2 oz bank sinker",
+        "explanation_cold": "Staghorn sculpin are abundant year-round in bays and off piers; they're one of the most common catches in Pacific NW.",
+        "explanation_warm": "Staghorn sculpin are in slightly deeper water during warmer months but still common from piers.",
+    },
+    # --- Other Pacific Species ---
+    {
+        "name": "Pacific herring",
+        "temp_min": 44, "temp_max": 58, "temp_ideal_low": 48, "temp_ideal_high": 54,
+        "peak_months": [12, 1, 2, 3],
+        "good_months": [11, 4],
+        "bait": "Sabiki rigs; small hooks with herring roe; small jigs",
+        "rig": "Multi-hook Sabiki rig",
+        "hook_size": "#10-#6 Sabiki hooks",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Pacific herring spawn in bays during winter, creating huge schools that are easy to catch on Sabiki rigs from piers; great for bait.",
+        "explanation_warm": "Pacific herring are offshore during warm months.",
+    },
+    {
+        "name": "Jacksmelt",
+        "temp_min": 50, "temp_max": 68, "temp_ideal_low": 54, "temp_ideal_high": 64,
+        "peak_months": [4, 5, 6, 7, 8],
+        "good_months": [3, 9, 10],
+        "bait": "Small pieces of pile worm; tiny shrimp; Sabiki rigs; small dough balls",
+        "rig": "Multi-hook Sabiki rig or float rig with small hook",
+        "hook_size": "#10-#6 small hooks",
+        "sinker": "Split shot or small torpedo sinker",
+        "explanation_cold": "Jacksmelt are less concentrated near shore in winter.",
+        "explanation_warm": "Jacksmelt are one of the most common pier fish in California; they school near the surface and are fun on ultra-light tackle.",
+    },
+    {
+        "name": "Walleye surfperch",
+        "temp_min": 48, "temp_max": 66, "temp_ideal_low": 52, "temp_ideal_high": 62,
+        "peak_months": [4, 5, 6, 7, 8],
+        "good_months": [3, 9],
+        "bait": "Pile worms; small shrimp; Gulp! baits; small pieces of mussel",
+        "rig": "Hi-lo rig; float rig; light Carolina rig",
+        "hook_size": "#8-#4 baitholder",
+        "sinker": "1-2 oz bank sinker",
+        "explanation_cold": "Walleye surfperch move to deeper water in winter.",
+        "explanation_warm": "Walleye surfperch are a staple pier catch in California; they school around pilings and rocky areas and are fun on light gear.",
+    },
+    {
+        "name": "White croaker (tomcod)",
+        "temp_min": 50, "temp_max": 70, "temp_ideal_low": 56, "temp_ideal_high": 66,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Cut squid; cut anchovy; pile worms; shrimp; almost anything",
+        "rig": "Hi-lo rig; Carolina rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-3 oz bank sinker",
+        "explanation_cold": "White croaker are deeper during winter months.",
+        "explanation_warm": "White croaker (tomcod/kingfish) are one of the most abundant fish at SoCal and central CA piers; they eat almost anything.",
+    },
+    {
+        "name": "Kelp bass (calico bass)",
+        "temp_min": 56, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Live anchovy; cut squid; swimbaits; artificial grubs",
+        "rig": "Sliding sinker rig near kelp; jig head with swimbait",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "1-2 oz sliding sinker or jig head",
+        "explanation_cold": "Kelp bass are less active in cold water and hold tight to structure.",
+        "explanation_warm": "Kelp bass are the most popular gamefish from SoCal piers and jetties; they ambush baitfish around kelp beds and rocky structure.",
+    },
+    {
+        "name": "Sand bass (barred sand bass)",
+        "temp_min": 58, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Live anchovy; cut squid; swimbaits; Carolina-rigged plastics",
+        "rig": "Dropper loop rig; jig head; Carolina rig with swimbait",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Sand bass move to deeper water during winter.",
+        "explanation_warm": "Sand bass school over sandy bottoms and around structure in SoCal; they aggregate in large spawning groups in summer.",
+    },
+    {
+        "name": "California sheephead",
+        "temp_min": 56, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Mussels; shrimp; sea urchin; cut squid; crab",
+        "rig": "Dropper loop rig near rocks; hi-lo rig",
+        "hook_size": "1/0-4/0 octopus hook",
+        "sinker": "3-6 oz bank sinker",
+        "explanation_cold": "California sheephead are less active and in deeper water during winter.",
+        "explanation_warm": "California sheephead are colorful, hard-fighting wrasse found around rocky reefs and kelp; they have powerful jaws that crush shellfish.",
+    },
+    {
+        "name": "Opaleye",
+        "temp_min": 54, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 66,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Frozen peas; moss; mussels; small pieces of shrimp",
+        "rig": "Float rig with small hook; light hi-lo rig",
+        "hook_size": "#8-#4 short shank",
+        "sinker": "Split shot or small egg sinker",
+        "explanation_cold": "Opaleye are less active but still present near rocky shorelines in winter.",
+        "explanation_warm": "Opaleye are herbivorous fish found around rocky shorelines and jetties in SoCal; they're surprisingly hard fighters for their size.",
+    },
+    {
+        "name": "Halfmoon (Catalina perch)",
+        "temp_min": 56, "temp_max": 70, "temp_ideal_low": 60, "temp_ideal_high": 66,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Mussels; frozen peas; moss; small pieces of shrimp",
+        "rig": "Float rig; light hi-lo rig",
+        "hook_size": "#8-#4 short shank",
+        "sinker": "Split shot",
+        "explanation_cold": "Halfmoon hold near rocky structure during winter.",
+        "explanation_warm": "Halfmoon are found along SoCal rocky shores and kelp beds; they're similar to opaleye and share the same habitat.",
+    },
+    {
+        "name": "Pacific sardine",
+        "temp_min": 54, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9, 10],
+        "good_months": [5, 11],
+        "bait": "Sabiki rigs; tiny jigs; small pieces of squid on tiny hooks",
+        "rig": "Multi-hook Sabiki rig",
+        "hook_size": "#12-#8 Sabiki hooks",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Pacific sardines move offshore during winter.",
+        "explanation_warm": "Pacific sardines school in massive numbers around SoCal piers; they're prized as live bait for yellowtail, white seabass, and halibut.",
+    },
+    {
+        "name": "Northern anchovy",
+        "temp_min": 48, "temp_max": 70, "temp_ideal_low": 52, "temp_ideal_high": 64,
+        "peak_months": [3, 4, 5, 6, 7, 8, 9, 10],
+        "good_months": [2, 11],
+        "bait": "Sabiki rigs; tiny hooks with small squid pieces",
+        "rig": "Multi-hook Sabiki rig",
+        "hook_size": "#12-#8 Sabiki hooks",
+        "sinker": "1 oz torpedo sinker",
+        "explanation_cold": "Northern anchovies are deeper and less concentrated near piers in winter.",
+        "explanation_warm": "Northern anchovies are the backbone of the California baitfish; catching them on Sabiki rigs provides the best live bait for nearly every gamefish.",
+    },
+    # --- Dungeness & Other Crustaceans ---
+    {
+        "name": "Dungeness crab (from pier)",
+        "temp_min": 44, "temp_max": 58, "temp_ideal_low": 48, "temp_ideal_high": 54,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 10],
+        "bait": "Chicken legs; fish carcasses; squid; turkey legs (in crab snares/nets)",
+        "rig": "Crab snare or hoop net baited and cast from pier",
+        "hook_size": "N/A (snare/net)",
+        "sinker": "Built into snare (3-6 oz equivalent)",
+        "explanation_cold": "Dungeness crab season peaks in winter; they can be caught from piers using snares and hoop nets, especially in NorCal and the Pacific NW.",
+        "explanation_warm": "Dungeness crab move to deeper water in summer and are less accessible from piers.",
+    },
+    # ═══════════════════════════════════════════════════════════════════════
+    # HAWAII SPECIES
+    # ═══════════════════════════════════════════════════════════════════════
+    {
+        "name": "Giant trevally (ulua)",
+        "temp_min": 72, "temp_max": 88, "temp_ideal_low": 76, "temp_ideal_high": 84,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Live akule (bigeye scad); live opelu; large cut bait; whole octopus",
+        "rig": "Heavy sliding sinker rig with 100+ lb leader; ulua setup",
+        "hook_size": "8/0-14/0 circle hook",
+        "sinker": "6-16 oz pyramid or breakaway sinker",
+        "explanation_cold": "Giant trevally are present year-round in Hawaii but slightly less active during cooler months.",
+        "explanation_warm": "Giant trevally (ulua) are the ultimate shore-fishing trophy in Hawaii; they're powerful predators caught from rocky shores and piers on heavy tackle.",
+    },
+    {
+        "name": "Bluefin trevally (omilu)",
+        "temp_min": 72, "temp_max": 86, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10, 11],
+        "bait": "Live baitfish; cut squid; poppers; metal jigs",
+        "rig": "Sliding sinker rig; popping/spinning setup; papio rig",
+        "hook_size": "2/0-6/0 circle hook",
+        "sinker": "2-6 oz pyramid sinker",
+        "explanation_cold": "Bluefin trevally are present year-round but slightly less active in winter.",
+        "explanation_warm": "Bluefin trevally (omilu) are strikingly beautiful blue-finned jacks found around reefs and rocky shores in Hawaii; they hit lures and bait aggressively.",
+    },
+    {
+        "name": "Papio (juvenile jack)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [4, 5, 6, 7, 8, 9, 10],
+        "good_months": [3, 11],
+        "bait": "Live opelu; cut squid; shrimp; small crabs; poppers",
+        "rig": "Light papio rig; float rig; small sliding sinker",
+        "hook_size": "#2-3/0 circle or octopus hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Papio are present year-round in Hawaii; smaller jacks are always near shore.",
+        "explanation_warm": "Papio are the most popular shore-fishing target in Hawaii; these juvenile jacks roam reefs and harbors and are a great family fishing species.",
+    },
+    {
+        "name": "Bonefish (oio)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 77, "temp_ideal_high": 83,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Shrimp; sand crabs; small crabs; squid strips; fly fishing (Christmas Island specials)",
+        "rig": "Light Carolina rig with fluorocarbon leader",
+        "hook_size": "#6-#2 circle or bonefish hook",
+        "sinker": "1/2-1 oz egg sinker",
+        "explanation_cold": "Bonefish are present year-round in Hawaii flats but slightly less active in winter.",
+        "explanation_warm": "Bonefish (oio) feed on shallow sand flats in Hawaii; they are the ghosts of the flats -- fast, wary, and an incredible fight on light tackle.",
+    },
+    {
+        "name": "Menpachi (soldierfish)",
+        "temp_min": 74, "temp_max": 84, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "good_months": [],
+        "bait": "Small shrimp; cut squid; aku belly (skipjack tuna belly); bread",
+        "rig": "Small hook dropper rig; float rig near rocks",
+        "hook_size": "#10-#6 small hooks",
+        "sinker": "Split shot or small bank sinker",
+        "explanation_cold": "Menpachi are active year-round in Hawaii, feeding at night around rocky areas.",
+        "explanation_warm": "Menpachi (soldierfish/squirrelfish) are a prized eating fish in Hawaii; they come out at night to feed around rocks and reef edges near piers.",
+    },
+    {
+        "name": "Moi (Pacific threadfin)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 77, "temp_ideal_high": 83,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Sand crabs; shrimp; cut squid; small crabs",
+        "rig": "Sliding sinker rig in the surf; Carolina rig with fluorocarbon",
+        "hook_size": "#4-1/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Moi are present in cooler months but less concentrated in the shallows.",
+        "explanation_warm": "Moi (Pacific threadfin) is Hawaii's most revered eating fish; once reserved for royalty, they feed in the sandy surf zone and are caught from beaches and piers.",
+    },
+    {
+        "name": "Mu (bigeye emperor)",
+        "temp_min": 74, "temp_max": 84, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Shrimp; squid; small crabs; cut fish",
+        "rig": "Bottom rig with fluorocarbon leader; dropper loop",
+        "hook_size": "#2-3/0 octopus hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Mu are present year-round around reef structure but less active in cooler months.",
+        "explanation_warm": "Mu (bigeye emperor) are prized bottom fish in Hawaii caught from rocky shores and piers over reef; they are excellent eating.",
+    },
+    {
+        "name": "Kaku (barracuda)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 77, "temp_ideal_high": 84,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Live baitfish; cut fish strips; silver spoons; jigs",
+        "rig": "Wire leader with live bait; casting spoon or jig",
+        "hook_size": "1/0-5/0 treble or live bait hook",
+        "sinker": "None (cast and retrieve) or 1-2 oz sliding sinker",
+        "explanation_cold": "Kaku are present year-round in Hawaii harbors and reefs.",
+        "explanation_warm": "Kaku (great barracuda) patrol Hawaii harbors, piers, and reef edges; they strike fast and fight hard on light tackle.",
+    },
+    {
+        "name": "Aholehole (Hawaiian flagtail)",
+        "temp_min": 74, "temp_max": 84, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "good_months": [],
+        "bait": "Bread; small shrimp; dough balls; bread flies; palu (chum)",
+        "rig": "Float rig with small hook; light bottom rig",
+        "hook_size": "#12-#6 small hooks",
+        "sinker": "Split shot or small sinker",
+        "explanation_cold": "Aholehole are active year-round in Hawaii harbors and rocky shorelines.",
+        "explanation_warm": "Aholehole are one of Hawaii's most popular panfish; they school around piers, harbors, and river mouths and are great eating.",
+    },
 ]
 
 
@@ -4291,6 +4881,7 @@ def _score_species(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
+    coast: str = "east",
 ) -> float:
     """Compute a bite-likelihood score for a species given current conditions.
 
@@ -4327,7 +4918,7 @@ def _score_species(
         score += 15.0
 
     # --- Dynamic conditions modifiers ---
-    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour)
+    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
 
     return score
 
@@ -4348,6 +4939,12 @@ _ONSHORE_WIND_SPECIES: set = {
     "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
     "Blacktip shark", "Spinner shark", "Bull shark",
     "Striped bass (rockfish)", "Black drum",
+    # Pacific
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Leopard shark", "Shovelnose guitarfish",
+    # Hawaii
+    "Giant trevally (ulua)", "Moi (Pacific threadfin)", "Bonefish (oio)",
 }
 
 # Species that prefer calmer conditions and/or offshore wind (clearer water).
@@ -4358,6 +4955,11 @@ _CALM_WATER_SPECIES: set = {
     "Scrawled cowfish", "Ocean triggerfish", "Queen triggerfish",
     "Gray snapper (juvenile)", "Speckled trout (spotted seatrout)",
     "Tarpon", "Tripletail", "Permit", "Snook",
+    # Pacific
+    "Kelp bass (calico bass)", "Sand bass (barred sand bass)", "California sheephead",
+    "Opaleye", "Halfmoon (Catalina perch)", "California halibut", "White seabass",
+    # Hawaii
+    "Mu (bigeye emperor)", "Menpachi (soldierfish)", "Aholehole (Hawaiian flagtail)",
 }
 
 # Species that feed more actively in rougher surf.
@@ -4366,6 +4968,9 @@ _ROUGH_SURF_SPECIES: set = {
     "Whiting (sea mullet, kingfish)", "Pompano", "Black drum",
     "Smooth dogfish", "Atlantic croaker", "Spot",
     "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    # Pacific
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
 }
 
 # Species that feed best in low-light conditions (dawn, dusk, night).
@@ -4376,6 +4981,10 @@ _LOW_LIGHT_SPECIES: set = {
     "Spotted moray eel", "Green moray eel", "American eel", "Conger eel",
     "Squirrelfish", "Bigeye (Priacanthus arenatus)", "Short bigeye",
     "Blacktip shark", "Bull shark", "Sandbar shark", "Lemon shark",
+    # Pacific
+    "Lingcod", "Cabezon", "Leopard shark", "Bat ray",
+    # Hawaii
+    "Giant trevally (ulua)", "Menpachi (soldierfish)", "Mu (bigeye emperor)",
 }
 
 # Species that are more active during bright midday conditions.
@@ -4385,14 +4994,26 @@ _DAYTIME_SPECIES: set = {
     "Sergeant major (damselfish)", "Blue tang (surgeonfish)",
     "Spotfin butterflyfish", "Gray angelfish",
     "Bermuda chub (sea chub)", "Pinfish", "Pigfish",
+    # Pacific
+    "Pacific mackerel (chub mackerel)", "Jack mackerel (Spanish jack)",
+    "Pacific bonito", "Yellowtail (California yellowtail)",
+    "Jacksmelt", "Pacific sardine", "Northern anchovy",
+    # Hawaii
+    "Bluefin trevally (omilu)", "Papio (juvenile jack)", "Kaku (barracuda)",
 }
 
 # Compass directions grouped for onshore/offshore determination.
-# For Wrightsville Beach, NC facing roughly ESE:
-#   Onshore winds: S, SE, E, SSE, ESE, SSW
-#   Offshore winds: N, NW, W, NNW, WNW, NNE
-_ONSHORE_DIRS: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE"}
-_OFFSHORE_DIRS: set = {"N", "NW", "W", "NNW", "WNW", "NNE", "NE"}
+# East-facing coasts (Atlantic): onshore = easterly, offshore = westerly
+# West-facing coasts (Pacific): onshore = westerly, offshore = easterly
+# Hawaii / Gulf south: mixed, so use east-facing defaults
+_ONSHORE_DIRS_EAST: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE"}
+_OFFSHORE_DIRS_EAST: set = {"N", "NW", "W", "NNW", "WNW", "NNE", "NE"}
+_ONSHORE_DIRS_WEST: set = {"W", "NW", "SW", "WNW", "WSW", "NNW", "SSW"}
+_OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
+
+# Default for backward compatibility
+_ONSHORE_DIRS = _ONSHORE_DIRS_EAST
+_OFFSHORE_DIRS = _OFFSHORE_DIRS_EAST
 
 
 def _conditions_modifier(
@@ -4401,20 +5022,25 @@ def _conditions_modifier(
     wind_range: Optional[Tuple[float, float]],
     wave_range: Optional[Tuple[float, float]],
     hour: int,
+    coast: str = "east",
 ) -> float:
     """Compute a conditions-based score modifier for a species.
 
     Returns a value between roughly -5 and +15 based on how well current
     wind direction, wind speed, wave height, and time of day match the
     species' preferred conditions.
+
+    ``coast`` should be ``"east"`` for Atlantic/Gulf or ``"west"`` for Pacific.
     """
     modifier = 0.0
     name = sp["name"]
 
     # --- Wind direction modifier (up to +5 / -3) ---
     if wind_dir:
-        is_onshore = wind_dir in _ONSHORE_DIRS
-        is_offshore = wind_dir in _OFFSHORE_DIRS
+        onshore_dirs = _ONSHORE_DIRS_WEST if coast == "west" else _ONSHORE_DIRS_EAST
+        offshore_dirs = _OFFSHORE_DIRS_WEST if coast == "west" else _OFFSHORE_DIRS_EAST
+        is_onshore = wind_dir in onshore_dirs
+        is_offshore = wind_dir in offshore_dirs
 
         if name in _ONSHORE_WIND_SPECIES:
             modifier += 5.0 if is_onshore else (-3.0 if is_offshore else 0.0)
@@ -4476,6 +5102,7 @@ def build_species_ranking(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
+    coast: str = "east",
 ) -> List[Dict[str, Any]]:
     """Dynamically rank species based on conditions.
 
@@ -4492,6 +5119,7 @@ def build_species_ranking(
             wind_range=wind_range,
             wave_range=wave_range,
             hour=hour,
+            coast=coast,
         )
         if s >= SPECIES_SCORE_THRESHOLD:
             explanation = _get_explanation(sp, month, water_temp)
@@ -4617,6 +5245,146 @@ def fetch_tide_predictions(
         return []
 
 
+# ---------------------------------------------------------------------------
+# Solunar fishing times (simplified moon transit calculation)
+# ---------------------------------------------------------------------------
+
+def _moon_phase(dt: datetime) -> float:
+    """Return the moon phase as a fraction (0.0 = new, 0.5 = full)."""
+    # Reference new moon: 2000-01-06 18:14 UTC
+    ref = datetime(2000, 1, 6, 18, 14, tzinfo=ZoneInfo("UTC"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    diff = (dt - ref).total_seconds()
+    synodic = 29.53058867  # days
+    phase = (diff / (synodic * 86400)) % 1.0
+    return phase
+
+
+def _moon_transit_hours(dt: datetime, lng: float) -> Tuple[float, float]:
+    """Approximate moon overhead and underfoot times (local hour of day).
+
+    Returns (overhead_hour, underfoot_hour).  These are rough estimates
+    based on the moon's position relative to the observer's longitude and
+    the moon's orbital phase.
+    """
+    phase = _moon_phase(dt)
+    # Moon transit relative to solar noon advances ~50 min/day through the lunar cycle
+    # At new moon, moon transits at ~12:00 (noon) local solar time
+    # At full moon, moon transits at ~00:00 (midnight) local solar time
+    transit_solar_hr = (phase * 24.0) % 24.0  # overhead time in solar hours
+    # Convert solar time to approximate clock time (simple longitude offset)
+    # Standard timezone offset from UTC
+    tz = dt.tzinfo
+    if tz:
+        utc_offset = dt.utcoffset().total_seconds() / 3600
+    else:
+        utc_offset = -5  # default EST
+    solar_offset = (lng / 15.0) - utc_offset
+    overhead = (12.0 + transit_solar_hr - solar_offset) % 24.0
+    underfoot = (overhead + 12.0) % 24.0
+    return overhead, underfoot
+
+
+def compute_solunar_times(
+    dt: datetime,
+    lat: float,
+    lng: float,
+    tz_name: str = "America/New_York",
+) -> Dict[str, Any]:
+    """Compute solunar major and minor fishing periods for the given day.
+
+    Returns a dict with:
+        major_periods: list of (start_time_str, end_time_str) ~2hr windows
+        minor_periods: list of (start_time_str, end_time_str) ~1hr windows
+        moon_phase: str description (New, Waxing, Full, Waning)
+        rating: str (Excellent / Good / Fair) based on moon phase
+    """
+    tz = ZoneInfo(tz_name)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+
+    phase_frac = _moon_phase(dt)
+    overhead, underfoot = _moon_transit_hours(dt, lng)
+
+    def fmt_time(hour: float) -> str:
+        h = int(hour) % 24
+        m = int((hour - int(hour)) * 60)
+        period = "AM" if h < 12 else "PM"
+        display_h = h if h <= 12 else h - 12
+        if display_h == 0:
+            display_h = 12
+        return f"{display_h}:{m:02d} {period}"
+
+    def time_window(center: float, half_width: float) -> Tuple[str, str]:
+        start = (center - half_width) % 24.0
+        end = (center + half_width) % 24.0
+        return fmt_time(start), fmt_time(end)
+
+    # Major periods: ~1 hour on each side of moon overhead / underfoot
+    major_periods = [
+        time_window(overhead, 1.0),
+        time_window(underfoot, 1.0),
+    ]
+
+    # Minor periods: ~30 min on each side of moonrise / moonset
+    # Moonrise/moonset are roughly 6 hours from transit
+    moonrise = (overhead - 6.2) % 24.0
+    moonset = (overhead + 6.2) % 24.0
+    minor_periods = [
+        time_window(moonrise, 0.5),
+        time_window(moonset, 0.5),
+    ]
+
+    # Sort by start time
+    def sort_key(p: Tuple[str, str]) -> float:
+        parts = p[0].replace(":", " ").replace("AM", "").replace("PM", "").split()
+        h = int(parts[0])
+        m = int(parts[1])
+        is_pm = "PM" in p[0]
+        if h == 12:
+            h = 0 if not is_pm else 12
+        elif is_pm:
+            h += 12
+        return h + m / 60.0
+
+    major_periods.sort(key=sort_key)
+    minor_periods.sort(key=sort_key)
+
+    # Moon phase name and fishing rating
+    if phase_frac < 0.05 or phase_frac > 0.95:
+        phase_name = "New Moon"
+        rating = "Excellent"
+    elif 0.45 < phase_frac < 0.55:
+        phase_name = "Full Moon"
+        rating = "Excellent"
+    elif phase_frac < 0.25:
+        phase_name = "Waxing Crescent"
+        rating = "Fair"
+    elif phase_frac < 0.30:
+        phase_name = "First Quarter"
+        rating = "Good"
+    elif phase_frac < 0.45:
+        phase_name = "Waxing Gibbous"
+        rating = "Good"
+    elif phase_frac < 0.75:
+        phase_name = "Waning Gibbous"
+        rating = "Good"
+    elif phase_frac < 0.80:
+        phase_name = "Last Quarter"
+        rating = "Good"
+    else:
+        phase_name = "Waning Crescent"
+        rating = "Fair"
+
+    return {
+        "major_periods": [{"start": s, "end": e} for s, e in major_periods],
+        "minor_periods": [{"start": s, "end": e} for s, e in minor_periods],
+        "moon_phase": phase_name,
+        "rating": rating,
+    }
+
+
 def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
@@ -4664,12 +5432,17 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         "sunrise_sunset": sun_str,
     }
 
+    # Determine coast for wind direction scoring
+    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
+    coast = "west" if conditions_region.startswith("pacific") else "east"
+
     species = build_species_ranking(
         month, water_temp,
         wind_dir=wind_dir,
         wind_range=wind_range,
         wave_range=wave_range,
         hour=now.hour,
+        coast=coast,
     )
     rig_recommendations = build_rig_recommendations(species)
 
@@ -4692,6 +5465,13 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     tides = fetch_tide_predictions(coops_id, tz_name)
     if tides:
         forecast["tides"] = tides
+
+    # Solunar fishing times
+    try:
+        solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)
+        forecast["solunar"] = solunar
+    except Exception:
+        pass
 
     return forecast
 
