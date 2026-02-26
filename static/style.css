@@ -1251,6 +1251,148 @@ h2 {
   }
 }
 
+/* ---------- Fishing Log ---------- */
+
+.fishlog-section {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 1rem 1rem;
+}
+
+.fishlog-section h2 {
+  text-align: center;
+}
+
+.fishlog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.fishlog-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fishlog-input {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid #d1d9e0;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+  background: var(--white);
+}
+
+.fishlog-input:focus {
+  outline: none;
+  border-color: var(--ocean);
+}
+
+.fishlog-input--sm {
+  max-width: 120px;
+}
+
+.fishlog-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: transform 0.12s ease;
+}
+
+.fishlog-add-btn:hover {
+  transform: translateY(-1px);
+}
+
+.fishlog-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fishlog-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  border: 1px solid #e8ecef;
+}
+
+.fishlog-entry-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.fishlog-species {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.fishlog-size {
+  font-size: 0.75rem;
+  color: var(--ocean);
+  font-weight: 600;
+}
+
+.fishlog-notes {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+  line-height: 1.3;
+}
+
+.fishlog-entry-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.fishlog-date {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.fishlog-del {
+  background: none;
+  border: none;
+  color: #c0392b;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.fishlog-del:hover {
+  opacity: 1;
+}
+
+.fishlog-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 /* ---------- Share ---------- */
 
 .share-section {

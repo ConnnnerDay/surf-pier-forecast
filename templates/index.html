@@ -482,6 +482,40 @@
         </section>
         {% endif %}
 
+        <!-- Fishing Log -->
+        <section class="fishlog-section">
+            <h2>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Fishing Log
+            </h2>
+            <p class="section-sub">Track your catches — saved on this device</p>
+
+            <div class="fishlog-form" id="fishlog-form">
+                <div class="fishlog-row">
+                    <input type="text" id="log-species" placeholder="Species caught" class="fishlog-input" maxlength="60">
+                    <input type="text" id="log-size" placeholder="Size (optional)" class="fishlog-input fishlog-input--sm" maxlength="20">
+                </div>
+                <div class="fishlog-row">
+                    <input type="text" id="log-notes" placeholder="Notes (bait used, location, etc.)" class="fishlog-input" maxlength="200">
+                    <button class="fishlog-add-btn" onclick="addLogEntry()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <div class="fishlog-entries" id="fishlog-entries"></div>
+            <div class="fishlog-empty" id="fishlog-empty" style="display:none;">
+                <p>No catches logged yet. Record your first catch above!</p>
+            </div>
+        </section>
+
         <!-- Share & Refresh -->
         <section class="share-section">
             <h2>Share This Forecast</h2>
@@ -555,6 +589,87 @@
                 }
             });
     }
+
+    /* ---- Fishing Log (localStorage) ---- */
+    var LOG_KEY = 'fishlog_' + {{ (forecast.location_id or '')|tojson }};
+
+    function getLog() {
+        try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; }
+        catch(e) { return []; }
+    }
+
+    function saveLog(entries) {
+        localStorage.setItem(LOG_KEY, JSON.stringify(entries));
+    }
+
+    function renderLog() {
+        var entries = getLog();
+        var container = document.getElementById('fishlog-entries');
+        var empty = document.getElementById('fishlog-empty');
+        if (!entries.length) {
+            container.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+        var html = '';
+        entries.forEach(function(e, i) {
+            html += '<div class="fishlog-entry">';
+            html += '<div class="fishlog-entry-main">';
+            html += '<strong class="fishlog-species">' + esc(e.species) + '</strong>';
+            if (e.size) html += ' <span class="fishlog-size">' + esc(e.size) + '</span>';
+            if (e.notes) html += '<p class="fishlog-notes">' + esc(e.notes) + '</p>';
+            html += '</div>';
+            html += '<div class="fishlog-entry-meta">';
+            html += '<span class="fishlog-date">' + esc(e.date) + '</span>';
+            html += '<button class="fishlog-del" onclick="deleteLog(' + i + ')" title="Remove">&times;</button>';
+            html += '</div></div>';
+        });
+        container.innerHTML = html;
+    }
+
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function addLogEntry() {
+        var species = document.getElementById('log-species').value.trim();
+        if (!species) return;
+        var size = document.getElementById('log-size').value.trim();
+        var notes = document.getElementById('log-notes').value.trim();
+        var entries = getLog();
+        var now = new Date();
+        entries.unshift({
+            species: species,
+            size: size,
+            notes: notes,
+            date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        });
+        // Keep max 50 entries
+        if (entries.length > 50) entries = entries.slice(0, 50);
+        saveLog(entries);
+        document.getElementById('log-species').value = '';
+        document.getElementById('log-size').value = '';
+        document.getElementById('log-notes').value = '';
+        renderLog();
+    }
+
+    function deleteLog(index) {
+        var entries = getLog();
+        entries.splice(index, 1);
+        saveLog(entries);
+        renderLog();
+    }
+
+    // Enter key support
+    document.getElementById('fishlog-form').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); addLogEntry(); }
+    });
+
+    // Render on page load
+    renderLog();
     </script>
 </body>
 </html>
