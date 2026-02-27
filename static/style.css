@@ -1134,6 +1134,55 @@ h2 {
   line-height: 1.45;
 }
 
+/* ---------- Natural forage / bait in the water ---------- */
+
+.forage-section {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.forage-section h2 {
+  text-align: center;
+}
+
+.forage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.4rem;
+}
+
+.forage-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.forage-status {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.forage-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.forage-name {
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.forage-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
 /* ---------- 3-Day Outlook ---------- */
 
 .outlook-section {

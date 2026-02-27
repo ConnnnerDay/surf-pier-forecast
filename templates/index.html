@@ -214,6 +214,23 @@
                     <span class="stat-detail" title="{{ forecast.pressure.fishing_impact }}">{{ forecast.pressure.trend|lower }} &middot; {{ forecast.pressure.pressure_mb }} mb</span>
                 </div>
                 {% endif %}
+                {% if forecast.weather %}
+                <div class="stat-card">
+                    <span class="stat-label">Air Temp</span>
+                    <span class="stat-value">{{ forecast.weather.air_temp_f }}&deg;F</span>
+                    <span class="stat-detail">
+                        {% if forecast.weather.description %}{{ forecast.weather.description|lower }}{% endif %}
+                        {% if forecast.weather.humidity %} &middot; {{ forecast.weather.humidity|int }}% humidity{% endif %}
+                    </span>
+                </div>
+                {% if forecast.weather.feels_like_f or forecast.weather.wind_chill_f %}
+                <div class="stat-card">
+                    <span class="stat-label">Feels Like</span>
+                    <span class="stat-value">{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f)|round|int }}&deg;F</span>
+                    <span class="stat-detail">{% if forecast.weather.feels_like_f %}heat index{% else %}wind chill{% endif %}</span>
+                </div>
+                {% endif %}
+                {% endif %}
             </div>
         </section>
 
@@ -488,6 +505,35 @@
             </div>
         </section>
 
+        <!-- Natural Bait in the Water -->
+        {% if forecast.natural_bait %}
+        <section class="forage-section">
+            <h2>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px; margin-right:0.3rem;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 12h8M12 8v8"/>
+                </svg>
+                What's in the Water
+            </h2>
+            <p class="section-sub">Natural forage species this month — match your bait</p>
+            <div class="forage-grid">
+                {% for bait in forecast.natural_bait %}
+                {% if bait.status == 'available' %}
+                <div class="forage-item">
+                    <div class="forage-status">
+                        <svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="6" fill="var(--sea-green)"/></svg>
+                    </div>
+                    <div class="forage-info">
+                        <strong class="forage-name">{{ bait.name }}</strong>
+                        <span class="forage-note">{{ bait.note }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
         <!-- 3-Day Outlook -->
         {% if forecast.outlook %}
         <section class="outlook-section">
@@ -643,7 +689,10 @@
             <form method="post" action="{{ url_for('api_refresh') }}">
                 <button type="submit">Refresh Forecast</button>
             </form>
-            <p class="timestamp">Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}</p>
+            <p class="timestamp">
+                Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}
+                <span id="auto-refresh-note"></span>
+            </p>
         </section>
     </main>
 
@@ -876,6 +925,27 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/static/sw.js').catch(function(){});
     }
+
+    // Auto-refresh forecast every 30 minutes
+    (function() {
+        var REFRESH_MS = 30 * 60 * 1000;
+        var note = document.getElementById('auto-refresh-note');
+        var start = Date.now();
+        function updateCountdown() {
+            var elapsed = Date.now() - start;
+            var remaining = Math.max(0, REFRESH_MS - elapsed);
+            var mins = Math.ceil(remaining / 60000);
+            if (remaining <= 0) {
+                if (note) note.textContent = '— refreshing...';
+                window.location.reload();
+                return;
+            }
+            if (note && mins <= 5) {
+                note.textContent = '— auto-refresh in ' + mins + ' min';
+            }
+        }
+        setInterval(updateCountdown, 30000);
+    })();
     </script>
 </body>
 </html>

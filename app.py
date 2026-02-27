@@ -5404,6 +5404,77 @@ def build_bait_ranking(
 
 
 # ---------------------------------------------------------------------------
+# Natural bait / forage species availability
+# ---------------------------------------------------------------------------
+
+NATURAL_BAIT_DB: List[Dict[str, Any]] = [
+    # Atlantic / Gulf
+    {"name": "Menhaden (bunker)", "months": [3,4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Schools visible at surface — look for diving birds"},
+    {"name": "Mullet", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "east",
+     "note": "Year-round; large fall runs Sept-Nov along beaches"},
+    {"name": "Sand fleas (mole crabs)", "months": [4,5,6,7,8,9,10], "coast": "east",
+     "note": "Dig in wet sand at surf's edge during wave retreat"},
+    {"name": "Shrimp", "months": [4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Peak summer/fall; run on outgoing tides at night"},
+    {"name": "Fiddler crabs", "months": [4,5,6,7,8,9,10], "coast": "east",
+     "note": "Found in mud flats at low tide — top sheepshead bait"},
+    {"name": "Bloodworms", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "east",
+     "note": "Available year-round at bait shops; pricey but effective"},
+    {"name": "Cut bait (spot/croaker)", "months": [5,6,7,8,9,10], "coast": "east",
+     "note": "Catch small spot/croaker on Sabiki rigs for fresh cut bait"},
+    {"name": "Finger mullet", "months": [6,7,8,9,10,11], "coast": "east",
+     "note": "Cast net along shore; top live bait for predator species"},
+    {"name": "Silversides", "months": [3,4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Tiny baitfish in surf zone — match with small spoons/jigs"},
+    {"name": "Blue crab", "months": [4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Cut in half for drum/sheepshead; chicken necks to trap"},
+
+    # Pacific
+    {"name": "Sand crabs", "months": [3,4,5,6,7,8,9,10,11], "coast": "west",
+     "note": "Dig at wave line for prime surfperch and corbina bait"},
+    {"name": "Mussels", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "west",
+     "note": "Pry from rocks at low tide — excellent all-purpose bait"},
+    {"name": "Anchovies", "months": [3,4,5,6,7,8,9,10,11], "coast": "west",
+     "note": "Buy live or use Sabiki rig; top live bait for gamefish"},
+    {"name": "Sardines", "months": [4,5,6,7,8,9,10], "coast": "west",
+     "note": "Available live at bait barges; great for halibut and bass"},
+    {"name": "Squid", "months": [1,2,3,4,5,10,11,12], "coast": "west",
+     "note": "Market squid runs in winter; cut strips or use whole"},
+    {"name": "Ghost shrimp", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "west",
+     "note": "Pump from mudflats at low tide; perch and surfperch love them"},
+    {"name": "Mackerel (bait)", "months": [4,5,6,7,8,9,10], "coast": "west",
+     "note": "Catch on Sabiki rigs at piers; cut for halibut and bass"},
+    {"name": "Grunion", "months": [3,4,5,6,7,8], "coast": "west",
+     "note": "Beach spawning runs on full/new moon nights — check regulations"},
+]
+
+
+def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, str]]:
+    """Return the list of natural bait species available this month.
+
+    Filters by coast and month, returns a list of dicts with name, note,
+    and availability status.
+    """
+    available = []
+    for bait in NATURAL_BAIT_DB:
+        if bait["coast"] != coast and bait["coast"] != "both":
+            continue
+        if month in bait["months"]:
+            status = "available"
+        else:
+            status = "off-season"
+        available.append({
+            "name": bait["name"],
+            "note": bait["note"],
+            "status": status,
+        })
+    # Sort: available first, then off-season
+    available.sort(key=lambda x: (0 if x["status"] == "available" else 1, x["name"]))
+    return available
+
+
+# ---------------------------------------------------------------------------
 # Tide predictions (NOAA CO-OPS)
 # ---------------------------------------------------------------------------
 
@@ -5711,6 +5782,77 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
         return []
 
 
+def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
+    """Fetch current weather observations from NWS.
+
+    Returns a dict with: air_temp_f, humidity, description, sky, wind_chill_f.
+    Returns None on failure.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    try:
+        # Get nearest observation station from the NWS points API
+        pts = requests.get(
+            f"https://api.weather.gov/points/{lat},{lng}",
+            headers=headers, timeout=10,
+        )
+        pts.raise_for_status()
+        obs_url = pts.json()["properties"].get("observationStations", "")
+        if not obs_url:
+            return None
+
+        # Get latest observation from nearest station
+        stations = requests.get(obs_url, headers=headers, timeout=10)
+        stations.raise_for_status()
+        station_list = stations.json().get("observationStations", [])
+        if not station_list:
+            return None
+
+        station_id = station_list[0].rstrip("/").split("/")[-1]
+        obs = requests.get(
+            f"https://api.weather.gov/stations/{station_id}/observations/latest",
+            headers=headers, timeout=10,
+        )
+        obs.raise_for_status()
+        props = obs.json().get("properties", {})
+
+        # Extract data
+        temp_c = props.get("temperature", {}).get("value")
+        humidity = props.get("relativeHumidity", {}).get("value")
+        description = props.get("textDescription", "")
+        wind_chill_c = props.get("windChill", {}).get("value")
+
+        result: Dict[str, Any] = {"description": description or ""}
+
+        if temp_c is not None:
+            result["air_temp_f"] = round(temp_c * 9 / 5 + 32, 1)
+        if humidity is not None:
+            result["humidity"] = round(humidity, 0)
+        if wind_chill_c is not None:
+            result["wind_chill_f"] = round(wind_chill_c * 9 / 5 + 32, 1)
+
+        # Compute feels-like / heat index for warm weather
+        if temp_c is not None and humidity is not None:
+            temp_f = result["air_temp_f"]
+            if temp_f >= 80 and humidity >= 40:
+                # Simplified heat index
+                hi = (-42.379 + 2.04901523 * temp_f
+                      + 10.14333127 * humidity
+                      - 0.22475541 * temp_f * humidity
+                      - 0.00683783 * temp_f ** 2
+                      - 0.05481717 * humidity ** 2
+                      + 0.00122874 * temp_f ** 2 * humidity
+                      + 0.00085282 * temp_f * humidity ** 2
+                      - 0.00000199 * temp_f ** 2 * humidity ** 2)
+                result["feels_like_f"] = round(hi, 0)
+
+        return result if "air_temp_f" in result else None
+    except Exception:
+        return None
+
+
 def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
     """Fetch the NWS 7-day forecast for a lat/lng.
 
@@ -6004,6 +6146,14 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     except Exception:
         pass
 
+    # Current weather (air temp, humidity)
+    try:
+        weather = fetch_current_weather(loc_lat, loc_lng)
+        if weather:
+            forecast["weather"] = weather
+    except Exception:
+        pass
+
     # Tide predictions
     coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     tides = fetch_tide_predictions(coops_id, tz_name)
@@ -6051,6 +6201,9 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
 
     # Species availability calendar
     forecast["calendar"] = build_species_calendar(species, location)
+
+    # Natural bait availability
+    forecast["natural_bait"] = build_natural_bait_chart(month, coast)
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
     forecast["best_times"] = build_best_times(forecast)
