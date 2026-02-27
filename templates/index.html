@@ -13,6 +13,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.svg') }}">
+    <script>
+    // Apply saved theme immediately to prevent flash
+    (function() {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+    </script>
     <meta name="description" content="Surf and pier fishing forecast with real-time conditions, species rankings, tide charts, and solunar times for {{ forecast.location_name or 'your location' }}">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -28,7 +37,13 @@
 <body>
     <header>
         <div class="header-inner">
-            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <div class="header-top-row">
+                <h1>Surf &amp; Pier Fishing Outlook</h1>
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
+                    <svg class="theme-icon theme-icon--light" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="theme-icon theme-icon--dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
             <p class="subtitle">{{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
             <a href="{{ url_for('setup') }}" class="change-location">Change location</a>
             {% if cached %}
@@ -65,6 +80,12 @@
                 {{ forecast.conditions.verdict }}
             </div>
             <p class="verdict-sub">24-hour fishability outlook</p>
+            {% if forecast.pressure %}
+            <p class="pressure-note" title="{{ forecast.pressure.fishing_impact }}">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+                Barometer {{ forecast.pressure.pressure_inhg }}" {{ forecast.pressure.trend|lower }}
+            </p>
+            {% endif %}
         </section>
 
         <!-- Best Fishing Times -->
@@ -168,6 +189,22 @@
                         {{ forecast.tide_state }}
                     </span>
                     <span class="stat-detail">current tidal flow</span>
+                </div>
+                {% endif %}
+                {% if forecast.pressure %}
+                <div class="stat-card">
+                    <span class="stat-label">Pressure</span>
+                    <span class="stat-value">
+                        {{ forecast.pressure.pressure_inhg }}"
+                        {% if forecast.pressure.trend == 'Rising' %}
+                        <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><path d="M8 3l4 5H4z" fill="#27ae60"/></svg>
+                        {% elif forecast.pressure.trend == 'Falling' %}
+                        <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><path d="M8 13l4-5H4z" fill="#e05830"/></svg>
+                        {% else %}
+                        <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><rect x="2" y="7" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
+                        {% endif %}
+                    </span>
+                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact }}">{{ forecast.pressure.trend|lower }} &middot; {{ forecast.pressure.pressure_mb }} mb</span>
                 </div>
                 {% endif %}
             </div>
@@ -581,6 +618,17 @@
     </footer>
 
     <script>
+    function toggleTheme() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
     function showToast(msg) {
         var t = document.getElementById('share-toast');
         t.textContent = msg;

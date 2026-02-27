@@ -184,6 +184,99 @@ def _try_ndbc_station(station_id: str) -> Tuple[Optional[Tuple[float, float]], O
     return wind_range, wave_range, wind_dir
 
 
+def fetch_barometric_pressure(
+    location: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Fetch barometric pressure from NDBC buoy or NOAA CO-OPS station.
+
+    Returns a dict with:
+        pressure_mb: float (millibars / hPa)
+        pressure_inhg: float (inches of mercury)
+        trend: str ("Rising", "Falling", "Steady")
+        fishing_impact: str (description of fishing impact)
+    Returns None on failure.
+    """
+    ndbc_list = (location or {}).get("ndbc_stations", [s[0] for s in NDBC_STATIONS])
+
+    # Try NDBC buoys first for pressure
+    for station_id in ndbc_list[:3]:
+        try:
+            url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
+            resp = requests.get(url, headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=10)
+            resp.raise_for_status()
+            lines = resp.text.strip().split("\n")
+            if len(lines) < 3:
+                continue
+
+            header = lines[0].replace("#", "").split()
+            col = {name: idx for idx, name in enumerate(header)}
+            if "PRES" not in col:
+                continue
+
+            _MISSING = {"MM", "99.0", "99.00", "999", "999.0", "9999.0"}
+
+            # Get last 2-3 readings for trend
+            pressures = []
+            for line in lines[2:12]:
+                fields = line.split()
+                if len(fields) < len(header):
+                    continue
+                pres_raw = fields[col["PRES"]]
+                if pres_raw not in _MISSING:
+                    pressures.append(float(pres_raw))
+                if len(pressures) >= 3:
+                    break
+
+            if not pressures:
+                continue
+
+            current_mb = pressures[0]
+            current_inhg = current_mb * 0.02953
+
+            # Trend from recent readings
+            trend = "Steady"
+            if len(pressures) >= 2:
+                diff = pressures[0] - pressures[-1]
+                if diff > 1.0:
+                    trend = "Rising"
+                elif diff < -1.0:
+                    trend = "Falling"
+
+            # Fishing impact assessment
+            if current_mb >= 1020:
+                if trend == "Rising":
+                    impact = "Excellent — high stable pressure, fish feed actively"
+                elif trend == "Falling":
+                    impact = "Good — fish sense dropping pressure and feed heavily"
+                else:
+                    impact = "Good — stable high pressure, consistent bites"
+            elif current_mb >= 1010:
+                if trend == "Falling":
+                    impact = "Very good — dropping pressure triggers feeding frenzy"
+                elif trend == "Rising":
+                    impact = "Good — rising pressure after a front, fish resuming"
+                else:
+                    impact = "Average — normal pressure, standard activity"
+            else:
+                if trend == "Falling":
+                    impact = "Poor — very low falling pressure, fish go deep"
+                elif trend == "Rising":
+                    impact = "Improving — pressure recovering, fish starting to feed"
+                else:
+                    impact = "Below average — low pressure suppresses feeding"
+
+            return {
+                "pressure_mb": round(current_mb, 1),
+                "pressure_inhg": round(current_inhg, 2),
+                "trend": trend,
+                "fishing_impact": impact,
+            }
+        except Exception:
+            continue
+
+    return None
+
+
 # -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
 
 def _try_coops_wind(station_id: str = "") -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
@@ -5797,6 +5890,14 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         alerts = fetch_weather_alerts(loc_lat, loc_lng)
         if alerts:
             forecast["alerts"] = alerts
+    except Exception:
+        pass
+
+    # Barometric pressure
+    try:
+        pressure = fetch_barometric_pressure(location)
+        if pressure:
+            forecast["pressure"] = pressure
     except Exception:
         pass
 
