@@ -45,7 +45,14 @@
                 </button>
             </div>
             <p class="subtitle">{{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
-            <a href="{{ url_for('setup') }}" class="change-location">Change location</a>
+            <div class="header-actions">
+                <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites">
+                    <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+                <a href="{{ url_for('setup') }}" class="change-location">Change location</a>
+            </div>
+            <div class="favorites-bar" id="favorites-bar"></div>
             {% if cached %}
             <div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
             {% endif %}
@@ -361,6 +368,12 @@
                     <div class="species-body">
                         <h3>{{ sp.name }}</h3>
                         <p class="species-why">{{ sp.explanation }}</p>
+                        {% if sp.tip %}
+                        <p class="species-tip">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:0.2rem; flex-shrink:0;"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+                            {{ sp.tip }}
+                        </p>
+                        {% endif %}
                         <div class="species-score-bar">
                             <div class="score-track">
                                 <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
@@ -581,6 +594,27 @@
             <div class="fishlog-empty" id="fishlog-empty" style="display:none;">
                 <p>No catches logged yet. Record your first catch above!</p>
             </div>
+
+            <div class="catch-stats" id="catch-stats" style="display:none;">
+                <div class="catch-stats-grid">
+                    <div class="catch-stat">
+                        <span class="catch-stat-value" id="stat-total">0</span>
+                        <span class="catch-stat-label">Total Catches</span>
+                    </div>
+                    <div class="catch-stat">
+                        <span class="catch-stat-value" id="stat-species">0</span>
+                        <span class="catch-stat-label">Species</span>
+                    </div>
+                    <div class="catch-stat">
+                        <span class="catch-stat-value" id="stat-top">—</span>
+                        <span class="catch-stat-label">Most Caught</span>
+                    </div>
+                    <div class="catch-stat">
+                        <span class="catch-stat-value" id="stat-recent">—</span>
+                        <span class="catch-stat-label">Last Catch</span>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Share & Refresh -->
@@ -618,6 +652,58 @@
     </footer>
 
     <script>
+    /* ---- Favorite Locations (localStorage) ---- */
+    var FAV_KEY = 'favorite_locations';
+    var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
+    var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
+
+    function getFavorites() {
+        try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
+        catch(e) { return []; }
+    }
+
+    function saveFavorites(favs) {
+        localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+    }
+
+    function isFavorite() {
+        return getFavorites().some(function(f) { return f.id === CURRENT_LOC_ID; });
+    }
+
+    function toggleFavorite() {
+        var favs = getFavorites();
+        var idx = favs.findIndex(function(f) { return f.id === CURRENT_LOC_ID; });
+        if (idx >= 0) {
+            favs.splice(idx, 1);
+        } else {
+            favs.push({ id: CURRENT_LOC_ID, name: CURRENT_LOC_NAME });
+            if (favs.length > 8) favs = favs.slice(-8);
+        }
+        saveFavorites(favs);
+        renderFavorites();
+    }
+
+    function renderFavorites() {
+        var favs = getFavorites();
+        var isFav = isFavorite();
+        var toggle = document.getElementById('fav-toggle');
+        if (toggle) {
+            toggle.classList.toggle('fav-toggle--active', isFav);
+        }
+        var bar = document.getElementById('favorites-bar');
+        if (!bar) return;
+        if (favs.length === 0) { bar.innerHTML = ''; return; }
+        var html = '';
+        favs.forEach(function(f) {
+            var active = f.id === CURRENT_LOC_ID ? ' fav-chip--active' : '';
+            var shortName = f.name.split(',')[0];
+            html += '<a href="/f/' + encodeURIComponent(f.id) + '" class="fav-chip' + active + '">' + esc(shortName) + '</a>';
+        });
+        bar.innerHTML = html;
+    }
+
+    renderFavorites();
+
     function toggleTheme() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         if (isDark) {
@@ -684,9 +770,11 @@
         var entries = getLog();
         var container = document.getElementById('fishlog-entries');
         var empty = document.getElementById('fishlog-empty');
+        var statsEl = document.getElementById('catch-stats');
         if (!entries.length) {
             container.innerHTML = '';
             empty.style.display = 'block';
+            if (statsEl) statsEl.style.display = 'none';
             return;
         }
         empty.style.display = 'none';
@@ -704,6 +792,41 @@
             html += '</div></div>';
         });
         container.innerHTML = html;
+        renderCatchStats(entries);
+    }
+
+    function renderCatchStats(entries) {
+        var statsEl = document.getElementById('catch-stats');
+        if (!statsEl || !entries.length) return;
+        statsEl.style.display = 'block';
+
+        // Total catches
+        document.getElementById('stat-total').textContent = entries.length;
+
+        // Unique species
+        var speciesMap = {};
+        entries.forEach(function(e) {
+            var sp = e.species.toLowerCase().trim();
+            speciesMap[sp] = (speciesMap[sp] || 0) + 1;
+        });
+        var uniqueSpecies = Object.keys(speciesMap).length;
+        document.getElementById('stat-species').textContent = uniqueSpecies;
+
+        // Most caught
+        var topSpecies = '—';
+        var topCount = 0;
+        for (var sp in speciesMap) {
+            if (speciesMap[sp] > topCount) {
+                topCount = speciesMap[sp];
+                topSpecies = sp.charAt(0).toUpperCase() + sp.slice(1);
+            }
+        }
+        document.getElementById('stat-top').textContent = topSpecies;
+
+        // Last catch date
+        if (entries[0] && entries[0].date) {
+            document.getElementById('stat-recent').textContent = entries[0].date.split(' ')[0];
+        }
     }
 
     function esc(s) {

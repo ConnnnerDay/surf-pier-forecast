@@ -4547,6 +4547,109 @@ def _get_explanation(sp: Dict[str, Any], month: int, water_temp: float) -> str:
     return sp["explanation_cold"] if is_cold else sp["explanation_warm"]
 
 
+def _get_technique_tip(
+    sp_name: str,
+    hour: int = 12,
+    tide_state: str = "",
+    wind_strength: str = "",
+) -> str:
+    """Generate a short, context-specific fishing technique tip.
+
+    Returns a 1-sentence tip based on species category, time of day,
+    tide state, and wind conditions.
+    """
+    name_lower = sp_name.lower()
+
+    # Time-based tips
+    is_dawn = 5 <= hour <= 8
+    is_dusk = 17 <= hour <= 21
+    is_night = hour >= 21 or hour <= 4
+    is_midday = 10 <= hour <= 14
+
+    # Categorize by species type
+    if any(k in name_lower for k in ["drum", "red drum", "puppy"]):
+        if tide_state == "Rising":
+            return "Cast to sandbars and troughs as rising water pushes bait toward shore"
+        if is_dawn or is_dusk:
+            return "Work cut mullet along the bottom near structure and drop-offs"
+        return "Use fresh cut bait on a fish-finder rig, let it soak on the bottom"
+
+    if "trout" in name_lower or "seatrout" in name_lower:
+        if is_dawn:
+            return "Fish live shrimp under a popping cork near grass flats at first light"
+        if tide_state == "Falling":
+            return "Target outflow points as falling tide concentrates baitfish"
+        return "Pop a cork rig in 3-6 feet of water near grassy edges"
+
+    if "flounder" in name_lower or "fluke" in name_lower:
+        if tide_state == "Rising":
+            return "Drift live minnows along the bottom on incoming tide channels"
+        return "Slowly bump a bucktail jig tipped with Gulp along sandy bottoms"
+
+    if "bluefish" in name_lower or "blue" in name_lower:
+        if is_dawn or is_dusk:
+            return "Cast metal spoons or Got-Cha plugs into surface activity"
+        return "Use wire leader — bluefish bite through mono quickly"
+
+    if "sheepshead" in name_lower:
+        return "Tip small hooks with fiddler crabs, fish tight to pilings and structure"
+
+    if any(k in name_lower for k in ["shark", "ray"]):
+        if is_night:
+            return "Fresh cut bait on heavy tackle, use a steel leader and long cast"
+        return "Present large cut baits on the bottom with enough weight to hold"
+
+    if "pompano" in name_lower:
+        if tide_state == "Rising":
+            return "Work sand fleas on a pompano rig in the first trough on rising tide"
+        return "Fish the first and second troughs with a double-drop pompano rig"
+
+    if "whiting" in name_lower:
+        return "Fish shrimp or Fishbites close to shore in the first trough"
+
+    if any(k in name_lower for k in ["mackerel", "spanish"]):
+        if is_dawn:
+            return "Cast small spoons or Gotcha plugs when you see surface bait schools"
+        return "Troll small Clark spoons or cast metal jigs near offshore structure"
+
+    if "croaker" in name_lower:
+        return "Use small pieces of shrimp or bloodworm on a bottom rig in channels"
+
+    if "spot" in name_lower and "trout" not in name_lower:
+        return "Fish bloodworms or small shrimp pieces on a two-hook bottom rig"
+
+    if any(k in name_lower for k in ["bass", "striper"]):
+        if is_dawn or is_dusk:
+            return "Cast soft plastics or live eels around rocks and jetties at dawn/dusk"
+        return "Work the water column with bucktails or soft plastics near structure"
+
+    if "rockfish" in name_lower or "lingcod" in name_lower:
+        return "Drift cut bait or heavy jigs near rocky bottom and kelp edges"
+
+    if "surfperch" in name_lower:
+        return "Fish sand crabs or grubs in the wash zone during incoming tide"
+
+    if "halibut" in name_lower:
+        return "Drag live bait slowly along sandy bottoms near drop-offs"
+
+    if "corbina" in name_lower:
+        return "Wade the surf with sand crabs on a Carolina rig, fish the troughs"
+
+    if "yellowtail" in name_lower:
+        return "Use live bait or iron jigs near kelp paddies and structure"
+
+    # Generic tip based on conditions
+    if is_dawn or is_dusk:
+        return "Low-light periods are prime — work bait slowly near structure"
+    if tide_state == "Rising":
+        return "Rising tide brings bait closer to shore — fish the troughs"
+    if tide_state == "Falling":
+        return "Falling tide concentrates fish at outflow points and channels"
+    if is_midday:
+        return "Fish deeper water or shaded structure during bright midday conditions"
+    return "Match your bait to what's naturally in the water right now"
+
+
 # ---------------------------------------------------------------------------
 # Dynamic rig recommendations -- built from active species
 # ---------------------------------------------------------------------------
@@ -5951,6 +6054,23 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
     forecast["best_times"] = build_best_times(forecast)
+
+    # Add technique tips to each species
+    t_state = forecast.get("tide_state", "")
+    wind_strength = ""
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind > 20:
+            wind_strength = "strong"
+        elif avg_wind > 10:
+            wind_strength = "moderate"
+        else:
+            wind_strength = "light"
+    for sp_entry in forecast["species"]:
+        sp_entry["tip"] = _get_technique_tip(
+            sp_entry["name"], hour=now.hour,
+            tide_state=t_state, wind_strength=wind_strength,
+        )
 
     return forecast
 

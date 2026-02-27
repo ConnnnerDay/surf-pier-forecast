@@ -817,10 +817,24 @@ h2 {
 }
 
 .species-why {
-  margin: 0.25rem 0 0.6rem;
+  margin: 0.25rem 0 0.4rem;
   font-size: 0.85rem;
   color: var(--text-muted);
   line-height: 1.5;
+}
+
+.species-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.15rem;
+  margin: 0 0 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--ocean);
+  background: var(--ocean-light);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--ocean);
+  line-height: 1.35;
 }
 
 .species-meta {
@@ -1487,6 +1501,45 @@ h2 {
   font-size: 0.8rem;
 }
 
+.catch-stats {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.catch-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.catch-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.catch-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ocean);
+}
+
+.catch-stat-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+@media (max-width: 500px) {
+  .catch-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ---------- Share ---------- */
 
 .share-section {
@@ -1656,11 +1709,44 @@ footer p {
   border-bottom-color: var(--ocean);
 }
 
-/* ---------- Change location link ---------- */
+/* ---------- Header actions & favorites ---------- */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.fav-toggle {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  padding: 0.2rem;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.fav-toggle:hover {
+  color: rgba(255,255,255,0.9);
+  transform: scale(1.15);
+}
+
+.fav-toggle--active {
+  color: #e74c3c;
+}
+
+.fav-toggle--active:hover {
+  color: #c0392b;
+}
+
+.fav-icon--on { display: none; }
+.fav-toggle--active .fav-icon--off { display: none; }
+.fav-toggle--active .fav-icon--on { display: block; }
 
 .change-location {
   display: inline-block;
-  margin-top: 0.4rem;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.8rem;
   text-decoration: none;
@@ -1671,6 +1757,38 @@ footer p {
 .change-location:hover {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
+}
+
+.favorites-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.fav-chip {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.fav-chip:hover {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+.fav-chip--active {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
 }
 
 /* ---------- Setup page ---------- */
