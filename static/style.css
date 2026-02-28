@@ -410,6 +410,78 @@ h2 {
   cursor: help;
 }
 
+/* ---------- Bite alerts ---------- */
+
+.bite-alerts {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.bite-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--sea-green);
+}
+
+.bite-alert--hot {
+  border-left-color: var(--coral);
+  background: linear-gradient(135deg, #fff5f2, var(--white));
+}
+
+[data-theme="dark"] .bite-alert--hot {
+  background: linear-gradient(135deg, #2a1a15, var(--white));
+}
+
+.bite-alert--excellent {
+  border-left-color: var(--amber);
+  background: linear-gradient(135deg, #fffbf0, var(--white));
+}
+
+[data-theme="dark"] .bite-alert--excellent {
+  background: linear-gradient(135deg, #2a2515, var(--white));
+}
+
+.bite-alert--pressure {
+  border-left-color: var(--ocean);
+}
+
+.bite-alert-icon {
+  flex-shrink: 0;
+  color: var(--ocean);
+  padding-top: 0.1rem;
+}
+
+.bite-alert--hot .bite-alert-icon {
+  color: var(--coral);
+}
+
+.bite-alert--excellent .bite-alert-icon {
+  color: var(--amber);
+}
+
+.bite-alert-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.bite-alert-body strong {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.bite-alert-body span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 /* ---------- Best fishing times ---------- */
 
 .best-times-section {

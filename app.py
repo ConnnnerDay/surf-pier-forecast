@@ -6340,6 +6340,60 @@ def build_spot_tips(
     return tips[:5]
 
 
+def build_bite_alerts(
+    verdict: str,
+    species: List[Dict[str, Any]],
+    pressure: Optional[Dict[str, Any]] = None,
+    tide_state: str = "",
+) -> List[Dict[str, str]]:
+    """Generate bite alert notifications when conditions are especially good."""
+    alerts: List[Dict[str, str]] = []
+
+    # Hot species alert
+    hot_species = [sp["name"] for sp in species if sp.get("activity") == "Hot"]
+    if hot_species:
+        if len(hot_species) >= 3:
+            alerts.append({
+                "type": "hot",
+                "title": "Multiple species on fire!",
+                "message": f"{', '.join(hot_species[:3])} are all rated HOT right now. This is a rare alignment of conditions.",
+            })
+        elif len(hot_species) == 1:
+            alerts.append({
+                "type": "hot",
+                "title": f"{hot_species[0]} is on fire!",
+                "message": "Conditions are dialed in for this species. Get your lines in the water.",
+            })
+
+    # Excellent conditions alert
+    if verdict == "Excellent":
+        alerts.append({
+            "type": "excellent",
+            "title": "Excellent fishing day!",
+            "message": "Wind, waves, and temperatures are all in the sweet spot. Don't miss this one.",
+        })
+
+    # Falling pressure trigger
+    if pressure and "falling" in pressure.get("trend", "").lower():
+        p_val = pressure.get("pressure_mb", 0)
+        if p_val and float(p_val) < 1010:
+            alerts.append({
+                "type": "pressure",
+                "title": "Pre-front feeding window",
+                "message": "Barometric pressure is dropping below 1010 mb — fish often feed aggressively before incoming weather.",
+            })
+
+    # Incoming tide + dawn/dusk
+    if tide_state == "Rising":
+        alerts.append({
+            "type": "tide",
+            "title": "Incoming tide active",
+            "message": "Rising water pushes bait toward shore. Prime time for surf and pier fishing.",
+        })
+
+    return alerts[:3]
+
+
 def pick_best_fishing_day(
     today_verdict: str,
     outlook: List[Dict[str, Any]],
@@ -6803,6 +6857,14 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         wind_dir=wind_dir, water_temp=water_temp,
         pressure=forecast.get("pressure"), tide_state=forecast.get("tide_state", ""),
         coast=coast,
+    )
+
+    # Bite alerts
+    forecast["bite_alerts"] = build_bite_alerts(
+        verdict=forecast["conditions"]["verdict"],
+        species=species,
+        pressure=forecast.get("pressure"),
+        tide_state=forecast.get("tide_state", ""),
     )
 
     # Safety checklist

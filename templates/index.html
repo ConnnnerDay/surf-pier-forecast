@@ -99,6 +99,31 @@
             {% endif %}
         </section>
 
+        <!-- Bite Alerts -->
+        {% if forecast.bite_alerts %}
+        <div class="bite-alerts">
+            {% for ba in forecast.bite_alerts %}
+            <div class="bite-alert bite-alert--{{ ba.type }}">
+                <div class="bite-alert-icon">
+                    {% if ba.type == 'hot' %}
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 3-2 6-2 9a4 4 0 1 0 8 0c0-3-3-6-2-9"/><path d="M12 22a6 6 0 0 1-6-6c0-4 3-7 3-10h6c0 3 3 6 3 10a6 6 0 0 1-6 6z"/></svg>
+                    {% elif ba.type == 'excellent' %}
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {% elif ba.type == 'pressure' %}
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 6v6l4 2"/></svg>
+                    {% else %}
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                    {% endif %}
+                </div>
+                <div class="bite-alert-body">
+                    <strong>{{ ba.title }}</strong>
+                    <span>{{ ba.message }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Best Fishing Times -->
         {% if forecast.best_times %}
         <section class="best-times-section">
