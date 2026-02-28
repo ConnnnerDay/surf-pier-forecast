@@ -6447,6 +6447,89 @@ def pick_best_fishing_day(
     }
 
 
+def build_gear_checklist(
+    species: List[Dict[str, Any]],
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
+    water_temp: float = 65.0,
+    weather: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, str]]:
+    """Generate a conditions-aware packing list for a fishing trip."""
+    items: List[Dict[str, str]] = []
+    categories_seen: set = set()
+
+    def _add(category: str, item: str, reason: str = "") -> None:
+        key = f"{category}:{item}"
+        if key not in categories_seen:
+            categories_seen.add(key)
+            items.append({"category": category, "item": item, "reason": reason})
+
+    # ---- Always bring ----
+    _add("Essentials", "Rod & reel (medium-heavy for surf)", "")
+    _add("Essentials", "Tackle box with hooks, sinkers, swivels", "")
+    _add("Essentials", "Bait cooler with ice", "")
+    _add("Essentials", "Pliers & line cutter", "")
+    _add("Essentials", "Fishing license", "Required in most states")
+
+    # ---- Conditions-based ----
+    max_wind = (wind_range[1] if wind_range else 10)
+    max_wave = (wave_range[1] if wave_range else 2)
+
+    if max_wind >= 15:
+        _add("Conditions", "Heavy sinkers (4-6 oz)", "Strong wind requires extra weight")
+        _add("Conditions", "Sand spike or rod holder", "Keep rods secure in high wind")
+
+    if max_wave >= 4:
+        _add("Conditions", "Waders or waterproof boots", "Heavy surf will splash")
+        _add("Conditions", "Extra sinkers (pyramid style)", "Holds bottom in rough surf")
+
+    if hour < 6 or hour >= 19:
+        _add("Conditions", "Headlamp (red light mode)", "Preserve night vision")
+        _add("Conditions", "Glow sticks or light-up bobbers", "Track your line in the dark")
+
+    if 10 <= hour <= 16:
+        _add("Conditions", "Sunscreen SPF 50+", "Peak UV hours")
+        _add("Conditions", "Polarized sunglasses", "Reduce glare, spot fish")
+        _add("Conditions", "Hat with brim or neck flap", "Sun protection")
+
+    # ---- Weather-based ----
+    air_temp = None
+    if weather:
+        air_temp = weather.get("air_temp_f")
+    if air_temp is not None:
+        if float(air_temp) < 50:
+            _add("Weather", "Layered clothing / thermal base", f"Air temp {air_temp}°F")
+            _add("Weather", "Hand warmers", "Keep fingers nimble for knots")
+            _add("Weather", "Thermos with hot drink", "Stay warm on the pier")
+        elif float(air_temp) > 85:
+            _add("Weather", "Extra water (1 gal minimum)", f"Air temp {air_temp}°F — stay hydrated")
+            _add("Weather", "Cooling towel", "Beat the heat")
+
+    # ---- Species-based ----
+    has_shark = any("shark" in sp.get("name", "").lower() for sp in species[:10])
+    has_king = any("king" in sp.get("name", "").lower() for sp in species[:10])
+    has_flounder = any("flounder" in sp.get("name", "").lower() for sp in species[:10])
+
+    if has_shark:
+        _add("Species", "Wire leader (single-strand)", "Shark teeth cut mono/fluoro")
+        _add("Species", "Heavy-duty dehooking tool", "Safe shark handling")
+
+    if has_king:
+        _add("Species", "Wire or heavy fluoro leader (60+ lb)", "Kings have sharp teeth")
+        _add("Species", "Stinger rig components", "Standard for kingfish")
+
+    if has_flounder:
+        _add("Species", "Bucktail jig (white/chartreuse)", "Top flounder lure")
+
+    # ---- Convenience ----
+    _add("Convenience", "5-gallon bucket", "Bait storage, seat, catch bucket")
+    _add("Convenience", "Towel / rags", "Clean hands between baiting")
+    _add("Convenience", "Trash bag", "Leave no trace")
+
+    return items
+
+
 def build_conditions_explainer(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
@@ -6865,6 +6948,14 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         species=species,
         pressure=forecast.get("pressure"),
         tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Gear checklist
+    forecast["gear_checklist"] = build_gear_checklist(
+        species=species,
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, water_temp=water_temp,
+        weather=forecast.get("weather"),
     )
 
     # Safety checklist

@@ -836,6 +836,39 @@
             </div>
         </section>
 
+        <!-- Gear Checklist -->
+        {% if forecast.gear_checklist %}
+        <section class="gear-section">
+            <details class="gear-details">
+                <summary class="gear-summary">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    What to Bring
+                    <span class="gear-count">{{ forecast.gear_checklist|length }} items</span>
+                </summary>
+                <div class="gear-list">
+                    {% set ns = namespace(current_cat='') %}
+                    {% for g in forecast.gear_checklist %}
+                    {% if g.category != ns.current_cat %}
+                    {% set ns.current_cat = g.category %}
+                    <div class="gear-category">{{ g.category }}</div>
+                    {% endif %}
+                    <label class="gear-item">
+                        <input type="checkbox" class="gear-check">
+                        <span class="gear-name">{{ g.item }}</span>
+                        {% if g.reason %}
+                        <span class="gear-reason">{{ g.reason }}</span>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </details>
+        </section>
+        {% endif %}
+
         <!-- Safety Checklist -->
         {% if forecast.safety %}
         <section class="safety-section">
