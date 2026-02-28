@@ -1517,6 +1517,37 @@ h2 {
   padding: 1.25rem 1.5rem;
 }
 
+.best-day-callout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--ocean-light);
+  border: 1.5px solid var(--ocean);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.best-day-icon {
+  color: var(--ocean);
+  flex-shrink: 0;
+}
+
+.best-day-body {
+  flex: 1;
+}
+
+.best-day-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--ocean);
+}
+
+.best-day-rec {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .outlook-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

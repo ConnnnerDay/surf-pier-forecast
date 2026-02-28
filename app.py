@@ -6340,6 +6340,59 @@ def build_spot_tips(
     return tips[:5]
 
 
+def pick_best_fishing_day(
+    today_verdict: str,
+    outlook: List[Dict[str, Any]],
+) -> Dict[str, str]:
+    """Analyze today and 3-day outlook to recommend the best day to fish.
+
+    Returns a dict with 'best_day', 'reason', and 'recommendation'.
+    """
+    # Score mapping for verdicts
+    verdict_scores = {
+        "Excellent": 5,
+        "Good": 4,
+        "Fair": 3,
+        "Challenging": 2,
+        "Poor": 1,
+        "Unknown": 2,
+    }
+
+    best_day = "Today"
+    best_score = verdict_scores.get(today_verdict, 2)
+    best_verdict = today_verdict
+
+    for day in outlook:
+        v = day.get("verdict", "Unknown")
+        s = verdict_scores.get(v, 2)
+        n_species = len(day.get("top_species", []))
+        # Bonus for having more active species
+        s += min(n_species * 0.2, 1.0)
+        if s > best_score:
+            best_score = s
+            best_day = day["day"]
+            best_verdict = v
+
+    if best_day == "Today":
+        if best_score >= 4:
+            recommendation = "Today looks great — get out there!"
+        elif best_score >= 3:
+            recommendation = "Decent day today, but conditions are fishable."
+        else:
+            recommendation = "Tough day today. Check back tomorrow."
+    else:
+        if best_score >= 4:
+            recommendation = f"{best_day} has the best forecast — plan your trip then."
+        else:
+            recommendation = f"{best_day} looks slightly better, but all days are similar."
+
+    return {
+        "best_day": best_day,
+        "verdict": best_verdict,
+        "recommendation": recommendation,
+    }
+
+
 def build_conditions_explainer(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
@@ -6723,6 +6776,13 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
             forecast["outlook"] = outlook
     except Exception:
         pass
+
+    # Best day to fish (trip planner)
+    if forecast.get("outlook"):
+        forecast["best_day"] = pick_best_fishing_day(
+            forecast["conditions"]["verdict"],
+            forecast["outlook"],
+        )
 
     # Species availability calendar
     forecast["calendar"] = build_species_calendar(species, location)
