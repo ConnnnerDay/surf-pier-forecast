@@ -731,6 +731,81 @@ h2 {
   font-family: 'Inter', sans-serif;
 }
 
+/* ---------- Multi-day tide table ---------- */
+
+.multi-tide-details {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-light, #e8ecef);
+  padding-top: 0.5rem;
+}
+
+.multi-tide-summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ocean);
+  cursor: pointer;
+  list-style: none;
+  padding: 0.4rem 0;
+}
+
+.multi-tide-summary::-webkit-details-marker { display: none; }
+
+.multi-tide-summary::before {
+  content: "▸ ";
+  font-size: 0.7rem;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+
+.multi-tide-details[open] .multi-tide-summary::before {
+  transform: rotate(90deg);
+}
+
+.multi-tide-table-wrap {
+  overflow-x: auto;
+}
+
+.multi-tide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.multi-tide-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0.3rem 0.5rem;
+  border-bottom: 2px solid var(--border-light, #e8ecef);
+}
+
+.multi-tide-table td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border-light, #e8ecef);
+}
+
+.multi-tide-date {
+  font-weight: 600;
+  color: var(--ocean);
+  vertical-align: top;
+}
+
+.multi-tide-type {
+  font-weight: 600;
+}
+
+.multi-tide-type--high {
+  color: var(--ocean);
+}
+
+.multi-tide-type--low {
+  color: var(--sea-green);
+}
+
 /* ---------- Solunar section ---------- */
 
 .solunar-section {

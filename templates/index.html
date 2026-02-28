@@ -331,6 +331,38 @@
             })();
             </script>
             {% endif %}
+
+            {% if forecast.multi_day_tides %}
+            <details class="multi-tide-details">
+                <summary class="multi-tide-summary">Upcoming Tides (Next 3 Days)</summary>
+                <div class="multi-tide-table-wrap">
+                    <table class="multi-tide-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Time</th>
+                                <th>Height</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in forecast.multi_day_tides %}
+                            {% for tide in day.tides %}
+                            <tr>
+                                {% if loop.first %}
+                                <td class="multi-tide-date" rowspan="{{ day.tides|length }}">{{ day.date }}</td>
+                                {% endif %}
+                                <td class="multi-tide-type multi-tide-type--{{ tide.type|lower }}">{{ tide.type }}</td>
+                                <td>{{ tide.time }}</td>
+                                <td>{{ tide.height_ft }} ft</td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+            {% endif %}
         </section>
         {% endif %}
 
