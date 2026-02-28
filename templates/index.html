@@ -742,6 +742,16 @@
                     Export CSV
                 </button>
             </div>
+            <div class="personal-bests" id="personal-bests" style="display:none;">
+                <h4 class="pb-title">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:0.25rem;">
+                        <circle cx="12" cy="8" r="7"/>
+                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                    </svg>
+                    Personal Bests
+                </h4>
+                <div class="pb-list" id="pb-list"></div>
+            </div>
         </section>
 
         <!-- Share & Refresh -->
@@ -995,6 +1005,46 @@
         if (entries[0] && entries[0].date) {
             document.getElementById('stat-recent').textContent = entries[0].date.split(' ')[0];
         }
+
+        // Personal bests
+        renderPersonalBests(entries);
+    }
+
+    function renderPersonalBests(entries) {
+        var pbEl = document.getElementById('personal-bests');
+        var pbList = document.getElementById('pb-list');
+        if (!pbEl || !pbList) return;
+
+        // Extract numeric sizes and find max per species
+        var bests = {};
+        entries.forEach(function(e) {
+            if (!e.size) return;
+            var num = parseFloat(e.size);
+            if (isNaN(num) || num <= 0) return;
+            var unit = e.size.replace(/[\d.\s]+/g, '').trim() || '"';
+            var sp = e.species.trim();
+            var key = sp.toLowerCase();
+            if (!bests[key] || num > bests[key].size) {
+                bests[key] = { species: sp, size: num, unit: unit, date: e.date || '' };
+            }
+        });
+
+        var sorted = Object.values(bests).sort(function(a, b) { return b.size - a.size; });
+        if (!sorted.length) {
+            pbEl.style.display = 'none';
+            return;
+        }
+
+        pbEl.style.display = 'block';
+        var html = '';
+        sorted.forEach(function(pb) {
+            html += '<div class="pb-entry">';
+            html += '<span class="pb-species">' + esc(pb.species) + '</span>';
+            html += '<span class="pb-size">' + pb.size + (pb.unit ? ' ' + esc(pb.unit) : '') + '</span>';
+            if (pb.date) html += '<span class="pb-date">' + esc(pb.date.split(' ')[0]) + '</span>';
+            html += '</div>';
+        });
+        pbList.innerHTML = html;
     }
 
     function esc(s) {

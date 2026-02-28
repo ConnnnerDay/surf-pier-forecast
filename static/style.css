@@ -1820,6 +1820,54 @@ h2 {
   }
 }
 
+.personal-bests {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light, #e8ecef);
+}
+
+.pb-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ocean);
+  margin: 0 0 0.5rem;
+}
+
+.pb-list {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.pb-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-subtle, #f8f9fa);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.pb-species {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pb-size {
+  font-weight: 700;
+  color: var(--ocean);
+  background: var(--ocean-light);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.pb-date {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
 .fishlog-export-btn {
   display: inline-flex;
   align-items: center;
