@@ -718,6 +718,14 @@
                         <span class="catch-stat-label">Last Catch</span>
                     </div>
                 </div>
+                <button class="fishlog-export-btn" onclick="exportLogCSV()" title="Download catches as CSV">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Export CSV
+                </button>
             </div>
         </section>
 
@@ -738,6 +746,14 @@
                         <path d="M7 7h10M7 12h10M7 17h6"/>
                     </svg>
                     <span>Copy Summary</span>
+                </button>
+                <button class="share-btn share-btn--print" onclick="window.print()" title="Print forecast">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"/>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                        <rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                    <span>Print Forecast</span>
                 </button>
             </div>
             <div id="share-toast" class="share-toast" style="display:none;">Copied!</div>
@@ -969,6 +985,27 @@
         entries.splice(index, 1);
         saveLog(entries);
         renderLog();
+    }
+
+    function exportLogCSV() {
+        var entries = getLog();
+        if (!entries.length) return;
+        var rows = [['Date', 'Species', 'Size', 'Notes']];
+        entries.forEach(function(e) {
+            rows.push([
+                '"' + (e.date || '').replace(/"/g, '""') + '"',
+                '"' + (e.species || '').replace(/"/g, '""') + '"',
+                '"' + (e.size || '').replace(/"/g, '""') + '"',
+                '"' + (e.notes || '').replace(/"/g, '""') + '"',
+            ]);
+        });
+        var csv = rows.map(function(r) { return r.join(','); }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'fishing-log.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
     }
 
     // Enter key support

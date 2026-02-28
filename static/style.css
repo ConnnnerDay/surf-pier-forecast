@@ -1717,6 +1717,31 @@ h2 {
   }
 }
 
+.fishlog-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ocean);
+  background: transparent;
+  border: 1.5px solid var(--ocean);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fishlog-export-btn:hover {
+  background: var(--ocean);
+  color: #fff;
+}
+
+.fishlog-export-btn svg {
+  flex-shrink: 0;
+}
+
 /* ---------- Share ---------- */
 
 .share-section {
@@ -2294,5 +2319,111 @@ footer p {
 
   .tide-point {
     min-width: auto;
+  }
+}
+
+/* ---------- Print styles ---------- */
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body { font-size: 10pt; padding: 0; }
+
+  header,
+  .dark-toggle,
+  .fav-bar,
+  .share-section,
+  .fishlog-section,
+  .refresh,
+  .alert-banner,
+  #auto-refresh-note,
+  .knot-detail summary::before {
+    display: none !important;
+  }
+
+  .location-header {
+    text-align: center;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid #000;
+    margin-bottom: 1rem;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    margin-bottom: 0.5rem !important;
+    padding: 0.5rem !important;
+  }
+
+  .verdict-hero {
+    border: 2px solid #000 !important;
+    text-align: center;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+
+  .stat-card {
+    border: 1px solid #ccc !important;
+    padding: 0.25rem !important;
+  }
+
+  .species-list,
+  .rig-cards,
+  .bait-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .species-card,
+  .rig-card,
+  .bait-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .rig-diagram img {
+    max-height: 120px !important;
+  }
+
+  .knot-detail[open] .knot-steps {
+    border-top: 1px solid #ccc !important;
+  }
+
+  details.knot-detail {
+    border: 1px solid #ccc !important;
+  }
+
+  details.knot-detail[open] {
+    break-inside: avoid;
+  }
+
+  .calendar-table {
+    font-size: 8pt !important;
+  }
+
+  .tide-chart-container svg {
+    max-height: 150px !important;
+  }
+
+  a { text-decoration: underline; }
+
+  a[href]::after {
+    content: none !important;
   }
 }
