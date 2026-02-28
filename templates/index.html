@@ -236,6 +236,17 @@
                 {% endif %}
                 {% endif %}
             </div>
+
+            {% if forecast.conditions_explainer %}
+            <div class="conditions-explainer">
+                {% for bullet in forecast.conditions_explainer %}
+                <div class="explainer-item explainer-{{ bullet.impact }}">
+                    <span class="explainer-label">{{ bullet.label }}</span>
+                    <span class="explainer-text">{{ bullet.text }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </section>
 
         <!-- Spot Tips -->

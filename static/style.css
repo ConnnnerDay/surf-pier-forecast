@@ -551,6 +551,53 @@ h2 {
   display: block;
 }
 
+/* ---------- Conditions explainer ---------- */
+
+.conditions-explainer {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light, #e8ecef);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.explainer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  background: var(--bg-subtle, #f8f9fa);
+}
+
+.explainer-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  min-width: 58px;
+  padding-top: 0.1rem;
+}
+
+.explainer-text {
+  color: var(--text);
+}
+
+.explainer-positive {
+  border-left: 3px solid var(--sea-green);
+}
+
+.explainer-negative {
+  border-left: 3px solid var(--red);
+}
+
+.explainer-neutral {
+  border-left: 3px solid var(--amber);
+}
+
 /* ---------- Spot tips ---------- */
 
 .spot-tips-section {

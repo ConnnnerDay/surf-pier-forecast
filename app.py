@@ -6340,6 +6340,122 @@ def build_spot_tips(
     return tips[:5]
 
 
+def build_conditions_explainer(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    wind_dir: Optional[str] = None,
+    water_temp: float = 65.0,
+    pressure: Optional[Dict[str, Any]] = None,
+    tide_state: str = "",
+    coast: str = "east",
+) -> List[Dict[str, str]]:
+    """Translate raw marine conditions into fishing-relevant plain English."""
+    bullets: List[Dict[str, str]] = []
+
+    # Wind analysis
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind <= 8:
+            bullets.append({
+                "label": "Wind",
+                "text": "Light winds make for calm conditions — great for float rigs and sight casting.",
+                "impact": "positive",
+            })
+        elif avg_wind <= 15:
+            bullets.append({
+                "label": "Wind",
+                "text": "Moderate breeze stirs up bait and adds turbidity. Good for surf fishing — fish move closer to feed.",
+                "impact": "positive",
+            })
+        elif avg_wind <= 22:
+            bullets.append({
+                "label": "Wind",
+                "text": "Strong winds make casting difficult and waves choppy. Use heavier sinkers and shorter leaders.",
+                "impact": "neutral",
+            })
+        else:
+            bullets.append({
+                "label": "Wind",
+                "text": "Near-gale conditions — tough fishing day. If you go, fish sheltered areas with heavy tackle.",
+                "impact": "negative",
+            })
+
+    # Wind direction meaning
+    if wind_dir:
+        onshore_dirs = {
+            "east": {"E", "ENE", "ESE", "SE", "NE"},
+            "west": {"W", "WNW", "WSW", "SW", "NW"},
+        }
+        dirs = onshore_dirs.get(coast, onshore_dirs["east"])
+        if wind_dir in dirs:
+            bullets.append({
+                "label": "Direction",
+                "text": f"{wind_dir} wind pushes bait and murky water shoreward — predators follow to feed along the beach.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Direction",
+                "text": f"{wind_dir} (offshore) wind flattens the surf and clears the water. Better for sight fishing, tougher for surf bait fishing.",
+                "impact": "neutral",
+            })
+
+    # Wave analysis
+    if wave_range:
+        avg_wave = (wave_range[0] + wave_range[1]) / 2
+        if avg_wave <= 2:
+            bullets.append({
+                "label": "Waves",
+                "text": "Flat to slight seas — ideal for pier fishing and wading. Fish may be less active in clear, calm water.",
+                "impact": "neutral",
+            })
+        elif avg_wave <= 4:
+            bullets.append({
+                "label": "Waves",
+                "text": "Moderate surf churns up sand fleas, crabs, and baitfish — prime conditions for the surf zone.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Waves",
+                "text": "Heavy surf concentrates bait in troughs between sandbars. Big fish feed hard but conditions are challenging.",
+                "impact": "neutral",
+            })
+
+    # Pressure
+    if pressure:
+        trend = pressure.get("trend", "").lower()
+        if "falling" in trend:
+            bullets.append({
+                "label": "Pressure",
+                "text": "Falling pressure triggers a feeding frenzy — fish sense the change and eat aggressively before a front.",
+                "impact": "positive",
+            })
+        elif "rising" in trend:
+            bullets.append({
+                "label": "Pressure",
+                "text": "Rising pressure often means post-front clear skies. Fishing may be slow at first but improves as it stabilizes.",
+                "impact": "neutral",
+            })
+
+    # Tide state
+    if tide_state:
+        if tide_state == "Rising":
+            bullets.append({
+                "label": "Tide",
+                "text": "Incoming tide floods channels and flats with bait — one of the best times to fish from shore.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Tide",
+                "text": "Outgoing tide funnels bait through inlets and cuts — position yourself where current concentrates.",
+                "impact": "positive",
+            })
+
+    return bullets[:5]
+
+
 def build_safety_checklist(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
@@ -6619,6 +6735,14 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         wind_range=wind_range, wave_range=wave_range,
         wind_dir=wind_dir or "", hour=now.hour, month=month,
         coast=coast, tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Conditions explainer
+    forecast["conditions_explainer"] = build_conditions_explainer(
+        wind_range=wind_range, wave_range=wave_range,
+        wind_dir=wind_dir, water_temp=water_temp,
+        pressure=forecast.get("pressure"), tide_state=forecast.get("tide_state", ""),
+        coast=coast,
     )
 
     # Safety checklist
