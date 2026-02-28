@@ -6340,6 +6340,89 @@ def build_spot_tips(
     return tips[:5]
 
 
+def build_safety_checklist(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
+    alerts: Optional[List[Dict[str, str]]] = None,
+) -> List[Dict[str, str]]:
+    """Build a conditions-aware safety checklist for surf/pier fishing."""
+    items: List[Dict[str, str]] = []
+
+    # Always show basics
+    items.append({
+        "text": "Tell someone your fishing plan and expected return time",
+        "icon": "info",
+    })
+
+    # Wave-based warnings
+    if wave_range:
+        max_wave = wave_range[1] if isinstance(wave_range, tuple) else 3
+        if max_wave >= 6:
+            items.append({
+                "text": "High surf advisory — stay off jetties and rock structures",
+                "icon": "warning",
+            })
+            items.append({
+                "text": "Rip current risk is elevated — never wade beyond knee depth",
+                "icon": "warning",
+            })
+        elif max_wave >= 4:
+            items.append({
+                "text": "Moderate surf — watch for sneaker waves and keep gear secured",
+                "icon": "caution",
+            })
+
+    # Wind-based
+    if wind_range:
+        max_wind = wind_range[1] if isinstance(wind_range, tuple) else 10
+        if max_wind >= 25:
+            items.append({
+                "text": "Gale-force winds — consider postponing your trip",
+                "icon": "warning",
+            })
+        elif max_wind >= 15:
+            items.append({
+                "text": "Strong winds — secure coolers/gear and watch for blown tackle",
+                "icon": "caution",
+            })
+
+    # Time-based
+    if hour < 6 or hour >= 20:
+        items.append({
+            "text": "Fishing in the dark — bring a headlamp and reflective gear",
+            "icon": "info",
+        })
+    if 10 <= hour <= 16:
+        items.append({
+            "text": "Peak sun hours — wear sunscreen (SPF 50+), hat, and polarized glasses",
+            "icon": "info",
+        })
+
+    # Weather alerts
+    if alerts:
+        for alert in alerts:
+            severity = alert.get("severity", "").lower()
+            if "thunderstorm" in alert.get("event", "").lower():
+                items.append({
+                    "text": "Thunderstorm warning active — leave pier/water immediately if lightning is within 10 miles",
+                    "icon": "warning",
+                })
+                break
+
+    # General
+    items.append({
+        "text": "Bring plenty of water — dehydration reduces reaction time",
+        "icon": "info",
+    })
+    items.append({
+        "text": "Know the emergency number for your pier/beach (usually posted at entrance)",
+        "icon": "info",
+    })
+
+    return items
+
+
 def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
@@ -6536,6 +6619,12 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         wind_range=wind_range, wave_range=wave_range,
         wind_dir=wind_dir or "", hour=now.hour, month=month,
         coast=coast, tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Safety checklist
+    forecast["safety"] = build_safety_checklist(
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, alerts=forecast.get("alerts"),
     )
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
