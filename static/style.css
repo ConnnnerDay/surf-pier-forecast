@@ -173,6 +173,34 @@ header::before {
   position: relative;
 }
 
+.unit-toggle {
+  position: absolute;
+  right: 42px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.9);
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.unit-toggle:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.unit-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .theme-toggle {
   position: absolute;
   right: 0;

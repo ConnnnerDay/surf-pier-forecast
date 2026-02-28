@@ -40,6 +40,9 @@
         <div class="header-inner">
             <div class="header-top-row">
                 <h1>Surf &amp; Pier Fishing Outlook</h1>
+                <button class="unit-toggle" id="unit-toggle" onclick="toggleUnits()" title="Toggle °F / °C" aria-label="Toggle temperature units">
+                    <span class="unit-label" id="unit-label">°F</span>
+                </button>
                 <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
                     <svg class="theme-icon theme-icon--light" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                     <svg class="theme-icon theme-icon--dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -135,7 +138,7 @@
                 <div class="stat-card">
                     <span class="stat-label">Water Temp</span>
                     <span class="stat-value">
-                        {{ forecast.conditions.water_temp_f }}&deg;F
+                        <span class="unit-temp" data-f="{{ forecast.conditions.water_temp_f }}">{{ forecast.conditions.water_temp_f }}&deg;F</span>
                         {% if forecast.conditions.water_temp_trend == 'warming' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><path d="M8 3l4 5H4z" fill="#e05830"/></svg>
                         {% elif forecast.conditions.water_temp_trend == 'cooling' %}
@@ -218,7 +221,7 @@
                 {% if forecast.weather %}
                 <div class="stat-card">
                     <span class="stat-label">Air Temp</span>
-                    <span class="stat-value">{{ forecast.weather.air_temp_f }}&deg;F</span>
+                    <span class="stat-value"><span class="unit-temp" data-f="{{ forecast.weather.air_temp_f }}">{{ forecast.weather.air_temp_f }}&deg;F</span></span>
                     <span class="stat-detail">
                         {% if forecast.weather.description %}{{ forecast.weather.description|lower }}{% endif %}
                         {% if forecast.weather.humidity %} &middot; {{ forecast.weather.humidity|int }}% humidity{% endif %}
@@ -227,7 +230,7 @@
                 {% if forecast.weather.feels_like_f or forecast.weather.wind_chill_f %}
                 <div class="stat-card">
                     <span class="stat-label">Feels Like</span>
-                    <span class="stat-value">{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f)|round|int }}&deg;F</span>
+                    <span class="stat-value"><span class="unit-temp" data-f="{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f)|round|int }}">{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f)|round|int }}&deg;F</span></span>
                     <span class="stat-detail">{% if forecast.weather.feels_like_f %}heat index{% else %}wind chill{% endif %}</span>
                 </div>
                 {% endif %}
@@ -841,6 +844,36 @@
             localStorage.setItem('theme', 'dark');
         }
     }
+
+    // Unit toggle (°F ↔ °C)
+    function applyUnits(unit) {
+        var label = document.getElementById('unit-label');
+        var els = document.querySelectorAll('.unit-temp');
+        els.forEach(function(el) {
+            var f = parseFloat(el.getAttribute('data-f'));
+            if (isNaN(f)) return;
+            if (unit === 'C') {
+                var c = Math.round((f - 32) * 5 / 9);
+                el.innerHTML = c + '&deg;C';
+            } else {
+                el.innerHTML = Math.round(f) + '&deg;F';
+            }
+        });
+        if (label) label.textContent = '°' + unit;
+    }
+
+    function toggleUnits() {
+        var current = localStorage.getItem('units') || 'F';
+        var next = current === 'F' ? 'C' : 'F';
+        localStorage.setItem('units', next);
+        applyUnits(next);
+    }
+
+    // Apply saved unit preference
+    (function() {
+        var u = localStorage.getItem('units');
+        if (u === 'C') applyUnits('C');
+    })();
 
     function showToast(msg) {
         var t = document.getElementById('share-toast');
