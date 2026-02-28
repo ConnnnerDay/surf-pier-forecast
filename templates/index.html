@@ -35,7 +35,8 @@
     <meta name="twitter:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}">
 </head>
 <body>
-    <header>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
         <div class="header-inner">
             <div class="header-top-row">
                 <h1>Surf &amp; Pier Fishing Outlook</h1>
@@ -46,7 +47,7 @@
             </div>
             <p class="subtitle">{{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
             <div class="header-actions">
-                <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites">
+                <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
                     <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 </button>
@@ -59,10 +60,10 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content" role="main">
         <!-- Weather Alerts -->
         {% if forecast.alerts %}
-        <div class="alerts-banner">
+        <div class="alerts-banner" role="alert" aria-label="Weather alerts">
             {% for alert in forecast.alerts %}
             <div class="alert-item alert-{{ alert.severity|lower }}">
                 <div class="alert-icon">
@@ -680,21 +681,24 @@
             </h2>
             <p class="section-sub">Track your catches — saved on this device</p>
 
-            <div class="fishlog-form" id="fishlog-form">
+            <div class="fishlog-form" id="fishlog-form" role="form" aria-label="Add a catch to your fishing log">
                 <div class="fishlog-row">
-                    <input type="text" id="log-species" placeholder="Species caught" class="fishlog-input" maxlength="60">
-                    <input type="text" id="log-size" placeholder="Size (optional)" class="fishlog-input fishlog-input--sm" maxlength="20">
+                    <label for="log-species" class="sr-only">Species caught</label>
+                    <input type="text" id="log-species" placeholder="Species caught" class="fishlog-input" maxlength="60" autocomplete="off">
+                    <label for="log-size" class="sr-only">Size</label>
+                    <input type="text" id="log-size" placeholder="Size (optional)" class="fishlog-input fishlog-input--sm" maxlength="20" autocomplete="off">
                 </div>
                 <div class="fishlog-row">
-                    <input type="text" id="log-notes" placeholder="Notes (bait used, location, etc.)" class="fishlog-input" maxlength="200">
-                    <button class="fishlog-add-btn" onclick="addLogEntry()">
+                    <label for="log-notes" class="sr-only">Notes</label>
+                    <input type="text" id="log-notes" placeholder="Notes (bait used, location, etc.)" class="fishlog-input" maxlength="200" autocomplete="off">
+                    <button class="fishlog-add-btn" onclick="addLogEntry()" aria-label="Add catch entry">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add
                     </button>
                 </div>
             </div>
 
-            <div class="fishlog-entries" id="fishlog-entries"></div>
+            <div class="fishlog-entries" id="fishlog-entries" aria-live="polite"></div>
             <div class="fishlog-empty" id="fishlog-empty" style="display:none;">
                 <p>No catches logged yet. Record your first catch above!</p>
             </div>
@@ -756,7 +760,7 @@
                     <span>Print Forecast</span>
                 </button>
             </div>
-            <div id="share-toast" class="share-toast" style="display:none;">Copied!</div>
+            <div id="share-toast" class="share-toast" style="display:none;" role="status" aria-live="polite">Copied!</div>
         </section>
 
         <section class="refresh">
@@ -911,7 +915,7 @@
             html += '</div>';
             html += '<div class="fishlog-entry-meta">';
             html += '<span class="fishlog-date">' + esc(e.date) + '</span>';
-            html += '<button class="fishlog-del" onclick="deleteLog(' + i + ')" title="Remove">&times;</button>';
+            html += '<button class="fishlog-del" onclick="deleteLog(' + i + ')" title="Remove" aria-label="Remove this catch entry">&times;</button>';
             html += '</div></div>';
         });
         container.innerHTML = html;
