@@ -6067,12 +6067,37 @@ def build_multiday_outlook(
         # --- Fishability verdict ---
         verdict = classify_conditions(wind_range, wave_range) if wind_range and wave_range else "Unknown"
 
+        # --- Top species for this day ---
+        coast = (location or {}).get("coast", "east")
+        if location:
+            monthly_temps = get_monthly_water_temps(location)
+            future_water_temp = float(monthly_temps[future_month])
+        else:
+            future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
+
+        top_species_names: List[str] = []
+        species_scores: List[Tuple[str, float]] = []
+        for sp in SPECIES_DB:
+            s = _score_species(
+                sp, future_month, future_water_temp,
+                wind_dir=None,
+                wind_range=wind_range,
+                wave_range=wave_range,
+                hour=12,
+                coast=coast,
+            )
+            if s > 20:
+                species_scores.append((sp["name"], s))
+        species_scores.sort(key=lambda x: x[1], reverse=True)
+        top_species_names = [name for name, _ in species_scores[:5]]
+
         days.append({
             "day": day_label,
             "date": date_label,
             "wind": wind_str,
             "waves": wave_str,
             "verdict": verdict,
+            "top_species": top_species_names,
         })
 
     return days

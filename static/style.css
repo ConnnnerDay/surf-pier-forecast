@@ -1462,6 +1462,34 @@ h2 {
   font-weight: 500;
 }
 
+.outlook-species {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-light, #e8ecef);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.outlook-species-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.outlook-species-tag {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  background: var(--ocean-light);
+  color: var(--ocean);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
 @media (max-width: 640px) {
   .outlook-grid {
     grid-template-columns: 1fr;

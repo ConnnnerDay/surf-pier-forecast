@@ -621,6 +621,14 @@
                             <span class="outlook-detail-value">{{ day.waves }}</span>
                         </div>
                     </div>
+                    {% if day.top_species %}
+                    <div class="outlook-species">
+                        <span class="outlook-species-label">Top targets:</span>
+                        {% for sp in day.top_species %}
+                        <span class="outlook-species-tag">{{ sp }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
