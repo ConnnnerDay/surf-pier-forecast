@@ -476,6 +476,65 @@ h2 {
   display: block;
 }
 
+/* ---------- Spot tips ---------- */
+
+.spot-tips-section {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.spot-tips-section h2 {
+  text-align: center;
+}
+
+.spot-tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.spot-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.spot-tip-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ocean-light);
+  color: var(--ocean);
+}
+
+.spot-tip-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.spot-tip-title {
+  font-size: 0.82rem;
+  color: var(--text);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.spot-tip-detail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
 /* ---------- Tide section ---------- */
 
 .tide-section {
@@ -1071,6 +1130,75 @@ h2 {
 .rig-specs dd {
   margin: 0;
   color: var(--text);
+}
+
+/* ---------- Rig knots ---------- */
+
+.rig-knots {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light, #e8ecef);
+}
+
+.rig-knots-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ocean);
+  margin: 0 0 0.5rem;
+}
+
+.knot-detail {
+  border: 1px solid var(--border-light, #e8ecef);
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+  overflow: hidden;
+}
+
+.knot-detail summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  list-style: none;
+  background: var(--bg-subtle, #f8f9fa);
+}
+
+.knot-detail summary::-webkit-details-marker { display: none; }
+
+.knot-detail summary::before {
+  content: "▸";
+  font-size: 0.7rem;
+  color: var(--ocean);
+  transition: transform 0.15s;
+}
+
+.knot-detail[open] summary::before { transform: rotate(90deg); }
+
+.knot-strength {
+  background: var(--ocean);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.knot-use {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.knot-steps {
+  padding: 0.5rem 0.65rem;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--card-bg, var(--white));
 }
 
 /* ---------- Bait list ---------- */

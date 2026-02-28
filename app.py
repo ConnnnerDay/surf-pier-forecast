@@ -4887,9 +4887,129 @@ def build_rig_recommendations(
             "sinker": " or ".join(sinkers[:3]),
             "targets": species_names,
             "image": category.get("image", ""),
+            "knots": get_knots_for_rig(key),
         })
 
     return recommendations
+
+
+# ---------------------------------------------------------------------------
+# Fishing knot recommendations
+# ---------------------------------------------------------------------------
+
+KNOTS_DB: Dict[str, Dict[str, str]] = {
+    "improved_clinch": {
+        "name": "Improved Clinch Knot",
+        "use": "Hook or swivel to mono/fluoro leader",
+        "strength": "95%",
+        "steps": (
+            "1. Thread 6\" of line through the hook eye. "
+            "2. Wrap the tag end around the standing line 5-7 times. "
+            "3. Pass the tag end through the small loop at the hook eye. "
+            "4. Pass it again through the big loop you just created. "
+            "5. Moisten, pull tight, trim tag."
+        ),
+    },
+    "palomar": {
+        "name": "Palomar Knot",
+        "use": "Hook to braid or mono — strongest simple knot",
+        "strength": "98%",
+        "steps": (
+            "1. Double 6\" of line and pass the loop through the hook eye. "
+            "2. Tie a simple overhand knot with the doubled line. "
+            "3. Pass the loop over the entire hook. "
+            "4. Moisten and pull both ends to tighten. Trim tag."
+        ),
+    },
+    "uni_knot": {
+        "name": "Uni Knot",
+        "use": "All-purpose: hook, swivel, or line-to-line",
+        "strength": "90%",
+        "steps": (
+            "1. Pass line through the eye, double back 6\". "
+            "2. Form a loop alongside the doubled line. "
+            "3. Wrap the tag end through the loop 4-6 times. "
+            "4. Moisten, pull tag end to tighten, then slide knot to eye."
+        ),
+    },
+    "uni_to_uni": {
+        "name": "Double Uni Knot",
+        "use": "Braid to fluoro/mono leader connection",
+        "strength": "90%",
+        "steps": (
+            "1. Overlap braid and leader by 8\". "
+            "2. Make a Uni Knot with each tag end (4 wraps for mono, 8 for braid). "
+            "3. Moisten both knots. "
+            "4. Pull standing lines to slide knots together. Trim tags."
+        ),
+    },
+    "fg_knot": {
+        "name": "FG Knot",
+        "use": "Braid to leader — slimmest, strongest connection",
+        "strength": "98%",
+        "steps": (
+            "1. Tension braid between teeth and rod. "
+            "2. Weave leader over and under braid 15-20 alternating wraps. "
+            "3. Cinch tight with half hitches (3-4). "
+            "4. Lock with 2 half hitches on braid only. Trim and melt tag."
+        ),
+    },
+    "surgeons_loop": {
+        "name": "Surgeon's Loop",
+        "use": "Create a loop for dropper rigs and quick-change clips",
+        "strength": "95%",
+        "steps": (
+            "1. Double 3\" of line to form a loop. "
+            "2. Tie an overhand knot with the doubled section. "
+            "3. Pass the loop through a second time (double overhand). "
+            "4. Moisten and pull tight."
+        ),
+    },
+    "dropper_loop": {
+        "name": "Dropper Loop",
+        "use": "Create a standing loop mid-leader for hi-lo rigs",
+        "strength": "90%",
+        "steps": (
+            "1. Form a loop in the middle of your leader. "
+            "2. Wrap one side through the loop 5-6 times. "
+            "3. Push the middle of the original loop through the center opening. "
+            "4. Pull both ends to tighten around the new loop."
+        ),
+    },
+    "haywire_twist": {
+        "name": "Haywire Twist",
+        "use": "Single-strand wire to hook or swivel",
+        "strength": "100%",
+        "steps": (
+            "1. Pass wire through hook eye. "
+            "2. Cross wires and twist together 4-5 times (barrel twist). "
+            "3. Wrap tag end tightly around standing wire 5-6 times (tight wraps). "
+            "4. Bend tag end into a handle, crank to break clean."
+        ),
+    },
+}
+
+# Map rig types to their recommended knots
+_RIG_KNOTS: Dict[str, List[str]] = {
+    "fishfinder": ["improved_clinch", "uni_to_uni"],
+    "hi-lo": ["dropper_loop", "improved_clinch"],
+    "knocker": ["palomar", "uni_to_uni"],
+    "pompano": ["dropper_loop", "surgeons_loop"],
+    "float": ["improved_clinch", "uni_knot"],
+    "popping-cork": ["uni_knot", "uni_to_uni"],
+    "kingfish-stinger": ["haywire_twist", "improved_clinch"],
+    "shark": ["haywire_twist", "fg_knot"],
+    "sabiki": ["uni_knot"],
+    "deep-drop": ["dropper_loop", "fg_knot"],
+    "tandem-jig": ["palomar", "uni_to_uni"],
+    "trolling": ["improved_clinch", "fg_knot"],
+}
+
+
+def get_knots_for_rig(rig_key: str) -> List[Dict[str, str]]:
+    """Return the recommended knots for a rig type."""
+    knot_keys = _RIG_KNOTS.get(rig_key, ["improved_clinch"])
+    return [KNOTS_DB[k] for k in knot_keys if k in KNOTS_DB]
 
 
 # Natural baits with the species they target and seasonal availability.
@@ -6022,6 +6142,127 @@ def build_species_calendar(
     return calendar
 
 
+# -- Spot-specific fishing tips based on conditions -------------------------
+
+def build_spot_tips(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    wind_dir: str = "",
+    hour: int = 12,
+    month: int = 6,
+    coast: str = "east",
+    tide_state: str = "",
+) -> List[Dict[str, str]]:
+    """Generate 3-5 actionable fishing tips based on current conditions.
+
+    Each tip has an 'icon' (emoji-free label), 'title', and 'detail'.
+    """
+    tips: List[Dict[str, str]] = []
+
+    # Wind-based tips
+    avg_wind = 0.0
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+
+    if avg_wind > 20:
+        tips.append({
+            "icon": "wind", "title": "Heavy Wind Strategy",
+            "detail": "Use heavier sinkers (4-6 oz) to hold bottom. "
+                      "Fish the lee side of piers and jetties for calmer pockets. "
+                      "Shorten leaders to reduce tangles.",
+        })
+    elif avg_wind > 12:
+        tips.append({
+            "icon": "wind", "title": "Moderate Wind",
+            "detail": "Standard 2-4 oz sinkers should hold. Wind chop stirs up bait — "
+                      "fish are often more active. Cast at an angle to the wind for better distance.",
+        })
+    elif avg_wind < 6:
+        tips.append({
+            "icon": "wind", "title": "Calm Conditions",
+            "detail": "Light tackle shines today. Use lighter leaders and smaller presentations. "
+                      "Fish may be more line-shy in clear, calm water.",
+        })
+
+    # Wave-based tips
+    avg_wave = 0.0
+    if wave_range:
+        avg_wave = (wave_range[0] + wave_range[1]) / 2
+
+    if avg_wave > 4:
+        tips.append({
+            "icon": "waves", "title": "Heavy Surf",
+            "detail": "Fish the troughs between sandbars where fish shelter from wave energy. "
+                      "Pyramid sinkers grip sandy bottoms better than egg sinkers in surf.",
+        })
+    elif avg_wave > 2:
+        tips.append({
+            "icon": "waves", "title": "Moderate Surf",
+            "detail": "Cast beyond the breakers to the second sandbar. "
+                      "The stirred-up sand exposes sand fleas and crabs, drawing fish to feed.",
+        })
+    elif avg_wave < 1.5:
+        tips.append({
+            "icon": "waves", "title": "Flat Surf",
+            "detail": "Fish closer to structure — jetties, pilings, and rocky outcrops. "
+                      "Clear water means lighter line and natural-colored baits work best.",
+        })
+
+    # Tide-based tips
+    if tide_state == "Rising":
+        tips.append({
+            "icon": "tide", "title": "Rising Tide Tactics",
+            "detail": "Incoming water pushes bait toward shore — position yourself "
+                      "at points where current funnels through cuts and inlets. "
+                      "Fish the first and second troughs as water fills them.",
+        })
+    elif tide_state == "Falling":
+        tips.append({
+            "icon": "tide", "title": "Falling Tide Tactics",
+            "detail": "Outgoing water concentrates baitfish at channel mouths and drain points. "
+                      "Set up where water flows out from marshes and estuaries — "
+                      "predators stack up to ambush departing bait.",
+        })
+
+    # Time-of-day tips
+    if 5 <= hour <= 7:
+        tips.append({
+            "icon": "time", "title": "Early Bird Advantage",
+            "detail": "Dawn is prime time — get lines in the water before sunrise. "
+                      "Topwater lures and live bait under corks excel in the low-light bite window.",
+        })
+    elif 17 <= hour <= 20:
+        tips.append({
+            "icon": "time", "title": "Evening Bite",
+            "detail": "Fish feed aggressively before dark. Switch to darker-colored lures as "
+                      "light fades — fish rely more on silhouette and vibration at dusk.",
+        })
+    elif 10 <= hour <= 14:
+        tips.append({
+            "icon": "time", "title": "Midday Approach",
+            "detail": "Fish deeper structure and shaded areas during bright sun. "
+                      "Piers cast shadows that attract baitfish — focus on the shadow line.",
+        })
+
+    # Seasonal tips
+    if month in (11, 12, 1, 2):
+        tips.append({
+            "icon": "season", "title": "Cold Water Tips",
+            "detail": "Slow your presentation — cold fish won't chase fast baits. "
+                      "Fish the warmest part of the day (10 AM - 3 PM) when water warms slightly. "
+                      "Bottom rigs with cut bait outperform artificials in winter.",
+        })
+    elif month in (6, 7, 8):
+        tips.append({
+            "icon": "season", "title": "Summer Patterns",
+            "detail": "Early morning and late evening are most productive — avoid the midday heat. "
+                      "Live bait stays livelier in a bucket with an aerator. "
+                      "Night fishing produces excellent catches in warm months.",
+        })
+
+    return tips[:5]
+
+
 def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
@@ -6204,6 +6445,13 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
 
     # Natural bait availability
     forecast["natural_bait"] = build_natural_bait_chart(month, coast)
+
+    # Spot tips based on current conditions
+    forecast["spot_tips"] = build_spot_tips(
+        wind_range=wind_range, wave_range=wave_range,
+        wind_dir=wind_dir or "", hour=now.hour, month=month,
+        coast=coast, tide_state=forecast.get("tide_state", ""),
+    )
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
     forecast["best_times"] = build_best_times(forecast)
