@@ -143,6 +143,28 @@
                 </div>
                 {% endfor %}
             </div>
+
+            {% if forecast.activity_timeline %}
+            <div class="activity-timeline">
+                <h3 class="timeline-title">24-Hour Activity</h3>
+                <div class="timeline-bars">
+                    {% for t in forecast.activity_timeline %}
+                    <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
+                        <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
+                        {% if t.hour % 3 == 0 %}
+                        <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="timeline-legend">
+                    <span class="tl-key tl-key--prime"></span> Prime
+                    <span class="tl-key tl-key--high"></span> High
+                    <span class="tl-key tl-key--med"></span> Moderate
+                    <span class="tl-key tl-key--low"></span> Low
+                </div>
+            </div>
+            {% endif %}
         </section>
         {% endif %}
 

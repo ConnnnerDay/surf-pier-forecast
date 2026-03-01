@@ -4314,6 +4314,19 @@ SPECIES_DB: List[Dict[str, Any]] = [
     },
 ]
 
+# ---------------------------------------------------------------------------
+# Tag each species with its coast so we can filter by region.
+# The DB is ordered: East/Gulf → Pacific → Hawaii.
+# ---------------------------------------------------------------------------
+_COAST_TAG = "east"
+for _sp in SPECIES_DB:
+    if _sp["name"] == "Barred surfperch":
+        _COAST_TAG = "west"
+    elif _sp["name"] == "Giant trevally (ulua)":
+        _COAST_TAG = "hawaii"
+    _sp["coast"] = _COAST_TAG
+del _COAST_TAG, _sp
+
 
 # ---------------------------------------------------------------------------
 # Seasonal explanation overrides -- species that behave differently during
@@ -5432,15 +5445,20 @@ def build_species_ranking(
     If ``state`` is provided, regulation data (size/bag limits) is
     attached to each species entry.
     """
+    # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
+    wind_coast = "west" if coast == "west" else "east"
     scored = []
     for sp in SPECIES_DB:
+        # Skip species from a different coast/region
+        if sp.get("coast", "east") != coast:
+            continue
         s = _score_species(
             sp, month, water_temp,
             wind_dir=wind_dir,
             wind_range=wind_range,
             wave_range=wave_range,
             hour=hour,
-            coast=coast,
+            coast=wind_coast,
         )
         if s >= SPECIES_SCORE_THRESHOLD:
             explanation = _get_explanation(sp, month, water_temp)
@@ -6120,23 +6138,27 @@ def build_multiday_outlook(
         verdict = classify_conditions(wind_range, wave_range) if wind_range and wave_range else "Unknown"
 
         # --- Top species for this day ---
-        coast = (location or {}).get("coast", "east")
+        cr = (location or {}).get("conditions_region", "atlantic_mid")
+        coast = "west" if cr.startswith("pacific") else ("hawaii" if cr.startswith("hawaii") else "east")
         if location:
             monthly_temps = get_monthly_water_temps(location)
             future_water_temp = float(monthly_temps[future_month])
         else:
             future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
 
+        wind_coast = "west" if coast == "west" else "east"
         top_species_names: List[str] = []
         species_scores: List[Tuple[str, float]] = []
         for sp in SPECIES_DB:
+            if sp.get("coast", "east") != coast:
+                continue
             s = _score_species(
                 sp, future_month, future_water_temp,
                 wind_dir=None,
                 wind_range=wind_range,
                 wave_range=wave_range,
                 hour=12,
-                coast=coast,
+                coast=wind_coast,
             )
             if s > 20:
                 species_scores.append((sp["name"], s))
@@ -6807,9 +6829,9 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         "sunrise_sunset": sun_str,
     }
 
-    # Determine coast for wind direction scoring
+    # Determine coast for wind direction scoring and species filtering
     conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
-    coast = "west" if conditions_region.startswith("pacific") else "east"
+    coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
 
     loc_state = (location or {}).get("state", "")
     species = build_species_ranking(
@@ -6924,8 +6946,9 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     # Species availability calendar
     forecast["calendar"] = build_species_calendar(species, location)
 
-    # Natural bait availability
-    forecast["natural_bait"] = build_natural_bait_chart(month, coast)
+    # Natural bait availability (bait DB only has "east"/"west" entries)
+    bait_coast = "west" if coast == "west" else "east"
+    forecast["natural_bait"] = build_natural_bait_chart(month, bait_coast)
 
     # Spot tips based on current conditions
     forecast["spot_tips"] = build_spot_tips(
@@ -6966,6 +6989,9 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
     forecast["best_times"] = build_best_times(forecast)
+
+    # 24-hour activity timeline
+    forecast["activity_timeline"] = build_activity_timeline(forecast)
 
     # Add technique tips to each species
     t_state = forecast.get("tide_state", "")
@@ -7130,6 +7156,95 @@ def build_best_times(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
             break
 
     return selected
+
+
+def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Build a 24-hour fish activity timeline (one value per hour).
+
+    Each entry: {"hour": 0-23, "label": "12 AM", "level": 0-100, "tag": "low/med/high/prime"}
+    Combines solunar periods, tide changes, and dawn/dusk to estimate activity.
+    """
+    # Start with a flat baseline
+    activity = [15.0] * 24  # baseline activity
+
+    # Dawn/dusk boost
+    sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
+    if "/" in sun_str:
+        parts = sun_str.split("/")
+        sr_h = _parse_time_str(parts[0].strip())
+        ss_h = _parse_time_str(parts[1].strip())
+
+        # Dawn: 1h before to 1.5h after sunrise
+        for h in range(24):
+            dist = abs(h - sr_h)
+            if dist < 1.5:
+                activity[h] += 30 * max(0, 1 - dist / 1.5)
+            dist = abs(h - ss_h)
+            if dist < 1.5:
+                activity[h] += 30 * max(0, 1 - dist / 1.5)
+
+    # Solunar periods
+    solunar = forecast.get("solunar", {})
+    for mp in solunar.get("major_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        for h in range(24):
+            if s_h <= h <= e_h:
+                activity[h] += 35
+            elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
+                activity[h] += 15
+
+    for mp in solunar.get("minor_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        for h in range(24):
+            if s_h <= h <= e_h:
+                activity[h] += 20
+            elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
+                activity[h] += 8
+
+    # Tide change windows
+    tides = forecast.get("tides", [])
+    for t in tides:
+        t_h = t.get("hour", _parse_time_str(t.get("time", "12:00 PM")))
+        for h in range(24):
+            dist = abs(h - t_h)
+            if dist < 2:
+                boost = 20 if t.get("type") == "High" else 12
+                activity[h] += boost * max(0, 1 - dist / 2)
+
+    # Night penalty (subtle — fish are less active 11 PM to 4 AM)
+    for h in [23, 0, 1, 2, 3, 4]:
+        activity[h] *= 0.7
+
+    # Normalize to 0-100
+    max_val = max(activity) if max(activity) > 0 else 1
+    labels_12h = [
+        "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM",
+        "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
+        "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
+        "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
+    ]
+
+    timeline = []
+    for h in range(24):
+        level = min(100, int(activity[h] / max_val * 100))
+        if level >= 75:
+            tag = "prime"
+        elif level >= 50:
+            tag = "high"
+        elif level >= 30:
+            tag = "med"
+        else:
+            tag = "low"
+        timeline.append({
+            "hour": h,
+            "label": labels_12h[h],
+            "level": level,
+            "tag": tag,
+        })
+
+    return timeline
 
 
 def _cache_path(location_id: str = "") -> str:
