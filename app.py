@@ -7370,13 +7370,23 @@ def setup_search() -> str:
 
 @app.route("/setup/select/<location_id>", methods=["POST"])
 def setup_select(location_id: str) -> Any:
-    """Save the selected location to the session and redirect to forecast."""
+    """Save the selected location to the session and redirect to forecast.
+
+    If the ``first_visit`` query parameter is set, redirect to the profile
+    setup page instead so the user can configure their fishing preferences.
+    """
     loc = get_location(location_id)
     if loc is None:
         return redirect(url_for("setup"))
     session["location_id"] = location_id
     session.permanent = True
     return redirect(url_for("index"))
+
+
+@app.route("/profile")
+def profile() -> str:
+    """Show the fishing profile setup page."""
+    return render_template("profile.html")
 
 
 # -- Main routes ------------------------------------------------------------

@@ -57,6 +57,7 @@
                 <a href="{{ url_for('setup') }}" class="change-location">Change location</a>
             </div>
             <div class="favorites-bar" id="favorites-bar"></div>
+            <div class="profile-bar" id="profile-bar"></div>
             {% if cached %}
             <div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
             {% endif %}
@@ -507,7 +508,7 @@
             <p class="section-sub">Top {{ forecast.species|length }} based on current conditions</p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
-                <div class="species-card">
+                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}">
                     <div class="species-rank-area">
                         <div class="species-rank">#{{ sp.rank }}</div>
                         <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
@@ -646,7 +647,7 @@
             <h2>Natural Bait Recommendations</h2>
             <div class="bait-list">
                 {% for item in forecast.bait_rankings %}
-                <div class="bait-item">
+                <div class="bait-item" data-bait-name="{{ item.bait|lower }}">
                     <span class="bait-num">{{ loop.index }}</span>
                     <div class="bait-info">
                         <strong>{{ item.bait }}</strong>
@@ -1024,6 +1025,147 @@
     }
 
     renderFavorites();
+
+    /* ---- Fishing Profile (localStorage) ---- */
+    var PROFILE_KEY = 'fishing_profile';
+
+    function getProfile() {
+        try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; }
+        catch(e) { return null; }
+    }
+
+    function renderProfileBar() {
+        var bar = document.getElementById('profile-bar');
+        if (!bar) return;
+        var profile = getProfile();
+        if (!profile || !profile.completed) {
+            bar.innerHTML = '<a href="/profile" class="profile-edit-link">Set up your fishing profile for personalized results</a>';
+            return;
+        }
+        var html = '';
+        var labels = {
+            'surf': 'Surf', 'pier': 'Pier', 'inshore': 'Inshore', 'offshore': 'Offshore',
+            'yes': 'Yes', 'sometimes': 'Sometimes', 'no': 'No',
+            'beginner': 'Beginner', 'intermediate': 'Intermediate', 'experienced': 'Experienced',
+            'bottom': 'Bottom', 'pelagic': 'Pelagics', 'structure': 'Structure',
+            'gamefish': 'Big Game', 'anything': 'All Species'
+        };
+        // Show fishing types
+        if (profile.fishing_type && profile.fishing_type.length) {
+            profile.fishing_type.forEach(function(t) {
+                html += '<span class="profile-tag">' + (labels[t] || t) + '</span>';
+            });
+        }
+        // Show bait prefs
+        if (profile.live_bait === 'yes') html += '<span class="profile-tag">Live Bait</span>';
+        if (profile.cut_bait === 'yes') html += '<span class="profile-tag">Cut Bait</span>';
+        if (profile.lures === 'yes') html += '<span class="profile-tag">Lures</span>';
+        else if (profile.lures === 'sometimes') html += '<span class="profile-tag">Some Lures</span>';
+
+        html += '<a href="/profile" class="profile-edit-link">Edit Profile</a>';
+        bar.innerHTML = html;
+    }
+
+    function applyProfileFilters() {
+        var profile = getProfile();
+        if (!profile || !profile.completed) return;
+
+        // --- Classify bait items ---
+        var baitItems = document.querySelectorAll('.bait-item[data-bait-name]');
+        var liveKeywords = ['live shrimp', 'live finger', 'live mullet', 'live menhaden', 'live blue runner',
+                            'live cigar', 'live crab', 'live baitfish', 'live eel', 'live minnow', 'live pogies'];
+        var lureKeywords = ['jig', 'spoon', 'plug', 'lure', 'feather', 'cedar plug', 'trolling',
+                            'dart', 'artificial', 'fishbites'];
+        var cutKeywords = ['cut ', 'blood', 'squid', 'clam', 'crab piece', 'shrimp piece', 'sand flea',
+                           'fiddler', 'fresh shrimp', 'mussel'];
+
+        baitItems.forEach(function(item) {
+            var name = item.getAttribute('data-bait-name') || '';
+            var isLive = liveKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+            var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+            var isCut = cutKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+
+            // If user doesn't use live bait at all, dim live bait items
+            if (isLive && profile.live_bait === 'no' && !isCut && !isLure) {
+                item.classList.add('profile-dimmed');
+                item.setAttribute('data-dim-reason', 'Not in your profile');
+            }
+            // If user doesn't use lures at all, dim lure items
+            if (isLure && profile.lures === 'no' && !isLive && !isCut) {
+                item.classList.add('profile-dimmed');
+                item.setAttribute('data-dim-reason', 'Not in your profile');
+            }
+            // If user doesn't use cut bait, dim cut bait items
+            if (isCut && profile.cut_bait === 'no' && !isLive && !isLure) {
+                item.classList.add('profile-dimmed');
+                item.setAttribute('data-dim-reason', 'Not in your profile');
+            }
+        });
+
+        // --- Highlight matching species bait recommendations ---
+        var speciesCards = document.querySelectorAll('.species-card[data-species-bait]');
+        speciesCards.forEach(function(card) {
+            var baitText = card.getAttribute('data-species-bait') || '';
+            var metaBait = card.querySelector('.meta-item--bait');
+            if (!metaBait) return;
+
+            var hasLive = liveKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
+            var hasLure = lureKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
+            var hasCut = cutKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
+
+            // Build a "for you" tip based on what the user uses
+            var tips = [];
+            if (hasLive && (profile.live_bait === 'yes' || profile.live_bait === 'sometimes')) {
+                tips.push('live bait');
+            }
+            if (hasLure && (profile.lures === 'yes' || profile.lures === 'sometimes')) {
+                tips.push('lures');
+            }
+            if (hasCut && (profile.cut_bait === 'yes' || profile.cut_bait === 'sometimes')) {
+                tips.push('cut bait');
+            }
+
+            if (tips.length > 0) {
+                var badge = document.createElement('span');
+                badge.className = 'personalized-label';
+                badge.textContent = 'Your methods: ' + tips.join(', ');
+                metaBait.appendChild(badge);
+            }
+        });
+
+        // --- Show/hide natural bait section based on bait prefs ---
+        var forageSection = document.querySelector('.forage-section');
+        if (forageSection && profile.live_bait === 'no' && profile.cut_bait === 'no') {
+            // If user only uses lures, dim the forage section
+            forageSection.classList.add('profile-dimmed');
+            forageSection.setAttribute('data-dim-reason', 'You fish with lures');
+        }
+
+        // --- Renumber visible bait items ---
+        var visibleBaits = document.querySelectorAll('.bait-item:not(.profile-hidden)');
+        var baitNum = 1;
+        visibleBaits.forEach(function(item) {
+            var numEl = item.querySelector('.bait-num');
+            if (numEl) numEl.textContent = baitNum++;
+        });
+    }
+
+    // Check if new user needs onboarding
+    (function() {
+        var profile = getProfile();
+        if (!profile || !profile.completed) {
+            // If this is the user's first visit with a location set, offer the profile setup
+            var profilePrompted = localStorage.getItem('profile_prompted');
+            if (!profilePrompted) {
+                localStorage.setItem('profile_prompted', 'true');
+                // Redirect to profile setup for first-time users
+                window.location.href = '/profile';
+                return;
+            }
+        }
+        renderProfileBar();
+        applyProfileFilters();
+    })();
 
     function toggleTheme() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
