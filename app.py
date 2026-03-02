@@ -45,6 +45,7 @@ from locations import (
     get_location,
     get_monthly_water_temps,
 )
+from regulations import lookup_regulation
 
 
 # Set up Flask app
@@ -181,6 +182,99 @@ def _try_ndbc_station(station_id: str) -> Tuple[Optional[Tuple[float, float]], O
             break
 
     return wind_range, wave_range, wind_dir
+
+
+def fetch_barometric_pressure(
+    location: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Fetch barometric pressure from NDBC buoy or NOAA CO-OPS station.
+
+    Returns a dict with:
+        pressure_mb: float (millibars / hPa)
+        pressure_inhg: float (inches of mercury)
+        trend: str ("Rising", "Falling", "Steady")
+        fishing_impact: str (description of fishing impact)
+    Returns None on failure.
+    """
+    ndbc_list = (location or {}).get("ndbc_stations", [s[0] for s in NDBC_STATIONS])
+
+    # Try NDBC buoys first for pressure
+    for station_id in ndbc_list[:3]:
+        try:
+            url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
+            resp = requests.get(url, headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=10)
+            resp.raise_for_status()
+            lines = resp.text.strip().split("\n")
+            if len(lines) < 3:
+                continue
+
+            header = lines[0].replace("#", "").split()
+            col = {name: idx for idx, name in enumerate(header)}
+            if "PRES" not in col:
+                continue
+
+            _MISSING = {"MM", "99.0", "99.00", "999", "999.0", "9999.0"}
+
+            # Get last 2-3 readings for trend
+            pressures = []
+            for line in lines[2:12]:
+                fields = line.split()
+                if len(fields) < len(header):
+                    continue
+                pres_raw = fields[col["PRES"]]
+                if pres_raw not in _MISSING:
+                    pressures.append(float(pres_raw))
+                if len(pressures) >= 3:
+                    break
+
+            if not pressures:
+                continue
+
+            current_mb = pressures[0]
+            current_inhg = current_mb * 0.02953
+
+            # Trend from recent readings
+            trend = "Steady"
+            if len(pressures) >= 2:
+                diff = pressures[0] - pressures[-1]
+                if diff > 1.0:
+                    trend = "Rising"
+                elif diff < -1.0:
+                    trend = "Falling"
+
+            # Fishing impact assessment
+            if current_mb >= 1020:
+                if trend == "Rising":
+                    impact = "Excellent — high stable pressure, fish feed actively"
+                elif trend == "Falling":
+                    impact = "Good — fish sense dropping pressure and feed heavily"
+                else:
+                    impact = "Good — stable high pressure, consistent bites"
+            elif current_mb >= 1010:
+                if trend == "Falling":
+                    impact = "Very good — dropping pressure triggers feeding frenzy"
+                elif trend == "Rising":
+                    impact = "Good — rising pressure after a front, fish resuming"
+                else:
+                    impact = "Average — normal pressure, standard activity"
+            else:
+                if trend == "Falling":
+                    impact = "Poor — very low falling pressure, fish go deep"
+                elif trend == "Rising":
+                    impact = "Improving — pressure recovering, fish starting to feed"
+                else:
+                    impact = "Below average — low pressure suppresses feeding"
+
+            return {
+                "pressure_mb": round(current_mb, 1),
+                "pressure_inhg": round(current_inhg, 2),
+                "trend": trend,
+                "fishing_impact": impact,
+            }
+        except Exception:
+            continue
+
+    return None
 
 
 # -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
@@ -3628,7 +3722,804 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "explanation_cold": "Longnose gar are sluggish in deep holes during cold months.",
         "explanation_warm": "Longnose gar enter brackish tidal rivers near the coast; these armored, prehistoric fish have needle-like snouts and are tough to hook conventionally.",
     },
+    # ═══════════════════════════════════════════════════════════════════════
+    # PACIFIC COAST SPECIES
+    # ═══════════════════════════════════════════════════════════════════════
+    # --- Surfperch ---
+    {
+        "name": "Barred surfperch",
+        "temp_min": 48, "temp_max": 68, "temp_ideal_low": 54, "temp_ideal_high": 64,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 5, 10],
+        "bait": "Sand crabs (mole crabs); bloodworms; Gulp! sandworms; small pieces of mussel",
+        "rig": "Carolina rig with light leader; sliding sinker rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Barred surfperch are actively spawning and feeding aggressively in the winter surf zone -- this is peak season on the Pacific Coast.",
+        "explanation_warm": "Barred surfperch are present but less concentrated; they move to deeper water as surf warms.",
+    },
+    {
+        "name": "Redtail surfperch",
+        "temp_min": 46, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [10, 11, 12, 1, 2, 3],
+        "good_months": [4, 5, 9],
+        "bait": "Sand crabs; sand shrimp; pile worms; Gulp! sandworms",
+        "rig": "Carolina rig or double dropper loop rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-3 oz pyramid sinker",
+        "explanation_cold": "Redtail surfperch school up in the surf zone during winter and early spring, feeding heavily on sand crabs in the wash.",
+        "explanation_warm": "Redtail surfperch are less common in the surf during warmer months; try rocky areas and jetties.",
+    },
+    {
+        "name": "Calico surfperch",
+        "temp_min": 48, "temp_max": 64, "temp_ideal_low": 52, "temp_ideal_high": 60,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 10],
+        "bait": "Sand crabs; bloodworms; small pieces of shrimp",
+        "rig": "Carolina rig with light line",
+        "hook_size": "#8-#4 baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Calico surfperch are abundant in the Northern California and Oregon surf during winter months.",
+        "explanation_warm": "Calico surfperch move to slightly deeper water but can still be found near jetties.",
+    },
+    {
+        "name": "Rubberlip seaperch",
+        "temp_min": 50, "temp_max": 66, "temp_ideal_low": 54, "temp_ideal_high": 62,
+        "peak_months": [3, 4, 5, 6],
+        "good_months": [2, 7, 8],
+        "bait": "Pile worms; mussels; small pieces of shrimp; sand crabs",
+        "rig": "Light Carolina rig; hi-lo rig around structure",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-2 oz egg or bank sinker",
+        "explanation_cold": "Rubberlip seaperch hold near rocky structure and pilings during winter.",
+        "explanation_warm": "Rubberlip seaperch feed actively around piers, jetties, and rocky shorelines; they are one of the largest surfperch species.",
+    },
+    # --- California Halibut & Flatfish ---
+    {
+        "name": "California halibut",
+        "temp_min": 52, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 68,
+        "peak_months": [3, 4, 5, 6, 7],
+        "good_months": [8, 9, 10],
+        "bait": "Live anchovy; live smelt; squid strips; Gulp! grubs; swim baits",
+        "rig": "Sliding sinker rig with fluorocarbon leader; Carolina rig; jig head",
+        "hook_size": "#2-2/0 circle or octopus hook",
+        "sinker": "1-3 oz sliding egg or banana sinker",
+        "explanation_cold": "California halibut are in deeper water during cold months and less accessible from shore.",
+        "explanation_warm": "California halibut move into shallow sandy areas near piers, jetties, and in the surf zone to ambush baitfish; cast parallel to shore and retrieve slowly along the bottom.",
+    },
+    {
+        "name": "Starry flounder",
+        "temp_min": 44, "temp_max": 64, "temp_ideal_low": 48, "temp_ideal_high": 58,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 10],
+        "bait": "Pile worms; sand shrimp; clam necks; cut anchovy",
+        "rig": "Sliding sinker rig; spreader bar",
+        "hook_size": "#4-1/0 baitholder",
+        "sinker": "1-3 oz pyramid sinker",
+        "explanation_cold": "Starry flounder move into bays and estuaries during winter and are a popular pier catch from NorCal through Washington.",
+        "explanation_warm": "Starry flounder retreat to deeper, cooler water during summer months.",
+    },
+    # --- Rockfish (Sebastes) ---
+    {
+        "name": "Lingcod",
+        "temp_min": 44, "temp_max": 62, "temp_ideal_low": 48, "temp_ideal_high": 56,
+        "peak_months": [10, 11, 12, 1, 2],
+        "good_months": [3, 9],
+        "bait": "Live bait (smelt, anchovy); large swimbaits; jigs tipped with squid",
+        "rig": "Heavy jig head or dropper loop rig with large swimbait",
+        "hook_size": "3/0-6/0 circle or octopus hook",
+        "sinker": "4-8 oz depending on current",
+        "explanation_cold": "Lingcod move into shallower rocky reefs during fall and winter to spawn; they are aggressive ambush predators accessible from jetties and rocky points.",
+        "explanation_warm": "Lingcod retreat to deeper water offshore during warm months; less accessible from shore.",
+    },
+    {
+        "name": "Vermilion rockfish",
+        "temp_min": 48, "temp_max": 64, "temp_ideal_low": 52, "temp_ideal_high": 60,
+        "peak_months": [4, 5, 6, 7, 8, 9],
+        "good_months": [3, 10],
+        "bait": "Squid strips; cut anchovy; shrimp; Gulp! baits",
+        "rig": "Hi-lo rig; dropper loop rig; shrimp fly rigs",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "4-8 oz bank or cannon ball sinker",
+        "explanation_cold": "Vermilion rockfish are deeper and less accessible in cold months.",
+        "explanation_warm": "Vermilion rockfish (red snapper of the Pacific) are found around rocky structure; they're a prized catch from deepwater piers and jetties.",
+    },
+    {
+        "name": "Blue rockfish",
+        "temp_min": 48, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10, 11],
+        "bait": "Small pieces of squid; cut anchovy; shrimp; Sabiki rig (artificial)",
+        "rig": "Hi-lo rig; shrimp fly rigs; small jigs",
+        "hook_size": "#6-#1 octopus hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Blue rockfish hold deep during winter but can be caught from deep piers.",
+        "explanation_warm": "Blue rockfish are common around kelp beds, piers, and rocky structures in NorCal and Oregon; they school up and can be caught readily on small baits.",
+    },
+    {
+        "name": "Copper rockfish",
+        "temp_min": 46, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Squid strips; shrimp; cut anchovy; live bait",
+        "rig": "Hi-lo rig; dropper loop rig",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "4-8 oz bank sinker",
+        "explanation_cold": "Copper rockfish hold near rocky structure year-round but are less active in cold months.",
+        "explanation_warm": "Copper rockfish are solitary ambush predators found around kelp and rocky reefs; they're accessible from deep piers and jetties.",
+    },
+    {
+        "name": "Grass rockfish",
+        "temp_min": 48, "temp_max": 64, "temp_ideal_low": 52, "temp_ideal_high": 60,
+        "peak_months": [4, 5, 6, 7, 8, 9],
+        "good_months": [3, 10, 11],
+        "bait": "Pile worms; shrimp; cut squid; mussels",
+        "rig": "Sliding sinker rig near rocks; hi-lo rig",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Grass rockfish hunker in rocky crevices during winter.",
+        "explanation_warm": "Grass rockfish inhabit shallow rocky areas and tide pools; they are common from piers and jetties along central and northern California.",
+    },
+    {
+        "name": "Cabezon",
+        "temp_min": 46, "temp_max": 62, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [10, 11, 12, 1, 2, 3],
+        "good_months": [4, 9],
+        "bait": "Shrimp; squid; mussels; cut fish; pile worms",
+        "rig": "Sliding sinker rig near rocks; dropper loop",
+        "hook_size": "1/0-4/0 octopus hook",
+        "sinker": "2-6 oz bank sinker",
+        "explanation_cold": "Cabezon move into shallower water during fall and winter to spawn; they're one of the largest sculpin family fish on the Pacific Coast and are aggressive biters.",
+        "explanation_warm": "Cabezon are present but in deeper water; focus on rocky jetties and deepwater piers.",
+    },
+    # --- Pacific Mackerel / Pelagics ---
+    {
+        "name": "Pacific mackerel (chub mackerel)",
+        "temp_min": 55, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9, 10],
+        "good_months": [5, 11],
+        "bait": "Small pieces of cut squid; Sabiki rigs; small chrome jigs; cut anchovy",
+        "rig": "Sabiki rig; small metal jig on light line",
+        "hook_size": "#8-#2 Sabiki or small treble",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Pacific mackerel move offshore during winter.",
+        "explanation_warm": "Pacific mackerel run in large schools around piers and harbors in SoCal; they're fun to catch on Sabiki rigs and make excellent live bait for larger fish.",
+    },
+    {
+        "name": "Jack mackerel (Spanish jack)",
+        "temp_min": 56, "temp_max": 70, "temp_ideal_low": 60, "temp_ideal_high": 66,
+        "peak_months": [7, 8, 9, 10],
+        "good_months": [5, 6, 11],
+        "bait": "Sabiki rigs; small jigs; cut squid; cut anchovy",
+        "rig": "Sabiki rig or light jig setup",
+        "hook_size": "#8-#4 Sabiki hooks",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Jack mackerel are offshore and not typically available from piers in winter.",
+        "explanation_warm": "Jack mackerel school around SoCal piers in summer and fall; they are aggressive feeders and excellent for bait or eating.",
+    },
+    {
+        "name": "Pacific bonito",
+        "temp_min": 58, "temp_max": 72, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [7, 8, 9, 10],
+        "good_months": [6, 11],
+        "bait": "Live anchovy; Sabiki-caught bait; metal jigs; feathered lures",
+        "rig": "Live bait on sliding sinker; casting jig; trolling feather",
+        "hook_size": "#2-2/0 treble or live bait hook",
+        "sinker": "None or 1 oz rubber-core sinker",
+        "explanation_cold": "Pacific bonito are offshore during cool months.",
+        "explanation_warm": "Pacific bonito (a small tuna relative) chase baitfish schools past SoCal piers; they fight hard and are great on light tackle.",
+    },
+    {
+        "name": "Yellowtail (California yellowtail)",
+        "temp_min": 60, "temp_max": 76, "temp_ideal_low": 64, "temp_ideal_high": 72,
+        "peak_months": [7, 8, 9, 10],
+        "good_months": [6, 11],
+        "bait": "Live sardine; live mackerel; iron jigs; surface poppers",
+        "rig": "Live bait on heavy fluorocarbon leader; yo-yo iron jig",
+        "hook_size": "1/0-4/0 circle or live bait hook",
+        "sinker": "None (free-lined live bait) or 1-2 oz sliding sinker",
+        "explanation_cold": "Yellowtail migrate south to Baja during cold months.",
+        "explanation_warm": "Yellowtail cruise past SoCal piers and kelp beds chasing baitfish; these are powerful fighters and one of the most prized pier catches on the West Coast.",
+    },
+    {
+        "name": "White seabass",
+        "temp_min": 56, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [3, 4, 5, 6],
+        "good_months": [2, 7, 8],
+        "bait": "Live squid; live sardine; cut squid; swimbaits",
+        "rig": "Live bait rig with fluorocarbon leader; heavy sliding sinker rig",
+        "hook_size": "2/0-5/0 circle or octopus hook",
+        "sinker": "1-4 oz sliding egg sinker",
+        "explanation_cold": "White seabass are offshore during cold months.",
+        "explanation_warm": "White seabass move inshore to spawn in spring; they follow squid runs near piers and kelp beds and are a trophy catch from shore.",
+    },
+    {
+        "name": "Corbina",
+        "temp_min": 58, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Sand crabs; bloodworms; mussels; clam",
+        "rig": "Carolina rig with light fluorocarbon leader",
+        "hook_size": "#6-#2 circle or baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Corbina move to deeper water and are hard to reach from shore in winter.",
+        "explanation_warm": "Corbina cruise the SoCal surf zone rooting for sand crabs and worms in the wash; they are the prized surf species of Southern California.",
+    },
+    {
+        "name": "Spotfin croaker",
+        "temp_min": 58, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [7, 8, 9],
+        "good_months": [6, 10],
+        "bait": "Sand crabs; mussels; bloodworms; ghost shrimp",
+        "rig": "Carolina rig; sliding sinker rig",
+        "hook_size": "#4-1/0 circle or baitholder",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Spotfin croaker move to deeper bays and offshore during cold months.",
+        "explanation_warm": "Spotfin croaker feed in the SoCal surf zone; their distinctive high-pitched croaking and golden body make them easy to identify.",
+    },
+    {
+        "name": "Yellowfin croaker",
+        "temp_min": 56, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Sand crabs; mussels; bloodworms; cut squid",
+        "rig": "Carolina rig; sliding sinker rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Yellowfin croaker are deeper and less active during cold months.",
+        "explanation_warm": "Yellowfin croaker are common in the SoCal and central CA surf zone; they school up and feed aggressively on sand crabs.",
+    },
+    # --- Pacific Sharks & Rays ---
+    {
+        "name": "Leopard shark",
+        "temp_min": 54, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Squid; cut mackerel; anchovy; shrimp; sand crabs",
+        "rig": "Sliding sinker rig with wire or heavy fluorocarbon leader",
+        "hook_size": "2/0-5/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Leopard sharks are in deeper water and less active during winter.",
+        "explanation_warm": "Leopard sharks cruise shallow bays and surf zones in summer; La Jolla and Pacifica are famous spots. They are beautiful, spotted sharks and fight well.",
+    },
+    {
+        "name": "Shovelnose guitarfish",
+        "temp_min": 56, "temp_max": 74, "temp_ideal_low": 60, "temp_ideal_high": 70,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Sand crabs; squid; cut fish; shrimp; bloodworms",
+        "rig": "Sliding sinker rig; Carolina rig",
+        "hook_size": "#2-2/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Shovelnose guitarfish are in deeper water during winter.",
+        "explanation_warm": "Shovelnose guitarfish are common in SoCal surf and bays; these ray-shark hybrids root through sand for crabs and worms.",
+    },
+    {
+        "name": "Bat ray",
+        "temp_min": 52, "temp_max": 72, "temp_ideal_low": 56, "temp_ideal_high": 66,
+        "peak_months": [4, 5, 6, 7, 8, 9],
+        "good_months": [3, 10],
+        "bait": "Squid; shrimp; cut mackerel; ghost shrimp; mussels",
+        "rig": "Heavy sliding sinker rig with wire leader",
+        "hook_size": "3/0-6/0 circle hook",
+        "sinker": "3-6 oz pyramid sinker",
+        "explanation_cold": "Bat rays are in deeper water and less accessible during winter.",
+        "explanation_warm": "Bat rays are powerful fighters caught from piers and surf in California bays; they can exceed 100 lbs and will test your tackle.",
+    },
+    {
+        "name": "Thornback ray",
+        "temp_min": 50, "temp_max": 66, "temp_ideal_low": 54, "temp_ideal_high": 62,
+        "peak_months": [3, 4, 5, 6, 7],
+        "good_months": [2, 8],
+        "bait": "Squid; shrimp; cut fish; sand crabs",
+        "rig": "Sliding sinker rig; heavy Carolina rig",
+        "hook_size": "1/0-4/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Thornback rays are deeper during cold months but occasionally taken from piers.",
+        "explanation_warm": "Thornback rays are a common catch from NorCal piers; they have distinctive thorny spines on their back and tail.",
+    },
+    # --- Greenling & Sculpin ---
+    {
+        "name": "Kelp greenling",
+        "temp_min": 44, "temp_max": 60, "temp_ideal_low": 48, "temp_ideal_high": 56,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Shrimp; pile worms; mussels; cut squid; small crabs",
+        "rig": "Hi-lo rig; dropper loop near bottom",
+        "hook_size": "#4-1/0 baitholder",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Kelp greenling hold near rocky structure year-round but bite less aggressively in winter.",
+        "explanation_warm": "Kelp greenling are colorful bottom fish found around kelp and rocky piers from Central CA to Washington; the males have bright blue spots.",
+    },
+    {
+        "name": "Rock greenling",
+        "temp_min": 44, "temp_max": 58, "temp_ideal_low": 46, "temp_ideal_high": 54,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Shrimp; pile worms; mussels; cut fish",
+        "rig": "Hi-lo rig; dropper loop near rocks",
+        "hook_size": "#4-1/0 baitholder",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Rock greenling shelter in rocky crevices during cold months.",
+        "explanation_warm": "Rock greenling are common along Oregon and Washington rocky shores and jetties; they are aggressive biters on natural baits.",
+    },
+    {
+        "name": "Pacific staghorn sculpin",
+        "temp_min": 44, "temp_max": 64, "temp_ideal_low": 48, "temp_ideal_high": 58,
+        "peak_months": [10, 11, 12, 1, 2, 3],
+        "good_months": [4, 5, 9],
+        "bait": "Pile worms; small shrimp; cut fish; sand crabs",
+        "rig": "Hi-lo rig; small hook near bottom",
+        "hook_size": "#8-#4 baitholder",
+        "sinker": "1-2 oz bank sinker",
+        "explanation_cold": "Staghorn sculpin are abundant year-round in bays and off piers; they're one of the most common catches in Pacific NW.",
+        "explanation_warm": "Staghorn sculpin are in slightly deeper water during warmer months but still common from piers.",
+    },
+    # --- Other Pacific Species ---
+    {
+        "name": "Pacific herring",
+        "temp_min": 44, "temp_max": 58, "temp_ideal_low": 48, "temp_ideal_high": 54,
+        "peak_months": [12, 1, 2, 3],
+        "good_months": [11, 4],
+        "bait": "Sabiki rigs; small hooks with herring roe; small jigs",
+        "rig": "Multi-hook Sabiki rig",
+        "hook_size": "#10-#6 Sabiki hooks",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Pacific herring spawn in bays during winter, creating huge schools that are easy to catch on Sabiki rigs from piers; great for bait.",
+        "explanation_warm": "Pacific herring are offshore during warm months.",
+    },
+    {
+        "name": "Jacksmelt",
+        "temp_min": 50, "temp_max": 68, "temp_ideal_low": 54, "temp_ideal_high": 64,
+        "peak_months": [4, 5, 6, 7, 8],
+        "good_months": [3, 9, 10],
+        "bait": "Small pieces of pile worm; tiny shrimp; Sabiki rigs; small dough balls",
+        "rig": "Multi-hook Sabiki rig or float rig with small hook",
+        "hook_size": "#10-#6 small hooks",
+        "sinker": "Split shot or small torpedo sinker",
+        "explanation_cold": "Jacksmelt are less concentrated near shore in winter.",
+        "explanation_warm": "Jacksmelt are one of the most common pier fish in California; they school near the surface and are fun on ultra-light tackle.",
+    },
+    {
+        "name": "Walleye surfperch",
+        "temp_min": 48, "temp_max": 66, "temp_ideal_low": 52, "temp_ideal_high": 62,
+        "peak_months": [4, 5, 6, 7, 8],
+        "good_months": [3, 9],
+        "bait": "Pile worms; small shrimp; Gulp! baits; small pieces of mussel",
+        "rig": "Hi-lo rig; float rig; light Carolina rig",
+        "hook_size": "#8-#4 baitholder",
+        "sinker": "1-2 oz bank sinker",
+        "explanation_cold": "Walleye surfperch move to deeper water in winter.",
+        "explanation_warm": "Walleye surfperch are a staple pier catch in California; they school around pilings and rocky areas and are fun on light gear.",
+    },
+    {
+        "name": "White croaker (tomcod)",
+        "temp_min": 50, "temp_max": 70, "temp_ideal_low": 56, "temp_ideal_high": 66,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Cut squid; cut anchovy; pile worms; shrimp; almost anything",
+        "rig": "Hi-lo rig; Carolina rig",
+        "hook_size": "#6-#2 baitholder",
+        "sinker": "1-3 oz bank sinker",
+        "explanation_cold": "White croaker are deeper during winter months.",
+        "explanation_warm": "White croaker (tomcod/kingfish) are one of the most abundant fish at SoCal and central CA piers; they eat almost anything.",
+    },
+    {
+        "name": "Kelp bass (calico bass)",
+        "temp_min": 56, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Live anchovy; cut squid; swimbaits; artificial grubs",
+        "rig": "Sliding sinker rig near kelp; jig head with swimbait",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "1-2 oz sliding sinker or jig head",
+        "explanation_cold": "Kelp bass are less active in cold water and hold tight to structure.",
+        "explanation_warm": "Kelp bass are the most popular gamefish from SoCal piers and jetties; they ambush baitfish around kelp beds and rocky structure.",
+    },
+    {
+        "name": "Sand bass (barred sand bass)",
+        "temp_min": 58, "temp_max": 74, "temp_ideal_low": 62, "temp_ideal_high": 70,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Live anchovy; cut squid; swimbaits; Carolina-rigged plastics",
+        "rig": "Dropper loop rig; jig head; Carolina rig with swimbait",
+        "hook_size": "#2-2/0 octopus hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Sand bass move to deeper water during winter.",
+        "explanation_warm": "Sand bass school over sandy bottoms and around structure in SoCal; they aggregate in large spawning groups in summer.",
+    },
+    {
+        "name": "California sheephead",
+        "temp_min": 56, "temp_max": 72, "temp_ideal_low": 60, "temp_ideal_high": 68,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Mussels; shrimp; sea urchin; cut squid; crab",
+        "rig": "Dropper loop rig near rocks; hi-lo rig",
+        "hook_size": "1/0-4/0 octopus hook",
+        "sinker": "3-6 oz bank sinker",
+        "explanation_cold": "California sheephead are less active and in deeper water during winter.",
+        "explanation_warm": "California sheephead are colorful, hard-fighting wrasse found around rocky reefs and kelp; they have powerful jaws that crush shellfish.",
+    },
+    {
+        "name": "Opaleye",
+        "temp_min": 54, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 66,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Frozen peas; moss; mussels; small pieces of shrimp",
+        "rig": "Float rig with small hook; light hi-lo rig",
+        "hook_size": "#8-#4 short shank",
+        "sinker": "Split shot or small egg sinker",
+        "explanation_cold": "Opaleye are less active but still present near rocky shorelines in winter.",
+        "explanation_warm": "Opaleye are herbivorous fish found around rocky shorelines and jetties in SoCal; they're surprisingly hard fighters for their size.",
+    },
+    {
+        "name": "Halfmoon (Catalina perch)",
+        "temp_min": 56, "temp_max": 70, "temp_ideal_low": 60, "temp_ideal_high": 66,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Mussels; frozen peas; moss; small pieces of shrimp",
+        "rig": "Float rig; light hi-lo rig",
+        "hook_size": "#8-#4 short shank",
+        "sinker": "Split shot",
+        "explanation_cold": "Halfmoon hold near rocky structure during winter.",
+        "explanation_warm": "Halfmoon are found along SoCal rocky shores and kelp beds; they're similar to opaleye and share the same habitat.",
+    },
+    {
+        "name": "Pacific sardine",
+        "temp_min": 54, "temp_max": 72, "temp_ideal_low": 58, "temp_ideal_high": 68,
+        "peak_months": [6, 7, 8, 9, 10],
+        "good_months": [5, 11],
+        "bait": "Sabiki rigs; tiny jigs; small pieces of squid on tiny hooks",
+        "rig": "Multi-hook Sabiki rig",
+        "hook_size": "#12-#8 Sabiki hooks",
+        "sinker": "1-2 oz torpedo sinker",
+        "explanation_cold": "Pacific sardines move offshore during winter.",
+        "explanation_warm": "Pacific sardines school in massive numbers around SoCal piers; they're prized as live bait for yellowtail, white seabass, and halibut.",
+    },
+    {
+        "name": "Northern anchovy",
+        "temp_min": 48, "temp_max": 70, "temp_ideal_low": 52, "temp_ideal_high": 64,
+        "peak_months": [3, 4, 5, 6, 7, 8, 9, 10],
+        "good_months": [2, 11],
+        "bait": "Sabiki rigs; tiny hooks with small squid pieces",
+        "rig": "Multi-hook Sabiki rig",
+        "hook_size": "#12-#8 Sabiki hooks",
+        "sinker": "1 oz torpedo sinker",
+        "explanation_cold": "Northern anchovies are deeper and less concentrated near piers in winter.",
+        "explanation_warm": "Northern anchovies are the backbone of the California baitfish; catching them on Sabiki rigs provides the best live bait for nearly every gamefish.",
+    },
+    # --- Dungeness & Other Crustaceans ---
+    {
+        "name": "Dungeness crab (from pier)",
+        "temp_min": 44, "temp_max": 58, "temp_ideal_low": 48, "temp_ideal_high": 54,
+        "peak_months": [11, 12, 1, 2, 3],
+        "good_months": [4, 10],
+        "bait": "Chicken legs; fish carcasses; squid; turkey legs (in crab snares/nets)",
+        "rig": "Crab snare or hoop net baited and cast from pier",
+        "hook_size": "N/A (snare/net)",
+        "sinker": "Built into snare (3-6 oz equivalent)",
+        "explanation_cold": "Dungeness crab season peaks in winter; they can be caught from piers using snares and hoop nets, especially in NorCal and the Pacific NW.",
+        "explanation_warm": "Dungeness crab move to deeper water in summer and are less accessible from piers.",
+    },
+    # ═══════════════════════════════════════════════════════════════════════
+    # HAWAII SPECIES
+    # ═══════════════════════════════════════════════════════════════════════
+    {
+        "name": "Giant trevally (ulua)",
+        "temp_min": 72, "temp_max": 88, "temp_ideal_low": 76, "temp_ideal_high": 84,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Live akule (bigeye scad); live opelu; large cut bait; whole octopus",
+        "rig": "Heavy sliding sinker rig with 100+ lb leader; ulua setup",
+        "hook_size": "8/0-14/0 circle hook",
+        "sinker": "6-16 oz pyramid or breakaway sinker",
+        "explanation_cold": "Giant trevally are present year-round in Hawaii but slightly less active during cooler months.",
+        "explanation_warm": "Giant trevally (ulua) are the ultimate shore-fishing trophy in Hawaii; they're powerful predators caught from rocky shores and piers on heavy tackle.",
+    },
+    {
+        "name": "Bluefin trevally (omilu)",
+        "temp_min": 72, "temp_max": 86, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10, 11],
+        "bait": "Live baitfish; cut squid; poppers; metal jigs",
+        "rig": "Sliding sinker rig; popping/spinning setup; papio rig",
+        "hook_size": "2/0-6/0 circle hook",
+        "sinker": "2-6 oz pyramid sinker",
+        "explanation_cold": "Bluefin trevally are present year-round but slightly less active in winter.",
+        "explanation_warm": "Bluefin trevally (omilu) are strikingly beautiful blue-finned jacks found around reefs and rocky shores in Hawaii; they hit lures and bait aggressively.",
+    },
+    {
+        "name": "Papio (juvenile jack)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [4, 5, 6, 7, 8, 9, 10],
+        "good_months": [3, 11],
+        "bait": "Live opelu; cut squid; shrimp; small crabs; poppers",
+        "rig": "Light papio rig; float rig; small sliding sinker",
+        "hook_size": "#2-3/0 circle or octopus hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Papio are present year-round in Hawaii; smaller jacks are always near shore.",
+        "explanation_warm": "Papio are the most popular shore-fishing target in Hawaii; these juvenile jacks roam reefs and harbors and are a great family fishing species.",
+    },
+    {
+        "name": "Bonefish (oio)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 77, "temp_ideal_high": 83,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Shrimp; sand crabs; small crabs; squid strips; fly fishing (Christmas Island specials)",
+        "rig": "Light Carolina rig with fluorocarbon leader",
+        "hook_size": "#6-#2 circle or bonefish hook",
+        "sinker": "1/2-1 oz egg sinker",
+        "explanation_cold": "Bonefish are present year-round in Hawaii flats but slightly less active in winter.",
+        "explanation_warm": "Bonefish (oio) feed on shallow sand flats in Hawaii; they are the ghosts of the flats -- fast, wary, and an incredible fight on light tackle.",
+    },
+    {
+        "name": "Menpachi (soldierfish)",
+        "temp_min": 74, "temp_max": 84, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "good_months": [],
+        "bait": "Small shrimp; cut squid; aku belly (skipjack tuna belly); bread",
+        "rig": "Small hook dropper rig; float rig near rocks",
+        "hook_size": "#10-#6 small hooks",
+        "sinker": "Split shot or small bank sinker",
+        "explanation_cold": "Menpachi are active year-round in Hawaii, feeding at night around rocky areas.",
+        "explanation_warm": "Menpachi (soldierfish/squirrelfish) are a prized eating fish in Hawaii; they come out at night to feed around rocks and reef edges near piers.",
+    },
+    {
+        "name": "Moi (Pacific threadfin)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 77, "temp_ideal_high": 83,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Sand crabs; shrimp; cut squid; small crabs",
+        "rig": "Sliding sinker rig in the surf; Carolina rig with fluorocarbon",
+        "hook_size": "#4-1/0 circle hook",
+        "sinker": "2-4 oz pyramid sinker",
+        "explanation_cold": "Moi are present in cooler months but less concentrated in the shallows.",
+        "explanation_warm": "Moi (Pacific threadfin) is Hawaii's most revered eating fish; once reserved for royalty, they feed in the sandy surf zone and are caught from beaches and piers.",
+    },
+    {
+        "name": "Mu (bigeye emperor)",
+        "temp_min": 74, "temp_max": 84, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Shrimp; squid; small crabs; cut fish",
+        "rig": "Bottom rig with fluorocarbon leader; dropper loop",
+        "hook_size": "#2-3/0 octopus hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Mu are present year-round around reef structure but less active in cooler months.",
+        "explanation_warm": "Mu (bigeye emperor) are prized bottom fish in Hawaii caught from rocky shores and piers over reef; they are excellent eating.",
+    },
+    {
+        "name": "Kaku (barracuda)",
+        "temp_min": 74, "temp_max": 86, "temp_ideal_low": 77, "temp_ideal_high": 84,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [4, 11],
+        "bait": "Live baitfish; cut fish strips; silver spoons; jigs",
+        "rig": "Wire leader with live bait; casting spoon or jig",
+        "hook_size": "1/0-5/0 treble or live bait hook",
+        "sinker": "None (cast and retrieve) or 1-2 oz sliding sinker",
+        "explanation_cold": "Kaku are present year-round in Hawaii harbors and reefs.",
+        "explanation_warm": "Kaku (great barracuda) patrol Hawaii harbors, piers, and reef edges; they strike fast and fight hard on light tackle.",
+    },
+    {
+        "name": "Aholehole (Hawaiian flagtail)",
+        "temp_min": 74, "temp_max": 84, "temp_ideal_low": 76, "temp_ideal_high": 82,
+        "peak_months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "good_months": [],
+        "bait": "Bread; small shrimp; dough balls; bread flies; palu (chum)",
+        "rig": "Float rig with small hook; light bottom rig",
+        "hook_size": "#12-#6 small hooks",
+        "sinker": "Split shot or small sinker",
+        "explanation_cold": "Aholehole are active year-round in Hawaii harbors and rocky shorelines.",
+        "explanation_warm": "Aholehole are one of Hawaii's most popular panfish; they school around piers, harbors, and river mouths and are great eating.",
+    },
 ]
+
+# ---------------------------------------------------------------------------
+# Tag each species with its coast so we can filter by region.
+# The DB is ordered: East/Gulf → Pacific → Hawaii.
+# ---------------------------------------------------------------------------
+_COAST_TAG = "east"
+for _sp in SPECIES_DB:
+    if _sp["name"] == "Barred surfperch":
+        _COAST_TAG = "west"
+    elif _sp["name"] == "Giant trevally (ulua)":
+        _COAST_TAG = "hawaii"
+    _sp["coast"] = _COAST_TAG
+del _COAST_TAG, _sp
+
+
+# ---------------------------------------------------------------------------
+# Profile-based species classification
+# ---------------------------------------------------------------------------
+# These sets map species to the fishing styles and target categories from
+# the user's profile.  Species not listed in a set are considered accessible
+# to that style (e.g. many species can be caught from both surf and pier).
+# ---------------------------------------------------------------------------
+
+# -- Fishing type (where you fish) --
+# Species that are ONLY realistic from a boat offshore — exclude for
+# surf/pier/inshore-only anglers.
+_OFFSHORE_ONLY_SPECIES: set = {
+    "Mahi-mahi (dolphinfish)", "Wahoo", "Blackfin tuna", "Yellowfin tuna",
+    "Sailfish", "Blue marlin", "White marlin", "Skipjack tuna",
+    "Bigeye tuna", "Albacore tuna", "Frigate mackerel",
+    "Blueline tilefish", "Golden tilefish", "Snowy grouper", "Wreckfish",
+    "Tilefish (blueline juvenile/grey)", "Tilefish (golden juvenile)",
+    "Barrelfish", "Blackbelly rosefish", "Misty grouper",
+    "Yellowedge grouper", "Queen snapper", "Silk snapper",
+    "Greater amberjack", "Almaco jack", "Almaco jack (large adult)",
+    "Lesser amberjack", "Rainbow runner",
+    "Shortfin mako shark", "Thresher shark", "Tiger shark",
+    "Ocean sunfish (mola mola)",
+}
+
+# Species best caught from a pier or jetty (structure-dependent).
+_PIER_SPECIES: set = {
+    "Sheepshead", "Tautog (blackfish)", "Black sea bass", "Spadefish (Atlantic)",
+    "Triggerfish (gray)", "Lookdown", "Mangrove snapper (gray snapper)",
+    "Hogfish", "Planehead filefish", "Northern puffer (blowfish)",
+    "Bermuda chub (sea chub)", "Sergeant major (damselfish)",
+    "Cunner (bergall)", "Slippery dick (wrasse)", "Puddingwife (wrasse)",
+    "Striped blenny", "Feather blenny",
+    "Ocean triggerfish", "Queen triggerfish", "Scrawled filefish",
+    "Orange filefish", "Bandtail puffer", "Checkered puffer",
+    "Striped burrfish (spiny boxfish)", "Scrawled cowfish",
+    "Blue tang (surgeonfish)", "Gray angelfish", "Spotfin butterflyfish",
+    "Doctorfish (tang)", "Squirrelfish", "Porkfish",
+    "Smooth trunkfish", "Honeycomb cowfish",
+    "Menpachi (soldierfish)", "Aholehole (Hawaiian flagtail)",
+    "Dungeness crab (from pier)",
+    "Kelp bass (calico bass)", "Sand bass (barred sand bass)",
+    "California sheephead", "Opaleye", "Halfmoon (Catalina perch)",
+    "Kelp greenling", "Rock greenling",
+}
+
+# Species primarily caught from the surf zone.
+_SURF_SPECIES: set = {
+    "Red drum (puppy drum)", "Pompano", "Whiting (sea mullet, kingfish)",
+    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Northern kingfish",
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Walleye surfperch", "Rubberlip seaperch",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Leopard shark", "Shovelnose guitarfish",
+    "Moi (Pacific threadfin)", "Bonefish (oio)",
+}
+
+# Species best caught inshore (inlet, marsh, flats).
+_INSHORE_SPECIES: set = {
+    "Speckled trout (spotted seatrout)", "Red drum (puppy drum)",
+    "Southern flounder", "Flounder (summer flounder)", "Gulf flounder",
+    "Snook", "Tripletail", "Ladyfish", "Jack crevalle",
+    "Tarpon", "Permit", "Black drum",
+    "Sand seatrout (white trout)", "Silver seatrout",
+    "Gray trout (weakfish)", "Striped bass (rockfish)",
+    "Striped bass (hybrid)",
+    "Hickory shad", "American shad",
+    "Channel catfish", "Blue catfish", "Flathead catfish",
+    "Largemouth bass", "White perch", "Yellow perch",
+    "Redear sunfish (shellcracker)", "Bluegill", "Warmouth",
+    "American eel",
+    "Giant trevally (ulua)", "Bluefin trevally (omilu)", "Papio (juvenile jack)",
+}
+
+# -- Target categories (what you want to catch) --
+_BOTTOM_SPECIES: set = {
+    "Red drum (puppy drum)", "Black drum", "Black drum (large bull)",
+    "Whiting (sea mullet, kingfish)", "Spot", "Atlantic croaker",
+    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Northern kingfish",
+    "Flounder (summer flounder)", "Southern flounder", "Gulf flounder",
+    "Windowpane flounder", "Fringed flounder", "Hogchoker",
+    "California halibut", "Starry flounder",
+    "Pompano", "White croaker (tomcod)",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Walleye surfperch", "Rubberlip seaperch",
+    "Hardhead catfish (sea catfish)", "Gafftopsail catfish",
+    "Bonefish (oio)", "Moi (Pacific threadfin)",
+}
+
+_PELAGIC_SPECIES: set = {
+    "Bluefish", "Spanish mackerel", "King mackerel (kingfish)",
+    "False albacore (little tunny)", "Atlantic bonito",
+    "Cobia", "Jack crevalle", "Blue runner (hardtail)",
+    "Mahi-mahi (dolphinfish)", "Wahoo", "Blackfin tuna", "Yellowfin tuna",
+    "Skipjack tuna", "Bigeye tuna", "Albacore tuna",
+    "Sailfish", "Blue marlin", "White marlin",
+    "Pacific mackerel (chub mackerel)", "Jack mackerel (Spanish jack)",
+    "Pacific bonito", "Yellowtail (California yellowtail)", "White seabass",
+    "Ladyfish", "Great barracuda", "Tarpon",
+    "Giant trevally (ulua)", "Bluefin trevally (omilu)", "Papio (juvenile jack)",
+    "Striped bass (rockfish)",
+}
+
+_STRUCTURE_SPECIES: set = {
+    "Sheepshead", "Tautog (blackfish)", "Black sea bass",
+    "Triggerfish (gray)", "Spadefish (Atlantic)",
+    "Red snapper", "Vermilion snapper (beeliner)",
+    "Mangrove snapper (gray snapper)", "Lane snapper",
+    "Yellowtail snapper", "Mutton snapper", "Cubera snapper",
+    "Schoolmaster snapper",
+    "Gag grouper", "Red grouper", "Scamp grouper", "Black grouper",
+    "Hogfish", "Red porgy", "Scup (porgy)",
+    "White grunt", "Tomtate grunt", "Blue-striped grunt",
+    "Lingcod", "Vermilion rockfish", "Blue rockfish",
+    "Copper rockfish", "Grass rockfish", "Cabezon",
+    "Kelp bass (calico bass)", "Sand bass (barred sand bass)",
+    "California sheephead", "Opaleye",
+    "Mu (bigeye emperor)", "Menpachi (soldierfish)",
+}
+
+_GAMEFISH_SPECIES: set = {
+    "Blacktip shark", "Spinner shark", "Bull shark", "Sandbar shark",
+    "Lemon shark", "Dusky shark", "Bonnethead shark",
+    "Atlantic sharpnose shark", "Scalloped hammerhead shark",
+    "Nurse shark", "Finetooth shark",
+    "Leopard shark", "Shovelnose guitarfish",
+    "Cobia", "Tarpon", "King mackerel (kingfish)",
+    "Mahi-mahi (dolphinfish)", "Wahoo", "Sailfish", "Blue marlin", "White marlin",
+    "Blackfin tuna", "Yellowfin tuna",
+    "Greater amberjack", "Jack crevalle",
+    "Giant trevally (ulua)", "Kaku (barracuda)",
+    "Snook", "Permit",
+}
+
+
+def _species_matches_profile(
+    sp_name: str,
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
+) -> bool:
+    """Return True if a species matches the user's profile preferences.
+
+    If the user selected specific fishing types, exclude species that
+    can only be caught from methods they don't use.  If the user selected
+    specific target categories, only include species from those categories
+    (unless they chose 'anything').
+    """
+    # --- Fishing type filter ---
+    if fishing_types and "all" not in fishing_types:
+        has_surf = "surf" in fishing_types
+        has_pier = "pier" in fishing_types
+        has_inshore = "inshore" in fishing_types
+        has_offshore = "offshore" in fishing_types
+
+        # If user doesn't fish offshore, exclude offshore-only species
+        if not has_offshore and sp_name in _OFFSHORE_ONLY_SPECIES:
+            return False
+
+        # If species is exclusively surf/pier/inshore AND user doesn't do
+        # that type, consider excluding.  But most species are catchable
+        # from multiple locations, so we only restrict the tight sets.
+        is_surf_only = sp_name in _SURF_SPECIES and sp_name not in _PIER_SPECIES and sp_name not in _INSHORE_SPECIES
+        is_pier_only = sp_name in _PIER_SPECIES and sp_name not in _SURF_SPECIES and sp_name not in _INSHORE_SPECIES
+        is_inshore_only = sp_name in _INSHORE_SPECIES and sp_name not in _SURF_SPECIES and sp_name not in _PIER_SPECIES
+
+        # Only exclude if the species' primary method doesn't overlap with
+        # any of the user's chosen types
+        if is_surf_only and not has_surf:
+            return False
+        if is_pier_only and not has_pier:
+            return False
+        if is_inshore_only and not has_inshore:
+            return False
+
+    # --- Target category filter ---
+    if targets and "anything" not in targets:
+        in_any_target = False
+        if "bottom" in targets and sp_name in _BOTTOM_SPECIES:
+            in_any_target = True
+        if "pelagic" in targets and sp_name in _PELAGIC_SPECIES:
+            in_any_target = True
+        if "structure" in targets and sp_name in _STRUCTURE_SPECIES:
+            in_any_target = True
+        if "gamefish" in targets and sp_name in _GAMEFISH_SPECIES:
+            in_any_target = True
+        if not in_any_target:
+            return False
+
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -3861,6 +4752,109 @@ def _get_explanation(sp: Dict[str, Any], month: int, water_temp: float) -> str:
     # Default: cold/warm split based on water temperature
     is_cold = water_temp < 65
     return sp["explanation_cold"] if is_cold else sp["explanation_warm"]
+
+
+def _get_technique_tip(
+    sp_name: str,
+    hour: int = 12,
+    tide_state: str = "",
+    wind_strength: str = "",
+) -> str:
+    """Generate a short, context-specific fishing technique tip.
+
+    Returns a 1-sentence tip based on species category, time of day,
+    tide state, and wind conditions.
+    """
+    name_lower = sp_name.lower()
+
+    # Time-based tips
+    is_dawn = 5 <= hour <= 8
+    is_dusk = 17 <= hour <= 21
+    is_night = hour >= 21 or hour <= 4
+    is_midday = 10 <= hour <= 14
+
+    # Categorize by species type
+    if any(k in name_lower for k in ["drum", "red drum", "puppy"]):
+        if tide_state == "Rising":
+            return "Cast to sandbars and troughs as rising water pushes bait toward shore"
+        if is_dawn or is_dusk:
+            return "Work cut mullet along the bottom near structure and drop-offs"
+        return "Use fresh cut bait on a fish-finder rig, let it soak on the bottom"
+
+    if "trout" in name_lower or "seatrout" in name_lower:
+        if is_dawn:
+            return "Fish live shrimp under a popping cork near grass flats at first light"
+        if tide_state == "Falling":
+            return "Target outflow points as falling tide concentrates baitfish"
+        return "Pop a cork rig in 3-6 feet of water near grassy edges"
+
+    if "flounder" in name_lower or "fluke" in name_lower:
+        if tide_state == "Rising":
+            return "Drift live minnows along the bottom on incoming tide channels"
+        return "Slowly bump a bucktail jig tipped with Gulp along sandy bottoms"
+
+    if "bluefish" in name_lower or "blue" in name_lower:
+        if is_dawn or is_dusk:
+            return "Cast metal spoons or Got-Cha plugs into surface activity"
+        return "Use wire leader — bluefish bite through mono quickly"
+
+    if "sheepshead" in name_lower:
+        return "Tip small hooks with fiddler crabs, fish tight to pilings and structure"
+
+    if any(k in name_lower for k in ["shark", "ray"]):
+        if is_night:
+            return "Fresh cut bait on heavy tackle, use a steel leader and long cast"
+        return "Present large cut baits on the bottom with enough weight to hold"
+
+    if "pompano" in name_lower:
+        if tide_state == "Rising":
+            return "Work sand fleas on a pompano rig in the first trough on rising tide"
+        return "Fish the first and second troughs with a double-drop pompano rig"
+
+    if "whiting" in name_lower:
+        return "Fish shrimp or Fishbites close to shore in the first trough"
+
+    if any(k in name_lower for k in ["mackerel", "spanish"]):
+        if is_dawn:
+            return "Cast small spoons or Gotcha plugs when you see surface bait schools"
+        return "Troll small Clark spoons or cast metal jigs near offshore structure"
+
+    if "croaker" in name_lower:
+        return "Use small pieces of shrimp or bloodworm on a bottom rig in channels"
+
+    if "spot" in name_lower and "trout" not in name_lower:
+        return "Fish bloodworms or small shrimp pieces on a two-hook bottom rig"
+
+    if any(k in name_lower for k in ["bass", "striper"]):
+        if is_dawn or is_dusk:
+            return "Cast soft plastics or live eels around rocks and jetties at dawn/dusk"
+        return "Work the water column with bucktails or soft plastics near structure"
+
+    if "rockfish" in name_lower or "lingcod" in name_lower:
+        return "Drift cut bait or heavy jigs near rocky bottom and kelp edges"
+
+    if "surfperch" in name_lower:
+        return "Fish sand crabs or grubs in the wash zone during incoming tide"
+
+    if "halibut" in name_lower:
+        return "Drag live bait slowly along sandy bottoms near drop-offs"
+
+    if "corbina" in name_lower:
+        return "Wade the surf with sand crabs on a Carolina rig, fish the troughs"
+
+    if "yellowtail" in name_lower:
+        return "Use live bait or iron jigs near kelp paddies and structure"
+
+    # Generic tip based on conditions
+    if is_dawn or is_dusk:
+        return "Low-light periods are prime — work bait slowly near structure"
+    if tide_state == "Rising":
+        return "Rising tide brings bait closer to shore — fish the troughs"
+    if tide_state == "Falling":
+        return "Falling tide concentrates fish at outflow points and channels"
+    if is_midday:
+        return "Fish deeper water or shaded structure during bright midday conditions"
+    return "Match your bait to what's naturally in the water right now"
 
 
 # ---------------------------------------------------------------------------
@@ -4100,9 +5094,129 @@ def build_rig_recommendations(
             "sinker": " or ".join(sinkers[:3]),
             "targets": species_names,
             "image": category.get("image", ""),
+            "knots": get_knots_for_rig(key),
         })
 
     return recommendations
+
+
+# ---------------------------------------------------------------------------
+# Fishing knot recommendations
+# ---------------------------------------------------------------------------
+
+KNOTS_DB: Dict[str, Dict[str, str]] = {
+    "improved_clinch": {
+        "name": "Improved Clinch Knot",
+        "use": "Hook or swivel to mono/fluoro leader",
+        "strength": "95%",
+        "steps": (
+            "1. Thread 6\" of line through the hook eye. "
+            "2. Wrap the tag end around the standing line 5-7 times. "
+            "3. Pass the tag end through the small loop at the hook eye. "
+            "4. Pass it again through the big loop you just created. "
+            "5. Moisten, pull tight, trim tag."
+        ),
+    },
+    "palomar": {
+        "name": "Palomar Knot",
+        "use": "Hook to braid or mono — strongest simple knot",
+        "strength": "98%",
+        "steps": (
+            "1. Double 6\" of line and pass the loop through the hook eye. "
+            "2. Tie a simple overhand knot with the doubled line. "
+            "3. Pass the loop over the entire hook. "
+            "4. Moisten and pull both ends to tighten. Trim tag."
+        ),
+    },
+    "uni_knot": {
+        "name": "Uni Knot",
+        "use": "All-purpose: hook, swivel, or line-to-line",
+        "strength": "90%",
+        "steps": (
+            "1. Pass line through the eye, double back 6\". "
+            "2. Form a loop alongside the doubled line. "
+            "3. Wrap the tag end through the loop 4-6 times. "
+            "4. Moisten, pull tag end to tighten, then slide knot to eye."
+        ),
+    },
+    "uni_to_uni": {
+        "name": "Double Uni Knot",
+        "use": "Braid to fluoro/mono leader connection",
+        "strength": "90%",
+        "steps": (
+            "1. Overlap braid and leader by 8\". "
+            "2. Make a Uni Knot with each tag end (4 wraps for mono, 8 for braid). "
+            "3. Moisten both knots. "
+            "4. Pull standing lines to slide knots together. Trim tags."
+        ),
+    },
+    "fg_knot": {
+        "name": "FG Knot",
+        "use": "Braid to leader — slimmest, strongest connection",
+        "strength": "98%",
+        "steps": (
+            "1. Tension braid between teeth and rod. "
+            "2. Weave leader over and under braid 15-20 alternating wraps. "
+            "3. Cinch tight with half hitches (3-4). "
+            "4. Lock with 2 half hitches on braid only. Trim and melt tag."
+        ),
+    },
+    "surgeons_loop": {
+        "name": "Surgeon's Loop",
+        "use": "Create a loop for dropper rigs and quick-change clips",
+        "strength": "95%",
+        "steps": (
+            "1. Double 3\" of line to form a loop. "
+            "2. Tie an overhand knot with the doubled section. "
+            "3. Pass the loop through a second time (double overhand). "
+            "4. Moisten and pull tight."
+        ),
+    },
+    "dropper_loop": {
+        "name": "Dropper Loop",
+        "use": "Create a standing loop mid-leader for hi-lo rigs",
+        "strength": "90%",
+        "steps": (
+            "1. Form a loop in the middle of your leader. "
+            "2. Wrap one side through the loop 5-6 times. "
+            "3. Push the middle of the original loop through the center opening. "
+            "4. Pull both ends to tighten around the new loop."
+        ),
+    },
+    "haywire_twist": {
+        "name": "Haywire Twist",
+        "use": "Single-strand wire to hook or swivel",
+        "strength": "100%",
+        "steps": (
+            "1. Pass wire through hook eye. "
+            "2. Cross wires and twist together 4-5 times (barrel twist). "
+            "3. Wrap tag end tightly around standing wire 5-6 times (tight wraps). "
+            "4. Bend tag end into a handle, crank to break clean."
+        ),
+    },
+}
+
+# Map rig types to their recommended knots
+_RIG_KNOTS: Dict[str, List[str]] = {
+    "fishfinder": ["improved_clinch", "uni_to_uni"],
+    "hi-lo": ["dropper_loop", "improved_clinch"],
+    "knocker": ["palomar", "uni_to_uni"],
+    "pompano": ["dropper_loop", "surgeons_loop"],
+    "float": ["improved_clinch", "uni_knot"],
+    "popping-cork": ["uni_knot", "uni_to_uni"],
+    "kingfish-stinger": ["haywire_twist", "improved_clinch"],
+    "shark": ["haywire_twist", "fg_knot"],
+    "sabiki": ["uni_knot"],
+    "deep-drop": ["dropper_loop", "fg_knot"],
+    "tandem-jig": ["palomar", "uni_to_uni"],
+    "trolling": ["improved_clinch", "fg_knot"],
+}
+
+
+def get_knots_for_rig(rig_key: str) -> List[Dict[str, str]]:
+    """Return the recommended knots for a rig type."""
+    knot_keys = _RIG_KNOTS.get(rig_key, ["improved_clinch"])
+    return [KNOTS_DB[k] for k in knot_keys if k in KNOTS_DB]
 
 
 # Natural baits with the species they target and seasonal availability.
@@ -4291,6 +5405,7 @@ def _score_species(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
+    coast: str = "east",
 ) -> float:
     """Compute a bite-likelihood score for a species given current conditions.
 
@@ -4327,7 +5442,7 @@ def _score_species(
         score += 15.0
 
     # --- Dynamic conditions modifiers ---
-    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour)
+    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
 
     return score
 
@@ -4348,6 +5463,12 @@ _ONSHORE_WIND_SPECIES: set = {
     "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
     "Blacktip shark", "Spinner shark", "Bull shark",
     "Striped bass (rockfish)", "Black drum",
+    # Pacific
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Leopard shark", "Shovelnose guitarfish",
+    # Hawaii
+    "Giant trevally (ulua)", "Moi (Pacific threadfin)", "Bonefish (oio)",
 }
 
 # Species that prefer calmer conditions and/or offshore wind (clearer water).
@@ -4358,6 +5479,11 @@ _CALM_WATER_SPECIES: set = {
     "Scrawled cowfish", "Ocean triggerfish", "Queen triggerfish",
     "Gray snapper (juvenile)", "Speckled trout (spotted seatrout)",
     "Tarpon", "Tripletail", "Permit", "Snook",
+    # Pacific
+    "Kelp bass (calico bass)", "Sand bass (barred sand bass)", "California sheephead",
+    "Opaleye", "Halfmoon (Catalina perch)", "California halibut", "White seabass",
+    # Hawaii
+    "Mu (bigeye emperor)", "Menpachi (soldierfish)", "Aholehole (Hawaiian flagtail)",
 }
 
 # Species that feed more actively in rougher surf.
@@ -4366,6 +5492,9 @@ _ROUGH_SURF_SPECIES: set = {
     "Whiting (sea mullet, kingfish)", "Pompano", "Black drum",
     "Smooth dogfish", "Atlantic croaker", "Spot",
     "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    # Pacific
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
 }
 
 # Species that feed best in low-light conditions (dawn, dusk, night).
@@ -4376,6 +5505,10 @@ _LOW_LIGHT_SPECIES: set = {
     "Spotted moray eel", "Green moray eel", "American eel", "Conger eel",
     "Squirrelfish", "Bigeye (Priacanthus arenatus)", "Short bigeye",
     "Blacktip shark", "Bull shark", "Sandbar shark", "Lemon shark",
+    # Pacific
+    "Lingcod", "Cabezon", "Leopard shark", "Bat ray",
+    # Hawaii
+    "Giant trevally (ulua)", "Menpachi (soldierfish)", "Mu (bigeye emperor)",
 }
 
 # Species that are more active during bright midday conditions.
@@ -4385,14 +5518,26 @@ _DAYTIME_SPECIES: set = {
     "Sergeant major (damselfish)", "Blue tang (surgeonfish)",
     "Spotfin butterflyfish", "Gray angelfish",
     "Bermuda chub (sea chub)", "Pinfish", "Pigfish",
+    # Pacific
+    "Pacific mackerel (chub mackerel)", "Jack mackerel (Spanish jack)",
+    "Pacific bonito", "Yellowtail (California yellowtail)",
+    "Jacksmelt", "Pacific sardine", "Northern anchovy",
+    # Hawaii
+    "Bluefin trevally (omilu)", "Papio (juvenile jack)", "Kaku (barracuda)",
 }
 
 # Compass directions grouped for onshore/offshore determination.
-# For Wrightsville Beach, NC facing roughly ESE:
-#   Onshore winds: S, SE, E, SSE, ESE, SSW
-#   Offshore winds: N, NW, W, NNW, WNW, NNE
-_ONSHORE_DIRS: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE"}
-_OFFSHORE_DIRS: set = {"N", "NW", "W", "NNW", "WNW", "NNE", "NE"}
+# East-facing coasts (Atlantic): onshore = easterly, offshore = westerly
+# West-facing coasts (Pacific): onshore = westerly, offshore = easterly
+# Hawaii / Gulf south: mixed, so use east-facing defaults
+_ONSHORE_DIRS_EAST: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE"}
+_OFFSHORE_DIRS_EAST: set = {"N", "NW", "W", "NNW", "WNW", "NNE", "NE"}
+_ONSHORE_DIRS_WEST: set = {"W", "NW", "SW", "WNW", "WSW", "NNW", "SSW"}
+_OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
+
+# Default for backward compatibility
+_ONSHORE_DIRS = _ONSHORE_DIRS_EAST
+_OFFSHORE_DIRS = _OFFSHORE_DIRS_EAST
 
 
 def _conditions_modifier(
@@ -4401,20 +5546,25 @@ def _conditions_modifier(
     wind_range: Optional[Tuple[float, float]],
     wave_range: Optional[Tuple[float, float]],
     hour: int,
+    coast: str = "east",
 ) -> float:
     """Compute a conditions-based score modifier for a species.
 
     Returns a value between roughly -5 and +15 based on how well current
     wind direction, wind speed, wave height, and time of day match the
     species' preferred conditions.
+
+    ``coast`` should be ``"east"`` for Atlantic/Gulf or ``"west"`` for Pacific.
     """
     modifier = 0.0
     name = sp["name"]
 
     # --- Wind direction modifier (up to +5 / -3) ---
     if wind_dir:
-        is_onshore = wind_dir in _ONSHORE_DIRS
-        is_offshore = wind_dir in _OFFSHORE_DIRS
+        onshore_dirs = _ONSHORE_DIRS_WEST if coast == "west" else _ONSHORE_DIRS_EAST
+        offshore_dirs = _OFFSHORE_DIRS_WEST if coast == "west" else _OFFSHORE_DIRS_EAST
+        is_onshore = wind_dir in onshore_dirs
+        is_offshore = wind_dir in offshore_dirs
 
         if name in _ONSHORE_WIND_SPECIES:
             modifier += 5.0 if is_onshore else (-3.0 if is_offshore else 0.0)
@@ -4476,22 +5626,41 @@ def build_species_ranking(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
+    coast: str = "east",
+    state: str = "",
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
-    """Dynamically rank species based on conditions.
+    """Dynamically rank species based on conditions and user profile.
 
     Factors in water temperature, month, wind direction, wind speed,
     wave height, and time of day.  Only species scoring above
     SPECIES_SCORE_THRESHOLD are included.  Each species gets an
     activity label: Hot, Active, or Possible.
+
+    If ``fishing_types`` or ``targets`` are provided (from user profile),
+    species are filtered to match how the user actually fishes.
+
+    If ``state`` is provided, regulation data (size/bag limits) is
+    attached to each species entry.
     """
+    # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
+    wind_coast = "west" if coast == "west" else "east"
     scored = []
     for sp in SPECIES_DB:
+        # Skip species from a different coast/region
+        if sp.get("coast", "east") != coast:
+            continue
+        # Skip species that don't match user's fishing profile
+        if not _species_matches_profile(sp["name"], fishing_types, targets):
+            continue
         s = _score_species(
             sp, month, water_temp,
             wind_dir=wind_dir,
             wind_range=wind_range,
             wave_range=wave_range,
             hour=hour,
+            coast=wind_coast,
         )
         if s >= SPECIES_SCORE_THRESHOLD:
             explanation = _get_explanation(sp, month, water_temp)
@@ -4508,7 +5677,7 @@ def build_species_ranking(
         else:
             activity = "Possible"
 
-        result.append({
+        entry: Dict[str, Any] = {
             "rank": rank,
             "name": sp["name"],
             "score": round(score, 1),
@@ -4518,7 +5687,15 @@ def build_species_ranking(
             "rig": sp["rig"],
             "hook_size": sp["hook_size"],
             "sinker": sp["sinker"],
-        })
+        }
+
+        # Attach regulation data if available
+        if state:
+            reg = lookup_regulation(sp["name"], state)
+            if reg:
+                entry["regulation"] = reg
+
+        result.append(entry)
 
     return result
 
@@ -4567,6 +5744,77 @@ def build_bait_ranking(
 
 
 # ---------------------------------------------------------------------------
+# Natural bait / forage species availability
+# ---------------------------------------------------------------------------
+
+NATURAL_BAIT_DB: List[Dict[str, Any]] = [
+    # Atlantic / Gulf
+    {"name": "Menhaden (bunker)", "months": [3,4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Schools visible at surface — look for diving birds"},
+    {"name": "Mullet", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "east",
+     "note": "Year-round; large fall runs Sept-Nov along beaches"},
+    {"name": "Sand fleas (mole crabs)", "months": [4,5,6,7,8,9,10], "coast": "east",
+     "note": "Dig in wet sand at surf's edge during wave retreat"},
+    {"name": "Shrimp", "months": [4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Peak summer/fall; run on outgoing tides at night"},
+    {"name": "Fiddler crabs", "months": [4,5,6,7,8,9,10], "coast": "east",
+     "note": "Found in mud flats at low tide — top sheepshead bait"},
+    {"name": "Bloodworms", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "east",
+     "note": "Available year-round at bait shops; pricey but effective"},
+    {"name": "Cut bait (spot/croaker)", "months": [5,6,7,8,9,10], "coast": "east",
+     "note": "Catch small spot/croaker on Sabiki rigs for fresh cut bait"},
+    {"name": "Finger mullet", "months": [6,7,8,9,10,11], "coast": "east",
+     "note": "Cast net along shore; top live bait for predator species"},
+    {"name": "Silversides", "months": [3,4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Tiny baitfish in surf zone — match with small spoons/jigs"},
+    {"name": "Blue crab", "months": [4,5,6,7,8,9,10,11], "coast": "east",
+     "note": "Cut in half for drum/sheepshead; chicken necks to trap"},
+
+    # Pacific
+    {"name": "Sand crabs", "months": [3,4,5,6,7,8,9,10,11], "coast": "west",
+     "note": "Dig at wave line for prime surfperch and corbina bait"},
+    {"name": "Mussels", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "west",
+     "note": "Pry from rocks at low tide — excellent all-purpose bait"},
+    {"name": "Anchovies", "months": [3,4,5,6,7,8,9,10,11], "coast": "west",
+     "note": "Buy live or use Sabiki rig; top live bait for gamefish"},
+    {"name": "Sardines", "months": [4,5,6,7,8,9,10], "coast": "west",
+     "note": "Available live at bait barges; great for halibut and bass"},
+    {"name": "Squid", "months": [1,2,3,4,5,10,11,12], "coast": "west",
+     "note": "Market squid runs in winter; cut strips or use whole"},
+    {"name": "Ghost shrimp", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "west",
+     "note": "Pump from mudflats at low tide; perch and surfperch love them"},
+    {"name": "Mackerel (bait)", "months": [4,5,6,7,8,9,10], "coast": "west",
+     "note": "Catch on Sabiki rigs at piers; cut for halibut and bass"},
+    {"name": "Grunion", "months": [3,4,5,6,7,8], "coast": "west",
+     "note": "Beach spawning runs on full/new moon nights — check regulations"},
+]
+
+
+def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, str]]:
+    """Return the list of natural bait species available this month.
+
+    Filters by coast and month, returns a list of dicts with name, note,
+    and availability status.
+    """
+    available = []
+    for bait in NATURAL_BAIT_DB:
+        if bait["coast"] != coast and bait["coast"] != "both":
+            continue
+        if month in bait["months"]:
+            status = "available"
+        else:
+            status = "off-season"
+        available.append({
+            "name": bait["name"],
+            "note": bait["note"],
+            "status": status,
+        })
+    # Sort: available first, then off-season
+    available.sort(key=lambda x: (0 if x["status"] == "available" else 1, x["name"]))
+    return available
+
+
+# ---------------------------------------------------------------------------
 # Tide predictions (NOAA CO-OPS)
 # ---------------------------------------------------------------------------
 
@@ -4611,19 +5859,1113 @@ def fetch_tide_predictions(
                 "time": time_str,
                 "type": tide_type,
                 "height_ft": f"{float(height):.1f}",
+                "hour": dt.hour + dt.minute / 60 if isinstance(dt, datetime) else 12.0,
+                "height_num": float(height),
             })
         return tides
     except Exception:
         return []
 
 
-def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def fetch_multi_day_tides(
+    station_id: str,
+    tz_name: str = "America/New_York",
+    days: int = 3,
+) -> List[Dict[str, Any]]:
+    """Fetch tide predictions for multiple days, grouped by date.
+
+    Returns a list of dicts:
+        [{"date": "Fri Feb 28", "tides": [{"time": "6:32 AM", "type": "High", "height_ft": "5.2"}, ...]}, ...]
+    """
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    start_str = (now + timedelta(days=1)).strftime("%Y%m%d")
+    end_str = (now + timedelta(days=days + 1)).strftime("%Y%m%d")
+    url = (
+        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+        f"?begin_date={start_str}&end_date={end_str}"
+        f"&station={station_id}"
+        "&product=predictions&datum=MLLW&units=english"
+        "&time_zone=lst_ldt&format=json&interval=hilo"
+    )
+    try:
+        resp = requests.get(url, timeout=12)
+        resp.raise_for_status()
+        data = resp.json()
+        predictions = data.get("predictions", [])
+    except Exception:
+        return []
+
+    by_date: Dict[str, List[Dict[str, str]]] = {}
+    for p in predictions:
+        raw_time = p.get("t", "")
+        height = p.get("v", "0")
+        tide_type = "High" if p.get("type") == "H" else "Low"
+        try:
+            dt = datetime.strptime(raw_time, "%Y-%m-%d %H:%M")
+            dt = dt.replace(tzinfo=tz)
+            date_key = dt.strftime("%a %b %-d")
+            time_str = dt.strftime("%-I:%M %p")
+        except Exception:
+            continue
+        if date_key not in by_date:
+            by_date[date_key] = []
+        by_date[date_key].append({
+            "time": time_str,
+            "type": tide_type,
+            "height_ft": f"{float(height):.1f}",
+        })
+
+    return [{"date": d, "tides": t} for d, t in by_date.items()]
+
+
+def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
+    """Build an SVG path string for a smooth tide curve.
+
+    Returns a dict with 'path' (SVG path d attribute), 'points' (list of
+    {cx, cy, label, height} for the markers), 'viewBox', and 'fill_path'.
+    Only considers tides within a 24-hour window.
+    """
+    if len(tides) < 2:
+        return ""
+
+    # Chart dimensions
+    W, H = 600, 140
+    PAD_X, PAD_TOP, PAD_BOT = 50, 20, 30
+
+    # Filter to reasonable 24h range and extract numeric data
+    pts = []
+    for t in tides:
+        h = t.get("hour", 12.0)
+        ht = t.get("height_num", 0.0)
+        if 0 <= h <= 30:  # Allow some overflow for next-day tides
+            pts.append((h, ht, t["type"], t["time"], t["height_ft"]))
+    if len(pts) < 2:
+        return ""
+
+    # Compute bounds
+    min_h = min(p[1] for p in pts)
+    max_h = max(p[1] for p in pts)
+    h_range = max_h - min_h if max_h != min_h else 1.0
+    min_hour = min(p[0] for p in pts)
+    max_hour = max(p[0] for p in pts)
+    hour_range = max_hour - min_hour if max_hour != min_hour else 24.0
+
+    def to_x(hr: float) -> float:
+        return PAD_X + (hr - min_hour) / hour_range * (W - 2 * PAD_X)
+
+    def to_y(ht: float) -> float:
+        return PAD_TOP + (1 - (ht - min_h) / h_range) * (H - PAD_TOP - PAD_BOT)
+
+    # Build smooth curve using cubic bezier through points
+    coords = [(to_x(p[0]), to_y(p[1])) for p in pts]
+    path_parts = [f"M{coords[0][0]:.1f},{coords[0][1]:.1f}"]
+    for i in range(1, len(coords)):
+        # Simple smooth curve: control points at 1/3 intervals
+        x0, y0 = coords[i - 1]
+        x1, y1 = coords[i]
+        cx1 = x0 + (x1 - x0) * 0.4
+        cx2 = x1 - (x1 - x0) * 0.4
+        path_parts.append(f"C{cx1:.1f},{y0:.1f} {cx2:.1f},{y1:.1f} {x1:.1f},{y1:.1f}")
+
+    path_d = " ".join(path_parts)
+
+    # Fill path (close to bottom)
+    fill_d = path_d + f" L{coords[-1][0]:.1f},{H - PAD_BOT:.1f} L{coords[0][0]:.1f},{H - PAD_BOT:.1f} Z"
+
+    # Build point markers
+    markers = []
+    for i, p in enumerate(pts):
+        markers.append({
+            "cx": f"{coords[i][0]:.1f}",
+            "cy": f"{coords[i][1]:.1f}",
+            "type": p[2],
+            "time": p[3],
+            "height": p[4],
+        })
+
+    import json as _json
+    return _json.dumps({
+        "viewBox": f"0 0 {W} {H}",
+        "path": path_d,
+        "fill_path": fill_d,
+        "markers": markers,
+        "width": W,
+        "height": H,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Solunar fishing times (simplified moon transit calculation)
+# ---------------------------------------------------------------------------
+
+def _moon_phase(dt: datetime) -> float:
+    """Return the moon phase as a fraction (0.0 = new, 0.5 = full)."""
+    # Reference new moon: 2000-01-06 18:14 UTC
+    ref = datetime(2000, 1, 6, 18, 14, tzinfo=ZoneInfo("UTC"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    diff = (dt - ref).total_seconds()
+    synodic = 29.53058867  # days
+    phase = (diff / (synodic * 86400)) % 1.0
+    return phase
+
+
+def _moon_transit_hours(dt: datetime, lng: float) -> Tuple[float, float]:
+    """Approximate moon overhead and underfoot times (local hour of day).
+
+    Returns (overhead_hour, underfoot_hour).  These are rough estimates
+    based on the moon's position relative to the observer's longitude and
+    the moon's orbital phase.
+    """
+    phase = _moon_phase(dt)
+    # Moon transit relative to solar noon advances ~50 min/day through the lunar cycle
+    # At new moon, moon transits at ~12:00 (noon) local solar time
+    # At full moon, moon transits at ~00:00 (midnight) local solar time
+    transit_solar_hr = (phase * 24.0) % 24.0  # overhead time in solar hours
+    # Convert solar time to approximate clock time (simple longitude offset)
+    # Standard timezone offset from UTC
+    tz = dt.tzinfo
+    if tz:
+        utc_offset = dt.utcoffset().total_seconds() / 3600
+    else:
+        utc_offset = -5  # default EST
+    solar_offset = (lng / 15.0) - utc_offset
+    overhead = (12.0 + transit_solar_hr - solar_offset) % 24.0
+    underfoot = (overhead + 12.0) % 24.0
+    return overhead, underfoot
+
+
+def compute_solunar_times(
+    dt: datetime,
+    lat: float,
+    lng: float,
+    tz_name: str = "America/New_York",
+) -> Dict[str, Any]:
+    """Compute solunar major and minor fishing periods for the given day.
+
+    Returns a dict with:
+        major_periods: list of (start_time_str, end_time_str) ~2hr windows
+        minor_periods: list of (start_time_str, end_time_str) ~1hr windows
+        moon_phase: str description (New, Waxing, Full, Waning)
+        rating: str (Excellent / Good / Fair) based on moon phase
+    """
+    tz = ZoneInfo(tz_name)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+
+    phase_frac = _moon_phase(dt)
+    overhead, underfoot = _moon_transit_hours(dt, lng)
+
+    def fmt_time(hour: float) -> str:
+        h = int(hour) % 24
+        m = int((hour - int(hour)) * 60)
+        period = "AM" if h < 12 else "PM"
+        display_h = h if h <= 12 else h - 12
+        if display_h == 0:
+            display_h = 12
+        return f"{display_h}:{m:02d} {period}"
+
+    def time_window(center: float, half_width: float) -> Tuple[str, str]:
+        start = (center - half_width) % 24.0
+        end = (center + half_width) % 24.0
+        return fmt_time(start), fmt_time(end)
+
+    # Major periods: ~1 hour on each side of moon overhead / underfoot
+    major_periods = [
+        time_window(overhead, 1.0),
+        time_window(underfoot, 1.0),
+    ]
+
+    # Minor periods: ~30 min on each side of moonrise / moonset
+    # Moonrise/moonset are roughly 6 hours from transit
+    moonrise = (overhead - 6.2) % 24.0
+    moonset = (overhead + 6.2) % 24.0
+    minor_periods = [
+        time_window(moonrise, 0.5),
+        time_window(moonset, 0.5),
+    ]
+
+    # Sort by start time
+    def sort_key(p: Tuple[str, str]) -> float:
+        parts = p[0].replace(":", " ").replace("AM", "").replace("PM", "").split()
+        h = int(parts[0])
+        m = int(parts[1])
+        is_pm = "PM" in p[0]
+        if h == 12:
+            h = 0 if not is_pm else 12
+        elif is_pm:
+            h += 12
+        return h + m / 60.0
+
+    major_periods.sort(key=sort_key)
+    minor_periods.sort(key=sort_key)
+
+    # Moon phase name and fishing rating
+    if phase_frac < 0.05 or phase_frac > 0.95:
+        phase_name = "New Moon"
+        rating = "Excellent"
+    elif 0.45 < phase_frac < 0.55:
+        phase_name = "Full Moon"
+        rating = "Excellent"
+    elif phase_frac < 0.25:
+        phase_name = "Waxing Crescent"
+        rating = "Fair"
+    elif phase_frac < 0.30:
+        phase_name = "First Quarter"
+        rating = "Good"
+    elif phase_frac < 0.45:
+        phase_name = "Waxing Gibbous"
+        rating = "Good"
+    elif phase_frac < 0.75:
+        phase_name = "Waning Gibbous"
+        rating = "Good"
+    elif phase_frac < 0.80:
+        phase_name = "Last Quarter"
+        rating = "Good"
+    else:
+        phase_name = "Waning Crescent"
+        rating = "Fair"
+
+    return {
+        "major_periods": [{"start": s, "end": e} for s, e in major_periods],
+        "minor_periods": [{"start": s, "end": e} for s, e in minor_periods],
+        "moon_phase": phase_name,
+        "rating": rating,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Multi-day forecast outlook
+# ---------------------------------------------------------------------------
+
+def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
+    """Fetch active weather alerts from NWS for a lat/lng.
+
+    Returns a list of dicts with: event, severity, headline, description.
+    Only includes marine and weather-relevant alerts.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    try:
+        resp = requests.get(
+            f"https://api.weather.gov/alerts/active?point={lat},{lng}",
+            headers=headers, timeout=10,
+        )
+        resp.raise_for_status()
+        features = resp.json().get("@graph", [])
+        alerts = []
+        for f in features[:5]:
+            event = f.get("event", "")
+            severity = f.get("severity", "")
+            headline = f.get("headline", "")
+            description = (f.get("description", "") or "")[:300]
+            if event:
+                alerts.append({
+                    "event": event,
+                    "severity": severity,
+                    "headline": headline,
+                    "description": description,
+                })
+        return alerts
+    except Exception:
+        return []
+
+
+def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
+    """Fetch current weather observations from NWS.
+
+    Returns a dict with: air_temp_f, humidity, description, sky, wind_chill_f.
+    Returns None on failure.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    try:
+        # Get nearest observation station from the NWS points API
+        pts = requests.get(
+            f"https://api.weather.gov/points/{lat},{lng}",
+            headers=headers, timeout=10,
+        )
+        pts.raise_for_status()
+        obs_url = pts.json()["properties"].get("observationStations", "")
+        if not obs_url:
+            return None
+
+        # Get latest observation from nearest station
+        stations = requests.get(obs_url, headers=headers, timeout=10)
+        stations.raise_for_status()
+        station_list = stations.json().get("observationStations", [])
+        if not station_list:
+            return None
+
+        station_id = station_list[0].rstrip("/").split("/")[-1]
+        obs = requests.get(
+            f"https://api.weather.gov/stations/{station_id}/observations/latest",
+            headers=headers, timeout=10,
+        )
+        obs.raise_for_status()
+        props = obs.json().get("properties", {})
+
+        # Extract data
+        temp_c = props.get("temperature", {}).get("value")
+        humidity = props.get("relativeHumidity", {}).get("value")
+        description = props.get("textDescription", "")
+        wind_chill_c = props.get("windChill", {}).get("value")
+
+        result: Dict[str, Any] = {"description": description or ""}
+
+        if temp_c is not None:
+            result["air_temp_f"] = round(temp_c * 9 / 5 + 32, 1)
+        if humidity is not None:
+            result["humidity"] = round(humidity, 0)
+        if wind_chill_c is not None:
+            result["wind_chill_f"] = round(wind_chill_c * 9 / 5 + 32, 1)
+
+        # Compute feels-like / heat index for warm weather
+        if temp_c is not None and humidity is not None:
+            temp_f = result["air_temp_f"]
+            if temp_f >= 80 and humidity >= 40:
+                # Simplified heat index
+                hi = (-42.379 + 2.04901523 * temp_f
+                      + 10.14333127 * humidity
+                      - 0.22475541 * temp_f * humidity
+                      - 0.00683783 * temp_f ** 2
+                      - 0.05481717 * humidity ** 2
+                      + 0.00122874 * temp_f ** 2 * humidity
+                      + 0.00085282 * temp_f * humidity ** 2
+                      - 0.00000199 * temp_f ** 2 * humidity ** 2)
+                result["feels_like_f"] = round(hi, 0)
+
+        return result if "air_temp_f" in result else None
+    except Exception:
+        return None
+
+
+def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
+    """Fetch the NWS 7-day forecast for a lat/lng.
+
+    Returns a list of period dicts with name, detailedForecast, temperature, etc.
+    Returns an empty list on failure.
+    """
+    headers = {
+        "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+        "Accept": "application/ld+json",
+    }
+    try:
+        pts = requests.get(
+            f"https://api.weather.gov/points/{lat},{lng}",
+            headers=headers, timeout=10,
+        )
+        pts.raise_for_status()
+        forecast_url = pts.json()["properties"]["forecast"]
+        fc = requests.get(forecast_url, headers=headers, timeout=10)
+        fc.raise_for_status()
+        return fc.json()["properties"]["periods"]
+    except Exception:
+        return []
+
+
+def build_multiday_outlook(
+    now: datetime,
+    location: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Build a 3-day outlook with conditions and fishability.
+
+    Each day includes: day_label, wind summary, wave estimate,
+    water temp estimate, and a fishability verdict.
+    """
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+
+    # Try NWS extended forecast for wind data
+    nws_periods = _fetch_nws_extended(loc_lat, loc_lng)
+
+    days = []
+    for offset_days in range(1, 4):  # tomorrow, day after, day 3
+        future = now + timedelta(days=offset_days)
+        future_month = future.month
+
+        day_label = future.strftime("%A")  # e.g., "Thursday"
+        date_label = future.strftime("%b %d")  # e.g., "Feb 27"
+
+        # --- Wind from NWS or fallback ---
+        wind_str = ""
+        wind_range = None
+        if nws_periods:
+            for p in nws_periods:
+                if p.get("isDaytime") and p.get("name", "").lower().startswith(day_label[:3].lower()):
+                    ws = p.get("windSpeed", "")
+                    wd = p.get("windDirection", "")
+                    m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
+                    if m:
+                        low_mph = float(m.group(1))
+                        high_mph = float(m.group(2)) if m.group(2) else low_mph
+                        low_kt = round(low_mph * _MPH_TO_KNOTS)
+                        high_kt = round(high_mph * _MPH_TO_KNOTS)
+                        wind_range = (low_kt, high_kt)
+                        wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
+                    break
+
+        if not wind_str:
+            # Use regional fallback
+            fb_wind, fb_waves, fb_dir = get_fallback_conditions(
+                location or {}, future_month,
+            ) if location else (
+                MONTHLY_AVG_WIND[future_month],
+                MONTHLY_AVG_WAVES[future_month],
+                MONTHLY_AVG_WIND_DIR[future_month],
+            )
+            if isinstance(fb_wind, tuple):
+                wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
+                wind_range = fb_wind
+
+        # --- Wave estimate ---
+        wave_str = ""
+        if location:
+            fb_wind_r, fb_wave_r, _ = get_fallback_conditions(location, future_month)
+            wave_str = f"{int(fb_wave_r[0])}-{int(fb_wave_r[1])} ft"
+            wave_range = fb_wave_r
+        else:
+            wave_avg = MONTHLY_AVG_WAVES.get(future_month, (1, 3))
+            wave_str = f"{int(wave_avg[0])}-{int(wave_avg[1])} ft"
+            wave_range = wave_avg
+
+        # --- Fishability verdict ---
+        verdict = classify_conditions(wind_range, wave_range) if wind_range and wave_range else "Unknown"
+
+        # --- Top species for this day ---
+        cr = (location or {}).get("conditions_region", "atlantic_mid")
+        coast = "west" if cr.startswith("pacific") else ("hawaii" if cr.startswith("hawaii") else "east")
+        if location:
+            monthly_temps = get_monthly_water_temps(location)
+            future_water_temp = float(monthly_temps[future_month])
+        else:
+            future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
+
+        wind_coast = "west" if coast == "west" else "east"
+        top_species_names: List[str] = []
+        species_scores: List[Tuple[str, float]] = []
+        for sp in SPECIES_DB:
+            if sp.get("coast", "east") != coast:
+                continue
+            s = _score_species(
+                sp, future_month, future_water_temp,
+                wind_dir=None,
+                wind_range=wind_range,
+                wave_range=wave_range,
+                hour=12,
+                coast=wind_coast,
+            )
+            if s > 20:
+                species_scores.append((sp["name"], s))
+        species_scores.sort(key=lambda x: x[1], reverse=True)
+        top_species_names = [name for name, _ in species_scores[:5]]
+
+        days.append({
+            "day": day_label,
+            "date": date_label,
+            "wind": wind_str,
+            "waves": wave_str,
+            "verdict": verdict,
+            "top_species": top_species_names,
+        })
+
+    return days
+
+
+# -- Species availability calendar ------------------------------------------
+
+_MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def build_species_calendar(
+    species_list: List[Dict[str, Any]],
+    location: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Build a 12-month availability calendar for the top ranked species.
+
+    For each species in *species_list* (already scored/ranked), looks up
+    peak_months and good_months from SPECIES_DB and returns a list of dicts:
+
+        {
+            "name": "Red drum",
+            "months": [
+                {"abbr": "Jan", "level": "good"},   # "peak", "good", or ""
+                ...
+            ]
+        }
+
+    Temperature feasibility is also considered: months where the regional
+    average water temp falls outside the species' temp range are marked empty.
+    """
+    # Build a name → SPECIES_DB entry lookup
+    db_map: Dict[str, Dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
+
+    # Get regional water temps (12 months) for temp filtering
+    monthly_temps: Dict[int, float] = {}
+    if location:
+        monthly_temps = get_monthly_water_temps(location)
+
+    calendar: List[Dict[str, Any]] = []
+    for ranked_sp in species_list[:10]:
+        sp = db_map.get(ranked_sp["name"])
+        if not sp:
+            continue
+        months = []
+        for m in range(1, 13):
+            # Check if water temp makes this species viable this month
+            if monthly_temps:
+                t = monthly_temps.get(m, 65)
+                if t < sp["temp_min"] - 5 or t > sp["temp_max"] + 5:
+                    months.append({"abbr": _MONTH_ABBR[m - 1], "level": ""})
+                    continue
+
+            if m in sp.get("peak_months", []):
+                level = "peak"
+            elif m in sp.get("good_months", []):
+                level = "good"
+            else:
+                level = ""
+            months.append({"abbr": _MONTH_ABBR[m - 1], "level": level})
+
+        calendar.append({
+            "name": ranked_sp["name"],
+            "months": months,
+        })
+
+    return calendar
+
+
+# -- Spot-specific fishing tips based on conditions -------------------------
+
+def build_spot_tips(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    wind_dir: str = "",
+    hour: int = 12,
+    month: int = 6,
+    coast: str = "east",
+    tide_state: str = "",
+) -> List[Dict[str, str]]:
+    """Generate 3-5 actionable fishing tips based on current conditions.
+
+    Each tip has an 'icon' (emoji-free label), 'title', and 'detail'.
+    """
+    tips: List[Dict[str, str]] = []
+
+    # Wind-based tips
+    avg_wind = 0.0
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+
+    if avg_wind > 20:
+        tips.append({
+            "icon": "wind", "title": "Heavy Wind Strategy",
+            "detail": "Use heavier sinkers (4-6 oz) to hold bottom. "
+                      "Fish the lee side of piers and jetties for calmer pockets. "
+                      "Shorten leaders to reduce tangles.",
+        })
+    elif avg_wind > 12:
+        tips.append({
+            "icon": "wind", "title": "Moderate Wind",
+            "detail": "Standard 2-4 oz sinkers should hold. Wind chop stirs up bait — "
+                      "fish are often more active. Cast at an angle to the wind for better distance.",
+        })
+    elif avg_wind < 6:
+        tips.append({
+            "icon": "wind", "title": "Calm Conditions",
+            "detail": "Light tackle shines today. Use lighter leaders and smaller presentations. "
+                      "Fish may be more line-shy in clear, calm water.",
+        })
+
+    # Wave-based tips
+    avg_wave = 0.0
+    if wave_range:
+        avg_wave = (wave_range[0] + wave_range[1]) / 2
+
+    if avg_wave > 4:
+        tips.append({
+            "icon": "waves", "title": "Heavy Surf",
+            "detail": "Fish the troughs between sandbars where fish shelter from wave energy. "
+                      "Pyramid sinkers grip sandy bottoms better than egg sinkers in surf.",
+        })
+    elif avg_wave > 2:
+        tips.append({
+            "icon": "waves", "title": "Moderate Surf",
+            "detail": "Cast beyond the breakers to the second sandbar. "
+                      "The stirred-up sand exposes sand fleas and crabs, drawing fish to feed.",
+        })
+    elif avg_wave < 1.5:
+        tips.append({
+            "icon": "waves", "title": "Flat Surf",
+            "detail": "Fish closer to structure — jetties, pilings, and rocky outcrops. "
+                      "Clear water means lighter line and natural-colored baits work best.",
+        })
+
+    # Tide-based tips
+    if tide_state == "Rising":
+        tips.append({
+            "icon": "tide", "title": "Rising Tide Tactics",
+            "detail": "Incoming water pushes bait toward shore — position yourself "
+                      "at points where current funnels through cuts and inlets. "
+                      "Fish the first and second troughs as water fills them.",
+        })
+    elif tide_state == "Falling":
+        tips.append({
+            "icon": "tide", "title": "Falling Tide Tactics",
+            "detail": "Outgoing water concentrates baitfish at channel mouths and drain points. "
+                      "Set up where water flows out from marshes and estuaries — "
+                      "predators stack up to ambush departing bait.",
+        })
+
+    # Time-of-day tips
+    if 5 <= hour <= 7:
+        tips.append({
+            "icon": "time", "title": "Early Bird Advantage",
+            "detail": "Dawn is prime time — get lines in the water before sunrise. "
+                      "Topwater lures and live bait under corks excel in the low-light bite window.",
+        })
+    elif 17 <= hour <= 20:
+        tips.append({
+            "icon": "time", "title": "Evening Bite",
+            "detail": "Fish feed aggressively before dark. Switch to darker-colored lures as "
+                      "light fades — fish rely more on silhouette and vibration at dusk.",
+        })
+    elif 10 <= hour <= 14:
+        tips.append({
+            "icon": "time", "title": "Midday Approach",
+            "detail": "Fish deeper structure and shaded areas during bright sun. "
+                      "Piers cast shadows that attract baitfish — focus on the shadow line.",
+        })
+
+    # Seasonal tips
+    if month in (11, 12, 1, 2):
+        tips.append({
+            "icon": "season", "title": "Cold Water Tips",
+            "detail": "Slow your presentation — cold fish won't chase fast baits. "
+                      "Fish the warmest part of the day (10 AM - 3 PM) when water warms slightly. "
+                      "Bottom rigs with cut bait outperform artificials in winter.",
+        })
+    elif month in (6, 7, 8):
+        tips.append({
+            "icon": "season", "title": "Summer Patterns",
+            "detail": "Early morning and late evening are most productive — avoid the midday heat. "
+                      "Live bait stays livelier in a bucket with an aerator. "
+                      "Night fishing produces excellent catches in warm months.",
+        })
+
+    return tips[:5]
+
+
+def build_bite_alerts(
+    verdict: str,
+    species: List[Dict[str, Any]],
+    pressure: Optional[Dict[str, Any]] = None,
+    tide_state: str = "",
+) -> List[Dict[str, str]]:
+    """Generate bite alert notifications when conditions are especially good."""
+    alerts: List[Dict[str, str]] = []
+
+    # Hot species alert
+    hot_species = [sp["name"] for sp in species if sp.get("activity") == "Hot"]
+    if hot_species:
+        if len(hot_species) >= 3:
+            alerts.append({
+                "type": "hot",
+                "title": "Multiple species on fire!",
+                "message": f"{', '.join(hot_species[:3])} are all rated HOT right now. This is a rare alignment of conditions.",
+            })
+        elif len(hot_species) == 1:
+            alerts.append({
+                "type": "hot",
+                "title": f"{hot_species[0]} is on fire!",
+                "message": "Conditions are dialed in for this species. Get your lines in the water.",
+            })
+
+    # Excellent conditions alert
+    if verdict == "Excellent":
+        alerts.append({
+            "type": "excellent",
+            "title": "Excellent fishing day!",
+            "message": "Wind, waves, and temperatures are all in the sweet spot. Don't miss this one.",
+        })
+
+    # Falling pressure trigger
+    if pressure and "falling" in pressure.get("trend", "").lower():
+        p_val = pressure.get("pressure_mb", 0)
+        if p_val and float(p_val) < 1010:
+            alerts.append({
+                "type": "pressure",
+                "title": "Pre-front feeding window",
+                "message": "Barometric pressure is dropping below 1010 mb — fish often feed aggressively before incoming weather.",
+            })
+
+    # Incoming tide + dawn/dusk
+    if tide_state == "Rising":
+        alerts.append({
+            "type": "tide",
+            "title": "Incoming tide active",
+            "message": "Rising water pushes bait toward shore. Prime time for surf and pier fishing.",
+        })
+
+    return alerts[:3]
+
+
+def pick_best_fishing_day(
+    today_verdict: str,
+    outlook: List[Dict[str, Any]],
+) -> Dict[str, str]:
+    """Analyze today and 3-day outlook to recommend the best day to fish.
+
+    Returns a dict with 'best_day', 'reason', and 'recommendation'.
+    """
+    # Score mapping for verdicts
+    verdict_scores = {
+        "Excellent": 5,
+        "Good": 4,
+        "Fair": 3,
+        "Challenging": 2,
+        "Poor": 1,
+        "Unknown": 2,
+    }
+
+    best_day = "Today"
+    best_score = verdict_scores.get(today_verdict, 2)
+    best_verdict = today_verdict
+
+    for day in outlook:
+        v = day.get("verdict", "Unknown")
+        s = verdict_scores.get(v, 2)
+        n_species = len(day.get("top_species", []))
+        # Bonus for having more active species
+        s += min(n_species * 0.2, 1.0)
+        if s > best_score:
+            best_score = s
+            best_day = day["day"]
+            best_verdict = v
+
+    if best_day == "Today":
+        if best_score >= 4:
+            recommendation = "Today looks great — get out there!"
+        elif best_score >= 3:
+            recommendation = "Decent day today, but conditions are fishable."
+        else:
+            recommendation = "Tough day today. Check back tomorrow."
+    else:
+        if best_score >= 4:
+            recommendation = f"{best_day} has the best forecast — plan your trip then."
+        else:
+            recommendation = f"{best_day} looks slightly better, but all days are similar."
+
+    return {
+        "best_day": best_day,
+        "verdict": best_verdict,
+        "recommendation": recommendation,
+    }
+
+
+def build_gear_checklist(
+    species: List[Dict[str, Any]],
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
+    water_temp: float = 65.0,
+    weather: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, str]]:
+    """Generate a conditions-aware packing list for a fishing trip."""
+    items: List[Dict[str, str]] = []
+    categories_seen: set = set()
+
+    def _add(category: str, item: str, reason: str = "") -> None:
+        key = f"{category}:{item}"
+        if key not in categories_seen:
+            categories_seen.add(key)
+            items.append({"category": category, "item": item, "reason": reason})
+
+    # ---- Always bring ----
+    _add("Essentials", "Rod & reel (medium-heavy for surf)", "")
+    _add("Essentials", "Tackle box with hooks, sinkers, swivels", "")
+    _add("Essentials", "Bait cooler with ice", "")
+    _add("Essentials", "Pliers & line cutter", "")
+    _add("Essentials", "Fishing license", "Required in most states")
+
+    # ---- Conditions-based ----
+    max_wind = (wind_range[1] if wind_range else 10)
+    max_wave = (wave_range[1] if wave_range else 2)
+
+    if max_wind >= 15:
+        _add("Conditions", "Heavy sinkers (4-6 oz)", "Strong wind requires extra weight")
+        _add("Conditions", "Sand spike or rod holder", "Keep rods secure in high wind")
+
+    if max_wave >= 4:
+        _add("Conditions", "Waders or waterproof boots", "Heavy surf will splash")
+        _add("Conditions", "Extra sinkers (pyramid style)", "Holds bottom in rough surf")
+
+    if hour < 6 or hour >= 19:
+        _add("Conditions", "Headlamp (red light mode)", "Preserve night vision")
+        _add("Conditions", "Glow sticks or light-up bobbers", "Track your line in the dark")
+
+    if 10 <= hour <= 16:
+        _add("Conditions", "Sunscreen SPF 50+", "Peak UV hours")
+        _add("Conditions", "Polarized sunglasses", "Reduce glare, spot fish")
+        _add("Conditions", "Hat with brim or neck flap", "Sun protection")
+
+    # ---- Weather-based ----
+    air_temp = None
+    if weather:
+        air_temp = weather.get("air_temp_f")
+    if air_temp is not None:
+        if float(air_temp) < 50:
+            _add("Weather", "Layered clothing / thermal base", f"Air temp {air_temp}°F")
+            _add("Weather", "Hand warmers", "Keep fingers nimble for knots")
+            _add("Weather", "Thermos with hot drink", "Stay warm on the pier")
+        elif float(air_temp) > 85:
+            _add("Weather", "Extra water (1 gal minimum)", f"Air temp {air_temp}°F — stay hydrated")
+            _add("Weather", "Cooling towel", "Beat the heat")
+
+    # ---- Species-based ----
+    has_shark = any("shark" in sp.get("name", "").lower() for sp in species[:10])
+    has_king = any("king" in sp.get("name", "").lower() for sp in species[:10])
+    has_flounder = any("flounder" in sp.get("name", "").lower() for sp in species[:10])
+
+    if has_shark:
+        _add("Species", "Wire leader (single-strand)", "Shark teeth cut mono/fluoro")
+        _add("Species", "Heavy-duty dehooking tool", "Safe shark handling")
+
+    if has_king:
+        _add("Species", "Wire or heavy fluoro leader (60+ lb)", "Kings have sharp teeth")
+        _add("Species", "Stinger rig components", "Standard for kingfish")
+
+    if has_flounder:
+        _add("Species", "Bucktail jig (white/chartreuse)", "Top flounder lure")
+
+    # ---- Convenience ----
+    _add("Convenience", "5-gallon bucket", "Bait storage, seat, catch bucket")
+    _add("Convenience", "Towel / rags", "Clean hands between baiting")
+    _add("Convenience", "Trash bag", "Leave no trace")
+
+    return items
+
+
+def build_conditions_explainer(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    wind_dir: Optional[str] = None,
+    water_temp: float = 65.0,
+    pressure: Optional[Dict[str, Any]] = None,
+    tide_state: str = "",
+    coast: str = "east",
+) -> List[Dict[str, str]]:
+    """Translate raw marine conditions into fishing-relevant plain English."""
+    bullets: List[Dict[str, str]] = []
+
+    # Wind analysis
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind <= 8:
+            bullets.append({
+                "label": "Wind",
+                "text": "Light winds make for calm conditions — great for float rigs and sight casting.",
+                "impact": "positive",
+            })
+        elif avg_wind <= 15:
+            bullets.append({
+                "label": "Wind",
+                "text": "Moderate breeze stirs up bait and adds turbidity. Good for surf fishing — fish move closer to feed.",
+                "impact": "positive",
+            })
+        elif avg_wind <= 22:
+            bullets.append({
+                "label": "Wind",
+                "text": "Strong winds make casting difficult and waves choppy. Use heavier sinkers and shorter leaders.",
+                "impact": "neutral",
+            })
+        else:
+            bullets.append({
+                "label": "Wind",
+                "text": "Near-gale conditions — tough fishing day. If you go, fish sheltered areas with heavy tackle.",
+                "impact": "negative",
+            })
+
+    # Wind direction meaning
+    if wind_dir:
+        onshore_dirs = {
+            "east": {"E", "ENE", "ESE", "SE", "NE"},
+            "west": {"W", "WNW", "WSW", "SW", "NW"},
+        }
+        dirs = onshore_dirs.get(coast, onshore_dirs["east"])
+        if wind_dir in dirs:
+            bullets.append({
+                "label": "Direction",
+                "text": f"{wind_dir} wind pushes bait and murky water shoreward — predators follow to feed along the beach.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Direction",
+                "text": f"{wind_dir} (offshore) wind flattens the surf and clears the water. Better for sight fishing, tougher for surf bait fishing.",
+                "impact": "neutral",
+            })
+
+    # Wave analysis
+    if wave_range:
+        avg_wave = (wave_range[0] + wave_range[1]) / 2
+        if avg_wave <= 2:
+            bullets.append({
+                "label": "Waves",
+                "text": "Flat to slight seas — ideal for pier fishing and wading. Fish may be less active in clear, calm water.",
+                "impact": "neutral",
+            })
+        elif avg_wave <= 4:
+            bullets.append({
+                "label": "Waves",
+                "text": "Moderate surf churns up sand fleas, crabs, and baitfish — prime conditions for the surf zone.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Waves",
+                "text": "Heavy surf concentrates bait in troughs between sandbars. Big fish feed hard but conditions are challenging.",
+                "impact": "neutral",
+            })
+
+    # Pressure
+    if pressure:
+        trend = pressure.get("trend", "").lower()
+        if "falling" in trend:
+            bullets.append({
+                "label": "Pressure",
+                "text": "Falling pressure triggers a feeding frenzy — fish sense the change and eat aggressively before a front.",
+                "impact": "positive",
+            })
+        elif "rising" in trend:
+            bullets.append({
+                "label": "Pressure",
+                "text": "Rising pressure often means post-front clear skies. Fishing may be slow at first but improves as it stabilizes.",
+                "impact": "neutral",
+            })
+
+    # Tide state
+    if tide_state:
+        if tide_state == "Rising":
+            bullets.append({
+                "label": "Tide",
+                "text": "Incoming tide floods channels and flats with bait — one of the best times to fish from shore.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Tide",
+                "text": "Outgoing tide funnels bait through inlets and cuts — position yourself where current concentrates.",
+                "impact": "positive",
+            })
+
+    return bullets[:5]
+
+
+def build_safety_checklist(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
+    alerts: Optional[List[Dict[str, str]]] = None,
+) -> List[Dict[str, str]]:
+    """Build a conditions-aware safety checklist for surf/pier fishing."""
+    items: List[Dict[str, str]] = []
+
+    # Always show basics
+    items.append({
+        "text": "Tell someone your fishing plan and expected return time",
+        "icon": "info",
+    })
+
+    # Wave-based warnings
+    if wave_range:
+        max_wave = wave_range[1] if isinstance(wave_range, tuple) else 3
+        if max_wave >= 6:
+            items.append({
+                "text": "High surf advisory — stay off jetties and rock structures",
+                "icon": "warning",
+            })
+            items.append({
+                "text": "Rip current risk is elevated — never wade beyond knee depth",
+                "icon": "warning",
+            })
+        elif max_wave >= 4:
+            items.append({
+                "text": "Moderate surf — watch for sneaker waves and keep gear secured",
+                "icon": "caution",
+            })
+
+    # Wind-based
+    if wind_range:
+        max_wind = wind_range[1] if isinstance(wind_range, tuple) else 10
+        if max_wind >= 25:
+            items.append({
+                "text": "Gale-force winds — consider postponing your trip",
+                "icon": "warning",
+            })
+        elif max_wind >= 15:
+            items.append({
+                "text": "Strong winds — secure coolers/gear and watch for blown tackle",
+                "icon": "caution",
+            })
+
+    # Time-based
+    if hour < 6 or hour >= 20:
+        items.append({
+            "text": "Fishing in the dark — bring a headlamp and reflective gear",
+            "icon": "info",
+        })
+    if 10 <= hour <= 16:
+        items.append({
+            "text": "Peak sun hours — wear sunscreen (SPF 50+), hat, and polarized glasses",
+            "icon": "info",
+        })
+
+    # Weather alerts
+    if alerts:
+        for alert in alerts:
+            severity = alert.get("severity", "").lower()
+            if "thunderstorm" in alert.get("event", "").lower():
+                items.append({
+                    "text": "Thunderstorm warning active — leave pier/water immediately if lightning is within 10 miles",
+                    "icon": "warning",
+                })
+                break
+
+    # General
+    items.append({
+        "text": "Bring plenty of water — dehydration reduces reaction time",
+        "icon": "info",
+    })
+    items.append({
+        "text": "Know the emergency number for your pier/beach (usually posted at entrance)",
+        "icon": "info",
+    })
+
+    return items
+
+
+def generate_forecast(
+    location: Optional[Dict[str, Any]] = None,
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
     Fetches marine conditions and water temperature, classifies fishability,
     then dynamically determines which species are biting based on the current
     month and water temperature.  Rig recommendations are matched to active
     species.
+
+    If ``profile`` is provided (from user's fishing profile), species are
+    filtered to match the user's fishing style and target preferences.
     """
     tz_name = (location or {}).get("timezone", "America/New_York")
     tz = ZoneInfo(tz_name)
@@ -4655,21 +6997,62 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     if wind_dir and wind_str != "Unknown":
         wind_str = f"{wind_dir} {wind_str}"
 
+    # Water temperature trend (compare to monthly avg and next month)
+    temp_trend = ""
+    temp_trend_detail = ""
+    if location:
+        monthly = get_monthly_water_temps(location)
+        avg_this = monthly.get(month, water_temp)
+        prev_month = month - 1 if month > 1 else 12
+        next_month = month + 1 if month < 12 else 1
+        avg_prev = monthly.get(prev_month, avg_this)
+        avg_next = monthly.get(next_month, avg_this)
+        seasonal_direction = avg_next - avg_prev  # positive = warming season
+        diff = water_temp - avg_this
+        if seasonal_direction > 1.5:
+            temp_trend = "warming"
+            temp_trend_detail = f"Warming trend — avg {avg_this:.0f}°F this month"
+        elif seasonal_direction < -1.5:
+            temp_trend = "cooling"
+            temp_trend_detail = f"Cooling trend — avg {avg_this:.0f}°F this month"
+        else:
+            temp_trend = "stable"
+            temp_trend_detail = f"Stable — avg {avg_this:.0f}°F this month"
+
+        if abs(diff) >= 2:
+            if diff > 0:
+                temp_trend_detail += f", currently {diff:+.0f}°F above avg"
+            else:
+                temp_trend_detail += f", currently {diff:.0f}°F below avg"
+
     conditions = {
         "wind": wind_str,
+        "wind_dir": wind_dir or "",
         "waves": format_range(wave_range, "ft"),
         "verdict": verdict,
         "water_temp_f": round(water_temp, 1),
         "water_temp_live": temp_is_live,
+        "water_temp_trend": temp_trend,
+        "water_temp_trend_detail": temp_trend_detail,
         "sunrise_sunset": sun_str,
     }
 
+    # Determine coast for wind direction scoring and species filtering
+    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
+    coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
+
+    loc_state = (location or {}).get("state", "")
+    profile = profile or {}
     species = build_species_ranking(
         month, water_temp,
         wind_dir=wind_dir,
         wind_range=wind_range,
         wave_range=wave_range,
         hour=now.hour,
+        coast=coast,
+        state=loc_state,
+        fishing_types=profile.get("fishing_types"),
+        targets=profile.get("targets"),
     )
     rig_recommendations = build_rig_recommendations(species)
 
@@ -4687,13 +7070,503 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         "bait_rankings": build_bait_ranking(species, month),
     }
 
+    # Weather alerts
+    try:
+        alerts = fetch_weather_alerts(loc_lat, loc_lng)
+        if alerts:
+            forecast["alerts"] = alerts
+    except Exception:
+        pass
+
+    # Barometric pressure
+    try:
+        pressure = fetch_barometric_pressure(location)
+        if pressure:
+            forecast["pressure"] = pressure
+    except Exception:
+        pass
+
+    # Current weather (air temp, humidity)
+    try:
+        weather = fetch_current_weather(loc_lat, loc_lng)
+        if weather:
+            forecast["weather"] = weather
+    except Exception:
+        pass
+
     # Tide predictions
     coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     tides = fetch_tide_predictions(coops_id, tz_name)
     if tides:
         forecast["tides"] = tides
+        chart_json = build_tide_chart_svg(tides)
+        if chart_json:
+            forecast["tide_chart"] = chart_json
+
+        # Determine current tide state
+        current_hour = now.hour + now.minute / 60
+        tide_state = ""
+        for i in range(len(tides) - 1):
+            t_now = tides[i].get("hour", 0)
+            t_next = tides[i + 1].get("hour", 24)
+            if t_now <= current_hour < t_next:
+                if tides[i + 1]["type"] == "High":
+                    tide_state = "Rising"
+                else:
+                    tide_state = "Falling"
+                break
+        if not tide_state and tides:
+            # Before first tide or after last
+            if current_hour < tides[0].get("hour", 12):
+                tide_state = "Falling" if tides[0]["type"] == "Low" else "Rising"
+            else:
+                tide_state = "Falling" if tides[-1]["type"] == "High" else "Rising"
+        if tide_state:
+            forecast["tide_state"] = tide_state
+
+    # Multi-day tide table
+    try:
+        multi_tides = fetch_multi_day_tides(coops_id, tz_name, days=3)
+        if multi_tides:
+            forecast["multi_day_tides"] = multi_tides
+    except Exception:
+        pass
+
+    # Solunar fishing times
+    try:
+        solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)
+        forecast["solunar"] = solunar
+    except Exception:
+        pass
+
+    # Multi-day outlook (3 days)
+    try:
+        outlook = build_multiday_outlook(now, location)
+        if outlook:
+            forecast["outlook"] = outlook
+    except Exception:
+        pass
+
+    # Best day to fish (trip planner)
+    if forecast.get("outlook"):
+        forecast["best_day"] = pick_best_fishing_day(
+            forecast["conditions"]["verdict"],
+            forecast["outlook"],
+        )
+
+    # Species availability calendar
+    forecast["calendar"] = build_species_calendar(species, location)
+
+    # Natural bait availability (bait DB only has "east"/"west" entries)
+    bait_coast = "west" if coast == "west" else "east"
+    forecast["natural_bait"] = build_natural_bait_chart(month, bait_coast)
+
+    # Spot tips based on current conditions
+    forecast["spot_tips"] = build_spot_tips(
+        wind_range=wind_range, wave_range=wave_range,
+        wind_dir=wind_dir or "", hour=now.hour, month=month,
+        coast=coast, tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Conditions explainer
+    forecast["conditions_explainer"] = build_conditions_explainer(
+        wind_range=wind_range, wave_range=wave_range,
+        wind_dir=wind_dir, water_temp=water_temp,
+        pressure=forecast.get("pressure"), tide_state=forecast.get("tide_state", ""),
+        coast=coast,
+    )
+
+    # Bite alerts
+    forecast["bite_alerts"] = build_bite_alerts(
+        verdict=forecast["conditions"]["verdict"],
+        species=species,
+        pressure=forecast.get("pressure"),
+        tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Gear checklist
+    forecast["gear_checklist"] = build_gear_checklist(
+        species=species,
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, water_temp=water_temp,
+        weather=forecast.get("weather"),
+    )
+
+    # Safety checklist
+    forecast["safety"] = build_safety_checklist(
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, alerts=forecast.get("alerts"),
+    )
+
+    # Best fishing times (synthesize solunar + tides + sunrise/sunset)
+    forecast["best_times"] = build_best_times(forecast)
+
+    # 24-hour activity timeline
+    forecast["activity_timeline"] = build_activity_timeline(forecast)
+
+    # Add technique tips to each species
+    t_state = forecast.get("tide_state", "")
+    wind_strength = ""
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind > 20:
+            wind_strength = "strong"
+        elif avg_wind > 10:
+            wind_strength = "moderate"
+        else:
+            wind_strength = "light"
+    for sp_entry in forecast["species"]:
+        sp_entry["tip"] = _get_technique_tip(
+            sp_entry["name"], hour=now.hour,
+            tide_state=t_state, wind_strength=wind_strength,
+        )
 
     return forecast
+
+
+def personalize_forecast(
+    forecast: Dict[str, Any],
+    profile: Dict[str, Any],
+    location: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Apply profile-based personalization to a cached forecast.
+
+    Re-runs species ranking with profile filters and rebuilds the
+    species-dependent sections (rigs, baits, bite alerts, gear checklist,
+    calendar).  Conditions data, tides, weather, etc. remain unchanged.
+    """
+    fishing_types = profile.get("fishing_types")
+    targets = profile.get("targets")
+    if not fishing_types and not targets:
+        return forecast
+
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    month = now.month
+
+    # Extract conditions from cached forecast for re-scoring
+    conds = forecast.get("conditions", {})
+    water_temp = conds.get("water_temp_f", 70)
+    wind_dir = conds.get("wind_dir") or None
+
+    # Parse wind/wave ranges from formatted strings
+    def _parse_range(s: str) -> Optional[Tuple[float, float]]:
+        if not s or s == "Unknown":
+            return None
+        # Remove direction prefix and unit suffix
+        parts = s.split()
+        nums = []
+        for p in parts:
+            # Handle "5-10" format
+            if "-" in p:
+                try:
+                    lo, hi = p.split("-")
+                    return (float(lo), float(hi))
+                except ValueError:
+                    pass
+            try:
+                nums.append(float(p))
+            except ValueError:
+                pass
+        if len(nums) == 1:
+            return (nums[0], nums[0])
+        if len(nums) >= 2:
+            return (nums[0], nums[1])
+        return None
+
+    wind_str = conds.get("wind", "")
+    wave_str = conds.get("waves", "")
+    wind_range = _parse_range(wind_str)
+    wave_range = _parse_range(wave_str)
+
+    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
+    coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
+    loc_state = (location or {}).get("state", "")
+
+    species = build_species_ranking(
+        month, water_temp,
+        wind_dir=wind_dir,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        hour=now.hour,
+        coast=coast,
+        state=loc_state,
+        fishing_types=fishing_types,
+        targets=targets,
+    )
+
+    # Add technique tips
+    t_state = forecast.get("tide_state", "")
+    wind_strength = ""
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind > 20:
+            wind_strength = "strong"
+        elif avg_wind > 10:
+            wind_strength = "moderate"
+        else:
+            wind_strength = "light"
+    for sp_entry in species:
+        sp_entry["tip"] = _get_technique_tip(
+            sp_entry["name"], hour=now.hour,
+            tide_state=t_state, wind_strength=wind_strength,
+        )
+
+    # Rebuild species-dependent sections
+    forecast = dict(forecast)  # shallow copy to avoid mutating cache
+    forecast["species"] = species
+    forecast["rig_recommendations"] = build_rig_recommendations(species)
+    forecast["bait_rankings"] = build_bait_ranking(species, month)
+    forecast["calendar"] = build_species_calendar(species, location)
+    forecast["bite_alerts"] = build_bite_alerts(
+        verdict=conds.get("verdict", "Fair"),
+        species=species,
+        pressure=forecast.get("pressure"),
+        tide_state=t_state,
+    )
+    forecast["gear_checklist"] = build_gear_checklist(
+        species=species,
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, water_temp=water_temp,
+        weather=forecast.get("weather"),
+    )
+
+    return forecast
+
+
+def _parse_time_str(s: str) -> float:
+    """Parse a time string like '6:32 AM' to decimal hour."""
+    try:
+        s = s.strip().upper()
+        parts = s.replace(":", " ").replace("AM", "").replace("PM", "").split()
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+        is_pm = "PM" in s
+        if h == 12:
+            h = 0 if not is_pm else 12
+        elif is_pm:
+            h += 12
+        return h + m / 60.0
+    except Exception:
+        return 12.0
+
+
+def build_best_times(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Build a list of recommended fishing windows.
+
+    Combines solunar major/minor periods with tide change windows and
+    low-light periods (dawn/dusk) to suggest the best 2-3 windows.
+    Each entry: {"window": "5:30 - 7:30 AM", "reason": "...", "quality": "Prime"}
+    """
+    windows: List[Dict[str, Any]] = []
+
+    # Sunrise/sunset windows (dawn and dusk are prime fishing)
+    sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
+    if "/" in sun_str:
+        parts = sun_str.split("/")
+        sunrise_str = parts[0].strip()
+        sunset_str = parts[1].strip()
+        sr_h = _parse_time_str(sunrise_str)
+        ss_h = _parse_time_str(sunset_str)
+
+        # Dawn window: 30 min before to 60 min after sunrise
+        dawn_start = sr_h - 0.5
+        dawn_end = sr_h + 1.0
+        windows.append({
+            "start_h": dawn_start,
+            "end_h": dawn_end,
+            "label": f"{sunrise_str} window",
+            "reason": "Dawn — fish feed actively in low light",
+            "score": 3,
+        })
+
+        # Dusk window: 60 min before to 30 min after sunset
+        dusk_start = ss_h - 1.0
+        dusk_end = ss_h + 0.5
+        windows.append({
+            "start_h": dusk_start,
+            "end_h": dusk_end,
+            "label": f"{sunset_str} window",
+            "reason": "Dusk — prime low-light feeding period",
+            "score": 3,
+        })
+
+    # Solunar major periods
+    solunar = forecast.get("solunar", {})
+    for mp in solunar.get("major_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        windows.append({
+            "start_h": s_h,
+            "end_h": e_h,
+            "label": f"{mp['start']} – {mp['end']}",
+            "reason": "Solunar major — peak lunar activity",
+            "score": 4,
+        })
+
+    for mp in solunar.get("minor_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        windows.append({
+            "start_h": s_h,
+            "end_h": e_h,
+            "label": f"{mp['start']} – {mp['end']}",
+            "reason": "Solunar minor — elevated activity",
+            "score": 2,
+        })
+
+    # Tide change windows (best fishing near high tides)
+    tides = forecast.get("tides", [])
+    for t in tides:
+        if t.get("type") == "High":
+            t_h = t.get("hour", _parse_time_str(t["time"]))
+            windows.append({
+                "start_h": t_h - 1.0,
+                "end_h": t_h + 1.0,
+                "label": f"{t['time']}",
+                "reason": "Incoming high tide pushes bait into range",
+                "score": 2,
+            })
+
+    if not windows:
+        return []
+
+    # Score each window: boost when multiple factors overlap
+    # Check for overlaps between windows
+    scored_windows: List[Dict[str, Any]] = []
+    for w in windows:
+        overlap_bonus = 0
+        for other in windows:
+            if other is w:
+                continue
+            # Check if windows overlap
+            if w["start_h"] < other["end_h"] and w["end_h"] > other["start_h"]:
+                overlap_bonus += other["score"]
+        w["total_score"] = w["score"] + overlap_bonus
+        scored_windows.append(w)
+
+    # Sort by total score and pick the best 3 non-overlapping windows
+    scored_windows.sort(key=lambda x: x["total_score"], reverse=True)
+    selected: List[Dict[str, str]] = []
+    used_hours: List[Tuple[float, float]] = []
+    for w in scored_windows:
+        # Skip if too close to an already-selected window
+        skip = False
+        for uh_s, uh_e in used_hours:
+            if w["start_h"] < uh_e + 0.5 and w["end_h"] > uh_s - 0.5:
+                skip = True
+                break
+        if skip:
+            continue
+
+        total = w["total_score"]
+        if total >= 6:
+            quality = "Prime"
+        elif total >= 4:
+            quality = "Good"
+        else:
+            quality = "Fair"
+
+        selected.append({
+            "window": w["label"],
+            "reason": w["reason"],
+            "quality": quality,
+        })
+        used_hours.append((w["start_h"], w["end_h"]))
+        if len(selected) >= 3:
+            break
+
+    return selected
+
+
+def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Build a 24-hour fish activity timeline (one value per hour).
+
+    Each entry: {"hour": 0-23, "label": "12 AM", "level": 0-100, "tag": "low/med/high/prime"}
+    Combines solunar periods, tide changes, and dawn/dusk to estimate activity.
+    """
+    # Start with a flat baseline
+    activity = [15.0] * 24  # baseline activity
+
+    # Dawn/dusk boost
+    sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
+    if "/" in sun_str:
+        parts = sun_str.split("/")
+        sr_h = _parse_time_str(parts[0].strip())
+        ss_h = _parse_time_str(parts[1].strip())
+
+        # Dawn: 1h before to 1.5h after sunrise
+        for h in range(24):
+            dist = abs(h - sr_h)
+            if dist < 1.5:
+                activity[h] += 30 * max(0, 1 - dist / 1.5)
+            dist = abs(h - ss_h)
+            if dist < 1.5:
+                activity[h] += 30 * max(0, 1 - dist / 1.5)
+
+    # Solunar periods
+    solunar = forecast.get("solunar", {})
+    for mp in solunar.get("major_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        for h in range(24):
+            if s_h <= h <= e_h:
+                activity[h] += 35
+            elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
+                activity[h] += 15
+
+    for mp in solunar.get("minor_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        for h in range(24):
+            if s_h <= h <= e_h:
+                activity[h] += 20
+            elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
+                activity[h] += 8
+
+    # Tide change windows
+    tides = forecast.get("tides", [])
+    for t in tides:
+        t_h = t.get("hour", _parse_time_str(t.get("time", "12:00 PM")))
+        for h in range(24):
+            dist = abs(h - t_h)
+            if dist < 2:
+                boost = 20 if t.get("type") == "High" else 12
+                activity[h] += boost * max(0, 1 - dist / 2)
+
+    # Night penalty (subtle — fish are less active 11 PM to 4 AM)
+    for h in [23, 0, 1, 2, 3, 4]:
+        activity[h] *= 0.7
+
+    # Normalize to 0-100
+    max_val = max(activity) if max(activity) > 0 else 1
+    labels_12h = [
+        "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM",
+        "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
+        "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
+        "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
+    ]
+
+    timeline = []
+    for h in range(24):
+        level = min(100, int(activity[h] / max_val * 100))
+        if level >= 75:
+            tag = "prime"
+        elif level >= 50:
+            tag = "high"
+        elif level >= 30:
+            tag = "med"
+        else:
+            tag = "low"
+        timeline.append({
+            "hour": h,
+            "label": labels_12h[h],
+            "level": level,
+            "tag": tag,
+        })
+
+    return timeline
 
 
 def _cache_path(location_id: str = "") -> str:
@@ -4819,7 +7692,11 @@ def setup_search() -> str:
 
 @app.route("/setup/select/<location_id>", methods=["POST"])
 def setup_select(location_id: str) -> Any:
-    """Save the selected location to the session and redirect to forecast."""
+    """Save the selected location to the session and redirect to forecast.
+
+    If the ``first_visit`` query parameter is set, redirect to the profile
+    setup page instead so the user can configure their fishing preferences.
+    """
     loc = get_location(location_id)
     if loc is None:
         return redirect(url_for("setup"))
@@ -4828,7 +7705,31 @@ def setup_select(location_id: str) -> Any:
     return redirect(url_for("index"))
 
 
+@app.route("/profile")
+def profile() -> str:
+    """Show the fishing profile setup page."""
+    return render_template("profile.html")
+
+
 # -- Main routes ------------------------------------------------------------
+
+def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
+    """Extract fishing profile from query parameters.
+
+    Expected params: fishing_types (comma-separated), targets (comma-separated).
+    Returns None if no profile params are present.
+    """
+    ft = request.args.get("fishing_types", "").strip()
+    tg = request.args.get("targets", "").strip()
+    if not ft and not tg:
+        return None
+    profile: Dict[str, Any] = {}
+    if ft:
+        profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()]
+    if tg:
+        profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()]
+    return profile
+
 
 @app.route("/")
 def index() -> str:
@@ -4836,6 +7737,7 @@ def index() -> str:
 
     If no location is set, redirect to the setup page.
     If the cached forecast is stale, auto-refresh it.
+    If profile query params are present, personalize the forecast.
     """
     location = _get_session_location()
     if location is None:
@@ -4866,10 +7768,16 @@ def index() -> str:
             # Fall through to serve stale cache
             cached_flag = "true"
 
+    # Apply profile-based personalization (re-rank species for this user)
+    profile = _extract_profile_from_request()
+    if profile:
+        forecast = personalize_forecast(forecast, profile, location)
+
     # Attach human-readable age for the template
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
 
-    return render_template("index.html", forecast=forecast, cached=cached_flag)
+    return render_template("index.html", forecast=forecast, cached=cached_flag,
+                           share_id=loc_id)
 
 
 @app.route("/api/forecast")
@@ -4896,6 +7804,106 @@ def api_refresh() -> Any:
     except Exception as exc:
         print(f"Error refreshing forecast: {exc}")
         return redirect(url_for("index", cached="true"))
+
+
+# -- Shareable forecast route -----------------------------------------------
+
+@app.route("/f/<location_id>")
+def shared_forecast(location_id: str) -> str:
+    """View a forecast for a specific location via shareable link.
+
+    This route doesn't require a session — anyone with the link can view the
+    forecast.  It also sets the viewer's session to this location so they can
+    continue browsing.
+    """
+    location = get_location(location_id)
+    if location is None:
+        return render_template(
+            "error.html",
+            message="Location not found. It may have been removed.",
+        ), 404
+
+    # Set the viewer's session to this location
+    session["location_id"] = location_id
+
+    loc_id = location["id"]
+    forecast = load_cached_forecast(loc_id)
+
+    needs_refresh = forecast is None
+    if forecast and not needs_refresh:
+        age = _forecast_age_minutes(forecast)
+        if age is not None and age > CACHE_MAX_AGE_HOURS * 60:
+            needs_refresh = True
+
+    if needs_refresh:
+        try:
+            forecast = generate_forecast(location)
+            save_forecast(forecast, loc_id)
+        except Exception:
+            if forecast is None:
+                return render_template(
+                    "error.html",
+                    message="Could not load forecast for this location.",
+                ), 500
+
+    # Apply profile-based personalization
+    profile = _extract_profile_from_request()
+    if profile:
+        forecast = personalize_forecast(forecast, profile, location)
+
+    forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
+
+    return render_template("index.html", forecast=forecast, cached=None,
+                           share_id=location_id)
+
+
+def build_share_text(forecast: Dict[str, Any]) -> str:
+    """Build a plain-text summary of the forecast for sharing."""
+    lines = []
+    loc = forecast.get("location_name", "")
+    if loc:
+        lines.append(f"Fishing Forecast — {loc}")
+    else:
+        lines.append("Fishing Forecast")
+
+    c = forecast.get("conditions", {})
+    verdict = c.get("verdict", "")
+    if verdict:
+        lines.append(f"Verdict: {verdict}")
+
+    wind = c.get("wind", "")
+    waves = c.get("waves", "")
+    temp = c.get("water_temp_f", "")
+    if wind:
+        lines.append(f"Wind: {wind}")
+    if waves:
+        lines.append(f"Waves: {waves}")
+    if temp:
+        lines.append(f"Water: {temp}°F")
+
+    species = forecast.get("species", [])
+    if species:
+        top = species[:5]
+        lines.append("")
+        lines.append("Top Species:")
+        for sp in top:
+            activity = sp.get("activity", "")
+            tag = f" [{activity}]" if activity else ""
+            lines.append(f"  • {sp['name']}{tag}")
+
+    return "\n".join(lines)
+
+
+@app.route("/api/share-text")
+def api_share_text() -> Any:
+    """Return a plain-text forecast summary for copy/paste sharing."""
+    location = _get_session_location()
+    loc_id = location["id"] if location else ""
+    forecast = load_cached_forecast(loc_id)
+    if not forecast:
+        return jsonify({"error": "No forecast available"}), 503
+    text = build_share_text(forecast)
+    return jsonify({"text": text, "location_id": loc_id})
 
 
 if __name__ == "__main__":
