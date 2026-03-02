@@ -1061,12 +1061,11 @@
     }
 
     function applyBaitFilters() {
-        // Bait method filtering stays client-side (dimming bait items
-        // based on live/cut/lure preferences)
+        // Sort bait items by relevance to user's bait method preferences
+        // instead of hiding/dimming non-matching items
         var profile = getProfile();
         if (!profile || !profile.completed) return;
 
-        var baitItems = document.querySelectorAll('.bait-item[data-bait-name]');
         var liveKeywords = ['live shrimp', 'live finger', 'live mullet', 'live menhaden', 'live blue runner',
                             'live cigar', 'live crab', 'live baitfish', 'live eel', 'live minnow', 'live pogies'];
         var lureKeywords = ['jig', 'spoon', 'plug', 'lure', 'feather', 'cedar plug', 'trolling',
@@ -1074,25 +1073,49 @@
         var cutKeywords = ['cut ', 'blood', 'squid', 'clam', 'crab piece', 'shrimp piece', 'sand flea',
                            'fiddler', 'fresh shrimp', 'mussel'];
 
-        baitItems.forEach(function(item) {
-            var name = item.getAttribute('data-bait-name') || '';
-            var isLive = liveKeywords.some(function(k) { return name.indexOf(k) >= 0; });
-            var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
-            var isCut = cutKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+        // Score a bait method preference: yes=2, sometimes=1, no=0
+        function methodScore(pref) {
+            if (pref === 'yes') return 2;
+            if (pref === 'sometimes') return 1;
+            return 0;
+        }
 
-            if (isLive && profile.live_bait === 'no' && !isCut && !isLure) {
-                item.classList.add('profile-dimmed');
-                item.setAttribute('data-dim-reason', 'Not in your profile');
-            }
-            if (isLure && profile.lures === 'no' && !isLive && !isCut) {
-                item.classList.add('profile-dimmed');
-                item.setAttribute('data-dim-reason', 'Not in your profile');
-            }
-            if (isCut && profile.cut_bait === 'no' && !isLive && !isLure) {
-                item.classList.add('profile-dimmed');
-                item.setAttribute('data-dim-reason', 'Not in your profile');
-            }
-        });
+        // Sort bait items within the bait list by profile relevance
+        var baitList = document.querySelector('.bait-list');
+        if (baitList) {
+            var baitItems = Array.prototype.slice.call(baitList.querySelectorAll('.bait-item[data-bait-name]'));
+
+            baitItems.forEach(function(item, idx) {
+                var name = item.getAttribute('data-bait-name') || '';
+                var isLive = liveKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+                var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+                var isCut = cutKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+
+                // Calculate relevance: highest method score for this bait's categories
+                var score = 0;
+                if (isLive) score = Math.max(score, methodScore(profile.live_bait));
+                if (isLure) score = Math.max(score, methodScore(profile.lures));
+                if (isCut) score = Math.max(score, methodScore(profile.cut_bait));
+                // If bait doesn't match any keyword category, treat as neutral (score 1)
+                if (!isLive && !isLure && !isCut) score = 1;
+
+                item._profileScore = score;
+                item._origIndex = idx;
+            });
+
+            // Stable sort: by profile score desc, then original index asc
+            baitItems.sort(function(a, b) {
+                if (b._profileScore !== a._profileScore) return b._profileScore - a._profileScore;
+                return a._origIndex - b._origIndex;
+            });
+
+            // Re-append in sorted order and update rank numbers
+            baitItems.forEach(function(item, idx) {
+                baitList.appendChild(item);
+                var numEl = item.querySelector('.bait-num');
+                if (numEl) numEl.textContent = idx + 1;
+            });
+        }
 
         // Highlight matching species bait recommendations
         var speciesCards = document.querySelectorAll('.species-card[data-species-bait]');
@@ -1117,13 +1140,6 @@
                 metaBait.appendChild(badge);
             }
         });
-
-        // Dim natural bait section for lures-only anglers
-        var forageSection = document.querySelector('.forage-section');
-        if (forageSection && profile.live_bait === 'no' && profile.cut_bait === 'no') {
-            forageSection.classList.add('profile-dimmed');
-            forageSection.setAttribute('data-dim-reason', 'You fish with lures');
-        }
     }
 
     // On page load: sync profile to URL for server-side filtering
