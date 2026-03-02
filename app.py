@@ -5861,6 +5861,7 @@ def fetch_tide_predictions(
                 "height_ft": f"{float(height):.1f}",
                 "hour": dt.hour + dt.minute / 60 if isinstance(dt, datetime) else 12.0,
                 "height_num": float(height),
+                "date_str": dt.strftime("%Y%m%d") if isinstance(dt, datetime) else today_str,
             })
         return tides
     except Exception:
@@ -7054,8 +7055,11 @@ def generate_forecast(
     coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     tides = fetch_tide_predictions(coops_id, tz_name)
     if tides:
-        forecast["tides"] = tides
-        chart_json = build_tide_chart_svg(tides)
+        # Filter to today-only for display (chart + timeline)
+        today_date_str = now.strftime("%Y%m%d")
+        today_tides = [t for t in tides if t.get("date_str") == today_date_str]
+        forecast["tides"] = today_tides
+        chart_json = build_tide_chart_svg(today_tides)
         if chart_json:
             forecast["tide_chart"] = chart_json
 
