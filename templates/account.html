@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="theme-color" content="#0e5f78">
+    <script>
+    (function() {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+    </script>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <p class="subtitle">Your Account</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="auth-section" style="max-width:500px">
+            <h2>{{ user.username }}</h2>
+
+            <div class="account-details">
+                <div class="account-row">
+                    <span class="account-label">Saved Location</span>
+                    <span class="account-value">
+                        {% if saved_location %}
+                            {{ saved_location.name }}
+                        {% else %}
+                            <em>None</em>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="account-row">
+                    <span class="account-label">Theme</span>
+                    <span class="account-value">{{ prefs.theme|capitalize }}</span>
+                </div>
+                <div class="account-row">
+                    <span class="account-label">Units</span>
+                    <span class="account-value">{{ prefs.units }}</span>
+                </div>
+                {% if prefs.fishing_profile %}
+                <div class="account-row">
+                    <span class="account-label">Fishing Profile</span>
+                    <span class="account-value">Saved</span>
+                </div>
+                {% endif %}
+                {% if prefs.favorites %}
+                <div class="account-row">
+                    <span class="account-label">Favorite Locations</span>
+                    <span class="account-value">{{ prefs.favorites|length }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="account-actions">
+                <a href="{{ url_for('index') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Back to Forecast</a>
+                <a href="{{ url_for('profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Edit Fishing Profile</a>
+                <form method="post" action="{{ url_for('logout') }}" style="margin-top:0.5rem">
+                    <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)">Log Out</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Surf &amp; Pier Fishing Outlook</p>
+    </footer>
+</body>
+</html>
