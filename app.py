@@ -5867,57 +5867,6 @@ def fetch_tide_predictions(
         return []
 
 
-def fetch_multi_day_tides(
-    station_id: str,
-    tz_name: str = "America/New_York",
-    days: int = 3,
-) -> List[Dict[str, Any]]:
-    """Fetch tide predictions for multiple days, grouped by date.
-
-    Returns a list of dicts:
-        [{"date": "Fri Feb 28", "tides": [{"time": "6:32 AM", "type": "High", "height_ft": "5.2"}, ...]}, ...]
-    """
-    tz = ZoneInfo(tz_name)
-    now = datetime.now(tz)
-    start_str = (now + timedelta(days=1)).strftime("%Y%m%d")
-    end_str = (now + timedelta(days=days + 1)).strftime("%Y%m%d")
-    url = (
-        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
-        f"?begin_date={start_str}&end_date={end_str}"
-        f"&station={station_id}"
-        "&product=predictions&datum=MLLW&units=english"
-        "&time_zone=lst_ldt&format=json&interval=hilo"
-    )
-    try:
-        resp = requests.get(url, timeout=12)
-        resp.raise_for_status()
-        data = resp.json()
-        predictions = data.get("predictions", [])
-    except Exception:
-        return []
-
-    by_date: Dict[str, List[Dict[str, str]]] = {}
-    for p in predictions:
-        raw_time = p.get("t", "")
-        height = p.get("v", "0")
-        tide_type = "High" if p.get("type") == "H" else "Low"
-        try:
-            dt = datetime.strptime(raw_time, "%Y-%m-%d %H:%M")
-            dt = dt.replace(tzinfo=tz)
-            date_key = dt.strftime("%a %b %-d")
-            time_str = dt.strftime("%-I:%M %p")
-        except Exception:
-            continue
-        if date_key not in by_date:
-            by_date[date_key] = []
-        by_date[date_key].append({
-            "time": time_str,
-            "type": tide_type,
-            "height_ft": f"{float(height):.1f}",
-        })
-
-    return [{"date": d, "tides": t} for d, t in by_date.items()]
-
 
 def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
     """Build an SVG path string for a smooth tide curve.
@@ -6272,11 +6221,16 @@ def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
 def build_multiday_outlook(
     now: datetime,
     location: Optional[Dict[str, Any]] = None,
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """Build a 3-day outlook with conditions and fishability.
 
     Each day includes: day_label, wind summary, wave estimate,
     water temp estimate, and a fishability verdict.
+
+    If *fishing_types* or *targets* are provided (from the user's profile),
+    the per-day top-species list is filtered to match.
     """
     loc_lat = (location or {}).get("lat", _LAT)
     loc_lng = (location or {}).get("lng", _LNG)
@@ -6353,6 +6307,8 @@ def build_multiday_outlook(
         species_scores: List[Tuple[str, float]] = []
         for sp in SPECIES_DB:
             if sp.get("coast", "east") != coast:
+                continue
+            if not _species_matches_profile(sp["name"], fishing_types, targets):
                 continue
             s = _score_species(
                 sp, future_month, future_water_temp,
@@ -7124,13 +7080,6 @@ def generate_forecast(
         if tide_state:
             forecast["tide_state"] = tide_state
 
-    # Multi-day tide table
-    try:
-        multi_tides = fetch_multi_day_tides(coops_id, tz_name, days=3)
-        if multi_tides:
-            forecast["multi_day_tides"] = multi_tides
-    except Exception:
-        pass
 
     # Solunar fishing times
     try:
@@ -7331,6 +7280,19 @@ def personalize_forecast(
         hour=now.hour, water_temp=water_temp,
         weather=forecast.get("weather"),
     )
+
+    # Rebuild 3-day outlook with profile-filtered species
+    outlook = build_multiday_outlook(
+        now, location,
+        fishing_types=fishing_types,
+        targets=targets,
+    )
+    if outlook:
+        forecast["outlook"] = outlook
+        forecast["best_day"] = pick_best_fishing_day(
+            forecast.get("conditions", {}).get("verdict", "Fair"),
+            outlook,
+        )
 
     return forecast
 
