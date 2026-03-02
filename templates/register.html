@@ -53,6 +53,22 @@
                 </div>
                 <button type="submit" class="auth-btn">Create Account</button>
             </form>
+            <script>
+            document.querySelector('.auth-form').addEventListener('submit', function(e) {
+                var pw = document.getElementById('password').value;
+                var cf = document.getElementById('confirm').value;
+                if (pw !== cf) {
+                    e.preventDefault();
+                    var err = document.querySelector('.setup-error');
+                    if (!err) {
+                        err = document.createElement('div');
+                        err.className = 'setup-error';
+                        this.parentNode.insertBefore(err, this);
+                    }
+                    err.textContent = 'Passwords do not match.';
+                }
+            });
+            </script>
 
             <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
         </section>
