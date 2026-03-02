@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="theme-color" content="#0e5f78">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <p class="subtitle">Create your account</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="auth-section">
+            <h2>Create Account</h2>
+
+            {% if error %}
+            <div class="setup-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" action="{{ url_for('register') }}" class="auth-form">
+                <div class="auth-field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Choose a username"
+                           value="{{ username|default('', true) }}" class="auth-input" maxlength="30"
+                           autocomplete="username" required autofocus>
+                </div>
+                <div class="auth-field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Choose a password"
+                           class="auth-input" minlength="4" autocomplete="new-password" required>
+                </div>
+                <div class="auth-field">
+                    <label for="confirm">Confirm Password</label>
+                    <input type="password" id="confirm" name="confirm" placeholder="Confirm your password"
+                           class="auth-input" minlength="4" autocomplete="new-password" required>
+                </div>
+                <button type="submit" class="auth-btn">Create Account</button>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Surf &amp; Pier Fishing Outlook</p>
+    </footer>
+</body>
+</html>
