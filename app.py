@@ -4329,6 +4329,200 @@ del _COAST_TAG, _sp
 
 
 # ---------------------------------------------------------------------------
+# Profile-based species classification
+# ---------------------------------------------------------------------------
+# These sets map species to the fishing styles and target categories from
+# the user's profile.  Species not listed in a set are considered accessible
+# to that style (e.g. many species can be caught from both surf and pier).
+# ---------------------------------------------------------------------------
+
+# -- Fishing type (where you fish) --
+# Species that are ONLY realistic from a boat offshore — exclude for
+# surf/pier/inshore-only anglers.
+_OFFSHORE_ONLY_SPECIES: set = {
+    "Mahi-mahi (dolphinfish)", "Wahoo", "Blackfin tuna", "Yellowfin tuna",
+    "Sailfish", "Blue marlin", "White marlin", "Skipjack tuna",
+    "Bigeye tuna", "Albacore tuna", "Frigate mackerel",
+    "Blueline tilefish", "Golden tilefish", "Snowy grouper", "Wreckfish",
+    "Tilefish (blueline juvenile/grey)", "Tilefish (golden juvenile)",
+    "Barrelfish", "Blackbelly rosefish", "Misty grouper",
+    "Yellowedge grouper", "Queen snapper", "Silk snapper",
+    "Greater amberjack", "Almaco jack", "Almaco jack (large adult)",
+    "Lesser amberjack", "Rainbow runner",
+    "Shortfin mako shark", "Thresher shark", "Tiger shark",
+    "Ocean sunfish (mola mola)",
+}
+
+# Species best caught from a pier or jetty (structure-dependent).
+_PIER_SPECIES: set = {
+    "Sheepshead", "Tautog (blackfish)", "Black sea bass", "Spadefish (Atlantic)",
+    "Triggerfish (gray)", "Lookdown", "Mangrove snapper (gray snapper)",
+    "Hogfish", "Planehead filefish", "Northern puffer (blowfish)",
+    "Bermuda chub (sea chub)", "Sergeant major (damselfish)",
+    "Cunner (bergall)", "Slippery dick (wrasse)", "Puddingwife (wrasse)",
+    "Striped blenny", "Feather blenny",
+    "Ocean triggerfish", "Queen triggerfish", "Scrawled filefish",
+    "Orange filefish", "Bandtail puffer", "Checkered puffer",
+    "Striped burrfish (spiny boxfish)", "Scrawled cowfish",
+    "Blue tang (surgeonfish)", "Gray angelfish", "Spotfin butterflyfish",
+    "Doctorfish (tang)", "Squirrelfish", "Porkfish",
+    "Smooth trunkfish", "Honeycomb cowfish",
+    "Menpachi (soldierfish)", "Aholehole (Hawaiian flagtail)",
+    "Dungeness crab (from pier)",
+    "Kelp bass (calico bass)", "Sand bass (barred sand bass)",
+    "California sheephead", "Opaleye", "Halfmoon (Catalina perch)",
+    "Kelp greenling", "Rock greenling",
+}
+
+# Species primarily caught from the surf zone.
+_SURF_SPECIES: set = {
+    "Red drum (puppy drum)", "Pompano", "Whiting (sea mullet, kingfish)",
+    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Northern kingfish",
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Walleye surfperch", "Rubberlip seaperch",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Leopard shark", "Shovelnose guitarfish",
+    "Moi (Pacific threadfin)", "Bonefish (oio)",
+}
+
+# Species best caught inshore (inlet, marsh, flats).
+_INSHORE_SPECIES: set = {
+    "Speckled trout (spotted seatrout)", "Red drum (puppy drum)",
+    "Southern flounder", "Flounder (summer flounder)", "Gulf flounder",
+    "Snook", "Tripletail", "Ladyfish", "Jack crevalle",
+    "Tarpon", "Permit", "Black drum",
+    "Sand seatrout (white trout)", "Silver seatrout",
+    "Gray trout (weakfish)", "Striped bass (rockfish)",
+    "Striped bass (hybrid)",
+    "Hickory shad", "American shad",
+    "Channel catfish", "Blue catfish", "Flathead catfish",
+    "Largemouth bass", "White perch", "Yellow perch",
+    "Redear sunfish (shellcracker)", "Bluegill", "Warmouth",
+    "American eel",
+    "Giant trevally (ulua)", "Bluefin trevally (omilu)", "Papio (juvenile jack)",
+}
+
+# -- Target categories (what you want to catch) --
+_BOTTOM_SPECIES: set = {
+    "Red drum (puppy drum)", "Black drum", "Black drum (large bull)",
+    "Whiting (sea mullet, kingfish)", "Spot", "Atlantic croaker",
+    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Northern kingfish",
+    "Flounder (summer flounder)", "Southern flounder", "Gulf flounder",
+    "Windowpane flounder", "Fringed flounder", "Hogchoker",
+    "California halibut", "Starry flounder",
+    "Pompano", "White croaker (tomcod)",
+    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
+    "Walleye surfperch", "Rubberlip seaperch",
+    "Hardhead catfish (sea catfish)", "Gafftopsail catfish",
+    "Bonefish (oio)", "Moi (Pacific threadfin)",
+}
+
+_PELAGIC_SPECIES: set = {
+    "Bluefish", "Spanish mackerel", "King mackerel (kingfish)",
+    "False albacore (little tunny)", "Atlantic bonito",
+    "Cobia", "Jack crevalle", "Blue runner (hardtail)",
+    "Mahi-mahi (dolphinfish)", "Wahoo", "Blackfin tuna", "Yellowfin tuna",
+    "Skipjack tuna", "Bigeye tuna", "Albacore tuna",
+    "Sailfish", "Blue marlin", "White marlin",
+    "Pacific mackerel (chub mackerel)", "Jack mackerel (Spanish jack)",
+    "Pacific bonito", "Yellowtail (California yellowtail)", "White seabass",
+    "Ladyfish", "Great barracuda", "Tarpon",
+    "Giant trevally (ulua)", "Bluefin trevally (omilu)", "Papio (juvenile jack)",
+    "Striped bass (rockfish)",
+}
+
+_STRUCTURE_SPECIES: set = {
+    "Sheepshead", "Tautog (blackfish)", "Black sea bass",
+    "Triggerfish (gray)", "Spadefish (Atlantic)",
+    "Red snapper", "Vermilion snapper (beeliner)",
+    "Mangrove snapper (gray snapper)", "Lane snapper",
+    "Yellowtail snapper", "Mutton snapper", "Cubera snapper",
+    "Schoolmaster snapper",
+    "Gag grouper", "Red grouper", "Scamp grouper", "Black grouper",
+    "Hogfish", "Red porgy", "Scup (porgy)",
+    "White grunt", "Tomtate grunt", "Blue-striped grunt",
+    "Lingcod", "Vermilion rockfish", "Blue rockfish",
+    "Copper rockfish", "Grass rockfish", "Cabezon",
+    "Kelp bass (calico bass)", "Sand bass (barred sand bass)",
+    "California sheephead", "Opaleye",
+    "Mu (bigeye emperor)", "Menpachi (soldierfish)",
+}
+
+_GAMEFISH_SPECIES: set = {
+    "Blacktip shark", "Spinner shark", "Bull shark", "Sandbar shark",
+    "Lemon shark", "Dusky shark", "Bonnethead shark",
+    "Atlantic sharpnose shark", "Scalloped hammerhead shark",
+    "Nurse shark", "Finetooth shark",
+    "Leopard shark", "Shovelnose guitarfish",
+    "Cobia", "Tarpon", "King mackerel (kingfish)",
+    "Mahi-mahi (dolphinfish)", "Wahoo", "Sailfish", "Blue marlin", "White marlin",
+    "Blackfin tuna", "Yellowfin tuna",
+    "Greater amberjack", "Jack crevalle",
+    "Giant trevally (ulua)", "Kaku (barracuda)",
+    "Snook", "Permit",
+}
+
+
+def _species_matches_profile(
+    sp_name: str,
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
+) -> bool:
+    """Return True if a species matches the user's profile preferences.
+
+    If the user selected specific fishing types, exclude species that
+    can only be caught from methods they don't use.  If the user selected
+    specific target categories, only include species from those categories
+    (unless they chose 'anything').
+    """
+    # --- Fishing type filter ---
+    if fishing_types and "all" not in fishing_types:
+        has_surf = "surf" in fishing_types
+        has_pier = "pier" in fishing_types
+        has_inshore = "inshore" in fishing_types
+        has_offshore = "offshore" in fishing_types
+
+        # If user doesn't fish offshore, exclude offshore-only species
+        if not has_offshore and sp_name in _OFFSHORE_ONLY_SPECIES:
+            return False
+
+        # If species is exclusively surf/pier/inshore AND user doesn't do
+        # that type, consider excluding.  But most species are catchable
+        # from multiple locations, so we only restrict the tight sets.
+        is_surf_only = sp_name in _SURF_SPECIES and sp_name not in _PIER_SPECIES and sp_name not in _INSHORE_SPECIES
+        is_pier_only = sp_name in _PIER_SPECIES and sp_name not in _SURF_SPECIES and sp_name not in _INSHORE_SPECIES
+        is_inshore_only = sp_name in _INSHORE_SPECIES and sp_name not in _SURF_SPECIES and sp_name not in _PIER_SPECIES
+
+        # Only exclude if the species' primary method doesn't overlap with
+        # any of the user's chosen types
+        if is_surf_only and not has_surf:
+            return False
+        if is_pier_only and not has_pier:
+            return False
+        if is_inshore_only and not has_inshore:
+            return False
+
+    # --- Target category filter ---
+    if targets and "anything" not in targets:
+        in_any_target = False
+        if "bottom" in targets and sp_name in _BOTTOM_SPECIES:
+            in_any_target = True
+        if "pelagic" in targets and sp_name in _PELAGIC_SPECIES:
+            in_any_target = True
+        if "structure" in targets and sp_name in _STRUCTURE_SPECIES:
+            in_any_target = True
+        if "gamefish" in targets and sp_name in _GAMEFISH_SPECIES:
+            in_any_target = True
+        if not in_any_target:
+            return False
+
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Seasonal explanation overrides -- species that behave differently during
 # spring/fall transitions get specific text.  Species NOT listed here fall
 # back to explanation_cold (winter) or explanation_warm (summer).
@@ -5434,13 +5628,18 @@ def build_species_ranking(
     hour: int = 12,
     coast: str = "east",
     state: str = "",
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
-    """Dynamically rank species based on conditions.
+    """Dynamically rank species based on conditions and user profile.
 
     Factors in water temperature, month, wind direction, wind speed,
     wave height, and time of day.  Only species scoring above
     SPECIES_SCORE_THRESHOLD are included.  Each species gets an
     activity label: Hot, Active, or Possible.
+
+    If ``fishing_types`` or ``targets`` are provided (from user profile),
+    species are filtered to match how the user actually fishes.
 
     If ``state`` is provided, regulation data (size/bag limits) is
     attached to each species entry.
@@ -5451,6 +5650,9 @@ def build_species_ranking(
     for sp in SPECIES_DB:
         # Skip species from a different coast/region
         if sp.get("coast", "east") != coast:
+            continue
+        # Skip species that don't match user's fishing profile
+        if not _species_matches_profile(sp["name"], fishing_types, targets):
             continue
         s = _score_species(
             sp, month, water_temp,
@@ -6751,13 +6953,19 @@ def build_safety_checklist(
     return items
 
 
-def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def generate_forecast(
+    location: Optional[Dict[str, Any]] = None,
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """Generate the complete fishing forecast.
 
     Fetches marine conditions and water temperature, classifies fishability,
     then dynamically determines which species are biting based on the current
     month and water temperature.  Rig recommendations are matched to active
     species.
+
+    If ``profile`` is provided (from user's fishing profile), species are
+    filtered to match the user's fishing style and target preferences.
     """
     tz_name = (location or {}).get("timezone", "America/New_York")
     tz = ZoneInfo(tz_name)
@@ -6834,6 +7042,7 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
     coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
 
     loc_state = (location or {}).get("state", "")
+    profile = profile or {}
     species = build_species_ranking(
         month, water_temp,
         wind_dir=wind_dir,
@@ -6842,6 +7051,8 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
         hour=now.hour,
         coast=coast,
         state=loc_state,
+        fishing_types=profile.get("fishing_types"),
+        targets=profile.get("targets"),
     )
     rig_recommendations = build_rig_recommendations(species)
 
@@ -7009,6 +7220,117 @@ def generate_forecast(location: Optional[Dict[str, Any]] = None) -> Dict[str, An
             sp_entry["name"], hour=now.hour,
             tide_state=t_state, wind_strength=wind_strength,
         )
+
+    return forecast
+
+
+def personalize_forecast(
+    forecast: Dict[str, Any],
+    profile: Dict[str, Any],
+    location: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Apply profile-based personalization to a cached forecast.
+
+    Re-runs species ranking with profile filters and rebuilds the
+    species-dependent sections (rigs, baits, bite alerts, gear checklist,
+    calendar).  Conditions data, tides, weather, etc. remain unchanged.
+    """
+    fishing_types = profile.get("fishing_types")
+    targets = profile.get("targets")
+    if not fishing_types and not targets:
+        return forecast
+
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    month = now.month
+
+    # Extract conditions from cached forecast for re-scoring
+    conds = forecast.get("conditions", {})
+    water_temp = conds.get("water_temp_f", 70)
+    wind_dir = conds.get("wind_dir") or None
+
+    # Parse wind/wave ranges from formatted strings
+    def _parse_range(s: str) -> Optional[Tuple[float, float]]:
+        if not s or s == "Unknown":
+            return None
+        # Remove direction prefix and unit suffix
+        parts = s.split()
+        nums = []
+        for p in parts:
+            # Handle "5-10" format
+            if "-" in p:
+                try:
+                    lo, hi = p.split("-")
+                    return (float(lo), float(hi))
+                except ValueError:
+                    pass
+            try:
+                nums.append(float(p))
+            except ValueError:
+                pass
+        if len(nums) == 1:
+            return (nums[0], nums[0])
+        if len(nums) >= 2:
+            return (nums[0], nums[1])
+        return None
+
+    wind_str = conds.get("wind", "")
+    wave_str = conds.get("waves", "")
+    wind_range = _parse_range(wind_str)
+    wave_range = _parse_range(wave_str)
+
+    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
+    coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
+    loc_state = (location or {}).get("state", "")
+
+    species = build_species_ranking(
+        month, water_temp,
+        wind_dir=wind_dir,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        hour=now.hour,
+        coast=coast,
+        state=loc_state,
+        fishing_types=fishing_types,
+        targets=targets,
+    )
+
+    # Add technique tips
+    t_state = forecast.get("tide_state", "")
+    wind_strength = ""
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind > 20:
+            wind_strength = "strong"
+        elif avg_wind > 10:
+            wind_strength = "moderate"
+        else:
+            wind_strength = "light"
+    for sp_entry in species:
+        sp_entry["tip"] = _get_technique_tip(
+            sp_entry["name"], hour=now.hour,
+            tide_state=t_state, wind_strength=wind_strength,
+        )
+
+    # Rebuild species-dependent sections
+    forecast = dict(forecast)  # shallow copy to avoid mutating cache
+    forecast["species"] = species
+    forecast["rig_recommendations"] = build_rig_recommendations(species)
+    forecast["bait_rankings"] = build_bait_ranking(species, month)
+    forecast["calendar"] = build_species_calendar(species, location)
+    forecast["bite_alerts"] = build_bite_alerts(
+        verdict=conds.get("verdict", "Fair"),
+        species=species,
+        pressure=forecast.get("pressure"),
+        tide_state=t_state,
+    )
+    forecast["gear_checklist"] = build_gear_checklist(
+        species=species,
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, water_temp=water_temp,
+        weather=forecast.get("weather"),
+    )
 
     return forecast
 
@@ -7391,12 +7713,31 @@ def profile() -> str:
 
 # -- Main routes ------------------------------------------------------------
 
+def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
+    """Extract fishing profile from query parameters.
+
+    Expected params: fishing_types (comma-separated), targets (comma-separated).
+    Returns None if no profile params are present.
+    """
+    ft = request.args.get("fishing_types", "").strip()
+    tg = request.args.get("targets", "").strip()
+    if not ft and not tg:
+        return None
+    profile: Dict[str, Any] = {}
+    if ft:
+        profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()]
+    if tg:
+        profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()]
+    return profile
+
+
 @app.route("/")
 def index() -> str:
     """Render the dashboard with the current forecast.
 
     If no location is set, redirect to the setup page.
     If the cached forecast is stale, auto-refresh it.
+    If profile query params are present, personalize the forecast.
     """
     location = _get_session_location()
     if location is None:
@@ -7426,6 +7767,11 @@ def index() -> str:
                 ), 500
             # Fall through to serve stale cache
             cached_flag = "true"
+
+    # Apply profile-based personalization (re-rank species for this user)
+    profile = _extract_profile_from_request()
+    if profile:
+        forecast = personalize_forecast(forecast, profile, location)
 
     # Attach human-readable age for the template
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
@@ -7499,6 +7845,11 @@ def shared_forecast(location_id: str) -> str:
                     "error.html",
                     message="Could not load forecast for this location.",
                 ), 500
+
+    # Apply profile-based personalization
+    profile = _extract_profile_from_request()
+    if profile:
+        forecast = personalize_forecast(forecast, profile, location)
 
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
 

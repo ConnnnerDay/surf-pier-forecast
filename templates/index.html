@@ -505,7 +505,7 @@
         <!-- Species ranking -->
         <section class="species-section">
             <h2>What's Biting Now</h2>
-            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions</p>
+            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
                 <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}">
@@ -1026,12 +1026,32 @@
 
     renderFavorites();
 
-    /* ---- Fishing Profile (localStorage) ---- */
+    /* ---- Fishing Profile (localStorage → server-side filtering) ---- */
     var PROFILE_KEY = 'fishing_profile';
 
     function getProfile() {
         try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; }
         catch(e) { return null; }
+    }
+
+    function buildProfileParams(profile) {
+        var params = new URLSearchParams(window.location.search);
+        var ft = (profile.fishing_type || []).join(',');
+        var tg = (profile.targets || []).join(',');
+        if (ft) params.set('fishing_types', ft);
+        else params.delete('fishing_types');
+        if (tg) params.set('targets', tg);
+        else params.delete('targets');
+        return params;
+    }
+
+    function profileParamsMatch(profile) {
+        var params = new URLSearchParams(window.location.search);
+        var currentFt = params.get('fishing_types') || '';
+        var currentTg = params.get('targets') || '';
+        var expectedFt = (profile.fishing_type || []).join(',');
+        var expectedTg = (profile.targets || []).join(',');
+        return currentFt === expectedFt && currentTg === expectedTg;
     }
 
     function renderProfileBar() {
@@ -1042,7 +1062,7 @@
             bar.innerHTML = '<a href="/profile" class="profile-edit-link">Set up your fishing profile for personalized results</a>';
             return;
         }
-        var html = '';
+        var html = '<span class="profile-label">Your profile:</span> ';
         var labels = {
             'surf': 'Surf', 'pier': 'Pier', 'inshore': 'Inshore', 'offshore': 'Offshore',
             'yes': 'Yes', 'sometimes': 'Sometimes', 'no': 'No',
@@ -1050,13 +1070,18 @@
             'bottom': 'Bottom', 'pelagic': 'Pelagics', 'structure': 'Structure',
             'gamefish': 'Big Game', 'anything': 'All Species'
         };
-        // Show fishing types
         if (profile.fishing_type && profile.fishing_type.length) {
             profile.fishing_type.forEach(function(t) {
                 html += '<span class="profile-tag">' + (labels[t] || t) + '</span>';
             });
         }
-        // Show bait prefs
+        if (profile.targets && profile.targets.length) {
+            profile.targets.forEach(function(t) {
+                if (t !== 'anything' || profile.targets.length === 1) {
+                    html += '<span class="profile-tag profile-tag--target">' + (labels[t] || t) + '</span>';
+                }
+            });
+        }
         if (profile.live_bait === 'yes') html += '<span class="profile-tag">Live Bait</span>';
         if (profile.cut_bait === 'yes') html += '<span class="profile-tag">Cut Bait</span>';
         if (profile.lures === 'yes') html += '<span class="profile-tag">Lures</span>';
@@ -1066,11 +1091,12 @@
         bar.innerHTML = html;
     }
 
-    function applyProfileFilters() {
+    function applyBaitFilters() {
+        // Bait method filtering stays client-side (dimming bait items
+        // based on live/cut/lure preferences)
         var profile = getProfile();
         if (!profile || !profile.completed) return;
 
-        // --- Classify bait items ---
         var baitItems = document.querySelectorAll('.bait-item[data-bait-name]');
         var liveKeywords = ['live shrimp', 'live finger', 'live mullet', 'live menhaden', 'live blue runner',
                             'live cigar', 'live crab', 'live baitfish', 'live eel', 'live minnow', 'live pogies'];
@@ -1085,24 +1111,21 @@
             var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
             var isCut = cutKeywords.some(function(k) { return name.indexOf(k) >= 0; });
 
-            // If user doesn't use live bait at all, dim live bait items
             if (isLive && profile.live_bait === 'no' && !isCut && !isLure) {
                 item.classList.add('profile-dimmed');
                 item.setAttribute('data-dim-reason', 'Not in your profile');
             }
-            // If user doesn't use lures at all, dim lure items
             if (isLure && profile.lures === 'no' && !isLive && !isCut) {
                 item.classList.add('profile-dimmed');
                 item.setAttribute('data-dim-reason', 'Not in your profile');
             }
-            // If user doesn't use cut bait, dim cut bait items
             if (isCut && profile.cut_bait === 'no' && !isLive && !isLure) {
                 item.classList.add('profile-dimmed');
                 item.setAttribute('data-dim-reason', 'Not in your profile');
             }
         });
 
-        // --- Highlight matching species bait recommendations ---
+        // Highlight matching species bait recommendations
         var speciesCards = document.querySelectorAll('.species-card[data-species-bait]');
         speciesCards.forEach(function(card) {
             var baitText = card.getAttribute('data-species-bait') || '';
@@ -1113,17 +1136,10 @@
             var hasLure = lureKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
             var hasCut = cutKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
 
-            // Build a "for you" tip based on what the user uses
             var tips = [];
-            if (hasLive && (profile.live_bait === 'yes' || profile.live_bait === 'sometimes')) {
-                tips.push('live bait');
-            }
-            if (hasLure && (profile.lures === 'yes' || profile.lures === 'sometimes')) {
-                tips.push('lures');
-            }
-            if (hasCut && (profile.cut_bait === 'yes' || profile.cut_bait === 'sometimes')) {
-                tips.push('cut bait');
-            }
+            if (hasLive && (profile.live_bait === 'yes' || profile.live_bait === 'sometimes')) tips.push('live bait');
+            if (hasLure && (profile.lures === 'yes' || profile.lures === 'sometimes')) tips.push('lures');
+            if (hasCut && (profile.cut_bait === 'yes' || profile.cut_bait === 'sometimes')) tips.push('cut bait');
 
             if (tips.length > 0) {
                 var badge = document.createElement('span');
@@ -1133,38 +1149,40 @@
             }
         });
 
-        // --- Show/hide natural bait section based on bait prefs ---
+        // Dim natural bait section for lures-only anglers
         var forageSection = document.querySelector('.forage-section');
         if (forageSection && profile.live_bait === 'no' && profile.cut_bait === 'no') {
-            // If user only uses lures, dim the forage section
             forageSection.classList.add('profile-dimmed');
             forageSection.setAttribute('data-dim-reason', 'You fish with lures');
         }
-
-        // --- Renumber visible bait items ---
-        var visibleBaits = document.querySelectorAll('.bait-item:not(.profile-hidden)');
-        var baitNum = 1;
-        visibleBaits.forEach(function(item) {
-            var numEl = item.querySelector('.bait-num');
-            if (numEl) numEl.textContent = baitNum++;
-        });
     }
 
-    // Check if new user needs onboarding
+    // On page load: sync profile to URL for server-side filtering
     (function() {
         var profile = getProfile();
         if (!profile || !profile.completed) {
-            // If this is the user's first visit with a location set, offer the profile setup
+            // First visit — redirect to profile setup
             var profilePrompted = localStorage.getItem('profile_prompted');
             if (!profilePrompted) {
                 localStorage.setItem('profile_prompted', 'true');
-                // Redirect to profile setup for first-time users
                 window.location.href = '/profile';
                 return;
             }
+            renderProfileBar();
+            return;
         }
+
+        // If profile exists but URL doesn't have matching params, redirect
+        // once so the server can filter species for this user
+        if (!profileParamsMatch(profile)) {
+            var params = buildProfileParams(profile);
+            var newUrl = window.location.pathname + '?' + params.toString();
+            window.location.replace(newUrl);
+            return;
+        }
+
         renderProfileBar();
-        applyProfileFilters();
+        applyBaitFilters();
     })();
 
     function toggleTheme() {
