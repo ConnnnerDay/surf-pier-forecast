@@ -305,7 +305,15 @@
         }
 
         localStorage.setItem('fishing_profile', JSON.stringify(profile));
-        window.location.href = '{{ url_for("index") }}';
+
+        // Build URL with profile query params so server filters on first load
+        var params = new URLSearchParams();
+        var ft = profile.fishing_type.join(',');
+        var tg = profile.targets.join(',');
+        if (ft) params.set('fishing_types', ft);
+        if (tg) params.set('targets', tg);
+        var qs = params.toString();
+        window.location.href = '{{ url_for("index") }}' + (qs ? '?' + qs : '');
         return false;
     }
     </script>

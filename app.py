@@ -6272,11 +6272,16 @@ def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
 def build_multiday_outlook(
     now: datetime,
     location: Optional[Dict[str, Any]] = None,
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """Build a 3-day outlook with conditions and fishability.
 
     Each day includes: day_label, wind summary, wave estimate,
     water temp estimate, and a fishability verdict.
+
+    If *fishing_types* or *targets* are provided (from the user's profile),
+    the per-day top-species list is filtered to match.
     """
     loc_lat = (location or {}).get("lat", _LAT)
     loc_lng = (location or {}).get("lng", _LNG)
@@ -6353,6 +6358,8 @@ def build_multiday_outlook(
         species_scores: List[Tuple[str, float]] = []
         for sp in SPECIES_DB:
             if sp.get("coast", "east") != coast:
+                continue
+            if not _species_matches_profile(sp["name"], fishing_types, targets):
                 continue
             s = _score_species(
                 sp, future_month, future_water_temp,
@@ -7331,6 +7338,19 @@ def personalize_forecast(
         hour=now.hour, water_temp=water_temp,
         weather=forecast.get("weather"),
     )
+
+    # Rebuild 3-day outlook with profile-filtered species
+    outlook = build_multiday_outlook(
+        now, location,
+        fishing_types=fishing_types,
+        targets=targets,
+    )
+    if outlook:
+        forecast["outlook"] = outlook
+        forecast["best_day"] = pick_best_fishing_day(
+            forecast.get("conditions", {}).get("verdict", "Fair"),
+            outlook,
+        )
 
     return forecast
 
