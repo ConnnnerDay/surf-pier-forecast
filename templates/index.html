@@ -125,49 +125,6 @@
         </div>
         {% endif %}
 
-        <!-- Best Fishing Times -->
-        {% if forecast.best_times %}
-        <section class="best-times-section">
-            <h2>
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px; margin-right:0.3rem;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                When to Fish
-            </h2>
-            <div class="best-times-cards">
-                {% for bt in forecast.best_times %}
-                <div class="best-time-card best-time--{{ bt.quality|lower }}">
-                    <div class="bt-quality">{{ bt.quality }}</div>
-                    <div class="bt-window">{{ bt.window }}</div>
-                    <div class="bt-reason">{{ bt.reason }}</div>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if forecast.activity_timeline %}
-            <div class="activity-timeline">
-                <h3 class="timeline-title">24-Hour Activity</h3>
-                <div class="timeline-bars">
-                    {% for t in forecast.activity_timeline %}
-                    <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
-                        <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
-                        {% if t.hour % 3 == 0 %}
-                        <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="timeline-legend">
-                    <span class="tl-key tl-key--prime"></span> Prime
-                    <span class="tl-key tl-key--high"></span> High
-                    <span class="tl-key tl-key--med"></span> Moderate
-                    <span class="tl-key tl-key--low"></span> Low
-                </div>
-            </div>
-            {% endif %}
-        </section>
-        {% endif %}
 
         <!-- Conditions grid -->
         <section class="conditions-section">
@@ -297,41 +254,134 @@
             {% endif %}
         </section>
 
-        <!-- Spot Tips -->
-        {% if forecast.spot_tips %}
-        <section class="spot-tips-section">
+        <!-- Best Fishing Times -->
+        {% if forecast.best_times %}
+        <section class="best-times-section">
             <h2>
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px; margin-right:0.3rem;">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px; margin-right:0.3rem;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                Today's Fishing Tips
+                When to Fish
             </h2>
-            <div class="spot-tips-list">
-                {% for tip in forecast.spot_tips %}
-                <div class="spot-tip">
-                    <div class="spot-tip-icon">
-                        {% if tip.icon == 'wind' %}
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-                        {% elif tip.icon == 'waves' %}
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
-                        {% elif tip.icon == 'tide' %}
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                        {% elif tip.icon == 'time' %}
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        {% elif tip.icon == 'season' %}
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <div class="best-times-cards">
+                {% for bt in forecast.best_times %}
+                <div class="best-time-card best-time--{{ bt.quality|lower }}">
+                    <div class="bt-quality">{{ bt.quality }}</div>
+                    <div class="bt-window">{{ bt.window }}</div>
+                    <div class="bt-reason">{{ bt.reason }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if forecast.activity_timeline %}
+            <div class="activity-timeline">
+                <h3 class="timeline-title">24-Hour Activity</h3>
+                <div class="timeline-bars">
+                    {% for t in forecast.activity_timeline %}
+                    <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
+                        <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
+                        {% if t.hour % 3 == 0 %}
+                        <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
                         {% endif %}
                     </div>
-                    <div class="spot-tip-body">
-                        <strong class="spot-tip-title">{{ tip.title }}</strong>
-                        <p class="spot-tip-detail">{{ tip.detail }}</p>
+                    {% endfor %}
+                </div>
+                <div class="timeline-legend">
+                    <span class="tl-key tl-key--prime"></span> Prime
+                    <span class="tl-key tl-key--high"></span> High
+                    <span class="tl-key tl-key--med"></span> Moderate
+                    <span class="tl-key tl-key--low"></span> Low
+                </div>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <!-- Species ranking -->
+        <section class="species-section">
+            <h2>What's Biting Now</h2>
+            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
+            <div class="species-cards">
+                {% for sp in forecast.species %}
+                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}">
+                    <div class="species-rank-area">
+                        <div class="species-rank">#{{ sp.rank }}</div>
+                        <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
+                    </div>
+                    <div class="species-body">
+                        <h3>{{ sp.name }}</h3>
+                        <p class="species-why">{{ sp.explanation }}</p>
+                        {% if sp.tip %}
+                        <p class="species-tip">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:0.2rem; flex-shrink:0;"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+                            {{ sp.tip }}
+                        </p>
+                        {% endif %}
+                        <div class="species-score-bar">
+                            <div class="score-track">
+                                <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
+                            </div>
+                            <span class="score-label">{{ sp.score }}/100</span>
+                        </div>
+                        <div class="species-meta">
+                            <div class="meta-item meta-item--bait">
+                                <span class="meta-label">Bait</span>
+                                <span class="meta-value">{{ sp.bait }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Rig</span>
+                                <span class="meta-value">{{ sp.rig }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Hook</span>
+                                <span class="meta-value">{{ sp.hook_size }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Sinker</span>
+                                <span class="meta-value">{{ sp.sinker }}</span>
+                            </div>
+                        </div>
+                        {% if sp.regulation %}
+                        <div class="species-regs">
+                            <div class="regs-header">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                                <span>Regulations</span>
+                            </div>
+                            <div class="regs-grid">
+                                {% if sp.regulation.min_size %}
+                                <div class="reg-item">
+                                    <span class="reg-label">Min Size</span>
+                                    <span class="reg-value">{{ sp.regulation.min_size }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sp.regulation.bag_limit %}
+                                <div class="reg-item">
+                                    <span class="reg-label">Bag Limit</span>
+                                    <span class="reg-value">{{ sp.regulation.bag_limit }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sp.regulation.season %}
+                                <div class="reg-item">
+                                    <span class="reg-label">Season</span>
+                                    <span class="reg-value">{{ sp.regulation.season }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sp.regulation.notes %}
+                                <div class="reg-item reg-item--full">
+                                    <span class="reg-value reg-note">{{ sp.regulation.notes }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </section>
-        {% endif %}
 
         <!-- Tide predictions -->
         {% if forecast.tides %}
@@ -471,91 +521,6 @@
         </section>
         {% endif %}
 
-        <!-- Species ranking -->
-        <section class="species-section">
-            <h2>What's Biting Now</h2>
-            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
-            <div class="species-cards">
-                {% for sp in forecast.species %}
-                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}">
-                    <div class="species-rank-area">
-                        <div class="species-rank">#{{ sp.rank }}</div>
-                        <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
-                    </div>
-                    <div class="species-body">
-                        <h3>{{ sp.name }}</h3>
-                        <p class="species-why">{{ sp.explanation }}</p>
-                        {% if sp.tip %}
-                        <p class="species-tip">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:0.2rem; flex-shrink:0;"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
-                            {{ sp.tip }}
-                        </p>
-                        {% endif %}
-                        <div class="species-score-bar">
-                            <div class="score-track">
-                                <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
-                            </div>
-                            <span class="score-label">{{ sp.score }}/100</span>
-                        </div>
-                        <div class="species-meta">
-                            <div class="meta-item meta-item--bait">
-                                <span class="meta-label">Bait</span>
-                                <span class="meta-value">{{ sp.bait }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Rig</span>
-                                <span class="meta-value">{{ sp.rig }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Hook</span>
-                                <span class="meta-value">{{ sp.hook_size }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Sinker</span>
-                                <span class="meta-value">{{ sp.sinker }}</span>
-                            </div>
-                        </div>
-                        {% if sp.regulation %}
-                        <div class="species-regs">
-                            <div class="regs-header">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                </svg>
-                                <span>Regulations</span>
-                            </div>
-                            <div class="regs-grid">
-                                {% if sp.regulation.min_size %}
-                                <div class="reg-item">
-                                    <span class="reg-label">Min Size</span>
-                                    <span class="reg-value">{{ sp.regulation.min_size }}</span>
-                                </div>
-                                {% endif %}
-                                {% if sp.regulation.bag_limit %}
-                                <div class="reg-item">
-                                    <span class="reg-label">Bag Limit</span>
-                                    <span class="reg-value">{{ sp.regulation.bag_limit }}</span>
-                                </div>
-                                {% endif %}
-                                {% if sp.regulation.season %}
-                                <div class="reg-item">
-                                    <span class="reg-label">Season</span>
-                                    <span class="reg-value">{{ sp.regulation.season }}</span>
-                                </div>
-                                {% endif %}
-                                {% if sp.regulation.notes %}
-                                <div class="reg-item reg-item--full">
-                                    <span class="reg-value reg-note">{{ sp.regulation.notes }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-
         <!-- Recommended Rigs -->
         {% if forecast.rig_recommendations %}
         <section class="rig-section">
@@ -615,7 +580,7 @@
         <section class="bait-section">
             <h2>Natural Bait Recommendations</h2>
             <div class="bait-list">
-                {% for item in forecast.bait_rankings %}
+                {% for item in forecast.bait_rankings[:4] %}
                 <div class="bait-item" data-bait-name="{{ item.bait|lower }}">
                     <span class="bait-num">{{ loop.index }}</span>
                     <div class="bait-info">
@@ -626,6 +591,42 @@
                 {% endfor %}
             </div>
         </section>
+
+        <!-- Spot Tips -->
+        {% if forecast.spot_tips %}
+        <section class="spot-tips-section">
+            <h2>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px; margin-right:0.3rem;">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+                Today's Fishing Tips
+            </h2>
+            <div class="spot-tips-list">
+                {% for tip in forecast.spot_tips %}
+                <div class="spot-tip">
+                    <div class="spot-tip-icon">
+                        {% if tip.icon == 'wind' %}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                        {% elif tip.icon == 'waves' %}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                        {% elif tip.icon == 'tide' %}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                        {% elif tip.icon == 'time' %}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {% elif tip.icon == 'season' %}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="spot-tip-body">
+                        <strong class="spot-tip-title">{{ tip.title }}</strong>
+                        <p class="spot-tip-detail">{{ tip.detail }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
         <!-- Natural Bait in the Water -->
         {% if forecast.natural_bait %}

@@ -265,7 +265,7 @@ main {
 
 main > section,
 main > div {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 h2 {
@@ -273,13 +273,13 @@ h2 {
   font-weight: 400;
   font-size: 1.35rem;
   color: var(--ocean);
-  margin: 0 0 1rem;
+  margin: 0 0 0.75rem;
 }
 
 .section-sub {
   font-size: 0.85rem;
   color: var(--text-muted);
-  margin: -0.5rem 0 1rem;
+  margin: -0.4rem 0 0.75rem;
 }
 
 /* ---------- Card base ---------- */
@@ -357,7 +357,7 @@ h2 {
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
-  padding: 1.5rem 1rem;
+  padding: 1rem;
 }
 
 .verdict-badge {
@@ -414,8 +414,8 @@ h2 {
 
 .bite-alerts {
   display: grid;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 .bite-alert {
@@ -486,7 +486,6 @@ h2 {
 
 .best-times-section {
   text-align: center;
-  margin-bottom: 0.5rem;
 }
 
 .best-times-section h2 {
@@ -1051,19 +1050,29 @@ h2 {
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.species-section h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.species-section .section-sub {
+  margin: -0.25rem 0 0.6rem;
+  font-size: 0.78rem;
 }
 
 .species-cards {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .species-card {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
   background: var(--card-bg);
@@ -1084,13 +1093,13 @@ h2 {
 }
 
 .species-rank {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 400;
   color: var(--white);
   background: linear-gradient(135deg, var(--ocean), #14738c);
@@ -1143,36 +1152,36 @@ h2 {
 
 .species-body h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .species-why {
-  margin: 0.25rem 0 0.4rem;
-  font-size: 0.85rem;
+  margin: 0.15rem 0 0.3rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .species-tip {
   display: flex;
   align-items: flex-start;
   gap: 0.15rem;
-  margin: 0 0 0.5rem;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.78rem;
+  margin: 0 0 0.35rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.72rem;
   color: var(--ocean);
   background: var(--ocean-light);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--ocean);
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .species-meta {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.4rem 1rem;
+  gap: 0.25rem 0.75rem;
 }
 
 @media (max-width: 480px) {
@@ -1187,7 +1196,7 @@ h2 {
 }
 
 .meta-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1195,7 +1204,7 @@ h2 {
 }
 
 .meta-value {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text);
 }
 
@@ -1206,17 +1215,17 @@ h2 {
 
 /* Score bar */
 .species-score-bar {
-  margin: 0.5rem 0 0;
+  margin: 0.3rem 0 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .score-track {
   flex: 1;
-  height: 6px;
+  height: 4px;
   background: #e8ecef;
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
@@ -1248,8 +1257,8 @@ h2 {
 /* ---------- Regulation info ---------- */
 
 .species-regs {
-  margin-top: 0.6rem;
-  padding: 0.6rem 0.75rem;
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.6rem;
   background: #fafbfc;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
