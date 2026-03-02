@@ -2,18 +2,21 @@
 Surf and Pier Fishing Forecast Application
 ----------------------------------------
 
-Flask app that generates a 24-hour surf and pier fishing outlook for
-Wrightsville Beach and Carolina Beach, NC.  Fetches marine conditions from
-the NWS API (zone AMZ158) and water temperature from NOAA CO-OPS, then
-dynamically determines which species are likely biting based on season and
-water temperature.  Rig recommendations are matched to the active species.
+Flask app that generates a 24-hour surf and pier fishing forecast for 100+
+coastal locations.  Users select their location on first visit.  Fetches
+marine conditions from the NWS API, water temperature from NOAA CO-OPS, and
+buoy data from NDBC, then dynamically determines which species are likely
+biting based on season, water temperature, and solunar conditions.  Rig
+recommendations are matched to the active species.
 
 Endpoints:
-* ``/``              -- HTML dashboard
+* ``/``              -- HTML dashboard (redirects to /setup if no location)
+* ``/setup``         -- Location picker
+* ``/f/<loc_id>``    -- Shareable forecast link
 * ``/api/forecast``  -- Current forecast as JSON
 * ``/api/refresh``   -- POST to regenerate forecast
 
-No API keys required.  Data cached to ``data/forecast.json``.
+No API keys required.  Data cached per-location to ``data/``.
 """
 
 from __future__ import annotations
@@ -64,20 +67,20 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 # Wind and waves will NEVER show "Unknown" thanks to layered fallbacks.
 # ---------------------------------------------------------------------------
 
-# AMZ158 = Coastal waters from Surf City to Cape Fear NC out 20 NM
+# Default NWS marine zone (overridden per location from locations.py)
 NWS_MARINE_ZONE = "AMZ158"
 NWS_FORECAST_URL = (
     f"https://api.weather.gov/zones/forecast/{NWS_MARINE_ZONE}/forecast"
 )
 
-# NDBC buoys near Wrightsville Beach (tried in order)
+# Default NDBC buoy stations (overridden per location from locations.py)
 NDBC_STATIONS = [
     ("41110", "Masonboro Inlet"),
-    ("41037", "Wrightsville Beach Offshore"),
+    ("41037", "Offshore Buoy"),
 ]
 
-# NOAA CO-OPS station 8658163 (Wrightsville Beach) -- same station used for
-# water temperature.  Also provides wind speed/direction/gusts.
+# NOAA CO-OPS wind endpoint (station ID filled per location; default is a
+# fallback used only when no location is set).
 COOPS_WIND_URL = (
     "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     "?date=latest&station={station}"
@@ -85,8 +88,9 @@ COOPS_WIND_URL = (
     "&time_zone=lst_ldt&format=json"
 )
 
-# Historical monthly averages for the Wrightsville Beach area.
-# Used as the absolute last resort so wind/waves are NEVER "Unknown".
+# Generic mid-Atlantic historical monthly averages used as the absolute
+# last resort when no location is set.  Per-location fallbacks come from
+# locations.py via get_fallback_conditions().
 # Wind in knots (sustained low - gust high), waves in feet (low - high).
 MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
     1: (8, 15), 2: (8, 16), 3: (9, 16), 4: (8, 15), 5: (7, 13), 6: (6, 12),
@@ -538,7 +542,7 @@ def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: O
 # NOAA water temperature (free, no API key)
 # ---------------------------------------------------------------------------
 
-# Wrightsville Beach NOAA CO-OPS station
+# Default NOAA CO-OPS station (overridden per location from locations.py)
 WATER_TEMP_STATION = "8658163"
 WATER_TEMP_URL = (
     "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
@@ -547,8 +551,9 @@ WATER_TEMP_URL = (
     "&time_zone=lst_ldt&format=json"
 )
 
-# Historical average water temperatures (F) for Wrightsville Beach, NC by month.
-# Used as fallback when the live NOAA reading is unavailable.
+# Generic mid-Atlantic historical water temperatures (F) by month.
+# Used only as a last resort when no location is set; per-location temps
+# come from locations.py via get_monthly_water_temps().
 MONTHLY_AVG_WATER_TEMP_F = {
     1: 50, 2: 50, 3: 54, 4: 62, 5: 70, 6: 78,
     7: 82, 8: 83, 9: 80, 10: 72, 11: 62, 12: 54,
@@ -597,7 +602,7 @@ def get_water_temp(
 # Sunrise / sunset (pure math, no API)
 # ---------------------------------------------------------------------------
 
-# Wrightsville Beach coordinates
+# Default coordinates (overridden per location; only used when no location set)
 _LAT = 34.2104
 _LNG = -77.7964
 
@@ -855,7 +860,7 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "explanation_cold": "Cobia have migrated south and are not present in NC waters during cold months.",
         "explanation_warm": "Cobia are cruising near the surface around piers, buoys and structure; sight-cast live eels or large baits to visible fish.",
     },
-    # --- Additional species for the Wrightsville / Carolina Beach area ---
+    # --- Additional coastal and estuarine species ---
     {
         "name": "Atlantic croaker",
         "temp_min": 50, "temp_max": 84, "temp_ideal_low": 62, "temp_ideal_high": 78,
@@ -3189,7 +3194,7 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "hook_size": "1/0-4/0 wide-gap hook",
         "sinker": "1/4-1/2 oz bullet weight",
         "explanation_cold": "Largemouth bass are in deeper holes in brackish creeks during cold months.",
-        "explanation_warm": "Largemouth bass enter brackish water in the ICW and tidal creeks near Wrightsville and Carolina Beach; they hit live shrimp and soft plastics.",
+        "explanation_warm": "Largemouth bass enter brackish water in the ICW and tidal creeks; they hit live shrimp and soft plastics near structure.",
     },
     {
         "name": "Blue catfish",

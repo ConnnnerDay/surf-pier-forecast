@@ -48,7 +48,7 @@
                     <svg class="theme-icon theme-icon--dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 </button>
             </div>
-            <p class="subtitle">{{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
+            <p class="subtitle">{{ forecast.location_name or 'Your Fishing Forecast' }}</p>
             <div class="header-actions">
                 <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
                     <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -940,7 +940,7 @@
     </main>
 
     <footer>
-        <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; {{ forecast.location_name or 'Wrightsville Beach &amp; Carolina Beach, NC' }}</p>
+        <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; {{ forecast.location_name or 'Your Fishing Forecast' }}</p>
     </footer>
 
     <script>
