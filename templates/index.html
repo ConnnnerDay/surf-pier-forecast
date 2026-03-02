@@ -48,6 +48,21 @@
                     <svg class="theme-icon theme-icon--dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 </button>
             </div>
+            <div class="user-nav">
+                {% if user %}
+                <span class="user-name">{{ user.username }}</span>
+                <span class="user-nav-sep">|</span>
+                <a href="{{ url_for('account') }}">Account</a>
+                <span class="user-nav-sep">|</span>
+                <form method="post" action="{{ url_for('logout') }}" style="display:inline;margin:0">
+                    <button type="submit" style="background:none;border:none;color:rgba(255,255,255,0.85);cursor:pointer;font:inherit;font-weight:500;font-size:0.82rem;padding:0">Log out</button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('login') }}">Log in</a>
+                <span class="user-nav-sep">|</span>
+                <a href="{{ url_for('register') }}">Sign up</a>
+                {% endif %}
+            </div>
             <p class="subtitle">{{ forecast.location_name or 'Your Fishing Forecast' }}</p>
             <div class="header-actions">
                 <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
@@ -944,6 +959,9 @@
     </footer>
 
     <script>
+    /* ---- Auth state ---- */
+    var LOGGED_IN = {{ 'true' if user else 'false' }};
+
     /* ---- Favorite Locations (localStorage) ---- */
     var FAV_KEY = 'favorite_locations';
     var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
@@ -956,6 +974,7 @@
 
     function saveFavorites(favs) {
         localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+        syncToServer();
     }
 
     function isFavorite() {
@@ -1180,6 +1199,7 @@
             document.documentElement.setAttribute('data-theme', 'dark');
             localStorage.setItem('theme', 'dark');
         }
+        syncToServer();
     }
 
     // Unit toggle (°F ↔ °C)
@@ -1204,6 +1224,7 @@
         var next = current === 'F' ? 'C' : 'F';
         localStorage.setItem('units', next);
         applyUnits(next);
+        syncToServer();
     }
 
     // Apply saved unit preference
@@ -1392,6 +1413,14 @@
         document.getElementById('log-size').value = '';
         document.getElementById('log-notes').value = '';
         renderLog();
+        // Sync the new entry to server
+        if (LOGGED_IN && CURRENT_LOC_ID) {
+            fetch('/api/log?location=' + encodeURIComponent(CURRENT_LOC_ID), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ species: species, size: size, notes: notes })
+            }).catch(function() {});
+        }
     }
 
     function deleteLog(index) {
@@ -1429,6 +1458,55 @@
 
     // Render on page load
     renderLog();
+
+    /* ---- Sync localStorage → server for logged-in users ---- */
+    function syncToServer() {
+        if (!LOGGED_IN) return;
+        var payload = {};
+        var theme = localStorage.getItem('theme');
+        if (theme) payload.theme = theme;
+        var units = localStorage.getItem('units');
+        if (units) payload.units = units;
+        var profile = getProfile();
+        if (profile) payload.fishing_profile = profile;
+        var favs = getFavorites();
+        if (favs.length) payload.favorites = favs;
+        if (CURRENT_LOC_ID) payload.location_id = CURRENT_LOC_ID;
+        if (Object.keys(payload).length === 0) return;
+        fetch('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(function() {});
+    }
+
+    // Sync once on page load
+    syncToServer();
+
+    // Also sync fishing log entries to server
+    function syncLogToServer() {
+        if (!LOGGED_IN || !CURRENT_LOC_ID) return;
+        var entries = getLog();
+        if (!entries.length) return;
+        // Send each entry that hasn't been synced yet
+        entries.forEach(function(e) {
+            if (e.synced) return;
+            fetch('/api/log?location=' + encodeURIComponent(CURRENT_LOC_ID), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    species: e.species,
+                    size: e.size || '',
+                    notes: e.notes || ''
+                })
+            }).then(function(r) {
+                if (r.ok) e.synced = true;
+                saveLog(entries);
+            }).catch(function() {});
+        });
+    }
+
+    syncLogToServer();
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {

@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 from flask import (
     Flask,
+    g,
     jsonify,
     redirect,
     render_template,
@@ -49,12 +50,16 @@ from locations import (
     get_monthly_water_temps,
 )
 from regulations import lookup_regulation
+import db as userdb
 
 
 # Set up Flask app
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
+
+# Initialize user database
+userdb.init_db()
 
 # Path to the cached forecast JSON
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -7856,11 +7861,176 @@ def _human_age(minutes: Optional[float]) -> str:
 
 
 def _get_session_location() -> Optional[Dict[str, Any]]:
-    """Return the location config from the user's session, or None."""
+    """Return the location config from the user's session, or None.
+
+    For logged-in users, falls back to their saved location preference
+    if the session doesn't have a location set.
+    """
     loc_id = session.get("location_id")
+    if not loc_id and getattr(g, "user", None):
+        prefs = userdb.get_preferences(g.user["id"])
+        loc_id = prefs.get("location_id")
+        if loc_id:
+            session["location_id"] = loc_id
     if loc_id:
         return get_location(loc_id)
     return None
+
+
+# -- Auth helpers -----------------------------------------------------------
+
+@app.before_request
+def _load_user() -> None:
+    """Populate g.user from the session on every request."""
+    user_id = session.get("user_id")
+    if user_id:
+        g.user = userdb.get_user(user_id)
+        if g.user is None:
+            # Stale session — user was deleted
+            session.pop("user_id", None)
+    else:
+        g.user = None
+
+
+@app.context_processor
+def _inject_user() -> Dict[str, Any]:
+    """Make ``user`` available in every template."""
+    return {"user": getattr(g, "user", None)}
+
+
+# -- Auth routes ------------------------------------------------------------
+
+@app.route("/login", methods=["GET", "POST"])
+def login() -> Any:
+    """Log-in page and form handler."""
+    if request.method == "GET":
+        return render_template("login.html", error=None)
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+    if not username or not password:
+        return render_template("login.html", error="Please enter both fields.",
+                               username=username)
+    user = userdb.authenticate_user(username, password)
+    if user is None:
+        return render_template("login.html", error="Invalid username or password.",
+                               username=username)
+    session["user_id"] = user["id"]
+    session.permanent = True
+    # Restore saved location preference
+    prefs = userdb.get_preferences(user["id"])
+    if prefs.get("location_id"):
+        session["location_id"] = prefs["location_id"]
+    return redirect(url_for("index"))
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register() -> Any:
+    """Registration page and form handler."""
+    if request.method == "GET":
+        return render_template("register.html", error=None)
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+    confirm = request.form.get("confirm", "")
+    if not username or not password:
+        return render_template("register.html", error="Please fill in all fields.",
+                               username=username)
+    if len(username) < 2 or len(username) > 30:
+        return render_template("register.html",
+                               error="Username must be 2-30 characters.",
+                               username=username)
+    if len(password) < 4:
+        return render_template("register.html",
+                               error="Password must be at least 4 characters.",
+                               username=username)
+    if password != confirm:
+        return render_template("register.html", error="Passwords do not match.",
+                               username=username)
+    user_id = userdb.create_user(username, password)
+    if user_id is None:
+        return render_template("register.html",
+                               error="That username is already taken.",
+                               username=username)
+    session["user_id"] = user_id
+    session.permanent = True
+    # Carry over current location if one is set
+    loc_id = session.get("location_id")
+    if loc_id:
+        userdb.save_preferences(user_id, location_id=loc_id)
+    return redirect(url_for("index"))
+
+
+@app.route("/logout", methods=["POST"])
+def logout() -> Any:
+    """Log out the current user."""
+    session.pop("user_id", None)
+    return redirect(url_for("index"))
+
+
+@app.route("/account")
+def account() -> str:
+    """Account settings page for logged-in users."""
+    if g.user is None:
+        return redirect(url_for("login"))
+    prefs = userdb.get_preferences(g.user["id"])
+    loc = None
+    if prefs.get("location_id"):
+        loc = get_location(prefs["location_id"])
+    return render_template("account.html", prefs=prefs, saved_location=loc)
+
+
+# -- Preference & log sync API ---------------------------------------------
+
+@app.route("/api/preferences", methods=["GET", "POST"])
+def api_preferences() -> Any:
+    """Get or update preferences for the logged-in user."""
+    if g.user is None:
+        return jsonify({"error": "Not logged in"}), 401
+    uid = g.user["id"]
+    if request.method == "GET":
+        return jsonify(userdb.get_preferences(uid))
+    data = request.get_json(silent=True) or {}
+    allowed = {"location_id", "theme", "units", "fishing_profile", "favorites"}
+    updates = {k: v for k, v in data.items() if k in allowed}
+    if updates:
+        userdb.save_preferences(uid, **updates)
+        # Keep session location in sync
+        if "location_id" in updates and updates["location_id"]:
+            session["location_id"] = updates["location_id"]
+    return jsonify({"ok": True})
+
+
+@app.route("/api/log", methods=["GET", "POST"])
+def api_log() -> Any:
+    """Get or add fishing log entries for the logged-in user."""
+    if g.user is None:
+        return jsonify({"error": "Not logged in"}), 401
+    uid = g.user["id"]
+    loc_id = request.args.get("location") or session.get("location_id", "")
+    if request.method == "GET":
+        entries = userdb.get_log_entries(uid, loc_id)
+        stats = userdb.get_log_stats(uid, loc_id) if loc_id else {}
+        return jsonify({"entries": entries, "stats": stats})
+    data = request.get_json(silent=True) or {}
+    species = data.get("species", "").strip()
+    if not species or not loc_id:
+        return jsonify({"error": "species and location required"}), 400
+    entry_id = userdb.add_log_entry(
+        uid, loc_id, species,
+        size=data.get("size", ""),
+        notes=data.get("notes", ""),
+    )
+    return jsonify({"ok": True, "id": entry_id}), 201
+
+
+@app.route("/api/log/<int:entry_id>", methods=["DELETE"])
+def api_log_delete(entry_id: int) -> Any:
+    """Delete a fishing log entry."""
+    if g.user is None:
+        return jsonify({"error": "Not logged in"}), 401
+    deleted = userdb.delete_log_entry(g.user["id"], entry_id)
+    if not deleted:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify({"ok": True})
 
 
 # -- Setup routes -----------------------------------------------------------
@@ -7930,6 +8100,9 @@ def setup_select(location_id: str) -> Any:
         return redirect(url_for("setup"))
     session["location_id"] = location_id
     session.permanent = True
+    # Persist for logged-in users
+    if g.user:
+        userdb.save_preferences(g.user["id"], location_id=location_id)
     return redirect(url_for("index"))
 
 
