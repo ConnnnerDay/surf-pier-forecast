@@ -1,20 +1,22 @@
 # Surf & Pier Fishing Forecast
 
-A self-hosted dashboard that generates a 24-hour surf and pier fishing outlook for **Wrightsville Beach & Carolina Beach, NC**.  All data comes from free public sources -- no API keys, no accounts, no subscriptions.
+A self-hosted dashboard that generates a 24-hour surf and pier fishing outlook for **100+ coastal locations** across the US East Coast and Gulf.  All data comes from free public sources -- no API keys, no accounts, no subscriptions.
 
-Once installed the dashboard runs as a background service that starts on boot. Open a browser, check the forecast, go fishing.
+On first visit users pick their location by zip code or by browsing the full list. Once installed the dashboard runs as a background service that starts on boot. Open a browser, check the forecast, go fishing.
 
 ## What it shows
 
 - **Fishability verdict** -- Fishable / Marginal / Not worth it based on wind and wave thresholds
 - **Marine conditions** -- wind speed & direction, wave height, live water temperature (NOAA CO-OPS)
-- **Tide schedule** -- high/low tide times and heights for the next 24 hours
+- **Tide schedule** -- high/low tide times, heights, and an interactive tide chart
 - **Sunrise & sunset** -- computed from solar position math, no API needed
 - **Moon phase & solunar rating** -- lunar illumination and a fishing-specific feeding activity rating (Excellent / Good / Fair / Poor)
-- **Best fishing windows** -- tide changes overlapping dawn/dusk are flagged as Prime
-- **Ranked species forecast** -- 15 species scored dynamically on water temperature, season, and solunar conditions
-- **Bait recommendations** -- ranked by relevance to the top species
-- **Bottom-rig templates** -- Carolina rig, double-dropper, pier structure rig, etc. with specs
+- **Best fishing windows** -- tide changes overlapping dawn/dusk are flagged as Prime, with a 24-hour activity timeline
+- **Ranked species forecast** -- species scored dynamically on water temperature, season, solunar conditions, and user profile
+- **Bait & rig recommendations** -- ranked by relevance to the top species, with full rig diagrams and knot instructions
+- **3-day outlook** -- upcoming conditions so you can plan ahead
+- **Fishing log** -- track your catches locally with stats and personal bests
+- **Personalized profiles** -- set your fishing style (surf, pier, inshore) and bait preferences for tailored results
 
 ## Quick start (one command)
 
@@ -32,7 +34,7 @@ That's it. The install script:
 2. Installs a systemd service that starts on boot
 3. Starts the dashboard immediately
 
-Open **http://localhost:5757** in your browser.
+Open **http://localhost:5757** in your browser. You'll be prompted to pick your fishing location on first visit.
 
 To access from your phone or another device on the same Wi-Fi, use your machine's local IP (the install script prints it):
 
@@ -122,15 +124,18 @@ Access from any device on your network at `http://<pi-ip>:5757`.
 
 ## How it works
 
-The app fetches data from three free NOAA endpoints (no keys required):
+The app fetches data from free NOAA endpoints (no keys required), selecting the correct stations for each location:
 
 | Data | Source | Update frequency |
 |------|--------|-----------------|
-| Wind & wave forecast | [NDBC FZUS52.KILM](https://www.ndbc.noaa.gov/data/Forecasts/FZUS52.KILM.html) | Every few hours |
-| Water temperature | [NOAA CO-OPS Station 8658163](https://tidesandcurrents.noaa.gov/stationhome.html?id=8658163) | Every 6 minutes |
+| Wind & wave forecast | NWS Marine Zone Forecast | Every few hours |
+| Water temperature | NOAA CO-OPS Tides & Currents | Every 6 minutes |
 | Tide predictions | NOAA CO-OPS Predictions API | Pre-computed |
+| Buoy observations | NDBC Real-time Data | Hourly |
 
 Sunrise/sunset and moon phase are calculated with pure math (NOAA solar algorithm and synodic month), no external API.
+
+Each location in the database has its own NWS zone, NOAA station, and NDBC buoy IDs so all data is location-specific.
 
 The dashboard auto-refreshes its cache every 4 hours on page load. You can also click **Refresh Forecast** at any time.
 
@@ -138,7 +143,10 @@ The dashboard auto-refreshes its cache every 4 hours on page load. You can also 
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | HTML dashboard |
+| `/` | GET | HTML dashboard (redirects to setup if no location set) |
+| `/setup` | GET | Location picker (zip search + browse) |
+| `/profile` | GET | Fishing profile setup |
+| `/f/<location_id>` | GET | Shareable forecast link for a specific location |
 | `/api/forecast` | GET | Current forecast as JSON |
 | `/api/refresh` | POST | Regenerate forecast and redirect to dashboard |
 
@@ -147,14 +155,19 @@ The dashboard auto-refreshes its cache every 4 hours on page load. You can also 
 ```
 surf-pier-forecast/
   app.py                  # Flask app + all forecast logic
+  locations.py            # 100+ location database with station IDs and regional data
+  regulations.py          # Fishing regulations by species and state
   requirements.txt        # Python dependencies (Flask, requests)
   install.sh              # One-command setup script
   surf-forecast.service   # systemd unit file template
   templates/
-    index.html            # Dashboard template
-    error.html            # Error page template
+    index.html            # Forecast dashboard
+    setup.html            # Location picker
+    profile.html          # Fishing profile setup
+    error.html            # Error page
   static/
     style.css             # Dashboard styles
+    images/rigs/          # Rig diagram SVGs
   data/
     forecast.json         # Cached forecast (auto-generated)
 ```

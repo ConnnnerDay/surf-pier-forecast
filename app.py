@@ -2,18 +2,21 @@
 Surf and Pier Fishing Forecast Application
 ----------------------------------------
 
-Flask app that generates a 24-hour surf and pier fishing outlook for
-Wrightsville Beach and Carolina Beach, NC.  Fetches marine conditions from
-the NWS API (zone AMZ158) and water temperature from NOAA CO-OPS, then
-dynamically determines which species are likely biting based on season and
-water temperature.  Rig recommendations are matched to the active species.
+Flask app that generates a 24-hour surf and pier fishing forecast for 100+
+coastal locations.  Users select their location on first visit.  Fetches
+marine conditions from the NWS API, water temperature from NOAA CO-OPS, and
+buoy data from NDBC, then dynamically determines which species are likely
+biting based on season, water temperature, and solunar conditions.  Rig
+recommendations are matched to the active species.
 
 Endpoints:
-* ``/``              -- HTML dashboard
+* ``/``              -- HTML dashboard (redirects to /setup if no location)
+* ``/setup``         -- Location picker
+* ``/f/<loc_id>``    -- Shareable forecast link
 * ``/api/forecast``  -- Current forecast as JSON
 * ``/api/refresh``   -- POST to regenerate forecast
 
-No API keys required.  Data cached to ``data/forecast.json``.
+No API keys required.  Data cached per-location to ``data/``.
 """
 
 from __future__ import annotations
@@ -64,20 +67,20 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 # Wind and waves will NEVER show "Unknown" thanks to layered fallbacks.
 # ---------------------------------------------------------------------------
 
-# AMZ158 = Coastal waters from Surf City to Cape Fear NC out 20 NM
+# Default NWS marine zone (overridden per location from locations.py)
 NWS_MARINE_ZONE = "AMZ158"
 NWS_FORECAST_URL = (
     f"https://api.weather.gov/zones/forecast/{NWS_MARINE_ZONE}/forecast"
 )
 
-# NDBC buoys near Wrightsville Beach (tried in order)
+# Default NDBC buoy stations (overridden per location from locations.py)
 NDBC_STATIONS = [
     ("41110", "Masonboro Inlet"),
-    ("41037", "Wrightsville Beach Offshore"),
+    ("41037", "Offshore Buoy"),
 ]
 
-# NOAA CO-OPS station 8658163 (Wrightsville Beach) -- same station used for
-# water temperature.  Also provides wind speed/direction/gusts.
+# NOAA CO-OPS wind endpoint (station ID filled per location; default is a
+# fallback used only when no location is set).
 COOPS_WIND_URL = (
     "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     "?date=latest&station={station}"
@@ -85,8 +88,9 @@ COOPS_WIND_URL = (
     "&time_zone=lst_ldt&format=json"
 )
 
-# Historical monthly averages for the Wrightsville Beach area.
-# Used as the absolute last resort so wind/waves are NEVER "Unknown".
+# Generic mid-Atlantic historical monthly averages used as the absolute
+# last resort when no location is set.  Per-location fallbacks come from
+# locations.py via get_fallback_conditions().
 # Wind in knots (sustained low - gust high), waves in feet (low - high).
 MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
     1: (8, 15), 2: (8, 16), 3: (9, 16), 4: (8, 15), 5: (7, 13), 6: (6, 12),
@@ -538,7 +542,7 @@ def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: O
 # NOAA water temperature (free, no API key)
 # ---------------------------------------------------------------------------
 
-# Wrightsville Beach NOAA CO-OPS station
+# Default NOAA CO-OPS station (overridden per location from locations.py)
 WATER_TEMP_STATION = "8658163"
 WATER_TEMP_URL = (
     "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
@@ -547,8 +551,9 @@ WATER_TEMP_URL = (
     "&time_zone=lst_ldt&format=json"
 )
 
-# Historical average water temperatures (F) for Wrightsville Beach, NC by month.
-# Used as fallback when the live NOAA reading is unavailable.
+# Generic mid-Atlantic historical water temperatures (F) by month.
+# Used only as a last resort when no location is set; per-location temps
+# come from locations.py via get_monthly_water_temps().
 MONTHLY_AVG_WATER_TEMP_F = {
     1: 50, 2: 50, 3: 54, 4: 62, 5: 70, 6: 78,
     7: 82, 8: 83, 9: 80, 10: 72, 11: 62, 12: 54,
@@ -597,7 +602,7 @@ def get_water_temp(
 # Sunrise / sunset (pure math, no API)
 # ---------------------------------------------------------------------------
 
-# Wrightsville Beach coordinates
+# Default coordinates (overridden per location; only used when no location set)
 _LAT = 34.2104
 _LNG = -77.7964
 
@@ -855,7 +860,7 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "explanation_cold": "Cobia have migrated south and are not present in NC waters during cold months.",
         "explanation_warm": "Cobia are cruising near the surface around piers, buoys and structure; sight-cast live eels or large baits to visible fish.",
     },
-    # --- Additional species for the Wrightsville / Carolina Beach area ---
+    # --- Additional coastal and estuarine species ---
     {
         "name": "Atlantic croaker",
         "temp_min": 50, "temp_max": 84, "temp_ideal_low": 62, "temp_ideal_high": 78,
@@ -3189,7 +3194,7 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "hook_size": "1/0-4/0 wide-gap hook",
         "sinker": "1/4-1/2 oz bullet weight",
         "explanation_cold": "Largemouth bass are in deeper holes in brackish creeks during cold months.",
-        "explanation_warm": "Largemouth bass enter brackish water in the ICW and tidal creeks near Wrightsville and Carolina Beach; they hit live shrimp and soft plastics.",
+        "explanation_warm": "Largemouth bass enter brackish water in the ICW and tidal creeks; they hit live shrimp and soft plastics near structure.",
     },
     {
         "name": "Blue catfish",
@@ -3721,6 +3726,127 @@ SPECIES_DB: List[Dict[str, Any]] = [
         "sinker": "None or small split shot",
         "explanation_cold": "Longnose gar are sluggish in deep holes during cold months.",
         "explanation_warm": "Longnose gar enter brackish tidal rivers near the coast; these armored, prehistoric fish have needle-like snouts and are tough to hook conventionally.",
+    },
+    # --- Additional region-specific Atlantic/Gulf species ---
+    {
+        "name": "Snook",
+        "temp_min": 60, "temp_max": 90, "temp_ideal_low": 72, "temp_ideal_high": 85,
+        "peak_months": [5, 6, 7, 8, 9, 10],
+        "good_months": [3, 4, 11],
+        "bait": "Live pilchards; live shrimp; finger mullet; white bait",
+        "rig": "Free-line with fluorocarbon leader or light jighead",
+        "hook_size": "1/0-3/0 circle hook",
+        "sinker": "None or 1/4 oz jighead",
+        "explanation_cold": "Snook are cold-sensitive and seek warm-water refuges near power plants and deep canals during cool months.",
+        "explanation_warm": "Snook aggressively feed around inlets, mangrove shorelines, and beaches during the spawn; live bait drifted along structure is deadly.",
+    },
+    {
+        "name": "Winter flounder",
+        "temp_min": 33, "temp_max": 60, "temp_ideal_low": 38, "temp_ideal_high": 52,
+        "peak_months": [2, 3, 4],
+        "good_months": [1, 5, 11, 12],
+        "bait": "Sandworms; bloodworms; clam strips; mussel",
+        "rig": "Spreader rig or hi-lo rig with small hooks",
+        "hook_size": "#8-#4 long-shank hook",
+        "sinker": "2-4 oz bank sinker",
+        "explanation_cold": "Winter flounder move inshore to bays and harbors in late winter to spawn; they are a cold-water staple of Northeast pier and jetty anglers.",
+        "explanation_warm": "Winter flounder move offshore as water warms past 60°F; they are rarely caught from shore in summer.",
+    },
+    {
+        "name": "Cunner",
+        "temp_min": 38, "temp_max": 68, "temp_ideal_low": 45, "temp_ideal_high": 60,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Small pieces of clam; green crab; sandworm; mussel",
+        "rig": "Simple bottom rig with small hook close to sinker",
+        "hook_size": "#8-#4 bait hook",
+        "sinker": "1-2 oz bank sinker",
+        "explanation_cold": "Cunner become torpid in cold water and are rarely caught below 45°F.",
+        "explanation_warm": "Cunner are eager biters around rocky structure, jetties, and pilings; small but plentiful, they are great for kids and beginners.",
+    },
+    {
+        "name": "Fluke (summer flounder)",
+        "temp_min": 50, "temp_max": 78, "temp_ideal_low": 58, "temp_ideal_high": 72,
+        "peak_months": [6, 7, 8, 9],
+        "good_months": [5, 10],
+        "bait": "Strip bait (fluke belly); live minnows; Gulp! swimming mullet; squid strips",
+        "rig": "Bucktail jig tipped with strip bait; fluke rig with spinner",
+        "hook_size": "2/0-4/0 wide-gap hook",
+        "sinker": "2-4 oz bucktail or bank sinker",
+        "explanation_cold": "Fluke are offshore on the continental shelf during winter; they migrate inshore as water warms in late spring.",
+        "explanation_warm": "Fluke are actively ambushing prey on sandy bottoms near structure; they lie flat and strike at baits drifted or bounced past them.",
+    },
+    {
+        "name": "Weakfish",
+        "temp_min": 48, "temp_max": 78, "temp_ideal_low": 58, "temp_ideal_high": 72,
+        "peak_months": [5, 6, 9, 10],
+        "good_months": [4, 7, 8, 11],
+        "bait": "Live shrimp; bloodworms; small mullet; soft plastics",
+        "rig": "Float rig or fish finder rig with light fluorocarbon leader",
+        "hook_size": "1/0-2/0 circle hook",
+        "sinker": "1-2 oz egg sinker",
+        "explanation_cold": "Weakfish migrate south and offshore in winter; a few linger in deep channels of the Chesapeake and Delaware bays.",
+        "explanation_warm": "Weakfish push into bays, inlets, and surf zones to feed on shrimp, small crabs, and baitfish; they have soft mouths requiring gentle hooksets.",
+    },
+    {
+        "name": "Tilefish (golden)",
+        "temp_min": 48, "temp_max": 65, "temp_ideal_low": 50, "temp_ideal_high": 58,
+        "peak_months": [5, 6, 7, 8, 9],
+        "good_months": [4, 10],
+        "bait": "Cut clam; squid; crab",
+        "rig": "Deep drop rig with electric reel",
+        "hook_size": "6/0-9/0 circle hook",
+        "sinker": "16-32 oz bank sinker",
+        "explanation_cold": "Golden tilefish are deep-dwelling bottom fish found in submarine canyons; they remain in deep water year-round.",
+        "explanation_warm": "Golden tilefish are prized for their sweet flesh; they live in burrows on the outer continental shelf at 400-1200 ft depths.",
+    },
+    {
+        "name": "Red porgy",
+        "temp_min": 55, "temp_max": 80, "temp_ideal_low": 62, "temp_ideal_high": 75,
+        "peak_months": [3, 4, 5, 10, 11],
+        "good_months": [6, 9, 12],
+        "bait": "Cut squid; shrimp; small crabs",
+        "rig": "Double-drop bottom rig (chicken rig)",
+        "hook_size": "1/0-3/0 circle hook",
+        "sinker": "4-8 oz bank sinker",
+        "explanation_cold": "Red porgy hold near hard bottom and reef structure in deeper water during cooler months.",
+        "explanation_warm": "Red porgy feed actively around ledges and artificial reefs; they travel in schools and provide steady action.",
+    },
+    {
+        "name": "Yellowtail snapper",
+        "temp_min": 70, "temp_max": 88, "temp_ideal_low": 74, "temp_ideal_high": 84,
+        "peak_months": [4, 5, 6, 7, 8, 9, 10],
+        "good_months": [3, 11],
+        "bait": "Small pieces of shrimp; glass minnows; pilchard chunks; cut squid",
+        "rig": "Light spinning outfit; free-line or small weight with chum",
+        "hook_size": "#2-1/0 light wire hook",
+        "sinker": "None or small split shot",
+        "explanation_cold": "Yellowtail snapper slow down in winter but remain near reefs in the Keys and South Florida.",
+        "explanation_warm": "Yellowtail snapper are aggressive feeders around reefs and wrecks; chumming brings them to the surface for exciting light-tackle fishing.",
+    },
+    {
+        "name": "Sheepshead (Gulf)",
+        "temp_min": 50, "temp_max": 82, "temp_ideal_low": 58, "temp_ideal_high": 75,
+        "peak_months": [1, 2, 3, 11, 12],
+        "good_months": [4, 10],
+        "bait": "Live fiddler crabs; shrimp; oysters; barnacle-covered debris",
+        "rig": "Knocker rig tight to pilings; short fluorocarbon leader",
+        "hook_size": "1/0-3/0 J-style hook",
+        "sinker": "1-3 oz egg sinker",
+        "explanation_cold": "Gulf sheepshead stack around bridge pilings, jetties, and docks in winter, feeding on barnacles and crabs in the cooler water.",
+        "explanation_warm": "Sheepshead move nearshore around structure before scattering to offshore reefs for spawning.",
+    },
+    {
+        "name": "Redfish (Gulf red drum)",
+        "temp_min": 50, "temp_max": 88, "temp_ideal_low": 65, "temp_ideal_high": 82,
+        "peak_months": [3, 4, 5, 9, 10, 11],
+        "good_months": [1, 2, 6, 7, 8, 12],
+        "bait": "Live shrimp; cut mullet; live crab; pogies (menhaden)",
+        "rig": "Carolina rig or popping cork with live bait",
+        "hook_size": "2/0-5/0 circle hook",
+        "sinker": "1-3 oz egg sinker or popping cork",
+        "explanation_cold": "Gulf redfish hold in deeper marsh channels and near warm-water outflows during winter cold fronts.",
+        "explanation_warm": "Redfish aggressively tail on grass flats and prowl shorelines; bull reds gather at passes during the fall spawn run.",
     },
     # ═══════════════════════════════════════════════════════════════════════
     # PACIFIC COAST SPECIES
@@ -4326,6 +4452,128 @@ for _sp in SPECIES_DB:
         _COAST_TAG = "hawaii"
     _sp["coast"] = _COAST_TAG
 del _COAST_TAG, _sp
+
+# ---------------------------------------------------------------------------
+# Region-specific species restrictions.
+# If a species has a "regions" list, it will only appear at locations whose
+# fish_region is in that list.  Species without a "regions" key appear
+# everywhere on their coast.
+# Regions: northeast, midatlantic, southeast, florida, gulf,
+#          socal, norcal, pacific_nw, hawaii
+# ---------------------------------------------------------------------------
+_REGION_RESTRICTIONS: Dict[str, List[str]] = {
+    # Northeast / cold-water specialists
+    "Tautog (blackfish)": ["northeast", "midatlantic"],
+    "Cunner": ["northeast"],
+    "Scup (porgy)": ["northeast", "midatlantic"],
+    "Winter flounder": ["northeast", "midatlantic"],
+    "Spiny dogfish": ["northeast", "midatlantic"],
+
+    # Northeast through Southeast (not tropical)
+    "Striped bass (rockfish)": ["northeast", "midatlantic", "southeast"],
+    "False albacore (little tunny)": ["northeast", "midatlantic", "southeast", "florida"],
+    "Atlantic bonito": ["northeast", "midatlantic", "southeast"],
+    "American shad": ["northeast", "midatlantic", "southeast"],
+    "Hickory shad": ["midatlantic", "southeast"],
+    "Gray trout (weakfish)": ["northeast", "midatlantic", "southeast"],
+    "Northern puffer (blowfish)": ["northeast", "midatlantic", "southeast"],
+    "Sea robin": ["northeast", "midatlantic", "southeast"],
+    "Oyster toadfish": ["northeast", "midatlantic", "southeast", "florida"],
+    "Sand tiger shark": ["northeast", "midatlantic", "southeast"],
+
+    # Mid-Atlantic through Gulf (warm water migrants)
+    "Cobia": ["midatlantic", "southeast", "florida", "gulf"],
+    "King mackerel (kingfish)": ["southeast", "florida", "gulf"],
+    "Spanish mackerel": ["midatlantic", "southeast", "florida", "gulf"],
+    "Pompano": ["southeast", "florida", "gulf"],
+    "Spot": ["northeast", "midatlantic", "southeast"],
+    "Atlantic croaker": ["northeast", "midatlantic", "southeast", "florida", "gulf"],
+
+    # Tropical / Florida-centric species
+    "Tarpon": ["southeast", "florida", "gulf"],
+    "Permit": ["florida"],
+    "Snook": ["florida"],
+    "Bonefish": ["florida"],
+    "Hogfish": ["florida", "gulf"],
+    "Yellowtail snapper": ["florida"],
+    "Mutton snapper": ["florida"],
+    "Great barracuda": ["southeast", "florida", "gulf"],
+    "Ladyfish": ["southeast", "florida", "gulf"],
+    "Tripletail": ["southeast", "florida", "gulf"],
+    "Lookdown": ["southeast", "florida", "gulf"],
+    "Lemon shark": ["southeast", "florida", "gulf"],
+    "Bonnethead shark": ["southeast", "florida", "gulf"],
+    "Nurse shark": ["florida", "gulf"],
+
+    # Gulf + Florida offshore/reef species
+    "Red snapper": ["southeast", "florida", "gulf"],
+    "Vermilion snapper (beeliner)": ["southeast", "florida", "gulf"],
+    "Mangrove snapper (gray snapper)": ["southeast", "florida", "gulf"],
+    "Lane snapper": ["florida", "gulf"],
+    "Gag grouper": ["southeast", "florida", "gulf"],
+    "Red grouper": ["southeast", "florida", "gulf"],
+    "Scamp grouper": ["southeast", "florida", "gulf"],
+    "Black grouper": ["florida", "gulf"],
+    "Greater amberjack": ["southeast", "florida", "gulf"],
+    "Almaco jack": ["southeast", "florida", "gulf"],
+
+    # Pelagic / offshore southern species
+    "Sailfish": ["florida", "gulf"],
+    "Blue marlin": ["southeast", "florida", "gulf"],
+    "White marlin": ["midatlantic", "southeast", "florida"],
+    "Mahi-mahi (dolphinfish)": ["southeast", "florida", "gulf"],
+    "Wahoo": ["southeast", "florida", "gulf"],
+    "Blackfin tuna": ["southeast", "florida", "gulf"],
+    "Yellowfin tuna": ["southeast", "florida", "gulf"],
+
+    # Jack family - tropical/subtropical
+    "Jack crevalle": ["southeast", "florida", "gulf"],
+    "Blue runner (hardtail)": ["southeast", "florida", "gulf"],
+    "Banded rudderfish": ["southeast", "florida", "gulf"],
+
+    # Wide-range species that need southern boundaries
+    "Triggerfish (gray)": ["midatlantic", "southeast", "florida", "gulf"],
+    "Spadefish (Atlantic)": ["midatlantic", "southeast", "florida", "gulf"],
+
+    # Southern catfish
+    "Gafftopsail catfish": ["southeast", "florida", "gulf"],
+    "Hardhead catfish (sea catfish)": ["southeast", "florida", "gulf"],
+
+    # New species region restrictions
+    "Fluke (summer flounder)": ["northeast", "midatlantic"],
+    "Weakfish": ["northeast", "midatlantic", "southeast"],
+    "Tilefish (golden)": ["midatlantic", "southeast"],
+    "Red porgy": ["southeast", "florida", "gulf"],
+    "Sheepshead (Gulf)": ["florida", "gulf"],
+    "Redfish (Gulf red drum)": ["florida", "gulf"],
+
+    # Pacific region-specific
+    "Corbina": ["socal"],
+    "Spotfin croaker": ["socal"],
+    "Yellowfin croaker": ["socal"],
+    "California sheephead": ["socal"],
+    "Opaleye": ["socal"],
+    "Halfmoon (Catalina perch)": ["socal"],
+    "Kelp bass (calico bass)": ["socal"],
+    "Sand bass (barred sand bass)": ["socal"],
+    "Yellowtail (California yellowtail)": ["socal"],
+    "White seabass": ["socal", "norcal"],
+    "California halibut": ["socal", "norcal"],
+    "Bat ray": ["socal", "norcal"],
+    "Shovelnose guitarfish": ["socal"],
+    "Leopard shark": ["socal", "norcal"],
+    "Lingcod": ["norcal", "pacific_nw"],
+    "Cabezon": ["norcal", "pacific_nw"],
+    "Dungeness crab (from pier)": ["norcal", "pacific_nw"],
+    "Redtail surfperch": ["norcal", "pacific_nw"],
+    "Kelp greenling": ["norcal", "pacific_nw"],
+    "Rock greenling": ["norcal", "pacific_nw"],
+}
+
+for _sp in SPECIES_DB:
+    if _sp["name"] in _REGION_RESTRICTIONS:
+        _sp["regions"] = _REGION_RESTRICTIONS[_sp["name"]]
+del _sp
 
 
 # ---------------------------------------------------------------------------
@@ -5630,6 +5878,7 @@ def build_species_ranking(
     state: str = "",
     fishing_types: Optional[List[str]] = None,
     targets: Optional[List[str]] = None,
+    fish_region: str = "",
 ) -> List[Dict[str, Any]]:
     """Dynamically rank species based on conditions and user profile.
 
@@ -5643,6 +5892,9 @@ def build_species_ranking(
 
     If ``state`` is provided, regulation data (size/bag limits) is
     attached to each species entry.
+
+    If ``fish_region`` is provided, species with a ``regions`` list are
+    filtered to only appear if the fish_region matches.
     """
     # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
     wind_coast = "west" if coast == "west" else "east"
@@ -5650,6 +5902,9 @@ def build_species_ranking(
     for sp in SPECIES_DB:
         # Skip species from a different coast/region
         if sp.get("coast", "east") != coast:
+            continue
+        # Skip species not found in this geographic region
+        if fish_region and "regions" in sp and fish_region not in sp["regions"]:
             continue
         # Skip species that don't match user's fishing profile
         if not _species_matches_profile(sp["name"], fishing_types, targets):
@@ -5861,6 +6116,7 @@ def fetch_tide_predictions(
                 "height_ft": f"{float(height):.1f}",
                 "hour": dt.hour + dt.minute / 60 if isinstance(dt, datetime) else 12.0,
                 "height_num": float(height),
+                "date_str": dt.strftime("%Y%m%d") if isinstance(dt, datetime) else today_str,
             })
         return tides
     except Exception:
@@ -6303,10 +6559,13 @@ def build_multiday_outlook(
             future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
 
         wind_coast = "west" if coast == "west" else "east"
+        outlook_fish_region = (location or {}).get("fish_region", "")
         top_species_names: List[str] = []
         species_scores: List[Tuple[str, float]] = []
         for sp in SPECIES_DB:
             if sp.get("coast", "east") != coast:
+                continue
+            if outlook_fish_region and "regions" in sp and outlook_fish_region not in sp["regions"]:
                 continue
             if not _species_matches_profile(sp["name"], fishing_types, targets):
                 continue
@@ -6998,6 +7257,7 @@ def generate_forecast(
     coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
 
     loc_state = (location or {}).get("state", "")
+    loc_fish_region = (location or {}).get("fish_region", "")
     profile = profile or {}
     species = build_species_ranking(
         month, water_temp,
@@ -7009,6 +7269,7 @@ def generate_forecast(
         state=loc_state,
         fishing_types=profile.get("fishing_types"),
         targets=profile.get("targets"),
+        fish_region=loc_fish_region,
     )
     rig_recommendations = build_rig_recommendations(species)
 
@@ -7054,8 +7315,11 @@ def generate_forecast(
     coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     tides = fetch_tide_predictions(coops_id, tz_name)
     if tides:
-        forecast["tides"] = tides
-        chart_json = build_tide_chart_svg(tides)
+        # Filter to today-only for display (chart + timeline)
+        today_date_str = now.strftime("%Y%m%d")
+        today_tides = [t for t in tides if t.get("date_str") == today_date_str]
+        forecast["tides"] = today_tides
+        chart_json = build_tide_chart_svg(today_tides)
         if chart_json:
             forecast["tide_chart"] = chart_json
 
@@ -7232,6 +7496,7 @@ def personalize_forecast(
     conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
     coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
     loc_state = (location or {}).get("state", "")
+    loc_fish_region = (location or {}).get("fish_region", "")
 
     species = build_species_ranking(
         month, water_temp,
@@ -7243,6 +7508,7 @@ def personalize_forecast(
         state=loc_state,
         fishing_types=fishing_types,
         targets=targets,
+        fish_region=loc_fish_region,
     )
 
     # Add technique tips
