@@ -191,6 +191,9 @@ def compute_solunar_times(
     elif 0.45 < phase_frac < 0.55:
         phase_name = "Full Moon"
         rating = "Excellent"
+    elif phase_frac < 0.22:
+        phase_name = "Waxing Crescent"
+        rating = "Poor"
     elif phase_frac < 0.25:
         phase_name = "Waxing Crescent"
         rating = "Fair"
@@ -206,13 +209,20 @@ def compute_solunar_times(
     elif phase_frac < 0.80:
         phase_name = "Last Quarter"
         rating = "Good"
-    else:
+    elif phase_frac < 0.88:
         phase_name = "Waning Crescent"
         rating = "Fair"
+    else:
+        phase_name = "Waning Crescent"
+        rating = "Poor"
+
+    # Illumination percentage from phase fraction (0 new -> 1 full)
+    illumination = (1 - math.cos(2 * math.pi * phase_frac)) / 2
 
     return {
         "major_periods": major_periods,
         "minor_periods": minor_periods,
         "moon_phase": phase_name,
+        "illumination_pct": round(illumination * 100, 1),
         "rating": rating,
     }

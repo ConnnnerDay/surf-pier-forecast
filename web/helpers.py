@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 from flask import g, session
 
 from locations import get_location
-from storage.db import get_preferences
+from storage.sqlite import get_preferences
 
 
 def get_session_location() -> Optional[Dict[str, Any]]:

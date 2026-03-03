@@ -19,7 +19,7 @@ import sys
 # Ensure project root is on the path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from storage.db import init_db, save_forecast_to_db
+from storage.sqlite import init_db, save_forecast_to_db
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 

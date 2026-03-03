@@ -23,7 +23,7 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
-from storage.db import save_preferences
+from storage.sqlite import save_preferences
 from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
