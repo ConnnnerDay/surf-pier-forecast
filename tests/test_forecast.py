@@ -89,3 +89,13 @@ class TestSolunar:
         assert "illumination_pct" in sol
         assert 0 <= sol["illumination_pct"] <= 100
         assert sol["rating"] in {"Excellent", "Good", "Fair", "Poor"}
+
+    def test_periods_are_dicts_with_start_end(self):
+        """Periods must be dicts so build_best_times / build_activity_timeline can subscript them."""
+        dt = datetime(2026, 2, 14, 6, 0, tzinfo=ZoneInfo("America/New_York"))
+        sol = compute_solunar_times(dt, 34.2, -77.8, "America/New_York")
+        for period_list in (sol["major_periods"], sol["minor_periods"]):
+            assert len(period_list) > 0
+            for p in period_list:
+                assert isinstance(p, dict), "periods must be dicts, not tuples"
+                assert "start" in p and "end" in p
