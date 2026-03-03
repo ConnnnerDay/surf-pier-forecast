@@ -111,3 +111,95 @@ def test_v1_log_crud(client):
     dbody = delete.get_json()
     assert dbody["ok"] is True
     assert dbody["data"]["deleted"] is True
+
+
+# ---------------------------------------------------------------------------
+# /api/v1/regulations
+# ---------------------------------------------------------------------------
+
+def test_v1_regulations_missing_species(client):
+    """Omitting the required 'species' param returns 400."""
+    resp = client.get("/api/v1/regulations")
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert body["error"]["code"] == "missing_param"
+
+
+def test_v1_regulations_with_state_returns_envelope(client):
+    """Valid species + state returns 200 v1 envelope with regulation dict."""
+    resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29&state=NC")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert set(body.keys()) == {"ok", "data", "error", "meta"}
+    assert body["error"] is None
+    assert body["meta"]["version"] == "v1"
+    data = body["data"]
+    assert data["species"] == "Red drum (puppy drum)"
+    assert data["state"] == "NC"
+    reg = data["regulation"]
+    assert reg is not None
+    assert "min_size" in reg
+    assert "bag_limit" in reg
+    assert "season" in reg
+    assert "notes" in reg
+
+
+def test_v1_regulations_unknown_species_returns_null(client):
+    """Species not in the regulation DB returns null (not an error)."""
+    resp = client.get("/api/v1/regulations?species=Fantasy+Fish&state=NC")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["regulation"] is None
+
+
+def test_v1_regulations_no_state_returns_null(client):
+    """Without state info the regulation is null but the response is still 200."""
+    resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["state"] is None
+    assert body["data"]["regulation"] is None
+
+
+def test_v1_regulations_derives_state_from_location_id(client, monkeypatch):
+    """Passing location_id causes state to be derived from the location config."""
+    monkeypatch.setattr(
+        "web.api.get_location",
+        lambda loc_id: {"id": loc_id, "state": "NC", "name": "Test Beach"},
+    )
+    resp = client.get(
+        "/api/v1/regulations?species=Red+drum+%28puppy+drum%29&location_id=test-nc"
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["state"] == "NC"
+    assert body["data"]["regulation"] is not None
+
+
+def test_v1_regulations_state_overrides_location_id(client, monkeypatch):
+    """Explicit 'state' query param takes priority over location_id lookup."""
+    # location_id would give SC, but state=NC is provided explicitly
+    monkeypatch.setattr(
+        "web.api.get_location",
+        lambda loc_id: {"id": loc_id, "state": "SC", "name": "SC Beach"},
+    )
+    resp = client.get(
+        "/api/v1/regulations?species=Red+drum+%28puppy+drum%29&state=NC&location_id=sc-loc"
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["data"]["state"] == "NC"
+
+
+def test_v1_regulations_unknown_state_returns_null(client):
+    """A valid species but an unrecognised state returns null regulation."""
+    resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29&state=ZZ")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["regulation"] is None

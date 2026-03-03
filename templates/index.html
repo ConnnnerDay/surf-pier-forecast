@@ -323,13 +323,19 @@
             <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
-                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}">
+                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}"{% endif %}>
                     <div class="species-rank-area">
                         <div class="species-rank">#{{ sp.rank }}</div>
                         <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
                     </div>
                     <div class="species-body">
-                        <h3>{{ sp.name }}</h3>
+                        <div class="species-name-row">
+                            <h3>{{ sp.name }}</h3>
+                            <button class="regs-pill" type="button" data-open-regs aria-label="View regulations for {{ sp.name }}">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                Regs
+                            </button>
+                        </div>
                         <p class="species-why">{{ sp.explanation }}</p>
                         {% if sp.tip %}
                         <p class="species-tip">
@@ -1587,5 +1593,98 @@
         setInterval(updateCountdown, 30000);
     })();
     </script>
+<!-- ── Regulations modal ─────────────────────────────────────────────── -->
+<dialog id="reg-modal" class="reg-modal" aria-labelledby="reg-modal-title">
+    <div class="reg-modal__card">
+        <header class="reg-modal__hdr">
+            <h2 class="reg-modal__title" id="reg-modal-title"></h2>
+            <button class="reg-modal__close" type="button" aria-label="Close">&times;</button>
+        </header>
+        <p class="reg-modal__disclaimer">Always verify current rules with your state&rsquo;s official fish &amp; wildlife agency before fishing.</p>
+        <div class="reg-modal__body" id="reg-modal-body"></div>
+    </div>
+</dialog>
+<script>
+(function () {
+    'use strict';
+    var modal = document.getElementById('reg-modal');
+    var modalTitle = document.getElementById('reg-modal-title');
+    var modalBody  = document.getElementById('reg-modal-body');
+    if (!modal || !modalTitle || !modalBody) return;
+
+    function esc(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function renderRegs(reg) {
+        if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
+            return '<p class="reg-no-data">No regulation data available for this species at your location.'
+                + '<br>Check your state fish &amp; wildlife agency for current rules.</p>';
+        }
+        var html = '<div class="reg-modal__grid">';
+        if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
+        if (reg.bag_limit) html += '<div class="reg-modal__item"><span class="reg-modal__label">Bag Limit</span><span class="reg-modal__value">' + esc(reg.bag_limit) + '</span></div>';
+        if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
+        html += '</div>';
+        if (reg.notes) html += '<p class="reg-modal__notes">' + esc(reg.notes) + '</p>';
+        return html;
+    }
+
+    function openModal(speciesName, reg) {
+        modalTitle.textContent = speciesName;
+        modalBody.innerHTML = renderRegs(reg);
+        modal.showModal();
+    }
+
+    // Click handler: each "Regs" pill button
+    document.querySelectorAll('[data-open-regs]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var card = btn.closest('.species-card');
+            if (!card) return;
+            var name = card.dataset.speciesName || '';
+
+            // If reg data was embedded server-side, use it instantly
+            if (card.hasAttribute('data-reg-min-size')) {
+                openModal(name, {
+                    min_size:  card.dataset.regMinSize  || '',
+                    bag_limit: card.dataset.regBagLimit || '',
+                    season:    card.dataset.regSeason   || '',
+                    notes:     card.dataset.regNotes    || '',
+                });
+                return;
+            }
+
+            // Otherwise fetch from API (species without a state match server-side)
+            modalTitle.textContent = name;
+            modalBody.innerHTML = '<p class="reg-loading">Loading\u2026</p>';
+            modal.showModal();
+
+            var url = '/api/v1/regulations?species=' + encodeURIComponent(name);
+            if (typeof CURRENT_LOC_ID !== 'undefined' && CURRENT_LOC_ID) {
+                url += '&location_id=' + encodeURIComponent(CURRENT_LOC_ID);
+            }
+            fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    modalBody.innerHTML = renderRegs((json.data || {}).regulation || null);
+                })
+                .catch(function () {
+                    modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations. Please try again.</p>';
+                });
+        });
+    });
+
+    // Close: button or clicking the backdrop
+    document.querySelector('.reg-modal__close').addEventListener('click', function () {
+        modal.close();
+    });
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.close();
+    });
+}());
+</script>
 </body>
 </html>
