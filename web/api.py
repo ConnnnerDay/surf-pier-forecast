@@ -11,6 +11,7 @@ from flask import Blueprint, g, jsonify, redirect, request, session, url_for
 
 from domain.forecast import build_share_text, generate_forecast
 from locations import get_location
+from regulations import lookup_regulation
 from storage.cache import load_cached_forecast, save_forecast
 from storage.sqlite import (
     add_log_entry,
@@ -243,6 +244,40 @@ def refresh() -> Any:
     except Exception as exc:
         logger.error("Error refreshing forecast: %s", exc)
         return redirect(url_for("views.index", cached="true"))
+
+
+@bp.route("/api/v1/regulations", methods=["GET"])
+def regulations_v1() -> Any:
+    """Return fishing regulations for a species at a given location or state.
+
+    Query parameters
+    ----------------
+    species      : str (required) — full species name, e.g. "Red drum (puppy drum)"
+    location_id  : str (optional) — location ID; state is derived automatically
+    state        : str (optional) — two-letter state abbreviation (overrides location_id)
+
+    Always returns HTTP 200.  ``regulation`` is ``null`` when no data is available.
+    """
+    species_name = request.args.get("species", "").strip()
+    if not species_name:
+        return _json_error(ApiError("missing_param", "'species' query parameter is required", status=400))
+
+    # Resolve state: explicit param takes priority, else derive from location_id
+    state = request.args.get("state", "").strip().upper()
+    if not state:
+        location_id = request.args.get("location_id", "").strip()
+        if location_id:
+            loc = get_location(location_id)
+            if loc:
+                state = loc.get("state", "").upper()
+
+    reg = lookup_regulation(species_name, state) if state else None
+
+    return jsonify(success_envelope({
+        "species": species_name,
+        "state": state or None,
+        "regulation": reg,
+    }))
 
 
 @bp.route("/api/share-text")
