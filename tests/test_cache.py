@@ -25,9 +25,9 @@ def isolated_storage(tmp_path, monkeypatch):
     monkeypatch.setattr("storage.cache.CACHE_FILE", str(tmp_path / "forecast.json"))
     # Point the DB to a temp file so tests don't touch the real database
     db_path = str(tmp_path / "test.db")
-    monkeypatch.setattr("storage.db.DB_PATH", db_path)
+    monkeypatch.setattr("storage.sqlite.DB_PATH", db_path)
     # Initialize the schema in the temp DB
-    from storage.db import init_db
+    from storage.sqlite import init_db
     init_db()
     return tmp_path
 
@@ -75,9 +75,14 @@ class TestSaveAndLoad:
         loaded2 = load_cached_forecast("legacy-loc")
         assert loaded2 == data
 
-    def test_json_backup_written(self, isolated_storage):
-        """save_forecast should also write a JSON backup file."""
+    def test_json_fallback_written_if_db_fails(self, isolated_storage, monkeypatch):
+        """If DB write fails, JSON fallback is written."""
         data = {"generated_at": "2026-03-01T12:00:00"}
+
+        def _boom(*_args, **_kwargs):
+            raise RuntimeError("db down")
+
+        monkeypatch.setattr("storage.sqlite.save_forecast_to_db", _boom)
         save_forecast(data, "backup-test")
         json_path = isolated_storage / "forecast_backup-test.json"
         assert json_path.exists()

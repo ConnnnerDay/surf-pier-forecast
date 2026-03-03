@@ -39,7 +39,7 @@ def load_cached_forecast(location_id: str = "") -> Optional[Dict[str, Any]]:
     if not location_id:
         return _load_json_fallback(location_id)
 
-    from storage.db import load_forecast
+    from storage.sqlite import load_forecast
     result = load_forecast(location_id)
     if result is not None:
         return result
@@ -52,13 +52,17 @@ def load_cached_forecast(location_id: str = "") -> Optional[Dict[str, Any]]:
 
 
 def save_forecast(data: Dict[str, Any], location_id: str = "") -> None:
-    """Persist the forecast to SQLite (and write JSON as backup)."""
-    if location_id:
-        from storage.db import save_forecast_to_db
-        save_forecast_to_db(location_id, data)
+    """Persist the forecast to SQLite; JSON is fallback-only for resilience."""
+    if not location_id:
+        _save_json(data, location_id)
+        return
 
-    # Also write JSON as a backup / for any tools that read it directly
-    _save_json(data, location_id)
+    try:
+        from storage.sqlite import save_forecast_to_db
+        save_forecast_to_db(location_id, data)
+    except Exception as exc:
+        logger.warning("DB write failed for %s, writing JSON fallback: %s", location_id, exc)
+        _save_json(data, location_id)
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +101,7 @@ def _save_json(data: Dict[str, Any], location_id: str = "") -> None:
 def _migrate_json_to_db(location_id: str, data: Dict[str, Any]) -> None:
     """One-time migration: copy a JSON-cached forecast into the DB."""
     try:
-        from storage.db import save_forecast_to_db
+        from storage.sqlite import save_forecast_to_db
         save_forecast_to_db(location_id, data)
         logger.info("Migrated JSON forecast to DB for %s", location_id)
     except Exception as exc:

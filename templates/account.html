@@ -9,14 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta name="theme-color" content="#0e5f78">
-    <script>
-    (function() {
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
-    </script>
+    {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body>
     <header>
@@ -48,6 +41,14 @@
                 <div class="account-row">
                     <span class="account-label">Units</span>
                     <span class="account-value">{{ prefs.units }}</span>
+                </div>
+                <div class="account-row">
+                    <span class="account-label">Plan</span>
+                    <span class="account-value">{{ (account.tier or 'free')|capitalize }}{% if account.is_paid %} ✓{% endif %}</span>
+                </div>
+                <div class="account-row">
+                    <span class="account-label">Saved Locations</span>
+                    <span class="account-value">{{ saved_locations_count }} / {{ gates.max_locations }}</span>
                 </div>
                 {% if prefs.fishing_profile %}
                 <div class="account-row">

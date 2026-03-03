@@ -23,7 +23,8 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
-from storage.db import save_preferences
+from storage.sqlite import count_saved_locations, get_user_account, list_saved_locations, save_preferences
+from web.feature_gates import tier_config
 from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
@@ -77,6 +78,18 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
         forecast = personalize_forecast(forecast, profile, location)
 
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
+
+    # Feature gating by tier (internal scaffolding)
+    if g.user:
+        acct = get_user_account(g.user["id"]) or {"tier": "free"}
+        gates = tier_config(acct.get("tier", "free"))
+        if not gates.get("extended_outlook", False):
+            forecast.pop("outlook", None)
+            forecast.pop("best_day", None)
+        if not gates.get("alerts", False):
+            forecast.pop("alerts", None)
+        forecast["account_tier"] = acct.get("tier", "free")
+        forecast["feature_gates"] = gates
 
     return render_template("index.html", forecast=forecast, cached=cached_flag,
                            share_id=loc_id)
@@ -155,7 +168,25 @@ def setup_select(location_id: str) -> Any:
     session["location_id"] = location_id
     session.permanent = True
     if g.user:
-        save_preferences(g.user["id"], location_id=location_id)
+        uid = g.user["id"]
+        acct = get_user_account(uid) or {"tier": "free"}
+        gates = tier_config(acct.get("tier", "free"))
+        saved = set(list_saved_locations(uid))
+        max_locs = int(gates.get("max_locations", 1))
+        selecting_new = location_id not in saved
+        if selecting_new and count_saved_locations(uid) >= max_locs:
+            current_loc = get_session_location()
+            return render_template(
+                "setup.html",
+                results=None,
+                all_locations=all_locations_sorted(),
+                current_location=current_loc,
+                error=(
+                    f"Your {acct.get('tier', 'free')} tier allows {max_locs} saved "
+                    f"location{'s' if max_locs != 1 else ''}. Upgrade to add more."
+                ),
+            )
+        save_preferences(uid, location_id=location_id)
     return redirect(url_for("views.index"))
 
 

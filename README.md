@@ -139,6 +139,8 @@ Each location in the database has its own NWS zone, NOAA station, and NDBC buoy 
 
 The dashboard auto-refreshes its cache every 4 hours on page load. You can also click **Refresh Forecast** at any time.
 
+Account/tier scaffolding is built in: users have `free` or `paid` flags, with feature gates (saved logs, alerts, extended outlook, and max saved locations) enforced in backend logic.
+
 ## API endpoints
 
 | Endpoint | Method | Description |
@@ -147,7 +149,12 @@ The dashboard auto-refreshes its cache every 4 hours on page load. You can also 
 | `/setup` | GET | Location picker (zip search + browse) |
 | `/profile` | GET | Fishing profile setup |
 | `/f/<location_id>` | GET | Shareable forecast link for a specific location |
-| `/api/forecast` | GET | Current forecast as JSON |
+| `/api/forecast` | GET | Legacy forecast JSON (supports `location_id` and `force_refresh=true`) |
+| `/api/v1/forecast` | GET | Versioned forecast envelope (`ok/data/error/meta`) |
+| `/api/v1/profile` | GET/POST | Versioned profile/preferences API |
+| `/api/v1/log` | GET/POST | Versioned catch log + stats API |
+| `/api/v1/log/<entry_id>` | DELETE | Delete catch log entry |
+| `/api/openapi.json` | GET | OpenAPI 3.0 spec (also at `/api/v1/openapi.json`) |
 | `/api/refresh` | POST | Regenerate forecast and redirect to dashboard |
 
 ## Project structure
@@ -169,8 +176,9 @@ surf-pier-forecast/
     noaa.py               # NOAA CO-OPS water temp & tides
     nws.py                # NWS marine zone forecast parsing
   storage/
-    cache.py              # JSON file-based forecast caching
-    db.py                 # SQLite user accounts & preferences
+    cache.py              # DB-first forecast cache with JSON fallback
+    sqlite.py             # SQLite data-access layer (users/profiles/locations/forecasts/catch_log)
+    db.py                 # Backwards-compatible alias to sqlite.py
   web/
     auth.py               # Login, register, logout, account routes
     api.py                # JSON API routes (preferences, log, forecast)
@@ -193,7 +201,7 @@ surf-pier-forecast/
     test_forecast.py      # Conditions & seasonal data tests
     test_species.py       # Species scoring & ranking tests
   data/
-    forecast_*.json       # Cached forecasts (auto-generated)
+    forecast_*.json       # Legacy fallback cache files (auto-generated)
     app.db                # SQLite database (auto-generated)
 ```
 
@@ -215,6 +223,9 @@ sudo systemctl disable surf-forecast
 # View live logs
 sudo journalctl -u surf-forecast -f
 
-# Force a fresh forecast (delete cache)
-rm data/forecast.json && sudo systemctl restart surf-forecast
+# Run SQLite schema + migration
+python migrate_sqlite.py
+
+# Force a fresh forecast (clear DB cache for one location using sqlite3)
+sqlite3 data/app.db "DELETE FROM forecasts WHERE location_id = 'wrightsville-beach-nc';"
 ```

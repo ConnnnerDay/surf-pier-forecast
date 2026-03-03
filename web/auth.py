@@ -15,12 +15,15 @@ from flask import (
 )
 
 from locations import get_location
-from storage.db import (
+from storage.sqlite import (
     authenticate_user,
+    count_saved_locations,
     create_user,
     get_preferences,
+    get_user_account,
     save_preferences,
 )
+from web.feature_gates import tier_config
 
 bp = Blueprint("auth", __name__)
 
@@ -30,15 +33,16 @@ def login() -> Any:
     """Log-in page and form handler."""
     if request.method == "GET":
         return render_template("login.html", error=None)
-    username = request.form.get("username", "").strip()
+    identifier = request.form.get("identifier", request.form.get("username", "")).strip()
     password = request.form.get("password", "")
-    if not username or not password:
+    if not identifier or not password:
         return render_template("login.html", error="Please enter both fields.",
-                               username=username)
-    user = authenticate_user(username, password)
+                               username=identifier)
+    user = authenticate_user(identifier, password)
     if user is None:
-        return render_template("login.html", error="Invalid username or password.",
-                               username=username)
+        return render_template("login.html", error="Invalid email/username or password.",
+                               username=identifier)
+    session.clear()
     session["user_id"] = user["id"]
     session.permanent = True
     # Restore saved location preference
@@ -54,27 +58,33 @@ def register() -> Any:
     if request.method == "GET":
         return render_template("register.html", error=None)
     username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm", "")
-    if not username or not password:
+    if not username or not email or not password:
         return render_template("register.html", error="Please fill in all fields.",
-                               username=username)
+                               username=username, email=email)
     if len(username) < 2 or len(username) > 30:
         return render_template("register.html",
                                error="Username must be 2-30 characters.",
-                               username=username)
+                               username=username, email=email)
     if len(password) < 4:
         return render_template("register.html",
                                error="Password must be at least 4 characters.",
-                               username=username)
+                               username=username, email=email)
     if password != confirm:
         return render_template("register.html", error="Passwords do not match.",
-                               username=username)
-    user_id = create_user(username, password)
+                               username=username, email=email)
+    if "@" not in email or "." not in email.split("@")[-1]:
+        return render_template("register.html", error="Please enter a valid email.",
+                               username=username, email=email)
+
+    user_id = create_user(username, password, email=email)
     if user_id is None:
         return render_template("register.html",
                                error="That username is already taken.",
-                               username=username)
+                               username=username, email=email)
+    session.clear()
     session["user_id"] = user_id
     session.permanent = True
     # Carry over current location if one is set
@@ -87,7 +97,7 @@ def register() -> Any:
 @bp.route("/logout", methods=["POST"])
 def logout() -> Any:
     """Log out the current user."""
-    session.pop("user_id", None)
+    session.clear()
     return redirect(url_for("views.index"))
 
 
@@ -100,4 +110,6 @@ def account() -> str:
     loc = None
     if prefs.get("location_id"):
         loc = get_location(prefs["location_id"])
-    return render_template("account.html", prefs=prefs, saved_location=loc)
+    acct = get_user_account(g.user["id"]) or {"tier": "free", "is_paid": False}
+    gates = tier_config(acct.get("tier", "free"))
+    return render_template("account.html", prefs=prefs, saved_location=loc, account=acct, gates=gates, saved_locations_count=count_saved_locations(g.user["id"]))

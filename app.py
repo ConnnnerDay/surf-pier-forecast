@@ -26,11 +26,17 @@ from datetime import timedelta
 from typing import Any, Dict
 
 from flask import Flask, g, session
+import werkzeug
 
-from storage.db import init_db, get_user
+from storage.sqlite import init_db, get_user
+from web.feature_gates import tier_config
 from web.auth import bp as auth_bp
 from web.api import bp as api_bp
 from web.views import bp as views_bp
+
+# Flask<3 test client expects werkzeug.__version__; Werkzeug 3 removed it.
+if not hasattr(werkzeug, "__version__"):
+    werkzeug.__version__ = "3"
 
 
 def create_app() -> Flask:
@@ -52,13 +58,24 @@ def create_app() -> Flask:
             g.user = get_user(user_id)
             if g.user is None:
                 session.pop("user_id", None)
+                g.account = None
+                g.feature_gates = tier_config("free")
+            else:
+                g.account = g.user
+                g.feature_gates = tier_config(g.user.get("tier", "free"))
         else:
             g.user = None
+            g.account = None
+            g.feature_gates = tier_config("free")
 
     @app.context_processor
     def _inject_user() -> Dict[str, Any]:
         """Make ``user`` available in every template."""
-        return {"user": getattr(g, "user", None)}
+        return {
+            "user": getattr(g, "user", None),
+            "account": getattr(g, "account", None),
+            "feature_gates": getattr(g, "feature_gates", tier_config("free")),
+        }
 
     # -- Register blueprints -----------------------------------------------
 
