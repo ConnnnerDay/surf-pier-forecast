@@ -140,6 +140,8 @@
                 statusEl.className = 'log-upload-status';
                 var fd = new FormData();
                 fd.append(input.name, input.files[0]);
+                var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
+                fd.append('csrf_token', csrfToken);
                 fetch('/api/v1/log/' + entryId + '/photos', { method: 'POST', body: fd })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
