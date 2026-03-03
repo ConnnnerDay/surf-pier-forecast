@@ -1,6 +1,10 @@
 """Tests for domain.forecast helper functions."""
 
 import pytest
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from services.astro import compute_solunar_times
 
 from domain.forecast import (
     _seasonal_averages,
@@ -37,23 +41,28 @@ class TestSeasonalAverages:
 
 
 class TestClassifyConditions:
-    def test_fishable(self):
-        result = classify_conditions((5, 10), (1, 2))
-        assert result == "Fishable"
+    def test_excellent_conditions(self):
+        result = classify_conditions((4, 8), (1, 1.5), wind_dir="NW", water_temp_f=68)
+        assert result in {"Excellent", "Good"}
 
-    def test_marginal_moderate_wind(self):
-        # Wind max 18 (<=20) and wave max 4 (<=5) => Marginal
-        result = classify_conditions((10, 18), (2, 4))
-        assert result == "Marginal"
+    def test_fair_to_challenging_moderate_wind(self):
+        result = classify_conditions((10, 18), (2, 4), wind_dir="E", water_temp_f=52)
+        assert result in {"Fair", "Challenging", "Good"}
 
-    def test_not_fishable_extreme(self):
-        result = classify_conditions((25, 40), (6, 10))
-        assert result == "Not worth it"
+    def test_poor_extreme(self):
+        result = classify_conditions((25, 40), (6, 10), wind_dir="NE", water_temp_f=44)
+        assert result == "Poor"
 
     def test_none_inputs(self):
         """Should handle None gracefully."""
         result = classify_conditions(None, None)
         assert isinstance(result, str)
+
+    def test_west_coast_offshore_east_wind_bonus(self):
+        good = classify_conditions((6, 10), (1, 2), wind_dir="E", coast="west", water_temp_f=65)
+        bad = classify_conditions((6, 10), (1, 2), wind_dir="W", coast="west", water_temp_f=65)
+        order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
+        assert order[good] >= order[bad]
 
 
 class TestMonthlyData:
@@ -71,3 +80,12 @@ class TestMonthlyData:
         assert len(MONTHLY_AVG_WIND_DIR) == 12
         for month in range(1, 13):
             assert month in MONTHLY_AVG_WIND_DIR
+
+
+class TestSolunar:
+    def test_solunar_has_illumination_and_four_tier_rating(self):
+        dt = datetime(2026, 2, 14, 6, 0, tzinfo=ZoneInfo("America/New_York"))
+        sol = compute_solunar_times(dt, 34.2, -77.8, "America/New_York")
+        assert "illumination_pct" in sol
+        assert 0 <= sol["illumination_pct"] <= 100
+        assert sol["rating"] in {"Excellent", "Good", "Fair", "Poor"}
