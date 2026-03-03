@@ -46,6 +46,17 @@ CREATE TABLE IF NOT EXISTS forecasts (
 CREATE INDEX IF NOT EXISTS idx_forecasts_location_time
 ON forecasts(location_id, generated_at DESC, id DESC);
 
+CREATE TABLE IF NOT EXISTS forecast_cache (
+    user_id       INTEGER NOT NULL DEFAULT 0,
+    location_id   TEXT NOT NULL,
+    forecast_json TEXT NOT NULL,
+    generated_at  TEXT NOT NULL,
+    updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, location_id)
+);
+CREATE INDEX IF NOT EXISTS idx_forecast_cache_updated
+ON forecast_cache(updated_at DESC);
+
 CREATE TABLE IF NOT EXISTS catch_log (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -356,6 +367,56 @@ def save_forecast_to_db(location_id: str, data: Dict[str, Any]) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def save_forecast_cache(user_id: int, location_id: str, data: Dict[str, Any]) -> None:
+    if not location_id:
+        return
+    generated_at = data.get("generated_at") or datetime.utcnow().isoformat()
+    conn = get_db()
+    conn.execute(
+        """
+        INSERT INTO forecast_cache (user_id, location_id, forecast_json, generated_at, updated_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(user_id, location_id)
+        DO UPDATE SET
+            forecast_json = excluded.forecast_json,
+            generated_at = excluded.generated_at,
+            updated_at = datetime('now')
+        """,
+        (user_id, location_id, json.dumps(data), generated_at),
+    )
+    conn.commit()
+    conn.close()
+
+
+def load_forecast_cache(user_id: int, location_id: str) -> Optional[Dict[str, Any]]:
+    if not location_id:
+        return None
+    conn = get_db()
+    row = conn.execute(
+        "SELECT forecast_json FROM forecast_cache WHERE user_id = ? AND location_id = ?",
+        (user_id, location_id),
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    try:
+        return json.loads(row["forecast_json"])
+    except Exception:
+        return None
+
+
+def delete_forecast_cache(user_id: int, location_id: str) -> bool:
+    conn = get_db()
+    cur = conn.execute(
+        "DELETE FROM forecast_cache WHERE user_id = ? AND location_id = ?",
+        (user_id, location_id),
+    )
+    conn.commit()
+    deleted = cur.rowcount > 0
+    conn.close()
+    return deleted
 
 
 def load_forecast(location_id: str) -> Optional[Dict[str, Any]]:
