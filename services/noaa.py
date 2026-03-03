@@ -139,6 +139,7 @@ def fetch_tide_predictions(
             raw_time = p.get("t", "")
             height = p.get("v", "0")
             tide_type = "High" if p.get("type") == "H" else "Low"
+            dt = None
             try:
                 dt = datetime.strptime(raw_time, "%Y-%m-%d %H:%M")
                 dt = dt.replace(tzinfo=tz)
