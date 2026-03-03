@@ -56,6 +56,7 @@
                 <a href="{{ url_for('auth.account') }}">Account</a>
                 <span class="user-nav-sep">|</span>
                 <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit" style="background:none;border:none;color:rgba(255,255,255,0.85);cursor:pointer;font:inherit;font-weight:500;font-size:0.82rem;padding:0">Log out</button>
                 </form>
                 {% else %}
@@ -926,6 +927,7 @@
 
         <section class="refresh">
             <form method="post" action="{{ url_for('api.refresh') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <button type="submit">Refresh Forecast</button>
             </form>
             <p class="timestamp">

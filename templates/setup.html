@@ -52,6 +52,7 @@
             <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
 
             <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="zip-input-group">
                     <input type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
                            value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required

@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT UNIQUE COLLATE NOCASE,
     password_hash TEXT,
+    email_confirmed INTEGER NOT NULL DEFAULT 0,
+    password_reset_token TEXT,
+    password_reset_sent_at TEXT,
+    default_location_id TEXT,
     is_anonymous  INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -26,6 +30,9 @@ CREATE TABLE IF NOT EXISTS profiles (
     fishing_profile TEXT,
     theme          TEXT DEFAULT 'light',
     units          TEXT DEFAULT 'F',
+    wind_units     TEXT DEFAULT 'knots',
+    temp_units     TEXT DEFAULT 'F',
+    notification_prefs TEXT DEFAULT '{}',
     favorites      TEXT DEFAULT '[]',
     updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -102,6 +109,24 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             conn.execute("ALTER TABLE forecasts RENAME TO forecasts_legacy")
 
     conn.executescript(SCHEMA)
+
+    user_cols = set(_column_names(conn, "users"))
+    if "email_confirmed" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN email_confirmed INTEGER NOT NULL DEFAULT 0")
+    if "password_reset_token" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN password_reset_token TEXT")
+    if "password_reset_sent_at" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN password_reset_sent_at TEXT")
+    if "default_location_id" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN default_location_id TEXT")
+
+    profile_cols = set(_column_names(conn, "profiles"))
+    if "wind_units" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN wind_units TEXT DEFAULT 'knots'")
+    if "temp_units" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN temp_units TEXT DEFAULT 'F'")
+    if "notification_prefs" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN notification_prefs TEXT DEFAULT '{}'")
 
     # Legacy user preferences -> profiles + locations
     if _table_exists(conn, "user_preferences"):
@@ -186,11 +211,19 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
 
 def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    row = conn.execute("SELECT id, username FROM users WHERE id = ?", (user_id,)).fetchone()
+    row = conn.execute(
+        "SELECT id, username, email_confirmed, default_location_id FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
     conn.close()
     if not row:
         return None
-    return {"id": row["id"], "username": row["username"]}
+    return {
+        "id": row["id"],
+        "username": row["username"],
+        "email_confirmed": bool(row["email_confirmed"]),
+        "default_location_id": row["default_location_id"],
+    }
 
 
 # Profiles + locations ------------------------------------------------------
@@ -199,7 +232,8 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
     conn = get_db()
     row = conn.execute(
         """
-        SELECT l.location_id, p.theme, p.units, p.fishing_profile, p.favorites
+        SELECT l.location_id, p.theme, p.units, p.wind_units, p.temp_units,
+               p.notification_prefs, p.fishing_profile, p.favorites
         FROM profiles p
         LEFT JOIN locations l ON l.user_id = p.user_id
         WHERE p.user_id = ?
@@ -224,10 +258,20 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         except Exception:
             favorites = []
 
+    notification_prefs: Dict[str, Any] = {}
+    if row["notification_prefs"]:
+        try:
+            notification_prefs = json.loads(row["notification_prefs"])
+        except Exception:
+            notification_prefs = {}
+
     return {
         "location_id": row["location_id"],
         "theme": row["theme"] or "light",
         "units": row["units"] or "F",
+        "wind_units": row["wind_units"] or "knots",
+        "temp_units": row["temp_units"] or "F",
+        "notification_prefs": notification_prefs,
         "fishing_profile": profile,
         "favorites": favorites,
     }
@@ -250,6 +294,9 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
         map_fields = {
             "theme": "theme",
             "units": "units",
+            "wind_units": "wind_units",
+            "temp_units": "temp_units",
+            "notification_prefs": "notification_prefs",
             "fishing_profile": "fishing_profile",
             "favorites": "favorites",
         }
@@ -257,10 +304,16 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
             if key not in kwargs:
                 continue
             val = kwargs[key]
-            if key in {"fishing_profile", "favorites"}:
+            if key in {"fishing_profile", "favorites", "notification_prefs"}:
                 val = json.dumps(val) if val is not None else None
             profile_sets.append(f"{col} = ?")
             vals.append(val)
+
+        if "default_location_id" in kwargs:
+            conn.execute(
+                "UPDATE users SET default_location_id = ? WHERE id = ?",
+                (kwargs.get("default_location_id"), user_id),
+            )
 
         if profile_sets:
             profile_sets.append("updated_at = datetime('now')")
@@ -352,6 +405,27 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
         "species_breakdown": species_breakdown,
         "monthly_counts": monthly_counts,
     }
+
+
+def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, location_id, species, size, notes, caught_at FROM catch_log "
+        "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
+        (user_id, limit),
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "id": r["id"],
+            "location_id": r["location_id"],
+            "species": r["species"],
+            "size": r["size"],
+            "notes": r["notes"],
+            "date": r["caught_at"],
+        }
+        for r in rows
+    ]
 
 
 # Forecast cache -------------------------------------------------------------

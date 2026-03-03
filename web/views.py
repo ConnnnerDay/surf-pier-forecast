@@ -23,7 +23,7 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
-from storage.sqlite import save_preferences
+from storage.sqlite import get_preferences, save_preferences
 from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
@@ -156,14 +156,15 @@ def setup_select(location_id: str) -> Any:
     session["location_id"] = location_id
     session.permanent = True
     if g.user:
-        save_preferences(g.user["id"], location_id=location_id)
+        save_preferences(g.user["id"], location_id=location_id, default_location_id=location_id)
     return redirect(url_for("views.index"))
 
 
 @bp.route("/profile")
 def profile() -> str:
     """Show the fishing profile setup page."""
-    return render_template("profile.html")
+    prefs = get_preferences(g.user["id"]) if g.user else {}
+    return render_template("profile.html", prefs=prefs)
 
 
 @bp.route("/f/<location_id>")

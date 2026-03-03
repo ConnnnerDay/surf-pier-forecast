@@ -30,6 +30,7 @@
             {% endif %}
 
             <form method="post" action="{{ url_for('auth.register') }}" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="auth-field">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" placeholder="Choose a username"
@@ -39,13 +40,14 @@
                 <div class="auth-field">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Choose a password"
-                           class="auth-input" minlength="4" autocomplete="new-password" required>
+                           class="auth-input" minlength="8" autocomplete="new-password" required>
                 </div>
                 <div class="auth-field">
                     <label for="confirm">Confirm Password</label>
                     <input type="password" id="confirm" name="confirm" placeholder="Confirm your password"
-                           class="auth-input" minlength="4" autocomplete="new-password" required>
+                           class="auth-input" minlength="8" autocomplete="new-password" required>
                 </div>
+                <p class="section-sub" style="margin-top:-0.2rem;">Use 8+ chars with upper/lowercase and a number.</p>
                 <button type="submit" class="auth-btn">Create Account</button>
             </form>
             <script>
