@@ -50,7 +50,8 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
 def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None) -> str:
     """Load (or refresh) the forecast for a location and render the dashboard."""
     loc_id = location["id"]
-    forecast = load_cached_forecast(loc_id)
+    user_id = g.user["id"] if g.user else None
+    forecast = load_cached_forecast(loc_id, user_id=user_id)
 
     needs_refresh = forecast is None
     if forecast and not needs_refresh:
@@ -61,7 +62,7 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
     if needs_refresh:
         try:
             forecast = generate_forecast(location)
-            save_forecast(forecast, loc_id)
+            save_forecast(forecast, loc_id, user_id=user_id)
             cached_flag = None
         except Exception:
             if forecast is None:

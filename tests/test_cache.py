@@ -82,12 +82,27 @@ class TestSaveAndLoad:
         def _boom(*_args, **_kwargs):
             raise RuntimeError("db down")
 
-        monkeypatch.setattr("storage.sqlite.save_forecast_to_db", _boom)
+        monkeypatch.setattr("storage.sqlite.save_forecast_cache", _boom)
         save_forecast(data, "backup-test")
         json_path = isolated_storage / "forecast_backup-test.json"
         assert json_path.exists()
         with open(json_path) as f:
             assert json.load(f) == data
+
+
+    def test_cache_is_scoped_by_user_and_location(self):
+        data_u1 = {"generated_at": "2026-03-01T12:00:00", "owner": 1}
+        data_u2 = {"generated_at": "2026-03-01T12:00:00", "owner": 2}
+        save_forecast(data_u1, "loc1", user_id=1)
+        save_forecast(data_u2, "loc1", user_id=2)
+
+        assert load_cached_forecast("loc1", user_id=1)["owner"] == 1
+        assert load_cached_forecast("loc1", user_id=2)["owner"] == 2
+
+    def test_stale_cache_returns_none(self):
+        old = datetime.now(ZoneInfo("America/New_York")) - timedelta(hours=CACHE_MAX_AGE_HOURS + 2)
+        save_forecast({"generated_at": old.isoformat()}, "stale-loc", user_id=9)
+        assert load_cached_forecast("stale-loc", user_id=9) is None
 
 
 class TestForecastAge:
