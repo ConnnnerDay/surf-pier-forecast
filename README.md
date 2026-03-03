@@ -147,7 +147,12 @@ The dashboard auto-refreshes its cache every 4 hours on page load. You can also 
 | `/setup` | GET | Location picker (zip search + browse) |
 | `/profile` | GET | Fishing profile setup |
 | `/f/<location_id>` | GET | Shareable forecast link for a specific location |
-| `/api/forecast` | GET | Current forecast as JSON |
+| `/api/forecast` | GET | Legacy forecast JSON (supports `location_id` and `force_refresh=true`) |
+| `/api/v1/forecast` | GET | Versioned forecast envelope (`ok/data/error/meta`) |
+| `/api/v1/profile` | GET/POST | Versioned profile/preferences API |
+| `/api/v1/log` | GET/POST | Versioned catch log + stats API |
+| `/api/v1/log/<entry_id>` | DELETE | Delete catch log entry |
+| `/api/openapi.json` | GET | OpenAPI 3.0 spec (also at `/api/v1/openapi.json`) |
 | `/api/refresh` | POST | Regenerate forecast and redirect to dashboard |
 
 ## Project structure

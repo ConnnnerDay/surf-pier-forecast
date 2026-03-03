@@ -26,11 +26,16 @@ from datetime import timedelta
 from typing import Any, Dict
 
 from flask import Flask, g, session
+import werkzeug
 
 from storage.sqlite import init_db, get_user
 from web.auth import bp as auth_bp
 from web.api import bp as api_bp
 from web.views import bp as views_bp
+
+# Flask<3 test client expects werkzeug.__version__; Werkzeug 3 removed it.
+if not hasattr(werkzeug, "__version__"):
+    werkzeug.__version__ = "3"
 
 
 def create_app() -> Flask:
