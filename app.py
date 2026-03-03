@@ -22,10 +22,11 @@ No API keys required.  Data cached per-location to ``data/``.
 from __future__ import annotations
 
 import os
+import secrets
 from datetime import timedelta
 from typing import Any, Dict
 
-from flask import Flask, g, session
+from flask import Flask, abort, g, request, session
 import werkzeug
 
 from storage.sqlite import init_db, get_user
@@ -60,10 +61,34 @@ def create_app() -> Flask:
         else:
             g.user = None
 
+    @app.before_request
+    def _csrf_protect() -> None:
+        """Require CSRF token for browser form POST requests."""
+        if request.method != "POST":
+            return
+        if request.is_json:
+            return
+        if request.blueprint not in {"auth", "views", "api"}:
+            return
+        sent = request.form.get("csrf_token", "")
+        expected = session.get("csrf_token", "")
+        if not sent or not expected or sent != expected:
+            abort(400)
+
+    def _get_csrf_token() -> str:
+        token = session.get("csrf_token")
+        if not token:
+            token = secrets.token_urlsafe(24)
+            session["csrf_token"] = token
+        return token
+
     @app.context_processor
     def _inject_user() -> Dict[str, Any]:
         """Make ``user`` available in every template."""
-        return {"user": getattr(g, "user", None)}
+        return {
+            "user": getattr(g, "user", None),
+            "csrf_token": _get_csrf_token(),
+        }
 
     # -- Register blueprints -----------------------------------------------
 

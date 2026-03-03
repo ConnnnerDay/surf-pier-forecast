@@ -23,7 +23,7 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
-from storage.sqlite import save_preferences
+from storage.sqlite import get_preferences, save_preferences
 from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
@@ -50,7 +50,8 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
 def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None) -> str:
     """Load (or refresh) the forecast for a location and render the dashboard."""
     loc_id = location["id"]
-    forecast = load_cached_forecast(loc_id)
+    user_id = g.user["id"] if g.user else None
+    forecast = load_cached_forecast(loc_id, user_id=user_id)
 
     needs_refresh = forecast is None
     if forecast and not needs_refresh:
@@ -61,7 +62,7 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
     if needs_refresh:
         try:
             forecast = generate_forecast(location)
-            save_forecast(forecast, loc_id)
+            save_forecast(forecast, loc_id, user_id=user_id)
             cached_flag = None
         except Exception:
             if forecast is None:
@@ -155,14 +156,15 @@ def setup_select(location_id: str) -> Any:
     session["location_id"] = location_id
     session.permanent = True
     if g.user:
-        save_preferences(g.user["id"], location_id=location_id)
+        save_preferences(g.user["id"], location_id=location_id, default_location_id=location_id)
     return redirect(url_for("views.index"))
 
 
 @bp.route("/profile")
 def profile() -> str:
     """Show the fishing profile setup page."""
-    return render_template("profile.html")
+    prefs = get_preferences(g.user["id"]) if g.user else {}
+    return render_template("profile.html", prefs=prefs)
 
 
 @bp.route("/f/<location_id>")

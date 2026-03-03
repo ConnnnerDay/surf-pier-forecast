@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#0e5f78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -55,6 +56,7 @@
                 <a href="{{ url_for('auth.account') }}">Account</a>
                 <span class="user-nav-sep">|</span>
                 <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit" style="background:none;border:none;color:rgba(255,255,255,0.85);cursor:pointer;font:inherit;font-weight:500;font-size:0.82rem;padding:0">Log out</button>
                 </form>
                 {% else %}
@@ -78,6 +80,8 @@
             {% endif %}
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
+
 
     <main id="main-content" role="main">
         <!-- Weather Alerts -->
@@ -427,34 +431,9 @@
                 {% endfor %}
             </div>
 
-            {% if forecast.tide_chart %}
-            {% set chart = forecast.tide_chart|tojson|safe %}
-            <div class="tide-chart-wrap" id="tide-chart-wrap">
-                <div class="tide-chart" id="tide-chart"></div>
+            <div class="chart-panel" aria-label="Tide trend chart">
+                <canvas id="tide-chart-canvas" role="img" aria-label="Interactive tide height chart for today"></canvas>
             </div>
-            <script>
-            (function() {
-                var data = JSON.parse({{ chart }});
-                var svg = '<svg viewBox="' + data.viewBox + '" preserveAspectRatio="xMidYMid meet" class="tide-chart-svg">';
-                svg += '<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">';
-                svg += '<stop offset="0%" stop-color="var(--ocean)" stop-opacity="0.15"/>';
-                svg += '<stop offset="100%" stop-color="var(--ocean)" stop-opacity="0.02"/>';
-                svg += '</linearGradient></defs>';
-                svg += '<path d="' + data.fill_path + '" fill="url(#tg)"/>';
-                svg += '<path d="' + data.path + '" fill="none" stroke="var(--ocean)" stroke-width="2.5" stroke-linecap="round"/>';
-                data.markers.forEach(function(m) {
-                    var col = m.type === 'High' ? 'var(--ocean)' : 'var(--sea-green)';
-                    svg += '<circle cx="' + m.cx + '" cy="' + m.cy + '" r="5" fill="' + col + '" stroke="#fff" stroke-width="2"/>';
-                    var anchor = parseFloat(m.cx) > data.width / 2 ? 'end' : 'start';
-                    var dx = anchor === 'end' ? -8 : 8;
-                    svg += '<text x="' + (parseFloat(m.cx) + dx) + '" y="' + (parseFloat(m.cy) - 10) + '" text-anchor="' + anchor + '" class="tide-chart-label">' + m.time + '</text>';
-                    svg += '<text x="' + (parseFloat(m.cx) + dx) + '" y="' + (parseFloat(m.cy) - 22) + '" text-anchor="' + anchor + '" class="tide-chart-height">' + m.height + ' ft</text>';
-                });
-                svg += '</svg>';
-                document.getElementById('tide-chart').innerHTML = svg;
-            })();
-            </script>
-            {% endif %}
 
         </section>
         {% endif %}
@@ -498,6 +477,9 @@
                 </div>
             </div>
 
+            <div class="chart-panel" aria-label="Solunar activity chart">
+                <canvas id="solunar-chart-canvas" role="img" aria-label="Interactive solunar activity timeline"></canvas>
+            </div>
             <div class="solunar-grid">
                 <!-- Major periods -->
                 {% for period in forecast.solunar.major_periods %}
@@ -769,7 +751,7 @@
         {% endif %}
 
         <!-- Fishing Log -->
-        <section class="fishlog-section">
+        <section class="fishlog-section" id="fish-log">
             <h2>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -792,7 +774,7 @@
                 <div class="fishlog-row">
                     <label for="log-notes" class="sr-only">Notes</label>
                     <input type="text" id="log-notes" placeholder="Notes (bait used, location, etc.)" class="fishlog-input" maxlength="200" autocomplete="off">
-                    <button class="fishlog-add-btn" onclick="addLogEntry()" aria-label="Add catch entry">
+                    <button type="button" class="fishlog-add-btn" onclick="addLogEntry()" aria-label="Add catch entry">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add
                     </button>
@@ -823,7 +805,7 @@
                         <span class="catch-stat-label">Last Catch</span>
                     </div>
                 </div>
-                <button class="fishlog-export-btn" onclick="exportLogCSV()" title="Download catches as CSV">
+                <button type="button" class="fishlog-export-btn" onclick="exportLogCSV()" title="Download catches as CSV">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
@@ -917,21 +899,21 @@
         <section class="share-section">
             <h2>Share This Forecast</h2>
             <div class="share-buttons">
-                <button class="share-btn share-btn--link" onclick="shareLink()" title="Copy shareable link">
+                <button type="button" class="share-btn share-btn--link" onclick="shareLink()" title="Copy shareable link">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                     </svg>
                     <span>Copy Link</span>
                 </button>
-                <button class="share-btn share-btn--text" onclick="shareText()" title="Copy forecast summary">
+                <button type="button" class="share-btn share-btn--text" onclick="shareText()" title="Copy forecast summary">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2"/>
                         <path d="M7 7h10M7 12h10M7 17h6"/>
                     </svg>
                     <span>Copy Summary</span>
                 </button>
-                <button class="share-btn share-btn--print" onclick="window.print()" title="Print forecast">
+                <button type="button" class="share-btn share-btn--print" onclick="window.print()" title="Print forecast">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6 9 6 2 18 2 18 9"/>
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -945,6 +927,7 @@
 
         <section class="refresh">
             <form method="post" action="{{ url_for('api.refresh') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <button type="submit">Refresh Forecast</button>
             </form>
             <p class="timestamp">
@@ -1507,6 +1490,76 @@
     }
 
     syncLogToServer();
+
+    function parseTimeLabelToMinutes(label) {
+        if (!label) return 0;
+        var m = label.match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
+        if (!m) return 0;
+        var h = parseInt(m[1], 10) % 12;
+        var mins = parseInt(m[2], 10);
+        var mer = m[3].toUpperCase();
+        if (mer === 'PM') h += 12;
+        return h * 60 + mins;
+    }
+
+    function renderInteractiveCharts() {
+        if (typeof Chart === 'undefined') return;
+
+        var tideCanvas = document.getElementById('tide-chart-canvas');
+        var tideData = {{ (forecast.tides or [])|tojson }};
+        if (tideCanvas && tideData.length) {
+            new Chart(tideCanvas, {
+                type: 'line',
+                data: {
+                    labels: tideData.map(function(t) { return t.time; }),
+                    datasets: [{
+                        label: 'Tide height (ft)',
+                        data: tideData.map(function(t) { return t.height_ft; }),
+                        borderColor: '#0b4f6c',
+                        backgroundColor: 'rgba(11,79,108,0.18)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { title: { display: true, text: 'Feet' } } }
+                }
+            });
+        }
+
+        var solunarCanvas = document.getElementById('solunar-chart-canvas');
+        var solunar = {{ (forecast.solunar or {})|tojson }};
+        if (solunarCanvas && solunar && (solunar.major_periods || solunar.minor_periods)) {
+            var allPeriods = [];
+            (solunar.major_periods || []).forEach(function(p) { allPeriods.push({label: 'Major', start: p.start, end: p.end, color: '#d4920b'}); });
+            (solunar.minor_periods || []).forEach(function(p) { allPeriods.push({label: 'Minor', start: p.start, end: p.end, color: '#1a8a5c'}); });
+            allPeriods.sort(function(a,b){return parseTimeLabelToMinutes(a.start)-parseTimeLabelToMinutes(b.start);});
+            new Chart(solunarCanvas, {
+                type: 'bar',
+                data: {
+                    labels: allPeriods.map(function(p){ return p.label + ' ' + p.start; }),
+                    datasets: [{
+                        label: 'Minutes of activity window',
+                        data: allPeriods.map(function(p){ return Math.max(0, parseTimeLabelToMinutes(p.end)-parseTimeLabelToMinutes(p.start)); }),
+                        backgroundColor: allPeriods.map(function(p){ return p.color; })
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { title: { display: true, text: 'Minutes' } } }
+                }
+            });
+        }
+    }
+
+    renderInteractiveCharts();
+
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {

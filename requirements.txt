@@ -1,4 +1,7 @@
+# Runtime dependencies
+Flask>=2.3,<3.0
+requests>=2.31,<3.0
+Werkzeug>=2.3,<3.1
 
-Flask==2.3.2
-requests==2.31.0
-Werkzeug>=2.3.0
+# Optional production server (recommended outside development)
+gunicorn>=21.2,<22.0

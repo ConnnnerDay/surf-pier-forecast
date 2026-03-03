@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -142,6 +143,140 @@ def get_marine_conditions(
         wind_dir = avg_dir
 
     return wind_range, wave_range, wind_dir
+
+
+class ExternalDataService:
+    """Base service with consistent retries and logging for upstream calls."""
+
+    def __init__(self, retries: int = 2, retry_delay_s: float = 0.15):
+        self.retries = retries
+        self.retry_delay_s = retry_delay_s
+
+    def _run_with_retries(self, name: str, func: Any, default: Any = None) -> Any:
+        for attempt in range(1, self.retries + 2):
+            try:
+                return func()
+            except Exception as exc:
+                logger.debug("%s failed on attempt %s: %s", name, attempt, exc)
+                if attempt >= self.retries + 1:
+                    return default
+                time.sleep(self.retry_delay_s)
+
+
+class MarineForecastService(ExternalDataService):
+    def get_marine_forecast(
+        self,
+        month: int,
+        location: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+        return self._run_with_retries(
+            "marine forecast",
+            lambda: get_marine_conditions(month, location),
+            default=_seasonal_averages(month),
+        )
+
+
+class TidePredictionService(ExternalDataService):
+    def get_tide_predictions(
+        self,
+        now: datetime,
+        location: Optional[Dict[str, Any]] = None,
+        tz_name: str = "America/New_York",
+    ) -> Dict[str, Any]:
+        coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+        tides = self._run_with_retries(
+            "tide predictions",
+            lambda: fetch_tide_predictions(coops_id, tz_name),
+            default=[],
+        ) or []
+        if not tides:
+            return {}
+
+        today_date_str = now.strftime("%Y%m%d")
+        today_tides = [t for t in tides if t.get("date_str") == today_date_str]
+        result: Dict[str, Any] = {"tides": today_tides}
+        chart_json = build_tide_chart_svg(today_tides)
+        if chart_json:
+            result["tide_chart"] = chart_json
+
+        current_hour = now.hour + now.minute / 60
+        tide_state = ""
+        for i in range(len(tides) - 1):
+            t_now = tides[i].get("hour", 0)
+            t_next = tides[i + 1].get("hour", 24)
+            if t_now <= current_hour < t_next:
+                tide_state = "Rising" if tides[i + 1]["type"] == "High" else "Falling"
+                break
+        if not tide_state and tides:
+            if current_hour < tides[0].get("hour", 12):
+                tide_state = "Falling" if tides[0]["type"] == "Low" else "Rising"
+            else:
+                tide_state = "Falling" if tides[-1]["type"] == "High" else "Rising"
+        if tide_state:
+            result["tide_state"] = tide_state
+        return result
+
+
+class BuoyDataService(ExternalDataService):
+    def get_barometric_pressure(self, location: Optional[Dict[str, Any]] = None) -> Optional[float]:
+        return self._run_with_retries(
+            "barometric pressure",
+            lambda: fetch_barometric_pressure(location),
+            default=None,
+        )
+
+
+class WeatherDataService(ExternalDataService):
+    def get_weather_alerts(self, lat: float, lng: float) -> List[Dict[str, Any]]:
+        return self._run_with_retries(
+            "weather alerts",
+            lambda: fetch_weather_alerts(lat, lng),
+            default=[],
+        ) or []
+
+    def get_current_weather(self, lat: float, lng: float) -> Optional[Dict[str, Any]]:
+        return self._run_with_retries(
+            "current weather",
+            lambda: fetch_current_weather(lat, lng),
+            default=None,
+        )
+
+
+class AstronomyService(ExternalDataService):
+    def get_sun_times(
+        self,
+        now: datetime,
+        lat: float,
+        lng: float,
+        tz_name: str,
+    ) -> Tuple[Optional[datetime], Optional[datetime], str]:
+        values = self._run_with_retries(
+            "sun times",
+            lambda: _sun_times(now, lat, lng, tz_name),
+            default=(None, None),
+        )
+        sunrise, sunset = values
+        if sunrise and sunset:
+            return sunrise, sunset, f"{sunrise.strftime('%-I:%M %p')} / {sunset.strftime('%-I:%M %p')}"
+        return None, None, "Unavailable"
+
+    def get_solunar_times(self, now: datetime, lat: float, lng: float, tz_name: str) -> Dict[str, Any]:
+        return self._run_with_retries(
+            "solunar",
+            lambda: compute_solunar_times(now, lat, lng, tz_name),
+            default={},
+        ) or {}
+
+
+class ForecastBuilder:
+    """Central forecast orchestrator for external services + domain assembly."""
+
+    def __init__(self) -> None:
+        self.marine_service = MarineForecastService()
+        self.tide_service = TidePredictionService()
+        self.buoy_service = BuoyDataService()
+        self.weather_service = WeatherDataService()
+        self.astro_service = AstronomyService()
 
 
 def classify_conditions(
@@ -956,8 +1091,9 @@ def generate_forecast(
     tz = ZoneInfo(tz_name)
     now = datetime.now(tz)
     month = now.month
+    builder = ForecastBuilder()
 
-    wind_range, wave_range, wind_dir = get_marine_conditions(month, location)
+    wind_range, wave_range, wind_dir = builder.marine_service.get_marine_forecast(month, location)
     water_temp, temp_is_live = get_water_temp(month, location)
 
     def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
@@ -968,15 +1104,9 @@ def generate_forecast(
             return f"{low:.0f} {unit}"
         return f"{low:.0f}-{high:.0f} {unit}"
 
-    try:
-        loc_lat = (location or {}).get("lat", _LAT)
-        loc_lng = (location or {}).get("lng", _LNG)
-        sunrise, sunset = _sun_times(now, loc_lat, loc_lng, tz_name)
-        sun_str = f"{sunrise.strftime('%-I:%M %p')} / {sunset.strftime('%-I:%M %p')}"
-    except Exception:
-        sunrise = None
-        sunset = None
-        sun_str = "Unavailable"
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+    sunrise, sunset, sun_str = builder.astro_service.get_sun_times(now, loc_lat, loc_lng, tz_name)
 
     wind_str = format_range(wind_range, "kt")
     if wind_dir and wind_str != "Unknown":
@@ -1057,71 +1187,30 @@ def generate_forecast(
         "bait_rankings": build_bait_ranking(species, month),
     }
 
-    # Weather alerts
-    try:
-        alerts = fetch_weather_alerts(loc_lat, loc_lng)
-        if alerts:
-            forecast["alerts"] = alerts
-    except Exception:
-        pass
+    alerts = builder.weather_service.get_weather_alerts(loc_lat, loc_lng)
+    if alerts:
+        forecast["alerts"] = alerts
 
     # Barometric pressure
-    try:
-        pressure = fetch_barometric_pressure(location)
-        if pressure:
-            forecast["pressure"] = pressure
-    except Exception:
-        pass
+    pressure = builder.buoy_service.get_barometric_pressure(location)
+    if pressure:
+        forecast["pressure"] = pressure
 
     # Current weather (air temp, humidity)
-    try:
-        weather = fetch_current_weather(loc_lat, loc_lng)
-        if weather:
-            forecast["weather"] = weather
-    except Exception:
-        pass
+    weather = builder.weather_service.get_current_weather(loc_lat, loc_lng)
+    if weather:
+        forecast["weather"] = weather
 
     # Tide predictions
-    coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
-    tides = fetch_tide_predictions(coops_id, tz_name)
-    if tides:
-        # Filter to today-only for display (chart + timeline)
-        today_date_str = now.strftime("%Y%m%d")
-        today_tides = [t for t in tides if t.get("date_str") == today_date_str]
-        forecast["tides"] = today_tides
-        chart_json = build_tide_chart_svg(today_tides)
-        if chart_json:
-            forecast["tide_chart"] = chart_json
-
-        # Determine current tide state
-        current_hour = now.hour + now.minute / 60
-        tide_state = ""
-        for i in range(len(tides) - 1):
-            t_now = tides[i].get("hour", 0)
-            t_next = tides[i + 1].get("hour", 24)
-            if t_now <= current_hour < t_next:
-                if tides[i + 1]["type"] == "High":
-                    tide_state = "Rising"
-                else:
-                    tide_state = "Falling"
-                break
-        if not tide_state and tides:
-            # Before first tide or after last
-            if current_hour < tides[0].get("hour", 12):
-                tide_state = "Falling" if tides[0]["type"] == "Low" else "Rising"
-            else:
-                tide_state = "Falling" if tides[-1]["type"] == "High" else "Rising"
-        if tide_state:
-            forecast["tide_state"] = tide_state
+    tide_data = builder.tide_service.get_tide_predictions(now, location, tz_name)
+    if tide_data:
+        forecast.update(tide_data)
 
 
     # Solunar fishing times
-    solunar: Dict[str, Any] = {}
-    try:
-        solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)
+    solunar = builder.astro_service.get_solunar_times(now, loc_lat, loc_lng, tz_name)
+    if solunar:
         forecast["solunar"] = solunar
-    except Exception:
-        pass
 
     # Final fishability verdict based on all available signals
     conditions["verdict"] = classify_conditions(

@@ -18,56 +18,81 @@
             <p class="subtitle">Your Account</p>
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
 
     <main>
-        <section class="auth-section" style="max-width:500px">
+        <section class="auth-section" style="max-width:760px">
             <h2>{{ user.username }}</h2>
 
             <div class="account-details">
-                <div class="account-row">
-                    <span class="account-label">Saved Location</span>
-                    <span class="account-value">
-                        {% if saved_location %}
-                            {{ saved_location.name }}
-                        {% else %}
-                            <em>None</em>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="account-row">
-                    <span class="account-label">Theme</span>
-                    <span class="account-value">{{ prefs.theme|capitalize }}</span>
-                </div>
-                <div class="account-row">
-                    <span class="account-label">Units</span>
-                    <span class="account-value">{{ prefs.units }}</span>
-                </div>
-                {% if prefs.fishing_profile %}
-                <div class="account-row">
-                    <span class="account-label">Fishing Profile</span>
-                    <span class="account-value">Saved</span>
-                </div>
-                {% endif %}
-                {% if prefs.favorites %}
-                <div class="account-row">
-                    <span class="account-label">Favorite Locations</span>
-                    <span class="account-value">{{ prefs.favorites|length }}</span>
-                </div>
-                {% endif %}
+                <div class="account-row"><span class="account-label">Saved Location</span><span class="account-value">{{ saved_location.name if saved_location else 'None' }}</span></div>
+                <div class="account-row"><span class="account-label">Theme</span><span class="account-value">{{ prefs.theme|capitalize }}</span></div>
+                <div class="account-row"><span class="account-label">Units</span><span class="account-value">{{ prefs.units }}</span></div>
+                <div class="account-row"><span class="account-label">Email Confirmed</span><span class="account-value">{{ 'Yes' if user.email_confirmed else 'No' }}</span></div>
             </div>
+
+            <h3 style="margin-top:1rem;">Settings</h3>
+            <form method="post" action="{{ url_for('auth.account_settings') }}" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="auth-field">
+                    <label for="default_location_id">Default Location ID</label>
+                    <input id="default_location_id" name="default_location_id" class="auth-input" value="{{ prefs.location_id or user.default_location_id or '' }}" placeholder="wrightsville-beach-nc">
+                </div>
+                <div class="auth-field">
+                    <label for="wind_units">Wind Units</label>
+                    <select id="wind_units" name="wind_units" class="auth-input">
+                        <option value="knots" {% if prefs.wind_units == 'knots' %}selected{% endif %}>Knots</option>
+                        <option value="mph" {% if prefs.wind_units == 'mph' %}selected{% endif %}>MPH</option>
+                    </select>
+                </div>
+                <div class="auth-field">
+                    <label for="temp_units">Temperature Units</label>
+                    <select id="temp_units" name="temp_units" class="auth-input">
+                        <option value="F" {% if prefs.temp_units == 'F' %}selected{% endif %}>°F</option>
+                        <option value="C" {% if prefs.temp_units == 'C' %}selected{% endif %}>°C</option>
+                    </select>
+                </div>
+                <div class="auth-field">
+                    <label><input type="checkbox" name="weekly_email" {% if prefs.notification_prefs and prefs.notification_prefs.weekly_email %}checked{% endif %}> Weekly email with best fishing days</label>
+                </div>
+                <div class="auth-field">
+                    <label for="favorites_csv">Favorite location IDs (comma-separated)</label>
+                    <input id="favorites_csv" name="favorites_csv" class="auth-input" value="{{ prefs.favorites|join(',') }}">
+                </div>
+                <button type="submit" class="auth-btn">Save Settings</button>
+            </form>
+
+            <h3 style="margin-top:1rem;">User Dashboard</h3>
+            <div class="account-details">
+                <div class="account-row"><span class="account-label">Recent Fishing Logs</span><span class="account-value">{{ recent_logs|length }}</span></div>
+                <div class="account-row"><span class="account-label">Favorite Locations</span><span class="account-value">{{ favorite_locations|length }}</span></div>
+            </div>
+            {% if recent_logs %}
+            <ul>
+                {% for entry in recent_logs %}
+                <li>{{ entry.date[:10] }} — {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if favorite_locations %}
+            <ul>
+                {% for loc in favorite_locations %}
+                <li>{{ loc.name }}, {{ loc.state }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
 
             <div class="account-actions">
                 <a href="{{ url_for('views.index') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Back to Forecast</a>
                 <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Edit Fishing Profile</a>
                 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)">Log Out</button>
                 </form>
             </div>
         </section>
     </main>
 
-    <footer>
-        <p>Surf &amp; Pier Fishing Outlook</p>
-    </footer>
+    <footer><p>Surf &amp; Pier Fishing Outlook</p></footer>
 </body>
 </html>
