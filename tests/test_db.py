@@ -4,9 +4,14 @@ import pytest
 
 from storage.sqlite import (
     add_log_entry,
+    attach_photos_to_entry,
     create_user,
     delete_forecast,
+    delete_log_entry,
+    get_entry_photo_paths,
+    get_log_entries,
     get_log_stats,
+    get_recent_logs,
     init_db,
     list_cached_locations,
     load_forecast,
@@ -112,3 +117,78 @@ class TestLogStats:
         assert stats2["total"] == 1
         assert stats1["top_species"] == "Drum"
         assert stats2["top_species"] == "Bluefish"
+
+
+# ---------------------------------------------------------------------------
+# Photo columns migration + photo DB functions
+# ---------------------------------------------------------------------------
+
+class TestPhotoDB:
+    def _make_user(self):
+        uid = create_user("photouser", "pass5678")
+        assert uid is not None
+        return uid
+
+    def test_photo_columns_exist_after_init(self):
+        """After init_db(), catch_log must have photo1_path and photo2_path columns."""
+        import sqlite3
+        from storage.sqlite import DB_PATH
+        conn = sqlite3.connect(DB_PATH)
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(catch_log)").fetchall()]
+        conn.close()
+        assert "photo1_path" in cols
+        assert "photo2_path" in cols
+
+    def test_new_entry_has_null_photos(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Pompano")
+        paths = get_entry_photo_paths(uid, entry_id)
+        assert paths == (None, None)
+
+    def test_get_entry_photo_paths_unknown_entry(self):
+        uid = self._make_user()
+        assert get_entry_photo_paths(uid, 99999) is None
+
+    def test_attach_photo1(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Drum")
+        ok = attach_photos_to_entry(uid, entry_id, photo1_path="uploads/1/abc.jpg")
+        assert ok is True
+        paths = get_entry_photo_paths(uid, entry_id)
+        assert paths == ("uploads/1/abc.jpg", None)
+
+    def test_attach_both_photos(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Bluefish")
+        attach_photos_to_entry(uid, entry_id, photo1_path="uploads/1/p1.jpg", photo2_path="uploads/1/p2.jpg")
+        paths = get_entry_photo_paths(uid, entry_id)
+        assert paths == ("uploads/1/p1.jpg", "uploads/1/p2.jpg")
+
+    def test_attach_wrong_user_returns_false(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Tautog")
+        ok = attach_photos_to_entry(uid + 100, entry_id, photo1_path="uploads/99/x.jpg")
+        assert ok is False
+
+    def test_attach_no_paths_returns_false(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Flounder")
+        ok = attach_photos_to_entry(uid, entry_id)
+        assert ok is False
+
+    def test_get_log_entries_includes_photo_fields(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Redfish")
+        attach_photos_to_entry(uid, entry_id, photo1_path="uploads/1/r.jpg")
+        entries = get_log_entries(uid, "loc1")
+        assert len(entries) == 1
+        assert entries[0]["photo1_path"] == "uploads/1/r.jpg"
+        assert entries[0]["photo2_path"] is None
+
+    def test_get_recent_logs_includes_photo_fields(self):
+        uid = self._make_user()
+        entry_id = add_log_entry(uid, "loc1", "Snook")
+        attach_photos_to_entry(uid, entry_id, photo1_path="uploads/1/s.png")
+        logs = get_recent_logs(uid)
+        assert logs[0]["photo1_path"] == "uploads/1/s.png"
+        assert logs[0]["photo2_path"] is None

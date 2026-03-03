@@ -10,6 +10,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta name="theme-color" content="#0e5f78">
     {% include 'partials/_theme_bootstrap.html' %}
+    <style>
+        .recent-log-list { list-style: none; padding: 0; margin: 0.5rem 0; }
+        .log-entry-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border, #ddd); }
+        .log-entry-text { flex: 1 1 auto; }
+        .log-entry-photos { display: flex; gap: 0.4rem; }
+        .catch-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border, #ccc); }
+        .photo-upload-label { font-size: 0.8rem; cursor: pointer; padding: 0.2rem 0.6rem; border-radius: 4px; background: var(--ocean, #0e5f78); color: #fff; white-space: nowrap; }
+        .photo-upload-label:hover { opacity: 0.85; }
+        .log-upload-status { font-size: 0.78rem; color: var(--ocean, #0e5f78); }
+        .log-upload-status.error { color: #c0392b; }
+    </style>
 </head>
 <body>
     <header>
@@ -69,9 +80,32 @@
                 <div class="account-row"><span class="account-label">Favorite Locations</span><span class="account-value">{{ favorite_locations|length }}</span></div>
             </div>
             {% if recent_logs %}
-            <ul>
+            <ul class="recent-log-list">
                 {% for entry in recent_logs %}
-                <li>{{ entry.date[:10] }} — {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</li>
+                <li class="log-entry-row" data-entry-id="{{ entry.id }}">
+                    <span class="log-entry-text">{{ entry.date[:10] }} — {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</span>
+                    <div class="log-entry-photos">
+                        {% if entry.photo1_path %}
+                        <img src="{{ url_for('static', filename=entry.photo1_path) }}" alt="Catch photo 1" class="catch-thumb">
+                        {% endif %}
+                        {% if entry.photo2_path %}
+                        <img src="{{ url_for('static', filename=entry.photo2_path) }}" alt="Catch photo 2" class="catch-thumb">
+                        {% endif %}
+                    </div>
+                    <form class="photo-upload-form" data-entry-id="{{ entry.id }}">
+                        <label class="photo-upload-label">
+                            {% if not entry.photo1_path %}Add photo{% else %}Replace photo{% endif %}
+                            <input type="file" name="photo1" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
+                        </label>
+                        {% if entry.photo1_path and not entry.photo2_path %}
+                        <label class="photo-upload-label">
+                            Add 2nd photo
+                            <input type="file" name="photo2" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
+                        </label>
+                        {% endif %}
+                    </form>
+                    <span class="log-upload-status" aria-live="polite"></span>
+                </li>
                 {% endfor %}
             </ul>
             {% endif %}
@@ -95,5 +129,35 @@
     </main>
 
     <footer><p>Surf &amp; Pier Fishing Outlook</p></footer>
+    <script>
+    document.querySelectorAll('.photo-upload-form').forEach(function(form) {
+        var entryId = form.dataset.entryId;
+        form.querySelectorAll('.photo-file-input').forEach(function(input) {
+            input.addEventListener('change', function() {
+                if (!input.files || !input.files[0]) return;
+                var statusEl = form.closest('.log-entry-row').querySelector('.log-upload-status');
+                statusEl.textContent = 'Uploading\u2026';
+                statusEl.className = 'log-upload-status';
+                var fd = new FormData();
+                fd.append(input.name, input.files[0]);
+                fetch('/api/v1/log/' + entryId + '/photos', { method: 'POST', body: fd })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.ok) {
+                            statusEl.textContent = 'Saved!';
+                            setTimeout(function() { location.reload(); }, 800);
+                        } else {
+                            statusEl.textContent = (data.error && data.error.message) || 'Upload failed';
+                            statusEl.className = 'log-upload-status error';
+                        }
+                    })
+                    .catch(function() {
+                        statusEl.textContent = 'Upload failed';
+                        statusEl.className = 'log-upload-status error';
+                    });
+            });
+        });
+    });
+    </script>
 </body>
 </html>
