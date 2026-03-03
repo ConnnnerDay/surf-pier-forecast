@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict
+
+logger = logging.getLogger(__name__)
 
 from flask import Blueprint, g, jsonify, redirect, request, session, url_for
 
@@ -238,7 +241,7 @@ def refresh() -> Any:
         save_forecast(new_forecast, location["id"], user_id=user_id)
         return redirect(url_for("views.index"))
     except Exception as exc:
-        print(f"Error refreshing forecast: {exc}")
+        logger.error("Error refreshing forecast: %s", exc)
         return redirect(url_for("views.index", cached="true"))
 
 

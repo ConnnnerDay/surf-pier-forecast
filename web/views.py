@@ -72,8 +72,13 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
                 ), 500
             cached_flag = "true"
 
-    # Apply profile-based personalization (re-rank species for this user)
+    # Apply profile-based personalization (re-rank species for this user).
+    # Query params take precedence; fall back to the user's stored DB profile.
     profile = _extract_profile_from_request()
+    if not profile and g.user:
+        stored = get_preferences(g.user["id"]).get("fishing_profile") or {}
+        if stored.get("fishing_types") or stored.get("targets"):
+            profile = stored
     if profile:
         forecast = personalize_forecast(forecast, profile, location)
 

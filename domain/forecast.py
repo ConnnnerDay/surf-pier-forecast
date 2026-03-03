@@ -205,13 +205,13 @@ class TidePredictionService(ExternalDataService):
             t_now = tides[i].get("hour", 0)
             t_next = tides[i + 1].get("hour", 24)
             if t_now <= current_hour < t_next:
-                tide_state = "Rising" if tides[i + 1]["type"] == "High" else "Falling"
+                tide_state = "Rising" if tides[i + 1].get("type") == "High" else "Falling"
                 break
         if not tide_state and tides:
             if current_hour < tides[0].get("hour", 12):
-                tide_state = "Falling" if tides[0]["type"] == "Low" else "Rising"
+                tide_state = "Falling" if tides[0].get("type") == "Low" else "Rising"
             else:
-                tide_state = "Falling" if tides[-1]["type"] == "High" else "Rising"
+                tide_state = "Falling" if tides[-1].get("type") == "High" else "Rising"
         if tide_state:
             result["tide_state"] = tide_state
         return result

@@ -241,20 +241,24 @@
     </footer>
 
     <script>
-    // Pre-fill form with existing profile data
+    // Server-side profile (authoritative when logged in)
+    var _serverProfile = {{ (prefs.fishing_profile or {}) | tojson | safe }};
+
+    // Pre-fill form: server profile takes precedence, fall back to localStorage
     (function() {
-        var existing;
-        try { existing = JSON.parse(localStorage.getItem('fishing_profile')); }
-        catch(e) { return; }
+        var existing = (_serverProfile && Object.keys(_serverProfile).length) ? _serverProfile : null;
+        if (!existing) {
+            try { existing = JSON.parse(localStorage.getItem('fishing_profile')); }
+            catch(e) {}
+        }
         if (!existing) return;
 
-        // Check fishing type boxes
-        if (existing.fishing_type) {
-            existing.fishing_type.forEach(function(t) {
-                var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
-                if (el) el.checked = true;
-            });
-        }
+        // fishing_types (plural, canonical key); also accept legacy fishing_type (singular)
+        var types = existing.fishing_types || existing.fishing_type || [];
+        types.forEach(function(t) {
+            var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
+            if (el) el.checked = true;
+        });
         // Check radio buttons
         ['live_bait', 'cut_bait', 'lures', 'experience'].forEach(function(name) {
             if (existing[name]) {
@@ -263,12 +267,11 @@
             }
         });
         // Check target boxes
-        if (existing.targets) {
-            existing.targets.forEach(function(t) {
-                var el = document.querySelector('input[name="targets"][value="' + t + '"]');
-                if (el) el.checked = true;
-            });
-        }
+        var targets = existing.targets || [];
+        targets.forEach(function(t) {
+            var el = document.querySelector('input[name="targets"][value="' + t + '"]');
+            if (el) el.checked = true;
+        });
     })();
 
     function updateProfileProgress() {
@@ -297,7 +300,7 @@
         e.preventDefault();
 
         var profile = {
-            fishing_type: [],
+            fishing_types: [],
             live_bait: 'sometimes',
             cut_bait: 'yes',
             lures: 'sometimes',
@@ -309,10 +312,10 @@
 
         // Fishing type checkboxes
         document.querySelectorAll('input[name="fishing_type"]:checked').forEach(function(el) {
-            profile.fishing_type.push(el.value);
+            profile.fishing_types.push(el.value);
         });
-        if (profile.fishing_type.length === 0) {
-            profile.fishing_type = ['surf', 'pier'];
+        if (profile.fishing_types.length === 0) {
+            profile.fishing_types = ['surf', 'pier'];
         }
 
         // Radio selections
@@ -338,14 +341,23 @@
 
         localStorage.setItem('fishing_profile', JSON.stringify(profile));
 
-        // Build URL with profile query params so server filters on first load
+        // Persist to server for logged-in users, then redirect.
+        // Also build query params so anonymous users get personalization on the
+        // first load even without a DB profile.
         var params = new URLSearchParams();
-        var ft = profile.fishing_type.join(',');
+        var ft = profile.fishing_types.join(',');
         var tg = profile.targets.join(',');
         if (ft) params.set('fishing_types', ft);
         if (tg) params.set('targets', tg);
-        var qs = params.toString();
-        window.location.href = '{{ url_for("views.index") }}' + (qs ? '?' + qs : '');
+        var dashboardUrl = '{{ url_for("views.index") }}' + (params.toString() ? '?' + params.toString() : '');
+
+        fetch('{{ url_for("api.profile_v1") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fishing_profile: profile })
+        }).finally(function() {
+            window.location.href = dashboardUrl;
+        });
         return false;
     }
     </script>

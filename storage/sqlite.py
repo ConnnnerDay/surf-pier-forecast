@@ -401,7 +401,7 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
         "total": total,
         "unique_species": len(species_rows),
         "top_species": species_rows[0]["species"] if species_rows else None,
-        "last_date": last["caught_at"].split(" ")[0] if last else None,
+        "last_date": last["caught_at"][:10] if last else None,
         "species_breakdown": species_breakdown,
         "monthly_counts": monthly_counts,
     }
