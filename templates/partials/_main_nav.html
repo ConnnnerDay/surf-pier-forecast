@@ -1,0 +1,23 @@
+<nav class="app-nav" aria-label="Primary">
+  <button class="app-nav-toggle" type="button" aria-expanded="false" aria-controls="app-nav-links" onclick="toggleAppNav(this)">
+    Menu
+  </button>
+  <ul id="app-nav-links" class="app-nav-links">
+    <li><a href="{{ url_for('views.index') }}">Dashboard</a></li>
+    <li><a href="{{ url_for('views.setup') }}">Location</a></li>
+    <li><a href="{{ url_for('views.profile') }}">Profile</a></li>
+    <li><a href="{{ url_for('views.index') }}#fish-log">Fishing Log</a></li>
+    {% if user %}
+    <li><a href="{{ url_for('auth.account') }}">Account</a></li>
+    {% endif %}
+  </ul>
+</nav>
+<script>
+function toggleAppNav(btn) {
+  var links = document.getElementById('app-nav-links');
+  if (!links) return;
+  var expanded = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  links.classList.toggle('is-open');
+}
+</script>
