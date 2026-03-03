@@ -43,14 +43,15 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
         raise ApiError("location_not_found", "No valid location selected", status=404)
 
     loc_id = location["id"]
+    user_id = g.user["id"] if g.user else None
     if query.force_refresh:
         forecast_data = generate_forecast(location)
-        save_forecast(forecast_data, loc_id)
+        save_forecast(forecast_data, loc_id, user_id=user_id)
     else:
-        forecast_data = load_cached_forecast(loc_id)
+        forecast_data = load_cached_forecast(loc_id, user_id=user_id)
         if not forecast_data:
             forecast_data = generate_forecast(location)
-            save_forecast(forecast_data, loc_id)
+            save_forecast(forecast_data, loc_id, user_id=user_id)
 
     if not forecast_data:
         raise ApiError("forecast_unavailable", "No forecast available", status=503)
@@ -233,7 +234,8 @@ def refresh() -> Any:
         return redirect(url_for("views.setup"))
     try:
         new_forecast = generate_forecast(location)
-        save_forecast(new_forecast, location["id"])
+        user_id = g.user["id"] if g.user else None
+        save_forecast(new_forecast, location["id"], user_id=user_id)
         return redirect(url_for("views.index"))
     except Exception as exc:
         print(f"Error refreshing forecast: {exc}")
@@ -245,7 +247,8 @@ def share_text() -> Any:
     """Return a plain-text forecast summary for copy/paste sharing."""
     location = get_session_location()
     loc_id = location["id"] if location else ""
-    forecast_data = load_cached_forecast(loc_id)
+    user_id = g.user["id"] if g.user else None
+    forecast_data = load_cached_forecast(loc_id, user_id=user_id)
     if not forecast_data:
         return jsonify({"error": "No forecast available"}), 503
     text = build_share_text(forecast_data)
