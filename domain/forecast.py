@@ -144,26 +144,139 @@ def get_marine_conditions(
     return wind_range, wave_range, wind_dir
 
 
-def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: Optional[Tuple[float, float]]) -> str:
-    """Classify fishability based on wind and wave thresholds.
+def classify_conditions(
+    wind_range: Optional[Tuple[float, float]],
+    wave_range: Optional[Tuple[float, float]],
+    wind_dir: str = "",
+    water_temp_f: Optional[float] = None,
+    is_live_temp: bool = False,
+    tide_state: str = "",
+    tides: Optional[List[Dict[str, Any]]] = None,
+    sunrise: Optional[datetime] = None,
+    sunset: Optional[datetime] = None,
+    now: Optional[datetime] = None,
+    solunar: Optional[Dict[str, Any]] = None,
+    coast: str = "east",
+) -> str:
+    """Classify fishability using all available marine + astronomical signals.
 
-    The policy uses the following rules:
-
-    * Fishable -- maximum sustained wind < 15 kt **and** maximum sea height < 3 ft.
-    * Marginal -- maximum sustained wind <= 20 kt **and** maximum sea height <= 5 ft.
-    * Not worth it -- winds > 20 kt **or** seas > 5 ft (small craft advisory
-      conditions).
+    Produces a 5-tier verdict: Excellent / Good / Fair / Challenging / Poor.
     """
     if wind_range is None or wave_range is None:
         return "Unknown"
+
+    score = 50.0
     wind_max = wind_range[1]
     wave_max = wave_range[1]
-    if wind_max < 15 and wave_max < 3:
-        return "Fishable"
-    elif wind_max <= 20 and wave_max <= 5:
-        return "Marginal"
+
+    # Wind speed (primary safety + fishability signal)
+    if wind_max <= 8:
+        score += 14
+    elif wind_max <= 12:
+        score += 8
+    elif wind_max <= 16:
+        score += 2
+    elif wind_max <= 20:
+        score -= 8
+    elif wind_max <= 25:
+        score -= 16
     else:
-        return "Not worth it"
+        score -= 26
+
+    # Wave height (primary surf-access signal)
+    if wave_max <= 1.5:
+        score += 10
+    elif wave_max <= 3:
+        score += 6
+    elif wave_max <= 5:
+        score -= 4
+    elif wave_max <= 7:
+        score -= 12
+    else:
+        score -= 22
+
+    # Wind direction heuristic by coast (offshore usually cleaner water).
+    if wind_dir:
+        offshore_dirs = {"W", "NW", "NNW", "N", "WNW"}
+        onshore_dirs = {"E", "ENE", "ESE", "NE", "SE"}
+        if coast == "west":
+            offshore_dirs = {"E", "ENE", "ESE", "NE", "SE"}
+            onshore_dirs = {"W", "NW", "NNW", "N", "WNW"}
+        if wind_dir in offshore_dirs:
+            score += 4
+        elif wind_dir in onshore_dirs:
+            score -= 4
+
+    # Water temp comfort/activity proxy (still species-specific elsewhere).
+    if water_temp_f is not None:
+        if 58 <= water_temp_f <= 78:
+            score += 6
+        elif 50 <= water_temp_f < 58 or 78 < water_temp_f <= 84:
+            score += 2
+        else:
+            score -= 4
+        if is_live_temp:
+            score += 1
+
+    # Tide state and tide range (bigger movement often improves feeding windows).
+    if tide_state in {"Rising", "Falling"}:
+        score += 2
+    if tides:
+        heights = [float(t.get("height", 0.0)) for t in tides if t.get("height") is not None]
+        if heights:
+            tide_range = max(heights) - min(heights)
+            if tide_range >= 4:
+                score += 5
+            elif tide_range >= 2:
+                score += 2
+
+        # Bonus near tide turn windows (high/low slack periods often productive).
+        if now:
+            nearest_delta = None
+            for t in tides:
+                th = t.get("hour")
+                if th is None:
+                    continue
+                tide_dt = now.replace(hour=int(th) % 24, minute=int((float(th) % 1) * 60), second=0, microsecond=0)
+                delta = abs((tide_dt - now).total_seconds())
+                nearest_delta = delta if nearest_delta is None else min(nearest_delta, delta)
+            if nearest_delta is not None and nearest_delta <= 90 * 60:
+                score += 3
+
+    # Light windows around sunrise/sunset are usually better bite periods.
+    if now and sunrise and sunset:
+        if abs((now - sunrise).total_seconds()) <= 2 * 3600:
+            score += 4
+        if abs((sunset - now).total_seconds()) <= 2 * 3600:
+            score += 4
+
+    # Solunar quality + illumination.
+    if solunar:
+        rating_bonus = {
+            "Excellent": 8,
+            "Good": 4,
+            "Fair": 0,
+            "Poor": -6,
+        }
+        score += rating_bonus.get(solunar.get("rating", ""), 0)
+
+        illum = solunar.get("illumination_pct")
+        if isinstance(illum, (int, float)):
+            if 40 <= illum <= 85:
+                score += 2
+            elif illum < 10 or illum > 95:
+                score += 1
+
+    score = max(0, min(100, score))
+    if score >= 80:
+        return "Excellent"
+    if score >= 64:
+        return "Good"
+    if score >= 48:
+        return "Fair"
+    if score >= 32:
+        return "Challenging"
+    return "Poor"
 
 
 
@@ -200,11 +313,13 @@ def build_multiday_outlook(
         # --- Wind from NWS or fallback ---
         wind_str = ""
         wind_range = None
+        wind_dir_day = ""
         if nws_periods:
             for p in nws_periods:
                 if p.get("isDaytime") and p.get("name", "").lower().startswith(day_label[:3].lower()):
                     ws = p.get("windSpeed", "")
                     wd = p.get("windDirection", "")
+                    wind_dir_day = wd or ""
                     m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
                     if m:
                         low_mph = float(m.group(1))
@@ -227,6 +342,7 @@ def build_multiday_outlook(
             if isinstance(fb_wind, tuple):
                 wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
                 wind_range = fb_wind
+                wind_dir_day = fb_dir
 
         # --- Wave estimate ---
         wave_str = ""
@@ -239,10 +355,7 @@ def build_multiday_outlook(
             wave_str = f"{int(wave_avg[0])}-{int(wave_avg[1])} ft"
             wave_range = wave_avg
 
-        # --- Fishability verdict ---
-        verdict = classify_conditions(wind_range, wave_range) if wind_range and wave_range else "Unknown"
-
-        # --- Top species for this day ---
+        # --- Region + water temperature context ---
         cr = (location or {}).get("conditions_region", "atlantic_mid")
         coast = "west" if cr.startswith("pacific") else ("hawaii" if cr.startswith("hawaii") else "east")
         if location:
@@ -251,6 +364,34 @@ def build_multiday_outlook(
         else:
             future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
 
+        # --- Fishability verdict ---
+        if wind_range and wave_range:
+            future_sunrise = None
+            future_sunset = None
+            future_solunar = None
+            try:
+                future_sunrise, future_sunset = _sun_times(future, loc_lat, loc_lng, tz_name)
+            except Exception:
+                pass
+            try:
+                future_solunar = compute_solunar_times(future, loc_lat, loc_lng, tz_name)
+            except Exception:
+                pass
+            verdict = classify_conditions(
+                wind_range,
+                wave_range,
+                wind_dir=wind_dir_day,
+                water_temp_f=future_water_temp,
+                now=future.replace(hour=12, minute=0, second=0, microsecond=0),
+                sunrise=future_sunrise,
+                sunset=future_sunset,
+                solunar=future_solunar,
+                coast=coast,
+            )
+        else:
+            verdict = "Unknown"
+
+        # --- Top species for this day ---
         wind_coast = "west" if coast == "west" else "east"
         outlook_fish_region = (location or {}).get("fish_region", "")
         top_species_names: List[str] = []
@@ -817,8 +958,6 @@ def generate_forecast(
     month = now.month
 
     wind_range, wave_range, wind_dir = get_marine_conditions(month, location)
-    verdict = classify_conditions(wind_range, wave_range)
-
     water_temp, temp_is_live = get_water_temp(month, location)
 
     def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
@@ -835,6 +974,8 @@ def generate_forecast(
         sunrise, sunset = _sun_times(now, loc_lat, loc_lng, tz_name)
         sun_str = f"{sunrise.strftime('%-I:%M %p')} / {sunset.strftime('%-I:%M %p')}"
     except Exception:
+        sunrise = None
+        sunset = None
         sun_str = "Unavailable"
 
     wind_str = format_range(wind_range, "kt")
@@ -873,7 +1014,7 @@ def generate_forecast(
         "wind": wind_str,
         "wind_dir": wind_dir or "",
         "waves": format_range(wave_range, "ft"),
-        "verdict": verdict,
+        "verdict": "Unknown",
         "water_temp_f": round(water_temp, 1),
         "water_temp_live": temp_is_live,
         "water_temp_trend": temp_trend,
@@ -975,11 +1116,28 @@ def generate_forecast(
 
 
     # Solunar fishing times
+    solunar: Dict[str, Any] = {}
     try:
         solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)
         forecast["solunar"] = solunar
     except Exception:
         pass
+
+    # Final fishability verdict based on all available signals
+    conditions["verdict"] = classify_conditions(
+        wind_range,
+        wave_range,
+        wind_dir=wind_dir or "",
+        water_temp_f=water_temp,
+        is_live_temp=temp_is_live,
+        tide_state=forecast.get("tide_state", ""),
+        tides=forecast.get("tides"),
+        sunrise=sunrise,
+        sunset=sunset,
+        now=now,
+        solunar=solunar,
+        coast=coast,
+    )
 
     # Multi-day outlook (3 days)
     try:
