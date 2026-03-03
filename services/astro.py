@@ -184,6 +184,9 @@ def compute_solunar_times(
     major_periods.sort(key=sort_key)
     minor_periods.sort(key=sort_key)
 
+    major_periods_out = [{"start": s, "end": e} for s, e in major_periods]
+    minor_periods_out = [{"start": s, "end": e} for s, e in minor_periods]
+
     # Moon phase name and fishing rating
     if phase_frac < 0.05 or phase_frac > 0.95:
         phase_name = "New Moon"
@@ -220,8 +223,8 @@ def compute_solunar_times(
     illumination = (1 - math.cos(2 * math.pi * phase_frac)) / 2
 
     return {
-        "major_periods": major_periods,
-        "minor_periods": minor_periods,
+        "major_periods": major_periods_out,
+        "minor_periods": minor_periods_out,
         "moon_phase": phase_name,
         "illumination_pct": round(illumination * 100, 1),
         "rating": rating,
