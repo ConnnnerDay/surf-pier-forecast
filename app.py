@@ -27,7 +27,7 @@ from typing import Any, Dict
 
 from flask import Flask, g, session
 
-from storage.db import init_db, get_user
+from storage.sqlite import init_db, get_user
 from web.auth import bp as auth_bp
 from web.api import bp as api_bp
 from web.views import bp as views_bp

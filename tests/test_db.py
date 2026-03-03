@@ -2,7 +2,7 @@
 
 import pytest
 
-from storage.db import (
+from storage.sqlite import (
     add_log_entry,
     create_user,
     delete_forecast,
@@ -18,7 +18,7 @@ from storage.db import (
 def isolated_db(tmp_path, monkeypatch):
     """Point the DB to a temp file and initialize schema."""
     db_path = str(tmp_path / "test.db")
-    monkeypatch.setattr("storage.db.DB_PATH", db_path)
+    monkeypatch.setattr("storage.sqlite.DB_PATH", db_path)
     init_db()
     return tmp_path
 
@@ -40,7 +40,7 @@ class TestForecastDB:
     def test_load_empty_id_returns_none(self):
         assert load_forecast("") is None
 
-    def test_upsert_replaces(self):
+    def test_latest_by_timestamp(self):
         save_forecast_to_db("loc1", {"generated_at": "2026-01-01T00:00:00", "v": 1})
         save_forecast_to_db("loc1", {"generated_at": "2026-02-01T00:00:00", "v": 2})
         loaded = load_forecast("loc1")
