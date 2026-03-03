@@ -154,22 +154,47 @@ The dashboard auto-refreshes its cache every 4 hours on page load. You can also 
 
 ```
 surf-pier-forecast/
-  app.py                  # Flask app + all forecast logic
-  locations.py            # 100+ location database with station IDs and regional data
+  app.py                  # Flask application factory & entry point
+  locations.py            # 100+ location database with station IDs
   regulations.py          # Fishing regulations by species and state
   requirements.txt        # Python dependencies (Flask, requests)
   install.sh              # One-command setup script
   surf-forecast.service   # systemd unit file template
+  domain/
+    forecast.py           # Forecast assembly, conditions analysis
+    species.py            # Species database, scoring logic, bait/rig data
+  services/
+    astro.py              # Sunrise/sunset, moon phase, solunar times
+    ndbc.py               # NDBC buoy observations
+    noaa.py               # NOAA CO-OPS water temp & tides
+    nws.py                # NWS marine zone forecast parsing
+  storage/
+    cache.py              # JSON file-based forecast caching
+    db.py                 # SQLite user accounts & preferences
+  web/
+    auth.py               # Login, register, logout, account routes
+    api.py                # JSON API routes (preferences, log, forecast)
+    views.py              # Dashboard, setup, profile page routes
+    helpers.py            # Shared session/location helpers
   templates/
     index.html            # Forecast dashboard
     setup.html            # Location picker
     profile.html          # Fishing profile setup
+    login.html            # Login page
+    register.html         # Registration page
+    account.html          # Account settings
     error.html            # Error page
   static/
     style.css             # Dashboard styles
     images/rigs/          # Rig diagram SVGs
+  tests/
+    test_app.py           # App factory & route tests
+    test_cache.py         # Forecast caching tests
+    test_forecast.py      # Conditions & seasonal data tests
+    test_species.py       # Species scoring & ranking tests
   data/
-    forecast.json         # Cached forecast (auto-generated)
+    forecast_*.json       # Cached forecasts (auto-generated)
+    app.db                # SQLite database (auto-generated)
 ```
 
 ## Useful commands

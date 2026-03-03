@@ -34,7 +34,7 @@
             <div class="setup-error">{{ error }}</div>
             {% endif %}
 
-            <form method="post" action="{{ url_for('login') }}" class="auth-form">
+            <form method="post" action="{{ url_for('auth.login') }}" class="auth-form">
                 <div class="auth-field">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" placeholder="Enter your username"
@@ -49,7 +49,7 @@
                 <button type="submit" class="auth-btn">Log In</button>
             </form>
 
-            <p class="auth-switch">Don't have an account? <a href="{{ url_for('register') }}">Create one</a></p>
+            <p class="auth-switch">Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a></p>
         </section>
     </main>
 
