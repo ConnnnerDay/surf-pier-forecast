@@ -1,0 +1,1463 @@
+"""Forecast assembly, conditions analysis, and advisory features."""
+
+from __future__ import annotations
+
+import logging
+import re
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
+from zoneinfo import ZoneInfo
+
+from locations import get_fallback_conditions, get_monthly_water_temps
+
+from services.astro import _sun_times, compute_solunar_times
+from services.ndbc import (
+    NDBC_STATIONS,
+    _try_ndbc_station,
+    fetch_barometric_pressure,
+)
+from services.noaa import (
+    MONTHLY_AVG_WATER_TEMP_F,
+    WATER_TEMP_STATION,
+    _try_coops_wind,
+    build_tide_chart_svg,
+    fetch_tide_predictions,
+    fetch_water_temperature,
+    get_water_temp,
+)
+from services.nws import (
+    NWS_MARINE_ZONE,
+    _MPH_TO_KNOTS,
+    _try_nws_forecast,
+    _try_nws_gridpoint,
+    _fetch_nws_extended,
+    fetch_current_weather,
+    fetch_weather_alerts,
+    parse_conditions,
+)
+from domain.species import (
+    SPECIES_DB,
+    _get_technique_tip,
+    _score_species,
+    _species_matches_profile,
+    build_bait_ranking,
+    build_natural_bait_chart,
+    build_rig_recommendations,
+    build_species_calendar,
+    build_species_ranking,
+)
+
+logger = logging.getLogger(__name__)
+
+# Generic mid-Atlantic historical monthly averages used as the absolute
+# last resort when no location is set.
+MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
+    1: (8, 15), 2: (8, 16), 3: (9, 16), 4: (8, 15), 5: (7, 13), 6: (6, 12),
+    7: (5, 11), 8: (5, 11), 9: (7, 14), 10: (7, 14), 11: (7, 14), 12: (8, 15),
+}
+MONTHLY_AVG_WAVES: Dict[int, Tuple[float, float]] = {
+    1: (2, 4), 2: (2, 4), 3: (2, 4), 4: (1, 3), 5: (1, 3), 6: (1, 2),
+    7: (1, 2), 8: (1, 2), 9: (2, 4), 10: (2, 4), 11: (2, 4), 12: (2, 4),
+}
+MONTHLY_AVG_WIND_DIR: Dict[int, str] = {
+    1: "NW", 2: "NW", 3: "SW", 4: "SW", 5: "SW", 6: "SW",
+    7: "SW", 8: "SW", 9: "NE", 10: "NE", 11: "NW", 12: "NW",
+}
+
+# Default coordinates
+_LAT = 34.2104
+_LNG = -77.7964
+
+# -- Source 5: Seasonal averages (ALWAYS succeeds) --------------------------
+
+def _seasonal_averages(month: int) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+    """Historical monthly averages -- the last resort. Never fails."""
+    return (
+        MONTHLY_AVG_WIND[month],
+        MONTHLY_AVG_WAVES[month],
+        MONTHLY_AVG_WIND_DIR[month],
+    )
+
+
+
+# -- Combined fetcher -------------------------------------------------------
+
+def get_marine_conditions(
+    month: int,
+    location: Optional[Dict[str, Any]] = None,
+) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+    """Get marine conditions, trying every source until we have full data.
+
+    Returns (wind_range, wave_range, wind_dir).  Guaranteed to never return
+    None for any field -- seasonal averages fill any remaining gaps.
+    """
+    nws_zone = (location or {}).get("nws_zone", NWS_MARINE_ZONE)
+    ndbc_list = (location or {}).get("ndbc_stations", [s[0] for s in NDBC_STATIONS])
+    coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+
+    wind_range: Optional[Tuple[float, float]] = None
+    wave_range: Optional[Tuple[float, float]] = None
+    wind_dir: Optional[str] = None
+
+    sources: List[Tuple[str, Any]] = [
+        ("NWS zone forecast", lambda: _try_nws_forecast(nws_zone)),
+    ]
+    for sid in ndbc_list:
+        sources.append((f"NDBC {sid}", lambda s=sid: _try_ndbc_station(s)))
+    sources.append(("NOAA CO-OPS wind", lambda: _try_coops_wind(coops_id)))
+    sources.append(("NWS gridpoint forecast", lambda: _try_nws_gridpoint(loc_lat, loc_lng)))
+
+    for name, fetcher in sources:
+        # Stop once we have both wind and waves
+        if wind_range is not None and wave_range is not None and wind_dir is not None:
+            break
+        try:
+            w, s, d = fetcher()
+            if wind_range is None and w is not None:
+                wind_range = w
+                print(f"Wind from {name}: {w}")
+            if wave_range is None and s is not None:
+                wave_range = s
+                print(f"Waves from {name}: {s}")
+            if wind_dir is None and d is not None:
+                wind_dir = d
+        except Exception as exc:
+            print(f"{name} unavailable: {exc}")
+
+    # Fill any remaining gaps with location-specific or default averages
+    if location:
+        avg_wind, avg_waves, avg_dir = get_fallback_conditions(location, month)
+    else:
+        avg_wind, avg_waves, avg_dir = _seasonal_averages(month)
+    if wind_range is None:
+        wind_range = avg_wind
+        print(f"Wind from seasonal avg: {avg_wind}")
+    if wave_range is None:
+        wave_range = avg_waves
+        print(f"Waves from seasonal avg: {avg_waves}")
+    if wind_dir is None:
+        wind_dir = avg_dir
+
+    return wind_range, wave_range, wind_dir
+
+
+def classify_conditions(wind_range: Optional[Tuple[float, float]], wave_range: Optional[Tuple[float, float]]) -> str:
+    """Classify fishability based on wind and wave thresholds.
+
+    The policy uses the following rules:
+
+    * Fishable -- maximum sustained wind < 15 kt **and** maximum sea height < 3 ft.
+    * Marginal -- maximum sustained wind <= 20 kt **and** maximum sea height <= 5 ft.
+    * Not worth it -- winds > 20 kt **or** seas > 5 ft (small craft advisory
+      conditions).
+    """
+    if wind_range is None or wave_range is None:
+        return "Unknown"
+    wind_max = wind_range[1]
+    wave_max = wave_range[1]
+    if wind_max < 15 and wave_max < 3:
+        return "Fishable"
+    elif wind_max <= 20 and wave_max <= 5:
+        return "Marginal"
+    else:
+        return "Not worth it"
+
+
+
+def build_multiday_outlook(
+    now: datetime,
+    location: Optional[Dict[str, Any]] = None,
+    fishing_types: Optional[List[str]] = None,
+    targets: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Build a 3-day outlook with conditions and fishability.
+
+    Each day includes: day_label, wind summary, wave estimate,
+    water temp estimate, and a fishability verdict.
+
+    If *fishing_types* or *targets* are provided (from the user's profile),
+    the per-day top-species list is filtered to match.
+    """
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+
+    # Try NWS extended forecast for wind data
+    nws_periods = _fetch_nws_extended(loc_lat, loc_lng)
+
+    days = []
+    for offset_days in range(1, 4):  # tomorrow, day after, day 3
+        future = now + timedelta(days=offset_days)
+        future_month = future.month
+
+        day_label = future.strftime("%A")  # e.g., "Thursday"
+        date_label = future.strftime("%b %d")  # e.g., "Feb 27"
+
+        # --- Wind from NWS or fallback ---
+        wind_str = ""
+        wind_range = None
+        if nws_periods:
+            for p in nws_periods:
+                if p.get("isDaytime") and p.get("name", "").lower().startswith(day_label[:3].lower()):
+                    ws = p.get("windSpeed", "")
+                    wd = p.get("windDirection", "")
+                    m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
+                    if m:
+                        low_mph = float(m.group(1))
+                        high_mph = float(m.group(2)) if m.group(2) else low_mph
+                        low_kt = round(low_mph * _MPH_TO_KNOTS)
+                        high_kt = round(high_mph * _MPH_TO_KNOTS)
+                        wind_range = (low_kt, high_kt)
+                        wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
+                    break
+
+        if not wind_str:
+            # Use regional fallback
+            fb_wind, fb_waves, fb_dir = get_fallback_conditions(
+                location or {}, future_month,
+            ) if location else (
+                MONTHLY_AVG_WIND[future_month],
+                MONTHLY_AVG_WAVES[future_month],
+                MONTHLY_AVG_WIND_DIR[future_month],
+            )
+            if isinstance(fb_wind, tuple):
+                wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
+                wind_range = fb_wind
+
+        # --- Wave estimate ---
+        wave_str = ""
+        if location:
+            fb_wind_r, fb_wave_r, _ = get_fallback_conditions(location, future_month)
+            wave_str = f"{int(fb_wave_r[0])}-{int(fb_wave_r[1])} ft"
+            wave_range = fb_wave_r
+        else:
+            wave_avg = MONTHLY_AVG_WAVES.get(future_month, (1, 3))
+            wave_str = f"{int(wave_avg[0])}-{int(wave_avg[1])} ft"
+            wave_range = wave_avg
+
+        # --- Fishability verdict ---
+        verdict = classify_conditions(wind_range, wave_range) if wind_range and wave_range else "Unknown"
+
+        # --- Top species for this day ---
+        cr = (location or {}).get("conditions_region", "atlantic_mid")
+        coast = "west" if cr.startswith("pacific") else ("hawaii" if cr.startswith("hawaii") else "east")
+        if location:
+            monthly_temps = get_monthly_water_temps(location)
+            future_water_temp = float(monthly_temps[future_month])
+        else:
+            future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
+
+        wind_coast = "west" if coast == "west" else "east"
+        outlook_fish_region = (location or {}).get("fish_region", "")
+        top_species_names: List[str] = []
+        species_scores: List[Tuple[str, float]] = []
+        for sp in SPECIES_DB:
+            if sp.get("coast", "east") != coast:
+                continue
+            if outlook_fish_region and "regions" in sp and outlook_fish_region not in sp["regions"]:
+                continue
+            if not _species_matches_profile(sp["name"], fishing_types, targets):
+                continue
+            s = _score_species(
+                sp, future_month, future_water_temp,
+                wind_dir=None,
+                wind_range=wind_range,
+                wave_range=wave_range,
+                hour=12,
+                coast=wind_coast,
+            )
+            if s > 20:
+                species_scores.append((sp["name"], s))
+        species_scores.sort(key=lambda x: x[1], reverse=True)
+        top_species_names = [name for name, _ in species_scores[:5]]
+
+        days.append({
+            "day": day_label,
+            "date": date_label,
+            "wind": wind_str,
+            "waves": wave_str,
+            "verdict": verdict,
+            "top_species": top_species_names,
+        })
+
+    return days
+
+
+# -- Spot-specific fishing tips based on conditions -------------------------
+
+def build_spot_tips(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    wind_dir: str = "",
+    hour: int = 12,
+    month: int = 6,
+    coast: str = "east",
+    tide_state: str = "",
+) -> List[Dict[str, str]]:
+    """Generate 3-5 actionable fishing tips based on current conditions.
+
+    Each tip has an 'icon' (emoji-free label), 'title', and 'detail'.
+    """
+    tips: List[Dict[str, str]] = []
+
+    # Wind-based tips
+    avg_wind = 0.0
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+
+    if avg_wind > 20:
+        tips.append({
+            "icon": "wind", "title": "Heavy Wind Strategy",
+            "detail": "Use heavier sinkers (4-6 oz) to hold bottom. "
+                      "Fish the lee side of piers and jetties for calmer pockets. "
+                      "Shorten leaders to reduce tangles.",
+        })
+    elif avg_wind > 12:
+        tips.append({
+            "icon": "wind", "title": "Moderate Wind",
+            "detail": "Standard 2-4 oz sinkers should hold. Wind chop stirs up bait — "
+                      "fish are often more active. Cast at an angle to the wind for better distance.",
+        })
+    elif avg_wind < 6:
+        tips.append({
+            "icon": "wind", "title": "Calm Conditions",
+            "detail": "Light tackle shines today. Use lighter leaders and smaller presentations. "
+                      "Fish may be more line-shy in clear, calm water.",
+        })
+
+    # Wave-based tips
+    avg_wave = 0.0
+    if wave_range:
+        avg_wave = (wave_range[0] + wave_range[1]) / 2
+
+    if avg_wave > 4:
+        tips.append({
+            "icon": "waves", "title": "Heavy Surf",
+            "detail": "Fish the troughs between sandbars where fish shelter from wave energy. "
+                      "Pyramid sinkers grip sandy bottoms better than egg sinkers in surf.",
+        })
+    elif avg_wave > 2:
+        tips.append({
+            "icon": "waves", "title": "Moderate Surf",
+            "detail": "Cast beyond the breakers to the second sandbar. "
+                      "The stirred-up sand exposes sand fleas and crabs, drawing fish to feed.",
+        })
+    elif avg_wave < 1.5:
+        tips.append({
+            "icon": "waves", "title": "Flat Surf",
+            "detail": "Fish closer to structure — jetties, pilings, and rocky outcrops. "
+                      "Clear water means lighter line and natural-colored baits work best.",
+        })
+
+    # Tide-based tips
+    if tide_state == "Rising":
+        tips.append({
+            "icon": "tide", "title": "Rising Tide Tactics",
+            "detail": "Incoming water pushes bait toward shore — position yourself "
+                      "at points where current funnels through cuts and inlets. "
+                      "Fish the first and second troughs as water fills them.",
+        })
+    elif tide_state == "Falling":
+        tips.append({
+            "icon": "tide", "title": "Falling Tide Tactics",
+            "detail": "Outgoing water concentrates baitfish at channel mouths and drain points. "
+                      "Set up where water flows out from marshes and estuaries — "
+                      "predators stack up to ambush departing bait.",
+        })
+
+    # Time-of-day tips
+    if 5 <= hour <= 7:
+        tips.append({
+            "icon": "time", "title": "Early Bird Advantage",
+            "detail": "Dawn is prime time — get lines in the water before sunrise. "
+                      "Topwater lures and live bait under corks excel in the low-light bite window.",
+        })
+    elif 17 <= hour <= 20:
+        tips.append({
+            "icon": "time", "title": "Evening Bite",
+            "detail": "Fish feed aggressively before dark. Switch to darker-colored lures as "
+                      "light fades — fish rely more on silhouette and vibration at dusk.",
+        })
+    elif 10 <= hour <= 14:
+        tips.append({
+            "icon": "time", "title": "Midday Approach",
+            "detail": "Fish deeper structure and shaded areas during bright sun. "
+                      "Piers cast shadows that attract baitfish — focus on the shadow line.",
+        })
+
+    # Seasonal tips
+    if month in (11, 12, 1, 2):
+        tips.append({
+            "icon": "season", "title": "Cold Water Tips",
+            "detail": "Slow your presentation — cold fish won't chase fast baits. "
+                      "Fish the warmest part of the day (10 AM - 3 PM) when water warms slightly. "
+                      "Bottom rigs with cut bait outperform artificials in winter.",
+        })
+    elif month in (6, 7, 8):
+        tips.append({
+            "icon": "season", "title": "Summer Patterns",
+            "detail": "Early morning and late evening are most productive — avoid the midday heat. "
+                      "Live bait stays livelier in a bucket with an aerator. "
+                      "Night fishing produces excellent catches in warm months.",
+        })
+
+    return tips[:5]
+
+
+def build_bite_alerts(
+    verdict: str,
+    species: List[Dict[str, Any]],
+    pressure: Optional[Dict[str, Any]] = None,
+    tide_state: str = "",
+) -> List[Dict[str, str]]:
+    """Generate bite alert notifications when conditions are especially good."""
+    alerts: List[Dict[str, str]] = []
+
+    # Hot species alert
+    hot_species = [sp["name"] for sp in species if sp.get("activity") == "Hot"]
+    if hot_species:
+        if len(hot_species) >= 3:
+            alerts.append({
+                "type": "hot",
+                "title": "Multiple species on fire!",
+                "message": f"{', '.join(hot_species[:3])} are all rated HOT right now. This is a rare alignment of conditions.",
+            })
+        elif len(hot_species) == 1:
+            alerts.append({
+                "type": "hot",
+                "title": f"{hot_species[0]} is on fire!",
+                "message": "Conditions are dialed in for this species. Get your lines in the water.",
+            })
+
+    # Excellent conditions alert
+    if verdict == "Excellent":
+        alerts.append({
+            "type": "excellent",
+            "title": "Excellent fishing day!",
+            "message": "Wind, waves, and temperatures are all in the sweet spot. Don't miss this one.",
+        })
+
+    # Falling pressure trigger
+    if pressure and "falling" in pressure.get("trend", "").lower():
+        p_val = pressure.get("pressure_mb", 0)
+        if p_val and float(p_val) < 1010:
+            alerts.append({
+                "type": "pressure",
+                "title": "Pre-front feeding window",
+                "message": "Barometric pressure is dropping below 1010 mb — fish often feed aggressively before incoming weather.",
+            })
+
+    # Incoming tide + dawn/dusk
+    if tide_state == "Rising":
+        alerts.append({
+            "type": "tide",
+            "title": "Incoming tide active",
+            "message": "Rising water pushes bait toward shore. Prime time for surf and pier fishing.",
+        })
+
+    return alerts[:3]
+
+
+def pick_best_fishing_day(
+    today_verdict: str,
+    outlook: List[Dict[str, Any]],
+) -> Dict[str, str]:
+    """Analyze today and 3-day outlook to recommend the best day to fish.
+
+    Returns a dict with 'best_day', 'reason', and 'recommendation'.
+    """
+    # Score mapping for verdicts
+    verdict_scores = {
+        "Excellent": 5,
+        "Good": 4,
+        "Fair": 3,
+        "Challenging": 2,
+        "Poor": 1,
+        "Unknown": 2,
+    }
+
+    best_day = "Today"
+    best_score = verdict_scores.get(today_verdict, 2)
+    best_verdict = today_verdict
+
+    for day in outlook:
+        v = day.get("verdict", "Unknown")
+        s = verdict_scores.get(v, 2)
+        n_species = len(day.get("top_species", []))
+        # Bonus for having more active species
+        s += min(n_species * 0.2, 1.0)
+        if s > best_score:
+            best_score = s
+            best_day = day["day"]
+            best_verdict = v
+
+    if best_day == "Today":
+        if best_score >= 4:
+            recommendation = "Today looks great — get out there!"
+        elif best_score >= 3:
+            recommendation = "Decent day today, but conditions are fishable."
+        else:
+            recommendation = "Tough day today. Check back tomorrow."
+    else:
+        if best_score >= 4:
+            recommendation = f"{best_day} has the best forecast — plan your trip then."
+        else:
+            recommendation = f"{best_day} looks slightly better, but all days are similar."
+
+    return {
+        "best_day": best_day,
+        "verdict": best_verdict,
+        "recommendation": recommendation,
+    }
+
+
+def build_gear_checklist(
+    species: List[Dict[str, Any]],
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
+    water_temp: float = 65.0,
+    weather: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, str]]:
+    """Generate a conditions-aware packing list for a fishing trip."""
+    items: List[Dict[str, str]] = []
+    categories_seen: set = set()
+
+    def _add(category: str, item: str, reason: str = "") -> None:
+        key = f"{category}:{item}"
+        if key not in categories_seen:
+            categories_seen.add(key)
+            items.append({"category": category, "item": item, "reason": reason})
+
+    # ---- Always bring ----
+    _add("Essentials", "Rod & reel (medium-heavy for surf)", "")
+    _add("Essentials", "Tackle box with hooks, sinkers, swivels", "")
+    _add("Essentials", "Bait cooler with ice", "")
+    _add("Essentials", "Pliers & line cutter", "")
+    _add("Essentials", "Fishing license", "Required in most states")
+
+    # ---- Conditions-based ----
+    max_wind = (wind_range[1] if wind_range else 10)
+    max_wave = (wave_range[1] if wave_range else 2)
+
+    if max_wind >= 15:
+        _add("Conditions", "Heavy sinkers (4-6 oz)", "Strong wind requires extra weight")
+        _add("Conditions", "Sand spike or rod holder", "Keep rods secure in high wind")
+
+    if max_wave >= 4:
+        _add("Conditions", "Waders or waterproof boots", "Heavy surf will splash")
+        _add("Conditions", "Extra sinkers (pyramid style)", "Holds bottom in rough surf")
+
+    if hour < 6 or hour >= 19:
+        _add("Conditions", "Headlamp (red light mode)", "Preserve night vision")
+        _add("Conditions", "Glow sticks or light-up bobbers", "Track your line in the dark")
+
+    if 10 <= hour <= 16:
+        _add("Conditions", "Sunscreen SPF 50+", "Peak UV hours")
+        _add("Conditions", "Polarized sunglasses", "Reduce glare, spot fish")
+        _add("Conditions", "Hat with brim or neck flap", "Sun protection")
+
+    # ---- Weather-based ----
+    air_temp = None
+    if weather:
+        air_temp = weather.get("air_temp_f")
+    if air_temp is not None:
+        if float(air_temp) < 50:
+            _add("Weather", "Layered clothing / thermal base", f"Air temp {air_temp}°F")
+            _add("Weather", "Hand warmers", "Keep fingers nimble for knots")
+            _add("Weather", "Thermos with hot drink", "Stay warm on the pier")
+        elif float(air_temp) > 85:
+            _add("Weather", "Extra water (1 gal minimum)", f"Air temp {air_temp}°F — stay hydrated")
+            _add("Weather", "Cooling towel", "Beat the heat")
+
+    # ---- Species-based ----
+    has_shark = any("shark" in sp.get("name", "").lower() for sp in species[:10])
+    has_king = any("king" in sp.get("name", "").lower() for sp in species[:10])
+    has_flounder = any("flounder" in sp.get("name", "").lower() for sp in species[:10])
+
+    if has_shark:
+        _add("Species", "Wire leader (single-strand)", "Shark teeth cut mono/fluoro")
+        _add("Species", "Heavy-duty dehooking tool", "Safe shark handling")
+
+    if has_king:
+        _add("Species", "Wire or heavy fluoro leader (60+ lb)", "Kings have sharp teeth")
+        _add("Species", "Stinger rig components", "Standard for kingfish")
+
+    if has_flounder:
+        _add("Species", "Bucktail jig (white/chartreuse)", "Top flounder lure")
+
+    # ---- Convenience ----
+    _add("Convenience", "5-gallon bucket", "Bait storage, seat, catch bucket")
+    _add("Convenience", "Towel / rags", "Clean hands between baiting")
+    _add("Convenience", "Trash bag", "Leave no trace")
+
+    return items
+
+
+def build_conditions_explainer(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    wind_dir: Optional[str] = None,
+    water_temp: float = 65.0,
+    pressure: Optional[Dict[str, Any]] = None,
+    tide_state: str = "",
+    coast: str = "east",
+) -> List[Dict[str, str]]:
+    """Translate raw marine conditions into fishing-relevant plain English."""
+    bullets: List[Dict[str, str]] = []
+
+    # Wind analysis
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind <= 8:
+            bullets.append({
+                "label": "Wind",
+                "text": "Light winds make for calm conditions — great for float rigs and sight casting.",
+                "impact": "positive",
+            })
+        elif avg_wind <= 15:
+            bullets.append({
+                "label": "Wind",
+                "text": "Moderate breeze stirs up bait and adds turbidity. Good for surf fishing — fish move closer to feed.",
+                "impact": "positive",
+            })
+        elif avg_wind <= 22:
+            bullets.append({
+                "label": "Wind",
+                "text": "Strong winds make casting difficult and waves choppy. Use heavier sinkers and shorter leaders.",
+                "impact": "neutral",
+            })
+        else:
+            bullets.append({
+                "label": "Wind",
+                "text": "Near-gale conditions — tough fishing day. If you go, fish sheltered areas with heavy tackle.",
+                "impact": "negative",
+            })
+
+    # Wind direction meaning
+    if wind_dir:
+        onshore_dirs = {
+            "east": {"E", "ENE", "ESE", "SE", "NE"},
+            "west": {"W", "WNW", "WSW", "SW", "NW"},
+        }
+        dirs = onshore_dirs.get(coast, onshore_dirs["east"])
+        if wind_dir in dirs:
+            bullets.append({
+                "label": "Direction",
+                "text": f"{wind_dir} wind pushes bait and murky water shoreward — predators follow to feed along the beach.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Direction",
+                "text": f"{wind_dir} (offshore) wind flattens the surf and clears the water. Better for sight fishing, tougher for surf bait fishing.",
+                "impact": "neutral",
+            })
+
+    # Wave analysis
+    if wave_range:
+        avg_wave = (wave_range[0] + wave_range[1]) / 2
+        if avg_wave <= 2:
+            bullets.append({
+                "label": "Waves",
+                "text": "Flat to slight seas — ideal for pier fishing and wading. Fish may be less active in clear, calm water.",
+                "impact": "neutral",
+            })
+        elif avg_wave <= 4:
+            bullets.append({
+                "label": "Waves",
+                "text": "Moderate surf churns up sand fleas, crabs, and baitfish — prime conditions for the surf zone.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Waves",
+                "text": "Heavy surf concentrates bait in troughs between sandbars. Big fish feed hard but conditions are challenging.",
+                "impact": "neutral",
+            })
+
+    # Pressure
+    if pressure:
+        trend = pressure.get("trend", "").lower()
+        if "falling" in trend:
+            bullets.append({
+                "label": "Pressure",
+                "text": "Falling pressure triggers a feeding frenzy — fish sense the change and eat aggressively before a front.",
+                "impact": "positive",
+            })
+        elif "rising" in trend:
+            bullets.append({
+                "label": "Pressure",
+                "text": "Rising pressure often means post-front clear skies. Fishing may be slow at first but improves as it stabilizes.",
+                "impact": "neutral",
+            })
+
+    # Tide state
+    if tide_state:
+        if tide_state == "Rising":
+            bullets.append({
+                "label": "Tide",
+                "text": "Incoming tide floods channels and flats with bait — one of the best times to fish from shore.",
+                "impact": "positive",
+            })
+        else:
+            bullets.append({
+                "label": "Tide",
+                "text": "Outgoing tide funnels bait through inlets and cuts — position yourself where current concentrates.",
+                "impact": "positive",
+            })
+
+    return bullets[:5]
+
+
+def build_safety_checklist(
+    wind_range: Optional[Tuple[float, float]] = None,
+    wave_range: Optional[Tuple[float, float]] = None,
+    hour: int = 12,
+    alerts: Optional[List[Dict[str, str]]] = None,
+) -> List[Dict[str, str]]:
+    """Build a conditions-aware safety checklist for surf/pier fishing."""
+    items: List[Dict[str, str]] = []
+
+    # Always show basics
+    items.append({
+        "text": "Tell someone your fishing plan and expected return time",
+        "icon": "info",
+    })
+
+    # Wave-based warnings
+    if wave_range:
+        max_wave = wave_range[1] if isinstance(wave_range, tuple) else 3
+        if max_wave >= 6:
+            items.append({
+                "text": "High surf advisory — stay off jetties and rock structures",
+                "icon": "warning",
+            })
+            items.append({
+                "text": "Rip current risk is elevated — never wade beyond knee depth",
+                "icon": "warning",
+            })
+        elif max_wave >= 4:
+            items.append({
+                "text": "Moderate surf — watch for sneaker waves and keep gear secured",
+                "icon": "caution",
+            })
+
+    # Wind-based
+    if wind_range:
+        max_wind = wind_range[1] if isinstance(wind_range, tuple) else 10
+        if max_wind >= 25:
+            items.append({
+                "text": "Gale-force winds — consider postponing your trip",
+                "icon": "warning",
+            })
+        elif max_wind >= 15:
+            items.append({
+                "text": "Strong winds — secure coolers/gear and watch for blown tackle",
+                "icon": "caution",
+            })
+
+    # Time-based
+    if hour < 6 or hour >= 20:
+        items.append({
+            "text": "Fishing in the dark — bring a headlamp and reflective gear",
+            "icon": "info",
+        })
+    if 10 <= hour <= 16:
+        items.append({
+            "text": "Peak sun hours — wear sunscreen (SPF 50+), hat, and polarized glasses",
+            "icon": "info",
+        })
+
+    # Weather alerts
+    if alerts:
+        for alert in alerts:
+            severity = alert.get("severity", "").lower()
+            if "thunderstorm" in alert.get("event", "").lower():
+                items.append({
+                    "text": "Thunderstorm warning active — leave pier/water immediately if lightning is within 10 miles",
+                    "icon": "warning",
+                })
+                break
+
+    # General
+    items.append({
+        "text": "Bring plenty of water — dehydration reduces reaction time",
+        "icon": "info",
+    })
+    items.append({
+        "text": "Know the emergency number for your pier/beach (usually posted at entrance)",
+        "icon": "info",
+    })
+
+    return items
+
+
+def generate_forecast(
+    location: Optional[Dict[str, Any]] = None,
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Generate the complete fishing forecast.
+
+    Fetches marine conditions and water temperature, classifies fishability,
+    then dynamically determines which species are biting based on the current
+    month and water temperature.  Rig recommendations are matched to active
+    species.
+
+    If ``profile`` is provided (from user's fishing profile), species are
+    filtered to match the user's fishing style and target preferences.
+    """
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    month = now.month
+
+    wind_range, wave_range, wind_dir = get_marine_conditions(month, location)
+    verdict = classify_conditions(wind_range, wave_range)
+
+    water_temp, temp_is_live = get_water_temp(month, location)
+
+    def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
+        if r is None:
+            return "Unknown"
+        low, high = r
+        if low == high:
+            return f"{low:.0f} {unit}"
+        return f"{low:.0f}-{high:.0f} {unit}"
+
+    try:
+        loc_lat = (location or {}).get("lat", _LAT)
+        loc_lng = (location or {}).get("lng", _LNG)
+        sunrise, sunset = _sun_times(now, loc_lat, loc_lng, tz_name)
+        sun_str = f"{sunrise.strftime('%-I:%M %p')} / {sunset.strftime('%-I:%M %p')}"
+    except Exception:
+        sun_str = "Unavailable"
+
+    wind_str = format_range(wind_range, "kt")
+    if wind_dir and wind_str != "Unknown":
+        wind_str = f"{wind_dir} {wind_str}"
+
+    # Water temperature trend (compare to monthly avg and next month)
+    temp_trend = ""
+    temp_trend_detail = ""
+    if location:
+        monthly = get_monthly_water_temps(location)
+        avg_this = monthly.get(month, water_temp)
+        prev_month = month - 1 if month > 1 else 12
+        next_month = month + 1 if month < 12 else 1
+        avg_prev = monthly.get(prev_month, avg_this)
+        avg_next = monthly.get(next_month, avg_this)
+        seasonal_direction = avg_next - avg_prev  # positive = warming season
+        diff = water_temp - avg_this
+        if seasonal_direction > 1.5:
+            temp_trend = "warming"
+            temp_trend_detail = f"Warming trend — avg {avg_this:.0f}°F this month"
+        elif seasonal_direction < -1.5:
+            temp_trend = "cooling"
+            temp_trend_detail = f"Cooling trend — avg {avg_this:.0f}°F this month"
+        else:
+            temp_trend = "stable"
+            temp_trend_detail = f"Stable — avg {avg_this:.0f}°F this month"
+
+        if abs(diff) >= 2:
+            if diff > 0:
+                temp_trend_detail += f", currently {diff:+.0f}°F above avg"
+            else:
+                temp_trend_detail += f", currently {diff:.0f}°F below avg"
+
+    conditions = {
+        "wind": wind_str,
+        "wind_dir": wind_dir or "",
+        "waves": format_range(wave_range, "ft"),
+        "verdict": verdict,
+        "water_temp_f": round(water_temp, 1),
+        "water_temp_live": temp_is_live,
+        "water_temp_trend": temp_trend,
+        "water_temp_trend_detail": temp_trend_detail,
+        "sunrise_sunset": sun_str,
+    }
+
+    # Determine coast for wind direction scoring and species filtering
+    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
+    coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
+
+    loc_state = (location or {}).get("state", "")
+    loc_fish_region = (location or {}).get("fish_region", "")
+    profile = profile or {}
+    species = build_species_ranking(
+        month, water_temp,
+        wind_dir=wind_dir,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        hour=now.hour,
+        coast=coast,
+        state=loc_state,
+        fishing_types=profile.get("fishing_types"),
+        targets=profile.get("targets"),
+        fish_region=loc_fish_region,
+    )
+    rig_recommendations = build_rig_recommendations(species)
+
+    loc_name = ""
+    if location:
+        loc_name = f"{location['name']}, {location['state']}"
+
+    forecast: Dict[str, Any] = {
+        "generated_at": now.isoformat(),
+        "location_name": loc_name,
+        "location_id": (location or {}).get("id", ""),
+        "conditions": conditions,
+        "species": species,
+        "rig_recommendations": rig_recommendations,
+        "bait_rankings": build_bait_ranking(species, month),
+    }
+
+    # Weather alerts
+    try:
+        alerts = fetch_weather_alerts(loc_lat, loc_lng)
+        if alerts:
+            forecast["alerts"] = alerts
+    except Exception:
+        pass
+
+    # Barometric pressure
+    try:
+        pressure = fetch_barometric_pressure(location)
+        if pressure:
+            forecast["pressure"] = pressure
+    except Exception:
+        pass
+
+    # Current weather (air temp, humidity)
+    try:
+        weather = fetch_current_weather(loc_lat, loc_lng)
+        if weather:
+            forecast["weather"] = weather
+    except Exception:
+        pass
+
+    # Tide predictions
+    coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    tides = fetch_tide_predictions(coops_id, tz_name)
+    if tides:
+        # Filter to today-only for display (chart + timeline)
+        today_date_str = now.strftime("%Y%m%d")
+        today_tides = [t for t in tides if t.get("date_str") == today_date_str]
+        forecast["tides"] = today_tides
+        chart_json = build_tide_chart_svg(today_tides)
+        if chart_json:
+            forecast["tide_chart"] = chart_json
+
+        # Determine current tide state
+        current_hour = now.hour + now.minute / 60
+        tide_state = ""
+        for i in range(len(tides) - 1):
+            t_now = tides[i].get("hour", 0)
+            t_next = tides[i + 1].get("hour", 24)
+            if t_now <= current_hour < t_next:
+                if tides[i + 1]["type"] == "High":
+                    tide_state = "Rising"
+                else:
+                    tide_state = "Falling"
+                break
+        if not tide_state and tides:
+            # Before first tide or after last
+            if current_hour < tides[0].get("hour", 12):
+                tide_state = "Falling" if tides[0]["type"] == "Low" else "Rising"
+            else:
+                tide_state = "Falling" if tides[-1]["type"] == "High" else "Rising"
+        if tide_state:
+            forecast["tide_state"] = tide_state
+
+
+    # Solunar fishing times
+    try:
+        solunar = compute_solunar_times(now, loc_lat, loc_lng, tz_name)
+        forecast["solunar"] = solunar
+    except Exception:
+        pass
+
+    # Multi-day outlook (3 days)
+    try:
+        outlook = build_multiday_outlook(now, location)
+        if outlook:
+            forecast["outlook"] = outlook
+    except Exception:
+        pass
+
+    # Best day to fish (trip planner)
+    if forecast.get("outlook"):
+        forecast["best_day"] = pick_best_fishing_day(
+            forecast["conditions"]["verdict"],
+            forecast["outlook"],
+        )
+
+    # Species availability calendar
+    forecast["calendar"] = build_species_calendar(species, location)
+
+    # Natural bait availability (bait DB only has "east"/"west" entries)
+    bait_coast = "west" if coast == "west" else "east"
+    forecast["natural_bait"] = build_natural_bait_chart(month, bait_coast)
+
+    # Spot tips based on current conditions
+    forecast["spot_tips"] = build_spot_tips(
+        wind_range=wind_range, wave_range=wave_range,
+        wind_dir=wind_dir or "", hour=now.hour, month=month,
+        coast=coast, tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Conditions explainer
+    forecast["conditions_explainer"] = build_conditions_explainer(
+        wind_range=wind_range, wave_range=wave_range,
+        wind_dir=wind_dir, water_temp=water_temp,
+        pressure=forecast.get("pressure"), tide_state=forecast.get("tide_state", ""),
+        coast=coast,
+    )
+
+    # Bite alerts
+    forecast["bite_alerts"] = build_bite_alerts(
+        verdict=forecast["conditions"]["verdict"],
+        species=species,
+        pressure=forecast.get("pressure"),
+        tide_state=forecast.get("tide_state", ""),
+    )
+
+    # Gear checklist
+    forecast["gear_checklist"] = build_gear_checklist(
+        species=species,
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, water_temp=water_temp,
+        weather=forecast.get("weather"),
+    )
+
+    # Safety checklist
+    forecast["safety"] = build_safety_checklist(
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, alerts=forecast.get("alerts"),
+    )
+
+    # Best fishing times (synthesize solunar + tides + sunrise/sunset)
+    forecast["best_times"] = build_best_times(forecast)
+
+    # 24-hour activity timeline
+    forecast["activity_timeline"] = build_activity_timeline(forecast)
+
+    # Add technique tips to each species
+    t_state = forecast.get("tide_state", "")
+    wind_strength = ""
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind > 20:
+            wind_strength = "strong"
+        elif avg_wind > 10:
+            wind_strength = "moderate"
+        else:
+            wind_strength = "light"
+    for sp_entry in forecast["species"]:
+        sp_entry["tip"] = _get_technique_tip(
+            sp_entry["name"], hour=now.hour,
+            tide_state=t_state, wind_strength=wind_strength,
+        )
+
+    return forecast
+
+
+def personalize_forecast(
+    forecast: Dict[str, Any],
+    profile: Dict[str, Any],
+    location: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Apply profile-based personalization to a cached forecast.
+
+    Re-runs species ranking with profile filters and rebuilds the
+    species-dependent sections (rigs, baits, bite alerts, gear checklist,
+    calendar).  Conditions data, tides, weather, etc. remain unchanged.
+    """
+    fishing_types = profile.get("fishing_types")
+    targets = profile.get("targets")
+    if not fishing_types and not targets:
+        return forecast
+
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    month = now.month
+
+    # Extract conditions from cached forecast for re-scoring
+    conds = forecast.get("conditions", {})
+    water_temp = conds.get("water_temp_f", 70)
+    wind_dir = conds.get("wind_dir") or None
+
+    # Parse wind/wave ranges from formatted strings
+    def _parse_range(s: str) -> Optional[Tuple[float, float]]:
+        if not s or s == "Unknown":
+            return None
+        # Remove direction prefix and unit suffix
+        parts = s.split()
+        nums = []
+        for p in parts:
+            # Handle "5-10" format
+            if "-" in p:
+                try:
+                    lo, hi = p.split("-")
+                    return (float(lo), float(hi))
+                except ValueError:
+                    pass
+            try:
+                nums.append(float(p))
+            except ValueError:
+                pass
+        if len(nums) == 1:
+            return (nums[0], nums[0])
+        if len(nums) >= 2:
+            return (nums[0], nums[1])
+        return None
+
+    wind_str = conds.get("wind", "")
+    wave_str = conds.get("waves", "")
+    wind_range = _parse_range(wind_str)
+    wave_range = _parse_range(wave_str)
+
+    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
+    coast = "west" if conditions_region.startswith("pacific") else ("hawaii" if conditions_region.startswith("hawaii") else "east")
+    loc_state = (location or {}).get("state", "")
+    loc_fish_region = (location or {}).get("fish_region", "")
+
+    species = build_species_ranking(
+        month, water_temp,
+        wind_dir=wind_dir,
+        wind_range=wind_range,
+        wave_range=wave_range,
+        hour=now.hour,
+        coast=coast,
+        state=loc_state,
+        fishing_types=fishing_types,
+        targets=targets,
+        fish_region=loc_fish_region,
+    )
+
+    # Add technique tips
+    t_state = forecast.get("tide_state", "")
+    wind_strength = ""
+    if wind_range:
+        avg_wind = (wind_range[0] + wind_range[1]) / 2
+        if avg_wind > 20:
+            wind_strength = "strong"
+        elif avg_wind > 10:
+            wind_strength = "moderate"
+        else:
+            wind_strength = "light"
+    for sp_entry in species:
+        sp_entry["tip"] = _get_technique_tip(
+            sp_entry["name"], hour=now.hour,
+            tide_state=t_state, wind_strength=wind_strength,
+        )
+
+    # Rebuild species-dependent sections
+    forecast = dict(forecast)  # shallow copy to avoid mutating cache
+    forecast["species"] = species
+    forecast["rig_recommendations"] = build_rig_recommendations(species)
+    forecast["bait_rankings"] = build_bait_ranking(species, month)
+    forecast["calendar"] = build_species_calendar(species, location)
+    forecast["bite_alerts"] = build_bite_alerts(
+        verdict=conds.get("verdict", "Fair"),
+        species=species,
+        pressure=forecast.get("pressure"),
+        tide_state=t_state,
+    )
+    forecast["gear_checklist"] = build_gear_checklist(
+        species=species,
+        wind_range=wind_range, wave_range=wave_range,
+        hour=now.hour, water_temp=water_temp,
+        weather=forecast.get("weather"),
+    )
+
+    # Rebuild 3-day outlook with profile-filtered species
+    outlook = build_multiday_outlook(
+        now, location,
+        fishing_types=fishing_types,
+        targets=targets,
+    )
+    if outlook:
+        forecast["outlook"] = outlook
+        forecast["best_day"] = pick_best_fishing_day(
+            forecast.get("conditions", {}).get("verdict", "Fair"),
+            outlook,
+        )
+
+    return forecast
+
+
+def _parse_time_str(s: str) -> float:
+    """Parse a time string like '6:32 AM' to decimal hour."""
+    try:
+        s = s.strip().upper()
+        parts = s.replace(":", " ").replace("AM", "").replace("PM", "").split()
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+        is_pm = "PM" in s
+        if h == 12:
+            h = 0 if not is_pm else 12
+        elif is_pm:
+            h += 12
+        return h + m / 60.0
+    except Exception:
+        return 12.0
+
+
+def build_best_times(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Build a list of recommended fishing windows.
+
+    Combines solunar major/minor periods with tide change windows and
+    low-light periods (dawn/dusk) to suggest the best 2-3 windows.
+    Each entry: {"window": "5:30 - 7:30 AM", "reason": "...", "quality": "Prime"}
+    """
+    windows: List[Dict[str, Any]] = []
+
+    # Sunrise/sunset windows (dawn and dusk are prime fishing)
+    sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
+    if "/" in sun_str:
+        parts = sun_str.split("/")
+        sunrise_str = parts[0].strip()
+        sunset_str = parts[1].strip()
+        sr_h = _parse_time_str(sunrise_str)
+        ss_h = _parse_time_str(sunset_str)
+
+        # Dawn window: 30 min before to 60 min after sunrise
+        dawn_start = sr_h - 0.5
+        dawn_end = sr_h + 1.0
+        windows.append({
+            "start_h": dawn_start,
+            "end_h": dawn_end,
+            "label": f"{sunrise_str} window",
+            "reason": "Dawn — fish feed actively in low light",
+            "score": 3,
+        })
+
+        # Dusk window: 60 min before to 30 min after sunset
+        dusk_start = ss_h - 1.0
+        dusk_end = ss_h + 0.5
+        windows.append({
+            "start_h": dusk_start,
+            "end_h": dusk_end,
+            "label": f"{sunset_str} window",
+            "reason": "Dusk — prime low-light feeding period",
+            "score": 3,
+        })
+
+    # Solunar major periods
+    solunar = forecast.get("solunar", {})
+    for mp in solunar.get("major_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        windows.append({
+            "start_h": s_h,
+            "end_h": e_h,
+            "label": f"{mp['start']} – {mp['end']}",
+            "reason": "Solunar major — peak lunar activity",
+            "score": 4,
+        })
+
+    for mp in solunar.get("minor_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        windows.append({
+            "start_h": s_h,
+            "end_h": e_h,
+            "label": f"{mp['start']} – {mp['end']}",
+            "reason": "Solunar minor — elevated activity",
+            "score": 2,
+        })
+
+    # Tide change windows (best fishing near high tides)
+    tides = forecast.get("tides", [])
+    for t in tides:
+        if t.get("type") == "High":
+            t_h = t.get("hour", _parse_time_str(t["time"]))
+            windows.append({
+                "start_h": t_h - 1.0,
+                "end_h": t_h + 1.0,
+                "label": f"{t['time']}",
+                "reason": "Incoming high tide pushes bait into range",
+                "score": 2,
+            })
+
+    if not windows:
+        return []
+
+    # Score each window: boost when multiple factors overlap
+    # Check for overlaps between windows
+    scored_windows: List[Dict[str, Any]] = []
+    for w in windows:
+        overlap_bonus = 0
+        for other in windows:
+            if other is w:
+                continue
+            # Check if windows overlap
+            if w["start_h"] < other["end_h"] and w["end_h"] > other["start_h"]:
+                overlap_bonus += other["score"]
+        w["total_score"] = w["score"] + overlap_bonus
+        scored_windows.append(w)
+
+    # Sort by total score and pick the best 3 non-overlapping windows
+    scored_windows.sort(key=lambda x: x["total_score"], reverse=True)
+    selected: List[Dict[str, str]] = []
+    used_hours: List[Tuple[float, float]] = []
+    for w in scored_windows:
+        # Skip if too close to an already-selected window
+        skip = False
+        for uh_s, uh_e in used_hours:
+            if w["start_h"] < uh_e + 0.5 and w["end_h"] > uh_s - 0.5:
+                skip = True
+                break
+        if skip:
+            continue
+
+        total = w["total_score"]
+        if total >= 6:
+            quality = "Prime"
+        elif total >= 4:
+            quality = "Good"
+        else:
+            quality = "Fair"
+
+        selected.append({
+            "window": w["label"],
+            "reason": w["reason"],
+            "quality": quality,
+        })
+        used_hours.append((w["start_h"], w["end_h"]))
+        if len(selected) >= 3:
+            break
+
+    return selected
+
+
+def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Build a 24-hour fish activity timeline (one value per hour).
+
+    Each entry: {"hour": 0-23, "label": "12 AM", "level": 0-100, "tag": "low/med/high/prime"}
+    Combines solunar periods, tide changes, and dawn/dusk to estimate activity.
+    """
+    # Start with a flat baseline
+    activity = [15.0] * 24  # baseline activity
+
+    # Dawn/dusk boost
+    sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
+    if "/" in sun_str:
+        parts = sun_str.split("/")
+        sr_h = _parse_time_str(parts[0].strip())
+        ss_h = _parse_time_str(parts[1].strip())
+
+        # Dawn: 1h before to 1.5h after sunrise
+        for h in range(24):
+            dist = abs(h - sr_h)
+            if dist < 1.5:
+                activity[h] += 30 * max(0, 1 - dist / 1.5)
+            dist = abs(h - ss_h)
+            if dist < 1.5:
+                activity[h] += 30 * max(0, 1 - dist / 1.5)
+
+    # Solunar periods
+    solunar = forecast.get("solunar", {})
+    for mp in solunar.get("major_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        for h in range(24):
+            if s_h <= h <= e_h:
+                activity[h] += 35
+            elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
+                activity[h] += 15
+
+    for mp in solunar.get("minor_periods", []):
+        s_h = _parse_time_str(mp["start"])
+        e_h = _parse_time_str(mp["end"])
+        for h in range(24):
+            if s_h <= h <= e_h:
+                activity[h] += 20
+            elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
+                activity[h] += 8
+
+    # Tide change windows
+    tides = forecast.get("tides", [])
+    for t in tides:
+        t_h = t.get("hour", _parse_time_str(t.get("time", "12:00 PM")))
+        for h in range(24):
+            dist = abs(h - t_h)
+            if dist < 2:
+                boost = 20 if t.get("type") == "High" else 12
+                activity[h] += boost * max(0, 1 - dist / 2)
+
+    # Night penalty (subtle — fish are less active 11 PM to 4 AM)
+    for h in [23, 0, 1, 2, 3, 4]:
+        activity[h] *= 0.7
+
+    # Normalize to 0-100
+    max_val = max(activity) if max(activity) > 0 else 1
+    labels_12h = [
+        "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM",
+        "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
+        "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
+        "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
+    ]
+
+    timeline = []
+    for h in range(24):
+        level = min(100, int(activity[h] / max_val * 100))
+        if level >= 75:
+            tag = "prime"
+        elif level >= 50:
+            tag = "high"
+        elif level >= 30:
+            tag = "med"
+        else:
+            tag = "low"
+        timeline.append({
+            "hour": h,
+            "label": labels_12h[h],
+            "level": level,
+            "tag": tag,
+        })
+
+    return timeline
+
+
+def build_share_text(forecast: Dict[str, Any]) -> str:
+    """Build a plain-text summary of the forecast for sharing."""
+    lines = []
+    loc = forecast.get("location_name", "")
+    if loc:
+        lines.append(f"Fishing Forecast — {loc}")
+    else:
+        lines.append("Fishing Forecast")
+
+    c = forecast.get("conditions", {})
+    verdict = c.get("verdict", "")
+    if verdict:
+        lines.append(f"Verdict: {verdict}")
+
+    wind = c.get("wind", "")
+    waves = c.get("waves", "")
+    temp = c.get("water_temp_f", "")
+    if wind:
+        lines.append(f"Wind: {wind}")
+    if waves:
+        lines.append(f"Waves: {waves}")
+    if temp:
+        lines.append(f"Water: {temp}°F")
+
+    species = forecast.get("species", [])
+    if species:
+        top = species[:5]
+        lines.append("")
+        lines.append("Top Species:")
+        for sp in top:
+            activity = sp.get("activity", "")
+            tag = f" [{activity}]" if activity else ""
+            lines.append(f"  • {sp['name']}{tag}")
+
+    return "\n".join(lines)
