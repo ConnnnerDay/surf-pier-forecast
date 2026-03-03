@@ -76,9 +76,33 @@ class ProfilePayload:
             if not isinstance(favorites, list) or not all(isinstance(x, str) for x in favorites):
                 raise ApiError("invalid_favorites", "favorites must be a list of strings", status=400)
 
+        _VALID_FISHING_TYPES = {"surf", "pier", "inshore", "offshore"}
+        _VALID_TARGETS = {"bottom", "pelagic", "structure", "gamefish", "anything"}
+
         fishing_profile = data.get("fishing_profile")
-        if fishing_profile is not None and not isinstance(fishing_profile, dict):
-            raise ApiError("invalid_profile", "fishing_profile must be an object", status=400)
+        if fishing_profile is not None:
+            if not isinstance(fishing_profile, dict):
+                raise ApiError("invalid_profile", "fishing_profile must be an object", status=400)
+            fp_types = fishing_profile.get("fishing_types")
+            if fp_types is not None:
+                if not isinstance(fp_types, list) or not all(
+                    isinstance(x, str) and x in _VALID_FISHING_TYPES for x in fp_types
+                ):
+                    raise ApiError(
+                        "invalid_fishing_types",
+                        f"fishing_types must be a list of: {sorted(_VALID_FISHING_TYPES)}",
+                        status=400,
+                    )
+            fp_targets = fishing_profile.get("targets")
+            if fp_targets is not None:
+                if not isinstance(fp_targets, list) or not all(
+                    isinstance(x, str) and x in _VALID_TARGETS for x in fp_targets
+                ):
+                    raise ApiError(
+                        "invalid_targets",
+                        f"targets must be a list of: {sorted(_VALID_TARGETS)}",
+                        status=400,
+                    )
 
         location_id = data.get("location_id")
         if location_id is not None and not isinstance(location_id, str):
