@@ -47,6 +47,13 @@ CREATE TABLE IF NOT EXISTS fishing_log (
     notes       TEXT,
     logged_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS forecasts (
+    location_id TEXT    PRIMARY KEY,
+    data        TEXT    NOT NULL,
+    generated_at TEXT   NOT NULL,
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -259,15 +266,101 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
         "WHERE user_id = ? AND location_id = ? ORDER BY logged_at DESC LIMIT 1",
         (user_id, location_id),
     ).fetchone()
+
+    # Monthly breakdown: how many catches per month
+    monthly_rows = conn.execute(
+        "SELECT strftime('%m', logged_at) as month, COUNT(*) as cnt "
+        "FROM fishing_log WHERE user_id = ? AND location_id = ? "
+        "GROUP BY month ORDER BY month",
+        (user_id, location_id),
+    ).fetchall()
     conn.close()
 
     unique = len(species_rows)
     top_species = species_rows[0]["species"] if species_rows else None
     last_date = last["logged_at"].split(" ")[0] if last else None
 
+    # Build species breakdown list (top 10)
+    species_breakdown = [
+        {"species": r["species"], "count": r["cnt"]}
+        for r in species_rows[:10]
+    ]
+
+    # Build monthly counts (1-12)
+    monthly_counts = {int(r["month"]): r["cnt"] for r in monthly_rows}
+
     return {
         "total": total,
         "unique_species": unique,
         "top_species": top_species,
         "last_date": last_date,
+        "species_breakdown": species_breakdown,
+        "monthly_counts": monthly_counts,
     }
+
+
+# ---------------------------------------------------------------------------
+# Forecast cache (SQLite-backed)
+# ---------------------------------------------------------------------------
+
+def load_forecast(location_id: str) -> Optional[Dict[str, Any]]:
+    """Load the most recent forecast for a location from the database."""
+    if not location_id:
+        return None
+    conn = get_db()
+    row = conn.execute(
+        "SELECT data FROM forecasts WHERE location_id = ?",
+        (location_id,),
+    ).fetchone()
+    conn.close()
+    if row:
+        try:
+            return json.loads(row["data"])
+        except (json.JSONDecodeError, TypeError):
+            return None
+    return None
+
+
+def save_forecast_to_db(location_id: str, data: Dict[str, Any]) -> None:
+    """Insert or replace the forecast for a location."""
+    if not location_id:
+        return
+    generated_at = data.get("generated_at", datetime.utcnow().isoformat())
+    conn = get_db()
+    conn.execute(
+        "INSERT OR REPLACE INTO forecasts (location_id, data, generated_at) "
+        "VALUES (?, ?, ?)",
+        (location_id, json.dumps(data), generated_at),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_cached_locations() -> List[Dict[str, str]]:
+    """Return a list of locations that have a cached forecast."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT location_id, generated_at, updated_at FROM forecasts "
+        "ORDER BY updated_at DESC"
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "location_id": r["location_id"],
+            "generated_at": r["generated_at"],
+            "updated_at": r["updated_at"],
+        }
+        for r in rows
+    ]
+
+
+def delete_forecast(location_id: str) -> bool:
+    """Delete the cached forecast for a location."""
+    conn = get_db()
+    cur = conn.execute(
+        "DELETE FROM forecasts WHERE location_id = ?", (location_id,)
+    )
+    conn.commit()
+    deleted = cur.rowcount > 0
+    conn.close()
+    return deleted
