@@ -12,14 +12,7 @@
     <meta name="theme-color" content="#0e5f78">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description" content="Set up your fishing profile to get personalized forecasts">
-    <script>
-    (function() {
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
-    </script>
+    {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body>
     <header>
@@ -32,12 +25,21 @@
     <main>
         <section class="profile-intro">
             <h2>Set Up Your Fishing Profile</h2>
-            <p class="section-sub">We'll customize your forecast based on how you fish. You can change these anytime from the dashboard.</p>
+            <p class="section-sub">Build your fishing persona in under a minute. We use this to prioritize species, baits, and bite windows.</p>
+        </section>
+        <section class="profile-wizard-card">
+            <div class="profile-wizard-head">
+                <strong>Profile completion</strong>
+                <span id="profile-progress-label">0/6 complete</span>
+            </div>
+            <div class="profile-wizard-track">
+                <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
+            </div>
         </section>
 
         <form id="profile-form" class="profile-form" onsubmit="return saveProfile(event)">
             <!-- Fishing Type -->
-            <section class="profile-section">
+            <section class="profile-section profile-section--step" data-step="1">
                 <h3 class="profile-question">What type of fishing do you do?</h3>
                 <p class="profile-hint">Select all that apply</p>
                 <div class="profile-options profile-options--multi">
@@ -77,7 +79,7 @@
             </section>
 
             <!-- Bait Preferences -->
-            <section class="profile-section">
+            <section class="profile-section profile-section--step" data-step="2">
                 <h3 class="profile-question">Do you use live bait?</h3>
                 <p class="profile-hint">Live shrimp, finger mullet, menhaden, etc.</p>
                 <div class="profile-options">
@@ -106,7 +108,7 @@
             </section>
 
             <!-- Cut/Natural Bait -->
-            <section class="profile-section">
+            <section class="profile-section profile-section--step" data-step="3">
                 <h3 class="profile-question">Do you use cut or natural bait?</h3>
                 <p class="profile-hint">Cut shrimp, bloodworms, sand fleas, squid, Fishbites, etc.</p>
                 <div class="profile-options">
@@ -135,7 +137,7 @@
             </section>
 
             <!-- Lures/Artificial -->
-            <section class="profile-section">
+            <section class="profile-section profile-section--step" data-step="4">
                 <h3 class="profile-question">Do you use lures or artificial baits?</h3>
                 <p class="profile-hint">Spoons, jigs, plugs, soft plastics, topwater, etc.</p>
                 <div class="profile-options">
@@ -164,7 +166,7 @@
             </section>
 
             <!-- Experience Level -->
-            <section class="profile-section">
+            <section class="profile-section profile-section--step" data-step="5">
                 <h3 class="profile-question">How would you describe your experience?</h3>
                 <div class="profile-options">
                     <label class="profile-chip">
@@ -192,7 +194,7 @@
             </section>
 
             <!-- Target Interest -->
-            <section class="profile-section">
+            <section class="profile-section profile-section--step" data-step="6">
                 <h3 class="profile-question">What are you mostly fishing for?</h3>
                 <p class="profile-hint">Select all that apply</p>
                 <div class="profile-options profile-options--multi profile-options--wrap">
@@ -219,7 +221,7 @@
                 </div>
             </section>
 
-            <div class="profile-actions">
+            <div class="profile-actions profile-actions--sticky">
                 <button type="submit" class="profile-save-btn">Save &amp; View Forecast</button>
                 <a href="{{ url_for('views.index') }}" class="profile-skip">Skip for now</a>
             </div>
@@ -260,6 +262,28 @@
             });
         }
     })();
+
+    function updateProfileProgress() {
+        var total = 6;
+        var complete = 0;
+        if (document.querySelectorAll('input[name="fishing_type"]:checked').length) complete += 1;
+        if (document.querySelector('input[name="live_bait"]:checked')) complete += 1;
+        if (document.querySelector('input[name="cut_bait"]:checked')) complete += 1;
+        if (document.querySelector('input[name="lures"]:checked')) complete += 1;
+        if (document.querySelector('input[name="experience"]:checked')) complete += 1;
+        if (document.querySelectorAll('input[name="targets"]:checked').length) complete += 1;
+
+        var pct = Math.round((complete / total) * 100);
+        var label = document.getElementById('profile-progress-label');
+        var bar = document.getElementById('profile-progress-bar');
+        if (label) label.textContent = complete + '/' + total + ' complete';
+        if (bar) bar.style.width = pct + '%';
+    }
+
+    document.querySelectorAll('#profile-form input').forEach(function(el) {
+        el.addEventListener('change', updateProfileProgress);
+    });
+    updateProfileProgress();
 
     function saveProfile(e) {
         e.preventDefault();
