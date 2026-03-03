@@ -6,7 +6,7 @@ import json
 import os
 import sqlite3
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -127,6 +127,12 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE profiles ADD COLUMN temp_units TEXT DEFAULT 'F'")
     if "notification_prefs" not in profile_cols:
         conn.execute("ALTER TABLE profiles ADD COLUMN notification_prefs TEXT DEFAULT '{}'")
+
+    catch_log_cols = set(_column_names(conn, "catch_log"))
+    if "photo1_path" not in catch_log_cols:
+        conn.execute("ALTER TABLE catch_log ADD COLUMN photo1_path TEXT")
+    if "photo2_path" not in catch_log_cols:
+        conn.execute("ALTER TABLE catch_log ADD COLUMN photo2_path TEXT")
 
     # Legacy user preferences -> profiles + locations
     if _table_exists(conn, "user_preferences"):
@@ -330,7 +336,7 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
 def get_log_entries(user_id: int, location_id: str, limit: int = 50) -> List[Dict[str, Any]]:
     conn = get_db()
     rows = conn.execute(
-        "SELECT id, species, size, notes, caught_at FROM catch_log "
+        "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
         "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
         (user_id, location_id, limit),
     ).fetchall()
@@ -342,6 +348,8 @@ def get_log_entries(user_id: int, location_id: str, limit: int = 50) -> List[Dic
             "size": r["size"],
             "notes": r["notes"],
             "date": r["caught_at"],
+            "photo1_path": r["photo1_path"],
+            "photo2_path": r["photo2_path"],
         }
         for r in rows
     ]
@@ -362,6 +370,54 @@ def add_log_entry(user_id: int, location_id: str, species: str, size: str = "", 
 def delete_log_entry(user_id: int, entry_id: int) -> bool:
     conn = get_db()
     cur = conn.execute("DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id))
+    conn.commit()
+    ok = cur.rowcount > 0
+    conn.close()
+    return ok
+
+
+def get_entry_photo_paths(
+    user_id: int, entry_id: int
+) -> Optional[Tuple[Optional[str], Optional[str]]]:
+    """Return (photo1_path, photo2_path) for the entry, or None if entry not found."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT photo1_path, photo2_path FROM catch_log WHERE id = ? AND user_id = ?",
+        (entry_id, user_id),
+    ).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    return (row["photo1_path"], row["photo2_path"])
+
+
+def attach_photos_to_entry(
+    user_id: int,
+    entry_id: int,
+    *,
+    photo1_path: Optional[str] = None,
+    photo2_path: Optional[str] = None,
+) -> bool:
+    """Update photo slots for an entry.  Only slots explicitly provided are updated.
+
+    Returns True if the entry exists and was updated, False otherwise.
+    """
+    sets = []
+    vals: List[Any] = []
+    if photo1_path is not None:
+        sets.append("photo1_path = ?")
+        vals.append(photo1_path)
+    if photo2_path is not None:
+        sets.append("photo2_path = ?")
+        vals.append(photo2_path)
+    if not sets:
+        return False
+    vals.extend([entry_id, user_id])
+    conn = get_db()
+    cur = conn.execute(
+        f"UPDATE catch_log SET {', '.join(sets)} WHERE id = ? AND user_id = ?",
+        vals,
+    )
     conn.commit()
     ok = cur.rowcount > 0
     conn.close()
@@ -410,7 +466,7 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
 def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
     conn = get_db()
     rows = conn.execute(
-        "SELECT id, location_id, species, size, notes, caught_at FROM catch_log "
+        "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
         "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
         (user_id, limit),
     ).fetchall()
@@ -423,6 +479,8 @@ def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
             "size": r["size"],
             "notes": r["notes"],
             "date": r["caught_at"],
+            "photo1_path": r["photo1_path"],
+            "photo2_path": r["photo2_path"],
         }
         for r in rows
     ]

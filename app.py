@@ -44,6 +44,11 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
+    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB hard limit for file uploads
+
+    _upload_folder = os.path.join(os.path.dirname(__file__), "static", "uploads")
+    os.makedirs(_upload_folder, exist_ok=True)
+    app.config["UPLOAD_FOLDER"] = _upload_folder
 
     # Initialize user database
     init_db()

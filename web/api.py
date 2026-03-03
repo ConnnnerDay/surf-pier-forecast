@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
+import os
+import uuid
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-from flask import Blueprint, g, jsonify, redirect, request, session, url_for
+from flask import Blueprint, current_app, g, jsonify, redirect, request, session, url_for
 
 from domain.forecast import build_share_text, generate_forecast
 from locations import get_location
@@ -15,7 +17,9 @@ from regulations import lookup_regulation
 from storage.cache import load_cached_forecast, save_forecast
 from storage.sqlite import (
     add_log_entry,
+    attach_photos_to_entry,
     delete_log_entry,
+    get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
     get_preferences,
@@ -191,9 +195,14 @@ def log_delete(entry_id: int) -> Any:
 def log_delete_v1(entry_id: int) -> Any:
     if g.user is None:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
-    deleted = delete_log_entry(g.user["id"], entry_id)
+    uid = g.user["id"]
+    photo_paths = get_entry_photo_paths(uid, entry_id)
+    deleted = delete_log_entry(uid, entry_id)
     if not deleted:
         return jsonify(error_envelope("not_found", "Log entry not found")), 404
+    if photo_paths:
+        _delete_upload_file(photo_paths[0])
+        _delete_upload_file(photo_paths[1])
     return jsonify(success_envelope({"deleted": True, "entry_id": entry_id}))
 
 
@@ -278,6 +287,99 @@ def regulations_v1() -> Any:
         "state": state or None,
         "regulation": reg,
     }))
+
+
+_ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+_ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp"}
+_MAX_PHOTO_BYTES = 8 * 1024 * 1024  # 8 MB per photo
+
+
+def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
+    """Validate + write an uploaded photo.
+
+    Returns ``(relative_path, absolute_path)`` where relative_path is suitable
+    for storing in the DB and serving via ``/static/...``.
+
+    Raises ApiError on validation failure.
+    """
+    mime = file_storage.mimetype or ""
+    if mime not in _ALLOWED_MIME:
+        raise ApiError("invalid_file_type", f"Unsupported file type '{mime}'. Use JPEG, PNG, or WebP.", status=400)
+
+    ext = os.path.splitext(file_storage.filename or "")[1].lower()
+    if ext not in _ALLOWED_EXT:
+        raise ApiError("invalid_file_type", f"Unsupported extension '{ext}'. Use .jpg, .png, or .webp.", status=400)
+
+    data = file_storage.read()
+    if len(data) > _MAX_PHOTO_BYTES:
+        raise ApiError("file_too_large", "Photo must be 8 MB or smaller.", status=413)
+
+    upload_root = current_app.config["UPLOAD_FOLDER"]
+    user_dir = os.path.join(upload_root, str(user_id))
+    os.makedirs(user_dir, exist_ok=True)
+
+    filename = f"{uuid.uuid4()}{ext}"
+    abs_path = os.path.join(user_dir, filename)
+    with open(abs_path, "wb") as fh:
+        fh.write(data)
+
+    rel_path = f"uploads/{user_id}/{filename}"
+    return rel_path, abs_path
+
+
+def _delete_upload_file(rel_path: Optional[str]) -> None:
+    """Silently remove a stored photo file; no-op when path is None or missing."""
+    if not rel_path:
+        return
+    upload_root = current_app.config.get("UPLOAD_FOLDER", "")
+    if not upload_root:
+        return
+    # rel_path is "uploads/<user_id>/<filename>"; strip the leading "uploads/" part
+    sub = rel_path[len("uploads/"):] if rel_path.startswith("uploads/") else rel_path
+    abs_path = os.path.join(upload_root, sub)
+    try:
+        os.remove(abs_path)
+    except OSError:
+        pass
+
+
+@bp.route("/api/v1/log/<int:entry_id>/photos", methods=["POST"])
+def log_photos_v1(entry_id: int) -> Any:
+    """Attach up to two photos to an existing catch-log entry.
+
+    Expects ``multipart/form-data`` with optional fields ``photo1`` and/or
+    ``photo2`` (each a file upload).  At least one field must be present.
+    """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    uid = g.user["id"]
+    paths = get_entry_photo_paths(uid, entry_id)
+    if paths is None:
+        return jsonify(error_envelope("not_found", "Log entry not found")), 404
+
+    photo1_file = request.files.get("photo1")
+    photo2_file = request.files.get("photo2")
+
+    if not photo1_file and not photo2_file:
+        return _json_error(ApiError("missing_param", "Provide at least one of: photo1, photo2", status=400))
+
+    saved: Dict[str, str] = {}
+    try:
+        if photo1_file and photo1_file.filename:
+            rel, _ = _save_upload(photo1_file, uid)
+            saved["photo1_path"] = rel
+        if photo2_file and photo2_file.filename:
+            rel, _ = _save_upload(photo2_file, uid)
+            saved["photo2_path"] = rel
+    except ApiError as err:
+        # Clean up any files already written this request
+        for p in saved.values():
+            _delete_upload_file(p)
+        return _json_error(err)
+
+    attach_photos_to_entry(uid, entry_id, **saved)
+    return jsonify(success_envelope({"entry_id": entry_id, **saved})), 201
 
 
 @bp.route("/api/share-text")
