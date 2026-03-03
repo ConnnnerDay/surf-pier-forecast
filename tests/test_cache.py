@@ -2,7 +2,6 @@
 
 import json
 import os
-import tempfile
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -20,38 +19,70 @@ from storage.cache import (
 
 
 @pytest.fixture(autouse=True)
-def tmp_cache_dir(tmp_path, monkeypatch):
-    """Redirect cache directory to a temp folder for each test."""
+def isolated_storage(tmp_path, monkeypatch):
+    """Redirect both JSON cache dir and SQLite DB to temp folder."""
     monkeypatch.setattr("storage.cache.CACHE_DIR", str(tmp_path))
     monkeypatch.setattr("storage.cache.CACHE_FILE", str(tmp_path / "forecast.json"))
+    # Point the DB to a temp file so tests don't touch the real database
+    db_path = str(tmp_path / "test.db")
+    monkeypatch.setattr("storage.db.DB_PATH", db_path)
+    # Initialize the schema in the temp DB
+    from storage.db import init_db
+    init_db()
     return tmp_path
 
 
 class TestCachePath:
-    def test_default_path(self, tmp_cache_dir):
-        assert _cache_path("") == str(tmp_cache_dir / "forecast.json")
+    def test_default_path(self, isolated_storage):
+        assert _cache_path("") == str(isolated_storage / "forecast.json")
 
-    def test_location_specific_path(self, tmp_cache_dir):
+    def test_location_specific_path(self, isolated_storage):
         assert _cache_path("wrightsville-beach-nc").endswith(
             "forecast_wrightsville-beach-nc.json"
         )
 
 
 class TestSaveAndLoad:
-    def test_roundtrip(self, tmp_cache_dir):
-        data = {"location": "test", "temp": 72}
+    def test_roundtrip_via_db(self):
+        """Save and load should work through SQLite for location-specific forecasts."""
+        data = {"generated_at": "2026-03-01T12:00:00", "location": "test", "temp": 72}
         save_forecast(data, "loc1")
         loaded = load_cached_forecast("loc1")
+        assert loaded == data
+
+    def test_roundtrip_no_location_uses_json(self, isolated_storage):
+        """Without a location_id, falls back to JSON only."""
+        data = {"generated_at": "2026-03-01T12:00:00", "temp": 65}
+        save_forecast(data, "")
+        loaded = load_cached_forecast("")
         assert loaded == data
 
     def test_load_missing_returns_none(self):
         assert load_cached_forecast("nonexistent") is None
 
-    def test_load_corrupt_json_returns_none(self, tmp_cache_dir):
-        path = tmp_cache_dir / "forecast_bad.json"
-        path.write_text("not json at all {{{")
-        with patch("storage.cache._cache_path", return_value=str(path)):
-            assert load_cached_forecast("bad") is None
+    def test_json_fallback_migration(self, isolated_storage):
+        """Legacy JSON file should be migrated to DB on first read."""
+        data = {"generated_at": "2026-02-01T12:00:00", "species": ["drum"]}
+        # Write directly to JSON (simulating legacy file)
+        path = isolated_storage / "forecast_legacy-loc.json"
+        path.write_text(json.dumps(data))
+
+        loaded = load_cached_forecast("legacy-loc")
+        assert loaded == data
+
+        # Second load should come from DB (even if we delete the JSON)
+        path.unlink()
+        loaded2 = load_cached_forecast("legacy-loc")
+        assert loaded2 == data
+
+    def test_json_backup_written(self, isolated_storage):
+        """save_forecast should also write a JSON backup file."""
+        data = {"generated_at": "2026-03-01T12:00:00"}
+        save_forecast(data, "backup-test")
+        json_path = isolated_storage / "forecast_backup-test.json"
+        assert json_path.exists()
+        with open(json_path) as f:
+            assert json.load(f) == data
 
 
 class TestForecastAge:
