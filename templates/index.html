@@ -494,7 +494,7 @@
                         <path d="M20,3 A17,17 0 0,0 20,37 A10,17 0 0,1 20,3" fill="#fef9e7"/>
                         {% endif %}
                     </svg>
-                    <span class="moon-label">{{ forecast.solunar.moon_phase }}</span>
+                    <span class="moon-label">{{ forecast.solunar.moon_phase }}{% if forecast.solunar.illumination_pct is defined %} · {{ forecast.solunar.illumination_pct }}% lit{% endif %}</span>
                 </div>
             </div>
 

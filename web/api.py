@@ -8,7 +8,7 @@ from flask import Blueprint, g, jsonify, redirect, request, session, url_for
 
 from domain.forecast import build_share_text, generate_forecast
 from storage.cache import load_cached_forecast, save_forecast
-from storage.db import (
+from storage.sqlite import (
     add_log_entry,
     delete_log_entry,
     get_log_entries,
