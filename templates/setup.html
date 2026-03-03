@@ -29,7 +29,7 @@
                 <span class="current-label">Current location</span>
                 <h3>{{ current_location.name }}, {{ current_location.state }}</h3>
             </div>
-            <a href="{{ url_for('index') }}" class="current-keep-btn">Back to Forecast</a>
+            <a href="{{ url_for('views.index') }}" class="current-keep-btn">Back to Forecast</a>
         </section>
         {% endif %}
 
@@ -38,7 +38,7 @@
             <h2>Find Your Spot</h2>
             <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
 
-            <form method="post" action="{{ url_for('setup_search') }}" class="zip-form">
+            <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form">
                 <div class="zip-input-group">
                     <input type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
                            value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required
@@ -60,7 +60,7 @@
 
             <div class="location-results">
                 {% for loc in results %}
-                <form method="post" action="{{ url_for('setup_select', location_id=loc.id) }}" class="location-card-form">
+                <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="location-card-form">
                     <button type="submit" class="location-card{% if current_location and loc.id == current_location.id %} location-card--active{% endif %}">
                         <div class="location-card-body">
                             <h3>{{ loc.name }}</h3>
@@ -90,7 +90,7 @@
                         <div class="state-group">
                             <h3 class="state-label">{{ loc.state }}</h3>
                     {% endif %}
-                    <form method="post" action="{{ url_for('setup_select', location_id=loc.id) }}" class="browse-item-form">
+                    <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="browse-item-form">
                         <button type="submit" class="browse-item{% if current_location and loc.id == current_location.id %} browse-item--active{% endif %}">{{ loc.name }}</button>
                     </form>
                 {% endfor %}

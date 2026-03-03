@@ -1,0 +1,68 @@
+"""Tests for app factory and blueprint registration."""
+
+import pytest
+
+from app import create_app
+
+
+@pytest.fixture
+def app():
+    app = create_app()
+    app.config["TESTING"] = True
+    return app
+
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+class TestAppFactory:
+    def test_creates_flask_app(self, app):
+        assert app is not None
+        assert app.config["TESTING"] is True
+
+    def test_all_blueprints_registered(self, app):
+        assert "auth" in app.blueprints
+        assert "api" in app.blueprints
+        assert "views" in app.blueprints
+
+    def test_expected_routes_exist(self, app):
+        rules = {r.rule for r in app.url_map.iter_rules()}
+        assert "/" in rules
+        assert "/login" in rules
+        assert "/register" in rules
+        assert "/setup" in rules
+        assert "/api/forecast" in rules
+        assert "/api/refresh" in rules
+
+
+class TestBasicRoutes:
+    def test_index_redirects_to_setup(self, client):
+        """Without a location set, index should redirect to setup."""
+        resp = client.get("/", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/setup" in resp.headers["Location"]
+
+    def test_setup_page_loads(self, client):
+        resp = client.get("/setup")
+        assert resp.status_code == 200
+        assert b"Choose" in resp.data or b"location" in resp.data.lower()
+
+    def test_login_page_loads(self, client):
+        resp = client.get("/login")
+        assert resp.status_code == 200
+        assert b"Log In" in resp.data or b"Log in" in resp.data
+
+    def test_register_page_loads(self, client):
+        resp = client.get("/register")
+        assert resp.status_code == 200
+        assert b"Create" in resp.data
+
+    def test_api_forecast_no_location(self, client):
+        resp = client.get("/api/forecast")
+        assert resp.status_code == 503
+
+    def test_unknown_shared_forecast_404(self, client):
+        resp = client.get("/f/nonexistent-location")
+        assert resp.status_code == 404

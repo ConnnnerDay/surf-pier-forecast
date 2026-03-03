@@ -28,7 +28,7 @@
     <meta property="og:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
     <meta property="og:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}{% if forecast.species %} | Top: {{ forecast.species[0].name }}{% endif %}">
     <meta property="og:image" content="{{ url_for('static', filename='icons/icon-192.svg', _external=True) }}">
-    {% if share_id %}<meta property="og:url" content="{{ url_for('shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
+    {% if share_id %}<meta property="og:url" content="{{ url_for('views.shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
@@ -52,15 +52,15 @@
                 {% if user %}
                 <span class="user-name">{{ user.username }}</span>
                 <span class="user-nav-sep">|</span>
-                <a href="{{ url_for('account') }}">Account</a>
+                <a href="{{ url_for('auth.account') }}">Account</a>
                 <span class="user-nav-sep">|</span>
-                <form method="post" action="{{ url_for('logout') }}" style="display:inline;margin:0">
+                <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0">
                     <button type="submit" style="background:none;border:none;color:rgba(255,255,255,0.85);cursor:pointer;font:inherit;font-weight:500;font-size:0.82rem;padding:0">Log out</button>
                 </form>
                 {% else %}
-                <a href="{{ url_for('login') }}">Log in</a>
+                <a href="{{ url_for('auth.login') }}">Log in</a>
                 <span class="user-nav-sep">|</span>
-                <a href="{{ url_for('register') }}">Sign up</a>
+                <a href="{{ url_for('auth.register') }}">Sign up</a>
                 {% endif %}
             </div>
             <p class="subtitle">{{ forecast.location_name or 'Your Fishing Forecast' }}</p>
@@ -69,7 +69,7 @@
                     <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 </button>
-                <a href="{{ url_for('setup') }}" class="change-location">Change location</a>
+                <a href="{{ url_for('views.setup') }}" class="change-location">Change location</a>
             </div>
             <div class="favorites-bar" id="favorites-bar"></div>
             <div class="profile-bar" id="profile-bar"></div>
@@ -944,7 +944,7 @@
         </section>
 
         <section class="refresh">
-            <form method="post" action="{{ url_for('api_refresh') }}">
+            <form method="post" action="{{ url_for('api.refresh') }}">
                 <button type="submit">Refresh Forecast</button>
             </form>
             <p class="timestamp">
@@ -1255,7 +1255,7 @@
     }
 
     function shareText() {
-        fetch('{{ url_for("api_share_text") }}')
+        fetch('{{ url_for("api.share_text") }}')
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.text) {

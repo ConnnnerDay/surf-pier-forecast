@@ -27,10 +27,10 @@
             <h2>Forecast Unavailable</h2>
             <p>{{ message }}</p>
             <div class="error-actions">
-                <form method="post" action="{{ url_for('api_refresh') }}">
+                <form method="post" action="{{ url_for('api.refresh') }}">
                     <button type="submit">Try Again</button>
                 </form>
-                <a href="{{ url_for('setup') }}" class="error-change-location">Change Location</a>
+                <a href="{{ url_for('views.setup') }}" class="error-change-location">Change Location</a>
             </div>
         </section>
     </main>

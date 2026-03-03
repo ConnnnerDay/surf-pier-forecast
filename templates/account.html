@@ -64,9 +64,9 @@
             </div>
 
             <div class="account-actions">
-                <a href="{{ url_for('index') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Back to Forecast</a>
-                <a href="{{ url_for('profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Edit Fishing Profile</a>
-                <form method="post" action="{{ url_for('logout') }}" style="margin-top:0.5rem">
+                <a href="{{ url_for('views.index') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Back to Forecast</a>
+                <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Edit Fishing Profile</a>
+                <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
                     <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)">Log Out</button>
                 </form>
             </div>

@@ -118,14 +118,14 @@ def get_marine_conditions(
             w, s, d = fetcher()
             if wind_range is None and w is not None:
                 wind_range = w
-                print(f"Wind from {name}: {w}")
+                logger.debug("Wind from %s: %s", name, w)
             if wave_range is None and s is not None:
                 wave_range = s
-                print(f"Waves from {name}: {s}")
+                logger.debug("Waves from %s: %s", name, s)
             if wind_dir is None and d is not None:
                 wind_dir = d
         except Exception as exc:
-            print(f"{name} unavailable: {exc}")
+            logger.debug("%s unavailable: %s", name, exc)
 
     # Fill any remaining gaps with location-specific or default averages
     if location:
@@ -134,10 +134,10 @@ def get_marine_conditions(
         avg_wind, avg_waves, avg_dir = _seasonal_averages(month)
     if wind_range is None:
         wind_range = avg_wind
-        print(f"Wind from seasonal avg: {avg_wind}")
+        logger.debug("Wind from seasonal avg: %s", avg_wind)
     if wave_range is None:
         wave_range = avg_waves
-        print(f"Waves from seasonal avg: {avg_waves}")
+        logger.debug("Waves from seasonal avg: %s", avg_waves)
     if wind_dir is None:
         wind_dir = avg_dir
 

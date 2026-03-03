@@ -221,7 +221,7 @@
 
             <div class="profile-actions">
                 <button type="submit" class="profile-save-btn">Save &amp; View Forecast</button>
-                <a href="{{ url_for('index') }}" class="profile-skip">Skip for now</a>
+                <a href="{{ url_for('views.index') }}" class="profile-skip">Skip for now</a>
             </div>
         </form>
     </main>
@@ -313,7 +313,7 @@
         if (ft) params.set('fishing_types', ft);
         if (tg) params.set('targets', tg);
         var qs = params.toString();
-        window.location.href = '{{ url_for("index") }}' + (qs ? '?' + qs : '');
+        window.location.href = '{{ url_for("views.index") }}' + (qs ? '?' + qs : '');
         return false;
     }
     </script>
