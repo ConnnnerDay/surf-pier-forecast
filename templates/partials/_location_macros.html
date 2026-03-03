@@ -1,5 +1,6 @@
 {% macro location_result_card(loc, current_location) -%}
 <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="location-card-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <button type="submit" class="location-card{% if current_location and loc.id == current_location.id %} location-card--active{% endif %}">
         <div class="location-card-body">
             <h3>{{ loc.name }}</h3>
@@ -12,6 +13,7 @@
 
 {% macro browse_location_button(loc, current_location) -%}
 <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="browse-item-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <button type="submit" class="browse-item{% if current_location and loc.id == current_location.id %} browse-item--active{% endif %}">{{ loc.name }}</button>
 </form>
 {%- endmacro %}

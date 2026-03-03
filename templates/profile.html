@@ -21,11 +21,19 @@
             <p class="subtitle">Tell us how you fish</p>
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
+
 
     <main>
         <section class="profile-intro">
             <h2>Set Up Your Fishing Profile</h2>
             <p class="section-sub">Build your fishing persona in under a minute. We use this to prioritize species, baits, and bite windows.</p>
+        </section>
+
+        <section class="profile-intro" style="margin-top:0.8rem;">
+            <h3>Preferences &amp; Notifications</h3>
+            <p class="section-sub">Manage forecast units, alerts, and default location from your account settings.</p>
+            <a href="{{ url_for('auth.account') }}" class="profile-save-btn" style="display:inline-block;text-decoration:none;">Open Account Settings</a>
         </section>
         <section class="profile-wizard-card">
             <div class="profile-wizard-head">
