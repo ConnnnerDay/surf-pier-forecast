@@ -9,14 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta name="theme-color" content="#0e5f78">
-    <script>
-    (function() {
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
-    </script>
+    {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body>
     <header>
@@ -25,6 +18,8 @@
             <p class="subtitle">Log in to your account</p>
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
+
 
     <main>
         <section class="auth-section">
@@ -35,6 +30,7 @@
             {% endif %}
 
             <form method="post" action="{{ url_for('auth.login') }}" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="auth-field">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" placeholder="Enter your username"

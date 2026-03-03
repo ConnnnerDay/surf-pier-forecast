@@ -12,16 +12,29 @@
     <meta name="theme-color" content="#0e5f78">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description" content="Choose your coastal fishing location for real-time surf and pier fishing forecasts">
+    {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body>
+    {% import 'partials/_location_macros.html' as loc_macros %}
     <header>
         <div class="header-inner">
             <h1>Surf &amp; Pier Fishing Outlook</h1>
             <p class="subtitle">Choose your fishing location</p>
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
+
 
     <main>
+        <section class="setup-flow-card">
+            <p class="setup-flow-title">Quick setup</p>
+            <div class="setup-flow-steps">
+                <span class="setup-flow-step is-active">1. Pick location</span>
+                <span class="setup-flow-step">2. Set fishing profile</span>
+                <span class="setup-flow-step">3. View live forecast</span>
+            </div>
+        </section>
+
         <!-- Current location banner -->
         {% if current_location %}
         <section class="setup-current">
@@ -39,6 +52,7 @@
             <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
 
             <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="zip-input-group">
                     <input type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
                            value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required
@@ -60,15 +74,7 @@
 
             <div class="location-results">
                 {% for loc in results %}
-                <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="location-card-form">
-                    <button type="submit" class="location-card{% if current_location and loc.id == current_location.id %} location-card--active{% endif %}">
-                        <div class="location-card-body">
-                            <h3>{{ loc.name }}</h3>
-                            <span class="location-state">{{ loc.state }}</span>
-                        </div>
-                        <span class="location-distance">{{ loc.distance_miles }} mi</span>
-                    </button>
-                </form>
+                    {{ loc_macros.location_result_card(loc, current_location) }}
                 {% endfor %}
             </div>
         </section>
@@ -90,9 +96,7 @@
                         <div class="state-group">
                             <h3 class="state-label">{{ loc.state }}</h3>
                     {% endif %}
-                    <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="browse-item-form">
-                        <button type="submit" class="browse-item{% if current_location and loc.id == current_location.id %} browse-item--active{% endif %}">{{ loc.name }}</button>
-                    </form>
+                    {{ loc_macros.browse_location_button(loc, current_location) }}
                 {% endfor %}
                 {% if ns.current_state != '' %}
                 </div>

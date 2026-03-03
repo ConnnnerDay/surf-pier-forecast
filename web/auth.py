@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+import time
 from typing import Any, Dict
 
 from flask import (
@@ -19,10 +21,52 @@ from storage.db import (
     authenticate_user,
     create_user,
     get_preferences,
+    get_recent_logs,
     save_preferences,
 )
 
 bp = Blueprint("auth", __name__)
+
+_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
+_LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
+
+
+def _password_complexity_error(password: str) -> str:
+    if len(password) < 8:
+        return "Password must be at least 8 characters."
+    if not re.search(r"[A-Z]", password):
+        return "Password must include at least one uppercase letter."
+    if not re.search(r"[a-z]", password):
+        return "Password must include at least one lowercase letter."
+    if not re.search(r"\d", password):
+        return "Password must include at least one number."
+    return ""
+
+
+def _login_is_rate_limited() -> bool:
+    now = int(time.time())
+    start = int(session.get("login_attempt_window_start", 0))
+    attempts = int(session.get("login_attempts", 0))
+    if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
+        session["login_attempt_window_start"] = now
+        session["login_attempts"] = 0
+        return False
+    return attempts >= _LOGIN_RATE_LIMIT_MAX_ATTEMPTS
+
+
+def _record_login_failure() -> None:
+    now = int(time.time())
+    start = int(session.get("login_attempt_window_start", 0))
+    if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
+        session["login_attempt_window_start"] = now
+        session["login_attempts"] = 1
+        return
+    session["login_attempts"] = int(session.get("login_attempts", 0)) + 1
+
+
+def _clear_login_failures() -> None:
+    session.pop("login_attempts", None)
+    session.pop("login_attempt_window_start", None)
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -35,16 +79,26 @@ def login() -> Any:
     if not username or not password:
         return render_template("login.html", error="Please enter both fields.",
                                username=username)
+    if _login_is_rate_limited():
+        return render_template(
+            "login.html",
+            error="Too many attempts. Please wait a few minutes and try again.",
+            username=username,
+        )
     user = authenticate_user(username, password)
     if user is None:
+        _record_login_failure()
         return render_template("login.html", error="Invalid username or password.",
                                username=username)
+    _clear_login_failures()
     session["user_id"] = user["id"]
     session.permanent = True
     # Restore saved location preference
     prefs = get_preferences(user["id"])
     if prefs.get("location_id"):
         session["location_id"] = prefs["location_id"]
+    elif user.get("default_location_id"):
+        session["location_id"] = user["default_location_id"]
     return redirect(url_for("views.index"))
 
 
@@ -63,9 +117,10 @@ def register() -> Any:
         return render_template("register.html",
                                error="Username must be 2-30 characters.",
                                username=username)
-    if len(password) < 4:
+    complexity_error = _password_complexity_error(password)
+    if complexity_error:
         return render_template("register.html",
-                               error="Password must be at least 4 characters.",
+                               error=complexity_error,
                                username=username)
     if password != confirm:
         return render_template("register.html", error="Passwords do not match.",
@@ -80,7 +135,7 @@ def register() -> Any:
     # Carry over current location if one is set
     loc_id = session.get("location_id")
     if loc_id:
-        save_preferences(user_id, location_id=loc_id)
+        save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
     return redirect(url_for("views.index"))
 
 
@@ -97,7 +152,42 @@ def account() -> str:
     if g.user is None:
         return redirect(url_for("auth.login"))
     prefs = get_preferences(g.user["id"])
+    prefs.setdefault("notification_prefs", {})
     loc = None
     if prefs.get("location_id"):
         loc = get_location(prefs["location_id"])
-    return render_template("account.html", prefs=prefs, saved_location=loc)
+    favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
+    favorites = [loc_obj for loc_obj in favorites if loc_obj]
+    recent_logs = get_recent_logs(g.user["id"], limit=5)
+    return render_template(
+        "account.html",
+        prefs=prefs,
+        saved_location=loc,
+        recent_logs=recent_logs,
+        favorite_locations=favorites,
+    )
+
+
+@bp.route("/account/settings", methods=["POST"])
+def account_settings() -> Any:
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+
+    wind_units = request.form.get("wind_units", "knots")
+    temp_units = request.form.get("temp_units", "F")
+    weekly_email = request.form.get("weekly_email") == "on"
+    favorite_ids = [loc_id.strip() for loc_id in request.form.get("favorites_csv", "").split(",") if loc_id.strip()]
+    default_location_id = request.form.get("default_location_id", "").strip() or None
+
+    save_preferences(
+        g.user["id"],
+        wind_units=wind_units,
+        temp_units=temp_units,
+        units=temp_units,
+        notification_prefs={"weekly_email": weekly_email},
+        favorites=favorite_ids,
+        default_location_id=default_location_id,
+    )
+    if default_location_id:
+        session["location_id"] = default_location_id
+    return redirect(url_for("auth.account"))

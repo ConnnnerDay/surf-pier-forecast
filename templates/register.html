@@ -9,14 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta name="theme-color" content="#0e5f78">
-    <script>
-    (function() {
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
-    </script>
+    {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body>
     <header>
@@ -25,6 +18,8 @@
             <p class="subtitle">Create your account</p>
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
+
 
     <main>
         <section class="auth-section">
@@ -35,6 +30,7 @@
             {% endif %}
 
             <form method="post" action="{{ url_for('auth.register') }}" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="auth-field">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" placeholder="Choose a username"
@@ -44,13 +40,14 @@
                 <div class="auth-field">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Choose a password"
-                           class="auth-input" minlength="4" autocomplete="new-password" required>
+                           class="auth-input" minlength="8" autocomplete="new-password" required>
                 </div>
                 <div class="auth-field">
                     <label for="confirm">Confirm Password</label>
                     <input type="password" id="confirm" name="confirm" placeholder="Confirm your password"
-                           class="auth-input" minlength="4" autocomplete="new-password" required>
+                           class="auth-input" minlength="8" autocomplete="new-password" required>
                 </div>
+                <p class="section-sub" style="margin-top:-0.2rem;">Use 8+ chars with upper/lowercase and a number.</p>
                 <button type="submit" class="auth-btn">Create Account</button>
             </form>
             <script>

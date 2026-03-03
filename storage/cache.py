@@ -1,8 +1,8 @@
 """Forecast cache -- SQLite primary, JSON file fallback for migration.
 
 Public API (unchanged):
-    load_cached_forecast(location_id) -> dict | None
-    save_forecast(data, location_id) -> None
+    load_cached_forecast(location_id, user_id=None) -> dict | None
+    save_forecast(data, location_id, user_id=None) -> None
     _forecast_age_minutes(forecast) -> float | None
     _human_age(minutes) -> str
     CACHE_MAX_AGE_HOURS
@@ -34,32 +34,55 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 # Primary storage: SQLite via storage.db
 # ---------------------------------------------------------------------------
 
-def load_cached_forecast(location_id: str = "") -> Optional[Dict[str, Any]]:
+def _norm_user_id(user_id: Optional[int]) -> int:
+    return int(user_id or 0)
+
+
+def _is_stale(forecast: Dict[str, Any]) -> bool:
+    age = _forecast_age_minutes(forecast)
+    return bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
+
+
+def load_cached_forecast(location_id: str = "", user_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """Load the cached forecast, trying SQLite first then JSON fallback."""
     if not location_id:
         return _load_json_fallback(location_id)
 
-    from storage.sqlite import load_forecast
-    result = load_forecast(location_id)
+    from storage.sqlite import delete_forecast_cache, load_forecast, load_forecast_cache
+    normalized_uid = _norm_user_id(user_id)
+    result = load_forecast_cache(normalized_uid, location_id)
+    if result is None and normalized_uid != 0:
+        result = load_forecast_cache(0, location_id)
+
     if result is not None:
+        if _is_stale(result):
+            delete_forecast_cache(normalized_uid, location_id)
+            return None
+        return result
+
+    # Backward-compatible fallback to historical forecasts table
+    result = load_forecast(location_id)
+    if result is not None and not _is_stale(result):
         return result
 
     # Fallback: try legacy JSON file and migrate it to DB if found
     result = _load_json_fallback(location_id)
     if result is not None:
-        _migrate_json_to_db(location_id, result)
+        if _is_stale(result):
+            return None
+        _migrate_json_to_db(location_id, result, normalized_uid)
     return result
 
 
-def save_forecast(data: Dict[str, Any], location_id: str = "") -> None:
+def save_forecast(data: Dict[str, Any], location_id: str = "", user_id: Optional[int] = None) -> None:
     """Persist the forecast to SQLite; JSON is fallback-only for resilience."""
     if not location_id:
         _save_json(data, location_id)
         return
 
     try:
-        from storage.sqlite import save_forecast_to_db
-        save_forecast_to_db(location_id, data)
+        from storage.sqlite import save_forecast_cache
+        save_forecast_cache(_norm_user_id(user_id), location_id, data)
     except Exception as exc:
         logger.warning("DB write failed for %s, writing JSON fallback: %s", location_id, exc)
         _save_json(data, location_id)
@@ -98,11 +121,11 @@ def _save_json(data: Dict[str, Any], location_id: str = "") -> None:
         logger.warning("Failed to write JSON backup %s: %s", path, exc)
 
 
-def _migrate_json_to_db(location_id: str, data: Dict[str, Any]) -> None:
+def _migrate_json_to_db(location_id: str, data: Dict[str, Any], user_id: int = 0) -> None:
     """One-time migration: copy a JSON-cached forecast into the DB."""
     try:
-        from storage.sqlite import save_forecast_to_db
-        save_forecast_to_db(location_id, data)
+        from storage.sqlite import save_forecast_cache
+        save_forecast_cache(user_id, location_id, data)
         logger.info("Migrated JSON forecast to DB for %s", location_id)
     except Exception as exc:
         logger.warning("Failed to migrate forecast for %s: %s", location_id, exc)

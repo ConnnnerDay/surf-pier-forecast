@@ -16,6 +16,8 @@
             <p class="subtitle">Forecast Unavailable</p>
         </div>
     </header>
+    {% include 'partials/_main_nav.html' %}
+
 
     <main>
         <section class="error-message">
@@ -28,6 +30,7 @@
             <p>{{ message }}</p>
             <div class="error-actions">
                 <form method="post" action="{{ url_for('api.refresh') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit">Try Again</button>
                 </form>
                 <a href="{{ url_for('views.setup') }}" class="error-change-location">Change Location</a>
