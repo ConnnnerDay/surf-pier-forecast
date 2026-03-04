@@ -1,0 +1,56 @@
+        <!-- Species ranking -->
+        <section class="species-section">
+            <h2>What's Biting Now</h2>
+            <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
+            <div class="species-cards">
+                {% for sp in forecast.species %}
+                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}"{% endif %}>
+                    <div class="species-rank-area">
+                        <div class="species-rank">#{{ sp.rank }}</div>
+                        <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>
+                    </div>
+                    <div class="species-body">
+                        <div class="species-name-row">
+                            <h3>{{ sp.name }}</h3>
+                            <button class="regs-pill" type="button" data-open-regs aria-label="View regulations for {{ sp.name }}">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                Regs
+                            </button>
+                        </div>
+                        <p class="species-why">{{ sp.explanation }}</p>
+                        {% if sp.tip %}
+                        <p class="species-tip">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:0.2rem; flex-shrink:0;"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+                            {{ sp.tip }}
+                        </p>
+                        {% endif %}
+                        <div class="species-score-bar">
+                            <div class="score-track">
+                                <div class="score-fill score-fill--{{ sp.activity|lower }}" style="width: {{ sp.score }}%"></div>
+                            </div>
+                            <span class="score-label">{{ sp.score }}/100</span>
+                        </div>
+                        <div class="species-meta">
+                            <div class="meta-item meta-item--bait">
+                                <span class="meta-label">Bait</span>
+                                <span class="meta-value">{{ sp.bait }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Rig</span>
+                                <span class="meta-value">{{ sp.rig }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Hook</span>
+                                <span class="meta-value">{{ sp.hook_size }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Sinker</span>
+                                <span class="meta-value">{{ sp.sinker }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+

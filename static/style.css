@@ -3873,3 +3873,32 @@ footer p {
   outline: 3px solid color-mix(in srgb, var(--ocean) 45%, white);
   outline-offset: 2px;
 }
+
+.lazy-section {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--line, #dfe6ee);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.lazy-skeleton {
+  margin-top: 0.75rem;
+  min-height: 3rem;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(180, 196, 211, 0.28), rgba(180, 196, 211, 0.12), rgba(180, 196, 211, 0.28));
+  background-size: 200% 100%;
+  animation: lazyShimmer 1.25s linear infinite;
+  color: transparent;
+}
+
+.lazy-error {
+  margin-top: 0.65rem;
+  color: #b03a2e;
+  font-weight: 600;
+}
+
+@keyframes lazyShimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
