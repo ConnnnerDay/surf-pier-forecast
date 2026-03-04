@@ -43,8 +43,17 @@ def _is_stale(forecast: Dict[str, Any]) -> bool:
     return bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
 
 
-def load_cached_forecast(location_id: str = "", user_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
-    """Load the cached forecast, trying SQLite first then JSON fallback."""
+def load_cached_forecast(
+    location_id: str = "",
+    user_id: Optional[int] = None,
+    include_stale: bool = False,
+) -> Optional[Dict[str, Any]]:
+    """Load the cached forecast, trying SQLite first then JSON fallback.
+
+    By default stale entries are treated as cache misses and removed from the
+    hot cache table. Set ``include_stale=True`` when callers want to render a
+    stale forecast while an async refresh is in progress.
+    """
     if not location_id:
         return _load_json_fallback(location_id)
 
@@ -56,19 +65,22 @@ def load_cached_forecast(location_id: str = "", user_id: Optional[int] = None) -
 
     if result is not None:
         if _is_stale(result):
+            if include_stale:
+                return result
             delete_forecast_cache(normalized_uid, location_id)
             return None
         return result
 
     # Backward-compatible fallback to historical forecasts table
     result = load_forecast(location_id)
-    if result is not None and not _is_stale(result):
-        return result
+    if result is not None:
+        if include_stale or not _is_stale(result):
+            return result
 
     # Fallback: try legacy JSON file and migrate it to DB if found
     result = _load_json_fallback(location_id)
     if result is not None:
-        if _is_stale(result):
+        if _is_stale(result) and not include_stale:
             return None
         _migrate_json_to_db(location_id, result, normalized_uid)
     return result

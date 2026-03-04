@@ -56,6 +56,15 @@ def build_openapi_spec() -> Dict[str, Any]:
                     },
                 }
             },
+            "/api/v1/forecast/{location_id}/status": {
+                "get": {
+                    "summary": "Get cache refresh status for a location",
+                    "parameters": [{"name": "location_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "responses": {
+                        "200": {"description": "Forecast cache status", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+                    },
+                }
+            },
             "/api/v1/profile": {
                 "get": {"summary": "Get current user profile"},
                 "post": {"summary": "Update current user profile"},

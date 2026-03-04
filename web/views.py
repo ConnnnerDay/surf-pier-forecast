@@ -17,6 +17,7 @@ from flask import (
 
 from locations import all_locations_sorted, find_nearest_locations, geocode_zip, get_location
 from domain.forecast import generate_forecast, personalize_forecast
+from services.forecast_refresh import enqueue_forecast_refresh
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
     _forecast_age_minutes,
@@ -75,32 +76,30 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
 def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None) -> str:
     """Load (or refresh) the forecast for a location and render the dashboard."""
     loc_id = location["id"]
-    user_id = g.user["id"] if g.user else None
-    forecast = load_cached_forecast(loc_id, user_id=user_id)
+    forecast = load_cached_forecast(loc_id, user_id=None, include_stale=True)
 
-    needs_refresh = forecast is None
-    if forecast and not needs_refresh:
+    is_stale = False
+    if forecast:
         age = _forecast_age_minutes(forecast)
-        if age is not None and age > CACHE_MAX_AGE_HOURS * 60:
-            needs_refresh = True
+        is_stale = bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
 
-    if needs_refresh:
-        logger.info("cache.miss_or_stale location_id=%s", loc_id)
+    if forecast is None:
+        logger.info("cache.miss location_id=%s", loc_id)
         try:
             forecast = generate_forecast(location)
-            save_forecast(forecast, loc_id, user_id=user_id)
+            save_forecast(forecast, loc_id, user_id=None)
             logger.info("cache.regenerated location_id=%s", loc_id)
             cached_flag = None
         except Exception:
-            if forecast is None:
-                return render_template(
-                    "error.html",
-                    message="Could not load forecast. Please try refreshing later.",
-                ), 500
-            logger.warning("cache.regen_failed_serving_stale location_id=%s", loc_id)
-            cached_flag = "true"
-
-    if not needs_refresh:
+            return render_template(
+                "error.html",
+                message="Could not load forecast. Please try refreshing later.",
+            ), 500
+    elif is_stale:
+        logger.info("cache.stale_served location_id=%s", loc_id)
+        enqueue_forecast_refresh(loc_id, user_id=None)
+        cached_flag = "refreshing"
+    else:
         logger.info("cache.hit location_id=%s", loc_id)
 
     # Apply profile-based personalization (re-rank species for this user).
