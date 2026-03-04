@@ -8,6 +8,8 @@ from services.astro import compute_lunar_details, compute_solunar_times, compute
 
 from domain.forecast import (
     _seasonal_averages,
+    _heat_index_f,
+    _wind_chill_f,
     classify_conditions,
     MONTHLY_AVG_WIND,
     MONTHLY_AVG_WAVES,
@@ -147,6 +149,9 @@ def test_generate_forecast_includes_metadata(monkeypatch):
         def get_currents(self, *_args, **_kwargs):
             return []
 
+        def get_current_observation(self, *_args, **_kwargs):
+            return None
+
     class _Astro:
         def get_sun_times(self, now, *_args, **_kwargs):
             return now, now, "6:00 AM / 6:00 PM"
@@ -189,3 +194,10 @@ def test_generate_forecast_includes_metadata(monkeypatch):
     assert out["forecast_version"] == fc.FORECAST_VERSION
     assert isinstance(out["sources_used"], list)
     assert isinstance(out["fallbacks_triggered"], list)
+
+
+def test_heat_index_and_wind_chill_helpers():
+    assert _heat_index_f(90, 65) is not None
+    assert _heat_index_f(72, 60) is None
+    assert _wind_chill_f(40, 15) is not None
+    assert _wind_chill_f(60, 15) is None

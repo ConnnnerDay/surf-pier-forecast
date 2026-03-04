@@ -25,6 +25,7 @@ from services.noaa import (
     _try_coops_wind,
     build_tide_chart_svg,
     fetch_coops_environmental_metrics,
+    fetch_currents_observation,
     fetch_currents_predictions,
     fetch_tide_predictions,
     fetch_water_temperature,
@@ -285,6 +286,13 @@ class EnvironmentalDataService(ExternalDataService):
             lambda: fetch_currents_predictions(station_id, tz_name),
             default=[],
         ) or []
+
+    def get_current_observation(self, station_id: str, tz_name: str) -> Optional[Dict[str, str]]:
+        return self._run_with_retries(
+            "currents observation",
+            lambda: fetch_currents_observation(station_id, tz_name),
+            default=None,
+        )
 
 
 class AstronomyService(ExternalDataService):
@@ -1183,6 +1191,31 @@ def _dew_point_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Opti
     dew_c = (b * alpha) / (a - alpha)
     return round(dew_c * 9 / 5 + 32, 1)
 
+
+def _heat_index_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Optional[float]:
+    if temp_f is None or humidity_pct is None:
+        return None
+    t = float(temp_f)
+    rh = float(humidity_pct)
+    if t < 80 or rh < 40:
+        return None
+    hi = (-42.379 + 2.04901523 * t + 10.14333127 * rh - 0.22475541 * t * rh
+          - 0.00683783 * t ** 2 - 0.05481717 * rh ** 2 + 0.00122874 * t ** 2 * rh
+          + 0.00085282 * t * rh ** 2 - 0.00000199 * t ** 2 * rh ** 2)
+    return round(hi, 1)
+
+
+def _wind_chill_f(temp_f: Optional[float], wind_kt: Optional[float]) -> Optional[float]:
+    if temp_f is None or wind_kt is None:
+        return None
+    t = float(temp_f)
+    wind_mph = float(wind_kt) * 1.15078
+    if t > 50 or wind_mph < 3:
+        return None
+    wc = 35.74 + 0.6215 * t - 35.75 * (wind_mph ** 0.16) + 0.4275 * t * (wind_mph ** 0.16)
+    return round(wc, 1)
+
+
 def _build_pier_info(location: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Return location-aware planning details without requiring APIs."""
     loc = location or {}
@@ -1447,6 +1480,10 @@ def generate_forecast(
         fallbacks_triggered.append("coops_environment_unavailable")
 
     currents = builder.environment_service.get_currents(coops_station, tz_name)
+    current_observation = builder.environment_service.get_current_observation(coops_station, tz_name)
+    if current_observation:
+        currents = [current_observation, *currents]
+        sources_used.append("NOAA currents observation")
     if currents:
         forecast["currents"] = currents
         sources_used.append("NOAA currents predictions")
@@ -1496,8 +1533,21 @@ def generate_forecast(
         humidity_for_dew = humidity_for_dew if humidity_for_dew is not None else forecast["weather"].get("humidity")
         temp_for_dew = temp_for_dew if temp_for_dew is not None else forecast["weather"].get("air_temp_f")
     dew_point = _dew_point_f(temp_for_dew, humidity_for_dew)
+    derived_indices: Dict[str, float] = {}
     if dew_point is not None:
-        forecast["derived_indices"] = {"dew_point_f": dew_point}
+        derived_indices["dew_point_f"] = dew_point
+
+    est_heat_index = _heat_index_f(temp_for_dew, humidity_for_dew)
+    if est_heat_index is not None and not (forecast.get("weather") or {}).get("feels_like_f"):
+        derived_indices["heat_index_f"] = est_heat_index
+
+    wind_ref = wind_range[1] if wind_range else None
+    est_wind_chill = _wind_chill_f(temp_for_dew, wind_ref)
+    if est_wind_chill is not None and not (forecast.get("weather") or {}).get("wind_chill_f"):
+        derived_indices["wind_chill_f"] = est_wind_chill
+
+    if derived_indices:
+        forecast["derived_indices"] = derived_indices
 
     # Final fishability verdict based on all available signals
     conditions["verdict"] = classify_conditions(

@@ -141,6 +141,45 @@ def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York
         return []
 
 
+def fetch_currents_observation(station_id: str, tz_name: str = "America/New_York") -> Optional[Dict[str, str]]:
+    """Fetch latest measured current speed/direction from NOAA CO-OPS."""
+    tz = ZoneInfo(tz_name)
+    url = (
+        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+        f"?date=latest&station={station_id}"
+        "&product=currents&time_zone=lst_ldt"
+        "&units=english&format=json"
+    )
+    try:
+        resp = http_get(url, endpoint="noaa.currents", timeout=(3.05, 12))
+        resp.raise_for_status()
+        rows = resp.json().get("data", [])
+        if not rows:
+            return None
+        row = rows[0]
+        raw_time = row.get("t") or row.get("Time") or row.get("time")
+        speed = row.get("s") or row.get("Speed") or row.get("v") or row.get("Velocity")
+        direction = row.get("d") or row.get("Direction") or row.get("dir")
+
+        when = "Now"
+        if raw_time:
+            try:
+                dt = datetime.strptime(raw_time, "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+                when = dt.strftime("%-I:%M %p")
+            except Exception:
+                when = str(raw_time)
+
+        speed_kt = f"{float(speed):.2f}" if speed not in (None, "") else "0.00"
+        return {
+            "time": when,
+            "event": "Observed",
+            "speed_kt": speed_kt,
+            "direction": str(direction) if direction not in (None, "") else "",
+        }
+    except Exception:
+        return None
+
+
 def get_water_temp(
     month: int,
     location: Optional[Dict[str, Any]] = None,
