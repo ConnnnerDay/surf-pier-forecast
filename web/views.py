@@ -29,6 +29,29 @@ from web.helpers import get_session_location
 bp = Blueprint("views", __name__)
 
 
+def _setup_context(**kwargs: Any) -> Dict[str, Any]:
+    """Build common template context for the setup page."""
+    current_loc = get_session_location()
+    favorite_ids = []
+    favorite_locations = []
+    if g.user:
+        prefs = get_preferences(g.user["id"])
+        favorite_locations = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
+        favorite_locations = [loc for loc in favorite_locations if loc]
+        favorite_ids = [loc["id"] for loc in favorite_locations]
+
+    context: Dict[str, Any] = {
+        "results": None,
+        "all_locations": all_locations_sorted(),
+        "current_location": current_loc,
+        "error": None,
+        "favorite_ids": favorite_ids,
+        "favorite_locations": favorite_locations,
+    }
+    context.update(kwargs)
+    return context
+
+
 def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
     """Extract fishing profile from query parameters.
 
@@ -105,14 +128,7 @@ def index() -> str:
 @bp.route("/setup")
 def setup() -> str:
     """Show the location setup page (zip code entry or browse)."""
-    current_loc = get_session_location()
-    return render_template(
-        "setup.html",
-        results=None,
-        all_locations=all_locations_sorted(),
-        current_location=current_loc,
-        error=None,
-    )
+    return render_template("setup.html", **_setup_context())
 
 
 @bp.route("/setup/search", methods=["POST"])
@@ -120,39 +136,27 @@ def setup_search() -> str:
     """Process a zip code search and show nearby locations."""
     zipcode = request.form.get("zipcode", "").strip()
     if not zipcode or not zipcode.isdigit() or len(zipcode) != 5:
-        return render_template(
-            "setup.html",
-            results=None,
-            all_locations=all_locations_sorted(),
+        return render_template("setup.html", **_setup_context(
             error="Please enter a valid 5-digit US zip code.",
-        )
+            zipcode=zipcode,
+        ))
 
     coords = geocode_zip(zipcode)
     if coords is None:
-        return render_template(
-            "setup.html",
-            results=None,
-            all_locations=all_locations_sorted(),
+        return render_template("setup.html", **_setup_context(
             error=f"Could not find zip code {zipcode}. Please try another.",
-        )
+            zipcode=zipcode,
+        ))
 
     lat, lng = coords
     nearby = find_nearest_locations(lat, lng, n=6)
     if not nearby:
-        return render_template(
-            "setup.html",
-            results=None,
-            all_locations=all_locations_sorted(),
+        return render_template("setup.html", **_setup_context(
             error="No supported fishing locations found within 300 miles. Try a coastal zip code.",
-        )
+            zipcode=zipcode,
+        ))
 
-    return render_template(
-        "setup.html",
-        results=nearby,
-        zipcode=zipcode,
-        all_locations=all_locations_sorted(),
-        error=None,
-    )
+    return render_template("setup.html", **_setup_context(results=nearby, zipcode=zipcode))
 
 
 @bp.route("/setup/select/<location_id>", methods=["POST"])
@@ -166,6 +170,28 @@ def setup_select(location_id: str) -> Any:
     if g.user:
         save_preferences(g.user["id"], location_id=location_id, default_location_id=location_id)
     return redirect(url_for("views.index"))
+
+
+@bp.route("/setup/favorite/<location_id>", methods=["POST"])
+def setup_favorite(location_id: str) -> Any:
+    """Toggle a favorite location for logged-in users from setup."""
+    if not g.user:
+        return redirect(url_for("views.setup"))
+    if get_location(location_id) is None:
+        return redirect(url_for("views.setup"))
+
+    prefs = get_preferences(g.user["id"])
+    favorites = [loc_id for loc_id in prefs.get("favorites", []) if get_location(loc_id)]
+    if location_id in favorites:
+        favorites = [loc_id for loc_id in favorites if loc_id != location_id]
+    else:
+        favorites.append(location_id)
+    save_preferences(g.user["id"], favorites=favorites)
+
+    next_url = request.form.get("next", "")
+    if next_url.startswith("/") and not next_url.startswith("//"):
+        return redirect(next_url)
+    return redirect(url_for("views.setup"))
 
 
 @bp.route("/profile")

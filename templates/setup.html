@@ -35,7 +35,6 @@
             </div>
         </section>
 
-        <!-- Current location banner -->
         {% if current_location %}
         <section class="setup-current">
             <div class="current-location-info">
@@ -46,27 +45,47 @@
         </section>
         {% endif %}
 
-        <!-- Zip code search -->
         <section class="setup-section">
             <h2>Find Your Spot</h2>
             <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
 
-            <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form">
+            <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="zip-input-group">
-                    <input type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
-                           value="{{ zipcode|default('', true) }}" class="zip-input" inputmode="numeric" required
+                    <label for="zipcode" class="sr-only">5-digit zip code</label>
+                    <input id="zipcode" type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
+                           value="{{ zipcode|default('', true) }}" class="zip-input{% if error %} zip-input--error{% endif %}" inputmode="numeric" required
+                           aria-invalid="{{ 'true' if error else 'false' }}" aria-describedby="zip-feedback"
                            autofocus>
-                    <button type="submit" class="zip-btn">Search</button>
+                    <button type="submit" class="zip-btn" aria-label="Search by zip code">Search</button>
                 </div>
             </form>
 
             {% if error %}
-            <div class="setup-error">{{ error }}</div>
+            <div id="zip-feedback" class="setup-error" role="alert">{{ error }}</div>
+            {% else %}
+            <div id="zip-feedback" class="setup-help">Zip search stays the fastest way to find your nearest forecast.</div>
             {% endif %}
         </section>
 
-        <!-- Search results -->
+        {% if favorite_locations %}
+        <section class="setup-section">
+            <h2>Favorites</h2>
+            <p class="section-sub">Your saved locations for quick access</p>
+            <div class="location-results">
+                {% for loc in favorite_locations %}
+                    {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=true, logged_in=g.user) }}
+                {% endfor %}
+            </div>
+        </section>
+        {% elif not g.user %}
+        <section class="setup-section" id="recent-section" hidden>
+            <h2>Recent Locations</h2>
+            <p class="section-sub">Your last 3 setup choices on this device</p>
+            <div class="location-results" id="recent-locations"></div>
+        </section>
+        {% endif %}
+
         {% if results %}
         <section class="setup-section">
             <h2>Nearby Locations</h2>
@@ -74,32 +93,43 @@
 
             <div class="location-results">
                 {% for loc in results %}
-                    {{ loc_macros.location_result_card(loc, current_location) }}
+                    {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=true, logged_in=g.user) }}
                 {% endfor %}
             </div>
         </section>
         {% endif %}
 
-        <!-- Browse all -->
         <section class="setup-section">
             <h2>Or Browse All Locations</h2>
             <p class="section-sub">{{ all_locations|length }} coastal fishing areas across the US</p>
 
-            <div class="location-browse">
-                {% set ns = namespace(current_state='') %}
+            <div class="browse-search-row">
+                <label for="browse-filter" class="browse-filter-label">Filter by location or state</label>
+                <input id="browse-filter" type="search" class="browse-filter-input" placeholder="Type to filter locations..." autocomplete="off">
+            </div>
+
+            <div class="location-browse" id="location-browse">
+                {% set ns = namespace(current_state='', state_count=0) %}
                 {% for loc in all_locations %}
                     {% if loc.state != ns.current_state %}
                         {% if ns.current_state != '' %}
-                        </div>
+                            </div>
+                            </details>
                         {% endif %}
                         {% set ns.current_state = loc.state %}
-                        <div class="state-group">
-                            <h3 class="state-label">{{ loc.state }}</h3>
+                        {% set ns.state_count = all_locations|selectattr('state', 'equalto', loc.state)|list|length %}
+                        <details class="state-group" open data-state-group data-state="{{ loc.state|lower }}">
+                            <summary class="state-label" aria-label="Toggle {{ loc.state }} locations">
+                                <span>{{ loc.state }}</span>
+                                <span class="state-count">{{ ns.state_count }}</span>
+                            </summary>
+                            <div class="state-items">
                     {% endif %}
-                    {{ loc_macros.browse_location_button(loc, current_location) }}
+                    {{ loc_macros.browse_location_button(loc, current_location, favorite_ids=favorite_ids, show_star=true, logged_in=g.user) }}
                 {% endfor %}
                 {% if ns.current_state != '' %}
-                </div>
+                    </div>
+                </details>
                 {% endif %}
             </div>
         </section>
@@ -108,5 +138,138 @@
     <footer>
         <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
+
+    <script>
+        (function () {
+            var FAV_KEY = 'setup_favorite_locations';
+            var RECENT_KEY = 'setup_recent_locations';
+            var loggedIn = {{ 'true' if g.user else 'false' }};
+            var allLocations = {{ all_locations|tojson }};
+
+            function onReady(fn) {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', fn);
+                    return;
+                }
+                fn();
+            }
+
+            function parseJSON(key, fallback) {
+                try {
+                    var raw = window.localStorage.getItem(key);
+                    if (!raw) return fallback;
+                    var parsed = JSON.parse(raw);
+                    return Array.isArray(parsed) ? parsed : fallback;
+                } catch (err) {
+                    return fallback;
+                }
+            }
+
+            function saveJSON(key, value) {
+                try {
+                    window.localStorage.setItem(key, JSON.stringify(value));
+                } catch (err) {
+                    // no-op
+                }
+            }
+
+            function updateRecent(locationId) {
+                if (!locationId) return;
+                var recent = parseJSON(RECENT_KEY, []);
+                recent = recent.filter(function (id) { return id !== locationId; });
+                recent.unshift(locationId);
+                saveJSON(RECENT_KEY, recent.slice(0, 3));
+            }
+
+            function renderRecentSection() {
+                if (loggedIn) return;
+                var section = document.getElementById('recent-section');
+                var container = document.getElementById('recent-locations');
+                if (!section || !container) return;
+                var recentIds = parseJSON(RECENT_KEY, []).slice(0, 3);
+                if (!recentIds.length) return;
+                var byId = {};
+                allLocations.forEach(function (loc) { byId[loc.id] = loc; });
+                var html = '';
+                recentIds.forEach(function (id) {
+                    var loc = byId[id];
+                    if (!loc) return;
+                    html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" class="location-card-form" data-recent-select="' + loc.id + '">';
+                    html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
+                    html += '<button type="submit" class="location-card">';
+                    html += '<div class="location-card-body"><h3>' + loc.name + '</h3><span class="location-state">' + loc.state + '</span></div>';
+                    html += '<span class="location-distance">Recent</span>';
+                    html += '</button></form>';
+                });
+                container.innerHTML = html;
+                section.hidden = !html;
+            }
+
+            function setupBrowseFilter() {
+                var input = document.getElementById('browse-filter');
+                if (!input) return;
+                var groups = Array.prototype.slice.call(document.querySelectorAll('[data-state-group]'));
+                input.addEventListener('input', function () {
+                    var q = input.value.trim().toLowerCase();
+                    groups.forEach(function (group) {
+                        var rows = Array.prototype.slice.call(group.querySelectorAll('[data-location-name]'));
+                        var visible = 0;
+                        rows.forEach(function (row) {
+                            var name = row.getAttribute('data-location-name') || '';
+                            var state = row.getAttribute('data-location-state') || '';
+                            var match = !q || name.indexOf(q) !== -1 || state.indexOf(q) !== -1;
+                            row.hidden = !match;
+                            if (match) visible += 1;
+                        });
+                        group.hidden = visible === 0;
+                        if (q && visible > 0) group.open = true;
+                    });
+                });
+            }
+
+            function setupFavoritesForAnonymous() {
+                if (loggedIn) return;
+                var favorites = parseJSON(FAV_KEY, []);
+                var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-favorite-btn]'));
+                buttons.forEach(function (button) {
+                    var locationId = button.getAttribute('data-location-id');
+                    if (favorites.indexOf(locationId) !== -1) {
+                        button.classList.add('favorite-toggle-btn--active');
+                        button.setAttribute('aria-pressed', 'true');
+                    }
+                    button.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        if (favorites.indexOf(locationId) !== -1) {
+                            favorites = favorites.filter(function (id) { return id !== locationId; });
+                            button.classList.remove('favorite-toggle-btn--active');
+                            button.setAttribute('aria-pressed', 'false');
+                        } else {
+                            favorites.push(locationId);
+                            button.classList.add('favorite-toggle-btn--active');
+                            button.setAttribute('aria-pressed', 'true');
+                        }
+                        saveJSON(FAV_KEY, favorites);
+                    });
+                });
+            }
+
+            function bindRecentTracking() {
+                document.addEventListener('click', function (event) {
+                    var form = event.target.closest('form[action^="/setup/select/"]');
+                    if (!form) return;
+                    var action = form.getAttribute('action') || '';
+                    var locationId = action.split('/').pop();
+                    updateRecent(locationId);
+                });
+            }
+
+            onReady(function () {
+                setupBrowseFilter();
+                renderRecentSection();
+                setupFavoritesForAnonymous();
+                bindRecentTracking();
+            });
+        })();
+    </script>
 </body>
 </html>

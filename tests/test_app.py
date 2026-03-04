@@ -70,3 +70,10 @@ class TestBasicRoutes:
     def test_unknown_shared_forecast_404(self, client):
         resp = client.get("/f/nonexistent-location")
         assert resp.status_code == 404
+
+
+    def test_setup_anon_favorite_toggle_is_client_side(self, client):
+        resp = client.get("/setup")
+        assert resp.status_code == 200
+        assert b'data-favorite-btn' in resp.data
+        assert b'/setup/favorite/' not in resp.data
