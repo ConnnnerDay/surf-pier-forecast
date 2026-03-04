@@ -1181,6 +1181,7 @@ def generate_forecast(
         "generated_at": now.isoformat(),
         "location_name": loc_name,
         "location_id": (location or {}).get("id", ""),
+        "location_state": loc_state,
         "conditions": conditions,
         "species": species,
         "rig_recommendations": rig_recommendations,

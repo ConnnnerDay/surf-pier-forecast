@@ -165,6 +165,20 @@ def test_v1_regulations_no_state_returns_null(client):
     assert body["data"]["regulation"] is None
 
 
+
+def test_v1_regulations_falls_back_to_session_location_state(client, monkeypatch):
+    """If no state/location params are passed, state is derived from session location."""
+    monkeypatch.setattr(
+        "web.api.get_session_location",
+        lambda: {"id": "session-loc", "state": "NC", "name": "Session Beach"},
+    )
+    resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["state"] == "NC"
+    assert body["data"]["regulation"] is not None
+
 def test_v1_regulations_derives_state_from_location_id(client, monkeypatch):
     """Passing location_id causes state to be derived from the location config."""
     monkeypatch.setattr(
@@ -181,6 +195,23 @@ def test_v1_regulations_derives_state_from_location_id(client, monkeypatch):
     assert body["data"]["regulation"] is not None
 
 
+
+
+def test_v1_regulations_invalid_location_id_falls_back_to_session_location(client, monkeypatch):
+    """If location_id is invalid, API should still try the active session location."""
+    monkeypatch.setattr("web.api.get_location", lambda loc_id: None)
+    monkeypatch.setattr(
+        "web.api.get_session_location",
+        lambda: {"id": "session-loc", "state": "NC", "name": "Session Beach"},
+    )
+    resp = client.get(
+        "/api/v1/regulations?species=Red+drum+%28puppy+drum%29&location_id=missing-loc"
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["state"] == "NC"
+    assert body["data"]["regulation"] is not None
 def test_v1_regulations_state_overrides_location_id(client, monkeypatch):
     """Explicit 'state' query param takes priority over location_id lookup."""
     # location_id would give SC, but state=NC is provided explicitly
