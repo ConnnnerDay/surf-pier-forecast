@@ -74,7 +74,7 @@
             <p class="section-sub">Your saved locations for quick access</p>
             <div class="location-results">
                 {% for loc in favorite_locations %}
-                    {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=true, logged_in=g.user) }}
+                    {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=false, logged_in=g.user) }}
                 {% endfor %}
             </div>
         </section>
@@ -93,7 +93,7 @@
 
             <div class="location-results">
                 {% for loc in results %}
-                    {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=true, logged_in=g.user) }}
+                    {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=false, logged_in=g.user) }}
                 {% endfor %}
             </div>
         </section>
@@ -125,7 +125,7 @@
                             </summary>
                             <div class="state-items">
                     {% endif %}
-                    {{ loc_macros.browse_location_button(loc, current_location, favorite_ids=favorite_ids, show_star=true, logged_in=g.user) }}
+                    {{ loc_macros.browse_location_button(loc, current_location, favorite_ids=favorite_ids, show_star=false, logged_in=g.user) }}
                 {% endfor %}
                 {% if ns.current_state != '' %}
                     </div>
