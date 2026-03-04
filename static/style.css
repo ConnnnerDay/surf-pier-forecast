@@ -3902,3 +3902,9 @@ footer p {
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
 }
+
+
+.table-scroll { overflow-x: auto; }
+.currents-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.currents-table th, .currents-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border, #dfe5ea); text-align: left; }
+.currents-table__slack td { background: rgba(14,95,120,0.08); font-weight: 600; }

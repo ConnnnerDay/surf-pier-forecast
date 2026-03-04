@@ -119,6 +119,106 @@ def _moon_transit_hours(dt: datetime, lng: float) -> Tuple[float, float]:
     return overhead, underfoot
 
 
+def _sun_event_time(
+    dt: datetime,
+    lat: float,
+    lng: float,
+    tz_name: str,
+    zenith_deg: float,
+    rising: bool,
+) -> datetime:
+    """Compute sunrise/sunset style event for custom zenith angle."""
+    tz = ZoneInfo(tz_name)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+    n = dt.timetuple().tm_yday
+    gamma = 2 * math.pi / 365 * (n - 1)
+    eqtime = 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(gamma)
+        - 0.032077 * math.sin(gamma)
+        - 0.014615 * math.cos(2 * gamma)
+        - 0.040849 * math.sin(2 * gamma)
+    )
+    decl = (
+        0.006918
+        - 0.399912 * math.cos(gamma)
+        + 0.070257 * math.sin(gamma)
+        - 0.006758 * math.cos(2 * gamma)
+        + 0.000907 * math.sin(2 * gamma)
+        - 0.002697 * math.cos(3 * gamma)
+        + 0.00148 * math.sin(3 * gamma)
+    )
+    lat_rad = math.radians(lat)
+    cos_ha = (
+        math.cos(math.radians(zenith_deg)) / (math.cos(lat_rad) * math.cos(decl))
+        - math.tan(lat_rad) * math.tan(decl)
+    )
+    cos_ha = max(-1.0, min(1.0, cos_ha))
+    ha = math.degrees(math.acos(cos_ha))
+    event_utc = 720 - 4 * (lng + ha if rising else lng - ha) - eqtime
+    base = datetime(dt.year, dt.month, dt.day, tzinfo=ZoneInfo("UTC"))
+    return (base + timedelta(minutes=event_utc)).astimezone(tz)
+
+
+def compute_twilight_times(dt: datetime, lat: float, lng: float, tz_name: str) -> Dict[str, str]:
+    """Compute civil/nautical/astronomical dawn+dusk and golden hour windows."""
+    civil_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=96.0, rising=True)
+    civil_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=96.0, rising=False)
+    nautical_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=102.0, rising=True)
+    nautical_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=102.0, rising=False)
+    astro_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=108.0, rising=True)
+    astro_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=108.0, rising=False)
+    sunrise, sunset = _sun_times(dt, lat, lng, tz_name)
+
+    def fmt(v: datetime) -> str:
+        return v.strftime("%-I:%M %p")
+
+    return {
+        "civil_dawn": fmt(civil_dawn),
+        "civil_dusk": fmt(civil_dusk),
+        "nautical_dawn": fmt(nautical_dawn),
+        "nautical_dusk": fmt(nautical_dusk),
+        "astronomical_dawn": fmt(astro_dawn),
+        "astronomical_dusk": fmt(astro_dusk),
+        "golden_am": f"{fmt(civil_dawn)} - {fmt(sunrise)}",
+        "golden_pm": f"{fmt(sunset)} - {fmt(civil_dusk)}",
+    }
+
+
+def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> Dict[str, Any]:
+    """Compute moonrise/moonset plus simple phase-age-distance info."""
+    tz = ZoneInfo(tz_name)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
+
+    phase_frac = _moon_phase(dt)
+    synodic = 29.53058867
+    age_days = phase_frac * synodic
+    overhead, _underfoot = _moon_transit_hours(dt, lng)
+    moonrise_h = (overhead - 6.2) % 24.0
+    moonset_h = (overhead + 6.2) % 24.0
+
+    def hour_to_str(hour: float) -> str:
+        h = int(hour) % 24
+        m = int((hour % 1) * 60)
+        ampm = "AM" if h < 12 else "PM"
+        display = h if 1 <= h <= 12 else (12 if h in (0, 12) else h - 12)
+        return f"{display}:{m:02d} {ampm}"
+
+    # Approximate geocentric moon distance in km with simple anomaly model.
+    mean_distance_km = 384400
+    anomaly = 2 * math.pi * phase_frac
+    distance_km = mean_distance_km - 20905 * math.cos(anomaly)
+
+    return {
+        "moonrise": hour_to_str(moonrise_h),
+        "moonset": hour_to_str(moonset_h),
+        "age_days": round(age_days, 1),
+        "distance_km": round(distance_km),
+    }
+
+
 def compute_solunar_times(
     dt: datetime,
     lat: float,

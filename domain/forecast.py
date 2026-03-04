@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import re
 import time
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ from zoneinfo import ZoneInfo
 
 from locations import get_fallback_conditions, get_monthly_water_temps
 
-from services.astro import _sun_times, compute_solunar_times
+from services.astro import _sun_times, compute_lunar_details, compute_solunar_times, compute_twilight_times
 from services.ndbc import (
     NDBC_STATIONS,
     _try_ndbc_station,
@@ -23,6 +24,8 @@ from services.noaa import (
     WATER_TEMP_STATION,
     _try_coops_wind,
     build_tide_chart_svg,
+    fetch_coops_environmental_metrics,
+    fetch_currents_predictions,
     fetch_tide_predictions,
     fetch_water_temperature,
     get_water_temp,
@@ -34,6 +37,7 @@ from services.nws import (
     _try_nws_gridpoint,
     _fetch_nws_extended,
     fetch_current_weather,
+    fetch_state_alerts,
     fetch_weather_alerts,
     parse_conditions,
 )
@@ -252,12 +256,35 @@ class WeatherDataService(ExternalDataService):
             default=[],
         ) or []
 
+    def get_state_alerts(self, state_code: str) -> List[Dict[str, Any]]:
+        return self._run_with_retries(
+            "state weather alerts",
+            lambda: fetch_state_alerts(state_code),
+            default=[],
+        ) or []
+
     def get_current_weather(self, lat: float, lng: float) -> Optional[Dict[str, Any]]:
         return self._run_with_retries(
             "current weather",
             lambda: fetch_current_weather(lat, lng),
             default=None,
         )
+
+
+class EnvironmentalDataService(ExternalDataService):
+    def get_coops_environmental(self, station_id: str) -> Dict[str, float]:
+        return self._run_with_retries(
+            "coops environmental",
+            lambda: fetch_coops_environmental_metrics(station_id),
+            default={},
+        ) or {}
+
+    def get_currents(self, station_id: str, tz_name: str) -> List[Dict[str, str]]:
+        return self._run_with_retries(
+            "currents predictions",
+            lambda: fetch_currents_predictions(station_id, tz_name),
+            default=[],
+        ) or []
 
 
 class AstronomyService(ExternalDataService):
@@ -285,6 +312,20 @@ class AstronomyService(ExternalDataService):
             default={},
         ) or {}
 
+    def get_twilight_times(self, now: datetime, lat: float, lng: float, tz_name: str) -> Dict[str, str]:
+        return self._run_with_retries(
+            "twilight",
+            lambda: compute_twilight_times(now, lat, lng, tz_name),
+            default={},
+        ) or {}
+
+    def get_lunar_details(self, now: datetime, lng: float, tz_name: str) -> Dict[str, Any]:
+        return self._run_with_retries(
+            "lunar details",
+            lambda: compute_lunar_details(now, lng, tz_name),
+            default={},
+        ) or {}
+
 
 class ForecastBuilder:
     """Central forecast orchestrator for external services + domain assembly."""
@@ -294,6 +335,7 @@ class ForecastBuilder:
         self.tide_service = TidePredictionService()
         self.buoy_service = BuoyDataService()
         self.weather_service = WeatherDataService()
+        self.environment_service = EnvironmentalDataService()
         self.astro_service = AstronomyService()
 
 
@@ -1091,6 +1133,144 @@ def build_safety_checklist(
     return items
 
 
+
+def _uv_category(uv_index: float) -> Dict[str, str]:
+    if uv_index <= 2:
+        return {"level": "Low", "advice": "Minimal sun risk; sunglasses still recommended."}
+    if uv_index <= 7:
+        return {"level": "Moderate to High", "advice": "Use SPF 30+, hat, and lightweight sun shirt."}
+    return {"level": "Very High to Extreme", "advice": "Limit direct midday exposure and reapply SPF often."}
+
+
+def _estimate_uv_index(now: datetime, sunrise: Optional[datetime], sunset: Optional[datetime]) -> float:
+    if not sunrise or not sunset or now < sunrise or now > sunset:
+        return 0.0
+    daylight = max((sunset - sunrise).total_seconds(), 1)
+    elapsed = (now - sunrise).total_seconds()
+    pct = elapsed / daylight
+    # bell-shaped daytime UV profile with coastal midday peak around 9
+    uv = 9.0 * max(0.0, 1 - (2 * pct - 1) ** 2)
+    return round(uv, 1)
+
+
+def _rip_risk_from_conditions(wave_range: Optional[Tuple[float, float]], wind_range: Optional[Tuple[float, float]]) -> Dict[str, str]:
+    wave_max = wave_range[1] if wave_range else 0.0
+    wind_max = wind_range[1] if wind_range else 0.0
+    if wave_max >= 5 or wind_max >= 20:
+        return {
+            "level": "High",
+            "guidance": "Strong rip current risk. Stay out of the surf and fish from stable structure.",
+        }
+    if wave_max >= 3 or wind_max >= 14:
+        return {
+            "level": "Moderate",
+            "guidance": "Rip currents possible, especially near piers/jetties. Keep exits in sight.",
+        }
+    return {
+        "level": "Low",
+        "guidance": "Risk still exists near piers and cuts. Never fish or swim alone in surf.",
+    }
+
+
+def _dew_point_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Optional[float]:
+    if temp_f is None or humidity_pct is None or humidity_pct <= 0:
+        return None
+    temp_c = (temp_f - 32) * 5 / 9
+    rh = max(1.0, min(float(humidity_pct), 100.0))
+    a = 17.27
+    b = 237.7
+    alpha = ((a * temp_c) / (b + temp_c)) + math.log(rh / 100.0)
+    dew_c = (b * alpha) / (a - alpha)
+    return round(dew_c * 9 / 5 + 32, 1)
+
+def _build_pier_info(location: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return location-aware planning details without requiring APIs."""
+    loc = location or {}
+    state = loc.get("state", "")
+    coast_region = loc.get("conditions_region", "")
+    default_hours = "Open daily; check seasonal maintenance closures"
+    if state in {"FL", "HI", "CA"}:
+        default_hours = "Sunrise to sunset (many piers extend hours in summer)"
+    elif state in {"NJ", "NY", "MA", "RI", "CT"}:
+        default_hours = "Dawn to dusk; winter weather closures possible"
+
+    amenities = ["Restrooms nearby", "Public parking", "Fish-cleaning area varies by pier"]
+    if coast_region.startswith("pacific"):
+        amenities.append("Kelp/rock structure nearby")
+    elif coast_region.startswith("gulf"):
+        amenities.append("Baitfish schools common near lights and passes")
+    else:
+        amenities.append("Tidal cuts and sandbars nearby")
+
+    return {
+        "hours": loc.get("pier_hours", default_hours),
+        "fees": loc.get("pier_fees", "Fees vary by municipality; verify before travel."),
+        "contact": loc.get("pier_contact", f"{loc.get('name', 'Local')} parks/marina office"),
+        "amenities": loc.get("amenities", amenities),
+        "rules": loc.get("rules", ["No alcohol on pier", "Respect casting lanes", "Check local drone policy"]),
+    }
+
+
+def _build_education_cards(
+    profile: Dict[str, Any],
+    uv: Dict[str, Any],
+    rip_current_risk: Dict[str, str],
+) -> List[Dict[str, str]]:
+    """Build educational/safety cards tailored to setup/profile choices."""
+    experience = (profile or {}).get("experience", "")
+    fishing_types = set((profile or {}).get("fishing_types") or [])
+    cards = [
+        {
+            "title": "Twilight windows",
+            "text": "Civil twilight often provides low-light feeding before sunrise and after sunset; many surf bites improve in this window.",
+        },
+        {
+            "title": "UV safety",
+            "text": f"UV is {uv.get('level', 'Unknown')} today. {uv.get('advice', 'Use sun protection and hydration breaks.')}",
+        },
+        {
+            "title": "Rip-current awareness",
+            "text": f"Current risk: {rip_current_risk.get('level', 'Unknown')}. {rip_current_risk.get('guidance', '')}",
+        },
+        {
+            "title": "Catch-and-release",
+            "text": "Use wet hands, keep fish in water when possible, and support the belly to reduce post-release stress.",
+        },
+    ]
+    if experience == "beginner":
+        cards.append({
+            "title": "Beginner tip",
+            "text": "Start with bottom rigs and short casts. Focus on reading current seams before trying long-distance casting.",
+        })
+    if "pier" in fishing_types:
+        cards.append({
+            "title": "Pier etiquette",
+            "text": "Call out when casting, avoid crossing lines, and net fish quickly to keep traffic moving safely.",
+        })
+    return cards
+
+
+def _seasonality_highlights(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Summarize active calendar windows for top species with regulation hints."""
+    highlights: List[Dict[str, str]] = []
+    species_by_name = {sp.get("name"): sp for sp in forecast.get("species", [])}
+    for row in (forecast.get("calendar") or [])[:5]:
+        active = [m["abbr"] for m in row.get("months", []) if m.get("level") in {"peak", "good"}]
+        if not active:
+            continue
+        reg = (species_by_name.get(row.get("name"), {}) or {}).get("regulation", {})
+        note = ""
+        if reg:
+            parts = [reg.get("min_size", ""), reg.get("bag_limit", "")]
+            note = " · ".join([p for p in parts if p])
+        highlights.append({
+            "species": row.get("name", ""),
+            "season": f"Active: {', '.join(active[:6])}",
+            "note": note,
+        })
+    return highlights
+
+
 def generate_forecast(
     location: Optional[Dict[str, Any]] = None,
     profile: Optional[Dict[str, Any]] = None,
@@ -1222,6 +1402,7 @@ def generate_forecast(
         "species": species,
         "rig_recommendations": rig_recommendations,
         "bait_rankings": build_bait_ranking(species, month),
+        "pier_info": _build_pier_info(location),
     }
 
     alerts = builder.weather_service.get_weather_alerts(loc_lat, loc_lng)
@@ -1230,6 +1411,13 @@ def generate_forecast(
         sources_used.append("NWS weather alerts")
     else:
         fallbacks_triggered.append("weather_alerts_unavailable")
+
+    if loc_state:
+        state_alerts = builder.weather_service.get_state_alerts(loc_state)
+        if state_alerts:
+            forecast["state_alerts"] = state_alerts[:5]
+            sources_used.append("NWS state alerts")
+
 
     # Barometric pressure
     pressure = builder.buoy_service.get_barometric_pressure(location)
@@ -1247,6 +1435,23 @@ def generate_forecast(
     else:
         fallbacks_triggered.append("current_weather_unavailable")
 
+    coops_station = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    env_metrics = builder.environment_service.get_coops_environmental(coops_station)
+    if env_metrics:
+        if weather:
+            env_metrics.setdefault("air_temp_f", weather.get("air_temp_f"))
+            env_metrics.setdefault("humidity_pct", weather.get("humidity"))
+        forecast["environment"] = env_metrics
+        sources_used.append("NOAA CO-OPS environmental")
+    else:
+        fallbacks_triggered.append("coops_environment_unavailable")
+
+    currents = builder.environment_service.get_currents(coops_station, tz_name)
+    if currents:
+        forecast["currents"] = currents
+        sources_used.append("NOAA currents predictions")
+
+
     # Tide predictions
     tide_data = builder.tide_service.get_tide_predictions(now, location, tz_name)
     if tide_data:
@@ -1263,6 +1468,36 @@ def generate_forecast(
         sources_used.append("astronomy solunar")
     else:
         fallbacks_triggered.append("solunar_unavailable")
+
+    twilight = builder.astro_service.get_twilight_times(now, loc_lat, loc_lng, tz_name)
+    if twilight:
+        forecast["twilight"] = twilight
+        sources_used.append("astronomy twilight")
+
+    lunar_details = builder.astro_service.get_lunar_details(now, loc_lng, tz_name)
+    if lunar_details:
+        forecast["lunar_details"] = lunar_details
+        if solunar:
+            forecast["lunar_details"]["illumination_pct"] = solunar.get("illumination_pct")
+            forecast["lunar_details"]["phase"] = solunar.get("moon_phase")
+        sources_used.append("astronomy lunar details")
+
+    uv_index = _estimate_uv_index(now, sunrise, sunset)
+    forecast["uv"] = {"index": uv_index, **_uv_category(uv_index)}
+    forecast["rip_current_risk"] = _rip_risk_from_conditions(wave_range, wind_range)
+    forecast["education"] = _build_education_cards(profile, forecast["uv"], forecast["rip_current_risk"])
+
+    humidity_for_dew = None
+    temp_for_dew = None
+    if forecast.get("environment"):
+        humidity_for_dew = forecast["environment"].get("humidity_pct")
+        temp_for_dew = forecast["environment"].get("air_temp_f")
+    if forecast.get("weather"):
+        humidity_for_dew = humidity_for_dew if humidity_for_dew is not None else forecast["weather"].get("humidity")
+        temp_for_dew = temp_for_dew if temp_for_dew is not None else forecast["weather"].get("air_temp_f")
+    dew_point = _dew_point_f(temp_for_dew, humidity_for_dew)
+    if dew_point is not None:
+        forecast["derived_indices"] = {"dew_point_f": dew_point}
 
     # Final fishability verdict based on all available signals
     conditions["verdict"] = classify_conditions(
@@ -1297,6 +1532,7 @@ def generate_forecast(
 
     # Species availability calendar
     forecast["calendar"] = build_species_calendar(species, location)
+    forecast["seasonality"] = _seasonality_highlights(forecast)
 
     # Natural bait availability (bait DB only has "east"/"west" entries)
     bait_coast = "west" if coast == "west" else "east"

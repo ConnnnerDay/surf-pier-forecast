@@ -200,6 +200,38 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
         return []
 
 
+
+def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:
+    """Fetch active alerts for an entire state via /alerts/active?area=XX."""
+    if not state_code:
+        return []
+    try:
+        resp = http_get(
+            f"https://api.weather.gov/alerts/active?area={state_code.upper()}",
+            endpoint="nws.alerts_state",
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        features = data.get("features", []) or data.get("@graph", [])
+        alerts: List[Dict[str, str]] = []
+        for feat in features[:10]:
+            props = feat.get("properties", feat)
+            event = props.get("event", "")
+            if not event:
+                continue
+            alerts.append({
+                "event": event,
+                "severity": props.get("severity", ""),
+                "headline": props.get("headline", ""),
+                "description": (props.get("description", "") or "")[:300],
+            })
+        return alerts
+    except Exception:
+        logger.debug("State alerts unavailable", exc_info=True)
+        return []
+
 def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
     """Fetch current weather observations from NWS.
 

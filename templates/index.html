@@ -87,9 +87,10 @@
 
     <main id="main-content" role="main">
         <!-- Weather Alerts -->
-        {% if forecast.alerts %}
+        {% set all_alerts = (forecast.alerts or []) + (forecast.state_alerts or []) %}
+        {% if all_alerts %}
         <div class="alerts-banner" role="alert" aria-label="Weather alerts">
-            {% for alert in forecast.alerts %}
+            {% for alert in all_alerts[:8] %}
             <div class="alert-item alert-{{ alert.severity|lower }}">
                 <div class="alert-icon">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

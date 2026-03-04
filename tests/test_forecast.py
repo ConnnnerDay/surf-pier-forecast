@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from services.astro import compute_solunar_times
+from services.astro import compute_lunar_details, compute_solunar_times, compute_twilight_times
 
 from domain.forecast import (
     _seasonal_averages,
@@ -101,6 +101,18 @@ class TestSolunar:
                 assert "start" in p and "end" in p
 
 
+class TestAstronomyExtras:
+    def test_twilight_contains_golden_windows(self):
+        dt = datetime(2026, 6, 14, 6, 0, tzinfo=ZoneInfo("America/New_York"))
+        out = compute_twilight_times(dt, 34.2, -77.8, "America/New_York")
+        assert "golden_am" in out and "golden_pm" in out
+
+    def test_lunar_details_has_rise_set_age_distance(self):
+        dt = datetime(2026, 6, 14, 6, 0, tzinfo=ZoneInfo("America/New_York"))
+        out = compute_lunar_details(dt, -77.8, "America/New_York")
+        assert {"moonrise", "moonset", "age_days", "distance_km"}.issubset(out.keys())
+
+
 def test_generate_forecast_includes_metadata(monkeypatch):
     """Generated forecast should include version/source metadata for auditability."""
     from domain import forecast as fc
@@ -122,8 +134,18 @@ def test_generate_forecast_includes_metadata(monkeypatch):
         def get_weather_alerts(self, *_args, **_kwargs):
             return []
 
+        def get_state_alerts(self, *_args, **_kwargs):
+            return []
+
         def get_current_weather(self, *_args, **_kwargs):
             return None
+
+    class _Env:
+        def get_coops_environmental(self, *_args, **_kwargs):
+            return {}
+
+        def get_currents(self, *_args, **_kwargs):
+            return []
 
     class _Astro:
         def get_sun_times(self, now, *_args, **_kwargs):
@@ -132,12 +154,19 @@ def test_generate_forecast_includes_metadata(monkeypatch):
         def get_solunar_times(self, *_args, **_kwargs):
             return {}
 
+        def get_twilight_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_lunar_details(self, *_args, **_kwargs):
+            return {}
+
     class _Builder:
         def __init__(self):
             self.marine_service = _Marine()
             self.tide_service = _Tides()
             self.buoy_service = _Buoy()
             self.weather_service = _Weather()
+            self.environment_service = _Env()
             self.astro_service = _Astro()
 
     monkeypatch.setattr(fc, "ForecastBuilder", _Builder)

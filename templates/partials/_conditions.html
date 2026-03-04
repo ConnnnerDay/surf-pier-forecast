@@ -112,6 +112,35 @@
                 </div>
                 {% endif %}
                 {% endif %}
+
+                {% if forecast.environment and forecast.environment.salinity_psu is defined %}
+                <div class="stat-card">
+                    <span class="stat-label">Salinity</span>
+                    <span class="stat-value">{{ forecast.environment.salinity_psu }} PSU</span>
+                    <span class="stat-detail">water freshness signal</span>
+                </div>
+                {% endif %}
+                {% if forecast.environment and forecast.environment.conductivity is defined %}
+                <div class="stat-card">
+                    <span class="stat-label">Conductivity</span>
+                    <span class="stat-value">{{ forecast.environment.conductivity }}</span>
+                    <span class="stat-detail">CO-OPS latest reading</span>
+                </div>
+                {% endif %}
+                {% if forecast.environment and forecast.environment.visibility_mi is defined %}
+                <div class="stat-card">
+                    <span class="stat-label">Visibility</span>
+                    <span class="stat-value">{{ forecast.environment.visibility_mi }} mi</span>
+                    <span class="stat-detail">fog & travel context</span>
+                </div>
+                {% endif %}
+                {% if forecast.derived_indices and forecast.derived_indices.dew_point_f is defined %}
+                <div class="stat-card">
+                    <span class="stat-label">Dew Point</span>
+                    <span class="stat-value"><span class="unit-temp" data-f="{{ forecast.derived_indices.dew_point_f }}">{{ forecast.derived_indices.dew_point_f }}&deg;F</span></span>
+                    <span class="stat-detail">comfort/moisture indicator</span>
+                </div>
+                {% endif %}
             </div>
 
             {% if forecast.conditions_explainer %}
@@ -126,6 +155,97 @@
             {% endif %}
         </section>
 
+        {% if forecast.currents %}
+        <section class="conditions-section">
+            <h2>Currents & Slack Windows</h2>
+            <div class="table-scroll">
+                <table class="currents-table">
+                    <thead><tr><th>Time</th><th>Event</th><th>Speed</th></tr></thead>
+                    <tbody>
+                    {% for c in forecast.currents %}
+                        <tr {% if 'Slack' in c.event %}class="currents-table__slack"{% endif %}><td>{{ c.time }}</td><td>{{ c.event }}</td><td>{{ c.speed_kt }} kt</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if forecast.twilight or forecast.lunar_details or forecast.uv %}
+        <section class="conditions-section">
+            <h2>Light, Lunar & Safety Outlook</h2>
+            <div class="conditions-explainer">
+                {% if forecast.twilight %}
+                <div class="explainer-item explainer-neutral">
+                    <span class="explainer-label">Golden Hour</span>
+                    <span class="explainer-text">AM {{ forecast.twilight.golden_am }} · PM {{ forecast.twilight.golden_pm }}</span>
+                </div>
+                <div class="explainer-item explainer-neutral">
+                    <span class="explainer-label">Twilight</span>
+                    <span class="explainer-text">Civil {{ forecast.twilight.civil_dawn }} / {{ forecast.twilight.civil_dusk }}, Nautical {{ forecast.twilight.nautical_dawn }} / {{ forecast.twilight.nautical_dusk }}</span>
+                </div>
+                {% endif %}
+                {% if forecast.lunar_details %}
+                <div class="explainer-item explainer-positive">
+                    <span class="explainer-label">Moon</span>
+                    <span class="explainer-text">Rise {{ forecast.lunar_details.moonrise }}, Set {{ forecast.lunar_details.moonset }}, {{ forecast.lunar_details.phase or '' }} {{ forecast.lunar_details.illumination_pct or '' }}% lit</span>
+                </div>
+                {% endif %}
+                {% if forecast.uv %}
+                <div class="explainer-item explainer-{{ 'negative' if forecast.uv.level == 'Very High to Extreme' else 'neutral' }}">
+                    <span class="explainer-label">UV {{ forecast.uv.index }}</span>
+                    <span class="explainer-text">{{ forecast.uv.level }} — {{ forecast.uv.advice }}</span>
+                </div>
+                {% endif %}
+                {% if forecast.rip_current_risk %}
+                <div class="explainer-item explainer-{{ 'negative' if forecast.rip_current_risk.level == 'High' else 'neutral' }}">
+                    <span class="explainer-label">Rip Current Risk</span>
+                    <span class="explainer-text">{{ forecast.rip_current_risk.level }} — {{ forecast.rip_current_risk.guidance }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+        {% if forecast.seasonality %}
+        <section class="conditions-section">
+            <h2>Target Species Seasonality</h2>
+            <div class="conditions-explainer">
+                {% for item in forecast.seasonality %}
+                <div class="explainer-item explainer-positive">
+                    <span class="explainer-label">{{ item.species }}</span>
+                    <span class="explainer-text">{{ item.season }}{% if item.note %} · {{ item.note }}{% endif %}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if forecast.pier_info %}
+        <section class="conditions-section">
+            <h2>Pier Info & Amenities</h2>
+            <div class="conditions-explainer">
+                <div class="explainer-item explainer-neutral"><span class="explainer-label">Hours</span><span class="explainer-text">{{ forecast.pier_info.hours }}</span></div>
+                <div class="explainer-item explainer-neutral"><span class="explainer-label">Fees</span><span class="explainer-text">{{ forecast.pier_info.fees }}</span></div>
+                <div class="explainer-item explainer-neutral"><span class="explainer-label">Contact</span><span class="explainer-text">{{ forecast.pier_info.contact }}</span></div>
+                <div class="explainer-item explainer-neutral"><span class="explainer-label">Amenities</span><span class="explainer-text">{{ forecast.pier_info.amenities|join(', ') }}</span></div>
+                <div class="explainer-item explainer-neutral"><span class="explainer-label">Rules</span><span class="explainer-text">{{ forecast.pier_info.rules|join(' · ') }}</span></div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if forecast.education %}
+        <section class="conditions-section">
+            <h2>Education & Safety</h2>
+            <div class="conditions-explainer">
+                {% for card in forecast.education %}
+                <div class="explainer-item explainer-neutral">
+                    <span class="explainer-label">{{ card.title }}</span>
+                    <span class="explainer-text">{{ card.text }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
         <!-- Best Fishing Times -->
         {% if forecast.best_times %}
         <section class="best-times-section">
