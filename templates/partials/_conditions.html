@@ -104,11 +104,11 @@
                         {% if forecast.weather.humidity %} &middot; {{ forecast.weather.humidity|int }}% humidity{% endif %}
                     </span>
                 </div>
-                {% if forecast.weather.feels_like_f or forecast.weather.wind_chill_f %}
+                {% if forecast.weather.feels_like_f or forecast.weather.wind_chill_f or (forecast.derived_indices and (forecast.derived_indices.heat_index_f is defined or forecast.derived_indices.wind_chill_f is defined)) %}
                 <div class="stat-card">
                     <span class="stat-label">Feels Like</span>
-                    <span class="stat-value"><span class="unit-temp" data-f="{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f)|round|int }}">{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f)|round|int }}&deg;F</span></span>
-                    <span class="stat-detail">{% if forecast.weather.feels_like_f %}heat index{% else %}wind chill{% endif %}</span>
+                    <span class="stat-value"><span class="unit-temp" data-f="{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f or forecast.derived_indices.heat_index_f or forecast.derived_indices.wind_chill_f)|round|int }}">{{ (forecast.weather.feels_like_f or forecast.weather.wind_chill_f or forecast.derived_indices.heat_index_f or forecast.derived_indices.wind_chill_f)|round|int }}&deg;F</span></span>
+                    <span class="stat-detail">{% if forecast.weather.feels_like_f or (forecast.derived_indices and forecast.derived_indices.heat_index_f is defined) %}heat index{% else %}wind chill{% endif %}</span>
                 </div>
                 {% endif %}
                 {% endif %}
@@ -125,6 +125,13 @@
                     <span class="stat-label">Conductivity</span>
                     <span class="stat-value">{{ forecast.environment.conductivity }}</span>
                     <span class="stat-detail">CO-OPS latest reading</span>
+                </div>
+                {% endif %}
+                {% if forecast.environment and forecast.environment.humidity_pct is defined %}
+                <div class="stat-card">
+                    <span class="stat-label">Humidity</span>
+                    <span class="stat-value">{{ forecast.environment.humidity_pct|round|int }}%</span>
+                    <span class="stat-detail">relative humidity</span>
                 </div>
                 {% endif %}
                 {% if forecast.environment and forecast.environment.visibility_mi is defined %}
@@ -160,10 +167,10 @@
             <h2>Currents & Slack Windows</h2>
             <div class="table-scroll">
                 <table class="currents-table">
-                    <thead><tr><th>Time</th><th>Event</th><th>Speed</th></tr></thead>
+                    <thead><tr><th>Time</th><th>Event</th><th>Speed</th><th>Direction</th></tr></thead>
                     <tbody>
                     {% for c in forecast.currents %}
-                        <tr {% if 'Slack' in c.event %}class="currents-table__slack"{% endif %}><td>{{ c.time }}</td><td>{{ c.event }}</td><td>{{ c.speed_kt }} kt</td></tr>
+                        <tr {% if 'Slack' in c.event %}class="currents-table__slack"{% endif %}><td>{{ c.time }}</td><td>{{ c.event }}</td><td>{{ c.speed_kt }} kt</td><td>{{ c.direction or '—' }}</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -182,13 +189,13 @@
                 </div>
                 <div class="explainer-item explainer-neutral">
                     <span class="explainer-label">Twilight</span>
-                    <span class="explainer-text">Civil {{ forecast.twilight.civil_dawn }} / {{ forecast.twilight.civil_dusk }}, Nautical {{ forecast.twilight.nautical_dawn }} / {{ forecast.twilight.nautical_dusk }}</span>
+                    <span class="explainer-text">Civil {{ forecast.twilight.civil_dawn }} / {{ forecast.twilight.civil_dusk }}, Nautical {{ forecast.twilight.nautical_dawn }} / {{ forecast.twilight.nautical_dusk }}, Astronomical {{ forecast.twilight.astronomical_dawn }} / {{ forecast.twilight.astronomical_dusk }}</span>
                 </div>
                 {% endif %}
                 {% if forecast.lunar_details %}
                 <div class="explainer-item explainer-positive">
                     <span class="explainer-label">Moon</span>
-                    <span class="explainer-text">Rise {{ forecast.lunar_details.moonrise }}, Set {{ forecast.lunar_details.moonset }}, {{ forecast.lunar_details.phase or '' }} {{ forecast.lunar_details.illumination_pct or '' }}% lit</span>
+                    <span class="explainer-text">Rise {{ forecast.lunar_details.moonrise }}, Set {{ forecast.lunar_details.moonset }}, {{ forecast.lunar_details.phase or '' }} {{ forecast.lunar_details.illumination_pct or '' }}% lit, Age {{ forecast.lunar_details.age_days }}d, Distance {{ forecast.lunar_details.distance_km }} km</span>
                 </div>
                 {% endif %}
                 {% if forecast.uv %}
