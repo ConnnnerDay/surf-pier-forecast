@@ -1028,6 +1028,16 @@
         return h * 60 + mins;
     }
 
+    function formatMinutesToLabel(totalMinutes) {
+        var normalized = ((totalMinutes % 1440) + 1440) % 1440;
+        var hours24 = Math.floor(normalized / 60);
+        var mins = normalized % 60;
+        var meridiem = hours24 >= 12 ? 'PM' : 'AM';
+        var hours12 = hours24 % 12;
+        if (hours12 === 0) hours12 = 12;
+        return hours12 + ':' + String(mins).padStart(2, '0') + ' ' + meridiem;
+    }
+
     function buildTideWaveSeries(tides) {
         var points = (tides || []).map(function(t) {
             return {
@@ -1041,15 +1051,23 @@
             return a.minutes - b.minutes;
         });
 
+        for (var i = 1; i < points.length; i++) {
+            while (points[i].minutes <= points[i - 1].minutes) {
+                points[i].minutes += 1440;
+            }
+        }
+
         if (points.length < 2) {
             return {
                 labels: points.map(function(p) { return p.time; }),
-                values: points.map(function(p) { return p.height; })
+                values: points.map(function(p) { return p.height; }),
+                minutes: points.map(function(p) { return p.minutes; })
             };
         }
 
         var labels = [];
         var values = [];
+        var minutes = [];
         var step = 30; // 30-minute interpolation for smooth wave shape
 
         for (var i = 0; i < points.length - 1; i++) {
@@ -1059,15 +1077,41 @@
             for (var mins = 0; mins < span; mins += step) {
                 var ratio = mins / span;
                 var eased = (1 - Math.cos(Math.PI * ratio)) / 2;
-                labels.push(curr.time);
+                labels.push(formatMinutesToLabel(curr.minutes + mins));
                 values.push(curr.height + (next.height - curr.height) * eased);
+                minutes.push(curr.minutes + mins);
             }
         }
 
-        labels.push(points[points.length - 1].time);
+        labels.push(formatMinutesToLabel(points[points.length - 1].minutes));
         values.push(points[points.length - 1].height);
+        minutes.push(points[points.length - 1].minutes);
 
-        return { labels: labels, values: values };
+        return { labels: labels, values: values, minutes: minutes };
+    }
+
+    function getCurrentTideMarker(tideWave) {
+        if (!tideWave || !tideWave.minutes || tideWave.minutes.length < 2) return null;
+        var now = new Date();
+        var nowMinutes = now.getHours() * 60 + now.getMinutes();
+        var start = tideWave.minutes[0];
+        var end = tideWave.minutes[tideWave.minutes.length - 1];
+        var projectedNow = nowMinutes;
+
+        if (end > 1440 && projectedNow < start) projectedNow += 1440;
+        if (projectedNow < start || projectedNow > end) return null;
+
+        for (var i = 1; i < tideWave.minutes.length; i++) {
+            var leftMin = tideWave.minutes[i - 1];
+            var rightMin = tideWave.minutes[i];
+            if (projectedNow < leftMin || projectedNow > rightMin) continue;
+            var span = rightMin - leftMin;
+            var ratio = span ? (projectedNow - leftMin) / span : 0;
+            var height = tideWave.values[i - 1] + (tideWave.values[i] - tideWave.values[i - 1]) * ratio;
+            return { index: i - 1, height: height };
+        }
+
+        return null;
     }
 
     function renderSolunarChart(solunarData) {
@@ -1104,25 +1148,47 @@
         var tideData = {{ (forecast.tides or [])|tojson }};
         if (tideCanvas && tideData.length) {
             var tideWave = buildTideWaveSeries(tideData);
+            var currentMarker = getCurrentTideMarker(tideWave);
+            var markerSeries = tideWave.values.map(function() { return null; });
+            if (currentMarker) markerSeries[currentMarker.index] = currentMarker.height;
             new Chart(tideCanvas, {
                 type: 'line',
                 data: {
                     labels: tideWave.labels,
-                    datasets: [{
-                        label: 'Tide height (ft)',
-                        data: tideWave.values,
-                        borderColor: '#0b4f6c',
-                        backgroundColor: 'rgba(11,79,108,0.18)',
-                        fill: true,
-                        tension: 0.45,
-                        pointRadius: 0,
-                        borderWidth: 3
-                    }]
+                    datasets: [
+                        {
+                            label: 'Tide height (ft)',
+                            data: tideWave.values,
+                            borderColor: '#0b4f6c',
+                            backgroundColor: 'rgba(11,79,108,0.18)',
+                            fill: true,
+                            tension: 0.45,
+                            pointRadius: 0,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Current tide',
+                            data: markerSeries,
+                            showLine: false,
+                            pointRadius: 6,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#ff6b35',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            filter: function(item) {
+                                return item.raw !== null;
+                            }
+                        }
+                    },
                     scales: { y: { title: { display: true, text: 'Feet' } } }
                 }
             });
