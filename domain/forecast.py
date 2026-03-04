@@ -25,6 +25,7 @@ from services.noaa import (
     _try_coops_wind,
     build_tide_chart_svg,
     fetch_coops_environmental_metrics,
+    fetch_currents_observation,
     fetch_currents_predictions,
     fetch_tide_predictions,
     fetch_water_temperature,
@@ -285,6 +286,13 @@ class EnvironmentalDataService(ExternalDataService):
             lambda: fetch_currents_predictions(station_id, tz_name),
             default=[],
         ) or []
+
+    def get_current_observation(self, station_id: str, tz_name: str) -> Optional[Dict[str, str]]:
+        return self._run_with_retries(
+            "currents observation",
+            lambda: fetch_currents_observation(station_id, tz_name),
+            default=None,
+        )
 
 
 class AstronomyService(ExternalDataService):
@@ -1172,6 +1180,54 @@ def _rip_risk_from_conditions(wave_range: Optional[Tuple[float, float]], wind_ra
     }
 
 
+def _rip_risk_from_alerts(alerts: List[Dict[str, Any]]) -> Optional[Dict[str, str]]:
+    if not alerts:
+        return None
+    combined = "\n".join(
+        f"{a.get('event', '')} {a.get('headline', '')} {a.get('description', '')}".lower()
+        for a in alerts
+    )
+    if "rip current" not in combined:
+        return None
+    if "high rip" in combined:
+        return {
+            "level": "High",
+            "guidance": "NWS alert indicates high rip-current danger. Stay out of surf near piers and jetties.",
+        }
+    if "moderate rip" in combined:
+        return {
+            "level": "Moderate",
+            "guidance": "NWS statement indicates moderate rip-current danger; use extra caution near structure.",
+        }
+    return {
+        "level": "Low",
+        "guidance": "Rip-current statement active. Even low risk can be dangerous near piers and jetties.",
+    }
+
+
+def _build_hazard_alerts(alerts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    hazard_terms = (
+        "small craft", "gale", "storm", "hurricane", "tropical", "rip current",
+        "high surf", "hazardous seas", "coastal flood", "marine warning",
+    )
+    severity_rank = {"extreme": 0, "severe": 1, "moderate": 2, "minor": 3, "": 4}
+    picked: List[Dict[str, Any]] = []
+    seen = set()
+    for alert in alerts:
+        event = (alert.get("event") or "").strip()
+        headline = (alert.get("headline") or "").strip()
+        blob = f"{event} {headline}".lower()
+        if not any(t in blob for t in hazard_terms):
+            continue
+        key = (event.lower(), headline.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        picked.append(alert)
+    picked.sort(key=lambda a: severity_rank.get((a.get("severity") or "").lower(), 5))
+    return picked[:6]
+
+
 def _dew_point_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Optional[float]:
     if temp_f is None or humidity_pct is None or humidity_pct <= 0:
         return None
@@ -1182,6 +1238,31 @@ def _dew_point_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Opti
     alpha = ((a * temp_c) / (b + temp_c)) + math.log(rh / 100.0)
     dew_c = (b * alpha) / (a - alpha)
     return round(dew_c * 9 / 5 + 32, 1)
+
+
+def _heat_index_f(temp_f: Optional[float], humidity_pct: Optional[float]) -> Optional[float]:
+    if temp_f is None or humidity_pct is None:
+        return None
+    t = float(temp_f)
+    rh = float(humidity_pct)
+    if t < 80 or rh < 40:
+        return None
+    hi = (-42.379 + 2.04901523 * t + 10.14333127 * rh - 0.22475541 * t * rh
+          - 0.00683783 * t ** 2 - 0.05481717 * rh ** 2 + 0.00122874 * t ** 2 * rh
+          + 0.00085282 * t * rh ** 2 - 0.00000199 * t ** 2 * rh ** 2)
+    return round(hi, 1)
+
+
+def _wind_chill_f(temp_f: Optional[float], wind_kt: Optional[float]) -> Optional[float]:
+    if temp_f is None or wind_kt is None:
+        return None
+    t = float(temp_f)
+    wind_mph = float(wind_kt) * 1.15078
+    if t > 50 or wind_mph < 3:
+        return None
+    wc = 35.74 + 0.6215 * t - 35.75 * (wind_mph ** 0.16) + 0.4275 * t * (wind_mph ** 0.16)
+    return round(wc, 1)
+
 
 def _build_pier_info(location: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Return location-aware planning details without requiring APIs."""
@@ -1412,11 +1493,17 @@ def generate_forecast(
     else:
         fallbacks_triggered.append("weather_alerts_unavailable")
 
+    state_alerts: List[Dict[str, Any]] = []
     if loc_state:
         state_alerts = builder.weather_service.get_state_alerts(loc_state)
         if state_alerts:
-            forecast["state_alerts"] = state_alerts[:5]
+            forecast["state_alerts"] = state_alerts[:8]
             sources_used.append("NWS state alerts")
+
+    merged_alerts = [*(alerts or []), *(state_alerts or [])]
+    hazard_alerts = _build_hazard_alerts(merged_alerts)
+    if hazard_alerts:
+        forecast["hazard_alerts"] = hazard_alerts
 
 
     # Barometric pressure
@@ -1447,6 +1534,10 @@ def generate_forecast(
         fallbacks_triggered.append("coops_environment_unavailable")
 
     currents = builder.environment_service.get_currents(coops_station, tz_name)
+    current_observation = builder.environment_service.get_current_observation(coops_station, tz_name)
+    if current_observation:
+        currents = [current_observation, *currents]
+        sources_used.append("NOAA currents observation")
     if currents:
         forecast["currents"] = currents
         sources_used.append("NOAA currents predictions")
@@ -1484,7 +1575,14 @@ def generate_forecast(
 
     uv_index = _estimate_uv_index(now, sunrise, sunset)
     forecast["uv"] = {"index": uv_index, **_uv_category(uv_index)}
-    forecast["rip_current_risk"] = _rip_risk_from_conditions(wave_range, wind_range)
+    rip_risk = _rip_risk_from_conditions(wave_range, wind_range)
+    alert_risk = _rip_risk_from_alerts([*(forecast.get("alerts") or []), *(forecast.get("state_alerts") or [])])
+    if alert_risk:
+        order = {"Low": 1, "Moderate": 2, "High": 3}
+        if order.get(alert_risk.get("level", "Low"), 1) >= order.get(rip_risk.get("level", "Low"), 1):
+            rip_risk = alert_risk
+            rip_risk["source"] = "NWS alerts"
+    forecast["rip_current_risk"] = rip_risk
     forecast["education"] = _build_education_cards(profile, forecast["uv"], forecast["rip_current_risk"])
 
     humidity_for_dew = None
@@ -1496,8 +1594,21 @@ def generate_forecast(
         humidity_for_dew = humidity_for_dew if humidity_for_dew is not None else forecast["weather"].get("humidity")
         temp_for_dew = temp_for_dew if temp_for_dew is not None else forecast["weather"].get("air_temp_f")
     dew_point = _dew_point_f(temp_for_dew, humidity_for_dew)
+    derived_indices: Dict[str, float] = {}
     if dew_point is not None:
-        forecast["derived_indices"] = {"dew_point_f": dew_point}
+        derived_indices["dew_point_f"] = dew_point
+
+    est_heat_index = _heat_index_f(temp_for_dew, humidity_for_dew)
+    if est_heat_index is not None and not (forecast.get("weather") or {}).get("feels_like_f"):
+        derived_indices["heat_index_f"] = est_heat_index
+
+    wind_ref = wind_range[1] if wind_range else None
+    est_wind_chill = _wind_chill_f(temp_for_dew, wind_ref)
+    if est_wind_chill is not None and not (forecast.get("weather") or {}).get("wind_chill_f"):
+        derived_indices["wind_chill_f"] = est_wind_chill
+
+    if derived_indices:
+        forecast["derived_indices"] = derived_indices
 
     # Final fishability verdict based on all available signals
     conditions["verdict"] = classify_conditions(

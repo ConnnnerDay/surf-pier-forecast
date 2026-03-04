@@ -88,9 +88,18 @@
     <main id="main-content" role="main">
         <!-- Weather Alerts -->
         {% set all_alerts = (forecast.alerts or []) + (forecast.state_alerts or []) %}
+        {% set hazard_alerts = forecast.hazard_alerts or [] %}
         {% if all_alerts %}
         <div class="alerts-banner" role="alert" aria-label="Weather alerts">
-            {% for alert in all_alerts[:8] %}
+            {% if hazard_alerts %}
+            <div class="alert-item alert-severe">
+                <div class="alert-body">
+                    <strong class="alert-event">Marine & Beach Hazards</strong>
+                    <span class="alert-headline">{{ hazard_alerts|length }} active advisories/warnings for this area.</span>
+                </div>
+            </div>
+            {% endif %}
+            {% for alert in (hazard_alerts if hazard_alerts else all_alerts[:8]) %}
             <div class="alert-item alert-{{ alert.severity|lower }}">
                 <div class="alert-icon">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
