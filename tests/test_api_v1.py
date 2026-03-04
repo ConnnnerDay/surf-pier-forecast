@@ -258,6 +258,7 @@ def test_v1_forecast_outlook_cached_only(client, monkeypatch):
     sample = {
         "outlook": [{"day": "Mon", "date": "Apr 1", "verdict": "Good", "wind": "10 kt", "waves": "2 ft", "top_species": ["Red Drum"]}],
         "best_day": {"best_day": "Mon", "recommendation": "Fish dawn", "verdict": "Good"},
+        "activity_timeline": [{"hour": 0, "label": "12 AM", "level": 35, "tag": "low"}],
     }
     monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: sample)
     monkeypatch.setattr("web.api.generate_forecast", lambda location: (_ for _ in ()).throw(AssertionError("should not generate")))
@@ -268,6 +269,7 @@ def test_v1_forecast_outlook_cached_only(client, monkeypatch):
     assert body["ok"] is True
     assert body["data"]["location_id"] == "wrightsville-beach-nc"
     assert body["data"]["outlook"][0]["day"] == "Mon"
+    assert body["data"]["activity_timeline"][0]["label"] == "12 AM"
 
 
 def test_v1_forecast_solunar_cached_only(client, monkeypatch):

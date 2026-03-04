@@ -283,6 +283,7 @@ def forecast_outlook_v1(location_id: str) -> Any:
         "location_id": location_id,
         "outlook": forecast_data.get("outlook") or [],
         "best_day": forecast_data.get("best_day"),
+        "activity_timeline": forecast_data.get("activity_timeline") or [],
     }))
 
 
