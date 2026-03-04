@@ -53,13 +53,19 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
     loc_id = location["id"]
     user_id = g.user["id"] if g.user else None
     if query.force_refresh:
+        logger.info("cache.force_refresh location_id=%s", loc_id)
         forecast_data = generate_forecast(location)
         save_forecast(forecast_data, loc_id, user_id=user_id)
+        logger.info("cache.regenerated location_id=%s", loc_id)
     else:
         forecast_data = load_cached_forecast(loc_id, user_id=user_id)
+        if forecast_data:
+            logger.info("cache.hit location_id=%s", loc_id)
         if not forecast_data:
+            logger.info("cache.miss location_id=%s", loc_id)
             forecast_data = generate_forecast(location)
             save_forecast(forecast_data, loc_id, user_id=user_id)
+            logger.info("cache.regenerated location_id=%s", loc_id)
 
     if not forecast_data:
         raise ApiError("forecast_unavailable", "No forecast available", status=503)

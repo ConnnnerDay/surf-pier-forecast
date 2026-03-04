@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import requests
+from services.http_client import get as http_get
 from zoneinfo import ZoneInfo
 
 from locations import get_monthly_water_temps
@@ -48,7 +48,7 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     """
     try:
         url = WATER_TEMP_URL.format(station=station_id or WATER_TEMP_STATION)
-        resp = requests.get(url, timeout=10)
+        resp = http_get(url, endpoint="noaa.water_temperature", timeout=(3.05, 10))
         resp.raise_for_status()
         data = resp.json()
         reading = data.get("data", [{}])[0].get("v")
@@ -62,6 +62,8 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
 def get_water_temp(
     month: int,
     location: Optional[Dict[str, Any]] = None,
+    sources_used: Optional[List[str]] = None,
+    fallbacks_triggered: Optional[List[str]] = None,
 ) -> Tuple[float, bool]:
     """Return (water_temp_f, is_live).
 
@@ -71,10 +73,16 @@ def get_water_temp(
     station_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
     live = fetch_water_temperature(station_id)
     if live is not None:
+        if sources_used is not None:
+            sources_used.append("NOAA CO-OPS water temperature")
         return live, True
     if location:
         temps = get_monthly_water_temps(location)
+        if fallbacks_triggered is not None:
+            fallbacks_triggered.append("monthly_location_water_temp")
         return float(temps[month]), False
+    if fallbacks_triggered is not None:
+        fallbacks_triggered.append("monthly_regional_water_temp")
     return float(MONTHLY_AVG_WATER_TEMP_F[month]), False
 
 
@@ -88,7 +96,7 @@ def _try_coops_wind(station_id: str = "") -> Tuple[Optional[Tuple[float, float]]
     Returns wind data only (no wave data from this source).
     """
     url = COOPS_WIND_URL.format(station=station_id or WATER_TEMP_STATION)
-    resp = requests.get(url, timeout=10)
+    resp = http_get(url, endpoint="noaa.coops_wind", timeout=(3.05, 10))
     resp.raise_for_status()
     data = resp.json()
 
@@ -130,7 +138,7 @@ def fetch_tide_predictions(
         "&time_zone=lst_ldt&format=json&interval=hilo"
     )
     try:
-        resp = requests.get(url, timeout=12)
+        resp = http_get(url, endpoint="noaa.tide_predictions", timeout=(3.05, 12))
         resp.raise_for_status()
         data = resp.json()
         predictions = data.get("predictions", [])

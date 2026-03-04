@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, Optional, Tuple
 
-import requests
+from services.http_client import get as http_get
 
 
 # ---------------------------------------------------------------------------
@@ -1681,9 +1681,10 @@ def geocode_zip(zipcode: str) -> Optional[Tuple[float, float]]:
     if not zipcode.isdigit() or len(zipcode) != 5:
         return None
     try:
-        resp = requests.get(
+        resp = http_get(
             f"https://api.zippopotam.us/us/{zipcode}",
-            timeout=8,
+            endpoint="zippopotam.geocode_zip",
+            timeout=(2.5, 8),
         )
         if resp.status_code != 200:
             return None
