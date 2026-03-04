@@ -83,6 +83,9 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
         forecast = personalize_forecast(forecast, profile, location)
 
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
+    # Backfill for cached forecasts created before location_state existed.
+    if not forecast.get("location_state"):
+        forecast["location_state"] = location.get("state", "")
 
     return render_template("index.html", forecast=forecast, cached=cached_flag,
                            share_id=loc_id)

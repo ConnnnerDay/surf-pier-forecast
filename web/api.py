@@ -271,14 +271,16 @@ def regulations_v1() -> Any:
     if not species_name:
         return _json_error(ApiError("missing_param", "'species' query parameter is required", status=400))
 
-    # Resolve state: explicit param takes priority, else derive from location_id
+    # Resolve state: explicit param takes priority, else derive from location_id,
+    # else fall back to the current session location.
     state = request.args.get("state", "").strip().upper()
     if not state:
         location_id = request.args.get("location_id", "").strip()
-        if location_id:
-            loc = get_location(location_id)
-            if loc:
-                state = loc.get("state", "").upper()
+        loc = get_location(location_id) if location_id else None
+        if not loc:
+            loc = get_session_location()
+        if loc:
+            state = (loc.get("state") or "").upper()
 
     reg = lookup_regulation(species_name, state) if state else None
 

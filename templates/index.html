@@ -367,41 +367,6 @@
                                 <span class="meta-value">{{ sp.sinker }}</span>
                             </div>
                         </div>
-                        {% if sp.regulation %}
-                        <div class="species-regs">
-                            <div class="regs-header">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                </svg>
-                                <span>Regulations</span>
-                            </div>
-                            <div class="regs-grid">
-                                {% if sp.regulation.min_size %}
-                                <div class="reg-item">
-                                    <span class="reg-label">Min Size</span>
-                                    <span class="reg-value">{{ sp.regulation.min_size }}</span>
-                                </div>
-                                {% endif %}
-                                {% if sp.regulation.bag_limit %}
-                                <div class="reg-item">
-                                    <span class="reg-label">Bag Limit</span>
-                                    <span class="reg-value">{{ sp.regulation.bag_limit }}</span>
-                                </div>
-                                {% endif %}
-                                {% if sp.regulation.season %}
-                                <div class="reg-item">
-                                    <span class="reg-label">Season</span>
-                                    <span class="reg-value">{{ sp.regulation.season }}</span>
-                                </div>
-                                {% endif %}
-                                {% if sp.regulation.notes %}
-                                <div class="reg-item reg-item--full">
-                                    <span class="reg-value reg-note">{{ sp.regulation.notes }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -954,6 +919,7 @@
     /* ---- Favorite Locations (localStorage) ---- */
     var FAV_KEY = 'favorite_locations';
     var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
+    var CURRENT_LOC_STATE = {{ (forecast.location_state or ((forecast.location_name.split(',')[-1].strip()) if forecast.location_name and ',' in forecast.location_name else ''))|tojson }};
     var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
 
     function getFavorites() {
@@ -1666,9 +1632,10 @@
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function renderRegs(reg) {
+    function renderRegs(reg, state) {
+        var stateLabel = state ? ' for ' + esc(state) : '';
         if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
-            return '<p class="reg-no-data">No regulation data available for this species at your location.'
+            return '<p class="reg-no-data">No regulation data available for this species' + stateLabel + '.'
                 + '<br>Check your state fish &amp; wildlife agency for current rules.</p>';
         }
         var html = '<div class="reg-modal__grid">';
@@ -1680,10 +1647,48 @@
         return html;
     }
 
-    function openModal(speciesName, reg) {
+    function openModal(speciesName, reg, state) {
         modalTitle.textContent = speciesName;
-        modalBody.innerHTML = renderRegs(reg);
+        modalBody.innerHTML = renderRegs(reg, state);
         modal.showModal();
+    }
+
+    function getEmbeddedReg(card) {
+        if (!card || !card.hasAttribute('data-reg-min-size')) return null;
+        return {
+            min_size: card.dataset.regMinSize || '',
+            bag_limit: card.dataset.regBagLimit || '',
+            season: card.dataset.regSeason || '',
+            notes: card.dataset.regNotes || '',
+        };
+    }
+
+    var regCache = Object.create(null);
+    var latestRegRequest = 0;
+
+    function fetchRegulation(speciesName) {
+        var state = (typeof CURRENT_LOC_STATE !== 'undefined' && CURRENT_LOC_STATE) ? CURRENT_LOC_STATE : '';
+        var cacheKey = speciesName + '::' + (state || CURRENT_LOC_ID || '');
+        if (regCache[cacheKey]) return Promise.resolve(regCache[cacheKey]);
+
+        var url = '/api/v1/regulations?species=' + encodeURIComponent(speciesName);
+        if (typeof CURRENT_LOC_ID !== 'undefined' && CURRENT_LOC_ID) {
+            url += '&location_id=' + encodeURIComponent(CURRENT_LOC_ID);
+        }
+        if (state) {
+            url += '&state=' + encodeURIComponent(state);
+        }
+        return fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                var data = json.data || {};
+                var payload = {
+                    state: data.state || state || '',
+                    regulation: data.regulation || null,
+                };
+                regCache[cacheKey] = payload;
+                return payload;
+            });
     }
 
     // Click handler: each "Regs" pill button
@@ -1693,34 +1698,32 @@
             var card = btn.closest('.species-card');
             if (!card) return;
             var name = card.dataset.speciesName || '';
+            var embedded = getEmbeddedReg(card);
+            var fallbackState = (typeof CURRENT_LOC_STATE !== 'undefined' && CURRENT_LOC_STATE) ? CURRENT_LOC_STATE : '';
+            var requestId = ++latestRegRequest;
 
-            // If reg data was embedded server-side, use it instantly
-            if (card.hasAttribute('data-reg-min-size')) {
-                openModal(name, {
-                    min_size:  card.dataset.regMinSize  || '',
-                    bag_limit: card.dataset.regBagLimit || '',
-                    season:    card.dataset.regSeason   || '',
-                    notes:     card.dataset.regNotes    || '',
-                });
-                return;
+            if (embedded) {
+                openModal(name, embedded, fallbackState);
+            } else {
+                modalTitle.textContent = name;
+                modalBody.innerHTML = '<p class="reg-loading">Loading…</p>';
+                modal.showModal();
             }
 
-            // Otherwise fetch from API (species without a state match server-side)
-            modalTitle.textContent = name;
-            modalBody.innerHTML = '<p class="reg-loading">Loading\u2026</p>';
-            modal.showModal();
-
-            var url = '/api/v1/regulations?species=' + encodeURIComponent(name);
-            if (typeof CURRENT_LOC_ID !== 'undefined' && CURRENT_LOC_ID) {
-                url += '&location_id=' + encodeURIComponent(CURRENT_LOC_ID);
-            }
-            fetch(url)
-                .then(function (r) { return r.json(); })
-                .then(function (json) {
-                    modalBody.innerHTML = renderRegs((json.data || {}).regulation || null);
+            fetchRegulation(name)
+                .then(function (result) {
+                    if (requestId !== latestRegRequest) return;
+                    var reg = (result || {}).regulation || null;
+                    var state = (result || {}).state || fallbackState;
+                    if (reg || !embedded) {
+                        modalBody.innerHTML = renderRegs(reg, state);
+                    }
                 })
                 .catch(function () {
-                    modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations. Please try again.</p>';
+                    if (requestId !== latestRegRequest) return;
+                    if (!embedded) {
+                        modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations. Please try again.</p>';
+                    }
                 });
         });
     });
