@@ -1,4 +1,4 @@
-"""NOAA CO-OPS water temperature, wind, and tide predictions."""
+"""NOAA CO-OPS marine/environmental products and tide/current predictions."""
 
 from __future__ import annotations
 
@@ -57,6 +57,88 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     except Exception:
         pass
     return None
+
+
+def fetch_latest_coops_product(station_id: str, product: str, units: str = "english") -> Optional[float]:
+    """Fetch latest numeric NOAA CO-OPS product value for a station.
+
+    Supported examples include: air_temperature, humidity, visibility,
+    air_pressure, salinity, conductivity.
+    """
+    try:
+        url = (
+            "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+            f"?date=latest&station={station_id}"
+            f"&product={product}&units={units}"
+            "&time_zone=lst_ldt&format=json"
+        )
+        resp = http_get(url, endpoint=f"noaa.{product}", timeout=(3.05, 10))
+        resp.raise_for_status()
+        payload = resp.json()
+        row = (payload.get("data") or [{}])[0]
+        value = row.get("v")
+        if value in (None, ""):
+            return None
+        return float(value)
+    except Exception:
+        return None
+
+
+def fetch_coops_environmental_metrics(station_id: str) -> Dict[str, float]:
+    """Fetch optional NOAA CO-OPS environmental products for a station."""
+    metrics: Dict[str, float] = {}
+    products = {
+        "air_temperature": ("air_temp_f", "english"),
+        "humidity": ("humidity_pct", "metric"),
+        "visibility": ("visibility_mi", "english"),
+        "air_pressure": ("air_pressure_mb", "metric"),
+        "salinity": ("salinity_psu", "metric"),
+        "conductivity": ("conductivity", "metric"),
+    }
+    for product, (key, units) in products.items():
+        val = fetch_latest_coops_product(station_id, product, units=units)
+        if val is not None:
+            metrics[key] = round(val, 2)
+    return metrics
+
+
+def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York") -> List[Dict[str, str]]:
+    """Fetch NOAA CO-OPS current prediction events (flood/ebb/slack)."""
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    today_str = now.strftime("%Y%m%d")
+    tomorrow_str = (now + timedelta(days=1)).strftime("%Y%m%d")
+    url = (
+        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+        f"?begin_date={today_str}&end_date={tomorrow_str}"
+        f"&station={station_id}"
+        "&product=currents_predictions&time_zone=lst_ldt"
+        "&units=english&interval=max_slack&format=json"
+    )
+    try:
+        resp = http_get(url, endpoint="noaa.currents_predictions", timeout=(3.05, 12))
+        resp.raise_for_status()
+        rows = resp.json().get("cp", [])
+        out: List[Dict[str, str]] = []
+        for row in rows:
+            raw = row.get("Time") or row.get("time")
+            velocity = row.get("Velocity_Major") or row.get("Velocity") or row.get("v")
+            event = row.get("Type") or row.get("type") or ""
+            if not raw:
+                continue
+            try:
+                dt = datetime.strptime(raw, "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+                when = dt.strftime("%-I:%M %p")
+            except Exception:
+                when = raw
+            out.append({
+                "time": when,
+                "event": str(event).title(),
+                "speed_kt": f"{float(velocity):.2f}" if velocity not in (None, "") else "0.00",
+            })
+        return out
+    except Exception:
+        return []
 
 
 def get_water_temp(
