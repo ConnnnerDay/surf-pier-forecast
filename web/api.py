@@ -12,9 +12,10 @@ logger = logging.getLogger(__name__)
 from flask import Blueprint, current_app, g, jsonify, redirect, request, session, url_for
 
 from domain.forecast import build_share_text, generate_forecast
+from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
 from locations import get_location
 from regulations import lookup_regulation
-from storage.cache import load_cached_forecast, save_forecast
+from storage.cache import CACHE_MAX_AGE_HOURS, _forecast_age_minutes, load_cached_forecast, save_forecast
 from storage.sqlite import (
     add_log_entry,
     attach_photos_to_entry,
@@ -246,6 +247,29 @@ def forecast_v1() -> Any:
 
 
 
+@bp.route("/api/v1/forecast/<location_id>/status", methods=["GET"])
+def forecast_status_v1(location_id: str) -> Any:
+    """Return cache status for dashboard polling."""
+    forecast_data = load_cached_forecast(location_id, user_id=None, include_stale=True)
+    if not forecast_data:
+        return jsonify(success_envelope({
+            "location_id": location_id,
+            "last_generated_at": None,
+            "is_stale": True,
+            "is_refreshing": is_refreshing(location_id, user_id=None),
+        }))
+
+    age = _forecast_age_minutes(forecast_data)
+    is_stale = bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
+    return jsonify(success_envelope({
+        "location_id": location_id,
+        "last_generated_at": forecast_data.get("generated_at"),
+        "is_stale": is_stale,
+        "is_refreshing": is_refreshing(location_id, user_id=None),
+    }))
+
+
+
 
 @bp.route("/api/v1/forecast/<location_id>/outlook", methods=["GET"])
 def forecast_outlook_v1(location_id: str) -> Any:
@@ -277,18 +301,12 @@ def forecast_solunar_v1(location_id: str) -> Any:
 
 @bp.route("/api/refresh", methods=["POST"])
 def refresh() -> Any:
-    """Trigger generation of a new forecast."""
+    """Queue generation of a new forecast and return immediately."""
     location = get_session_location()
     if location is None:
         return redirect(url_for("views.setup"))
-    try:
-        new_forecast = generate_forecast(location)
-        user_id = g.user["id"] if g.user else None
-        save_forecast(new_forecast, location["id"], user_id=user_id)
-        return redirect(url_for("views.index"))
-    except Exception as exc:
-        logger.error("Error refreshing forecast: %s", exc)
-        return redirect(url_for("views.index", cached="true"))
+    enqueue_forecast_refresh(location["id"], user_id=None)
+    return redirect(url_for("views.index", cached="refreshing"))
 
 
 @bp.route("/api/v1/regulations", methods=["GET"])

@@ -43,6 +43,24 @@ def test_v1_forecast_envelope(client, monkeypatch):
     assert body["data"]["forecast"]["conditions"]["verdict"] == "Good"
 
 
+
+
+def test_v1_forecast_status_endpoint(client, monkeypatch):
+    sample = {"generated_at": "2026-03-03T10:00:00"}
+    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None, include_stale=False: sample)
+    monkeypatch.setattr("web.api._forecast_age_minutes", lambda forecast: 15)
+    monkeypatch.setattr("web.api.is_refreshing", lambda loc_id, user_id=None: True)
+
+    resp = client.get("/api/v1/forecast/wrightsville-beach-nc/status")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    data = body["data"]
+    assert data["location_id"] == "wrightsville-beach-nc"
+    assert data["last_generated_at"] == "2026-03-03T10:00:00"
+    assert data["is_stale"] is False
+    assert data["is_refreshing"] is True
+
 def test_legacy_forecast_force_refresh(client, monkeypatch):
     generated = {"generated_at": "2026-03-03T11:00:00", "conditions": {"verdict": "Excellent"}}
     monkeypatch.setattr("web.api.generate_forecast", lambda location: generated)

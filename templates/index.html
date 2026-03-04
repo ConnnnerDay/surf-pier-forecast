@@ -75,7 +75,9 @@
             </div>
             <div class="favorites-bar" id="favorites-bar"></div>
             <div class="profile-bar" id="profile-bar"></div>
-            {% if cached %}
+            {% if cached == "refreshing" %}
+            <div class="banner">Refreshing forecast… showing cached data from {{ forecast.generated_at }}</div>
+            {% elif cached %}
             <div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
             {% endif %}
         </div>

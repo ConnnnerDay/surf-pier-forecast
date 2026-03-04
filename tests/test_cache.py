@@ -104,6 +104,13 @@ class TestSaveAndLoad:
         save_forecast({"generated_at": old.isoformat()}, "stale-loc", user_id=9)
         assert load_cached_forecast("stale-loc", user_id=9) is None
 
+    def test_stale_cache_can_be_loaded_for_async_refresh(self):
+        old = datetime.now(ZoneInfo("America/New_York")) - timedelta(hours=CACHE_MAX_AGE_HOURS + 2)
+        data = {"generated_at": old.isoformat(), "verdict": "stale"}
+        save_forecast(data, "stale-loc-include", user_id=9)
+        loaded = load_cached_forecast("stale-loc-include", user_id=9, include_stale=True)
+        assert loaded == data
+
 
 class TestForecastAge:
     def test_valid_age(self):

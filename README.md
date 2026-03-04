@@ -5,7 +5,7 @@ A self-hosted Flask dashboard that builds an actionable surf/pier fishing foreca
 ## Highlights
 
 - **Location-aware forecast engine** (winds, waves, tide state, sunrise/sunset, solunar, pressure, weather)
-- **User-scoped forecast cache** in SQLite (`forecast_cache`) with stale invalidation
+- **User-scoped forecast cache** in SQLite (`forecast_cache`) with async stale refresh
 - **Authentication + account settings** (login/register/account)
 - **Security hardening**: CSRF protection on browser form POSTs, password complexity, login rate limiting
 - **Fishing workflow tools**: profile setup, favorites, catch log, share links, quick refresh
@@ -95,6 +95,7 @@ SECRET_KEY='change-me' PORT=8080 python app.py
 
 - `/api/forecast` (legacy JSON)
 - `/api/v1/forecast`
+- `/api/v1/forecast/<location_id>/status`
 - `/api/v1/profile`
 - `/api/v1/log`
 - `/api/v1/log/<entry_id>`
@@ -125,8 +126,11 @@ Primary tables include:
 - `catch_log`
 
 Cache behavior:
-- Forecasts are keyed by **user + location** when available
-- Stale entries are invalidated automatically
+- Forecasts are stored as a base cache per location for shared refresh jobs
+- Dashboard serves stale cache immediately and enqueues a background refresh
+- Missing cache is generated synchronously once, then reused
+- Poll `/api/v1/forecast/<location_id>/status` for `last_generated_at`, `is_stale`, and `is_refreshing`
+- Background refresh uses a built-in daemon thread queue (no Redis worker setup required for local dev)
 - Legacy JSON cache files can still be read/migrated
 
 Run migrations/init manually:
