@@ -107,19 +107,13 @@
         </div>
         {% endif %}
 
-        <!-- Verdict hero -->
-        <section class="verdict-hero">
-            <div class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }}">
-                {{ forecast.conditions.verdict }}
-            </div>
-            <p class="verdict-sub">24-hour fishability outlook</p>
-            {% if forecast.pressure %}
-            <p class="pressure-note" title="{{ forecast.pressure.fishing_impact }}">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
-                Barometer {{ forecast.pressure.pressure_inhg }}" {{ forecast.pressure.trend|lower }}
-            </p>
-            {% endif %}
-        </section>
+        <div id="outlook-lazy-root" data-lazy-section="outlook" data-endpoint="{{ url_for('api.forecast_outlook_v1', location_id=share_id) }}">
+            <section class="lazy-section" aria-live="polite">
+                <h2>3-Day Outlook</h2>
+                <div class="lazy-skeleton">Loading outlook…</div>
+            </section>
+        </div>
+        <noscript>{% include 'partials/_outlook.html' %}</noscript>
 
         <!-- Bite Alerts -->
         {% if forecast.bite_alerts %}
@@ -293,13 +287,6 @@
         </section>
         {% endif %}
 
-        <div id="outlook-lazy-root" data-lazy-section="outlook" data-endpoint="{{ url_for('api.forecast_outlook_v1', location_id=share_id) }}">
-            <section class="lazy-section" aria-live="polite">
-                <h2>3-Day Outlook</h2>
-                <div class="lazy-skeleton">Loading outlook…</div>
-            </section>
-        </div>
-        <noscript>{% include 'partials/_outlook.html' %}</noscript>
         <!-- Species Availability Calendar -->
         {% if forecast.calendar %}
         <section class="calendar-section">
