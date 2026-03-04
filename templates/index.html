@@ -150,13 +150,6 @@
         {% include 'partials/_conditions.html' %}
         {% include 'partials/_species.html' %}
         {% include 'partials/_tides.html' %}
-        <div id="solunar-lazy-root" data-lazy-section="solunar" data-endpoint="{{ url_for('api.forecast_solunar_v1', location_id=share_id) }}">
-            <section class="lazy-section" aria-live="polite">
-                <h2>Solunar Fishing Times</h2>
-                <div class="lazy-skeleton">Loading solunar forecast…</div>
-            </section>
-        </div>
-        <noscript>{% include 'partials/_solunar.html' %}</noscript>
         <!-- Recommended Rigs -->
         {% if forecast.rig_recommendations %}
         <section class="rig-section">
@@ -1028,6 +1021,16 @@
         return h * 60 + mins;
     }
 
+    function formatMinutesToLabel(totalMinutes) {
+        var normalized = ((totalMinutes % 1440) + 1440) % 1440;
+        var hours24 = Math.floor(normalized / 60);
+        var mins = normalized % 60;
+        var meridiem = hours24 >= 12 ? 'PM' : 'AM';
+        var hours12 = hours24 % 12;
+        if (hours12 === 0) hours12 = 12;
+        return hours12 + ':' + String(mins).padStart(2, '0') + ' ' + meridiem;
+    }
+
     function buildTideWaveSeries(tides) {
         var points = (tides || []).map(function(t) {
             return {
@@ -1041,15 +1044,23 @@
             return a.minutes - b.minutes;
         });
 
+        for (var i = 1; i < points.length; i++) {
+            while (points[i].minutes <= points[i - 1].minutes) {
+                points[i].minutes += 1440;
+            }
+        }
+
         if (points.length < 2) {
             return {
                 labels: points.map(function(p) { return p.time; }),
-                values: points.map(function(p) { return p.height; })
+                values: points.map(function(p) { return p.height; }),
+                minutes: points.map(function(p) { return p.minutes; })
             };
         }
 
         var labels = [];
         var values = [];
+        var minutes = [];
         var step = 30; // 30-minute interpolation for smooth wave shape
 
         for (var i = 0; i < points.length - 1; i++) {
@@ -1059,43 +1070,41 @@
             for (var mins = 0; mins < span; mins += step) {
                 var ratio = mins / span;
                 var eased = (1 - Math.cos(Math.PI * ratio)) / 2;
-                labels.push(curr.time);
+                labels.push(formatMinutesToLabel(curr.minutes + mins));
                 values.push(curr.height + (next.height - curr.height) * eased);
+                minutes.push(curr.minutes + mins);
             }
         }
 
-        labels.push(points[points.length - 1].time);
+        labels.push(formatMinutesToLabel(points[points.length - 1].minutes));
         values.push(points[points.length - 1].height);
+        minutes.push(points[points.length - 1].minutes);
 
-        return { labels: labels, values: values };
+        return { labels: labels, values: values, minutes: minutes };
     }
 
-    function renderSolunarChart(solunarData) {
-        if (typeof Chart === 'undefined') return;
-        var solunarCanvas = document.getElementById('solunar-chart-canvas');
-        if (!solunarCanvas || !solunarData) return;
-        var allPeriods = [];
-        (solunarData.major_periods || []).forEach(function(p) { allPeriods.push({label: 'Major', start: p.start, end: p.end, color: '#d4920b'}); });
-        (solunarData.minor_periods || []).forEach(function(p) { allPeriods.push({label: 'Minor', start: p.start, end: p.end, color: '#1a8a5c'}); });
-        if (!allPeriods.length) return;
-        allPeriods.sort(function(a,b){return parseTimeLabelToMinutes(a.start)-parseTimeLabelToMinutes(b.start);});
-        new Chart(solunarCanvas, {
-            type: 'bar',
-            data: {
-                labels: allPeriods.map(function(p){ return p.label + ' ' + p.start; }),
-                datasets: [{
-                    label: 'Minutes of activity window',
-                    data: allPeriods.map(function(p){ return Math.max(0, parseTimeLabelToMinutes(p.end)-parseTimeLabelToMinutes(p.start)); }),
-                    backgroundColor: allPeriods.map(function(p){ return p.color; })
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { title: { display: true, text: 'Minutes' } } }
-            }
-        });
+    function getCurrentTideMarker(tideWave) {
+        if (!tideWave || !tideWave.minutes || tideWave.minutes.length < 2) return null;
+        var now = new Date();
+        var nowMinutes = now.getHours() * 60 + now.getMinutes();
+        var start = tideWave.minutes[0];
+        var end = tideWave.minutes[tideWave.minutes.length - 1];
+        var projectedNow = nowMinutes;
+
+        if (end > 1440 && projectedNow < start) projectedNow += 1440;
+        if (projectedNow < start || projectedNow > end) return null;
+
+        for (var i = 1; i < tideWave.minutes.length; i++) {
+            var leftMin = tideWave.minutes[i - 1];
+            var rightMin = tideWave.minutes[i];
+            if (projectedNow < leftMin || projectedNow > rightMin) continue;
+            var span = rightMin - leftMin;
+            var ratio = span ? (projectedNow - leftMin) / span : 0;
+            var height = tideWave.values[i - 1] + (tideWave.values[i] - tideWave.values[i - 1]) * ratio;
+            return { index: i - 1, height: height };
+        }
+
+        return null;
     }
 
     function renderInteractiveCharts() {
@@ -1104,25 +1113,47 @@
         var tideData = {{ (forecast.tides or [])|tojson }};
         if (tideCanvas && tideData.length) {
             var tideWave = buildTideWaveSeries(tideData);
+            var currentMarker = getCurrentTideMarker(tideWave);
+            var markerSeries = tideWave.values.map(function() { return null; });
+            if (currentMarker) markerSeries[currentMarker.index] = currentMarker.height;
             new Chart(tideCanvas, {
                 type: 'line',
                 data: {
                     labels: tideWave.labels,
-                    datasets: [{
-                        label: 'Tide height (ft)',
-                        data: tideWave.values,
-                        borderColor: '#0b4f6c',
-                        backgroundColor: 'rgba(11,79,108,0.18)',
-                        fill: true,
-                        tension: 0.45,
-                        pointRadius: 0,
-                        borderWidth: 3
-                    }]
+                    datasets: [
+                        {
+                            label: 'Tide height (ft)',
+                            data: tideWave.values,
+                            borderColor: '#0b4f6c',
+                            backgroundColor: 'rgba(11,79,108,0.18)',
+                            fill: true,
+                            tension: 0.45,
+                            pointRadius: 0,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Current tide',
+                            data: markerSeries,
+                            showLine: false,
+                            pointRadius: 6,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#ff6b35',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            filter: function(item) {
+                                return item.raw !== null;
+                            }
+                        }
+                    },
                     scales: { y: { title: { display: true, text: 'Feet' } } }
                 }
             });
@@ -1142,16 +1173,6 @@
         return '<section class="outlook-section"><h2>3-Day Outlook</h2><p class="section-sub">Upcoming conditions forecast</p>' + bestDayHtml + '<div class="outlook-grid">' + cards + '</div></section>';
     }
 
-    function renderSolunarSection(solunar) {
-        var major = (solunar.major_periods || []).map(function(period) {
-            return '<div class="solunar-card solunar-major"><div class="solunar-info"><span class="solunar-label">Major Period</span><span class="solunar-times">' + esc(period.start) + ' &ndash; ' + esc(period.end) + '</span></div></div>';
-        }).join('');
-        var minor = (solunar.minor_periods || []).map(function(period) {
-            return '<div class="solunar-card solunar-minor"><div class="solunar-info"><span class="solunar-label">Minor Period</span><span class="solunar-times">' + esc(period.start) + ' &ndash; ' + esc(period.end) + '</span></div></div>';
-        }).join('');
-        return '<section class="solunar-section"><div class="solunar-header"><div><h2>Solunar Fishing Times</h2><p class="section-sub">Solunar forecast &mdash; ' + esc(solunar.rating || 'Unknown') + ' day</p></div><div class="moon-badge"><span class="moon-label">' + esc(solunar.moon_phase || 'Moon phase unavailable') + '</span></div></div><div class="chart-panel" aria-label="Solunar activity chart"><canvas id="solunar-chart-canvas" role="img" aria-label="Interactive solunar activity timeline"></canvas></div><div class="solunar-grid">' + major + minor + '</div></section>';
-    }
-
     function lazyHydrateSection(rootId, renderer, dataKey, onSuccess) {
         var root = document.getElementById(rootId);
         if (!root) return;
@@ -1168,14 +1189,13 @@
                 if (onSuccess) onSuccess(data[dataKey] || data);
             })
             .catch(function() {
-                root.innerHTML = '<section class="lazy-section"><h2>' + (rootId.indexOf('solunar') >= 0 ? 'Solunar Fishing Times' : '3-Day Outlook') + '</h2><p class="lazy-error">Unable to load this section.</p></section>';
+                root.innerHTML = '<section class="lazy-section"><h2>3-Day Outlook</h2><p class="lazy-error">Unable to load this section.</p></section>';
             });
     }
 
     function initInteractiveCharts() {
         renderInteractiveCharts();
         lazyHydrateSection('outlook-lazy-root', function(data){ return renderOutlookSection(data); }, 'outlook');
-        lazyHydrateSection('solunar-lazy-root', function(data){ return renderSolunarSection(data.solunar || data); }, 'solunar', renderSolunarChart);
     }
 
     window.addEventListener('DOMContentLoaded', initInteractiveCharts);

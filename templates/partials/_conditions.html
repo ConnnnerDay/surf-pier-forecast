@@ -134,39 +134,39 @@
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                When to Fish
+                Fishing Activity Windows
             </h2>
-            <div class="best-times-cards">
-                {% for bt in forecast.best_times %}
-                <div class="best-time-card best-time--{{ bt.quality|lower }}">
-                    <div class="bt-quality">{{ bt.quality }}</div>
-                    <div class="bt-window">{{ bt.window }}</div>
-                    <div class="bt-reason">{{ bt.reason }}</div>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if forecast.activity_timeline %}
-            <div class="activity-timeline">
-                <h3 class="timeline-title">24-Hour Activity</h3>
-                <div class="timeline-bars">
-                    {% for t in forecast.activity_timeline %}
-                    <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
-                        <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
-                        {% if t.hour % 3 == 0 %}
-                        <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
-                        {% endif %}
+            <p class="section-sub">Best windows and hourly activity in one cleaner view</p>
+            <div class="activity-combined-panel">
+                <div class="best-times-cards">
+                    {% for bt in forecast.best_times %}
+                    <div class="best-time-card best-time--{{ bt.quality|lower }}">
+                        <div class="bt-quality">{{ bt.quality }}</div>
+                        <div class="bt-window">{{ bt.window }}</div>
+                        <div class="bt-reason">{{ bt.reason }}</div>
                     </div>
                     {% endfor %}
                 </div>
-                <div class="timeline-legend">
-                    <span class="tl-key tl-key--prime"></span> Prime
-                    <span class="tl-key tl-key--high"></span> High
-                    <span class="tl-key tl-key--med"></span> Moderate
-                    <span class="tl-key tl-key--low"></span> Low
+
+                {% if forecast.activity_timeline %}
+                <div class="activity-timeline activity-timeline--integrated">
+                    <div class="timeline-head">
+                        <span class="timeline-title-inline">24-Hour Activity</span>
+                        <span class="timeline-keyline"><span class="tl-key tl-key--prime"></span>Prime <span class="tl-key tl-key--high"></span>High <span class="tl-key tl-key--med"></span>Moderate <span class="tl-key tl-key--low"></span>Low</span>
+                    </div>
+                    <div class="timeline-bars">
+                        {% for t in forecast.activity_timeline %}
+                        <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
+                            <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
+                            {% if t.hour % 3 == 0 %}
+                            <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
+                            {% endif %}
+
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
         </section>
         {% endif %}
-

@@ -520,19 +520,28 @@ h2 {
 
 .best-times-section {
   text-align: center;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.1rem 1.25rem;
 }
 
 .best-times-section h2 {
   display: inline-flex;
   align-items: center;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.activity-combined-panel {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.85rem;
 }
 
 .best-times-cards {
-  display: flex;
-  gap: 0.6rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .best-time-card {
@@ -664,12 +673,36 @@ h2 {
   border-top: 1px solid var(--border-light, #e8ecef);
 }
 
-.timeline-title {
+.activity-timeline--integrated {
+  margin-top: 0;
+  padding: 0.85rem 0.9rem;
+  border-top: none;
+  background: linear-gradient(180deg, var(--ocean-light) 0%, var(--white) 75%);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light, #dce4ea);
+}
+
+.timeline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.timeline-title-inline {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 0.75rem;
-  text-align: center;
+}
+
+.timeline-keyline {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .timeline-bars {
@@ -707,15 +740,6 @@ h2 {
   color: var(--text-muted);
   margin-top: 3px;
   white-space: nowrap;
-}
-
-.timeline-legend {
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  font-size: 0.65rem;
-  color: var(--text-muted);
 }
 
 .tl-key {
@@ -3488,8 +3512,7 @@ footer p {
   }
 
   .best-times-cards {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr;
   }
 
   .best-time-card {
