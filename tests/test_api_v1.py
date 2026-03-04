@@ -234,3 +234,43 @@ def test_v1_regulations_unknown_state_returns_null(client):
     body = resp.get_json()
     assert body["ok"] is True
     assert body["data"]["regulation"] is None
+
+
+def test_v1_forecast_outlook_cached_only(client, monkeypatch):
+    sample = {
+        "outlook": [{"day": "Mon", "date": "Apr 1", "verdict": "Good", "wind": "10 kt", "waves": "2 ft", "top_species": ["Red Drum"]}],
+        "best_day": {"best_day": "Mon", "recommendation": "Fish dawn", "verdict": "Good"},
+    }
+    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: sample)
+    monkeypatch.setattr("web.api.generate_forecast", lambda location: (_ for _ in ()).throw(AssertionError("should not generate")))
+
+    resp = client.get("/api/v1/forecast/wrightsville-beach-nc/outlook")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["location_id"] == "wrightsville-beach-nc"
+    assert body["data"]["outlook"][0]["day"] == "Mon"
+
+
+def test_v1_forecast_solunar_cached_only(client, monkeypatch):
+    sample = {"solunar": {"rating": "Great", "moon_phase": "Full Moon", "major_periods": [], "minor_periods": []}}
+    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: sample)
+    monkeypatch.setattr("web.api.generate_forecast", lambda location: (_ for _ in ()).throw(AssertionError("should not generate")))
+
+    resp = client.get("/api/v1/forecast/wrightsville-beach-nc/solunar")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["data"]["solunar"]["rating"] == "Great"
+
+
+def test_v1_forecast_section_endpoints_404_when_missing_cache(client, monkeypatch):
+    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: None)
+
+    outlook = client.get("/api/v1/forecast/wrightsville-beach-nc/outlook")
+    assert outlook.status_code == 404
+    assert outlook.get_json()["error"]["code"] == "forecast_not_cached"
+
+    solunar = client.get("/api/v1/forecast/wrightsville-beach-nc/solunar")
+    assert solunar.status_code == 404
+    assert solunar.get_json()["error"]["code"] == "forecast_not_cached"

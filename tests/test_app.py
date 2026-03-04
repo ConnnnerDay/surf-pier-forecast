@@ -35,6 +35,8 @@ class TestAppFactory:
         assert "/setup" in rules
         assert "/api/forecast" in rules
         assert "/api/v1/forecast" in rules
+        assert "/api/v1/forecast/<location_id>/outlook" in rules
+        assert "/api/v1/forecast/<location_id>/solunar" in rules
         assert "/api/v1/profile" in rules
         assert "/api/v1/log" in rules
         assert "/api/openapi.json" in rules

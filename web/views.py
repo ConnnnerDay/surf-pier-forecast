@@ -106,7 +106,9 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
         forecast = personalize_forecast(forecast, profile, location)
 
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
-    # Backfill for cached forecasts created before location_state existed.
+    # Backfill for cached forecasts created before these fields existed.
+    if not forecast.get("location_id"):
+        forecast["location_id"] = loc_id
     if not forecast.get("location_state"):
         forecast["location_state"] = location.get("state", "")
 

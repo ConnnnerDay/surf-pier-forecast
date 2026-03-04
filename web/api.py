@@ -239,6 +239,36 @@ def forecast_v1() -> Any:
     return jsonify(success_envelope(payload))
 
 
+
+
+@bp.route("/api/v1/forecast/<location_id>/outlook", methods=["GET"])
+def forecast_outlook_v1(location_id: str) -> Any:
+    """Return cached 3-day outlook payload for lazy dashboard hydration."""
+    user_id = g.user["id"] if g.user else None
+    forecast_data = load_cached_forecast(location_id, user_id=user_id)
+    if not forecast_data:
+        return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
+
+    return jsonify(success_envelope({
+        "location_id": location_id,
+        "outlook": forecast_data.get("outlook") or [],
+        "best_day": forecast_data.get("best_day"),
+    }))
+
+
+@bp.route("/api/v1/forecast/<location_id>/solunar", methods=["GET"])
+def forecast_solunar_v1(location_id: str) -> Any:
+    """Return cached solunar payload for lazy dashboard hydration."""
+    user_id = g.user["id"] if g.user else None
+    forecast_data = load_cached_forecast(location_id, user_id=user_id)
+    if not forecast_data:
+        return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
+
+    return jsonify(success_envelope({
+        "location_id": location_id,
+        "solunar": forecast_data.get("solunar") or {},
+    }))
+
 @bp.route("/api/refresh", methods=["POST"])
 def refresh() -> Any:
     """Trigger generation of a new forecast."""
