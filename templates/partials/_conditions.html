@@ -65,6 +65,13 @@
                     <span class="stat-detail">sunrise / sunset</span>
                 </div>
                 {% endif %}
+                {% if forecast.uv %}
+                <div class="stat-card">
+                    <span class="stat-label">UV Index</span>
+                    <span class="stat-value">{{ forecast.uv.index }}</span>
+                    <span class="stat-detail">{{ forecast.uv.level }}</span>
+                </div>
+                {% endif %}
                 {% if forecast.tide_state %}
                 <div class="stat-card">
                     <span class="stat-label">Tide</span>
