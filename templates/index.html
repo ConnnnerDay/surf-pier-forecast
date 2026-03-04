@@ -35,7 +35,7 @@
     <meta name="twitter:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
     <meta name="twitter:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}">
 </head>
-<body>
+<body class="forecast-page">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <header role="banner">
         <div class="header-inner">
@@ -1508,24 +1508,68 @@
         return h * 60 + mins;
     }
 
+    function buildTideWaveSeries(tides) {
+        var points = (tides || []).map(function(t) {
+            return {
+                time: t.time,
+                minutes: parseTimeLabelToMinutes(t.time),
+                height: parseFloat(t.height_ft)
+            };
+        }).filter(function(p) {
+            return !Number.isNaN(p.height);
+        }).sort(function(a, b) {
+            return a.minutes - b.minutes;
+        });
+
+        if (points.length < 2) {
+            return {
+                labels: points.map(function(p) { return p.time; }),
+                values: points.map(function(p) { return p.height; })
+            };
+        }
+
+        var labels = [];
+        var values = [];
+        var step = 30; // 30-minute interpolation for smooth wave shape
+
+        for (var i = 0; i < points.length - 1; i++) {
+            var curr = points[i];
+            var next = points[i + 1];
+            var span = Math.max(step, next.minutes - curr.minutes);
+            for (var mins = 0; mins < span; mins += step) {
+                var ratio = mins / span;
+                var eased = (1 - Math.cos(Math.PI * ratio)) / 2;
+                labels.push(curr.time);
+                values.push(curr.height + (next.height - curr.height) * eased);
+            }
+        }
+
+        labels.push(points[points.length - 1].time);
+        values.push(points[points.length - 1].height);
+
+        return { labels: labels, values: values };
+    }
+
     function renderInteractiveCharts() {
         if (typeof Chart === 'undefined') return;
 
         var tideCanvas = document.getElementById('tide-chart-canvas');
         var tideData = {{ (forecast.tides or [])|tojson }};
         if (tideCanvas && tideData.length) {
+            var tideWave = buildTideWaveSeries(tideData);
             new Chart(tideCanvas, {
                 type: 'line',
                 data: {
-                    labels: tideData.map(function(t) { return t.time; }),
+                    labels: tideWave.labels,
                     datasets: [{
                         label: 'Tide height (ft)',
-                        data: tideData.map(function(t) { return t.height_ft; }),
+                        data: tideWave.values,
                         borderColor: '#0b4f6c',
                         backgroundColor: 'rgba(11,79,108,0.18)',
                         fill: true,
-                        tension: 0.35,
-                        pointRadius: 5
+                        tension: 0.45,
+                        pointRadius: 0,
+                        borderWidth: 3
                     }]
                 },
                 options: {
@@ -1564,7 +1608,11 @@
         }
     }
 
-    renderInteractiveCharts();
+    function initInteractiveCharts() {
+        renderInteractiveCharts();
+    }
+
+    window.addEventListener('DOMContentLoaded', initInteractiveCharts);
 
 
     // Register service worker for PWA
