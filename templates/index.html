@@ -145,13 +145,6 @@
         {% include 'partials/_conditions.html' %}
         {% include 'partials/_species.html' %}
         {% include 'partials/_tides.html' %}
-        <div id="solunar-lazy-root" data-lazy-section="solunar" data-endpoint="{{ url_for('api.forecast_solunar_v1', location_id=share_id) }}">
-            <section class="lazy-section" aria-live="polite">
-                <h2>Solunar Fishing Times</h2>
-                <div class="lazy-skeleton">Loading solunar forecast…</div>
-            </section>
-        </div>
-        <noscript>{% include 'partials/_solunar.html' %}</noscript>
         <!-- Recommended Rigs -->
         {% if forecast.rig_recommendations %}
         <section class="rig-section">
@@ -1102,34 +1095,6 @@
         return null;
     }
 
-    function renderSolunarChart(solunarData) {
-        if (typeof Chart === 'undefined') return;
-        var solunarCanvas = document.getElementById('solunar-chart-canvas');
-        if (!solunarCanvas || !solunarData) return;
-        var allPeriods = [];
-        (solunarData.major_periods || []).forEach(function(p) { allPeriods.push({label: 'Major', start: p.start, end: p.end, color: '#d4920b'}); });
-        (solunarData.minor_periods || []).forEach(function(p) { allPeriods.push({label: 'Minor', start: p.start, end: p.end, color: '#1a8a5c'}); });
-        if (!allPeriods.length) return;
-        allPeriods.sort(function(a,b){return parseTimeLabelToMinutes(a.start)-parseTimeLabelToMinutes(b.start);});
-        new Chart(solunarCanvas, {
-            type: 'bar',
-            data: {
-                labels: allPeriods.map(function(p){ return p.label + ' ' + p.start; }),
-                datasets: [{
-                    label: 'Minutes of activity window',
-                    data: allPeriods.map(function(p){ return Math.max(0, parseTimeLabelToMinutes(p.end)-parseTimeLabelToMinutes(p.start)); }),
-                    backgroundColor: allPeriods.map(function(p){ return p.color; })
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { title: { display: true, text: 'Minutes' } } }
-            }
-        });
-    }
-
     function renderInteractiveCharts() {
         if (typeof Chart === 'undefined') return;
         var tideCanvas = document.getElementById('tide-chart-canvas');
@@ -1204,16 +1169,6 @@
         return '<section class="outlook-section"><h2>3-Day Outlook</h2><p class="section-sub">Upcoming conditions forecast</p>' + bestDayHtml + activityTimelineHtml + '<div class="outlook-grid">' + cards + '</div></section>';
     }
 
-    function renderSolunarSection(solunar) {
-        var major = (solunar.major_periods || []).map(function(period) {
-            return '<div class="solunar-card solunar-major"><div class="solunar-info"><span class="solunar-label">Major Period</span><span class="solunar-times">' + esc(period.start) + ' &ndash; ' + esc(period.end) + '</span></div></div>';
-        }).join('');
-        var minor = (solunar.minor_periods || []).map(function(period) {
-            return '<div class="solunar-card solunar-minor"><div class="solunar-info"><span class="solunar-label">Minor Period</span><span class="solunar-times">' + esc(period.start) + ' &ndash; ' + esc(period.end) + '</span></div></div>';
-        }).join('');
-        return '<section class="solunar-section"><div class="solunar-header"><div><h2>Solunar Fishing Times</h2><p class="section-sub">Solunar forecast &mdash; ' + esc(solunar.rating || 'Unknown') + ' day</p></div><div class="moon-badge"><span class="moon-label">' + esc(solunar.moon_phase || 'Moon phase unavailable') + '</span></div></div><div class="chart-panel" aria-label="Solunar activity chart"><canvas id="solunar-chart-canvas" role="img" aria-label="Interactive solunar activity timeline"></canvas></div><div class="solunar-grid">' + major + minor + '</div></section>';
-    }
-
     function lazyHydrateSection(rootId, renderer, dataKey, onSuccess) {
         var root = document.getElementById(rootId);
         if (!root) return;
@@ -1230,14 +1185,13 @@
                 if (onSuccess) onSuccess(data[dataKey] || data);
             })
             .catch(function() {
-                root.innerHTML = '<section class="lazy-section"><h2>' + (rootId.indexOf('solunar') >= 0 ? 'Solunar Fishing Times' : '3-Day Outlook') + '</h2><p class="lazy-error">Unable to load this section.</p></section>';
+                root.innerHTML = '<section class="lazy-section"><h2>3-Day Outlook</h2><p class="lazy-error">Unable to load this section.</p></section>';
             });
     }
 
     function initInteractiveCharts() {
         renderInteractiveCharts();
         lazyHydrateSection('outlook-lazy-root', function(data){ return renderOutlookSection(data); }, 'outlook');
-        lazyHydrateSection('solunar-lazy-root', function(data){ return renderSolunarSection(data.solunar || data); }, 'solunar', renderSolunarChart);
     }
 
     window.addEventListener('DOMContentLoaded', initInteractiveCharts);
