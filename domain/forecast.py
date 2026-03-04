@@ -51,6 +51,8 @@ from domain.species import (
 
 logger = logging.getLogger(__name__)
 
+FORECAST_VERSION = "v1.0.0"
+
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
 MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
@@ -87,6 +89,8 @@ def _seasonal_averages(month: int) -> Tuple[Tuple[float, float], Tuple[float, fl
 def get_marine_conditions(
     month: int,
     location: Optional[Dict[str, Any]] = None,
+    sources_used: Optional[List[str]] = None,
+    fallbacks_triggered: Optional[List[str]] = None,
 ) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
     """Get marine conditions, trying every source until we have full data.
 
@@ -119,12 +123,18 @@ def get_marine_conditions(
             w, s, d = fetcher()
             if wind_range is None and w is not None:
                 wind_range = w
+                if sources_used is not None:
+                    sources_used.append(f"{name}:wind")
                 logger.debug("Wind from %s: %s", name, w)
             if wave_range is None and s is not None:
                 wave_range = s
+                if sources_used is not None:
+                    sources_used.append(f"{name}:waves")
                 logger.debug("Waves from %s: %s", name, s)
             if wind_dir is None and d is not None:
                 wind_dir = d
+                if sources_used is not None:
+                    sources_used.append(f"{name}:wind_dir")
         except Exception as exc:
             logger.debug("%s unavailable: %s", name, exc)
 
@@ -135,12 +145,18 @@ def get_marine_conditions(
         avg_wind, avg_waves, avg_dir = _seasonal_averages(month)
     if wind_range is None:
         wind_range = avg_wind
+        if fallbacks_triggered is not None:
+            fallbacks_triggered.append("seasonal_avg_wind")
         logger.debug("Wind from seasonal avg: %s", avg_wind)
     if wave_range is None:
         wave_range = avg_waves
+        if fallbacks_triggered is not None:
+            fallbacks_triggered.append("seasonal_avg_waves")
         logger.debug("Waves from seasonal avg: %s", avg_waves)
     if wind_dir is None:
         wind_dir = avg_dir
+        if fallbacks_triggered is not None:
+            fallbacks_triggered.append("seasonal_avg_wind_dir")
 
     return wind_range, wave_range, wind_dir
 
@@ -168,10 +184,12 @@ class MarineForecastService(ExternalDataService):
         self,
         month: int,
         location: Optional[Dict[str, Any]] = None,
+        sources_used: Optional[List[str]] = None,
+        fallbacks_triggered: Optional[List[str]] = None,
     ) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
         return self._run_with_retries(
             "marine forecast",
-            lambda: get_marine_conditions(month, location),
+            lambda: get_marine_conditions(month, location, sources_used=sources_used, fallbacks_triggered=fallbacks_triggered),
             default=_seasonal_averages(month),
         )
 
@@ -1092,9 +1110,24 @@ def generate_forecast(
     now = datetime.now(tz)
     month = now.month
     builder = ForecastBuilder()
+    sources_used: List[str] = []
+    fallbacks_triggered: List[str] = []
+    location_id = (location or {}).get("id", "")
+    started = time.perf_counter()
+    logger.info("forecast.start location_id=%s forecast_version=%s", location_id, FORECAST_VERSION)
 
-    wind_range, wave_range, wind_dir = builder.marine_service.get_marine_forecast(month, location)
-    water_temp, temp_is_live = get_water_temp(month, location)
+    wind_range, wave_range, wind_dir = builder.marine_service.get_marine_forecast(
+        month,
+        location,
+        sources_used=sources_used,
+        fallbacks_triggered=fallbacks_triggered,
+    )
+    water_temp, temp_is_live = get_water_temp(
+        month,
+        location,
+        sources_used=sources_used,
+        fallbacks_triggered=fallbacks_triggered,
+    )
 
     def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
         if r is None:
@@ -1179,6 +1212,9 @@ def generate_forecast(
 
     forecast: Dict[str, Any] = {
         "generated_at": now.isoformat(),
+        "forecast_version": FORECAST_VERSION,
+        "sources_used": sorted(set(sources_used)),
+        "fallbacks_triggered": sorted(set(fallbacks_triggered)),
         "location_name": loc_name,
         "location_id": (location or {}).get("id", ""),
         "location_state": loc_state,
@@ -1191,27 +1227,42 @@ def generate_forecast(
     alerts = builder.weather_service.get_weather_alerts(loc_lat, loc_lng)
     if alerts:
         forecast["alerts"] = alerts
+        sources_used.append("NWS weather alerts")
+    else:
+        fallbacks_triggered.append("weather_alerts_unavailable")
 
     # Barometric pressure
     pressure = builder.buoy_service.get_barometric_pressure(location)
     if pressure:
         forecast["pressure"] = pressure
+        sources_used.append("NDBC barometric pressure")
+    else:
+        fallbacks_triggered.append("barometric_pressure_unavailable")
 
     # Current weather (air temp, humidity)
     weather = builder.weather_service.get_current_weather(loc_lat, loc_lng)
     if weather:
         forecast["weather"] = weather
+        sources_used.append("NWS current weather")
+    else:
+        fallbacks_triggered.append("current_weather_unavailable")
 
     # Tide predictions
     tide_data = builder.tide_service.get_tide_predictions(now, location, tz_name)
     if tide_data:
         forecast.update(tide_data)
+        sources_used.append("NOAA tide predictions")
+    else:
+        fallbacks_triggered.append("tide_predictions_unavailable")
 
 
     # Solunar fishing times
     solunar = builder.astro_service.get_solunar_times(now, loc_lat, loc_lng, tz_name)
     if solunar:
         forecast["solunar"] = solunar
+        sources_used.append("astronomy solunar")
+    else:
+        fallbacks_triggered.append("solunar_unavailable")
 
     # Final fishability verdict based on all available signals
     conditions["verdict"] = classify_conditions(
@@ -1311,6 +1362,17 @@ def generate_forecast(
             tide_state=t_state, wind_strength=wind_strength,
         )
 
+    forecast["sources_used"] = sorted(set(sources_used))
+    forecast["fallbacks_triggered"] = sorted(set(fallbacks_triggered))
+    duration_ms = round((time.perf_counter() - started) * 1000, 1)
+    logger.info(
+        "forecast.end location_id=%s forecast_version=%s duration_ms=%s sources=%s fallbacks=%s",
+        location_id,
+        FORECAST_VERSION,
+        duration_ms,
+        len(forecast["sources_used"]),
+        len(forecast["fallbacks_triggered"]),
+    )
     return forecast
 
 

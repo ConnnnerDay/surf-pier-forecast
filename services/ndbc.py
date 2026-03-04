@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import requests
+from services.http_client import get as http_get
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def _try_ndbc_station(
 ) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
     """Fetch real-time wind/wave observations from a single NDBC buoy."""
     url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
-    resp = requests.get(url, headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=15)
+    resp = http_get(url, endpoint="ndbc.realtime", headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=(3.05, 15))
     resp.raise_for_status()
 
     lines = resp.text.strip().split("\n")
@@ -96,7 +96,7 @@ def fetch_barometric_pressure(
     for station_id in ndbc_list[:3]:
         try:
             url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
-            resp = requests.get(url, headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=10)
+            resp = http_get(url, endpoint="ndbc.pressure", headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=(3.05, 10))
             resp.raise_for_status()
             lines = resp.text.strip().split("\n")
             if len(lines) < 3:

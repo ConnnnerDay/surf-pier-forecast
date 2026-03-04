@@ -99,3 +99,64 @@ class TestSolunar:
             for p in period_list:
                 assert isinstance(p, dict), "periods must be dicts, not tuples"
                 assert "start" in p and "end" in p
+
+
+def test_generate_forecast_includes_metadata(monkeypatch):
+    """Generated forecast should include version/source metadata for auditability."""
+    from domain import forecast as fc
+
+    class _Marine:
+        def get_marine_forecast(self, *_args, **_kwargs):
+            _kwargs["sources_used"].append("test_marine")
+            return (5.0, 8.0), (1.0, 2.0), "NW"
+
+    class _Tides:
+        def get_tide_predictions(self, *_args, **_kwargs):
+            return {}
+
+    class _Buoy:
+        def get_barometric_pressure(self, *_args, **_kwargs):
+            return None
+
+    class _Weather:
+        def get_weather_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_current_weather(self, *_args, **_kwargs):
+            return None
+
+    class _Astro:
+        def get_sun_times(self, now, *_args, **_kwargs):
+            return now, now, "6:00 AM / 6:00 PM"
+
+        def get_solunar_times(self, *_args, **_kwargs):
+            return {}
+
+    class _Builder:
+        def __init__(self):
+            self.marine_service = _Marine()
+            self.tide_service = _Tides()
+            self.buoy_service = _Buoy()
+            self.weather_service = _Weather()
+            self.astro_service = _Astro()
+
+    monkeypatch.setattr(fc, "ForecastBuilder", _Builder)
+    monkeypatch.setattr(fc, "get_water_temp", lambda *_args, **_kwargs: (70.0, True))
+    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_species_calendar", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_natural_bait_chart", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_spot_tips", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_conditions_explainer", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_gear_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_safety_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_best_times", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_activity_timeline", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
+
+    out = fc.generate_forecast({"id": "test-loc", "name": "Test", "state": "NC"})
+    assert out["forecast_version"] == fc.FORECAST_VERSION
+    assert isinstance(out["sources_used"], list)
+    assert isinstance(out["fallbacks_triggered"], list)

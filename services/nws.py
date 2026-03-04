@@ -6,7 +6,8 @@ import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-import requests
+from services.http_client import get as http_get
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def _try_nws_forecast(
     """NWS marine zone forecast -- provides 24-hour forecast ranges."""
     zone = zone or NWS_MARINE_ZONE
     url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
-    response = requests.get(url, headers=_NWS_HEADERS, timeout=15)
+    response = http_get(url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15))
     response.raise_for_status()
     data = response.json()
     periods = data["properties"]["periods"]
@@ -51,15 +52,16 @@ def _try_nws_gridpoint(
     if lng == 0:
         lng = _LNG
     # First get the gridpoint info
-    pts = requests.get(
+    pts = http_get(
         f"https://api.weather.gov/points/{lat},{lng}",
-        headers=_NWS_HEADERS, timeout=10,
+        endpoint="nws.points",
+        headers=_NWS_HEADERS, timeout=(3.05, 10),
     )
     pts.raise_for_status()
     forecast_url = pts.json()["properties"]["forecast"]
 
     # Then get the forecast
-    fc = requests.get(forecast_url, headers=_NWS_HEADERS, timeout=10)
+    fc = http_get(forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10))
     fc.raise_for_status()
     periods = fc.json()["properties"]["periods"]
 
@@ -172,9 +174,10 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
     Only includes marine and weather-relevant alerts.
     """
     try:
-        resp = requests.get(
+        resp = http_get(
             f"https://api.weather.gov/alerts/active?point={lat},{lng}",
-            headers=_NWS_HEADERS, timeout=10,
+            endpoint="nws.alerts",
+            headers=_NWS_HEADERS, timeout=(3.05, 10),
         )
         resp.raise_for_status()
         features = resp.json().get("@graph", [])
@@ -205,9 +208,10 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
     """
     try:
         # Get nearest observation station from the NWS points API
-        pts = requests.get(
+        pts = http_get(
             f"https://api.weather.gov/points/{lat},{lng}",
-            headers=_NWS_HEADERS, timeout=10,
+            endpoint="nws.points",
+            headers=_NWS_HEADERS, timeout=(3.05, 10),
         )
         pts.raise_for_status()
         obs_url = pts.json()["properties"].get("observationStations", "")
@@ -215,16 +219,17 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
             return None
 
         # Get latest observation from nearest station
-        stations = requests.get(obs_url, headers=_NWS_HEADERS, timeout=10)
+        stations = http_get(obs_url, endpoint="nws.observation_stations", headers=_NWS_HEADERS, timeout=(3.05, 10))
         stations.raise_for_status()
         station_list = stations.json().get("observationStations", [])
         if not station_list:
             return None
 
         station_id = station_list[0].rstrip("/").split("/")[-1]
-        obs = requests.get(
+        obs = http_get(
             f"https://api.weather.gov/stations/{station_id}/observations/latest",
-            headers=_NWS_HEADERS, timeout=10,
+            endpoint="nws.observation_latest",
+            headers=_NWS_HEADERS, timeout=(3.05, 10),
         )
         obs.raise_for_status()
         props = obs.json().get("properties", {})
@@ -272,13 +277,14 @@ def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
     Returns an empty list on failure.
     """
     try:
-        pts = requests.get(
+        pts = http_get(
             f"https://api.weather.gov/points/{lat},{lng}",
-            headers=_NWS_HEADERS, timeout=10,
+            endpoint="nws.points",
+            headers=_NWS_HEADERS, timeout=(3.05, 10),
         )
         pts.raise_for_status()
         forecast_url = pts.json()["properties"]["forecast"]
-        fc = requests.get(forecast_url, headers=_NWS_HEADERS, timeout=10)
+        fc = http_get(forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10))
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]
     except Exception:

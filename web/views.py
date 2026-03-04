@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, Optional
 
 from flask import (
@@ -27,6 +28,7 @@ from storage.sqlite import get_preferences, save_preferences
 from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
+logger = logging.getLogger(__name__)
 
 
 def _setup_context(**kwargs: Any) -> Dict[str, Any]:
@@ -83,9 +85,11 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
             needs_refresh = True
 
     if needs_refresh:
+        logger.info("cache.miss_or_stale location_id=%s", loc_id)
         try:
             forecast = generate_forecast(location)
             save_forecast(forecast, loc_id, user_id=user_id)
+            logger.info("cache.regenerated location_id=%s", loc_id)
             cached_flag = None
         except Exception:
             if forecast is None:
@@ -93,7 +97,11 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
                     "error.html",
                     message="Could not load forecast. Please try refreshing later.",
                 ), 500
+            logger.warning("cache.regen_failed_serving_stale location_id=%s", loc_id)
             cached_flag = "true"
+
+    if not needs_refresh:
+        logger.info("cache.hit location_id=%s", loc_id)
 
     # Apply profile-based personalization (re-rank species for this user).
     # Query params take precedence; fall back to the user's stored DB profile.
