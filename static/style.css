@@ -263,6 +263,10 @@ main {
   position: relative;
 }
 
+.forecast-page main {
+  margin-top: 1rem;
+}
+
 main > section,
 main > div {
   margin-bottom: 1rem;
@@ -3364,6 +3368,10 @@ footer p {
   main {
     padding: 0 0.75rem;
     margin-top: -1rem;
+  }
+
+  .forecast-page main {
+    margin-top: 0.75rem;
   }
 
   .stat-grid {
