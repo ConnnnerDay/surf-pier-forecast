@@ -1,7 +1,7 @@
 """Tests for domain.forecast helper functions."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from services.astro import compute_lunar_details, compute_solunar_times, compute_twilight_times
@@ -194,6 +194,93 @@ def test_generate_forecast_includes_metadata(monkeypatch):
     assert out["forecast_version"] == fc.FORECAST_VERSION
     assert isinstance(out["sources_used"], list)
     assert isinstance(out["fallbacks_triggered"], list)
+
+
+def test_generate_forecast_uv_reflects_selected_location(monkeypatch):
+    """UV index should be computed from sun times for the requested location."""
+    from domain import forecast as fc
+
+    class _Marine:
+        def get_marine_forecast(self, *_args, **_kwargs):
+            return (5.0, 8.0), (1.0, 2.0), "NW"
+
+    class _Tides:
+        def get_tide_predictions(self, *_args, **_kwargs):
+            return {}
+
+    class _Buoy:
+        def get_barometric_pressure(self, *_args, **_kwargs):
+            return None
+
+    class _Weather:
+        def get_weather_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_state_alerts(self, *_args, **_kwargs):
+            return []
+
+        def get_current_weather(self, *_args, **_kwargs):
+            return None
+
+    class _Env:
+        def get_coops_environmental(self, *_args, **_kwargs):
+            return {}
+
+        def get_currents(self, *_args, **_kwargs):
+            return []
+
+        def get_current_observation(self, *_args, **_kwargs):
+            return None
+
+    class _Astro:
+        def get_sun_times(self, now, lat, *_args, **_kwargs):
+            # Simulate different daylight windows by location latitude.
+            if lat > 40:
+                return now - timedelta(hours=1), now + timedelta(hours=8), "11:00 AM / 8:00 PM"
+            return now - timedelta(hours=4), now + timedelta(hours=1), "8:00 AM / 1:00 PM"
+
+        def get_solunar_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_twilight_times(self, *_args, **_kwargs):
+            return {}
+
+        def get_lunar_details(self, *_args, **_kwargs):
+            return {}
+
+    class _Builder:
+        def __init__(self):
+            self.marine_service = _Marine()
+            self.tide_service = _Tides()
+            self.buoy_service = _Buoy()
+            self.weather_service = _Weather()
+            self.environment_service = _Env()
+            self.astro_service = _Astro()
+
+    monkeypatch.setattr(fc, "ForecastBuilder", _Builder)
+    monkeypatch.setattr(fc, "get_water_temp", lambda *_args, **_kwargs: (70.0, True))
+    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_species_calendar", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_natural_bait_chart", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_spot_tips", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_conditions_explainer", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_gear_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_safety_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_best_times", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_activity_timeline", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
+
+    north_location = {"id": "north", "name": "North", "state": "ME", "lat": 45.0, "lng": -68.0, "timezone": "America/New_York"}
+    south_location = {"id": "south", "name": "South", "state": "FL", "lat": 25.0, "lng": -80.0, "timezone": "America/New_York"}
+
+    north = fc.generate_forecast(north_location)
+    south = fc.generate_forecast(south_location)
+
+    assert "uv" in north and "uv" in south
+    assert north["uv"]["index"] != south["uv"]["index"]
 
 
 def test_heat_index_and_wind_chill_helpers():

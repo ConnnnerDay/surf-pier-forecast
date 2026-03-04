@@ -15,3 +15,10 @@ def test_keeps_core_forecast_sections():
 
     assert "Currents & Slack Windows" in template
     assert "When to Fish" in template
+
+
+def test_shows_uv_index_stat_in_marine_conditions():
+    template = Path("templates/partials/_conditions.html").read_text(encoding="utf-8")
+
+    assert "UV Index" in template
+    assert "forecast.uv.index" in template
