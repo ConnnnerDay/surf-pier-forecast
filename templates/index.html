@@ -1188,12 +1188,20 @@
         if (data.best_day) {
             bestDayHtml = '<div class="best-day-callout"><div class="best-day-body"><strong class="best-day-label">Best day: ' + esc(data.best_day.best_day) + '</strong><span class="best-day-rec">' + esc(data.best_day.recommendation) + '</span></div><span class="verdict-badge verdict-' + esc((data.best_day.verdict || '').toLowerCase().replace(/\s+/g, '-')) + '">' + esc(data.best_day.verdict) + '</span></div>';
         }
+        var activityTimelineHtml = '';
+        if ((data.activity_timeline || []).length) {
+            var timelineBars = data.activity_timeline.map(function(slot) {
+                var hourLabel = slot.hour % 3 === 0 ? '<span class="timeline-hour">' + esc((slot.label || '').replace(' AM', 'a').replace(' PM', 'p')) + '</span>' : '';
+                return '<div class="timeline-bar-col" title="' + esc(slot.label) + ': ' + esc(slot.level) + '% activity"><div class="timeline-bar timeline-bar--' + esc(slot.tag || 'low') + '" style="height: ' + esc(slot.level) + '%"></div>' + hourLabel + '</div>';
+            }).join('');
+            activityTimelineHtml = '<div class="activity-timeline"><h3 class="timeline-title">Today: 24-Hour Activity</h3><div class="timeline-bars">' + timelineBars + '</div><div class="timeline-legend"><span class="tl-key tl-key--prime"></span> Prime <span class="tl-key tl-key--high"></span> High <span class="tl-key tl-key--med"></span> Moderate <span class="tl-key tl-key--low"></span> Low</div></div>';
+        }
         var cards = (data.outlook || []).map(function(day) {
             var species = (day.top_species || []).map(function(sp) { return '<span class="outlook-species-tag">' + esc(sp) + '</span>'; }).join('');
             var speciesBlock = species ? '<div class="outlook-species"><span class="outlook-species-label">Top targets:</span>' + species + '</div>' : '';
             return '<div class="outlook-card"><div class="outlook-header"><span class="outlook-day">' + esc(day.day) + '</span><span class="outlook-date">' + esc(day.date) + '</span></div><div class="outlook-verdict verdict-badge verdict-' + esc((day.verdict || '').toLowerCase().replace(/\s+/g, '-')) + '">' + esc(day.verdict) + '</div><div class="outlook-details"><div class="outlook-detail"><span class="outlook-detail-label">Wind</span><span class="outlook-detail-value">' + esc(day.wind) + '</span></div><div class="outlook-detail"><span class="outlook-detail-label">Waves</span><span class="outlook-detail-value">' + esc(day.waves) + '</span></div></div>' + speciesBlock + '</div>';
         }).join('');
-        return '<section class="outlook-section"><h2>3-Day Outlook</h2><p class="section-sub">Upcoming conditions forecast</p>' + bestDayHtml + '<div class="outlook-grid">' + cards + '</div></section>';
+        return '<section class="outlook-section"><h2>3-Day Outlook</h2><p class="section-sub">Upcoming conditions forecast</p>' + bestDayHtml + activityTimelineHtml + '<div class="outlook-grid">' + cards + '</div></section>';
     }
 
     function renderSolunarSection(solunar) {
