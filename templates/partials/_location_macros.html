@@ -1,19 +1,53 @@
-{% macro location_result_card(loc, current_location) -%}
-<form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="location-card-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit" class="location-card{% if current_location and loc.id == current_location.id %} location-card--active{% endif %}">
-        <div class="location-card-body">
-            <h3>{{ loc.name }}</h3>
-            <span class="location-state">{{ loc.state }}</span>
-        </div>
-        <span class="location-distance">{{ loc.distance_miles }} mi</span>
-    </button>
-</form>
+{% macro location_result_card(loc, current_location, favorite_ids=[], show_star=False, logged_in=False) -%}
+<div class="location-card-row" data-location-name="{{ loc.name|lower }}" data-location-state="{{ loc.state|lower }}">
+    <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="location-card-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="location-card{% if current_location and loc.id == current_location.id %} location-card--active{% endif %}">
+            <div class="location-card-body">
+                <h3>{{ loc.name }}</h3>
+                <span class="location-state">{{ loc.state }}</span>
+            </div>
+            <span class="location-distance">{{ loc.distance_miles }} mi</span>
+        </button>
+    </form>
+    {% if show_star and logged_in %}
+    <form method="post" action="{{ url_for('views.setup_favorite', location_id=loc.id) }}" class="favorite-toggle-form" data-favorite-form="{{ loc.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+        <button type="submit" class="favorite-toggle-btn{% if loc.id in favorite_ids %} favorite-toggle-btn--active{% endif %}" data-favorite-btn="{{ loc.id }}" data-location-id="{{ loc.id }}" aria-pressed="{{ 'true' if loc.id in favorite_ids else 'false' }}" aria-label="{{ 'Remove ' ~ loc.name ~ ' from favorites' if loc.id in favorite_ids else 'Add ' ~ loc.name ~ ' to favorites' }}" title="Toggle favorite for {{ loc.name }}">
+            <span aria-hidden="true">★</span>
+        </button>
+    </form>
+    {% elif show_star %}
+    <div class="favorite-toggle-form" data-favorite-form="{{ loc.id }}">
+        <button type="button" class="favorite-toggle-btn{% if loc.id in favorite_ids %} favorite-toggle-btn--active{% endif %}" data-favorite-btn="{{ loc.id }}" data-location-id="{{ loc.id }}" aria-pressed="{{ 'true' if loc.id in favorite_ids else 'false' }}" aria-label="{{ 'Remove ' ~ loc.name ~ ' from favorites' if loc.id in favorite_ids else 'Add ' ~ loc.name ~ ' to favorites' }}" title="Toggle favorite for {{ loc.name }}">
+            <span aria-hidden="true">★</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
 {%- endmacro %}
 
-{% macro browse_location_button(loc, current_location) -%}
-<form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="browse-item-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit" class="browse-item{% if current_location and loc.id == current_location.id %} browse-item--active{% endif %}">{{ loc.name }}</button>
-</form>
+{% macro browse_location_button(loc, current_location, favorite_ids=[], show_star=False, logged_in=False) -%}
+<div class="browse-item-row" data-location-name="{{ loc.name|lower }}" data-location-state="{{ loc.state|lower }}">
+    <form method="post" action="{{ url_for('views.setup_select', location_id=loc.id) }}" class="browse-item-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="browse-item{% if current_location and loc.id == current_location.id %} browse-item--active{% endif %}">{{ loc.name }}</button>
+    </form>
+    {% if show_star and logged_in %}
+    <form method="post" action="{{ url_for('views.setup_favorite', location_id=loc.id) }}" class="favorite-toggle-form" data-favorite-form="{{ loc.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+        <button type="submit" class="favorite-toggle-btn favorite-toggle-btn--small{% if loc.id in favorite_ids %} favorite-toggle-btn--active{% endif %}" data-favorite-btn="{{ loc.id }}" data-location-id="{{ loc.id }}" aria-pressed="{{ 'true' if loc.id in favorite_ids else 'false' }}" aria-label="{{ 'Remove ' ~ loc.name ~ ' from favorites' if loc.id in favorite_ids else 'Add ' ~ loc.name ~ ' to favorites' }}" title="Toggle favorite for {{ loc.name }}">
+            <span aria-hidden="true">★</span>
+        </button>
+    </form>
+    {% elif show_star %}
+    <div class="favorite-toggle-form" data-favorite-form="{{ loc.id }}">
+        <button type="button" class="favorite-toggle-btn favorite-toggle-btn--small{% if loc.id in favorite_ids %} favorite-toggle-btn--active{% endif %}" data-favorite-btn="{{ loc.id }}" data-location-id="{{ loc.id }}" aria-pressed="{{ 'true' if loc.id in favorite_ids else 'false' }}" aria-label="{{ 'Remove ' ~ loc.name ~ ' from favorites' if loc.id in favorite_ids else 'Add ' ~ loc.name ~ ' to favorites' }}" title="Toggle favorite for {{ loc.name }}">
+            <span aria-hidden="true">★</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
 {%- endmacro %}

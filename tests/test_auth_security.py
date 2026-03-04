@@ -5,7 +5,7 @@ import re
 import pytest
 
 from app import create_app
-from storage.sqlite import create_user, get_preferences, get_user, init_db
+from storage.sqlite import create_user, get_preferences, get_user, init_db, save_preferences
 
 
 @pytest.fixture
@@ -101,3 +101,63 @@ def test_account_settings_updates_preferences(client):
     assert prefs["favorites"] == ["wrightsville-beach-nc", "outer-banks-nc"]
     assert user is not None
     assert user["default_location_id"] == "wrightsville-beach-nc"
+
+
+def test_setup_shows_favorites_for_logged_in_user(client):
+    uid = create_user("setup_fav_user", "Aa123456")
+    assert uid is not None
+    save_preferences(uid, favorites=["wrightsville-beach-nc"])
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+
+    resp = client.get("/setup")
+    assert resp.status_code == 200
+    assert b"Favorites" in resp.data
+    assert b"Wrightsville Beach" in resp.data
+
+
+def test_setup_favorite_toggle_updates_preferences(client):
+    uid = create_user("toggle_fav_user", "Aa123456")
+    assert uid is not None
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+
+    page = client.get("/setup")
+    token = _csrf_from_html(page.data)
+
+    add_resp = client.post(
+        "/setup/favorite/wrightsville-beach-nc",
+        data={"csrf_token": token, "next": "/setup"},
+        follow_redirects=False,
+    )
+    assert add_resp.status_code == 302
+    assert "wrightsville-beach-nc" in get_preferences(uid)["favorites"]
+
+    remove_resp = client.post(
+        "/setup/favorite/wrightsville-beach-nc",
+        data={"csrf_token": token, "next": "/setup"},
+        follow_redirects=False,
+    )
+    assert remove_resp.status_code == 302
+    assert "wrightsville-beach-nc" not in get_preferences(uid)["favorites"]
+
+
+def test_setup_favorite_rejects_external_next_redirect(client):
+    uid = create_user("toggle_fav_user_next", "Aa123456")
+    assert uid is not None
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+
+    page = client.get("/setup")
+    token = _csrf_from_html(page.data)
+
+    resp = client.post(
+        "/setup/favorite/wrightsville-beach-nc",
+        data={"csrf_token": token, "next": "https://example.com/phish"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/setup")
