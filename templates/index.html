@@ -1173,7 +1173,7 @@
         return '<section class="outlook-section"><h2>3-Day Outlook</h2><p class="section-sub">Upcoming conditions forecast</p>' + bestDayHtml + '<div class="outlook-grid">' + cards + '</div></section>';
     }
 
-    function lazyHydrateSection(rootId, renderer, dataKey, onSuccess) {
+    function lazyHydrateSection(rootId, renderer) {
         var root = document.getElementById(rootId);
         if (!root) return;
         var endpoint = root.getAttribute('data-endpoint');
@@ -1186,7 +1186,6 @@
             .then(function(payload) {
                 var data = payload && payload.data ? payload.data : {};
                 root.innerHTML = renderer(data);
-                if (onSuccess) onSuccess(data[dataKey] || data);
             })
             .catch(function() {
                 root.innerHTML = '<section class="lazy-section"><h2>3-Day Outlook</h2><p class="lazy-error">Unable to load this section.</p></section>';
@@ -1195,7 +1194,7 @@
 
     function initInteractiveCharts() {
         renderInteractiveCharts();
-        lazyHydrateSection('outlook-lazy-root', function(data){ return renderOutlookSection(data); }, 'outlook');
+        lazyHydrateSection('outlook-lazy-root', function(data){ return renderOutlookSection(data); });
     }
 
     window.addEventListener('DOMContentLoaded', initInteractiveCharts);
