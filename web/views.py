@@ -15,7 +15,13 @@ from flask import (
     url_for,
 )
 
-from locations import all_locations_sorted, find_nearest_locations, geocode_zip, get_location
+from locations import (
+    all_locations_sorted,
+    find_nearby_live_cams,
+    find_nearest_locations,
+    geocode_zip,
+    get_location,
+)
 from domain.forecast import generate_forecast, personalize_forecast, recompute_current_uv
 from services.forecast_refresh import enqueue_forecast_refresh
 from storage.cache import (
@@ -132,6 +138,17 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
             profile = stored
     if profile:
         forecast = personalize_forecast(forecast, profile, location)
+
+    fishing_types = set((profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or [])
+    include_pier_cams = (not fishing_types) or ("pier" in fishing_types)
+    forecast["nearby_live_cams"] = find_nearby_live_cams(
+        location["lat"],
+        location["lng"],
+        max_miles=10.0,
+        include_pier_cams=include_pier_cams,
+    )
+    forecast["live_cam_radius_miles"] = 10
+    forecast["pier_cams_enabled"] = include_pier_cams
 
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
     # Backfill for cached forecasts created before these fields existed.

@@ -252,6 +252,26 @@
         </section>
         {% endif %}
 
+        <!-- Nearby Live Cams -->
+        <section class="live-cams-section">
+            <h2>Nearby Live Cams</h2>
+            <p class="section-sub">Beach and surf cams within {{ forecast.live_cam_radius_miles }} miles of {{ forecast.location_name }}</p>
+            {% if forecast.nearby_live_cams %}
+            <div class="live-cam-list">
+                {% for cam in forecast.nearby_live_cams %}
+                <a class="live-cam-item" href="{{ cam.url }}" target="_blank" rel="noopener noreferrer">
+                    <span class="live-cam-name">{{ cam.name }}</span>
+                    <span class="live-cam-meta">{{ cam.cam_type|title }} cam · {{ cam.distance_miles }} mi</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="live-cam-empty">
+                No public beach live cams found within {{ forecast.live_cam_radius_miles }} miles right now.{% if not forecast.pier_cams_enabled %} Pier cams are hidden because your fishing profile does not include pier fishing.{% endif %}
+            </p>
+            {% endif %}
+        </section>
+
         <!-- Natural Bait in the Water -->
         {% if forecast.natural_bait %}
         <section class="forage-section">
