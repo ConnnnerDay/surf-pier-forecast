@@ -88,7 +88,7 @@ def _species_name_variants(name: str) -> List[str]:
 
 _REG_DATA = _RegData()
 _REG_LOCK = Lock()
-_LAST_LOADED_MONO = 0.0
+_LAST_LOADED_MONO = -_RELOAD_INTERVAL_SECONDS  # ensure first call always loads
 
 
 def _build_default_name_map() -> Dict[str, str]:
@@ -210,8 +210,11 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
             if species_key:
                 break
     state_regs = _REG_DATA.states.get(state_key)
-    if not species_key and state_regs:
-        # Support callers that already pass a normalized regulations key.
+    if state_regs and (not species_key or species_key not in state_regs):
+        # Either no canonical key was found, or the canonical key doesn't exist
+        # in this state's regulations. Try each normalized variant directly —
+        # the regulations snapshot may use a shorter key (e.g. "red_drum" for
+        # "Red drum (puppy drum)").
         for normalized_name in normalized_variants:
             if normalized_name in state_regs:
                 species_key = normalized_name
