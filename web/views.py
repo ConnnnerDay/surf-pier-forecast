@@ -49,7 +49,7 @@ def _require_login() -> Any:
     if g.user is None:
         # Clear stale per-user state from the cookie.
         session.pop("location_id", None)
-        return redirect(url_for("auth.register"))
+        return redirect(url_for("auth.landing"))
 
 
 def _setup_context(**kwargs: Any) -> Dict[str, Any]:

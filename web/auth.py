@@ -28,6 +28,14 @@ from storage.db import (
 bp = Blueprint("auth", __name__)
 
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
+
+
+@bp.route("/welcome")
+def landing() -> Any:
+    """Public landing page for unauthenticated visitors."""
+    if g.user is not None:
+        return redirect(url_for("views.index"))
+    return render_template("landing.html")
 _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 
@@ -73,6 +81,8 @@ def _clear_login_failures() -> None:
 def login() -> Any:
     """Log-in page and form handler."""
     if request.method == "GET":
+        if g.user is not None:
+            return redirect(url_for("views.index"))
         return render_template("login.html", error=None)
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
@@ -106,6 +116,8 @@ def login() -> Any:
 def register() -> Any:
     """Registration page and form handler."""
     if request.method == "GET":
+        if g.user is not None:
+            return redirect(url_for("views.index"))
         return render_template("register.html", error=None)
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")

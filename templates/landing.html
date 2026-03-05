@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surf &amp; Pier Fishing Forecast &mdash; Real-time Coastal Forecasts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#0e5f78">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="description" content="Real-time surf and pier fishing forecasts for 70+ coastal US locations. Species outlooks, live conditions, and up-to-date regulations.">
+    {% include 'partials/_theme_bootstrap.html' %}
+</head>
+<body>
+    <header class="landing-header">
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <p class="subtitle">Know before you go</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="landing-hero">
+            <p class="landing-tagline">Real-time fishing forecasts for 70+ coastal spots across the US — live conditions, species outlooks, and up-to-date regulations, all in one place.</p>
+        </section>
+
+        <section class="landing-features">
+            <div class="landing-feature">
+                <div class="landing-feature-icon">&#127754;</div>
+                <strong>Live Conditions</strong>
+                <p>Wind, swell, tides, and water temperature refreshed every hour from NOAA and NWS.</p>
+            </div>
+            <div class="landing-feature">
+                <div class="landing-feature-icon">&#127907;</div>
+                <strong>Species Outlook</strong>
+                <p>See which fish are most likely biting based on current conditions and solunar timing.</p>
+            </div>
+            <div class="landing-feature">
+                <div class="landing-feature-icon">&#128221;</div>
+                <strong>Regulations</strong>
+                <p>Size and bag limits pulled live from state agencies so you always know the rules.</p>
+            </div>
+        </section>
+
+        <section class="landing-cta">
+            <a href="{{ url_for('auth.login') }}" class="landing-btn landing-btn--primary">Log In</a>
+            <a href="{{ url_for('auth.register') }}" class="landing-btn landing-btn--secondary">Create Account</a>
+        </section>
+
+        <p class="landing-location-count">70+ coastal locations &mdash; FL, VA, NC, NY, TX and more</p>
+    </main>
+
+    <footer>
+        <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
+    </footer>
+</body>
+</html>
