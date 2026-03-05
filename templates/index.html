@@ -1351,9 +1351,10 @@
     });
 
     // Close: button or clicking the backdrop
-    document.querySelector('.reg-modal__close').addEventListener('click', function () {
-        modal.close();
-    });
+    var closeBtn = document.querySelector('.reg-modal__close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () { modal.close(); });
+    }
     modal.addEventListener('click', function (e) {
         if (e.target === modal) modal.close();
     });

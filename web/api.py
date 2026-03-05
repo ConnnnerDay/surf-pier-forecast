@@ -204,12 +204,14 @@ def log_delete_v1(entry_id: int) -> Any:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
     uid = g.user["id"]
     photo_paths = get_entry_photo_paths(uid, entry_id)
-    deleted = delete_log_entry(uid, entry_id)
-    if not deleted:
+    if photo_paths is None:
+        # Entry doesn't exist (get_entry_photo_paths returns None for missing rows)
         return jsonify(error_envelope("not_found", "Log entry not found")), 404
-    if photo_paths:
-        _delete_upload_file(photo_paths[0])
-        _delete_upload_file(photo_paths[1])
+    # Delete files before the DB row so a crash between the two doesn't leave
+    # orphaned files on disk with no DB record to clean them up later.
+    _delete_upload_file(photo_paths[0])
+    _delete_upload_file(photo_paths[1])
+    delete_log_entry(uid, entry_id)
     return jsonify(success_envelope({"deleted": True, "entry_id": entry_id}))
 
 

@@ -91,6 +91,7 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
             logger.info("cache.regenerated location_id=%s", loc_id)
             cached_flag = None
         except Exception:
+            logger.exception("forecast.generate_failed location_id=%s", loc_id)
             return render_template(
                 "error.html",
                 message="Could not load forecast. Please try refreshing later.",
@@ -202,7 +203,9 @@ def setup_favorite(location_id: str) -> Any:
     save_preferences(g.user["id"], favorites=favorites)
 
     next_url = request.form.get("next", "")
-    if next_url.startswith("/") and not next_url.startswith("//"):
+    # Only allow same-origin relative paths. Block // (protocol-relative) and
+    # backslash tricks (/\evil.com) that Chrome/Edge normalise to external URLs.
+    if next_url.startswith("/") and not next_url.startswith("//") and "\\" not in next_url:
         return redirect(next_url)
     return redirect(url_for("views.setup"))
 
@@ -210,7 +213,9 @@ def setup_favorite(location_id: str) -> Any:
 @bp.route("/profile")
 def profile() -> str:
     """Show the fishing profile setup page."""
-    prefs = get_preferences(g.user["id"]) if g.user else {}
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+    prefs = get_preferences(g.user["id"])
     return render_template("profile.html", prefs=prefs)
 
 
