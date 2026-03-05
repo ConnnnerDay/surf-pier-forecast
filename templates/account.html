@@ -11,6 +11,22 @@
     <meta name="theme-color" content="#0e5f78">
     {% include 'partials/_theme_bootstrap.html' %}
     <style>
+        .account-page { max-width: 880px !important; }
+        .account-heading { margin-bottom: 1rem; }
+        .account-subtitle { margin-top: 0.2rem; color: var(--muted, #5c6b73); }
+        .quick-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; margin-bottom: 1rem; }
+        .quick-link-btn { display: block; text-align: center; text-decoration: none; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.8rem; margin: 1rem 0; }
+        .summary-card { border: 1px solid var(--border, #d8dee3); border-radius: 10px; padding: 0.9rem; background: var(--card-bg, rgba(255,255,255,0.6)); }
+        .summary-card h3 { margin: 0 0 0.6rem 0; font-size: 1.02rem; }
+        .account-details.compact .account-row { padding: 0.35rem 0; }
+        .section-title { margin-top: 1.2rem; margin-bottom: 0.6rem; }
+        .dashboard-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.7rem; margin-bottom: 0.7rem; }
+        .metric-card { border: 1px solid var(--border, #d8dee3); border-radius: 10px; padding: 0.7rem; text-align: center; background: var(--card-bg, rgba(255,255,255,0.6)); }
+        .metric-value { display: block; font-size: 1.3rem; font-weight: 700; }
+        .metric-label { font-size: 0.86rem; color: var(--muted, #5c6b73); }
+        .favorites-list { margin: 0.6rem 0 0; padding-left: 1rem; }
+        .account-footer-actions { margin-top: 1.2rem; }
         .recent-log-list { list-style: none; padding: 0; margin: 0.5rem 0; }
         .log-entry-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border, #ddd); }
         .log-entry-text { flex: 1 1 auto; }
@@ -33,22 +49,36 @@
 
 
     <main>
-        <section class="auth-section" style="max-width:760px">
-            <h2>{{ user.username }}</h2>
-
-            <div class="account-actions" style="margin-bottom:1rem">
-                <a href="{{ url_for('views.setup') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Account &gt; Location</a>
-                <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Account &gt; Profile</a>
+        <section class="auth-section account-page">
+            <div class="account-heading">
+                <h2>{{ user.username }}</h2>
+                <p class="account-subtitle">Manage your location preferences, account settings, and fishing activity.</p>
             </div>
 
-            <div class="account-details">
-                <div class="account-row"><span class="account-label">Saved Location</span><span class="account-value">{{ saved_location.name if saved_location else 'None' }}</span></div>
-                <div class="account-row"><span class="account-label">Theme</span><span class="account-value">{{ prefs.theme|capitalize }}</span></div>
-                <div class="account-row"><span class="account-label">Units</span><span class="account-value">{{ prefs.units }}</span></div>
-                <div class="account-row"><span class="account-label">Email Confirmed</span><span class="account-value">{{ 'Yes' if user.email_confirmed else 'No' }}</span></div>
+            <div class="quick-links">
+                <a href="{{ url_for('views.setup') }}" class="auth-btn quick-link-btn">Update Saved Location</a>
+                <a href="{{ url_for('views.profile') }}" class="auth-btn quick-link-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)">Edit Fishing Profile</a>
             </div>
 
-            <h3 style="margin-top:1rem;">Settings</h3>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Account Overview</h3>
+                    <div class="account-details compact">
+                        <div class="account-row"><span class="account-label">Saved Location</span><span class="account-value">{{ saved_location.name if saved_location else 'None' }}</span></div>
+                        <div class="account-row"><span class="account-label">Email Confirmed</span><span class="account-value">{{ 'Yes' if user.email_confirmed else 'No' }}</span></div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <h3>Display Preferences</h3>
+                    <div class="account-details compact">
+                        <div class="account-row"><span class="account-label">Theme</span><span class="account-value">{{ prefs.theme|capitalize }}</span></div>
+                        <div class="account-row"><span class="account-label">Wind Speed</span><span class="account-value">{{ (prefs.wind_units or 'knots')|upper }}</span></div>
+                        <div class="account-row"><span class="account-label">Temperature</span><span class="account-value">{{ '°F' if (prefs.temp_units or 'F') == 'F' else '°C' }}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-title">Settings</h3>
             <form method="post" action="{{ url_for('auth.account_settings') }}" class="auth-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="auth-field">
@@ -79,10 +109,16 @@
                 <button type="submit" class="auth-btn">Save Settings</button>
             </form>
 
-            <h3 style="margin-top:1rem;">User Dashboard</h3>
-            <div class="account-details">
-                <div class="account-row"><span class="account-label">Recent Fishing Logs</span><span class="account-value">{{ recent_logs|length }}</span></div>
-                <div class="account-row"><span class="account-label">Favorite Locations</span><span class="account-value">{{ favorite_locations|length }}</span></div>
+            <h3 class="section-title">Dashboard</h3>
+            <div class="dashboard-metrics">
+                <div class="metric-card">
+                    <span class="metric-value">{{ recent_logs|length }}</span>
+                    <span class="metric-label">Recent Fishing Logs</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value">{{ favorite_locations|length }}</span>
+                    <span class="metric-label">Favorite Locations</span>
+                </div>
             </div>
             {% if recent_logs %}
             <ul class="recent-log-list">
@@ -115,16 +151,15 @@
             </ul>
             {% endif %}
             {% if favorite_locations %}
-            <ul>
+            <ul class="favorites-list">
                 {% for loc in favorite_locations %}
                 <li>{{ loc.name }}, {{ loc.state }}</li>
                 {% endfor %}
             </ul>
             {% endif %}
 
-            <div class="account-actions">
+            <div class="account-actions account-footer-actions">
                 <a href="{{ url_for('views.index') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Back to Forecast</a>
-                <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Edit Fishing Profile</a>
                 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)">Log Out</button>
