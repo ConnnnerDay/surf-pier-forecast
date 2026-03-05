@@ -1607,8 +1607,9 @@ def generate_forecast(
             forecast["outlook"],
         )
 
-    # Species availability calendar
-    forecast["calendar"] = build_species_calendar(species, location)
+    # Species availability calendar — shows popular regional target species,
+    # not day-to-day bite conditions.
+    forecast["calendar"] = build_species_calendar(species, location, fish_region=loc_fish_region)
     forecast["seasonality"] = _seasonality_highlights(forecast)
 
     # Natural bait availability (bait DB only has "east"/"west" entries)
