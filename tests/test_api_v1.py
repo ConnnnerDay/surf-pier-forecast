@@ -3,7 +3,7 @@
 import pytest
 
 from app import create_app
-from storage.sqlite import create_user, init_db
+from storage.sqlite import create_user, init_db, save_preferences
 
 
 @pytest.fixture
@@ -303,6 +303,37 @@ def test_v1_forecast_solunar_cached_only(client, monkeypatch):
     body = resp.get_json()
     assert body["ok"] is True
     assert body["data"]["solunar"]["rating"] == "Great"
+
+
+def test_v1_regulations_uses_account_saved_location_when_no_params(client, app):
+    """Logged-in user with a saved location gets regulations for that state even
+    when neither 'state' nor 'location_id' are passed to the API.
+
+    This exercises the full chain: user account DB preference → session fallback
+    in get_session_location() → state derivation → regulation lookup.
+    """
+    with app.app_context():
+        uid = create_user("loctest", "pw")
+        # Save wrightsville-beach-nc (NC) as the user's primary location
+        save_preferences(uid, location_id="wrightsville-beach-nc")
+
+    # Log in the user but do NOT put location_id in the session so the helper
+    # falls back to the DB preference.
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+
+    resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    data = body["data"]
+    # State must be derived from the user's saved NC location
+    assert data["state"] == "NC"
+    reg = data["regulation"]
+    assert reg is not None
+    # The NC snapshot has data for red drum
+    assert reg["data_status"] == "snapshot"
+    assert reg["min_size"] == "18 in TL"
 
 
 def test_v1_forecast_section_endpoints_404_when_missing_cache(client, monkeypatch):
