@@ -92,6 +92,27 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
 
 # Routes that are accessible without authentication (shareable forecast links).
 _PUBLIC_ENDPOINTS = {"views.shared_forecast"}
+_PROFILE_SETUP_EXEMPT_ENDPOINTS = {
+    "views.profile",
+    "views.setup",
+    "views.setup_search",
+    "views.setup_coords",
+    "views.setup_select",
+    "views.setup_favorite",
+    "auth.logout",
+    "auth.account",
+    "auth.account_settings",
+}
+
+
+def _user_requires_profile_setup() -> bool:
+    """Return True when a logged-in user has picked a location but no profile."""
+    if g.user is None:
+        return False
+    prefs = get_preferences(g.user["id"])
+    has_location = bool((prefs.get("location_id") or session.get("location_id") or "").strip())
+    has_profile = bool(prefs.get("fishing_profile"))
+    return has_location and not has_profile
 
 
 @bp.before_request
@@ -109,6 +130,8 @@ def _require_login() -> Any:
         # Clear stale per-user state from the cookie.
         session.pop("location_id", None)
         return redirect(url_for("auth.landing"))
+    if request.endpoint not in _PROFILE_SETUP_EXEMPT_ENDPOINTS and _user_requires_profile_setup():
+        return redirect(url_for("views.profile"))
 
 
 def _setup_context(**kwargs: Any) -> Dict[str, Any]:
@@ -316,6 +339,8 @@ def setup_select(location_id: str) -> Any:
     session.permanent = True
     if g.user:
         save_preferences(g.user["id"], location_id=location_id, default_location_id=location_id)
+        if _user_requires_profile_setup():
+            return redirect(url_for("views.profile"))
     return redirect(url_for("views.index"))
 
 
