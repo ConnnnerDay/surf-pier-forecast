@@ -64,10 +64,8 @@
                     <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 </button>
-                <a href="{{ url_for('views.setup') }}" class="change-location">Change location</a>
             </div>
             <div class="favorites-bar" id="favorites-bar"></div>
-            <div class="profile-bar" id="profile-bar"></div>
             {% if cached == "refreshing" %}
             <div class="banner">Refreshing forecast… showing cached data from {{ forecast.generated_at }}</div>
             {% elif cached %}
@@ -526,44 +524,6 @@
         return currentFt === expectedFt && currentTg === expectedTg;
     }
 
-    function renderProfileBar() {
-        var bar = document.getElementById('profile-bar');
-        if (!bar) return;
-        var profile = getProfile();
-        if (!profile || !profile.completed) {
-            bar.innerHTML = '<a href="/profile" class="profile-edit-link">Set up your fishing profile for personalized results</a>';
-            return;
-        }
-        var html = '<span class="profile-label">Your profile:</span> ';
-        var labels = {
-            'surf': 'Surf', 'pier': 'Pier', 'inshore': 'Inshore', 'offshore': 'Offshore',
-            'yes': 'Yes', 'sometimes': 'Sometimes', 'no': 'No',
-            'beginner': 'Beginner', 'intermediate': 'Intermediate', 'experienced': 'Experienced',
-            'bottom': 'Bottom', 'pelagic': 'Pelagics', 'structure': 'Structure',
-            'gamefish': 'Big Game', 'anything': 'All Species'
-        };
-        var fishingTypes = profile.fishing_types || profile.fishing_type || [];
-        if (fishingTypes.length) {
-            fishingTypes.forEach(function(t) {
-                html += '<span class="profile-tag">' + (labels[t] || t) + '</span>';
-            });
-        }
-        if (profile.targets && profile.targets.length) {
-            profile.targets.forEach(function(t) {
-                if (t !== 'anything' || profile.targets.length === 1) {
-                    html += '<span class="profile-tag profile-tag--target">' + (labels[t] || t) + '</span>';
-                }
-            });
-        }
-        if (profile.live_bait === 'yes') html += '<span class="profile-tag">Live Bait</span>';
-        if (profile.cut_bait === 'yes') html += '<span class="profile-tag">Cut Bait</span>';
-        if (profile.lures === 'yes') html += '<span class="profile-tag">Lures</span>';
-        else if (profile.lures === 'sometimes') html += '<span class="profile-tag">Some Lures</span>';
-
-        html += '<a href="/profile" class="profile-edit-link">Edit Profile</a>';
-        bar.innerHTML = html;
-    }
-
     function applyBaitFilters() {
         // Sort bait items by relevance to user's bait method preferences
         // instead of hiding/dimming non-matching items
@@ -657,7 +617,6 @@
                 window.location.href = '/profile';
                 return;
             }
-            renderProfileBar();
             return;
         }
 
@@ -670,7 +629,6 @@
             return;
         }
 
-        renderProfileBar();
         applyBaitFilters();
     })();
 
