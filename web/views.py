@@ -31,6 +31,26 @@ from web.helpers import get_session_location
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
 
+# Routes that are accessible without authentication (shareable forecast links).
+_PUBLIC_ENDPOINTS = {"views.shared_forecast"}
+
+
+@bp.before_request
+def _require_login() -> Any:
+    """Redirect unauthenticated users to the registration page.
+
+    Shareable /f/<id> links remain public so they can be shared freely.
+    When no authenticated user is present we also clear any stale
+    location_id that may have been left in the session from a previous
+    login, so it cannot bleed across accounts.
+    """
+    if request.endpoint in _PUBLIC_ENDPOINTS:
+        return
+    if g.user is None:
+        # Clear stale per-user state from the cookie.
+        session.pop("location_id", None)
+        return redirect(url_for("auth.landing"))
+
 
 def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     """Build common template context for the setup page."""
@@ -171,6 +191,28 @@ def setup_search() -> str:
         ))
 
     return render_template("setup.html", **_setup_context(results=nearby, zipcode=zipcode))
+
+
+@bp.route("/setup/coords", methods=["POST"])
+def setup_coords() -> Any:
+    """Accept lat/lon from the map picker and show nearby locations."""
+    raw_lat = request.form.get("location_lat", "").strip()
+    raw_lon = request.form.get("location_lon", "").strip()
+    try:
+        lat = float(raw_lat)
+        lon = float(raw_lon)
+    except (ValueError, TypeError):
+        return render_template("setup.html", **_setup_context(
+            error="Invalid coordinates. Please click the map to set your location.",
+        ))
+
+    nearby = find_nearest_locations(lat, lon, n=6)
+    if not nearby:
+        return render_template("setup.html", **_setup_context(
+            error="No supported fishing locations found within 300 miles of that point. Try a coastal area.",
+        ))
+
+    return render_template("setup.html", **_setup_context(results=nearby))
 
 
 @bp.route("/setup/select/<location_id>", methods=["POST"])

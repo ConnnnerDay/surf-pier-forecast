@@ -3665,6 +3665,48 @@ footer p {
   text-decoration: underline;
 }
 
+.app-nav-divider {
+  width: 1px;
+  background: var(--border-light);
+  align-self: stretch;
+  margin: 0;
+}
+
+.app-nav-user-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-nav-username {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.app-nav-logout-form {
+  margin: 0;
+}
+
+.app-nav-logout-btn {
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.app-nav-logout-btn:hover {
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
 /* ---------- Interactive Charts ---------- */
 .chart-panel {
   margin-top: 1rem;
@@ -3682,6 +3724,8 @@ footer p {
   .app-nav-toggle { display: inline-block; }
   .app-nav-links { display: none; flex-direction: column; align-items: flex-start; margin-top: 0.5rem; }
   .app-nav-links.is-open { display: flex; }
+  .app-nav-divider { width: 100%; height: 1px; align-self: auto; margin: 0.25rem 0; }
+  .app-nav-user-item { flex-direction: column; align-items: flex-start; }
 }
 
 /* ==========================================================================
@@ -3939,3 +3983,102 @@ footer p {
 .currents-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 .currents-table th, .currents-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border, #dfe5ea); text-align: left; }
 .currents-table__slack td { background: rgba(14,95,120,0.08); font-weight: 600; }
+
+/* ==========================================================================
+   Landing / welcome page
+   ========================================================================== */
+
+.landing-hero {
+  text-align: center;
+  padding: 2rem 1rem 1.5rem;
+}
+
+.landing-tagline {
+  font-size: 1.1rem;
+  color: var(--text);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  max-width: 860px;
+  margin: 0 auto 2rem;
+  padding: 0 1rem;
+}
+
+.landing-feature {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.25rem 1rem;
+  text-align: center;
+}
+
+.landing-feature-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.landing-feature strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ocean);
+  margin-bottom: 0.4rem;
+}
+
+.landing-feature p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.landing-cta {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 1rem 1rem;
+}
+
+.landing-btn {
+  display: inline-block;
+  padding: 0.85rem 2.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-width: 160px;
+  text-align: center;
+}
+
+.landing-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.landing-btn--primary {
+  background: linear-gradient(135deg, var(--ocean), #14738c);
+  color: #fff;
+}
+
+.landing-btn--secondary {
+  background: var(--white);
+  color: var(--ocean);
+  border: 2px solid var(--ocean);
+}
+
+.landing-location-count {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  padding-bottom: 2rem;
+}

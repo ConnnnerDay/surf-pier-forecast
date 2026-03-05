@@ -9,6 +9,14 @@
     <li><a href="{{ url_for('views.index') }}#fish-log">Fishing Log</a></li>
     {% if user %}
     <li><a href="{{ url_for('auth.account') }}">Account</a></li>
+    <li class="app-nav-divider" aria-hidden="true"></li>
+    <li class="app-nav-user-item">
+      <span class="app-nav-username">{{ user.username }}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="app-nav-logout-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="app-nav-logout-btn">Log Out</button>
+      </form>
+    </li>
     {% endif %}
   </ul>
 </nav>

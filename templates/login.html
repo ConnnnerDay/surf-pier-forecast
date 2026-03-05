@@ -18,8 +18,6 @@
             <p class="subtitle">Log in to your account</p>
         </div>
     </header>
-    {% include 'partials/_main_nav.html' %}
-
 
     <main>
         <section class="auth-section">
@@ -46,6 +44,7 @@
             </form>
 
             <p class="auth-switch">Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a></p>
+            <p class="auth-switch"><a href="{{ url_for('auth.landing') }}">&larr; Back</a></p>
         </section>
     </main>
 
