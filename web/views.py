@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Dict, Optional
+
+import requests
 
 from flask import (
     Blueprint,
@@ -36,6 +39,56 @@ from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
+
+_CAM_STATUS_TTL_SECONDS = 30 * 60
+_cam_status_cache: Dict[str, Dict[str, Any]] = {}
+
+
+def _cam_status(url: str) -> Dict[str, Any]:
+    """Check whether a cam URL appears reachable, with short-lived caching."""
+    now = time.time()
+    cached = _cam_status_cache.get(url)
+    if cached and (now - cached["checked_at_ts"]) < _CAM_STATUS_TTL_SECONDS:
+        return cached
+
+    status = {"is_live": False, "status_label": "Unavailable", "checked_at_ts": now}
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; SurfPierForecast/1.0)"}
+    try:
+        resp = requests.get(url, timeout=(2.5, 7.0), allow_redirects=True, headers=headers)
+        if resp.status_code < 400:
+            status["is_live"] = True
+            status["status_label"] = "Live now"
+        else:
+            status["status_label"] = f"HTTP {resp.status_code}"
+    except requests.RequestException:
+        status["status_label"] = "Unavailable"
+
+    _cam_status_cache[url] = status
+    return status
+
+
+def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Build nearby live cam data and availability indicators."""
+    fishing_types = set((profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or [])
+    include_pier_cams = (not fishing_types) or ("pier" in fishing_types)
+    cams = find_nearby_live_cams(
+        location["lat"],
+        location["lng"],
+        max_miles=15.0,
+        include_pier_cams=include_pier_cams,
+    )
+
+    enhanced_cams = []
+    for cam in cams:
+        entry = dict(cam)
+        entry.update(_cam_status(cam["url"]))
+        enhanced_cams.append(entry)
+
+    return {
+        "nearby_live_cams": enhanced_cams,
+        "live_cam_radius_miles": 15,
+        "pier_cams_enabled": include_pier_cams,
+    }
 
 # Routes that are accessible without authentication (shareable forecast links).
 _PUBLIC_ENDPOINTS = {"views.shared_forecast"}
@@ -139,16 +192,7 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
     if profile:
         forecast = personalize_forecast(forecast, profile, location)
 
-    fishing_types = set((profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or [])
-    include_pier_cams = (not fishing_types) or ("pier" in fishing_types)
-    forecast["nearby_live_cams"] = find_nearby_live_cams(
-        location["lat"],
-        location["lng"],
-        max_miles=10.0,
-        include_pier_cams=include_pier_cams,
-    )
-    forecast["live_cam_radius_miles"] = 10
-    forecast["pier_cams_enabled"] = include_pier_cams
+    forecast.update(_build_live_cam_context(location, profile))
 
     forecast["age_human"] = _human_age(_forecast_age_minutes(forecast))
     # Backfill for cached forecasts created before these fields existed.
@@ -174,6 +218,25 @@ def index() -> str:
 
     cached_flag = request.args.get("cached")
     return _render_forecast(location, cached_flag)
+
+
+
+
+@bp.route("/live-cams")
+def live_cams() -> str:
+    """Render the dedicated live cams page for the selected location."""
+    location = get_session_location()
+    if location is None:
+        return redirect(url_for("views.setup"))
+
+    profile = _extract_profile_from_request()
+    if not profile and g.user:
+        stored = get_preferences(g.user["id"]).get("fishing_profile") or {}
+        if stored.get("fishing_types") or stored.get("targets"):
+            profile = stored
+
+    cam_context = _build_live_cam_context(location, profile)
+    return render_template("live_cams.html", location=location, **cam_context)
 
 
 @bp.route("/setup")
