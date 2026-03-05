@@ -162,15 +162,22 @@ def test_v1_regulations_with_state_returns_envelope(client):
     assert "bag_limit" in reg
     assert "season" in reg
     assert "notes" in reg
+    assert "official_source" in reg
+    assert "snapshot_source" in reg
+    assert "source_file" in reg
 
 
 def test_v1_regulations_unknown_species_returns_null(client):
-    """Species not in the regulation DB returns null (not an error)."""
+    """Species without snapshot rows still returns official-source guidance."""
     resp = client.get("/api/v1/regulations?species=Fantasy+Fish&state=NC")
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["ok"] is True
-    assert body["data"]["regulation"] is None
+    reg = body["data"]["regulation"]
+    assert reg is not None
+    assert reg["official_source"].startswith("https://")
+    assert reg["data_status"] == "official_reference"
+    assert reg["source_file"].endswith("regulations_data.json")
 
 
 def test_v1_regulations_no_state_returns_null(client):
@@ -246,12 +253,14 @@ def test_v1_regulations_state_overrides_location_id(client, monkeypatch):
 
 
 def test_v1_regulations_unknown_state_returns_null(client):
-    """A valid species but an unrecognised state returns null regulation."""
+    """Unknown states still return fallback official-source guidance."""
     resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29&state=ZZ")
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["ok"] is True
-    assert body["data"]["regulation"] is None
+    reg = body["data"]["regulation"]
+    assert reg is not None
+    assert reg["official_source"].startswith("https://")
 
 
 def test_v1_forecast_outlook_cached_only(client, monkeypatch):
