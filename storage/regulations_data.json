@@ -1,0 +1,20 @@
+{
+  "last_updated": "",
+  "snapshot_source": "Manually curated starter snapshot. Replace with current state agency data exports.",
+  "name_map": {
+    "Red drum (puppy drum)": "red_drum",
+    "Speckled trout (spotted seatrout)": "spotted_seatrout",
+    "Striped bass (rockfish)": "striped_bass"
+  },
+  "states": {
+    "NC": {
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Slot limit: 18-27 in; verify emergency proclamations before fishing.",
+        "source": "https://www.deq.nc.gov/about/divisions/marine-fisheries/recreational-fishing"
+      }
+    }
+  }
+}
