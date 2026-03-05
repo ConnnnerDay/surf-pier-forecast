@@ -385,3 +385,66 @@ def test_build_multiday_outlook_uses_daily_nws_period_data(monkeypatch):
     assert [d["day"] for d in outlook] == ["Friday", "Saturday", "Sunday"]
     assert [d["wind"] for d in outlook] == ["SW 9-12 kt", "N 4-7 kt", "E 13-17 kt"]
     assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
+
+
+def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch):
+    from domain import forecast as fc
+
+    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [{"name": "Red drum (puppy drum)"}])
+    monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_gear_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
+
+    captured = {}
+
+    def _calendar(_species, _location=None, fish_region=""):
+        captured["fish_region"] = fish_region
+        return []
+
+    monkeypatch.setattr(fc, "build_species_calendar", _calendar)
+
+    base = {
+        "conditions": {"water_temp_f": 68, "wind": "SW 8-12 kt", "waves": "2-3 ft", "verdict": "Good"},
+        "tide_state": "incoming",
+    }
+    profile = {"fishing_types": ["pier"]}
+    location = {"state": "NC", "fish_region": "southeast", "timezone": "America/New_York", "conditions_region": "atlantic_mid"}
+
+    fc.personalize_forecast(base, profile, location=location)
+
+    assert captured["fish_region"] == "southeast"
+
+
+def test_personalize_forecast_carolina_beach_location_passes_southeast_calendar_region(monkeypatch):
+    from domain import forecast as fc
+    from locations import get_location
+
+    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [{"name": "Red drum (puppy drum)"}])
+    monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_gear_checklist", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
+
+    captured = {}
+
+    def _calendar(_species, _location=None, fish_region=""):
+        captured["fish_region"] = fish_region
+        return []
+
+    monkeypatch.setattr(fc, "build_species_calendar", _calendar)
+
+    base = {
+        "conditions": {"water_temp_f": 68, "wind": "SW 8-12 kt", "waves": "2-3 ft", "verdict": "Good"},
+        "tide_state": "incoming",
+    }
+    profile = {"fishing_types": ["pier"]}
+    location = get_location("carolina-beach-nc")
+
+    assert location and location.get("fish_region") == "southeast"
+
+    fc.personalize_forecast(base, profile, location=location)
+
+    assert captured["fish_region"] == "southeast"

@@ -213,3 +213,18 @@ class TestPersonalizationHardGate:
         assert "Sheepshead" not in names, "Pier-only Sheepshead should be absent for offshore angler"
         assert "Pompano" not in names, "Surf-only Pompano should be absent for offshore angler"
         assert "Speckled trout (spotted seatrout)" not in names, "Inshore-only species should be absent for offshore angler"
+
+
+def test_southeast_calendar_uses_curated_notable_targets_not_dynamic_ranked_list():
+    """Calendar should use sought-after southeast targets, not incoming ranked species list."""
+    # Intentionally pass a ranked list that doesn't match the southeast notable set.
+    ranked = [{"name": "Golden tilefish", "score": 99}]
+
+    cal = build_species_calendar(ranked, fish_region="southeast")
+    names = [row["name"] for row in cal]
+
+    assert "Red drum (puppy drum)" in names
+    assert "Black drum" in names
+    assert "Bluefish" in names
+    assert "Tarpon" not in names
+    assert "Golden tilefish" not in names
