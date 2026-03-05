@@ -1338,6 +1338,9 @@ def build_species_ranking(
     wind_coast = "west" if coast == "west" else "east"
     scored = []
     for sp in SPECIES_DB:
+        # Skip protected/endangered species — they must never appear as targets
+        if sp.get("protected"):
+            continue
         # Skip species from a different coast/region
         if sp.get("coast", "east") != coast:
             continue

@@ -4506,6 +4506,7 @@
   },
   {
     "name": "Goliath grouper (jewfish)",
+    "protected": true,
     "temp_min": 68,
     "temp_max": 86,
     "temp_ideal_low": 74,
@@ -4581,6 +4582,7 @@
   },
   {
     "name": "Atlantic sturgeon",
+    "protected": true,
     "temp_min": 50,
     "temp_max": 78,
     "temp_ideal_low": 58,
@@ -4607,6 +4609,7 @@
   },
   {
     "name": "Shortnose sturgeon",
+    "protected": true,
     "temp_min": 46,
     "temp_max": 72,
     "temp_ideal_low": 52,
@@ -4817,6 +4820,7 @@
   },
   {
     "name": "Kemp's ridley sea turtle",
+    "protected": true,
     "temp_min": 60,
     "temp_max": 85,
     "temp_ideal_low": 70,
@@ -5907,6 +5911,7 @@
   },
   {
     "name": "Nassau grouper",
+    "protected": true,
     "temp_min": 70,
     "temp_max": 84,
     "temp_ideal_low": 76,
