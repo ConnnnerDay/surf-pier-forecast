@@ -16,6 +16,7 @@ from domain.forecast import (
     MONTHLY_AVG_WIND,
     MONTHLY_AVG_WAVES,
     MONTHLY_AVG_WIND_DIR,
+    build_multiday_outlook,
 )
 
 
@@ -341,3 +342,46 @@ def test_heat_index_and_wind_chill_helpers():
     assert _heat_index_f(72, 60) is None
     assert _wind_chill_f(40, 15) is not None
     assert _wind_chill_f(60, 15) is None
+
+
+def test_build_multiday_outlook_uses_daily_nws_period_data(monkeypatch):
+    now = datetime(2026, 3, 5, 12, 0, tzinfo=ZoneInfo("America/New_York"))
+    mock_periods = [
+        {
+            "isDaytime": True,
+            "name": "Friday",
+            "startTime": "2026-03-06T06:00:00-05:00",
+            "windSpeed": "10 to 14 mph",
+            "windDirection": "SW",
+            "detailedForecast": "Southwest wind 10 to 14 mph. Seas 2 to 3 ft.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Saturday",
+            "startTime": "2026-03-07T06:00:00-05:00",
+            "windSpeed": "5 to 8 mph",
+            "windDirection": "N",
+            "detailedForecast": "North wind 5 to 8 mph. Seas 1 to 2 ft.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Sunday",
+            "startTime": "2026-03-08T06:00:00-05:00",
+            "windSpeed": "15 to 20 mph",
+            "windDirection": "E",
+            "detailedForecast": "East wind 15 to 20 mph. Seas 4 to 6 ft.",
+        },
+    ]
+
+    monkeypatch.setattr("domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods)
+    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr("domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None))
+
+    outlook = build_multiday_outlook(
+        now,
+        {"lat": 34.2, "lng": -77.8, "timezone": "America/New_York", "conditions_region": "atlantic_mid"},
+    )
+
+    assert [d["day"] for d in outlook] == ["Friday", "Saturday", "Sunday"]
+    assert [d["wind"] for d in outlook] == ["SW 9-12 kt", "N 4-7 kt", "E 13-17 kt"]
+    assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
