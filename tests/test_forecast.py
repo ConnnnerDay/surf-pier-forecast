@@ -387,6 +387,47 @@ def test_build_multiday_outlook_uses_daily_nws_period_data(monkeypatch):
     assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
 
 
+def test_build_multiday_outlook_estimates_waves_from_daily_wind_when_missing(monkeypatch):
+    now = datetime(2026, 3, 5, 12, 0, tzinfo=ZoneInfo("America/New_York"))
+    mock_periods = [
+        {
+            "isDaytime": True,
+            "name": "Friday",
+            "startTime": "2026-03-06T06:00:00-05:00",
+            "windSpeed": "8 to 10 mph",
+            "windDirection": "SW",
+            "detailedForecast": "Southwest wind 8 to 10 mph.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Saturday",
+            "startTime": "2026-03-07T06:00:00-05:00",
+            "windSpeed": "15 to 18 mph",
+            "windDirection": "N",
+            "detailedForecast": "North wind 15 to 18 mph.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Sunday",
+            "startTime": "2026-03-08T06:00:00-05:00",
+            "windSpeed": "22 to 26 mph",
+            "windDirection": "E",
+            "detailedForecast": "East wind 22 to 26 mph.",
+        },
+    ]
+
+    monkeypatch.setattr("domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods)
+    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr("domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None))
+
+    outlook = build_multiday_outlook(
+        now,
+        {"lat": 34.2, "lng": -77.8, "timezone": "America/New_York", "conditions_region": "atlantic_mid"},
+    )
+
+    assert [d["waves"] for d in outlook] == ["1-2 ft", "2-4 ft", "3-6 ft"]
+
+
 def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch):
     from domain import forecast as fc
 

@@ -505,6 +505,16 @@ def build_multiday_outlook(
     # Try NWS extended forecast for wind data
     nws_periods = _fetch_nws_extended(loc_lat, loc_lng)
 
+    def _estimate_wave_range_from_wind(day_wind_range: Optional[Tuple[float, float]]) -> Optional[Tuple[float, float]]:
+        """Estimate wave range from forecast wind when marine seas are unavailable."""
+        if not day_wind_range:
+            return None
+        avg_kt = (day_wind_range[0] + day_wind_range[1]) / 2
+        low_ft = max(1.0, float(math.floor(avg_kt / 6)))
+        high_ft = max(low_ft + 1.0, float(math.ceil(avg_kt / 4)))
+        high_ft = min(high_ft, 12.0)
+        return (low_ft, high_ft)
+
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
         future = now + timedelta(days=offset_days)
@@ -580,6 +590,12 @@ def build_multiday_outlook(
                 high_ft = float(sea_match.group(2)) if sea_match.group(2) else low_ft
                 wave_range = (low_ft, high_ft)
                 wave_str = f"{int(low_ft)}-{int(high_ft)} ft"
+
+        if not wave_range and wind_range:
+            est_wave_range = _estimate_wave_range_from_wind(wind_range)
+            if est_wave_range:
+                wave_range = est_wave_range
+                wave_str = f"{int(est_wave_range[0])}-{int(est_wave_range[1])} ft"
 
         if location:
             if not wave_range:
