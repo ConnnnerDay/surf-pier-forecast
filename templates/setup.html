@@ -49,14 +49,14 @@
         <section class="setup-section">
             <h2>Pick on the Map</h2>
             <p class="section-sub">Click anywhere on the coast to find the nearest supported fishing location</p>
-            <div id="map" style="height: 400px; border-radius: 8px; margin-bottom: 1rem;"></div>
+            <div id="map" data-supported-locations='{{ all_locations|tojson|safe }}' style="height: 400px; border-radius: 8px; margin-bottom: 1rem;"></div>
             <form method="post" action="{{ url_for('views.setup_coords') }}" class="zip-form" id="map-coords-form" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="location_lat" id="location_lat">
                 <input type="hidden" name="location_lon" id="location_lon">
                 <button type="submit" class="zip-btn" id="map-submit-btn" disabled>Find Nearest Location</button>
             </form>
-            <p id="map-hint" class="setup-help">Click the map to drop a pin, then press the button above.</p>
+            <p id="map-hint" class="setup-help">Click a supported location marker (NOAA-backed) to continue.</p>
         </section>
 
         <section class="setup-section">
