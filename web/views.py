@@ -31,6 +31,26 @@ from web.helpers import get_session_location
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
 
+# Routes that are accessible without authentication (shareable forecast links).
+_PUBLIC_ENDPOINTS = {"views.shared_forecast"}
+
+
+@bp.before_request
+def _require_login() -> Any:
+    """Redirect unauthenticated users to the registration page.
+
+    Shareable /f/<id> links remain public so they can be shared freely.
+    When no authenticated user is present we also clear any stale
+    location_id that may have been left in the session from a previous
+    login, so it cannot bleed across accounts.
+    """
+    if request.endpoint in _PUBLIC_ENDPOINTS:
+        return
+    if g.user is None:
+        # Clear stale per-user state from the cookie.
+        session.pop("location_id", None)
+        return redirect(url_for("auth.register"))
+
 
 def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     """Build common template context for the setup page."""
