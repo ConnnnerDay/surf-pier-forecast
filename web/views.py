@@ -294,6 +294,15 @@ def live_cams() -> str:
     return render_template("live_cams.html", location=location, **cam_context)
 
 
+@bp.route("/fishing-log")
+def fishing_log() -> str:
+    """Render the dedicated fishing log page for the selected location."""
+    location = get_session_location()
+    if location is None:
+        return redirect(url_for("views.setup"))
+    return render_template("fishing_log.html", location=location)
+
+
 @bp.route("/setup")
 def setup() -> str:
     """Show the location setup page (zip code entry or browse)."""
