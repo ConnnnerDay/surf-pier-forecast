@@ -4,6 +4,7 @@ import pytest
 
 from domain.species import (
     SPECIES_DB,
+    _regulation_disallows_keep,
     _score_species,
     _species_matches_profile,
     build_natural_bait_chart,
@@ -213,3 +214,38 @@ class TestPersonalizationHardGate:
         assert "Sheepshead" not in names, "Pier-only Sheepshead should be absent for offshore angler"
         assert "Pompano" not in names, "Surf-only Pompano should be absent for offshore angler"
         assert "Speckled trout (spotted seatrout)" not in names, "Inshore-only species should be absent for offshore angler"
+
+
+class TestRegulationHarvestFilter:
+    def test_regulation_disallow_parser(self):
+        assert _regulation_disallows_keep({"bag_limit": "0/day"}) is True
+        assert _regulation_disallows_keep({"notes": "Catch and release only."}) is True
+        assert _regulation_disallows_keep({"season": "Open year-round"}) is False
+
+    def test_ranking_hides_species_that_cannot_be_kept(self, monkeypatch):
+        def fake_lookup(species_name, _state):
+            if species_name == "Sheepshead":
+                return {
+                    "bag_limit": "0/day",
+                    "season": "Open",
+                    "notes": "No harvest",
+                }
+            return {
+                "bag_limit": "5/day",
+                "season": "Open",
+                "notes": "",
+            }
+
+        monkeypatch.setattr("domain.species.lookup_regulation", fake_lookup)
+
+        ranking = build_species_ranking(
+            month=3,
+            water_temp=62,
+            coast="east",
+            fishing_types=["pier"],
+            state="NC",
+        )
+        names = [sp["name"] for sp in ranking]
+
+        assert "Sheepshead" not in names
+        assert [sp["rank"] for sp in ranking] == list(range(1, len(ranking) + 1))

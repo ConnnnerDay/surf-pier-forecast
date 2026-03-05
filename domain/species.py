@@ -1305,6 +1305,35 @@ def _conditions_modifier(
 SPECIES_SCORE_THRESHOLD = 30
 
 
+def _regulation_disallows_keep(regulation: Dict[str, str]) -> bool:
+    """Return True when regulations indicate harvest/retention is not legal."""
+    bag_limit = str(regulation.get("bag_limit") or "").strip().lower()
+    season = str(regulation.get("season") or "").strip().lower()
+    notes = str(regulation.get("notes") or "").strip().lower()
+
+    combined = " ".join(part for part in (bag_limit, season, notes) if part)
+    if not combined:
+        return False
+
+    if bag_limit in {"0", "0/day", "0 per day", "0 fish", "none"}:
+        return True
+
+    blocked_phrases = (
+        "catch and release only",
+        "catch-and-release only",
+        "no harvest",
+        "harvest prohibited",
+        "retention prohibited",
+        "possession prohibited",
+        "must be released",
+        "cannot be retained",
+        "closed season",
+        "season closed",
+        "closed year-round",
+    )
+    return any(phrase in combined for phrase in blocked_phrases)
+
+
 def build_species_ranking(
     month: int,
     water_temp: float,
@@ -1362,7 +1391,7 @@ def build_species_ranking(
     scored.sort(key=lambda x: x[0], reverse=True)
 
     result: List[Dict[str, Any]] = []
-    for rank, (score, sp, explanation) in enumerate(scored[:10], start=1):
+    for score, sp, explanation in scored:
         if score >= 65:
             activity = "Hot"
         elif score >= 50:
@@ -1371,7 +1400,7 @@ def build_species_ranking(
             activity = "Possible"
 
         entry: Dict[str, Any] = {
-            "rank": rank,
+            "rank": len(result) + 1,
             "name": sp["name"],
             "score": round(score, 1),
             "activity": activity,
@@ -1386,9 +1415,13 @@ def build_species_ranking(
         if state:
             reg = lookup_regulation(sp["name"], state)
             if reg:
+                if _regulation_disallows_keep(reg):
+                    continue
                 entry["regulation"] = reg
 
         result.append(entry)
+        if len(result) >= 10:
+            break
 
     return result
 
