@@ -127,6 +127,23 @@
         tryProvider();
     }
 
+    function escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function buildLocationPopup(loc) {
+        return '' +
+            '<div class="setup-map-popup">' +
+            '<p class="setup-map-popup__title">' + escapeHtml(loc.name) + ', ' + escapeHtml(loc.state) + '</p>' +
+            '<button type="button" class="setup-map-popup__select" data-map-select-location="' + escapeHtml(loc.id) + '">Select this location</button>' +
+            '</div>';
+    }
+
     function buildMap(mapEl, locations, latInput, lonInput, submitBtn, hint) {
         var map = L.map(mapEl).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
         addBestAvailableTileLayer(map);
@@ -154,11 +171,13 @@
         }
 
         var bounds = [];
+        var byId = {};
         locations.forEach(function (loc) {
             var lat = Number(loc.lat);
             var lng = Number(loc.lng);
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
+            byId[String(loc.id)] = loc;
             bounds.push([lat, lng]);
             var marker = L.circleMarker([lat, lng], {
                 radius: 5,
@@ -167,8 +186,21 @@
                 fillColor: '#1285a6',
                 fillOpacity: 0.85
             }).addTo(map);
-            marker.bindPopup(loc.name + ', ' + loc.state);
+            marker.bindPopup(buildLocationPopup(loc));
             marker.on('click', function () { selectLocation(loc); });
+        });
+
+        map.on('popupopen', function (event) {
+            var popupEl = event.popup && event.popup.getElement();
+            if (!popupEl) return;
+            var selectBtn = popupEl.querySelector('[data-map-select-location]');
+            if (!selectBtn) return;
+            selectBtn.addEventListener('click', function () {
+                var selectedLoc = byId[selectBtn.getAttribute('data-map-select-location')];
+                if (!selectedLoc) return;
+                selectLocation(selectedLoc);
+                map.closePopup(event.popup);
+            }, { once: true });
         });
 
         if (bounds.length) {

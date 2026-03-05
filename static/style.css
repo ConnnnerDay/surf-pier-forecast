@@ -2962,6 +2962,33 @@ footer p {
   font-size: 0.82rem;
 }
 
+.setup-map-popup {
+  min-width: 180px;
+}
+
+.setup-map-popup__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+
+.setup-map-popup__select {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  background: var(--ocean);
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.setup-map-popup__select:hover {
+  background: #14738c;
+}
+
 
 .map-fallback {
   height: auto !important;
