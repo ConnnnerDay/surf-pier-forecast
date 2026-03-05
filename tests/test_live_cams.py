@@ -17,3 +17,41 @@ def test_find_nearby_live_cams_can_exclude_pier_cams():
 
     assert any(cam["cam_type"] == "pier" for cam in all_cams)
     assert all(cam["cam_type"] != "pier" for cam in beach_only)
+
+
+def test_live_cam_context_parses_string_fishing_types(monkeypatch):
+    from web import views
+
+    monkeypatch.setattr(
+        views,
+        "find_nearby_live_cams",
+        lambda *_args, **kwargs: [{"url": "https://cam.example", "name": "Example", "cam_type": "pier", "distance_miles": 2.5}],
+    )
+    monkeypatch.setattr(views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"})
+
+    context = views._build_live_cam_context(
+        {"lat": 34.0, "lng": -77.0},
+        {"fishing_types": "pier,surf"},
+    )
+
+    assert context["pier_cams_enabled"] is True
+    assert context["nearby_live_cams"][0]["is_live"] is True
+
+
+def test_live_cam_context_handles_unknown_status(monkeypatch):
+    from web import views
+
+    monkeypatch.setattr(
+        views,
+        "find_nearby_live_cams",
+        lambda *_args, **kwargs: [{"url": "https://cam.example", "name": "Example", "cam_type": "beach", "distance_miles": 1.1}],
+    )
+
+    def _explode(_url):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(views, "_cam_status", _explode)
+
+    context = views._build_live_cam_context({"lat": 34.0, "lng": -77.0}, None)
+    assert context["nearby_live_cams"][0]["status_label"] == "Unavailable"
+    assert context["nearby_live_cams"][0]["is_live"] is False

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Optional
 
 import requests
@@ -69,7 +70,13 @@ def _cam_status(url: str) -> Dict[str, Any]:
 
 def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Build nearby live cam data and availability indicators."""
-    fishing_types = set((profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or [])
+
+    raw_types = (profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or []
+    if isinstance(raw_types, str):
+        fishing_types = {t.strip() for t in raw_types.split(",") if t.strip()}
+    else:
+        fishing_types = {str(t).strip() for t in raw_types if str(t).strip()}
+
     include_pier_cams = (not fishing_types) or ("pier" in fishing_types)
     cams = find_nearby_live_cams(
         location["lat"],
@@ -78,10 +85,24 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
         include_pier_cams=include_pier_cams,
     )
 
+    statuses: Dict[str, Dict[str, Any]] = {}
+    if cams:
+        max_workers = min(6, len(cams))
+        def _safe_status(cam: Dict[str, Any]) -> Dict[str, Any]:
+            try:
+                return _cam_status(cam["url"])
+            except Exception:
+                logger.exception("cam.status_check_failed url=%s", cam.get("url"))
+                return {"is_live": False, "status_label": "Unavailable"}
+
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            for cam, status in zip(cams, pool.map(_safe_status, cams)):
+                statuses[cam["url"]] = status
+
     enhanced_cams = []
     for cam in cams:
         entry = dict(cam)
-        entry.update(_cam_status(cam["url"]))
+        entry.update(statuses.get(cam["url"], {"is_live": False, "status_label": "Unavailable"}))
         enhanced_cams.append(entry)
 
     return {
