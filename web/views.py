@@ -184,11 +184,13 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
 
     # Apply profile-based personalization (re-rank species for this user).
     # Query params take precedence; fall back to the user's stored DB profile.
+    stored_profile: Dict[str, Any] = {}
+    if g.user:
+        stored_profile = get_preferences(g.user["id"]).get("fishing_profile") or {}
+
     profile = _extract_profile_from_request()
-    if not profile and g.user:
-        stored = get_preferences(g.user["id"]).get("fishing_profile") or {}
-        if stored.get("fishing_types") or stored.get("targets"):
-            profile = stored
+    if not profile and (stored_profile.get("fishing_types") or stored_profile.get("targets")):
+        profile = stored_profile
     if profile:
         forecast = personalize_forecast(forecast, profile, location)
 
@@ -205,8 +207,17 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
     # displayed value reflects *now*, not the moment the forecast was cached.
     forecast["uv"] = recompute_current_uv(location)
 
-    return render_template("index.html", forecast=forecast, cached=cached_flag,
-                           share_id=loc_id)
+    client_profile = dict(stored_profile)
+    if profile:
+        client_profile.update(profile)
+
+    return render_template(
+        "index.html",
+        forecast=forecast,
+        cached=cached_flag,
+        share_id=loc_id,
+        profile=client_profile,
+    )
 
 
 @bp.route("/")

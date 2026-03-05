@@ -505,17 +505,17 @@
 
     renderFavorites();
 
-    /* ---- Fishing Profile (localStorage → server-side filtering) ---- */
-    var PROFILE_KEY = 'fishing_profile';
+    /* ---- Fishing Profile (account-backed) ---- */
+    var SERVER_PROFILE = {{ (profile or {})|tojson }};
 
     function getProfile() {
-        try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; }
-        catch(e) { return null; }
+        if (!SERVER_PROFILE || !Object.keys(SERVER_PROFILE).length) return null;
+        return SERVER_PROFILE;
     }
 
     function buildProfileParams(profile) {
         var params = new URLSearchParams(window.location.search);
-        var ft = (profile.fishing_type || []).join(',');
+        var ft = (profile.fishing_types || profile.fishing_type || []).join(',');
         var tg = (profile.targets || []).join(',');
         if (ft) params.set('fishing_types', ft);
         else params.delete('fishing_types');
@@ -528,7 +528,7 @@
         var params = new URLSearchParams(window.location.search);
         var currentFt = params.get('fishing_types') || '';
         var currentTg = params.get('targets') || '';
-        var expectedFt = (profile.fishing_type || []).join(',');
+        var expectedFt = (profile.fishing_types || profile.fishing_type || []).join(',');
         var expectedTg = (profile.targets || []).join(',');
         return currentFt === expectedFt && currentTg === expectedTg;
     }
@@ -549,8 +549,9 @@
             'bottom': 'Bottom', 'pelagic': 'Pelagics', 'structure': 'Structure',
             'gamefish': 'Big Game', 'anything': 'All Species'
         };
-        if (profile.fishing_type && profile.fishing_type.length) {
-            profile.fishing_type.forEach(function(t) {
+        var fishingTypes = profile.fishing_types || profile.fishing_type || [];
+        if (fishingTypes.length) {
+            fishingTypes.forEach(function(t) {
                 html += '<span class="profile-tag">' + (labels[t] || t) + '</span>';
             });
         }
@@ -657,9 +658,9 @@
         var profile = getProfile();
         if (!profile || !profile.completed) {
             // First visit — redirect to profile setup
-            var profilePrompted = localStorage.getItem('profile_prompted');
+            var profilePrompted = sessionStorage.getItem('profile_prompted');
             if (!profilePrompted) {
-                localStorage.setItem('profile_prompted', 'true');
+                sessionStorage.setItem('profile_prompted', 'true');
                 window.location.href = '/profile';
                 return;
             }
