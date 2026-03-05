@@ -2950,6 +2950,48 @@ footer p {
   font-size: 0.82rem;
 }
 
+
+.map-fallback {
+  height: auto !important;
+  min-height: 210px;
+  border: 1px solid #d1d9e0;
+  background: #f6fbfd;
+  padding: 1rem;
+  display: grid;
+  gap: 0.7rem;
+  color: var(--text);
+}
+
+.map-fallback-controls {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.map-fallback-controls label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.map-fallback-controls input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #c6d1da;
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.map-fallback-controls button {
+  width: fit-content;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--ocean);
+  color: var(--white);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* -- Auth pages -- */
 
 .auth-section {
