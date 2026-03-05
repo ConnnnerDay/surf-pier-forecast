@@ -5,7 +5,7 @@
   <ul id="app-nav-links" class="app-nav-links">
     <li><a href="{{ url_for('views.index') }}">Dashboard</a></li>
     <li><a href="{{ url_for('views.live_cams') }}">Live Cams</a></li>
-    <li><a href="{{ url_for('views.index') }}#fish-log">Fishing Log</a></li>
+    <li><a href="{{ url_for('views.fishing_log') }}">Fishing Log</a></li>
     {% if user %}
     <li><a href="{{ url_for('auth.account') }}">Account</a></li>
     {% endif %}
