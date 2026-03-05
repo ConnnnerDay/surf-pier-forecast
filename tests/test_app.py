@@ -89,6 +89,16 @@ def test_live_cams_tab_present_in_nav():
     assert "Live Cams" in nav
 
 
+
+
+def test_location_and_profile_live_under_account_nav():
+    from pathlib import Path
+    nav = Path("templates/partials/_main_nav.html").read_text(encoding="utf-8")
+    assert "Account" in nav
+    assert "app-nav-submenu" in nav
+    assert "views.setup" in nav
+    assert "views.profile" in nav
+
 def test_live_cams_have_dedicated_template():
     from pathlib import Path
     template = Path("templates/live_cams.html").read_text(encoding="utf-8")
