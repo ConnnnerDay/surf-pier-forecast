@@ -144,6 +144,31 @@ def test_setup_favorite_toggle_updates_preferences(client):
     assert "wrightsville-beach-nc" not in get_preferences(uid)["favorites"]
 
 
+def test_setup_location_select_forms_include_valid_csrf(client):
+    uid = create_user("setup_select_csrf_user", "Aa123456")
+    assert uid is not None
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+
+    page = client.get("/setup")
+    html = page.data.decode("utf-8")
+    page_token = _csrf_from_html(page.data)
+
+    select_match = re.search(
+        r'action="(/setup/select/[^"]+)"[^>]*>\s*\n\s*<input type="hidden" name="csrf_token" value="([^"]*)"',
+        html,
+    )
+    assert select_match is not None
+
+    action, select_token = select_match.groups()
+    assert select_token == page_token
+
+    resp = client.post(action, data={"csrf_token": select_token}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/")
+
+
 def test_setup_favorite_rejects_external_next_redirect(client):
     uid = create_user("toggle_fav_user_next", "Aa123456")
     assert uid is not None
