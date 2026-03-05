@@ -1199,7 +1199,7 @@
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/static/sw.js').catch(function(){});
+        navigator.serviceWorker.register('/sw.js').catch(function(){});
     }
 
     // Auto-refresh forecast every 30 minutes

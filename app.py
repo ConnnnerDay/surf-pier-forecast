@@ -26,7 +26,7 @@ import secrets
 from datetime import timedelta
 from typing import Any, Dict
 
-from flask import Flask, abort, g, request, session
+from flask import Flask, abort, g, request, send_from_directory, session
 import werkzeug
 
 from storage.sqlite import init_db, get_user
@@ -94,6 +94,22 @@ def create_app() -> Flask:
             "user": getattr(g, "user", None),
             "csrf_token": _get_csrf_token(),
         }
+
+    # -- Service worker at root scope --------------------------------------
+
+    @app.route("/sw.js")
+    def service_worker() -> Any:
+        """Serve the service worker from the root so its scope covers the whole app.
+
+        A SW registered from /static/sw.js defaults to a scope of /static/ and
+        cannot intercept navigations to / or API calls.  Serving it from /sw.js
+        gives it the full-site scope it needs for offline support and cache
+        strategies to work on mobile.
+        """
+        resp = send_from_directory(app.static_folder, "sw.js")
+        resp.headers["Service-Worker-Allowed"] = "/"
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
     # -- Register blueprints -----------------------------------------------
 
