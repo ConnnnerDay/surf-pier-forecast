@@ -167,6 +167,18 @@ def test_v1_regulations_with_state_returns_envelope(client):
     assert "source_file" in reg
 
 
+def test_v1_regulations_species_lookup_is_case_insensitive(client):
+    """Species lookup should work even when species capitalization differs."""
+    resp = client.get("/api/v1/regulations?species=red+drum+%28puppy+drum%29&state=NC")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    reg = body["data"]["regulation"]
+    assert reg is not None
+    assert reg["data_status"] == "snapshot"
+    assert reg["min_size"] == "18 in TL"
+
+
 def test_v1_regulations_unknown_species_returns_null(client):
     """Species without snapshot rows still returns official-source guidance."""
     resp = client.get("/api/v1/regulations?species=Fantasy+Fish&state=NC")

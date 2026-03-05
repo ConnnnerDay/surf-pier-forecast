@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from threading import Lock
 from time import monotonic
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from storage.species_loader import SPECIES_DB
 
@@ -48,10 +49,41 @@ _FALLBACK_SOURCE = "https://www.fisheries.noaa.gov/recreational-fishing-rules"
 class _RegData:
     def __init__(self) -> None:
         self.name_map: Dict[str, str] = {}
+        self.normalized_name_map: Dict[str, str] = {}
         self.states: Dict[str, Dict[str, Dict[str, str]]] = {}
         self.last_updated: str = ""
         self.snapshot_source: str = ""
         self.source_file: str = ""
+
+
+def _normalize_species_name(name: str) -> str:
+    return (
+        str(name or "")
+        .lower()
+        .replace("(", "")
+        .replace(")", "")
+        .replace("/", " ")
+        .replace("-", " ")
+        .replace(",", "")
+        .strip()
+        .replace(" ", "_")
+    )
+
+
+def _species_name_variants(name: str) -> List[str]:
+    raw = str(name or "").strip()
+    variants: List[str] = []
+
+    normalized = _normalize_species_name(raw)
+    if normalized:
+        variants.append(normalized)
+
+    no_parenthetical = re.sub(r"\s*\([^)]*\)", "", raw).strip()
+    normalized_no_paren = _normalize_species_name(no_parenthetical)
+    if normalized_no_paren and normalized_no_paren not in variants:
+        variants.append(normalized_no_paren)
+
+    return variants
 
 
 _REG_DATA = _RegData()
@@ -65,16 +97,7 @@ def _build_default_name_map() -> Dict[str, str]:
         name = str(entry.get("name") or "").strip()
         if not name:
             continue
-        key = (
-            name.lower()
-            .replace("(", "")
-            .replace(")", "")
-            .replace("/", " ")
-            .replace("-", " ")
-            .replace(",", "")
-            .strip()
-            .replace(" ", "_")
-        )
+        key = _normalize_species_name(name)
         default_map[name] = key
     return default_map
 
@@ -87,6 +110,10 @@ def _resolve_path() -> Path:
 def _load_data_file() -> _RegData:
     data = _RegData()
     data.name_map = _build_default_name_map()
+    data.normalized_name_map = {}
+    for name, key in data.name_map.items():
+        for variant in _species_name_variants(name):
+            data.normalized_name_map[variant] = key
 
     path = _resolve_path()
     data.source_file = str(path)
@@ -101,7 +128,11 @@ def _load_data_file() -> _RegData:
     if isinstance(custom_name_map, dict):
         for name, key in custom_name_map.items():
             if isinstance(name, str) and isinstance(key, str) and name.strip() and key.strip():
-                data.name_map[name.strip()] = key.strip()
+                clean_name = name.strip()
+                clean_key = key.strip()
+                data.name_map[clean_name] = clean_key
+                for variant in _species_name_variants(clean_name):
+                    data.normalized_name_map[variant] = clean_key
 
     states = raw.get("states")
     if isinstance(states, dict):
@@ -139,6 +170,7 @@ def _ensure_data_loaded() -> None:
             return
         loaded = _load_data_file()
         _REG_DATA.name_map = loaded.name_map
+        _REG_DATA.normalized_name_map = loaded.normalized_name_map
         _REG_DATA.states = loaded.states
         _REG_DATA.last_updated = loaded.last_updated
         _REG_DATA.snapshot_source = loaded.snapshot_source
@@ -171,8 +203,21 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
 
     payload = _base_payload(state_key)
     species_key = _REG_DATA.name_map.get(species_name)
-    state_regs = _REG_DATA.states.get(state_key) if species_key else None
-    matched = state_regs.get(species_key) if state_regs else None
+    normalized_variants = _species_name_variants(species_name)
+    if not species_key:
+        for normalized_name in normalized_variants:
+            species_key = _REG_DATA.normalized_name_map.get(normalized_name)
+            if species_key:
+                break
+    state_regs = _REG_DATA.states.get(state_key)
+    if not species_key and state_regs:
+        # Support callers that already pass a normalized regulations key.
+        for normalized_name in normalized_variants:
+            if normalized_name in state_regs:
+                species_key = normalized_name
+                break
+
+    matched = state_regs.get(species_key) if state_regs and species_key else None
 
     if matched:
         payload.update(matched)
