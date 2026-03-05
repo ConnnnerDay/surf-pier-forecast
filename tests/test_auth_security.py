@@ -166,7 +166,39 @@ def test_setup_location_select_forms_include_valid_csrf(client):
 
     resp = client.post(action, data={"csrf_token": select_token}, follow_redirects=False)
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
+
+
+def test_index_requires_profile_after_location_selected(client):
+    uid = create_user("profile_gate_user", "Aa123456")
+    assert uid is not None
+    save_preferences(uid, location_id="wrightsville-beach-nc", default_location_id="wrightsville-beach-nc")
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["location_id"] = "wrightsville-beach-nc"
+
+    resp = client.get("/", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/profile")
+
+
+def test_index_allowed_once_profile_exists(client):
+    uid = create_user("profile_gate_done_user", "Aa123456")
+    assert uid is not None
+    save_preferences(
+        uid,
+        location_id="wrightsville-beach-nc",
+        default_location_id="wrightsville-beach-nc",
+        fishing_profile={"fishing_types": ["surf"], "targets": ["anything"]},
+    )
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["location_id"] = "wrightsville-beach-nc"
+
+    resp = client.get("/", follow_redirects=False)
+    assert resp.status_code == 200
 
 
 def test_setup_favorite_rejects_external_next_redirect(client):
