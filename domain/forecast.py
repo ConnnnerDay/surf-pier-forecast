@@ -517,21 +517,39 @@ def build_multiday_outlook(
         wind_str = ""
         wind_range = None
         wind_dir_day = ""
+        day_period = None
         if nws_periods:
             for p in nws_periods:
-                if p.get("isDaytime") and p.get("name", "").lower().startswith(day_label[:3].lower()):
-                    ws = p.get("windSpeed", "")
-                    wd = p.get("windDirection", "")
-                    wind_dir_day = wd or ""
-                    m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
-                    if m:
-                        low_mph = float(m.group(1))
-                        high_mph = float(m.group(2)) if m.group(2) else low_mph
-                        low_kt = round(low_mph * _MPH_TO_KNOTS)
-                        high_kt = round(high_mph * _MPH_TO_KNOTS)
-                        wind_range = (low_kt, high_kt)
-                        wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
+                if not p.get("isDaytime"):
+                    continue
+
+                start_raw = p.get("startTime")
+                if start_raw:
+                    try:
+                        period_dt = datetime.fromisoformat(start_raw)
+                        if period_dt.astimezone(tz).date() == future.date():
+                            day_period = p
+                            break
+                    except ValueError:
+                        logger.debug("Unable to parse NWS period startTime: %s", start_raw)
+
+                # Fallback for API payloads that omit startTime.
+                if p.get("name", "").lower().startswith(day_label[:3].lower()):
+                    day_period = p
                     break
+
+        if day_period:
+            ws = day_period.get("windSpeed", "")
+            wd = day_period.get("windDirection", "")
+            wind_dir_day = wd or ""
+            m = re.search(r"(\d+)(?:\s*to\s*(\d+))?\s*mph", ws, re.IGNORECASE)
+            if m:
+                low_mph = float(m.group(1))
+                high_mph = float(m.group(2)) if m.group(2) else low_mph
+                low_kt = round(low_mph * _MPH_TO_KNOTS)
+                high_kt = round(high_mph * _MPH_TO_KNOTS)
+                wind_range = (low_kt, high_kt)
+                wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
 
         if not wind_str:
             # Use regional fallback
@@ -549,14 +567,30 @@ def build_multiday_outlook(
 
         # --- Wave estimate ---
         wave_str = ""
+        wave_range = None
+        if day_period:
+            marine_text = day_period.get("detailedForecast", "")
+            sea_match = re.search(
+                r"(?:seas?|waves?)\s*(?:around\s+)?(\d+)(?:\s*to\s*(\d+))?\s*(?:ft|feet|foot)",
+                marine_text,
+                re.IGNORECASE,
+            )
+            if sea_match:
+                low_ft = float(sea_match.group(1))
+                high_ft = float(sea_match.group(2)) if sea_match.group(2) else low_ft
+                wave_range = (low_ft, high_ft)
+                wave_str = f"{int(low_ft)}-{int(high_ft)} ft"
+
         if location:
-            fb_wind_r, fb_wave_r, _ = get_fallback_conditions(location, future_month)
-            wave_str = f"{int(fb_wave_r[0])}-{int(fb_wave_r[1])} ft"
-            wave_range = fb_wave_r
+            if not wave_range:
+                fb_wind_r, fb_wave_r, _ = get_fallback_conditions(location, future_month)
+                wave_str = f"{int(fb_wave_r[0])}-{int(fb_wave_r[1])} ft"
+                wave_range = fb_wave_r
         else:
-            wave_avg = MONTHLY_AVG_WAVES.get(future_month, (1, 3))
-            wave_str = f"{int(wave_avg[0])}-{int(wave_avg[1])} ft"
-            wave_range = wave_avg
+            if not wave_range:
+                wave_avg = MONTHLY_AVG_WAVES.get(future_month, (1, 3))
+                wave_str = f"{int(wave_avg[0])}-{int(wave_avg[1])} ft"
+                wave_range = wave_avg
 
         # --- Region + water temperature context ---
         cr = (location or {}).get("conditions_region", "atlantic_mid")
