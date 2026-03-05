@@ -346,3 +346,35 @@ def test_v1_forecast_section_endpoints_404_when_missing_cache(client, monkeypatc
     solunar = client.get("/api/v1/forecast/wrightsville-beach-nc/solunar")
     assert solunar.status_code == 404
     assert solunar.get_json()["error"]["code"] == "forecast_not_cached"
+
+
+def test_v1_forecast_section_endpoints_fall_back_to_shared_cache_for_logged_in_user(client, app, monkeypatch):
+    calls = []
+
+    def _fake_load(loc_id, user_id=None):
+        calls.append((loc_id, user_id))
+        if user_id is None:
+            return {
+                "outlook": [{"day": "Tue", "date": "Apr 2", "verdict": "Fair", "wind": "8 kt", "waves": "1 ft"}],
+                "solunar": {"rating": "Good", "moon_phase": "Waxing"},
+            }
+        return None
+
+    monkeypatch.setattr("web.api.load_cached_forecast", _fake_load)
+
+    with app.test_request_context("/"):
+        from flask import g
+        from web.api import forecast_outlook_v1, forecast_solunar_v1
+
+        g.user = {"id": 999}
+
+        outlook_resp = forecast_outlook_v1("wrightsville-beach-nc")
+        solunar_resp = forecast_solunar_v1("wrightsville-beach-nc")
+
+        assert outlook_resp.status_code == 200
+        assert outlook_resp.get_json()["data"]["outlook"][0]["day"] == "Tue"
+        assert solunar_resp.status_code == 200
+        assert solunar_resp.get_json()["data"]["solunar"]["rating"] == "Good"
+
+    assert ("wrightsville-beach-nc", 999) in calls
+    assert ("wrightsville-beach-nc", None) in calls

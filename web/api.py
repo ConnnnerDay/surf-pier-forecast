@@ -278,6 +278,10 @@ def forecast_outlook_v1(location_id: str) -> Any:
     """Return cached 3-day outlook payload for lazy dashboard hydration."""
     user_id = g.user["id"] if g.user else None
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
+    if not forecast_data and user_id is not None:
+        # Dashboard renders from the shared cache namespace today; fall back so
+        # authenticated users can still hydrate lazy sections.
+        forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
         return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
 
@@ -294,6 +298,8 @@ def forecast_solunar_v1(location_id: str) -> Any:
     """Return cached solunar payload for lazy dashboard hydration."""
     user_id = g.user["id"] if g.user else None
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
+    if not forecast_data and user_id is not None:
+        forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
         return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
 

@@ -691,13 +691,27 @@
 
     function parseTimeLabelToMinutes(label) {
         if (!label) return 0;
-        var m = label.match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
-        if (!m) return 0;
-        var h = parseInt(m[1], 10) % 12;
-        var mins = parseInt(m[2], 10);
-        var mer = m[3].toUpperCase();
-        if (mer === 'PM') h += 12;
-        return h * 60 + mins;
+
+        var amPmMatch = label.match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
+        if (amPmMatch) {
+            var h = parseInt(amPmMatch[1], 10) % 12;
+            var mins = parseInt(amPmMatch[2], 10);
+            var mer = amPmMatch[3].toUpperCase();
+            if (mer === 'PM') h += 12;
+            return h * 60 + mins;
+        }
+
+        // Fallback for raw NOAA timestamps like "2026-03-05 06:32".
+        var timestampMatch = label.match(/(?:\d{4}-\d{2}-\d{2}\s+)?(\d{1,2}):(\d{2})/);
+        if (timestampMatch) {
+            var hours24 = parseInt(timestampMatch[1], 10);
+            var minutes24 = parseInt(timestampMatch[2], 10);
+            if (!Number.isNaN(hours24) && !Number.isNaN(minutes24)) {
+                return hours24 * 60 + minutes24;
+            }
+        }
+
+        return 0;
     }
 
     function formatMinutesToLabel(totalMinutes) {
