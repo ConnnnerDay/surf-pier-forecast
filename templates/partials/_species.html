@@ -4,7 +4,7 @@
             <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
-                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}"{% endif %}>
+                <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}"{% endif %}>
                     <div class="species-rank-area">
                         <div class="species-rank">#{{ sp.rank }}</div>
                         <span class="activity-badge activity-{{ sp.activity|lower }}">{{ sp.activity }}</span>

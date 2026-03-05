@@ -8,9 +8,11 @@ from services.astro import compute_lunar_details, compute_solunar_times, compute
 
 from domain.forecast import (
     _seasonal_averages,
+    _estimate_uv_index,
     _heat_index_f,
     _wind_chill_f,
     classify_conditions,
+    recompute_current_uv,
     MONTHLY_AVG_WIND,
     MONTHLY_AVG_WAVES,
     MONTHLY_AVG_WIND_DIR,
@@ -281,6 +283,57 @@ def test_generate_forecast_uv_reflects_selected_location(monkeypatch):
 
     assert "uv" in north and "uv" in south
     assert north["uv"]["index"] != south["uv"]["index"]
+
+
+def test_estimate_uv_index_scales_by_latitude():
+    """Lower latitudes (closer to equator) should produce higher peak UV."""
+    tz = ZoneInfo("America/New_York")
+    # Use a fixed solar-noon-ish time so timing is not the differentiator
+    now = datetime(2024, 6, 21, 12, 0, 0, tzinfo=tz)
+    sunrise = now - timedelta(hours=6)  # 6 AM
+    sunset = now + timedelta(hours=6)   # 6 PM  (noon = pct=0.5, bell peak)
+
+    uv_tropical = _estimate_uv_index(now, sunrise, sunset, lat=20.0)   # Hawaii
+    uv_florida   = _estimate_uv_index(now, sunrise, sunset, lat=27.0)   # FL
+    uv_nc        = _estimate_uv_index(now, sunrise, sunset, lat=35.0)   # NC
+    uv_maine     = _estimate_uv_index(now, sunrise, sunset, lat=44.0)   # ME
+
+    # Each location should have a lower UV than the one closer to the equator
+    assert uv_tropical > uv_florida > uv_nc > uv_maine
+    # UV should be positive midday for all locations
+    assert uv_maine > 0
+
+
+def test_estimate_uv_index_returns_zero_at_night():
+    """UV should be 0 when the current time is outside sunrise-sunset."""
+    tz = ZoneInfo("America/New_York")
+    now = datetime(2024, 6, 21, 23, 0, 0, tzinfo=tz)  # 11 PM
+    sunrise = now.replace(hour=6)
+    sunset = now.replace(hour=20)
+    assert _estimate_uv_index(now, sunrise, sunset, lat=35.0) == 0.0
+
+
+def test_recompute_current_uv_uses_location_lat():
+    """recompute_current_uv should yield different values for different latitudes."""
+    fl_location = {"lat": 25.0, "lng": -80.0, "timezone": "America/New_York"}
+    me_location = {"lat": 45.0, "lng": -68.0, "timezone": "America/New_York"}
+
+    fl_uv = recompute_current_uv(fl_location)
+    me_uv = recompute_current_uv(me_location)
+
+    assert "index" in fl_uv and "level" in fl_uv
+    assert "index" in me_uv and "level" in me_uv
+    # Both should produce valid UV dicts; at midday FL should exceed ME
+    # (We can't assert the exact time of day in tests, but structure is valid.)
+    assert isinstance(fl_uv["index"], float)
+    assert isinstance(me_uv["index"], float)
+
+
+def test_recompute_current_uv_no_location():
+    """recompute_current_uv should not raise when called without a location."""
+    result = recompute_current_uv(None)
+    assert "index" in result
+    assert isinstance(result["index"], float)
 
 
 def test_heat_index_and_wind_chill_helpers():

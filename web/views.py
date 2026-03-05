@@ -16,7 +16,7 @@ from flask import (
 )
 
 from locations import all_locations_sorted, find_nearest_locations, geocode_zip, get_location
-from domain.forecast import generate_forecast, personalize_forecast
+from domain.forecast import generate_forecast, personalize_forecast, recompute_current_uv
 from services.forecast_refresh import enqueue_forecast_refresh
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -118,6 +118,10 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
         forecast["location_id"] = loc_id
     if not forecast.get("location_state"):
         forecast["location_state"] = location.get("state", "")
+
+    # Always recompute UV for the current time at the selected location so the
+    # displayed value reflects *now*, not the moment the forecast was cached.
+    forecast["uv"] = recompute_current_uv(location)
 
     return render_template("index.html", forecast=forecast, cached=cached_flag,
                            share_id=loc_id)

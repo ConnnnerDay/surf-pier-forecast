@@ -1250,9 +1250,13 @@
 
     function renderRegs(reg, state) {
         var stateLabel = state ? ' for ' + esc(state) : '';
+        var sourceLink = (reg && reg.official_source)
+            ? '<p class="reg-source"><a href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' regulations source ↗</a></p>'
+            : '';
         if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
             return '<p class="reg-no-data">No regulation data available for this species' + stateLabel + '.'
-                + '<br>Check your state fish &amp; wildlife agency for current rules.</p>';
+                + '<br>Check your state fish &amp; wildlife agency for current rules.</p>'
+                + sourceLink;
         }
         var html = '<div class="reg-modal__grid">';
         if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
@@ -1260,6 +1264,7 @@
         if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
         html += '</div>';
         if (reg.notes) html += '<p class="reg-modal__notes">' + esc(reg.notes) + '</p>';
+        html += sourceLink;
         return html;
     }
 
@@ -1276,6 +1281,7 @@
             bag_limit: card.dataset.regBagLimit || '',
             season: card.dataset.regSeason || '',
             notes: card.dataset.regNotes || '',
+            official_source: card.dataset.regOfficialSource || '',
         };
     }
 

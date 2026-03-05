@@ -22,3 +22,17 @@ def test_shows_uv_index_stat_in_marine_conditions():
 
     assert "UV Index" in template
     assert "forecast.uv.index" in template
+
+
+def test_species_card_embeds_official_source():
+    """Species cards should embed the official regulation source URL."""
+    template = Path("templates/partials/_species.html").read_text(encoding="utf-8")
+    assert "data-reg-official-source" in template
+
+
+def test_regulation_modal_shows_official_source_link():
+    """Regulation modal JS should render a link to the official source URL."""
+    template = Path("templates/index.html").read_text(encoding="utf-8")
+    assert "official_source" in template
+    assert "reg-source" in template
+    assert "regOfficialSource" in template

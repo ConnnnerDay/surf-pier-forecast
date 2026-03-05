@@ -1150,15 +1150,42 @@ def _uv_category(uv_index: float) -> Dict[str, str]:
     return {"level": "Very High to Extreme", "advice": "Limit direct midday exposure and reapply SPF often."}
 
 
-def _estimate_uv_index(now: datetime, sunrise: Optional[datetime], sunset: Optional[datetime]) -> float:
+def _estimate_uv_index(
+    now: datetime,
+    sunrise: Optional[datetime],
+    sunset: Optional[datetime],
+    lat: float = _LAT,
+) -> float:
     if not sunrise or not sunset or now < sunrise or now > sunset:
         return 0.0
     daylight = max((sunset - sunrise).total_seconds(), 1)
     elapsed = (now - sunrise).total_seconds()
     pct = elapsed / daylight
-    # bell-shaped daytime UV profile with coastal midday peak around 9
-    uv = 9.0 * max(0.0, 1 - (2 * pct - 1) ** 2)
+    # Scale peak UV by latitude: lower latitudes (closer to equator) receive
+    # more direct sunlight and therefore higher UV intensity at solar noon.
+    peak = max(3.0, 11.0 - 0.1 * abs(lat))
+    uv = peak * max(0.0, 1 - (2 * pct - 1) ** 2)
     return round(uv, 1)
+
+
+def recompute_current_uv(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Compute UV index for the current time at the given location.
+
+    Intended for refreshing stale cached UV values at page-render time so the
+    displayed UV always reflects the *current* sun position for the selected
+    location, not the moment the forecast was originally generated.
+    """
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    tz = ZoneInfo(tz_name)
+    now = datetime.now(tz)
+    lat = (location or {}).get("lat", _LAT)
+    lng = (location or {}).get("lng", _LNG)
+    try:
+        sunrise, sunset = _sun_times(now, lat, lng, tz_name)
+    except Exception:
+        sunrise, sunset = None, None
+    uv_index = _estimate_uv_index(now, sunrise, sunset, lat)
+    return {"index": uv_index, **_uv_category(uv_index)}
 
 
 def _rip_risk_from_conditions(wave_range: Optional[Tuple[float, float]], wind_range: Optional[Tuple[float, float]]) -> Dict[str, str]:
@@ -1519,7 +1546,7 @@ def generate_forecast(
             forecast["lunar_details"]["phase"] = solunar.get("moon_phase")
         sources_used.append("astronomy lunar details")
 
-    uv_index = _estimate_uv_index(now, sunrise, sunset)
+    uv_index = _estimate_uv_index(now, sunrise, sunset, loc_lat)
     forecast["uv"] = {"index": uv_index, **_uv_category(uv_index)}
     forecast["rip_current_risk"] = _rip_risk_from_conditions(wave_range, wind_range)
     forecast["education"] = _build_education_cards(profile, forecast["uv"], forecast["rip_current_risk"])
