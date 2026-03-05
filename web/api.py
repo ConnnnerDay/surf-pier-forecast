@@ -277,7 +277,7 @@ def forecast_status_v1(location_id: str) -> Any:
 def forecast_outlook_v1(location_id: str) -> Any:
     """Return cached 3-day outlook payload for lazy dashboard hydration."""
     user_id = g.user["id"] if g.user else None
-    forecast_data = load_cached_forecast(location_id, user_id=user_id)
+    forecast_data = load_cached_forecast(location_id, user_id=user_id, include_stale=True)
     if not forecast_data:
         return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
 
@@ -293,7 +293,7 @@ def forecast_outlook_v1(location_id: str) -> Any:
 def forecast_solunar_v1(location_id: str) -> Any:
     """Return cached solunar payload for lazy dashboard hydration."""
     user_id = g.user["id"] if g.user else None
-    forecast_data = load_cached_forecast(location_id, user_id=user_id)
+    forecast_data = load_cached_forecast(location_id, user_id=user_id, include_stale=True)
     if not forecast_data:
         return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
 
