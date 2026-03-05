@@ -5,6 +5,9 @@ Scrapes official state agency pages on demand and caches results for 24 hours.
 Supported states with live scraping:
   FL — FWC per-species pages at myfwc.com
   VA — VA Marine Resources Commission single-page listing
+  GA — Coastal GA DNR definition-list page at coastalgadnr.org
+  NC — NC Division of Marine Fisheries size/bag limits table at deq.nc.gov
+  NY — NY DEC saltwater recreational regulations table at dec.ny.gov
 
 All other states return None so the caller falls back to the static JSON
 snapshot in storage/regulations_data.json.
@@ -329,12 +332,397 @@ def _scrape_va(species_name: str) -> Optional[Dict[str, str]]:
 
 
 # ──────────────────────────────────────────────────────────────────
+# Georgia — Coastal GA DNR definition-list page
+# ──────────────────────────────────────────────────────────────────
+
+_GA_URL = "https://coastalgadnr.org/Limits"
+
+# Cached full-page HTML (one fetch per process run)
+_ga_page_cache: Optional[str] = None
+_ga_page_lock = Lock()
+
+_GA_NAMES: Dict[str, List[str]] = {
+    "red_drum":          ["red drum"],
+    "spotted_seatrout":  ["spotted seatrout", "speckled trout"],
+    "striped_bass":      ["striped bass", "rockfish"],
+    "bluefish":          ["bluefish"],
+    "summer_flounder":   ["summer flounder", "fluke"],
+    "southern_flounder": ["southern flounder"],
+    "black_sea_bass":    ["black sea bass"],
+    "sheepshead":        ["sheepshead"],
+    # GA page uses "Mackerel, Spanish" / "Mackerel, King" order
+    "spanish_mackerel":  ["mackerel, spanish", "spanish mackerel"],
+    "king_mackerel":     ["mackerel, king", "king mackerel"],
+    "gag_grouper":       ["gag grouper"],
+    "cobia":             ["cobia"],
+    "flounder":          ["flounder"],
+    "black_drum":        ["black drum"],
+    "pompano":           ["pompano"],
+    "red_snapper":       ["red snapper"],
+    "weakfish":          ["weakfish"],
+    "tarpon":            ["tarpon"],
+    "amberjack":         ["amberjack"],
+}
+
+
+def _get_ga_html() -> Optional[str]:
+    global _ga_page_cache
+    with _ga_page_lock:
+        if _ga_page_cache is not None:
+            return _ga_page_cache
+        try:
+            resp = requests.get(
+                _GA_URL, timeout=_REQUEST_TIMEOUT,
+                headers={"User-Agent": _USER_AGENT},
+            )
+            resp.raise_for_status()
+            _ga_page_cache = resp.text
+            return _ga_page_cache
+        except Exception as exc:
+            _log.warning("GA page fetch failed: %s", exc)
+            return None
+
+
+def _parse_ga_dd(dd_text: str) -> Dict[str, str]:
+    """Extract season/limit/size from a GA coastalgadnr DD text block.
+
+    DD text format (space-separated labels):
+      'Season: All year  Limit: 5  Minimum size: 14" TL (Maximum 23" TL) ...'
+      'Season: March 1 - Oct. 31  Limit: 1 per angler, maximum 6 per boat  Minimum size: 36" FL'
+    """
+    # Scrub URLs and legal citations
+    text = re.sub(r"https?://\S+", "", dd_text)
+    text = re.sub(r"\[O\.C\.G\.A[^\]]*\]", "", text)
+    text = re.sub(r"\*?Federal\s+regulations?[^.]*\.?", "", text, flags=re.IGNORECASE)
+    text = text.strip()
+
+    def _between(start_pat: str, stop_pat: str) -> str:
+        m = re.search(
+            start_pat + r"\s*:\s*(.+?)(?=\s+" + stop_pat + r"\s*:|$)",
+            text, re.IGNORECASE,
+        )
+        return m.group(1).strip().rstrip(".,;") if m else ""
+
+    season = _between("Season", "Limit")
+    bag    = _between("Limit", "Minimum\\s+size")
+
+    # Size: capture everything after "Minimum size:" then strip trailing
+    # sentences (e.g. "Red Drum are a gamefish…")
+    size = ""
+    size_m = re.search(r"Minimum\s+size\s*:\s*(.+)", text, re.IGNORECASE)
+    if size_m:
+        size = size_m.group(1).strip()
+        # Strip a second regulation block starting with proper-noun place name(s)
+        # followed by "Season:" — e.g. "Savannah River Season: All year Limit: 2…"
+        # Use capitalized-word requirement so measurement units (TL, FL) don't match.
+        size = re.sub(
+            r"\s+(?:[A-Z][a-z]+\s+)+Season\s*:.*$", "", size,
+        )
+        # Strip trailing location name with no following value
+        size = re.sub(
+            r"\s+\w+\s+(?:River|Lake|Sound|Bay|Coast|Ocean|Waters?)\s*$",
+            "", size, flags=re.IGNORECASE,
+        )
+        # Strip trailing sentence: one or more Capitalised Words followed by a verb
+        # e.g. "Red Drum are a gamefish…" or "Flounder may not be…"
+        size = re.sub(
+            r"\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*\s+(?:are|is|may|were|have|can)\b.*$",
+            "", size,
+        )
+        size = size.rstrip(".,; ").strip()
+
+    return {
+        "season":    season[:120],
+        "bag_limit": bag[:120],
+        "min_size":  size[:120],
+    }
+
+
+def _parse_ga_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+    """Parse coastalgadnr.org/Limits which uses <dl>/<dt>/<dd> structure.
+
+    Each <dt> is a species name; the paired <dd> contains text like:
+      'Season: All year  Limit: 5  Minimum size: 14" TL (Maximum 23" TL)'
+    """
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        _log.warning("beautifulsoup4 not installed; GA scraping unavailable")
+        return None
+
+    names = None
+    for candidate in _name_variants(species_name):
+        names = _GA_NAMES.get(candidate)
+        if names:
+            break
+    if not names:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    for dt in soup.find_all("dt"):
+        dt_text = dt.get_text(" ", strip=True).lower()
+        for name in names:
+            if name.lower() in dt_text:
+                dd = dt.find_next_sibling("dd")
+                if not dd:
+                    continue
+                parsed = _parse_ga_dd(dd.get_text(" ", strip=True))
+                if parsed["min_size"] or parsed["bag_limit"]:
+                    return {
+                        **parsed,
+                        "notes":          "Verify current rules with GA Coastal Resources (coastalgadnr.org).",
+                        "scraped_source": "coastalgadnr.org",
+                    }
+    return None
+
+
+def _scrape_ga(species_name: str) -> Optional[Dict[str, str]]:
+    html = _get_ga_html()
+    if not html:
+        return None
+    return _parse_ga_page(html, species_name)
+
+
+# ──────────────────────────────────────────────────────────────────
+# North Carolina — NC DMF size/bag limits table
+# ──────────────────────────────────────────────────────────────────
+
+_NC_URL = (
+    "https://deq.nc.gov/about/divisions/marine-fisheries/"
+    "rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits"
+)
+
+_nc_page_cache: Optional[str] = None
+_nc_page_lock = Lock()
+
+# species_key → substrings to look for in the NC table's first column (lowercased)
+_NC_NAMES: Dict[str, List[str]] = {
+    "red_drum":          ["red drum", "channel bass"],
+    "spotted_seatrout":  ["spotted seatrout", "speckled trout"],
+    "striped_bass":      ["striped bass"],
+    "bluefish":          ["bluefish"],
+    "summer_flounder":   ["flounder"],
+    "southern_flounder": ["flounder"],
+    "black_sea_bass":    ["black sea bass"],
+    "sheepshead":        ["sheepshead"],
+    "spanish_mackerel":  ["spanish mackerel"],
+    "cobia":             ["cobia"],
+    "king_mackerel":     ["king mackerel"],
+    "weakfish":          ["weakfish", "gray trout"],
+    "scup":              ["scup"],
+    "tautog":            ["tautog"],
+    "black_drum":        ["black drum"],
+    "pompano":           ["pompano"],
+    "red_snapper":       ["red snapper"],
+    "gag_grouper":       ["snapper", "grouper"],  # grouped complex on NC page
+}
+
+
+def _get_nc_html() -> Optional[str]:
+    global _nc_page_cache
+    with _nc_page_lock:
+        if _nc_page_cache is not None:
+            return _nc_page_cache
+        try:
+            resp = requests.get(
+                _NC_URL, timeout=_REQUEST_TIMEOUT,
+                headers={"User-Agent": _USER_AGENT},
+            )
+            resp.raise_for_status()
+            _nc_page_cache = resp.text
+            return _nc_page_cache
+        except Exception as exc:
+            _log.warning("NC page fetch failed: %s", exc)
+            return None
+
+
+def _parse_nc_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+    """Parse the NC DMF recreational size/bag limits table.
+
+    Table column layout (4-cell rows):
+      col 0 — Species name (may include annotations like '(C) ▲▲')
+      col 1 — Minimum Length
+      col 2 — Bag Limits (per person)
+      col 3 — Federal Management / notes
+
+    3-cell rows (second cell has colspan=2) use a single combined info cell
+    for species that are closed or have complex proclamation references.
+    """
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        _log.warning("beautifulsoup4 not installed; NC scraping unavailable")
+        return None
+
+    names = None
+    for candidate in _name_variants(species_name):
+        names = _NC_NAMES.get(candidate)
+        if names:
+            break
+    if not names:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    tables = soup.find_all("table")
+    if not tables:
+        return None
+
+    for row in tables[0].find_all("tr"):
+        tds = row.find_all(["td", "th"])
+        if not tds:
+            continue
+        cell0 = tds[0].get_text(" ", strip=True).lower()
+        for name in names:
+            if name.lower() in cell0:
+                # 4-column row: size in col[1], bag in col[2]
+                # 3-column row with colspan=2: combined info in col[1]
+                if len(tds) >= 4:
+                    size   = tds[1].get_text(" ", strip=True).strip()
+                    bag    = tds[2].get_text(" ", strip=True).strip()
+                    season = ""
+                elif len(tds) == 3:
+                    combined = tds[1].get_text(" ", strip=True).strip()
+                    size, bag = combined, combined
+                    season = ""
+                else:
+                    continue
+
+                # Skip rows that are just proclamation references with no values
+                skip_phrases = ("see the most recent", "see most recent")
+                if any(p in size.lower() for p in skip_phrases):
+                    size, bag = "", ""
+
+                if size or bag:
+                    return {
+                        "min_size":       size[:120],
+                        "bag_limit":      bag[:120],
+                        "season":         season,
+                        "notes":          "Verify current rules with NC Division of Marine Fisheries (deq.nc.gov).",
+                        "scraped_source": "deq.nc.gov",
+                    }
+    return None
+
+
+def _scrape_nc(species_name: str) -> Optional[Dict[str, str]]:
+    html = _get_nc_html()
+    if not html:
+        return None
+    return _parse_nc_page(html, species_name)
+
+
+# ──────────────────────────────────────────────────────────────────
+# New York — NY DEC recreational fishing regulations table
+# ──────────────────────────────────────────────────────────────────
+
+_NY_URL = (
+    "https://dec.ny.gov/things-to-do/saltwater-fishing/recreational-fishing-regulations"
+)
+
+_ny_page_cache: Optional[str] = None
+_ny_page_lock = Lock()
+
+# species_key → substrings to look for in NY table first column (lowercased)
+_NY_NAMES: Dict[str, List[str]] = {
+    "red_drum":          ["red drum"],
+    "striped_bass":      ["striped bass: marine"],     # prefer marine over Hudson River row
+    "bluefish":          ["bluefish"],
+    "summer_flounder":   ["summer flounder", "fluke"],
+    "winter_flounder":   ["winter flounder"],
+    "black_sea_bass":    ["black sea bass"],
+    "scup":              ["scup (porgy)"],              # first row (not party/charter)
+    "weakfish":          ["weakfish"],
+    "tautog":            ["tautog (blackfish): ny bight"],  # prefer NY Bight
+    "spanish_mackerel":  ["spanish mackerel"],
+    "king_mackerel":     ["king mackerel"],
+    "cobia":             ["cobia"],
+    "southern_flounder": ["yellowtail flounder", "flounder"],
+    "flounder":          ["summer flounder", "fluke"],
+}
+
+
+def _get_ny_html() -> Optional[str]:
+    global _ny_page_cache
+    with _ny_page_lock:
+        if _ny_page_cache is not None:
+            return _ny_page_cache
+        try:
+            resp = requests.get(
+                _NY_URL, timeout=_REQUEST_TIMEOUT,
+                headers={"User-Agent": _USER_AGENT},
+            )
+            resp.raise_for_status()
+            _ny_page_cache = resp.text
+            return _ny_page_cache
+        except Exception as exc:
+            _log.warning("NY page fetch failed: %s", exc)
+            return None
+
+
+def _parse_ny_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+    """Parse NY DEC 4-column saltwater regulations table.
+
+    Columns: Species | Min Size | Bag Limit | Open Season
+    """
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        _log.warning("beautifulsoup4 not installed; NY scraping unavailable")
+        return None
+
+    names = None
+    for candidate in _name_variants(species_name):
+        names = _NY_NAMES.get(candidate)
+        if names:
+            break
+    if not names:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    tables = soup.find_all("table")
+    if not tables:
+        return None
+
+    for row in tables[0].find_all("tr"):
+        tds = row.find_all(["td", "th"])
+        if len(tds) < 3:
+            continue
+        cell0 = tds[0].get_text(" ", strip=True).lower()
+        for name in names:
+            if name.lower() in cell0:
+                size   = tds[1].get_text(" ", strip=True).strip()
+                bag    = tds[2].get_text(" ", strip=True).strip()
+                season = tds[3].get_text(" ", strip=True).strip() if len(tds) > 3 else ""
+                # Strip numeric footnote references like "(2)", "(5)"
+                size   = re.sub(r"\s*\(\d+\)", "", size).strip()
+                bag    = re.sub(r"\s*\(\d+\)", "", bag).strip()
+                if size or bag:
+                    return {
+                        "min_size":       size[:120],
+                        "bag_limit":      bag[:120],
+                        "season":         season[:120],
+                        "notes":          "Verify current rules with NY DEC (dec.ny.gov).",
+                        "scraped_source": "dec.ny.gov",
+                    }
+    return None
+
+
+def _scrape_ny(species_name: str) -> Optional[Dict[str, str]]:
+    html = _get_ny_html()
+    if not html:
+        return None
+    return _parse_ny_page(html, species_name)
+
+
+# ──────────────────────────────────────────────────────────────────
 # State dispatcher
 # ──────────────────────────────────────────────────────────────────
 
 _SCRAPERS = {
     "FL": _scrape_fl,
     "VA": _scrape_va,
+    "GA": _scrape_ga,
+    "NC": _scrape_nc,
+    "NY": _scrape_ny,
 }
 
 
