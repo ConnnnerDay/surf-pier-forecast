@@ -1510,15 +1510,125 @@ def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, 
 _MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+# Curated headline species shown on the year-round calendar, per region.
+# These are the iconic target species anglers actually plan trips around —
+# independent of current day-to-day conditions.
+_NOTABLE_SPECIES_BY_REGION: Dict[str, List[str]] = {
+    "northeast": [
+        "Striped bass (rockfish)",
+        "Bluefish",
+        "Fluke (summer flounder)",
+        "Tautog (blackfish)",
+        "Black sea bass",
+        "Scup (porgy)",
+        "False albacore (little tunny)",
+        "Atlantic bonito",
+        "Winter flounder",
+        "Weakfish",
+    ],
+    "midatlantic": [
+        "Striped bass (rockfish)",
+        "Bluefish",
+        "Red drum (puppy drum)",
+        "Fluke (summer flounder)",
+        "Black sea bass",
+        "Tautog (blackfish)",
+        "Cobia",
+        "Spanish mackerel",
+        "False albacore (little tunny)",
+        "Scup (porgy)",
+    ],
+    "southeast": [
+        "Red drum (puppy drum)",
+        "Speckled trout (spotted seatrout)",
+        "Flounder (summer flounder)",
+        "Spanish mackerel",
+        "King mackerel (kingfish)",
+        "Cobia",
+        "Pompano",
+        "Sheepshead",
+        "Tarpon",
+        "Black sea bass",
+    ],
+    "florida": [
+        "Tarpon",
+        "Snook",
+        "Red drum (puppy drum)",
+        "Speckled trout (spotted seatrout)",
+        "Permit",
+        "Spanish mackerel",
+        "King mackerel (kingfish)",
+        "Cobia",
+        "Red snapper",
+        "Gag grouper",
+    ],
+    "gulf": [
+        "Red drum (puppy drum)",
+        "Speckled trout (spotted seatrout)",
+        "Flounder (summer flounder)",
+        "Red snapper",
+        "King mackerel (kingfish)",
+        "Cobia",
+        "Pompano",
+        "Spanish mackerel",
+        "Mahi-mahi (dolphinfish)",
+        "Tarpon",
+    ],
+    "socal": [
+        "Yellowtail (California yellowtail)",
+        "California halibut",
+        "White seabass",
+        "Corbina",
+        "Kelp bass (calico bass)",
+        "Sand bass (barred sand bass)",
+        "Spotfin croaker",
+        "Yellowfin croaker",
+        "Leopard shark",
+        "California sheephead",
+    ],
+    "norcal": [
+        "Lingcod",
+        "California halibut",
+        "White seabass",
+        "Redtail surfperch",
+        "Cabezon",
+        "Kelp greenling",
+        "Rock greenling",
+        "Leopard shark",
+    ],
+    "pacific_nw": [
+        "Lingcod",
+        "Redtail surfperch",
+        "Cabezon",
+        "Kelp greenling",
+        "Rock greenling",
+    ],
+    "hawaii": [
+        "Giant trevally (ulua)",
+        "Moi (Pacific threadfin)",
+        "Bonefish (oio)",
+        "Bluefin trevally (omilu)",
+        "Papio (juvenile jack)",
+        "Kaku (barracuda)",
+        "Menpachi (soldierfish)",
+    ],
+}
+
 
 def build_species_calendar(
     species_list: List[Dict[str, Any]],
     location: Optional[Dict[str, Any]] = None,
+    fish_region: str = "",
 ) -> List[Dict[str, Any]]:
-    """Build a 12-month availability calendar for the top ranked species.
+    """Build a 12-month availability calendar.
 
-    For each species in *species_list* (already scored/ranked), looks up
-    peak_months and good_months from SPECIES_DB and returns a list of dicts:
+    When *fish_region* is provided the calendar shows the region's notable
+    target species (the fish people plan trips around) rather than whatever
+    happens to be scoring highest under today's conditions.  Falls back to
+    the dynamic top-10 ranked list when no region is known.
+
+    For each species, looks up peak_months and good_months from SPECIES_DB
+    and returns a list of dicts::
 
         {
             "name": "Red drum",
@@ -1539,8 +1649,14 @@ def build_species_calendar(
     if location:
         monthly_temps = get_monthly_water_temps(location)
 
+    # Determine which species to show on the calendar
+    if fish_region and fish_region in _NOTABLE_SPECIES_BY_REGION:
+        source = [{"name": n} for n in _NOTABLE_SPECIES_BY_REGION[fish_region]]
+    else:
+        source = species_list[:10]
+
     calendar: List[Dict[str, Any]] = []
-    for ranked_sp in species_list[:10]:
+    for ranked_sp in source:
         sp = db_map.get(ranked_sp["name"])
         if not sp:
             continue

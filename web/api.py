@@ -204,12 +204,14 @@ def log_delete_v1(entry_id: int) -> Any:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
     uid = g.user["id"]
     photo_paths = get_entry_photo_paths(uid, entry_id)
-    deleted = delete_log_entry(uid, entry_id)
-    if not deleted:
+    if photo_paths is None:
+        # Entry doesn't exist (get_entry_photo_paths returns None for missing rows)
         return jsonify(error_envelope("not_found", "Log entry not found")), 404
-    if photo_paths:
-        _delete_upload_file(photo_paths[0])
-        _delete_upload_file(photo_paths[1])
+    # Delete files before the DB row so a crash between the two doesn't leave
+    # orphaned files on disk with no DB record to clean them up later.
+    _delete_upload_file(photo_paths[0])
+    _delete_upload_file(photo_paths[1])
+    delete_log_entry(uid, entry_id)
     return jsonify(success_envelope({"deleted": True, "entry_id": entry_id}))
 
 
@@ -308,6 +310,23 @@ def refresh() -> Any:
         return redirect(url_for("views.setup"))
     enqueue_forecast_refresh(location["id"], user_id=None)
     return redirect(url_for("views.index", cached="refreshing"))
+
+
+@bp.route("/api/v1/regulations/refresh", methods=["POST"])
+def regulations_refresh_v1() -> Any:
+    """Invalidate the live-scrape regulation cache.
+
+    Optionally filter to a single state via the ``state`` query param.
+    The next regulation lookup for affected entries will re-scrape the
+    official state agency website.
+    """
+    state = request.args.get("state", "").strip().upper() or None
+    try:
+        from storage.reg_scraper import invalidate_cache
+        removed = invalidate_cache(state)
+    except Exception:
+        removed = 0
+    return jsonify(success_envelope({"invalidated": removed, "state": state}))
 
 
 @bp.route("/api/v1/regulations", methods=["GET"])

@@ -194,7 +194,14 @@ def _base_payload(state: str) -> Dict[str, str]:
 
 
 def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]:
-    """Look up fishing regulations for a species in a state."""
+    """Look up fishing regulations for a species in a state.
+
+    Tries in order:
+      1. Live scrape from the official state agency website (cached 24 h).
+      2. Local JSON snapshot (storage/regulations_data.json).
+      3. Returns a bare payload with just the official-source link so the
+         modal can still point the angler somewhere useful.
+    """
     state_key = (state or "").upper().strip()
     if not state_key:
         return None
@@ -202,6 +209,24 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
     _ensure_data_loaded()
 
     payload = _base_payload(state_key)
+
+    # ── 1. Try live scraper ──────────────────────────────────────────
+    try:
+        from storage.reg_scraper import scrape_regulation
+        scraped = scrape_regulation(species_name, state_key)
+        if scraped:
+            payload.update(scraped)
+            payload["data_status"] = "live"
+            # Make sure official_source is always set
+            if not payload.get("official_source"):
+                payload["official_source"] = _STATE_REGULATION_SOURCES.get(
+                    state_key, _FALLBACK_SOURCE
+                )
+            return payload
+    except Exception:
+        pass  # scraper unavailable — fall through to snapshot
+
+    # ── 2. Static JSON snapshot ──────────────────────────────────────
     species_key = _REG_DATA.name_map.get(species_name)
     normalized_variants = _species_name_variants(species_name)
     if not species_key:
@@ -211,10 +236,6 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
                 break
     state_regs = _REG_DATA.states.get(state_key)
     if state_regs and (not species_key or species_key not in state_regs):
-        # Either no canonical key was found, or the canonical key doesn't exist
-        # in this state's regulations. Try each normalized variant directly —
-        # the regulations snapshot may use a shorter key (e.g. "red_drum" for
-        # "Red drum (puppy drum)").
         for normalized_name in normalized_variants:
             if normalized_name in state_regs:
                 species_key = normalized_name
@@ -229,8 +250,9 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
             payload["snapshot_source"] = payload["source"]
         return payload
 
+    # ── 3. Nothing found — return link-only payload ──────────────────
     payload["notes"] = (
-        "Species-specific limits were not found in the local snapshot. "
+        "Species-specific limits were not found. "
         "Use the official source link for current bag, size, and season rules."
     )
     return payload

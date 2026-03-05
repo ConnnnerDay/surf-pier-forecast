@@ -175,14 +175,14 @@ header::before {
 
 .unit-toggle {
   position: absolute;
-  right: 42px;
+  right: 48px;
   top: 50%;
   transform: translateY(-50%);
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,8 +209,8 @@ header::before {
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3737,6 +3737,7 @@ footer p {
   background: transparent;
   border: none;
   max-width: min(440px, 94vw);
+  max-height: 90vh;
   max-height: 90dvh;
   overflow: visible;
 }
@@ -3750,6 +3751,7 @@ footer p {
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
   max-height: 90dvh;
   overflow: hidden;
 }
@@ -3832,6 +3834,35 @@ footer p {
   padding: 1rem 0;
   margin: 0;
   line-height: 1.6;
+}
+.reg-source {
+  margin: 0.75rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.reg-source__link {
+  font-size: 0.8rem;
+  color: var(--accent, #0066cc);
+  text-decoration: none;
+}
+.reg-source__link:hover { text-decoration: underline; }
+.reg-source__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+.reg-source__badge--live {
+  background: #d4edda;
+  color: #155724;
+}
+.reg-source__badge--snapshot {
+  background: #fff3cd;
+  color: #856404;
 }
 
 

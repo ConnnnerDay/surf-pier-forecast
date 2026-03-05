@@ -1199,7 +1199,7 @@
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/static/sw.js').catch(function(){});
+        navigator.serviceWorker.register('/sw.js').catch(function(){});
     }
 
     // Auto-refresh forecast every 30 minutes
@@ -1251,12 +1251,12 @@
     function renderRegs(reg, state) {
         var stateLabel = state ? ' for ' + esc(state) : '';
         var sourceLink = (reg && reg.official_source)
-            ? '<p class="reg-source"><a href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' regulations source ↗</a></p>'
+            ? '<a class="reg-source__link" href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' regulations ↗</a>'
             : '';
         if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
             return '<p class="reg-no-data">No regulation data available for this species' + stateLabel + '.'
-                + '<br>Check your state fish &amp; wildlife agency for current rules.</p>'
-                + sourceLink;
+                + ' Check your state fish &amp; wildlife agency for current rules.</p>'
+                + (sourceLink ? '<p class="reg-source">' + sourceLink + '</p>' : '');
         }
         var html = '<div class="reg-modal__grid">';
         if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
@@ -1264,7 +1264,15 @@
         if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
         html += '</div>';
         if (reg.notes) html += '<p class="reg-modal__notes">' + esc(reg.notes) + '</p>';
-        html += sourceLink;
+        if (sourceLink) {
+            var freshness = '';
+            if (reg.data_status === 'live' && reg.scraped_source) {
+                freshness = '<span class="reg-source__badge reg-source__badge--live">live</span>';
+            } else if (reg.data_status === 'snapshot') {
+                freshness = '<span class="reg-source__badge reg-source__badge--snapshot">snapshot</span>';
+            }
+            html += '<p class="reg-source">' + freshness + sourceLink + '</p>';
+        }
         return html;
     }
 
@@ -1351,9 +1359,10 @@
     });
 
     // Close: button or clicking the backdrop
-    document.querySelector('.reg-modal__close').addEventListener('click', function () {
-        modal.close();
-    });
+    var closeBtn = document.querySelector('.reg-modal__close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () { modal.close(); });
+    }
     modal.addEventListener('click', function (e) {
         if (e.target === modal) modal.close();
     });
