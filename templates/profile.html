@@ -241,16 +241,12 @@
     </footer>
 
     <script>
-    // Server-side profile (authoritative when logged in)
+    // Server-side profile (authoritative, account-backed)
     var _serverProfile = {{ (prefs.fishing_profile or {}) | tojson | safe }};
 
-    // Pre-fill form: server profile takes precedence, fall back to localStorage
+    // Pre-fill from the profile stored on the signed-in account.
     (function() {
         var existing = (_serverProfile && Object.keys(_serverProfile).length) ? _serverProfile : null;
-        if (!existing) {
-            try { existing = JSON.parse(localStorage.getItem('fishing_profile')); }
-            catch(e) {}
-        }
         if (!existing) return;
 
         // fishing_types (plural, canonical key); also accept legacy fishing_type (singular)
@@ -339,11 +335,8 @@
             profile.targets = ['anything'];
         }
 
-        localStorage.setItem('fishing_profile', JSON.stringify(profile));
-
-        // Persist to server for logged-in users, then redirect.
-        // Also build query params so anonymous users get personalization on the
-        // first load even without a DB profile.
+        // Persist to server for the signed-in account, then redirect.
+        // Keep query params aligned so server-side filtering updates immediately.
         var params = new URLSearchParams();
         var ft = profile.fishing_types.join(',');
         var tg = profile.targets.join(',');
