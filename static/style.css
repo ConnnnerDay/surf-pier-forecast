@@ -3835,6 +3835,35 @@ footer p {
   margin: 0;
   line-height: 1.6;
 }
+.reg-source {
+  margin: 0.75rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.reg-source__link {
+  font-size: 0.8rem;
+  color: var(--accent, #0066cc);
+  text-decoration: none;
+}
+.reg-source__link:hover { text-decoration: underline; }
+.reg-source__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+.reg-source__badge--live {
+  background: #d4edda;
+  color: #155724;
+}
+.reg-source__badge--snapshot {
+  background: #fff3cd;
+  color: #856404;
+}
 
 
 .favorite-toggle-form {

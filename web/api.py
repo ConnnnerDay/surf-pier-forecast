@@ -312,6 +312,23 @@ def refresh() -> Any:
     return redirect(url_for("views.index", cached="refreshing"))
 
 
+@bp.route("/api/v1/regulations/refresh", methods=["POST"])
+def regulations_refresh_v1() -> Any:
+    """Invalidate the live-scrape regulation cache.
+
+    Optionally filter to a single state via the ``state`` query param.
+    The next regulation lookup for affected entries will re-scrape the
+    official state agency website.
+    """
+    state = request.args.get("state", "").strip().upper() or None
+    try:
+        from storage.reg_scraper import invalidate_cache
+        removed = invalidate_cache(state)
+    except Exception:
+        removed = 0
+    return jsonify(success_envelope({"invalidated": removed, "state": state}))
+
+
 @bp.route("/api/v1/regulations", methods=["GET"])
 def regulations_v1() -> Any:
     """Return fishing regulations for a species at a given location or state.
