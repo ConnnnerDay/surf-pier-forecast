@@ -197,6 +197,36 @@ surf-forecast.service
 
 ---
 
+## Uninstall / delete everything
+
+If you want to fully remove the app, service, virtual environment, and local database/cache files:
+
+```bash
+# From anywhere
+PROJECT_DIR="/absolute/path/to/surf-pier-forecast"
+
+# Stop + disable service (ignore errors if it was never installed)
+sudo systemctl stop surf-forecast || true
+sudo systemctl disable surf-forecast || true
+sudo rm -f /etc/systemd/system/surf-forecast.service
+sudo systemctl daemon-reload
+
+# Remove project files (includes .venv and data/app.db)
+rm -rf "$PROJECT_DIR"
+```
+
+Optional cleanup:
+
+```bash
+# Remove systemd logs older than retention policy (optional)
+sudo journalctl --vacuum-time=1s
+```
+
+> ⚠️ `rm -rf` is destructive. Double-check `PROJECT_DIR` before running.
+
+
+---
+
 ## Troubleshooting
 
 - **Port in use**: set `PORT=8080`
