@@ -36,6 +36,11 @@
         <section class="auth-section" style="max-width:760px">
             <h2>{{ user.username }}</h2>
 
+            <div class="account-actions" style="margin-bottom:1rem">
+                <a href="{{ url_for('views.setup') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Account &gt; Location</a>
+                <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#2a7d6e,#1a5c50);margin-top:0.5rem">Account &gt; Profile</a>
+            </div>
+
             <div class="account-details">
                 <div class="account-row"><span class="account-label">Saved Location</span><span class="account-value">{{ saved_location.name if saved_location else 'None' }}</span></div>
                 <div class="account-row"><span class="account-label">Theme</span><span class="account-value">{{ prefs.theme|capitalize }}</span></div>
