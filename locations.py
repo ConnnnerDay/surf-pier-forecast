@@ -1587,6 +1587,140 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
     },
 ]
 
+# Nearby public beach/pier live cams used to enhance the forecast dashboard.
+# Distances are computed from the user's selected fishing location and filtered
+# to the requested search radius in ``find_nearby_live_cams``.
+COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
+    {
+        "id": "virginia-beach-boardwalk-cam",
+        "name": "Virginia Beach Boardwalk Cam",
+        "cam_type": "beach",
+        "lat": 36.8529,
+        "lng": -75.9773,
+        "url": "https://www.13newsnow.com/beach-cams",
+    },
+    {
+        "id": "wrightsville-beach-surf-cam",
+        "name": "Wrightsville Beach Surf Cam",
+        "cam_type": "beach",
+        "lat": 34.2085,
+        "lng": -77.7964,
+        "url": "https://www.surfchex.com/cams/wrightsville-beach-nc/",
+    },
+    {
+        "id": "johnnie-mercers-pier-cam",
+        "name": "Johnnie Mercer's Pier Cam",
+        "cam_type": "pier",
+        "lat": 34.2193,
+        "lng": -77.7869,
+        "url": "https://www.surfchex.com/cams/wrightsville-beach-nc/johnnie-mercers-pier/",
+    },
+    {
+        "id": "myrtle-beach-boardwalk-cam",
+        "name": "Myrtle Beach Boardwalk Cam",
+        "cam_type": "beach",
+        "lat": 33.6891,
+        "lng": -78.8867,
+        "url": "https://myrtlebeachlivecam.com/",
+    },
+    {
+        "id": "juno-beach-pier-cam",
+        "name": "Juno Beach Pier Cam",
+        "cam_type": "pier",
+        "lat": 26.8798,
+        "lng": -80.0553,
+        "url": "https://www.juno-beach.us/surf-cam/",
+    },
+    {
+        "id": "daytona-beach-cam",
+        "name": "Daytona Beach Cam",
+        "cam_type": "beach",
+        "lat": 29.2287,
+        "lng": -81.0053,
+        "url": "https://www.daytonabeach.com/webcams/",
+    },
+    {
+        "id": "cocoa-beach-pier-cam",
+        "name": "Cocoa Beach Pier Cam",
+        "cam_type": "pier",
+        "lat": 28.3694,
+        "lng": -80.6031,
+        "url": "https://www.surfline.com/surf-report/cocoa-beach-pier/5842041f4e65fad6a7708c66",
+    },
+    {
+        "id": "jacksonville-beach-pier-cam",
+        "name": "Jacksonville Beach Pier Cam",
+        "cam_type": "pier",
+        "lat": 30.2845,
+        "lng": -81.3886,
+        "url": "https://www.visitjacksonville.com/beach-web-cams/",
+    },
+    {
+        "id": "pensacola-beach-cam",
+        "name": "Pensacola Beach Cam",
+        "cam_type": "beach",
+        "lat": 30.3325,
+        "lng": -87.1427,
+        "url": "https://www.visitpensacola.com/beaches/webcams/",
+    },
+    {
+        "id": "galveston-61st-street-pier-cam",
+        "name": "Galveston 61st Street Pier Cam",
+        "cam_type": "pier",
+        "lat": 29.2791,
+        "lng": -94.7948,
+        "url": "https://www.galveston.com/webcams/61ststreetfishingpier/",
+    },
+    {
+        "id": "south-padre-beach-cam",
+        "name": "South Padre Beach Cam",
+        "cam_type": "beach",
+        "lat": 26.1055,
+        "lng": -97.1681,
+        "url": "https://www.sopadre.com/webcams/",
+    },
+    {
+        "id": "huntington-beach-pier-cam",
+        "name": "Huntington Beach Pier Cam",
+        "cam_type": "pier",
+        "lat": 33.6550,
+        "lng": -118.0019,
+        "url": "https://www.surfline.com/surf-report/huntington-street/5842041f4e65fad6a7708c6d",
+    },
+    {
+        "id": "malibu-surfrider-cam",
+        "name": "Malibu Surfrider Cam",
+        "cam_type": "beach",
+        "lat": 34.0357,
+        "lng": -118.6773,
+        "url": "https://www.surfline.com/surf-report/malibu-surfrider/5842041f4e65fad6a7708c5f",
+    },
+    {
+        "id": "pacifica-linda-mar-cam",
+        "name": "Pacifica / Linda Mar Cam",
+        "cam_type": "beach",
+        "lat": 37.5934,
+        "lng": -122.5038,
+        "url": "https://www.surfline.com/surf-report/linda-mar/5842041f4e65fad6a7708c70",
+    },
+    {
+        "id": "ocean-city-boardwalk-cam",
+        "name": "Ocean City Boardwalk Cam",
+        "cam_type": "beach",
+        "lat": 38.3365,
+        "lng": -75.0847,
+        "url": "https://oceancitylive.com/ocean-city-webcams/",
+    },
+    {
+        "id": "rehoboth-boardwalk-cam",
+        "name": "Rehoboth Beach Boardwalk Cam",
+        "cam_type": "beach",
+        "lat": 38.7207,
+        "lng": -75.0760,
+        "url": "https://www.cityofrehoboth.com/webcams",
+    },
+]
+
 
 # ---------------------------------------------------------------------------
 # Assign fish_region to each location for species filtering.
@@ -1720,6 +1854,31 @@ def find_nearest_locations(
 
     results.sort(key=lambda x: x["distance_miles"])
     return results[:n]
+
+
+def find_nearby_live_cams(
+    lat: float,
+    lng: float,
+    max_miles: float = 10.0,
+    include_pier_cams: bool = True,
+) -> List[Dict[str, Any]]:
+    """Return nearby live cam links within ``max_miles`` of a point.
+
+    When ``include_pier_cams`` is False, pier cam results are removed so we
+    only recommend beach-focused camera feeds.
+    """
+    results: List[Dict[str, Any]] = []
+    for cam in COASTAL_LIVE_CAMS:
+        if cam.get("cam_type") == "pier" and not include_pier_cams:
+            continue
+        d = _haversine_miles(lat, lng, cam["lat"], cam["lng"])
+        if d <= max_miles:
+            entry = dict(cam)
+            entry["distance_miles"] = round(d, 1)
+            results.append(entry)
+
+    results.sort(key=lambda x: x["distance_miles"])
+    return results
 
 
 def all_locations_sorted() -> List[Dict[str, Any]]:

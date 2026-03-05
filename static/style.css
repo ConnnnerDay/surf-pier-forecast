@@ -1578,6 +1578,50 @@ h2 {
   line-height: 1.45;
 }
 
+/* ---------- Nearby live cams ---------- */
+
+.live-cams-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.live-cam-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.55rem;
+}
+
+.live-cam-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  text-decoration: none;
+}
+
+.live-cam-item:hover {
+  border-color: #c8d6e5;
+  box-shadow: var(--shadow-sm);
+}
+
+.live-cam-name {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.87rem;
+}
+
+.live-cam-meta,
+.live-cam-empty {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 /* ---------- Natural forage / bait in the water ---------- */
 
 .forage-section {
