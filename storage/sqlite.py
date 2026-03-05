@@ -75,6 +75,14 @@ CREATE TABLE IF NOT EXISTS catch_log (
 );
 CREATE INDEX IF NOT EXISTS idx_catch_log_user_loc_time
 ON catch_log(user_id, location_id, caught_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS reg_scrape_cache (
+    species_key TEXT NOT NULL,
+    state       TEXT NOT NULL,
+    reg_json    TEXT NOT NULL,
+    scraped_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (species_key, state)
+);
 """
 
 
