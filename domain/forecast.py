@@ -1820,7 +1820,11 @@ def personalize_forecast(
     forecast["species"] = species
     forecast["rig_recommendations"] = build_rig_recommendations(species)
     forecast["bait_rankings"] = build_bait_ranking(species, month)
-    forecast["calendar"] = build_species_calendar(species, location)
+    forecast["calendar"] = build_species_calendar(
+        species,
+        location,
+        fish_region=loc_fish_region,
+    )
     forecast["bite_alerts"] = build_bite_alerts(
         verdict=conds.get("verdict", "Fair"),
         species=species,

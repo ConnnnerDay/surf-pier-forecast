@@ -1547,8 +1547,8 @@ _NOTABLE_SPECIES_BY_REGION: Dict[str, List[str]] = {
         "Cobia",
         "Pompano",
         "Sheepshead",
-        "Tarpon",
-        "Black sea bass",
+        "Black drum",
+        "Bluefish",
     ],
     "florida": [
         "Tarpon",
