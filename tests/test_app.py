@@ -91,13 +91,13 @@ def test_live_cams_tab_present_in_nav():
 
 
 
-def test_location_and_profile_live_under_account_nav():
+def test_account_nav_is_single_link():
     from pathlib import Path
     nav = Path("templates/partials/_main_nav.html").read_text(encoding="utf-8")
     assert "Account" in nav
-    assert "app-nav-submenu" in nav
-    assert "views.setup" in nav
-    assert "views.profile" in nav
+    assert "app-nav-submenu" not in nav
+    assert "views.setup" not in nav
+    assert "views.profile" not in nav
 
 def test_live_cams_have_dedicated_template():
     from pathlib import Path

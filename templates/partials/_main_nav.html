@@ -7,13 +7,7 @@
     <li><a href="{{ url_for('views.live_cams') }}">Live Cams</a></li>
     <li><a href="{{ url_for('views.index') }}#fish-log">Fishing Log</a></li>
     {% if user %}
-    <li class="app-nav-account-item">
-      <a href="{{ url_for('auth.account') }}">Account</a>
-      <ul class="app-nav-submenu" aria-label="Account links">
-        <li><a href="{{ url_for('views.setup') }}">Location</a></li>
-        <li><a href="{{ url_for('views.profile') }}">Profile</a></li>
-      </ul>
-    </li>
+    <li><a href="{{ url_for('auth.account') }}">Account</a></li>
     <li class="app-nav-divider" aria-hidden="true"></li>
     <li class="app-nav-user-item">
       <span class="app-nav-username">{{ user.username }}</span>
