@@ -1,19 +1,924 @@
 {
-  "last_updated": "",
-  "snapshot_source": "Manually curated starter snapshot. Replace with current state agency data exports.",
+  "last_updated": "2025-01",
+  "snapshot_source": "General recreational limits compiled from state agency publications as of early 2025. Regulations change frequently — always verify with the official state source before fishing.",
   "name_map": {
     "Red drum (puppy drum)": "red_drum",
     "Speckled trout (spotted seatrout)": "spotted_seatrout",
-    "Striped bass (rockfish)": "striped_bass"
+    "Striped bass (rockfish)": "striped_bass",
+    "Bluefish": "bluefish",
+    "Fluke (summer flounder)": "summer_flounder",
+    "Flounder (summer flounder)": "summer_flounder",
+    "Southern flounder": "southern_flounder",
+    "Black sea bass": "black_sea_bass",
+    "Tautog (blackfish)": "tautog",
+    "Scup (porgy)": "scup",
+    "Weakfish": "weakfish",
+    "Cobia": "cobia",
+    "Spanish mackerel": "spanish_mackerel",
+    "King mackerel (kingfish)": "king_mackerel",
+    "Pompano": "pompano",
+    "Sheepshead": "sheepshead",
+    "Snook": "snook",
+    "Tarpon": "tarpon",
+    "False albacore (little tunny)": "false_albacore",
+    "Gag grouper": "gag_grouper",
+    "Red snapper": "red_snapper",
+    "California halibut": "california_halibut",
+    "White seabass": "white_seabass",
+    "Yellowtail (California yellowtail)": "yellowtail",
+    "Corbina": "corbina",
+    "Kelp bass (calico bass)": "kelp_bass",
+    "Sand bass (barred sand bass)": "sand_bass",
+    "Lingcod": "lingcod",
+    "Cabezon": "cabezon",
+    "Redtail surfperch": "redtail_surfperch",
+    "Kelp greenling": "kelp_greenling"
   },
   "states": {
+    "AL": {
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Slot limit: 18–27 in TL. Verify current rules before fishing."
+      },
+      "spotted_seatrout": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify for any closed seasons or slot limits in effect."
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify for seasonal closures; flounder regulations have been updated in recent years."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with official source."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules before fishing."
+      }
+    },
+    "CA": {
+      "california_halibut": {
+        "min_size": "22 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Possession limit is 10. Verify current rules with CDFW before fishing."
+      },
+      "white_seabass": {
+        "min_size": "28 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Verify current size and bag limits with CDFW; rules may vary by region."
+      },
+      "yellowtail": {
+        "min_size": "24 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current bag limits and any area restrictions with CDFW."
+      },
+      "kelp_bass": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Combined bass bag limit (kelp, sand, barred sand) may apply. Verify with CDFW."
+      },
+      "sand_bass": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Combined bass bag limit (kelp, sand, barred sand) may apply. Verify with CDFW."
+      },
+      "lingcod": {
+        "min_size": "22 in TL",
+        "bag_limit": "2 per day",
+        "season": "Seasonal — check CDFW for current open dates",
+        "notes": "Season dates and bag limits vary by area (north vs. south). Verify before fishing."
+      },
+      "corbina": {
+        "min_size": "No minimum",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "No state-regulated minimum size or bag limit. Hook and line only. Verify with CDFW."
+      },
+      "cabezon": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Varies by area",
+        "notes": "Season and bag limits vary by CDFW management area. Verify current rules."
+      }
+    },
+    "CT": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Regulations may include slot limits or season closures. Verify with DEEP."
+      },
+      "summer_flounder": {
+        "min_size": "13 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size varies annually; verify current year's limit with CT DEEP."
+      },
+      "black_sea_bass": {
+        "min_size": "11 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal — check CT DEEP for open dates",
+        "notes": "Size and bag limits vary by season. Verify current rules before fishing."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal bag limit of 3/day applies. Verify current rules."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal — check CT DEEP for open dates",
+        "notes": "Bag limit varies by season. Spring season is more restrictive. Verify with CT DEEP."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with CT DEEP."
+      }
+    },
+    "DE": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Seasonal — check DNREC for dates",
+        "notes": "Regulations may include a slot limit. Verify current rules with DE DNREC."
+      },
+      "summer_flounder": {
+        "min_size": "16 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size may change annually. Verify current rules with DE DNREC."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Verify current rules with DE DNREC."
+      },
+      "black_sea_bass": {
+        "min_size": "11 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal",
+        "notes": "Verify current season dates and limits with DE DNREC."
+      }
+    },
+    "FL": {
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "1 per day (inshore/nearshore)",
+        "season": "Open year-round",
+        "notes": "Slot limit: 18–27 in TL inshore/nearshore; 18 in minimum offshore with 5/day limit. Rules vary by zone — verify with FWC."
+      },
+      "spotted_seatrout": {
+        "min_size": "15 in TL",
+        "bag_limit": "4–5 per day (zone-dependent)",
+        "season": "Open year-round",
+        "notes": "Bag limit and size vary by zone (Northeast, East Central, Brevard, Southwest, etc.). Verify your zone's rules with FWC."
+      },
+      "snook": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open season varies by zone — check FWC",
+        "notes": "Slot limit: 28–33 in TL. Season closed portions of year depending on Atlantic vs. Gulf side. Verify with FWC."
+      },
+      "tarpon": {
+        "min_size": "75 in FL",
+        "bag_limit": "1 per day (harvest tag required)",
+        "season": "Open year-round",
+        "notes": "Most anglers practice catch and release. Harvest requires a $50 tarpon tag from FWC. Minimum 75 in fork length. Strongly encouraged to release."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with FWC."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with FWC."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Bag limits may differ in federal vs. state waters. Verify with FWC."
+      },
+      "gag_grouper": {
+        "min_size": "22 in TL",
+        "bag_limit": "3 per day (Gulf) / 3 per day (Atlantic)",
+        "season": "Seasonal — Gulf closed Jan–May; check FWC",
+        "notes": "Included in aggregate grouper bag limit. Season and limits vary Gulf vs. Atlantic. Verify with FWC."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Seasonal — limited season in both state and federal waters",
+        "notes": "Season length and dates vary year to year. Verify current season with FWC before targeting red snapper."
+      },
+      "pompano": {
+        "min_size": "10 in FL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with FWC."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with FWC."
+      },
+      "summer_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with FWC."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with FWC."
+      },
+      "false_albacore": {
+        "min_size": "No minimum",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "Not subject to state size or bag limits. Verify with FWC."
+      }
+    },
+    "GA": {
+      "red_drum": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with GA DNR."
+      },
+      "spotted_seatrout": {
+        "min_size": "14 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with GA DNR."
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with GA DNR."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with GA DNR."
+      }
+    },
+    "LA": {
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Slot limit: 18–27 in TL. Verify current rules with LDWF."
+      },
+      "spotted_seatrout": {
+        "min_size": "12 in TL",
+        "bag_limit": "25 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with LDWF; some areas may have more restrictive rules."
+      },
+      "southern_flounder": {
+        "min_size": "10 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round (seasonal closure Nov–Dec in some years)",
+        "notes": "Flounder season may close in fall to protect spawning fish. Verify with LDWF."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with LDWF."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with LDWF."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Seasonal — check LDWF for current year's open dates",
+        "notes": "Season is limited and dates vary year to year. Verify with LDWF."
+      }
+    },
+    "MA": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Seasonal — check MA DMF for open dates",
+        "notes": "Regulations may include a slot limit or reduced season. Verify current rules with MA DMF."
+      },
+      "summer_flounder": {
+        "min_size": "14 in TL",
+        "bag_limit": "8 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size and bag limit may change annually. Verify current year's rules with MA DMF."
+      },
+      "black_sea_bass": {
+        "min_size": "12.5 in TL",
+        "bag_limit": "8 per day",
+        "season": "Seasonal — check MA DMF for open dates",
+        "notes": "Season and bag limits vary. Verify current rules with MA DMF."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal bag limit applies. Verify current rules."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal — check MA DMF for open dates",
+        "notes": "Bag limit varies by season. Verify current rules with MA DMF."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with MA DMF."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Weakfish stocks are depleted; bag limits are very restrictive. Verify current rules."
+      },
+      "false_albacore": {
+        "min_size": "No minimum",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "Not subject to state size or bag limits. Catch and release strongly encouraged."
+      }
+    },
+    "MD": {
+      "striped_bass": {
+        "min_size": "19 in TL",
+        "bag_limit": "1 per day",
+        "season": "Seasonal — Chesapeake Bay has a spring and fall season; coastal waters open most of year",
+        "notes": "Regulations vary greatly by area (Chesapeake Bay vs. coastal). Slot limits may apply. Verify with MD DNR."
+      },
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round (coastal)",
+        "notes": "Verify current limits with MD DNR."
+      },
+      "summer_flounder": {
+        "min_size": "14 in TL",
+        "bag_limit": "8 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size may change annually. Verify current year's rules with MD DNR."
+      },
+      "black_sea_bass": {
+        "min_size": "11 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal",
+        "notes": "Season dates and limits vary. Verify current rules with MD DNR."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with MD DNR."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal",
+        "notes": "Bag limit and season vary. Verify with MD DNR."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Stock is depleted; confirm very restrictive current limits with MD DNR."
+      },
+      "cobia": {
+        "min_size": "37 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with MD DNR."
+      }
+    },
+    "ME": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Seasonal — check ME DMR for open dates",
+        "notes": "Regulations may include slot or season restrictions. Verify with ME DMR."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with ME DMR."
+      },
+      "summer_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "8 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with ME DMR."
+      }
+    },
+    "MS": {
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Slot limit: 18–30 in TL. Verify current rules with MS MDWFP."
+      },
+      "spotted_seatrout": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with MS MDWFP."
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (seasonal restrictions may apply)",
+        "notes": "Verify current limits with MS MDWFP."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with MS MDWFP."
+      }
+    },
     "NC": {
       "red_drum": {
         "min_size": "18 in TL",
         "bag_limit": "1 per day",
         "season": "Open year-round",
-        "notes": "Slot limit: 18-27 in; verify emergency proclamations before fishing.",
-        "source": "https://www.deq.nc.gov/about/divisions/marine-fisheries/recreational-fishing"
+        "notes": "Slot limit: 18–27 in TL. Verify emergency proclamations before fishing."
+      },
+      "spotted_seatrout": {
+        "min_size": "14 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NC DMF."
+      },
+      "southern_flounder": {
+        "min_size": "14 in TL",
+        "bag_limit": "4 per day",
+        "season": "Open spring–fall; seasonal closure in effect some years",
+        "notes": "NC has implemented harvest reductions in recent years. Verify current season and bag limit with NC DMF."
+      },
+      "striped_bass": {
+        "min_size": "18 in TL",
+        "bag_limit": "5 per day (coastal)",
+        "season": "Open year-round (some areas have closed seasons)",
+        "notes": "Rules differ for Albemarle Sound, Roanoke River, and coastal waters. Verify area-specific rules with NC DMF."
+      },
+      "black_sea_bass": {
+        "min_size": "11 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal",
+        "notes": "Season dates and bag limits vary. Verify current rules with NC DMF."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NC DMF."
+      },
+      "tautog": {
+        "min_size": "15 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal",
+        "notes": "Verify season dates and current limits with NC DMF."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "50 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NC DMF."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with NC DMF."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with NC DMF."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with NC DMF."
+      },
+      "pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NC DMF."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NC DMF."
+      }
+    },
+    "NJ": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Seasonal — check NJ DEP for open dates",
+        "notes": "Regulations have changed in recent years and may include slot limits. Verify with NJ DEP."
+      },
+      "summer_flounder": {
+        "min_size": "16 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size may change annually. Verify current year's rules with NJ DEP."
+      },
+      "black_sea_bass": {
+        "min_size": "12.5 in TL",
+        "bag_limit": "15 per day",
+        "season": "Seasonal — check NJ DEP for open dates",
+        "notes": "Season and bag limits vary. Verify current rules with NJ DEP."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal bag limit applies. Verify current limits."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal — check NJ DEP for open dates",
+        "notes": "Bag limit varies by season. Verify current rules with NJ DEP."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NJ DEP."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Stock is depleted; bag limit is very restrictive. Verify current rules with NJ DEP."
+      },
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NJ DEP."
+      }
+    },
+    "NY": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round (some tributary closures)",
+        "notes": "Regulations may include a slot limit. Verify current rules with NY DEC."
+      },
+      "summer_flounder": {
+        "min_size": "17 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size may change annually. Verify current year's rules with NY DEC."
+      },
+      "black_sea_bass": {
+        "min_size": "12.5 in TL",
+        "bag_limit": "15 per day",
+        "season": "Seasonal — check NY DEC for open dates",
+        "notes": "Season and bag limits vary. Verify current rules with NY DEC."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal bag limit applies. Verify current limits."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal — check NY DEC for open dates",
+        "notes": "Bag limit varies by season. Verify current rules with NY DEC."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with NY DEC."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Stock is depleted; bag limit is very restrictive. Verify current rules with NY DEC."
+      }
+    },
+    "OR": {
+      "lingcod": {
+        "min_size": "22 in TL",
+        "bag_limit": "5 per day",
+        "season": "Seasonal — check ODFW for current open dates",
+        "notes": "Season and bag limits vary by zone (north vs. south). Verify current rules with ODFW."
+      },
+      "cabezon": {
+        "min_size": "No minimum",
+        "bag_limit": "5 per day",
+        "season": "Seasonal",
+        "notes": "Verify current season dates and limits with ODFW."
+      },
+      "kelp_greenling": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with ODFW."
+      },
+      "redtail_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with ODFW."
+      }
+    },
+    "RI": {
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "May include slot restrictions. Verify current rules with RI DEM."
+      },
+      "summer_flounder": {
+        "min_size": "14 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size may change annually. Verify current year's rules with RI DEM."
+      },
+      "black_sea_bass": {
+        "min_size": "12.5 in TL",
+        "bag_limit": "8 per day",
+        "season": "Seasonal — check RI DEM for open dates",
+        "notes": "Season and bag limits vary. Verify current rules with RI DEM."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal bag limit applies. Verify current limits."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "5 per day",
+        "season": "Seasonal — check RI DEM for open dates",
+        "notes": "Bag limit varies by season. Verify current rules with RI DEM."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with RI DEM."
+      },
+      "false_albacore": {
+        "min_size": "No minimum",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "Not subject to state size or bag limits. Catch and release strongly encouraged."
+      }
+    },
+    "SC": {
+      "red_drum": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with SC DNR."
+      },
+      "spotted_seatrout": {
+        "min_size": "14 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with SC DNR."
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round (seasonal restrictions may apply)",
+        "notes": "Flounder regulations have been updated in recent years. Verify with SC DNR."
+      },
+      "black_sea_bass": {
+        "min_size": "11 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal",
+        "notes": "Verify current season dates and limits with SC DNR."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with SC DNR."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with SC DNR."
+      },
+      "pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with SC DNR."
+      },
+      "striped_bass": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round (Santee-Cooper area has different rules)",
+        "notes": "Rules vary by area. Verify with SC DNR."
+      }
+    },
+    "TX": {
+      "red_drum": {
+        "min_size": "20 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Slot limit: 20–28 in TL. Verify current rules with TPWD."
+      },
+      "spotted_seatrout": {
+        "min_size": "15 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Upper Laguna Madre and Baffin Bay have a 17–23 in slot limit with 5/day bag. Verify your specific bay with TPWD."
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (seasonal closure Oct 15 – Nov 30 in some years)",
+        "notes": "Fall closures have been implemented to protect spawning fish. Verify current season with TPWD."
+      },
+      "cobia": {
+        "min_size": "37 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with TPWD."
+      },
+      "spanish_mackerel": {
+        "min_size": "14 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with TPWD."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with TPWD."
+      },
+      "sheepshead": {
+        "min_size": "No minimum",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit as of recent regulations. Verify with TPWD."
+      },
+      "pompano": {
+        "min_size": "No minimum",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit as of recent regulations. Verify with TPWD."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "4 per day (state waters)",
+        "season": "Open year-round in state waters (0–9 nautical miles)",
+        "notes": "Texas state waters red snapper season is open year-round. Federal waters season is limited. Verify current rules with TPWD."
+      }
+    },
+    "VA": {
+      "striped_bass": {
+        "min_size": "18 in TL",
+        "bag_limit": "2 per day",
+        "season": "Seasonal (Chesapeake Bay has spring/fall seasons; coastal waters differ)",
+        "notes": "Regulations vary by area. Slot limits may apply. Verify current rules with VA MRC or VDWR."
+      },
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Verify current rules with VA MRC."
+      },
+      "spotted_seatrout": {
+        "min_size": "14 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with VA MRC."
+      },
+      "summer_flounder": {
+        "min_size": "16 in TL",
+        "bag_limit": "4 per day",
+        "season": "Open year-round",
+        "notes": "Minimum size may change annually. Verify current year's rules with VA MRC."
+      },
+      "black_sea_bass": {
+        "min_size": "11 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal",
+        "notes": "Season dates and limits vary. Verify current rules with VA MRC."
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with VA MRC."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "Seasonal",
+        "notes": "Bag limit and season vary. Verify current rules with VA MRC."
+      },
+      "cobia": {
+        "min_size": "37 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current rules with VA MRC."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Stock is depleted; confirm current limits with VA MRC."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with VA MRC."
+      },
+      "spanish_mackerel": {
+        "min_size": "14 in FL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current limits with VA MRC."
+      }
+    },
+    "WA": {
+      "lingcod": {
+        "min_size": "22 in TL",
+        "bag_limit": "5 per day",
+        "season": "Seasonal — check WDFW for current open dates",
+        "notes": "Season and bag limits vary by Puget Sound vs. coastal marine areas. Verify current rules with WDFW."
+      },
+      "cabezon": {
+        "min_size": "No minimum",
+        "bag_limit": "5 per day",
+        "season": "Seasonal",
+        "notes": "Verify current season dates and limits with WDFW."
+      },
+      "kelp_greenling": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with WDFW."
+      },
+      "redtail_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with WDFW."
       }
     }
   }
