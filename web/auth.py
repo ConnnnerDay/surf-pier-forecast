@@ -154,8 +154,8 @@ def register() -> Any:
 @bp.route("/logout", methods=["POST"])
 def logout() -> Any:
     """Log out the current user."""
-    session.pop("user_id", None)
-    return redirect(url_for("views.index"))
+    session.clear()
+    return redirect(url_for("auth.landing"))
 
 
 @bp.route("/account")
