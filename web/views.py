@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Optional
@@ -43,6 +44,43 @@ logger = logging.getLogger(__name__)
 
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _cam_status_cache: Dict[str, Dict[str, Any]] = {}
+
+_KT_RANGE_RE = re.compile(r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE)
+_KT_VALUE_RE = re.compile(r"(?P<value>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE)
+
+
+def _convert_wind_text_units(text: str, wind_units: str) -> str:
+    """Convert wind text containing kt values to the requested display units."""
+    if wind_units != "mph" or not text:
+        return text
+
+    def _to_mph_range(match: re.Match[str]) -> str:
+        low = round(float(match.group("low")) * 1.15078)
+        high = round(float(match.group("high")) * 1.15078)
+        return f"{low}-{high} mph"
+
+    converted = _KT_RANGE_RE.sub(_to_mph_range, text)
+
+    def _to_mph(match: re.Match[str]) -> str:
+        kt = float(match.group("value"))
+        mph = round(kt * 1.15078)
+        return f"{mph} mph"
+
+    return _KT_VALUE_RE.sub(_to_mph, converted)
+
+
+def _apply_wind_unit_preference(forecast: Dict[str, Any], wind_units: str) -> None:
+    """Mutate wind labels in a forecast to match a user's preferred wind units."""
+    if wind_units != "mph":
+        return
+
+    conditions = forecast.get("conditions") or {}
+    if conditions.get("wind"):
+        conditions["wind"] = _convert_wind_text_units(conditions["wind"], wind_units)
+
+    for day in forecast.get("outlook") or []:
+        if day.get("wind"):
+            day["wind"] = _convert_wind_text_units(day["wind"], wind_units)
 
 
 def _cam_status(url: str) -> Dict[str, Any]:
@@ -228,15 +266,19 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
 
     # Apply profile-based personalization (re-rank species for this user).
     # Query params take precedence; fall back to the user's stored DB profile.
+    user_prefs: Dict[str, Any] = {}
     stored_profile: Dict[str, Any] = {}
     if g.user:
-        stored_profile = get_preferences(g.user["id"]).get("fishing_profile") or {}
+        user_prefs = get_preferences(g.user["id"])
+        stored_profile = user_prefs.get("fishing_profile") or {}
 
     profile = _extract_profile_from_request()
     if not profile and (stored_profile.get("fishing_types") or stored_profile.get("targets")):
         profile = stored_profile
     if profile:
         forecast = personalize_forecast(forecast, profile, location)
+
+    _apply_wind_unit_preference(forecast, user_prefs.get("wind_units", "knots"))
 
     forecast.update(_build_live_cam_context(location, profile))
 
