@@ -33,6 +33,7 @@ class TestAppFactory:
         assert "/login" in rules
         assert "/register" in rules
         assert "/setup" in rules
+        assert "/live-cams" in rules
         assert "/api/forecast" in rules
         assert "/api/v1/forecast" in rules
         assert "/api/v1/forecast/<location_id>/outlook" in rules
@@ -80,3 +81,16 @@ class TestBasicRoutes:
         assert resp.status_code == 200
         assert b'data-favorite-btn' in resp.data
         assert b'/setup/favorite/' not in resp.data
+
+
+def test_live_cams_tab_present_in_nav():
+    from pathlib import Path
+    nav = Path("templates/partials/_main_nav.html").read_text(encoding="utf-8")
+    assert "Live Cams" in nav
+
+
+def test_live_cams_have_dedicated_template():
+    from pathlib import Path
+    template = Path("templates/live_cams.html").read_text(encoding="utf-8")
+    assert "Open live cam" in template
+    assert "live-cam-status" in template

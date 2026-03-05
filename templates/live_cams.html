@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Cams &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% include 'partials/_theme_bootstrap.html' %}
+</head>
+<body class="forecast-page">
+    <header>
+        <div class="header-inner">
+            <h1>Live Cams</h1>
+            <p class="subtitle">Nearby beach and pier cams for {{ location.name }}, {{ location.state }}</p>
+        </div>
+    </header>
+
+    {% include 'partials/_main_nav.html' %}
+
+    <main>
+        <section class="live-cams-page-card">
+            <h2>Camera feeds within {{ live_cam_radius_miles }} miles</h2>
+            <p class="section-sub">Links are checked regularly and labeled when reachable.</p>
+            {% if nearby_live_cams %}
+            <div class="live-cam-grid">
+                {% for cam in nearby_live_cams %}
+                <article class="live-cam-card">
+                    <div class="live-cam-card-top">
+                        <span class="live-cam-type">{{ cam.cam_type|title }} cam</span>
+                        <span class="live-cam-status {% if cam.is_live %}is-live{% else %}is-down{% endif %}">{{ cam.status_label }}</span>
+                    </div>
+                    <h3>{{ cam.name }}</h3>
+                    <p>{{ cam.distance_miles }} miles away</p>
+                    <a class="live-cam-open-link" href="{{ cam.url }}" target="_blank" rel="noopener noreferrer">Open live cam</a>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="live-cam-empty">No public live cams found nearby.{% if not pier_cams_enabled %} Pier cams are hidden by your fishing profile.{% endif %}</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

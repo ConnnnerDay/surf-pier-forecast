@@ -1622,6 +1622,81 @@ h2 {
   line-height: 1.45;
 }
 
+
+
+.live-cams-page-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.live-cam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.8rem;
+}
+
+.live-cam-card {
+  border: 1px solid var(--border-light);
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+}
+
+.live-cam-card h3 {
+  font-size: 1rem;
+  margin: 0.4rem 0 0.3rem;
+}
+
+.live-cam-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.live-cam-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-cam-type {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.live-cam-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.live-cam-status.is-live {
+  color: #116530;
+  background: #dcfce7;
+}
+
+.live-cam-status.is-down {
+  color: #8a4907;
+  background: #ffedd5;
+}
+
+.live-cam-open-link {
+  display: inline-block;
+  margin-top: 0.7rem;
+  text-decoration: none;
+  color: var(--ocean);
+  font-weight: 600;
+}
+
+.live-cam-open-link:hover {
+  text-decoration: underline;
+}
 /* ---------- Natural forage / bait in the water ---------- */
 
 .forage-section {
