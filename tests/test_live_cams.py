@@ -55,3 +55,22 @@ def test_live_cam_context_handles_unknown_status(monkeypatch):
     context = views._build_live_cam_context({"lat": 34.0, "lng": -77.0}, None)
     assert context["nearby_live_cams"][0]["status_label"] == "Unavailable"
     assert context["nearby_live_cams"][0]["is_live"] is False
+
+
+def test_live_cam_context_treats_fishing_types_case_insensitively(monkeypatch):
+    from web import views
+
+    monkeypatch.setattr(
+        views,
+        "find_nearby_live_cams",
+        lambda *_args, **kwargs: [{"url": "https://cam.example", "name": "Example", "cam_type": "pier", "distance_miles": 2.0}] if kwargs.get("include_pier_cams") else [],
+    )
+    monkeypatch.setattr(views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"})
+
+    context = views._build_live_cam_context(
+        {"lat": 34.0, "lng": -77.0},
+        {"fishing_types": ["Pier", "SURF"]},
+    )
+
+    assert context["pier_cams_enabled"] is True
+    assert context["nearby_live_cams"], "Expected pier cams to remain visible for mixed-case profile values"

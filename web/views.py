@@ -73,9 +73,9 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
 
     raw_types = (profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or []
     if isinstance(raw_types, str):
-        fishing_types = {t.strip() for t in raw_types.split(",") if t.strip()}
+        fishing_types = {t.strip().lower() for t in raw_types.split(",") if t.strip()}
     else:
-        fishing_types = {str(t).strip() for t in raw_types if str(t).strip()}
+        fishing_types = {str(t).strip().lower() for t in raw_types if str(t).strip()}
 
     include_pier_cams = (not fishing_types) or ("pier" in fishing_types)
     cams = find_nearby_live_cams(
