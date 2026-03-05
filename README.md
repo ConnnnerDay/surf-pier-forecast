@@ -1,15 +1,17 @@
 # Surf & Pier Fishing Forecast
 
-A self-hosted Flask dashboard that builds an actionable surf/pier fishing forecast from NOAA/NWS/NDBC data, then personalizes targets/rigs/bait by user profile.
+A self-hosted Flask web app that combines NOAA/NWS/NDBC marine data with species logic, rig guidance, and personal fishing preferences to generate a practical surf & pier game plan.
 
 ## Highlights
 
-- **Location-aware forecast engine** (winds, waves, tide state, sunrise/sunset, solunar, pressure, weather)
-- **User-scoped forecast cache** in SQLite (`forecast_cache`) with async stale refresh
-- **Authentication + account settings** (login/register/account)
-- **Security hardening**: CSRF protection on browser form POSTs, password complexity, login rate limiting
-- **Fishing workflow tools**: profile setup, favorites, catch log, share links, quick refresh
-- **Responsive UI** with shared nav and interactive charts
+- **Live fishing outlook dashboard** with conditions cards, confidence/verdict summary, and trend charts
+- **Location-aware forecast engine** (wind, waves, tide windows, sunrise/sunset, solunar, pressure, weather)
+- **Species + tactics guidance** (ranked target species, natural bait picks, rig recommendations, knots, and spot tips)
+- **User accounts** with login/register, profile setup, favorites, catch logging, and photo uploads
+- **Shareable forecast links** via `/f/<location_id>`
+- **SQLite-backed caching + background refresh** for fast page loads and stale-while-refresh behavior
+- **PWA/offline-ready setup** (manifest + service worker)
+- **Security hardening**: CSRF protection, password complexity rules, and login rate limiting
 
 ---
 
@@ -28,11 +30,15 @@ Python packages are listed in `requirements.txt`:
 
 ---
 
-## Quick start
+## Quick start (local dev)
 
 ```bash
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
 cd surf-pier-forecast
+
+# Linux only: install venv support if missing
+sudo apt-get update && sudo apt-get install -y python3-venv
+
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -41,9 +47,11 @@ python app.py
 
 Open: **http://localhost:5757**
 
+If you're on macOS or Windows, skip the `apt-get` line and run the remaining commands in your terminal.
+
 ---
 
-## One-command install (systemd)
+## One-click install (systemd)
 
 ```bash
 ./install.sh
@@ -54,6 +62,13 @@ What it does:
 2. Installs dependencies
 3. Installs/starts `surf-forecast.service`
 4. Enables auto-start on boot
+
+If your distro does not include the Python `venv` module by default, install it first:
+
+```bash
+sudo apt-get update && sudo apt-get install -y python3-venv
+./install.sh
+```
 
 Useful service commands:
 
@@ -90,6 +105,7 @@ SECRET_KEY='change-me' PORT=8080 python app.py
 - `/account` account/settings/dashboard
 - `/f/<location_id>` shareable location forecast
 - `/login`, `/register`
+- `/sw.js` service worker endpoint (root-scoped)
 
 ### APIs
 
@@ -101,6 +117,7 @@ SECRET_KEY='change-me' PORT=8080 python app.py
 - `/api/v1/log/<entry_id>`
 - `/api/openapi.json`
 - `/api/refresh` (POST)
+- `/api/v1/log/<entry_id>/photos` (POST)
 
 ---
 
@@ -186,4 +203,3 @@ surf-forecast.service
 - **Service not starting**: check `journalctl -u surf-forecast -n 100`
 - **No forecast data**: verify internet access; upstream NOAA/NWS/NDBC endpoints may be temporarily unavailable
 - **Auth form POST 400**: CSRF token missing/invalid (refresh page and retry)
-
