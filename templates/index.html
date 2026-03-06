@@ -899,9 +899,18 @@
             });
     }
 
+    var OUTLOOK_DATA = {
+        outlook: {{ (forecast.outlook or [])|tojson }},
+        best_day: {{ (forecast.best_day or None)|tojson }},
+        activity_timeline: {{ (forecast.activity_timeline or [])|tojson }}
+    };
+
     function initInteractiveCharts() {
         renderInteractiveCharts();
-        lazyHydrateSection('outlook-lazy-root', function(data){ return renderOutlookSection(data); }, 'outlook');
+        var outlookRoot = document.getElementById('outlook-lazy-root');
+        if (outlookRoot) {
+            outlookRoot.innerHTML = renderOutlookSection(OUTLOOK_DATA);
+        }
     }
 
     window.addEventListener('DOMContentLoaded', initInteractiveCharts);
