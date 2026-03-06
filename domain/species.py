@@ -151,6 +151,19 @@ _GAMEFISH_SPECIES: set = {
     "Snook", "Permit",
 }
 
+# Species that are nuisance bycatch and not worth targeting from the surf or pier.
+# These are excluded from the "What's Biting Now" ranking entirely.
+_NUISANCE_SPECIES: set = {
+    "Lizardfish",               # Pure nuisance — no food/sport value
+    "Hardhead catfish (sea catfish)",  # Venomous spines, slimy, universally disliked
+    "Gafftopsail catfish",      # Same deal as hardhead — bycatch pest
+    "Pinfish",                  # Tiny bait-thieves, nobody targets them
+    "Spottail pinfish",         # Same as pinfish
+    "Pigfish",                  # Marginal grunt bycatch
+    "Ribbonfish (Atlantic cutlassfish)",  # Occasional pier bycatch, not a target
+    "Hogchoker",                # Tiny flatfish, no sport or food value
+}
+
 
 def _species_matches_profile(
     sp_name: str,
@@ -1305,8 +1318,45 @@ def _conditions_modifier(
 SPECIES_SCORE_THRESHOLD = 30
 
 
-def _regulation_disallows_keep(regulation: Dict[str, str]) -> bool:
-    """Return True when regulations indicate harvest/retention is not legal."""
+_MONTH_ABBREVS: Dict[str, int] = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    "january": 1, "february": 2, "march": 3, "april": 4, "june": 6,
+    "july": 7, "august": 8, "september": 9, "october": 10,
+    "november": 11, "december": 12,
+}
+
+
+def _parse_closed_months(text: str) -> set:
+    """Parse month ranges from regulation text like 'closed Jan-May' or 'Gulf closed Jan–May'.
+
+    Returns a set of month numbers (1-12) that are closed.
+    Handles year-wrap ranges like 'closed Nov-Feb'.
+    """
+    closed: set = set()
+    # Match "closed MMM-MMM", "closed MMM–MMM", "closed MonthName-MonthName"
+    pattern = r"closed\s+([a-z]+)[–\-]([a-z]+)"
+    for m in re.finditer(pattern, text.lower()):
+        start_str = m.group(1)[:3]
+        end_str = m.group(2)[:3]
+        start = _MONTH_ABBREVS.get(start_str)
+        end = _MONTH_ABBREVS.get(end_str)
+        if start and end:
+            if end >= start:
+                closed.update(range(start, end + 1))
+            else:
+                # Wraps around the year end, e.g., Nov-Feb
+                closed.update(range(start, 13))
+                closed.update(range(1, end + 1))
+    return closed
+
+
+def _regulation_disallows_keep(regulation: Dict[str, str], month: int = 0) -> bool:
+    """Return True when regulations indicate harvest/retention is not legal.
+
+    Pass ``month`` (1-12) to also check month-specific seasonal closures
+    embedded in the regulation text (e.g. "Gulf closed Jan–May").
+    """
     bag_limit = str(regulation.get("bag_limit") or "").strip().lower()
     season = str(regulation.get("season") or "").strip().lower()
     notes = str(regulation.get("notes") or "").strip().lower()
@@ -1331,7 +1381,15 @@ def _regulation_disallows_keep(regulation: Dict[str, str]) -> bool:
         "season closed",
         "closed year-round",
     )
-    return any(phrase in combined for phrase in blocked_phrases)
+    if any(phrase in combined for phrase in blocked_phrases):
+        return True
+
+    # Check month-specific closures when a current month is supplied
+    if month:
+        if month in _parse_closed_months(combined):
+            return True
+
+    return False
 
 
 def build_species_ranking(
@@ -1370,6 +1428,9 @@ def build_species_ranking(
         # Skip species from a different coast/region
         if sp.get("coast", "east") != coast:
             continue
+        # Skip nuisance/bycatch species that aren't worth targeting
+        if sp["name"] in _NUISANCE_SPECIES:
+            continue
         # Skip species not found in this geographic region
         if fish_region and "regions" in sp and fish_region not in sp["regions"]:
             continue
@@ -1390,6 +1451,9 @@ def build_species_ranking(
 
     scored.sort(key=lambda x: x[0], reverse=True)
 
+    # Max possible raw score: 50 (temp) + 30 (season) + 15 (conditions) = 95
+    _MAX_RAW_SCORE = 95.0
+
     result: List[Dict[str, Any]] = []
     for score, sp, explanation in scored:
         if score >= 65:
@@ -1399,10 +1463,22 @@ def build_species_ranking(
         else:
             activity = "Possible"
 
+        # Attach regulation data and check for closures before building entry
+        regulation = None
+        if state:
+            reg = lookup_regulation(sp["name"], state)
+            if reg:
+                if _regulation_disallows_keep(reg, month):
+                    continue
+                regulation = reg
+
+        # Normalize raw score (max ~95) to a clean 0-100 display percentage
+        display_score = min(100, round(score / _MAX_RAW_SCORE * 100))
+
         entry: Dict[str, Any] = {
             "rank": len(result) + 1,
             "name": sp["name"],
-            "score": round(score, 1),
+            "score": display_score,
             "activity": activity,
             "explanation": explanation,
             "bait": sp["bait"],
@@ -1411,13 +1487,8 @@ def build_species_ranking(
             "sinker": sp["sinker"],
         }
 
-        # Attach regulation data if available
-        if state:
-            reg = lookup_regulation(sp["name"], state)
-            if reg:
-                if _regulation_disallows_keep(reg):
-                    continue
-                entry["regulation"] = reg
+        if regulation:
+            entry["regulation"] = regulation
 
         result.append(entry)
         if len(result) >= 10:
