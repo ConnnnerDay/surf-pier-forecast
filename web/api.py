@@ -14,7 +14,7 @@ from flask import Blueprint, current_app, g, jsonify, redirect, request, session
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
 from locations import get_location
-from regulations import lookup_regulation, search_regulations
+from regulations import lookup_regulation
 from storage.cache import CACHE_MAX_AGE_HOURS, _forecast_age_minutes, load_cached_forecast, save_forecast
 from storage.sqlite import (
     add_log_entry,
@@ -333,42 +333,6 @@ def regulations_refresh_v1() -> Any:
     except Exception:
         removed = 0
     return jsonify(success_envelope({"invalidated": removed, "state": state}))
-
-
-@bp.route("/api/v1/regulations/search", methods=["GET"])
-def regulations_search_v1() -> Any:
-    """Search fishing regulations for all species in the user's state.
-
-    Query parameters
-    ----------------
-    q            : str (optional) — partial species name filter (case-insensitive)
-    location_id  : str (optional) — location ID; state is derived automatically
-    state        : str (optional) — two-letter state abbreviation (overrides location_id)
-
-    Returns a list of species with their regulations for the resolved state,
-    sorted alphabetically and filtered by ``q`` when provided.
-    """
-    state = request.args.get("state", "").strip().upper()
-    if not state:
-        location_id = request.args.get("location_id", "").strip()
-        loc = get_location(location_id) if location_id else None
-        if not loc:
-            loc = get_session_location()
-        if loc:
-            state = (loc.get("state") or "").upper()
-
-    if not state:
-        return _json_error(ApiError("missing_param", "Could not determine state. Provide 'state' or 'location_id'.", status=400))
-
-    q = request.args.get("q", "").strip()
-    results = search_regulations(q, state)
-
-    return jsonify(success_envelope({
-        "state": state,
-        "query": q or None,
-        "count": len(results),
-        "results": results,
-    }))
 
 
 @bp.route("/api/v1/regulations", methods=["GET"])
