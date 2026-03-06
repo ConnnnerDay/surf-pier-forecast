@@ -9,8 +9,11 @@
     {% if user %}
     <li><a href="{{ url_for('auth.account') }}">Account</a></li>
     {% endif %}
-    <li><button class="app-nav-regs-btn" type="button" onclick="openRegSearch()" aria-haspopup="dialog">Search Regulations</button></li>
   </ul>
+  <button class="app-nav-regs-btn" type="button" onclick="openRegSearch()" aria-haspopup="dialog" aria-label="Search regulations">
+    <span aria-hidden="true">🔍</span>
+    <span class="sr-only">Search regulations</span>
+  </button>
 </nav>
 
 <!-- ── Regulation search modal (shared across all pages) ─────────────── -->
