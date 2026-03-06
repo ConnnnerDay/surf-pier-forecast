@@ -1385,11 +1385,16 @@ def build_species_ranking(
             "sinker": sp["sinker"],
         }
 
-        # Attach regulation data if available
+        # Attach regulation data if available; use it to reflect season status
         if state:
             reg = lookup_regulation(sp["name"], state)
             if reg:
                 entry["regulation"] = reg
+                season = reg.get("season", "")
+                if month in reg.get("closed_months", []):
+                    entry["activity"] = "Closed"
+                elif "Seasonal" in season:
+                    entry["activity"] = "Check Regs"
 
         result.append(entry)
 

@@ -228,6 +228,7 @@
         "min_size": "22 in TL",
         "bag_limit": "3 per day (Gulf) / 3 per day (Atlantic)",
         "season": "Seasonal — Gulf closed Jan–May; check FWC",
+        "closed_months": [1, 2, 3, 4, 5],
         "notes": "Included in aggregate grouper bag limit. Season and limits vary Gulf vs. Atlantic. Verify with FWC."
       },
       "red_snapper": {

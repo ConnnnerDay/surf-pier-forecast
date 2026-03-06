@@ -50,7 +50,7 @@ class _RegData:
     def __init__(self) -> None:
         self.name_map: Dict[str, str] = {}
         self.normalized_name_map: Dict[str, str] = {}
-        self.states: Dict[str, Dict[str, Dict[str, str]]] = {}
+        self.states: Dict[str, Dict[str, Dict[str, object]]] = {}
         self.last_updated: str = ""
         self.snapshot_source: str = ""
         self.source_file: str = ""
@@ -145,13 +145,17 @@ def _load_data_file() -> _RegData:
             for species_key, details in regs.items():
                 if not isinstance(species_key, str) or not isinstance(details, dict):
                     continue
-                normalized_states[st_key][species_key.strip()] = {
+                entry: Dict[str, object] = {
                     "min_size": str(details.get("min_size") or "").strip(),
                     "bag_limit": str(details.get("bag_limit") or "").strip(),
                     "season": str(details.get("season") or "").strip(),
                     "notes": str(details.get("notes") or "").strip(),
                     "source": str(details.get("source") or "").strip(),
                 }
+                raw_months = details.get("closed_months")
+                if isinstance(raw_months, list):
+                    entry["closed_months"] = [m for m in raw_months if isinstance(m, int)]
+                normalized_states[st_key][species_key.strip()] = entry
         data.states = normalized_states
 
     data.last_updated = str(raw.get("last_updated") or "").strip()
