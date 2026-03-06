@@ -76,6 +76,18 @@ class TestBasicRoutes:
         assert resp.status_code == 404
 
 
+
+    def test_shared_forecast_renders_full_dashboard_shell(self, client):
+        from locations import all_locations_sorted
+
+        sample_location = all_locations_sorted()[0]["id"]
+        resp = client.get(f"/f/{sample_location}")
+
+        assert resp.status_code == 200
+        assert b"Marine Conditions" in resp.data
+        assert b"When to Fish" in resp.data
+        assert b"Surf &amp; Pier Fishing Outlook" in resp.data
+
     def test_setup_anon_favorite_toggle_is_client_side(self, client):
         resp = client.get("/setup")
         assert resp.status_code == 200
