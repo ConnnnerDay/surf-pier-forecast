@@ -149,8 +149,18 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
         "pier_cams_enabled": include_pier_cams,
     }
 
-# Routes that are accessible without authentication (shareable forecast links).
-_PUBLIC_ENDPOINTS = {"views.shared_forecast"}
+# Routes that are accessible without authentication.
+# Keep the core forecast flow public so visitors can select a location and use
+# the app without creating an account.
+_PUBLIC_ENDPOINTS = {
+    "views.index",
+    "views.setup",
+    "views.setup_search",
+    "views.setup_coords",
+    "views.setup_select",
+    "views.live_cams",
+    "views.shared_forecast",
+}
 _PROFILE_SETUP_EXEMPT_ENDPOINTS = {
     "views.profile",
     "views.setup",
@@ -183,8 +193,14 @@ def _require_login() -> Any:
     location_id that may have been left in the session from a previous
     login, so it cannot bleed across accounts.
     """
-    if request.endpoint in _PUBLIC_ENDPOINTS:
+    if request.endpoint is None:
         return
+
+    if request.endpoint in _PUBLIC_ENDPOINTS:
+        if g.user is not None and request.endpoint not in _PROFILE_SETUP_EXEMPT_ENDPOINTS and _user_requires_profile_setup():
+            return redirect(url_for("views.profile"))
+        return
+
     if g.user is None:
         # Clear stale per-user state from the cookie.
         session.pop("location_id", None)
