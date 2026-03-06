@@ -159,6 +159,7 @@ _PUBLIC_ENDPOINTS = {
     "views.setup_coords",
     "views.setup_select",
     "views.live_cams",
+    "views.fishing_log",
     "views.shared_forecast",
 }
 _PROFILE_SETUP_EXEMPT_ENDPOINTS = {
