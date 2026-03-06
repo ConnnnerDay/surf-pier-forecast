@@ -365,6 +365,11 @@
     </footer>
 
     <script>
+    /* ---- HTML escape helper (used throughout this script) ---- */
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     /* ---- Auth state ---- */
     var LOGGED_IN = {{ 'true' if user else 'false' }};
 
@@ -809,6 +814,8 @@
             var currentMarker = getCurrentTideMarker(tideWave);
             var markerSeries = tideWave.values.map(function() { return null; });
             if (currentMarker) markerSeries[currentMarker.index] = currentMarker.height;
+            var tideLineColor = getComputedStyle(document.documentElement).getPropertyValue('--ocean').trim() || '#0b4f6c';
+            var tideLineRgba = tideLineColor.startsWith('#') ? tideLineColor + '30' : 'rgba(11,79,108,0.18)';
             new Chart(tideCanvas, {
                 type: 'line',
                 data: {
@@ -817,8 +824,8 @@
                         {
                             label: 'Tide height (ft)',
                             data: tideWave.values,
-                            borderColor: '#0b4f6c',
-                            backgroundColor: 'rgba(11,79,108,0.18)',
+                            borderColor: tideLineColor,
+                            backgroundColor: tideLineRgba,
                             fill: true,
                             tension: 0.45,
                             pointRadius: 0,

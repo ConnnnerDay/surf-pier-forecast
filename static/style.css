@@ -4045,6 +4045,7 @@ footer p {
   padding: 0;
   background: transparent;
   border: none;
+  z-index: 99999;
   max-width: min(440px, 94vw);
   max-height: 90vh;
   max-height: 90dvh;
@@ -4189,6 +4190,7 @@ footer p {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  z-index: 99999;
 }
 .reg-search-modal::backdrop {
   background: rgba(0,0,0,0.55);
