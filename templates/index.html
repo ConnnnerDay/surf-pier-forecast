@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#0e5f78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -99,13 +98,7 @@
         </div>
         {% endif %}
 
-        <div id="outlook-lazy-root" data-lazy-section="outlook" data-endpoint="{{ url_for('api.forecast_outlook_v1', location_id=share_id) }}">
-            <section class="lazy-section" aria-live="polite">
-                <h2>3-Day Outlook</h2>
-                <div class="lazy-skeleton">Loading outlook…</div>
-            </section>
-        </div>
-        <noscript>{% include 'partials/_outlook.html' %}</noscript>
+        {% include 'partials/_outlook.html' %}
 
         <!-- Bite Alerts -->
         {% if forecast.bite_alerts %}
@@ -695,175 +688,6 @@
 
     syncLogToServer();
 
-    function parseTimeLabelToMinutes(label) {
-        if (!label) return 0;
-
-        var amPmMatch = label.match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
-        if (amPmMatch) {
-            var h = parseInt(amPmMatch[1], 10) % 12;
-            var mins = parseInt(amPmMatch[2], 10);
-            var mer = amPmMatch[3].toUpperCase();
-            if (mer === 'PM') h += 12;
-            return h * 60 + mins;
-        }
-
-        // Fallback for raw NOAA timestamps like "2026-03-05 06:32".
-        var timestampMatch = label.match(/(?:\d{4}-\d{2}-\d{2}\s+)?(\d{1,2}):(\d{2})/);
-        if (timestampMatch) {
-            var hours24 = parseInt(timestampMatch[1], 10);
-            var minutes24 = parseInt(timestampMatch[2], 10);
-            if (!Number.isNaN(hours24) && !Number.isNaN(minutes24)) {
-                return hours24 * 60 + minutes24;
-            }
-        }
-
-        return 0;
-    }
-
-    function formatMinutesToLabel(totalMinutes) {
-        var normalized = ((totalMinutes % 1440) + 1440) % 1440;
-        var hours24 = Math.floor(normalized / 60);
-        var mins = normalized % 60;
-        var meridiem = hours24 >= 12 ? 'PM' : 'AM';
-        var hours12 = hours24 % 12;
-        if (hours12 === 0) hours12 = 12;
-        return hours12 + ':' + String(mins).padStart(2, '0') + ' ' + meridiem;
-    }
-
-    function buildTideWaveSeries(tides) {
-        var points = (tides || []).map(function(t) {
-            return {
-                time: t.time,
-                minutes: parseTimeLabelToMinutes(t.time),
-                height: parseFloat(t.height_ft)
-            };
-        }).filter(function(p) {
-            return !Number.isNaN(p.height);
-        }).sort(function(a, b) {
-            return a.minutes - b.minutes;
-        });
-
-        for (var i = 1; i < points.length; i++) {
-            while (points[i].minutes <= points[i - 1].minutes) {
-                points[i].minutes += 1440;
-            }
-        }
-
-        if (points.length < 2) {
-            return {
-                labels: points.map(function(p) { return p.time; }),
-                values: points.map(function(p) { return p.height; }),
-                minutes: points.map(function(p) { return p.minutes; })
-            };
-        }
-
-        var labels = [];
-        var values = [];
-        var minutes = [];
-        var step = 30; // 30-minute interpolation for smooth wave shape
-
-        for (var i = 0; i < points.length - 1; i++) {
-            var curr = points[i];
-            var next = points[i + 1];
-            var span = Math.max(step, next.minutes - curr.minutes);
-            for (var mins = 0; mins < span; mins += step) {
-                var ratio = mins / span;
-                var eased = (1 - Math.cos(Math.PI * ratio)) / 2;
-                labels.push(formatMinutesToLabel(curr.minutes + mins));
-                values.push(curr.height + (next.height - curr.height) * eased);
-                minutes.push(curr.minutes + mins);
-            }
-        }
-
-        labels.push(formatMinutesToLabel(points[points.length - 1].minutes));
-        values.push(points[points.length - 1].height);
-        minutes.push(points[points.length - 1].minutes);
-
-        return { labels: labels, values: values, minutes: minutes };
-    }
-
-    function getCurrentTideMarker(tideWave) {
-        if (!tideWave || !tideWave.minutes || tideWave.minutes.length < 2) return null;
-        var now = new Date();
-        var nowMinutes = now.getHours() * 60 + now.getMinutes();
-        var start = tideWave.minutes[0];
-        var end = tideWave.minutes[tideWave.minutes.length - 1];
-        var projectedNow = nowMinutes;
-
-        if (end > 1440 && projectedNow < start) projectedNow += 1440;
-        if (projectedNow < start || projectedNow > end) return null;
-
-        for (var i = 1; i < tideWave.minutes.length; i++) {
-            var leftMin = tideWave.minutes[i - 1];
-            var rightMin = tideWave.minutes[i];
-            if (projectedNow < leftMin || projectedNow > rightMin) continue;
-            var span = rightMin - leftMin;
-            var ratio = span ? (projectedNow - leftMin) / span : 0;
-            var height = tideWave.values[i - 1] + (tideWave.values[i] - tideWave.values[i - 1]) * ratio;
-            return { index: i - 1, height: height };
-        }
-
-        return null;
-    }
-
-    function renderInteractiveCharts() {
-        /* Tide chart is now rendered as an inline SVG server-side. */
-    }
-
-    function renderOutlookSection(data) {
-        var bestDayHtml = '';
-        if (data.best_day) {
-            bestDayHtml = '<div class="best-day-callout"><div class="best-day-body"><strong class="best-day-label">Best day: ' + esc(data.best_day.best_day) + '</strong><span class="best-day-rec">' + esc(data.best_day.recommendation) + '</span></div><span class="verdict-badge verdict-' + esc((data.best_day.verdict || '').toLowerCase().replace(/\s+/g, '-')) + '">' + esc(data.best_day.verdict) + '</span></div>';
-        }
-        var activityTimelineHtml = '';
-        if ((data.activity_timeline || []).length) {
-            var timelineBars = data.activity_timeline.map(function(slot) {
-                var hourLabel = slot.hour % 3 === 0 ? '<span class="timeline-hour">' + esc((slot.label || '').replace(' AM', 'a').replace(' PM', 'p')) + '</span>' : '';
-                return '<div class="timeline-bar-col" title="' + esc(slot.label) + ': ' + esc(slot.level) + '% activity"><div class="timeline-bar timeline-bar--' + esc(slot.tag || 'low') + '" style="height: ' + esc(slot.level) + '%"></div>' + hourLabel + '</div>';
-            }).join('');
-            activityTimelineHtml = '<div class="activity-timeline"><h3 class="timeline-title">Today: 24-Hour Activity</h3><div class="timeline-bars">' + timelineBars + '</div><div class="timeline-legend"><span class="tl-key tl-key--prime"></span> Prime <span class="tl-key tl-key--high"></span> High <span class="tl-key tl-key--med"></span> Moderate <span class="tl-key tl-key--low"></span> Low</div></div>';
-        }
-        var cards = (data.outlook || []).map(function(day) {
-            return '<div class="outlook-card"><div class="outlook-header"><span class="outlook-day">' + esc(day.day) + '</span><span class="outlook-date">' + esc(day.date) + '</span></div><div class="outlook-verdict verdict-badge verdict-' + esc((day.verdict || '').toLowerCase().replace(/\s+/g, '-')) + '">' + esc(day.verdict) + '</div><div class="outlook-details"><div class="outlook-detail"><span class="outlook-detail-label">Wind</span><span class="outlook-detail-value">' + esc(day.wind) + '</span></div><div class="outlook-detail"><span class="outlook-detail-label">Waves</span><span class="outlook-detail-value">' + esc(day.waves) + '</span></div></div></div>';
-        }).join('');
-        return '<section class="outlook-section"><h2>3-Day Outlook</h2><p class="section-sub">Upcoming conditions forecast</p>' + bestDayHtml + activityTimelineHtml + '<div class="outlook-grid">' + cards + '</div></section>';
-    }
-
-    function lazyHydrateSection(rootId, renderer, dataKey, onSuccess) {
-        var root = document.getElementById(rootId);
-        if (!root) return;
-        var endpoint = root.getAttribute('data-endpoint');
-        if (!endpoint) return;
-        fetch(endpoint)
-            .then(function(r) {
-                if (!r.ok) throw new Error('fetch failed');
-                return r.json();
-            })
-            .then(function(payload) {
-                var data = payload && payload.data ? payload.data : {};
-                root.innerHTML = renderer(data);
-                if (onSuccess) onSuccess(data[dataKey] || data);
-            })
-            .catch(function() {
-                root.innerHTML = '<section class="lazy-section"><h2>3-Day Outlook</h2><p class="lazy-error">Unable to load this section.</p></section>';
-            });
-    }
-
-    var OUTLOOK_DATA = {
-        outlook: {{ (forecast.outlook or [])|tojson }},
-        best_day: {{ (forecast.best_day or None)|tojson }},
-        activity_timeline: {{ (forecast.activity_timeline or [])|tojson }}
-    };
-
-    function initInteractiveCharts() {
-        try { renderInteractiveCharts(); } catch(e) {}
-        var outlookRoot = document.getElementById('outlook-lazy-root');
-        if (outlookRoot) {
-            outlookRoot.innerHTML = renderOutlookSection(OUTLOOK_DATA);
-        }
-    }
-
-    window.addEventListener('DOMContentLoaded', initInteractiveCharts);
 
 
     // Register service worker for PWA
