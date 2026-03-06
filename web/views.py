@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json
 import logging
 import re
 import time
@@ -305,6 +306,14 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
         forecast["location_id"] = loc_id
     if not forecast.get("location_state"):
         forecast["location_state"] = location.get("state", "")
+    # tide_chart was stored as a JSON string in older cache entries; parse it
+    # back to a dict so the template can access fields directly.
+    tc = forecast.get("tide_chart")
+    if isinstance(tc, str) and tc:
+        try:
+            forecast["tide_chart"] = _json.loads(tc)
+        except Exception:
+            forecast.pop("tide_chart", None)
 
     # Always recompute UV for the current time at the selected location so the
     # displayed value reflects *now*, not the moment the forecast was cached.
