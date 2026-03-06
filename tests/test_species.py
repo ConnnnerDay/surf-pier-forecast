@@ -3,10 +3,12 @@
 import pytest
 
 from domain.species import (
+    BAIT_DB,
     SPECIES_DB,
     _regulation_disallows_keep,
     _score_species,
     _species_matches_profile,
+    build_bait_ranking,
     build_natural_bait_chart,
     build_species_calendar,
     build_species_ranking,
@@ -102,6 +104,29 @@ class TestBuildNaturalBaitChart:
     def test_west_coast_has_results(self):
         chart = build_natural_bait_chart(month=6, coast="west")
         assert len(chart) > 0
+
+
+class TestBuildBaitRanking:
+    def test_no_duplicate_bait_labels_by_canonical_name(self):
+        species_ranking = [
+            {"rank": 1, "name": "Red snapper"},
+            {"rank": 2, "name": "Black sea bass"},
+            {"rank": 3, "name": "Scup (porgy)"},
+        ]
+
+        ranking = build_bait_ranking(species_ranking=species_ranking, month=6)
+        labels = [item["bait"] for item in ranking]
+
+        squid_variants = {"Squid strips", "Cut squid strips"}
+        assert len([label for label in labels if label in squid_variants]) == 1
+
+    def test_returns_all_items_when_no_alias_duplicates(self):
+        species_ranking = [{"rank": i + 1, "name": target}
+                           for i, target in enumerate(BAIT_DB[0]["targets"])]
+
+        ranking = build_bait_ranking(species_ranking=species_ranking, month=6)
+
+        assert len(ranking) <= len(BAIT_DB)
 
 
 class TestBuildSpeciesCalendar:

@@ -1444,6 +1444,14 @@ def build_bait_ranking(
         short = sp["name"].split("(")[0].strip()
         species_ranks[short] = sp["rank"]
 
+    def canonical_bait_name(name: str) -> str:
+        """Return a canonical label for de-duplicating near-identical bait names."""
+        cleaned = " ".join(name.lower().replace("-", " ").split())
+        alias_map = {
+            "cut squid strips": "squid strips",
+        }
+        return alias_map.get(cleaned, cleaned)
+
     scored_baits: List[Tuple[float, Dict[str, str]]] = []
     for bait_entry in BAIT_DB:
         bait_score = 0.0
@@ -1466,7 +1474,17 @@ def build_bait_ranking(
         scored_baits.append((bait_score, {"bait": bait_entry["bait"], "notes": notes}))
 
     scored_baits.sort(key=lambda x: x[0], reverse=True)
-    return [b for _, b in scored_baits]
+
+    deduped_rankings: List[Dict[str, str]] = []
+    seen_baits: set[str] = set()
+    for _, bait in scored_baits:
+        key = canonical_bait_name(bait["bait"])
+        if key in seen_baits:
+            continue
+        seen_baits.add(key)
+        deduped_rankings.append(bait)
+
+    return deduped_rankings
 
 
 # ---------------------------------------------------------------------------
