@@ -143,11 +143,10 @@
                     <span class="stat-detail">CO-OPS latest reading</span>
                 </div>
                 {% endif %}
-                {% set humidity_val = (forecast.environment.humidity_pct if forecast.environment and forecast.environment.humidity_pct is defined else (forecast.weather.humidity if forecast.weather and forecast.weather.humidity is defined else none)) %}
-                {% if humidity_val is not none %}
+                {% if forecast.conditions.humidity is defined %}
                 <div class="stat-card">
                     <span class="stat-label">Humidity</span>
-                    <span class="stat-value">{{ humidity_val|round|int }}%</span>
+                    <span class="stat-value">{{ forecast.conditions.humidity|round|int }}%</span>
                     <span class="stat-detail">relative humidity</span>
                 </div>
                 {% endif %}
