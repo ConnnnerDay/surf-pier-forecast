@@ -36,3 +36,23 @@ def test_regulation_modal_shows_official_source_link():
     assert "official_source" in template
     assert "reg-source" in template
     assert "regOfficialSource" in template
+
+
+def test_shows_air_temp_stat_card():
+    template = Path("templates/partials/_conditions.html").read_text(encoding="utf-8")
+
+    assert "Air Temp" in template
+    assert "air_temp_f" in template
+
+
+def test_air_temp_falls_back_to_environmental_metrics():
+    template = Path("templates/partials/_conditions.html").read_text(encoding="utf-8")
+
+    assert "forecast.environment.air_temp_f" in template
+
+
+def test_pressure_falls_back_to_environmental_metrics():
+    template = Path("templates/partials/_conditions.html").read_text(encoding="utf-8")
+
+    assert "forecast.environment.air_pressure_mb" in template
+    assert "CO-OPS latest reading" in template

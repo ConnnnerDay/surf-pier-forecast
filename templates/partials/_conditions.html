@@ -86,31 +86,40 @@
                     <span class="stat-detail">current tidal flow</span>
                 </div>
                 {% endif %}
-                {% if forecast.pressure %}
+                {% set pressure_mb = (forecast.pressure.pressure_mb if forecast.pressure and forecast.pressure.pressure_mb is defined else (forecast.environment.air_pressure_mb if forecast.environment and forecast.environment.air_pressure_mb is defined else none)) %}
+                {% set pressure_inhg = (forecast.pressure.pressure_inhg if forecast.pressure and forecast.pressure.pressure_inhg is defined else ((pressure_mb / 33.8639)|round(2) if pressure_mb is not none else none)) %}
+                {% if pressure_mb is not none and pressure_inhg is not none %}
                 <div class="stat-card">
                     <span class="stat-label">Pressure</span>
                     <span class="stat-value">
-                        {{ forecast.pressure.pressure_inhg }}"
-                        {% if forecast.pressure.trend == 'Rising' %}
+                        {{ pressure_inhg }}"
+                        {% if forecast.pressure and forecast.pressure.trend == 'Rising' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><path d="M8 3l4 5H4z" fill="#27ae60"/></svg>
-                        {% elif forecast.pressure.trend == 'Falling' %}
+                        {% elif forecast.pressure and forecast.pressure.trend == 'Falling' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><path d="M8 13l4-5H4z" fill="#e05830"/></svg>
-                        {% else %}
+                        {% elif forecast.pressure and forecast.pressure.trend %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><rect x="2" y="7" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
                         {% endif %}
                     </span>
-                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact }}">{{ forecast.pressure.trend|lower }} &middot; {{ forecast.pressure.pressure_mb }} mb</span>
+                    {% if forecast.pressure and forecast.pressure.trend %}
+                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact }}">{{ forecast.pressure.trend|lower }} &middot; {{ pressure_mb }} mb</span>
+                    {% else %}
+                    <span class="stat-detail">CO-OPS latest reading &middot; {{ pressure_mb }} mb</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% set air_temp_f = (forecast.weather.air_temp_f if forecast.weather and forecast.weather.air_temp_f is defined else (forecast.environment.air_temp_f if forecast.environment and forecast.environment.air_temp_f is defined else none)) %}
+                {% if air_temp_f is not none %}
+                <div class="stat-card">
+                    <span class="stat-label">Air Temp</span>
+                    <span class="stat-value"><span class="unit-temp" data-f="{{ air_temp_f }}">{{ air_temp_f }}&deg;F</span></span>
+                    <span class="stat-detail">
+                        {% if forecast.weather and forecast.weather.description %}{{ forecast.weather.description|lower }}{% endif %}
+                        {% if forecast.weather and forecast.weather.humidity %} &middot; {{ forecast.weather.humidity|int }}% humidity{% elif forecast.environment and forecast.environment.humidity_pct is defined %}{{ ' ' if not (forecast.weather and forecast.weather.description) else ' &middot; ' }}{{ forecast.environment.humidity_pct|round|int }}% humidity{% endif %}
+                    </span>
                 </div>
                 {% endif %}
                 {% if forecast.weather %}
-                <div class="stat-card">
-                    <span class="stat-label">Air Temp</span>
-                    <span class="stat-value"><span class="unit-temp" data-f="{{ forecast.weather.air_temp_f }}">{{ forecast.weather.air_temp_f }}&deg;F</span></span>
-                    <span class="stat-detail">
-                        {% if forecast.weather.description %}{{ forecast.weather.description|lower }}{% endif %}
-                        {% if forecast.weather.humidity %} &middot; {{ forecast.weather.humidity|int }}% humidity{% endif %}
-                    </span>
-                </div>
                 {% if forecast.weather.feels_like_f or forecast.weather.wind_chill_f or (forecast.derived_indices and (forecast.derived_indices.heat_index_f is defined or forecast.derived_indices.wind_chill_f is defined)) %}
                 <div class="stat-card">
                     <span class="stat-label">Feels Like</span>
