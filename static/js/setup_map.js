@@ -196,10 +196,21 @@
             var selectBtn = popupEl.querySelector('[data-map-select-location]');
             if (!selectBtn) return;
             selectBtn.addEventListener('click', function () {
-                var selectedLoc = byId[selectBtn.getAttribute('data-map-select-location')];
+                var locationId = selectBtn.getAttribute('data-map-select-location');
+                var selectedLoc = byId[locationId];
                 if (!selectedLoc) return;
-                selectLocation(selectedLoc);
-                map.closePopup(event.popup);
+                var csrfInput = document.querySelector('input[name="csrf_token"]');
+                var csrfToken = csrfInput ? csrfInput.value : '';
+                var form = document.createElement('form');
+                form.method = 'post';
+                form.action = '/setup/select/' + encodeURIComponent(locationId);
+                var csrfField = document.createElement('input');
+                csrfField.type = 'hidden';
+                csrfField.name = 'csrf_token';
+                csrfField.value = csrfToken;
+                form.appendChild(csrfField);
+                document.body.appendChild(form);
+                form.submit();
             }, { once: true });
         });
 
