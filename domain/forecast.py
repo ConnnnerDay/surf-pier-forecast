@@ -1531,8 +1531,13 @@ def generate_forecast(
     if loc_state:
         state_alerts = builder.weather_service.get_state_alerts(loc_state)
         if state_alerts:
-            forecast["state_alerts"] = state_alerts[:5]
-            sources_used.append("NWS state alerts")
+            # Deduplicate: remove state alerts already present in the point-based
+            # alerts list (the point query is a subset of the state query).
+            existing_events = {a.get("event") for a in alerts}
+            state_alerts = [a for a in state_alerts if a.get("event") not in existing_events]
+            if state_alerts:
+                forecast["state_alerts"] = state_alerts[:5]
+                sources_used.append("NWS state alerts")
 
 
     # Barometric pressure
