@@ -1602,6 +1602,15 @@ def generate_forecast(
     else:
         fallbacks_triggered.append("coops_environment_unavailable")
 
+    # Propagate humidity into conditions so the template always has a single
+    # reliable place to look, regardless of which data source provided it.
+    _humidity = (
+        (forecast.get("environment") or {}).get("humidity_pct")
+        or (forecast.get("weather") or {}).get("humidity")
+    )
+    if _humidity is not None:
+        forecast["conditions"]["humidity"] = _humidity
+
     currents = builder.environment_service.get_currents(coops_station, tz_name)
     current_observation = builder.environment_service.get_current_observation(coops_station, tz_name)
     if current_observation:
