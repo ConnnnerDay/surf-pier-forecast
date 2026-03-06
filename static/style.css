@@ -3977,6 +3977,7 @@ footer p {
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
   padding: 0.75rem;
+  height: 280px;
 }
 .chart-panel canvas {
   width: 100% !important;
@@ -4045,7 +4046,6 @@ footer p {
   padding: 0;
   background: transparent;
   border: none;
-  z-index: 99999;
   max-width: min(440px, 94vw);
   max-height: 90vh;
   max-height: 90dvh;
@@ -4188,9 +4188,10 @@ footer p {
   background: var(--card-bg);
   box-shadow: 0 8px 40px rgba(0,0,0,0.28);
   overflow: hidden;
+}
+.reg-search-modal[open] {
   display: flex;
   flex-direction: column;
-  z-index: 99999;
 }
 .reg-search-modal::backdrop {
   background: rgba(0,0,0,0.55);
