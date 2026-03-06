@@ -387,6 +387,74 @@ def test_build_multiday_outlook_uses_daily_nws_period_data(monkeypatch):
     assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
 
 
+def test_build_multiday_outlook_does_not_match_wrong_period_by_name(monkeypatch):
+    """Name-based fallback must NOT fire when startTime was parsed but belongs to
+    a different day.
+
+    The old code lacked a ``continue`` after a successful-but-non-matching
+    startTime parse, so the loop would fall through to the name check.  If a
+    period appeared in the list *before* the correct one and its name happened
+    to start with the same 3 characters as the target day (e.g. a "Saturday
+    Afternoon" period appearing before the canonical "Saturday" period), that
+    wrong period would be selected — causing all 3 days to display the same
+    stale data.
+    """
+    now = datetime(2026, 3, 5, 12, 0, tzinfo=ZoneInfo("America/New_York"))
+
+    mock_periods = [
+        {
+            # This period's name starts with "Fri" but its startTime is Monday –
+            # without the fix the name check fires and it would be selected for
+            # the Friday slot even though the date is completely wrong.
+            "isDaytime": True,
+            "name": "Friday Outlook",
+            "startTime": "2026-03-09T06:00:00-05:00",  # Monday – wrong date
+            "windSpeed": "30 to 40 mph",
+            "windDirection": "N",
+            "detailedForecast": "North wind 30 to 40 mph. Seas 8 to 12 ft.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Friday",
+            "startTime": "2026-03-06T06:00:00-05:00",
+            "windSpeed": "10 to 14 mph",
+            "windDirection": "SW",
+            "detailedForecast": "Southwest wind 10 to 14 mph. Seas 2 to 3 ft.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Saturday",
+            "startTime": "2026-03-07T06:00:00-05:00",
+            "windSpeed": "5 to 8 mph",
+            "windDirection": "N",
+            "detailedForecast": "North wind 5 to 8 mph. Seas 1 to 2 ft.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Sunday",
+            "startTime": "2026-03-08T06:00:00-05:00",
+            "windSpeed": "15 to 20 mph",
+            "windDirection": "E",
+            "detailedForecast": "East wind 15 to 20 mph. Seas 4 to 6 ft.",
+        },
+    ]
+
+    monkeypatch.setattr("domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods)
+    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr("domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None))
+
+    outlook = build_multiday_outlook(
+        now,
+        {"lat": 34.2, "lng": -77.8, "timezone": "America/New_York", "conditions_region": "atlantic_mid"},
+    )
+
+    # Friday must use the real Friday period, not "Friday Outlook" whose
+    # startTime is Monday.
+    assert [d["day"] for d in outlook] == ["Friday", "Saturday", "Sunday"]
+    assert [d["wind"] for d in outlook] == ["SW 9-12 kt", "N 4-7 kt", "E 13-17 kt"]
+    assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
+
+
 def test_build_multiday_outlook_estimates_waves_from_daily_wind_when_missing(monkeypatch):
     now = datetime(2026, 3, 5, 12, 0, tzinfo=ZoneInfo("America/New_York"))
     mock_periods = [
