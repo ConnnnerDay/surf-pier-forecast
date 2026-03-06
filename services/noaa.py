@@ -14,6 +14,11 @@ from locations import get_monthly_water_temps
 
 logger = logging.getLogger(__name__)
 
+_COOPS_HEADERS = {
+    "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
+    "Accept": "application/json",
+}
+
 # Default NOAA CO-OPS station (overridden per location from locations.py)
 WATER_TEMP_STATION = "8658163"
 
@@ -48,7 +53,7 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     """
     try:
         url = WATER_TEMP_URL.format(station=station_id or WATER_TEMP_STATION)
-        resp = http_get(url, endpoint="noaa.water_temperature", timeout=(3.05, 10))
+        resp = http_get(url, endpoint="noaa.water_temperature", headers=_COOPS_HEADERS, timeout=(5, 15))
         resp.raise_for_status()
         data = resp.json()
         reading = data.get("data", [{}])[0].get("v")
@@ -72,7 +77,7 @@ def fetch_latest_coops_product(station_id: str, product: str, units: str = "engl
             f"&product={product}&units={units}"
             "&time_zone=lst_ldt&format=json"
         )
-        resp = http_get(url, endpoint=f"noaa.{product}", timeout=(3.05, 10))
+        resp = http_get(url, endpoint=f"noaa.{product}", headers=_COOPS_HEADERS, timeout=(5, 15))
         resp.raise_for_status()
         payload = resp.json()
         row = (payload.get("data") or [{}])[0]
@@ -116,7 +121,7 @@ def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York
         "&units=english&interval=max_slack&format=json"
     )
     try:
-        resp = http_get(url, endpoint="noaa.currents_predictions", timeout=(3.05, 12))
+        resp = http_get(url, endpoint="noaa.currents_predictions", headers=_COOPS_HEADERS, timeout=(5, 15))
         resp.raise_for_status()
         rows = resp.json().get("cp", [])
         out: List[Dict[str, str]] = []
@@ -151,7 +156,7 @@ def fetch_currents_observation(station_id: str, tz_name: str = "America/New_York
         "&units=english&format=json"
     )
     try:
-        resp = http_get(url, endpoint="noaa.currents", timeout=(3.05, 12))
+        resp = http_get(url, endpoint="noaa.currents", headers=_COOPS_HEADERS, timeout=(5, 15))
         resp.raise_for_status()
         rows = resp.json().get("data", [])
         if not rows:
@@ -217,7 +222,7 @@ def _try_coops_wind(station_id: str = "") -> Tuple[Optional[Tuple[float, float]]
     Returns wind data only (no wave data from this source).
     """
     url = COOPS_WIND_URL.format(station=station_id or WATER_TEMP_STATION)
-    resp = http_get(url, endpoint="noaa.coops_wind", timeout=(3.05, 10))
+    resp = http_get(url, endpoint="noaa.coops_wind", headers=_COOPS_HEADERS, timeout=(5, 15))
     resp.raise_for_status()
     data = resp.json()
 
@@ -259,7 +264,7 @@ def fetch_tide_predictions(
         "&time_zone=lst_ldt&format=json&interval=hilo"
     )
     try:
-        resp = http_get(url, endpoint="noaa.tide_predictions", timeout=(3.05, 12))
+        resp = http_get(url, endpoint="noaa.tide_predictions", headers=_COOPS_HEADERS, timeout=(5, 15))
         resp.raise_for_status()
         data = resp.json()
         predictions = data.get("predictions", [])
