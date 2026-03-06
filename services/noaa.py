@@ -294,11 +294,12 @@ def fetch_tide_predictions(
 
 
 
-def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
+def build_tide_chart_svg(tides: List[Dict[str, Any]], now_hour: float = None) -> str:
     """Build an SVG path string for a smooth tide curve.
 
     Returns a dict with 'path' (SVG path d attribute), 'points' (list of
-    {cx, cy, label, height} for the markers), 'viewBox', and 'fill_path'.
+    {cx, cy, label, height} for the markers), 'viewBox', 'fill_path', and
+    optionally 'now_marker' with the current-time dot position.
     Only considers tides within a 24-hour window.
     """
     if len(tides) < 2:
@@ -359,6 +360,23 @@ def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
             "height": p[4],
         })
 
+    # Current-time "now" marker — interpolate height between surrounding pts
+    now_marker = None
+    if now_hour is not None and min_hour <= now_hour <= max_hour:
+        # Find surrounding tide points and linearly interpolate height
+        now_ht = pts[0][1]
+        for i in range(len(pts) - 1):
+            h0, ht0 = pts[i][0], pts[i][1]
+            h1, ht1 = pts[i + 1][0], pts[i + 1][1]
+            if h0 <= now_hour <= h1:
+                frac = (now_hour - h0) / (h1 - h0) if h1 != h0 else 0.0
+                now_ht = ht0 + frac * (ht1 - ht0)
+                break
+        now_marker = {
+            "cx": f"{to_x(now_hour):.1f}",
+            "cy": f"{to_y(now_ht):.1f}",
+        }
+
     return {
         "viewBox": f"0 0 {W} {H}",
         "path": path_d,
@@ -366,4 +384,5 @@ def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
         "markers": markers,
         "width": W,
         "height": H,
+        "now_marker": now_marker,
     }
