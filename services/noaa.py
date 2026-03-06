@@ -359,12 +359,11 @@ def build_tide_chart_svg(tides: List[Dict[str, Any]]) -> str:
             "height": p[4],
         })
 
-    import json as _json
-    return _json.dumps({
+    return {
         "viewBox": f"0 0 {W} {H}",
         "path": path_d,
         "fill_path": fill_d,
         "markers": markers,
         "width": W,
         "height": H,
-    })
+    }

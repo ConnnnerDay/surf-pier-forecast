@@ -672,6 +672,7 @@
     // Also sync fishing log entries to server
     function syncLogToServer() {
         if (!LOGGED_IN || !CURRENT_LOC_ID) return;
+        if (typeof getLog !== 'function' || typeof saveLog !== 'function') return;
         var entries = getLog();
         if (!entries.length) return;
         // Send each entry that hasn't been synced yet
@@ -806,60 +807,7 @@
     }
 
     function renderInteractiveCharts() {
-        if (typeof Chart === 'undefined') return;
-        var tideCanvas = document.getElementById('tide-chart-canvas');
-        var tideData = {{ (forecast.tides or [])|tojson }};
-        if (tideCanvas && tideData.length) {
-            try {
-                var tideWave = buildTideWaveSeries(tideData);
-                var currentMarker = getCurrentTideMarker(tideWave);
-                var markerSeries = tideWave.values.map(function() { return null; });
-                if (currentMarker) markerSeries[currentMarker.index] = currentMarker.height;
-                var tideLineColor = getComputedStyle(document.documentElement).getPropertyValue('--ocean').trim() || '#0b4f6c';
-                var tideLineRgba = tideLineColor.startsWith('#') ? tideLineColor + '30' : 'rgba(11,79,108,0.18)';
-                new Chart(tideCanvas, {
-                    type: 'line',
-                    data: {
-                        labels: tideWave.labels,
-                        datasets: [
-                            {
-                                label: 'Tide height (ft)',
-                                data: tideWave.values,
-                                borderColor: tideLineColor,
-                                backgroundColor: tideLineRgba,
-                                fill: true,
-                                tension: 0.45,
-                                pointRadius: 0,
-                                borderWidth: 3
-                            },
-                            {
-                                label: 'Current tide',
-                                data: markerSeries,
-                                showLine: false,
-                                pointRadius: 6,
-                                pointHoverRadius: 7,
-                                pointBackgroundColor: '#ff6b35',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                filter: function(item) {
-                                    return item.raw !== null;
-                                }
-                            }
-                        },
-                        scales: { y: { title: { display: true, text: 'Feet' } } }
-                    }
-                });
-            } catch(e) {}
-        }
+        /* Tide chart is now rendered as an inline SVG server-side. */
     }
 
     function renderOutlookSection(data) {

@@ -3971,17 +3971,18 @@ footer p {
 }
 
 /* ---------- Interactive Charts ---------- */
-.chart-panel {
+.tide-svg-wrap {
   margin-top: 1rem;
   background: var(--card-bg);
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
   padding: 0.75rem;
-  height: 280px;
+  overflow: hidden;
 }
-.chart-panel canvas {
-  width: 100% !important;
-  height: 280px !important;
+.tide-svg-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 @media (max-width: 760px) {

@@ -224,9 +224,9 @@ class TidePredictionService(ExternalDataService):
             if first_date:
                 today_tides = [t for t in tides if t.get("date_str") == first_date]
         result: Dict[str, Any] = {"tides": today_tides}
-        chart_json = build_tide_chart_svg(today_tides)
-        if chart_json:
-            result["tide_chart"] = chart_json
+        chart_data = build_tide_chart_svg(today_tides)
+        if chart_data:
+            result["tide_chart"] = chart_data
 
         current_hour = now.hour + now.minute / 60
         tide_state = ""
