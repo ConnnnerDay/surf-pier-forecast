@@ -1597,7 +1597,7 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
         "cam_type": "beach",
         "lat": 36.8529,
         "lng": -75.9773,
-        "url": "https://www.13newsnow.com/beach-cams",
+        "url": "https://www.surfchex.com/cams/virginia-beach-web-cam/",
     },
     {
         "id": "wrightsville-beach-surf-cam",
@@ -1621,7 +1621,7 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
         "cam_type": "beach",
         "lat": 33.6891,
         "lng": -78.8867,
-        "url": "https://myrtlebeachlivecam.com/",
+        "url": "https://www.myrtlebeach.com/webcams/",
     },
     {
         "id": "juno-beach-pier-cam",
@@ -1637,7 +1637,7 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
         "cam_type": "beach",
         "lat": 29.2287,
         "lng": -81.0053,
-        "url": "https://www.daytonabeach.com/webcams/",
+        "url": "https://www.daytonabeach.com/things-to-do/beaches/live-web-cam/",
     },
     {
         "id": "cocoa-beach-pier-cam",
@@ -1661,7 +1661,7 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
         "cam_type": "beach",
         "lat": 30.3325,
         "lng": -87.1427,
-        "url": "https://www.visitpensacola.com/beaches/webcams/",
+        "url": "https://visitpensacolabeach.com/web-cams/",
     },
     {
         "id": "galveston-61st-street-pier-cam",
@@ -1677,7 +1677,7 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
         "cam_type": "beach",
         "lat": 26.1055,
         "lng": -97.1681,
-        "url": "https://www.sopadre.com/webcams/",
+        "url": "https://visitsouthpadreisland.com/live-webcams/",
     },
     {
         "id": "huntington-beach-pier-cam",
