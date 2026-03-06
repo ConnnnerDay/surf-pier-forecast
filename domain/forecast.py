@@ -546,10 +546,14 @@ def build_multiday_outlook(
                         if period_dt.astimezone(tz).date() == future.date():
                             day_period = p
                             break
+                        # startTime parsed but belongs to a different day; skip
+                        # the name-based fallback so we don't match the wrong period.
+                        continue
                     except ValueError:
                         logger.debug("Unable to parse NWS period startTime: %s", start_raw)
 
-                # Fallback for API payloads that omit startTime.
+                # Fallback for API payloads that omit startTime (or when
+                # parsing failed): match by the period's human-readable name.
                 if p.get("name", "").lower().startswith(day_label[:3].lower()):
                     day_period = p
                     break
