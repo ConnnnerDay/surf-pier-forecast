@@ -9,8 +9,34 @@
     {% if user %}
     <li><a href="{{ url_for('auth.account') }}">Account</a></li>
     {% endif %}
+    <li><button class="app-nav-regs-btn" type="button" onclick="openRegSearch()" aria-haspopup="dialog">Search Regulations</button></li>
   </ul>
 </nav>
+
+<!-- ── Regulation search modal (shared across all pages) ─────────────── -->
+<dialog id="reg-search-modal" class="reg-search-modal" aria-labelledby="reg-search-title">
+  <div class="reg-search-modal__card">
+    <header class="reg-modal__hdr">
+      <div>
+        <h2 class="reg-modal__title" id="reg-search-title">Search Regulations</h2>
+        <p class="reg-search-modal__location" id="reg-search-location"></p>
+      </div>
+      <button class="reg-modal__close" type="button" aria-label="Close" id="reg-search-close">&times;</button>
+    </header>
+    <div class="reg-search-modal__body">
+      <div class="reg-search-modal__input-wrap">
+        <svg class="reg-search-modal__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="reg-search-input" class="reg-search-modal__input"
+          placeholder="e.g. red drum, flounder, snook…"
+          autocomplete="off" autocorrect="off" spellcheck="false"
+          aria-label="Search species name">
+      </div>
+      <p class="reg-modal__disclaimer">Always verify current rules with your state&rsquo;s official fish &amp; wildlife agency before fishing.</p>
+      <div id="reg-search-results" class="reg-search-modal__results" role="list" aria-live="polite" aria-label="Search results"></div>
+    </div>
+  </div>
+</dialog>
+
 <script>
 function toggleAppNav(btn) {
   var links = document.getElementById('app-nav-links');
@@ -19,4 +45,125 @@ function toggleAppNav(btn) {
   btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
   links.classList.toggle('is-open');
 }
+
+(function () {
+  'use strict';
+  var searchModal   = document.getElementById('reg-search-modal');
+  var searchInput   = document.getElementById('reg-search-input');
+  var searchResults = document.getElementById('reg-search-results');
+  var searchLocation = document.getElementById('reg-search-location');
+  var searchClose   = document.getElementById('reg-search-close');
+  if (!searchModal) return;
+
+  var _debounceTimer = null;
+  var _lastQuery = null;
+  var _cachedAll = null; // cached full species list for the resolved state
+  var _resolvedState = '';
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderResults(results) {
+    if (!results || results.length === 0) {
+      var term = searchInput.value.trim();
+      searchResults.innerHTML = '<p class="reg-no-data">No regulations found'
+        + (term ? ' for \u201c' + esc(term) + '\u201d' : '') + '.</p>';
+      return;
+    }
+    var html = '';
+    results.forEach(function (item) {
+      var reg = item.regulation || {};
+      html += '<div class="reg-search-result" role="listitem">';
+      html += '<div class="reg-search-result__name">' + esc(item.display_name) + '</div>';
+      html += '<div class="reg-modal__grid reg-search-result__grid">';
+      if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
+      if (reg.bag_limit) html += '<div class="reg-modal__item"><span class="reg-modal__label">Bag Limit</span><span class="reg-modal__value">' + esc(reg.bag_limit) + '</span></div>';
+      if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
+      html += '</div>';
+      if (reg.notes) html += '<p class="reg-modal__notes">' + esc(reg.notes) + '</p>';
+      if (reg.official_source) {
+        html += '<p class="reg-source"><a class="reg-source__link" href="' + esc(reg.official_source)
+          + '" target="_blank" rel="noopener noreferrer">Official ' + esc(_resolvedState) + ' regulations \u2197</a></p>';
+      }
+      html += '</div>';
+    });
+    searchResults.innerHTML = html;
+  }
+
+  function fetchAndRender(q) {
+    // Let the server derive state from the user's session — no client vars needed.
+    var url = '/api/v1/regulations/search?q=' + encodeURIComponent(q);
+    searchResults.innerHTML = '<p class="reg-loading">Loading\u2026</p>';
+    fetch(url)
+      .then(function (r) {
+        if (r.status === 400) {
+          searchLocation.textContent = 'No location set';
+          searchResults.innerHTML = '<p class="reg-no-data">Set your location on the <a href="/setup">setup page</a> to see regulations for your area.</p>';
+          return null;
+        }
+        return r.json();
+      })
+      .then(function (json) {
+        if (!json) return;
+        var data = (json && json.data) ? json.data : json;
+        var results = data.results || [];
+        _resolvedState = data.state || '';
+        if (_resolvedState) {
+          searchLocation.textContent = 'Showing regulations for ' + _resolvedState;
+        }
+        if (!q) _cachedAll = results; // cache only the unfiltered full list
+        renderResults(results);
+      })
+      .catch(function () {
+        searchResults.innerHTML = '<p class="reg-no-data">Could not load regulations. Check your connection.</p>';
+      });
+  }
+
+  function filterCached(q) {
+    if (!_cachedAll) return null;
+    if (!q) return _cachedAll;
+    var lq = q.toLowerCase();
+    return _cachedAll.filter(function (item) {
+      return item.display_name.toLowerCase().indexOf(lq) !== -1
+        || item.species_key.replace(/_/g, ' ').indexOf(lq) !== -1;
+    });
+  }
+
+  function onInput() {
+    var q = searchInput.value.trim();
+    if (q === _lastQuery) return;
+    _lastQuery = q;
+    clearTimeout(_debounceTimer);
+    var filtered = filterCached(q);
+    if (filtered !== null) { renderResults(filtered); return; }
+    _debounceTimer = setTimeout(function () { fetchAndRender(q); }, 220);
+  }
+
+  window.openRegSearch = function () {
+    // Reset state each open in case the user changed location
+    _cachedAll = null;
+    _resolvedState = '';
+    searchLocation.textContent = '';
+    searchInput.value = '';
+    _lastQuery = null;
+    searchResults.innerHTML = '<p class="reg-loading">Loading\u2026</p>';
+    searchModal.showModal();
+    searchInput.focus();
+    fetchAndRender('');
+  };
+
+  searchInput.addEventListener('input', onInput);
+
+  if (searchClose) {
+    searchClose.addEventListener('click', function () { searchModal.close(); });
+  }
+  searchModal.addEventListener('click', function (e) {
+    if (e.target === searchModal) searchModal.close();
+  });
+  searchModal.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') searchModal.close();
+  });
+}());
 </script>
