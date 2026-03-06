@@ -456,3 +456,24 @@ def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch
     fc.personalize_forecast(base, profile, location=location)
 
     assert captured["fish_region"] == "southeast"
+
+
+def test_tide_predictions_fall_back_to_available_date_when_today_missing(monkeypatch):
+    from domain.forecast import TidePredictionService
+
+    service = TidePredictionService()
+
+    def _fake_fetch(*_args, **_kwargs):
+        return [
+            {"date_str": "20260103", "time": "1:00 AM", "type": "High", "height_ft": "4.2", "hour": 1.0, "height_num": 4.2},
+            {"date_str": "20260103", "time": "7:00 AM", "type": "Low", "height_ft": "0.9", "hour": 7.0, "height_num": 0.9},
+        ]
+
+    monkeypatch.setattr("domain.forecast.fetch_tide_predictions", _fake_fetch)
+    monkeypatch.setattr("domain.forecast.build_tide_chart_svg", lambda tides: "chart" if tides else "")
+
+    out = service.get_tide_predictions(datetime(2026, 1, 2, 22, 0), {"coops_station": "123"}, "America/New_York")
+
+    assert len(out["tides"]) == 2
+    assert out["tides"][0]["date_str"] == "20260103"
+    assert out["tide_chart"] == "chart"

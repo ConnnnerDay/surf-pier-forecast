@@ -217,6 +217,12 @@ class TidePredictionService(ExternalDataService):
 
         today_date_str = now.strftime("%Y%m%d")
         today_tides = [t for t in tides if t.get("date_str") == today_date_str]
+        if not today_tides:
+            # Fallback for timezone/date-boundary mismatches: show the first
+            # available prediction day instead of hiding tides entirely.
+            first_date = next((t.get("date_str") for t in tides if t.get("date_str")), None)
+            if first_date:
+                today_tides = [t for t in tides if t.get("date_str") == first_date]
         result: Dict[str, Any] = {"tides": today_tides}
         chart_json = build_tide_chart_svg(today_tides)
         if chart_json:
