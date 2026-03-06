@@ -505,11 +505,14 @@ def build_multiday_outlook(
     """
     loc_lat = (location or {}).get("lat", _LAT)
     loc_lng = (location or {}).get("lng", _LNG)
+    loc_zone = (location or {}).get("nws_zone", "")
     tz_name = (location or {}).get("timezone", "America/New_York")
     tz = ZoneInfo(tz_name)
 
-    # Try NWS extended forecast for wind data
-    nws_periods = _fetch_nws_extended(loc_lat, loc_lng)
+    # Try NWS extended forecast for wind data; falls back to marine zone
+    # forecast (loc_zone) for offshore/pier coordinates where the gridpoint
+    # API returns an error.
+    nws_periods = _fetch_nws_extended(loc_lat, loc_lng, zone=loc_zone)
 
     def _estimate_wave_range_from_wind(day_wind_range: Optional[Tuple[float, float]]) -> Optional[Tuple[float, float]]:
         """Estimate wave range from forecast wind when marine seas are unavailable."""
@@ -570,6 +573,34 @@ def build_multiday_outlook(
                 high_kt = round(high_mph * _MPH_TO_KNOTS)
                 wind_range = (low_kt, high_kt)
                 wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
+            else:
+                # Marine zone periods report wind in knots inside detailedForecast
+                # text rather than in a separate windSpeed field.
+                marine_text = day_period.get("detailedForecast", "")
+                kt_m = re.search(
+                    r"(\d+)(?:\s*to\s*(\d+))?\s*(?:kt|knots?)",
+                    marine_text, re.IGNORECASE,
+                )
+                if kt_m:
+                    low_kt = round(float(kt_m.group(1)))
+                    high_kt = round(float(kt_m.group(2))) if kt_m.group(2) else low_kt
+                    wind_range = (low_kt, high_kt)
+                    if not wd:
+                        dir_m = re.search(
+                            r"(north(?:east|west)?|south(?:east|west)?|east|west"
+                            r"|NE|NW|SE|SW|N|E|S|W)\s+wind",
+                            marine_text, re.IGNORECASE,
+                        )
+                        if dir_m:
+                            _DIR_MAP = {
+                                "north": "N", "northeast": "NE", "northwest": "NW",
+                                "south": "S", "southeast": "SE", "southwest": "SW",
+                                "east": "E", "west": "W",
+                            }
+                            raw = dir_m.group(1)
+                            wd = _DIR_MAP.get(raw.lower(), raw.upper())
+                            wind_dir_day = wd
+                    wind_str = f"{wd} {low_kt}-{high_kt} kt" if wd else f"{low_kt}-{high_kt} kt"
 
         if not wind_str:
             # Use regional fallback

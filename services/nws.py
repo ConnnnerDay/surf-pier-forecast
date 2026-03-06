@@ -302,10 +302,16 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         return None
 
 
-def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
+def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> List[Dict[str, str]]:
     """Fetch the NWS 7-day forecast for a lat/lng.
 
-    Returns a list of period dicts with name, detailedForecast, temperature, etc.
+    Tries the NWS gridpoint forecast first (works for land coordinates).  For
+    pier / offshore coordinates where the gridpoint API returns an error, falls
+    back to the NWS marine zone forecast identified by *zone* (e.g. "AMZ158").
+    Marine zone periods carry wind speed in knots inside ``detailedForecast``
+    text rather than in a separate ``windSpeed`` field.
+
+    Returns a list of period dicts with name, detailedForecast, etc.
     Returns an empty list on failure.
     """
     try:
@@ -320,5 +326,16 @@ def _fetch_nws_extended(lat: float, lng: float) -> List[Dict[str, str]]:
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]
     except Exception:
-        logger.debug("NWS extended forecast unavailable", exc_info=True)
+        logger.debug("NWS gridpoint forecast unavailable, trying marine zone", exc_info=True)
+
+    if not zone:
+        return []
+
+    try:
+        url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
+        fc = http_get(url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15))
+        fc.raise_for_status()
+        return fc.json()["properties"]["periods"]
+    except Exception:
+        logger.debug("NWS marine zone forecast unavailable", exc_info=True)
         return []

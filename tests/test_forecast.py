@@ -496,6 +496,66 @@ def test_build_multiday_outlook_estimates_waves_from_daily_wind_when_missing(mon
     assert [d["waves"] for d in outlook] == ["1-2 ft", "2-4 ft", "3-6 ft"]
 
 
+def test_build_multiday_outlook_uses_marine_zone_when_gridpoint_fails(monkeypatch):
+    """When the NWS gridpoint API fails (e.g. offshore/pier coordinates), the
+    outlook must fall back to the marine zone forecast and correctly parse wind
+    speed in knots and wave height from the detailedForecast text."""
+    now = datetime(2026, 3, 5, 12, 0, tzinfo=ZoneInfo("America/New_York"))
+
+    # Marine zone periods: wind in knots + wave height in detailedForecast text;
+    # no separate windSpeed / windDirection fields.
+    marine_periods = [
+        {
+            "isDaytime": True,
+            "name": "Friday",
+            "startTime": "2026-03-06T06:00:00-05:00",
+            "detailedForecast": "Southwest winds 10 to 14 knots. Seas 2 to 3 feet.",
+        },
+        {
+            "isDaytime": False,
+            "name": "Friday Night",
+            "startTime": "2026-03-06T18:00:00-05:00",
+            "detailedForecast": "Southwest winds 8 to 12 knots. Seas 2 to 3 feet.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Saturday",
+            "startTime": "2026-03-07T06:00:00-05:00",
+            "detailedForecast": "North winds 4 to 7 knots. Seas 1 to 2 feet.",
+        },
+        {
+            "isDaytime": True,
+            "name": "Sunday",
+            "startTime": "2026-03-08T06:00:00-05:00",
+            "detailedForecast": "East winds 13 to 17 knots. Seas 4 to 6 feet.",
+        },
+    ]
+
+    # Gridpoint always fails; marine zone returns the periods above.
+    def _fake_fetch_extended(lat, lng, zone=""):
+        if zone == "AMZ158":
+            return marine_periods
+        return []
+
+    monkeypatch.setattr("domain.forecast._fetch_nws_extended", _fake_fetch_extended)
+    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_a, **_kw: {})
+    monkeypatch.setattr("domain.forecast._sun_times", lambda *_a, **_kw: (None, None))
+
+    outlook = build_multiday_outlook(
+        now,
+        {
+            "lat": 34.2, "lng": -77.8,
+            "nws_zone": "AMZ158",
+            "timezone": "America/New_York",
+            "conditions_region": "atlantic_mid",
+        },
+    )
+
+    assert [d["day"] for d in outlook] == ["Friday", "Saturday", "Sunday"]
+    assert [d["wind"] for d in outlook] == ["SW 10-14 kt", "N 4-7 kt", "E 13-17 kt"]
+    assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
+
+
 def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch):
     from domain import forecast as fc
 
