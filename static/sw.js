@@ -36,14 +36,22 @@ self.addEventListener('fetch', function(event) {
   if (event.request.url.includes('/api/')) return;
 
   // Cache-first for static assets (CSS, JS, icons, fonts).
+  // Only successful responses (2xx) are written to the cache so that error
+  // pages are never served from cache on subsequent offline visits.
   event.respondWith(
     caches.match(event.request).then(function(cached) {
       return cached || fetch(event.request).then(function(response) {
-        var clone = response.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, clone);
-        });
+        if (response.ok) {
+          var clone = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, clone);
+          });
+        }
         return response;
+      }).catch(function() {
+        // Network failure and no cache hit — return an empty offline response
+        // for sub-resources so the page degrades gracefully instead of throwing.
+        return new Response('', { status: 503, statusText: 'Offline' });
       });
     })
   );

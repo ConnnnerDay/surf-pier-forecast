@@ -418,6 +418,11 @@ def setup_coords() -> Any:
             error="Invalid coordinates. Please click the map to set your location.",
         ))
 
+    if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+        return render_template("setup.html", **_setup_context(
+            error="Coordinates out of range. Please click the map again.",
+        ))
+
     nearby = find_nearest_locations(lat, lon, n=6)
     if not nearby:
         return render_template("setup.html", **_setup_context(

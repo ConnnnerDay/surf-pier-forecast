@@ -58,6 +58,18 @@ logger = logging.getLogger(__name__)
 
 FORECAST_VERSION = "v1.0.0"
 
+_DEFAULT_TZ = "America/New_York"
+
+
+def _safe_zone(tz_name: str) -> ZoneInfo:
+    """Return ZoneInfo for *tz_name*, falling back to Eastern if it's invalid."""
+    try:
+        return ZoneInfo(tz_name)
+    except (KeyError, Exception):
+        if tz_name != _DEFAULT_TZ:
+            logger.warning("Invalid timezone %r in location data; using %s", tz_name, _DEFAULT_TZ)
+        return ZoneInfo(_DEFAULT_TZ)
+
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
 MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
@@ -76,6 +88,13 @@ MONTHLY_AVG_WIND_DIR: Dict[int, str] = {
 # Default coordinates
 _LAT = 34.2104
 _LNG = -77.7964
+
+# Direction abbreviation map (shared by multiple forecast helpers)
+_DIR_MAP: Dict[str, str] = {
+    "north": "N", "northeast": "NE", "northwest": "NW",
+    "south": "S", "southeast": "SE", "southwest": "SW",
+    "east": "E", "west": "W",
+}
 
 # -- Source 5: Seasonal averages (ALWAYS succeeds) --------------------------
 
@@ -507,7 +526,7 @@ def build_multiday_outlook(
     loc_lng = (location or {}).get("lng", _LNG)
     loc_zone = (location or {}).get("nws_zone", "")
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
 
     # Try NWS extended forecast for wind data; falls back to marine zone
     # forecast (loc_zone) for offshore/pier coordinates where the gridpoint
@@ -592,11 +611,6 @@ def build_multiday_outlook(
                             marine_text, re.IGNORECASE,
                         )
                         if dir_m:
-                            _DIR_MAP = {
-                                "north": "N", "northeast": "NE", "northwest": "NW",
-                                "south": "S", "southeast": "SE", "southwest": "SW",
-                                "east": "E", "west": "W",
-                            }
                             raw = dir_m.group(1)
                             wd = _DIR_MAP.get(raw.lower(), raw.upper())
                             wind_dir_day = wd
@@ -1267,7 +1281,7 @@ def recompute_current_uv(location: Optional[Dict[str, Any]] = None) -> Dict[str,
     location, not the moment the forecast was originally generated.
     """
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     lat = (location or {}).get("lat", _LAT)
     lng = (location or {}).get("lng", _LNG)
@@ -1437,7 +1451,7 @@ def generate_forecast(
     filtered to match the user's fishing style and target preferences.
     """
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     month = now.month
     builder = ForecastBuilder()
@@ -1703,7 +1717,7 @@ def generate_forecast(
         if outlook:
             forecast["outlook"] = outlook
     except Exception:
-        pass
+        logger.debug("build_multiday_outlook failed for location_id=%s", location_id, exc_info=True)
 
     # Best day to fish (trip planner)
     if forecast.get("outlook"):
@@ -1812,7 +1826,7 @@ def personalize_forecast(
         return forecast
 
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     month = now.month
 

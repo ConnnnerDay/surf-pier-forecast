@@ -21,9 +21,11 @@
     return d.innerHTML;
   }
 
+  var MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8 MB per photo
+
   function readPhotos(files) {
     var validFiles = Array.prototype.slice.call(files || []).filter(function (file) {
-      return file && file.type && file.type.indexOf('image/') === 0;
+      return file && file.type && file.type.indexOf('image/') === 0 && file.size <= MAX_PHOTO_BYTES;
     }).slice(0, 8);
 
     return Promise.all(validFiles.map(function (file) {
@@ -131,7 +133,7 @@
         html += '<div class="fishlog-photo-grid">';
         e.photos.forEach(function (photo, pIdx) {
           html += '<a href="' + esc(photo) + '" target="_blank" rel="noopener noreferrer" aria-label="Open fish photo ' + (pIdx + 1) + '">';
-          html += '<img src="' + esc(photo) + '" alt="Catch photo ' + (pIdx + 1) + '" class="fishlog-photo-thumb">';
+          html += '<img src="' + esc(photo) + '" alt="' + esc(e.species) + ' catch photo ' + (pIdx + 1) + '" class="fishlog-photo-thumb">';
           html += '</a>';
         });
         html += '</div>';
@@ -157,6 +159,21 @@
     if (!species) return;
     var size = sizeInput.value.trim();
     var notes = notesInput.value.trim();
+
+    // Warn if any selected photos were skipped due to size limit
+    var allFiles = Array.prototype.slice.call(photosInput.files || []);
+    var oversized = allFiles.filter(function (f) { return f.size > MAX_PHOTO_BYTES; });
+    if (oversized.length) {
+      var helpEl = document.querySelector('.fishlog-photo-help');
+      if (helpEl) {
+        helpEl.textContent = oversized.length + ' photo(s) skipped (max 8 MB each).';
+        helpEl.style.color = '#c0392b';
+        setTimeout(function () {
+          helpEl.textContent = 'You can add multiple photos per catch.';
+          helpEl.style.color = '';
+        }, 4000);
+      }
+    }
 
     readPhotos(photosInput.files).then(function (photos) {
       var entries = getLog();

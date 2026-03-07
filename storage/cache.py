@@ -105,9 +105,14 @@ def save_forecast(data: Dict[str, Any], location_id: str = "", user_id: Optional
 # ---------------------------------------------------------------------------
 
 def _cache_path(location_id: str = "") -> str:
-    """Return the JSON cache file path for a given location."""
+    """Return the JSON cache file path for a given location.
+
+    ``location_id`` is sanitised to a flat filename so that values like
+    ``../../../etc/passwd`` cannot escape the cache directory.
+    """
     if location_id:
-        return os.path.join(CACHE_DIR, f"forecast_{location_id}.json")
+        safe_id = os.path.basename(location_id).replace("/", "_").replace("\\", "_")
+        return os.path.join(CACHE_DIR, f"forecast_{safe_id}.json")
     return CACHE_FILE
 
 

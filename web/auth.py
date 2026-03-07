@@ -28,6 +28,7 @@ from storage.db import (
 bp = Blueprint("auth", __name__)
 
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
+_LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 
 @bp.route("/welcome")
@@ -36,7 +37,6 @@ def landing() -> Any:
     if g.user is not None:
         return redirect(url_for("views.index"))
     return render_template("landing.html")
-_LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 
 def _password_complexity_error(password: str) -> str:
@@ -51,10 +51,18 @@ def _password_complexity_error(password: str) -> str:
     return ""
 
 
+def _session_int(key: str, default: int = 0) -> int:
+    """Read an integer from the session, returning *default* on bad/missing values."""
+    try:
+        return int(session.get(key, default))
+    except (ValueError, TypeError):
+        return default
+
+
 def _login_is_rate_limited() -> bool:
     now = int(time.time())
-    start = int(session.get("login_attempt_window_start", 0))
-    attempts = int(session.get("login_attempts", 0))
+    start = _session_int("login_attempt_window_start")
+    attempts = _session_int("login_attempts")
     if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
         session["login_attempt_window_start"] = now
         session["login_attempts"] = 0
@@ -64,12 +72,12 @@ def _login_is_rate_limited() -> bool:
 
 def _record_login_failure() -> None:
     now = int(time.time())
-    start = int(session.get("login_attempt_window_start", 0))
+    start = _session_int("login_attempt_window_start")
     if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
         session["login_attempt_window_start"] = now
         session["login_attempts"] = 1
         return
-    session["login_attempts"] = int(session.get("login_attempts", 0)) + 1
+    session["login_attempts"] = _session_int("login_attempts") + 1
 
 
 def _clear_login_failures() -> None:
@@ -101,14 +109,20 @@ def login() -> Any:
         return render_template("login.html", error="Invalid username or password.",
                                username=username)
     _clear_login_failures()
+    # Regenerate session to prevent session fixation: preserve the anonymous
+    # location choice, then clear everything else before setting credentials.
+    prior_location_id = session.get("location_id")
+    session.clear()
     session["user_id"] = user["id"]
     session.permanent = True
-    # Restore saved location preference
+    # Restore saved location preference (DB preference wins over anonymous choice).
     prefs = get_preferences(user["id"])
     if prefs.get("location_id"):
         session["location_id"] = prefs["location_id"]
     elif user.get("default_location_id"):
         session["location_id"] = user["default_location_id"]
+    elif prior_location_id:
+        session["location_id"] = prior_location_id
     return redirect(url_for("views.index"))
 
 
@@ -142,11 +156,14 @@ def register() -> Any:
         return render_template("register.html",
                                error="That username is already taken.",
                                username=username)
+    # Regenerate session to prevent session fixation.
+    loc_id = session.get("location_id")
+    session.clear()
     session["user_id"] = user_id
     session.permanent = True
     # Carry over current location if one is set
-    loc_id = session.get("location_id")
     if loc_id:
+        session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
     return redirect(url_for("views.index"))
 
@@ -186,10 +203,18 @@ def account_settings() -> Any:
         return redirect(url_for("auth.login"))
 
     wind_units = request.form.get("wind_units", "knots")
+    if wind_units not in {"knots", "mph"}:
+        wind_units = "knots"
     temp_units = request.form.get("temp_units", "F")
+    if temp_units not in {"F", "C"}:
+        temp_units = "F"
     weekly_email = request.form.get("weekly_email") == "on"
     favorite_ids = [loc_id.strip() for loc_id in request.form.get("favorites_csv", "").split(",") if loc_id.strip()]
+    # Only keep favorites that resolve to real locations
+    favorite_ids = [loc_id for loc_id in favorite_ids if get_location(loc_id)]
     default_location_id = request.form.get("default_location_id", "").strip() or None
+    if default_location_id and not get_location(default_location_id):
+        default_location_id = None
 
     save_preferences(
         g.user["id"],

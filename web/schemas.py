@@ -30,6 +30,10 @@ def error_envelope(code: str, message: str, *, version: str = "v1", details: Opt
     }
 
 
+_VALID_FISHING_TYPES = frozenset({"surf", "pier", "inshore", "offshore"})
+_VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "gamefish", "anything"})
+
+
 def parse_bool(value: Any, default: bool = False) -> bool:
     if value is None:
         return default
@@ -75,9 +79,6 @@ class ProfilePayload:
         if favorites is not None:
             if not isinstance(favorites, list) or not all(isinstance(x, str) for x in favorites):
                 raise ApiError("invalid_favorites", "favorites must be a list of strings", status=400)
-
-        _VALID_FISHING_TYPES = {"surf", "pier", "inshore", "offshore"}
-        _VALID_TARGETS = {"bottom", "pelagic", "structure", "gamefish", "anything"}
 
         fishing_profile = data.get("fishing_profile")
         if fishing_profile is not None:
@@ -139,8 +140,14 @@ class LogCreatePayload:
         species = str(data.get("species", "")).strip()
         if not species:
             raise ApiError("missing_species", "species is required", status=400)
+        if len(species) > 200:
+            raise ApiError("invalid_species", "species must be 200 characters or fewer", status=400)
         size = str(data.get("size", "")).strip()
+        if len(size) > 100:
+            raise ApiError("invalid_size", "size must be 100 characters or fewer", status=400)
         notes = str(data.get("notes", "")).strip()
+        if len(notes) > 2000:
+            raise ApiError("invalid_notes", "notes must be 2000 characters or fewer", status=400)
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
             raise ApiError("missing_location", "location_id is required", status=400)

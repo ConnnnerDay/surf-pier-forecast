@@ -11,6 +11,17 @@ from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_TZ = "America/New_York"
+
+
+def _safe_zone(tz_name: str) -> ZoneInfo:
+    try:
+        return ZoneInfo(tz_name)
+    except Exception:
+        if tz_name != _DEFAULT_TZ:
+            logger.warning("Invalid timezone %r in astro; using %s", tz_name, _DEFAULT_TZ)
+        return ZoneInfo(_DEFAULT_TZ)
+
 # Default coordinates (overridden per location; only used when no location set)
 _LAT = 34.2104
 _LNG = -77.7964
@@ -33,7 +44,7 @@ def _sun_times(
         lat = _LAT
     if lng == 0:
         lng = _LNG
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     # Day of year (1-365)
     n = dt.timetuple().tm_yday
 
@@ -128,7 +139,7 @@ def _sun_event_time(
     rising: bool,
 ) -> datetime:
     """Compute sunrise/sunset style event for custom zenith angle."""
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=tz)
     n = dt.timetuple().tm_yday
@@ -188,7 +199,7 @@ def compute_twilight_times(dt: datetime, lat: float, lng: float, tz_name: str) -
 
 def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> Dict[str, Any]:
     """Compute moonrise/moonset plus simple phase-age-distance info."""
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=tz)
 
@@ -233,7 +244,7 @@ def compute_solunar_times(
         moon_phase: str description (New, Waxing, Full, Waning)
         rating: str (Excellent / Good / Fair) based on moon phase
     """
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=tz)
 
