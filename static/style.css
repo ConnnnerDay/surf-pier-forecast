@@ -4202,12 +4202,46 @@ footer p {
   font-weight: 500;
   color: var(--text);
 }
-.reg-modal__notes {
-  margin: 0.75rem 0 0;
-  font-size: 0.8rem;
+.reg-state-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: var(--text-muted);
-  font-style: italic;
+  margin: 0 0 0.65rem;
+}
+.reg-field-icon {
+  vertical-align: -1px;
+  margin-right: 0.2rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.reg-notes-callout {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #f0d060;
+  border-left: 3px solid #d4920b;
+  border-radius: 6px;
+}
+[data-theme="dark"] .reg-notes-callout {
+  background: rgba(212, 146, 11, 0.1);
+  border-color: rgba(212, 146, 11, 0.35);
+  border-left-color: #d4920b;
+}
+.reg-notes-callout__icon {
+  color: #d4920b;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.reg-notes-callout__text {
+  margin: 0;
+  font-size: 0.82rem;
   line-height: 1.5;
+  color: var(--text);
 }
 .reg-no-data,
 .reg-loading {
@@ -4218,6 +4252,21 @@ footer p {
   margin: 0;
   line-height: 1.6;
 }
+.reg-retry-btn {
+  display: block;
+  margin: 0.5rem auto 0;
+  padding: 0.4rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--ocean);
+  background: var(--ocean-light);
+  border: 1px solid var(--ocean);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.reg-retry-btn:hover { background: #d0e8f4; }
 .reg-source {
   margin: 0.75rem 0 0;
   display: flex;
@@ -4234,18 +4283,26 @@ footer p {
 .reg-source__badge {
   font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  padding: 0.1rem 0.35rem;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  padding: 0.1rem 0.4rem;
   border-radius: 3px;
 }
 .reg-source__badge--live {
   background: #d4edda;
   color: #155724;
 }
+[data-theme="dark"] .reg-source__badge--live {
+  background: rgba(21, 87, 36, 0.25);
+  color: #75c990;
+}
 .reg-source__badge--snapshot {
   background: #fff3cd;
   color: #856404;
+}
+[data-theme="dark"] .reg-source__badge--snapshot {
+  background: rgba(133, 100, 4, 0.2);
+  color: #f0c040;
 }
 
 

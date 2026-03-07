@@ -757,32 +757,64 @@
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    // Inline SVG icons for regulation fields
+    var ICON_RULER = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 7l18 0M7 3v4M11 5v2M15 3v4M19 5v2"/><rect x="3" y="7" width="18" height="10" rx="1"/></svg>';
+    var ICON_BAG  = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a5 5 0 0 1 5 5v1H7V7a5 5 0 0 1 5-5z"/><rect x="3" y="8" width="18" height="13" rx="2"/></svg>';
+    var ICON_CAL  = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+
     function renderRegs(reg, state) {
-        var stateLabel = state ? ' for ' + esc(state) : '';
         var sourceLink = (reg && reg.official_source)
-            ? '<a class="reg-source__link" href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' regulations ↗</a>'
+            ? '<a class="reg-source__link" href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' source ↗</a>'
             : '';
         if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
-            return '<p class="reg-no-data">No regulation data available for this species' + stateLabel + '.'
-                + ' Check your state fish &amp; wildlife agency for current rules.</p>'
-                + (sourceLink ? '<p class="reg-source">' + sourceLink + '</p>' : '');
+            return '<p class="reg-no-data">No specific regulation data found for this species'
+                + (state ? ' in ' + esc(state) : '') + '.'
+                + ' Verify current rules with your state\u2019s fish &amp; wildlife agency before fishing.</p>'
+                + (sourceLink ? '<div class="reg-source">' + sourceLink + '</div>' : '');
         }
-        var html = '<div class="reg-modal__grid">';
-        if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
-        if (reg.bag_limit) html += '<div class="reg-modal__item"><span class="reg-modal__label">Bag Limit</span><span class="reg-modal__value">' + esc(reg.bag_limit) + '</span></div>';
-        if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
+        var html = '';
+        if (state) {
+            html += '<p class="reg-state-label">' + esc(state) + ' Regulations</p>';
+        }
+        html += '<div class="reg-modal__grid">';
+        if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">' + ICON_RULER + 'Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
+        if (reg.bag_limit) html += '<div class="reg-modal__item"><span class="reg-modal__label">' + ICON_BAG   + 'Bag Limit</span><span class="reg-modal__value">' + esc(reg.bag_limit) + '</span></div>';
+        if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">' + ICON_CAL   + 'Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
         html += '</div>';
-        if (reg.notes) html += '<p class="reg-modal__notes">' + esc(reg.notes) + '</p>';
+        if (reg.notes) {
+            html += '<div class="reg-notes-callout" role="note">'
+                + '<svg class="reg-notes-callout__icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+                + '<p class="reg-notes-callout__text">' + esc(reg.notes) + '</p>'
+                + '</div>';
+        }
         if (sourceLink) {
             var freshness = '';
-            if (reg.data_status === 'live' && reg.scraped_source) {
-                freshness = '<span class="reg-source__badge reg-source__badge--live">live</span>';
+            if (reg.data_status === 'live') {
+                freshness = '<span class="reg-source__badge reg-source__badge--live" title="Scraped from official source">verified</span>';
             } else if (reg.data_status === 'snapshot') {
-                freshness = '<span class="reg-source__badge reg-source__badge--snapshot">snapshot</span>';
+                var dateStr = reg.last_updated ? ' \u00b7 ' + esc(reg.last_updated) : '';
+                freshness = '<span class="reg-source__badge reg-source__badge--snapshot" title="Cached data' + (reg.last_updated ? ', last updated ' + esc(reg.last_updated) : '') + '">cached' + dateStr + '</span>';
             }
-            html += '<p class="reg-source">' + freshness + sourceLink + '</p>';
+            html += '<div class="reg-source">' + freshness + sourceLink + '</div>';
         }
         return html;
+    }
+
+    function retryFetch(speciesName, fallbackState) {
+        var state = (typeof CURRENT_LOC_STATE !== 'undefined' && CURRENT_LOC_STATE) ? CURRENT_LOC_STATE : '';
+        var cacheKey = speciesName + '::' + (state || (typeof CURRENT_LOC_ID !== 'undefined' ? CURRENT_LOC_ID : '') || '');
+        delete regCache[cacheKey];
+        modalBody.innerHTML = '<p class="reg-loading">Loading\u2026</p>';
+        var reqId = ++latestRegRequest;
+        fetchRegulation(speciesName)
+            .then(function (result) {
+                if (reqId !== latestRegRequest) return;
+                modalBody.innerHTML = renderRegs((result || {}).regulation || null, (result || {}).state || fallbackState);
+            })
+            .catch(function () {
+                if (reqId !== latestRegRequest) return;
+                modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations. Check your connection and try again.</p>';
+            });
     }
 
     function openModal(speciesName, reg, state) {
@@ -799,6 +831,8 @@
             season: card.dataset.regSeason || '',
             notes: card.dataset.regNotes || '',
             official_source: card.dataset.regOfficialSource || '',
+            data_status: card.dataset.regDataStatus || '',
+            last_updated: card.dataset.regLastUpdated || '',
         };
     }
 
@@ -861,7 +895,10 @@
                 .catch(function () {
                     if (requestId !== latestRegRequest) return;
                     if (!embedded) {
-                        modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations. Please try again.</p>';
+                        modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations.</p>'
+                            + '<button class="reg-retry-btn" type="button">Try again</button>';
+                        var retryBtn = modalBody.querySelector('.reg-retry-btn');
+                        if (retryBtn) retryBtn.addEventListener('click', function () { retryFetch(name, fallbackState); });
                     }
                 });
         });
