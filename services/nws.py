@@ -16,6 +16,12 @@ NWS_MARINE_ZONE = "AMZ158"
 
 _MPH_TO_KNOTS = 0.868976
 
+_DIR_MAP: dict = {
+    "north": "N", "northeast": "NE", "northwest": "NW",
+    "south": "S", "southeast": "SE", "southwest": "SW",
+    "east": "E", "west": "W", "variable": "VARIABLE",
+}
+
 # Default coordinates (overridden per location)
 _LAT = 34.2104
 _LNG = -77.7964
@@ -116,11 +122,6 @@ def parse_conditions(
             text, re.IGNORECASE,
         )
         if dir_match:
-            _DIR_MAP = {
-                "north": "N", "northeast": "NE", "northwest": "NW",
-                "south": "S", "southeast": "SE", "southwest": "SW",
-                "east": "E", "west": "W", "variable": "VARIABLE",
-            }
             raw = dir_match.group(1)
             wind_directions.append(_DIR_MAP.get(raw.lower(), raw.upper()))
 

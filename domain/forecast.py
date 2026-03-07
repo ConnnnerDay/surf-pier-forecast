@@ -89,6 +89,13 @@ MONTHLY_AVG_WIND_DIR: Dict[int, str] = {
 _LAT = 34.2104
 _LNG = -77.7964
 
+# Direction abbreviation map (shared by multiple forecast helpers)
+_DIR_MAP: Dict[str, str] = {
+    "north": "N", "northeast": "NE", "northwest": "NW",
+    "south": "S", "southeast": "SE", "southwest": "SW",
+    "east": "E", "west": "W",
+}
+
 # -- Source 5: Seasonal averages (ALWAYS succeeds) --------------------------
 
 def _seasonal_averages(month: int) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
@@ -604,11 +611,6 @@ def build_multiday_outlook(
                             marine_text, re.IGNORECASE,
                         )
                         if dir_m:
-                            _DIR_MAP = {
-                                "north": "N", "northeast": "NE", "northwest": "NW",
-                                "south": "S", "southeast": "SE", "southwest": "SW",
-                                "east": "E", "west": "W",
-                            }
                             raw = dir_m.group(1)
                             wd = _DIR_MAP.get(raw.lower(), raw.upper())
                             wind_dir_day = wd
@@ -1715,7 +1717,7 @@ def generate_forecast(
         if outlook:
             forecast["outlook"] = outlook
     except Exception:
-        pass
+        logger.debug("build_multiday_outlook failed for location_id=%s", location_id, exc_info=True)
 
     # Best day to fish (trip planner)
     if forecast.get("outlook"):
