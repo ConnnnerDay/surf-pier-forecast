@@ -14,6 +14,18 @@ from locations import get_monthly_water_temps
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_TZ = "America/New_York"
+
+
+def _safe_zone(tz_name: str) -> ZoneInfo:
+    """Return ZoneInfo for *tz_name*, falling back to Eastern if invalid."""
+    try:
+        return ZoneInfo(tz_name)
+    except Exception:
+        if tz_name != _DEFAULT_TZ:
+            logger.warning("Invalid timezone %r; using %s", tz_name, _DEFAULT_TZ)
+        return ZoneInfo(_DEFAULT_TZ)
+
 _COOPS_HEADERS = {
     "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
     "Accept": "application/json",
@@ -109,7 +121,7 @@ def fetch_coops_environmental_metrics(station_id: str) -> Dict[str, float]:
 
 def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York") -> List[Dict[str, str]]:
     """Fetch NOAA CO-OPS current prediction events (flood/ebb/slack)."""
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     today_str = now.strftime("%Y%m%d")
     tomorrow_str = (now + timedelta(days=1)).strftime("%Y%m%d")
@@ -148,7 +160,7 @@ def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York
 
 def fetch_currents_observation(station_id: str, tz_name: str = "America/New_York") -> Optional[Dict[str, str]]:
     """Fetch latest measured current speed/direction from NOAA CO-OPS."""
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     url = (
         "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
         f"?date=latest&station={station_id}"
@@ -252,7 +264,7 @@ def fetch_tide_predictions(
         [{"time": "6:32 AM", "type": "High", "height_ft": "5.2"}, ...]
     Returns an empty list on any error.
     """
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     today_str = now.strftime("%Y%m%d")
     tomorrow_str = (now + timedelta(days=1)).strftime("%Y%m%d")
@@ -294,16 +306,17 @@ def fetch_tide_predictions(
 
 
 
-def build_tide_chart_svg(tides: List[Dict[str, Any]], now_hour: float = None) -> str:
-    """Build an SVG path string for a smooth tide curve.
+def build_tide_chart_svg(tides: List[Dict[str, Any]], now_hour: Optional[float] = None) -> Optional[Dict[str, Any]]:
+    """Build a tide chart data dict for SVG rendering.
 
     Returns a dict with 'path' (SVG path d attribute), 'points' (list of
     {cx, cy, label, height} for the markers), 'viewBox', 'fill_path', and
     optionally 'now_marker' with the current-time dot position.
+    Returns None when there is insufficient tide data to draw a chart.
     Only considers tides within a 24-hour window.
     """
     if len(tides) < 2:
-        return ""
+        return None
 
     # Chart dimensions
     W, H = 600, 140
@@ -317,7 +330,7 @@ def build_tide_chart_svg(tides: List[Dict[str, Any]], now_hour: float = None) ->
         if 0 <= h <= 30:  # Allow some overflow for next-day tides
             pts.append((h, ht, t["type"], t["time"], t["height_ft"]))
     if len(pts) < 2:
-        return ""
+        return None
 
     # Compute bounds
     min_h = min(p[1] for p in pts)
