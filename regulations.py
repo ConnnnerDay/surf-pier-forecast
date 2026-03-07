@@ -11,10 +11,24 @@ import json
 import logging
 import os
 import re
+from datetime import date
 from pathlib import Path
 from threading import Lock
 from time import monotonic
 from typing import Dict, List, Optional
+
+_STALE_MONTHS = 6  # snapshot data older than this is flagged as potentially outdated
+
+
+def _months_since(date_str: str) -> float:
+    """Return approximate months since a 'YYYY-MM' date string. Returns inf on error."""
+    try:
+        parts = str(date_str or "").split("-")
+        year, month = int(parts[0]), int(parts[1])
+        today = date.today()
+        return (today.year - year) * 12 + (today.month - month)
+    except Exception:
+        return float("inf")
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +211,8 @@ def _base_payload(state: str) -> Dict[str, str]:
         "source_file": _REG_DATA.source_file,
         "data_status": "official_reference",
         "last_updated": _REG_DATA.last_updated,
+        "is_stale": _months_since(_REG_DATA.last_updated) >= _STALE_MONTHS,
+        "fetched_at": "",
     }
 
 
@@ -224,6 +240,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
         if scraped:
             payload.update(scraped)
             payload["data_status"] = "live"
+            payload["is_stale"] = False
             # Make sure official_source is always set
             if not payload.get("official_source"):
                 payload["official_source"] = _STATE_REGULATION_SOURCES.get(
@@ -253,6 +270,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
     if matched:
         payload.update(matched)
         payload["data_status"] = "snapshot"
+        payload["is_stale"] = _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS
         if payload.get("source"):
             payload["snapshot_source"] = payload["source"]
         return payload
