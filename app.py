@@ -21,6 +21,7 @@ No API keys required.  Data cached per-location to ``data/``.
 
 from __future__ import annotations
 
+import logging
 import os
 import secrets
 from datetime import timedelta
@@ -39,11 +40,38 @@ if not hasattr(werkzeug, "__version__"):
     werkzeug.__version__ = "3"
 
 
+def _configure_logging() -> None:
+    """Set up basic logging for development and production."""
+    level = logging.DEBUG if os.environ.get("FLASK_DEBUG") == "1" else logging.INFO
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+        level=level,
+    )
+
+
 def create_app() -> Flask:
     """Application factory."""
+    _configure_logging()
+
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
+
+    secret_key = os.environ.get("SECRET_KEY", "")
+    if not secret_key:
+        _in_dev = os.environ.get("FLASK_DEBUG") == "1" or os.environ.get("PYTEST_CURRENT_TEST")
+        if _in_dev:
+            secret_key = "dev-key-change-in-production"
+            logging.warning(
+                "SECRET_KEY not set — using insecure dev key. "
+                "Set the SECRET_KEY environment variable for production."
+            )
+        else:
+            raise RuntimeError(
+                "SECRET_KEY environment variable is not set. "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+    app.config["SECRET_KEY"] = secret_key
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB hard limit for file uploads
 
     _upload_folder = os.path.join(os.path.dirname(__file__), "static", "uploads")

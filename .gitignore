@@ -4,3 +4,9 @@ __pycache__/
 *.pyc
 # cache files
 /data/
+# env secrets
+.env
+# test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
