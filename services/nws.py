@@ -180,9 +180,16 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
             headers=_NWS_HEADERS, timeout=(3.05, 10),
         )
         resp.raise_for_status()
-        features = resp.json().get("@graph", [])
+        data = resp.json()
+        # The NWS API may return GeoJSON ("features") or JSON-LD ("@graph")
+        # depending on the Accept header; handle both formats so alerts are
+        # never silently dropped when the server sends GeoJSON.
+        raw = data.get("features", []) or data.get("@graph", [])
         alerts = []
-        for f in features[:5]:
+        for item in raw[:5]:
+            # GeoJSON wraps alert fields inside a "properties" envelope;
+            # JSON-LD (@graph) has them at the top level.
+            f = item.get("properties", item)
             event = f.get("event", "")
             severity = f.get("severity", "")
             headline = f.get("headline", "")
@@ -198,7 +205,6 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
     except Exception:
         logger.debug("Weather alerts unavailable", exc_info=True)
         return []
-
 
 
 def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:

@@ -28,6 +28,7 @@ from storage.db import (
 bp = Blueprint("auth", __name__)
 
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
+_LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 
 @bp.route("/welcome")
@@ -36,7 +37,6 @@ def landing() -> Any:
     if g.user is not None:
         return redirect(url_for("views.index"))
     return render_template("landing.html")
-_LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 
 def _password_complexity_error(password: str) -> str:
@@ -186,10 +186,18 @@ def account_settings() -> Any:
         return redirect(url_for("auth.login"))
 
     wind_units = request.form.get("wind_units", "knots")
+    if wind_units not in {"knots", "mph"}:
+        wind_units = "knots"
     temp_units = request.form.get("temp_units", "F")
+    if temp_units not in {"F", "C"}:
+        temp_units = "F"
     weekly_email = request.form.get("weekly_email") == "on"
     favorite_ids = [loc_id.strip() for loc_id in request.form.get("favorites_csv", "").split(",") if loc_id.strip()]
+    # Only keep favorites that resolve to real locations
+    favorite_ids = [loc_id for loc_id in favorite_ids if get_location(loc_id)]
     default_location_id = request.form.get("default_location_id", "").strip() or None
+    if default_location_id and not get_location(default_location_id):
+        default_location_id = None
 
     save_preferences(
         g.user["id"],
