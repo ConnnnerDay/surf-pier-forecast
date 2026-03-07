@@ -38,32 +38,15 @@ To restart later:
 
 ---
 
-## Database Init
-
-On first run the database is created automatically. If you need to run migrations manually:
-
-```bash
-python migrate.py
-python migrate_sqlite.py
-```
-
-SQLite DB is stored at `data/app.db`.
-
----
-
 ## Configuration
-
-Set environment variables as needed before running:
 
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `5757` | Port to listen on |
 | `SECRET_KEY` | `dev-key-change-in-production` | Flask session secret |
 
-Example:
-
 ```bash
-PORT=8080 python app.py
+PORT=8080 .venv/bin/python app.py
 ```
 
 ---
