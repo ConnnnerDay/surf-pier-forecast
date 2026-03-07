@@ -25,18 +25,19 @@ A Flask web app that combines NOAA/NWS/NDBC marine data with species logic, rig 
 
 ```bash
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
-cd surf-pier-forecast
-
-# Linux/WSL only: install venv support if missing
-sudo apt-get update && sudo apt-get install -y python3-venv
-
-python3 -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
+cd surf-pier-forecast && ./install.sh
 ```
 
+> **Linux/WSL:** if `python3-venv` is missing, run `sudo apt-get install -y python3-venv` first.
+
+`install.sh` creates the `.venv`, installs dependencies, and starts the app.
+
 Open: **http://localhost:5757**
+
+To restart later:
+```bash
+.venv/bin/python app.py
+```
 
 ---
 
