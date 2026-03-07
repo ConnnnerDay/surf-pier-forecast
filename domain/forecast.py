@@ -58,6 +58,18 @@ logger = logging.getLogger(__name__)
 
 FORECAST_VERSION = "v1.0.0"
 
+_DEFAULT_TZ = "America/New_York"
+
+
+def _safe_zone(tz_name: str) -> ZoneInfo:
+    """Return ZoneInfo for *tz_name*, falling back to Eastern if it's invalid."""
+    try:
+        return ZoneInfo(tz_name)
+    except (KeyError, Exception):
+        if tz_name != _DEFAULT_TZ:
+            logger.warning("Invalid timezone %r in location data; using %s", tz_name, _DEFAULT_TZ)
+        return ZoneInfo(_DEFAULT_TZ)
+
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
 MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
@@ -507,7 +519,7 @@ def build_multiday_outlook(
     loc_lng = (location or {}).get("lng", _LNG)
     loc_zone = (location or {}).get("nws_zone", "")
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
 
     # Try NWS extended forecast for wind data; falls back to marine zone
     # forecast (loc_zone) for offshore/pier coordinates where the gridpoint
@@ -1267,7 +1279,7 @@ def recompute_current_uv(location: Optional[Dict[str, Any]] = None) -> Dict[str,
     location, not the moment the forecast was originally generated.
     """
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     lat = (location or {}).get("lat", _LAT)
     lng = (location or {}).get("lng", _LNG)
@@ -1437,7 +1449,7 @@ def generate_forecast(
     filtered to match the user's fishing style and target preferences.
     """
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     month = now.month
     builder = ForecastBuilder()
@@ -1812,7 +1824,7 @@ def personalize_forecast(
         return forecast
 
     tz_name = (location or {}).get("timezone", "America/New_York")
-    tz = ZoneInfo(tz_name)
+    tz = _safe_zone(tz_name)
     now = datetime.now(tz)
     month = now.month
 

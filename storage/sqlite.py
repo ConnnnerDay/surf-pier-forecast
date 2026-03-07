@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sqlite3
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from werkzeug.security import check_password_hash, generate_password_hash
+
+logger = logging.getLogger(__name__)
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "app.db")
 
@@ -263,6 +266,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         try:
             profile = json.loads(row["fishing_profile"])
         except Exception:
+            logger.warning("Corrupt fishing_profile JSON for user_id=%s; resetting to None", user_id)
             profile = None
 
     favorites: List[str] = []
@@ -270,6 +274,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         try:
             favorites = json.loads(row["favorites"])
         except Exception:
+            logger.warning("Corrupt favorites JSON for user_id=%s; resetting to []", user_id)
             favorites = []
 
     notification_prefs: Dict[str, Any] = {}
@@ -277,6 +282,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         try:
             notification_prefs = json.loads(row["notification_prefs"])
         except Exception:
+            logger.warning("Corrupt notification_prefs JSON for user_id=%s; resetting to {}", user_id)
             notification_prefs = {}
 
     return {

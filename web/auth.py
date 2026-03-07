@@ -51,10 +51,18 @@ def _password_complexity_error(password: str) -> str:
     return ""
 
 
+def _session_int(key: str, default: int = 0) -> int:
+    """Read an integer from the session, returning *default* on bad/missing values."""
+    try:
+        return int(session.get(key, default))
+    except (ValueError, TypeError):
+        return default
+
+
 def _login_is_rate_limited() -> bool:
     now = int(time.time())
-    start = int(session.get("login_attempt_window_start", 0))
-    attempts = int(session.get("login_attempts", 0))
+    start = _session_int("login_attempt_window_start")
+    attempts = _session_int("login_attempts")
     if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
         session["login_attempt_window_start"] = now
         session["login_attempts"] = 0
@@ -64,12 +72,12 @@ def _login_is_rate_limited() -> bool:
 
 def _record_login_failure() -> None:
     now = int(time.time())
-    start = int(session.get("login_attempt_window_start", 0))
+    start = _session_int("login_attempt_window_start")
     if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
         session["login_attempt_window_start"] = now
         session["login_attempts"] = 1
         return
-    session["login_attempts"] = int(session.get("login_attempts", 0)) + 1
+    session["login_attempts"] = _session_int("login_attempts") + 1
 
 
 def _clear_login_failures() -> None:
