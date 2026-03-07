@@ -44,6 +44,7 @@ def _try_ndbc_station(
     header = lines[0].replace("#", "").split()
     col = {name: idx for idx, name in enumerate(header)}
 
+    _MISSING = {"MM", "99.0", "99.00", "999", "999.0"}
     wind_range = None
     wave_range = None
     wind_dir = None
@@ -52,8 +53,6 @@ def _try_ndbc_station(
         fields = line.split()
         if len(fields) < len(header):
             continue
-
-        _MISSING = {"MM", "99.0", "99.00", "999", "999.0"}
 
         wspd_raw = fields[col["WSPD"]] if "WSPD" in col else "MM"
         gst_raw = fields[col["GST"]] if "GST" in col else "MM"

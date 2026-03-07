@@ -1783,8 +1783,10 @@ def get_fallback_conditions(
     region = location.get("conditions_region", "atlantic_mid")
     cond = _FALLBACK_CONDITIONS.get(region, _FALLBACK_CONDITIONS["atlantic_mid"])
     dirs = _FALLBACK_WIND_DIR.get(region, _FALLBACK_WIND_DIR["atlantic_mid"])
-    wind, waves = cond[month]
-    return wind, waves, dirs[month]
+    # Clamp to a valid calendar month so a bad caller can't cause a KeyError.
+    safe_month = max(1, min(12, int(month)))
+    wind, waves = cond[safe_month]
+    return wind, waves, dirs[safe_month]
 
 
 # ---------------------------------------------------------------------------
