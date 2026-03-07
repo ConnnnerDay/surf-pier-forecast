@@ -39,13 +39,9 @@ info "Verifying app imports..."
 "${PROJECT_DIR}/.venv/bin/python" -c "import app; print('  app.py OK')"
 
 # ---------------------------------------------------------------------------
-# Done
+# Done — start the app
 # ---------------------------------------------------------------------------
 echo ""
-info "Setup complete. To start the app:"
+info "Setup complete. Starting app on http://localhost:${PORT} ..."
 echo ""
-echo "    source .venv/bin/activate"
-echo "    python app.py"
-echo ""
-echo "    Then open http://localhost:${PORT}"
-echo ""
+"${PROJECT_DIR}/.venv/bin/python" "${PROJECT_DIR}/app.py"
