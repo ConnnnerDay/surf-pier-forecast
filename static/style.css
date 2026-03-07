@@ -2598,6 +2598,22 @@ h2 {
   transform: translateY(0);
 }
 
+.refresh button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spin-icon {
+  animation: spin 0.9s linear infinite;
+  display: inline-block;
+}
+
 .timestamp {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -3906,6 +3922,11 @@ footer p {
 .app-nav a:focus-visible {
   color: var(--ocean);
   text-decoration: underline;
+}
+.app-nav a.app-nav-active {
+  color: var(--ocean);
+  border-bottom: 2px solid var(--ocean);
+  padding-bottom: 1px;
 }
 
 .app-nav-account-item {

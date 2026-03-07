@@ -134,8 +134,17 @@ def create_app() -> Flask:
         response.headers.setdefault("X-Frame-Options", "DENY")
         # Only send the bare origin as the Referer header on cross-origin requests.
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-        # Opt out of FLoC / Topics API (privacy).
-        response.headers.setdefault("Permissions-Policy", "interest-cohort=()")
+        # Opt out of FLoC / Topics API and limit sensitive permissions (privacy).
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "interest-cohort=(), geolocation=(), microphone=(), camera=()",
+        )
+        # Enforce HTTPS for one year when served over TLS (safe no-op over plain HTTP).
+        if request.is_secure:
+            response.headers.setdefault(
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains",
+            )
         return response
 
     # -- Service worker at root scope --------------------------------------

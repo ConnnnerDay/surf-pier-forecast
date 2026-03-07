@@ -3,11 +3,11 @@
     Menu
   </button>
   <ul id="app-nav-links" class="app-nav-links">
-    <li><a href="{{ url_for('views.index') }}">Dashboard</a></li>
-    <li><a href="{{ url_for('views.live_cams') }}">Live Cams</a></li>
-    <li><a href="{{ url_for('views.fishing_log') }}">Fishing Log</a></li>
+    <li><a href="{{ url_for('views.index') }}"{% if request.endpoint == 'views.index' %} class="app-nav-active" aria-current="page"{% endif %}>Dashboard</a></li>
+    <li><a href="{{ url_for('views.live_cams') }}"{% if request.endpoint == 'views.live_cams' %} class="app-nav-active" aria-current="page"{% endif %}>Live Cams</a></li>
+    <li><a href="{{ url_for('views.fishing_log') }}"{% if request.endpoint == 'views.fishing_log' %} class="app-nav-active" aria-current="page"{% endif %}>Fishing Log</a></li>
     {% if user %}
-    <li><a href="{{ url_for('auth.account') }}">Account</a></li>
+    <li><a href="{{ url_for('auth.account') }}"{% if request.endpoint in ('auth.account', 'auth.account_settings') %} class="app-nav-active" aria-current="page"{% endif %}>Account</a></li>
     {% endif %}
   </ul>
 </nav>

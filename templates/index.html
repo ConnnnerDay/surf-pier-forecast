@@ -342,9 +342,15 @@
         </section>
 
         <section class="refresh">
-            <form method="post" action="{{ url_for('api.refresh') }}">
+            <form method="post" action="{{ url_for('api.refresh') }}" id="refresh-form" onsubmit="handleRefreshSubmit(this)">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit">Refresh Forecast</button>
+                <button type="submit" id="refresh-btn">
+                    <span id="refresh-btn-label">Refresh Forecast</span>
+                    <span id="refresh-btn-spinner" style="display:none;" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="spin-icon" style="vertical-align:-3px; margin-left:0.25rem;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        Refreshing…
+                    </span>
+                </button>
             </form>
             <p class="timestamp">
                 Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}
@@ -689,6 +695,16 @@
     syncLogToServer();
 
 
+
+    // Refresh button loading state
+    function handleRefreshSubmit(form) {
+        var btn = document.getElementById('refresh-btn');
+        var label = document.getElementById('refresh-btn-label');
+        var spinner = document.getElementById('refresh-btn-spinner');
+        if (btn) btn.disabled = true;
+        if (label) label.style.display = 'none';
+        if (spinner) spinner.style.display = 'inline';
+    }
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {

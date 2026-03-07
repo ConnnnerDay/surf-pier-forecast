@@ -143,6 +143,10 @@ def register() -> Any:
         return render_template("register.html",
                                error="Username must be 2-30 characters.",
                                username=username)
+    if not re.match(r"^[A-Za-z0-9_-]+$", username):
+        return render_template("register.html",
+                               error="Username may only contain letters, numbers, underscores, and hyphens.",
+                               username=username)
     complexity_error = _password_complexity_error(password)
     if complexity_error:
         return render_template("register.html",

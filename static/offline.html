@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline &mdash; Surf &amp; Pier Fishing Forecast</title>
+  <style>
+    :root {
+      --ocean: #0e5f78;
+      --bg: #f4f7f9;
+      --text: #1a2533;
+      --card-bg: #ffffff;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #131c27;
+        --text: #d8e3ef;
+        --card-bg: #1e2d40;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 2.5rem 2rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.25rem;
+      color: var(--ocean);
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--ocean);
+    }
+    p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      opacity: 0.8;
+    }
+    .btn {
+      display: inline-block;
+      background: var(--ocean);
+      color: #ffffff;
+      border: none;
+      padding: 0.65rem 1.75rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.88; }
+    .tips {
+      margin-top: 1.75rem;
+      text-align: left;
+      background: rgba(14,95,120,0.07);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .tips h2 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ocean);
+      margin-bottom: 0.6rem;
+    }
+    .tips ul {
+      list-style: none;
+      font-size: 0.875rem;
+      line-height: 1.7;
+      opacity: 0.85;
+    }
+    .tips li::before { content: "🎣 "; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M1 6s4-2 11-2 11 2 11 2"/>
+      <path d="M1 12s4-2 11-2 11 2 11 2"/>
+      <path d="M1 18s4-2 11-2 11 2 11 2"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+    <h1>You're Offline</h1>
+    <p>No internet connection detected. Check your signal and try again &mdash; the forecast will load as soon as you're back online.</p>
+    <button class="btn" onclick="window.location.reload()">Try Again</button>
+
+    <div class="tips">
+      <h2>While you wait&hellip;</h2>
+      <ul>
+        <li>Incoming tides typically improve bite activity</li>
+        <li>Dawn and dusk are peak feeding times</li>
+        <li>Rising barometric pressure favors active fish</li>
+        <li>Full and new moon phases boost solunar activity</li>
+        <li>Fish move shallow as water warms in spring</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

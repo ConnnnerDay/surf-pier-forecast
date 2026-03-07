@@ -416,25 +416,30 @@ def attach_photos_to_entry(
 
     Returns True if the entry exists and was updated, False otherwise.
     """
-    sets = []
-    vals: List[Any] = []
-    if photo1_path is not None:
-        sets.append("photo1_path = ?")
-        vals.append(photo1_path)
-    if photo2_path is not None:
-        sets.append("photo2_path = ?")
-        vals.append(photo2_path)
-    if not sets:
+    if photo1_path is None and photo2_path is None:
         return False
-    vals.extend([entry_id, user_id])
+
     conn = get_db()
-    cur = conn.execute(
-        f"UPDATE catch_log SET {', '.join(sets)} WHERE id = ? AND user_id = ?",
-        vals,
-    )
-    conn.commit()
-    ok = cur.rowcount > 0
-    conn.close()
+    try:
+        if photo1_path is not None and photo2_path is not None:
+            cur = conn.execute(
+                "UPDATE catch_log SET photo1_path = ?, photo2_path = ? WHERE id = ? AND user_id = ?",
+                (photo1_path, photo2_path, entry_id, user_id),
+            )
+        elif photo1_path is not None:
+            cur = conn.execute(
+                "UPDATE catch_log SET photo1_path = ? WHERE id = ? AND user_id = ?",
+                (photo1_path, entry_id, user_id),
+            )
+        else:
+            cur = conn.execute(
+                "UPDATE catch_log SET photo2_path = ? WHERE id = ? AND user_id = ?",
+                (photo2_path, entry_id, user_id),
+            )
+        conn.commit()
+        ok = cur.rowcount > 0
+    finally:
+        conn.close()
     return ok
 
 
