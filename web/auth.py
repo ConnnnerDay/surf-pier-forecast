@@ -101,14 +101,20 @@ def login() -> Any:
         return render_template("login.html", error="Invalid username or password.",
                                username=username)
     _clear_login_failures()
+    # Regenerate session to prevent session fixation: preserve the anonymous
+    # location choice, then clear everything else before setting credentials.
+    prior_location_id = session.get("location_id")
+    session.clear()
     session["user_id"] = user["id"]
     session.permanent = True
-    # Restore saved location preference
+    # Restore saved location preference (DB preference wins over anonymous choice).
     prefs = get_preferences(user["id"])
     if prefs.get("location_id"):
         session["location_id"] = prefs["location_id"]
     elif user.get("default_location_id"):
         session["location_id"] = user["default_location_id"]
+    elif prior_location_id:
+        session["location_id"] = prior_location_id
     return redirect(url_for("views.index"))
 
 
@@ -142,11 +148,14 @@ def register() -> Any:
         return render_template("register.html",
                                error="That username is already taken.",
                                username=username)
+    # Regenerate session to prevent session fixation.
+    loc_id = session.get("location_id")
+    session.clear()
     session["user_id"] = user_id
     session.permanent = True
     # Carry over current location if one is set
-    loc_id = session.get("location_id")
     if loc_id:
+        session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
     return redirect(url_for("views.index"))
 

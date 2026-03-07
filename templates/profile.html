@@ -242,7 +242,7 @@
 
     <script>
     // Server-side profile (authoritative, account-backed)
-    var _serverProfile = {{ (prefs.fishing_profile or {}) | tojson | safe }};
+    var _serverProfile = {{ (prefs.fishing_profile or {}) | tojson }};
 
     // Pre-fill from the profile stored on the signed-in account.
     (function() {

@@ -123,6 +123,21 @@ def create_app() -> Flask:
             "csrf_token": _get_csrf_token(),
         }
 
+    # -- Security response headers -----------------------------------------
+
+    @app.after_request
+    def _set_security_headers(response: Any) -> Any:
+        """Attach defensive HTTP headers to every response."""
+        # Prevent browsers from MIME-sniffing the content type.
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        # Deny embedding in <iframe> / <frame> to block clickjacking.
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        # Only send the bare origin as the Referer header on cross-origin requests.
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        # Opt out of FLoC / Topics API (privacy).
+        response.headers.setdefault("Permissions-Policy", "interest-cohort=()")
+        return response
+
     # -- Service worker at root scope --------------------------------------
 
     @app.route("/sw.js")
