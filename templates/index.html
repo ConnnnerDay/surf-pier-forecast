@@ -66,7 +66,7 @@
             </div>
             <div class="favorites-bar" id="favorites-bar"></div>
             {% if cached == "refreshing" %}
-            <div class="banner">Refreshing forecast… showing cached data from {{ forecast.generated_at }}</div>
+            <div class="banner" id="refresh-banner">Refreshing forecast… showing cached data from <span id="refresh-banner-time" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
             {% elif cached %}
             <div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
             {% endif %}
@@ -377,6 +377,7 @@
     var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
     var CURRENT_LOC_STATE = {{ (forecast.location_state or ((forecast.location_name.split(',')[-1].strip()) if forecast.location_name and ',' in forecast.location_name else ''))|tojson }};
     var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
+    var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
 
     function getFavorites() {
         try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
@@ -704,6 +705,49 @@
         if (btn) btn.disabled = true;
         if (label) label.style.display = 'none';
         if (spinner) spinner.style.display = 'inline';
+    }
+
+    // Format the cached-data timestamp in the banner to be human-readable
+    (function() {
+        var el = document.getElementById('refresh-banner-time');
+        if (!el) return;
+        try {
+            var d = new Date(el.dataset.iso);
+            if (!isNaN(d.getTime())) {
+                el.textContent = d.toLocaleString(undefined, {
+                    month: 'short', day: 'numeric',
+                    hour: 'numeric', minute: '2-digit'
+                });
+            }
+        } catch (e) {}
+    })();
+
+    // Poll for refresh completion and reload without the ?cached param when done
+    if (IS_REFRESHING && CURRENT_LOC_ID) {
+        (function() {
+            var POLL_MS = 3000;
+            var MAX_MS = 120000;
+            var started = Date.now();
+            var statusUrl = '/api/v1/forecast/' + encodeURIComponent(CURRENT_LOC_ID) + '/status';
+            function check() {
+                if (Date.now() - started > MAX_MS) {
+                    window.location.href = window.location.pathname;
+                    return;
+                }
+                fetch(statusUrl)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var d = data && data.data;
+                        if (d && !d.is_refreshing) {
+                            window.location.href = window.location.pathname;
+                        } else {
+                            setTimeout(check, POLL_MS);
+                        }
+                    })
+                    .catch(function() { setTimeout(check, POLL_MS); });
+            }
+            setTimeout(check, POLL_MS);
+        })();
     }
 
     // Register service worker for PWA
