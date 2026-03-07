@@ -1213,7 +1213,11 @@ def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
         age = (datetime.utcnow() - scraped_at).total_seconds()
         if age > _CACHE_TTL_SECONDS:
             return None
-        return json.loads(row["reg_json"])
+        data = json.loads(row["reg_json"])
+        # Inject the actual scrape timestamp so callers can show "verified X h ago"
+        if data:
+            data["fetched_at"] = str(row["scraped_at"])
+        return data
     except Exception:
         return None
 

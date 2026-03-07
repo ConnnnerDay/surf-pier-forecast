@@ -762,17 +762,40 @@
     var ICON_BAG  = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a5 5 0 0 1 5 5v1H7V7a5 5 0 0 1 5-5z"/><rect x="3" y="8" width="18" height="13" rx="2"/></svg>';
     var ICON_CAL  = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
 
+    function _hoursAgo(isoStr) {
+        if (!isoStr) return -1;
+        try {
+            var ms = Date.now() - new Date(isoStr.replace(' ', 'T') + 'Z').getTime();
+            return Math.max(0, Math.round(ms / 3600000));
+        } catch (e) { return -1; }
+    }
+
     function renderRegs(reg, state) {
         var sourceLink = (reg && reg.official_source)
             ? '<a class="reg-source__link" href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' source ↗</a>'
             : '';
+
+        var isStale = reg && (reg.is_stale === true || reg.is_stale === 'true');
+
         if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
             return '<p class="reg-no-data">No specific regulation data found for this species'
                 + (state ? ' in ' + esc(state) : '') + '.'
                 + ' Verify current rules with your state\u2019s fish &amp; wildlife agency before fishing.</p>'
                 + (sourceLink ? '<div class="reg-source">' + sourceLink + '</div>' : '');
         }
+
         var html = '';
+
+        // Prominent stale data warning shown above everything else
+        if (isStale && reg.data_status !== 'live') {
+            var ageLabel = reg.last_updated ? ' (last updated ' + esc(reg.last_updated) + ')' : '';
+            html += '<div class="reg-stale-alert" role="alert">'
+                + '<svg class="reg-stale-alert__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+                + '<div><strong>These limits may be outdated' + ageLabel + '.</strong>'
+                + ' Always confirm current rules at the official source before keeping any fish.</div>'
+                + '</div>';
+        }
+
         if (state) {
             html += '<p class="reg-state-label">' + esc(state) + ' Regulations</p>';
         }
@@ -790,10 +813,13 @@
         if (sourceLink) {
             var freshness = '';
             if (reg.data_status === 'live') {
-                freshness = '<span class="reg-source__badge reg-source__badge--live" title="Scraped from official source">verified</span>';
+                var h = _hoursAgo(reg.fetched_at || '');
+                var timeLabel = h >= 0 ? (h < 1 ? ' \u00b7 just now' : ' \u00b7 ' + h + 'h ago') : '';
+                freshness = '<span class="reg-source__badge reg-source__badge--live" title="Scraped from official state source">verified' + timeLabel + '</span>';
             } else if (reg.data_status === 'snapshot') {
                 var dateStr = reg.last_updated ? ' \u00b7 ' + esc(reg.last_updated) : '';
-                freshness = '<span class="reg-source__badge reg-source__badge--snapshot" title="Cached data' + (reg.last_updated ? ', last updated ' + esc(reg.last_updated) : '') + '">cached' + dateStr + '</span>';
+                var titleStr = 'Cached data' + (reg.last_updated ? ', last updated ' + esc(reg.last_updated) : '');
+                freshness = '<span class="reg-source__badge reg-source__badge--snapshot" title="' + titleStr + '">cached' + dateStr + '</span>';
             }
             html += '<div class="reg-source">' + freshness + sourceLink + '</div>';
         }
@@ -833,6 +859,8 @@
             official_source: card.dataset.regOfficialSource || '',
             data_status: card.dataset.regDataStatus || '',
             last_updated: card.dataset.regLastUpdated || '',
+            is_stale: card.dataset.regIsStale === 'true',
+            fetched_at: card.dataset.regFetchedAt || '',
         };
     }
 
