@@ -3,7 +3,7 @@
         <section class="gear-section">
             <details class="gear-details">
                 <summary class="gear-summary">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;" aria-hidden="true">
                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                         <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                         <line x1="12" y1="22.08" x2="12" y2="12"/>
@@ -19,7 +19,7 @@
                     <div class="gear-category">{{ g.category }}</div>
                     {% endif %}
                     <label class="gear-item">
-                        <input type="checkbox" class="gear-check">
+                        <input type="checkbox" class="gear-check" data-checklist="gear" data-item="{{ g.item|lower|replace(' ', '-') }}">
                         <span class="gear-name">{{ g.item }}</span>
                         {% if g.reason %}
                         <span class="gear-reason">{{ g.reason }}</span>
@@ -36,7 +36,7 @@
         <section class="safety-section">
             <details class="safety-details">
                 <summary class="safety-summary">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;" aria-hidden="true">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                     </svg>
                     Safety Checklist
@@ -45,16 +45,16 @@
                 <div class="safety-list">
                     {% for item in forecast.safety %}
                     <label class="safety-item safety-item--{{ item.icon }}">
-                        <input type="checkbox" class="safety-check">
+                        <input type="checkbox" class="safety-check" data-checklist="safety" data-item="{{ item.text|lower|replace(' ', '-')|truncate(40, True, '') }}">
                         <span class="safety-text">{{ item.text }}</span>
                         {% if item.icon == 'warning' %}
-                        <svg class="safety-badge" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c0392b" stroke-width="2.5">
+                        <svg class="safety-badge safety-badge--warning" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-label="Warning" role="img">
                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                             <line x1="12" y1="9" x2="12" y2="13"/>
                             <line x1="12" y1="17" x2="12.01" y2="17"/>
                         </svg>
                         {% elif item.icon == 'caution' %}
-                        <svg class="safety-badge" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#d4920b" stroke-width="2.5">
+                        <svg class="safety-badge safety-badge--caution" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-label="Caution" role="img">
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="12" y1="8" x2="12" y2="12"/>
                             <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -67,3 +67,30 @@
         </section>
         {% endif %}
 
+<script>
+(function() {
+    'use strict';
+    var LOC_ID = (typeof CURRENT_LOC_ID !== 'undefined' && CURRENT_LOC_ID) ? CURRENT_LOC_ID : 'default';
+    var TODAY = new Date().toISOString().slice(0, 10);
+    var STORAGE_KEY = 'checklist_' + LOC_ID + '_' + TODAY;
+
+    function loadChecked() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; }
+    }
+
+    function saveChecked(state) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    var state = loadChecked();
+
+    document.querySelectorAll('input[data-checklist]').forEach(function(cb) {
+        var key = cb.dataset.checklist + '::' + cb.dataset.item;
+        if (state[key]) cb.checked = true;
+        cb.addEventListener('change', function() {
+            state[key] = cb.checked;
+            saveChecked(state);
+        });
+    });
+}());
+</script>

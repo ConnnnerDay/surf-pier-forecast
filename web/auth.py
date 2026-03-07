@@ -143,6 +143,10 @@ def register() -> Any:
         return render_template("register.html",
                                error="Username must be 2-30 characters.",
                                username=username)
+    if not re.match(r"^[A-Za-z0-9_-]+$", username):
+        return render_template("register.html",
+                               error="Username may only contain letters, numbers, underscores, and hyphens.",
+                               username=username)
     complexity_error = _password_complexity_error(password)
     if complexity_error:
         return render_template("register.html",
@@ -227,4 +231,4 @@ def account_settings() -> Any:
     )
     if default_location_id:
         session["location_id"] = default_location_id
-    return redirect(url_for("auth.account"))
+    return redirect(url_for("auth.account", saved="1"))

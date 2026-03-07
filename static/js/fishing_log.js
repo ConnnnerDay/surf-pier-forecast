@@ -206,6 +206,9 @@
 
   function deleteLog(index) {
     var entries = getLog();
+    var entry = entries[index];
+    var name = entry ? entry.species : 'this entry';
+    if (!window.confirm('Remove "' + name + '" from your log?')) return;
     entries.splice(index, 1);
     saveLog(entries);
     renderLog();

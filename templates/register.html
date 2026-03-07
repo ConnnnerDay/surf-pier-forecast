@@ -38,31 +38,68 @@
                 <div class="auth-field">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Choose a password"
-                           class="auth-input" minlength="8" autocomplete="new-password" required>
+                           class="auth-input" minlength="8" autocomplete="new-password" required
+                           aria-describedby="pw-reqs">
+                    <ul id="pw-reqs" class="pw-reqs" aria-label="Password requirements">
+                        <li id="req-len"  class="pw-req">At least 8 characters</li>
+                        <li id="req-up"   class="pw-req">One uppercase letter</li>
+                        <li id="req-low"  class="pw-req">One lowercase letter</li>
+                        <li id="req-num"  class="pw-req">One number</li>
+                    </ul>
                 </div>
                 <div class="auth-field">
                     <label for="confirm">Confirm Password</label>
                     <input type="password" id="confirm" name="confirm" placeholder="Confirm your password"
-                           class="auth-input" minlength="8" autocomplete="new-password" required>
+                           class="auth-input" minlength="8" autocomplete="new-password" required
+                           aria-describedby="pw-match-hint">
+                    <span id="pw-match-hint" class="pw-match-hint" aria-live="polite"></span>
                 </div>
-                <p class="section-sub" style="margin-top:-0.2rem;">Use 8+ chars with upper/lowercase and a number.</p>
                 <button type="submit" class="auth-btn">Create Account</button>
             </form>
             <script>
-            document.querySelector('.auth-form').addEventListener('submit', function(e) {
-                var pw = document.getElementById('password').value;
-                var cf = document.getElementById('confirm').value;
-                if (pw !== cf) {
-                    e.preventDefault();
-                    var err = document.querySelector('.setup-error');
-                    if (!err) {
-                        err = document.createElement('div');
-                        err.className = 'setup-error';
-                        this.parentNode.insertBefore(err, this);
-                    }
-                    err.textContent = 'Passwords do not match.';
+            (function() {
+                var pw  = document.getElementById('password');
+                var cf  = document.getElementById('confirm');
+                var matchHint = document.getElementById('pw-match-hint');
+
+                function setReq(id, ok) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    el.classList.toggle('pw-req--ok',   ok);
+                    el.classList.toggle('pw-req--fail', pw.value.length > 0 && !ok);
                 }
-            });
+
+                pw.addEventListener('input', function() {
+                    var v = pw.value;
+                    setReq('req-len', v.length >= 8);
+                    setReq('req-up',  /[A-Z]/.test(v));
+                    setReq('req-low', /[a-z]/.test(v));
+                    setReq('req-num', /\d/.test(v));
+                    if (cf.value) checkMatch();
+                });
+
+                function checkMatch() {
+                    if (!cf.value) { matchHint.textContent = ''; return; }
+                    var match = pw.value === cf.value;
+                    matchHint.textContent = match ? '\u2713 Passwords match' : '\u2717 Passwords do not match';
+                    matchHint.style.color  = match ? 'var(--sea-green, #2a7d6e)' : '#c0392b';
+                }
+                cf.addEventListener('input', checkMatch);
+
+                document.querySelector('.auth-form').addEventListener('submit', function(e) {
+                    if (pw.value !== cf.value) {
+                        e.preventDefault();
+                        var err = document.querySelector('.setup-error');
+                        if (!err) {
+                            err = document.createElement('div');
+                            err.className = 'setup-error';
+                            this.parentNode.insertBefore(err, this);
+                        }
+                        err.textContent = 'Passwords do not match.';
+                        cf.focus();
+                    }
+                });
+            }());
             </script>
 
             <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>

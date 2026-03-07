@@ -36,6 +36,24 @@
         .photo-upload-label:hover { opacity: 0.85; }
         .log-upload-status { font-size: 0.78rem; color: var(--ocean, #0e5f78); }
         .log-upload-status.error { color: #c0392b; }
+        .account-save-toast {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #e8f5e9;
+            color: #2a7d6e;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            padding: 0.65rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        [data-theme="dark"] .account-save-toast {
+            background: rgba(42, 125, 110, 0.15);
+            border-color: rgba(42, 125, 110, 0.4);
+            color: #4db6ac;
+        }
     </style>
 </head>
 <body>
@@ -50,6 +68,12 @@
 
     <main>
         <section class="auth-section account-page">
+            {% if request.args.get('saved') == '1' %}
+            <div class="account-save-toast" role="status" aria-live="polite">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Settings saved successfully.
+            </div>
+            {% endif %}
             <div class="account-heading">
                 <h2>{{ user.username }}</h2>
                 <p class="account-subtitle">Manage your location preferences, account settings, and fishing activity.</p>
@@ -103,8 +127,12 @@
                     <label><input type="checkbox" name="weekly_email" {% if prefs.notification_prefs and prefs.notification_prefs.weekly_email %}checked{% endif %}> Weekly email with best fishing days</label>
                 </div>
                 <div class="auth-field">
-                    <label for="favorites_csv">Favorite location IDs (comma-separated)</label>
-                    <input id="favorites_csv" name="favorites_csv" class="auth-input" value="{{ prefs.favorites|join(',') }}">
+                    <label for="favorites_csv">Favorite Locations</label>
+                    <input id="favorites_csv" name="favorites_csv" class="auth-input"
+                           value="{{ prefs.favorites|join(',') }}"
+                           placeholder="e.g. wrightsville-beach-nc,folly-beach-sc"
+                           aria-describedby="favorites-hint">
+                    <span id="favorites-hint" class="section-sub" style="display:block;margin-top:0.2rem;">Enter location IDs separated by commas. Find IDs on the <a href="{{ url_for('views.setup') }}">setup page</a>.</span>
                 </div>
                 <button type="submit" class="auth-btn">Save Settings</button>
             </form>
