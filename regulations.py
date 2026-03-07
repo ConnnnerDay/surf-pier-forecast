@@ -8,12 +8,15 @@ see where data came from.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from pathlib import Path
 from threading import Lock
 from time import monotonic
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from storage.species_loader import SPECIES_DB
 
@@ -120,7 +123,11 @@ def _load_data_file() -> _RegData:
     if not path.exists():
         return data
 
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Failed to parse regulations_data.json: %s", exc)
+        return data
     if not isinstance(raw, dict):
         return data
 
