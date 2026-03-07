@@ -2508,6 +2508,10 @@ h2 {
   flex-shrink: 0;
   margin-top: 0.1rem;
 }
+.safety-badge--warning { color: #c0392b; }
+.safety-badge--caution { color: #d4920b; }
+[data-theme="dark"] .safety-badge--warning { color: #e05830; }
+[data-theme="dark"] .safety-badge--caution { color: #f0b429; }
 
 /* ---------- Share ---------- */
 
@@ -3149,6 +3153,53 @@ footer p {
 .auth-btn:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
+}
+
+.pw-reqs {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+}
+
+.pw-req {
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7b8d);
+  padding-left: 1.1em;
+  position: relative;
+}
+
+.pw-req::before {
+  content: '\25CB';
+  position: absolute;
+  left: 0;
+  font-size: 0.75em;
+  top: 0.1em;
+}
+
+.pw-req--ok {
+  color: var(--sea-green, #2a7d6e);
+}
+
+.pw-req--ok::before {
+  content: '\2713';
+}
+
+.pw-req--fail {
+  color: #c0392b;
+}
+
+.pw-req--fail::before {
+  content: '\2717';
+}
+
+.pw-match-hint {
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+  min-height: 1.1em;
 }
 
 .auth-switch {

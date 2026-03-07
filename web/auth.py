@@ -231,4 +231,4 @@ def account_settings() -> Any:
     )
     if default_location_id:
         session["location_id"] = default_location_id
-    return redirect(url_for("auth.account"))
+    return redirect(url_for("auth.account", saved="1"))
