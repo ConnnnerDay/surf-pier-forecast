@@ -52,9 +52,26 @@ info "Verifying app loads..."
 "${PROJECT_DIR}/.venv/bin/python" -c "import app; print('  app.py OK')"
 
 # ---------------------------------------------------------------------------
-# 6. Start
+# 6. Install and start systemd service
 # ---------------------------------------------------------------------------
+SERVICE_FILE="/etc/systemd/system/surf-forecast.service"
+CURRENT_USER="$(id -un)"
+
+info "Installing systemd service..."
+sed \
+    -e "s|REPLACE_USER|${CURRENT_USER}|g" \
+    -e "s|REPLACE_DIR|${PROJECT_DIR}|g" \
+    "${PROJECT_DIR}/surf-forecast.service" \
+    | sudo tee "${SERVICE_FILE}" > /dev/null
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now surf-forecast
+
 echo ""
-info "Setup complete. Starting app on http://localhost:${PORT} ..."
+info "Service installed and started."
+info "App is running at http://localhost:${PORT}"
 echo ""
-"${PROJECT_DIR}/.venv/bin/python" "${PROJECT_DIR}/app.py"
+echo "  Useful commands:"
+echo "    sudo systemctl status surf-forecast"
+echo "    sudo systemctl restart surf-forecast"
+echo "    sudo journalctl -u surf-forecast -f"

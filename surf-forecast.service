@@ -11,15 +11,12 @@ WorkingDirectory=REPLACE_DIR
 ExecStart=REPLACE_DIR/.venv/bin/python app.py
 Restart=on-failure
 RestartSec=10
-
-# Auto-restart once a day at 4 AM to pick up fresh forecast data
-# (handled by the companion .timer if desired, otherwise the app
-#  auto-refreshes stale cache every 4 hours on page load)
+Environment=PORT=5757
 
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=REPLACE_DIR/data
+ReadWritePaths=REPLACE_DIR/data REPLACE_DIR/static/uploads
 
 [Install]
 WantedBy=multi-user.target
