@@ -418,7 +418,11 @@ def _delete_upload_file(rel_path: Optional[str]) -> None:
         return
     # rel_path is "uploads/<user_id>/<filename>"; strip the leading "uploads/" part
     sub = rel_path[len("uploads/"):] if rel_path.startswith("uploads/") else rel_path
-    abs_path = os.path.join(upload_root, sub)
+    upload_root_path = os.path.realpath(upload_root)
+    abs_path = os.path.realpath(os.path.join(upload_root, sub))
+    # Guard against path traversal: the resolved path must stay inside upload_root
+    if not abs_path.startswith(upload_root_path + os.sep) and abs_path != upload_root_path:
+        return
     try:
         os.remove(abs_path)
     except OSError:

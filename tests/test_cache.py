@@ -45,14 +45,16 @@ class TestCachePath:
 class TestSaveAndLoad:
     def test_roundtrip_via_db(self):
         """Save and load should work through SQLite for location-specific forecasts."""
-        data = {"generated_at": "2026-03-01T12:00:00", "location": "test", "temp": 72}
+        fresh_ts = datetime.now(ZoneInfo("UTC")).isoformat()
+        data = {"generated_at": fresh_ts, "location": "test", "temp": 72}
         save_forecast(data, "loc1")
         loaded = load_cached_forecast("loc1")
         assert loaded == data
 
     def test_roundtrip_no_location_uses_json(self, isolated_storage):
         """Without a location_id, falls back to JSON only."""
-        data = {"generated_at": "2026-03-01T12:00:00", "temp": 65}
+        fresh_ts = datetime.now(ZoneInfo("UTC")).isoformat()
+        data = {"generated_at": fresh_ts, "temp": 65}
         save_forecast(data, "")
         loaded = load_cached_forecast("")
         assert loaded == data
@@ -62,7 +64,8 @@ class TestSaveAndLoad:
 
     def test_json_fallback_migration(self, isolated_storage):
         """Legacy JSON file should be migrated to DB on first read."""
-        data = {"generated_at": "2026-02-01T12:00:00", "species": ["drum"]}
+        fresh_ts = datetime.now(ZoneInfo("UTC")).isoformat()
+        data = {"generated_at": fresh_ts, "species": ["drum"]}
         # Write directly to JSON (simulating legacy file)
         path = isolated_storage / "forecast_legacy-loc.json"
         path.write_text(json.dumps(data))
@@ -91,8 +94,9 @@ class TestSaveAndLoad:
 
 
     def test_cache_is_scoped_by_user_and_location(self):
-        data_u1 = {"generated_at": "2026-03-01T12:00:00", "owner": 1}
-        data_u2 = {"generated_at": "2026-03-01T12:00:00", "owner": 2}
+        fresh_ts = datetime.now(ZoneInfo("UTC")).isoformat()
+        data_u1 = {"generated_at": fresh_ts, "owner": 1}
+        data_u2 = {"generated_at": fresh_ts, "owner": 2}
         save_forecast(data_u1, "loc1", user_id=1)
         save_forecast(data_u2, "loc1", user_id=2)
 

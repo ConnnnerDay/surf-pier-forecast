@@ -199,7 +199,9 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ species: species, size: size, notes: notes })
-        }).catch(function () {});
+        }).catch(function (err) {
+          console.warn('Failed to sync catch to server:', err);
+        });
       }
     });
   }

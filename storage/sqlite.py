@@ -105,7 +105,16 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
     return row is not None
 
 
+_VALID_TABLES = frozenset({
+    "users", "profiles", "locations", "forecasts", "forecast_cache",
+    "catch_log", "reg_scrape_cache", "user_preferences", "fishing_log",
+    "forecasts_legacy",
+})
+
+
 def _column_names(conn: sqlite3.Connection, table: str) -> List[str]:
+    if table not in _VALID_TABLES:
+        raise ValueError(f"Unknown table: {table!r}")
     if not _table_exists(conn, table):
         return []
     rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
@@ -349,12 +358,14 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
 
 def get_log_entries(user_id: int, location_id: str, limit: int = 50) -> List[Dict[str, Any]]:
     conn = get_db()
-    rows = conn.execute(
-        "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
-        "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
-        (user_id, location_id, limit),
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
+            "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
+            (user_id, location_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
     return [
         {
             "id": r["id"],
@@ -371,22 +382,26 @@ def get_log_entries(user_id: int, location_id: str, limit: int = 50) -> List[Dic
 
 def add_log_entry(user_id: int, location_id: str, species: str, size: str = "", notes: str = "") -> int:
     conn = get_db()
-    cur = conn.execute(
-        "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
-        (user_id, location_id, species.strip(), size.strip(), notes.strip()),
-    )
-    conn.commit()
-    entry_id = cur.lastrowid
-    conn.close()
+    try:
+        cur = conn.execute(
+            "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
+            (user_id, location_id, species.strip(), size.strip(), notes.strip()),
+        )
+        conn.commit()
+        entry_id = cur.lastrowid
+    finally:
+        conn.close()
     return entry_id
 
 
 def delete_log_entry(user_id: int, entry_id: int) -> bool:
     conn = get_db()
-    cur = conn.execute("DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id))
-    conn.commit()
-    ok = cur.rowcount > 0
-    conn.close()
+    try:
+        cur = conn.execute("DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id))
+        conn.commit()
+        ok = cur.rowcount > 0
+    finally:
+        conn.close()
     return ok
 
 
@@ -395,11 +410,13 @@ def get_entry_photo_paths(
 ) -> Optional[Tuple[Optional[str], Optional[str]]]:
     """Return (photo1_path, photo2_path) for the entry, or None if entry not found."""
     conn = get_db()
-    row = conn.execute(
-        "SELECT photo1_path, photo2_path FROM catch_log WHERE id = ? AND user_id = ?",
-        (entry_id, user_id),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT photo1_path, photo2_path FROM catch_log WHERE id = ? AND user_id = ?",
+            (entry_id, user_id),
+        ).fetchone()
+    finally:
+        conn.close()
     if row is None:
         return None
     return (row["photo1_path"], row["photo2_path"])
@@ -428,41 +445,45 @@ def attach_photos_to_entry(
         return False
     vals.extend([entry_id, user_id])
     conn = get_db()
-    cur = conn.execute(
-        f"UPDATE catch_log SET {', '.join(sets)} WHERE id = ? AND user_id = ?",
-        vals,
-    )
-    conn.commit()
-    ok = cur.rowcount > 0
-    conn.close()
+    try:
+        cur = conn.execute(
+            f"UPDATE catch_log SET {', '.join(sets)} WHERE id = ? AND user_id = ?",
+            vals,
+        )
+        conn.commit()
+        ok = cur.rowcount > 0
+    finally:
+        conn.close()
     return ok
 
 
 def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
     conn = get_db()
-    total = conn.execute(
-        "SELECT COUNT(*) AS cnt FROM catch_log WHERE user_id = ? AND location_id = ?",
-        (user_id, location_id),
-    ).fetchone()["cnt"]
+    try:
+        total = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM catch_log WHERE user_id = ? AND location_id = ?",
+            (user_id, location_id),
+        ).fetchone()["cnt"]
 
-    species_rows = conn.execute(
-        "SELECT species, COUNT(*) AS cnt FROM catch_log "
-        "WHERE user_id = ? AND location_id = ? GROUP BY LOWER(species) ORDER BY cnt DESC",
-        (user_id, location_id),
-    ).fetchall()
+        species_rows = conn.execute(
+            "SELECT species, COUNT(*) AS cnt FROM catch_log "
+            "WHERE user_id = ? AND location_id = ? GROUP BY LOWER(species) ORDER BY cnt DESC",
+            (user_id, location_id),
+        ).fetchall()
 
-    last = conn.execute(
-        "SELECT caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
-        "ORDER BY caught_at DESC, id DESC LIMIT 1",
-        (user_id, location_id),
-    ).fetchone()
+        last = conn.execute(
+            "SELECT caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
+            "ORDER BY caught_at DESC, id DESC LIMIT 1",
+            (user_id, location_id),
+        ).fetchone()
 
-    monthly_rows = conn.execute(
-        "SELECT strftime('%m', caught_at) AS month, COUNT(*) AS cnt FROM catch_log "
-        "WHERE user_id = ? AND location_id = ? GROUP BY month ORDER BY month",
-        (user_id, location_id),
-    ).fetchall()
-    conn.close()
+        monthly_rows = conn.execute(
+            "SELECT strftime('%m', caught_at) AS month, COUNT(*) AS cnt FROM catch_log "
+            "WHERE user_id = ? AND location_id = ? GROUP BY month ORDER BY month",
+            (user_id, location_id),
+        ).fetchall()
+    finally:
+        conn.close()
 
     species_breakdown = [{"species": r["species"], "count": r["cnt"]} for r in species_rows[:10]]
     monthly_counts = {int(r["month"]): r["cnt"] for r in monthly_rows}
@@ -479,12 +500,14 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
 
 def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
     conn = get_db()
-    rows = conn.execute(
-        "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
-        "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
-        (user_id, limit),
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
+            "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
     return [
         {
             "id": r["id"],

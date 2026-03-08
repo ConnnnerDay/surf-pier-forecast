@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from typing import Any, Dict
@@ -26,6 +27,7 @@ from storage.db import (
 )
 
 bp = Blueprint("auth", __name__)
+logger = logging.getLogger(__name__)
 
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
 _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
@@ -98,6 +100,7 @@ def login() -> Any:
         return render_template("login.html", error="Please enter both fields.",
                                username=username)
     if _login_is_rate_limited():
+        logger.warning("auth.rate_limited username=%s ip=%s", username, request.remote_addr)
         return render_template(
             "login.html",
             error="Too many attempts. Please wait a few minutes and try again.",

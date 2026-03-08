@@ -156,7 +156,10 @@ def _forecast_age_minutes(forecast: Dict[str, Any]) -> Optional[float]:
     """Return the age of a cached forecast in minutes, or None."""
     try:
         generated = datetime.fromisoformat(forecast["generated_at"])
-        now = datetime.now(ZoneInfo("America/New_York"))
+        # Treat naive timestamps as UTC so subtraction doesn't raise TypeError
+        if generated.tzinfo is None:
+            generated = generated.replace(tzinfo=ZoneInfo("UTC"))
+        now = datetime.now(ZoneInfo("UTC"))
         return (now - generated).total_seconds() / 60
     except Exception:
         return None

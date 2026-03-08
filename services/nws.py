@@ -41,7 +41,9 @@ def _try_nws_forecast(
     response = http_get(url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15))
     response.raise_for_status()
     data = response.json()
-    periods = data["properties"]["periods"]
+    periods = (data.get("properties") or {}).get("periods") or []
+    if not periods:
+        return None, None, None
     return parse_conditions(periods)
 
 
@@ -64,12 +66,17 @@ def _try_nws_gridpoint(
         headers=_NWS_HEADERS, timeout=(3.05, 10),
     )
     pts.raise_for_status()
-    forecast_url = pts.json()["properties"]["forecast"]
+    pts_data = pts.json()
+    forecast_url = (pts_data.get("properties") or {}).get("forecast")
+    if not forecast_url:
+        return None, None, None
 
     # Then get the forecast
     fc = http_get(forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10))
     fc.raise_for_status()
-    periods = fc.json()["properties"]["periods"]
+    periods = (fc.json().get("properties") or {}).get("periods") or []
+    if not periods:
+        return None, None, None
 
     wind_ranges: List[Tuple[float, float]] = []
     wind_dirs: List[str] = []
