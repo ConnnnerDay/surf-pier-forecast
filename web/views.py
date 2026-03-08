@@ -28,7 +28,11 @@ from locations import (
     geocode_zip,
     get_location,
 )
-from domain.forecast import generate_forecast, personalize_forecast, recompute_current_uv
+from domain.forecast import (
+    generate_forecast,
+    personalize_forecast,
+    recompute_current_uv,
+)
 from services.forecast_refresh import enqueue_forecast_refresh
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -46,7 +50,9 @@ logger = logging.getLogger(__name__)
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _cam_status_cache: Dict[str, Dict[str, Any]] = {}
 
-_KT_RANGE_RE = re.compile(r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE)
+_KT_RANGE_RE = re.compile(
+    r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE
+)
 _KT_VALUE_RE = re.compile(r"(?P<value>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE)
 
 
@@ -94,7 +100,9 @@ def _cam_status(url: str) -> Dict[str, Any]:
     status = {"is_live": False, "status_label": "Unavailable", "checked_at_ts": now}
     headers = {"User-Agent": "Mozilla/5.0 (compatible; SurfPierForecast/1.0)"}
     try:
-        resp = requests.get(url, timeout=(2.5, 7.0), allow_redirects=True, headers=headers)
+        resp = requests.get(
+            url, timeout=(2.5, 7.0), allow_redirects=True, headers=headers
+        )
         if resp.status_code < 400:
             status["is_live"] = True
             status["status_label"] = "Live now"
@@ -107,10 +115,16 @@ def _cam_status(url: str) -> Dict[str, Any]:
     return status
 
 
-def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_live_cam_context(
+    location: Dict[str, Any], profile: Optional[Dict[str, Any]]
+) -> Dict[str, Any]:
     """Build nearby live cam data and availability indicators."""
 
-    raw_types = (profile or {}).get("fishing_types") or (profile or {}).get("fishing_type") or []
+    raw_types = (
+        (profile or {}).get("fishing_types")
+        or (profile or {}).get("fishing_type")
+        or []
+    )
     if isinstance(raw_types, str):
         fishing_types = {t.strip().lower() for t in raw_types.split(",") if t.strip()}
     else:
@@ -127,6 +141,7 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
     statuses: Dict[str, Dict[str, Any]] = {}
     if cams:
         max_workers = min(6, len(cams))
+
         def _safe_status(cam: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 return _cam_status(cam["url"])
@@ -141,7 +156,9 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
     enhanced_cams = []
     for cam in cams:
         entry = dict(cam)
-        entry.update(statuses.get(cam["url"], {"is_live": False, "status_label": "Unavailable"}))
+        entry.update(
+            statuses.get(cam["url"], {"is_live": False, "status_label": "Unavailable"})
+        )
         enhanced_cams.append(entry)
 
     return {
@@ -149,6 +166,7 @@ def _build_live_cam_context(location: Dict[str, Any], profile: Optional[Dict[str
         "live_cam_radius_miles": 15,
         "pier_cams_enabled": include_pier_cams,
     }
+
 
 # Routes that are accessible without authentication.
 # Keep the core forecast flow public so visitors can select a location and use
@@ -181,7 +199,9 @@ def _user_requires_profile_setup() -> bool:
     if g.user is None:
         return False
     prefs = get_preferences(g.user["id"])
-    has_location = bool((prefs.get("location_id") or session.get("location_id") or "").strip())
+    has_location = bool(
+        (prefs.get("location_id") or session.get("location_id") or "").strip()
+    )
     has_profile = bool(prefs.get("fishing_profile"))
     return has_location and not has_profile
 
@@ -199,7 +219,11 @@ def _require_login() -> Any:
         return
 
     if request.endpoint in _PUBLIC_ENDPOINTS:
-        if g.user is not None and request.endpoint not in _PROFILE_SETUP_EXEMPT_ENDPOINTS and _user_requires_profile_setup():
+        if (
+            g.user is not None
+            and request.endpoint not in _PROFILE_SETUP_EXEMPT_ENDPOINTS
+            and _user_requires_profile_setup()
+        ):
             return redirect(url_for("views.profile"))
         return
 
@@ -207,7 +231,10 @@ def _require_login() -> Any:
         # Clear stale per-user state from the cookie.
         session.pop("location_id", None)
         return redirect(url_for("auth.landing"))
-    if request.endpoint not in _PROFILE_SETUP_EXEMPT_ENDPOINTS and _user_requires_profile_setup():
+    if (
+        request.endpoint not in _PROFILE_SETUP_EXEMPT_ENDPOINTS
+        and _user_requires_profile_setup()
+    ):
         return redirect(url_for("views.profile"))
 
 
@@ -218,7 +245,9 @@ def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     favorite_locations = []
     if g.user:
         prefs = get_preferences(g.user["id"])
-        favorite_locations = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
+        favorite_locations = [
+            get_location(loc_id) for loc_id in prefs.get("favorites", [])
+        ]
         favorite_locations = [loc for loc in favorite_locations if loc]
         favorite_ids = [loc["id"] for loc in favorite_locations]
 
@@ -252,7 +281,9 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
     return profile
 
 
-def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None) -> str:
+def _render_forecast(
+    location: Dict[str, Any], cached_flag: Optional[str] = None
+) -> str:
     """Load (or refresh) the forecast for a location and render the dashboard."""
     loc_id = location["id"]
     forecast = load_cached_forecast(loc_id, user_id=None, include_stale=True)
@@ -291,7 +322,9 @@ def _render_forecast(location: Dict[str, Any], cached_flag: Optional[str] = None
         stored_profile = user_prefs.get("fishing_profile") or {}
 
     profile = _extract_profile_from_request()
-    if not profile and (stored_profile.get("fishing_types") or stored_profile.get("targets")):
+    if not profile and (
+        stored_profile.get("fishing_types") or stored_profile.get("targets")
+    ):
         profile = stored_profile
     if profile:
         forecast = personalize_forecast(forecast, profile, location)
@@ -343,8 +376,6 @@ def index() -> str:
     return _render_forecast(location, cached_flag)
 
 
-
-
 @bp.route("/live-cams")
 def live_cams() -> str:
     """Render the dedicated live cams page for the selected location."""
@@ -382,27 +413,38 @@ def setup_search() -> str:
     """Process a zip code search and show nearby locations."""
     zipcode = request.form.get("zipcode", "").strip()
     if not zipcode or not zipcode.isdigit() or len(zipcode) != 5:
-        return render_template("setup.html", **_setup_context(
-            error="Please enter a valid 5-digit US zip code.",
-            zipcode=zipcode,
-        ))
+        return render_template(
+            "setup.html",
+            **_setup_context(
+                error="Please enter a valid 5-digit US zip code.",
+                zipcode=zipcode,
+            ),
+        )
 
     coords = geocode_zip(zipcode)
     if coords is None:
-        return render_template("setup.html", **_setup_context(
-            error=f"Could not find zip code {zipcode}. Please try another.",
-            zipcode=zipcode,
-        ))
+        return render_template(
+            "setup.html",
+            **_setup_context(
+                error=f"Could not find zip code {zipcode}. Please try another.",
+                zipcode=zipcode,
+            ),
+        )
 
     lat, lng = coords
     nearby = find_nearest_locations(lat, lng, n=6)
     if not nearby:
-        return render_template("setup.html", **_setup_context(
-            error="No supported fishing locations found within 300 miles. Try a coastal zip code.",
-            zipcode=zipcode,
-        ))
+        return render_template(
+            "setup.html",
+            **_setup_context(
+                error="No supported fishing locations found within 300 miles. Try a coastal zip code.",
+                zipcode=zipcode,
+            ),
+        )
 
-    return render_template("setup.html", **_setup_context(results=nearby, zipcode=zipcode))
+    return render_template(
+        "setup.html", **_setup_context(results=nearby, zipcode=zipcode)
+    )
 
 
 @bp.route("/setup/coords", methods=["POST"])
@@ -414,20 +456,29 @@ def setup_coords() -> Any:
         lat = float(raw_lat)
         lon = float(raw_lon)
     except (ValueError, TypeError):
-        return render_template("setup.html", **_setup_context(
-            error="Invalid coordinates. Please click the map to set your location.",
-        ))
+        return render_template(
+            "setup.html",
+            **_setup_context(
+                error="Invalid coordinates. Please click the map to set your location.",
+            ),
+        )
 
     if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
-        return render_template("setup.html", **_setup_context(
-            error="Coordinates out of range. Please click the map again.",
-        ))
+        return render_template(
+            "setup.html",
+            **_setup_context(
+                error="Coordinates out of range. Please click the map again.",
+            ),
+        )
 
     nearby = find_nearest_locations(lat, lon, n=6)
     if not nearby:
-        return render_template("setup.html", **_setup_context(
-            error="No supported fishing locations found within 300 miles of that point. Try a coastal area.",
-        ))
+        return render_template(
+            "setup.html",
+            **_setup_context(
+                error="No supported fishing locations found within 300 miles of that point. Try a coastal area.",
+            ),
+        )
 
     return render_template("setup.html", **_setup_context(results=nearby))
 
@@ -441,7 +492,9 @@ def setup_select(location_id: str) -> Any:
     session["location_id"] = location_id
     session.permanent = True
     if g.user:
-        save_preferences(g.user["id"], location_id=location_id, default_location_id=location_id)
+        save_preferences(
+            g.user["id"], location_id=location_id, default_location_id=location_id
+        )
         if _user_requires_profile_setup():
             return redirect(url_for("views.profile"))
     return redirect(url_for("views.index"))
@@ -456,7 +509,9 @@ def setup_favorite(location_id: str) -> Any:
         return redirect(url_for("views.setup"))
 
     prefs = get_preferences(g.user["id"])
-    favorites = [loc_id for loc_id in prefs.get("favorites", []) if get_location(loc_id)]
+    favorites = [
+        loc_id for loc_id in prefs.get("favorites", []) if get_location(loc_id)
+    ]
     if location_id in favorites:
         favorites = [loc_id for loc_id in favorites if loc_id != location_id]
     else:
@@ -466,7 +521,11 @@ def setup_favorite(location_id: str) -> Any:
     next_url = request.form.get("next", "")
     # Only allow same-origin relative paths. Block // (protocol-relative) and
     # backslash tricks (/\evil.com) that Chrome/Edge normalise to external URLs.
-    if next_url.startswith("/") and not next_url.startswith("//") and "\\" not in next_url:
+    if (
+        next_url.startswith("/")
+        and not next_url.startswith("//")
+        and "\\" not in next_url
+    ):
         return redirect(next_url)
     return redirect(url_for("views.setup"))
 

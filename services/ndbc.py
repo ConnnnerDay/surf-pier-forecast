@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from services.http_client import get as http_get
 
@@ -22,8 +22,22 @@ _M_TO_FEET = 3.28084
 def _deg_to_compass(deg: float) -> str:
     """Convert wind direction in degrees to a compass abbreviation."""
     _DEG_TO_DIR = [
-        "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+        "N",
+        "NNE",
+        "NE",
+        "ENE",
+        "E",
+        "ESE",
+        "SE",
+        "SSE",
+        "S",
+        "SSW",
+        "SW",
+        "WSW",
+        "W",
+        "WNW",
+        "NW",
+        "NNW",
     ]
     idx = round(deg / 22.5) % 16
     return _DEG_TO_DIR[idx]
@@ -34,7 +48,12 @@ def _try_ndbc_station(
 ) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
     """Fetch real-time wind/wave observations from a single NDBC buoy."""
     url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
-    resp = http_get(url, endpoint="ndbc.realtime", headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=(3.05, 15))
+    resp = http_get(
+        url,
+        endpoint="ndbc.realtime",
+        headers={"User-Agent": "SurfPierForecast/1.0"},
+        timeout=(3.05, 15),
+    )
     resp.raise_for_status()
 
     lines = resp.text.strip().split("\n")
@@ -61,7 +80,9 @@ def _try_ndbc_station(
 
         if wind_range is None and wspd_raw not in _MISSING:
             wspd_kt = float(wspd_raw) * _MS_TO_KNOTS
-            gst_kt = float(gst_raw) * _MS_TO_KNOTS if gst_raw not in _MISSING else wspd_kt
+            gst_kt = (
+                float(gst_raw) * _MS_TO_KNOTS if gst_raw not in _MISSING else wspd_kt
+            )
             wind_range = (round(wspd_kt, 1), round(max(wspd_kt, gst_kt), 1))
 
         if wind_dir is None and wdir_raw not in _MISSING:
@@ -95,7 +116,12 @@ def fetch_barometric_pressure(
     for station_id in ndbc_list[:3]:
         try:
             url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
-            resp = http_get(url, endpoint="ndbc.pressure", headers={"User-Agent": "SurfPierForecast/1.0"}, timeout=(3.05, 10))
+            resp = http_get(
+                url,
+                endpoint="ndbc.pressure",
+                headers={"User-Agent": "SurfPierForecast/1.0"},
+                timeout=(3.05, 10),
+            )
             resp.raise_for_status()
             lines = resp.text.strip().split("\n")
             if len(lines) < 3:

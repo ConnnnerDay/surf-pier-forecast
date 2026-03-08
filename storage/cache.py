@@ -34,6 +34,7 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 # Primary storage: SQLite via storage.db
 # ---------------------------------------------------------------------------
 
+
 def _norm_user_id(user_id: Optional[int]) -> int:
     return int(user_id or 0)
 
@@ -58,6 +59,7 @@ def load_cached_forecast(
         return _load_json_fallback(location_id)
 
     from storage.sqlite import delete_forecast_cache, load_forecast, load_forecast_cache
+
     normalized_uid = _norm_user_id(user_id)
     result = load_forecast_cache(normalized_uid, location_id)
     if result is None and normalized_uid != 0:
@@ -86,7 +88,9 @@ def load_cached_forecast(
     return result
 
 
-def save_forecast(data: Dict[str, Any], location_id: str = "", user_id: Optional[int] = None) -> None:
+def save_forecast(
+    data: Dict[str, Any], location_id: str = "", user_id: Optional[int] = None
+) -> None:
     """Persist the forecast to SQLite; JSON is fallback-only for resilience."""
     if not location_id:
         _save_json(data, location_id)
@@ -94,15 +98,19 @@ def save_forecast(data: Dict[str, Any], location_id: str = "", user_id: Optional
 
     try:
         from storage.sqlite import save_forecast_cache
+
         save_forecast_cache(_norm_user_id(user_id), location_id, data)
     except Exception as exc:
-        logger.warning("DB write failed for %s, writing JSON fallback: %s", location_id, exc)
+        logger.warning(
+            "DB write failed for %s, writing JSON fallback: %s", location_id, exc
+        )
         _save_json(data, location_id)
 
 
 # ---------------------------------------------------------------------------
 # JSON file helpers (legacy / backup)
 # ---------------------------------------------------------------------------
+
 
 def _cache_path(location_id: str = "") -> str:
     """Return the JSON cache file path for a given location.
@@ -138,10 +146,13 @@ def _save_json(data: Dict[str, Any], location_id: str = "") -> None:
         logger.warning("Failed to write JSON backup %s: %s", path, exc)
 
 
-def _migrate_json_to_db(location_id: str, data: Dict[str, Any], user_id: int = 0) -> None:
+def _migrate_json_to_db(
+    location_id: str, data: Dict[str, Any], user_id: int = 0
+) -> None:
     """One-time migration: copy a JSON-cached forecast into the DB."""
     try:
         from storage.sqlite import save_forecast_cache
+
         save_forecast_cache(user_id, location_id, data)
         logger.info("Migrated JSON forecast to DB for %s", location_id)
     except Exception as exc:
@@ -151,6 +162,7 @@ def _migrate_json_to_db(location_id: str, data: Dict[str, Any], user_id: int = 0
 # ---------------------------------------------------------------------------
 # Age / display helpers (unchanged)
 # ---------------------------------------------------------------------------
+
 
 def _forecast_age_minutes(forecast: Dict[str, Any]) -> Optional[float]:
     """Return the age of a cached forecast in minutes, or None."""

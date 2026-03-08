@@ -66,7 +66,9 @@ def create_app() -> Flask:
         )
     app.config["SECRET_KEY"] = secret_key
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB hard limit for file uploads
+    app.config["MAX_CONTENT_LENGTH"] = (
+        16 * 1024 * 1024
+    )  # 16 MB hard limit for file uploads
 
     _upload_folder = os.path.join(os.path.dirname(__file__), "static", "uploads")
     os.makedirs(_upload_folder, exist_ok=True)
@@ -127,7 +129,9 @@ def create_app() -> Flask:
         # Deny embedding in <iframe> / <frame> to block clickjacking.
         response.headers.setdefault("X-Frame-Options", "DENY")
         # Only send the bare origin as the Referer header on cross-origin requests.
-        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
         # Opt out of FLoC / Topics API and limit sensitive permissions (privacy).
         response.headers.setdefault(
             "Permissions-Policy",

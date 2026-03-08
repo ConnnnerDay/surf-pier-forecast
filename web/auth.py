@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any, Dict
+from typing import Any
 
 from flask import (
     Blueprint,
@@ -95,8 +95,9 @@ def login() -> Any:
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
     if not username or not password:
-        return render_template("login.html", error="Please enter both fields.",
-                               username=username)
+        return render_template(
+            "login.html", error="Please enter both fields.", username=username
+        )
     if _login_is_rate_limited():
         return render_template(
             "login.html",
@@ -106,8 +107,9 @@ def login() -> Any:
     user = authenticate_user(username, password)
     if user is None:
         _record_login_failure()
-        return render_template("login.html", error="Invalid username or password.",
-                               username=username)
+        return render_template(
+            "login.html", error="Invalid username or password.", username=username
+        )
     _clear_login_failures()
     # Regenerate session to prevent session fixation: preserve the anonymous
     # location choice, then clear everything else before setting credentials.
@@ -137,29 +139,35 @@ def register() -> Any:
     password = request.form.get("password", "")
     confirm = request.form.get("confirm", "")
     if not username or not password:
-        return render_template("register.html", error="Please fill in all fields.",
-                               username=username)
+        return render_template(
+            "register.html", error="Please fill in all fields.", username=username
+        )
     if len(username) < 2 or len(username) > 30:
-        return render_template("register.html",
-                               error="Username must be 2-30 characters.",
-                               username=username)
+        return render_template(
+            "register.html",
+            error="Username must be 2-30 characters.",
+            username=username,
+        )
     if not re.match(r"^[A-Za-z0-9_-]+$", username):
-        return render_template("register.html",
-                               error="Username may only contain letters, numbers, underscores, and hyphens.",
-                               username=username)
+        return render_template(
+            "register.html",
+            error="Username may only contain letters, numbers, underscores, and hyphens.",
+            username=username,
+        )
     complexity_error = _password_complexity_error(password)
     if complexity_error:
-        return render_template("register.html",
-                               error=complexity_error,
-                               username=username)
+        return render_template(
+            "register.html", error=complexity_error, username=username
+        )
     if password != confirm:
-        return render_template("register.html", error="Passwords do not match.",
-                               username=username)
+        return render_template(
+            "register.html", error="Passwords do not match.", username=username
+        )
     user_id = create_user(username, password)
     if user_id is None:
-        return render_template("register.html",
-                               error="That username is already taken.",
-                               username=username)
+        return render_template(
+            "register.html", error="That username is already taken.", username=username
+        )
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
     session.clear()
@@ -213,7 +221,11 @@ def account_settings() -> Any:
     if temp_units not in {"F", "C"}:
         temp_units = "F"
     weekly_email = request.form.get("weekly_email") == "on"
-    favorite_ids = [loc_id.strip() for loc_id in request.form.get("favorites_csv", "").split(",") if loc_id.strip()]
+    favorite_ids = [
+        loc_id.strip()
+        for loc_id in request.form.get("favorites_csv", "").split(",")
+        if loc_id.strip()
+    ]
     # Only keep favorites that resolve to real locations
     favorite_ids = [loc_id for loc_id in favorite_ids if get_location(loc_id)]
     default_location_id = request.form.get("default_location_id", "").strip() or None

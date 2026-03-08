@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -14,14 +14,27 @@ class ApiError(Exception):
     details: Optional[Dict[str, Any]] = None
 
 
-def success_envelope(data: Dict[str, Any], *, version: str = "v1", meta: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {"ok": True, "data": data, "error": None, "meta": {"version": version}}
+def success_envelope(
+    data: Dict[str, Any], *, version: str = "v1", meta: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "ok": True,
+        "data": data,
+        "error": None,
+        "meta": {"version": version},
+    }
     if meta:
         payload["meta"].update(meta)
     return payload
 
 
-def error_envelope(code: str, message: str, *, version: str = "v1", details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def error_envelope(
+    code: str,
+    message: str,
+    *,
+    version: str = "v1",
+    details: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     return {
         "ok": False,
         "data": None,
@@ -49,9 +62,14 @@ class ForecastQuery:
     force_refresh: bool = False
 
     @classmethod
-    def from_request(cls, args: Dict[str, Any], fallback_location_id: str = "") -> "ForecastQuery":
+    def from_request(
+        cls, args: Dict[str, Any], fallback_location_id: str = ""
+    ) -> "ForecastQuery":
         loc_id = (args.get("location_id") or "").strip() or fallback_location_id
-        return cls(location_id=loc_id, force_refresh=parse_bool(args.get("force_refresh"), False))
+        return cls(
+            location_id=loc_id,
+            force_refresh=parse_bool(args.get("force_refresh"), False),
+        )
 
 
 @dataclass
@@ -65,11 +83,15 @@ class ProfilePayload:
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> "ProfilePayload":
         if not isinstance(data, dict):
-            raise ApiError("invalid_payload", "Request body must be a JSON object", status=400)
+            raise ApiError(
+                "invalid_payload", "Request body must be a JSON object", status=400
+            )
 
         theme = data.get("theme")
         if theme is not None and theme not in {"light", "dark"}:
-            raise ApiError("invalid_theme", "theme must be 'light' or 'dark'", status=400)
+            raise ApiError(
+                "invalid_theme", "theme must be 'light' or 'dark'", status=400
+            )
 
         units = data.get("units")
         if units is not None and units not in {"F", "C"}:
@@ -77,13 +99,21 @@ class ProfilePayload:
 
         favorites = data.get("favorites")
         if favorites is not None:
-            if not isinstance(favorites, list) or not all(isinstance(x, str) for x in favorites):
-                raise ApiError("invalid_favorites", "favorites must be a list of strings", status=400)
+            if not isinstance(favorites, list) or not all(
+                isinstance(x, str) for x in favorites
+            ):
+                raise ApiError(
+                    "invalid_favorites",
+                    "favorites must be a list of strings",
+                    status=400,
+                )
 
         fishing_profile = data.get("fishing_profile")
         if fishing_profile is not None:
             if not isinstance(fishing_profile, dict):
-                raise ApiError("invalid_profile", "fishing_profile must be an object", status=400)
+                raise ApiError(
+                    "invalid_profile", "fishing_profile must be an object", status=400
+                )
             fp_types = fishing_profile.get("fishing_types")
             if fp_types is not None:
                 if not isinstance(fp_types, list) or not all(
@@ -107,7 +137,9 @@ class ProfilePayload:
 
         location_id = data.get("location_id")
         if location_id is not None and not isinstance(location_id, str):
-            raise ApiError("invalid_location_id", "location_id must be a string", status=400)
+            raise ApiError(
+                "invalid_location_id", "location_id must be a string", status=400
+            )
 
         return cls(
             location_id=location_id,
@@ -134,20 +166,30 @@ class LogCreatePayload:
     location_id: str = ""
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any], location_id: str = "") -> "LogCreatePayload":
+    def from_json(
+        cls, data: Dict[str, Any], location_id: str = ""
+    ) -> "LogCreatePayload":
         if not isinstance(data, dict):
-            raise ApiError("invalid_payload", "Request body must be a JSON object", status=400)
+            raise ApiError(
+                "invalid_payload", "Request body must be a JSON object", status=400
+            )
         species = str(data.get("species", "")).strip()
         if not species:
             raise ApiError("missing_species", "species is required", status=400)
         if len(species) > 200:
-            raise ApiError("invalid_species", "species must be 200 characters or fewer", status=400)
+            raise ApiError(
+                "invalid_species", "species must be 200 characters or fewer", status=400
+            )
         size = str(data.get("size", "")).strip()
         if len(size) > 100:
-            raise ApiError("invalid_size", "size must be 100 characters or fewer", status=400)
+            raise ApiError(
+                "invalid_size", "size must be 100 characters or fewer", status=400
+            )
         notes = str(data.get("notes", "")).strip()
         if len(notes) > 2000:
-            raise ApiError("invalid_notes", "notes must be 2000 characters or fewer", status=400)
+            raise ApiError(
+                "invalid_notes", "notes must be 2000 characters or fewer", status=400
+            )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
             raise ApiError("missing_location", "location_id is required", status=400)

@@ -7,15 +7,27 @@ import os
 import uuid
 from typing import Any, Dict, Optional, Tuple
 
-logger = logging.getLogger(__name__)
-
-from flask import Blueprint, current_app, g, jsonify, redirect, request, session, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    g,
+    jsonify,
+    redirect,
+    request,
+    session,
+    url_for,
+)
 
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
 from locations import get_location
 from regulations import lookup_regulation
-from storage.cache import CACHE_MAX_AGE_HOURS, _forecast_age_minutes, load_cached_forecast, save_forecast
+from storage.cache import (
+    CACHE_MAX_AGE_HOURS,
+    _forecast_age_minutes,
+    load_cached_forecast,
+    save_forecast,
+)
 from storage.sqlite import (
     add_log_entry,
     attach_photos_to_entry,
@@ -39,15 +51,21 @@ from web.schemas import (
     success_envelope,
 )
 
+logger = logging.getLogger(__name__)
+
 bp = Blueprint("api", __name__)
 
 
 def _json_error(err: ApiError) -> Any:
-    return jsonify(error_envelope(err.code, err.message, details=err.details)), err.status
+    return jsonify(
+        error_envelope(err.code, err.message, details=err.details)
+    ), err.status
 
 
 def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
-    location = get_location(query.location_id) if query.location_id else get_session_location()
+    location = (
+        get_location(query.location_id) if query.location_id else get_session_location()
+    )
     if not location:
         raise ApiError("location_not_found", "No valid location selected", status=404)
 
@@ -150,7 +168,9 @@ def log() -> Any:
     except ApiError as err:
         return jsonify({"error": err.message}), err.status
     entry_id = add_log_entry(
-        uid, payload.location_id, payload.species,
+        uid,
+        payload.location_id,
+        payload.species,
         size=payload.size,
         notes=payload.notes,
     )
@@ -163,12 +183,21 @@ def log_v1() -> Any:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
 
     uid = g.user["id"]
-    loc_id = (request.args.get("location_id") or request.args.get("location") or session.get("location_id") or "").strip()
+    loc_id = (
+        request.args.get("location_id")
+        or request.args.get("location")
+        or session.get("location_id")
+        or ""
+    ).strip()
 
     if request.method == "GET":
         entries = get_log_entries(uid, loc_id) if loc_id else []
         stats = normalize_log_stats(get_log_stats(uid, loc_id) if loc_id else {})
-        return jsonify(success_envelope({"location_id": loc_id or None, "entries": entries, "stats": stats}))
+        return jsonify(
+            success_envelope(
+                {"location_id": loc_id or None, "entries": entries, "stats": stats}
+            )
+        )
 
     data = request.get_json(silent=True) or {}
     try:
@@ -176,7 +205,13 @@ def log_v1() -> Any:
     except ApiError as err:
         return _json_error(err)
 
-    entry_id = add_log_entry(uid, payload.location_id, payload.species, size=payload.size, notes=payload.notes)
+    entry_id = add_log_entry(
+        uid,
+        payload.location_id,
+        payload.species,
+        size=payload.size,
+        notes=payload.notes,
+    )
     created = {
         "id": entry_id,
         "species": payload.species,
@@ -248,29 +283,34 @@ def forecast_v1() -> Any:
     return jsonify(success_envelope(payload))
 
 
-
 @bp.route("/api/v1/forecast/<location_id>/status", methods=["GET"])
 def forecast_status_v1(location_id: str) -> Any:
     """Return cache status for dashboard polling."""
     forecast_data = load_cached_forecast(location_id, user_id=None, include_stale=True)
     if not forecast_data:
-        return jsonify(success_envelope({
-            "location_id": location_id,
-            "last_generated_at": None,
-            "is_stale": True,
-            "is_refreshing": is_refreshing(location_id, user_id=None),
-        }))
+        return jsonify(
+            success_envelope(
+                {
+                    "location_id": location_id,
+                    "last_generated_at": None,
+                    "is_stale": True,
+                    "is_refreshing": is_refreshing(location_id, user_id=None),
+                }
+            )
+        )
 
     age = _forecast_age_minutes(forecast_data)
     is_stale = bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
-    return jsonify(success_envelope({
-        "location_id": location_id,
-        "last_generated_at": forecast_data.get("generated_at"),
-        "is_stale": is_stale,
-        "is_refreshing": is_refreshing(location_id, user_id=None),
-    }))
-
-
+    return jsonify(
+        success_envelope(
+            {
+                "location_id": location_id,
+                "last_generated_at": forecast_data.get("generated_at"),
+                "is_stale": is_stale,
+                "is_refreshing": is_refreshing(location_id, user_id=None),
+            }
+        )
+    )
 
 
 @bp.route("/api/v1/forecast/<location_id>/outlook", methods=["GET"])
@@ -283,14 +323,20 @@ def forecast_outlook_v1(location_id: str) -> Any:
         # authenticated users can still hydrate lazy sections.
         forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
-        return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
+        return _json_error(
+            ApiError("forecast_not_cached", "No cached forecast available", status=404)
+        )
 
-    return jsonify(success_envelope({
-        "location_id": location_id,
-        "outlook": forecast_data.get("outlook") or [],
-        "best_day": forecast_data.get("best_day"),
-        "activity_timeline": forecast_data.get("activity_timeline") or [],
-    }))
+    return jsonify(
+        success_envelope(
+            {
+                "location_id": location_id,
+                "outlook": forecast_data.get("outlook") or [],
+                "best_day": forecast_data.get("best_day"),
+                "activity_timeline": forecast_data.get("activity_timeline") or [],
+            }
+        )
+    )
 
 
 @bp.route("/api/v1/forecast/<location_id>/solunar", methods=["GET"])
@@ -301,12 +347,19 @@ def forecast_solunar_v1(location_id: str) -> Any:
     if not forecast_data and user_id is not None:
         forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
-        return _json_error(ApiError("forecast_not_cached", "No cached forecast available", status=404))
+        return _json_error(
+            ApiError("forecast_not_cached", "No cached forecast available", status=404)
+        )
 
-    return jsonify(success_envelope({
-        "location_id": location_id,
-        "solunar": forecast_data.get("solunar") or {},
-    }))
+    return jsonify(
+        success_envelope(
+            {
+                "location_id": location_id,
+                "solunar": forecast_data.get("solunar") or {},
+            }
+        )
+    )
+
 
 @bp.route("/api/refresh", methods=["POST"])
 def refresh() -> Any:
@@ -329,6 +382,7 @@ def regulations_refresh_v1() -> Any:
     state = request.args.get("state", "").strip().upper() or None
     try:
         from storage.reg_scraper import invalidate_cache
+
         removed = invalidate_cache(state)
     except Exception:
         removed = 0
@@ -349,7 +403,11 @@ def regulations_v1() -> Any:
     """
     species_name = request.args.get("species", "").strip()
     if not species_name:
-        return _json_error(ApiError("missing_param", "'species' query parameter is required", status=400))
+        return _json_error(
+            ApiError(
+                "missing_param", "'species' query parameter is required", status=400
+            )
+        )
 
     # Resolve state: explicit param takes priority, else derive from location_id,
     # else fall back to the current session location.
@@ -364,11 +422,15 @@ def regulations_v1() -> Any:
 
     reg = lookup_regulation(species_name, state) if state else None
 
-    return jsonify(success_envelope({
-        "species": species_name,
-        "state": state or None,
-        "regulation": reg,
-    }))
+    return jsonify(
+        success_envelope(
+            {
+                "species": species_name,
+                "state": state or None,
+                "regulation": reg,
+            }
+        )
+    )
 
 
 _ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
@@ -386,11 +448,19 @@ def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
     """
     mime = file_storage.mimetype or ""
     if mime not in _ALLOWED_MIME:
-        raise ApiError("invalid_file_type", f"Unsupported file type '{mime}'. Use JPEG, PNG, or WebP.", status=400)
+        raise ApiError(
+            "invalid_file_type",
+            f"Unsupported file type '{mime}'. Use JPEG, PNG, or WebP.",
+            status=400,
+        )
 
     ext = os.path.splitext(file_storage.filename or "")[1].lower()
     if ext not in _ALLOWED_EXT:
-        raise ApiError("invalid_file_type", f"Unsupported extension '{ext}'. Use .jpg, .png, or .webp.", status=400)
+        raise ApiError(
+            "invalid_file_type",
+            f"Unsupported extension '{ext}'. Use .jpg, .png, or .webp.",
+            status=400,
+        )
 
     data = file_storage.read()
     if len(data) > _MAX_PHOTO_BYTES:
@@ -417,7 +487,7 @@ def _delete_upload_file(rel_path: Optional[str]) -> None:
     if not upload_root:
         return
     # rel_path is "uploads/<user_id>/<filename>"; strip the leading "uploads/" part
-    sub = rel_path[len("uploads/"):] if rel_path.startswith("uploads/") else rel_path
+    sub = rel_path[len("uploads/") :] if rel_path.startswith("uploads/") else rel_path
     abs_path = os.path.join(upload_root, sub)
     try:
         os.remove(abs_path)
@@ -444,7 +514,11 @@ def log_photos_v1(entry_id: int) -> Any:
     photo2_file = request.files.get("photo2")
 
     if not photo1_file and not photo2_file:
-        return _json_error(ApiError("missing_param", "Provide at least one of: photo1, photo2", status=400))
+        return _json_error(
+            ApiError(
+                "missing_param", "Provide at least one of: photo1, photo2", status=400
+            )
+        )
 
     saved: Dict[str, str] = {}
     try:

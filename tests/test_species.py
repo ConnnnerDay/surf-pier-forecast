@@ -1,7 +1,5 @@
 """Tests for domain.species scoring and ranking."""
 
-import pytest
-
 from domain.species import (
     BAIT_DB,
     SPECIES_DB,
@@ -57,9 +55,14 @@ class TestScoreSpecies:
         """Score function should accept all optional params without error."""
         red_drum = _get_species("Red drum")
         score = _score_species(
-            red_drum, month=5, water_temp=68,
-            wind_dir="SW", wind_range=(8, 12),
-            wave_range=(2, 3), hour=6, coast="east",
+            red_drum,
+            month=5,
+            water_temp=68,
+            wind_dir="SW",
+            wind_range=(8, 12),
+            wave_range=(2, 3),
+            hour=6,
+            coast="east",
         )
         assert isinstance(score, float)
 
@@ -121,8 +124,10 @@ class TestBuildBaitRanking:
         assert len([label for label in labels if label in squid_variants]) == 1
 
     def test_returns_all_items_when_no_alias_duplicates(self):
-        species_ranking = [{"rank": i + 1, "name": target}
-                           for i, target in enumerate(BAIT_DB[0]["targets"])]
+        species_ranking = [
+            {"rank": i + 1, "name": target}
+            for i, target in enumerate(BAIT_DB[0]["targets"])
+        ]
 
         ranking = build_bait_ranking(species_ranking=species_ranking, month=6)
 
@@ -166,7 +171,10 @@ class TestPersonalizationHardGate:
         assert _species_matches_profile("Pompano", fishing_types=["pier"]) is False
 
     def test_pier_only_excludes_offshore_only_species(self):
-        assert _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=["pier"]) is False
+        assert (
+            _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=["pier"])
+            is False
+        )
 
     # ------------------------------------------------------------------ #
     # Surf-only profile                                                    #
@@ -178,36 +186,57 @@ class TestPersonalizationHardGate:
         assert _species_matches_profile("Sheepshead", fishing_types=["surf"]) is False
 
     def test_surf_only_excludes_offshore_only_species(self):
-        assert _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=["surf"]) is False
+        assert (
+            _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=["surf"])
+            is False
+        )
 
     # ------------------------------------------------------------------ #
     # Offshore/boat-only profile                                           #
     # ------------------------------------------------------------------ #
     def test_offshore_only_includes_offshore_species(self):
-        assert _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=["offshore"]) is True
+        assert (
+            _species_matches_profile(
+                "Mahi-mahi (dolphinfish)", fishing_types=["offshore"]
+            )
+            is True
+        )
 
     def test_offshore_only_excludes_pier_only_species(self):
-        assert _species_matches_profile("Sheepshead", fishing_types=["offshore"]) is False
+        assert (
+            _species_matches_profile("Sheepshead", fishing_types=["offshore"]) is False
+        )
 
     def test_offshore_only_excludes_surf_only_species(self):
         assert _species_matches_profile("Pompano", fishing_types=["offshore"]) is False
 
     def test_offshore_only_excludes_inshore_only_species(self):
-        assert _species_matches_profile(
-            "Speckled trout (spotted seatrout)", fishing_types=["offshore"]
-        ) is False
+        assert (
+            _species_matches_profile(
+                "Speckled trout (spotted seatrout)", fishing_types=["offshore"]
+            )
+            is False
+        )
 
     # ------------------------------------------------------------------ #
     # Combinations: multi-method profiles should not over-exclude         #
     # ------------------------------------------------------------------ #
     def test_pier_surf_combo_includes_pier_and_surf_species(self):
-        assert _species_matches_profile("Sheepshead", fishing_types=["pier", "surf"]) is True
-        assert _species_matches_profile("Pompano", fishing_types=["pier", "surf"]) is True
+        assert (
+            _species_matches_profile("Sheepshead", fishing_types=["pier", "surf"])
+            is True
+        )
+        assert (
+            _species_matches_profile("Pompano", fishing_types=["pier", "surf"]) is True
+        )
 
     def test_no_fishing_types_matches_all(self):
         """Empty fishing_types list (or missing) should not exclude anything."""
         assert _species_matches_profile("Sheepshead", fishing_types=None) is True
-        assert _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=None) is True
+        assert (
+            _species_matches_profile("Mahi-mahi (dolphinfish)", fishing_types=None)
+            is True
+        )
 
     # ------------------------------------------------------------------ #
     # Integration: build_species_ranking respects the hard gate end-to-end#
@@ -218,8 +247,12 @@ class TestPersonalizationHardGate:
             month=3, water_temp=62, coast="east", fishing_types=["pier"]
         )
         names = {sp["name"] for sp in ranking}
-        assert "Pompano" not in names, "Surf-only species Pompano should be absent for pier-only angler"
-        assert "Mahi-mahi (dolphinfish)" not in names, "Offshore-only species should be absent for pier-only angler"
+        assert "Pompano" not in names, (
+            "Surf-only species Pompano should be absent for pier-only angler"
+        )
+        assert "Mahi-mahi (dolphinfish)" not in names, (
+            "Offshore-only species should be absent for pier-only angler"
+        )
 
     def test_ranking_surf_only_excludes_pier_and_offshore(self):
         """With a surf-only profile, pier-only and offshore-only names must not appear."""
@@ -227,8 +260,12 @@ class TestPersonalizationHardGate:
             month=6, water_temp=72, coast="east", fishing_types=["surf"]
         )
         names = {sp["name"] for sp in ranking}
-        assert "Sheepshead" not in names, "Pier-only species Sheepshead should be absent for surf-only angler"
-        assert "Mahi-mahi (dolphinfish)" not in names, "Offshore-only species should be absent for surf-only angler"
+        assert "Sheepshead" not in names, (
+            "Pier-only species Sheepshead should be absent for surf-only angler"
+        )
+        assert "Mahi-mahi (dolphinfish)" not in names, (
+            "Offshore-only species should be absent for surf-only angler"
+        )
 
     def test_ranking_offshore_only_excludes_pier_surf_inshore(self):
         """With an offshore-only profile, pier/surf/inshore-only species must not appear."""
@@ -236,9 +273,15 @@ class TestPersonalizationHardGate:
             month=7, water_temp=80, coast="east", fishing_types=["offshore"]
         )
         names = {sp["name"] for sp in ranking}
-        assert "Sheepshead" not in names, "Pier-only Sheepshead should be absent for offshore angler"
-        assert "Pompano" not in names, "Surf-only Pompano should be absent for offshore angler"
-        assert "Speckled trout (spotted seatrout)" not in names, "Inshore-only species should be absent for offshore angler"
+        assert "Sheepshead" not in names, (
+            "Pier-only Sheepshead should be absent for offshore angler"
+        )
+        assert "Pompano" not in names, (
+            "Surf-only Pompano should be absent for offshore angler"
+        )
+        assert "Speckled trout (spotted seatrout)" not in names, (
+            "Inshore-only species should be absent for offshore angler"
+        )
 
 
 class TestRegulationHarvestFilter:

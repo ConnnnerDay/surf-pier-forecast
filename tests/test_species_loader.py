@@ -19,6 +19,7 @@ from storage.species_loader import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _write_json(tmp_path: pathlib.Path, data) -> pathlib.Path:
     p = tmp_path / "species_data.json"
     p.write_text(json.dumps(data), encoding="utf-8")
@@ -29,8 +30,10 @@ def _minimal_entry(**overrides) -> dict:
     """Return a valid minimal species entry, optionally overriding fields."""
     base = {
         "name": "Test fish",
-        "temp_min": 50, "temp_max": 80,
-        "temp_ideal_low": 55, "temp_ideal_high": 75,
+        "temp_min": 50,
+        "temp_max": 80,
+        "temp_ideal_low": 55,
+        "temp_ideal_high": 75,
         "peak_months": [3, 4, 5],
         "good_months": [2, 6],
         "bait": "Shrimp",
@@ -48,6 +51,7 @@ def _minimal_entry(**overrides) -> dict:
 # ---------------------------------------------------------------------------
 # Module-level SPECIES_DB
 # ---------------------------------------------------------------------------
+
 
 class TestModuleLevelDB:
     def test_loaded_at_import(self):
@@ -112,6 +116,7 @@ class TestModuleLevelDB:
 # load_species_db() — happy path
 # ---------------------------------------------------------------------------
 
+
 class TestLoadSpeciesDbValid:
     def test_returns_list(self, tmp_path):
         p = _write_json(tmp_path, [_minimal_entry()])
@@ -152,6 +157,7 @@ class TestLoadSpeciesDbValid:
 # ---------------------------------------------------------------------------
 # load_species_db() — error paths (fail fast, helpful messages)
 # ---------------------------------------------------------------------------
+
 
 class TestLoadSpeciesDbErrors:
     def test_file_not_found(self, tmp_path):

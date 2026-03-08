@@ -29,28 +29,30 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from storage.sqlite import DB_PATH, get_db
+from storage.sqlite import get_db
 
 _log = logging.getLogger(__name__)
 
-_CACHE_TTL_SECONDS = 86_400   # 24 hours
-_REQUEST_TIMEOUT   = 12       # seconds
-_USER_AGENT = (
-    "Mozilla/5.0 (compatible; SurfForecast/1.0 fishing-regulation-lookup)"
-)
+_CACHE_TTL_SECONDS = 86_400  # 24 hours
+_REQUEST_TIMEOUT = 12  # seconds
+_USER_AGENT = "Mozilla/5.0 (compatible; SurfForecast/1.0 fishing-regulation-lookup)"
 
 
 # ──────────────────────────────────────────────────────────────────
 # Shared helpers
 # ──────────────────────────────────────────────────────────────────
 
+
 def _normalize_name(name: str) -> str:
     """Convert a display species name to a snake_case key."""
     return (
         str(name or "")
         .lower()
-        .replace("(", "").replace(")", "")
-        .replace("/", " ").replace("-", " ").replace(",", "")
+        .replace("(", "")
+        .replace(")", "")
+        .replace("/", " ")
+        .replace("-", " ")
+        .replace(",", "")
         .strip()
         .replace(" ", "_")
     )
@@ -98,30 +100,30 @@ _FL_BASE = "https://myfwc.com/fishing/saltwater/recreational/"
 # species_key → URL slug on myfwc.com/fishing/saltwater/recreational/{slug}/
 _FL_SLUGS: Dict[str, str] = {
     # Keys are the short snake_case form from _name_variants() (parenthetical stripped)
-    "red_drum":           "red-drum",
-    "spotted_seatrout":   "spotted-seatrout",
-    "speckled_trout":     "spotted-seatrout",   # display name "Speckled trout (...)"
-    "snook":              "snook",
-    "tarpon":             "tarpon",
-    "cobia":              "cobia",
-    "spanish_mackerel":   "spanish-mackerel",
-    "king_mackerel":      "king-mackerel",
-    "gag_grouper":        "grouper-gag",
-    "black_sea_bass":     "black-sea-bass",
-    "pompano":            "florida-pompano",
-    "sheepshead":         "sheepshead",
-    "summer_flounder":    "flounder",
-    "southern_flounder":  "flounder",
-    "flounder":           "flounder",
-    "bluefish":           "bluefish",
-    "striped_bass":       "striped-bass",
-    "false_albacore":     "little-tunny",
-    "red_snapper":        "red-snapper",
-    "weakfish":           "weakfish",
-    "permit":             "permit",
-    "tautog":             "tautog",
-    "black_drum":         "black-drum",
-    "scup":               "scup",
+    "red_drum": "red-drum",
+    "spotted_seatrout": "spotted-seatrout",
+    "speckled_trout": "spotted-seatrout",  # display name "Speckled trout (...)"
+    "snook": "snook",
+    "tarpon": "tarpon",
+    "cobia": "cobia",
+    "spanish_mackerel": "spanish-mackerel",
+    "king_mackerel": "king-mackerel",
+    "gag_grouper": "grouper-gag",
+    "black_sea_bass": "black-sea-bass",
+    "pompano": "florida-pompano",
+    "sheepshead": "sheepshead",
+    "summer_flounder": "flounder",
+    "southern_flounder": "flounder",
+    "flounder": "flounder",
+    "bluefish": "bluefish",
+    "striped_bass": "striped-bass",
+    "false_albacore": "little-tunny",
+    "red_snapper": "red-snapper",
+    "weakfish": "weakfish",
+    "permit": "permit",
+    "tautog": "tautog",
+    "black_drum": "black-drum",
+    "scup": "scup",
 }
 
 
@@ -150,53 +152,56 @@ def _parse_fl_page(html: str) -> Optional[Dict[str, str]]:
 
     seasons = re.findall(
         r"Season\s*:\s*(.+?)" + _BOUND,
-        text, re.IGNORECASE,
+        text,
+        re.IGNORECASE,
     )
     sizes = re.findall(
         r"(?:Slot\s+[Ll]imit|Minimum\s+Size(?:\s+Limit)?)\s*:\s*(.+?)" + _BOUND,
-        text, re.IGNORECASE,
+        text,
+        re.IGNORECASE,
     )
     bags = re.findall(
         r"(?:Daily\s+)?Bag\s+[Ll]imit\s*:\s*(.+?)" + _BOUND,
-        text, re.IGNORECASE,
+        text,
+        re.IGNORECASE,
     )
 
     if not bags and not sizes:
         return None
 
     _FL_REGIONS = re.compile(
-        r'\s+(?:Big Bend|Panhandle|Tampa|Sarasota|Charlotte|Southwest|'
-        r'Southeast|Northeast|Indian River|Central East)\b.*$',
+        r"\s+(?:Big Bend|Panhandle|Tampa|Sarasota|Charlotte|Southwest|"
+        r"Southeast|Northeast|Indian River|Central East)\b.*$",
         re.IGNORECASE,
     )
 
     def _clean(val: str) -> str:
         # Trim natural end-phrases for size limits; drop explanatory text after them
-        for end_phrase in (' total length', ' fork length'):
+        for end_phrase in (" total length", " fork length"):
             idx = val.lower().find(end_phrase)
             if idx >= 0:
-                val = val[:idx + len(end_phrase)]
+                val = val[: idx + len(end_phrase)]
         # Strip closing-quote followed by a proper noun (FWC section boundary)
-        val = re.sub(r'["\u201d]\s+[A-Z].*$', '', val)
+        val = re.sub(r'["\u201d]\s+[A-Z].*$', "", val)
         # Strip FL management region names that bled in
-        val = _FL_REGIONS.sub('', val)
+        val = _FL_REGIONS.sub("", val)
         # Strip "Federal Waters Regulations" tail
-        val = re.sub(r'\s+Federal\s+Waters.*$', '', val, flags=re.IGNORECASE)
+        val = re.sub(r"\s+Federal\s+Waters.*$", "", val, flags=re.IGNORECASE)
         # Strip additional context after "per harvester" or "per person per day"
-        val = re.sub(r'(?<=per harvester)\s+.*$', '', val, flags=re.IGNORECASE)
-        val = re.sub(r'(?<=per day)\s+[A-Z].*$', '', val)
+        val = re.sub(r"(?<=per harvester)\s+.*$", "", val, flags=re.IGNORECASE)
+        val = re.sub(r"(?<=per day)\s+[A-Z].*$", "", val)
         return val.strip().rstrip('",;')[:120]
 
     # Use up to first 8 occurrences (≈ number of FL management regions)
     season = _clean(_most_common(seasons[:8]))
-    size   = _clean(_most_common(sizes[:8]))
-    bag    = _clean(_most_common(bags[:8]))
+    size = _clean(_most_common(sizes[:8]))
+    bag = _clean(_most_common(bags[:8]))
 
     return {
-        "min_size":  size,
+        "min_size": size,
         "bag_limit": bag,
-        "season":    season,
-        "notes":     (
+        "season": season,
+        "notes": (
             "Limits may vary by FL management region. "
             "Verify current rules at myfwc.com before fishing."
         ),
@@ -215,7 +220,8 @@ def _scrape_fl(species_name: str) -> Optional[Dict[str, str]]:
     url = f"{_FL_BASE}{slug}/"
     try:
         resp = requests.get(
-            url, timeout=_REQUEST_TIMEOUT,
+            url,
+            timeout=_REQUEST_TIMEOUT,
             headers={"User-Agent": _USER_AGENT},
         )
         resp.raise_for_status()
@@ -237,20 +243,20 @@ _va_page_lock = Lock()
 
 # species_key → uppercase names as they appear in the VA MRC page
 _VA_NAMES: Dict[str, List[str]] = {
-    "red_drum":          ["RED DRUM", "CHANNEL BASS"],
-    "striped_bass":      ["STRIPED BASS", "ROCKFISH"],
-    "summer_flounder":   ["SUMMER FLOUNDER"],
+    "red_drum": ["RED DRUM", "CHANNEL BASS"],
+    "striped_bass": ["STRIPED BASS", "ROCKFISH"],
+    "summer_flounder": ["SUMMER FLOUNDER"],
     "southern_flounder": ["SOUTHERN FLOUNDER", "FLOUNDER"],
-    "spotted_seatrout":  ["SPOTTED SEA TROUT", "SPECKLED TROUT"],
-    "bluefish":          ["BLUEFISH"],
-    "tautog":            ["TAUTOG"],
-    "black_sea_bass":    ["BLACK SEA BASS"],
-    "scup":              ["SCUP"],
-    "weakfish":          ["WEAKFISH"],
-    "cobia":             ["COBIA"],
-    "spanish_mackerel":  ["SPANISH MACKEREL"],
-    "sheepshead":        ["SHEEPSHEAD"],
-    "red_snapper":       ["RED SNAPPER"],
+    "spotted_seatrout": ["SPOTTED SEA TROUT", "SPECKLED TROUT"],
+    "bluefish": ["BLUEFISH"],
+    "tautog": ["TAUTOG"],
+    "black_sea_bass": ["BLACK SEA BASS"],
+    "scup": ["SCUP"],
+    "weakfish": ["WEAKFISH"],
+    "cobia": ["COBIA"],
+    "spanish_mackerel": ["SPANISH MACKEREL"],
+    "sheepshead": ["SHEEPSHEAD"],
+    "red_snapper": ["RED SNAPPER"],
 }
 
 
@@ -261,7 +267,8 @@ def _get_va_html() -> Optional[str]:
             return _va_page_cache
         try:
             resp = requests.get(
-                _VA_URL, timeout=_REQUEST_TIMEOUT,
+                _VA_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -287,7 +294,7 @@ def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
         idx = text.find(name)
         if idx < 0:
             continue
-        section = text[idx: idx + 700]
+        section = text[idx : idx + 700]
 
         # Stop each value at the next label keyword or record marker.
         # "Maximum Size Limit" is included so slot-limit ranges don't bleed.
@@ -299,15 +306,18 @@ def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
         )
         size_m = re.search(
             r"(?:Minimum\s+Size\s+Limit|Size\s+Limit)[:\s]+(.+?)" + _va_stop,
-            section, re.IGNORECASE,
+            section,
+            re.IGNORECASE,
         )
         bag_m = re.search(
             r"(?:Possession\s+Limit|Bag\s+Limit)[:\s]+(.+?)" + _va_stop,
-            section, re.IGNORECASE,
+            section,
+            re.IGNORECASE,
         )
         season_m = re.search(
             r"(?:Open\s+Season\s*:|(?<!Closed\s)Season\s*:)\s*(.+?)" + _va_stop,
-            section, re.IGNORECASE,
+            section,
+            re.IGNORECASE,
         )
 
         def _cv(m: Optional[re.Match]) -> str:  # type: ignore[type-arg]
@@ -315,10 +325,10 @@ def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
 
         if size_m or bag_m:
             return {
-                "min_size":  _cv(size_m),
+                "min_size": _cv(size_m),
                 "bag_limit": _cv(bag_m),
-                "season":    _cv(season_m),
-                "notes":     (
+                "season": _cv(season_m),
+                "notes": (
                     "Verify current rules with VA Marine Resources Commission "
                     "(mrc.virginia.gov)."
                 ),
@@ -346,26 +356,26 @@ _ga_page_cache: Optional[str] = None
 _ga_page_lock = Lock()
 
 _GA_NAMES: Dict[str, List[str]] = {
-    "red_drum":          ["red drum"],
-    "spotted_seatrout":  ["spotted seatrout", "speckled trout"],
-    "striped_bass":      ["striped bass", "rockfish"],
-    "bluefish":          ["bluefish"],
-    "summer_flounder":   ["summer flounder", "fluke"],
+    "red_drum": ["red drum"],
+    "spotted_seatrout": ["spotted seatrout", "speckled trout"],
+    "striped_bass": ["striped bass", "rockfish"],
+    "bluefish": ["bluefish"],
+    "summer_flounder": ["summer flounder", "fluke"],
     "southern_flounder": ["southern flounder"],
-    "black_sea_bass":    ["black sea bass"],
-    "sheepshead":        ["sheepshead"],
+    "black_sea_bass": ["black sea bass"],
+    "sheepshead": ["sheepshead"],
     # GA page uses "Mackerel, Spanish" / "Mackerel, King" order
-    "spanish_mackerel":  ["mackerel, spanish", "spanish mackerel"],
-    "king_mackerel":     ["mackerel, king", "king mackerel"],
-    "gag_grouper":       ["gag grouper"],
-    "cobia":             ["cobia"],
-    "flounder":          ["flounder"],
-    "black_drum":        ["black drum"],
-    "pompano":           ["pompano"],
-    "red_snapper":       ["red snapper"],
-    "weakfish":          ["weakfish"],
-    "tarpon":            ["tarpon"],
-    "amberjack":         ["amberjack"],
+    "spanish_mackerel": ["mackerel, spanish", "spanish mackerel"],
+    "king_mackerel": ["mackerel, king", "king mackerel"],
+    "gag_grouper": ["gag grouper"],
+    "cobia": ["cobia"],
+    "flounder": ["flounder"],
+    "black_drum": ["black drum"],
+    "pompano": ["pompano"],
+    "red_snapper": ["red snapper"],
+    "weakfish": ["weakfish"],
+    "tarpon": ["tarpon"],
+    "amberjack": ["amberjack"],
 }
 
 
@@ -376,7 +386,8 @@ def _get_ga_html() -> Optional[str]:
             return _ga_page_cache
         try:
             resp = requests.get(
-                _GA_URL, timeout=_REQUEST_TIMEOUT,
+                _GA_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -403,12 +414,13 @@ def _parse_ga_dd(dd_text: str) -> Dict[str, str]:
     def _between(start_pat: str, stop_pat: str) -> str:
         m = re.search(
             start_pat + r"\s*:\s*(.+?)(?=\s+" + stop_pat + r"\s*:|$)",
-            text, re.IGNORECASE,
+            text,
+            re.IGNORECASE,
         )
         return m.group(1).strip().rstrip(".,;") if m else ""
 
     season = _between("Season", "Limit")
-    bag    = _between("Limit", "Minimum\\s+size")
+    bag = _between("Limit", "Minimum\\s+size")
 
     # Size: capture everything after "Minimum size:" then strip trailing
     # sentences (e.g. "Red Drum are a gamefish…")
@@ -420,25 +432,30 @@ def _parse_ga_dd(dd_text: str) -> Dict[str, str]:
         # followed by "Season:" — e.g. "Savannah River Season: All year Limit: 2…"
         # Use capitalized-word requirement so measurement units (TL, FL) don't match.
         size = re.sub(
-            r"\s+(?:[A-Z][a-z]+\s+)+Season\s*:.*$", "", size,
+            r"\s+(?:[A-Z][a-z]+\s+)+Season\s*:.*$",
+            "",
+            size,
         )
         # Strip trailing location name with no following value
         size = re.sub(
             r"\s+\w+\s+(?:River|Lake|Sound|Bay|Coast|Ocean|Waters?)\s*$",
-            "", size, flags=re.IGNORECASE,
+            "",
+            size,
+            flags=re.IGNORECASE,
         )
         # Strip trailing sentence: one or more Capitalised Words followed by a verb
         # e.g. "Red Drum are a gamefish…" or "Flounder may not be…"
         size = re.sub(
             r"\s+[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*\s+(?:are|is|may|were|have|can)\b.*$",
-            "", size,
+            "",
+            size,
         )
         size = size.rstrip(".,; ").strip()
 
     return {
-        "season":    season[:120],
+        "season": season[:120],
         "bag_limit": bag[:120],
-        "min_size":  size[:120],
+        "min_size": size[:120],
     }
 
 
@@ -474,7 +491,7 @@ def _parse_ga_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                 if parsed["min_size"] or parsed["bag_limit"]:
                     return {
                         **parsed,
-                        "notes":          "Verify current rules with GA Coastal Resources (coastalgadnr.org).",
+                        "notes": "Verify current rules with GA Coastal Resources (coastalgadnr.org).",
                         "scraped_source": "coastalgadnr.org",
                     }
     return None
@@ -501,24 +518,24 @@ _nc_page_lock = Lock()
 
 # species_key → substrings to look for in the NC table's first column (lowercased)
 _NC_NAMES: Dict[str, List[str]] = {
-    "red_drum":          ["red drum", "channel bass"],
-    "spotted_seatrout":  ["spotted seatrout", "speckled trout"],
-    "striped_bass":      ["striped bass"],
-    "bluefish":          ["bluefish"],
-    "summer_flounder":   ["flounder"],
+    "red_drum": ["red drum", "channel bass"],
+    "spotted_seatrout": ["spotted seatrout", "speckled trout"],
+    "striped_bass": ["striped bass"],
+    "bluefish": ["bluefish"],
+    "summer_flounder": ["flounder"],
     "southern_flounder": ["flounder"],
-    "black_sea_bass":    ["black sea bass"],
-    "sheepshead":        ["sheepshead"],
-    "spanish_mackerel":  ["spanish mackerel"],
-    "cobia":             ["cobia"],
-    "king_mackerel":     ["king mackerel"],
-    "weakfish":          ["weakfish", "gray trout"],
-    "scup":              ["scup"],
-    "tautog":            ["tautog"],
-    "black_drum":        ["black drum"],
-    "pompano":           ["pompano"],
-    "red_snapper":       ["red snapper"],
-    "gag_grouper":       ["snapper", "grouper"],  # grouped complex on NC page
+    "black_sea_bass": ["black sea bass"],
+    "sheepshead": ["sheepshead"],
+    "spanish_mackerel": ["spanish mackerel"],
+    "cobia": ["cobia"],
+    "king_mackerel": ["king mackerel"],
+    "weakfish": ["weakfish", "gray trout"],
+    "scup": ["scup"],
+    "tautog": ["tautog"],
+    "black_drum": ["black drum"],
+    "pompano": ["pompano"],
+    "red_snapper": ["red snapper"],
+    "gag_grouper": ["snapper", "grouper"],  # grouped complex on NC page
 }
 
 
@@ -529,7 +546,8 @@ def _get_nc_html() -> Optional[str]:
             return _nc_page_cache
         try:
             resp = requests.get(
-                _NC_URL, timeout=_REQUEST_TIMEOUT,
+                _NC_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -581,8 +599,8 @@ def _parse_nc_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                 # 4-column row: size in col[1], bag in col[2]
                 # 3-column row with colspan=2: combined info in col[1]
                 if len(tds) >= 4:
-                    size   = tds[1].get_text(" ", strip=True).strip()
-                    bag    = tds[2].get_text(" ", strip=True).strip()
+                    size = tds[1].get_text(" ", strip=True).strip()
+                    bag = tds[2].get_text(" ", strip=True).strip()
                     season = ""
                 elif len(tds) == 3:
                     combined = tds[1].get_text(" ", strip=True).strip()
@@ -598,10 +616,10 @@ def _parse_nc_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
 
                 if size or bag:
                     return {
-                        "min_size":       size[:120],
-                        "bag_limit":      bag[:120],
-                        "season":         season,
-                        "notes":          "Verify current rules with NC Division of Marine Fisheries (deq.nc.gov).",
+                        "min_size": size[:120],
+                        "bag_limit": bag[:120],
+                        "season": season,
+                        "notes": "Verify current rules with NC Division of Marine Fisheries (deq.nc.gov).",
                         "scraped_source": "deq.nc.gov",
                     }
     return None
@@ -627,20 +645,20 @@ _ny_page_lock = Lock()
 
 # species_key → substrings to look for in NY table first column (lowercased)
 _NY_NAMES: Dict[str, List[str]] = {
-    "red_drum":          ["red drum"],
-    "striped_bass":      ["striped bass: marine"],     # prefer marine over Hudson River row
-    "bluefish":          ["bluefish"],
-    "summer_flounder":   ["summer flounder", "fluke"],
-    "winter_flounder":   ["winter flounder"],
-    "black_sea_bass":    ["black sea bass"],
-    "scup":              ["scup (porgy)"],              # first row (not party/charter)
-    "weakfish":          ["weakfish"],
-    "tautog":            ["tautog (blackfish): ny bight"],  # prefer NY Bight
-    "spanish_mackerel":  ["spanish mackerel"],
-    "king_mackerel":     ["king mackerel"],
-    "cobia":             ["cobia"],
+    "red_drum": ["red drum"],
+    "striped_bass": ["striped bass: marine"],  # prefer marine over Hudson River row
+    "bluefish": ["bluefish"],
+    "summer_flounder": ["summer flounder", "fluke"],
+    "winter_flounder": ["winter flounder"],
+    "black_sea_bass": ["black sea bass"],
+    "scup": ["scup (porgy)"],  # first row (not party/charter)
+    "weakfish": ["weakfish"],
+    "tautog": ["tautog (blackfish): ny bight"],  # prefer NY Bight
+    "spanish_mackerel": ["spanish mackerel"],
+    "king_mackerel": ["king mackerel"],
+    "cobia": ["cobia"],
     "southern_flounder": ["yellowtail flounder", "flounder"],
-    "flounder":          ["summer flounder", "fluke"],
+    "flounder": ["summer flounder", "fluke"],
 }
 
 
@@ -651,7 +669,8 @@ def _get_ny_html() -> Optional[str]:
             return _ny_page_cache
         try:
             resp = requests.get(
-                _NY_URL, timeout=_REQUEST_TIMEOUT,
+                _NY_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -693,18 +712,20 @@ def _parse_ny_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
         cell0 = tds[0].get_text(" ", strip=True).lower()
         for name in names:
             if name.lower() in cell0:
-                size   = tds[1].get_text(" ", strip=True).strip()
-                bag    = tds[2].get_text(" ", strip=True).strip()
-                season = tds[3].get_text(" ", strip=True).strip() if len(tds) > 3 else ""
+                size = tds[1].get_text(" ", strip=True).strip()
+                bag = tds[2].get_text(" ", strip=True).strip()
+                season = (
+                    tds[3].get_text(" ", strip=True).strip() if len(tds) > 3 else ""
+                )
                 # Strip numeric footnote references like "(2)", "(5)"
-                size   = re.sub(r"\s*\(\d+\)", "", size).strip()
-                bag    = re.sub(r"\s*\(\d+\)", "", bag).strip()
+                size = re.sub(r"\s*\(\d+\)", "", size).strip()
+                bag = re.sub(r"\s*\(\d+\)", "", bag).strip()
                 if size or bag:
                     return {
-                        "min_size":       size[:120],
-                        "bag_limit":      bag[:120],
-                        "season":         season[:120],
-                        "notes":          "Verify current rules with NY DEC (dec.ny.gov).",
+                        "min_size": size[:120],
+                        "bag_limit": bag[:120],
+                        "season": season[:120],
+                        "notes": "Verify current rules with NY DEC (dec.ny.gov).",
                         "scraped_source": "dec.ny.gov",
                     }
     return None
@@ -721,29 +742,31 @@ def _scrape_ny(species_name: str) -> Optional[Dict[str, str]]:
 # Alabama — ADCNR div.table-row layout
 # ──────────────────────────────────────────────────────────────────
 
-_AL_URL = "https://www.outdooralabama.com/fishing/saltwater-recreational-size-creel-limits"
+_AL_URL = (
+    "https://www.outdooralabama.com/fishing/saltwater-recreational-size-creel-limits"
+)
 
 _al_page_cache: Optional[str] = None
 _al_page_lock = Lock()
 
 _AL_NAMES: Dict[str, List[str]] = {
-    "red_drum":          ["red drum", "redfish"],
-    "spotted_seatrout":  ["spotted seatrout", "speckled trout"],
-    "striped_bass":      ["striped bass", "rockfish"],
-    "bluefish":          ["bluefish"],
-    "summer_flounder":   ["flounder"],
+    "red_drum": ["red drum", "redfish"],
+    "spotted_seatrout": ["spotted seatrout", "speckled trout"],
+    "striped_bass": ["striped bass", "rockfish"],
+    "bluefish": ["bluefish"],
+    "summer_flounder": ["flounder"],
     "southern_flounder": ["flounder"],
-    "black_sea_bass":    ["black sea bass"],
-    "sheepshead":        ["sheepshead"],
-    "spanish_mackerel":  ["spanish mackerel"],
-    "cobia":             ["cobia", "ling"],
-    "king_mackerel":     ["king mackerel"],
-    "gag_grouper":       ["gag grouper"],
-    "red_snapper":       ["red snapper"],
-    "pompano":           ["florida pompano", "pompano"],
-    "flounder":          ["flounder"],
-    "black_drum":        ["black drum"],
-    "amberjack":         ["greater amberjack", "amberjack"],
+    "black_sea_bass": ["black sea bass"],
+    "sheepshead": ["sheepshead"],
+    "spanish_mackerel": ["spanish mackerel"],
+    "cobia": ["cobia", "ling"],
+    "king_mackerel": ["king mackerel"],
+    "gag_grouper": ["gag grouper"],
+    "red_snapper": ["red snapper"],
+    "pompano": ["florida pompano", "pompano"],
+    "flounder": ["flounder"],
+    "black_drum": ["black drum"],
+    "amberjack": ["greater amberjack", "amberjack"],
 }
 
 
@@ -754,7 +777,8 @@ def _get_al_html() -> Optional[str]:
             return _al_page_cache
         try:
             resp = requests.get(
-                _AL_URL, timeout=_REQUEST_TIMEOUT,
+                _AL_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -794,13 +818,13 @@ def _parse_al_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
         for name in names:
             if name.lower() in cell0:
                 size = cols[1].get_text(" ", strip=True).strip()
-                bag  = cols[2].get_text(" ", strip=True).strip()
+                bag = cols[2].get_text(" ", strip=True).strip()
                 if size or bag:
                     return {
-                        "min_size":       size[:120],
-                        "bag_limit":      bag[:120],
-                        "season":         "",
-                        "notes":          "Verify current rules with AL DCNR (outdooralabama.com).",
+                        "min_size": size[:120],
+                        "bag_limit": bag[:120],
+                        "season": "",
+                        "notes": "Verify current rules with AL DCNR (outdooralabama.com).",
                         "scraped_source": "outdooralabama.com",
                     }
     return None
@@ -826,17 +850,17 @@ _ri_page_cache: Optional[str] = None
 _ri_page_lock = Lock()
 
 _RI_NAMES: Dict[str, List[str]] = {
-    "striped_bass":      ["striped bass"],
-    "bluefish":          ["bluefish"],
-    "summer_flounder":   ["summer flounder", "fluke"],
-    "winter_flounder":   ["winter flounder", "blackback"],
-    "black_sea_bass":    ["black sea bass general recreational"],
-    "scup":              ["scup shore"],   # prefer shore row over party/charter
-    "weakfish":          ["weakfish", "squeteague"],
-    "tautog":            ["tautog"],       # first row (not party/charter)
-    "cobia":             ["cobia"],
-    "false_albacore":    ["false albacore", "little tunny"],
-    "flounder":          ["summer flounder", "fluke"],
+    "striped_bass": ["striped bass"],
+    "bluefish": ["bluefish"],
+    "summer_flounder": ["summer flounder", "fluke"],
+    "winter_flounder": ["winter flounder", "blackback"],
+    "black_sea_bass": ["black sea bass general recreational"],
+    "scup": ["scup shore"],  # prefer shore row over party/charter
+    "weakfish": ["weakfish", "squeteague"],
+    "tautog": ["tautog"],  # first row (not party/charter)
+    "cobia": ["cobia"],
+    "false_albacore": ["false albacore", "little tunny"],
+    "flounder": ["summer flounder", "fluke"],
 }
 
 
@@ -847,7 +871,8 @@ def _get_ri_html() -> Optional[str]:
             return _ri_page_cache
         try:
             resp = requests.get(
-                _RI_URL, timeout=_REQUEST_TIMEOUT,
+                _RI_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -892,15 +917,15 @@ def _parse_ri_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
         cell0 = tds[0].get_text(" ", strip=True).lower()
         for name in names:
             if name.lower() in cell0:
-                size   = tds[1].get_text(" ", strip=True).strip()
+                size = tds[1].get_text(" ", strip=True).strip()
                 season = tds[2].get_text(" ", strip=True).strip()
-                bag    = tds[3].get_text(" ", strip=True).strip() if len(tds) > 3 else ""
+                bag = tds[3].get_text(" ", strip=True).strip() if len(tds) > 3 else ""
                 if size or bag:
                     return {
-                        "min_size":       size[:120],
-                        "bag_limit":      bag[:120],
-                        "season":         season[:120],
-                        "notes":          "Verify current rules with RI DEM (dem.ri.gov).",
+                        "min_size": size[:120],
+                        "bag_limit": bag[:120],
+                        "season": season[:120],
+                        "notes": "Verify current rules with RI DEM (dem.ri.gov).",
                         "scraped_source": "dem.ri.gov",
                     }
     return None
@@ -924,43 +949,43 @@ _TX_BASE = (
 
 # species_key → URL slug on TPWD per-species pages
 _TX_SLUGS: Dict[str, str] = {
-    "red_drum":          "drum-bag-length-limits",
-    "black_drum":        "drum-bag-length-limits",
-    "spotted_seatrout":  "seatrout-bag-length-limits",
-    "speckled_trout":    "seatrout-bag-length-limits",
+    "red_drum": "drum-bag-length-limits",
+    "black_drum": "drum-bag-length-limits",
+    "spotted_seatrout": "seatrout-bag-length-limits",
+    "speckled_trout": "seatrout-bag-length-limits",
     "southern_flounder": "flounder-bag-length-limits",
-    "flounder":          "flounder-bag-length-limits",
-    "sheepshead":        "sheepshead-bag-length-limits",
-    "cobia":             "cobia-bag-length-limits",
-    "king_mackerel":     "mackerel-bag-length-limits",
-    "spanish_mackerel":  "mackerel-bag-length-limits",
-    "red_snapper":       "snapper-bag-length-limits",
-    "gag_grouper":       "grouper-bag-length-limits",
-    "snook":             "snook-bag-length-limits",
-    "tarpon":            "tarpon-bag-length-limits",
-    "amberjack":         "amberjack-bag-length-limits",
-    "pompano":           "flounder-bag-length-limits",   # no standalone pompano slug
+    "flounder": "flounder-bag-length-limits",
+    "sheepshead": "sheepshead-bag-length-limits",
+    "cobia": "cobia-bag-length-limits",
+    "king_mackerel": "mackerel-bag-length-limits",
+    "spanish_mackerel": "mackerel-bag-length-limits",
+    "red_snapper": "snapper-bag-length-limits",
+    "gag_grouper": "grouper-bag-length-limits",
+    "snook": "snook-bag-length-limits",
+    "tarpon": "tarpon-bag-length-limits",
+    "amberjack": "amberjack-bag-length-limits",
+    "pompano": "flounder-bag-length-limits",  # no standalone pompano slug
 }
 
 # Per-page target species names (lowercased fragments) so multi-species pages
 # (e.g. drum page has "red drum" and "black drum") pick the right entry.
 _TX_TARGET: Dict[str, str] = {
-    "red_drum":         "red drum",
-    "black_drum":       "black drum",
+    "red_drum": "red drum",
+    "black_drum": "black drum",
     "spotted_seatrout": "spotted seatrout",
-    "speckled_trout":   "spotted seatrout",
-    "southern_flounder":"flounder",
-    "flounder":         "flounder",
-    "sheepshead":       "sheepshead",
-    "cobia":            "cobia",
-    "king_mackerel":    "king mackerel",
+    "speckled_trout": "spotted seatrout",
+    "southern_flounder": "flounder",
+    "flounder": "flounder",
+    "sheepshead": "sheepshead",
+    "cobia": "cobia",
+    "king_mackerel": "king mackerel",
     "spanish_mackerel": "spanish mackerel",
-    "red_snapper":      "red snapper",
-    "gag_grouper":      "gag grouper",
-    "snook":            "snook",
-    "tarpon":           "tarpon",
-    "amberjack":        "amberjack",
-    "pompano":          "pompano",
+    "red_snapper": "red snapper",
+    "gag_grouper": "gag grouper",
+    "snook": "snook",
+    "tarpon": "tarpon",
+    "amberjack": "amberjack",
+    "pompano": "pompano",
 }
 
 
@@ -989,7 +1014,7 @@ def _parse_tx_page(text: str, target: str) -> Optional[Dict[str, str]]:
     best_pos = -1
     for m in re.finditer(r"Daily\s+Bag\s*:", text, re.IGNORECASE):
         window_start = max(0, m.start() - 400)
-        if target_lower in text_lower[window_start: m.start()]:
+        if target_lower in text_lower[window_start : m.start()]:
             best_pos = m.start()
             break
 
@@ -1002,16 +1027,20 @@ def _parse_tx_page(text: str, target: str) -> Optional[Dict[str, str]]:
     if best_pos < 0:
         return None
 
-    section = text[best_pos: best_pos + 300]
+    section = text[best_pos : best_pos + 300]
 
-    bag_m  = re.search(r"Daily\s+Bag\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE)
-    min_m  = re.search(r"Min(?:imum)?\s+Length\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE)
-    max_m  = re.search(r"Max(?:imum)?\s+Length\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE)
+    bag_m = re.search(r"Daily\s+Bag\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE)
+    min_m = re.search(
+        r"Min(?:imum)?\s+Length\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE
+    )
+    max_m = re.search(
+        r"Max(?:imum)?\s+Length\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE
+    )
 
     def _cv(m: Optional[re.Match]) -> str:  # type: ignore[type-arg]
         return m.group(1).strip()[:80] if m else ""
 
-    bag  = _cv(bag_m)
+    bag = _cv(bag_m)
     size = _cv(min_m)
     if max_m:
         max_val = _cv(max_m)
@@ -1022,10 +1051,10 @@ def _parse_tx_page(text: str, target: str) -> Optional[Dict[str, str]]:
 
     if bag or size:
         return {
-            "min_size":       size,
-            "bag_limit":      bag,
-            "season":         "",
-            "notes":          "Verify current rules with TX Parks & Wildlife (tpwd.texas.gov).",
+            "min_size": size,
+            "bag_limit": bag,
+            "season": "",
+            "notes": "Verify current rules with TX Parks & Wildlife (tpwd.texas.gov).",
             "scraped_source": "tpwd.texas.gov",
         }
     return None
@@ -1045,11 +1074,13 @@ def _scrape_tx(species_name: str) -> Optional[Dict[str, str]]:
     url = f"{_TX_BASE}{slug}"
     try:
         resp = requests.get(
-            url, timeout=_REQUEST_TIMEOUT,
+            url,
+            timeout=_REQUEST_TIMEOUT,
             headers={"User-Agent": _USER_AGENT},
         )
         resp.raise_for_status()
         from bs4 import BeautifulSoup
+
         soup = BeautifulSoup(resp.text, "html.parser")
         return _parse_tx_page(soup.get_text("\n", strip=True), target)
     except Exception as exc:
@@ -1067,21 +1098,21 @@ _ms_page_cache: Optional[str] = None
 _ms_page_lock = Lock()
 
 _MS_NAMES: Dict[str, List[str]] = {
-    "red_drum":          ["red drum"],
-    "spotted_seatrout":  ["spotted seatrout", "speckled trout"],
+    "red_drum": ["red drum"],
+    "spotted_seatrout": ["spotted seatrout", "speckled trout"],
     "southern_flounder": ["flounder"],
-    "sheepshead":        ["sheepshead"],
-    "cobia":             ["cobia"],
-    "spanish_mackerel":  ["spanish mackerel"],
-    "king_mackerel":     ["king mackerel"],
-    "black_sea_bass":    ["black sea bass"],
-    "red_snapper":       ["red snapper"],
-    "gag_grouper":       ["gag grouper"],
-    "amberjack":         ["greater amberjack", "amberjack"],
-    "flounder":          ["flounder"],
-    "pompano":           ["pompano"],
-    "black_drum":        ["black drum"],
-    "tripletail":        ["tripletail"],
+    "sheepshead": ["sheepshead"],
+    "cobia": ["cobia"],
+    "spanish_mackerel": ["spanish mackerel"],
+    "king_mackerel": ["king mackerel"],
+    "black_sea_bass": ["black sea bass"],
+    "red_snapper": ["red snapper"],
+    "gag_grouper": ["gag grouper"],
+    "amberjack": ["greater amberjack", "amberjack"],
+    "flounder": ["flounder"],
+    "pompano": ["pompano"],
+    "black_drum": ["black drum"],
+    "tripletail": ["tripletail"],
 }
 
 
@@ -1092,7 +1123,8 @@ def _get_ms_html() -> Optional[str]:
             return _ms_page_cache
         try:
             resp = requests.get(
-                _MS_URL, timeout=_REQUEST_TIMEOUT,
+                _MS_URL,
+                timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
             )
             resp.raise_for_status()
@@ -1141,29 +1173,31 @@ def _parse_ms_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
             # Handle 4-cell rows (col 0 = category) and 3-cell rows
             if len(tds) >= 4:
                 species_cell = tds[1]
-                size_cell    = tds[2]
-                bag_cell     = tds[3]
+                size_cell = tds[2]
+                bag_cell = tds[3]
             else:
                 species_cell = tds[0]
-                size_cell    = tds[1]
-                bag_cell     = tds[2]
+                size_cell = tds[1]
+                bag_cell = tds[2]
 
             # Use no separator to avoid spaces inserted between adjacent <strong> tags
-            cell_text = re.sub(r"\d+$", "", species_cell.get_text(strip=True)).strip().lower()
+            cell_text = (
+                re.sub(r"\d+$", "", species_cell.get_text(strip=True)).strip().lower()
+            )
             for name in names:
                 if name.lower() in cell_text:
                     size = size_cell.get_text(" ", strip=True).strip()
-                    bag  = bag_cell.get_text(" ", strip=True).strip()
+                    bag = bag_cell.get_text(" ", strip=True).strip()
                     # Normalise curly quotes to straight
                     size = size.replace("\u201c", '"').replace("\u201d", '"')
                     size = size.replace("\u2013", "-").replace("\u2014", "-")
-                    bag  = bag.replace("\u201c", '"').replace("\u201d", '"')
+                    bag = bag.replace("\u201c", '"').replace("\u201d", '"')
                     if size or bag:
                         return {
-                            "min_size":       size[:120],
-                            "bag_limit":      bag[:120],
-                            "season":         "",
-                            "notes":          "Verify current rules with MS DMR (dmr.ms.gov).",
+                            "min_size": size[:120],
+                            "bag_limit": bag[:120],
+                            "season": "",
+                            "notes": "Verify current rules with MS DMR (dmr.ms.gov).",
                             "scraped_source": "eregulations.com/mississippi",
                         }
     return None
@@ -1196,6 +1230,7 @@ _SCRAPERS = {
 # ──────────────────────────────────────────────────────────────────
 # SQLite cache helpers
 # ──────────────────────────────────────────────────────────────────
+
 
 def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
     """Return cached regulation dict, or None if missing / expired."""
@@ -1241,6 +1276,7 @@ def _cache_set(species_key: str, state: str, data: Dict[str, Any]) -> None:
 # Public API
 # ──────────────────────────────────────────────────────────────────
 
+
 def scrape_regulation(
     species_name: str,
     state: str,
@@ -1265,7 +1301,7 @@ def scrape_regulation(
     # Return cached result (including a cached "nothing found" sentinel)
     cached = _cache_get(cache_key, state)
     if cached is not None:
-        return cached if cached else None   # empty dict → cached miss
+        return cached if cached else None  # empty dict → cached miss
 
     # Live scrape — pass the display name so sub-functions can derive variants
     scraper = _SCRAPERS[state]

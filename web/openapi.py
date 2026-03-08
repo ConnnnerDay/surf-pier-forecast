@@ -30,7 +30,12 @@ def build_openapi_spec() -> Dict[str, Any]:
                     "properties": {
                         "ok": {"type": "boolean"},
                         "data": {"type": "object", "nullable": True},
-                        "error": {"oneOf": [{"$ref": "#/components/schemas/ApiError"}, {"type": "null"}]},
+                        "error": {
+                            "oneOf": [
+                                {"$ref": "#/components/schemas/ApiError"},
+                                {"type": "null"},
+                            ]
+                        },
                         "meta": {
                             "type": "object",
                             "properties": {"version": {"type": "string"}},
@@ -46,11 +51,26 @@ def build_openapi_spec() -> Dict[str, Any]:
                 "get": {
                     "summary": "Get forecast",
                     "parameters": [
-                        {"name": "location_id", "in": "query", "schema": {"type": "string"}},
-                        {"name": "force_refresh", "in": "query", "schema": {"type": "boolean", "default": False}},
+                        {
+                            "name": "location_id",
+                            "in": "query",
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "force_refresh",
+                            "in": "query",
+                            "schema": {"type": "boolean", "default": False},
+                        },
                     ],
                     "responses": {
-                        "200": {"description": "Forecast response", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+                        "200": {
+                            "description": "Forecast response",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/Envelope"}
+                                }
+                            },
+                        },
                         "404": {"description": "Location not found"},
                         "503": {"description": "No forecast available"},
                     },
@@ -59,9 +79,23 @@ def build_openapi_spec() -> Dict[str, Any]:
             "/api/v1/forecast/{location_id}/status": {
                 "get": {
                     "summary": "Get cache refresh status for a location",
-                    "parameters": [{"name": "location_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "parameters": [
+                        {
+                            "name": "location_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
                     "responses": {
-                        "200": {"description": "Forecast cache status", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+                        "200": {
+                            "description": "Forecast cache status",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/Envelope"}
+                                }
+                            },
+                        },
                     },
                 }
             },
@@ -76,11 +110,16 @@ def build_openapi_spec() -> Dict[str, Any]:
             "/api/v1/log/{entry_id}": {
                 "delete": {
                     "summary": "Delete catch log entry",
-                    "parameters": [{"name": "entry_id", "in": "path", "required": True, "schema": {"type": "integer"}}],
+                    "parameters": [
+                        {
+                            "name": "entry_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "integer"},
+                        }
+                    ],
                 }
             },
-            "/api/openapi.json": {
-                "get": {"summary": "OpenAPI spec"}
-            },
+            "/api/openapi.json": {"get": {"summary": "OpenAPI spec"}},
         },
     }

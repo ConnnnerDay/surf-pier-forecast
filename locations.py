@@ -24,81 +24,271 @@ from services.http_client import get as http_get
 
 _WATER_TEMPS: Dict[str, Dict[int, float]] = {
     "northeast": {
-        1: 40, 2: 38, 3: 40, 4: 48, 5: 56, 6: 64,
-        7: 72, 8: 74, 9: 70, 10: 62, 11: 53, 12: 45,
+        1: 40,
+        2: 38,
+        3: 40,
+        4: 48,
+        5: 56,
+        6: 64,
+        7: 72,
+        8: 74,
+        9: 70,
+        10: 62,
+        11: 53,
+        12: 45,
     },
     "midatlantic": {
-        1: 43, 2: 41, 3: 44, 4: 52, 5: 60, 6: 70,
-        7: 77, 8: 78, 9: 74, 10: 65, 11: 55, 12: 47,
+        1: 43,
+        2: 41,
+        3: 44,
+        4: 52,
+        5: 60,
+        6: 70,
+        7: 77,
+        8: 78,
+        9: 74,
+        10: 65,
+        11: 55,
+        12: 47,
     },
     "nc_outer_banks": {
-        1: 48, 2: 47, 3: 50, 4: 58, 5: 67, 6: 76,
-        7: 80, 8: 81, 9: 78, 10: 70, 11: 60, 12: 52,
+        1: 48,
+        2: 47,
+        3: 50,
+        4: 58,
+        5: 67,
+        6: 76,
+        7: 80,
+        8: 81,
+        9: 78,
+        10: 70,
+        11: 60,
+        12: 52,
     },
     "nc_south": {
-        1: 50, 2: 50, 3: 54, 4: 62, 5: 70, 6: 78,
-        7: 82, 8: 83, 9: 80, 10: 72, 11: 62, 12: 54,
+        1: 50,
+        2: 50,
+        3: 54,
+        4: 62,
+        5: 70,
+        6: 78,
+        7: 82,
+        8: 83,
+        9: 80,
+        10: 72,
+        11: 62,
+        12: 54,
     },
     "sc_ga": {
-        1: 52, 2: 52, 3: 56, 4: 63, 5: 71, 6: 79,
-        7: 83, 8: 84, 9: 81, 10: 74, 11: 64, 12: 56,
+        1: 52,
+        2: 52,
+        3: 56,
+        4: 63,
+        5: 71,
+        6: 79,
+        7: 83,
+        8: 84,
+        9: 81,
+        10: 74,
+        11: 64,
+        12: 56,
     },
     "fl_northeast": {
-        1: 58, 2: 58, 3: 62, 4: 68, 5: 75, 6: 81,
-        7: 84, 8: 85, 9: 82, 10: 76, 11: 68, 12: 61,
+        1: 58,
+        2: 58,
+        3: 62,
+        4: 68,
+        5: 75,
+        6: 81,
+        7: 84,
+        8: 85,
+        9: 82,
+        10: 76,
+        11: 68,
+        12: 61,
     },
     "fl_central_east": {
-        1: 65, 2: 65, 3: 68, 4: 73, 5: 78, 6: 82,
-        7: 84, 8: 85, 9: 84, 10: 79, 11: 73, 12: 67,
+        1: 65,
+        2: 65,
+        3: 68,
+        4: 73,
+        5: 78,
+        6: 82,
+        7: 84,
+        8: 85,
+        9: 84,
+        10: 79,
+        11: 73,
+        12: 67,
     },
     "fl_south": {
-        1: 73, 2: 73, 3: 75, 4: 78, 5: 81, 6: 84,
-        7: 86, 8: 87, 9: 86, 10: 82, 11: 77, 12: 74,
+        1: 73,
+        2: 73,
+        3: 75,
+        4: 78,
+        5: 81,
+        6: 84,
+        7: 86,
+        8: 87,
+        9: 86,
+        10: 82,
+        11: 77,
+        12: 74,
     },
     "fl_keys": {
-        1: 73, 2: 74, 3: 76, 4: 79, 5: 82, 6: 85,
-        7: 87, 8: 87, 9: 86, 10: 82, 11: 78, 12: 75,
+        1: 73,
+        2: 74,
+        3: 76,
+        4: 79,
+        5: 82,
+        6: 85,
+        7: 87,
+        8: 87,
+        9: 86,
+        10: 82,
+        11: 78,
+        12: 75,
     },
     "fl_gulf_south": {
-        1: 64, 2: 65, 3: 69, 4: 74, 5: 80, 6: 85,
-        7: 87, 8: 87, 9: 85, 10: 79, 11: 72, 12: 66,
+        1: 64,
+        2: 65,
+        3: 69,
+        4: 74,
+        5: 80,
+        6: 85,
+        7: 87,
+        8: 87,
+        9: 85,
+        10: 79,
+        11: 72,
+        12: 66,
     },
     "fl_gulf_north": {
-        1: 58, 2: 58, 3: 63, 4: 69, 5: 77, 6: 83,
-        7: 86, 8: 86, 9: 83, 10: 75, 11: 66, 12: 60,
+        1: 58,
+        2: 58,
+        3: 63,
+        4: 69,
+        5: 77,
+        6: 83,
+        7: 86,
+        8: 86,
+        9: 83,
+        10: 75,
+        11: 66,
+        12: 60,
     },
     "gulf_central": {
-        1: 55, 2: 56, 3: 62, 4: 69, 5: 77, 6: 84,
-        7: 86, 8: 87, 9: 84, 10: 76, 11: 66, 12: 58,
+        1: 55,
+        2: 56,
+        3: 62,
+        4: 69,
+        5: 77,
+        6: 84,
+        7: 86,
+        8: 87,
+        9: 84,
+        10: 76,
+        11: 66,
+        12: 58,
     },
     "gulf_west": {
-        1: 57, 2: 58, 3: 64, 4: 71, 5: 78, 6: 84,
-        7: 86, 8: 86, 9: 84, 10: 77, 11: 68, 12: 60,
+        1: 57,
+        2: 58,
+        3: 64,
+        4: 71,
+        5: 78,
+        6: 84,
+        7: 86,
+        8: 86,
+        9: 84,
+        10: 77,
+        11: 68,
+        12: 60,
     },
     # ── Pacific Coast ────────────────────────────────────────────────────
     "pacific_nw": {
-        1: 48, 2: 47, 3: 48, 4: 50, 5: 52, 6: 54,
-        7: 56, 8: 57, 9: 57, 10: 55, 11: 52, 12: 49,
+        1: 48,
+        2: 47,
+        3: 48,
+        4: 50,
+        5: 52,
+        6: 54,
+        7: 56,
+        8: 57,
+        9: 57,
+        10: 55,
+        11: 52,
+        12: 49,
     },
     "pacific_norcal": {
-        1: 51, 2: 50, 3: 50, 4: 51, 5: 52, 6: 54,
-        7: 56, 8: 57, 9: 58, 10: 57, 11: 55, 12: 52,
+        1: 51,
+        2: 50,
+        3: 50,
+        4: 51,
+        5: 52,
+        6: 54,
+        7: 56,
+        8: 57,
+        9: 58,
+        10: 57,
+        11: 55,
+        12: 52,
     },
     "pacific_central_cal": {
-        1: 54, 2: 53, 3: 54, 4: 55, 5: 57, 6: 59,
-        7: 61, 8: 62, 9: 63, 10: 62, 11: 59, 12: 56,
+        1: 54,
+        2: 53,
+        3: 54,
+        4: 55,
+        5: 57,
+        6: 59,
+        7: 61,
+        8: 62,
+        9: 63,
+        10: 62,
+        11: 59,
+        12: 56,
     },
     "pacific_socal": {
-        1: 58, 2: 57, 3: 58, 4: 60, 5: 62, 6: 65,
-        7: 68, 8: 70, 9: 70, 10: 67, 11: 63, 12: 59,
+        1: 58,
+        2: 57,
+        3: 58,
+        4: 60,
+        5: 62,
+        6: 65,
+        7: 68,
+        8: 70,
+        9: 70,
+        10: 67,
+        11: 63,
+        12: 59,
     },
     "pacific_san_diego": {
-        1: 59, 2: 58, 3: 59, 4: 61, 5: 63, 6: 66,
-        7: 70, 8: 72, 9: 72, 10: 68, 11: 64, 12: 60,
+        1: 59,
+        2: 58,
+        3: 59,
+        4: 61,
+        5: 63,
+        6: 66,
+        7: 70,
+        8: 72,
+        9: 72,
+        10: 68,
+        11: 64,
+        12: 60,
     },
     "hawaii": {
-        1: 76, 2: 75, 3: 75, 4: 76, 5: 77, 6: 78,
-        7: 79, 8: 80, 9: 80, 10: 79, 11: 78, 12: 77,
+        1: 76,
+        2: 75,
+        3: 75,
+        4: 76,
+        5: 77,
+        6: 78,
+        7: 79,
+        8: 80,
+        9: 80,
+        10: 79,
+        11: 78,
+        12: 77,
     },
 }
 
@@ -107,79 +297,207 @@ _WATER_TEMPS: Dict[str, Dict[int, float]] = {
 # Used when live data is unavailable.  Format: {month: ((wind_lo, wind_hi), (wave_lo, wave_hi))}
 # ---------------------------------------------------------------------------
 
-_FALLBACK_CONDITIONS: Dict[str, Dict[int, Tuple[Tuple[float, float], Tuple[float, float]]]] = {
+_FALLBACK_CONDITIONS: Dict[
+    str, Dict[int, Tuple[Tuple[float, float], Tuple[float, float]]]
+] = {
     "atlantic_north": {
-        1: ((12, 28), (4, 8)), 2: ((12, 28), (4, 8)), 3: ((10, 24), (3, 7)),
-        4: ((8, 20), (2, 5)), 5: ((7, 16), (2, 4)), 6: ((6, 14), (1, 3)),
-        7: ((6, 12), (1, 3)), 8: ((6, 12), (1, 3)), 9: ((8, 18), (2, 5)),
-        10: ((10, 22), (3, 6)), 11: ((10, 24), (3, 7)), 12: ((12, 26), (4, 8)),
+        1: ((12, 28), (4, 8)),
+        2: ((12, 28), (4, 8)),
+        3: ((10, 24), (3, 7)),
+        4: ((8, 20), (2, 5)),
+        5: ((7, 16), (2, 4)),
+        6: ((6, 14), (1, 3)),
+        7: ((6, 12), (1, 3)),
+        8: ((6, 12), (1, 3)),
+        9: ((8, 18), (2, 5)),
+        10: ((10, 22), (3, 6)),
+        11: ((10, 24), (3, 7)),
+        12: ((12, 26), (4, 8)),
     },
     "atlantic_mid": {
-        1: ((10, 25), (3, 7)), 2: ((10, 25), (3, 7)), 3: ((9, 22), (3, 6)),
-        4: ((8, 18), (2, 5)), 5: ((7, 15), (1, 4)), 6: ((6, 13), (1, 3)),
-        7: ((5, 12), (1, 2)), 8: ((5, 12), (1, 2)), 9: ((7, 16), (2, 4)),
-        10: ((8, 18), (2, 5)), 11: ((9, 20), (3, 6)), 12: ((10, 24), (3, 7)),
+        1: ((10, 25), (3, 7)),
+        2: ((10, 25), (3, 7)),
+        3: ((9, 22), (3, 6)),
+        4: ((8, 18), (2, 5)),
+        5: ((7, 15), (1, 4)),
+        6: ((6, 13), (1, 3)),
+        7: ((5, 12), (1, 2)),
+        8: ((5, 12), (1, 2)),
+        9: ((7, 16), (2, 4)),
+        10: ((8, 18), (2, 5)),
+        11: ((9, 20), (3, 6)),
+        12: ((10, 24), (3, 7)),
     },
     "atlantic_south": {
-        1: ((8, 18), (2, 5)), 2: ((8, 18), (2, 5)), 3: ((8, 16), (2, 4)),
-        4: ((7, 14), (1, 3)), 5: ((6, 12), (1, 3)), 6: ((5, 11), (1, 2)),
-        7: ((5, 10), (1, 2)), 8: ((5, 10), (1, 2)), 9: ((6, 14), (1, 3)),
-        10: ((7, 15), (2, 4)), 11: ((7, 16), (2, 4)), 12: ((8, 18), (2, 5)),
+        1: ((8, 18), (2, 5)),
+        2: ((8, 18), (2, 5)),
+        3: ((8, 16), (2, 4)),
+        4: ((7, 14), (1, 3)),
+        5: ((6, 12), (1, 3)),
+        6: ((5, 11), (1, 2)),
+        7: ((5, 10), (1, 2)),
+        8: ((5, 10), (1, 2)),
+        9: ((6, 14), (1, 3)),
+        10: ((7, 15), (2, 4)),
+        11: ((7, 16), (2, 4)),
+        12: ((8, 18), (2, 5)),
     },
     "gulf": {
-        1: ((8, 18), (1, 4)), 2: ((8, 18), (1, 4)), 3: ((8, 16), (1, 3)),
-        4: ((7, 14), (1, 3)), 5: ((6, 12), (1, 2)), 6: ((5, 10), (1, 2)),
-        7: ((5, 10), (1, 2)), 8: ((5, 10), (1, 2)), 9: ((6, 14), (1, 3)),
-        10: ((7, 15), (1, 3)), 11: ((7, 16), (1, 3)), 12: ((8, 18), (1, 4)),
+        1: ((8, 18), (1, 4)),
+        2: ((8, 18), (1, 4)),
+        3: ((8, 16), (1, 3)),
+        4: ((7, 14), (1, 3)),
+        5: ((6, 12), (1, 2)),
+        6: ((5, 10), (1, 2)),
+        7: ((5, 10), (1, 2)),
+        8: ((5, 10), (1, 2)),
+        9: ((6, 14), (1, 3)),
+        10: ((7, 15), (1, 3)),
+        11: ((7, 16), (1, 3)),
+        12: ((8, 18), (1, 4)),
     },
     "pacific": {
-        1: ((10, 25), (4, 9)), 2: ((10, 24), (4, 8)), 3: ((10, 22), (3, 7)),
-        4: ((8, 18), (3, 6)), 5: ((8, 16), (2, 5)), 6: ((7, 15), (2, 4)),
-        7: ((6, 14), (2, 4)), 8: ((6, 14), (2, 4)), 9: ((7, 16), (2, 5)),
-        10: ((8, 18), (3, 6)), 11: ((10, 22), (3, 7)), 12: ((10, 25), (4, 9)),
+        1: ((10, 25), (4, 9)),
+        2: ((10, 24), (4, 8)),
+        3: ((10, 22), (3, 7)),
+        4: ((8, 18), (3, 6)),
+        5: ((8, 16), (2, 5)),
+        6: ((7, 15), (2, 4)),
+        7: ((6, 14), (2, 4)),
+        8: ((6, 14), (2, 4)),
+        9: ((7, 16), (2, 5)),
+        10: ((8, 18), (3, 6)),
+        11: ((10, 22), (3, 7)),
+        12: ((10, 25), (4, 9)),
     },
     "pacific_south": {
-        1: ((6, 16), (3, 6)), 2: ((6, 16), (3, 6)), 3: ((6, 14), (2, 5)),
-        4: ((5, 12), (2, 4)), 5: ((5, 10), (2, 4)), 6: ((4, 10), (1, 3)),
-        7: ((4, 8), (1, 3)), 8: ((4, 8), (1, 3)), 9: ((5, 10), (2, 4)),
-        10: ((5, 12), (2, 5)), 11: ((6, 14), (3, 6)), 12: ((6, 16), (3, 6)),
+        1: ((6, 16), (3, 6)),
+        2: ((6, 16), (3, 6)),
+        3: ((6, 14), (2, 5)),
+        4: ((5, 12), (2, 4)),
+        5: ((5, 10), (2, 4)),
+        6: ((4, 10), (1, 3)),
+        7: ((4, 8), (1, 3)),
+        8: ((4, 8), (1, 3)),
+        9: ((5, 10), (2, 4)),
+        10: ((5, 12), (2, 5)),
+        11: ((6, 14), (3, 6)),
+        12: ((6, 16), (3, 6)),
     },
     "hawaii_conditions": {
-        1: ((10, 22), (3, 8)), 2: ((10, 22), (3, 8)), 3: ((10, 20), (2, 6)),
-        4: ((8, 18), (2, 5)), 5: ((8, 16), (2, 4)), 6: ((8, 16), (1, 3)),
-        7: ((8, 16), (1, 3)), 8: ((8, 16), (1, 3)), 9: ((8, 16), (2, 4)),
-        10: ((8, 18), (2, 5)), 11: ((10, 20), (3, 6)), 12: ((10, 22), (3, 8)),
+        1: ((10, 22), (3, 8)),
+        2: ((10, 22), (3, 8)),
+        3: ((10, 20), (2, 6)),
+        4: ((8, 18), (2, 5)),
+        5: ((8, 16), (2, 4)),
+        6: ((8, 16), (1, 3)),
+        7: ((8, 16), (1, 3)),
+        8: ((8, 16), (1, 3)),
+        9: ((8, 16), (2, 4)),
+        10: ((8, 18), (2, 5)),
+        11: ((10, 20), (3, 6)),
+        12: ((10, 22), (3, 8)),
     },
 }
 
 _FALLBACK_WIND_DIR: Dict[str, Dict[int, str]] = {
     "atlantic_north": {
-        1: "NW", 2: "NW", 3: "NW", 4: "SW", 5: "SW", 6: "SW",
-        7: "SW", 8: "SW", 9: "NE", 10: "NE", 11: "NW", 12: "NW",
+        1: "NW",
+        2: "NW",
+        3: "NW",
+        4: "SW",
+        5: "SW",
+        6: "SW",
+        7: "SW",
+        8: "SW",
+        9: "NE",
+        10: "NE",
+        11: "NW",
+        12: "NW",
     },
     "atlantic_mid": {
-        1: "NW", 2: "NW", 3: "SW", 4: "SW", 5: "SW", 6: "SW",
-        7: "SW", 8: "SW", 9: "NE", 10: "NE", 11: "NW", 12: "NW",
+        1: "NW",
+        2: "NW",
+        3: "SW",
+        4: "SW",
+        5: "SW",
+        6: "SW",
+        7: "SW",
+        8: "SW",
+        9: "NE",
+        10: "NE",
+        11: "NW",
+        12: "NW",
     },
     "atlantic_south": {
-        1: "NW", 2: "NW", 3: "SW", 4: "SE", 5: "SE", 6: "SE",
-        7: "SE", 8: "SE", 9: "NE", 10: "NE", 11: "NW", 12: "NW",
+        1: "NW",
+        2: "NW",
+        3: "SW",
+        4: "SE",
+        5: "SE",
+        6: "SE",
+        7: "SE",
+        8: "SE",
+        9: "NE",
+        10: "NE",
+        11: "NW",
+        12: "NW",
     },
     "gulf": {
-        1: "N", 2: "N", 3: "SE", 4: "SE", 5: "SE", 6: "S",
-        7: "S", 8: "S", 9: "SE", 10: "N", 11: "N", 12: "N",
+        1: "N",
+        2: "N",
+        3: "SE",
+        4: "SE",
+        5: "SE",
+        6: "S",
+        7: "S",
+        8: "S",
+        9: "SE",
+        10: "N",
+        11: "N",
+        12: "N",
     },
     "pacific": {
-        1: "NW", 2: "NW", 3: "NW", 4: "NW", 5: "NW", 6: "NW",
-        7: "NW", 8: "NW", 9: "NW", 10: "NW", 11: "NW", 12: "NW",
+        1: "NW",
+        2: "NW",
+        3: "NW",
+        4: "NW",
+        5: "NW",
+        6: "NW",
+        7: "NW",
+        8: "NW",
+        9: "NW",
+        10: "NW",
+        11: "NW",
+        12: "NW",
     },
     "pacific_south": {
-        1: "W", 2: "W", 3: "W", 4: "W", 5: "W", 6: "W",
-        7: "W", 8: "W", 9: "W", 10: "W", 11: "W", 12: "W",
+        1: "W",
+        2: "W",
+        3: "W",
+        4: "W",
+        5: "W",
+        6: "W",
+        7: "W",
+        8: "W",
+        9: "W",
+        10: "W",
+        11: "W",
+        12: "W",
     },
     "hawaii_conditions": {
-        1: "NE", 2: "NE", 3: "NE", 4: "NE", 5: "NE", 6: "NE",
-        7: "NE", 8: "NE", 9: "NE", 10: "NE", 11: "NE", 12: "NE",
+        1: "NE",
+        2: "NE",
+        3: "NE",
+        4: "NE",
+        5: "NE",
+        6: "NE",
+        7: "NE",
+        8: "NE",
+        9: "NE",
+        10: "NE",
+        11: "NE",
+        12: "NE",
     },
 }
 
@@ -257,7 +575,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "midatlantic",
         "conditions_region": "atlantic_north",
     },
-
     # ── Mid-Atlantic ───────────────────────────────────────────────────────
     {
         "id": "ocean-city-md",
@@ -286,7 +603,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "atlantic_mid",
         "temp_offset": 2,
     },
-
     # ── North Carolina ─────────────────────────────────────────────────────
     {
         "id": "outer-banks-nc",
@@ -355,7 +671,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "nc_south",
         "conditions_region": "atlantic_mid",
     },
-
     # ── South Carolina ─────────────────────────────────────────────────────
     {
         "id": "myrtle-beach-sc",
@@ -396,7 +711,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "sc_ga",
         "conditions_region": "atlantic_south",
     },
-
     # ── Georgia ────────────────────────────────────────────────────────────
     {
         "id": "tybee-island-ga",
@@ -411,7 +725,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "sc_ga",
         "conditions_region": "atlantic_south",
     },
-
     # ── Florida East Coast ─────────────────────────────────────────────────
     {
         "id": "jacksonville-beach-fl",
@@ -520,7 +833,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "fl_south",
         "conditions_region": "atlantic_south",
     },
-
     # ── Florida Keys ───────────────────────────────────────────────────────
     {
         "id": "key-west-fl",
@@ -535,7 +847,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "fl_keys",
         "conditions_region": "atlantic_south",
     },
-
     # ── Florida Gulf Coast ─────────────────────────────────────────────────
     {
         "id": "naples-fl",
@@ -629,7 +940,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "fl_gulf_north",
         "conditions_region": "gulf",
     },
-
     # ── Gulf Coast (AL / MS / LA / TX) ─────────────────────────────────────
     {
         "id": "gulf-shores-al",
@@ -709,7 +1019,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "gulf_west",
         "conditions_region": "gulf",
     },
-
     # ── California (South) ────────────────────────────────────────────────
     {
         "id": "san-diego-ca",
@@ -846,7 +1155,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "pacific_south",
         "temp_offset": 2,
     },
-
     # ── California (Central) ──────────────────────────────────────────────
     {
         "id": "pismo-beach-ca",
@@ -914,7 +1222,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "pacific_norcal",
         "conditions_region": "pacific",
     },
-
     # ── California (North) / San Francisco Bay ────────────────────────────
     {
         "id": "san-francisco-ca",
@@ -956,7 +1263,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "pacific",
         "temp_offset": -1,
     },
-
     # ── Oregon ────────────────────────────────────────────────────────────
     {
         "id": "brookings-or",
@@ -1039,7 +1345,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "pacific",
         "temp_offset": -1,
     },
-
     # ── Washington ────────────────────────────────────────────────────────
     {
         "id": "long-beach-wa",
@@ -1095,7 +1400,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "pacific",
         "temp_offset": 2,
     },
-
     # ── Hawaii ────────────────────────────────────────────────────────────
     {
         "id": "honolulu-hi",
@@ -1151,7 +1455,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "hawaii",
         "conditions_region": "hawaii_conditions",
     },
-
     # ── New England ──────────────────────────────────────────────────────
     {
         "id": "bar-harbor-me",
@@ -1236,7 +1539,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "atlantic_north",
         "temp_offset": 1,
     },
-
     # ── Mid-Atlantic additions ───────────────────────────────────────────
     {
         "id": "rehoboth-beach-de",
@@ -1265,7 +1567,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "atlantic_mid",
         "temp_offset": 1,
     },
-
     # ── North Carolina additions ─────────────────────────────────────────
     {
         "id": "topsail-island-nc",
@@ -1294,7 +1595,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "nc_south",
         "conditions_region": "atlantic_mid",
     },
-
     # ── South Carolina additions ─────────────────────────────────────────
     {
         "id": "pawleys-island-sc",
@@ -1322,7 +1622,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "sc_ga",
         "conditions_region": "atlantic_south",
     },
-
     # ── Georgia additions ────────────────────────────────────────────────
     {
         "id": "st-simons-island-ga",
@@ -1337,7 +1636,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "sc_ga",
         "conditions_region": "atlantic_south",
     },
-
     # ── Florida additions ────────────────────────────────────────────────
     {
         "id": "amelia-island-fl",
@@ -1431,7 +1729,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "fl_gulf_north",
         "conditions_region": "gulf",
     },
-
     # ── Gulf Coast additions ─────────────────────────────────────────────
     {
         "id": "dauphin-island-al",
@@ -1485,7 +1782,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "gulf_west",
         "conditions_region": "gulf",
     },
-
     # ── California additions ─────────────────────────────────────────────
     {
         "id": "newport-beach-ca",
@@ -1513,7 +1809,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "pacific_socal",
         "conditions_region": "pacific_south",
     },
-
     # ── Oregon additions ─────────────────────────────────────────────────
     {
         "id": "pacific-city-or",
@@ -1541,7 +1836,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "temp_region": "pacific_nw",
         "conditions_region": "pacific",
     },
-
     # ── Washington additions ─────────────────────────────────────────────
     {
         "id": "neah-bay-wa",
@@ -1557,7 +1851,6 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
         "conditions_region": "pacific",
         "temp_offset": -1,
     },
-
     # ── Hawaii additions ─────────────────────────────────────────────────
     {
         "id": "hilo-hi",
@@ -1729,13 +2022,25 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
 # ---------------------------------------------------------------------------
 
 _FISH_REGION_BY_STATE: Dict[str, str] = {
-    "ME": "northeast", "NH": "northeast", "MA": "northeast",
-    "RI": "northeast", "CT": "northeast", "NY": "northeast",
+    "ME": "northeast",
+    "NH": "northeast",
+    "MA": "northeast",
+    "RI": "northeast",
+    "CT": "northeast",
+    "NY": "northeast",
     "NJ": "northeast",
-    "DE": "midatlantic", "MD": "midatlantic", "VA": "midatlantic",
-    "NC": "southeast", "SC": "southeast", "GA": "southeast",
-    "AL": "gulf", "MS": "gulf", "LA": "gulf", "TX": "gulf",
-    "OR": "pacific_nw", "WA": "pacific_nw",
+    "DE": "midatlantic",
+    "MD": "midatlantic",
+    "VA": "midatlantic",
+    "NC": "southeast",
+    "SC": "southeast",
+    "GA": "southeast",
+    "AL": "gulf",
+    "MS": "gulf",
+    "LA": "gulf",
+    "TX": "gulf",
+    "OR": "pacific_nw",
+    "WA": "pacific_nw",
     "HI": "hawaii",
 }
 
@@ -1777,7 +2082,8 @@ def get_monthly_water_temps(location: Dict[str, Any]) -> Dict[int, float]:
 
 
 def get_fallback_conditions(
-    location: Dict[str, Any], month: int,
+    location: Dict[str, Any],
+    month: int,
 ) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
     """Return (wind_range, wave_range, wind_dir) fallback for the given month."""
     region = location.get("conditions_region", "atlantic_mid")
@@ -1792,6 +2098,7 @@ def get_fallback_conditions(
 # ---------------------------------------------------------------------------
 # Geocoding + nearest location search
 # ---------------------------------------------------------------------------
+
 
 def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Great-circle distance in miles between two lat/lng points."""
@@ -1885,4 +2192,4 @@ def find_nearby_live_cams(
 
 def all_locations_sorted() -> List[Dict[str, Any]]:
     """Return all locations sorted by state then name (for browse view)."""
-    return sorted(COASTAL_LOCATIONS, key=lambda l: (l["state"], l["name"]))
+    return sorted(COASTAL_LOCATIONS, key=lambda loc: (loc["state"], loc["name"]))

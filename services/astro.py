@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from zoneinfo import ZoneInfo
 
@@ -19,8 +19,11 @@ def _safe_zone(tz_name: str) -> ZoneInfo:
         return ZoneInfo(tz_name)
     except Exception:
         if tz_name != _DEFAULT_TZ:
-            logger.warning("Invalid timezone %r in astro; using %s", tz_name, _DEFAULT_TZ)
+            logger.warning(
+                "Invalid timezone %r in astro; using %s", tz_name, _DEFAULT_TZ
+            )
         return ZoneInfo(_DEFAULT_TZ)
+
 
 # Default coordinates (overridden per location; only used when no location set)
 _LAT = 34.2104
@@ -74,10 +77,9 @@ def _sun_times(
     lat_rad = math.radians(lat)
 
     # Hour angle at sunrise/sunset (degrees)
-    cos_ha = (
-        math.cos(math.radians(90.833)) / (math.cos(lat_rad) * math.cos(decl))
-        - math.tan(lat_rad) * math.tan(decl)
-    )
+    cos_ha = math.cos(math.radians(90.833)) / (
+        math.cos(lat_rad) * math.cos(decl)
+    ) - math.tan(lat_rad) * math.tan(decl)
     # Clamp for polar regions
     cos_ha = max(-1.0, min(1.0, cos_ha))
     ha = math.degrees(math.acos(cos_ha))
@@ -161,10 +163,9 @@ def _sun_event_time(
         + 0.00148 * math.sin(3 * gamma)
     )
     lat_rad = math.radians(lat)
-    cos_ha = (
-        math.cos(math.radians(zenith_deg)) / (math.cos(lat_rad) * math.cos(decl))
-        - math.tan(lat_rad) * math.tan(decl)
-    )
+    cos_ha = math.cos(math.radians(zenith_deg)) / (
+        math.cos(lat_rad) * math.cos(decl)
+    ) - math.tan(lat_rad) * math.tan(decl)
     cos_ha = max(-1.0, min(1.0, cos_ha))
     ha = math.degrees(math.acos(cos_ha))
     event_utc = 720 - 4 * (lng + ha if rising else lng - ha) - eqtime
@@ -172,12 +173,18 @@ def _sun_event_time(
     return (base + timedelta(minutes=event_utc)).astimezone(tz)
 
 
-def compute_twilight_times(dt: datetime, lat: float, lng: float, tz_name: str) -> Dict[str, str]:
+def compute_twilight_times(
+    dt: datetime, lat: float, lng: float, tz_name: str
+) -> Dict[str, str]:
     """Compute civil/nautical/astronomical dawn+dusk and golden hour windows."""
     civil_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=96.0, rising=True)
     civil_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=96.0, rising=False)
-    nautical_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=102.0, rising=True)
-    nautical_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=102.0, rising=False)
+    nautical_dawn = _sun_event_time(
+        dt, lat, lng, tz_name, zenith_deg=102.0, rising=True
+    )
+    nautical_dusk = _sun_event_time(
+        dt, lat, lng, tz_name, zenith_deg=102.0, rising=False
+    )
     astro_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=108.0, rising=True)
     astro_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=108.0, rising=False)
     sunrise, sunset = _sun_times(dt, lat, lng, tz_name)

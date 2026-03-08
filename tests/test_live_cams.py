@@ -12,8 +12,12 @@ def test_find_nearby_live_cams_within_radius_sorted():
 
 
 def test_find_nearby_live_cams_can_exclude_pier_cams():
-    all_cams = find_nearby_live_cams(34.2257, -77.7950, max_miles=10, include_pier_cams=True)
-    beach_only = find_nearby_live_cams(34.2257, -77.7950, max_miles=10, include_pier_cams=False)
+    all_cams = find_nearby_live_cams(
+        34.2257, -77.7950, max_miles=10, include_pier_cams=True
+    )
+    beach_only = find_nearby_live_cams(
+        34.2257, -77.7950, max_miles=10, include_pier_cams=False
+    )
 
     assert any(cam["cam_type"] == "pier" for cam in all_cams)
     assert all(cam["cam_type"] != "pier" for cam in beach_only)
@@ -25,9 +29,18 @@ def test_live_cam_context_parses_string_fishing_types(monkeypatch):
     monkeypatch.setattr(
         views,
         "find_nearby_live_cams",
-        lambda *_args, **kwargs: [{"url": "https://cam.example", "name": "Example", "cam_type": "pier", "distance_miles": 2.5}],
+        lambda *_args, **kwargs: [
+            {
+                "url": "https://cam.example",
+                "name": "Example",
+                "cam_type": "pier",
+                "distance_miles": 2.5,
+            }
+        ],
     )
-    monkeypatch.setattr(views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"})
+    monkeypatch.setattr(
+        views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"}
+    )
 
     context = views._build_live_cam_context(
         {"lat": 34.0, "lng": -77.0},
@@ -44,7 +57,14 @@ def test_live_cam_context_handles_unknown_status(monkeypatch):
     monkeypatch.setattr(
         views,
         "find_nearby_live_cams",
-        lambda *_args, **kwargs: [{"url": "https://cam.example", "name": "Example", "cam_type": "beach", "distance_miles": 1.1}],
+        lambda *_args, **kwargs: [
+            {
+                "url": "https://cam.example",
+                "name": "Example",
+                "cam_type": "beach",
+                "distance_miles": 1.1,
+            }
+        ],
     )
 
     def _explode(_url):
@@ -63,9 +83,22 @@ def test_live_cam_context_treats_fishing_types_case_insensitively(monkeypatch):
     monkeypatch.setattr(
         views,
         "find_nearby_live_cams",
-        lambda *_args, **kwargs: [{"url": "https://cam.example", "name": "Example", "cam_type": "pier", "distance_miles": 2.0}] if kwargs.get("include_pier_cams") else [],
+        lambda *_args, **kwargs: (
+            [
+                {
+                    "url": "https://cam.example",
+                    "name": "Example",
+                    "cam_type": "pier",
+                    "distance_miles": 2.0,
+                }
+            ]
+            if kwargs.get("include_pier_cams")
+            else []
+        ),
     )
-    monkeypatch.setattr(views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"})
+    monkeypatch.setattr(
+        views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"}
+    )
 
     context = views._build_live_cam_context(
         {"lat": 34.0, "lng": -77.0},
@@ -73,4 +106,6 @@ def test_live_cam_context_treats_fishing_types_case_insensitively(monkeypatch):
     )
 
     assert context["pier_cams_enabled"] is True
-    assert context["nearby_live_cams"], "Expected pier cams to remain visible for mixed-case profile values"
+    assert context["nearby_live_cams"], (
+        "Expected pier cams to remain visible for mixed-case profile values"
+    )

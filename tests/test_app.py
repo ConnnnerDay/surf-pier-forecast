@@ -75,8 +75,6 @@ class TestBasicRoutes:
         resp = client.get("/f/nonexistent-location")
         assert resp.status_code == 404
 
-
-
     def test_shared_forecast_renders_full_dashboard_shell(self, client):
         from locations import all_locations_sorted
 
@@ -91,28 +89,30 @@ class TestBasicRoutes:
     def test_setup_anon_favorite_toggle_is_client_side(self, client):
         resp = client.get("/setup")
         assert resp.status_code == 200
-        assert b'data-favorite-btn' in resp.data
-        assert b'/setup/favorite/' not in resp.data
+        assert b"data-favorite-btn" in resp.data
+        assert b"/setup/favorite/" not in resp.data
 
 
 def test_live_cams_tab_present_in_nav():
     from pathlib import Path
+
     nav = Path("templates/partials/_main_nav.html").read_text(encoding="utf-8")
     assert "Live Cams" in nav
 
 
-
-
 def test_account_nav_is_single_link():
     from pathlib import Path
+
     nav = Path("templates/partials/_main_nav.html").read_text(encoding="utf-8")
     assert "Account" in nav
     assert "app-nav-submenu" not in nav
     assert "views.setup" not in nav
     assert "views.profile" not in nav
 
+
 def test_live_cams_have_dedicated_template():
     from pathlib import Path
+
     template = Path("templates/live_cams.html").read_text(encoding="utf-8")
     assert "Open live cam" in template
     assert "live-cam-status" in template

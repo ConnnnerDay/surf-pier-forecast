@@ -27,7 +27,6 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 # Allow running from the project root or from the scripts/ dir
@@ -113,7 +112,9 @@ def main(argv: list[str] | None = None) -> int:
         for sp in species_list:
             try:
                 reg = scrape_regulation(sp, state)
-                if reg and (reg.get("min_size") or reg.get("bag_limit") or reg.get("season")):
+                if reg and (
+                    reg.get("min_size") or reg.get("bag_limit") or reg.get("season")
+                ):
                     logger.info("  [%s] %-42s  ✓ OK", state, sp)
                     totals["ok"] += 1
                 else:

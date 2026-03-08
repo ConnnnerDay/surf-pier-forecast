@@ -1,10 +1,13 @@
 """Tests for domain.forecast helper functions."""
 
-import pytest
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from services.astro import compute_lunar_details, compute_solunar_times, compute_twilight_times
+from services.astro import (
+    compute_lunar_details,
+    compute_solunar_times,
+    compute_twilight_times,
+)
 
 from domain.forecast import (
     _seasonal_averages,
@@ -64,8 +67,12 @@ class TestClassifyConditions:
         assert isinstance(result, str)
 
     def test_west_coast_offshore_east_wind_bonus(self):
-        good = classify_conditions((6, 10), (1, 2), wind_dir="E", coast="west", water_temp_f=65)
-        bad = classify_conditions((6, 10), (1, 2), wind_dir="W", coast="west", water_temp_f=65)
+        good = classify_conditions(
+            (6, 10), (1, 2), wind_dir="E", coast="west", water_temp_f=65
+        )
+        bad = classify_conditions(
+            (6, 10), (1, 2), wind_dir="W", coast="west", water_temp_f=65
+        )
         order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
         assert order[good] >= order[bad]
 
@@ -239,8 +246,16 @@ def test_generate_forecast_uv_reflects_selected_location(monkeypatch):
         def get_sun_times(self, now, lat, *_args, **_kwargs):
             # Simulate different daylight windows by location latitude.
             if lat > 40:
-                return now - timedelta(hours=1), now + timedelta(hours=8), "11:00 AM / 8:00 PM"
-            return now - timedelta(hours=4), now + timedelta(hours=1), "8:00 AM / 1:00 PM"
+                return (
+                    now - timedelta(hours=1),
+                    now + timedelta(hours=8),
+                    "11:00 AM / 8:00 PM",
+                )
+            return (
+                now - timedelta(hours=4),
+                now + timedelta(hours=1),
+                "8:00 AM / 1:00 PM",
+            )
 
         def get_solunar_times(self, *_args, **_kwargs):
             return {}
@@ -276,8 +291,22 @@ def test_generate_forecast_uv_reflects_selected_location(monkeypatch):
     monkeypatch.setattr(fc, "build_activity_timeline", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "build_multiday_outlook", lambda *_args, **_kwargs: [])
 
-    north_location = {"id": "north", "name": "North", "state": "ME", "lat": 45.0, "lng": -68.0, "timezone": "America/New_York"}
-    south_location = {"id": "south", "name": "South", "state": "FL", "lat": 25.0, "lng": -80.0, "timezone": "America/New_York"}
+    north_location = {
+        "id": "north",
+        "name": "North",
+        "state": "ME",
+        "lat": 45.0,
+        "lng": -68.0,
+        "timezone": "America/New_York",
+    }
+    south_location = {
+        "id": "south",
+        "name": "South",
+        "state": "FL",
+        "lat": 25.0,
+        "lng": -80.0,
+        "timezone": "America/New_York",
+    }
 
     north = fc.generate_forecast(north_location)
     south = fc.generate_forecast(south_location)
@@ -292,12 +321,12 @@ def test_estimate_uv_index_scales_by_latitude():
     # Use a fixed solar-noon-ish time so timing is not the differentiator
     now = datetime(2024, 6, 21, 12, 0, 0, tzinfo=tz)
     sunrise = now - timedelta(hours=6)  # 6 AM
-    sunset = now + timedelta(hours=6)   # 6 PM  (noon = pct=0.5, bell peak)
+    sunset = now + timedelta(hours=6)  # 6 PM  (noon = pct=0.5, bell peak)
 
-    uv_tropical = _estimate_uv_index(now, sunrise, sunset, lat=20.0)   # Hawaii
-    uv_florida   = _estimate_uv_index(now, sunrise, sunset, lat=27.0)   # FL
-    uv_nc        = _estimate_uv_index(now, sunrise, sunset, lat=35.0)   # NC
-    uv_maine     = _estimate_uv_index(now, sunrise, sunset, lat=44.0)   # ME
+    uv_tropical = _estimate_uv_index(now, sunrise, sunset, lat=20.0)  # Hawaii
+    uv_florida = _estimate_uv_index(now, sunrise, sunset, lat=27.0)  # FL
+    uv_nc = _estimate_uv_index(now, sunrise, sunset, lat=35.0)  # NC
+    uv_maine = _estimate_uv_index(now, sunrise, sunset, lat=44.0)  # ME
 
     # Each location should have a lower UV than the one closer to the equator
     assert uv_tropical > uv_florida > uv_nc > uv_maine
@@ -373,13 +402,24 @@ def test_build_multiday_outlook_uses_daily_nws_period_data(monkeypatch):
         },
     ]
 
-    monkeypatch.setattr("domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods)
-    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {})
-    monkeypatch.setattr("domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None))
+    monkeypatch.setattr(
+        "domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods
+    )
+    monkeypatch.setattr(
+        "domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        "domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None)
+    )
 
     outlook = build_multiday_outlook(
         now,
-        {"lat": 34.2, "lng": -77.8, "timezone": "America/New_York", "conditions_region": "atlantic_mid"},
+        {
+            "lat": 34.2,
+            "lng": -77.8,
+            "timezone": "America/New_York",
+            "conditions_region": "atlantic_mid",
+        },
     )
 
     assert [d["day"] for d in outlook] == ["Friday", "Saturday", "Sunday"]
@@ -439,13 +479,24 @@ def test_build_multiday_outlook_does_not_match_wrong_period_by_name(monkeypatch)
         },
     ]
 
-    monkeypatch.setattr("domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods)
-    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {})
-    monkeypatch.setattr("domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None))
+    monkeypatch.setattr(
+        "domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods
+    )
+    monkeypatch.setattr(
+        "domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        "domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None)
+    )
 
     outlook = build_multiday_outlook(
         now,
-        {"lat": 34.2, "lng": -77.8, "timezone": "America/New_York", "conditions_region": "atlantic_mid"},
+        {
+            "lat": 34.2,
+            "lng": -77.8,
+            "timezone": "America/New_York",
+            "conditions_region": "atlantic_mid",
+        },
     )
 
     # Friday must use the real Friday period, not "Friday Outlook" whose
@@ -455,7 +506,9 @@ def test_build_multiday_outlook_does_not_match_wrong_period_by_name(monkeypatch)
     assert [d["waves"] for d in outlook] == ["2-3 ft", "1-2 ft", "4-6 ft"]
 
 
-def test_build_multiday_outlook_estimates_waves_from_daily_wind_when_missing(monkeypatch):
+def test_build_multiday_outlook_estimates_waves_from_daily_wind_when_missing(
+    monkeypatch,
+):
     now = datetime(2026, 3, 5, 12, 0, tzinfo=ZoneInfo("America/New_York"))
     mock_periods = [
         {
@@ -484,13 +537,24 @@ def test_build_multiday_outlook_estimates_waves_from_daily_wind_when_missing(mon
         },
     ]
 
-    monkeypatch.setattr("domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods)
-    monkeypatch.setattr("domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {})
-    monkeypatch.setattr("domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None))
+    monkeypatch.setattr(
+        "domain.forecast._fetch_nws_extended", lambda *_args, **_kwargs: mock_periods
+    )
+    monkeypatch.setattr(
+        "domain.forecast.compute_solunar_times", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        "domain.forecast._sun_times", lambda *_args, **_kwargs: (None, None)
+    )
 
     outlook = build_multiday_outlook(
         now,
-        {"lat": 34.2, "lng": -77.8, "timezone": "America/New_York", "conditions_region": "atlantic_mid"},
+        {
+            "lat": 34.2,
+            "lng": -77.8,
+            "timezone": "America/New_York",
+            "conditions_region": "atlantic_mid",
+        },
     )
 
     assert [d["waves"] for d in outlook] == ["1-2 ft", "2-4 ft", "3-6 ft"]
@@ -544,7 +608,8 @@ def test_build_multiday_outlook_uses_marine_zone_when_gridpoint_fails(monkeypatc
     outlook = build_multiday_outlook(
         now,
         {
-            "lat": 34.2, "lng": -77.8,
+            "lat": 34.2,
+            "lng": -77.8,
             "nws_zone": "AMZ158",
             "timezone": "America/New_York",
             "conditions_region": "atlantic_mid",
@@ -559,7 +624,11 @@ def test_build_multiday_outlook_uses_marine_zone_when_gridpoint_fails(monkeypatc
 def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch):
     from domain import forecast as fc
 
-    monkeypatch.setattr(fc, "build_species_ranking", lambda *_args, **_kwargs: [{"name": "Red drum (puppy drum)"}])
+    monkeypatch.setattr(
+        fc,
+        "build_species_ranking",
+        lambda *_args, **_kwargs: [{"name": "Red drum (puppy drum)"}],
+    )
     monkeypatch.setattr(fc, "build_rig_recommendations", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "build_bait_ranking", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(fc, "build_bite_alerts", lambda *_args, **_kwargs: [])
@@ -575,11 +644,21 @@ def test_personalize_forecast_uses_location_fish_region_for_calendar(monkeypatch
     monkeypatch.setattr(fc, "build_species_calendar", _calendar)
 
     base = {
-        "conditions": {"water_temp_f": 68, "wind": "SW 8-12 kt", "waves": "2-3 ft", "verdict": "Good"},
+        "conditions": {
+            "water_temp_f": 68,
+            "wind": "SW 8-12 kt",
+            "waves": "2-3 ft",
+            "verdict": "Good",
+        },
         "tide_state": "incoming",
     }
     profile = {"fishing_types": ["pier"]}
-    location = {"state": "NC", "fish_region": "southeast", "timezone": "America/New_York", "conditions_region": "atlantic_mid"}
+    location = {
+        "state": "NC",
+        "fish_region": "southeast",
+        "timezone": "America/New_York",
+        "conditions_region": "atlantic_mid",
+    }
 
     fc.personalize_forecast(base, profile, location=location)
 
@@ -593,14 +672,44 @@ def test_tide_predictions_fall_back_to_available_date_when_today_missing(monkeyp
 
     def _fake_fetch(*_args, **_kwargs):
         return [
-            {"date_str": "20260103", "time": "1:00 AM", "type": "High", "height_ft": "4.2", "hour": 1.0, "height_num": 4.2},
-            {"date_str": "20260103", "time": "7:00 AM", "type": "Low", "height_ft": "0.9", "hour": 7.0, "height_num": 0.9},
+            {
+                "date_str": "20260103",
+                "time": "1:00 AM",
+                "type": "High",
+                "height_ft": "4.2",
+                "hour": 1.0,
+                "height_num": 4.2,
+            },
+            {
+                "date_str": "20260103",
+                "time": "7:00 AM",
+                "type": "Low",
+                "height_ft": "0.9",
+                "hour": 7.0,
+                "height_num": 0.9,
+            },
         ]
 
     monkeypatch.setattr("domain.forecast.fetch_tide_predictions", _fake_fetch)
-    monkeypatch.setattr("domain.forecast.build_tide_chart_svg", lambda tides: {"path": "M0,0", "fill_path": "M0,0Z", "markers": [], "viewBox": "0 0 600 140", "width": 600, "height": 140} if tides else {})
+    monkeypatch.setattr(
+        "domain.forecast.build_tide_chart_svg",
+        lambda tides, now_hour=None: (
+            {
+                "path": "M0,0",
+                "fill_path": "M0,0Z",
+                "markers": [],
+                "viewBox": "0 0 600 140",
+                "width": 600,
+                "height": 140,
+            }
+            if tides
+            else {}
+        ),
+    )
 
-    out = service.get_tide_predictions(datetime(2026, 1, 2, 22, 0), {"coops_station": "123"}, "America/New_York")
+    out = service.get_tide_predictions(
+        datetime(2026, 1, 2, 22, 0), {"coops_station": "123"}, "America/New_York"
+    )
 
     assert len(out["tides"]) == 2
     assert out["tides"][0]["date_str"] == "20260103"

@@ -17,6 +17,8 @@ from threading import Lock
 from time import monotonic
 from typing import Dict, List, Optional
 
+from storage.species_loader import SPECIES_DB
+
 _STALE_MONTHS = 6  # snapshot data older than this is flagged as potentially outdated
 
 
@@ -30,11 +32,12 @@ def _months_since(date_str: str) -> float:
     except Exception:
         return float("inf")
 
+
 logger = logging.getLogger(__name__)
 
-from storage.species_loader import SPECIES_DB
-
-_DEFAULT_REGULATIONS_PATH = Path(__file__).resolve().parent / "storage" / "regulations_data.json"
+_DEFAULT_REGULATIONS_PATH = (
+    Path(__file__).resolve().parent / "storage" / "regulations_data.json"
+)
 _RELOAD_INTERVAL_SECONDS = 300.0
 
 _STATE_REGULATION_SOURCES: Dict[str, str] = {
@@ -148,7 +151,12 @@ def _load_data_file() -> _RegData:
     custom_name_map = raw.get("name_map")
     if isinstance(custom_name_map, dict):
         for name, key in custom_name_map.items():
-            if isinstance(name, str) and isinstance(key, str) and name.strip() and key.strip():
+            if (
+                isinstance(name, str)
+                and isinstance(key, str)
+                and name.strip()
+                and key.strip()
+            ):
                 clean_name = name.strip()
                 clean_key = key.strip()
                 data.name_map[clean_name] = clean_key
@@ -236,6 +244,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
     # ── 1. Try live scraper ──────────────────────────────────────────
     try:
         from storage.reg_scraper import scrape_regulation
+
         scraped = scrape_regulation(species_name, state_key)
         if scraped:
             payload.update(scraped)
@@ -270,7 +279,9 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
     if matched:
         payload.update(matched)
         payload["data_status"] = "snapshot"
-        payload["is_stale"] = _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS
+        payload["is_stale"] = (
+            _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS
+        )
         if payload.get("source"):
             payload["snapshot_source"] = payload["source"]
         return payload
