@@ -243,6 +243,9 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
                 break
     state_regs = _REG_DATA.states.get(state_key)
     if state_regs and (not species_key or species_key not in state_regs):
+        # Reset species_key before searching state-level variants so a stale
+        # cross-state key can't mask a successful variant match (or a genuine miss).
+        species_key = None
         for normalized_name in normalized_variants:
             if normalized_name in state_regs:
                 species_key = normalized_name

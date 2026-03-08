@@ -538,7 +538,8 @@
             var profilePrompted = sessionStorage.getItem('profile_prompted');
             if (!profilePrompted) {
                 sessionStorage.setItem('profile_prompted', 'true');
-                window.location.href = '/profile';
+                showToast('Set up your profile for a personalized forecast\u2026');
+                setTimeout(function() { window.location.href = '/profile'; }, 1500);
                 return;
             }
             return;
@@ -614,6 +615,8 @@
         } else if (navigator.clipboard) {
             navigator.clipboard.writeText(url).then(function() {
                 showToast('Link copied!');
+            }).catch(function() {
+                prompt('Copy this link:', url);
             });
         } else {
             prompt('Copy this link:', url);
@@ -630,6 +633,8 @@
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(full).then(function() {
                             showToast('Summary copied!');
+                        }).catch(function() {
+                            prompt('Copy this summary:', full);
                         });
                     } else {
                         prompt('Copy this summary:', full);
@@ -700,11 +705,13 @@
         var REFRESH_MS = 30 * 60 * 1000;
         var note = document.getElementById('auto-refresh-note');
         var start = Date.now();
+        var refreshInterval;
         function updateCountdown() {
             var elapsed = Date.now() - start;
             var remaining = Math.max(0, REFRESH_MS - elapsed);
             var mins = Math.ceil(remaining / 60000);
             if (remaining <= 0) {
+                clearInterval(refreshInterval);
                 if (note) note.textContent = '— refreshing...';
                 window.location.reload();
                 return;
@@ -713,7 +720,7 @@
                 note.textContent = '— auto-refresh in ' + mins + ' min';
             }
         }
-        setInterval(updateCountdown, 30000);
+        refreshInterval = setInterval(updateCountdown, 30000);
     })();
     </script>
 <!-- ── Regulations modal ─────────────────────────────────────────────── -->

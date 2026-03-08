@@ -172,6 +172,7 @@
     <script>
     document.querySelectorAll('.photo-upload-form').forEach(function(form) {
         var entryId = form.dataset.entryId;
+        var reloading = false;
         form.querySelectorAll('.photo-file-input').forEach(function(input) {
             input.addEventListener('change', function() {
                 if (!input.files || !input.files[0]) return;
@@ -184,18 +185,26 @@
                 }
                 statusEl.textContent = 'Uploading\u2026';
                 statusEl.className = 'log-upload-status';
+                var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
+                if (!csrfToken) {
+                    statusEl.textContent = 'Upload failed (session expired — please reload)';
+                    statusEl.className = 'log-upload-status error';
+                    return;
+                }
                 var fd = new FormData();
                 fd.append(input.name, input.files[0]);
-                var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
                 fd.append('csrf_token', csrfToken);
                 fetch('/api/v1/log/' + entryId + '/photos', { method: 'POST', body: fd })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.ok) {
                             statusEl.textContent = 'Saved!';
-                            setTimeout(function() { location.reload(); }, 800);
+                            if (!reloading) {
+                                reloading = true;
+                                setTimeout(function() { location.reload(); }, 800);
+                            }
                         } else {
-                            statusEl.textContent = (data.error && data.error.message) || 'Upload failed';
+                            statusEl.textContent = (data.error && (data.error.message || data.error)) || 'Upload failed';
                             statusEl.className = 'log-upload-status error';
                         }
                     })

@@ -34,7 +34,7 @@
             </h2>
             <p class="section-sub">Track your catches — saved on this device</p>
 
-            <div class="fishlog-form" id="fishlog-form" role="form" aria-label="Add a catch to your fishing log">
+            <form class="fishlog-form" id="fishlog-form" aria-label="Add a catch to your fishing log" onsubmit="return false">
                 <div class="fishlog-row">
                     <label for="log-species" class="sr-only">Species caught</label>
                     <input type="text" id="log-species" placeholder="Species caught" class="fishlog-input" maxlength="60" autocomplete="off">
@@ -54,7 +54,7 @@
                     <input type="file" id="log-photos" accept="image/*" multiple>
                     <p class="fishlog-photo-help">You can add multiple photos per catch.</p>
                 </div>
-            </div>
+            </form>
 
             <div class="fishlog-entries" id="fishlog-entries" aria-live="polite"></div>
             <div class="fishlog-empty" id="fishlog-empty" style="display:none;">
