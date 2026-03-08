@@ -45,7 +45,15 @@ def _jpeg_bytes(size: int = 100) -> bytes:
     return b"\xff\xd8\xff\xe0" + b"\x00" * size
 
 
-def _upload(client, entry_id, *, field="photo1", content=None, filename="fish.jpg", mimetype="image/jpeg"):
+def _upload(
+    client,
+    entry_id,
+    *,
+    field="photo1",
+    content=None,
+    filename="fish.jpg",
+    mimetype="image/jpeg",
+):
     data = {
         "csrf_token": _CSRF_TOKEN,
         field: (io.BytesIO(content or _jpeg_bytes()), filename, mimetype),
@@ -60,6 +68,7 @@ def _upload(client, entry_id, *, field="photo1", content=None, filename="fish.jp
 # ---------------------------------------------------------------------------
 # Auth guard
 # ---------------------------------------------------------------------------
+
 
 class TestPhotoUploadAuth:
     def test_requires_login(self, client):
@@ -77,6 +86,7 @@ class TestPhotoUploadAuth:
 # ---------------------------------------------------------------------------
 # Happy paths
 # ---------------------------------------------------------------------------
+
 
 class TestPhotoUploadHappy:
     def test_upload_photo1_returns_201(self, client):
@@ -100,7 +110,7 @@ class TestPhotoUploadHappy:
         paths = get_entry_photo_paths(uid, entry_id)
         assert paths is not None
         assert paths[0] is not None  # photo1_path was set
-        assert paths[1] is None       # photo2_path still null
+        assert paths[1] is None  # photo2_path still null
 
     def test_upload_photo2(self, client):
         uid = create_user("uploader3", "pw123456")
@@ -141,7 +151,7 @@ class TestPhotoUploadHappy:
         paths = get_entry_photo_paths(uid, entry_id)
         rel = paths[0]
         # rel is "uploads/<uid>/<uuid>.jpg"; strip "uploads/" prefix
-        sub = rel[len("uploads/"):]
+        sub = rel[len("uploads/") :]
         abs_path = os.path.join(app.config["UPLOAD_FOLDER"], sub)
         assert os.path.exists(abs_path)
 
@@ -165,6 +175,7 @@ class TestPhotoUploadHappy:
 # ---------------------------------------------------------------------------
 # Error paths
 # ---------------------------------------------------------------------------
+
 
 class TestPhotoUploadErrors:
     def test_entry_not_found_returns_404(self, client):
@@ -224,6 +235,7 @@ class TestPhotoUploadErrors:
 # Delete cascade
 # ---------------------------------------------------------------------------
 
+
 class TestDeleteCascade:
     def test_delete_removes_photo_file(self, client, app):
         uid = create_user("deluser1", "pw123456")
@@ -233,7 +245,7 @@ class TestDeleteCascade:
         _upload(client, entry_id)
         paths = get_entry_photo_paths(uid, entry_id)
         rel = paths[0]
-        sub = rel[len("uploads/"):]
+        sub = rel[len("uploads/") :]
         abs_path = os.path.join(app.config["UPLOAD_FOLDER"], sub)
         assert os.path.exists(abs_path), "file should exist before delete"
 

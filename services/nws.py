@@ -17,9 +17,15 @@ NWS_MARINE_ZONE = "AMZ158"
 _MPH_TO_KNOTS = 0.868976
 
 _DIR_MAP: dict = {
-    "north": "N", "northeast": "NE", "northwest": "NW",
-    "south": "S", "southeast": "SE", "southwest": "SW",
-    "east": "E", "west": "W", "variable": "VARIABLE",
+    "north": "N",
+    "northeast": "NE",
+    "northwest": "NW",
+    "south": "S",
+    "southeast": "SE",
+    "southwest": "SW",
+    "east": "E",
+    "west": "W",
+    "variable": "VARIABLE",
 }
 
 # Default coordinates (overridden per location)
@@ -38,7 +44,9 @@ def _try_nws_forecast(
     """NWS marine zone forecast -- provides 24-hour forecast ranges."""
     zone = zone or NWS_MARINE_ZONE
     url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
-    response = http_get(url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15))
+    response = http_get(
+        url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15)
+    )
     response.raise_for_status()
     data = response.json()
     periods = data["properties"]["periods"]
@@ -46,7 +54,8 @@ def _try_nws_forecast(
 
 
 def _try_nws_gridpoint(
-    lat: float = 0, lng: float = 0,
+    lat: float = 0,
+    lng: float = 0,
 ) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
     """NWS grid forecast for the nearest land point to a location.
 
@@ -61,13 +70,16 @@ def _try_nws_gridpoint(
     pts = http_get(
         f"https://api.weather.gov/points/{lat},{lng}",
         endpoint="nws.points",
-        headers=_NWS_HEADERS, timeout=(3.05, 10),
+        headers=_NWS_HEADERS,
+        timeout=(3.05, 10),
     )
     pts.raise_for_status()
     forecast_url = pts.json()["properties"]["forecast"]
 
     # Then get the forecast
-    fc = http_get(forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10))
+    fc = http_get(
+        forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10)
+    )
     fc.raise_for_status()
     periods = fc.json()["properties"]["periods"]
 
@@ -119,7 +131,8 @@ def parse_conditions(
         dir_match = re.search(
             r"(north(?:east|west)?|south(?:east|west)?|east|west|"
             r"NE|NW|SE|SW|N|E|S|W|VARIABLE)\s+wind",
-            text, re.IGNORECASE,
+            text,
+            re.IGNORECASE,
         )
         if dir_match:
             raw = dir_match.group(1)
@@ -129,7 +142,8 @@ def parse_conditions(
         # "around 10 kt", "around 10 knots", etc.
         wind_match = re.search(
             r"(\d+)(?:\s*to\s*(\d+))?\s*(?:kt|knots?)",
-            text, re.IGNORECASE,
+            text,
+            re.IGNORECASE,
         )
         if wind_match:
             low = float(wind_match.group(1))
@@ -140,7 +154,8 @@ def parse_conditions(
         # "seas around 2 feet", "waves 1 to 2 ft", etc.
         sea_match = re.search(
             r"(?:seas?|waves?)\s*(?:around\s+)?(\d+)(?:\s*to\s*(\d+))?\s*(?:ft|feet|foot)",
-            text, re.IGNORECASE,
+            text,
+            re.IGNORECASE,
         )
         if sea_match:
             low = float(sea_match.group(1))
@@ -178,7 +193,8 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
         resp = http_get(
             f"https://api.weather.gov/alerts/active?point={lat},{lng}",
             endpoint="nws.alerts",
-            headers=_NWS_HEADERS, timeout=(3.05, 10),
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
         )
         resp.raise_for_status()
         data = resp.json()
@@ -196,12 +212,14 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
             headline = f.get("headline", "")
             description = (f.get("description", "") or "")[:300]
             if event:
-                alerts.append({
-                    "event": event,
-                    "severity": severity,
-                    "headline": headline,
-                    "description": description,
-                })
+                alerts.append(
+                    {
+                        "event": event,
+                        "severity": severity,
+                        "headline": headline,
+                        "description": description,
+                    }
+                )
         return alerts
     except Exception:
         logger.debug("Weather alerts unavailable", exc_info=True)
@@ -228,16 +246,19 @@ def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:
             event = props.get("event", "")
             if not event:
                 continue
-            alerts.append({
-                "event": event,
-                "severity": props.get("severity", ""),
-                "headline": props.get("headline", ""),
-                "description": (props.get("description", "") or "")[:300],
-            })
+            alerts.append(
+                {
+                    "event": event,
+                    "severity": props.get("severity", ""),
+                    "headline": props.get("headline", ""),
+                    "description": (props.get("description", "") or "")[:300],
+                }
+            )
         return alerts
     except Exception:
         logger.debug("State alerts unavailable", exc_info=True)
         return []
+
 
 def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
     """Fetch current weather observations from NWS.
@@ -250,7 +271,8 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         pts = http_get(
             f"https://api.weather.gov/points/{lat},{lng}",
             endpoint="nws.points",
-            headers=_NWS_HEADERS, timeout=(3.05, 10),
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
         )
         pts.raise_for_status()
         obs_url = pts.json()["properties"].get("observationStations", "")
@@ -258,7 +280,12 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
             return None
 
         # Get latest observation from nearest station
-        stations = http_get(obs_url, endpoint="nws.observation_stations", headers=_NWS_HEADERS, timeout=(3.05, 10))
+        stations = http_get(
+            obs_url,
+            endpoint="nws.observation_stations",
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
+        )
         stations.raise_for_status()
         station_list = stations.json().get("observationStations", [])
         if not station_list:
@@ -268,7 +295,8 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         obs = http_get(
             f"https://api.weather.gov/stations/{station_id}/observations/latest",
             endpoint="nws.observation_latest",
-            headers=_NWS_HEADERS, timeout=(3.05, 10),
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
         )
         obs.raise_for_status()
         props = obs.json().get("properties", {})
@@ -293,14 +321,17 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
             temp_f = result["air_temp_f"]
             if temp_f >= 80 and humidity >= 40:
                 # Simplified heat index
-                hi = (-42.379 + 2.04901523 * temp_f
-                      + 10.14333127 * humidity
-                      - 0.22475541 * temp_f * humidity
-                      - 0.00683783 * temp_f ** 2
-                      - 0.05481717 * humidity ** 2
-                      + 0.00122874 * temp_f ** 2 * humidity
-                      + 0.00085282 * temp_f * humidity ** 2
-                      - 0.00000199 * temp_f ** 2 * humidity ** 2)
+                hi = (
+                    -42.379
+                    + 2.04901523 * temp_f
+                    + 10.14333127 * humidity
+                    - 0.22475541 * temp_f * humidity
+                    - 0.00683783 * temp_f**2
+                    - 0.05481717 * humidity**2
+                    + 0.00122874 * temp_f**2 * humidity
+                    + 0.00085282 * temp_f * humidity**2
+                    - 0.00000199 * temp_f**2 * humidity**2
+                )
                 result["feels_like_f"] = round(hi, 0)
 
         return result if "air_temp_f" in result else None
@@ -325,22 +356,32 @@ def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> List[Dict[str
         pts = http_get(
             f"https://api.weather.gov/points/{lat},{lng}",
             endpoint="nws.points",
-            headers=_NWS_HEADERS, timeout=(3.05, 10),
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
         )
         pts.raise_for_status()
         forecast_url = pts.json()["properties"]["forecast"]
-        fc = http_get(forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10))
+        fc = http_get(
+            forecast_url,
+            endpoint="nws.forecast",
+            headers=_NWS_HEADERS,
+            timeout=(3.05, 10),
+        )
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]
     except Exception:
-        logger.debug("NWS gridpoint forecast unavailable, trying marine zone", exc_info=True)
+        logger.debug(
+            "NWS gridpoint forecast unavailable, trying marine zone", exc_info=True
+        )
 
     if not zone:
         return []
 
     try:
         url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
-        fc = http_get(url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15))
+        fc = http_get(
+            url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15)
+        )
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]
     except Exception:

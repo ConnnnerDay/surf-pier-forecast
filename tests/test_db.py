@@ -7,7 +7,6 @@ from storage.sqlite import (
     attach_photos_to_entry,
     create_user,
     delete_forecast,
-    delete_log_entry,
     get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
@@ -31,6 +30,7 @@ def isolated_db(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # Forecast cache in SQLite
 # ---------------------------------------------------------------------------
+
 
 class TestForecastDB:
     def test_save_and_load(self):
@@ -56,7 +56,7 @@ class TestForecastDB:
         save_forecast_to_db("loc-a", {"generated_at": "2026-01-01T00:00:00"})
         save_forecast_to_db("loc-b", {"generated_at": "2026-02-01T00:00:00"})
         locs = list_cached_locations()
-        ids = [l["location_id"] for l in locs]
+        ids = [loc["location_id"] for loc in locs]
         assert "loc-a" in ids
         assert "loc-b" in ids
 
@@ -78,6 +78,7 @@ class TestForecastDB:
 # ---------------------------------------------------------------------------
 # Enhanced catch log stats
 # ---------------------------------------------------------------------------
+
 
 class TestLogStats:
     def _make_user(self):
@@ -123,6 +124,7 @@ class TestLogStats:
 # Photo columns migration + photo DB functions
 # ---------------------------------------------------------------------------
 
+
 class TestPhotoDB:
     def _make_user(self):
         uid = create_user("photouser", "pass5678")
@@ -133,6 +135,7 @@ class TestPhotoDB:
         """After init_db(), catch_log must have photo1_path and photo2_path columns."""
         import sqlite3
         from storage.sqlite import DB_PATH
+
         conn = sqlite3.connect(DB_PATH)
         cols = [r[1] for r in conn.execute("PRAGMA table_info(catch_log)").fetchall()]
         conn.close()
@@ -160,7 +163,12 @@ class TestPhotoDB:
     def test_attach_both_photos(self):
         uid = self._make_user()
         entry_id = add_log_entry(uid, "loc1", "Bluefish")
-        attach_photos_to_entry(uid, entry_id, photo1_path="uploads/1/p1.jpg", photo2_path="uploads/1/p2.jpg")
+        attach_photos_to_entry(
+            uid,
+            entry_id,
+            photo1_path="uploads/1/p1.jpg",
+            photo2_path="uploads/1/p2.jpg",
+        )
         paths = get_entry_photo_paths(uid, entry_id)
         assert paths == ("uploads/1/p1.jpg", "uploads/1/p2.jpg")
 

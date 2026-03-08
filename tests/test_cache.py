@@ -1,9 +1,7 @@
 """Tests for storage.cache module."""
 
 import json
-import os
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 import pytest
 from zoneinfo import ZoneInfo
@@ -28,6 +26,7 @@ def isolated_storage(tmp_path, monkeypatch):
     monkeypatch.setattr("storage.sqlite.DB_PATH", db_path)
     # Initialize the schema in the temp DB
     from storage.sqlite import init_db
+
     init_db()
     return tmp_path
 
@@ -89,7 +88,6 @@ class TestSaveAndLoad:
         with open(json_path) as f:
             assert json.load(f) == data
 
-
     def test_cache_is_scoped_by_user_and_location(self):
         data_u1 = {"generated_at": "2026-03-01T12:00:00", "owner": 1}
         data_u2 = {"generated_at": "2026-03-01T12:00:00", "owner": 2}
@@ -100,15 +98,21 @@ class TestSaveAndLoad:
         assert load_cached_forecast("loc1", user_id=2)["owner"] == 2
 
     def test_stale_cache_returns_none(self):
-        old = datetime.now(ZoneInfo("America/New_York")) - timedelta(hours=CACHE_MAX_AGE_HOURS + 2)
+        old = datetime.now(ZoneInfo("America/New_York")) - timedelta(
+            hours=CACHE_MAX_AGE_HOURS + 2
+        )
         save_forecast({"generated_at": old.isoformat()}, "stale-loc", user_id=9)
         assert load_cached_forecast("stale-loc", user_id=9) is None
 
     def test_stale_cache_can_be_loaded_for_async_refresh(self):
-        old = datetime.now(ZoneInfo("America/New_York")) - timedelta(hours=CACHE_MAX_AGE_HOURS + 2)
+        old = datetime.now(ZoneInfo("America/New_York")) - timedelta(
+            hours=CACHE_MAX_AGE_HOURS + 2
+        )
         data = {"generated_at": old.isoformat(), "verdict": "stale"}
         save_forecast(data, "stale-loc-include", user_id=9)
-        loaded = load_cached_forecast("stale-loc-include", user_id=9, include_stale=True)
+        loaded = load_cached_forecast(
+            "stale-loc-include", user_id=9, include_stale=True
+        )
         assert loaded == data
 
 

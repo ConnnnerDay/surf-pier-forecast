@@ -123,7 +123,9 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
 
     user_cols = set(_column_names(conn, "users"))
     if "email_confirmed" not in user_cols:
-        conn.execute("ALTER TABLE users ADD COLUMN email_confirmed INTEGER NOT NULL DEFAULT 0")
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN email_confirmed INTEGER NOT NULL DEFAULT 0"
+        )
     if "password_reset_token" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN password_reset_token TEXT")
     if "password_reset_sent_at" not in user_cols:
@@ -137,7 +139,9 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     if "temp_units" not in profile_cols:
         conn.execute("ALTER TABLE profiles ADD COLUMN temp_units TEXT DEFAULT 'F'")
     if "notification_prefs" not in profile_cols:
-        conn.execute("ALTER TABLE profiles ADD COLUMN notification_prefs TEXT DEFAULT '{}'")
+        conn.execute(
+            "ALTER TABLE profiles ADD COLUMN notification_prefs TEXT DEFAULT '{}'"
+        )
 
     catch_log_cols = set(_column_names(conn, "catch_log"))
     if "photo1_path" not in catch_log_cols:
@@ -195,6 +199,7 @@ def init_db() -> None:
 
 # User auth -----------------------------------------------------------------
 
+
 def create_user(username: str, password: str) -> Optional[int]:
     pw_hash = generate_password_hash(password)
     conn = get_db()
@@ -221,7 +226,11 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
         (username.strip(),),
     ).fetchone()
     conn.close()
-    if row and row["password_hash"] and check_password_hash(row["password_hash"], password):
+    if (
+        row
+        and row["password_hash"]
+        and check_password_hash(row["password_hash"], password)
+    ):
         return {"id": row["id"], "username": row["username"]}
     return None
 
@@ -245,6 +254,7 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
 
 # Profiles + locations ------------------------------------------------------
 
+
 def get_preferences(user_id: int) -> Dict[str, Any]:
     conn = get_db()
     row = conn.execute(
@@ -266,7 +276,10 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         try:
             profile = json.loads(row["fishing_profile"])
         except Exception:
-            logger.warning("Corrupt fishing_profile JSON for user_id=%s; resetting to None", user_id)
+            logger.warning(
+                "Corrupt fishing_profile JSON for user_id=%s; resetting to None",
+                user_id,
+            )
             profile = None
 
     favorites: List[str] = []
@@ -274,7 +287,9 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         try:
             favorites = json.loads(row["favorites"])
         except Exception:
-            logger.warning("Corrupt favorites JSON for user_id=%s; resetting to []", user_id)
+            logger.warning(
+                "Corrupt favorites JSON for user_id=%s; resetting to []", user_id
+            )
             favorites = []
 
     notification_prefs: Dict[str, Any] = {}
@@ -282,7 +297,10 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         try:
             notification_prefs = json.loads(row["notification_prefs"])
         except Exception:
-            logger.warning("Corrupt notification_prefs JSON for user_id=%s; resetting to {}", user_id)
+            logger.warning(
+                "Corrupt notification_prefs JSON for user_id=%s; resetting to {}",
+                user_id,
+            )
             notification_prefs = {}
 
     return {
@@ -338,7 +356,9 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
         if profile_sets:
             profile_sets.append("updated_at = datetime('now')")
             vals.append(user_id)
-            conn.execute(f"UPDATE profiles SET {', '.join(profile_sets)} WHERE user_id = ?", vals)
+            conn.execute(
+                f"UPDATE profiles SET {', '.join(profile_sets)} WHERE user_id = ?", vals
+            )
 
         conn.commit()
     finally:
@@ -347,7 +367,10 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
 
 # Catch log -----------------------------------------------------------------
 
-def get_log_entries(user_id: int, location_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+
+def get_log_entries(
+    user_id: int, location_id: str, limit: int = 50
+) -> List[Dict[str, Any]]:
     conn = get_db()
     rows = conn.execute(
         "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
@@ -369,7 +392,9 @@ def get_log_entries(user_id: int, location_id: str, limit: int = 50) -> List[Dic
     ]
 
 
-def add_log_entry(user_id: int, location_id: str, species: str, size: str = "", notes: str = "") -> int:
+def add_log_entry(
+    user_id: int, location_id: str, species: str, size: str = "", notes: str = ""
+) -> int:
     conn = get_db()
     cur = conn.execute(
         "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
@@ -383,7 +408,9 @@ def add_log_entry(user_id: int, location_id: str, species: str, size: str = "", 
 
 def delete_log_entry(user_id: int, entry_id: int) -> bool:
     conn = get_db()
-    cur = conn.execute("DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id))
+    cur = conn.execute(
+        "DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id)
+    )
     conn.commit()
     ok = cur.rowcount > 0
     conn.close()
@@ -469,7 +496,9 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
     ).fetchall()
     conn.close()
 
-    species_breakdown = [{"species": r["species"], "count": r["cnt"]} for r in species_rows[:10]]
+    species_breakdown = [
+        {"species": r["species"], "count": r["cnt"]} for r in species_rows[:10]
+    ]
     monthly_counts = {int(r["month"]): r["cnt"] for r in monthly_rows}
 
     return {
@@ -506,6 +535,7 @@ def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
 
 
 # Forecast cache -------------------------------------------------------------
+
 
 def save_forecast_to_db(location_id: str, data: Dict[str, Any]) -> None:
     if not location_id:
@@ -596,7 +626,11 @@ def list_cached_locations() -> List[Dict[str, str]]:
     ).fetchall()
     conn.close()
     return [
-        {"location_id": r["location_id"], "generated_at": r["generated_at"], "updated_at": r["updated_at"]}
+        {
+            "location_id": r["location_id"],
+            "generated_at": r["generated_at"],
+            "updated_at": r["updated_at"],
+        }
         for r in rows
     ]
 

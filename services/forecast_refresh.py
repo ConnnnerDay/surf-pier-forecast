@@ -35,7 +35,9 @@ def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:
 
     forecast = generate_forecast(location)
     save_forecast(forecast, location_id, user_id=user_id)
-    logger.info("refresh.completed location_id=%s user_id=%s", location_id, user_id or 0)
+    logger.info(
+        "refresh.completed location_id=%s user_id=%s", location_id, user_id or 0
+    )
     return True
 
 
@@ -49,7 +51,9 @@ def _worker_loop() -> None:
         try:
             refresh_forecast(location_id, user_id=normalized_uid or None)
         except Exception:
-            logger.exception("refresh.failed location_id=%s user_id=%s", location_id, normalized_uid)
+            logger.exception(
+                "refresh.failed location_id=%s user_id=%s", location_id, normalized_uid
+            )
         finally:
             with _refresh_lock:
                 _refreshing.discard(key)
@@ -61,7 +65,9 @@ def _ensure_worker_started() -> None:
     with _refresh_lock:
         if _worker_started:
             return
-        worker = threading.Thread(target=_worker_loop, name="forecast-refresh-worker", daemon=True)
+        worker = threading.Thread(
+            target=_worker_loop, name="forecast-refresh-worker", daemon=True
+        )
         worker.start()
         _worker_started = True
 

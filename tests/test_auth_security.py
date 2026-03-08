@@ -5,7 +5,13 @@ import re
 import pytest
 
 from app import create_app
-from storage.sqlite import create_user, get_preferences, get_user, init_db, save_preferences
+from storage.sqlite import (
+    create_user,
+    get_preferences,
+    get_user,
+    init_db,
+    save_preferences,
+)
 
 
 @pytest.fixture
@@ -164,7 +170,9 @@ def test_setup_location_select_forms_include_valid_csrf(client):
     action, select_token = select_match.groups()
     assert select_token == page_token
 
-    resp = client.post(action, data={"csrf_token": select_token}, follow_redirects=False)
+    resp = client.post(
+        action, data={"csrf_token": select_token}, follow_redirects=False
+    )
     assert resp.status_code == 302
     assert resp.headers["Location"].endswith("/profile")
 
@@ -172,7 +180,11 @@ def test_setup_location_select_forms_include_valid_csrf(client):
 def test_index_requires_profile_after_location_selected(client):
     uid = create_user("profile_gate_user", "Aa123456")
     assert uid is not None
-    save_preferences(uid, location_id="wrightsville-beach-nc", default_location_id="wrightsville-beach-nc")
+    save_preferences(
+        uid,
+        location_id="wrightsville-beach-nc",
+        default_location_id="wrightsville-beach-nc",
+    )
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid

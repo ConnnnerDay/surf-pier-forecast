@@ -35,7 +35,9 @@ def test_envelope_shapes_stable():
 
 
 def test_forecast_query_fallback():
-    q = ForecastQuery.from_request({"force_refresh": "true"}, fallback_location_id="abc")
+    q = ForecastQuery.from_request(
+        {"force_refresh": "true"}, fallback_location_id="abc"
+    )
     assert q.location_id == "abc"
     assert q.force_refresh is True
 
@@ -52,9 +54,9 @@ def test_profile_payload_validation():
 
 
 def test_log_payload_validation():
-    l = LogCreatePayload.from_json({"species": "Red Drum"}, location_id="loc1")
-    assert l.species == "Red Drum"
-    assert l.location_id == "loc1"
+    payload = LogCreatePayload.from_json({"species": "Red Drum"}, location_id="loc1")
+    assert payload.species == "Red Drum"
+    assert payload.location_id == "loc1"
 
 
 def test_log_stats_normalization():

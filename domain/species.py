@@ -13,7 +13,6 @@ from storage.species_loader import SPECIES_DB
 logger = logging.getLogger(__name__)
 
 
-
 # ---------------------------------------------------------------------------
 # Profile-based species classification
 # ---------------------------------------------------------------------------
@@ -26,142 +25,294 @@ logger = logging.getLogger(__name__)
 # Species that are ONLY realistic from a boat offshore — exclude for
 # surf/pier/inshore-only anglers.
 _OFFSHORE_ONLY_SPECIES: set = {
-    "Mahi-mahi (dolphinfish)", "Wahoo", "Blackfin tuna", "Yellowfin tuna",
-    "Sailfish", "Blue marlin", "White marlin", "Skipjack tuna",
-    "Bigeye tuna", "Albacore tuna", "Frigate mackerel",
-    "Blueline tilefish", "Golden tilefish", "Snowy grouper", "Wreckfish",
-    "Tilefish (blueline juvenile/grey)", "Tilefish (golden juvenile)",
-    "Barrelfish", "Blackbelly rosefish", "Misty grouper",
-    "Yellowedge grouper", "Queen snapper", "Silk snapper",
-    "Greater amberjack", "Almaco jack", "Almaco jack (large adult)",
-    "Lesser amberjack", "Rainbow runner",
-    "Shortfin mako shark", "Thresher shark", "Tiger shark",
+    "Mahi-mahi (dolphinfish)",
+    "Wahoo",
+    "Blackfin tuna",
+    "Yellowfin tuna",
+    "Sailfish",
+    "Blue marlin",
+    "White marlin",
+    "Skipjack tuna",
+    "Bigeye tuna",
+    "Albacore tuna",
+    "Frigate mackerel",
+    "Blueline tilefish",
+    "Golden tilefish",
+    "Snowy grouper",
+    "Wreckfish",
+    "Tilefish (blueline juvenile/grey)",
+    "Tilefish (golden juvenile)",
+    "Barrelfish",
+    "Blackbelly rosefish",
+    "Misty grouper",
+    "Yellowedge grouper",
+    "Queen snapper",
+    "Silk snapper",
+    "Greater amberjack",
+    "Almaco jack",
+    "Almaco jack (large adult)",
+    "Lesser amberjack",
+    "Rainbow runner",
+    "Shortfin mako shark",
+    "Thresher shark",
+    "Tiger shark",
     "Ocean sunfish (mola mola)",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
 _PIER_SPECIES: set = {
-    "Sheepshead", "Tautog (blackfish)", "Black sea bass", "Spadefish (Atlantic)",
-    "Triggerfish (gray)", "Lookdown", "Mangrove snapper (gray snapper)",
-    "Hogfish", "Planehead filefish", "Northern puffer (blowfish)",
-    "Bermuda chub (sea chub)", "Sergeant major (damselfish)",
-    "Cunner (bergall)", "Slippery dick (wrasse)", "Puddingwife (wrasse)",
-    "Striped blenny", "Feather blenny",
-    "Ocean triggerfish", "Queen triggerfish", "Scrawled filefish",
-    "Orange filefish", "Bandtail puffer", "Checkered puffer",
-    "Striped burrfish (spiny boxfish)", "Scrawled cowfish",
-    "Blue tang (surgeonfish)", "Gray angelfish", "Spotfin butterflyfish",
-    "Doctorfish (tang)", "Squirrelfish", "Porkfish",
-    "Smooth trunkfish", "Honeycomb cowfish",
-    "Menpachi (soldierfish)", "Aholehole (Hawaiian flagtail)",
+    "Sheepshead",
+    "Tautog (blackfish)",
+    "Black sea bass",
+    "Spadefish (Atlantic)",
+    "Triggerfish (gray)",
+    "Lookdown",
+    "Mangrove snapper (gray snapper)",
+    "Hogfish",
+    "Planehead filefish",
+    "Northern puffer (blowfish)",
+    "Bermuda chub (sea chub)",
+    "Sergeant major (damselfish)",
+    "Cunner (bergall)",
+    "Slippery dick (wrasse)",
+    "Puddingwife (wrasse)",
+    "Striped blenny",
+    "Feather blenny",
+    "Ocean triggerfish",
+    "Queen triggerfish",
+    "Scrawled filefish",
+    "Orange filefish",
+    "Bandtail puffer",
+    "Checkered puffer",
+    "Striped burrfish (spiny boxfish)",
+    "Scrawled cowfish",
+    "Blue tang (surgeonfish)",
+    "Gray angelfish",
+    "Spotfin butterflyfish",
+    "Doctorfish (tang)",
+    "Squirrelfish",
+    "Porkfish",
+    "Smooth trunkfish",
+    "Honeycomb cowfish",
+    "Menpachi (soldierfish)",
+    "Aholehole (Hawaiian flagtail)",
     "Dungeness crab (from pier)",
-    "Kelp bass (calico bass)", "Sand bass (barred sand bass)",
-    "California sheephead", "Opaleye", "Halfmoon (Catalina perch)",
-    "Kelp greenling", "Rock greenling",
+    "Kelp bass (calico bass)",
+    "Sand bass (barred sand bass)",
+    "California sheephead",
+    "Opaleye",
+    "Halfmoon (Catalina perch)",
+    "Kelp greenling",
+    "Rock greenling",
 }
 
 # Species primarily caught from the surf zone.
 _SURF_SPECIES: set = {
-    "Red drum (puppy drum)", "Pompano", "Whiting (sea mullet, kingfish)",
-    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Red drum (puppy drum)",
+    "Pompano",
+    "Whiting (sea mullet, kingfish)",
+    "Southern kingfish (ground mullet)",
+    "Gulf kingfish (gulf whiting)",
     "Northern kingfish",
-    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
-    "Walleye surfperch", "Rubberlip seaperch",
-    "Corbina", "Spotfin croaker", "Yellowfin croaker",
-    "Leopard shark", "Shovelnose guitarfish",
-    "Moi (Pacific threadfin)", "Bonefish (oio)",
+    "Barred surfperch",
+    "Redtail surfperch",
+    "Calico surfperch",
+    "Walleye surfperch",
+    "Rubberlip seaperch",
+    "Corbina",
+    "Spotfin croaker",
+    "Yellowfin croaker",
+    "Leopard shark",
+    "Shovelnose guitarfish",
+    "Moi (Pacific threadfin)",
+    "Bonefish (oio)",
 }
 
 # Species best caught inshore (inlet, marsh, flats).
 _INSHORE_SPECIES: set = {
-    "Speckled trout (spotted seatrout)", "Red drum (puppy drum)",
-    "Southern flounder", "Flounder (summer flounder)", "Gulf flounder",
-    "Snook", "Tripletail", "Ladyfish", "Jack crevalle",
-    "Tarpon", "Permit", "Black drum",
-    "Sand seatrout (white trout)", "Silver seatrout",
-    "Gray trout (weakfish)", "Striped bass (rockfish)",
+    "Speckled trout (spotted seatrout)",
+    "Red drum (puppy drum)",
+    "Southern flounder",
+    "Flounder (summer flounder)",
+    "Gulf flounder",
+    "Snook",
+    "Tripletail",
+    "Ladyfish",
+    "Jack crevalle",
+    "Tarpon",
+    "Permit",
+    "Black drum",
+    "Sand seatrout (white trout)",
+    "Silver seatrout",
+    "Gray trout (weakfish)",
+    "Striped bass (rockfish)",
     "Striped bass (hybrid)",
-    "Hickory shad", "American shad",
-    "Channel catfish", "Blue catfish", "Flathead catfish",
-    "Largemouth bass", "White perch", "Yellow perch",
-    "Redear sunfish (shellcracker)", "Bluegill", "Warmouth",
+    "Hickory shad",
+    "American shad",
+    "Channel catfish",
+    "Blue catfish",
+    "Flathead catfish",
+    "Largemouth bass",
+    "White perch",
+    "Yellow perch",
+    "Redear sunfish (shellcracker)",
+    "Bluegill",
+    "Warmouth",
     "American eel",
-    "Giant trevally (ulua)", "Bluefin trevally (omilu)", "Papio (juvenile jack)",
+    "Giant trevally (ulua)",
+    "Bluefin trevally (omilu)",
+    "Papio (juvenile jack)",
 }
 
 # -- Target categories (what you want to catch) --
 _BOTTOM_SPECIES: set = {
-    "Red drum (puppy drum)", "Black drum", "Black drum (large bull)",
-    "Whiting (sea mullet, kingfish)", "Spot", "Atlantic croaker",
-    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Red drum (puppy drum)",
+    "Black drum",
+    "Black drum (large bull)",
+    "Whiting (sea mullet, kingfish)",
+    "Spot",
+    "Atlantic croaker",
+    "Southern kingfish (ground mullet)",
+    "Gulf kingfish (gulf whiting)",
     "Northern kingfish",
-    "Flounder (summer flounder)", "Southern flounder", "Gulf flounder",
-    "Windowpane flounder", "Fringed flounder", "Hogchoker",
-    "California halibut", "Starry flounder",
-    "Pompano", "White croaker (tomcod)",
-    "Corbina", "Spotfin croaker", "Yellowfin croaker",
-    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
-    "Walleye surfperch", "Rubberlip seaperch",
-    "Hardhead catfish (sea catfish)", "Gafftopsail catfish",
-    "Bonefish (oio)", "Moi (Pacific threadfin)",
+    "Flounder (summer flounder)",
+    "Southern flounder",
+    "Gulf flounder",
+    "Windowpane flounder",
+    "Fringed flounder",
+    "Hogchoker",
+    "California halibut",
+    "Starry flounder",
+    "Pompano",
+    "White croaker (tomcod)",
+    "Corbina",
+    "Spotfin croaker",
+    "Yellowfin croaker",
+    "Barred surfperch",
+    "Redtail surfperch",
+    "Calico surfperch",
+    "Walleye surfperch",
+    "Rubberlip seaperch",
+    "Hardhead catfish (sea catfish)",
+    "Gafftopsail catfish",
+    "Bonefish (oio)",
+    "Moi (Pacific threadfin)",
 }
 
 _PELAGIC_SPECIES: set = {
-    "Bluefish", "Spanish mackerel", "King mackerel (kingfish)",
-    "False albacore (little tunny)", "Atlantic bonito",
-    "Cobia", "Jack crevalle", "Blue runner (hardtail)",
-    "Mahi-mahi (dolphinfish)", "Wahoo", "Blackfin tuna", "Yellowfin tuna",
-    "Skipjack tuna", "Bigeye tuna", "Albacore tuna",
-    "Sailfish", "Blue marlin", "White marlin",
-    "Pacific mackerel (chub mackerel)", "Jack mackerel (Spanish jack)",
-    "Pacific bonito", "Yellowtail (California yellowtail)", "White seabass",
-    "Ladyfish", "Great barracuda", "Tarpon",
-    "Giant trevally (ulua)", "Bluefin trevally (omilu)", "Papio (juvenile jack)",
+    "Bluefish",
+    "Spanish mackerel",
+    "King mackerel (kingfish)",
+    "False albacore (little tunny)",
+    "Atlantic bonito",
+    "Cobia",
+    "Jack crevalle",
+    "Blue runner (hardtail)",
+    "Mahi-mahi (dolphinfish)",
+    "Wahoo",
+    "Blackfin tuna",
+    "Yellowfin tuna",
+    "Skipjack tuna",
+    "Bigeye tuna",
+    "Albacore tuna",
+    "Sailfish",
+    "Blue marlin",
+    "White marlin",
+    "Pacific mackerel (chub mackerel)",
+    "Jack mackerel (Spanish jack)",
+    "Pacific bonito",
+    "Yellowtail (California yellowtail)",
+    "White seabass",
+    "Ladyfish",
+    "Great barracuda",
+    "Tarpon",
+    "Giant trevally (ulua)",
+    "Bluefin trevally (omilu)",
+    "Papio (juvenile jack)",
     "Striped bass (rockfish)",
 }
 
 _STRUCTURE_SPECIES: set = {
-    "Sheepshead", "Tautog (blackfish)", "Black sea bass",
-    "Triggerfish (gray)", "Spadefish (Atlantic)",
-    "Red snapper", "Vermilion snapper (beeliner)",
-    "Mangrove snapper (gray snapper)", "Lane snapper",
-    "Yellowtail snapper", "Mutton snapper", "Cubera snapper",
+    "Sheepshead",
+    "Tautog (blackfish)",
+    "Black sea bass",
+    "Triggerfish (gray)",
+    "Spadefish (Atlantic)",
+    "Red snapper",
+    "Vermilion snapper (beeliner)",
+    "Mangrove snapper (gray snapper)",
+    "Lane snapper",
+    "Yellowtail snapper",
+    "Mutton snapper",
+    "Cubera snapper",
     "Schoolmaster snapper",
-    "Gag grouper", "Red grouper", "Scamp grouper", "Black grouper",
-    "Hogfish", "Red porgy", "Scup (porgy)",
-    "White grunt", "Tomtate grunt", "Blue-striped grunt",
-    "Lingcod", "Vermilion rockfish", "Blue rockfish",
-    "Copper rockfish", "Grass rockfish", "Cabezon",
-    "Kelp bass (calico bass)", "Sand bass (barred sand bass)",
-    "California sheephead", "Opaleye",
-    "Mu (bigeye emperor)", "Menpachi (soldierfish)",
+    "Gag grouper",
+    "Red grouper",
+    "Scamp grouper",
+    "Black grouper",
+    "Hogfish",
+    "Red porgy",
+    "Scup (porgy)",
+    "White grunt",
+    "Tomtate grunt",
+    "Blue-striped grunt",
+    "Lingcod",
+    "Vermilion rockfish",
+    "Blue rockfish",
+    "Copper rockfish",
+    "Grass rockfish",
+    "Cabezon",
+    "Kelp bass (calico bass)",
+    "Sand bass (barred sand bass)",
+    "California sheephead",
+    "Opaleye",
+    "Mu (bigeye emperor)",
+    "Menpachi (soldierfish)",
 }
 
 _GAMEFISH_SPECIES: set = {
-    "Blacktip shark", "Spinner shark", "Bull shark", "Sandbar shark",
-    "Lemon shark", "Dusky shark", "Bonnethead shark",
-    "Atlantic sharpnose shark", "Scalloped hammerhead shark",
-    "Nurse shark", "Finetooth shark",
-    "Leopard shark", "Shovelnose guitarfish",
-    "Cobia", "Tarpon", "King mackerel (kingfish)",
-    "Mahi-mahi (dolphinfish)", "Wahoo", "Sailfish", "Blue marlin", "White marlin",
-    "Blackfin tuna", "Yellowfin tuna",
-    "Greater amberjack", "Jack crevalle",
-    "Giant trevally (ulua)", "Kaku (barracuda)",
-    "Snook", "Permit",
+    "Blacktip shark",
+    "Spinner shark",
+    "Bull shark",
+    "Sandbar shark",
+    "Lemon shark",
+    "Dusky shark",
+    "Bonnethead shark",
+    "Atlantic sharpnose shark",
+    "Scalloped hammerhead shark",
+    "Nurse shark",
+    "Finetooth shark",
+    "Leopard shark",
+    "Shovelnose guitarfish",
+    "Cobia",
+    "Tarpon",
+    "King mackerel (kingfish)",
+    "Mahi-mahi (dolphinfish)",
+    "Wahoo",
+    "Sailfish",
+    "Blue marlin",
+    "White marlin",
+    "Blackfin tuna",
+    "Yellowfin tuna",
+    "Greater amberjack",
+    "Jack crevalle",
+    "Giant trevally (ulua)",
+    "Kaku (barracuda)",
+    "Snook",
+    "Permit",
 }
 
 # Species that are nuisance bycatch and not worth targeting from the surf or pier.
 # These are excluded from the "What's Biting Now" ranking entirely.
 _NUISANCE_SPECIES: set = {
-    "Lizardfish",               # Pure nuisance — no food/sport value
+    "Lizardfish",  # Pure nuisance — no food/sport value
     "Hardhead catfish (sea catfish)",  # Venomous spines, slimy, universally disliked
-    "Gafftopsail catfish",      # Same deal as hardhead — bycatch pest
-    "Pinfish",                  # Tiny bait-thieves, nobody targets them
-    "Spottail pinfish",         # Same as pinfish
-    "Pigfish",                  # Marginal grunt bycatch
+    "Gafftopsail catfish",  # Same deal as hardhead — bycatch pest
+    "Pinfish",  # Tiny bait-thieves, nobody targets them
+    "Spottail pinfish",  # Same as pinfish
+    "Pigfish",  # Marginal grunt bycatch
     "Ribbonfish (Atlantic cutlassfish)",  # Occasional pier bycatch, not a target
-    "Hogchoker",                # Tiny flatfish, no sport or food value
+    "Hogchoker",  # Tiny flatfish, no sport or food value
 }
 
 
@@ -191,9 +342,21 @@ def _species_matches_profile(
         # If species is exclusively surf/pier/inshore AND user doesn't do
         # that type, consider excluding.  But most species are catchable
         # from multiple locations, so we only restrict the tight sets.
-        is_surf_only = sp_name in _SURF_SPECIES and sp_name not in _PIER_SPECIES and sp_name not in _INSHORE_SPECIES
-        is_pier_only = sp_name in _PIER_SPECIES and sp_name not in _SURF_SPECIES and sp_name not in _INSHORE_SPECIES
-        is_inshore_only = sp_name in _INSHORE_SPECIES and sp_name not in _SURF_SPECIES and sp_name not in _PIER_SPECIES
+        is_surf_only = (
+            sp_name in _SURF_SPECIES
+            and sp_name not in _PIER_SPECIES
+            and sp_name not in _INSHORE_SPECIES
+        )
+        is_pier_only = (
+            sp_name in _PIER_SPECIES
+            and sp_name not in _SURF_SPECIES
+            and sp_name not in _INSHORE_SPECIES
+        )
+        is_inshore_only = (
+            sp_name in _INSHORE_SPECIES
+            and sp_name not in _SURF_SPECIES
+            and sp_name not in _PIER_SPECIES
+        )
 
         # Only exclude if the species' primary method doesn't overlap with
         # any of the user's chosen types
@@ -226,6 +389,7 @@ def _species_matches_profile(
 # spring/fall transitions get specific text.  Species NOT listed here fall
 # back to explanation_cold (winter) or explanation_warm (summer).
 # ---------------------------------------------------------------------------
+
 
 def _get_season(month: int) -> str:
     """Map month number to meteorological season name."""
@@ -475,14 +639,18 @@ def _get_technique_tip(
     # Categorize by species type
     if any(k in name_lower for k in ["drum", "red drum", "puppy"]):
         if tide_state == "Rising":
-            return "Cast to sandbars and troughs as rising water pushes bait toward shore"
+            return (
+                "Cast to sandbars and troughs as rising water pushes bait toward shore"
+            )
         if is_dawn or is_dusk:
             return "Work cut mullet along the bottom near structure and drop-offs"
         return "Use fresh cut bait on a fish-finder rig, let it soak on the bottom"
 
     if "trout" in name_lower or "seatrout" in name_lower:
         if is_dawn:
-            return "Fish live shrimp under a popping cork near grass flats at first light"
+            return (
+                "Fish live shrimp under a popping cork near grass flats at first light"
+            )
         if tide_state == "Falling":
             return "Target outflow points as falling tide concentrates baitfish"
         return "Pop a cork rig in 3-6 feet of water near grassy edges"
@@ -526,7 +694,9 @@ def _get_technique_tip(
 
     if any(k in name_lower for k in ["bass", "striper"]):
         if is_dawn or is_dusk:
-            return "Cast soft plastics or live eels around rocks and jetties at dawn/dusk"
+            return (
+                "Cast soft plastics or live eels around rocks and jetties at dawn/dusk"
+            )
         return "Work the water column with bucktails or soft plastics near structure"
 
     if "rockfish" in name_lower or "lingcod" in name_lower:
@@ -736,8 +906,12 @@ def _classify_rig(rig_text: str) -> str:
         return "popping-cork"
     if "stinger" in text or ("king" in text and "wire" in text):
         return "kingfish-stinger"
-    if ("shark" in text or "very heavy wire" in text
-            or "stand-up" in text or "heavy wire leader and heavy" in text):
+    if (
+        "shark" in text
+        or "very heavy wire" in text
+        or "stand-up" in text
+        or "heavy wire leader and heavy" in text
+    ):
         return "shark"
     if "knocker" in text:
         return "knocker"
@@ -749,8 +923,12 @@ def _classify_rig(rig_text: str) -> str:
         return "hi-lo"
     if "float" in text or "free-line" in text or "balloon" in text:
         return "float"
-    if ("carolina" in text or "fishfinder" in text or "fish finder" in text
-            or "sliding" in text):
+    if (
+        "carolina" in text
+        or "fishfinder" in text
+        or "fish finder" in text
+        or "sliding" in text
+    ):
         return "fishfinder"
     return "fishfinder"
 
@@ -784,17 +962,19 @@ def build_rig_recommendations(
         hooks = list(dict.fromkeys(sp["hook_size"] for sp in group))
         sinkers = list(dict.fromkeys(sp["sinker"] for sp in group))
 
-        recommendations.append({
-            "name": category["name"],
-            "description": category["description"],
-            "mainline": category["mainline"],
-            "leader": category["leader"],
-            "hook": " or ".join(hooks[:3]),
-            "sinker": " or ".join(sinkers[:3]),
-            "targets": species_names,
-            "image": category.get("image", ""),
-            "knots": get_knots_for_rig(key),
-        })
+        recommendations.append(
+            {
+                "name": category["name"],
+                "description": category["description"],
+                "mainline": category["mainline"],
+                "leader": category["leader"],
+                "hook": " or ".join(hooks[:3]),
+                "sinker": " or ".join(sinkers[:3]),
+                "targets": species_names,
+                "image": category.get("image", ""),
+                "knots": get_knots_for_rig(key),
+            }
+        )
 
     return recommendations
 
@@ -809,7 +989,7 @@ KNOTS_DB: Dict[str, Dict[str, str]] = {
         "use": "Hook or swivel to mono/fluoro leader",
         "strength": "95%",
         "steps": (
-            "1. Thread 6\" of line through the hook eye. "
+            '1. Thread 6" of line through the hook eye. '
             "2. Wrap the tag end around the standing line 5-7 times. "
             "3. Pass the tag end through the small loop at the hook eye. "
             "4. Pass it again through the big loop you just created. "
@@ -821,7 +1001,7 @@ KNOTS_DB: Dict[str, Dict[str, str]] = {
         "use": "Hook to braid or mono — strongest simple knot",
         "strength": "98%",
         "steps": (
-            "1. Double 6\" of line and pass the loop through the hook eye. "
+            '1. Double 6" of line and pass the loop through the hook eye. '
             "2. Tie a simple overhand knot with the doubled line. "
             "3. Pass the loop over the entire hook. "
             "4. Moisten and pull both ends to tighten. Trim tag."
@@ -832,7 +1012,7 @@ KNOTS_DB: Dict[str, Dict[str, str]] = {
         "use": "All-purpose: hook, swivel, or line-to-line",
         "strength": "90%",
         "steps": (
-            "1. Pass line through the eye, double back 6\". "
+            '1. Pass line through the eye, double back 6". '
             "2. Form a loop alongside the doubled line. "
             "3. Wrap the tag end through the loop 4-6 times. "
             "4. Moisten, pull tag end to tighten, then slide knot to eye."
@@ -843,7 +1023,7 @@ KNOTS_DB: Dict[str, Dict[str, str]] = {
         "use": "Braid to fluoro/mono leader connection",
         "strength": "90%",
         "steps": (
-            "1. Overlap braid and leader by 8\". "
+            '1. Overlap braid and leader by 8". '
             "2. Make a Uni Knot with each tag end (4 wraps for mono, 8 for braid). "
             "3. Moisten both knots. "
             "4. Pull standing lines to slide knots together. Trim tags."
@@ -865,7 +1045,7 @@ KNOTS_DB: Dict[str, Dict[str, str]] = {
         "use": "Create a loop for dropper rigs and quick-change clips",
         "strength": "95%",
         "steps": (
-            "1. Double 3\" of line to form a loop. "
+            '1. Double 3" of line to form a loop. '
             "2. Tie an overhand knot with the doubled section. "
             "3. Pass the loop through a second time (double overhand). "
             "4. Moisten and pull tight."
@@ -986,7 +1166,13 @@ BAIT_DB: List[Dict[str, Any]] = [
             "winter": "Bloodworms are a top winter bait; their scent and movement attract cold-water bottom feeders when other baits are scarce.",
             "fall": "Bloodworms during the fall spot run are unbeatable; small pieces on #6 hooks catch spot after spot.",
         },
-        "targets": ["Whiting", "Black drum", "Northern puffer", "Spot", "Atlantic croaker"],
+        "targets": [
+            "Whiting",
+            "Black drum",
+            "Northern puffer",
+            "Spot",
+            "Atlantic croaker",
+        ],
     },
     {
         "bait": "Clams and crab pieces",
@@ -1023,7 +1209,13 @@ BAIT_DB: List[Dict[str, Any]] = [
         "bait": "Large cut menhaden or bluefish chunks",
         "available_months": list(range(1, 13)),
         "notes": "Heavy shark baits; use fresh, bloody chunks on wire leader for maximum scent trail. Frozen works year-round.",
-        "targets": ["Blacktip shark", "Bull shark", "Sandbar shark", "Spinner shark", "Dusky shark"],
+        "targets": [
+            "Blacktip shark",
+            "Bull shark",
+            "Sandbar shark",
+            "Spinner shark",
+            "Dusky shark",
+        ],
     },
     {
         "bait": "Live blue runners",
@@ -1032,7 +1224,13 @@ BAIT_DB: List[Dict[str, Any]] = [
         "notes_seasonal": {
             "winter": "Blue runners are not available inshore in winter months.",
         },
-        "targets": ["Greater amberjack", "King mackerel", "Cobia", "Black grouper", "Gag grouper"],
+        "targets": [
+            "Greater amberjack",
+            "King mackerel",
+            "Cobia",
+            "Black grouper",
+            "Gag grouper",
+        ],
     },
     {
         "bait": "Live menhaden (pogies)",
@@ -1042,7 +1240,14 @@ BAIT_DB: List[Dict[str, Any]] = [
             "winter": "Live pogies are hard to find in winter; use frozen cut menhaden or live mullet as alternatives.",
             "fall": "Massive menhaden schools are along the beach in fall; cast-net more than you need and freeze the rest.",
         },
-        "targets": ["Red drum", "Cobia", "Tarpon", "King mackerel", "Jack crevalle", "Gag grouper"],
+        "targets": [
+            "Red drum",
+            "Cobia",
+            "Tarpon",
+            "King mackerel",
+            "Jack crevalle",
+            "Gag grouper",
+        ],
     },
     {
         "bait": "Ballyhoo (rigged or live)",
@@ -1070,13 +1275,26 @@ BAIT_DB: List[Dict[str, Any]] = [
         "notes_seasonal": {
             "winter": "Crabs are dormant in cold months; use fresh shrimp or clam pieces as a substitute for structure species.",
         },
-        "targets": ["Sheepshead", "Tautog", "Permit", "Triggerfish", "Bonnethead shark"],
+        "targets": [
+            "Sheepshead",
+            "Tautog",
+            "Permit",
+            "Triggerfish",
+            "Bonnethead shark",
+        ],
     },
     {
         "bait": "Cut squid strips",
         "available_months": list(range(1, 13)),
         "notes": "Durable and versatile bottom fishing bait; stays on the hook well for reef and wreck species. Frozen year-round.",
-        "targets": ["Red snapper", "Vermilion snapper", "Black sea bass", "Red porgy", "White grunt", "Scup"],
+        "targets": [
+            "Red snapper",
+            "Vermilion snapper",
+            "Black sea bass",
+            "Red porgy",
+            "White grunt",
+            "Scup",
+        ],
     },
     {
         "bait": "Cedar plugs and trolling feathers",
@@ -1156,73 +1374,156 @@ def _score_species(
 # Species that bite better on an incoming (onshore) wind -- the wind pushes
 # bait and turbid water toward shore, stimulating feeding.
 _ONSHORE_WIND_SPECIES: set = {
-    "Red drum (puppy drum)", "Bluefish", "Pompano", "Whiting (sea mullet, kingfish)",
-    "Spot", "Atlantic croaker", "Flounder (summer flounder)", "Southern flounder",
-    "Gulf flounder", "Spanish mackerel", "Jack crevalle", "Cobia",
-    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
-    "Blacktip shark", "Spinner shark", "Bull shark",
-    "Striped bass (rockfish)", "Black drum",
+    "Red drum (puppy drum)",
+    "Bluefish",
+    "Pompano",
+    "Whiting (sea mullet, kingfish)",
+    "Spot",
+    "Atlantic croaker",
+    "Flounder (summer flounder)",
+    "Southern flounder",
+    "Gulf flounder",
+    "Spanish mackerel",
+    "Jack crevalle",
+    "Cobia",
+    "Southern kingfish (ground mullet)",
+    "Gulf kingfish (gulf whiting)",
+    "Blacktip shark",
+    "Spinner shark",
+    "Bull shark",
+    "Striped bass (rockfish)",
+    "Black drum",
     # Pacific
-    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
-    "Corbina", "Spotfin croaker", "Yellowfin croaker",
-    "Leopard shark", "Shovelnose guitarfish",
+    "Barred surfperch",
+    "Redtail surfperch",
+    "Calico surfperch",
+    "Corbina",
+    "Spotfin croaker",
+    "Yellowfin croaker",
+    "Leopard shark",
+    "Shovelnose guitarfish",
     # Hawaii
-    "Giant trevally (ulua)", "Moi (Pacific threadfin)", "Bonefish (oio)",
+    "Giant trevally (ulua)",
+    "Moi (Pacific threadfin)",
+    "Bonefish (oio)",
 }
 
 # Species that prefer calmer conditions and/or offshore wind (clearer water).
 _CALM_WATER_SPECIES: set = {
-    "Sheepshead", "Tautog (blackfish)", "Triggerfish (gray)", "Spadefish (Atlantic)",
-    "Mangrove snapper (gray snapper)", "Hogfish", "Bermuda chub (sea chub)",
-    "Lookdown", "Sergeant major (damselfish)", "Planehead filefish",
-    "Scrawled cowfish", "Ocean triggerfish", "Queen triggerfish",
-    "Gray snapper (juvenile)", "Speckled trout (spotted seatrout)",
-    "Tarpon", "Tripletail", "Permit", "Snook",
+    "Sheepshead",
+    "Tautog (blackfish)",
+    "Triggerfish (gray)",
+    "Spadefish (Atlantic)",
+    "Mangrove snapper (gray snapper)",
+    "Hogfish",
+    "Bermuda chub (sea chub)",
+    "Lookdown",
+    "Sergeant major (damselfish)",
+    "Planehead filefish",
+    "Scrawled cowfish",
+    "Ocean triggerfish",
+    "Queen triggerfish",
+    "Gray snapper (juvenile)",
+    "Speckled trout (spotted seatrout)",
+    "Tarpon",
+    "Tripletail",
+    "Permit",
+    "Snook",
     # Pacific
-    "Kelp bass (calico bass)", "Sand bass (barred sand bass)", "California sheephead",
-    "Opaleye", "Halfmoon (Catalina perch)", "California halibut", "White seabass",
+    "Kelp bass (calico bass)",
+    "Sand bass (barred sand bass)",
+    "California sheephead",
+    "Opaleye",
+    "Halfmoon (Catalina perch)",
+    "California halibut",
+    "White seabass",
     # Hawaii
-    "Mu (bigeye emperor)", "Menpachi (soldierfish)", "Aholehole (Hawaiian flagtail)",
+    "Mu (bigeye emperor)",
+    "Menpachi (soldierfish)",
+    "Aholehole (Hawaiian flagtail)",
 }
 
 # Species that feed more actively in rougher surf.
 _ROUGH_SURF_SPECIES: set = {
-    "Red drum (puppy drum)", "Bluefish", "Striped bass (rockfish)",
-    "Whiting (sea mullet, kingfish)", "Pompano", "Black drum",
-    "Smooth dogfish", "Atlantic croaker", "Spot",
-    "Southern kingfish (ground mullet)", "Gulf kingfish (gulf whiting)",
+    "Red drum (puppy drum)",
+    "Bluefish",
+    "Striped bass (rockfish)",
+    "Whiting (sea mullet, kingfish)",
+    "Pompano",
+    "Black drum",
+    "Smooth dogfish",
+    "Atlantic croaker",
+    "Spot",
+    "Southern kingfish (ground mullet)",
+    "Gulf kingfish (gulf whiting)",
     # Pacific
-    "Barred surfperch", "Redtail surfperch", "Calico surfperch",
-    "Corbina", "Spotfin croaker", "Yellowfin croaker",
+    "Barred surfperch",
+    "Redtail surfperch",
+    "Calico surfperch",
+    "Corbina",
+    "Spotfin croaker",
+    "Yellowfin croaker",
 }
 
 # Species that feed best in low-light conditions (dawn, dusk, night).
 _LOW_LIGHT_SPECIES: set = {
-    "Striped bass (rockfish)", "Speckled trout (spotted seatrout)",
-    "Red drum (puppy drum)", "Cobia", "Tarpon", "Flounder (summer flounder)",
-    "Southern flounder", "Gulf flounder", "Ribbonfish (Atlantic cutlassfish)",
-    "Spotted moray eel", "Green moray eel", "American eel", "Conger eel",
-    "Squirrelfish", "Bigeye (Priacanthus arenatus)", "Short bigeye",
-    "Blacktip shark", "Bull shark", "Sandbar shark", "Lemon shark",
+    "Striped bass (rockfish)",
+    "Speckled trout (spotted seatrout)",
+    "Red drum (puppy drum)",
+    "Cobia",
+    "Tarpon",
+    "Flounder (summer flounder)",
+    "Southern flounder",
+    "Gulf flounder",
+    "Ribbonfish (Atlantic cutlassfish)",
+    "Spotted moray eel",
+    "Green moray eel",
+    "American eel",
+    "Conger eel",
+    "Squirrelfish",
+    "Bigeye (Priacanthus arenatus)",
+    "Short bigeye",
+    "Blacktip shark",
+    "Bull shark",
+    "Sandbar shark",
+    "Lemon shark",
     # Pacific
-    "Lingcod", "Cabezon", "Leopard shark", "Bat ray",
+    "Lingcod",
+    "Cabezon",
+    "Leopard shark",
+    "Bat ray",
     # Hawaii
-    "Giant trevally (ulua)", "Menpachi (soldierfish)", "Mu (bigeye emperor)",
+    "Giant trevally (ulua)",
+    "Menpachi (soldierfish)",
+    "Mu (bigeye emperor)",
 }
 
 # Species that are more active during bright midday conditions.
 _DAYTIME_SPECIES: set = {
-    "Spanish mackerel", "King mackerel (kingfish)", "Cero mackerel",
-    "False albacore (little tunny)", "Mahi-mahi (dolphinfish)",
-    "Sergeant major (damselfish)", "Blue tang (surgeonfish)",
-    "Spotfin butterflyfish", "Gray angelfish",
-    "Bermuda chub (sea chub)", "Pinfish", "Pigfish",
+    "Spanish mackerel",
+    "King mackerel (kingfish)",
+    "Cero mackerel",
+    "False albacore (little tunny)",
+    "Mahi-mahi (dolphinfish)",
+    "Sergeant major (damselfish)",
+    "Blue tang (surgeonfish)",
+    "Spotfin butterflyfish",
+    "Gray angelfish",
+    "Bermuda chub (sea chub)",
+    "Pinfish",
+    "Pigfish",
     # Pacific
-    "Pacific mackerel (chub mackerel)", "Jack mackerel (Spanish jack)",
-    "Pacific bonito", "Yellowtail (California yellowtail)",
-    "Jacksmelt", "Pacific sardine", "Northern anchovy",
+    "Pacific mackerel (chub mackerel)",
+    "Jack mackerel (Spanish jack)",
+    "Pacific bonito",
+    "Yellowtail (California yellowtail)",
+    "Jacksmelt",
+    "Pacific sardine",
+    "Northern anchovy",
     # Hawaii
-    "Bluefin trevally (omilu)", "Papio (juvenile jack)", "Kaku (barracuda)",
+    "Bluefin trevally (omilu)",
+    "Papio (juvenile jack)",
+    "Kaku (barracuda)",
 }
 
 # Compass directions grouped for onshore/offshore determination.
@@ -1319,11 +1620,29 @@ SPECIES_SCORE_THRESHOLD = 30
 
 
 _MONTH_ABBREVS: Dict[str, int] = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
-    "january": 1, "february": 2, "march": 3, "april": 4, "june": 6,
-    "july": 7, "august": 8, "september": 9, "october": 10,
-    "november": 11, "december": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
 }
 
 
@@ -1438,7 +1757,9 @@ def build_species_ranking(
         if not _species_matches_profile(sp["name"], fishing_types, targets):
             continue
         s = _score_species(
-            sp, month, water_temp,
+            sp,
+            month,
+            water_temp,
             wind_dir=wind_dir,
             wind_range=wind_range,
             wave_range=wave_range,
@@ -1564,44 +1885,115 @@ def build_bait_ranking(
 
 NATURAL_BAIT_DB: List[Dict[str, Any]] = [
     # Atlantic / Gulf
-    {"name": "Menhaden (bunker)", "months": [3,4,5,6,7,8,9,10,11], "coast": "east",
-     "note": "Schools visible at surface — look for diving birds"},
-    {"name": "Mullet", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "east",
-     "note": "Year-round; large fall runs Sept-Nov along beaches"},
-    {"name": "Sand fleas (mole crabs)", "months": [4,5,6,7,8,9,10], "coast": "east",
-     "note": "Dig in wet sand at surf's edge during wave retreat"},
-    {"name": "Shrimp", "months": [4,5,6,7,8,9,10,11], "coast": "east",
-     "note": "Peak summer/fall; run on outgoing tides at night"},
-    {"name": "Fiddler crabs", "months": [4,5,6,7,8,9,10], "coast": "east",
-     "note": "Found in mud flats at low tide — top sheepshead bait"},
-    {"name": "Bloodworms", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "east",
-     "note": "Available year-round at bait shops; pricey but effective"},
-    {"name": "Cut bait (spot/croaker)", "months": [5,6,7,8,9,10], "coast": "east",
-     "note": "Catch small spot/croaker on Sabiki rigs for fresh cut bait"},
-    {"name": "Finger mullet", "months": [6,7,8,9,10,11], "coast": "east",
-     "note": "Cast net along shore; top live bait for predator species"},
-    {"name": "Silversides", "months": [3,4,5,6,7,8,9,10,11], "coast": "east",
-     "note": "Tiny baitfish in surf zone — match with small spoons/jigs"},
-    {"name": "Blue crab", "months": [4,5,6,7,8,9,10,11], "coast": "east",
-     "note": "Cut in half for drum/sheepshead; chicken necks to trap"},
-
+    {
+        "name": "Menhaden (bunker)",
+        "months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "coast": "east",
+        "note": "Schools visible at surface — look for diving birds",
+    },
+    {
+        "name": "Mullet",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "east",
+        "note": "Year-round; large fall runs Sept-Nov along beaches",
+    },
+    {
+        "name": "Sand fleas (mole crabs)",
+        "months": [4, 5, 6, 7, 8, 9, 10],
+        "coast": "east",
+        "note": "Dig in wet sand at surf's edge during wave retreat",
+    },
+    {
+        "name": "Shrimp",
+        "months": [4, 5, 6, 7, 8, 9, 10, 11],
+        "coast": "east",
+        "note": "Peak summer/fall; run on outgoing tides at night",
+    },
+    {
+        "name": "Fiddler crabs",
+        "months": [4, 5, 6, 7, 8, 9, 10],
+        "coast": "east",
+        "note": "Found in mud flats at low tide — top sheepshead bait",
+    },
+    {
+        "name": "Bloodworms",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "east",
+        "note": "Available year-round at bait shops; pricey but effective",
+    },
+    {
+        "name": "Cut bait (spot/croaker)",
+        "months": [5, 6, 7, 8, 9, 10],
+        "coast": "east",
+        "note": "Catch small spot/croaker on Sabiki rigs for fresh cut bait",
+    },
+    {
+        "name": "Finger mullet",
+        "months": [6, 7, 8, 9, 10, 11],
+        "coast": "east",
+        "note": "Cast net along shore; top live bait for predator species",
+    },
+    {
+        "name": "Silversides",
+        "months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "coast": "east",
+        "note": "Tiny baitfish in surf zone — match with small spoons/jigs",
+    },
+    {
+        "name": "Blue crab",
+        "months": [4, 5, 6, 7, 8, 9, 10, 11],
+        "coast": "east",
+        "note": "Cut in half for drum/sheepshead; chicken necks to trap",
+    },
     # Pacific
-    {"name": "Sand crabs", "months": [3,4,5,6,7,8,9,10,11], "coast": "west",
-     "note": "Dig at wave line for prime surfperch and corbina bait"},
-    {"name": "Mussels", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "west",
-     "note": "Pry from rocks at low tide — excellent all-purpose bait"},
-    {"name": "Anchovies", "months": [3,4,5,6,7,8,9,10,11], "coast": "west",
-     "note": "Buy live or use Sabiki rig; top live bait for gamefish"},
-    {"name": "Sardines", "months": [4,5,6,7,8,9,10], "coast": "west",
-     "note": "Available live at bait barges; great for halibut and bass"},
-    {"name": "Squid", "months": [1,2,3,4,5,10,11,12], "coast": "west",
-     "note": "Market squid runs in winter; cut strips or use whole"},
-    {"name": "Ghost shrimp", "months": [1,2,3,4,5,6,7,8,9,10,11,12], "coast": "west",
-     "note": "Pump from mudflats at low tide; perch and surfperch love them"},
-    {"name": "Mackerel (bait)", "months": [4,5,6,7,8,9,10], "coast": "west",
-     "note": "Catch on Sabiki rigs at piers; cut for halibut and bass"},
-    {"name": "Grunion", "months": [3,4,5,6,7,8], "coast": "west",
-     "note": "Beach spawning runs on full/new moon nights — check regulations"},
+    {
+        "name": "Sand crabs",
+        "months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "coast": "west",
+        "note": "Dig at wave line for prime surfperch and corbina bait",
+    },
+    {
+        "name": "Mussels",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "west",
+        "note": "Pry from rocks at low tide — excellent all-purpose bait",
+    },
+    {
+        "name": "Anchovies",
+        "months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "coast": "west",
+        "note": "Buy live or use Sabiki rig; top live bait for gamefish",
+    },
+    {
+        "name": "Sardines",
+        "months": [4, 5, 6, 7, 8, 9, 10],
+        "coast": "west",
+        "note": "Available live at bait barges; great for halibut and bass",
+    },
+    {
+        "name": "Squid",
+        "months": [1, 2, 3, 4, 5, 10, 11, 12],
+        "coast": "west",
+        "note": "Market squid runs in winter; cut strips or use whole",
+    },
+    {
+        "name": "Ghost shrimp",
+        "months": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "coast": "west",
+        "note": "Pump from mudflats at low tide; perch and surfperch love them",
+    },
+    {
+        "name": "Mackerel (bait)",
+        "months": [4, 5, 6, 7, 8, 9, 10],
+        "coast": "west",
+        "note": "Catch on Sabiki rigs at piers; cut for halibut and bass",
+    },
+    {
+        "name": "Grunion",
+        "months": [3, 4, 5, 6, 7, 8],
+        "coast": "west",
+        "note": "Beach spawning runs on full/new moon nights — check regulations",
+    },
 ]
 
 
@@ -1619,18 +2011,32 @@ def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, 
             status = "available"
         else:
             status = "off-season"
-        available.append({
-            "name": bait["name"],
-            "note": bait["note"],
-            "status": status,
-        })
+        available.append(
+            {
+                "name": bait["name"],
+                "note": bait["note"],
+                "status": status,
+            }
+        )
     # Sort: available first, then off-season
     available.sort(key=lambda x: (0 if x["status"] == "available" else 1, x["name"]))
     return available
 
 
-_MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+_MONTH_ABBR = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
 
 # Curated headline species shown on the year-round calendar, per region.
 # These are the iconic target species anglers actually plan trips around —
@@ -1799,9 +2205,11 @@ def build_species_calendar(
                 level = ""
             months.append({"abbr": _MONTH_ABBR[m - 1], "level": level})
 
-        calendar.append({
-            "name": ranked_sp["name"],
-            "months": months,
-        })
+        calendar.append(
+            {
+                "name": ranked_sp["name"],
+                "months": months,
+            }
+        )
 
     return calendar

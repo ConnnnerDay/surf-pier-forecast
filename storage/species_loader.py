@@ -12,14 +12,24 @@ from typing import Any, Dict, List
 
 _JSON_PATH = pathlib.Path(__file__).parent / "species_data.json"
 
-_REQUIRED_FIELDS: frozenset = frozenset({
-    "name",
-    "temp_min", "temp_max", "temp_ideal_low", "temp_ideal_high",
-    "peak_months", "good_months",
-    "bait", "rig", "hook_size", "sinker",
-    "explanation_cold", "explanation_warm",
-    "coast",
-})
+_REQUIRED_FIELDS: frozenset = frozenset(
+    {
+        "name",
+        "temp_min",
+        "temp_max",
+        "temp_ideal_low",
+        "temp_ideal_high",
+        "peak_months",
+        "good_months",
+        "bait",
+        "rig",
+        "hook_size",
+        "sinker",
+        "explanation_cold",
+        "explanation_warm",
+        "coast",
+    }
+)
 
 _VALID_COASTS: frozenset = frozenset({"east", "west", "hawaii"})
 
@@ -79,7 +89,9 @@ def _validate(entries: List[Dict[str, Any]]) -> None:
 
         if "regions" in entry:
             regions = entry["regions"]
-            if not isinstance(regions, list) or not all(isinstance(r, str) for r in regions):
+            if not isinstance(regions, list) or not all(
+                isinstance(r, str) for r in regions
+            ):
                 raise ValueError(
                     f"Species '{name}': 'regions' must be a list of strings"
                 )
@@ -112,9 +124,7 @@ def load_species_db(path: pathlib.Path | None = None) -> List[Dict[str, Any]]:
     try:
         entries = json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"species_data.json contains invalid JSON: {exc}"
-        ) from exc
+        raise ValueError(f"species_data.json contains invalid JSON: {exc}") from exc
 
     _validate(entries)
     return entries

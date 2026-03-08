@@ -30,7 +30,9 @@ def _login_session(client, user_id, location_id="wrightsville-beach-nc"):
 def test_v1_forecast_envelope(client, monkeypatch):
     sample = {"generated_at": "2026-03-03T10:00:00", "conditions": {"verdict": "Good"}}
 
-    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: sample)
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast", lambda loc_id, user_id=None: sample
+    )
 
     resp = client.get("/api/v1/forecast?location_id=wrightsville-beach-nc")
     assert resp.status_code == 200
@@ -43,11 +45,12 @@ def test_v1_forecast_envelope(client, monkeypatch):
     assert body["data"]["forecast"]["conditions"]["verdict"] == "Good"
 
 
-
-
 def test_v1_forecast_status_endpoint(client, monkeypatch):
     sample = {"generated_at": "2026-03-03T10:00:00"}
-    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None, include_stale=False: sample)
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast",
+        lambda loc_id, user_id=None, include_stale=False: sample,
+    )
     monkeypatch.setattr("web.api._forecast_age_minutes", lambda forecast: 15)
     monkeypatch.setattr("web.api.is_refreshing", lambda loc_id, user_id=None: True)
 
@@ -61,8 +64,12 @@ def test_v1_forecast_status_endpoint(client, monkeypatch):
     assert data["is_stale"] is False
     assert data["is_refreshing"] is True
 
+
 def test_legacy_forecast_force_refresh(client, monkeypatch):
-    generated = {"generated_at": "2026-03-03T11:00:00", "conditions": {"verdict": "Excellent"}}
+    generated = {
+        "generated_at": "2026-03-03T11:00:00",
+        "conditions": {"verdict": "Excellent"},
+    }
     monkeypatch.setattr("web.api.generate_forecast", lambda location: generated)
 
     saved = {}
@@ -73,7 +80,9 @@ def test_legacy_forecast_force_refresh(client, monkeypatch):
 
     monkeypatch.setattr("web.api.save_forecast", _save)
 
-    resp = client.get("/api/forecast?location_id=wrightsville-beach-nc&force_refresh=true")
+    resp = client.get(
+        "/api/forecast?location_id=wrightsville-beach-nc&force_refresh=true"
+    )
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["conditions"]["verdict"] == "Excellent"
@@ -93,7 +102,10 @@ def test_v1_profile_get_and_post(client):
     assert uid is not None
     _login_session(client, uid)
 
-    post = client.post("/api/v1/profile", json={"theme": "dark", "units": "F", "favorites": ["wrightsville-beach-nc"]})
+    post = client.post(
+        "/api/v1/profile",
+        json={"theme": "dark", "units": "F", "favorites": ["wrightsville-beach-nc"]},
+    )
     assert post.status_code == 200
     pbody = post.get_json()
     assert pbody["ok"] is True
@@ -111,7 +123,10 @@ def test_v1_log_crud(client):
     assert uid is not None
     _login_session(client, uid)
 
-    create = client.post("/api/v1/log", json={"species": "Red Drum", "size": "22 in", "notes": "Slot fish"})
+    create = client.post(
+        "/api/v1/log",
+        json={"species": "Red Drum", "size": "22 in", "notes": "Slot fish"},
+    )
     assert create.status_code == 201
     cbody = create.get_json()
     assert cbody["ok"] is True
@@ -134,6 +149,7 @@ def test_v1_log_crud(client):
 # ---------------------------------------------------------------------------
 # /api/v1/regulations
 # ---------------------------------------------------------------------------
+
 
 def test_v1_regulations_missing_species(client):
     """Omitting the required 'species' param returns 400."""
@@ -204,7 +220,6 @@ def test_v1_regulations_no_state_returns_null(client):
     assert body["data"]["regulation"] is None
 
 
-
 def test_v1_regulations_falls_back_to_session_location_state(client, monkeypatch):
     """If no state/location params are passed, state is derived from session location."""
     monkeypatch.setattr(
@@ -217,6 +232,7 @@ def test_v1_regulations_falls_back_to_session_location_state(client, monkeypatch
     assert body["ok"] is True
     assert body["data"]["state"] == "NC"
     assert body["data"]["regulation"] is not None
+
 
 def test_v1_regulations_derives_state_from_location_id(client, monkeypatch):
     """Passing location_id causes state to be derived from the location config."""
@@ -234,9 +250,9 @@ def test_v1_regulations_derives_state_from_location_id(client, monkeypatch):
     assert body["data"]["regulation"] is not None
 
 
-
-
-def test_v1_regulations_invalid_location_id_falls_back_to_session_location(client, monkeypatch):
+def test_v1_regulations_invalid_location_id_falls_back_to_session_location(
+    client, monkeypatch
+):
     """If location_id is invalid, API should still try the active session location."""
     monkeypatch.setattr("web.api.get_location", lambda loc_id: None)
     monkeypatch.setattr(
@@ -251,6 +267,8 @@ def test_v1_regulations_invalid_location_id_falls_back_to_session_location(clien
     assert body["ok"] is True
     assert body["data"]["state"] == "NC"
     assert body["data"]["regulation"] is not None
+
+
 def test_v1_regulations_state_overrides_location_id(client, monkeypatch):
     """Explicit 'state' query param takes priority over location_id lookup."""
     # location_id would give SC, but state=NC is provided explicitly
@@ -279,12 +297,30 @@ def test_v1_regulations_unknown_state_returns_null(client):
 
 def test_v1_forecast_outlook_cached_only(client, monkeypatch):
     sample = {
-        "outlook": [{"day": "Mon", "date": "Apr 1", "verdict": "Good", "wind": "10 kt", "waves": "2 ft", "top_species": ["Red Drum"]}],
-        "best_day": {"best_day": "Mon", "recommendation": "Fish dawn", "verdict": "Good"},
+        "outlook": [
+            {
+                "day": "Mon",
+                "date": "Apr 1",
+                "verdict": "Good",
+                "wind": "10 kt",
+                "waves": "2 ft",
+                "top_species": ["Red Drum"],
+            }
+        ],
+        "best_day": {
+            "best_day": "Mon",
+            "recommendation": "Fish dawn",
+            "verdict": "Good",
+        },
         "activity_timeline": [{"hour": 0, "label": "12 AM", "level": 35, "tag": "low"}],
     }
-    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: sample)
-    monkeypatch.setattr("web.api.generate_forecast", lambda location: (_ for _ in ()).throw(AssertionError("should not generate")))
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast", lambda loc_id, user_id=None: sample
+    )
+    monkeypatch.setattr(
+        "web.api.generate_forecast",
+        lambda location: (_ for _ in ()).throw(AssertionError("should not generate")),
+    )
 
     resp = client.get("/api/v1/forecast/wrightsville-beach-nc/outlook")
     assert resp.status_code == 200
@@ -296,9 +332,21 @@ def test_v1_forecast_outlook_cached_only(client, monkeypatch):
 
 
 def test_v1_forecast_solunar_cached_only(client, monkeypatch):
-    sample = {"solunar": {"rating": "Great", "moon_phase": "Full Moon", "major_periods": [], "minor_periods": []}}
-    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: sample)
-    monkeypatch.setattr("web.api.generate_forecast", lambda location: (_ for _ in ()).throw(AssertionError("should not generate")))
+    sample = {
+        "solunar": {
+            "rating": "Great",
+            "moon_phase": "Full Moon",
+            "major_periods": [],
+            "minor_periods": [],
+        }
+    }
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast", lambda loc_id, user_id=None: sample
+    )
+    monkeypatch.setattr(
+        "web.api.generate_forecast",
+        lambda location: (_ for _ in ()).throw(AssertionError("should not generate")),
+    )
 
     resp = client.get("/api/v1/forecast/wrightsville-beach-nc/solunar")
     assert resp.status_code == 200
@@ -307,7 +355,9 @@ def test_v1_forecast_solunar_cached_only(client, monkeypatch):
     assert body["data"]["solunar"]["rating"] == "Great"
 
 
-def test_v1_regulations_uses_account_saved_location_when_no_params(client, app, monkeypatch):
+def test_v1_regulations_uses_account_saved_location_when_no_params(
+    client, app, monkeypatch
+):
     """Logged-in user with a saved location gets regulations for that state even
     when neither 'state' nor 'location_id' are passed to the API.
 
@@ -342,7 +392,9 @@ def test_v1_regulations_uses_account_saved_location_when_no_params(client, app, 
 
 
 def test_v1_forecast_section_endpoints_404_when_missing_cache(client, monkeypatch):
-    monkeypatch.setattr("web.api.load_cached_forecast", lambda loc_id, user_id=None: None)
+    monkeypatch.setattr(
+        "web.api.load_cached_forecast", lambda loc_id, user_id=None: None
+    )
 
     outlook = client.get("/api/v1/forecast/wrightsville-beach-nc/outlook")
     assert outlook.status_code == 404
@@ -353,14 +405,24 @@ def test_v1_forecast_section_endpoints_404_when_missing_cache(client, monkeypatc
     assert solunar.get_json()["error"]["code"] == "forecast_not_cached"
 
 
-def test_v1_forecast_section_endpoints_fall_back_to_shared_cache_for_logged_in_user(client, app, monkeypatch):
+def test_v1_forecast_section_endpoints_fall_back_to_shared_cache_for_logged_in_user(
+    client, app, monkeypatch
+):
     calls = []
 
     def _fake_load(loc_id, user_id=None):
         calls.append((loc_id, user_id))
         if user_id is None:
             return {
-                "outlook": [{"day": "Tue", "date": "Apr 2", "verdict": "Fair", "wind": "8 kt", "waves": "1 ft"}],
+                "outlook": [
+                    {
+                        "day": "Tue",
+                        "date": "Apr 2",
+                        "verdict": "Fair",
+                        "wind": "8 kt",
+                        "waves": "1 ft",
+                    }
+                ],
                 "solunar": {"rating": "Good", "moon_phase": "Waxing"},
             }
         return None

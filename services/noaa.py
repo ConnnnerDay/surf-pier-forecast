@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json as _json
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
@@ -25,6 +24,7 @@ def _safe_zone(tz_name: str) -> ZoneInfo:
         if tz_name != _DEFAULT_TZ:
             logger.warning("Invalid timezone %r; using %s", tz_name, _DEFAULT_TZ)
         return ZoneInfo(_DEFAULT_TZ)
+
 
 _COOPS_HEADERS = {
     "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
@@ -52,8 +52,18 @@ WATER_TEMP_URL = (
 # Used only as a last resort when no location is set; per-location temps
 # come from locations.py via get_monthly_water_temps().
 MONTHLY_AVG_WATER_TEMP_F = {
-    1: 50, 2: 50, 3: 54, 4: 62, 5: 70, 6: 78,
-    7: 82, 8: 83, 9: 80, 10: 72, 11: 62, 12: 54,
+    1: 50,
+    2: 50,
+    3: 54,
+    4: 62,
+    5: 70,
+    6: 78,
+    7: 82,
+    8: 83,
+    9: 80,
+    10: 72,
+    11: 62,
+    12: 54,
 }
 
 
@@ -65,7 +75,12 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     """
     try:
         url = WATER_TEMP_URL.format(station=station_id or WATER_TEMP_STATION)
-        resp = http_get(url, endpoint="noaa.water_temperature", headers=_COOPS_HEADERS, timeout=(5, 15))
+        resp = http_get(
+            url,
+            endpoint="noaa.water_temperature",
+            headers=_COOPS_HEADERS,
+            timeout=(5, 15),
+        )
         resp.raise_for_status()
         data = resp.json()
         reading = data.get("data", [{}])[0].get("v")
@@ -76,7 +91,9 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     return None
 
 
-def fetch_latest_coops_product(station_id: str, product: str, units: str = "english") -> Optional[float]:
+def fetch_latest_coops_product(
+    station_id: str, product: str, units: str = "english"
+) -> Optional[float]:
     """Fetch latest numeric NOAA CO-OPS product value for a station.
 
     Supported examples include: air_temperature, humidity, visibility,
@@ -89,7 +106,9 @@ def fetch_latest_coops_product(station_id: str, product: str, units: str = "engl
             f"&product={product}&units={units}"
             "&time_zone=lst_ldt&format=json"
         )
-        resp = http_get(url, endpoint=f"noaa.{product}", headers=_COOPS_HEADERS, timeout=(5, 15))
+        resp = http_get(
+            url, endpoint=f"noaa.{product}", headers=_COOPS_HEADERS, timeout=(5, 15)
+        )
         resp.raise_for_status()
         payload = resp.json()
         row = (payload.get("data") or [{}])[0]
@@ -119,7 +138,9 @@ def fetch_coops_environmental_metrics(station_id: str) -> Dict[str, float]:
     return metrics
 
 
-def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York") -> List[Dict[str, str]]:
+def fetch_currents_predictions(
+    station_id: str, tz_name: str = "America/New_York"
+) -> List[Dict[str, str]]:
     """Fetch NOAA CO-OPS current prediction events (flood/ebb/slack)."""
     tz = _safe_zone(tz_name)
     now = datetime.now(tz)
@@ -133,7 +154,12 @@ def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York
         "&units=english&interval=max_slack&format=json"
     )
     try:
-        resp = http_get(url, endpoint="noaa.currents_predictions", headers=_COOPS_HEADERS, timeout=(5, 15))
+        resp = http_get(
+            url,
+            endpoint="noaa.currents_predictions",
+            headers=_COOPS_HEADERS,
+            timeout=(5, 15),
+        )
         resp.raise_for_status()
         rows = resp.json().get("cp", [])
         out: List[Dict[str, str]] = []
@@ -148,17 +174,23 @@ def fetch_currents_predictions(station_id: str, tz_name: str = "America/New_York
                 when = dt.strftime("%-I:%M %p")
             except Exception:
                 when = raw
-            out.append({
-                "time": when,
-                "event": str(event).title(),
-                "speed_kt": f"{float(velocity):.2f}" if velocity not in (None, "") else "0.00",
-            })
+            out.append(
+                {
+                    "time": when,
+                    "event": str(event).title(),
+                    "speed_kt": f"{float(velocity):.2f}"
+                    if velocity not in (None, "")
+                    else "0.00",
+                }
+            )
         return out
     except Exception:
         return []
 
 
-def fetch_currents_observation(station_id: str, tz_name: str = "America/New_York") -> Optional[Dict[str, str]]:
+def fetch_currents_observation(
+    station_id: str, tz_name: str = "America/New_York"
+) -> Optional[Dict[str, str]]:
     """Fetch latest measured current speed/direction from NOAA CO-OPS."""
     tz = _safe_zone(tz_name)
     url = (
@@ -168,7 +200,9 @@ def fetch_currents_observation(station_id: str, tz_name: str = "America/New_York
         "&units=english&format=json"
     )
     try:
-        resp = http_get(url, endpoint="noaa.currents", headers=_COOPS_HEADERS, timeout=(5, 15))
+        resp = http_get(
+            url, endpoint="noaa.currents", headers=_COOPS_HEADERS, timeout=(5, 15)
+        )
         resp.raise_for_status()
         rows = resp.json().get("data", [])
         if not rows:
@@ -226,7 +260,10 @@ def get_water_temp(
 
 # -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
 
-def _try_coops_wind(station_id: str = "") -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+
+def _try_coops_wind(
+    station_id: str = "",
+) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
     """Fetch wind from a NOAA CO-OPS station.
 
     This is the same station we use for water temperature, so if water temp
@@ -234,13 +271,15 @@ def _try_coops_wind(station_id: str = "") -> Tuple[Optional[Tuple[float, float]]
     Returns wind data only (no wave data from this source).
     """
     url = COOPS_WIND_URL.format(station=station_id or WATER_TEMP_STATION)
-    resp = http_get(url, endpoint="noaa.coops_wind", headers=_COOPS_HEADERS, timeout=(5, 15))
+    resp = http_get(
+        url, endpoint="noaa.coops_wind", headers=_COOPS_HEADERS, timeout=(5, 15)
+    )
     resp.raise_for_status()
     data = resp.json()
 
     entry = data.get("data", [{}])[0]
-    speed = entry.get("s")   # speed in knots
-    gust = entry.get("g")    # gust in knots
+    speed = entry.get("s")  # speed in knots
+    gust = entry.get("g")  # gust in knots
     direction = entry.get("d")  # direction string like "SW"
 
     if speed is None:
@@ -276,7 +315,12 @@ def fetch_tide_predictions(
         "&time_zone=lst_ldt&format=json&interval=hilo"
     )
     try:
-        resp = http_get(url, endpoint="noaa.tide_predictions", headers=_COOPS_HEADERS, timeout=(5, 15))
+        resp = http_get(
+            url,
+            endpoint="noaa.tide_predictions",
+            headers=_COOPS_HEADERS,
+            timeout=(5, 15),
+        )
         resp.raise_for_status()
         data = resp.json()
         predictions = data.get("predictions", [])
@@ -292,21 +336,28 @@ def fetch_tide_predictions(
                 time_str = dt.strftime("%-I:%M %p")
             except Exception:
                 time_str = raw_time
-            tides.append({
-                "time": time_str,
-                "type": tide_type,
-                "height_ft": f"{float(height):.1f}",
-                "hour": dt.hour + dt.minute / 60 if isinstance(dt, datetime) else 12.0,
-                "height_num": float(height),
-                "date_str": dt.strftime("%Y%m%d") if isinstance(dt, datetime) else today_str,
-            })
+            tides.append(
+                {
+                    "time": time_str,
+                    "type": tide_type,
+                    "height_ft": f"{float(height):.1f}",
+                    "hour": dt.hour + dt.minute / 60
+                    if isinstance(dt, datetime)
+                    else 12.0,
+                    "height_num": float(height),
+                    "date_str": dt.strftime("%Y%m%d")
+                    if isinstance(dt, datetime)
+                    else today_str,
+                }
+            )
         return tides
     except Exception:
         return []
 
 
-
-def build_tide_chart_svg(tides: List[Dict[str, Any]], now_hour: Optional[float] = None) -> Optional[Dict[str, Any]]:
+def build_tide_chart_svg(
+    tides: List[Dict[str, Any]], now_hour: Optional[float] = None
+) -> Optional[Dict[str, Any]]:
     """Build a tide chart data dict for SVG rendering.
 
     Returns a dict with 'path' (SVG path d attribute), 'points' (list of
@@ -360,18 +411,23 @@ def build_tide_chart_svg(tides: List[Dict[str, Any]], now_hour: Optional[float] 
     path_d = " ".join(path_parts)
 
     # Fill path (close to bottom)
-    fill_d = path_d + f" L{coords[-1][0]:.1f},{H - PAD_BOT:.1f} L{coords[0][0]:.1f},{H - PAD_BOT:.1f} Z"
+    fill_d = (
+        path_d
+        + f" L{coords[-1][0]:.1f},{H - PAD_BOT:.1f} L{coords[0][0]:.1f},{H - PAD_BOT:.1f} Z"
+    )
 
     # Build point markers
     markers = []
     for i, p in enumerate(pts):
-        markers.append({
-            "cx": f"{coords[i][0]:.1f}",
-            "cy": f"{coords[i][1]:.1f}",
-            "type": p[2],
-            "time": p[3],
-            "height": p[4],
-        })
+        markers.append(
+            {
+                "cx": f"{coords[i][0]:.1f}",
+                "cy": f"{coords[i][1]:.1f}",
+                "type": p[2],
+                "time": p[3],
+                "height": p[4],
+            }
+        )
 
     # Current-time "now" marker — interpolate height between surrounding pts
     now_marker = None
