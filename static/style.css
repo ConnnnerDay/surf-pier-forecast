@@ -1986,6 +1986,33 @@ h2 {
   color: var(--accent, #e07c39);
 }
 
+.spawning-status--pre_spawn {
+  background: color-mix(in srgb, var(--accent, #e07c39) 15%, transparent);
+  color: var(--accent, #e07c39);
+}
+
+.spawning-status--post_spawn {
+  background: color-mix(in srgb, var(--text-secondary, #8a9bb0) 14%, transparent);
+  color: var(--text-secondary, #8a9bb0);
+}
+
+.spawning-status--temp_pending {
+  background: color-mix(in srgb, #4fa8d4 18%, transparent);
+  color: #3a8ab8;
+}
+
+[data-theme="dark"] .spawning-status--temp_pending {
+  color: #6dc4f0;
+}
+
+.spawning-card--pre_spawn {
+  border-color: color-mix(in srgb, var(--accent, #e07c39) 45%, transparent);
+}
+
+.spawning-card--temp_pending {
+  border-color: color-mix(in srgb, #4fa8d4 45%, transparent);
+}
+
 .spawning-name {
   font-size: 0.95rem;
   font-weight: 600;
@@ -2014,8 +2041,14 @@ h2 {
   color: var(--text-secondary);
 }
 
-.spawning-temp-warn {
-  color: var(--accent, #e07c39);
+.spawning-temp-warn,
+.spawning-temp-note {
+  color: #3a8ab8;
+}
+
+[data-theme="dark"] .spawning-temp-warn,
+[data-theme="dark"] .spawning-temp-note {
+  color: #6dc4f0;
 }
 
 /* ---------- Species Calendar ---------- */

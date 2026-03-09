@@ -2031,14 +2031,34 @@ def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, 
 # ---------------------------------------------------------------------------
 
 SPAWNING_DATA: List[Dict] = [
-    # ── East Coast ──────────────────────────────────────────────────────────
+    # ── East Coast & Gulf (coast="east") ────────────────────────────────────
+    # Gulf locations use coast="east" in the species database, so Gulf species
+    # are included here with temperature constraints naturally limiting them to
+    # the correct region (warm-water Gulf species won't appear for cold-water
+    # New England locations where water never reaches their spawn temp window).
     {
-        "name": "Striped bass (rockfish)",
+        "name": "American shad",
         "coast": "east",
-        "spawn_months": [3, 4, 5],
+        "spawn_months": [2, 3, 4, 5],
         "spawn_temp_low": 50,
-        "spawn_temp_high": 65,
-        "spawn_note": "Striped bass migrate up coastal rivers and estuaries to spawn; fish congregate at river mouths and inlet channels.",
+        "spawn_temp_high": 70,
+        "spawn_note": "Shad make their famous upriver spawning migration; the run timing is closely tied to water temperature crossing 50°F — one of the year's most reliable seasonal triggers.",
+    },
+    {
+        "name": "Atlantic bonito",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 64,
+        "spawn_temp_high": 76,
+        "spawn_note": "Bonito spawn in open water offshore; active schools blitzing baitfish near the surface are a reliable sign of spawning season presence.",
+    },
+    {
+        "name": "Atlantic croaker",
+        "coast": "east",
+        "spawn_months": [8, 9, 10, 11],
+        "spawn_temp_low": 65,
+        "spawn_temp_high": 78,
+        "spawn_note": "Croaker move offshore in fall to spawn; the 'croaker run' concentrates fish along piers and inlets before they head to deeper water.",
     },
     {
         "name": "Black drum",
@@ -2046,39 +2066,15 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [3, 4, 5],
         "spawn_temp_low": 60,
         "spawn_temp_high": 74,
-        "spawn_note": "Black drum gather in large pods near inlets and inshore structure; their drumming sound is audible underwater.",
+        "spawn_note": "Black drum gather in large pods near inlets and inshore structure to spawn; their low drumming is audible underwater and signals active fish.",
     },
     {
-        "name": "Sheepshead",
+        "name": "Black sea bass",
         "coast": "east",
-        "spawn_months": [2, 3, 4],
-        "spawn_temp_low": 55,
-        "spawn_temp_high": 68,
-        "spawn_note": "Sheepshead move to nearshore reefs and passes to spawn; large females are especially active and approachable.",
-    },
-    {
-        "name": "Red drum (puppy drum)",
-        "coast": "east",
-        "spawn_months": [8, 9, 10, 11],
-        "spawn_temp_low": 70,
-        "spawn_temp_high": 82,
-        "spawn_note": "Red drum spawn near inlets and passes in the surf zone; large 'bull reds' congregate — an exciting time to target them.",
-    },
-    {
-        "name": "Speckled trout (spotted seatrout)",
-        "coast": "east",
-        "spawn_months": [4, 5, 6, 7],
-        "spawn_temp_low": 65,
-        "spawn_temp_high": 78,
-        "spawn_note": "Seatrout spawn repeatedly over warm months over seagrass beds; males produce an audible drumming call to attract females.",
-    },
-    {
-        "name": "Flounder (summer flounder)",
-        "coast": "east",
-        "spawn_months": [10, 11, 12],
-        "spawn_temp_low": 55,
-        "spawn_temp_high": 70,
-        "spawn_note": "Summer flounder migrate offshore to the continental shelf edge to spawn; this fall run through inlets produces the season's biggest fish.",
+        "spawn_months": [5, 6, 7],
+        "spawn_temp_low": 58,
+        "spawn_temp_high": 72,
+        "spawn_note": "Black sea bass gather on nearshore reefs and wrecks to spawn; males darken dramatically and defend territories, making them more aggressive biters.",
     },
     {
         "name": "Bluefish",
@@ -2086,15 +2082,7 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [5, 6, 7],
         "spawn_temp_low": 65,
         "spawn_temp_high": 76,
-        "spawn_note": "Bluefish spawn in nearshore and offshore waters; large schools push baitfish to the surface during this period.",
-    },
-    {
-        "name": "Weakfish",
-        "coast": "east",
-        "spawn_months": [4, 5, 6],
-        "spawn_temp_low": 58,
-        "spawn_temp_high": 72,
-        "spawn_note": "Weakfish move into estuaries and bays to spawn; they are most active at night near structure during this period.",
+        "spawn_note": "Bluefish spawn in nearshore and offshore waters; large schools blitzing baitfish near the surface are common sights during spawning season.",
     },
     {
         "name": "Cobia",
@@ -2102,7 +2090,71 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [4, 5, 6, 7],
         "spawn_temp_low": 68,
         "spawn_temp_high": 82,
-        "spawn_note": "Cobia migrate along the coast and spawn nearshore; sight-casting to individual fish near buoys and structure is productive.",
+        "spawn_note": "Cobia follow rays and large sharks inshore to spawn; sight-casting to individual fish near channel markers and nearshore structure is highly effective.",
+    },
+    {
+        "name": "Flounder (summer flounder)",
+        "coast": "east",
+        "spawn_months": [10, 11, 12],
+        "spawn_temp_low": 55,
+        "spawn_temp_high": 70,
+        "spawn_note": "Summer flounder migrate offshore to the continental shelf edge to spawn; the fall run through inlets consistently produces the season's largest fish.",
+    },
+    {
+        "name": "Gag grouper",
+        "coast": "east",
+        "spawn_months": [1, 2, 3, 4, 5],
+        "spawn_temp_low": 62,
+        "spawn_temp_high": 74,
+        "spawn_note": "Gag grouper aggregate on deep offshore reefs and ledges to spawn; nearshore wrecks hold fish staging for the offshore run — live bait on heavy tackle is key.",
+    },
+    {
+        "name": "Greater amberjack",
+        "coast": "east",
+        "spawn_months": [2, 3, 4, 5, 6],
+        "spawn_temp_low": 68,
+        "spawn_temp_high": 80,
+        "spawn_note": "Amberjack spawn over offshore structure; their aggressive feeding during spawn staging makes them susceptible to live bait and heavy jigs.",
+    },
+    {
+        "name": "Jack crevalle",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 74,
+        "spawn_temp_high": 84,
+        "spawn_note": "Jack crevalle spawn in nearshore and estuarine waters; aggressive schools herding baitfish along the beach and in passes are a summer spectacle.",
+    },
+    {
+        "name": "King mackerel (kingfish)",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 70,
+        "spawn_temp_high": 84,
+        "spawn_note": "King mackerel spawn in offshore waters; fish push large baitfish schools to the surface and are highly aggressive near any bait concentration.",
+    },
+    {
+        "name": "Mahi-mahi (dolphinfish)",
+        "coast": "east",
+        "spawn_months": [4, 5, 6, 7, 8, 9],
+        "spawn_temp_low": 72,
+        "spawn_temp_high": 86,
+        "spawn_note": "Mahi spawn repeatedly in warm offshore water; weedlines and floating debris concentrate both bait and spawning fish — look for the sargassum.",
+    },
+    {
+        "name": "Mangrove snapper (gray snapper)",
+        "coast": "east",
+        "spawn_months": [6, 7, 8, 9, 10],
+        "spawn_temp_low": 72,
+        "spawn_temp_high": 84,
+        "spawn_note": "Gray snapper move to nearshore reefs and passes to spawn; this is the easiest time to target larger fish that normally hug structure tightly.",
+    },
+    {
+        "name": "Permit",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 74,
+        "spawn_temp_high": 84,
+        "spawn_note": "Permit spawn offshore then return to flats and passes; large aggregations near inlet edges before the spawn are a rare opportunity.",
     },
     {
         "name": "Pompano",
@@ -2110,15 +2162,63 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [3, 4, 5],
         "spawn_temp_low": 65,
         "spawn_temp_high": 76,
-        "spawn_note": "Pompano spawn in nearshore surf waters; fish are especially active along the beach face during this run.",
+        "spawn_note": "Pompano spawn in nearshore surf waters; fish are especially active along beach troughs and passes during this run — sand fleas and Fishbites are top baits.",
     },
     {
-        "name": "Whiting (sea mullet, kingfish)",
+        "name": "Red drum (puppy drum)",
+        "coast": "east",
+        "spawn_months": [8, 9, 10, 11],
+        "spawn_temp_low": 70,
+        "spawn_temp_high": 82,
+        "spawn_note": "Red drum spawn near inlets, passes, and the surf zone; large 'bull reds' congregate in accessible numbers — releasing large breeders protects the fishery.",
+    },
+    {
+        "name": "Red grouper",
+        "coast": "east",
+        "spawn_months": [2, 3, 4, 5, 6],
+        "spawn_temp_low": 64,
+        "spawn_temp_high": 76,
+        "spawn_note": "Red grouper form spawning aggregations on offshore rocky bottom and ledges; males hold territories aggressively and will attack almost any presented bait.",
+    },
+    {
+        "name": "Red snapper",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8, 9],
+        "spawn_temp_low": 70,
+        "spawn_temp_high": 84,
+        "spawn_note": "Red snapper spawn repeatedly near reefs and hard structure; peak activity aligns with full and new moons — one of the most moon-phase-sensitive species.",
+    },
+    {
+        "name": "Scup (porgy)",
+        "coast": "east",
+        "spawn_months": [5, 6, 7],
+        "spawn_temp_low": 60,
+        "spawn_temp_high": 72,
+        "spawn_note": "Scup spawn in nearshore and inshore waters; large aggregations make late spring one of the most productive times for porgies off piers and jetties.",
+    },
+    {
+        "name": "Sheepshead",
+        "coast": "east",
+        "spawn_months": [2, 3, 4],
+        "spawn_temp_low": 55,
+        "spawn_temp_high": 68,
+        "spawn_note": "Sheepshead move to nearshore reefs, jetties, and passes to spawn; large females are especially active — fiddler crabs fished straight down on structure are deadly.",
+    },
+    {
+        "name": "Snook",
         "coast": "east",
         "spawn_months": [5, 6, 7, 8],
-        "spawn_temp_low": 65,
-        "spawn_temp_high": 76,
-        "spawn_note": "Whiting spawn in the nearshore surf zone over sandy bottom; feeding activity increases as fish stage along the beach.",
+        "spawn_temp_low": 74,
+        "spawn_temp_high": 84,
+        "spawn_note": "Snook aggregate at passes and inlets to spawn on outgoing tides; topwater lures and large live baits work best during low-light spawning pushes.",
+    },
+    {
+        "name": "Southern flounder",
+        "coast": "east",
+        "spawn_months": [10, 11, 12],
+        "spawn_temp_low": 55,
+        "spawn_temp_high": 68,
+        "spawn_note": "Southern flounder migrate from estuaries to nearshore water to spawn in fall; creek mouths and inlets funnel fish and concentrate large catches.",
     },
     {
         "name": "Spanish mackerel",
@@ -2126,15 +2226,15 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [6, 7, 8],
         "spawn_temp_low": 72,
         "spawn_temp_high": 82,
-        "spawn_note": "Spanish mackerel spawn in offshore and nearshore waters; large pods push baitfish schools to the surface.",
+        "spawn_note": "Spanish mackerel spawn in nearshore and offshore waters; large surface-busting schools are common — a white or silver spoon on a long cast is hard to beat.",
     },
     {
-        "name": "American shad",
+        "name": "Speckled trout (spotted seatrout)",
         "coast": "east",
-        "spawn_months": [2, 3, 4, 5],
-        "spawn_temp_low": 50,
-        "spawn_temp_high": 70,
-        "spawn_note": "Shad make their famous upriver spawning migration; their run timing is closely tied to water temperature reaching 50°F.",
+        "spawn_months": [4, 5, 6, 7, 8],
+        "spawn_temp_low": 65,
+        "spawn_temp_high": 80,
+        "spawn_note": "Seatrout spawn repeatedly over seagrass beds and shallow bays; males produce a distinctive drumming call at dawn and dusk to attract females — active fish are vocal fish.",
     },
     {
         "name": "Spot",
@@ -2142,7 +2242,15 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [9, 10, 11],
         "spawn_temp_low": 62,
         "spawn_temp_high": 74,
-        "spawn_note": "Spot migrate offshore to spawn in fall; the 'spot run' is one of the most anticipated events for surf and pier anglers.",
+        "spawn_note": "Spot migrate offshore to spawn in fall; the 'spot run' is one of the most anticipated autumn events for surf and pier anglers across the Southeast.",
+    },
+    {
+        "name": "Striped bass (rockfish)",
+        "coast": "east",
+        "spawn_months": [3, 4, 5],
+        "spawn_temp_low": 50,
+        "spawn_temp_high": 65,
+        "spawn_note": "Striped bass migrate up coastal rivers and estuaries to spawn; fish stage at river mouths and inlet channels — early morning tidal flows concentrate pre-spawn fish.",
     },
     {
         "name": "Tarpon",
@@ -2150,81 +2258,64 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [5, 6, 7, 8],
         "spawn_temp_low": 74,
         "spawn_temp_high": 86,
-        "spawn_note": "Tarpon spawn offshore in summer; their inshore presence during this period creates spectacular sight-fishing opportunities.",
+        "spawn_note": "Tarpon spawn offshore in summer and stage in nearshore passes; large 'rolling' fish visible at dawn are staging for offshore spawning runs — permit-style presentations work.",
     },
-    # ── Gulf Coast ──────────────────────────────────────────────────────────
     {
-        "name": "Red snapper",
-        "coast": "gulf",
+        "name": "Tautog (blackfish)",
+        "coast": "east",
+        "spawn_months": [4, 5, 6],
+        "spawn_temp_low": 52,
+        "spawn_temp_high": 65,
+        "spawn_note": "Tautog spawn on rocky reefs and around jetty structure; spawning fish are less wary than usual and respond well to fresh green crab on a knocker rig.",
+    },
+    {
+        "name": "Tripletail",
+        "coast": "east",
         "spawn_months": [5, 6, 7, 8, 9],
-        "spawn_temp_low": 70,
-        "spawn_temp_high": 84,
-        "spawn_note": "Red snapper spawn repeatedly over warm months near reefs and structure; peak activity occurs during full and new moons.",
-    },
-    {
-        "name": "King mackerel (kingfish)",
-        "coast": "gulf",
-        "spawn_months": [5, 6, 7, 8],
-        "spawn_temp_low": 70,
-        "spawn_temp_high": 84,
-        "spawn_note": "King mackerel spawn in offshore Gulf waters; fish are highly aggressive near bait schools during this period.",
-    },
-    {
-        "name": "Cobia",
-        "coast": "gulf",
-        "spawn_months": [3, 4, 5, 6],
-        "spawn_temp_low": 68,
-        "spawn_temp_high": 82,
-        "spawn_note": "Cobia follow rays and sharks inshore in spring to spawn; this is a prime time to sight-cast near the surface.",
-    },
-    {
-        "name": "Tarpon",
-        "coast": "gulf",
-        "spawn_months": [5, 6, 7, 8],
-        "spawn_temp_low": 74,
-        "spawn_temp_high": 86,
-        "spawn_note": "Tarpon stage and spawn in Gulf passes and nearshore waters; legendary fishing as large fish roll on the surface at dawn.",
-    },
-    {
-        "name": "Pompano",
-        "coast": "gulf",
-        "spawn_months": [3, 4, 5],
-        "spawn_temp_low": 65,
-        "spawn_temp_high": 76,
-        "spawn_note": "Pompano run the Gulf beach surf in spring; sand fleas and fresh shrimp on the bottom are deadly during the spawning run.",
-    },
-    {
-        "name": "Speckled trout (spotted seatrout)",
-        "coast": "gulf",
-        "spawn_months": [3, 4, 5, 6, 7, 8],
-        "spawn_temp_low": 65,
-        "spawn_temp_high": 80,
-        "spawn_note": "Gulf seatrout spawn repeatedly over warm months on grass flats and shallow bays; popping corks over grass are highly effective.",
-    },
-    {
-        "name": "Red drum (puppy drum)",
-        "coast": "gulf",
-        "spawn_months": [8, 9, 10],
         "spawn_temp_low": 72,
         "spawn_temp_high": 84,
-        "spawn_note": "Red drum aggregate at Gulf passes and beachfronts to spawn; slot fish are most numerous; releasing large breeders is encouraged.",
+        "spawn_note": "Tripletail hang near floating structure and channel buoys during spawn staging; sight-fishing to individual fish with a live shrimp is extremely effective.",
+    },
+    {
+        "name": "Weakfish",
+        "coast": "east",
+        "spawn_months": [4, 5, 6],
+        "spawn_temp_low": 58,
+        "spawn_temp_high": 72,
+        "spawn_note": "Weakfish move into estuaries and bays to spawn; they are most active at night around piers and jetty edges — soft plastics and live shrimp under a light both work.",
+    },
+    {
+        "name": "Whiting (sea mullet, kingfish)",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 65,
+        "spawn_temp_high": 76,
+        "spawn_note": "Whiting spawn in the nearshore surf over sandy bottom; schooling fish stage along the beach face and in cuts — light tackle with small hooks and fresh shrimp is ideal.",
+    },
+    {
+        "name": "Yellowtail snapper",
+        "coast": "east",
+        "spawn_months": [5, 6, 7, 8, 9],
+        "spawn_temp_low": 74,
+        "spawn_temp_high": 84,
+        "spawn_note": "Yellowtail snapper spawn over offshore reefs; spawning fish feed aggressively near structure and respond to free-lined bait drifted back in the current.",
     },
     # ── West Coast ───────────────────────────────────────────────────────────
     {
-        "name": "Striped bass (California)",
+        "name": "Barred surfperch",
         "coast": "west",
-        "spawn_months": [3, 4, 5, 6],
-        "spawn_temp_low": 57,
-        "spawn_temp_high": 68,
-        "spawn_note": "California stripers migrate up the Sacramento-San Joaquin Delta to spawn; tidal flows near spawning areas concentrate fish.",
+        "spawn_months": [1, 2, 3, 4],
+        "spawn_temp_low": 50,
+        "spawn_temp_high": 62,
+        "spawn_note": "Surfperch are livebearers that release pups in late winter and early spring; newly delivered females feed aggressively in the heavy shorebreak — the best surf fishing of the year.",
     },
     {
-        "name": "Pacific halibut",
+        "name": "Cabezon",
         "coast": "west",
-        "spawn_months": [11, 12, 1, 2],
-        "spawn_temp_low": 42,
-        "spawn_temp_high": 54,
-        "spawn_note": "Pacific halibut spawn in deep offshore water in winter; spawning fish migrate inshore in spring and summer.",
+        "spawn_months": [1, 2, 3],
+        "spawn_temp_low": 50,
+        "spawn_temp_high": 58,
+        "spawn_note": "Cabezon spawn on rocky reefs in winter; males guard adhesive egg masses fiercely and attack lures or baits that intrude on the nest site.",
     },
     {
         "name": "California halibut",
@@ -2232,39 +2323,23 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [3, 4, 5, 6],
         "spawn_temp_low": 55,
         "spawn_temp_high": 65,
-        "spawn_note": "California halibut spawn nearshore over sandy bottom; post-spawn fish flood into bays and estuaries and bite aggressively.",
+        "spawn_note": "California halibut spawn over nearshore sandy bottom; post-spawn fish flood into bays and estuaries in large numbers and bite aggressively on live anchovies.",
     },
     {
-        "name": "White seabass",
-        "coast": "west",
-        "spawn_months": [3, 4, 5, 6],
-        "spawn_temp_low": 58,
-        "spawn_temp_high": 68,
-        "spawn_note": "White seabass move into kelp beds to spawn; squid spawning aggregations attract large fish — one of the best fishing windows.",
-    },
-    {
-        "name": "Yellowtail (California yellowtail)",
-        "coast": "west",
-        "spawn_months": [5, 6, 7, 8],
-        "spawn_temp_low": 62,
-        "spawn_temp_high": 72,
-        "spawn_note": "Yellowtail spawn in offshore Southern California waters; warm-water intrusions push fish close to kelp beds and island structure.",
-    },
-    {
-        "name": "Barred surfperch",
-        "coast": "west",
-        "spawn_months": [1, 2, 3, 4],
-        "spawn_temp_low": 50,
-        "spawn_temp_high": 62,
-        "spawn_note": "Surfperch are livebearers that give birth in late winter and early spring; post-birth fish feed aggressively in the surf.",
-    },
-    {
-        "name": "Corbina (California corbina)",
+        "name": "Corbina",
         "coast": "west",
         "spawn_months": [6, 7, 8],
         "spawn_temp_low": 65,
         "spawn_temp_high": 72,
-        "spawn_note": "Corbina spawn in the summer surf zone; sight-fishing to fish tailing in the shallows is a prized technique during this period.",
+        "spawn_note": "Corbina spawn in the summer surf zone over sandy bottom; sight-fishing to fish tailing in the shallows with a sand crab on a light leader is a California tradition.",
+    },
+    {
+        "name": "Jack mackerel (Spanish jack)",
+        "coast": "west",
+        "spawn_months": [3, 4, 5, 6],
+        "spawn_temp_low": 56,
+        "spawn_temp_high": 68,
+        "spawn_note": "Jack mackerel spawn in open water off the coast; large nearshore schools in spring are a reliable sign of spawning aggregations — they hit small chrome jigs readily.",
     },
     {
         "name": "Kelp bass (calico bass)",
@@ -2272,9 +2347,154 @@ SPAWNING_DATA: List[Dict] = [
         "spawn_months": [4, 5, 6, 7, 8],
         "spawn_temp_low": 60,
         "spawn_temp_high": 72,
-        "spawn_note": "Kelp bass spawn repeatedly over kelp beds in warm months; fish defend nest sites aggressively and bite surface lures readily.",
+        "spawn_note": "Kelp bass spawn repeatedly over kelp beds in warm months; males defend nest sites aggressively and bite surface plugs and swimbaits more readily than at any other time.",
+    },
+    {
+        "name": "Leopard shark",
+        "coast": "west",
+        "spawn_months": [6, 7, 8, 9],
+        "spawn_temp_low": 62,
+        "spawn_temp_high": 70,
+        "spawn_note": "Leopard sharks pup in warm, shallow bays in summer; large aggregations of pregnant females in very shallow water are an iconic California sight — strictly catch-and-release.",
+    },
+    {
+        "name": "Lingcod",
+        "coast": "west",
+        "spawn_months": [1, 2, 3],
+        "spawn_temp_low": 46,
+        "spawn_temp_high": 54,
+        "spawn_note": "Lingcod spawn on rocky reefs in winter; males guard large white egg masses and are highly aggressive — fishing near the nest is extremely effective but regulated.",
+    },
+    {
+        "name": "Pacific bonito",
+        "coast": "west",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 62,
+        "spawn_temp_high": 72,
+        "spawn_note": "Pacific bonito spawn in open water off Southern California; surface-busting schools chasing anchovies are the hallmark of spawning season — fast-moving chrome jigs are go-to.",
+    },
+    {
+        "name": "Sand bass (barred sand bass)",
+        "coast": "west",
+        "spawn_months": [6, 7, 8],
+        "spawn_temp_low": 64,
+        "spawn_temp_high": 72,
+        "spawn_note": "Barred sand bass aggregate in massive spawning schools over sandy bottom in summer; this is when the largest bass of the year are caught on swimbaits and drop-shots.",
+    },
+    {
+        "name": "Spotfin croaker",
+        "coast": "west",
+        "spawn_months": [6, 7, 8],
+        "spawn_temp_low": 65,
+        "spawn_temp_high": 72,
+        "spawn_note": "Spotfin croaker spawn in the nearshore surf zone in summer; males produce a loud drumming sound at night — surf anglers targeting them after dark have an advantage.",
+    },
+    {
+        "name": "Striped bass (California)",
+        "coast": "west",
+        "spawn_months": [3, 4, 5, 6],
+        "spawn_temp_low": 57,
+        "spawn_temp_high": 68,
+        "spawn_note": "California stripers migrate up the Sacramento-San Joaquin Delta to spawn; tidal flows near spawning shoals concentrate fish — this is the season's most celebrated striper run.",
+    },
+    {
+        "name": "White seabass",
+        "coast": "west",
+        "spawn_months": [3, 4, 5, 6],
+        "spawn_temp_low": 58,
+        "spawn_temp_high": 68,
+        "spawn_note": "White seabass move into kelp beds to spawn during squid spawning aggregations; following squid boats at night is one of the most productive WSB tactics of the year.",
+    },
+    {
+        "name": "Yellowfin croaker",
+        "coast": "west",
+        "spawn_months": [6, 7, 8],
+        "spawn_temp_low": 65,
+        "spawn_temp_high": 74,
+        "spawn_note": "Yellowfin croaker spawn in the surf zone in summer alongside spotfin croaker; beach fishing with sand crabs and fresh clam siphon at night is highly productive.",
+    },
+    {
+        "name": "Yellowtail (California yellowtail)",
+        "coast": "west",
+        "spawn_months": [5, 6, 7, 8],
+        "spawn_temp_low": 62,
+        "spawn_temp_high": 72,
+        "spawn_note": "Yellowtail spawn in offshore waters; warm-water eddies push fish close to the kelp line and island structure — live sardines on a slow-troll or flylined are the top producers.",
+    },
+    # ── Hawaii ───────────────────────────────────────────────────────────────
+    {
+        "name": "Giant trevally (ulua)",
+        "coast": "hawaii",
+        "spawn_months": [5, 6, 7, 8, 9],
+        "spawn_temp_low": 76,
+        "spawn_temp_high": 84,
+        "spawn_note": "Ulua spawn in open water near current rips and offshore pinnacles; spawning fish are highly aggressive and prowl reef edges at dawn and dusk.",
+    },
+    {
+        "name": "Bluefin trevally (omilu)",
+        "coast": "hawaii",
+        "spawn_months": [4, 5, 6, 7, 8],
+        "spawn_temp_low": 74,
+        "spawn_temp_high": 82,
+        "spawn_note": "Omilu spawn in nearshore reef areas; active schools herding baitfish near the surface are common during spawning season — small poppers and jigs are very effective.",
+    },
+    {
+        "name": "Moi (Pacific threadfin)",
+        "coast": "hawaii",
+        "spawn_months": [6, 7, 8, 9],
+        "spawn_temp_low": 76,
+        "spawn_temp_high": 82,
+        "spawn_note": "Moi spawn nearshore in summer; schooling fish in the surf along sandy beaches are at their most catchable — light tackle with small hooks and cut shrimp are traditional.",
+    },
+    {
+        "name": "Bonefish (oio)",
+        "coast": "hawaii",
+        "spawn_months": [4, 5, 6, 7, 8],
+        "spawn_temp_low": 74,
+        "spawn_temp_high": 84,
+        "spawn_note": "Bonefish aggregate in large schools on shallow Hawaiian flats to spawn; spawning pods of 50+ fish are visible from shore and respond to small crab imitations.",
     },
 ]
+
+
+def _format_spawn_window(spawn_months: List[int]) -> str:
+    """Format a list of spawn months into a human-readable string.
+
+    Handles wrap-around ranges (e.g. Nov–Feb) and non-contiguous lists.
+    """
+    _MA = [
+        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ]
+    sm = sorted(set(spawn_months))
+    if not sm:
+        return "Unknown"
+    if len(sm) == 1:
+        return _MA[sm[0]]
+
+    # Find the largest gap between consecutive months (including the year-wrap gap).
+    # The spawn window is the contiguous run on the *other* side of that gap.
+    gaps = [(sm[i + 1] - sm[i], i) for i in range(len(sm) - 1)]
+    wrap_gap = (12 - sm[-1] + sm[0], len(sm) - 1)
+    all_gaps = gaps + [wrap_gap]
+    max_gap, max_idx = max(all_gaps, key=lambda g: g[0])
+
+    # Check whether months are contiguous on either side of the biggest gap
+    other_gaps = [g for g, idx in all_gaps if (g, idx) != (max_gap, max_idx)]
+    mostly_contiguous = all(g == 1 for g in other_gaps)
+
+    if mostly_contiguous:
+        if max_idx == len(sm) - 1:
+            # Gap is at the year-wrap point — simple linear range
+            return f"{_MA[sm[0]]} – {_MA[sm[-1]]}"
+        else:
+            # Gap is in the middle — range wraps around the year
+            start = sm[max_idx + 1]
+            end = sm[max_idx]
+            return f"{_MA[start]} – {_MA[end]}"
+
+    # Multiple gaps — list months individually
+    return ", ".join(_MA[m] for m in sm)
 
 
 def build_spawning_report(
@@ -2287,22 +2507,24 @@ def build_spawning_report(
     Each entry is a dict::
 
         {
-            "name": str,           # species common name
-            "status": str,         # "spawning", "approaching", or "post-spawn"
-            "temp_ok": bool,       # True if water temp is within spawn range
-            "spawn_note": str,     # behaviour / fishing tip
-            "temp_range": str,     # human-readable temp range, e.g. "65–78 °F"
-            "spawn_window": str,   # human-readable months, e.g. "May – Aug"
+            "name": str,       # species common name
+            "status": str,     # "spawning" | "pre_spawn" | "post_spawn" | "temp_pending"
+            "temp_ok": bool,   # True if water temp is within spawn range
+            "temp_delta": int, # degrees outside the spawn temp range (0 = in range)
+            "spawn_note": str, # behaviour / fishing tip
+            "temp_range": str, # human-readable, e.g. "65–78 °F"
+            "spawn_window": str, # human-readable, e.g. "May – Aug" or "Nov – Feb"
         }
 
-    Only species with a spawn window within ±1 month of the current month
-    (or currently active) are included so the list stays actionable.
-    """
-    _MONTH_ABBR = [
-        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ]
+    Status meanings:
+      spawning     — month is in spawn window AND temp is within range
+      temp_pending — month is in spawn window but water hasn't reached spawn temp
+      pre_spawn    — spawn window starts next month (fish are staging)
+      post_spawn   — spawn window ended last month (fish may be recovering / feeding up)
 
+    Only species within ±1 month of the spawn window are included so the
+    list stays immediately actionable.
+    """
     results: List[Dict[str, Any]] = []
 
     for entry in SPAWNING_DATA:
@@ -2314,49 +2536,50 @@ def build_spawning_report(
         temp_high = entry["spawn_temp_high"]
         temp_ok = temp_low <= water_temp <= temp_high
 
-        # Determine proximity: current month in spawn window, adjacent, or out
+        # How far is the current water temp from the spawn range?
+        if water_temp < temp_low:
+            temp_delta = int(temp_low - water_temp)
+        elif water_temp > temp_high:
+            temp_delta = int(water_temp - temp_high)
+        else:
+            temp_delta = 0
+
         in_window = month in spawn_months
-        # Check adjacent months (wrap around year boundaries)
         prev_month = 12 if month == 1 else month - 1
         next_month = 1 if month == 12 else month + 1
-        approaching = (not in_window) and (
-            prev_month in spawn_months or next_month in spawn_months
-        )
 
-        if not in_window and not approaching:
-            continue
+        # Determine direction of adjacency
+        after_window = (not in_window) and (prev_month in spawn_months)   # just ended
+        before_window = (not in_window) and (next_month in spawn_months)  # about to start
 
-        # Determine status label
+        if not in_window and not after_window and not before_window:
+            continue  # too far away to be actionable
+
         if in_window and temp_ok:
             status = "spawning"
         elif in_window and not temp_ok:
-            status = "approaching"  # month is right but temp hasn't hit window
+            # In the spawn month but temperature hasn't arrived yet (or has passed)
+            status = "temp_pending"
+        elif before_window:
+            status = "pre_spawn"
         else:
-            status = "approaching"  # adjacent month — window opening/closing
-
-        # Build a readable spawn window string like "Apr – Jun"
-        if spawn_months:
-            sm_sorted = sorted(spawn_months)
-            if len(sm_sorted) == 1:
-                window_str = _MONTH_ABBR[sm_sorted[0]]
-            else:
-                window_str = f"{_MONTH_ABBR[sm_sorted[0]]} – {_MONTH_ABBR[sm_sorted[-1]]}"
-        else:
-            window_str = "Unknown"
+            status = "post_spawn"
 
         results.append(
             {
                 "name": entry["name"],
                 "status": status,
                 "temp_ok": temp_ok,
+                "temp_delta": temp_delta,
                 "spawn_note": entry["spawn_note"],
-                "temp_range": f"{temp_low}–{temp_high} °F",
-                "spawn_window": window_str,
+                "temp_range": f"{temp_low}–{temp_high}\u202f°F",
+                "spawn_window": _format_spawn_window(spawn_months),
             }
         )
 
-    # Sort: actively spawning first, then approaching; within each group alpha
-    results.sort(key=lambda x: (0 if x["status"] == "spawning" else 1, x["name"]))
+    # Sort priority: spawning → pre_spawn → temp_pending → post_spawn; alpha within group
+    _STATUS_ORDER = {"spawning": 0, "pre_spawn": 1, "temp_pending": 2, "post_spawn": 3}
+    results.sort(key=lambda x: (_STATUS_ORDER.get(x["status"], 9), x["name"]))
     return results
 
 
