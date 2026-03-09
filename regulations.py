@@ -257,7 +257,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
                 )
             return payload
     except Exception:
-        pass  # scraper unavailable — fall through to snapshot
+        logger.warning("Live regulation scraper failed for %r/%r; falling back to snapshot", species_name, state_key, exc_info=True)
 
     # ── 2. Static JSON snapshot ──────────────────────────────────────
     species_key = _REG_DATA.name_map.get(species_name)

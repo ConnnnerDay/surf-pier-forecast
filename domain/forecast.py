@@ -207,7 +207,7 @@ def get_marine_conditions(
                 if sources_used is not None:
                     sources_used.append(f"{name}:wind_dir")
         except Exception as exc:
-            logger.debug("%s unavailable: %s", name, exc)
+            logger.warning("%s unavailable: %s", name, exc, exc_info=True)
 
     # Fill any remaining gaps with location-specific or default averages
     if location:
@@ -807,13 +807,13 @@ def build_multiday_outlook(
                     future, loc_lat, loc_lng, tz_name
                 )
             except Exception:
-                pass
+                logger.debug("Sun times unavailable for %s", future, exc_info=True)
             try:
                 future_solunar = compute_solunar_times(
                     future, loc_lat, loc_lng, tz_name
                 )
             except Exception:
-                pass
+                logger.debug("Solunar times unavailable for %s", future, exc_info=True)
             verdict = classify_conditions(
                 wind_range,
                 wave_range,
@@ -2037,7 +2037,7 @@ def generate_forecast(
         if outlook:
             forecast["outlook"] = outlook
     except Exception:
-        logger.debug(
+        logger.warning(
             "build_multiday_outlook failed for location_id=%s",
             location_id,
             exc_info=True,

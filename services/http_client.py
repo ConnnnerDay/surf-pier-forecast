@@ -24,6 +24,8 @@ def get(
     backoff_s: float = 0.25,
 ) -> requests.Response:
     """GET with bounded timeout and retry/backoff for transient failures."""
+    if retries < 0:
+        raise ValueError(f"retries must be >= 0, got {retries}")
     last_error: Optional[Exception] = None
 
     for attempt in range(1, retries + 2):
@@ -76,6 +78,5 @@ def get(
             )
             raise
 
-    if last_error:
-        raise last_error
-    raise RuntimeError("HTTP client failed unexpectedly")
+    # Unreachable: the loop always returns or raises on the last attempt.
+    raise AssertionError("http_client.get: loop exited without returning or raising")
