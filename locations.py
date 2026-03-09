@@ -11,10 +11,13 @@ with a haversine distance calculation to find the nearest locations.
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple
 
 from services.http_client import get as http_get
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -2139,6 +2142,7 @@ def geocode_zip(zipcode: str) -> Optional[Tuple[float, float]]:
         lng = float(places[0]["longitude"])
         return lat, lng
     except Exception:
+        logger.debug("geocode_zip failed for %r", zipcode, exc_info=True)
         return None
 
 

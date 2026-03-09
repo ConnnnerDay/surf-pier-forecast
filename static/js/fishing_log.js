@@ -199,7 +199,9 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ species: species, size: size, notes: notes })
-        }).catch(function () {});
+        }).catch(function (err) {
+          console.error('Failed to sync log entry to server:', err);
+        });
       }
     });
   }

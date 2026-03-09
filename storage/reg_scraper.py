@@ -1269,7 +1269,7 @@ def _cache_set(species_key: str, state: str, data: Dict[str, Any]) -> None:
         conn.commit()
         conn.close()
     except Exception:
-        pass
+        _log.warning("reg_scraper: failed to write cache for %r/%r", species_key, state, exc_info=True)
 
 
 # ──────────────────────────────────────────────────────────────────
