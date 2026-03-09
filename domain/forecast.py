@@ -55,6 +55,7 @@ from domain.species import (
     build_rig_recommendations,
     build_species_calendar,
     build_species_ranking,
+    build_spawning_report,
 )
 
 logger = logging.getLogger(__name__)
@@ -2059,6 +2060,10 @@ def generate_forecast(
     # Natural bait availability (bait DB only has "east"/"west" entries)
     bait_coast = "west" if coast == "west" else "east"
     forecast["natural_bait"] = build_natural_bait_chart(month, bait_coast)
+
+    # Spawning report — species currently or nearly spawning based on
+    # month and water temperature.
+    forecast["spawning"] = build_spawning_report(month, water_temp, coast)
 
     # Spot tips based on current conditions
     forecast["spot_tips"] = build_spot_tips(
