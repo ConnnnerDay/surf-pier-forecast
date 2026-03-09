@@ -83,11 +83,12 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
         )
         resp.raise_for_status()
         data = resp.json()
-        reading = data.get("data", [{}])[0].get("v")
+        rows = data.get("data") or []
+        reading = rows[0].get("v") if rows else None
         if reading is not None:
             return float(reading)
     except Exception:
-        pass
+        logger.debug("Water temperature fetch failed", exc_info=True)
     return None
 
 
@@ -117,6 +118,7 @@ def fetch_latest_coops_product(
             return None
         return float(value)
     except Exception:
+        logger.debug("NOAA CO-OPS product %r fetch failed", product, exc_info=True)
         return None
 
 
@@ -185,6 +187,7 @@ def fetch_currents_predictions(
             )
         return out
     except Exception:
+        logger.debug("Currents predictions fetch failed for station %r", station_id, exc_info=True)
         return []
 
 
@@ -228,6 +231,7 @@ def fetch_currents_observation(
             "direction": str(direction) if direction not in (None, "") else "",
         }
     except Exception:
+        logger.debug("Currents observation fetch failed for station %r", station_id, exc_info=True)
         return None
 
 
@@ -352,6 +356,7 @@ def fetch_tide_predictions(
             )
         return tides
     except Exception:
+        logger.debug("Tide predictions fetch failed", exc_info=True)
         return []
 
 
