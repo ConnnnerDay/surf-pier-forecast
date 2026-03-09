@@ -222,7 +222,7 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
                 )
         return alerts
     except Exception:
-        logger.debug("Weather alerts unavailable", exc_info=True)
+        logger.warning("Weather alerts unavailable", exc_info=True)
         return []
 
 
@@ -256,7 +256,7 @@ def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:
             )
         return alerts
     except Exception:
-        logger.debug("State alerts unavailable", exc_info=True)
+        logger.warning("State alerts unavailable", exc_info=True)
         return []
 
 
@@ -336,7 +336,7 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
 
         return result if "air_temp_f" in result else None
     except Exception:
-        logger.debug("Current weather unavailable", exc_info=True)
+        logger.warning("Current weather unavailable", exc_info=True)
         return None
 
 
@@ -385,5 +385,5 @@ def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> List[Dict[str
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]
     except Exception:
-        logger.debug("NWS marine zone forecast unavailable", exc_info=True)
+        logger.warning("NWS marine zone forecast unavailable", exc_info=True)
         return []
