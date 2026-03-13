@@ -2062,8 +2062,9 @@ def generate_forecast(
     forecast["natural_bait"] = build_natural_bait_chart(month, bait_coast)
 
     # Spawning report — species currently or nearly spawning based on
-    # month and water temperature.
-    forecast["spawning"] = build_spawning_report(month, water_temp, coast)
+    # month and water temperature.  State is passed so legal status can be
+    # surfaced (closed season, C&R-only, size/bag limits).
+    forecast["spawning"] = build_spawning_report(month, water_temp, coast, state=loc_state)
 
     # Spot tips based on current conditions
     forecast["spot_tips"] = build_spot_tips(

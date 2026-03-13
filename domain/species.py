@@ -2497,23 +2497,101 @@ def _format_spawn_window(spawn_months: List[int]) -> str:
     return ", ".join(_MA[m] for m in sm)
 
 
+def _classify_legal_status(reg: Optional[Dict[str, str]], month: int) -> str:
+    """Derive a simple legal-status label from a regulation payload.
+
+    Returns one of:
+      "catch_release" — harvest is definitively prohibited (C&R only, hard closed season)
+      "restricted"    — seasonal rules apply; angler must verify current status
+      "open"          — regulations indicate currently open; size/bag limits apply
+      "unknown"       — no data for this state / species combination
+
+    This function is intentionally more conservative than _regulation_disallows_keep
+    (which gates hard filtering) so that qualifying phrases like "some areas have
+    closed seasons" don't trigger a misleading "Do not keep" banner.
+    """
+    if not reg:
+        return "unknown"
+
+    bag_limit = str(reg.get("bag_limit") or "").strip().lower()
+    season = str(reg.get("season") or "").strip().lower()
+    notes = str(reg.get("notes") or "").strip().lower()
+    combined = " ".join(p for p in (bag_limit, season, notes) if p)
+
+    # Explicit harvest prohibitions that leave no room for interpretation
+    hard_prohibited = (
+        "catch and release only",
+        "catch-and-release only",
+        "no harvest",
+        "harvest prohibited",
+        "retention prohibited",
+        "possession prohibited",
+        "must be released",
+        "cannot be retained",
+        "closed year-round",
+    )
+    if any(phrase in combined for phrase in hard_prohibited):
+        return "catch_release"
+
+    # Explicit bag-limit zero
+    if bag_limit in {"0", "0/day", "0 per day", "0 fish", "none"}:
+        return "catch_release"
+
+    # Month-specific closures parsed from regulation text (e.g. "Gulf closed Jan–May")
+    if month and month in _parse_closed_months(combined):
+        return "catch_release"
+
+    # "Season closed" as a standalone verdict — but not when it is a qualifying
+    # subordinate clause like "some areas have closed seasons" or "may have closed
+    # seasons".  We look for the phrase and then check that it is NOT preceded by
+    # common qualifier words that weaken the statement.
+    _CLOSED_SEASON_RE = re.compile(
+        r"(season\s+closed|closed\s+season)", re.IGNORECASE
+    )
+    _QUALIFIER_WORDS = ("some", "certain", "have", "having", "with", "may", "areas")
+    for m in _CLOSED_SEASON_RE.finditer(combined):
+        preceding = combined[max(0, m.start() - 30): m.start()].lower()
+        if not any(q in preceding for q in _QUALIFIER_WORDS):
+            return "catch_release"
+
+    # Seasonal entries or "check" language that requires angler verification
+    if "seasonal" in season or ("check" in season and "open year-round" not in season):
+        return "restricted"
+
+    # Qualifier phrases that indicate some restrictions without a hard close
+    soft_restricted = (
+        "some areas",
+        "certain areas",
+        "may be closed",
+        "area closures",
+        "varies by",
+    )
+    if any(phrase in combined for phrase in soft_restricted):
+        return "restricted"
+
+    return "open"
+
+
 def build_spawning_report(
     month: int,
     water_temp: float,
     coast: str = "east",
+    state: str = "",
 ) -> List[Dict[str, Any]]:
     """Return species that are currently spawning or approaching their spawn window.
 
     Each entry is a dict::
 
         {
-            "name": str,       # species common name
-            "status": str,     # "spawning" | "pre_spawn" | "post_spawn" | "temp_pending"
-            "temp_ok": bool,   # True if water temp is within spawn range
-            "temp_delta": int, # degrees outside the spawn temp range (0 = in range)
-            "spawn_note": str, # behaviour / fishing tip
-            "temp_range": str, # human-readable, e.g. "65–78 °F"
-            "spawn_window": str, # human-readable, e.g. "May – Aug" or "Nov – Feb"
+            "name": str,          # species common name
+            "status": str,        # "spawning" | "pre_spawn" | "post_spawn" | "temp_pending"
+            "temp_ok": bool,      # True if water temp is within spawn range
+            "temp_delta": int,    # degrees outside the spawn temp range (0 = in range)
+            "spawn_note": str,    # behaviour / fishing tip
+            "temp_range": str,    # human-readable, e.g. "65–78 °F"
+            "spawn_window": str,  # human-readable, e.g. "May – Aug" or "Nov – Feb"
+            "legal_status": str,  # "catch_release" | "restricted" | "open" | "unknown"
+            "regulation": dict|None,  # full regulation payload for this state, or None
         }
 
     Status meanings:
@@ -2521,6 +2599,12 @@ def build_spawning_report(
       temp_pending — month is in spawn window but water hasn't reached spawn temp
       pre_spawn    — spawn window starts next month (fish are staging)
       post_spawn   — spawn window ended last month (fish may be recovering / feeding up)
+
+    Legal status meanings:
+      catch_release — harvest prohibited (closed season, C&R only, bag limit 0)
+      restricted    — seasonal rules apply; always verify before keeping fish
+      open          — currently open per regulation data; size/bag limits shown
+      unknown       — no regulation data found for this state/species combination
 
     Only species within ±1 month of the spawn window are included so the
     list stays immediately actionable.
@@ -2558,12 +2642,21 @@ def build_spawning_report(
         if in_window and temp_ok:
             status = "spawning"
         elif in_window and not temp_ok:
-            # In the spawn month but temperature hasn't arrived yet (or has passed)
             status = "temp_pending"
         elif before_window:
             status = "pre_spawn"
         else:
             status = "post_spawn"
+
+        # Regulation lookup — only query when a state is known
+        reg: Optional[Dict[str, str]] = None
+        if state:
+            try:
+                reg = lookup_regulation(entry["name"], state)
+            except Exception:
+                reg = None
+
+        legal_status = _classify_legal_status(reg, month)
 
         results.append(
             {
@@ -2574,6 +2667,8 @@ def build_spawning_report(
                 "spawn_note": entry["spawn_note"],
                 "temp_range": f"{temp_low}–{temp_high}\u202f°F",
                 "spawn_window": _format_spawn_window(spawn_months),
+                "legal_status": legal_status,
+                "regulation": reg,
             }
         )
 
