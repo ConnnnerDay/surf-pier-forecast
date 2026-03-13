@@ -155,10 +155,10 @@
                     <span class="log-entry-text">{{ entry.date[:10] }} — {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</span>
                     <div class="log-entry-photos">
                         {% if entry.photo1_path %}
-                        <img src="{{ url_for('static', filename=entry.photo1_path) }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb">
+                        <img src="/{{ entry.photo1_path }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb">
                         {% endif %}
                         {% if entry.photo2_path %}
-                        <img src="{{ url_for('static', filename=entry.photo2_path) }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb">
+                        <img src="/{{ entry.photo2_path }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb">
                         {% endif %}
                     </div>
                     <form class="photo-upload-form" data-entry-id="{{ entry.id }}">

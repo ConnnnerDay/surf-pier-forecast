@@ -38,8 +38,9 @@ def test_live_cam_context_parses_string_fishing_types(monkeypatch):
             }
         ],
     )
+    # Patch the cached-status function (non-blocking, returns dict immediately).
     monkeypatch.setattr(
-        views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"}
+        views, "_cam_status_cached", lambda _url: {"is_live": True, "status_label": "Live now"}
     )
 
     context = views._build_live_cam_context(
@@ -52,6 +53,7 @@ def test_live_cam_context_parses_string_fishing_types(monkeypatch):
 
 
 def test_live_cam_context_handles_unknown_status(monkeypatch):
+    """When no cached status exists the context still returns a safe default."""
     from web import views
 
     monkeypatch.setattr(
@@ -67,13 +69,11 @@ def test_live_cam_context_handles_unknown_status(monkeypatch):
         ],
     )
 
-    def _explode(_url):
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr(views, "_cam_status", _explode)
+    # Return the "Checking…" unknown sentinel (what _cam_status_cached returns
+    # for unseen URLs while the background probe is in flight).
+    monkeypatch.setattr(views, "_cam_status_cached", lambda _url: views._CAM_STATUS_UNKNOWN)
 
     context = views._build_live_cam_context({"lat": 34.0, "lng": -77.0}, None)
-    assert context["nearby_live_cams"][0]["status_label"] == "Unavailable"
     assert context["nearby_live_cams"][0]["is_live"] is False
 
 
@@ -97,7 +97,7 @@ def test_live_cam_context_treats_fishing_types_case_insensitively(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        views, "_cam_status", lambda _url: {"is_live": True, "status_label": "Live now"}
+        views, "_cam_status_cached", lambda _url: {"is_live": True, "status_label": "Live now"}
     )
 
     context = views._build_live_cam_context(

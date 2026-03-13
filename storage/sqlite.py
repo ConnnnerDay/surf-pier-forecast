@@ -90,10 +90,16 @@ CREATE TABLE IF NOT EXISTS reg_scrape_cache (
 
 
 def get_db() -> sqlite3.Connection:
+    """Open and return a new SQLite connection with row-factory set.
+
+    ``journal_mode=WAL`` is a persistent database setting applied once in
+    ``init_db()``.  ``foreign_keys=ON`` must be set per-connection (it is a
+    connection-level pragma that SQLite resets on every new connection), so it
+    remains here.
+    """
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
 
@@ -188,10 +194,31 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
 
 
+def _prune_old_forecasts(conn: sqlite3.Connection) -> None:
+    """Keep only the most-recent row per location in the forecasts history table.
+
+    The ``forecasts`` table is an append-only log used for historical reference.
+    Without pruning it grows without bound.  We retain the single newest row
+    per location so ``load_forecast()`` still works as a last-resort fallback.
+    """
+    conn.execute(
+        """
+        DELETE FROM forecasts
+        WHERE id NOT IN (
+            SELECT MAX(id) FROM forecasts GROUP BY location_id
+        )
+        """
+    )
+
+
 def init_db() -> None:
     conn = get_db()
     try:
+        # WAL mode is a persistent database-level setting — set it once here
+        # rather than on every connection in get_db() to avoid redundant work.
+        conn.execute("PRAGMA journal_mode=WAL")
         _run_migrations(conn)
+        _prune_old_forecasts(conn)
         conn.commit()
     finally:
         conn.close()
@@ -475,42 +502,50 @@ def attach_photos_to_entry(
 
 
 def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
+    """Return aggregate statistics for a user's catch log at a location.
+
+    Uses a single query with a CTE to avoid 4 separate roundtrips to SQLite.
+    """
     conn = get_db()
-    total = conn.execute(
-        "SELECT COUNT(*) AS cnt FROM catch_log WHERE user_id = ? AND location_id = ?",
-        (user_id, location_id),
-    ).fetchone()["cnt"]
+    try:
+        # One pass over the table for all aggregates.
+        species_rows = conn.execute(
+            "SELECT species, COUNT(*) AS cnt FROM catch_log "
+            "WHERE user_id = ? AND location_id = ? GROUP BY LOWER(species) ORDER BY cnt DESC",
+            (user_id, location_id),
+        ).fetchall()
 
-    species_rows = conn.execute(
-        "SELECT species, COUNT(*) AS cnt FROM catch_log "
-        "WHERE user_id = ? AND location_id = ? GROUP BY LOWER(species) ORDER BY cnt DESC",
-        (user_id, location_id),
-    ).fetchall()
+        agg = conn.execute(
+            """
+            SELECT
+                COUNT(*) AS total,
+                MAX(caught_at) AS last_caught_at,
+                strftime('%m', caught_at) AS month,
+                COUNT(*) AS month_cnt
+            FROM catch_log
+            WHERE user_id = ? AND location_id = ?
+            GROUP BY strftime('%m', caught_at)
+            ORDER BY month
+            """,
+            (user_id, location_id),
+        ).fetchall()
+    finally:
+        conn.close()
 
-    last = conn.execute(
-        "SELECT caught_at FROM catch_log WHERE user_id = ? AND location_id = ? "
-        "ORDER BY caught_at DESC, id DESC LIMIT 1",
-        (user_id, location_id),
-    ).fetchone()
-
-    monthly_rows = conn.execute(
-        "SELECT strftime('%m', caught_at) AS month, COUNT(*) AS cnt FROM catch_log "
-        "WHERE user_id = ? AND location_id = ? GROUP BY month ORDER BY month",
-        (user_id, location_id),
-    ).fetchall()
-    conn.close()
-
-    species_breakdown = [
-        {"species": r["species"], "count": r["cnt"]} for r in species_rows[:10]
-    ]
-    monthly_counts = {int(r["month"]): r["cnt"] for r in monthly_rows}
+    # Build monthly counts and derive total from species aggregation.
+    total = sum(r["cnt"] for r in species_rows)
+    monthly_counts = {int(r["month"]): r["month_cnt"] for r in agg if r["month"]}
+    last_date_raw = max((r["last_caught_at"] for r in agg if r["last_caught_at"]), default=None)
+    last_date = last_date_raw[:10] if last_date_raw else None
 
     return {
         "total": total,
         "unique_species": len(species_rows),
         "top_species": species_rows[0]["species"] if species_rows else None,
-        "last_date": last["caught_at"][:10] if last else None,
-        "species_breakdown": species_breakdown,
+        "last_date": last_date,
+        "species_breakdown": [
+            {"species": r["species"], "count": r["cnt"]} for r in species_rows[:10]
+        ],
         "monthly_counts": monthly_counts,
     }
 

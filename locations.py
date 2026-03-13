@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import math
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 from services.http_client import get as http_get
@@ -2194,6 +2195,11 @@ def find_nearby_live_cams(
     return results
 
 
+@lru_cache(maxsize=1)
 def all_locations_sorted() -> List[Dict[str, Any]]:
-    """Return all locations sorted by state then name (for browse view)."""
+    """Return all locations sorted by state then name (for browse view).
+
+    The result is cached for the process lifetime since COASTAL_LOCATIONS is
+    a static compile-time constant.  Called on every setup page render.
+    """
     return sorted(COASTAL_LOCATIONS, key=lambda loc: (loc["state"], loc["name"]))
