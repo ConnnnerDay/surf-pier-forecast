@@ -26,7 +26,6 @@ def get(
     """GET with bounded timeout and retry/backoff for transient failures."""
     if retries < 0:
         raise ValueError(f"retries must be >= 0, got {retries}")
-    last_error: Optional[Exception] = None
 
     for attempt in range(1, retries + 2):
         start = time.perf_counter()
@@ -56,7 +55,6 @@ def get(
             )
             return response
         except requests.RequestException as exc:
-            last_error = exc
             latency_ms = round((time.perf_counter() - start) * 1000, 1)
             if attempt <= retries:
                 logger.warning(

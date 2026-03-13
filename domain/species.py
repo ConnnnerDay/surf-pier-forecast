@@ -2922,8 +2922,19 @@ def _format_spawn_window(spawn_months: List[int]) -> str:
     Handles wrap-around ranges (e.g. Nov–Feb) and non-contiguous lists.
     """
     _MA = [
-        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        "",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
     ]
     sm = sorted(set(spawn_months))
     if not sm:
@@ -3010,12 +3021,10 @@ def _classify_legal_status(reg: Optional[Dict[str, str]], month: int) -> str:
     # subordinate clause like "some areas have closed seasons" or "may have closed
     # seasons".  We look for the phrase and then check that it is NOT preceded by
     # common qualifier words that weaken the statement.
-    _CLOSED_SEASON_RE = re.compile(
-        r"(season\s+closed|closed\s+season)", re.IGNORECASE
-    )
+    _CLOSED_SEASON_RE = re.compile(r"(season\s+closed|closed\s+season)", re.IGNORECASE)
     _QUALIFIER_WORDS = ("some", "certain", "have", "having", "with", "may", "areas")
     for m in _CLOSED_SEASON_RE.finditer(combined):
-        preceding = combined[max(0, m.start() - 30): m.start()].lower()
+        preceding = combined[max(0, m.start() - 30) : m.start()].lower()
         if not any(q in preceding for q in _QUALIFIER_WORDS):
             return "catch_release"
 
@@ -3098,8 +3107,10 @@ def build_spawning_report(
         next_month = 1 if month == 12 else month + 1
 
         # Determine direction of adjacency
-        after_window = (not in_window) and (prev_month in spawn_months)   # just ended
-        before_window = (not in_window) and (next_month in spawn_months)  # about to start
+        after_window = (not in_window) and (prev_month in spawn_months)  # just ended
+        before_window = (not in_window) and (
+            next_month in spawn_months
+        )  # about to start
 
         if not in_window and not after_window and not before_window:
             continue  # too far away to be actionable

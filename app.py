@@ -46,7 +46,7 @@ from web.views import bp as views_bp
 
 # Flask<3 test client expects werkzeug.__version__; Werkzeug 3 removed it.
 if not hasattr(werkzeug, "__version__"):
-    werkzeug.__version__ = "3"
+    werkzeug.__version__ = "3"  # type: ignore[attr-defined]
 
 
 def _configure_logging() -> None:
@@ -180,7 +180,7 @@ def create_app() -> Flask:
         gives it the full-site scope it needs for offline support and cache
         strategies to work on mobile.
         """
-        resp = send_from_directory(app.static_folder, "sw.js")
+        resp = send_from_directory(app.static_folder or "static", "sw.js")
         resp.headers["Service-Worker-Allowed"] = "/"
         resp.headers["Cache-Control"] = "no-cache"
         return resp

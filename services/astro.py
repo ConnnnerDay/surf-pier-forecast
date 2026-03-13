@@ -111,7 +111,8 @@ def _moon_transit_hours(dt: datetime, lng: float) -> Tuple[float, float]:
     # Standard timezone offset from UTC
     tz = dt.tzinfo
     if tz:
-        utc_offset = dt.utcoffset().total_seconds() / 3600
+        _offset = dt.utcoffset()
+        utc_offset = _offset.total_seconds() / 3600 if _offset is not None else -5
     else:
         utc_offset = -5  # default EST
     solar_offset = (lng / 15.0) - utc_offset

@@ -137,7 +137,10 @@ def _cam_status_cached(url: str) -> Dict[str, Any]:
     with _cam_status_lock:
         cached = _cam_status_cache.get(url)
 
-    if cached is None or (now - cached.get("checked_at_ts", 0)) >= _CAM_STATUS_TTL_SECONDS:
+    if (
+        cached is None
+        or (now - cached.get("checked_at_ts", 0)) >= _CAM_STATUS_TTL_SECONDS
+    ):
         _cam_check_pool.submit(_fetch_cam_status, url)
 
     return cached or _CAM_STATUS_UNKNOWN
@@ -261,9 +264,11 @@ def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     if g.user:
         prefs = get_preferences(g.user["id"])
         favorite_locations = [
-            get_location(loc_id) for loc_id in prefs.get("favorites", [])
+            loc
+            for loc_id in prefs.get("favorites", [])
+            for loc in (get_location(loc_id),)
+            if loc is not None
         ]
-        favorite_locations = [loc for loc in favorite_locations if loc]
         favorite_ids = [loc["id"] for loc in favorite_locations]
 
     context: Dict[str, Any] = {
@@ -298,7 +303,7 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
 
 def _render_forecast(
     location: Dict[str, Any], cached_flag: Optional[str] = None
-) -> str:
+) -> Any:
     """Load (or refresh) the forecast for a location and render the dashboard."""
     loc_id = location["id"]
     forecast = load_cached_forecast(loc_id, user_id=None, include_stale=True)
@@ -381,7 +386,7 @@ def _render_forecast(
 
 
 @bp.route("/")
-def index() -> str:
+def index() -> Any:
     """Render the dashboard with the current forecast."""
     location = get_session_location()
     if location is None:
@@ -392,7 +397,7 @@ def index() -> str:
 
 
 @bp.route("/live-cams")
-def live_cams() -> str:
+def live_cams() -> Any:
     """Render the dedicated live cams page for the selected location."""
     location = get_session_location()
     if location is None:
@@ -409,7 +414,7 @@ def live_cams() -> str:
 
 
 @bp.route("/fishing-log")
-def fishing_log() -> str:
+def fishing_log() -> Any:
     """Render the dedicated fishing log page for the selected location."""
     location = get_session_location()
     if location is None:
@@ -546,7 +551,7 @@ def setup_favorite(location_id: str) -> Any:
 
 
 @bp.route("/profile")
-def profile() -> str:
+def profile() -> Any:
     """Show the fishing profile setup page."""
     if g.user is None:
         return redirect(url_for("auth.login"))
@@ -555,7 +560,7 @@ def profile() -> str:
 
 
 @bp.route("/f/<location_id>")
-def shared_forecast(location_id: str) -> str:
+def shared_forecast(location_id: str) -> Any:
     """View a forecast for a specific location via shareable link."""
     location = get_location(location_id)
     if location is None:

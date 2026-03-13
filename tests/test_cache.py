@@ -6,11 +6,6 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from zoneinfo import ZoneInfo
 
-
-def _fresh_ts() -> str:
-    """Return a recent timezone-aware ISO timestamp (5 minutes ago in UTC)."""
-    return (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
-
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
     _cache_path,
@@ -19,6 +14,11 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
+
+
+def _fresh_ts() -> str:
+    """Return a recent timezone-aware ISO timestamp (5 minutes ago in UTC)."""
+    return (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
 
 
 @pytest.fixture(autouse=True)

@@ -71,6 +71,7 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
 
     loc_id = location["id"]
     user_id = g.user["id"] if g.user else None
+    forecast_data: Optional[Dict[str, Any]] = None
     if query.force_refresh:
         logger.info("cache.force_refresh location_id=%s", loc_id)
         forecast_data = generate_forecast(location)

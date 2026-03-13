@@ -219,7 +219,7 @@ def _base_payload(state: str) -> Dict[str, str]:
         "source_file": _REG_DATA.source_file,
         "data_status": "official_reference",
         "last_updated": _REG_DATA.last_updated,
-        "is_stale": _months_since(_REG_DATA.last_updated) >= _STALE_MONTHS,
+        "is_stale": _months_since(_REG_DATA.last_updated) >= _STALE_MONTHS,  # type: ignore[dict-item]
         "fetched_at": "",
     }
 
@@ -249,7 +249,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
         if scraped:
             payload.update(scraped)
             payload["data_status"] = "live"
-            payload["is_stale"] = False
+            payload["is_stale"] = False  # type: ignore[assignment]
             # Make sure official_source is always set
             if not payload.get("official_source"):
                 payload["official_source"] = _STATE_REGULATION_SOURCES.get(
@@ -257,7 +257,12 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
                 )
             return payload
     except Exception:
-        logger.warning("Live regulation scraper failed for %r/%r; falling back to snapshot", species_name, state_key, exc_info=True)
+        logger.warning(
+            "Live regulation scraper failed for %r/%r; falling back to snapshot",
+            species_name,
+            state_key,
+            exc_info=True,
+        )
 
     # ── 2. Static JSON snapshot ──────────────────────────────────────
     species_key = _REG_DATA.name_map.get(species_name)
@@ -280,7 +285,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]
         payload.update(matched)
         payload["data_status"] = "snapshot"
         payload["is_stale"] = (
-            _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS
+            _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS  # type: ignore[assignment]
         )
         if payload.get("source"):
             payload["snapshot_source"] = payload["source"]
