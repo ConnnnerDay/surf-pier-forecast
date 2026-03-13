@@ -175,7 +175,11 @@ def fetch_currents_predictions(
             )
         return out
     except Exception:
-        logger.debug("Currents predictions fetch failed for station %r", station_id, exc_info=True)
+        logger.debug(
+            "Currents predictions fetch failed for station %r",
+            station_id,
+            exc_info=True,
+        )
         return []
 
 
@@ -219,7 +223,11 @@ def fetch_currents_observation(
             "direction": str(direction) if direction not in (None, "") else "",
         }
     except Exception:
-        logger.debug("Currents observation fetch failed for station %r", station_id, exc_info=True)
+        logger.debug(
+            "Currents observation fetch failed for station %r",
+            station_id,
+            exc_info=True,
+        )
         return None
 
 
@@ -342,7 +350,7 @@ def fetch_tide_predictions(
                     else today_str,
                 }
             )
-        return tides
+        return tides  # type: ignore[return-value]
     except Exception:
         logger.debug("Tide predictions fetch failed", exc_info=True)
         return []

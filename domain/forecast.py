@@ -756,7 +756,7 @@ def build_multiday_outlook(
             )
             if isinstance(fb_wind, tuple):
                 wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
-                wind_range = fb_wind
+                wind_range = fb_wind  # type: ignore[assignment]
                 wind_dir_day = fb_dir
 
         # --- Wave estimate ---
@@ -1135,7 +1135,7 @@ def pick_best_fishing_day(
         s = verdict_scores.get(v, 2)
         n_species = len(day.get("top_species", []))
         # Bonus for having more active species
-        s += min(n_species * 0.2, 1.0)
+        s += min(n_species * 0.2, 1.0)  # type: ignore[assignment]
         if s > best_score:
             best_score = s
             best_day = day["day"]
@@ -1924,8 +1924,8 @@ def generate_forecast(
     env_metrics = builder.environment_service.get_coops_environmental(coops_station)
     if env_metrics:
         if weather:
-            env_metrics.setdefault("air_temp_f", weather.get("air_temp_f"))
-            env_metrics.setdefault("humidity_pct", weather.get("humidity"))
+            env_metrics.setdefault("air_temp_f", weather.get("air_temp_f"))  # type: ignore[arg-type]
+            env_metrics.setdefault("humidity_pct", weather.get("humidity"))  # type: ignore[arg-type]
         forecast["environment"] = env_metrics
         sources_used.append("NOAA CO-OPS environmental")
     else:
@@ -2074,7 +2074,9 @@ def generate_forecast(
     # Spawning report — species currently or nearly spawning based on
     # month and water temperature.  State is passed so legal status can be
     # surfaced (closed season, C&R-only, size/bag limits).
-    forecast["spawning"] = build_spawning_report(month, water_temp, coast, state=loc_state)
+    forecast["spawning"] = build_spawning_report(
+        month, water_temp, coast, state=loc_state
+    )
 
     # Spot tips based on current conditions
     forecast["spot_tips"] = build_spot_tips(

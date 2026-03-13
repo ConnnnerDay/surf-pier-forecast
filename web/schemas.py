@@ -197,7 +197,7 @@ class LogCreatePayload:
 
 
 def normalize_log_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
-    base = {
+    base: Dict[str, Any] = {
         "total": 0,
         "unique_species": 0,
         "top_species": None,

@@ -215,7 +215,7 @@ def logout() -> Any:
 
 
 @bp.route("/account")
-def account() -> str:
+def account() -> Any:
     """Account settings page for logged-in users."""
     if g.user is None:
         return redirect(url_for("auth.login"))

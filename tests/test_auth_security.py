@@ -71,7 +71,11 @@ def test_login_rate_limit_message(client, monkeypatch):
     for _ in range(auth_module._LOGIN_RATE_LIMIT_MAX_ATTEMPTS):
         client.post(
             "/login",
-            data={"csrf_token": token, "username": "rate_user", "password": "WrongPass1"},
+            data={
+                "csrf_token": token,
+                "username": "rate_user",
+                "password": "WrongPass1",
+            },
         )
 
     # Next attempt (even with the correct password) must be blocked.

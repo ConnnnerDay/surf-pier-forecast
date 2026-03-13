@@ -432,7 +432,7 @@ def add_log_entry(
         (user_id, location_id, species.strip(), size.strip(), notes.strip()),
     )
     conn.commit()
-    entry_id = cur.lastrowid
+    entry_id = cur.lastrowid or 0
     conn.close()
     return entry_id
 
@@ -535,7 +535,9 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
     # Build monthly counts and derive total from species aggregation.
     total = sum(r["cnt"] for r in species_rows)
     monthly_counts = {int(r["month"]): r["month_cnt"] for r in agg if r["month"]}
-    last_date_raw = max((r["last_caught_at"] for r in agg if r["last_caught_at"]), default=None)
+    last_date_raw = max(
+        (r["last_caught_at"] for r in agg if r["last_caught_at"]), default=None
+    )
     last_date = last_date_raw[:10] if last_date_raw else None
 
     return {
