@@ -5,6 +5,7 @@ from __future__ import annotations
 import json as _json
 import logging
 import re
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Optional
@@ -49,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _cam_status_cache: Dict[str, Dict[str, Any]] = {}
+_cam_status_lock = threading.Lock()
 
 _KT_RANGE_RE = re.compile(
     r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE
@@ -91,13 +93,22 @@ def _apply_wind_unit_preference(forecast: Dict[str, Any], wind_units: str) -> No
 
 
 def _cam_status(url: str) -> Dict[str, Any]:
-    """Check whether a cam URL appears reachable, with short-lived caching."""
-    now = time.time()
-    cached = _cam_status_cache.get(url)
-    if cached and (now - cached["checked_at_ts"]) < _CAM_STATUS_TTL_SECONDS:
-        return cached
+    """Check whether a cam URL appears reachable, with short-lived caching.
 
-    status = {"is_live": False, "status_label": "Unavailable", "checked_at_ts": now}
+    The in-process cache is guarded by ``_cam_status_lock`` so that concurrent
+    requests from ``ThreadPoolExecutor`` workers don't race on the dict.
+    """
+    now = time.time()
+    with _cam_status_lock:
+        cached = _cam_status_cache.get(url)
+        if cached and (now - cached["checked_at_ts"]) < _CAM_STATUS_TTL_SECONDS:
+            return cached
+
+    status: Dict[str, Any] = {
+        "is_live": False,
+        "status_label": "Unavailable",
+        "checked_at_ts": now,
+    }
     headers = {"User-Agent": "Mozilla/5.0 (compatible; SurfPierForecast/1.0)"}
     try:
         resp = requests.get(
@@ -111,7 +122,8 @@ def _cam_status(url: str) -> Dict[str, Any]:
     except requests.RequestException:
         status["status_label"] = "Unavailable"
 
-    _cam_status_cache[url] = status
+    with _cam_status_lock:
+        _cam_status_cache[url] = status
     return status
 
 

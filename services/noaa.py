@@ -7,23 +7,11 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from services.http_client import get as http_get
-from zoneinfo import ZoneInfo
 
 from locations import get_monthly_water_temps
+from utils import safe_zone as _safe_zone
 
 logger = logging.getLogger(__name__)
-
-_DEFAULT_TZ = "America/New_York"
-
-
-def _safe_zone(tz_name: str) -> ZoneInfo:
-    """Return ZoneInfo for *tz_name*, falling back to Eastern if invalid."""
-    try:
-        return ZoneInfo(tz_name)
-    except Exception:
-        if tz_name != _DEFAULT_TZ:
-            logger.warning("Invalid timezone %r; using %s", tz_name, _DEFAULT_TZ)
-        return ZoneInfo(_DEFAULT_TZ)
 
 
 _COOPS_HEADERS = {

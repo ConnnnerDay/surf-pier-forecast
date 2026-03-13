@@ -6,23 +6,11 @@ import logging
 import math
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
-
 from zoneinfo import ZoneInfo
 
+from utils import safe_zone as _safe_zone
+
 logger = logging.getLogger(__name__)
-
-_DEFAULT_TZ = "America/New_York"
-
-
-def _safe_zone(tz_name: str) -> ZoneInfo:
-    try:
-        return ZoneInfo(tz_name)
-    except Exception:
-        if tz_name != _DEFAULT_TZ:
-            logger.warning(
-                "Invalid timezone %r in astro; using %s", tz_name, _DEFAULT_TZ
-            )
-        return ZoneInfo(_DEFAULT_TZ)
 
 
 # Default coordinates (overridden per location; only used when no location set)
