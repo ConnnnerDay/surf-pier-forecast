@@ -4702,3 +4702,40 @@ footer p {
   font-style: italic;
   line-height: 1.35;
 }
+
+/* Inline catch-and-release badge — species card (What's Biting) */
+.reg-inline-cr {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.71rem;
+  font-weight: 600;
+  line-height: 1.35;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+[data-theme="dark"] .reg-inline-cr {
+  background: rgba(30, 64, 175, 0.18);
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.3);
+}
+.reg-inline-cr svg {
+  flex-shrink: 0;
+}
+
+/* Spawning card — catch-and-release and unknown meta items */
+.spawning-cr-note {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+[data-theme="dark"] .spawning-cr-note {
+  color: #93c5fd;
+}
+.spawning-unknown-note {
+  color: var(--text-muted);
+  font-style: italic;
+}

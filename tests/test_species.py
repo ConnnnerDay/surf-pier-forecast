@@ -290,7 +290,13 @@ class TestRegulationHarvestFilter:
         assert _regulation_disallows_keep({"notes": "Catch and release only."}) is True
         assert _regulation_disallows_keep({"season": "Open year-round"}) is False
 
-    def test_ranking_hides_species_that_cannot_be_kept(self, monkeypatch):
+    def test_catch_and_release_species_visible_with_badge(self, monkeypatch):
+        """C&R Sheepshead (bag_limit=0, 'No harvest') must stay in ranking with a C&R badge.
+
+        Policy: 'catch and release only' means targeting is legal — anglers can fish
+        for the species, they just must release every catch.  Hiding C&R species would
+        silently remove useful forecast information.
+        """
         def fake_lookup(species_name, _state):
             if species_name == "Sheepshead":
                 return {
@@ -315,5 +321,40 @@ class TestRegulationHarvestFilter:
         )
         names = [sp["name"] for sp in ranking]
 
-        assert "Sheepshead" not in names
+        assert "Sheepshead" in names, (
+            "C&R Sheepshead must appear in ranking — targeting is legal"
+        )
+        sheepshead = next(sp for sp in ranking if sp["name"] == "Sheepshead")
+        assert sheepshead["regulation_status"] == "catch_and_release", (
+            f"Expected regulation_status='catch_and_release', got {sheepshead['regulation_status']!r}"
+        )
+        assert [sp["rank"] for sp in ranking] == list(range(1, len(ranking) + 1))
+
+    def test_closed_season_species_hidden_from_ranking(self, monkeypatch):
+        """A species with 'Season closed' must be absent — targeting is not permitted."""
+        def fake_lookup(species_name, _state):
+            if species_name == "Sheepshead":
+                return {
+                    "bag_limit": "",
+                    "season": "Season closed",
+                    "notes": "",
+                }
+            return {
+                "bag_limit": "5/day",
+                "season": "Open",
+                "notes": "",
+            }
+
+        monkeypatch.setattr("domain.species.lookup_regulation", fake_lookup)
+
+        ranking = build_species_ranking(
+            month=3,
+            water_temp=62,
+            coast="east",
+            fishing_types=["pier"],
+            state="NC",
+        )
+        names = [sp["name"] for sp in ranking]
+
+        assert "Sheepshead" not in names, "Season-closed Sheepshead must be hidden from forecast"
         assert [sp["rank"] for sp in ranking] == list(range(1, len(ranking) + 1))
