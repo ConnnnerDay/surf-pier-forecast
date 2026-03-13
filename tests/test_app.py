@@ -46,16 +46,17 @@ class TestAppFactory:
 
 
 class TestBasicRoutes:
-    def test_index_redirects_to_setup(self, client):
-        """Without a location set, index should redirect to setup."""
+    def test_index_redirects_anon_to_landing(self, client):
+        """Unauthenticated users visiting / are sent to the landing/login page."""
         resp = client.get("/", follow_redirects=False)
         assert resp.status_code == 302
-        assert "/setup" in resp.headers["Location"]
+        assert "/welcome" in resp.headers["Location"]
 
-    def test_setup_page_loads(self, client):
-        resp = client.get("/setup")
-        assert resp.status_code == 200
-        assert b"Choose" in resp.data or b"location" in resp.data.lower()
+    def test_setup_requires_login(self, client):
+        """Unauthenticated users visiting /setup are sent to the landing page."""
+        resp = client.get("/setup", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/welcome" in resp.headers["Location"]
 
     def test_login_page_loads(self, client):
         resp = client.get("/login")
@@ -86,11 +87,11 @@ class TestBasicRoutes:
         assert b"When to Fish" in resp.data
         assert b"Surf &amp; Pier Fishing Outlook" in resp.data
 
-    def test_setup_anon_favorite_toggle_is_client_side(self, client):
-        resp = client.get("/setup")
-        assert resp.status_code == 200
-        assert b"data-favorite-btn" in resp.data
-        assert b"/setup/favorite/" not in resp.data
+    def test_setup_requires_login_for_unauthenticated(self, client):
+        """Unauthenticated users hitting /setup are redirected to the landing page."""
+        resp = client.get("/setup", follow_redirects=True)
+        # Should land on the welcome/landing page, not the setup page.
+        assert b"Sign Up" in resp.data or b"Log In" in resp.data or b"Welcome" in resp.data
 
 
 def test_live_cams_tab_present_in_nav():

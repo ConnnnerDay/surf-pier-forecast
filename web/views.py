@@ -190,13 +190,8 @@ def _build_live_cam_context(
 # Keep the core forecast flow public so visitors can select a location and use
 # the app without creating an account.
 _PUBLIC_ENDPOINTS = {
-    "views.index",
-    "views.setup",
-    "views.setup_search",
-    "views.setup_coords",
-    "views.setup_select",
-    "views.live_cams",
-    "views.fishing_log",
+    # Shareable forecast links are intentionally public so they can be shared
+    # without requiring the recipient to have an account.
     "views.shared_forecast",
 }
 _PROFILE_SETUP_EXEMPT_ENDPOINTS = {
