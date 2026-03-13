@@ -276,11 +276,20 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
 
     Returns one of::
 
-        "legal"         — regulations confirm the species is currently open to harvest
-        "restricted"    — seasonal/area-specific rules apply; angler must verify
-        "out_of_season" — currently inside a closed season window for this month
-        "prohibited"    — harvest definitively not allowed (C&R, bag=0, federally protected)
-        "unknown"       — no usable regulation data found for this state/species
+        "legal"             — open fishery with standard bag/size limits
+        "catch_and_release" — legal to target; all catch must be released
+        "restricted"        — conditional rules apply; angler must verify before keeping
+        "out_of_season"     — currently inside a closed season window for this month
+        "prohibited"        — fishery closed; do not target (year-round closure, federal
+                              protection)
+        "unknown"           — no usable regulation data found for this state/species
+
+    **Critical distinction**: ``catch_and_release`` means the fishery is *open for
+    targeting* but retention is banned.  Anglers can legally fish for the species;
+    they simply must release every fish caught.  This is fundamentally different from
+    ``out_of_season`` / ``prohibited``, where fishing for the species is not permitted
+    at all.  The :func:`should_hide_from_forecast` helper encodes this policy: only
+    ``out_of_season`` and ``prohibited`` suppress a species from the forecast.
 
     This function is **advisory only**.  Regulations change frequently; always
     verify with the official state source before fishing.
@@ -306,29 +315,20 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
     if "species-specific limits were not found" in notes:
         return "unknown"
 
-    # ── Hard prohibitions ───────────────────────────────────────────────────
-    _HARD_PROHIBITED = (
-        "catch and release only",
-        "catch-and-release only",
-        "no harvest",
-        "harvest prohibited",
-        "retention prohibited",
-        "possession prohibited",
-        "must be released",
-        "cannot be retained",
+    # ── Step 1: Truly closed fisheries — check BEFORE C&R phrases so that
+    #    e.g. "season closed, bag limit 0" is correctly classified as
+    #    out_of_season (cannot target) rather than catch_and_release. ─────────
+
+    # Year-round / federal closures where targeting is not permitted
+    _TRULY_CLOSED = (
         "closed year-round",
-        "harvest tag required",
-        "harvest permit required",
-        "tag required to harvest",
         "federally protected",
         "endangered species",
     )
-    if any(phrase in combined for phrase in _HARD_PROHIBITED):
-        return "prohibited"
-    if bag_limit in {"0", "0/day", "0 per day", "0 fish", "none"}:
+    if any(phrase in combined for phrase in _TRULY_CLOSED):
         return "prohibited"
 
-    # ── Month-specific seasonal closure ─────────────────────────────────────
+    # Month-specific seasonal closure ("closed Jan–Apr", etc.)
     if month and month in _parse_closed_months_text(combined):
         return "out_of_season"
 
@@ -338,7 +338,36 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
         if not any(q in preceding for q in _QUALIFIER_WORDS):
             return "out_of_season"
 
-    # ── Soft restrictions ────────────────────────────────────────────────────
+    # ── Step 2: Catch-and-release — fishery is open for targeting, retention
+    #    is not permitted.  Show with a C&R badge; do NOT hide. ──────────────
+
+    _CATCH_AND_RELEASE = (
+        "catch and release only",
+        "catch-and-release only",
+        "no harvest",
+        "harvest prohibited",
+        "retention prohibited",
+        "possession prohibited",
+        "must be released",
+        "cannot be retained",
+    )
+    if any(phrase in combined for phrase in _CATCH_AND_RELEASE):
+        return "catch_and_release"
+
+    # bag_limit of zero means no retention allowed — effectively C&R
+    if bag_limit in {"0", "0/day", "0 per day", "0 fish"}:
+        return "catch_and_release"
+
+    # ── Step 3: Restricted — conditional rules that require angler verification ─
+    # Permit/tag-based harvest (can target; need a permit to keep)
+    _PERMIT_REQUIRED = (
+        "harvest tag required",
+        "harvest permit required",
+        "tag required to harvest",
+    )
+    if any(phrase in combined for phrase in _PERMIT_REQUIRED):
+        return "restricted"
+
     if "seasonal" in season or ("check" in season and "open year-round" not in season):
         return "restricted"
     _SOFT_RESTRICTED = ("some areas", "certain areas", "may be closed", "area closures", "varies by")
@@ -346,6 +375,27 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
         return "restricted"
 
     return "legal"
+
+
+def should_hide_from_forecast(status: str) -> bool:
+    """Return True when a species should be suppressed from 'What\'s Biting'
+    and 'What\'s Spawning Now' based on its legality *status*.
+
+    Hide policy (minimal, deliberate):
+      - ``"prohibited"``    — year-round closure or federal protection; do not target
+      - ``"out_of_season"`` — currently in a closed season window; do not target
+
+    Show policy (everything else is visible):
+      - ``"catch_and_release"`` — legal to target; show with a C&R badge
+      - ``"restricted"``        — conditional; show with a 'verify' prompt
+      - ``"legal"``             — open; show normally
+      - ``"unknown"``           — data missing; show with an 'unverified' note
+
+    C&R species are *not* hidden because anglers can legally fish for them —
+    they just must release every fish caught.  Hiding them would remove useful
+    information from the forecast.
+    """
+    return status in ("prohibited", "out_of_season")
 
 
 def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]:
