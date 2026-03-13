@@ -224,6 +224,130 @@ def _base_payload(state: str) -> Dict[str, str]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Month abbreviations for closed-season parsing in classify_legality
+# ---------------------------------------------------------------------------
+_LEGALITY_MONTH_ABBREVS: Dict[str, int] = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    "january": 1, "february": 2, "march": 3, "april": 4,
+    "june": 6, "july": 7, "august": 8, "september": 9,
+    "october": 10, "november": 11, "december": 12,
+}
+
+_CLOSED_RANGE_RE = re.compile(r"closed\s+([a-z]+)[–\-]([a-z]+)")
+_CLOSED_SEASON_RE = re.compile(r"(season\s+closed|closed\s+season)", re.IGNORECASE)
+_QUALIFIER_WORDS = frozenset(("some", "certain", "have", "having", "with", "may", "areas"))
+
+
+def _parse_closed_months_text(text: str) -> set:
+    """Parse month ranges from text like 'closed Jan-May'.
+
+    Returns the set of month numbers (1-12) that are closed.
+    Handles year-wrap ranges such as 'closed Nov-Feb'.
+    """
+    closed: set = set()
+    for m in _CLOSED_RANGE_RE.finditer(text.lower()):
+        start_str = m.group(1)[:3]
+        end_str = m.group(2)[:3]
+        start = _LEGALITY_MONTH_ABBREVS.get(start_str)
+        end = _LEGALITY_MONTH_ABBREVS.get(end_str)
+        if start and end:
+            if end >= start:
+                closed.update(range(start, end + 1))
+            else:
+                # Wraps around the year-end, e.g. Nov-Feb
+                closed.update(range(start, 13))
+                closed.update(range(1, end + 1))
+    return closed
+
+
+def get_official_regulations_url(state: str) -> str:
+    """Return the official state fishing regulations URL for *state* (2-letter code).
+
+    Falls back to the NOAA recreational fishing rules page when the state is
+    not recognised or when *state* is empty.
+    """
+    return _STATE_REGULATION_SOURCES.get((state or "").upper().strip(), _FALLBACK_SOURCE)
+
+
+def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
+    """Return a normalised legality status for a regulation payload.
+
+    Returns one of::
+
+        "legal"         — regulations confirm the species is currently open to harvest
+        "restricted"    — seasonal/area-specific rules apply; angler must verify
+        "out_of_season" — currently inside a closed season window for this month
+        "prohibited"    — harvest definitively not allowed (C&R, bag=0, federally protected)
+        "unknown"       — no usable regulation data found for this state/species
+
+    This function is **advisory only**.  Regulations change frequently; always
+    verify with the official state source before fishing.
+
+    Args:
+        reg:   Regulation dict returned by :func:`lookup_regulation`, or ``None``.
+        month: Current month (1-12) used to evaluate month-specific closures.
+               Pass 0 (default) to skip month-specific checks.
+    """
+    if not reg:
+        return "unknown"
+
+    bag_limit = str(reg.get("bag_limit") or "").strip().lower()
+    season = str(reg.get("season") or "").strip().lower()
+    notes = str(reg.get("notes") or "").strip().lower()
+    combined = " ".join(p for p in (bag_limit, season, notes) if p)
+
+    # No meaningful regulation content at all — link-only fallback payload.
+    # Check *combined* (not individual fields) so that notes-only payloads
+    # with genuine prohibition text still get classified correctly below.
+    if not combined:
+        return "unknown"
+    if "species-specific limits were not found" in notes:
+        return "unknown"
+
+    # ── Hard prohibitions ───────────────────────────────────────────────────
+    _HARD_PROHIBITED = (
+        "catch and release only",
+        "catch-and-release only",
+        "no harvest",
+        "harvest prohibited",
+        "retention prohibited",
+        "possession prohibited",
+        "must be released",
+        "cannot be retained",
+        "closed year-round",
+        "harvest tag required",
+        "harvest permit required",
+        "tag required to harvest",
+        "federally protected",
+        "endangered species",
+    )
+    if any(phrase in combined for phrase in _HARD_PROHIBITED):
+        return "prohibited"
+    if bag_limit in {"0", "0/day", "0 per day", "0 fish", "none"}:
+        return "prohibited"
+
+    # ── Month-specific seasonal closure ─────────────────────────────────────
+    if month and month in _parse_closed_months_text(combined):
+        return "out_of_season"
+
+    # Standalone "season closed" / "closed season" (without qualifying hedges)
+    for m in _CLOSED_SEASON_RE.finditer(combined):
+        preceding = combined[max(0, m.start() - 30): m.start()].lower()
+        if not any(q in preceding for q in _QUALIFIER_WORDS):
+            return "out_of_season"
+
+    # ── Soft restrictions ────────────────────────────────────────────────────
+    if "seasonal" in season or ("check" in season and "open year-round" not in season):
+        return "restricted"
+    _SOFT_RESTRICTED = ("some areas", "certain areas", "may be closed", "area closures", "varies by")
+    if any(phrase in combined for phrase in _SOFT_RESTRICTED):
+        return "restricted"
+
+    return "legal"
+
+
 def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]:
     """Look up fishing regulations for a species in a state.
 

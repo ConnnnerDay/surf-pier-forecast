@@ -2,6 +2,12 @@
         <section class="species-section">
             <h2>What's Biting Now</h2>
             <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
+            <p class="reg-section-disclaimer">
+                Please check local regulations before fishing.
+                {% if forecast.official_regulations_url %}
+                <a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-disclaimer-link">Official {{ forecast.location_state or '' }} regulations ↗</a>
+                {% endif %}
+            </p>
             <div class="species-cards">
                 {% for sp in forecast.species %}
                 <div class="species-card" data-species-name="{{ sp.name }}" data-species-bait="{{ sp.bait|lower }}" data-species-rig="{{ sp.rig|lower }}"{% if sp.regulation %} data-reg-min-size="{{ sp.regulation.min_size }}" data-reg-bag-limit="{{ sp.regulation.bag_limit }}" data-reg-season="{{ sp.regulation.season }}" data-reg-notes="{{ sp.regulation.notes }}" data-reg-official-source="{{ sp.regulation.official_source or '' }}" data-reg-data-status="{{ sp.regulation.data_status or '' }}" data-reg-last-updated="{{ sp.regulation.last_updated or '' }}" data-reg-is-stale="{{ sp.regulation.is_stale|lower }}" data-reg-fetched-at="{{ sp.regulation.fetched_at or '' }}"{% endif %}>
@@ -48,6 +54,22 @@
                                 <span class="meta-value">{{ sp.sinker }}</span>
                             </div>
                         </div>
+                        {# Stale regulation warning — shown in HTML so it's visible without opening the modal #}
+                        {% if sp.regulation and sp.regulation.is_stale and sp.regulation.data_status != 'live' %}
+                        <div class="reg-inline-stale">
+                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Regulations data may be outdated
+                            {% if sp.regulation.official_source %}
+                            &ndash; <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">verify ↗</a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {# Unknown regulation status — shown when no data was found for this state/species #}
+                        {% if sp.regulation_status == 'unknown' and forecast.location_state %}
+                        <p class="reg-inline-unknown">Regulations unverified for {{ forecast.location_state }} &ndash;
+                            {% if forecast.official_regulations_url %}<a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-disclaimer-link">check official source ↗</a>{% else %}check official source{% endif %}
+                        </p>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}

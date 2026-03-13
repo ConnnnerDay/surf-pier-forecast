@@ -354,6 +354,11 @@ def _render_forecast(
         forecast["location_id"] = loc_id
     if not forecast.get("location_state"):
         forecast["location_state"] = location.get("state", "")
+    if not forecast.get("official_regulations_url"):
+        from regulations import get_official_regulations_url as _get_reg_url
+        _st = forecast.get("location_state") or location.get("state", "")
+        if _st:
+            forecast["official_regulations_url"] = _get_reg_url(_st)
     # tide_chart was stored as a JSON string in older cache entries; parse it
     # back to a dict so the template can access fields directly.
     tc = forecast.get("tide_chart")

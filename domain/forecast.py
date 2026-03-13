@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from locations import get_fallback_conditions, get_monthly_water_temps
+from regulations import get_official_regulations_url
 from utils import safe_zone as _safe_zone
 
 from services.astro import (
@@ -1877,6 +1878,7 @@ def generate_forecast(
         "location_name": loc_name,
         "location_id": (location or {}).get("id", ""),
         "location_state": loc_state,
+        "official_regulations_url": get_official_regulations_url(loc_state) if loc_state else "",
         "conditions": conditions,
         "species": species,
         "rig_recommendations": rig_recommendations,
