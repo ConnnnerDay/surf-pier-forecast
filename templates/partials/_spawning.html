@@ -10,11 +10,11 @@
         </svg>
         What's Spawning
     </h2>
-    <p class="section-sub">Species spawning or entering their spawn window — based on water temp &amp; time of year</p>
+    <p class="section-sub">Species spawning near you right now — based on water temp &amp; time of year</p>
 
     <div class="spawning-grid">
         {% for sp in forecast.spawning %}
-        <div class="spawning-card spawning-card--{{ sp.status }}{% if sp.legal_status == 'catch_release' %} spawning-card--protected{% endif %}">
+        <div class="spawning-card spawning-card--{{ sp.status }}">
             <div class="spawning-card-header">
                 <div class="spawning-status-badge spawning-status--{{ sp.status }}">
                     {% if sp.status == 'spawning' %}
@@ -36,47 +36,6 @@
 
             <p class="spawning-note">{{ sp.spawn_note }}</p>
 
-            {# ── Legal / regulation status banner ── #}
-            {% if sp.legal_status == 'catch_release' %}
-            <div class="spawning-reg-banner spawning-reg-banner--protected" role="alert">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                <span>
-                    <strong>Do not keep</strong> —
-                    {% if sp.regulation and sp.regulation.season %}{{ sp.regulation.season }}{% else %}closed or catch &amp; release only{% endif %}
-                    {% if sp.regulation and sp.regulation.official_source %}
-                    · <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="spawning-reg-link">Verify official rules ↗</a>
-                    {% endif %}
-                </span>
-            </div>
-            {% elif sp.legal_status == 'restricted' %}
-            <div class="spawning-reg-banner spawning-reg-banner--verify" role="note">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span>
-                    <strong>Seasonal rules apply</strong> — verify current limits before keeping fish
-                    {% if sp.regulation and sp.regulation.official_source %}
-                    · <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="spawning-reg-link">Official source ↗</a>
-                    {% endif %}
-                </span>
-            </div>
-            {% elif sp.legal_status == 'open' and sp.regulation %}
-            <div class="spawning-reg-banner spawning-reg-banner--open">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>
-                    Open
-                    {% if sp.regulation.min_size %} · Min {{ sp.regulation.min_size }}{% endif %}
-                    {% if sp.regulation.bag_limit %} · Bag {{ sp.regulation.bag_limit }}{% endif %}
-                    {% if sp.regulation.official_source %}
-                    · <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="spawning-reg-link">Verify ↗</a>
-                    {% endif %}
-                </span>
-            </div>
-            {% elif sp.legal_status == 'unknown' %}
-            <div class="spawning-reg-banner spawning-reg-banner--unknown">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span>Always verify local rules before keeping fish</span>
-            </div>
-            {% endif %}
-
             <div class="spawning-meta">
                 <span class="spawning-meta-item" title="Water temperature needed for spawning activity">
                     <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
@@ -92,10 +51,29 @@
                     Water {{ sp.temp_delta }}°F below spawn range
                 </span>
                 {% endif %}
+                {% if sp.regulation and sp.regulation.min_size %}
+                <span class="spawning-meta-item">
+                    Min {{ sp.regulation.min_size }}
+                </span>
+                {% endif %}
+                {% if sp.regulation and sp.regulation.bag_limit %}
+                <span class="spawning-meta-item">
+                    Bag {{ sp.regulation.bag_limit }}
+                </span>
+                {% endif %}
+                {% if sp.legal_status == 'restricted' %}
+                <span class="spawning-meta-item spawning-verify-note">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    {% if sp.regulation and sp.regulation.official_source %}
+                    <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="spawning-reg-link">Verify seasonal rules ↗</a>
+                    {% else %}
+                    Verify seasonal rules
+                    {% endif %}
+                </span>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
-    <p class="spawning-disclaimer">Regulation data shown for reference only — always confirm current rules with your state fish &amp; wildlife agency before keeping any fish.</p>
 </section>
 {% endif %}
