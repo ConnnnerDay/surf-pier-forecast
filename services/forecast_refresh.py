@@ -10,6 +10,7 @@ from typing import Optional, Set, Tuple
 from domain.forecast import generate_forecast
 from locations import get_location
 from storage.cache import save_forecast
+from utils import norm_user_id as _norm_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,6 @@ _refresh_lock = threading.Lock()
 _refreshing: Set[QueueKey] = set()
 _enqueued: Set[QueueKey] = set()
 _worker_started = False
-
-
-def _norm_user_id(user_id: Optional[int]) -> int:
-    return int(user_id or 0)
 
 
 def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:

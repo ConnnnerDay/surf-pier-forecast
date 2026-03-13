@@ -9,9 +9,8 @@ import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-from zoneinfo import ZoneInfo
-
 from locations import get_fallback_conditions, get_monthly_water_temps
+from utils import safe_zone as _safe_zone
 
 from services.astro import (
     _sun_times,
@@ -61,21 +60,6 @@ from domain.species import (
 logger = logging.getLogger(__name__)
 
 FORECAST_VERSION = "v1.0.0"
-
-_DEFAULT_TZ = "America/New_York"
-
-
-def _safe_zone(tz_name: str) -> ZoneInfo:
-    """Return ZoneInfo for *tz_name*, falling back to Eastern if it's invalid."""
-    try:
-        return ZoneInfo(tz_name)
-    except (KeyError, Exception):
-        if tz_name != _DEFAULT_TZ:
-            logger.warning(
-                "Invalid timezone %r in location data; using %s", tz_name, _DEFAULT_TZ
-            )
-        return ZoneInfo(_DEFAULT_TZ)
-
 
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
@@ -466,6 +450,32 @@ class ForecastBuilder:
         self.astro_service = AstronomyService()
 
 
+# ---------------------------------------------------------------------------
+# Fishability scoring constants
+# ---------------------------------------------------------------------------
+# Starting score — midpoint of the 0-100 scale before any adjustments.
+_SCORE_BASELINE = 50.0
+
+# Wind speed thresholds (knots) for scoring adjustments.
+_WIND_LIGHT_KT = 8
+_WIND_MODERATE_LOW_KT = 12
+_WIND_MODERATE_HIGH_KT = 16
+_WIND_STRONG_KT = 20
+_WIND_VERY_STRONG_KT = 25
+
+# Wave height thresholds (feet) for scoring adjustments.
+_WAVE_FLAT_FT = 1.5
+_WAVE_MODERATE_FT = 3.0
+_WAVE_ROUGH_FT = 5.0
+_WAVE_HEAVY_FT = 7.0
+
+# Verdict score bands (score >= threshold → label).
+_VERDICT_EXCELLENT = 80
+_VERDICT_GOOD = 64
+_VERDICT_FAIR = 48
+_VERDICT_CHALLENGING = 32
+
+
 def classify_conditions(
     wind_range: Optional[Tuple[float, float]],
     wave_range: Optional[Tuple[float, float]],
@@ -487,32 +497,32 @@ def classify_conditions(
     if wind_range is None or wave_range is None:
         return "Unknown"
 
-    score = 50.0
+    score = _SCORE_BASELINE
     wind_max = wind_range[1]
     wave_max = wave_range[1]
 
     # Wind speed (primary safety + fishability signal)
-    if wind_max <= 8:
+    if wind_max <= _WIND_LIGHT_KT:
         score += 14
-    elif wind_max <= 12:
+    elif wind_max <= _WIND_MODERATE_LOW_KT:
         score += 8
-    elif wind_max <= 16:
+    elif wind_max <= _WIND_MODERATE_HIGH_KT:
         score += 2
-    elif wind_max <= 20:
+    elif wind_max <= _WIND_STRONG_KT:
         score -= 8
-    elif wind_max <= 25:
+    elif wind_max <= _WIND_VERY_STRONG_KT:
         score -= 16
     else:
         score -= 26
 
     # Wave height (primary surf-access signal)
-    if wave_max <= 1.5:
+    if wave_max <= _WAVE_FLAT_FT:
         score += 10
-    elif wave_max <= 3:
+    elif wave_max <= _WAVE_MODERATE_FT:
         score += 6
-    elif wave_max <= 5:
+    elif wave_max <= _WAVE_ROUGH_FT:
         score -= 4
-    elif wave_max <= 7:
+    elif wave_max <= _WAVE_HEAVY_FT:
         score -= 12
     else:
         score -= 22
@@ -599,13 +609,13 @@ def classify_conditions(
                 score += 1
 
     score = max(0, min(100, score))
-    if score >= 80:
+    if score >= _VERDICT_EXCELLENT:
         return "Excellent"
-    if score >= 64:
+    if score >= _VERDICT_GOOD:
         return "Good"
-    if score >= 48:
+    if score >= _VERDICT_FAIR:
         return "Fair"
-    if score >= 32:
+    if score >= _VERDICT_CHALLENGING:
         return "Challenging"
     return "Poor"
 

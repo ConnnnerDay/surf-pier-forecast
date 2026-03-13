@@ -13,10 +13,10 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from zoneinfo import ZoneInfo
+from utils import norm_user_id as _norm_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +33,6 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 # ---------------------------------------------------------------------------
 # Primary storage: SQLite via storage.db
 # ---------------------------------------------------------------------------
-
-
-def _norm_user_id(user_id: Optional[int]) -> int:
-    return int(user_id or 0)
 
 
 def _is_stale(forecast: Dict[str, Any]) -> bool:
@@ -165,10 +161,20 @@ def _migrate_json_to_db(
 
 
 def _forecast_age_minutes(forecast: Dict[str, Any]) -> Optional[float]:
-    """Return the age of a cached forecast in minutes, or None."""
+    """Return the age of a cached forecast in minutes, or None.
+
+    All comparisons are done in UTC so the result is correct regardless of the
+    server's local timezone and immune to DST transitions.  Legacy naive
+    ``generated_at`` values (stored before timezone-awareness was enforced) are
+    treated as UTC to avoid erroneously marking them as ageless.
+    """
     try:
         generated = datetime.fromisoformat(forecast["generated_at"])
-        now = datetime.now(ZoneInfo("America/New_York"))
+        if generated.tzinfo is None:
+            # Legacy naive timestamp — assume UTC (matches how datetime.utcnow()
+            # was used before the switch to timezone-aware datetimes).
+            generated = generated.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
         return (now - generated).total_seconds() / 60
     except Exception:
         return None

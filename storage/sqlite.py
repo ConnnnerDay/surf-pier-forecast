@@ -221,11 +221,13 @@ def create_user(username: str, password: str) -> Optional[int]:
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    row = conn.execute(
-        "SELECT id, username, password_hash FROM users WHERE username = ? AND is_anonymous = 0",
-        (username.strip(),),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT id, username, password_hash FROM users WHERE username = ? AND is_anonymous = 0",
+            (username.strip(),),
+        ).fetchone()
+    finally:
+        conn.close()
     if (
         row
         and row["password_hash"]
@@ -237,11 +239,13 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
 
 def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    row = conn.execute(
-        "SELECT id, username, email_confirmed, default_location_id FROM users WHERE id = ?",
-        (user_id,),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT id, username, email_confirmed, default_location_id FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    finally:
+        conn.close()
     if not row:
         return None
     return {

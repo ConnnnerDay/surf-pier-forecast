@@ -1,10 +1,15 @@
 """Tests for storage.cache module."""
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from zoneinfo import ZoneInfo
+
+
+def _fresh_ts() -> str:
+    """Return a recent timezone-aware ISO timestamp (5 minutes ago in UTC)."""
+    return (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
 
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -44,7 +49,7 @@ class TestCachePath:
 class TestSaveAndLoad:
     def test_roundtrip_via_db(self):
         """Save and load should work through SQLite for location-specific forecasts."""
-        data = {"generated_at": "2026-03-01T12:00:00", "location": "test", "temp": 72}
+        data = {"generated_at": _fresh_ts(), "location": "test", "temp": 72}
         save_forecast(data, "loc1")
         loaded = load_cached_forecast("loc1")
         assert loaded == data
@@ -61,7 +66,7 @@ class TestSaveAndLoad:
 
     def test_json_fallback_migration(self, isolated_storage):
         """Legacy JSON file should be migrated to DB on first read."""
-        data = {"generated_at": "2026-02-01T12:00:00", "species": ["drum"]}
+        data = {"generated_at": _fresh_ts(), "species": ["drum"]}
         # Write directly to JSON (simulating legacy file)
         path = isolated_storage / "forecast_legacy-loc.json"
         path.write_text(json.dumps(data))
@@ -89,8 +94,8 @@ class TestSaveAndLoad:
             assert json.load(f) == data
 
     def test_cache_is_scoped_by_user_and_location(self):
-        data_u1 = {"generated_at": "2026-03-01T12:00:00", "owner": 1}
-        data_u2 = {"generated_at": "2026-03-01T12:00:00", "owner": 2}
+        data_u1 = {"generated_at": _fresh_ts(), "owner": 1}
+        data_u2 = {"generated_at": _fresh_ts(), "owner": 2}
         save_forecast(data_u1, "loc1", user_id=1)
         save_forecast(data_u2, "loc1", user_id=2)
 

@@ -80,7 +80,7 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
         forecast_data = load_cached_forecast(loc_id, user_id=user_id)
         if forecast_data:
             logger.info("cache.hit location_id=%s", loc_id)
-        if not forecast_data:
+        else:
             logger.info("cache.miss location_id=%s", loc_id)
             forecast_data = generate_forecast(location)
             save_forecast(forecast_data, loc_id, user_id=user_id)
