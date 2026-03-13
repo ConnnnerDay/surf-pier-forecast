@@ -4653,3 +4653,52 @@ footer p {
   margin-top: 0.25rem;
   padding-bottom: 2rem;
 }
+
+/* ── Regulation disclaimer & status indicators ──────────────────────── */
+
+/* Section-level "please check local regulations" disclaimer */
+.reg-section-disclaimer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: -0.15rem 0 0.9rem;
+  line-height: 1.45;
+}
+.reg-disclaimer-link {
+  color: var(--ocean);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.reg-disclaimer-link:hover {
+  color: var(--ocean-dark, var(--ocean));
+}
+
+/* Inline stale-data warning on species / spawning cards */
+.reg-inline-stale {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  font-size: 0.71rem;
+  color: #9a6200;
+  line-height: 1.35;
+}
+[data-theme="dark"] .reg-inline-stale {
+  color: #e09010;
+}
+.reg-inline-stale svg {
+  flex-shrink: 0;
+}
+.reg-inline-stale__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Inline "regulations unverified" note for unknown-status species */
+.reg-inline-unknown {
+  margin-top: 0.4rem;
+  font-size: 0.71rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.35;
+}

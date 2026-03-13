@@ -7,7 +7,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from locations import get_monthly_water_temps
-from regulations import lookup_regulation
+from regulations import classify_legality, lookup_regulation
 from storage.species_loader import SPECIES_DB
 
 logger = logging.getLogger(__name__)
@@ -1786,12 +1786,14 @@ def build_species_ranking(
 
         # Attach regulation data and check for closures before building entry
         regulation = None
+        regulation_status: Optional[str] = None
         if state:
             reg = lookup_regulation(sp["name"], state)
             if reg:
                 if _regulation_disallows_keep(reg, month):
                     continue
                 regulation = reg
+                regulation_status = classify_legality(reg, month)
 
         # Normalize raw score (max ~95) to a clean 0-100 display percentage
         display_score = min(100, round(score / _MAX_RAW_SCORE * 100))
@@ -1810,6 +1812,10 @@ def build_species_ranking(
 
         if regulation:
             entry["regulation"] = regulation
+        # Expose legality status so templates can show uncertainty / stale warnings
+        # without needing to re-parse regulation text.  Only set when state was queried.
+        if regulation_status is not None:
+            entry["regulation_status"] = regulation_status
 
         result.append(entry)
         if len(result) >= 10:
@@ -3139,6 +3145,11 @@ def build_spawning_report(
         if legal_status == "catch_release":
             continue  # skip — not legal to keep right now
 
+        # Derive the normalised regulation_status using the public classify_legality()
+        # helper so the field is consistent with the species ranking section and carries
+        # the "unknown" distinction that _classify_legal_status does not make.
+        regulation_status = classify_legality(reg, month)
+
         results.append(
             {
                 "name": entry["name"],
@@ -3149,6 +3160,7 @@ def build_spawning_report(
                 "temp_range": f"{temp_low}–{temp_high}\u202f°F",
                 "spawn_window": _format_spawn_window(spawn_months),
                 "legal_status": legal_status,
+                "regulation_status": regulation_status,
                 "regulation": reg,
             }
         )

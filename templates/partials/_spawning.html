@@ -11,6 +11,12 @@
         What's Spawning
     </h2>
     <p class="section-sub">Species spawning near you right now — based on water temp &amp; time of year</p>
+    <p class="reg-section-disclaimer">
+        Spawning regulations change seasonally — please check local rules before keeping fish.
+        {% if forecast.official_regulations_url %}
+        <a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-disclaimer-link">Official {{ forecast.location_state or '' }} regulations ↗</a>
+        {% endif %}
+    </p>
 
     <div class="spawning-grid">
         {% for sp in forecast.spawning %}
@@ -68,6 +74,16 @@
                     <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="spawning-reg-link">Verify seasonal rules ↗</a>
                     {% else %}
                     Verify seasonal rules
+                    {% endif %}
+                </span>
+                {% endif %}
+                {# Stale data warning — shown inline so anglers see it before keeping fish #}
+                {% if sp.regulation and sp.regulation.is_stale and sp.regulation.data_status != 'live' %}
+                <span class="spawning-meta-item reg-inline-stale">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Regs may be outdated
+                    {% if sp.regulation.official_source %}
+                    &ndash; <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">verify ↗</a>
                     {% endif %}
                 </span>
                 {% endif %}
