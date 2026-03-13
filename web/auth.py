@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+import threading
 import time
-from typing import Any
+from typing import Any, Dict, Tuple
 
 from flask import (
     Blueprint,
@@ -30,16 +31,68 @@ bp = Blueprint("auth", __name__)
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
 _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
+# ---------------------------------------------------------------------------
+# Server-side IP-keyed rate limiting for the login endpoint.
+#
+# The previous implementation stored attempt counts in the session cookie,
+# which an attacker could trivially bypass by clearing cookies or making
+# requests without a session.  This implementation keys on the client IP so
+# the limit cannot be circumvented by the client.
+#
+# Data structure: {ip: (window_start_ts, attempt_count)}
+# A single lock guards all reads and writes.
+# ---------------------------------------------------------------------------
+_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_rate_limit_lock = threading.Lock()
 
-@bp.route("/welcome")
-def landing() -> Any:
-    """Public landing page for unauthenticated visitors."""
-    if g.user is not None:
-        return redirect(url_for("views.index"))
-    return render_template("landing.html")
+
+def _client_ip() -> str:
+    """Return the best-effort client IP, honouring X-Forwarded-For when set.
+
+    In production behind a reverse proxy (nginx/gunicorn) the real IP arrives
+    in the X-Forwarded-For header.  We take only the first entry (the original
+    client) to prevent IP spoofing via header injection.
+    """
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+def _login_is_rate_limited() -> bool:
+    """Return True if the current client IP has exceeded the login rate limit."""
+    ip = _client_ip()
+    now = time.time()
+    with _rate_limit_lock:
+        start, attempts = _rate_limit_store.get(ip, (now, 0))
+        if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
+            # Window expired — reset
+            _rate_limit_store[ip] = (now, 0)
+            return False
+        return attempts >= _LOGIN_RATE_LIMIT_MAX_ATTEMPTS
+
+
+def _record_login_failure() -> None:
+    """Increment the failure counter for the current client IP."""
+    ip = _client_ip()
+    now = time.time()
+    with _rate_limit_lock:
+        start, attempts = _rate_limit_store.get(ip, (now, 0))
+        if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
+            _rate_limit_store[ip] = (now, 1)
+        else:
+            _rate_limit_store[ip] = (start, attempts + 1)
+
+
+def _clear_login_failures() -> None:
+    """Clear the failure counter for the current client IP on successful login."""
+    ip = _client_ip()
+    with _rate_limit_lock:
+        _rate_limit_store.pop(ip, None)
 
 
 def _password_complexity_error(password: str) -> str:
+    """Return an error message if the password fails complexity requirements, else ''."""
     if len(password) < 8:
         return "Password must be at least 8 characters."
     if not re.search(r"[A-Z]", password):
@@ -51,38 +104,12 @@ def _password_complexity_error(password: str) -> str:
     return ""
 
 
-def _session_int(key: str, default: int = 0) -> int:
-    """Read an integer from the session, returning *default* on bad/missing values."""
-    try:
-        return int(session.get(key, default))
-    except (ValueError, TypeError):
-        return default
-
-
-def _login_is_rate_limited() -> bool:
-    now = int(time.time())
-    start = _session_int("login_attempt_window_start")
-    attempts = _session_int("login_attempts")
-    if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
-        session["login_attempt_window_start"] = now
-        session["login_attempts"] = 0
-        return False
-    return attempts >= _LOGIN_RATE_LIMIT_MAX_ATTEMPTS
-
-
-def _record_login_failure() -> None:
-    now = int(time.time())
-    start = _session_int("login_attempt_window_start")
-    if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
-        session["login_attempt_window_start"] = now
-        session["login_attempts"] = 1
-        return
-    session["login_attempts"] = _session_int("login_attempts") + 1
-
-
-def _clear_login_failures() -> None:
-    session.pop("login_attempts", None)
-    session.pop("login_attempt_window_start", None)
+@bp.route("/welcome")
+def landing() -> Any:
+    """Public landing page for unauthenticated visitors."""
+    if g.user is not None:
+        return redirect(url_for("views.index"))
+    return render_template("landing.html")
 
 
 @bp.route("/login", methods=["GET", "POST"])

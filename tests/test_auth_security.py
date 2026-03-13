@@ -56,17 +56,25 @@ def test_register_requires_complex_password(client):
     assert b"uppercase" in resp.data
 
 
-def test_login_rate_limit_message(client):
-    user_id = create_user("rate_user", "Aa123456")
-    assert user_id is not None
+def test_login_rate_limit_message(client, monkeypatch):
+    from web import auth as auth_module
+
+    # Isolate this test from any state left by other tests.
+    monkeypatch.setattr(auth_module, "_rate_limit_store", {})
+
+    create_user("rate_user", "Aa123456")
 
     page = client.get("/login")
     token = _csrf_from_html(page.data)
 
-    with client.session_transaction() as sess:
-        sess["login_attempt_window_start"] = 9999999999
-        sess["login_attempts"] = 5
+    # Exhaust the IP-based rate limit with bad passwords.
+    for _ in range(auth_module._LOGIN_RATE_LIMIT_MAX_ATTEMPTS):
+        client.post(
+            "/login",
+            data={"csrf_token": token, "username": "rate_user", "password": "WrongPass1"},
+        )
 
+    # Next attempt (even with the correct password) must be blocked.
     resp = client.post(
         "/login",
         data={"csrf_token": token, "username": "rate_user", "password": "Aa123456"},
