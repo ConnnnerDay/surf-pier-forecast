@@ -2529,6 +2529,12 @@ def _classify_legal_status(reg: Optional[Dict[str, str]], month: int) -> str:
         "must be released",
         "cannot be retained",
         "closed year-round",
+        # Tag/permit-based restrictions that are effectively C&R for most anglers
+        "harvest tag required",
+        "harvest permit required",
+        "tag required to harvest",
+        "federally protected",
+        "endangered species",
     )
     if any(phrase in combined for phrase in hard_prohibited):
         return "catch_release"
