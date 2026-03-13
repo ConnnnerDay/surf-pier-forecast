@@ -2051,81 +2051,14 @@ h2 {
   color: #6dc4f0;
 }
 
-/* ── Spawning regulation banners ── */
-.spawning-reg-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  padding: 0.4rem 0.55rem;
-  border-radius: 6px;
-}
-
-.spawning-reg-banner svg {
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
-.spawning-reg-banner--protected {
-  background: color-mix(in srgb, #d94f4f 12%, transparent);
-  color: #b03030;
-  border: 1px solid color-mix(in srgb, #d94f4f 30%, transparent);
-}
-
-[data-theme="dark"] .spawning-reg-banner--protected {
-  color: #f08080;
-  background: color-mix(in srgb, #d94f4f 15%, transparent);
-  border-color: color-mix(in srgb, #d94f4f 25%, transparent);
-}
-
-.spawning-card--protected {
-  border-color: color-mix(in srgb, #d94f4f 40%, transparent);
-}
-
-.spawning-reg-banner--verify {
-  background: color-mix(in srgb, var(--accent, #e07c39) 11%, transparent);
-  color: color-mix(in srgb, var(--accent, #e07c39) 80%, #000);
-  border: 1px solid color-mix(in srgb, var(--accent, #e07c39) 28%, transparent);
-}
-
-[data-theme="dark"] .spawning-reg-banner--verify {
-  color: color-mix(in srgb, var(--accent, #e07c39) 90%, #fff);
-}
-
-.spawning-reg-banner--open {
-  background: color-mix(in srgb, var(--sea-green, #2a9d7c) 10%, transparent);
-  color: var(--sea-green, #2a9d7c);
-  border: 1px solid color-mix(in srgb, var(--sea-green, #2a9d7c) 25%, transparent);
-}
-
-[data-theme="dark"] .spawning-reg-banner--open {
-  color: color-mix(in srgb, var(--sea-green, #2a9d7c) 90%, #fff);
-}
-
-.spawning-reg-banner--unknown {
-  background: color-mix(in srgb, var(--text-secondary, #8a9bb0) 10%, transparent);
-  color: var(--text-secondary, #8a9bb0);
+.spawning-verify-note {
+  color: var(--accent, #e07c39);
 }
 
 .spawning-reg-link {
   color: inherit;
   font-weight: 600;
   text-underline-offset: 2px;
-}
-
-.spawning-disclaimer {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin-top: 0.75rem;
-  padding: 0 0.5rem;
-  line-height: 1.4;
-}
-
-[data-theme="dark"] .spawning-temp-warn,
-[data-theme="dark"] .spawning-temp-note {
-  color: #6dc4f0;
 }
 
 /* ---------- Species Calendar ---------- */

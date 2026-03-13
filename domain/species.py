@@ -2648,7 +2648,10 @@ def build_spawning_report(
         else:
             status = "post_spawn"
 
-        # Regulation lookup — only query when a state is known
+        # Regulation lookup — only query when a state is known.
+        # Species confirmed as catch-and-release only or in a hard closed
+        # season are silently excluded so the list only shows fish you can
+        # actually keep.
         reg: Optional[Dict[str, str]] = None
         if state:
             try:
@@ -2657,6 +2660,8 @@ def build_spawning_report(
                 reg = None
 
         legal_status = _classify_legal_status(reg, month)
+        if legal_status == "catch_release":
+            continue  # skip — not legal to keep right now
 
         results.append(
             {
