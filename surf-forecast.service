@@ -8,15 +8,26 @@ Wants=network-online.target
 Type=simple
 User=REPLACE_USER
 WorkingDirectory=REPLACE_DIR
-ExecStart=REPLACE_DIR/.venv/bin/python app.py
+# Use gunicorn (production WSGI server) instead of the Flask dev server.
+# 2 sync workers handle concurrent requests without the GIL bottleneck;
+# increase to 4 on multi-core machines.  Bind to localhost only and put
+# nginx or another reverse proxy in front for TLS termination.
+ExecStart=REPLACE_DIR/.venv/bin/gunicorn \
+    --workers 2 \
+    --bind 0.0.0.0:5757 \
+    --timeout 60 \
+    --access-logfile - \
+    --error-logfile - \
+    "app:create_app()"
 Restart=on-failure
 RestartSec=10
 Environment=PORT=5757
+Environment=FLASK_ENV=production
 
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=REPLACE_DIR/data REPLACE_DIR/static/uploads
+ReadWritePaths=REPLACE_DIR/data
 
 [Install]
 WantedBy=multi-user.target

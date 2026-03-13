@@ -27,6 +27,15 @@ import secrets
 from datetime import timedelta
 from typing import Any, Dict
 
+# Load .env file in development when python-dotenv is installed.
+# In production the environment is set by the systemd unit; this is a no-op.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
 from flask import Flask, abort, g, request, send_from_directory, session
 import werkzeug
 
@@ -70,7 +79,22 @@ def create_app() -> Flask:
         16 * 1024 * 1024
     )  # 16 MB hard limit for file uploads
 
-    _upload_folder = os.path.join(os.path.dirname(__file__), "static", "uploads")
+    # Session cookie hardening.
+    # SECURE: only transmit the cookie over HTTPS.  Guarded by is_secure check
+    # so the dev server still works over plain HTTP.
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    # SECURE flag is also enforced at the response-header level in
+    # _set_security_headers; set it here too so Flask marks the cookie itself.
+    if os.environ.get("FLASK_ENV") == "production" or os.environ.get(
+        "SESSION_COOKIE_SECURE"
+    ):
+        app.config["SESSION_COOKIE_SECURE"] = True
+
+    # Store uploads in data/uploads/ (outside static/) so Flask's static file
+    # handler never serves them directly.  Access is gated by the auth-checked
+    # /uploads/<user_id>/<filename> route defined in web/views.py.
+    _upload_folder = os.path.join(os.path.dirname(__file__), "data", "uploads")
     os.makedirs(_upload_folder, exist_ok=True)
     app.config["UPLOAD_FOLDER"] = _upload_folder
 

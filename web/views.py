@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json as _json
 import logging
+import os
 import re
 import threading
 import time
@@ -14,10 +15,13 @@ import requests
 
 from flask import (
     Blueprint,
+    abort,
+    current_app,
     g,
     redirect,
     render_template,
     request,
+    send_from_directory,
     session,
     url_for,
 )
@@ -51,6 +55,9 @@ logger = logging.getLogger(__name__)
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _cam_status_cache: Dict[str, Dict[str, Any]] = {}
 _cam_status_lock = threading.Lock()
+# Shared daemon pool for background cam probes — never blocks a WSGI worker.
+_cam_check_pool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="cam-check")
+_CAM_STATUS_UNKNOWN: Dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
 
 _KT_RANGE_RE = re.compile(
     r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE
@@ -92,18 +99,12 @@ def _apply_wind_unit_preference(forecast: Dict[str, Any], wind_units: str) -> No
             day["wind"] = _convert_wind_text_units(day["wind"], wind_units)
 
 
-def _cam_status(url: str) -> Dict[str, Any]:
-    """Check whether a cam URL appears reachable, with short-lived caching.
+def _fetch_cam_status(url: str) -> None:
+    """Probe a single cam URL and write the result into ``_cam_status_cache``.
 
-    The in-process cache is guarded by ``_cam_status_lock`` so that concurrent
-    requests from ``ThreadPoolExecutor`` workers don't race on the dict.
+    Runs in the background thread pool so it never blocks a WSGI worker.
     """
     now = time.time()
-    with _cam_status_lock:
-        cached = _cam_status_cache.get(url)
-        if cached and (now - cached["checked_at_ts"]) < _CAM_STATUS_TTL_SECONDS:
-            return cached
-
     status: Dict[str, Any] = {
         "is_live": False,
         "status_label": "Unavailable",
@@ -120,18 +121,37 @@ def _cam_status(url: str) -> Dict[str, Any]:
         else:
             status["status_label"] = f"HTTP {resp.status_code}"
     except requests.RequestException:
-        status["status_label"] = "Unavailable"
-
+        pass
     with _cam_status_lock:
         _cam_status_cache[url] = status
-    return status
+
+
+def _cam_status_cached(url: str) -> Dict[str, Any]:
+    """Return the cached cam status, scheduling a background refresh if stale.
+
+    Never blocks — always returns immediately.  The first call for a URL
+    returns ``_CAM_STATUS_UNKNOWN`` ("Checking…") while the probe runs; the
+    next page load will see real data.
+    """
+    now = time.time()
+    with _cam_status_lock:
+        cached = _cam_status_cache.get(url)
+
+    if cached is None or (now - cached.get("checked_at_ts", 0)) >= _CAM_STATUS_TTL_SECONDS:
+        _cam_check_pool.submit(_fetch_cam_status, url)
+
+    return cached or _CAM_STATUS_UNKNOWN
 
 
 def _build_live_cam_context(
     location: Dict[str, Any], profile: Optional[Dict[str, Any]]
 ) -> Dict[str, Any]:
-    """Build nearby live cam data and availability indicators."""
+    """Build nearby live cam data.
 
+    Returns cached availability immediately; stale/unseen URLs trigger a
+    background re-probe so the next load gets fresh data without blocking
+    the current request.
+    """
     raw_types = (
         (profile or {}).get("fishing_types")
         or (profile or {}).get("fishing_type")
@@ -150,27 +170,10 @@ def _build_live_cam_context(
         include_pier_cams=include_pier_cams,
     )
 
-    statuses: Dict[str, Dict[str, Any]] = {}
-    if cams:
-        max_workers = min(6, len(cams))
-
-        def _safe_status(cam: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                return _cam_status(cam["url"])
-            except Exception:
-                logger.exception("cam.status_check_failed url=%s", cam.get("url"))
-                return {"is_live": False, "status_label": "Unavailable"}
-
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            for cam, status in zip(cams, pool.map(_safe_status, cams)):
-                statuses[cam["url"]] = status
-
     enhanced_cams = []
     for cam in cams:
         entry = dict(cam)
-        entry.update(
-            statuses.get(cam["url"], {"is_live": False, "status_label": "Unavailable"})
-        )
+        entry.update(_cam_status_cached(cam["url"]))
         enhanced_cams.append(entry)
 
     return {
@@ -563,3 +566,24 @@ def shared_forecast(location_id: str) -> str:
 
     session["location_id"] = location_id
     return _render_forecast(location)
+
+
+@bp.route("/uploads/<int:user_id>/<path:filename>")
+def serve_upload(user_id: int, filename: str) -> Any:
+    """Serve a user-uploaded photo after verifying the requester owns it.
+
+    Photos are stored in ``data/uploads/`` (outside Flask's static folder) so
+    they cannot be fetched directly.  This route enforces that:
+    - The request comes from an authenticated user.
+    - The authenticated user is the owner of the file (user_id match).
+
+    Path-traversal is prevented by ``send_from_directory``, which raises 404
+    for any path that escapes the base directory.
+    """
+    if g.user is None:
+        abort(401)
+    if g.user["id"] != user_id:
+        abort(403)
+    upload_root = current_app.config["UPLOAD_FOLDER"]
+    user_dir = os.path.join(upload_root, str(user_id))
+    return send_from_directory(user_dir, filename)
