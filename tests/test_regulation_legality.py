@@ -567,6 +567,123 @@ class TestSpawningReportRegulationStatus:
 
 
 # ---------------------------------------------------------------------------
+# Regression guard: retention logic must never become the visibility gate
+# ---------------------------------------------------------------------------
+
+class TestRetentionLogicNotVisibilityGate:
+    """Regression tests that would fail immediately if the visibility gate
+    reverted to using retention-prohibited logic instead of targeting-allowed logic.
+
+    The old bug: _regulation_disallows_keep() (now _retention_prohibited()) was
+    used to suppress species from the forecast.  This hid C&R species even though
+    anglers can legally target them.  The correct gate is:
+
+        should_hide_from_forecast(classify_legality(reg, month))
+
+    which hides ONLY fisheries where targeting itself is not permitted
+    (out_of_season, prohibited), and keeps C&R species visible.
+
+    Each test below is written so that it passes under the current correct
+    policy and would fail if someone replaced the gate with retention logic.
+    """
+
+    def test_cr_phrase_does_not_hide_from_ranking(self, monkeypatch):
+        """'Catch and release only' must NOT hide a species from What's Biting.
+
+        Regression: _retention_prohibited({'season': 'Catch and release only'}) is True,
+        so if that function were used as the visibility gate, this test would fail
+        because the species would be absent from the ranking.
+        """
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation",
+            lambda name, st: {
+                "bag_limit": "",
+                "season": "Catch and release only",
+                "notes": "",
+                "official_source": "https://example.com/regs",
+                "is_stale": False,
+                "data_status": "snapshot",
+            },
+        )
+        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        assert len(ranking) > 0, (
+            "REGRESSION: 'Catch and release only' must not suppress species. "
+            "Check that the visibility gate uses should_hide_from_forecast(classify_legality(...)) "
+            "and NOT _retention_prohibited()."
+        )
+        for sp in ranking:
+            assert sp.get("regulation_status") == "catch_and_release"
+
+    def test_bag_zero_does_not_hide_from_ranking(self, monkeypatch):
+        """bag_limit='0/day' with open season must NOT hide a species from What's Biting.
+
+        Regression: _retention_prohibited({'bag_limit': '0/day'}) is True,
+        so if that function were used as the visibility gate, all species
+        would vanish from the ranking whenever bag limits are set to zero.
+        """
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation",
+            lambda name, st: {
+                "bag_limit": "0/day",
+                "season": "Open",
+                "notes": "",
+                "official_source": "https://example.com/regs",
+                "is_stale": False,
+                "data_status": "snapshot",
+            },
+        )
+        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        assert len(ranking) > 0, (
+            "REGRESSION: bag_limit=0/Open must not suppress species. "
+            "Check that the visibility gate uses should_hide_from_forecast(classify_legality(...)) "
+            "and NOT _retention_prohibited()."
+        )
+
+    def test_cr_and_closed_season_differ_in_visibility(self, monkeypatch):
+        """C&R (can target) and closed season (cannot target) must produce different visibility.
+
+        This test verifies the core distinction at the heart of the policy:
+          - 'Catch and release only' → visible (regulation_status='catch_and_release')
+          - 'Season closed'          → hidden
+        If both were treated the same way (as the old code did), this would fail.
+        """
+        # Pass 1: C&R regulation for all species → ranking must be non-empty
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation",
+            lambda name, st: {
+                "bag_limit": "0/day",
+                "season": "Catch and release only",
+                "notes": "",
+                "official_source": "https://example.com/regs",
+                "is_stale": False,
+                "data_status": "snapshot",
+            },
+        )
+        cr_ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+
+        # Pass 2: Closed-season regulation for all species → ranking must be empty
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation",
+            lambda name, st: {
+                "bag_limit": "",
+                "season": "Season closed",
+                "notes": "",
+                "official_source": "https://example.com/regs",
+                "is_stale": False,
+                "data_status": "snapshot",
+            },
+        )
+        closed_ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+
+        assert len(cr_ranking) > 0, (
+            "REGRESSION: C&R species must be visible — targeting is legal."
+        )
+        assert len(closed_ranking) == 0, (
+            "REGRESSION: Closed-season species must be hidden — targeting is not permitted."
+        )
+
+
+# ---------------------------------------------------------------------------
 # Tests: stale regulation data is flagged
 # ---------------------------------------------------------------------------
 

@@ -3,7 +3,7 @@
 from domain.species import (
     BAIT_DB,
     SPECIES_DB,
-    _regulation_disallows_keep,
+    _retention_prohibited,
     _score_species,
     _species_matches_profile,
     build_bait_ranking,
@@ -284,11 +284,27 @@ class TestPersonalizationHardGate:
         )
 
 
-class TestRegulationHarvestFilter:
-    def test_regulation_disallow_parser(self):
-        assert _regulation_disallows_keep({"bag_limit": "0/day"}) is True
-        assert _regulation_disallows_keep({"notes": "Catch and release only."}) is True
-        assert _regulation_disallows_keep({"season": "Open year-round"}) is False
+class TestRetentionProhibited:
+    """Tests for _retention_prohibited() — the "can the angler keep this fish?" helper.
+
+    This is NOT a visibility test.  _retention_prohibited() returns True for
+    both C&R-only and closed-season regulations because in neither case can
+    the fish be retained.  Forecast visibility is controlled separately by
+    should_hide_from_forecast(classify_legality(...)) in regulations.py, which
+    keeps C&R species visible while hiding only truly-closed fisheries.
+    """
+
+    def test_bag_limit_zero_is_retention_prohibited(self):
+        """bag_limit=0 means no retention (C&R); fish cannot be kept."""
+        assert _retention_prohibited({"bag_limit": "0/day"}) is True
+
+    def test_catch_and_release_phrase_is_retention_prohibited(self):
+        """C&R phrase means no retention; fish cannot be kept."""
+        assert _retention_prohibited({"notes": "Catch and release only."}) is True
+
+    def test_open_season_is_not_retention_prohibited(self):
+        """Open year-round with no restrictions means retention is permitted."""
+        assert _retention_prohibited({"season": "Open year-round"}) is False
 
     def test_catch_and_release_species_visible_with_badge(self, monkeypatch):
         """C&R Sheepshead (bag_limit=0, 'No harvest') must stay in ranking with a C&R badge.
