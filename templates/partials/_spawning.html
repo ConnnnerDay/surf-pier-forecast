@@ -62,12 +62,20 @@
                     Min {{ sp.regulation.min_size }}
                 </span>
                 {% endif %}
-                {% if sp.regulation and sp.regulation.bag_limit %}
+                {# Only show bag limit for harvestable species; C&R "Bag 0" is confusing #}
+                {% if sp.regulation and sp.regulation.bag_limit and sp.regulation_status != 'catch_and_release' %}
                 <span class="spawning-meta-item">
                     Bag {{ sp.regulation.bag_limit }}
                 </span>
                 {% endif %}
-                {% if sp.legal_status == 'restricted' %}
+                {# Catch-and-release badge — targeting is legal; show before other reg notes #}
+                {% if sp.regulation_status == 'catch_and_release' %}
+                <span class="spawning-meta-item spawning-cr-note">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/><path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/><path d="M6.5 12h11"/><path d="M17.5 12c1.5 1.5 3 2.5 4.5 2.5-.5-1.5-.5-3.5 0-5-1.5 0-3 1-4.5 2.5z"/></svg>
+                    Catch &amp; Release Only
+                </span>
+                {% endif %}
+                {% if sp.regulation_status == 'restricted' or sp.legal_status == 'restricted' %}
                 <span class="spawning-meta-item spawning-verify-note">
                     <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     {% if sp.regulation and sp.regulation.official_source %}
@@ -84,6 +92,15 @@
                     Regs may be outdated
                     {% if sp.regulation.official_source %}
                     &ndash; <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">verify ↗</a>
+                    {% endif %}
+                </span>
+                {% endif %}
+                {# Unknown regulation status — visible but unverified #}
+                {% if sp.regulation_status == 'unknown' %}
+                <span class="spawning-meta-item spawning-unknown-note">
+                    Regs unverified
+                    {% if sp.regulation and sp.regulation.official_source %}
+                    &ndash; <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="spawning-reg-link">check official source ↗</a>
                     {% endif %}
                 </span>
                 {% endif %}

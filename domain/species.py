@@ -7,7 +7,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from locations import get_monthly_water_temps
-from regulations import classify_legality, lookup_regulation
+from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
 from storage.species_loader import SPECIES_DB
 
 logger = logging.getLogger(__name__)
@@ -1784,16 +1784,19 @@ def build_species_ranking(
         else:
             activity = "Possible"
 
-        # Attach regulation data and check for closures before building entry
+        # Attach regulation data and check for closures before building entry.
+        # Only truly closed fisheries (out_of_season, prohibited) are hidden.
+        # C&R species are kept visible with a badge so anglers know they can
+        # still fish for the species — they just must release every catch.
         regulation = None
         regulation_status: Optional[str] = None
         if state:
             reg = lookup_regulation(sp["name"], state)
             if reg:
-                if _regulation_disallows_keep(reg, month):
+                regulation_status = classify_legality(reg, month)
+                if should_hide_from_forecast(regulation_status):
                     continue
                 regulation = reg
-                regulation_status = classify_legality(reg, month)
 
         # Normalize raw score (max ~95) to a clean 0-100 display percentage
         display_score = min(100, round(score / _MAX_RAW_SCORE * 100))
@@ -3141,14 +3144,24 @@ def build_spawning_report(
             except Exception:
                 reg = None
 
-        legal_status = _classify_legal_status(reg, month)
-        if legal_status == "catch_release":
-            continue  # skip — not legal to keep right now
-
-        # Derive the normalised regulation_status using the public classify_legality()
-        # helper so the field is consistent with the species ranking section and carries
-        # the "unknown" distinction that _classify_legal_status does not make.
+        # Use classify_legality for the unified status model.
+        # Only hide when the fishery is truly closed (out_of_season / prohibited).
+        # C&R species remain visible so anglers know they can still target the fish.
         regulation_status = classify_legality(reg, month)
+        if should_hide_from_forecast(regulation_status):
+            continue
+
+        # Preserve legacy legal_status field for backward-compatibility with
+        # templates that still reference it (e.g. the "Verify seasonal rules" badge).
+        _LEGACY_MAP = {
+            "legal": "open",
+            "catch_and_release": "catch_release",
+            "restricted": "restricted",
+            "out_of_season": "catch_release",
+            "prohibited": "catch_release",
+            "unknown": "unknown",
+        }
+        legal_status = _LEGACY_MAP.get(regulation_status, "unknown")
 
         results.append(
             {
