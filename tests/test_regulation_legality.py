@@ -400,6 +400,98 @@ class TestSpeciesRankingRegulationStatus:
             f"got {sheepshead_entry['regulation_status']!r}"
         )
 
+    def test_bag_limit_zero_only_visible_as_catch_and_release(self, monkeypatch):
+        """bag_limit=0 alone (open season, no other C&R text) must not hide the species.
+
+        A zero bag limit means no retention is allowed — the fishery is open for
+        targeting (C&R), not closed.  This is the most common form for C&R
+        regulations in state databases.
+        """
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation",
+            lambda name, st: {
+                "bag_limit": "0/day",
+                "season": "Open",
+                "notes": "",
+                "official_source": "https://example.com/regs",
+                "is_stale": False,
+                "data_status": "snapshot",
+            },
+        )
+        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        assert len(ranking) > 0, "bag_limit=0 must not suppress all species from the ranking"
+        for sp in ranking:
+            assert sp.get("regulation_status") == "catch_and_release", (
+                f"'{sp['name']}': bag_limit=0/Open should yield catch_and_release, "
+                f"got {sp.get('regulation_status')!r}"
+            )
+
+    def test_no_harvest_text_visible_as_catch_and_release(self, monkeypatch):
+        """'No harvest' in regulation notes must not hide the species.
+
+        'No harvest' prohibits retention but the fishery is open for targeting.
+        Species must appear with regulation_status='catch_and_release'.
+        """
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation",
+            lambda name, st: {
+                "bag_limit": "5/day",
+                "season": "Open",
+                "notes": "No harvest",
+                "official_source": "https://example.com/regs",
+                "is_stale": False,
+                "data_status": "snapshot",
+            },
+        )
+        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        assert len(ranking) > 0, "'No harvest' text must not suppress species from ranking"
+        for sp in ranking:
+            assert sp.get("regulation_status") == "catch_and_release", (
+                f"'{sp['name']}': 'No harvest' should yield catch_and_release, "
+                f"got {sp.get('regulation_status')!r}"
+            )
+
+    def test_federally_protected_species_hidden_from_biting(self, monkeypatch):
+        """Federally protected species must be absent — targeting is not legally permitted."""
+        def fake_lookup(name, state):
+            if name == "Sheepshead":
+                return {
+                    "bag_limit": "",
+                    "season": "",
+                    "notes": "Federally protected species. Do not target.",
+                    "official_source": "https://example.com/regs",
+                    "is_stale": False,
+                    "data_status": "snapshot",
+                }
+            return _open_reg()
+
+        monkeypatch.setattr("domain.species.lookup_regulation", fake_lookup)
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", fishing_types=["pier"], state="NC"
+        )
+        names = [sp["name"] for sp in ranking]
+        assert "Sheepshead" not in names, (
+            "Federally protected Sheepshead must be hidden (targeting is prohibited)"
+        )
+
+    def test_unknown_regulation_species_visible_and_marked(self, monkeypatch):
+        """Species with no usable regulation data must remain visible, marked 'unknown'.
+
+        Hiding unknown-status species would silently remove fish from the forecast
+        when data is simply missing.  The correct behaviour is to show them with an
+        'Unverified' note and a link to the official state regulations.
+        """
+        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _unknown_reg())
+        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        assert len(ranking) > 0, (
+            "Unknown-status species must appear in ranking (missing data ≠ closed)"
+        )
+        for sp in ranking:
+            assert sp.get("regulation_status") == "unknown", (
+                f"'{sp['name']}' should have regulation_status='unknown' when data is "
+                f"link-only, got {sp.get('regulation_status')!r}"
+            )
+
 
 # ---------------------------------------------------------------------------
 # Tests: build_spawning_report() — filtering and regulation_status field

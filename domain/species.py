@@ -1673,6 +1673,18 @@ def _parse_closed_months(text: str) -> set:
 def _regulation_disallows_keep(regulation: Dict[str, str], month: int = 0) -> bool:
     """Return True when regulations indicate harvest/retention is not legal.
 
+    This answers "can the angler keep/retain this fish?" — True for both
+    catch-and-release-only species AND species in a closed season.
+
+    **Important:** this function is NOT used to control forecast visibility.
+    Forecast visibility is gated by ``should_hide_from_forecast(classify_legality(...))``
+    from ``regulations.py``, which correctly keeps C&R species visible (targeting
+    is legal) while hiding only truly-closed fisheries.
+
+    This function remains useful as a "do not keep" signal for UI elements
+    that need to warn anglers about retention rules regardless of whether
+    targeting is permitted.
+
     Pass ``month`` (1-12) to also check month-specific seasonal closures
     embedded in the regulation text (e.g. "Gulf closed Jan–May").
     """
@@ -2979,15 +2991,22 @@ def _format_spawn_window(spawn_months: List[int]) -> str:
 def _classify_legal_status(reg: Optional[Dict[str, str]], month: int) -> str:
     """Derive a simple legal-status label from a regulation payload.
 
+    .. deprecated::
+        This function is no longer called by any production code path.
+        ``build_spawning_report()`` and ``build_species_ranking()`` now use
+        ``classify_legality()`` + ``should_hide_from_forecast()`` from
+        ``regulations.py``, which correctly distinguishes catch-and-release
+        (visible with a badge) from truly-closed fisheries (hidden).
+
+        This function conflates the two: it returns ``"catch_release"`` for
+        both C&R phrases and seasonal closures, which was the source of the
+        over-aggressive hiding bug.  Do not add new call sites.
+
     Returns one of:
-      "catch_release" — harvest is definitively prohibited (C&R only, hard closed season)
+      "catch_release" — harvest prohibited (C&R or closed season — NOT distinguished)
       "restricted"    — seasonal rules apply; angler must verify current status
       "open"          — regulations indicate currently open; size/bag limits apply
       "unknown"       — no data for this state / species combination
-
-    This function is intentionally more conservative than _regulation_disallows_keep
-    (which gates hard filtering) so that qualifying phrases like "some areas have
-    closed seasons" don't trigger a misleading "Do not keep" banner.
     """
     if not reg:
         return "unknown"

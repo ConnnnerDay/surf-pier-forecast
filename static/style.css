@@ -4727,6 +4727,28 @@ footer p {
   flex-shrink: 0;
 }
 
+/* Inline "verify rules" prompt for restricted/conditional regulation status */
+.reg-inline-verify {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  font-size: 0.71rem;
+  line-height: 1.35;
+  color: #92400e;
+}
+[data-theme="dark"] .reg-inline-verify {
+  color: #fbbf24;
+}
+.reg-inline-verify svg {
+  flex-shrink: 0;
+}
+.reg-inline-verify__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Spawning card — catch-and-release and unknown meta items */
 .spawning-cr-note {
   color: #1d4ed8;
