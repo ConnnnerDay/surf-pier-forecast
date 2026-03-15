@@ -46,17 +46,15 @@ class TestAppFactory:
 
 
 class TestBasicRoutes:
-    def test_index_redirects_anon_to_landing(self, client):
-        """Unauthenticated users visiting / are sent to the landing/login page."""
-        resp = client.get("/", follow_redirects=False)
-        assert resp.status_code == 302
-        assert "/welcome" in resp.headers["Location"]
+    def test_index_loads_for_anon(self, client):
+        """Unauthenticated users can visit / and get the setup flow."""
+        resp = client.get("/", follow_redirects=True)
+        assert resp.status_code == 200
 
-    def test_setup_requires_login(self, client):
-        """Unauthenticated users visiting /setup are sent to the landing page."""
+    def test_setup_loads_for_anon(self, client):
+        """Unauthenticated users can visit /setup without being redirected."""
         resp = client.get("/setup", follow_redirects=False)
-        assert resp.status_code == 302
-        assert "/welcome" in resp.headers["Location"]
+        assert resp.status_code == 200
 
     def test_login_page_loads(self, client):
         resp = client.get("/login")
@@ -87,11 +85,13 @@ class TestBasicRoutes:
         assert b"When to Fish" in resp.data
         assert b"Surf &amp; Pier Fishing Outlook" in resp.data
 
-    def test_setup_requires_login_for_unauthenticated(self, client):
-        """Unauthenticated users hitting /setup are redirected to the landing page."""
-        resp = client.get("/setup", follow_redirects=True)
-        # Should land on the welcome/landing page, not the setup page.
-        assert b"Sign Up" in resp.data or b"Log In" in resp.data or b"Welcome" in resp.data
+    def test_setup_select_requires_csrf(self, client):
+        """POST to /setup/select without a CSRF token returns 400."""
+        from locations import all_locations_sorted
+
+        loc_id = all_locations_sorted()[0]["id"]
+        resp = client.post(f"/setup/select/{loc_id}", data={})
+        assert resp.status_code == 400
 
 
 def test_live_cams_tab_present_in_nav():
