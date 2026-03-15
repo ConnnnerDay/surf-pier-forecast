@@ -421,9 +421,6 @@ class TestSpeciesCategories:
         assert "ray" in _SPECIES_CATEGORIES["Southern stingray"]
         assert "ray" in _SPECIES_CATEGORIES["Bat ray"]
 
-    def test_shellfish_category(self):
-        assert "shellfish" in _SPECIES_CATEGORIES["Dungeness crab (from pier)"]
-
     def test_pelagic_tunas(self):
         assert "pelagic" in _SPECIES_CATEGORIES["Yellowfin tuna"]
         assert "pelagic" in _SPECIES_CATEGORIES["Mahi-mahi (dolphinfish)"]
@@ -514,19 +511,19 @@ class TestCategoriesInSpawningPayload:
 
 
 class TestNewSpeciesInDB:
-    """New species added in dataset expansion are present and well-formed."""
-
-    def test_blue_crab_in_db(self):
-        names = [s["name"] for s in SPECIES_DB]
-        assert "Blue crab" in names
+    """Rod-and-reel species added in dataset expansion are present and well-formed."""
 
     def test_great_hammerhead_in_db(self):
         names = [s["name"] for s in SPECIES_DB]
         assert "Great hammerhead shark" in names
 
-    def test_ca_spiny_lobster_in_db(self):
+    def test_longfin_squid_in_db(self):
         names = [s["name"] for s in SPECIES_DB]
-        assert "California spiny lobster" in names
+        assert "Longfin inshore squid" in names
+
+    def test_blue_shark_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Blue shark" in names
 
     def test_pacific_barracuda_in_db(self):
         names = [s["name"] for s in SPECIES_DB]
@@ -547,8 +544,7 @@ class TestNewSpeciesInDB:
     def test_new_species_have_valid_categories_in_json(self):
         """New species JSON entries must have valid categories lists."""
         target_names = {
-            "Blue crab", "Longfin inshore squid", "Florida spiny lobster",
-            "Blue shark", "Great hammerhead shark", "California spiny lobster",
+            "Longfin inshore squid", "Blue shark", "Great hammerhead shark",
             "Pacific barracuda (California barracuda)",
             "Toau (blacktail snapper)", "Roi (peacock grouper)", "Weke (goatfish)",
         }
@@ -560,10 +556,6 @@ class TestNewSpeciesInDB:
                     assert cat in _VALID_CATEGORIES, (
                         f"{sp['name']} has unknown category '{cat}'"
                     )
-
-    def test_blue_crab_shellfish_category(self):
-        sp = next(s for s in SPECIES_DB if s["name"] == "Blue crab")
-        assert "shellfish" in sp["categories"]
 
     def test_great_hammerhead_shark_category(self):
         sp = next(s for s in SPECIES_DB if s["name"] == "Great hammerhead shark")
@@ -578,17 +570,6 @@ class TestNewSpeciesInDB:
         assert "game_fish" in sp["categories"]
         assert "pelagic" in sp["categories"]
 
-    def test_new_species_appear_in_ranking_when_conditions_match(self):
-        """Blue crab (east, warm water) should score above threshold and appear when
-        filtered to bottom/inshore targets that compete with fewer species."""
-        from domain.species import _score_species, SPECIES_SCORE_THRESHOLD
-
-        blue_crab = next(s for s in SPECIES_DB if s["name"] == "Blue crab")
-        score = _score_species(blue_crab, month=7, water_temp=76)
-        assert score >= SPECIES_SCORE_THRESHOLD, (
-            f"Blue crab score {score} is below threshold {SPECIES_SCORE_THRESHOLD}"
-        )
-
     def test_great_hammerhead_scores_above_threshold(self):
         """Great hammerhead should score above the ranking threshold in summer."""
         from domain.species import _score_species, SPECIES_SCORE_THRESHOLD
@@ -597,20 +578,51 @@ class TestNewSpeciesInDB:
         score = _score_species(gh, month=7, water_temp=82)
         assert score >= SPECIES_SCORE_THRESHOLD
 
-    def test_ca_spiny_lobster_appears_in_west_fall_ranking(self):
-        """CA spiny lobster should appear in west coast fall ranking."""
-        ranking = build_species_ranking(month=11, water_temp=62, coast="west")
-        names = [sp["name"] for sp in ranking]
-        assert "California spiny lobster" in names
-
     def test_hawaii_new_species_appear_in_ranking(self):
         """New Hawaii species should appear in Hawaii ranking."""
         ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
         names = [sp["name"] for sp in ranking]
-        # At least one of the new Hawaii species should be in top 10
         new_hawaii = {
             "Toau (blacktail snapper)", "Roi (peacock grouper)", "Weke (goatfish)"
         }
         assert new_hawaii & set(names), (
             f"None of {new_hawaii} appeared in Hawaii ranking: {names}"
+        )
+
+
+class TestNonRodReelSpeciesRemoved:
+    """Regression suite: trap/dive/shellfish-harvest species must not appear
+    anywhere in the forecast output or the species database."""
+
+    _REMOVED = {
+        "Blue crab",
+        "Florida spiny lobster",
+        "California spiny lobster",
+        "Dungeness crab (from pier)",
+    }
+
+    def test_removed_species_not_in_db(self):
+        """Removed species must not be in SPECIES_DB."""
+        db_names = {s["name"] for s in SPECIES_DB}
+        present = self._REMOVED & db_names
+        assert not present, f"Non-rod-and-reel species still in DB: {present}"
+
+    def test_removed_species_not_in_east_ranking(self):
+        """Removed species must never appear in east coast ranking output."""
+        ranking = build_species_ranking(month=7, water_temp=76, coast="east")
+        names = {sp["name"] for sp in ranking}
+        assert not (self._REMOVED & names), (
+            f"Non-rod-and-reel species in ranking: {self._REMOVED & names}"
+        )
+
+    def test_removed_species_not_in_west_ranking(self):
+        ranking = build_species_ranking(month=11, water_temp=62, coast="west")
+        names = {sp["name"] for sp in ranking}
+        assert not (self._REMOVED & names)
+
+    def test_removed_species_not_in_species_categories_dict(self):
+        """Removed species must not appear in the _SPECIES_CATEGORIES dict."""
+        present = self._REMOVED & set(_SPECIES_CATEGORIES.keys())
+        assert not present, (
+            f"Non-rod-and-reel species still in _SPECIES_CATEGORIES: {present}"
         )

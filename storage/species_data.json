@@ -7769,35 +7769,6 @@
     "coast": "west"
   },
   {
-    "name": "Dungeness crab (from pier)",
-    "temp_min": 44,
-    "temp_max": 58,
-    "temp_ideal_low": 48,
-    "temp_ideal_high": 54,
-    "peak_months": [
-      11,
-      12,
-      1,
-      2,
-      3
-    ],
-    "good_months": [
-      4,
-      10
-    ],
-    "bait": "Chicken legs; fish carcasses; squid; turkey legs (in crab snares/nets)",
-    "rig": "Crab snare or hoop net baited and cast from pier",
-    "hook_size": "N/A (snare/net)",
-    "sinker": "Built into snare (3-6 oz equivalent)",
-    "explanation_cold": "Dungeness crab season peaks in winter; they can be caught from piers using snares and hoop nets, especially in NorCal and the Pacific NW.",
-    "explanation_warm": "Dungeness crab move to deeper water in summer and are less accessible from piers.",
-    "coast": "west",
-    "regions": [
-      "norcal",
-      "pacific_nw"
-    ]
-  },
-  {
     "name": "Giant trevally (ulua)",
     "temp_min": 72,
     "temp_max": 88,
@@ -8038,42 +8009,6 @@
     "coast": "hawaii"
   },
   {
-    "name": "Blue crab",
-    "temp_min": 50,
-    "temp_max": 90,
-    "temp_ideal_low": 65,
-    "temp_ideal_high": 82,
-    "peak_months": [
-      5,
-      6,
-      7,
-      8,
-      9,
-      10
-    ],
-    "good_months": [
-      3,
-      4,
-      11
-    ],
-    "bait": "Chicken necks; fish heads; cut menhaden; clams",
-    "rig": "Drop line or crab trap; chicken neck tied to a string and dipped",
-    "hook_size": "No hook — use a dip net to scoop crabs off the line",
-    "sinker": "None or light weight to keep bait near the bottom",
-    "explanation_cold": "Blue crabs are largely dormant in cold water, buried in mud in deep channels — crabbing is very slow.",
-    "explanation_warm": "Blue crabs are actively foraging in shallow marshes, grass flats, and docks; chicken necks on drop lines or crab traps produce excellent catches.",
-    "coast": "east",
-    "regions": [
-      "northeast",
-      "mid-atlantic",
-      "southeast",
-      "gulf"
-    ],
-    "categories": [
-      "shellfish"
-    ]
-  },
-  {
     "name": "Longfin inshore squid",
     "temp_min": 42,
     "temp_max": 72,
@@ -8105,42 +8040,6 @@
     ],
     "categories": [
       "other"
-    ]
-  },
-  {
-    "name": "Florida spiny lobster",
-    "temp_min": 72,
-    "temp_max": 86,
-    "temp_ideal_low": 76,
-    "temp_ideal_high": 84,
-    "peak_months": [
-      8,
-      9,
-      10,
-      11,
-      12,
-      1,
-      2,
-      3
-    ],
-    "good_months": [
-      4,
-      5,
-      6,
-      7
-    ],
-    "bait": "No rod and reel — divers catch by hand or use a tickle stick and net; recreational trap harvest also legal",
-    "rig": "Freediving or SCUBA with tickle stick and dive net; or lobster trap (with permit)",
-    "hook_size": "No hook — hand harvest or trap",
-    "sinker": "None",
-    "explanation_cold": "Florida spiny lobster are most active in cooler winter months in the Keys and South Florida reef tract; this is the heart of the season after the late-July mini-season and August opener.",
-    "explanation_warm": "Florida spiny lobster season opens in late July (mini-season) and August; divers target them in coral reefs, rock piles, and ledges throughout the Keys and Southeast Florida.",
-    "coast": "east",
-    "regions": [
-      "southeast"
-    ],
-    "categories": [
-      "shellfish"
     ]
   },
   {
@@ -8204,35 +8103,6 @@
     "categories": [
       "shark",
       "game_fish"
-    ]
-  },
-  {
-    "name": "California spiny lobster",
-    "temp_min": 55,
-    "temp_max": 74,
-    "temp_ideal_low": 58,
-    "temp_ideal_high": 68,
-    "peak_months": [
-      10,
-      11,
-      12,
-      1,
-      2,
-      3
-    ],
-    "good_months": [
-      4,
-      9
-    ],
-    "bait": "Lobster traps baited with fish carcasses or mackerel; divers catch by hand with gloves at night",
-    "rig": "Lobster trap (permit required); freediving or SCUBA at night with dive light",
-    "hook_size": "No hook — trap or hand harvest",
-    "sinker": "None",
-    "explanation_cold": "California spiny lobster season runs October through mid-March; lobsters are most active at night in kelp beds and rocky reefs — traps and night diving produce best results in cooler water.",
-    "explanation_warm": "Season is closed in spring and summer (mid-March through September) to protect molting and reproducing lobsters.",
-    "coast": "west",
-    "categories": [
-      "shellfish"
     ]
   },
   {
