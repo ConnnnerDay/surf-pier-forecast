@@ -5360,12 +5360,21 @@ footer p {
   opacity: 1;
 }
 
-/* Settings/customize tab — narrower, right-aligned */
+/* Menu tab — slightly wider to show hamburger icon */
 .dash-tab--settings {
-  flex: 0 0 44px;
+  flex: 0 0 52px;
   border-left: 1px solid var(--border-light);
   color: var(--text-muted);
   padding: 0.7rem 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
 }
 
 .dash-tab--settings.has-custom {
@@ -5755,4 +5764,184 @@ footer p {
     width: 14px;
     height: 14px;
   }
+}
+
+/* ================================================================
+   Auth page layout fix (register / login)
+   ================================================================ */
+
+.auth-page main {
+  margin-top: 2rem;
+  max-width: 480px;
+  padding: 0 1rem;
+}
+
+.auth-page .auth-section {
+  margin-top: 0;
+}
+
+@media (max-width: 480px) {
+  .auth-page main {
+    margin-top: 1.5rem;
+    padding: 0 0.75rem;
+  }
+
+  .auth-page .auth-section {
+    padding: 1.25rem 1.25rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .auth-page header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* ================================================================
+   Unified Menu — hide the old app-nav on mobile (replaced by
+   the bottom-tab ☰ Menu button + slide-up drawer)
+   ================================================================ */
+
+@media (max-width: 760px) {
+  .app-nav {
+    display: none !important;
+  }
+}
+
+/* ================================================================
+   Drawer navigation section (inside unified slide-up drawer)
+   ================================================================ */
+
+.drawer-nav-section {
+  padding: 0 1rem 0.5rem;
+  flex-shrink: 0;
+}
+
+
+.drawer-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin: 0 0 0.65rem;
+  flex-shrink: 0;
+}
+
+.drawer-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.drawer-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.25rem;
+  background: var(--ocean-light);
+  border-radius: var(--radius-sm);
+  color: var(--ocean);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  transition: background 0.15s, transform 0.1s;
+  border: 1px solid transparent;
+}
+
+.drawer-nav-item:hover,
+.drawer-nav-item:focus-visible {
+  background: var(--ocean);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+.drawer-nav-item--active {
+  background: var(--ocean);
+  color: var(--white);
+}
+
+.drawer-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 50%;
+}
+
+.drawer-nav-item:hover .drawer-nav-icon,
+.drawer-nav-item:focus-visible .drawer-nav-icon,
+.drawer-nav-item--active .drawer-nav-icon {
+  background: rgba(255,255,255,0.25);
+}
+
+.drawer-divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: var(--border-light);
+  margin: 0.5rem 1rem 0.75rem;
+}
+
+/* ================================================================
+   Drag handle for section reorder items
+   ================================================================ */
+
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  flex-shrink: 0;
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 1rem;
+  opacity: 0.5;
+  touch-action: none;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  opacity: 0.9;
+}
+
+.customize-section-item {
+  cursor: default;
+}
+
+.customize-section-item.drag-over {
+  border-top: 2px solid var(--ocean);
+}
+
+.customize-section-item.dragging {
+  opacity: 0.4;
+}
+
+/* Dark-mode variants */
+[data-theme="dark"] .drawer-nav-item {
+  background: rgba(255,255,255,0.07);
+  color: var(--ocean);
+  border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .drawer-nav-item:hover,
+[data-theme="dark"] .drawer-nav-item:focus-visible,
+[data-theme="dark"] .drawer-nav-item--active {
+  background: var(--ocean);
+  color: var(--white);
+}
+
+[data-theme="dark"] .drawer-nav-icon {
+  background: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .drawer-divider {
+  background: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .drawer-section-title {
+  color: rgba(255,255,255,0.45);
 }
