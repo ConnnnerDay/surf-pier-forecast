@@ -119,8 +119,9 @@
                 <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Plan
             </button>
-            <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Open menu" title="Menu">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <span style="font-size:0.59rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Menu</span>
             </button>
         </nav>
 
@@ -524,10 +525,55 @@
             <div class="customize-drawer-handle" aria-hidden="true"></div>
             <div class="customize-drawer-inner">
                 <div class="customize-hdr">
-                    <h2 id="customize-title">Customize Dashboard</h2>
-                    <button class="customize-close" id="customize-close" aria-label="Close customize panel">&times;</button>
+                    <h2 id="customize-title">Menu</h2>
+                    <button class="customize-close" id="customize-close" aria-label="Close menu">&times;</button>
                 </div>
-                <p class="customize-hint">Toggle sections on/off and reorder them within each tab.</p>
+
+                <!-- Navigation links -->
+                <div class="drawer-nav-section">
+                    <p class="drawer-section-title">Navigate</p>
+                    <div class="drawer-nav-grid">
+                        <a href="{{ url_for('views.index') }}" class="drawer-nav-item{% if request.endpoint == 'views.index' %} drawer-nav-item--active{% endif %}">
+                            <span class="drawer-nav-icon">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            </span>
+                            Dashboard
+                        </a>
+                        <a href="{{ url_for('views.live_cams') }}" class="drawer-nav-item{% if request.endpoint == 'views.live_cams' %} drawer-nav-item--active{% endif %}">
+                            <span class="drawer-nav-icon">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            </span>
+                            Live Cams
+                        </a>
+                        <a href="{{ url_for('views.fishing_log') }}" class="drawer-nav-item{% if request.endpoint == 'views.fishing_log' %} drawer-nav-item--active{% endif %}">
+                            <span class="drawer-nav-icon">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            </span>
+                            Fish Log
+                        </a>
+                        {% if user %}
+                        <a href="{{ url_for('auth.account') }}" class="drawer-nav-item{% if request.endpoint in ('auth.account', 'auth.account_settings') %} drawer-nav-item--active{% endif %}">
+                            <span class="drawer-nav-icon">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </span>
+                            Account
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('auth.register') }}" class="drawer-nav-item">
+                            <span class="drawer-nav-icon">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            </span>
+                            Sign Up
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="drawer-divider"></div>
+
+                <!-- Customize sections -->
+                <p class="drawer-section-title" style="padding: 0 1rem 0.5rem; margin:0">Customize Dashboard</p>
+                <p class="customize-hint">Toggle sections on/off and drag to reorder.</p>
                 <div class="customize-tab-selector" id="customize-tab-selector" role="group" aria-label="Select tab to customize">
                     <button class="cust-tab-btn active" data-cust-tab="today">Today</button>
                     <button class="cust-tab-btn" data-cust-tab="species">Species</button>
@@ -1107,6 +1153,9 @@
             return el ? (el.dataset.sectionLabel || id) : id;
         }
 
+        // Drag-and-drop state
+        var dragSrcId = null;
+
         function renderCustTab(tab) {
             activeCustTab = tab;
             custTabBtns.forEach(function(btn) {
@@ -1122,23 +1171,13 @@
                 var li = document.createElement('li');
                 li.className = 'customize-section-item';
                 li.dataset.sectionId = pref.id;
+                li.setAttribute('draggable', 'true');
 
-                var upBtn = document.createElement('button');
-                upBtn.className = 'cust-move-btn cust-move-btn--up';
-                upBtn.innerHTML = '&#9650;';
-                upBtn.setAttribute('aria-label', 'Move up');
-                upBtn.disabled = idx === 0;
-
-                var downBtn = document.createElement('button');
-                downBtn.className = 'cust-move-btn cust-move-btn--down';
-                downBtn.innerHTML = '&#9660;';
-                downBtn.setAttribute('aria-label', 'Move down');
-                downBtn.disabled = idx === tabPrefs.length - 1;
-
-                var moveBtns = document.createElement('div');
-                moveBtns.className = 'cust-move-btns';
-                moveBtns.appendChild(upBtn);
-                moveBtns.appendChild(downBtn);
+                // Drag handle
+                var handle = document.createElement('span');
+                handle.className = 'drag-handle';
+                handle.setAttribute('aria-hidden', 'true');
+                handle.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>';
 
                 var label = document.createElement('span');
                 label.className = 'cust-section-label';
@@ -1158,11 +1197,12 @@
                 toggleWrap.appendChild(checkbox);
                 toggleWrap.appendChild(slider);
 
-                li.appendChild(moveBtns);
+                li.appendChild(handle);
                 li.appendChild(label);
                 li.appendChild(toggleWrap);
                 list.appendChild(li);
 
+                // Checkbox toggle
                 checkbox.addEventListener('change', function() {
                     var id = this.dataset.sectionId;
                     var tabArr = editPrefs[activeCustTab];
@@ -1170,23 +1210,86 @@
                     if (entry) entry.visible = this.checked;
                 });
 
-                upBtn.addEventListener('click', function() {
+                // HTML5 drag events (desktop)
+                li.addEventListener('dragstart', function(e) {
+                    dragSrcId = pref.id;
+                    li.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                li.addEventListener('dragend', function() {
+                    li.classList.remove('dragging');
+                    list.querySelectorAll('.drag-over').forEach(function(el) {
+                        el.classList.remove('drag-over');
+                    });
+                });
+                li.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (pref.id !== dragSrcId) li.classList.add('drag-over');
+                });
+                li.addEventListener('dragleave', function() {
+                    li.classList.remove('drag-over');
+                });
+                li.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    li.classList.remove('drag-over');
+                    if (!dragSrcId || dragSrcId === pref.id) return;
                     var arr = editPrefs[activeCustTab];
-                    var i = arr.findIndex(function(p) { return p.id === pref.id; });
-                    if (i > 0) {
-                        var tmp = arr[i - 1]; arr[i - 1] = arr[i]; arr[i] = tmp;
-                        renderCustTab(activeCustTab);
-                    }
+                    var fromIdx = arr.findIndex(function(p) { return p.id === dragSrcId; });
+                    var toIdx   = arr.findIndex(function(p) { return p.id === pref.id; });
+                    if (fromIdx < 0 || toIdx < 0) return;
+                    var moved = arr.splice(fromIdx, 1)[0];
+                    arr.splice(toIdx, 0, moved);
+                    dragSrcId = null;
+                    renderCustTab(activeCustTab);
                 });
 
-                downBtn.addEventListener('click', function() {
-                    var arr = editPrefs[activeCustTab];
-                    var i = arr.findIndex(function(p) { return p.id === pref.id; });
-                    if (i < arr.length - 1) {
-                        var tmp = arr[i + 1]; arr[i + 1] = arr[i]; arr[i] = tmp;
+                // Touch drag (mobile)
+                (function(currentLi, currentId) {
+                    var startY = 0, lastY = 0, isDragging = false;
+                    handle.addEventListener('touchstart', function(e) {
+                        startY = e.touches[0].clientY;
+                        lastY  = startY;
+                        isDragging = false;
+                    }, { passive: true });
+                    handle.addEventListener('touchmove', function(e) {
+                        lastY = e.touches[0].clientY;
+                        var totalDy = e.touches[0].clientY - startY;
+                        if (Math.abs(totalDy) < 8) return;
+                        isDragging = true;
+                        e.preventDefault();
+                        // Find item under finger
+                        var items = Array.from(list.querySelectorAll('.customize-section-item'));
+                        var target = null;
+                        items.forEach(function(item) {
+                            var rect = item.getBoundingClientRect();
+                            if (e.touches[0].clientY >= rect.top && e.touches[0].clientY <= rect.bottom) {
+                                target = item;
+                            }
+                        });
+                        items.forEach(function(item) { item.classList.remove('drag-over'); });
+                        if (target && target !== currentLi) target.classList.add('drag-over');
+                    }, { passive: false });
+                    handle.addEventListener('touchend', function(e) {
+                        if (!isDragging) return;
+                        var items = Array.from(list.querySelectorAll('.customize-section-item'));
+                        var targetId = null;
+                        items.forEach(function(item) {
+                            if (item.classList.contains('drag-over')) {
+                                targetId = item.dataset.sectionId;
+                            }
+                            item.classList.remove('drag-over');
+                        });
+                        if (!targetId || targetId === currentId) return;
+                        var arr = editPrefs[activeCustTab];
+                        var fromIdx = arr.findIndex(function(p) { return p.id === currentId; });
+                        var toIdx   = arr.findIndex(function(p) { return p.id === targetId; });
+                        if (fromIdx < 0 || toIdx < 0) return;
+                        var moved = arr.splice(fromIdx, 1)[0];
+                        arr.splice(toIdx, 0, moved);
                         renderCustTab(activeCustTab);
-                    }
-                });
+                    }, { passive: true });
+                })(li, pref.id);
             });
         }
 
