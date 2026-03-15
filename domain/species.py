@@ -96,7 +96,6 @@ _PIER_SPECIES: set = {
     "Honeycomb cowfish",
     "Menpachi (soldierfish)",
     "Aholehole (Hawaiian flagtail)",
-    "Dungeness crab (from pier)",
     "Kelp bass (calico bass)",
     "Sand bass (barred sand bass)",
     "California sheephead",
@@ -641,7 +640,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Pacific sardine": ["bait_fish"],
     "Northern anchovy": ["bait_fish"],
     "Jacksmelt": ["bait_fish", "panfish"],
-    "Dungeness crab (from pier)": ["shellfish"],
     # ── Hawaii ───────────────────────────────────────────────────────────────
     "Giant trevally (ulua)": ["game_fish", "pelagic"],
     "Bluefin trevally (omilu)": ["game_fish", "pelagic"],
