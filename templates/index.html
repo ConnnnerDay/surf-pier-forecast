@@ -98,9 +98,88 @@
         </div>
         {% endif %}
 
-        {% include 'partials/_outlook.html' %}
+        <!-- ============================================================
+             1. CURRENT CONDITIONS HERO
+             Quick-scan summary: verdict + wind, waves, water temp, tide
+             ============================================================ -->
+        {% set wind_str = forecast.conditions.wind or '' %}
+        {% set wind_speed = wind_str.split(' ')[0].split('-')[0] | int %}
+        {% if 'calm' in wind_str.lower() or wind_speed == 0 %}
+            {% set wind_class = 'calm' %}{% set wind_label = 'Calm Seas' %}
+        {% elif wind_speed <= 8 %}
+            {% set wind_class = 'light' %}{% set wind_label = 'Light Wind' %}
+        {% elif wind_speed <= 15 %}
+            {% set wind_class = 'moderate' %}{% set wind_label = 'Moderate Wind' %}
+        {% elif wind_speed <= 25 %}
+            {% set wind_class = 'strong' %}{% set wind_label = 'Strong Wind' %}
+        {% else %}
+            {% set wind_class = 'gale' %}{% set wind_label = 'Gale Warning' %}
+        {% endif %}
+        <section class="conditions-hero" aria-label="Current conditions summary">
+            <div class="conditions-hero-top">
+                <div>
+                    <div class="conditions-hero-label">Current Conditions</div>
+                    <div class="conditions-hero-location">{{ forecast.location_name or 'Your Location' }}</div>
+                </div>
+                {% if forecast.conditions.verdict %}
+                <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }}">{{ forecast.conditions.verdict }}</span>
+                {% endif %}
+            </div>
+            <div class="conditions-hero-grid">
+                <!-- Wind -->
+                <div class="hero-stat">
+                    <div class="hero-stat-header">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                        <span class="hero-stat-label">Wind</span>
+                    </div>
+                    <span class="hero-stat-value">{{ forecast.conditions.wind or '—' }}</span>
+                    <span class="wind-quality-badge wind-quality--{{ wind_class }}">{{ wind_label }}</span>
+                </div>
+                <!-- Waves -->
+                <div class="hero-stat">
+                    <div class="hero-stat-header">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                        <span class="hero-stat-label">Waves</span>
+                    </div>
+                    <span class="hero-stat-value">{{ forecast.conditions.waves or '—' }}</span>
+                </div>
+                <!-- Water Temp -->
+                <div class="hero-stat">
+                    <div class="hero-stat-header">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                        <span class="hero-stat-label">Water</span>
+                    </div>
+                    <span class="hero-stat-value"><span class="unit-temp" data-f="{{ forecast.conditions.water_temp_f }}">{{ forecast.conditions.water_temp_f }}&deg;F</span></span>
+                    {% if forecast.conditions.water_temp_trend %}
+                    <span class="hero-stat-sub">{{ forecast.conditions.water_temp_trend|title }}</span>
+                    {% endif %}
+                </div>
+                <!-- Tide State -->
+                <div class="hero-stat">
+                    <div class="hero-stat-header">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                        <span class="hero-stat-label">Tide</span>
+                    </div>
+                    {% if forecast.tide_state == 'Rising' %}
+                    <span class="tide-state-badge tide-state--rising">
+                        <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
+                        Incoming
+                    </span>
+                    {% elif forecast.tide_state == 'Falling' %}
+                    <span class="tide-state-badge tide-state--falling">
+                        <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
+                        Outgoing
+                    </span>
+                    {% else %}
+                    <span class="hero-stat-value">{{ forecast.tide_state or '—' }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
 
-        <!-- Bite Alerts -->
+        <!-- ============================================================
+             2. BITE ALERTS
+             ============================================================ -->
         {% if forecast.bite_alerts %}
         <div class="bite-alerts">
             {% for ba in forecast.bite_alerts %}
@@ -125,10 +204,71 @@
         </div>
         {% endif %}
 
+        <!-- ============================================================
+             3. BEST FISHING WINDOWS
+             ============================================================ -->
+        {% if forecast.best_times %}
+        <section class="bite-windows-section">
+            <h2>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Best Fishing Windows
+            </h2>
+            <div class="best-times-cards">
+                {% for bt in forecast.best_times %}
+                <div class="best-time-card best-time--{{ bt.quality|lower }}">
+                    <div class="bt-quality">{{ bt.quality }}</div>
+                    <div class="bt-window">{{ bt.window }}</div>
+                    <div class="bt-reason">{{ bt.reason }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
-        {% include 'partials/_conditions.html' %}
-        {% include 'partials/_tides.html' %}
+        <!-- ============================================================
+             4. 24-HOUR ACTIVITY TIMELINE
+             ============================================================ -->
+        {% if forecast.activity_timeline %}
+        <section class="hourly-timeline-section">
+            <h2>24-Hour Activity Forecast</h2>
+            <p class="section-sub">Today&rsquo;s fishing activity by hour — tap bars for details</p>
+            <div class="activity-timeline">
+                <div class="timeline-bars">
+                    {% for t in forecast.activity_timeline %}
+                    <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
+                        <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
+                        {% if t.hour % 3 == 0 %}
+                        <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="timeline-legend">
+                    <span class="tl-key tl-key--prime"></span> Prime
+                    <span class="tl-key tl-key--high"></span> High
+                    <span class="tl-key tl-key--med"></span> Moderate
+                    <span class="tl-key tl-key--low"></span> Low
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ============================================================
+             5. SPECIES ACTIVITY RANKINGS
+             ============================================================ -->
         {% include 'partials/_species.html' %}
+
+        <!-- ============================================================
+             6. TIDES & MARINE CONDITIONS
+             ============================================================ -->
+        {% include 'partials/_tides.html' %}
+        {% include 'partials/_conditions.html' %}
+        {% include 'partials/_solunar.html' %}
+
+        <!-- ============================================================
+             7. 3-DAY OUTLOOK
+             ============================================================ -->
+        {% include 'partials/_outlook.html' %}
         <!-- Recommended Rigs -->
         {% if forecast.rig_recommendations %}
         <section class="rig-section">
