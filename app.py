@@ -67,12 +67,27 @@ def create_app() -> Flask:
 
     secret_key = os.environ.get("SECRET_KEY", "")
     if not secret_key:
-        secret_key = secrets.token_hex(32)
-        logging.warning(
-            "SECRET_KEY not set — using a temporary random key. "
-            "Sessions will not persist across restarts. "
-            "Set the SECRET_KEY environment variable for production."
-        )
+        # Persist a generated key so all gunicorn workers share the same secret.
+        _key_file = os.path.join(os.path.dirname(__file__), "data", "secret_key")
+        try:
+            with open(_key_file, "r") as _f:
+                secret_key = _f.read().strip()
+        except FileNotFoundError:
+            pass
+        if not secret_key:
+            secret_key = secrets.token_hex(32)
+            os.makedirs(os.path.dirname(_key_file), exist_ok=True)
+            try:
+                with open(_key_file, "w") as _f:
+                    _f.write(secret_key)
+                os.chmod(_key_file, 0o600)
+            except OSError:
+                pass
+            logging.warning(
+                "SECRET_KEY not set — generated and saved to %s. "
+                "Set the SECRET_KEY environment variable for production.",
+                _key_file,
+            )
     app.config["SECRET_KEY"] = secret_key
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
     app.config["MAX_CONTENT_LENGTH"] = (
