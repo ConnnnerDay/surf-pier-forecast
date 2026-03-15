@@ -33,13 +33,17 @@
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" placeholder="Choose a username"
                            value="{{ username|default('', true) }}" class="auth-input" maxlength="30"
-                           autocomplete="username" required autofocus>
+                           autocomplete="username" autocorrect="off" autocapitalize="off" spellcheck="false"
+                           required autofocus>
                 </div>
                 <div class="auth-field">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Choose a password"
-                           class="auth-input" minlength="8" autocomplete="new-password" required
-                           aria-describedby="pw-reqs">
+                    <div class="auth-input-wrap">
+                        <input type="password" id="password" name="password" placeholder="Choose a password"
+                               class="auth-input" minlength="8" autocomplete="new-password" required
+                               aria-describedby="pw-reqs">
+                        <button type="button" class="auth-show-pw" onclick="togglePwVis('password', this)" aria-label="Show password" title="Show/hide password">&#128065;</button>
+                    </div>
                     <ul id="pw-reqs" class="pw-reqs" aria-label="Password requirements">
                         <li id="req-len"  class="pw-req">At least 8 characters</li>
                         <li id="req-up"   class="pw-req">One uppercase letter</li>
@@ -49,13 +53,24 @@
                 </div>
                 <div class="auth-field">
                     <label for="confirm">Confirm Password</label>
-                    <input type="password" id="confirm" name="confirm" placeholder="Confirm your password"
-                           class="auth-input" minlength="8" autocomplete="new-password" required
-                           aria-describedby="pw-match-hint">
+                    <div class="auth-input-wrap">
+                        <input type="password" id="confirm" name="confirm" placeholder="Confirm your password"
+                               class="auth-input" minlength="8" autocomplete="new-password" required
+                               aria-describedby="pw-match-hint">
+                        <button type="button" class="auth-show-pw" onclick="togglePwVis('confirm', this)" aria-label="Show confirm password" title="Show/hide password">&#128065;</button>
+                    </div>
                     <span id="pw-match-hint" class="pw-match-hint" aria-live="polite"></span>
                 </div>
                 <button type="submit" class="auth-btn">Create Account</button>
             </form>
+            <script>
+            function togglePwVis(id, btn) {
+                var input = document.getElementById(id);
+                if (!input) return;
+                input.type = input.type === 'password' ? 'text' : 'password';
+                btn.style.opacity = input.type === 'text' ? '1' : '0.55';
+            }
+            </script>
             <script>
             (function() {
                 var pw  = document.getElementById('password');

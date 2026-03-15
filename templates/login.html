@@ -33,7 +33,8 @@
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" placeholder="Enter your username"
                            value="{{ username|default('', true) }}" class="auth-input" maxlength="30"
-                           autocomplete="username" required autofocus>
+                           autocomplete="username" autocorrect="off" autocapitalize="off" spellcheck="false"
+                           required autofocus>
                 </div>
                 <div class="auth-field">
                     <label for="password">Password</label>

@@ -28,7 +28,7 @@ from storage.db import (
 
 bp = Blueprint("auth", __name__)
 
-_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
+_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 10
 _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 # ---------------------------------------------------------------------------
