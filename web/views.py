@@ -395,6 +395,10 @@ def index() -> Any:
     """Render the dashboard with the current forecast."""
     location = get_session_location()
     if location is None:
+        # Send unauthenticated visitors to login/register first,
+        # not directly to location setup.
+        if g.user is None:
+            return redirect(url_for("auth.landing"))
         return redirect(url_for("views.setup"))
 
     cached_flag = request.args.get("cached")
