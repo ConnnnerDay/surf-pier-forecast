@@ -86,9 +86,7 @@ def create_app() -> Flask:
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     # SECURE flag is also enforced at the response-header level in
     # _set_security_headers; set it here too so Flask marks the cookie itself.
-    if os.environ.get("FLASK_ENV") == "production" or os.environ.get(
-        "SESSION_COOKIE_SECURE"
-    ):
+    if os.environ.get("SESSION_COOKIE_SECURE"):
         app.config["SESSION_COOKIE_SECURE"] = True
 
     # Store uploads in data/uploads/ (outside static/) so Flask's static file
