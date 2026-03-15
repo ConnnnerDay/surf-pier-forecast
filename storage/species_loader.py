@@ -96,6 +96,15 @@ def _validate(entries: List[Dict[str, Any]]) -> None:
                     f"Species '{name}': 'regions' must be a list of strings"
                 )
 
+        if "categories" in entry:
+            cats = entry["categories"]
+            if not isinstance(cats, list) or not all(
+                isinstance(c, str) for c in cats
+            ):
+                raise ValueError(
+                    f"Species '{name}': 'categories' must be a list of strings"
+                )
+
 
 def load_species_db(path: pathlib.Path | None = None) -> List[Dict[str, Any]]:
     """Read, parse, and validate the species JSON file.

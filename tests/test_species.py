@@ -3,13 +3,15 @@
 from domain.species import (
     BAIT_DB,
     SPECIES_DB,
-    _regulation_disallows_keep,
+    _SPECIES_CATEGORIES,
+    _retention_prohibited,
     _score_species,
     _species_matches_profile,
     build_bait_ranking,
     build_natural_bait_chart,
     build_species_calendar,
     build_species_ranking,
+    build_spawning_report,
 )
 
 
@@ -284,11 +286,27 @@ class TestPersonalizationHardGate:
         )
 
 
-class TestRegulationHarvestFilter:
-    def test_regulation_disallow_parser(self):
-        assert _regulation_disallows_keep({"bag_limit": "0/day"}) is True
-        assert _regulation_disallows_keep({"notes": "Catch and release only."}) is True
-        assert _regulation_disallows_keep({"season": "Open year-round"}) is False
+class TestRetentionProhibited:
+    """Tests for _retention_prohibited() — the "can the angler keep this fish?" helper.
+
+    This is NOT a visibility test.  _retention_prohibited() returns True for
+    both C&R-only and closed-season regulations because in neither case can
+    the fish be retained.  Forecast visibility is controlled separately by
+    should_hide_from_forecast(classify_legality(...)) in regulations.py, which
+    keeps C&R species visible while hiding only truly-closed fisheries.
+    """
+
+    def test_bag_limit_zero_is_retention_prohibited(self):
+        """bag_limit=0 means no retention (C&R); fish cannot be kept."""
+        assert _retention_prohibited({"bag_limit": "0/day"}) is True
+
+    def test_catch_and_release_phrase_is_retention_prohibited(self):
+        """C&R phrase means no retention; fish cannot be kept."""
+        assert _retention_prohibited({"notes": "Catch and release only."}) is True
+
+    def test_open_season_is_not_retention_prohibited(self):
+        """Open year-round with no restrictions means retention is permitted."""
+        assert _retention_prohibited({"season": "Open year-round"}) is False
 
     def test_catch_and_release_species_visible_with_badge(self, monkeypatch):
         """C&R Sheepshead (bag_limit=0, 'No harvest') must stay in ranking with a C&R badge.
@@ -358,3 +376,241 @@ class TestRegulationHarvestFilter:
 
         assert "Sheepshead" not in names, "Season-closed Sheepshead must be hidden from forecast"
         assert [sp["rank"] for sp in ranking] == list(range(1, len(ranking) + 1))
+
+# ---------------------------------------------------------------------------
+# Categories
+# ---------------------------------------------------------------------------
+
+_VALID_CATEGORIES = frozenset(
+    {"game_fish", "bait_fish", "panfish", "shark", "ray", "reef_fish",
+     "pelagic", "migratory", "shellfish", "other"}
+)
+
+
+class TestSpeciesCategories:
+    """_SPECIES_CATEGORIES dict correctness and coverage."""
+
+    def test_all_category_values_are_valid(self):
+        """Every category label must belong to the controlled vocabulary."""
+        for name, cats in _SPECIES_CATEGORIES.items():
+            for cat in cats:
+                assert cat in _VALID_CATEGORIES, (
+                    f"Species '{name}' has unknown category '{cat}'"
+                )
+
+    def test_category_values_are_lists(self):
+        """Every entry in _SPECIES_CATEGORIES must be a list."""
+        for name, cats in _SPECIES_CATEGORIES.items():
+            assert isinstance(cats, list), (
+                f"Species '{name}' categories should be a list, got {type(cats)}"
+            )
+            assert len(cats) >= 1, f"Species '{name}' has empty categories list"
+
+    def test_known_sport_fish_are_game_fish(self):
+        assert "game_fish" in _SPECIES_CATEGORIES["Red drum (puppy drum)"]
+        assert "game_fish" in _SPECIES_CATEGORIES["Striped bass (rockfish)"]
+        assert "game_fish" in _SPECIES_CATEGORIES["Snook"]
+
+    def test_sharks_have_shark_category(self):
+        assert "shark" in _SPECIES_CATEGORIES["Blacktip shark"]
+        assert "shark" in _SPECIES_CATEGORIES["Bull shark"]
+        assert "shark" in _SPECIES_CATEGORIES["Sandbar shark"]
+
+    def test_rays_have_ray_category(self):
+        assert "ray" in _SPECIES_CATEGORIES["Cownose ray"]
+        assert "ray" in _SPECIES_CATEGORIES["Southern stingray"]
+        assert "ray" in _SPECIES_CATEGORIES["Bat ray"]
+
+    def test_shellfish_category(self):
+        assert "shellfish" in _SPECIES_CATEGORIES["Dungeness crab (from pier)"]
+
+    def test_pelagic_tunas(self):
+        assert "pelagic" in _SPECIES_CATEGORIES["Yellowfin tuna"]
+        assert "pelagic" in _SPECIES_CATEGORIES["Mahi-mahi (dolphinfish)"]
+
+    def test_bait_fish(self):
+        assert "bait_fish" in _SPECIES_CATEGORIES["Atlantic menhaden (bunker)"]
+        assert "bait_fish" in _SPECIES_CATEGORIES["Northern anchovy"]
+
+
+class TestCategoriesInRankingPayload:
+    """build_species_ranking() must include 'categories' in every entry."""
+
+    def test_categories_present_in_ranking(self):
+        ranking = build_species_ranking(month=7, water_temp=72, coast="east")
+        assert len(ranking) > 0
+        for entry in ranking:
+            assert "categories" in entry, (
+                f"Entry for '{entry['name']}' missing 'categories' key"
+            )
+
+    def test_categories_are_valid_vocabulary(self):
+        ranking = build_species_ranking(month=7, water_temp=72, coast="east")
+        for entry in ranking:
+            for cat in entry["categories"]:
+                assert cat in _VALID_CATEGORIES, (
+                    f"'{entry['name']}' has unknown category '{cat}'"
+                )
+
+    def test_categories_non_empty(self):
+        ranking = build_species_ranking(month=7, water_temp=72, coast="east")
+        for entry in ranking:
+            assert len(entry["categories"]) >= 1, (
+                f"'{entry['name']}' has empty categories list"
+            )
+
+    def test_west_coast_ranking_has_categories(self):
+        ranking = build_species_ranking(month=7, water_temp=62, coast="west")
+        assert len(ranking) > 0
+        for entry in ranking:
+            assert "categories" in entry
+
+    def test_hawaii_ranking_has_categories(self):
+        ranking = build_species_ranking(month=7, water_temp=78, coast="hawaii")
+        assert len(ranking) > 0
+        for entry in ranking:
+            assert "categories" in entry
+
+    def test_json_categories_field_takes_precedence(self, monkeypatch):
+        """If species JSON has a 'categories' field, it overrides the dict."""
+        # Patch SPECIES_DB to inject a species with a categories field
+        fake_sp = {
+            "name": "Red drum (puppy drum)",
+            "temp_min": 45, "temp_max": 85,
+            "temp_ideal_low": 55, "temp_ideal_high": 75,
+            "peak_months": [9, 10],
+            "good_months": [3, 4],
+            "bait": "Cut bait",
+            "rig": "Fish finder",
+            "hook_size": "3/0",
+            "sinker": "2 oz",
+            "explanation_cold": "Cold",
+            "explanation_warm": "Warm",
+            "coast": "east",
+            "categories": ["panfish"],  # override: should produce panfish not game_fish
+        }
+        monkeypatch.setattr("domain.species.SPECIES_DB", [fake_sp])
+
+        ranking = build_species_ranking(month=10, water_temp=65, coast="east")
+        assert len(ranking) == 1
+        assert ranking[0]["categories"] == ["panfish"]
+
+
+class TestCategoriesInSpawningPayload:
+    """build_spawning_report() must include 'categories' in every entry."""
+
+    def test_categories_present_in_spawning(self):
+        report = build_spawning_report(month=5, water_temp=68, coast="east")
+        for entry in report:
+            assert "categories" in entry, (
+                f"Spawning entry for '{entry['name']}' missing 'categories'"
+            )
+
+    def test_spawning_categories_valid(self):
+        report = build_spawning_report(month=5, water_temp=68, coast="east")
+        for entry in report:
+            for cat in entry["categories"]:
+                assert cat in _VALID_CATEGORIES
+
+
+class TestNewSpeciesInDB:
+    """New species added in dataset expansion are present and well-formed."""
+
+    def test_blue_crab_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Blue crab" in names
+
+    def test_great_hammerhead_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Great hammerhead shark" in names
+
+    def test_ca_spiny_lobster_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "California spiny lobster" in names
+
+    def test_pacific_barracuda_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Pacific barracuda (California barracuda)" in names
+
+    def test_toau_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Toau (blacktail snapper)" in names
+
+    def test_roi_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Roi (peacock grouper)" in names
+
+    def test_weke_in_db(self):
+        names = [s["name"] for s in SPECIES_DB]
+        assert "Weke (goatfish)" in names
+
+    def test_new_species_have_valid_categories_in_json(self):
+        """New species JSON entries must have valid categories lists."""
+        target_names = {
+            "Blue crab", "Longfin inshore squid", "Florida spiny lobster",
+            "Blue shark", "Great hammerhead shark", "California spiny lobster",
+            "Pacific barracuda (California barracuda)",
+            "Toau (blacktail snapper)", "Roi (peacock grouper)", "Weke (goatfish)",
+        }
+        for sp in SPECIES_DB:
+            if sp["name"] in target_names:
+                assert "categories" in sp, f"{sp['name']} missing categories in JSON"
+                assert isinstance(sp["categories"], list)
+                for cat in sp["categories"]:
+                    assert cat in _VALID_CATEGORIES, (
+                        f"{sp['name']} has unknown category '{cat}'"
+                    )
+
+    def test_blue_crab_shellfish_category(self):
+        sp = next(s for s in SPECIES_DB if s["name"] == "Blue crab")
+        assert "shellfish" in sp["categories"]
+
+    def test_great_hammerhead_shark_category(self):
+        sp = next(s for s in SPECIES_DB if s["name"] == "Great hammerhead shark")
+        assert "shark" in sp["categories"]
+        assert "game_fish" in sp["categories"]
+
+    def test_pacific_barracuda_game_fish_pelagic(self):
+        sp = next(
+            s for s in SPECIES_DB
+            if s["name"] == "Pacific barracuda (California barracuda)"
+        )
+        assert "game_fish" in sp["categories"]
+        assert "pelagic" in sp["categories"]
+
+    def test_new_species_appear_in_ranking_when_conditions_match(self):
+        """Blue crab (east, warm water) should score above threshold and appear when
+        filtered to bottom/inshore targets that compete with fewer species."""
+        from domain.species import _score_species, SPECIES_SCORE_THRESHOLD
+
+        blue_crab = next(s for s in SPECIES_DB if s["name"] == "Blue crab")
+        score = _score_species(blue_crab, month=7, water_temp=76)
+        assert score >= SPECIES_SCORE_THRESHOLD, (
+            f"Blue crab score {score} is below threshold {SPECIES_SCORE_THRESHOLD}"
+        )
+
+    def test_great_hammerhead_scores_above_threshold(self):
+        """Great hammerhead should score above the ranking threshold in summer."""
+        from domain.species import _score_species, SPECIES_SCORE_THRESHOLD
+
+        gh = next(s for s in SPECIES_DB if s["name"] == "Great hammerhead shark")
+        score = _score_species(gh, month=7, water_temp=82)
+        assert score >= SPECIES_SCORE_THRESHOLD
+
+    def test_ca_spiny_lobster_appears_in_west_fall_ranking(self):
+        """CA spiny lobster should appear in west coast fall ranking."""
+        ranking = build_species_ranking(month=11, water_temp=62, coast="west")
+        names = [sp["name"] for sp in ranking]
+        assert "California spiny lobster" in names
+
+    def test_hawaii_new_species_appear_in_ranking(self):
+        """New Hawaii species should appear in Hawaii ranking."""
+        ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
+        names = [sp["name"] for sp in ranking]
+        # At least one of the new Hawaii species should be in top 10
+        new_hawaii = {
+            "Toau (blacktail snapper)", "Roi (peacock grouper)", "Weke (goatfish)"
+        }
+        assert new_hawaii & set(names), (
+            f"None of {new_hawaii} appeared in Hawaii ranking: {names}"
+        )

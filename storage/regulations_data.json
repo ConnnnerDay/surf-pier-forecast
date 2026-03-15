@@ -32,7 +32,17 @@
     "Lingcod": "lingcod",
     "Cabezon": "cabezon",
     "Redtail surfperch": "redtail_surfperch",
-    "Kelp greenling": "kelp_greenling"
+    "Kelp greenling": "kelp_greenling",
+    "Blue crab": "blue_crab",
+    "Longfin inshore squid": "longfin_squid",
+    "Florida spiny lobster": "florida_spiny_lobster",
+    "Blue shark": "blue_shark",
+    "Great hammerhead shark": "great_hammerhead_shark",
+    "California spiny lobster": "ca_spiny_lobster",
+    "Pacific barracuda (California barracuda)": "pacific_barracuda",
+    "Toau (blacktail snapper)": "toau_blacktail_snapper",
+    "Roi (peacock grouper)": "roi_peacock_grouper",
+    "Weke (goatfish)": "weke_goatfish"
   },
   "states": {
     "AL": {
@@ -115,6 +125,20 @@
         "bag_limit": "5 per day",
         "season": "Varies by area",
         "notes": "Season and bag limits vary by CDFW management area. Verify current rules."
+      },
+      "ca_spiny_lobster": {
+        "min_size": "3.25 in carapace length",
+        "bag_limit": "7 per day",
+        "season": "Typically first Saturday in October through mid-March (check CDFW for exact dates)",
+        "notes": "Hoop nets and lobster traps require a lobster report card. Closed during spring-summer molt. Verify season opening date each year.",
+        "official_source": "https://wildlife.ca.gov/Fishing/Ocean/Invertebrates/Spiny-Lobster"
+      },
+      "pacific_barracuda": {
+        "min_size": "28 in total length",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; peak April–September",
+        "notes": "Single barbless hooks required. 28 in TL minimum statewide.",
+        "official_source": "https://wildlife.ca.gov/Fishing/Ocean/Fish/Pelagic/Pacific-Barracuda"
       }
     },
     "CT": {
@@ -265,6 +289,34 @@
         "bag_limit": "No bag limit",
         "season": "Open year-round",
         "notes": "Not subject to state size or bag limits. Verify with FWC."
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point carapace width",
+        "bag_limit": "10 per person or 20 per vessel per day",
+        "season": "Open year-round (no harvest during sponge crab season closures)",
+        "notes": "Females with eggs (sponge crabs) must be released. Verify current rules.",
+        "official_source": "https://myfwc.com/fishing/saltwater/recreational/blue-crab/"
+      },
+      "florida_spiny_lobster": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "6 per person per day (sport season); 12 per person per day (mini-season)",
+        "season": "Mini-season: last consecutive Wed-Thu of July. Regular season: August 6 – March 31.",
+        "notes": "Egg-bearing females must be released. No harvest from Monroe County reefs Aug 1-15 (spawning aggregation protection).",
+        "official_source": "https://myfwc.com/fishing/saltwater/recreational/lobster/"
+      },
+      "blue_shark": {
+        "min_size": "No minimum size",
+        "bag_limit": "No specific bag limit; check HMS regulations",
+        "season": "Open year-round; some HMS restrictions may apply",
+        "notes": "Consult NOAA HMS regulations. Fins must remain naturally attached.",
+        "official_source": "https://www.fisheries.noaa.gov/species/blue-shark"
+      },
+      "great_hammerhead_shark": {
+        "min_size": "No retention",
+        "bag_limit": "0 — Prohibited; Great hammerhead is prohibited for harvest in Atlantic and Gulf federal waters",
+        "season": "Prohibited year-round",
+        "notes": "Great hammerhead sharks are prohibited for harvest in state and federal waters. Must be released immediately.",
+        "official_source": "https://myfwc.com/fishing/saltwater/sharks/"
       }
     },
     "GA": {
@@ -379,6 +431,13 @@
         "bag_limit": "No bag limit",
         "season": "Open year-round",
         "notes": "Not subject to state size or bag limits. Catch and release strongly encouraged."
+      },
+      "longfin_squid": {
+        "min_size": "No minimum size",
+        "bag_limit": "No recreational bag limit",
+        "season": "Open year-round; peak fall-spring nearshore",
+        "notes": "No state restrictions for recreational take; consult NOAA for commercial quota status.",
+        "official_source": "https://www.mass.gov/saltwater-fishing"
       }
     },
     "MD": {
@@ -429,6 +488,13 @@
         "bag_limit": "2 per day",
         "season": "Open year-round",
         "notes": "Fork length minimum. Verify current rules with MD DNR."
+      },
+      "blue_crab": {
+        "min_size": "No minimum size (males); females 5 in point-to-point (Chesapeake Bay)",
+        "bag_limit": "2 bushels per person per day",
+        "season": "Open year-round (closed waters may vary by zone)",
+        "notes": "Juvenile female crabs (peelers, soft crabs) and sponge crabs must be released. License required.",
+        "official_source": "https://dnr.maryland.gov/fisheries/pages/blue-crab/index.aspx"
       }
     },
     "ME": {
@@ -555,6 +621,20 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with NC DMF."
+      },
+      "blue_crab": {
+        "min_size": "No minimum carapace size for recreational harvest",
+        "bag_limit": "No recreational bag limit; only commercial pots require license",
+        "season": "Open year-round",
+        "notes": "Recreational harvest from dock, pier, or drop line does not require a license. Egg-bearing females (sponge crabs) must be released.",
+        "official_source": "https://www.ncwildlife.org/Fishing/Saltwater-Fishing"
+      },
+      "blue_shark": {
+        "min_size": "No minimum size",
+        "bag_limit": "No specific state bag limit; HMS federal regulations apply",
+        "season": "Open year-round offshore",
+        "notes": "Consult NOAA HMS regulations. Most shark harvests offshore are federally regulated.",
+        "official_source": "https://www.ncwildlife.org/Fishing/Saltwater-Fishing/Sharks"
       }
     },
     "NJ": {
@@ -605,6 +685,20 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with NJ DEP."
+      },
+      "longfin_squid": {
+        "min_size": "No minimum size",
+        "bag_limit": "No recreational bag limit",
+        "season": "Open year-round; peak Oct-Apr nearshore",
+        "notes": "No size or bag restrictions for recreational anglers.",
+        "official_source": "https://www.njfishandwildlife.com/saltfish.htm"
+      },
+      "blue_shark": {
+        "min_size": "No minimum size",
+        "bag_limit": "No specific state limit; HMS federal regulations apply",
+        "season": "Open year-round offshore",
+        "notes": "Consult NOAA Highly Migratory Species regulations. Fins must remain naturally attached.",
+        "official_source": "https://www.fisheries.noaa.gov/species/blue-shark"
       }
     },
     "NY": {
@@ -769,6 +863,13 @@
         "bag_limit": "5 per day",
         "season": "Open year-round (Santee-Cooper area has different rules)",
         "notes": "Rules vary by area. Verify with SC DNR."
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "No recreational bag limit per SCDNR",
+        "season": "Open year-round",
+        "notes": "Sponge crabs (egg-bearing females) must be released. Harvest by dip net or drop line doesn't require license.",
+        "official_source": "https://www.dnr.sc.gov/marine/pub/seascience/bluecrab.html"
       }
     },
     "TX": {
@@ -893,6 +994,13 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Fork length minimum. Verify current limits with VA MRC."
+      },
+      "blue_crab": {
+        "min_size": "No minimum size",
+        "bag_limit": "1 bushel per person per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No license required for recreational crabbing in tidal waters with no more than 2 crab pots. Sponge crabs must be released.",
+        "official_source": "https://www.mrc.virginia.gov/rec_fisheries/crab/index.shtm"
       }
     },
     "WA": {
@@ -919,6 +1027,29 @@
         "bag_limit": "15 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with WDFW."
+      }
+    },
+    "HI": {
+      "toau_blacktail_snapper": {
+        "min_size": "No minimum size",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "No size or bag restrictions. Salt water license not required in Hawaii for recreational fishing.",
+        "official_source": "https://dlnr.hawaii.gov/dar/fishing/"
+      },
+      "roi_peacock_grouper": {
+        "min_size": "No minimum size",
+        "bag_limit": "No bag limit; anglers are encouraged to keep all",
+        "season": "Open year-round",
+        "notes": "Roi is an invasive species introduced in 1956. DLNR encourages unlimited harvest to help control populations. No license required.",
+        "official_source": "https://dlnr.hawaii.gov/dar/fishing/"
+      },
+      "weke_goatfish": {
+        "min_size": "No minimum size",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "No size or bag restrictions in Hawaii for recreational fishing.",
+        "official_source": "https://dlnr.hawaii.gov/dar/fishing/"
       }
     }
   }

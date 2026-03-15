@@ -8036,5 +8036,331 @@
     "explanation_cold": "Aholehole are active year-round in Hawaii harbors and rocky shorelines.",
     "explanation_warm": "Aholehole are one of Hawaii's most popular panfish; they school around piers, harbors, and river mouths and are great eating.",
     "coast": "hawaii"
+  },
+  {
+    "name": "Blue crab",
+    "temp_min": 50,
+    "temp_max": 90,
+    "temp_ideal_low": 65,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      4,
+      11
+    ],
+    "bait": "Chicken necks; fish heads; cut menhaden; clams",
+    "rig": "Drop line or crab trap; chicken neck tied to a string and dipped",
+    "hook_size": "No hook — use a dip net to scoop crabs off the line",
+    "sinker": "None or light weight to keep bait near the bottom",
+    "explanation_cold": "Blue crabs are largely dormant in cold water, buried in mud in deep channels — crabbing is very slow.",
+    "explanation_warm": "Blue crabs are actively foraging in shallow marshes, grass flats, and docks; chicken necks on drop lines or crab traps produce excellent catches.",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic",
+      "southeast",
+      "gulf"
+    ],
+    "categories": [
+      "shellfish"
+    ]
+  },
+  {
+    "name": "Longfin inshore squid",
+    "temp_min": 42,
+    "temp_max": 72,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Squid jigs (luminous or chrome); small sabiki rigs baited with fish flesh; small spoons",
+    "rig": "Squid jig rig with a small sinker; light spinning or jigging rod",
+    "hook_size": "Size 2-4 squid jig; no hook — jig has prongs",
+    "sinker": "1-2 oz inline sinker above jig",
+    "explanation_cold": "Longfin squid are most abundant inshore during fall and winter as they follow cold-water baitfish schools; jigging at night under lights near piers produces steady action.",
+    "explanation_warm": "Longfin squid have largely moved offshore into cooler deep water; occasional catches still occur near inlets on overcast days or at night.",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "categories": [
+      "other"
+    ]
+  },
+  {
+    "name": "Florida spiny lobster",
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "bait": "No rod and reel — divers catch by hand or use a tickle stick and net; recreational trap harvest also legal",
+    "rig": "Freediving or SCUBA with tickle stick and dive net; or lobster trap (with permit)",
+    "hook_size": "No hook — hand harvest or trap",
+    "sinker": "None",
+    "explanation_cold": "Florida spiny lobster are most active in cooler winter months in the Keys and South Florida reef tract; this is the heart of the season after the late-July mini-season and August opener.",
+    "explanation_warm": "Florida spiny lobster season opens in late July (mini-season) and August; divers target them in coral reefs, rock piles, and ledges throughout the Keys and Southeast Florida.",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "categories": [
+      "shellfish"
+    ]
+  },
+  {
+    "name": "Blue shark",
+    "temp_min": 50,
+    "temp_max": 80,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Whole mackerel; bluefish; menhaden; squid; chunk bait",
+    "rig": "Float rig with 6-9 ft of wire or heavy mono leader; or bottom rig with large circle hook",
+    "hook_size": "6/0-9/0 circle hook",
+    "sinker": "None for float rig; 4-8 oz for bottom rig",
+    "explanation_cold": "Blue sharks are pelagic and move offshore or south in cold water — nearshore catches are uncommon below 55°F.",
+    "explanation_warm": "Blue sharks are among the most abundant pelagic sharks from Cape Hatteras to New England in summer; they cruise near the surface offshore and occasionally come within a few miles of shore following baitfish and menhaden schools.",
+    "coast": "east",
+    "categories": [
+      "shark",
+      "pelagic"
+    ]
+  },
+  {
+    "name": "Great hammerhead shark",
+    "temp_min": 65,
+    "temp_max": 88,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live stingrays (preferred); live bluefish, jack, or ladyfish; large cut baits",
+    "rig": "Heavy conventional tackle (50-130 class); 10-15 ft of 480-lb steel cable leader; large circle hook",
+    "hook_size": "12/0-16/0 circle hook",
+    "sinker": "4-8 oz egg sinker or fish-finder rig",
+    "explanation_cold": "Great hammerheads move south to warmer Florida and Gulf waters as temperatures drop — rarely encountered north of Florida below 65°F.",
+    "explanation_warm": "Great hammerheads patrol nearshore flats, surf zones, and inlets along the Southeast US and Gulf; they are particularly attracted to stingray-rich sandy flats and are one of the most prized shark targets from shore.",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "categories": [
+      "shark",
+      "game_fish"
+    ]
+  },
+  {
+    "name": "California spiny lobster",
+    "temp_min": 55,
+    "temp_max": 74,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Lobster traps baited with fish carcasses or mackerel; divers catch by hand with gloves at night",
+    "rig": "Lobster trap (permit required); freediving or SCUBA at night with dive light",
+    "hook_size": "No hook — trap or hand harvest",
+    "sinker": "None",
+    "explanation_cold": "California spiny lobster season runs October through mid-March; lobsters are most active at night in kelp beds and rocky reefs — traps and night diving produce best results in cooler water.",
+    "explanation_warm": "Season is closed in spring and summer (mid-March through September) to protect molting and reproducing lobsters.",
+    "coast": "west",
+    "categories": [
+      "shellfish"
+    ]
+  },
+  {
+    "name": "Pacific barracuda (California barracuda)",
+    "temp_min": 58,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live anchovies; small mackerel; chrome surface iron jigs; white swimbaits",
+    "rig": "Light to medium spinning or casting rod; wire or heavy fluorocarbon leader (single strand wire preferred)",
+    "hook_size": "1/0-3/0 treble hook (jigs); 2/0-4/0 live bait hook",
+    "sinker": "None for surface jigs; split shot for live bait",
+    "explanation_cold": "Pacific barracuda move south into Mexican waters or offshore when temperatures drop below 60°F; catches are uncommon in Southern California from December through February.",
+    "explanation_warm": "Pacific barracuda school near kelp paddies, the surface, and nearshore reefs from San Diego to Point Conception; they hit chrome surface iron jigs and live anchovies aggressively on light tackle from boats and piers.",
+    "coast": "west",
+    "categories": [
+      "game_fish",
+      "pelagic"
+    ]
+  },
+  {
+    "name": "Toau (blacktail snapper)",
+    "temp_min": 74,
+    "temp_max": 84,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [],
+    "bait": "Cut squid; small fish chunks; shrimp; live small fish",
+    "rig": "Bottom rig with light to medium sinker; slip sinker rig near reef structure",
+    "hook_size": "#4-1/0 circle or J-hook",
+    "sinker": "1-3 oz egg sinker",
+    "explanation_cold": "Toau are active year-round around Hawaii's shallow reef flats and rocky shorelines; water temperature in Hawaii rarely limits the bite.",
+    "explanation_warm": "Toau (blacktail snapper) are one of Hawaii's most common and easily caught shore fish; they congregate around reef structure, rocky points, and reef edges — great eating and fun on light tackle.",
+    "coast": "hawaii",
+    "categories": [
+      "game_fish",
+      "reef_fish"
+    ]
+  },
+  {
+    "name": "Roi (peacock grouper)",
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [],
+    "bait": "Live small fish; cut fish; squid strips; lures near structure",
+    "rig": "Bottom rig near reef structure; small jig or drop-shot rig around rocky habitat",
+    "hook_size": "1/0-3/0 J-hook or circle hook",
+    "sinker": "1-3 oz egg sinker",
+    "explanation_cold": "Roi are active year-round in Hawaii; this invasive grouper occupies reef habitat year-round and can be caught on most bottom rigs near structure.",
+    "explanation_warm": "Roi (peacock grouper) are an invasive species in Hawaii introduced in the 1950s; they are abundant on coral reefs, rocky bottoms, and rubble zones — anglers are encouraged to keep all they catch as part of control efforts.",
+    "coast": "hawaii",
+    "categories": [
+      "reef_fish"
+    ]
+  },
+  {
+    "name": "Weke (goatfish)",
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [],
+    "bait": "Small shrimp; pieces of squid; cut fish; sandworms",
+    "rig": "Light bottom rig with small hook; two-hook bottom rig in sandy areas",
+    "hook_size": "#6-#1 small hook",
+    "sinker": "1-2 oz flat or egg sinker",
+    "explanation_cold": "Weke are year-round Hawaii residents; they forage along sandy bottoms and reef edges using their chin barbels to detect buried invertebrates.",
+    "explanation_warm": "Weke (goatfish) are a beloved Hawaiian table fish found in schools over sandy flats, grass beds, and mixed reef-sand edges; they are excellent eating and bite readily on small baits fished on the bottom.",
+    "coast": "hawaii",
+    "categories": [
+      "panfish",
+      "reef_fish"
+    ]
   }
 ]

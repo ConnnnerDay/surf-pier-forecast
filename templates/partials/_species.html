@@ -61,6 +61,20 @@
                             Catch &amp; Release Only &mdash; legal to target; all fish must be released
                         </div>
                         {% endif %}
+                        {# Verify Rules prompt — shown for conditional/area-specific restrictions #}
+                        {% if sp.regulation_status == 'restricted' %}
+                        <div class="reg-inline-verify">
+                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Seasonal or area restrictions may apply &mdash;
+                            {% if sp.regulation and sp.regulation.official_source %}
+                            <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-verify__link">verify current rules ↗</a>
+                            {% elif forecast.official_regulations_url %}
+                            <a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-inline-verify__link">verify current rules ↗</a>
+                            {% else %}
+                            verify current rules before fishing
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         {# Stale regulation warning — shown in HTML so it's visible without opening the modal #}
                         {% if sp.regulation and sp.regulation.is_stale and sp.regulation.data_status != 'live' %}
                         <div class="reg-inline-stale">

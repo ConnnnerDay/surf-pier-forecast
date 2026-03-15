@@ -315,6 +315,345 @@ _NUISANCE_SPECIES: set = {
     "Hogchoker",  # Tiny flatfish, no sport or food value
 }
 
+# ---------------------------------------------------------------------------
+# Display taxonomy — controlled-vocabulary categories for the forecast UI.
+# ---------------------------------------------------------------------------
+# Maps each species name to one or more category labels from this vocabulary:
+#   game_fish  — prized sport/food fish actively targeted by anglers
+#   bait_fish  — species primarily used as live or cut bait
+#   panfish    — small/medium edible fish; easy catches; great for eating
+#   shark      — elasmobranchs (sharks)
+#   ray        — rays, skates, guitarfish
+#   reef_fish  — structure/reef-associated species (tropical or temperate)
+#   pelagic    — open-water, mid-column or surface species
+#   migratory  — species with strong seasonal coastal migrations
+#   shellfish  — crustaceans and mollusks
+#   other      — everything that doesn't fit the above
+#
+# Species not listed here default to ["other"].
+# This dict is independent of _GAMEFISH_SPECIES / _PELAGIC_SPECIES / etc.;
+# those sets drive profile-based filtering; this dict drives display taxonomy.
+# ---------------------------------------------------------------------------
+_SPECIES_CATEGORIES: Dict[str, List[str]] = {
+    # ── East Coast — primary sport fish ────────────────────────────────────
+    "Red drum (puppy drum)": ["game_fish"],
+    "Speckled trout (spotted seatrout)": ["game_fish"],
+    "Black drum": ["game_fish"],
+    "Black drum (large bull)": ["game_fish"],
+    "Sheepshead": ["game_fish", "reef_fish"],
+    "Tautog (blackfish)": ["game_fish", "reef_fish"],
+    "Black sea bass": ["game_fish", "reef_fish"],
+    "Bluefish": ["game_fish", "pelagic", "migratory"],
+    "Striped bass (rockfish)": ["game_fish", "migratory"],
+    "Striped bass (hybrid)": ["game_fish"],
+    "Flounder (summer flounder)": ["game_fish"],
+    "Southern flounder": ["game_fish"],
+    "Gulf flounder": ["game_fish"],
+    "Windowpane flounder": ["other"],
+    "Fringed flounder": ["other"],
+    "Spanish mackerel": ["game_fish", "pelagic", "migratory"],
+    "Cero mackerel": ["game_fish", "pelagic"],
+    "Pompano": ["game_fish"],
+    "African pompano": ["game_fish", "pelagic"],
+    "Palometa": ["panfish", "pelagic"],
+    "Cobia": ["game_fish", "pelagic"],
+    "King mackerel (kingfish)": ["game_fish", "pelagic"],
+    "False albacore (little tunny)": ["game_fish", "pelagic"],
+    "Atlantic bonito": ["game_fish", "pelagic"],
+    "Tarpon": ["game_fish", "migratory"],
+    "Snook": ["game_fish"],
+    "Jack crevalle": ["game_fish", "pelagic"],
+    "Blue runner (hardtail)": ["bait_fish", "pelagic"],
+    "Bar jack": ["game_fish", "pelagic"],
+    "Yellow jack": ["game_fish", "pelagic"],
+    "Horse-eye jack": ["game_fish", "pelagic"],
+    "Lookdown": ["reef_fish"],
+    "Greater amberjack": ["game_fish", "pelagic"],
+    "Almaco jack": ["game_fish", "pelagic"],
+    "Almaco jack (large adult)": ["game_fish", "pelagic"],
+    "Lesser amberjack": ["game_fish", "pelagic"],
+    "Amberjack (juvenile, banded)": ["game_fish"],
+    "Banded rudderfish": ["game_fish", "pelagic"],
+    "Rainbow runner": ["game_fish", "pelagic"],
+    "Permit": ["game_fish"],
+    "Tripletail": ["game_fish"],
+    "Ladyfish": ["game_fish", "pelagic"],
+    "Great barracuda": ["game_fish", "pelagic"],
+    "Gray trout (weakfish)": ["game_fish"],
+    "Sand seatrout (white trout)": ["panfish"],
+    "Silver seatrout": ["panfish"],
+    "Mahi-mahi (dolphinfish)": ["game_fish", "pelagic"],
+    "Wahoo": ["game_fish", "pelagic"],
+    "Blackfin tuna": ["game_fish", "pelagic"],
+    "Yellowfin tuna": ["game_fish", "pelagic"],
+    "Bigeye tuna": ["game_fish", "pelagic"],
+    "Albacore tuna": ["game_fish", "pelagic"],
+    "Skipjack tuna": ["game_fish", "pelagic"],
+    "Frigate mackerel": ["pelagic", "bait_fish"],
+    "Sailfish": ["game_fish", "pelagic"],
+    "Blue marlin": ["game_fish", "pelagic"],
+    "White marlin": ["game_fish", "pelagic"],
+    # ── East Coast — reef & structure fish ─────────────────────────────────
+    "Triggerfish (gray)": ["reef_fish"],
+    "Ocean triggerfish": ["reef_fish"],
+    "Queen triggerfish": ["reef_fish"],
+    "Planehead filefish": ["reef_fish"],
+    "Scrawled filefish": ["reef_fish"],
+    "Orange filefish": ["reef_fish"],
+    "Spadefish (Atlantic)": ["reef_fish"],
+    "Red snapper": ["game_fish", "reef_fish"],
+    "Vermilion snapper (beeliner)": ["game_fish", "reef_fish"],
+    "Mangrove snapper (gray snapper)": ["game_fish", "reef_fish"],
+    "Lane snapper": ["game_fish", "reef_fish"],
+    "Yellowtail snapper": ["game_fish", "reef_fish"],
+    "Mutton snapper": ["game_fish", "reef_fish"],
+    "Cubera snapper": ["game_fish", "reef_fish"],
+    "Schoolmaster snapper": ["game_fish", "reef_fish"],
+    "Silk snapper": ["reef_fish"],
+    "Queen snapper": ["reef_fish"],
+    "Gray snapper (juvenile)": ["reef_fish"],
+    "Gag grouper": ["game_fish", "reef_fish"],
+    "Red grouper": ["game_fish", "reef_fish"],
+    "Scamp grouper": ["game_fish", "reef_fish"],
+    "Black grouper": ["game_fish", "reef_fish"],
+    "Snowy grouper": ["game_fish", "reef_fish"],
+    "Wreckfish": ["reef_fish"],
+    "Yellowedge grouper": ["reef_fish"],
+    "Misty grouper": ["reef_fish"],
+    "Nassau grouper": ["reef_fish"],
+    "Goliath grouper (jewfish)": ["reef_fish"],
+    "Coney": ["reef_fish"],
+    "Rock hind": ["reef_fish"],
+    "Red hind": ["reef_fish"],
+    "Speckled hind": ["reef_fish"],
+    "Warsaw grouper": ["reef_fish"],
+    "Yellowmouth grouper": ["reef_fish"],
+    "Kitty Mitchell (yellowfin grouper)": ["game_fish", "reef_fish"],
+    "Greater soapfish": ["reef_fish"],
+    "Hogfish": ["game_fish", "reef_fish"],
+    "Red porgy": ["panfish", "reef_fish"],
+    "Scup (porgy)": ["panfish"],
+    "Knobbed porgy": ["panfish", "reef_fish"],
+    "Whitebone porgy": ["panfish", "reef_fish"],
+    "Jolthead porgy": ["panfish", "reef_fish"],
+    "Grass porgy": ["panfish", "reef_fish"],
+    "Saucereye porgy": ["panfish", "reef_fish"],
+    "White grunt": ["panfish", "reef_fish"],
+    "Blue-striped grunt": ["panfish", "reef_fish"],
+    "Tomtate grunt": ["panfish", "reef_fish"],
+    "Sailor's choice grunt": ["panfish", "reef_fish"],
+    "Margate": ["panfish", "reef_fish"],
+    "Porkfish": ["panfish", "reef_fish"],
+    "Sand perch": ["panfish", "reef_fish"],
+    "Sand tilefish": ["reef_fish"],
+    "Blueline tilefish": ["game_fish", "reef_fish"],
+    "Golden tilefish": ["game_fish", "reef_fish"],
+    "Tilefish (blueline juvenile/grey)": ["reef_fish"],
+    "Tilefish (golden juvenile)": ["reef_fish"],
+    "Tilefish (golden)": ["game_fish", "reef_fish"],
+    "Barrelfish": ["reef_fish"],
+    "Blackbelly rosefish": ["reef_fish"],
+    "Blue tang (surgeonfish)": ["reef_fish"],
+    "Gray angelfish": ["reef_fish"],
+    "Spotfin butterflyfish": ["reef_fish"],
+    "Doctorfish (tang)": ["reef_fish"],
+    "Squirrelfish": ["reef_fish"],
+    "Bermuda chub (sea chub)": ["reef_fish"],
+    "Sergeant major (damselfish)": ["reef_fish"],
+    "Yellowtail damselfish": ["reef_fish"],
+    "Slippery dick (wrasse)": ["reef_fish"],
+    "Puddingwife (wrasse)": ["reef_fish"],
+    "Bluehead wrasse": ["reef_fish"],
+    "Creole wrasse": ["reef_fish"],
+    "Yellowhead wrasse": ["reef_fish"],
+    "Cunner (bergall)": ["reef_fish"],
+    "Striped blenny": ["reef_fish"],
+    "Feather blenny": ["reef_fish"],
+    "Naked goby": ["reef_fish"],
+    "Smooth trunkfish": ["reef_fish"],
+    "Honeycomb cowfish": ["reef_fish"],
+    "Scrawled cowfish": ["reef_fish"],
+    "Striped burrfish (spiny boxfish)": ["reef_fish"],
+    "Bandtail puffer": ["reef_fish"],
+    "Checkered puffer": ["reef_fish"],
+    "Northern puffer (blowfish)": ["panfish", "reef_fish"],
+    "Bigeye (Priacanthus arenatus)": ["reef_fish"],
+    "Short bigeye": ["reef_fish"],
+    "Red lionfish (invasive)": ["reef_fish"],
+    "Spotted scorpionfish": ["reef_fish"],
+    "Barbfish (scorpionfish)": ["reef_fish"],
+    "Plumed scorpionfish": ["reef_fish"],
+    "Spotted moray eel": ["reef_fish"],
+    "Green moray eel": ["reef_fish"],
+    # ── East Coast — panfish / edible small fish ────────────────────────────
+    "Spot": ["panfish"],
+    "Atlantic croaker": ["panfish"],
+    "Whiting (sea mullet, kingfish)": ["panfish"],
+    "Southern kingfish (ground mullet)": ["panfish"],
+    "Gulf kingfish (gulf whiting)": ["panfish"],
+    "Northern kingfish": ["panfish"],
+    "Star drum": ["panfish"],
+    "Banded drum": ["panfish"],
+    "Silver perch": ["panfish"],
+    "White perch": ["panfish"],
+    "Yellow perch": ["panfish"],
+    "Bluegill": ["panfish"],
+    "Redear sunfish (shellcracker)": ["panfish"],
+    "Warmouth": ["panfish"],
+    "Hickory shad": ["game_fish", "migratory"],
+    "American shad": ["game_fish", "migratory"],
+    # ── East Coast — bait fish ──────────────────────────────────────────────
+    "Atlantic menhaden (bunker)": ["bait_fish", "migratory"],
+    "Ballyhoo (balao)": ["bait_fish"],
+    "Round scad (cigar minnow)": ["bait_fish"],
+    "Bigeye scad": ["bait_fish"],
+    "Spanish sardine": ["bait_fish"],
+    "Atlantic thread herring (greenback)": ["bait_fish"],
+    "Atlantic herring": ["bait_fish", "migratory"],
+    "Blueback herring": ["bait_fish", "migratory"],
+    "Alewife": ["bait_fish", "migratory"],
+    "Butterfish": ["bait_fish"],
+    "Harvestfish": ["bait_fish"],
+    "Sheepshead minnow (killifish)": ["bait_fish"],
+    "Atlantic bumper": ["bait_fish"],
+    "Striped mullet": ["bait_fish", "migratory"],
+    "Southern sennet": ["bait_fish"],
+    # ── East Coast — sharks ─────────────────────────────────────────────────
+    "Blacktip shark": ["shark", "game_fish"],
+    "Spinner shark": ["shark"],
+    "Atlantic sharpnose shark": ["shark"],
+    "Bull shark": ["shark", "game_fish"],
+    "Sandbar shark": ["shark"],
+    "Bonnethead shark": ["shark"],
+    "Lemon shark": ["shark"],
+    "Dusky shark": ["shark"],
+    "Smooth dogfish": ["shark"],
+    "Spiny dogfish": ["shark"],
+    "Sand tiger shark": ["shark"],
+    "Tiger shark": ["shark", "game_fish"],
+    "Scalloped hammerhead shark": ["shark"],
+    "Shortfin mako shark": ["shark", "game_fish", "pelagic"],
+    "Thresher shark": ["shark", "game_fish"],
+    "Nurse shark": ["shark"],
+    "Finetooth shark": ["shark"],
+    "Atlantic angel shark": ["shark"],
+    # ── East Coast — rays ───────────────────────────────────────────────────
+    "Southern stingray": ["ray"],
+    "Cownose ray": ["ray", "migratory"],
+    "Clearnose skate": ["ray"],
+    "Atlantic stingray": ["ray"],
+    "Bluntnose stingray": ["ray"],
+    "Butterfly ray": ["ray"],
+    "Eagle ray (spotted)": ["ray"],
+    "Winter skate": ["ray"],
+    "Little skate": ["ray"],
+    # ── East Coast — other ──────────────────────────────────────────────────
+    "Sea robin": ["other"],
+    "Striped sea robin": ["other"],
+    "Northern sea robin": ["other"],
+    "Oyster toadfish": ["other"],
+    "Leopard toadfish": ["other"],
+    "Atlantic needlefish": ["other"],
+    "Lizardfish": ["other"],
+    "American eel": ["other"],
+    "Conger eel": ["other"],
+    "Remora (sharksucker)": ["other"],
+    "Sharksucker (whitefin)": ["other"],
+    "Goosefish (monkfish)": ["other"],
+    "Atlantic wolffish": ["other"],
+    "Northern stargazer": ["other"],
+    "Atlantic sturgeon": ["other"],
+    "Shortnose sturgeon": ["other"],
+    "Sargassumfish": ["other"],
+    "Lined seahorse": ["other"],
+    "Dusky pipefish": ["other"],
+    "Shortnose batfish": ["other"],
+    "Flying gurnard": ["other"],
+    "Ocean sunfish (mola mola)": ["other"],
+    "Ocean pout": ["other"],
+    "Longnose gar": ["other"],
+    "Kemp's ridley sea turtle": ["other"],
+    "Hardhead catfish (sea catfish)": ["other"],
+    "Gafftopsail catfish": ["other"],
+    "Lizardfish": ["other"],
+    "Pigfish": ["other"],
+    "Pinfish": ["other"],
+    "Spottail pinfish": ["other"],
+    "Ribbonfish (Atlantic cutlassfish)": ["other"],
+    "Hogchoker": ["other"],
+    "Spotted hake": ["other"],
+    "Red hake (ling)": ["other"],
+    "Longhorn sculpin": ["other"],
+    "Pollock": ["game_fish", "reef_fish"],
+    "Atlantic cod": ["game_fish", "reef_fish"],
+    "Winter flounder": ["game_fish"],
+    "Cunner": ["reef_fish"],
+    "Fluke (summer flounder)": ["game_fish"],
+    "Weakfish": ["game_fish"],
+    "Mojarra (yellowfin mojarra)": ["other"],
+    "Sheepshead minnow (killifish)": ["bait_fish"],
+    "Northern puffer (blowfish)": ["panfish", "reef_fish"],
+    "Spadefish (Atlantic)": ["reef_fish"],
+    # ── Fresh / brackish water ──────────────────────────────────────────────
+    "Largemouth bass": ["game_fish"],
+    "Channel catfish": ["panfish"],
+    "Blue catfish": ["panfish"],
+    "Flathead catfish": ["game_fish"],
+    # ── Gulf region variants ─────────────────────────────────────────────────
+    "Sheepshead (Gulf)": ["game_fish", "reef_fish"],
+    "Redfish (Gulf red drum)": ["game_fish"],
+    # ── West Coast ───────────────────────────────────────────────────────────
+    "Barred surfperch": ["panfish"],
+    "Redtail surfperch": ["panfish"],
+    "Calico surfperch": ["panfish"],
+    "Walleye surfperch": ["panfish"],
+    "Rubberlip seaperch": ["panfish"],
+    "Halfmoon (Catalina perch)": ["panfish"],
+    "Opaleye": ["panfish"],
+    "California halibut": ["game_fish"],
+    "Starry flounder": ["game_fish"],
+    "Lingcod": ["game_fish", "reef_fish"],
+    "Vermilion rockfish": ["game_fish", "reef_fish"],
+    "Blue rockfish": ["game_fish", "reef_fish"],
+    "Copper rockfish": ["game_fish", "reef_fish"],
+    "Grass rockfish": ["game_fish", "reef_fish"],
+    "Cabezon": ["game_fish", "reef_fish"],
+    "Kelp bass (calico bass)": ["game_fish", "reef_fish"],
+    "Sand bass (barred sand bass)": ["game_fish", "reef_fish"],
+    "California sheephead": ["game_fish", "reef_fish"],
+    "White seabass": ["game_fish", "pelagic"],
+    "Yellowtail (California yellowtail)": ["game_fish", "pelagic"],
+    "Pacific bonito": ["game_fish", "pelagic"],
+    "Pacific mackerel (chub mackerel)": ["panfish", "pelagic"],
+    "Jack mackerel (Spanish jack)": ["bait_fish", "pelagic"],
+    "Corbina": ["panfish"],
+    "Spotfin croaker": ["panfish"],
+    "Yellowfin croaker": ["panfish"],
+    "White croaker (tomcod)": ["panfish"],
+    "Leopard shark": ["shark"],
+    "Shovelnose guitarfish": ["ray", "game_fish"],
+    "Bat ray": ["ray"],
+    "Thornback ray": ["ray"],
+    "Kelp greenling": ["game_fish", "reef_fish"],
+    "Rock greenling": ["game_fish", "reef_fish"],
+    "Pacific staghorn sculpin": ["other"],
+    "Pacific herring": ["bait_fish"],
+    "Pacific sardine": ["bait_fish"],
+    "Northern anchovy": ["bait_fish"],
+    "Jacksmelt": ["bait_fish", "panfish"],
+    "Dungeness crab (from pier)": ["shellfish"],
+    # ── Hawaii ───────────────────────────────────────────────────────────────
+    "Giant trevally (ulua)": ["game_fish", "pelagic"],
+    "Bluefin trevally (omilu)": ["game_fish", "pelagic"],
+    "Papio (juvenile jack)": ["game_fish", "pelagic"],
+    "Bonefish (oio)": ["game_fish"],
+    "Menpachi (soldierfish)": ["reef_fish"],
+    "Moi (Pacific threadfin)": ["game_fish"],
+    "Mu (bigeye emperor)": ["game_fish", "reef_fish"],
+    "Kaku (barracuda)": ["game_fish", "pelagic"],
+    "Aholehole (Hawaiian flagtail)": ["reef_fish"],
+}
+
 
 def _species_matches_profile(
     sp_name: str,
@@ -1670,11 +2009,31 @@ def _parse_closed_months(text: str) -> set:
     return closed
 
 
-def _regulation_disallows_keep(regulation: Dict[str, str], month: int = 0) -> bool:
-    """Return True when regulations indicate harvest/retention is not legal.
+def _retention_prohibited(regulation: Dict[str, str], month: int = 0) -> bool:
+    """Return True when regulations prohibit retaining / keeping the fish.
+
+    This is a **retention-only** check — it answers "must the angler release
+    this fish?" and returns True for both catch-and-release-only regs AND
+    closed-season regs, because in both cases the fish cannot be kept.
+
+    ╔══════════════════════════════════════════════════════════╗
+    ║  DO NOT use this function to decide whether to hide a   ║
+    ║  species from the forecast.                             ║
+    ║                                                         ║
+    ║  Forecast visibility is controlled exclusively by:      ║
+    ║    should_hide_from_forecast(classify_legality(...))    ║
+    ║  in regulations.py, which correctly keeps C&R species   ║
+    ║  visible (targeting is legal) while suppressing only    ║
+    ║  fisheries where targeting itself is not permitted.     ║
+    ╚══════════════════════════════════════════════════════════╝
+
+    Appropriate uses of this function:
+      - Displaying a "do not keep" warning on a species card
+      - Validating a catch log entry before marking it as a keeper
+      - Any UI element that needs to distinguish "harvestable" from "must release"
 
     Pass ``month`` (1-12) to also check month-specific seasonal closures
-    embedded in the regulation text (e.g. "Gulf closed Jan–May").
+    embedded in the regulation text (e.g. "Closed Jan–May").
     """
     bag_limit = str(regulation.get("bag_limit") or "").strip().lower()
     season = str(regulation.get("season") or "").strip().lower()
@@ -1784,10 +2143,15 @@ def build_species_ranking(
         else:
             activity = "Possible"
 
-        # Attach regulation data and check for closures before building entry.
-        # Only truly closed fisheries (out_of_season, prohibited) are hidden.
-        # C&R species are kept visible with a badge so anglers know they can
-        # still fish for the species — they just must release every catch.
+        # ── Visibility gate ─────────────────────────────────────────────────
+        # A species is hidden ONLY when targeting itself is not permitted:
+        #   • "prohibited"    — year-round closure or federal protection
+        #   • "out_of_season" — current month falls inside a closed season
+        #
+        # Retention-prohibited / catch-and-release regulations do NOT hide a
+        # species.  Anglers can legally fish for C&R species; they just must
+        # release every catch.  Hiding them would remove valid targeting info.
+        # Those species remain visible with a "Catch & Release Only" badge.
         regulation = None
         regulation_status: Optional[str] = None
         if state:
@@ -1801,6 +2165,14 @@ def build_species_ranking(
         # Normalize raw score (max ~95) to a clean 0-100 display percentage
         display_score = min(100, round(score / _MAX_RAW_SCORE * 100))
 
+        # Look up display categories: JSON field takes precedence if present,
+        # then the curated _SPECIES_CATEGORIES dict, then default to ["other"].
+        categories: List[str] = (
+            sp.get("categories")
+            or _SPECIES_CATEGORIES.get(sp["name"])
+            or ["other"]
+        )
+
         entry: Dict[str, Any] = {
             "rank": len(result) + 1,
             "name": sp["name"],
@@ -1811,6 +2183,7 @@ def build_species_ranking(
             "rig": sp["rig"],
             "hook_size": sp["hook_size"],
             "sinker": sp["sinker"],
+            "categories": categories,
         }
 
         if regulation:
@@ -2976,85 +3349,6 @@ def _format_spawn_window(spawn_months: List[int]) -> str:
     return ", ".join(_MA[m] for m in sm)
 
 
-def _classify_legal_status(reg: Optional[Dict[str, str]], month: int) -> str:
-    """Derive a simple legal-status label from a regulation payload.
-
-    Returns one of:
-      "catch_release" — harvest is definitively prohibited (C&R only, hard closed season)
-      "restricted"    — seasonal rules apply; angler must verify current status
-      "open"          — regulations indicate currently open; size/bag limits apply
-      "unknown"       — no data for this state / species combination
-
-    This function is intentionally more conservative than _regulation_disallows_keep
-    (which gates hard filtering) so that qualifying phrases like "some areas have
-    closed seasons" don't trigger a misleading "Do not keep" banner.
-    """
-    if not reg:
-        return "unknown"
-
-    bag_limit = str(reg.get("bag_limit") or "").strip().lower()
-    season = str(reg.get("season") or "").strip().lower()
-    notes = str(reg.get("notes") or "").strip().lower()
-    combined = " ".join(p for p in (bag_limit, season, notes) if p)
-
-    # Explicit harvest prohibitions that leave no room for interpretation
-    hard_prohibited = (
-        "catch and release only",
-        "catch-and-release only",
-        "no harvest",
-        "harvest prohibited",
-        "retention prohibited",
-        "possession prohibited",
-        "must be released",
-        "cannot be retained",
-        "closed year-round",
-        # Tag/permit-based restrictions that are effectively C&R for most anglers
-        "harvest tag required",
-        "harvest permit required",
-        "tag required to harvest",
-        "federally protected",
-        "endangered species",
-    )
-    if any(phrase in combined for phrase in hard_prohibited):
-        return "catch_release"
-
-    # Explicit bag-limit zero
-    if bag_limit in {"0", "0/day", "0 per day", "0 fish", "none"}:
-        return "catch_release"
-
-    # Month-specific closures parsed from regulation text (e.g. "Gulf closed Jan–May")
-    if month and month in _parse_closed_months(combined):
-        return "catch_release"
-
-    # "Season closed" as a standalone verdict — but not when it is a qualifying
-    # subordinate clause like "some areas have closed seasons" or "may have closed
-    # seasons".  We look for the phrase and then check that it is NOT preceded by
-    # common qualifier words that weaken the statement.
-    _CLOSED_SEASON_RE = re.compile(r"(season\s+closed|closed\s+season)", re.IGNORECASE)
-    _QUALIFIER_WORDS = ("some", "certain", "have", "having", "with", "may", "areas")
-    for m in _CLOSED_SEASON_RE.finditer(combined):
-        preceding = combined[max(0, m.start() - 30) : m.start()].lower()
-        if not any(q in preceding for q in _QUALIFIER_WORDS):
-            return "catch_release"
-
-    # Seasonal entries or "check" language that requires angler verification
-    if "seasonal" in season or ("check" in season and "open year-round" not in season):
-        return "restricted"
-
-    # Qualifier phrases that indicate some restrictions without a hard close
-    soft_restricted = (
-        "some areas",
-        "certain areas",
-        "may be closed",
-        "area closures",
-        "varies by",
-    )
-    if any(phrase in combined for phrase in soft_restricted):
-        return "restricted"
-
-    return "open"
-
-
 def build_spawning_report(
     month: int,
     water_temp: float,
@@ -3134,9 +3428,6 @@ def build_spawning_report(
             status = "post_spawn"
 
         # Regulation lookup — only query when a state is known.
-        # Species confirmed as catch-and-release only or in a hard closed
-        # season are silently excluded so the list only shows fish you can
-        # actually keep.
         reg: Optional[Dict[str, str]] = None
         if state:
             try:
@@ -3144,9 +3435,15 @@ def build_spawning_report(
             except Exception:
                 reg = None
 
-        # Use classify_legality for the unified status model.
-        # Only hide when the fishery is truly closed (out_of_season / prohibited).
-        # C&R species remain visible so anglers know they can still target the fish.
+        # ── Visibility gate ─────────────────────────────────────────────────
+        # A species is hidden ONLY when targeting itself is not permitted:
+        #   • "prohibited"    — year-round closure or federal protection
+        #   • "out_of_season" — current month falls inside a closed season
+        #
+        # Retention-prohibited / catch-and-release regulations do NOT hide a
+        # species.  Anglers can legally fish for C&R species; they just must
+        # release every catch.  Hiding them would remove valid targeting info.
+        # Those species remain visible with a "Catch & Release Only" badge.
         regulation_status = classify_legality(reg, month)
         if should_hide_from_forecast(regulation_status):
             continue
@@ -3163,6 +3460,16 @@ def build_spawning_report(
         }
         legal_status = _LEGACY_MAP.get(regulation_status, "unknown")
 
+        # Resolve display categories from the canonical dict (or JSON field).
+        spawn_sp = next(
+            (s for s in SPECIES_DB if s["name"] == entry["name"]), None
+        )
+        sp_categories: List[str] = (
+            (spawn_sp.get("categories") if spawn_sp else None)
+            or _SPECIES_CATEGORIES.get(entry["name"])
+            or ["other"]
+        )
+
         results.append(
             {
                 "name": entry["name"],
@@ -3175,6 +3482,7 @@ def build_spawning_report(
                 "legal_status": legal_status,
                 "regulation_status": regulation_status,
                 "regulation": reg,
+                "categories": sp_categories,
             }
         )
 
