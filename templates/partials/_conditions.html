@@ -1,6 +1,29 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
             <h2>Marine Conditions</h2>
+            <!-- Wind quality indicator -->
+            {% set _wind_str = forecast.conditions.wind or '' %}
+            {% set _wind_spd = _wind_str.split(' ')[0].split('-')[0] | int %}
+            {% if 'calm' in _wind_str.lower() or _wind_spd == 0 %}
+                {% set _wqc = 'calm' %}{% set _wql = 'Calm Seas' %}
+            {% elif _wind_spd <= 8 %}
+                {% set _wqc = 'light' %}{% set _wql = 'Light Wind — good fishing conditions' %}
+            {% elif _wind_spd <= 15 %}
+                {% set _wqc = 'moderate' %}{% set _wql = 'Moderate Wind — manageable' %}
+            {% elif _wind_spd <= 25 %}
+                {% set _wqc = 'strong' %}{% set _wql = 'Strong Wind — difficult conditions' %}
+            {% else %}
+                {% set _wqc = 'gale' %}{% set _wql = 'Gale Warning — stay off piers' %}
+            {% endif %}
+            <div class="wind-quality-row">
+                <span class="wind-quality-indicator wind-quality-indicator--{{ _wqc }}">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                    {{ _wql }}
+                </span>
+                {% if forecast.conditions.wind_dir %}
+                <span class="wind-direction-context">{{ forecast.conditions.wind_dir }} &middot; {{ _wind_str }}</span>
+                {% endif %}
+            </div>
             <div class="stat-grid">
                 <div class="stat-card">
                     <span class="stat-label">Wind</span>
@@ -194,25 +217,4 @@
         </section>
         {% endif %}
 
-        <!-- Best Fishing Times -->
-        {% if forecast.best_times %}
-        <section class="best-times-section">
-            <h2>
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px; margin-right:0.3rem;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                When to Fish
-            </h2>
-            <div class="best-times-cards">
-                {% for bt in forecast.best_times %}
-                <div class="best-time-card best-time--{{ bt.quality|lower }}">
-                    <div class="bt-quality">{{ bt.quality }}</div>
-                    <div class="bt-window">{{ bt.window }}</div>
-                    <div class="bt-reason">{{ bt.reason }}</div>
-                </div>
-                {% endfor %}
-            </div>
-
-        </section>
-        {% endif %}
+        {# Best fishing windows are shown earlier in the page layout #}

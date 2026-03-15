@@ -4761,3 +4761,540 @@ footer p {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ==========================================================================
+   REDESIGN: Improved Fishing UI — Coastal Scan Design
+   Optimized for mobile-first scanning by surf & pier fishermen
+   ========================================================================== */
+
+/* ---------- Conditions Hero Card ---------- */
+
+.conditions-hero {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  border-top: 4px solid var(--ocean);
+  margin-bottom: 0.75rem;
+}
+
+.conditions-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.conditions-hero-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.conditions-hero-location {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.conditions-hero .verdict-badge {
+  font-size: 0.82rem;
+  padding: 0.4rem 1rem;
+  flex-shrink: 0;
+}
+
+.conditions-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+@media (min-width: 500px) {
+  .conditions-hero-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.hero-stat {
+  background: var(--ocean-light);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 80px;
+}
+
+.hero-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ocean);
+  margin-bottom: 0.1rem;
+}
+
+.hero-stat-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ocean);
+}
+
+.hero-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.hero-stat-sub {
+  font-size: 0.67rem;
+  color: var(--text-muted);
+  margin-top: 0.05rem;
+}
+
+/* ---------- Wind Quality Badge ---------- */
+
+.wind-quality-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+}
+
+.wind-quality--calm,
+.wind-quality--light {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.wind-quality--moderate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wind-quality--strong,
+.wind-quality--gale {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+[data-theme="dark"] .wind-quality--calm,
+[data-theme="dark"] .wind-quality--light {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .wind-quality--moderate {
+  background: #451a03;
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .wind-quality--strong,
+[data-theme="dark"] .wind-quality--gale {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
+/* ---------- Tide State Badge (in hero) ---------- */
+
+.tide-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.tide-state--rising {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.tide-state--falling {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme="dark"] .tide-state--rising {
+  background: #1e2d4e;
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .tide-state--falling {
+  background: #2d2010;
+  color: #fcd34d;
+}
+
+/* ---------- Tide State Banner (in tides section header) ---------- */
+
+.tide-state-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.tide-state-banner--rising {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border-left: 4px solid #3b82f6;
+}
+
+.tide-state-banner--falling {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border-left: 4px solid #f59e0b;
+}
+
+[data-theme="dark"] .tide-state-banner--rising {
+  background: linear-gradient(135deg, #1a2d48, #1e3a5f);
+  color: #93c5fd;
+  border-left-color: #3b82f6;
+}
+
+[data-theme="dark"] .tide-state-banner--falling {
+  background: linear-gradient(135deg, #2d2010, #3d2c18);
+  color: #fcd34d;
+  border-left-color: #f59e0b;
+}
+
+/* ---------- Wind Quality Row (in conditions section) ---------- */
+
+.wind-quality-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.wind-quality-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wind-quality-indicator--calm,
+.wind-quality-indicator--light {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.wind-quality-indicator--moderate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wind-quality-indicator--strong,
+.wind-quality-indicator--gale {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+[data-theme="dark"] .wind-quality-indicator--calm,
+[data-theme="dark"] .wind-quality-indicator--light {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .wind-quality-indicator--moderate {
+  background: #451a03;
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .wind-quality-indicator--strong,
+[data-theme="dark"] .wind-quality-indicator--gale {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
+.wind-direction-context {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Hourly Timeline Section ---------- */
+
+.hourly-timeline-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+}
+
+.hourly-timeline-section h2 {
+  margin-bottom: 0.2rem;
+}
+
+.hourly-timeline-section .activity-timeline {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.hourly-timeline-section .timeline-bars {
+  height: 100px;
+}
+
+/* ---------- Bite Windows Section ---------- */
+
+.bite-windows-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem 1.25rem;
+}
+
+.bite-windows-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  font-size: 1.1rem;
+}
+
+.bite-windows-section .best-times-cards {
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .bite-windows-section .best-time-card {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: calc(50% - 0.5rem);
+    max-width: none;
+  }
+}
+
+/* ---------- Enhanced Activity Badges (Excellent/Good/Fair/Slow) ---------- */
+
+.activity-badge.activity-excellent {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+}
+
+.activity-badge.activity-good {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: #fff;
+}
+
+.activity-badge.activity-fair {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fff;
+}
+
+.activity-badge.activity-slow {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* Score bar fills for new activity level names */
+.score-fill--excellent {
+  background: linear-gradient(90deg, #059669, #047857);
+}
+
+.score-fill--good {
+  background: linear-gradient(90deg, #0891b2, #0e7490);
+}
+
+.score-fill--fair {
+  background: linear-gradient(90deg, #d97706, #b45309);
+}
+
+.score-fill--slow {
+  background: linear-gradient(90deg, #9ca3af, #6b7280);
+}
+
+/* Slightly taller score bar for mobile readability */
+.score-track {
+  height: 6px;
+}
+
+/* Species card accent border by activity */
+.species-card[data-activity="excellent"] {
+  border-left: 3px solid #059669;
+}
+
+.species-card[data-activity="good"] {
+  border-left: 3px solid #0891b2;
+}
+
+.species-card[data-activity="fair"] {
+  border-left: 3px solid #d97706;
+}
+
+.species-card[data-activity="slow"] {
+  border-left: 3px solid #9ca3af;
+}
+
+/* ---------- Section header row (title + context badge) ---------- */
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.section-header-row h2 {
+  margin-bottom: 0;
+}
+
+.section-context-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.section-context-badge--incoming-tide {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.section-context-badge--outgoing-tide {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme="dark"] .section-context-badge--incoming-tide {
+  background: #1e2d4e;
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .section-context-badge--outgoing-tide {
+  background: #2d2010;
+  color: #fcd34d;
+}
+
+/* ---------- Best Bite Marker ---------- */
+
+.best-bite-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  background: linear-gradient(135deg, #064e3b, #065f46);
+  color: #6ee7b7;
+  border-radius: 12px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .best-bite-marker {
+  background: linear-gradient(135deg, #052e16, #064e3b);
+  color: #6ee7b7;
+}
+
+/* ---------- Mobile-first improvements ---------- */
+
+@media (max-width: 480px) {
+  header {
+    padding: 1.25rem 1rem 1.75rem;
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+  }
+
+  .conditions-hero-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero-stat {
+    min-height: 72px;
+    padding: 0.65rem;
+  }
+
+  .hero-stat-value {
+    font-size: 0.9rem;
+  }
+
+  /* Larger touch targets */
+  .regs-pill {
+    min-height: 36px;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .share-btn {
+    min-height: 44px;
+  }
+
+  .app-nav-toggle {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Keep stat grid at 2 cols on small phones */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tide-timeline {
+    flex-direction: column;
+  }
+
+  .tide-point {
+    flex: none;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  .section-sub {
+    font-size: 0.8rem;
+  }
+
+  main {
+    padding: 0 0.75rem;
+  }
+}
+
+/* Prevent tide SVG horizontal overflow on narrow screens */
+.tide-svg-wrap {
+  overflow: hidden;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  margin-top: 0.75rem;
+}
