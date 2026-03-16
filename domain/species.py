@@ -2075,7 +2075,7 @@ def build_species_ranking(
     wind_range: Optional[Tuple[float, float]] = None,
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
-    coast: str = "east",
+    coast: Optional[str] = None,
     state: str = "",
     fishing_types: Optional[List[str]] = None,
     targets: Optional[List[str]] = None,
@@ -2096,13 +2096,18 @@ def build_species_ranking(
 
     If ``fish_region`` is provided, species with a ``regions`` list are
     filtered to only appear if the fish_region matches.
+
+    ``coast`` must be one of ``"east"``, ``"west"``, or ``"hawaii"``.
+    Passing ``None`` (or omitting the argument) returns an empty list —
+    the coast must be known to avoid leaking wrong-region species.
     """
     # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
     wind_coast = "west" if coast == "west" else "east"
     scored = []
     for sp in SPECIES_DB:
-        # Skip species from a different coast/region
-        if sp.get("coast", "east") != coast:
+        # Skip species from a different coast/region; also skip all species
+        # when coast is None (unknown location — do not show any species).
+        if coast is None or sp.get("coast", "east") != coast:
             continue
         # Skip nuisance/bycatch species that aren't worth targeting
         if sp["name"] in _NUISANCE_SPECIES:
@@ -3349,7 +3354,7 @@ def _format_spawn_window(spawn_months: List[int]) -> str:
 def build_spawning_report(
     month: int,
     water_temp: float,
-    coast: str = "east",
+    coast: Optional[str] = None,
     state: str = "",
 ) -> List[Dict[str, Any]]:
     """Return species that are currently spawning or approaching their spawn window.
@@ -3382,11 +3387,16 @@ def build_spawning_report(
 
     Only species within ±1 month of the spawn window are included so the
     list stays immediately actionable.
+
+    ``coast`` must be one of ``"east"``, ``"west"``, or ``"hawaii"``.
+    Passing ``None`` returns an empty list — the coast must be known to
+    avoid showing wrong-region spawning data.
     """
     results: List[Dict[str, Any]] = []
 
     for entry in SPAWNING_DATA:
-        if entry["coast"] != coast:
+        # Also filters out all entries when coast is None (unknown location).
+        if coast is None or entry["coast"] != coast:
             continue
 
         spawn_months = entry["spawn_months"]

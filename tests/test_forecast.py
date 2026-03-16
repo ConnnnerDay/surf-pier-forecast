@@ -715,3 +715,105 @@ def test_tide_predictions_fall_back_to_available_date_when_today_missing(monkeyp
     assert out["tides"][0]["date_str"] == "20260103"
     assert isinstance(out["tide_chart"], dict)
     assert "path" in out["tide_chart"]
+
+
+# ---------------------------------------------------------------------------
+# _derive_coast() — canonical coast derivation helper
+# ---------------------------------------------------------------------------
+
+class TestDeriveCoast:
+    """Unit tests for the canonical _derive_coast() helper.
+
+    Verifies every supported conditions_region prefix maps to the correct
+    coast string and that unknown/missing regions return None (safe fallback).
+    """
+
+    def _coast(self, conditions_region):
+        from domain.forecast import _derive_coast
+        return _derive_coast({"conditions_region": conditions_region})
+
+    # ---- Atlantic (east) ----
+    def test_atlantic_north_is_east(self):
+        assert self._coast("atlantic_north") == "east"
+
+    def test_atlantic_mid_is_east(self):
+        assert self._coast("atlantic_mid") == "east"
+
+    def test_atlantic_south_is_east(self):
+        assert self._coast("atlantic_south") == "east"
+
+    # ---- Gulf (east) ----
+    def test_gulf_is_east(self):
+        assert self._coast("gulf") == "east"
+
+    # ---- Pacific (west) ----
+    def test_pacific_is_west(self):
+        assert self._coast("pacific") == "west"
+
+    def test_pacific_south_is_west(self):
+        assert self._coast("pacific_south") == "west"
+
+    # ---- Hawaii ----
+    def test_hawaii_conditions_is_hawaii(self):
+        assert self._coast("hawaii_conditions") == "hawaii"
+
+    # ---- Unknown / missing → None ----
+    def test_missing_conditions_region_returns_none(self):
+        from domain.forecast import _derive_coast
+        assert _derive_coast({"state": "NC"}) is None
+
+    def test_empty_conditions_region_returns_none(self):
+        assert self._coast("") is None
+
+    def test_unrecognised_region_returns_none(self):
+        assert self._coast("great_lakes") is None
+
+    def test_none_location_returns_none(self):
+        from domain.forecast import _derive_coast
+        assert _derive_coast(None) is None
+
+    def test_empty_location_returns_none(self):
+        from domain.forecast import _derive_coast
+        assert _derive_coast({}) is None
+
+    # ---- Integration: coast drives species filtering ----
+    def test_east_location_produces_only_east_species(self):
+        """An east-coast location must not return west or Hawaii species."""
+        from domain.species import build_species_ranking, SPECIES_DB
+        ranking = build_species_ranking(month=7, water_temp=76, coast="east")
+        for sp in ranking:
+            db_entry = next(s for s in SPECIES_DB if s["name"] == sp["name"])
+            assert db_entry.get("coast") == "east", (
+                f"Non-east species '{sp['name']}' appeared in east ranking"
+            )
+
+    def test_west_location_produces_only_west_species(self):
+        """A west-coast location must not return east or Hawaii species."""
+        from domain.species import build_species_ranking, SPECIES_DB
+        ranking = build_species_ranking(month=11, water_temp=60, coast="west")
+        for sp in ranking:
+            db_entry = next(s for s in SPECIES_DB if s["name"] == sp["name"])
+            assert db_entry.get("coast") == "west", (
+                f"Non-west species '{sp['name']}' appeared in west ranking"
+            )
+
+    def test_hawaii_location_produces_only_hawaii_species(self):
+        """A Hawaii location must not return east or west species."""
+        from domain.species import build_species_ranking, SPECIES_DB
+        ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
+        for sp in ranking:
+            db_entry = next(s for s in SPECIES_DB if s["name"] == sp["name"])
+            assert db_entry.get("coast") == "hawaii", (
+                f"Non-hawaii species '{sp['name']}' appeared in Hawaii ranking"
+            )
+
+    def test_unknown_location_produces_no_species(self):
+        """A location with no conditions_region must produce no species (coast=None)."""
+        from domain.forecast import _derive_coast
+        from domain.species import build_species_ranking
+        coast = _derive_coast({"state": "XX"})  # no conditions_region
+        assert coast is None
+        ranking = build_species_ranking(month=7, water_temp=72, coast=coast)
+        assert ranking == [], (
+            "Unknown coast must produce empty species list, not east/default species"
+        )
