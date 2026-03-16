@@ -477,6 +477,39 @@ _VERDICT_FAIR = 48
 _VERDICT_CHALLENGING = 32
 
 
+# ---------------------------------------------------------------------------
+# Canonical coast derivation
+# ---------------------------------------------------------------------------
+
+def _derive_coast(location: Optional[Dict[str, Any]]) -> Optional[str]:
+    """Return the canonical coast string for a location, or ``None`` if unknown.
+
+    Mapping of ``conditions_region`` prefix → coast:
+
+        ``"pacific*"``  → ``"west"``
+        ``"hawaii*"``   → ``"hawaii"``
+        ``"atlantic*"`` → ``"east"``
+        ``"gulf*"``     → ``"east"``
+        missing / empty / unrecognised → ``None``
+
+    ``None`` means the coast could not be determined from the location's
+    ``conditions_region`` field.  All callers **must** treat ``None`` as "show
+    no species" rather than falling back to a default coast; silently leaking
+    species from the wrong region is worse than showing an empty list.
+
+    This is the single authoritative coast-derivation function.  Do not
+    re-implement the ``conditions_region`` → coast mapping elsewhere.
+    """
+    cr = (location or {}).get("conditions_region", "")
+    if cr.startswith("pacific"):
+        return "west"
+    if cr.startswith("hawaii"):
+        return "hawaii"
+    if cr.startswith("atlantic") or cr.startswith("gulf"):
+        return "east"
+    return None
+
+
 def classify_conditions(
     wind_range: Optional[Tuple[float, float]],
     wave_range: Optional[Tuple[float, float]],
@@ -796,12 +829,7 @@ def build_multiday_outlook(
                 wave_range = wave_avg
 
         # --- Region + water temperature context ---
-        cr = (location or {}).get("conditions_region", "atlantic_mid")
-        coast = (
-            "west"
-            if cr.startswith("pacific")
-            else ("hawaii" if cr.startswith("hawaii") else "east")
-        )
+        coast = _derive_coast(location)
         if location:
             monthly_temps = get_monthly_water_temps(location)
             future_water_temp = float(monthly_temps[future_month])
@@ -834,7 +862,7 @@ def build_multiday_outlook(
                 sunrise=future_sunrise,
                 sunset=future_sunset,
                 solunar=future_solunar,
-                coast=coast,
+                coast=coast or "east",
             )
         else:
             verdict = "Unknown"
@@ -845,7 +873,7 @@ def build_multiday_outlook(
         top_species_names: List[str] = []
         species_scores: List[Tuple[str, float]] = []
         for sp in SPECIES_DB:
-            if sp.get("coast", "east") != coast:
+            if coast is None or sp.get("coast", "east") != coast:
                 continue
             if (
                 outlook_fish_region
@@ -1841,12 +1869,7 @@ def generate_forecast(
     }
 
     # Determine coast for wind direction scoring and species filtering
-    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
-    coast = (
-        "west"
-        if conditions_region.startswith("pacific")
-        else ("hawaii" if conditions_region.startswith("hawaii") else "east")
-    )
+    coast = _derive_coast(location)
 
     loc_state = (location or {}).get("state", "")
     loc_fish_region = (location or {}).get("fish_region", "")
@@ -2040,7 +2063,7 @@ def generate_forecast(
         sunset=sunset,
         now=now,
         solunar=solunar,
-        coast=coast,
+        coast=coast or "east",
     )
 
     # Multi-day outlook (3 days)
@@ -2223,12 +2246,7 @@ def personalize_forecast(
     wind_range = _parse_range(wind_str)
     wave_range = _parse_range(wave_str)
 
-    conditions_region = (location or {}).get("conditions_region", "atlantic_mid")
-    coast = (
-        "west"
-        if conditions_region.startswith("pacific")
-        else ("hawaii" if conditions_region.startswith("hawaii") else "east")
-    )
+    coast = _derive_coast(location)
     loc_state = (location or {}).get("state", "")
     loc_fish_region = (location or {}).get("fish_region", "")
 

@@ -308,12 +308,11 @@ class TestRetentionProhibited:
         """Open year-round with no restrictions means retention is permitted."""
         assert _retention_prohibited({"season": "Open year-round"}) is False
 
-    def test_catch_and_release_species_visible_with_badge(self, monkeypatch):
-        """C&R Sheepshead (bag_limit=0, 'No harvest') must stay in ranking with a C&R badge.
+    def test_catch_and_release_species_hidden_from_ranking(self, monkeypatch):
+        """C&R Sheepshead (bag_limit=0, 'No harvest') must be absent from the ranking.
 
-        Policy: 'catch and release only' means targeting is legal — anglers can fish
-        for the species, they just must release every catch.  Hiding C&R species would
-        silently remove useful forecast information.
+        Policy: only species classified as 'legal' appear in the forecast.
+        C&R status means anglers cannot keep the fish, so it must be hidden.
         """
         def fake_lookup(species_name, _state):
             if species_name == "Sheepshead":
@@ -339,12 +338,8 @@ class TestRetentionProhibited:
         )
         names = [sp["name"] for sp in ranking]
 
-        assert "Sheepshead" in names, (
-            "C&R Sheepshead must appear in ranking — targeting is legal"
-        )
-        sheepshead = next(sp for sp in ranking if sp["name"] == "Sheepshead")
-        assert sheepshead["regulation_status"] == "catch_and_release", (
-            f"Expected regulation_status='catch_and_release', got {sheepshead['regulation_status']!r}"
+        assert "Sheepshead" not in names, (
+            "C&R Sheepshead must NOT appear in ranking — anglers cannot keep the fish"
         )
         assert [sp["rank"] for sp in ranking] == list(range(1, len(ranking) + 1))
 
@@ -625,4 +620,144 @@ class TestNonRodReelSpeciesRemoved:
         present = self._REMOVED & set(_SPECIES_CATEGORIES.keys())
         assert not present, (
             f"Non-rod-and-reel species still in _SPECIES_CATEGORIES: {present}"
+        )
+
+# ---------------------------------------------------------------------------
+# Coast filtering — species and spawning surfaces
+# ---------------------------------------------------------------------------
+
+class TestCoastFiltering:
+    """Verify that build_species_ranking() and build_spawning_report() strictly
+    filter species to the requested coast value and never leak cross-coast fish.
+
+    Tests cover every supported coast (east, west, hawaii) plus the
+    safety-fallback for an unknown coast (None → empty results).
+    """
+
+    # East-coast-only species that rank well in warm summer conditions
+    _EAST_ONLY = {"Spanish mackerel", "King mackerel (kingfish)"}
+    # West-coast-only species that rank in cool fall conditions
+    _WEST_ONLY = {"Barred surfperch", "Redtail surfperch"}
+    # Hawaii-only species
+    _HAWAII_ONLY = {"Giant trevally (ulua)", "Papio (juvenile jack)"}
+
+    # ---- build_species_ranking ----
+
+    def test_east_ranking_contains_east_species(self):
+        ranking = build_species_ranking(month=7, water_temp=76, coast="east")
+        names = {sp["name"] for sp in ranking}
+        # At least one known east species must appear
+        assert names & self._EAST_ONLY, (
+            f"Expected at least one of {self._EAST_ONLY} in east ranking; got {names}"
+        )
+
+    def test_east_ranking_excludes_west_and_hawaii(self):
+        ranking = build_species_ranking(month=7, water_temp=76, coast="east")
+        names = {sp["name"] for sp in ranking}
+        assert not (names & self._WEST_ONLY), (
+            f"West-coast species leaked into east ranking: {names & self._WEST_ONLY}"
+        )
+        assert not (names & self._HAWAII_ONLY), (
+            f"Hawaii species leaked into east ranking: {names & self._HAWAII_ONLY}"
+        )
+
+    def test_west_ranking_contains_west_species(self):
+        ranking = build_species_ranking(month=11, water_temp=60, coast="west")
+        names = {sp["name"] for sp in ranking}
+        assert names & self._WEST_ONLY, (
+            f"Expected at least one of {self._WEST_ONLY} in west ranking; got {names}"
+        )
+
+    def test_west_ranking_excludes_east_and_hawaii(self):
+        ranking = build_species_ranking(month=11, water_temp=60, coast="west")
+        names = {sp["name"] for sp in ranking}
+        assert not (names & self._EAST_ONLY), (
+            f"East-coast species leaked into west ranking: {names & self._EAST_ONLY}"
+        )
+        assert not (names & self._HAWAII_ONLY), (
+            f"Hawaii species leaked into west ranking: {names & self._HAWAII_ONLY}"
+        )
+
+    def test_hawaii_ranking_contains_hawaii_species(self):
+        ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
+        names = {sp["name"] for sp in ranking}
+        assert names & self._HAWAII_ONLY, (
+            f"Expected at least one of {self._HAWAII_ONLY} in Hawaii ranking; got {names}"
+        )
+
+    def test_hawaii_ranking_excludes_east_and_west(self):
+        ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
+        names = {sp["name"] for sp in ranking}
+        assert not (names & self._EAST_ONLY), (
+            f"East-coast species leaked into Hawaii ranking: {names & self._EAST_ONLY}"
+        )
+        assert not (names & self._WEST_ONLY), (
+            f"West-coast species leaked into Hawaii ranking: {names & self._WEST_ONLY}"
+        )
+
+    def test_unknown_coast_returns_no_species(self):
+        """coast=None (unknown location) must return an empty ranking, not east/all species."""
+        ranking = build_species_ranking(month=7, water_temp=72, coast=None)
+        assert ranking == [], (
+            f"Unknown coast (None) must return empty ranking; got {[sp['name'] for sp in ranking]}"
+        )
+
+    def test_all_ranking_species_belong_to_requested_coast(self):
+        """Every species in any ranking must have coast == the requested coast."""
+        for coast in ("east", "west", "hawaii"):
+            ranking = build_species_ranking(month=6, water_temp=72, coast=coast)
+            for sp in ranking:
+                db_entry = next((s for s in SPECIES_DB if s["name"] == sp["name"]), None)
+                assert db_entry is not None
+                assert db_entry.get("coast") == coast, (
+                    f"Species '{sp['name']}' has coast={db_entry.get('coast')!r} "
+                    f"but appeared in coast={coast!r} ranking"
+                )
+
+    # ---- build_spawning_report ----
+
+    def test_east_spawning_excludes_west_and_hawaii(self):
+        from domain.species import SPAWNING_DATA
+        west_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "west"}
+        hawaii_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "hawaii"}
+        report = build_spawning_report(month=5, water_temp=68, coast="east")
+        names = {sp["name"] for sp in report}
+        assert not (names & west_names), (
+            f"West-coast spawning species leaked into east report: {names & west_names}"
+        )
+        assert not (names & hawaii_names), (
+            f"Hawaii spawning species leaked into east report: {names & hawaii_names}"
+        )
+
+    def test_west_spawning_excludes_east_and_hawaii(self):
+        from domain.species import SPAWNING_DATA
+        east_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "east"}
+        hawaii_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "hawaii"}
+        report = build_spawning_report(month=5, water_temp=58, coast="west")
+        names = {sp["name"] for sp in report}
+        assert not (names & east_names), (
+            f"East-coast spawning species leaked into west report: {names & east_names}"
+        )
+        assert not (names & hawaii_names), (
+            f"Hawaii spawning species leaked into west report: {names & hawaii_names}"
+        )
+
+    def test_hawaii_spawning_excludes_east_and_west(self):
+        from domain.species import SPAWNING_DATA
+        east_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "east"}
+        west_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "west"}
+        report = build_spawning_report(month=5, water_temp=76, coast="hawaii")
+        names = {sp["name"] for sp in report}
+        assert not (names & east_names), (
+            f"East-coast spawning species leaked into Hawaii report: {names & east_names}"
+        )
+        assert not (names & west_names), (
+            f"West-coast spawning species leaked into Hawaii report: {names & west_names}"
+        )
+
+    def test_unknown_coast_spawning_returns_empty(self):
+        """coast=None must return empty spawning report, not east/all species."""
+        report = build_spawning_report(month=5, water_temp=68, coast=None)
+        assert report == [], (
+            f"Unknown coast (None) must return empty spawning report; got {[sp['name'] for sp in report]}"
         )
