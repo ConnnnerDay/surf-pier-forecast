@@ -7454,6 +7454,19 @@ details[open] .collapsible-module-body {
 /* The old standalone <header> in each page is kept for non-refactored pages */
 /* For the new refactored pages, the old header is replaced by page-hero or removed */
 
+/* ---- Slack tide badge/banner ---- */
+.section-context-badge--slack-tide {
+  background: rgba(107, 123, 141, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(107, 123, 141, 0.3);
+}
+
+.tide-state-banner--slack {
+  background: rgba(107, 123, 141, 0.1);
+  border-left: 3px solid var(--text-muted);
+  color: var(--text);
+}
+
 /* ---- REFRESH SECTION ---- */
 
 .refresh {

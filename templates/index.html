@@ -96,14 +96,20 @@
          1. CONDITIONS SUMMARY CARD — most prominent element
          ============================================================ -->
     {% set wind_str = forecast.conditions.wind or '' %}
-    {% set wind_speed = wind_str.split(' ')[0].split('-')[0] | int %}
-    {% if 'calm' in wind_str.lower() or wind_speed == 0 %}
+    {# Find the first token that starts with a digit (handles "S 16-21 kt", "16 kt", "Calm", etc.) #}
+    {% set wind_speed = namespace(val=0) %}
+    {% for token in wind_str.split(' ') %}
+        {% if wind_speed.val == 0 and token and token[0].isdigit() %}
+            {% set wind_speed.val = token.split('-')[0] | int %}
+        {% endif %}
+    {% endfor %}
+    {% if 'calm' in wind_str.lower() or wind_speed.val == 0 %}
         {% set wind_class = 'calm' %}{% set wind_label = 'Calm Seas' %}
-    {% elif wind_speed <= 8 %}
+    {% elif wind_speed.val <= 8 %}
         {% set wind_class = 'light' %}{% set wind_label = 'Light Wind' %}
-    {% elif wind_speed <= 15 %}
+    {% elif wind_speed.val <= 15 %}
         {% set wind_class = 'moderate' %}{% set wind_label = 'Moderate Wind' %}
-    {% elif wind_speed <= 25 %}
+    {% elif wind_speed.val <= 25 %}
         {% set wind_class = 'strong' %}{% set wind_label = 'Strong Wind' %}
     {% else %}
         {% set wind_class = 'gale' %}{% set wind_label = 'Gale Warning' %}
@@ -152,15 +158,21 @@
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
                     Tide
                 </div>
-                {% if forecast.tide_state == 'Rising' %}
+                {% set _csc_ts = (forecast.tide_state or '')|lower|trim %}
+                {% if _csc_ts == 'rising' %}
                 <span class="tide-state-badge tide-state--rising csc-stat-value" style="font-size:1rem">
                     <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
                     Incoming
                 </span>
-                {% elif forecast.tide_state == 'Falling' %}
+                {% elif _csc_ts == 'falling' %}
                 <span class="tide-state-badge tide-state--falling csc-stat-value" style="font-size:1rem">
                     <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
                     Outgoing
+                </span>
+                {% elif _csc_ts == 'slack' %}
+                <span class="csc-stat-value" style="font-size:1rem;color:var(--text-muted)">
+                    <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><rect x="2" y="7" width="12" height="2" rx="1"/></svg>
+                    Slack
                 </span>
                 {% else %}
                 <span class="csc-stat-value">{{ forecast.tide_state or '—' }}</span>
