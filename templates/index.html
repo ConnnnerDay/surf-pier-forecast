@@ -72,29 +72,8 @@
             {% endif %}
         </div>
     </header>
-    <nav class="unified-nav" aria-label="Main navigation">
-        <div class="unified-nav-pages">
-            <a href="{{ url_for('views.live_cams') }}" class="unified-nav-link{% if request.endpoint == 'views.live_cams' %} unified-nav-active{% endif %}">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                Live Cams
-            </a>
-            <a href="{{ url_for('views.fishing_log') }}" class="unified-nav-link{% if request.endpoint == 'views.fishing_log' %} unified-nav-active{% endif %}">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                Fish Log
-            </a>
-            {% if user %}
-            <a href="{{ url_for('auth.account') }}" class="unified-nav-link{% if request.endpoint in ('auth.account', 'auth.account_settings') %} unified-nav-active{% endif %}">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Account
-            </a>
-            {% else %}
-            <a href="{{ url_for('auth.login') }}" class="unified-nav-link{% if request.endpoint in ('auth.login', 'auth.register') %} unified-nav-active{% endif %}">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                Log In
-            </a>
-            {% endif %}
-        </div>
-        <div class="dash-tabs" role="tablist" aria-label="Forecast sections" id="dash-tabs">
+    <nav class="main-nav" aria-label="Main navigation">
+        <div class="main-nav-tabs" role="tablist" aria-label="Forecast sections" id="dash-tabs">
             <button class="dash-tab" data-tab="today" role="tab" aria-selected="true" aria-controls="panel-today" id="tab-today">
                 <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
                 Today
@@ -105,17 +84,38 @@
             </button>
             <button class="dash-tab" data-tab="tides" role="tab" aria-selected="false" aria-controls="panel-tides" id="tab-tides">
                 <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                Tides
+                Conditions
             </button>
             <button class="dash-tab" data-tab="plan" role="tab" aria-selected="false" aria-controls="panel-plan" id="tab-plan">
                 <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Plan
             </button>
-            <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                <span style="font-size:0.59rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">Edit</span>
-            </button>
         </div>
+        <div class="main-nav-pages">
+            <a href="{{ url_for('views.live_cams') }}" class="main-nav-page{% if request.endpoint == 'views.live_cams' %} main-nav-page--active{% endif %}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                Cams
+            </a>
+            <a href="{{ url_for('views.fishing_log') }}" class="main-nav-page{% if request.endpoint == 'views.fishing_log' %} main-nav-page--active{% endif %}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Log
+            </a>
+            {% if user %}
+            <a href="{{ url_for('auth.account') }}" class="main-nav-page{% if request.endpoint in ('auth.account', 'auth.account_settings') %} main-nav-page--active{% endif %}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Account
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="main-nav-page">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Log In
+            </a>
+            {% endif %}
+        </div>
+        <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            <span style="font-size:0.59rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">Edit</span>
+        </button>
     </nav>
 
     <main id="main-content" role="main">
@@ -124,7 +124,8 @@
         {% set all_alerts = (forecast.alerts or []) + (forecast.state_alerts or []) %}
         {% if all_alerts %}
         <div class="alerts-banner" role="alert" aria-label="Weather alerts">
-            {% for alert in all_alerts[:8] %}
+            {% set ns = namespace(seen=[]) %}
+            {% for alert in all_alerts %}{% if alert.event not in ns.seen %}{% set ns.seen = ns.seen + [alert.event] %}
             <div class="alert-item alert-{{ alert.severity|lower }}">
                 <div class="alert-icon">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -138,7 +139,7 @@
                     <span class="alert-headline">{{ alert.headline }}</span>
                 </div>
             </div>
-            {% endfor %}
+            {% endif %}{% endfor %}
         </div>
         {% endif %}
 
@@ -295,6 +296,10 @@
                 {% endif %}
             </div>
 
+            <div class="dash-section" data-section-id="outlook" data-section-label="3-Day Outlook" data-section-tab="today">
+                {% include 'partials/_outlook.html' %}
+            </div>
+
             <p class="dash-panel-empty" id="today-empty">All sections hidden. Tap ⚙ to show sections.</p>
         </div>
 
@@ -343,6 +348,10 @@
                     </div>
                 </section>
                 {% endif %}
+            </div>
+
+            <div class="dash-section" data-section-id="spawning" data-section-label="Spawning Status" data-section-tab="species">
+                {% include 'partials/_spawning.html' %}
             </div>
 
             <p class="dash-panel-empty" id="species-empty">All sections hidden. Tap ⚙ to show sections.</p>
@@ -418,10 +427,6 @@
                 {% endif %}
             </div>
 
-            <div class="dash-section" data-section-id="outlook" data-section-label="3-Day Outlook" data-section-tab="plan">
-                {% include 'partials/_outlook.html' %}
-            </div>
-
             <div class="dash-section" data-section-id="spot-tips" data-section-label="Fishing Tips" data-section-tab="plan" {% if not forecast.spot_tips %}data-empty="true"{% endif %}>
                 {% if forecast.spot_tips %}
                 <section class="spot-tips-section">
@@ -446,10 +451,6 @@
                     </div>
                 </section>
                 {% endif %}
-            </div>
-
-            <div class="dash-section" data-section-id="spawning" data-section-label="Spawning Status" data-section-tab="plan">
-                {% include 'partials/_spawning.html' %}
             </div>
 
             <div class="dash-section" data-section-id="calendar" data-section-label="Species Calendar" data-section-tab="plan" {% if not forecast.calendar %}data-empty="true"{% endif %}>
@@ -1018,10 +1019,10 @@
 
         // Default order mirrors the HTML order in each tab panel
         var DEFAULTS = {
-            today:   ['conditions-hero','bite-alerts','best-windows','timeline'],
-            species: ['species','bait','rigs','forage'],
+            today:   ['conditions-hero','bite-alerts','best-windows','timeline','outlook'],
+            species: ['species','bait','forage','spawning'],
             tides:   ['tides','conditions','solunar'],
-            plan:    ['outlook','spot-tips','spawning','calendar','checklists']
+            plan:    ['rigs','spot-tips','calendar','checklists']
         };
 
         function loadPrefs() {

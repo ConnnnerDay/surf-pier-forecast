@@ -5395,65 +5395,77 @@ footer p {
    TABBED DASHBOARD + CUSTOMIZATION SYSTEM
    ========================================================================== */
 
-/* ---------- Unified Navigation (dashboard only) ---------- */
+/* ---------- Main Navigation (dashboard single nav bar) ---------- */
 
-.unified-nav {
+.main-nav {
+  display: flex;
+  align-items: stretch;
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--card-bg);
+  background: var(--white);
   border-bottom: 1px solid var(--border-light);
+  overflow: hidden;
 }
 
-.unified-nav-pages {
+.main-nav-tabs {
   display: flex;
-  align-items: center;
-  padding: 0 0.5rem;
-  border-bottom: 1px solid var(--border-light);
+  flex: 1;
 }
 
-.unified-nav-link {
+.main-nav-pages {
   display: flex;
-  flex-direction: row;
+  align-items: stretch;
+  border-left: 1px solid var(--border-light);
+}
+
+/* Page links styled to match section tabs */
+.main-nav-page {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 600;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--text-muted);
   text-decoration: none;
-  border-radius: var(--radius-sm);
-  transition: background 0.15s, color 0.15s;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1.1;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.unified-nav-link:hover,
-.unified-nav-link:focus-visible {
+.main-nav-page:hover,
+.main-nav-page:focus-visible {
   color: var(--ocean);
   background: var(--ocean-light);
 }
 
-.unified-nav-link.unified-nav-active {
+.main-nav-page--active {
   color: var(--ocean);
+  border-bottom-color: var(--ocean);
 }
 
-[data-theme="dark"] .unified-nav {
+[data-theme="dark"] .main-nav {
   background: var(--card-bg, #1e2a35);
   border-bottom-color: rgba(255,255,255,0.08);
 }
 
-[data-theme="dark"] .unified-nav-pages {
-  border-bottom-color: rgba(255,255,255,0.08);
+[data-theme="dark"] .main-nav-pages {
+  border-left-color: rgba(255,255,255,0.08);
 }
 
-/* ---------- Tab Navigation Bar ---------- */
+/* ---------- Tab Navigation Bar (inside .main-nav-tabs) ---------- */
 
 .dash-tabs {
   display: flex;
-  align-items: stretch;
-  background: var(--white);
+  flex: 1;
   overflow: hidden;
-  border-bottom: 1px solid var(--border-light);
 }
 
 .dash-tab {
