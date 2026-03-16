@@ -61,7 +61,7 @@ def _cr_reg(**extra) -> dict:
 
     The fishery is open for targeting but all fish must be immediately released.
     classify_legality() returns 'catch_and_release'; should_hide_from_forecast()
-    returns False (species must remain visible with a C&R badge).
+    returns True (species is hidden — anglers cannot keep the fish).
     """
     base = {
         "bag_limit": "0/day",
@@ -219,35 +219,37 @@ class TestClassifyLegality:
 class TestShouldHideFromForecast:
     """Unit tests for the should_hide_from_forecast() helper.
 
-    The hide policy: only 'prohibited' and 'out_of_season' suppress a species.
-    C&R species are visible (anglers can still legally fish for them).
+    The hide policy is strict: ONLY ``"legal"`` is visible.  Every other
+    status — including ``"unknown"`` where regulations could not be verified —
+    is hidden so the app never recommends targeting a species unless legality
+    is confirmed.
     """
-
-    def test_prohibited_is_hidden(self):
-        assert should_hide_from_forecast("prohibited") is True
-
-    def test_out_of_season_is_hidden(self):
-        assert should_hide_from_forecast("out_of_season") is True
-
-    def test_catch_and_release_is_visible(self):
-        """C&R species must NOT be hidden — targeting is legal."""
-        assert should_hide_from_forecast("catch_and_release") is False
 
     def test_legal_is_visible(self):
         assert should_hide_from_forecast("legal") is False
 
-    def test_restricted_is_visible(self):
-        assert should_hide_from_forecast("restricted") is False
+    def test_unknown_is_hidden(self):
+        """Unknown status must be hidden — we must not recommend unverified species."""
+        assert should_hide_from_forecast("unknown") is True
 
-    def test_unknown_is_visible(self):
-        """Unknown status stays visible so anglers are not silently misled."""
-        assert should_hide_from_forecast("unknown") is False
+    def test_catch_and_release_is_hidden(self):
+        """C&R species are hidden — anglers cannot keep them."""
+        assert should_hide_from_forecast("catch_and_release") is True
 
-    def test_cr_reg_does_not_hide(self):
-        """Full round-trip: _cr_reg() must produce a status that is NOT hidden."""
+    def test_restricted_is_hidden(self):
+        assert should_hide_from_forecast("restricted") is True
+
+    def test_out_of_season_is_hidden(self):
+        assert should_hide_from_forecast("out_of_season") is True
+
+    def test_prohibited_is_hidden(self):
+        assert should_hide_from_forecast("prohibited") is True
+
+    def test_cr_reg_is_hidden(self):
+        """Full round-trip: _cr_reg() must produce a status that IS hidden."""
         status = classify_legality(_cr_reg())
         assert status == "catch_and_release"
-        assert should_hide_from_forecast(status) is False
+        assert should_hide_from_forecast(status) is True
 
     def test_closed_reg_hides(self):
         """Full round-trip: _prohibited_reg() must produce a status that IS hidden."""
@@ -328,20 +330,21 @@ class TestSpeciesRankingRegulationStatus:
         names = [sp["name"] for sp in ranking]
         assert "Sheepshead" not in names, "Out-of-season Sheepshead should be absent in Feb"
 
-    # -- Test 4: unknown regulation status NOT presented as definitely legal
-    def test_unknown_status_not_claimed_legal(self, monkeypatch):
-        """When no regulation data exists the species must carry regulation_status='unknown'."""
+    # -- Test 4: unknown regulation status is hidden (cannot verify legality)
+    def test_unknown_status_hidden_from_ranking(self, monkeypatch):
+        """When no regulation data exists the species must be hidden from the ranking.
+
+        Under the strict policy, 'unknown' legality is not safe to recommend —
+        we cannot confirm the angler can legally keep the fish.
+        """
         monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _unknown_reg())
 
         ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
 
-        assert len(ranking) > 0
-        for sp in ranking:
-            status = sp.get("regulation_status")
-            assert status == "unknown", (
-                f"'{sp['name']}' has regulation_status={status!r}; expected 'unknown' "
-                "when data is link-only"
-            )
+        assert len(ranking) == 0, (
+            "Species with 'unknown' regulation status must be hidden from the ranking. "
+            "should_hide_from_forecast() must return True for 'unknown'."
+        )
 
     def test_regulation_status_field_present_when_state_given(self, monkeypatch):
         """Every ranked species should have a regulation_status key when state is provided."""
@@ -375,12 +378,8 @@ class TestSpeciesRankingRegulationStatus:
         ranks = [sp["rank"] for sp in ranking]
         assert ranks == list(range(1, len(ranking) + 1)), "Ranks must be 1..N with no gaps"
 
-    def test_catch_and_release_species_visible_in_biting(self, monkeypatch):
-        """C&R species must remain in 'What's Biting' with regulation_status='catch_and_release'.
-
-        Anglers can legally fish for C&R species — they just must release every catch.
-        Hiding them would remove useful targeting information from the forecast.
-        """
+    def test_catch_and_release_species_hidden_from_biting(self, monkeypatch):
+        """C&R species must be absent from 'What's Biting' — anglers cannot keep the fish."""
         def fake_lookup(name, state):
             if name == "Sheepshead":
                 return _cr_reg()
@@ -391,22 +390,12 @@ class TestSpeciesRankingRegulationStatus:
             month=3, water_temp=62, coast="east", fishing_types=["pier"], state="NC"
         )
         names = [sp["name"] for sp in ranking]
-        assert "Sheepshead" in names, (
-            "C&R Sheepshead must appear in What's Biting (targeting is legal)"
-        )
-        sheepshead_entry = next(sp for sp in ranking if sp["name"] == "Sheepshead")
-        assert sheepshead_entry["regulation_status"] == "catch_and_release", (
-            f"Expected regulation_status='catch_and_release', "
-            f"got {sheepshead_entry['regulation_status']!r}"
+        assert "Sheepshead" not in names, (
+            "C&R Sheepshead must NOT appear in What's Biting — cannot keep the fish"
         )
 
-    def test_bag_limit_zero_only_visible_as_catch_and_release(self, monkeypatch):
-        """bag_limit=0 alone (open season, no other C&R text) must not hide the species.
-
-        A zero bag limit means no retention is allowed — the fishery is open for
-        targeting (C&R), not closed.  This is the most common form for C&R
-        regulations in state databases.
-        """
+    def test_bag_limit_zero_hidden_from_ranking(self, monkeypatch):
+        """bag_limit=0 (catch_and_release status) must hide the species — cannot keep the fish."""
         monkeypatch.setattr(
             "domain.species.lookup_regulation",
             lambda name, st: {
@@ -419,19 +408,12 @@ class TestSpeciesRankingRegulationStatus:
             },
         )
         ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-        assert len(ranking) > 0, "bag_limit=0 must not suppress all species from the ranking"
-        for sp in ranking:
-            assert sp.get("regulation_status") == "catch_and_release", (
-                f"'{sp['name']}': bag_limit=0/Open should yield catch_and_release, "
-                f"got {sp.get('regulation_status')!r}"
-            )
+        assert len(ranking) == 0, (
+            "bag_limit=0 (catch_and_release) must suppress all species from the ranking"
+        )
 
-    def test_no_harvest_text_visible_as_catch_and_release(self, monkeypatch):
-        """'No harvest' in regulation notes must not hide the species.
-
-        'No harvest' prohibits retention but the fishery is open for targeting.
-        Species must appear with regulation_status='catch_and_release'.
-        """
+    def test_no_harvest_text_hidden_from_ranking(self, monkeypatch):
+        """'No harvest' in regulation notes must hide the species — cannot keep the fish."""
         monkeypatch.setattr(
             "domain.species.lookup_regulation",
             lambda name, st: {
@@ -444,12 +426,7 @@ class TestSpeciesRankingRegulationStatus:
             },
         )
         ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-        assert len(ranking) > 0, "'No harvest' text must not suppress species from ranking"
-        for sp in ranking:
-            assert sp.get("regulation_status") == "catch_and_release", (
-                f"'{sp['name']}': 'No harvest' should yield catch_and_release, "
-                f"got {sp.get('regulation_status')!r}"
-            )
+        assert len(ranking) == 0, "'No harvest' (catch_and_release) must suppress species from ranking"
 
     def test_federally_protected_species_hidden_from_biting(self, monkeypatch):
         """Federally protected species must be absent — targeting is not legally permitted."""
@@ -474,23 +451,18 @@ class TestSpeciesRankingRegulationStatus:
             "Federally protected Sheepshead must be hidden (targeting is prohibited)"
         )
 
-    def test_unknown_regulation_species_visible_and_marked(self, monkeypatch):
-        """Species with no usable regulation data must remain visible, marked 'unknown'.
+    def test_unknown_regulation_species_hidden_from_ranking(self, monkeypatch):
+        """Species with no usable regulation data must be hidden from the ranking.
 
-        Hiding unknown-status species would silently remove fish from the forecast
-        when data is simply missing.  The correct behaviour is to show them with an
-        'Unverified' note and a link to the official state regulations.
+        We cannot confirm the angler can legally keep the fish, so we must not
+        recommend targeting it.  Missing data is not the same as legal.
         """
         monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _unknown_reg())
         ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-        assert len(ranking) > 0, (
-            "Unknown-status species must appear in ranking (missing data ≠ closed)"
+        assert len(ranking) == 0, (
+            "Unknown-status species must be hidden from ranking — "
+            "cannot recommend targeting a species of unverified legality"
         )
-        for sp in ranking:
-            assert sp.get("regulation_status") == "unknown", (
-                f"'{sp['name']}' should have regulation_status='unknown' when data is "
-                f"link-only, got {sp.get('regulation_status')!r}"
-            )
 
 
 # ---------------------------------------------------------------------------
@@ -547,23 +519,14 @@ class TestSpawningReportRegulationStatus:
             assert "legal_status" in sp, f"'{sp['name']}' missing legacy legal_status field"
             assert sp["legal_status"] in ("catch_release", "restricted", "open", "unknown")
 
-    def test_catch_and_release_species_visible_in_spawning(self, monkeypatch):
-        """C&R species must remain in 'What's Spawning' with regulation_status='catch_and_release'.
-
-        Knowing a species is spawning while on C&R is useful: it helps anglers
-        locate the fish for sport fishing even though they cannot keep any catch.
-        """
+    def test_catch_and_release_species_hidden_from_spawning(self, monkeypatch):
+        """C&R species must be absent from 'What's Spawning' — anglers cannot keep the fish."""
         monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _cr_reg())
 
         spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
-        assert len(spawning) > 0, (
-            "C&R species must appear in the spawning list (targeting is legal)"
+        assert len(spawning) == 0, (
+            "C&R species must be hidden from the spawning list — cannot keep the fish"
         )
-        for sp in spawning:
-            assert sp.get("regulation_status") == "catch_and_release", (
-                f"'{sp['name']}' should have regulation_status='catch_and_release', "
-                f"got {sp.get('regulation_status')!r}"
-            )
 
 
 # ---------------------------------------------------------------------------
@@ -571,28 +534,21 @@ class TestSpawningReportRegulationStatus:
 # ---------------------------------------------------------------------------
 
 class TestRetentionLogicNotVisibilityGate:
-    """Regression tests that would fail immediately if the visibility gate
-    reverted to using retention-prohibited logic instead of targeting-allowed logic.
+    """Regression tests ensuring the visibility gate stays as should_hide_from_forecast().
 
-    The old bug: _regulation_disallows_keep() (now _retention_prohibited()) was
-    used to suppress species from the forecast.  This hid C&R species even though
-    anglers can legally target them.  The correct gate is:
+    The gate is intentionally strict: ONLY ``"legal"`` status is shown.
+    All other statuses — including catch_and_release, restricted, and unknown —
+    are hidden so the app never recommends targeting a species unless legality
+    is confirmed and the fish can be legally kept.
 
-        should_hide_from_forecast(classify_legality(reg, month))
-
-    which hides ONLY fisheries where targeting itself is not permitted
-    (out_of_season, prohibited), and keeps C&R species visible.
-
-    Each test below is written so that it passes under the current correct
-    policy and would fail if someone replaced the gate with retention logic.
+    Each test below passes under the current strict policy and would fail if
+    someone loosened the gate (e.g. made C&R visible again).
     """
 
-    def test_cr_phrase_does_not_hide_from_ranking(self, monkeypatch):
-        """'Catch and release only' must NOT hide a species from What's Biting.
+    def test_cr_phrase_hides_from_ranking(self, monkeypatch):
+        """'Catch and release only' must suppress a species from What's Biting.
 
-        Regression: _retention_prohibited({'season': 'Catch and release only'}) is True,
-        so if that function were used as the visibility gate, this test would fail
-        because the species would be absent from the ranking.
+        Anglers cannot keep C&R fish, so the forecast must not recommend targeting them.
         """
         monkeypatch.setattr(
             "domain.species.lookup_regulation",
@@ -606,21 +562,13 @@ class TestRetentionLogicNotVisibilityGate:
             },
         )
         ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-        assert len(ranking) > 0, (
-            "REGRESSION: 'Catch and release only' must not suppress species. "
-            "Check that the visibility gate uses should_hide_from_forecast(classify_legality(...)) "
-            "and NOT _retention_prohibited()."
+        assert len(ranking) == 0, (
+            "REGRESSION: 'Catch and release only' must suppress species from the ranking. "
+            "should_hide_from_forecast() must return True for 'catch_and_release'."
         )
-        for sp in ranking:
-            assert sp.get("regulation_status") == "catch_and_release"
 
-    def test_bag_zero_does_not_hide_from_ranking(self, monkeypatch):
-        """bag_limit='0/day' with open season must NOT hide a species from What's Biting.
-
-        Regression: _retention_prohibited({'bag_limit': '0/day'}) is True,
-        so if that function were used as the visibility gate, all species
-        would vanish from the ranking whenever bag limits are set to zero.
-        """
+    def test_bag_zero_hides_from_ranking(self, monkeypatch):
+        """bag_limit='0/day' (catch_and_release status) must hide species from What's Biting."""
         monkeypatch.setattr(
             "domain.species.lookup_regulation",
             lambda name, st: {
@@ -633,54 +581,32 @@ class TestRetentionLogicNotVisibilityGate:
             },
         )
         ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-        assert len(ranking) > 0, (
-            "REGRESSION: bag_limit=0/Open must not suppress species. "
-            "Check that the visibility gate uses should_hide_from_forecast(classify_legality(...)) "
-            "and NOT _retention_prohibited()."
+        assert len(ranking) == 0, (
+            "REGRESSION: bag_limit=0 (catch_and_release) must suppress species. "
+            "should_hide_from_forecast() must return True for 'catch_and_release'."
         )
 
-    def test_cr_and_closed_season_differ_in_visibility(self, monkeypatch):
-        """C&R (can target) and closed season (cannot target) must produce different visibility.
+    def test_cr_and_closed_season_both_hidden(self, monkeypatch):
+        """C&R and closed-season regulations must both hide species.
 
-        This test verifies the core distinction at the heart of the policy:
-          - 'Catch and release only' → visible (regulation_status='catch_and_release')
-          - 'Season closed'          → hidden
-        If both were treated the same way (as the old code did), this would fail.
+        Under the strict policy both statuses are non-legal and therefore hidden.
         """
-        # Pass 1: C&R regulation for all species → ranking must be non-empty
-        monkeypatch.setattr(
-            "domain.species.lookup_regulation",
-            lambda name, st: {
-                "bag_limit": "0/day",
-                "season": "Catch and release only",
-                "notes": "",
-                "official_source": "https://example.com/regs",
-                "is_stale": False,
-                "data_status": "snapshot",
-            },
-        )
-        cr_ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-
-        # Pass 2: Closed-season regulation for all species → ranking must be empty
-        monkeypatch.setattr(
-            "domain.species.lookup_regulation",
-            lambda name, st: {
-                "bag_limit": "",
-                "season": "Season closed",
-                "notes": "",
-                "official_source": "https://example.com/regs",
-                "is_stale": False,
-                "data_status": "snapshot",
-            },
-        )
-        closed_ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-
-        assert len(cr_ranking) > 0, (
-            "REGRESSION: C&R species must be visible — targeting is legal."
-        )
-        assert len(closed_ranking) == 0, (
-            "REGRESSION: Closed-season species must be hidden — targeting is not permitted."
-        )
+        for season_text in ("Catch and release only", "Season closed"):
+            monkeypatch.setattr(
+                "domain.species.lookup_regulation",
+                lambda name, st, _s=season_text: {
+                    "bag_limit": "",
+                    "season": _s,
+                    "notes": "",
+                    "official_source": "https://example.com/regs",
+                    "is_stale": False,
+                    "data_status": "snapshot",
+                },
+            )
+            ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+            assert len(ranking) == 0, (
+                f"REGRESSION: season='{season_text}' must hide all species from the ranking."
+            )
 
 
 # ---------------------------------------------------------------------------
