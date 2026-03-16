@@ -26,14 +26,17 @@
 
     <main>
         <section class="profile-intro">
-            <h2>Set Up Your Fishing Profile</h2>
-            <p class="section-sub">Build your fishing persona in under a minute. We use this to prioritize species, baits, and bite windows.</p>
-        </section>
-
-        <section class="profile-intro" style="margin-top:0.8rem;">
-            <h3>Preferences &amp; Notifications</h3>
-            <p class="section-sub">Manage forecast units, alerts, and default location from your account settings.</p>
-            <a href="{{ url_for('auth.account') }}" class="profile-save-btn" style="display:inline-block;text-decoration:none;">Open Account Settings</a>
+            <h2>Fishing Profile</h2>
+            <p class="section-sub">Answer these questions to get personalized species rankings, bait suggestions, and bite windows. Takes under a minute.</p>
+            <div class="profile-intro-actions">
+                <a href="{{ url_for('views.index') }}" class="profile-back-link">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Forecast
+                </a>
+                {% if user %}
+                <a href="{{ url_for('auth.account') }}" class="profile-back-link">Account Settings</a>
+                {% endif %}
+            </div>
         </section>
         <section class="profile-wizard-card">
             <div class="profile-wizard-head">
