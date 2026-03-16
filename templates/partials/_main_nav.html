@@ -1,64 +1,14 @@
-<nav class="app-nav" aria-label="Primary navigation">
-  <button class="app-nav-toggle" type="button" aria-expanded="false" aria-controls="app-nav-links" onclick="toggleAppNav(this)">
-    &#9776; Menu
-  </button>
-  <ul id="app-nav-links" class="app-nav-links">
-    <li>
-      <a href="{{ url_for('views.index') }}" class="app-nav-link{% if request.endpoint == 'views.index' %} app-nav-active{% endif %}"{% if request.endpoint == 'views.index' %} aria-current="page"{% endif %}>
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span class="app-nav-label">Forecast</span>
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('views.setup') }}" class="app-nav-link{% if request.endpoint == 'views.setup' %} app-nav-active{% endif %}"{% if request.endpoint == 'views.setup' %} aria-current="page"{% endif %}>
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <span class="app-nav-label">Location</span>
-      </a>
-    </li>
+<nav class="site-nav" aria-label="Site navigation">
+  <div class="site-nav-inner">
+    <a href="{{ url_for('views.index') }}" class="site-nav-link{% if request.endpoint == 'views.index' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.index' %}page{% else %}false{% endif %}">Forecast</a>
+    <a href="{{ url_for('views.setup') }}" class="site-nav-link{% if request.endpoint == 'views.setup' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.setup' %}page{% else %}false{% endif %}">Location</a>
+    {% if user %}<a href="{{ url_for('views.profile') }}" class="site-nav-link{% if request.endpoint == 'views.profile' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.profile' %}page{% else %}false{% endif %}">Profile</a>{% endif %}
+    <a href="{{ url_for('views.fishing_log') }}" class="site-nav-link{% if request.endpoint == 'views.fishing_log' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.fishing_log' %}page{% else %}false{% endif %}">Fish Log</a>
+    <a href="{{ url_for('views.live_cams') }}" class="site-nav-link{% if request.endpoint == 'views.live_cams' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.live_cams' %}page{% else %}false{% endif %}">Live Cams</a>
     {% if user %}
-    <li>
-      <a href="{{ url_for('views.profile') }}" class="app-nav-link{% if request.endpoint == 'views.profile' %} app-nav-active{% endif %}"{% if request.endpoint == 'views.profile' %} aria-current="page"{% endif %}>
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/><path d="M6 4l6 3 6-3"/></svg>
-        <span class="app-nav-label">Profile</span>
-      </a>
-    </li>
-    {% endif %}
-    <li>
-      <a href="{{ url_for('views.live_cams') }}" class="app-nav-link{% if request.endpoint == 'views.live_cams' %} app-nav-active{% endif %}"{% if request.endpoint == 'views.live_cams' %} aria-current="page"{% endif %}>
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-        <span class="app-nav-label">Live Cams</span>
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for('views.fishing_log') }}" class="app-nav-link{% if request.endpoint == 'views.fishing_log' %} app-nav-active{% endif %}"{% if request.endpoint == 'views.fishing_log' %} aria-current="page"{% endif %}>
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span class="app-nav-label">Fish Log</span>
-      </a>
-    </li>
-    {% if user %}
-    <li>
-      <a href="{{ url_for('auth.account') }}" class="app-nav-link{% if request.endpoint in ('auth.account', 'auth.account_settings') %} app-nav-active{% endif %}"{% if request.endpoint in ('auth.account', 'auth.account_settings') %} aria-current="page"{% endif %}>
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span class="app-nav-label">Account</span>
-      </a>
-    </li>
+    <a href="{{ url_for('auth.account') }}" class="site-nav-link{% if request.endpoint in ('auth.account', 'auth.account_settings') %} site-nav-active{% endif %}" aria-current="{% if request.endpoint in ('auth.account', 'auth.account_settings') %}page{% else %}false{% endif %}">Account</a>
     {% else %}
-    <li>
-      <a href="{{ url_for('auth.login') }}" class="app-nav-link{% if request.endpoint in ('auth.login', 'auth.register') %} app-nav-active{% endif %}">
-        <svg class="app-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-        <span class="app-nav-label">Log In</span>
-      </a>
-    </li>
+    <a href="{{ url_for('auth.login') }}" class="site-nav-link{% if request.endpoint in ('auth.login', 'auth.register') %} site-nav-active{% endif %}">Log In</a>
     {% endif %}
-  </ul>
+  </div>
 </nav>
-
-<script>
-function toggleAppNav(btn) {
-  var links = document.getElementById('app-nav-links');
-  if (!links) return;
-  var expanded = btn.getAttribute('aria-expanded') === 'true';
-  btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-  links.classList.toggle('is-open');
-}
-</script>

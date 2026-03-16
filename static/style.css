@@ -6310,3 +6310,134 @@ footer p {
   }
 }
 
+
+/* ==========================================================================
+   Site Nav — Simple horizontal text-link bar (replaces app-nav icon tabs)
+   ========================================================================== */
+
+.site-nav {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.site-nav-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.site-nav-inner::-webkit-scrollbar { display: none; }
+
+.site-nav-link {
+  display: inline-block;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.site-nav-link:hover,
+.site-nav-link:focus-visible {
+  color: var(--ocean);
+  border-bottom-color: var(--ocean-light);
+}
+
+.site-nav-link.site-nav-active {
+  color: var(--ocean);
+  border-bottom-color: var(--ocean);
+}
+
+[data-theme="dark"] .site-nav {
+  background: var(--card-bg);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .site-nav-link.site-nav-active {
+  color: #5bb8d4;
+  border-bottom-color: #5bb8d4;
+}
+
+/* On the dashboard, site-nav sits inside the dash-nav-outer stacking context */
+.forecast-page .site-nav {
+  position: static;
+}
+
+/* Remove bottom padding reserved for old fixed mobile nav on non-forecast pages */
+body:not(.forecast-page) main {
+  padding-bottom: 0;
+}
+
+/* ==========================================================================
+   Alerts — collapsed single-line summary with expand toggle
+   ========================================================================== */
+
+.alerts-banner--collapsed {
+  padding: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.alerts-summary-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.3;
+}
+
+.alerts-summary-btn:hover {
+  filter: brightness(0.96);
+}
+
+.alerts-summary-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.alerts-summary-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.alerts-toggle-chevron {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+.alerts-detail {
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+.alerts-detail .alert-item {
+  border-radius: 0;
+  border-left-width: 3px;
+}
+
+.alerts-detail .alert-item:last-child {
+  margin-bottom: 0;
+}
+
