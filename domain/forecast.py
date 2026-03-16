@@ -1056,23 +1056,14 @@ def build_bite_alerts(
 
     # Hot species alert
     hot_species = [sp["name"] for sp in species if sp.get("activity") == "Hot"]
-    if hot_species:
-        if len(hot_species) >= 3:
-            alerts.append(
-                {
-                    "type": "hot",
-                    "title": "Multiple species on fire!",
-                    "message": f"{', '.join(hot_species[:3])} are all rated HOT right now. This is a rare alignment of conditions.",
-                }
-            )
-        elif len(hot_species) == 1:
-            alerts.append(
-                {
-                    "type": "hot",
-                    "title": f"{hot_species[0]} is on fire!",
-                    "message": "Conditions are dialed in for this species. Get your lines in the water.",
-                }
-            )
+    if len(hot_species) == 1:
+        alerts.append(
+            {
+                "type": "hot",
+                "title": f"{hot_species[0]} is on fire!",
+                "message": "Conditions are dialed in for this species. Get your lines in the water.",
+            }
+        )
 
     # Excellent conditions alert
     if verdict == "Excellent":
@@ -1095,16 +1086,6 @@ def build_bite_alerts(
                     "message": "Barometric pressure is dropping below 1010 mb — fish often feed aggressively before incoming weather.",
                 }
             )
-
-    # Incoming tide + dawn/dusk
-    if tide_state == "Rising":
-        alerts.append(
-            {
-                "type": "tide",
-                "title": "Incoming tide active",
-                "message": "Rising water pushes bait toward shore. Prime time for surf and pier fishing.",
-            }
-        )
 
     return alerts[:3]
 
