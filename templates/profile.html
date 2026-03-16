@@ -3,34 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set Up Your Fishing Profile &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <title>Fishing Profile &mdash; Surf &amp; Pier Fishing Forecast</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#0e5f78">
+    <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description" content="Set up your fishing profile to get personalized forecasts">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
-<body>
-    <header>
-        <div class="header-inner">
-            <h1>Surf &amp; Pier Fishing Outlook</h1>
-            <p class="subtitle">Tell us how you fish</p>
-        </div>
-    </header>
+<body class="has-app-header">
     {% include 'partials/_main_nav.html' %}
-
+    <div class="page-hero">
+        <h1>Fishing Profile</h1>
+        <p class="page-subtitle">Personalize your forecast &mdash; takes under a minute</p>
+    </div>
 
     <main>
-        <section class="profile-intro">
-            <h2>Fishing Profile</h2>
-            <p class="section-sub">Answer these questions to get personalized species rankings, bait suggestions, and bite windows. Takes under a minute.</p>
-            <div class="profile-intro-actions">
+        <!-- Completion progress -->
+        <section class="profile-wizard-card" style="margin:1rem">
+            <div class="profile-wizard-head">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                    <strong>Profile completion</strong>
+                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/6 complete</span>
+                </div>
+                <div class="profile-wizard-track" style="margin-top:0.5rem">
+                    <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.75rem;margin-top:0.75rem;flex-wrap:wrap">
                 <a href="{{ url_for('views.index') }}" class="profile-back-link">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
                     Back to Forecast
                 </a>
                 {% if user %}
@@ -38,17 +43,9 @@
                 {% endif %}
             </div>
         </section>
-        <section class="profile-wizard-card">
-            <div class="profile-wizard-head">
-                <strong>Profile completion</strong>
-                <span id="profile-progress-label">0/6 complete</span>
-            </div>
-            <div class="profile-wizard-track">
-                <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
-            </div>
-        </section>
 
-        <form id="profile-form" class="profile-form" onsubmit="return saveProfile(event)">
+        <form id="profile-form" class="profile-form" onsubmit="return saveProfile(event)" style="padding:0 1rem">
+            <p class="profile-group-label">Fishing Style</p>
             <!-- Fishing Type -->
             <section class="profile-section profile-section--step" data-step="1">
                 <h3 class="profile-question">What type of fishing do you do?</h3>
@@ -89,6 +86,7 @@
                 </div>
             </section>
 
+            <p class="profile-group-label">Bait Preferences</p>
             <!-- Bait Preferences -->
             <section class="profile-section profile-section--step" data-step="2">
                 <h3 class="profile-question">Do you use live bait?</h3>
@@ -176,6 +174,7 @@
                 </div>
             </section>
 
+            <p class="profile-group-label">About You</p>
             <!-- Experience Level -->
             <section class="profile-section profile-section--step" data-step="5">
                 <h3 class="profile-question">How would you describe your experience?</h3>
@@ -204,6 +203,7 @@
                 </div>
             </section>
 
+            <p class="profile-group-label">Target Species</p>
             <!-- Target Interest -->
             <section class="profile-section profile-section--step" data-step="6">
                 <h3 class="profile-question">What are you mostly fishing for?</h3>
@@ -239,7 +239,7 @@
         </form>
     </main>
 
-    <footer>
+    <footer style="padding:1.5rem;text-align:center;font-size:0.82rem;color:var(--text-muted)">
         <p>Surf &amp; Pier Fishing Outlook</p>
     </footer>
 

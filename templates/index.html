@@ -9,1521 +9,1025 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#0e5f78">
+    <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.svg') }}">
     <script>
-    // Apply saved theme immediately to prevent flash
     (function() {
         var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (t === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
             document.documentElement.setAttribute('data-theme', 'dark');
+            if (!t) localStorage.setItem('theme', 'dark');
         }
     })();
     </script>
     <meta name="description" content="Surf and pier fishing forecast with real-time conditions, species rankings, tide charts, and solunar times for {{ forecast.location_name or 'your location' }}">
-    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
     <meta property="og:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}{% if forecast.species %} | Top: {{ forecast.species[0].name }}{% endif %}">
     <meta property="og:image" content="{{ url_for('static', filename='icons/icon-192.svg', _external=True) }}">
     {% if share_id %}<meta property="og:url" content="{{ url_for('views.shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
     <meta name="twitter:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}">
 </head>
-<body class="forecast-page">
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    <header role="banner">
-        <div class="header-inner">
-            <div class="header-top-row">
-                <h1>Surf &amp; Pier Fishing Outlook</h1>
-                <button class="unit-toggle" id="unit-toggle" onclick="toggleUnits()" title="Toggle °F / °C" aria-label="Toggle temperature units">
-                    <span class="unit-label" id="unit-label">°F</span>
-                </button>
-                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
-                    <svg class="theme-icon theme-icon--light" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                    <svg class="theme-icon theme-icon--dark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                </button>
-            </div>
-            <div class="user-nav">
-                {% if user %}
-                <span class="user-name">{{ user.username }}</span>
-                {% else %}
-                <a href="{{ url_for('auth.login') }}">Log in</a>
-                <span class="user-nav-sep">|</span>
-                <a href="{{ url_for('auth.register') }}">Sign up</a>
+<body class="forecast-page has-app-header">
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+{% include 'partials/_main_nav.html' %}
+
+<!-- Location info bar -->
+<div class="location-bar">
+    <div class="location-bar-inner">
+        <span class="location-bar-name">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
+            {{ forecast.location_name or 'Your Location' }}
+        </span>
+        <div class="location-bar-actions">
+            <a href="{{ url_for('views.setup') }}" class="location-bar-change">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2"/></svg>
+                Change
+            </a>
+            <button class="location-bar-fav" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
+                <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="2" style="display:none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                Save
+            </button>
+        </div>
+    </div>
+    <div class="location-bar-inner" id="favorites-bar-wrap" style="display:none">
+        <div class="location-bar-favs" id="favorites-bar"></div>
+    </div>
+</div>
+
+{% if cached == "refreshing" %}
+<div class="banner" id="refresh-banner">Refreshing forecast&hellip; showing cached data from <span id="refresh-banner-time" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
+{% elif cached %}
+<div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
+{% endif %}
+
+<main id="main-content" role="main">
+
+    <!-- Weather Alerts -->
+    {% set all_alerts = (forecast.alerts or []) + (forecast.state_alerts or []) %}
+    {% if all_alerts %}
+    {% set ns = namespace(seen=[], top_severity='moderate') %}
+    {% for alert in all_alerts %}{% if alert.event not in ns.seen %}{% set ns.seen = ns.seen + [alert.event] %}{% if alert.severity|lower in ('extreme','warning','severe') %}{% set ns.top_severity = alert.severity|lower %}{% endif %}{% endif %}{% endfor %}
+    {% set unique_count = ns.seen|length %}
+    <div class="alerts-banner alerts-banner--collapsed alert-{{ ns.top_severity }}" style="margin:0.75rem 1rem" role="region" aria-label="Weather alerts">
+        <button class="alerts-summary-btn" type="button" onclick="toggleAlerts(this)" aria-expanded="false" aria-controls="alerts-detail">
+            <span class="alerts-summary-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+            <span class="alerts-summary-text">{% if unique_count == 1 %}{{ ns.seen[0] }}{% else %}{{ unique_count }} weather alerts &mdash; {{ ns.seen[0] }}{% if unique_count > 1 %} + {{ unique_count - 1 }} more{% endif %}{% endif %}</span>
+            <span class="alerts-toggle-chevron" aria-hidden="true">&#9660;</span>
+        </button>
+        <div class="alerts-detail" id="alerts-detail" hidden>
+            {% set ns2 = namespace(seen=[]) %}
+            {% for alert in all_alerts %}{% if alert.event not in ns2.seen %}{% set ns2.seen = ns2.seen + [alert.event] %}
+            <div class="alert-item alert-{{ alert.severity|lower }}"><div class="alert-body"><strong class="alert-event">{{ alert.event }}</strong><span class="alert-headline">{{ alert.headline }}</span></div></div>
+            {% endif %}{% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================
+         1. CONDITIONS SUMMARY CARD — most prominent element
+         ============================================================ -->
+    {% set wind_str = forecast.conditions.wind or '' %}
+    {% set wind_speed = wind_str.split(' ')[0].split('-')[0] | int %}
+    {% if 'calm' in wind_str.lower() or wind_speed == 0 %}
+        {% set wind_class = 'calm' %}{% set wind_label = 'Calm Seas' %}
+    {% elif wind_speed <= 8 %}
+        {% set wind_class = 'light' %}{% set wind_label = 'Light Wind' %}
+    {% elif wind_speed <= 15 %}
+        {% set wind_class = 'moderate' %}{% set wind_label = 'Moderate Wind' %}
+    {% elif wind_speed <= 25 %}
+        {% set wind_class = 'strong' %}{% set wind_label = 'Strong Wind' %}
+    {% else %}
+        {% set wind_class = 'gale' %}{% set wind_label = 'Gale Warning' %}
+    {% endif %}
+
+    <div class="conditions-summary-card">
+        <div class="csc-verdict-bar">
+            <div>
+                <p class="csc-location">Today&rsquo;s Forecast</p>
+                {% if forecast.conditions.verdict %}
+                <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
+                {% endif %}
+                {% if forecast.conditions.summary %}
+                <p class="csc-verdict-summary">{{ forecast.conditions.summary }}</p>
                 {% endif %}
             </div>
-            <div class="subtitle-row">
-                <p class="subtitle">{{ forecast.location_name or 'Your Fishing Forecast' }}</p>
-                <a href="{{ url_for('views.setup') }}" class="location-change-link" title="Change location">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                    Change
-                </a>
+        </div>
+        <div class="csc-stats-grid">
+            <div class="csc-stat">
+                <div class="csc-stat-icon-label">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                    Wind
+                </div>
+                <span class="csc-stat-value">{{ forecast.conditions.wind or '—' }}</span>
+                <span class="csc-stat-sub wind-quality-badge wind-quality--{{ wind_class }}">{{ wind_label }}</span>
             </div>
-            <div class="header-actions">
-                <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
-                    <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                </button>
+            <div class="csc-stat">
+                <div class="csc-stat-icon-label">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                    Waves
+                </div>
+                <span class="csc-stat-value">{{ forecast.conditions.waves or '—' }}</span>
             </div>
-            <div class="favorites-bar" id="favorites-bar"></div>
-            {% if cached == "refreshing" %}
-            <div class="banner" id="refresh-banner">Refreshing forecast… showing cached data from <span id="refresh-banner-time" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
-            {% elif cached %}
-            <div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
+            <div class="csc-stat">
+                <div class="csc-stat-icon-label">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                    Water
+                </div>
+                <span class="csc-stat-value"><span class="unit-temp" data-f="{{ forecast.conditions.water_temp_f }}">{{ forecast.conditions.water_temp_f }}&deg;F</span></span>
+                {% if forecast.conditions.water_temp_trend %}
+                <span class="csc-stat-sub">{{ forecast.conditions.water_temp_trend|title }}</span>
+                {% endif %}
+            </div>
+            <div class="csc-stat">
+                <div class="csc-stat-icon-label">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                    Tide
+                </div>
+                {% if forecast.tide_state == 'Rising' %}
+                <span class="tide-state-badge tide-state--rising csc-stat-value" style="font-size:1rem">
+                    <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
+                    Incoming
+                </span>
+                {% elif forecast.tide_state == 'Falling' %}
+                <span class="tide-state-badge tide-state--falling csc-stat-value" style="font-size:1rem">
+                    <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
+                    Outgoing
+                </span>
+                {% else %}
+                <span class="csc-stat-value">{{ forecast.tide_state or '—' }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         2. BEST FISHING WINDOWS
+         ============================================================ -->
+    {% if forecast.best_times %}
+    <section class="best-windows-section" aria-label="Best fishing windows">
+        <h2>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Best Windows Today
+        </h2>
+        <div class="best-times-cards">
+            {% for bt in forecast.best_times %}
+            <div class="best-time-card best-time--{{ bt.quality|lower }}">
+                <div class="bt-quality">{{ bt.quality }}</div>
+                <div class="bt-window">{{ bt.window }}</div>
+                <div class="bt-reason">{{ bt.reason }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Bite Alerts (if any) -->
+    {% if forecast.bite_alerts %}
+    <div class="bite-alerts" style="margin:0 1rem 1rem">
+        {% for ba in forecast.bite_alerts %}
+        <div class="bite-alert bite-alert--{{ ba.type }}">
+            <div class="bite-alert-icon">
+                {% if ba.type == 'hot' %}<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 3-2 6-2 9a4 4 0 1 0 8 0c0-3-3-6-2-9"/></svg>
+                {% elif ba.type == 'excellent' %}<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                {% else %}<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {% endif %}
+            </div>
+            <div class="bite-alert-body">
+                <strong>{{ ba.title }}</strong>
+                <span>{{ ba.message }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ============================================================
+         3. 24-HOUR ACTIVITY TIMELINE
+         ============================================================ -->
+    {% if forecast.activity_timeline %}
+    <section class="timeline-section-v2" aria-label="24-hour activity forecast">
+        <h2>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            24-Hour Activity
+        </h2>
+        <div class="activity-timeline">
+            <div class="timeline-bars">
+                {% for t in forecast.activity_timeline %}
+                <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
+                    <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
+                    {% if t.hour % 3 == 0 %}
+                    <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="timeline-legend">
+                <span class="tl-key tl-key--prime"></span> Prime
+                <span class="tl-key tl-key--high"></span> High
+                <span class="tl-key tl-key--med"></span> Moderate
+                <span class="tl-key tl-key--low"></span> Low
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ============================================================
+         4. TOP 5 SPECIES BITING
+         ============================================================ -->
+    {% if forecast.species %}
+    <section class="top-species-section" aria-label="Top species biting now">
+        <div class="top-species-header">
+            <h2>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/><path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/><path d="M6.5 12h11"/><path d="M17.5 12c1.5 1.5 3 2.5 4.5 2.5-.5-1.5-.5-3.5 0-5-1.5 0-3 1-4.5 2.5z"/></svg>
+                What&rsquo;s Biting
+            </h2>
+            {% if forecast.species|length > 5 %}
+            <button class="top-species-viewall" type="button" id="view-all-species-btn" aria-expanded="false" aria-controls="full-species-panel">
+                View All ({{ forecast.species|length }})
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
             {% endif %}
         </div>
-    </header>
-    {% include 'partials/_main_nav.html' %}
-    <nav class="main-nav" aria-label="Forecast sections">
-        <div class="main-nav-tabs" role="tablist" aria-label="Forecast sections" id="dash-tabs">
-            <button class="dash-tab" data-tab="today" role="tab" aria-selected="true" aria-controls="panel-today" id="tab-today">Today</button>
-            <button class="dash-tab" data-tab="species" role="tab" aria-selected="false" aria-controls="panel-species" id="tab-species">Species</button>
-            <button class="dash-tab" data-tab="tides" role="tab" aria-selected="false" aria-controls="panel-tides" id="tab-tides">Conditions</button>
-            <button class="dash-tab" data-tab="plan" role="tab" aria-selected="false" aria-controls="panel-plan" id="tab-plan">Plan</button>
-        </div>
-        <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize sections">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-            <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Sections</span>
-        </button>
-    </nav>
 
-    <main id="main-content" role="main">
-
-        <!-- Weather Alerts (always visible, outside tabs) -->
-        {% set all_alerts = (forecast.alerts or []) + (forecast.state_alerts or []) %}
-        {% if all_alerts %}
-        {% set ns = namespace(seen=[], top_severity='moderate') %}
-        {% for alert in all_alerts %}{% if alert.event not in ns.seen %}{% set ns.seen = ns.seen + [alert.event] %}{% if alert.severity|lower in ('extreme','warning','severe') %}{% set ns.top_severity = alert.severity|lower %}{% endif %}{% endif %}{% endfor %}
-        {% set unique_count = ns.seen|length %}
-        <div class="alerts-banner alerts-banner--collapsed alert-{{ ns.top_severity }}" role="region" aria-label="Weather alerts">
-            <button class="alerts-summary-btn" type="button" onclick="toggleAlerts(this)" aria-expanded="false" aria-controls="alerts-detail">
-                <span class="alerts-summary-icon">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                </span>
-                <span class="alerts-summary-text">
-                    {% if unique_count == 1 %}
-                    {{ ns.seen[0] }}
-                    {% else %}
-                    {{ unique_count }} weather alerts active — {{ ns.seen[0] }}{% if unique_count > 1 %} + {{ unique_count - 1 }} more{% endif %}
-                    {% endif %}
-                </span>
-                <span class="alerts-toggle-chevron" aria-hidden="true">&#9660;</span>
-            </button>
-            <div class="alerts-detail" id="alerts-detail" hidden>
-                {% set ns2 = namespace(seen=[]) %}
-                {% for alert in all_alerts %}{% if alert.event not in ns2.seen %}{% set ns2.seen = ns2.seen + [alert.event] %}
-                <div class="alert-item alert-{{ alert.severity|lower }}">
-                    <div class="alert-body">
-                        <strong class="alert-event">{{ alert.event }}</strong>
-                        <span class="alert-headline">{{ alert.headline }}</span>
-                    </div>
+        <div class="top-species-grid" id="top-species-grid">
+            {% for sp in forecast.species[:5] %}
+            {% set activity_lower = sp.activity|lower %}
+            <div class="top-species-row">
+                <div class="tsr-rank tsr-rank--{{ loop.index }}">{{ loop.index }}</div>
+                <div class="tsr-info">
+                    <span class="tsr-name">{{ sp.name }}</span>
+                    <span class="tsr-bait">
+                        {% if sp.bait %}{{ sp.bait[:50] }}{% if sp.bait|length > 50 %}&hellip;{% endif %}{% else %}&mdash;{% endif %}
+                    </span>
                 </div>
-                {% endif %}{% endfor %}
+                <span class="tsr-badge tsr-badge--{{ activity_lower }}">{{ sp.activity }}</span>
             </div>
+            {% endfor %}
         </div>
+
+        {% if forecast.species|length > 5 %}
+        <button class="top-species-expand-btn" type="button" id="species-expand-btn" aria-expanded="false" aria-controls="full-species-panel">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" id="species-btn-icon"><polyline points="6 9 12 15 18 9"/></svg>
+            View Full Species Forecast
+        </button>
         {% endif %}
+    </section>
 
-        <!-- ============================================================
-             TAB: TODAY
-             Quick conditions summary for checking before you go out
-             ============================================================ -->
-        {% set wind_str = forecast.conditions.wind or '' %}
-        {% set wind_speed = wind_str.split(' ')[0].split('-')[0] | int %}
-        {% if 'calm' in wind_str.lower() or wind_speed == 0 %}
-            {% set wind_class = 'calm' %}{% set wind_label = 'Calm Seas' %}
-        {% elif wind_speed <= 8 %}
-            {% set wind_class = 'light' %}{% set wind_label = 'Light Wind' %}
-        {% elif wind_speed <= 15 %}
-            {% set wind_class = 'moderate' %}{% set wind_label = 'Moderate Wind' %}
-        {% elif wind_speed <= 25 %}
-            {% set wind_class = 'strong' %}{% set wind_label = 'Strong Wind' %}
-        {% else %}
-            {% set wind_class = 'gale' %}{% set wind_label = 'Gale Warning' %}
-        {% endif %}
+    <!-- Full species list (hidden by default) -->
+    <div id="full-species-panel" class="full-species-list" aria-label="Full species forecast" hidden>
+        {% include 'partials/_species.html' %}
+    </div>
+    {% endif %}
 
-        <div class="dash-panel active" id="panel-today" role="tabpanel" aria-labelledby="tab-today">
+    <!-- ============================================================
+         5. SECONDARY DATA — COLLAPSIBLE SECTIONS
+         ============================================================ -->
 
-            <div class="dash-section" data-section-id="conditions-hero" data-section-label="Conditions Summary" data-section-tab="today">
-                <section class="conditions-hero" aria-label="Current conditions summary">
-                    <div class="conditions-hero-header">
-                        <div class="conditions-hero-label">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-                            Today's Forecast
+    <!-- 3-Day Outlook -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                3-Day Outlook
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_outlook.html' %}
+        </div>
+    </details>
+
+    <!-- Tides -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                Tide Charts
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_tides.html' %}
+        </div>
+    </details>
+
+    <!-- Marine Conditions (detailed) -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                Marine Conditions
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_conditions.html' %}
+        </div>
+    </details>
+
+    <!-- Solunar Times -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Solunar Times
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_solunar.html' %}
+        </div>
+    </details>
+
+    <!-- Fishing Plan (rigs, tips, bait) -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/></svg>
+                Fishing Plan
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% if forecast.rig_recommendations %}
+            <section class="rig-section">
+                <h2>Recommended Rigs</h2>
+                <p class="section-sub">Matched to species biting now</p>
+                <div class="rig-cards">
+                    {% for rig in forecast.rig_recommendations %}
+                    <div class="rig-card">
+                        <h3>{{ rig.name }}</h3>
+                        {% if rig.image %}
+                        <div class="rig-diagram"><img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy"></div>
+                        {% endif %}
+                        <p class="rig-desc">{{ rig.description }}</p>
+                        <div class="rig-targets">
+                            <span class="rig-targets-label">Good for:</span>
+                            {% for t in rig.targets %}<span class="rig-target-tag">{{ t }}</span>{% endfor %}
                         </div>
-                        <span class="conditions-hero-location">{{ forecast.location_name or 'Your Location' }}</span>
-                    </div>
-                    {% if forecast.conditions.verdict %}
-                    <div class="conditions-hero-verdict">
-                        <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }}">{{ forecast.conditions.verdict }}</span>
-                        {% if forecast.conditions.summary %}
-                        <p class="verdict-summary">{{ forecast.conditions.summary }}</p>
+                        <dl class="rig-specs">
+                            <dt>Mainline</dt><dd>{{ rig.mainline }}</dd>
+                            <dt>Leader</dt><dd>{{ rig.leader }}</dd>
+                            <dt>Hook</dt><dd>{{ rig.hook }}</dd>
+                            <dt>Sinker</dt><dd>{{ rig.sinker }}</dd>
+                        </dl>
+                        {% if rig.knots %}
+                        <div class="rig-knots">
+                            <h4 class="rig-knots-title">Recommended Knots</h4>
+                            {% for knot in rig.knots %}
+                            <details class="knot-detail">
+                                <summary><strong>{{ knot.name }}</strong><span class="knot-strength">{{ knot.strength }}</span><span class="knot-use">{{ knot.use }}</span></summary>
+                                <p class="knot-steps">{{ knot.steps }}</p>
+                            </details>
+                            {% endfor %}
+                        </div>
                         {% endif %}
                     </div>
-                    {% endif %}
-                    <div class="conditions-hero-divider"></div>
-                    <div class="conditions-hero-grid">
-                        <div class="hero-stat">
-                            <div class="hero-stat-header">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-                                <span class="hero-stat-label">Wind</span>
-                            </div>
-                            <span class="hero-stat-value">{{ forecast.conditions.wind or '—' }}</span>
-                            <span class="wind-quality-badge wind-quality--{{ wind_class }}">{{ wind_label }}</span>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-header">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
-                                <span class="hero-stat-label">Waves</span>
-                            </div>
-                            <span class="hero-stat-value">{{ forecast.conditions.waves or '—' }}</span>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-header">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-                                <span class="hero-stat-label">Water</span>
-                            </div>
-                            <span class="hero-stat-value"><span class="unit-temp" data-f="{{ forecast.conditions.water_temp_f }}">{{ forecast.conditions.water_temp_f }}&deg;F</span></span>
-                            {% if forecast.conditions.water_temp_trend %}
-                            <span class="hero-stat-sub">{{ forecast.conditions.water_temp_trend|title }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-header">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                                <span class="hero-stat-label">Tide</span>
-                            </div>
-                            {% if forecast.tide_state == 'Rising' %}
-                            <span class="tide-state-badge tide-state--rising">
-                                <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
-                                Incoming
-                            </span>
-                            {% elif forecast.tide_state == 'Falling' %}
-                            <span class="tide-state-badge tide-state--falling">
-                                <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
-                                Outgoing
-                            </span>
-                            {% else %}
-                            <span class="hero-stat-value">{{ forecast.tide_state or '—' }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </section>
-            </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
 
-            <div class="dash-section" data-section-id="bite-alerts" data-section-label="Bite Alerts" data-section-tab="today" {% if not forecast.bite_alerts %}data-empty="true"{% endif %}>
-                {% if forecast.bite_alerts %}
-                <div class="bite-alerts">
-                    {% for ba in forecast.bite_alerts %}
-                    <div class="bite-alert bite-alert--{{ ba.type }}">
-                        <div class="bite-alert-icon">
-                            {% if ba.type == 'hot' %}
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 3-2 6-2 9a4 4 0 1 0 8 0c0-3-3-6-2-9"/><path d="M12 22a6 6 0 0 1-6-6c0-4 3-7 3-10h6c0 3 3 6 3 10a6 6 0 0 1-6 6z"/></svg>
-                            {% elif ba.type == 'excellent' %}
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                            {% elif ba.type == 'pressure' %}
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 6v6l4 2"/></svg>
-                            {% else %}
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+            {% if forecast.spot_tips %}
+            <section class="spot-tips-section">
+                <h2>Today&rsquo;s Fishing Tips</h2>
+                <div class="spot-tips-list">
+                    {% for tip in forecast.spot_tips %}
+                    <div class="spot-tip">
+                        <div class="spot-tip-icon">
+                            {% if tip.icon == 'wind' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                            {% elif tip.icon == 'waves' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                            {% elif tip.icon == 'tide' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                            {% elif tip.icon == 'time' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {% elif tip.icon == 'season' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                             {% endif %}
                         </div>
-                        <div class="bite-alert-body">
-                            <strong>{{ ba.title }}</strong>
-                            <span>{{ ba.message }}</span>
+                        <div class="spot-tip-body">
+                            <strong class="spot-tip-title">{{ tip.title }}</strong>
+                            <p class="spot-tip-detail">{{ tip.detail }}</p>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                {% endif %}
-            </div>
+            </section>
+            {% endif %}
 
-            <div class="dash-section" data-section-id="best-windows" data-section-label="Best Fishing Windows" data-section-tab="today" {% if not forecast.best_times %}data-empty="true"{% endif %}>
-                {% if forecast.best_times %}
-                <section class="bite-windows-section">
-                    <h2>
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Best Fishing Windows
-                    </h2>
-                    <div class="best-times-cards">
-                        {% for bt in forecast.best_times %}
-                        <div class="best-time-card best-time--{{ bt.quality|lower }}">
-                            <div class="bt-quality">{{ bt.quality }}</div>
-                            <div class="bt-window">{{ bt.window }}</div>
-                            <div class="bt-reason">{{ bt.reason }}</div>
+            {% if forecast.bait_rankings %}
+            <section class="bait-section">
+                <h2>Natural Bait Recommendations</h2>
+                <div class="bait-list">
+                    {% for item in forecast.bait_rankings[:4] %}
+                    <div class="bait-item" data-bait-name="{{ item.bait|lower }}">
+                        <span class="bait-num">{{ loop.index }}</span>
+                        <div class="bait-info">
+                            <strong>{{ item.bait }}</strong>
+                            <span>{{ item.notes }}</span>
                         </div>
-                        {% endfor %}
                     </div>
-                </section>
-                {% endif %}
-            </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </details>
 
-            <div class="dash-section" data-section-id="timeline" data-section-label="24h Activity Timeline" data-section-tab="today" {% if not forecast.activity_timeline %}data-empty="true"{% endif %}>
-                {% if forecast.activity_timeline %}
-                <section class="hourly-timeline-section">
-                    <h2>24-Hour Activity Forecast</h2>
-                    <p class="section-sub">Today&rsquo;s fishing activity by hour</p>
-                    <div class="activity-timeline">
-                        <div class="timeline-bars">
-                            {% for t in forecast.activity_timeline %}
-                            <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
-                                <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
-                                {% if t.hour % 3 == 0 %}
-                                <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
-                                {% endif %}
-                            </div>
+    <!-- Gear & Safety -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Gear &amp; Safety
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_checklists.html' %}
+        </div>
+    </details>
+
+    <!-- Additional Data (spawning, calendar, forage) -->
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Species Calendar &amp; Spawning
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_spawning.html' %}
+
+            {% if forecast.calendar %}
+            <section class="calendar-section">
+                <h2>Species Calendar</h2>
+                <p class="section-sub">Monthly availability at {{ forecast.location_name or 'this location' }}</p>
+                <div class="calendar-table-wrap">
+                    <table class="calendar-table">
+                        <thead>
+                            <tr>
+                                <th class="cal-species-col">Species</th>
+                                {% for m in ['J','F','M','A','M','J','J','A','S','O','N','D'] %}<th class="cal-month-col">{{ m }}</th>{% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sp in forecast.calendar %}
+                            <tr>
+                                <td class="cal-species-name">{{ sp.name }}</td>
+                                {% for mo in sp.months %}
+                                <td>
+                                    {% if mo.level == 'peak' %}<span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak"></span>
+                                    {% elif mo.level == 'good' %}<span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good"></span>
+                                    {% else %}<span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off"></span>{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
                             {% endfor %}
-                        </div>
-                        <div class="timeline-legend">
-                            <span class="tl-key tl-key--prime"></span> Prime
-                            <span class="tl-key tl-key--high"></span> High
-                            <span class="tl-key tl-key--med"></span> Moderate
-                            <span class="tl-key tl-key--low"></span> Low
-                        </div>
-                    </div>
-                </section>
-                {% endif %}
-            </div>
-
-            <div class="dash-section" data-section-id="outlook" data-section-label="3-Day Outlook" data-section-tab="today">
-                {% include 'partials/_outlook.html' %}
-            </div>
-
-            <p class="dash-panel-empty" id="today-empty">All sections hidden. Tap ⚙ to show sections.</p>
-        </div>
-
-        <!-- ============================================================
-             TAB: SPECIES
-             What's biting and what to use
-             ============================================================ -->
-        <div class="dash-panel" id="panel-species" role="tabpanel" aria-labelledby="tab-species">
-
-            <div class="dash-section" data-section-id="species" data-section-label="Species Rankings" data-section-tab="species">
-                {% include 'partials/_species.html' %}
-            </div>
-
-            <div class="dash-section" data-section-id="bait" data-section-label="Bait Recommendations" data-section-tab="species">
-                <section class="bait-section">
-                    <h2>Natural Bait Recommendations</h2>
-                    <div class="bait-list">
-                        {% for item in forecast.bait_rankings[:4] %}
-                        <div class="bait-item" data-bait-name="{{ item.bait|lower }}">
-                            <span class="bait-num">{{ loop.index }}</span>
-                            <div class="bait-info">
-                                <strong>{{ item.bait }}</strong>
-                                <span>{{ item.notes }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-            </div>
-
-            <div class="dash-section" data-section-id="forage" data-section-label="What's in the Water" data-section-tab="species" {% if not forecast.natural_bait %}data-empty="true"{% endif %}>
-                {% if forecast.natural_bait %}
-                <section class="forage-section">
-                    <h2>What's in the Water</h2>
-                    <p class="section-sub">Natural forage species this month — match your bait</p>
-                    <div class="forage-grid">
-                        {% for bait in forecast.natural_bait %}{% if bait.status == 'available' %}
-                        <div class="forage-item">
-                            <div class="forage-status"><svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="6" fill="var(--sea-green)"/></svg></div>
-                            <div class="forage-info">
-                                <strong class="forage-name">{{ bait.name }}</strong>
-                                <span class="forage-note">{{ bait.note }}</span>
-                            </div>
-                        </div>
-                        {% endif %}{% endfor %}
-                    </div>
-                </section>
-                {% endif %}
-            </div>
-
-            <div class="dash-section" data-section-id="spawning" data-section-label="Spawning Status" data-section-tab="species">
-                {% include 'partials/_spawning.html' %}
-            </div>
-
-            <p class="dash-panel-empty" id="species-empty">All sections hidden. Tap ⚙ to show sections.</p>
-        </div>
-
-        <!-- ============================================================
-             TAB: TIDES
-             Tides, water conditions, solunar
-             ============================================================ -->
-        <div class="dash-panel" id="panel-tides" role="tabpanel" aria-labelledby="tab-tides">
-
-            <div class="dash-section" data-section-id="tides" data-section-label="Today's Tides" data-section-tab="tides">
-                {% include 'partials/_tides.html' %}
-            </div>
-
-            <div class="dash-section" data-section-id="conditions" data-section-label="Marine Conditions" data-section-tab="tides">
-                {% include 'partials/_conditions.html' %}
-            </div>
-
-            <div class="dash-section" data-section-id="solunar" data-section-label="Solunar Times" data-section-tab="tides">
-                {% include 'partials/_solunar.html' %}
-            </div>
-
-            <p class="dash-panel-empty" id="tides-empty">All sections hidden. Tap ⚙ to show sections.</p>
-        </div>
-
-        <!-- ============================================================
-             TAB: PLAN
-             Outlook, tips, spawning, calendar, checklists
-             ============================================================ -->
-        <div class="dash-panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan">
-
-            <div class="dash-section" data-section-id="rigs" data-section-label="Recommended Rigs" data-section-tab="plan" {% if not forecast.rig_recommendations %}data-empty="true"{% endif %}>
-                {% if forecast.rig_recommendations %}
-                <section class="rig-section">
-                    <h2>Recommended Rigs</h2>
-                    <p class="section-sub">Matched to species biting now</p>
-                    <div class="rig-cards">
-                        {% for rig in forecast.rig_recommendations %}
-                        <div class="rig-card">
-                            <h3>{{ rig.name }}</h3>
-                            {% if rig.image %}
-                            <div class="rig-diagram">
-                                <img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy">
-                            </div>
-                            {% endif %}
-                            <p class="rig-desc">{{ rig.description }}</p>
-                            <div class="rig-targets">
-                                <span class="rig-targets-label">Good for:</span>
-                                {% for t in rig.targets %}<span class="rig-target-tag">{{ t }}</span>{% endfor %}
-                            </div>
-                            <dl class="rig-specs">
-                                <dt>Mainline</dt><dd>{{ rig.mainline }}</dd>
-                                <dt>Leader</dt><dd>{{ rig.leader }}</dd>
-                                <dt>Hook</dt><dd>{{ rig.hook }}</dd>
-                                <dt>Sinker</dt><dd>{{ rig.sinker }}</dd>
-                            </dl>
-                            {% if rig.knots %}
-                            <div class="rig-knots">
-                                <h4 class="rig-knots-title">Recommended Knots</h4>
-                                {% for knot in rig.knots %}
-                                <details class="knot-detail">
-                                    <summary><strong>{{ knot.name }}</strong><span class="knot-strength">{{ knot.strength }}</span><span class="knot-use">{{ knot.use }}</span></summary>
-                                    <p class="knot-steps">{{ knot.steps }}</p>
-                                </details>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-                {% endif %}
-            </div>
-
-            <div class="dash-section" data-section-id="spot-tips" data-section-label="Fishing Tips" data-section-tab="plan" {% if not forecast.spot_tips %}data-empty="true"{% endif %}>
-                {% if forecast.spot_tips %}
-                <section class="spot-tips-section">
-                    <h2>Today's Fishing Tips</h2>
-                    <div class="spot-tips-list">
-                        {% for tip in forecast.spot_tips %}
-                        <div class="spot-tip">
-                            <div class="spot-tip-icon">
-                                {% if tip.icon == 'wind' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-                                {% elif tip.icon == 'waves' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
-                                {% elif tip.icon == 'tide' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                                {% elif tip.icon == 'time' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                {% elif tip.icon == 'season' %}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                {% endif %}
-                            </div>
-                            <div class="spot-tip-body">
-                                <strong class="spot-tip-title">{{ tip.title }}</strong>
-                                <p class="spot-tip-detail">{{ tip.detail }}</p>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-                {% endif %}
-            </div>
-
-            <div class="dash-section" data-section-id="calendar" data-section-label="Species Calendar" data-section-tab="plan" {% if not forecast.calendar %}data-empty="true"{% endif %}>
-                {% if forecast.calendar %}
-                <section class="calendar-section">
-                    <h2>Species Calendar</h2>
-                    <p class="section-sub">Monthly availability at {{ forecast.location_name or 'this location' }}</p>
-                    <div class="calendar-table-wrap">
-                        <table class="calendar-table">
-                            <thead>
-                                <tr>
-                                    <th class="cal-species-col">Species</th>
-                                    {% for m in ['J','F','M','A','M','J','J','A','S','O','N','D'] %}<th class="cal-month-col">{{ m }}</th>{% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sp in forecast.calendar %}
-                                <tr>
-                                    <td class="cal-species-name">{{ sp.name }}</td>
-                                    {% for mo in sp.months %}
-                                    <td>
-                                        {% if mo.level == 'peak' %}<span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak season"></span>
-                                        {% elif mo.level == 'good' %}<span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good season"></span>
-                                        {% else %}<span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off season"></span>{% endif %}
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="calendar-legend">
-                        <span class="cal-legend-item"><span class="cal-dot cal-dot--peak"></span> Peak</span>
-                        <span class="cal-legend-item"><span class="cal-dot cal-dot--good"></span> Good</span>
-                        <span class="cal-legend-item"><span class="cal-dot cal-dot--off"></span> Off season</span>
-                    </div>
-                </section>
-                {% endif %}
-            </div>
-
-            <div class="dash-section" data-section-id="checklists" data-section-label="Gear Checklist" data-section-tab="plan">
-                {% include 'partials/_checklists.html' %}
-            </div>
-
-            <p class="dash-panel-empty" id="plan-empty">All sections hidden. Tap ⚙ to show sections.</p>
-        </div>
-
-        <!-- Share & Refresh (always visible) -->
-        <section class="share-section">
-            <h2>Share This Forecast</h2>
-            <div class="share-buttons">
-                <button type="button" class="share-btn share-btn--link" onclick="shareLink()" title="Copy shareable link">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                    <span>Copy Link</span>
-                </button>
-                <button type="button" class="share-btn share-btn--text" onclick="shareText()" title="Copy forecast summary">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h10M7 17h6"/></svg>
-                    <span>Copy Summary</span>
-                </button>
-                <button type="button" class="share-btn share-btn--print" onclick="window.print()" title="Print forecast">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    <span>Print Forecast</span>
-                </button>
-            </div>
-            <div id="share-toast" class="share-toast" style="display:none;" role="status" aria-live="polite">Copied!</div>
-        </section>
-
-        <section class="refresh">
-            <form method="post" action="{{ url_for('api.refresh') }}" id="refresh-form" onsubmit="handleRefreshSubmit(this)">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" id="refresh-btn">
-                    <span id="refresh-btn-label">Refresh Forecast</span>
-                    <span id="refresh-btn-spinner" style="display:none;" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="spin-icon" style="vertical-align:-3px; margin-left:0.25rem;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                        Refreshing…
-                    </span>
-                </button>
-            </form>
-            <p class="timestamp">
-                Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}
-                <span id="auto-refresh-note"></span>
-            </p>
-        </section>
-
-        <!-- ============================================================
-             CUSTOMIZE DASHBOARD DRAWER
-             ============================================================ -->
-        <div class="customize-overlay" id="customize-overlay" aria-hidden="true"></div>
-        <div class="customize-drawer" id="customize-drawer" role="dialog" aria-modal="true" aria-labelledby="customize-title" aria-hidden="true">
-            <div class="customize-drawer-handle" aria-hidden="true"></div>
-            <div class="customize-drawer-inner">
-                <div class="customize-hdr">
-                    <h2 id="customize-title">Customize Dashboard</h2>
-                    <button class="customize-close" id="customize-close" aria-label="Close customize panel">&times;</button>
+                        </tbody>
+                    </table>
                 </div>
-                <p class="customize-hint">Toggle sections on/off and drag to reorder.</p>
-                <div class="customize-tab-selector" id="customize-tab-selector" role="group" aria-label="Select tab to customize">
-                    <button class="cust-tab-btn active" data-cust-tab="today">Today</button>
-                    <button class="cust-tab-btn" data-cust-tab="species">Species</button>
-                    <button class="cust-tab-btn" data-cust-tab="tides">Tides</button>
-                    <button class="cust-tab-btn" data-cust-tab="plan">Plan</button>
+                <div class="calendar-legend">
+                    <span class="cal-legend-item"><span class="cal-dot cal-dot--peak"></span> Peak</span>
+                    <span class="cal-legend-item"><span class="cal-dot cal-dot--good"></span> Good</span>
+                    <span class="cal-legend-item"><span class="cal-dot cal-dot--off"></span> Off season</span>
                 </div>
-                <ul class="customize-section-list" id="customize-section-list" aria-label="Dashboard sections"></ul>
-                <div class="customize-footer">
-                    <button class="cust-reset-btn" id="cust-reset-btn" type="button">Reset to defaults</button>
-                    <button class="cust-done-btn" id="cust-done-btn" type="button">Done</button>
+            </section>
+            {% endif %}
+
+            {% if forecast.natural_bait %}
+            <section class="forage-section">
+                <h2>What&rsquo;s in the Water</h2>
+                <p class="section-sub">Natural forage this month &mdash; match your bait</p>
+                <div class="forage-grid">
+                    {% for bait in forecast.natural_bait %}{% if bait.status == 'available' %}
+                    <div class="forage-item">
+                        <div class="forage-status"><svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="6" fill="var(--sea-green)"/></svg></div>
+                        <div class="forage-info">
+                            <strong class="forage-name">{{ bait.name }}</strong>
+                            <span class="forage-note">{{ bait.note }}</span>
+                        </div>
+                    </div>
+                    {% endif %}{% endfor %}
                 </div>
-            </div>
+            </section>
+            {% endif %}
         </div>
+    </details>
 
-    </main>
+    <!-- Share & Refresh -->
+    <section class="share-section">
+        <h2>Share This Forecast</h2>
+        <div class="share-buttons">
+            <button type="button" class="share-btn share-btn--link" onclick="shareLink()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Copy Link</span>
+            </button>
+            <button type="button" class="share-btn share-btn--text" onclick="shareText()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h10M7 17h6"/></svg>
+                <span>Copy Summary</span>
+            </button>
+            <button type="button" class="share-btn share-btn--print" onclick="window.print()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Print</span>
+            </button>
+        </div>
+        <div id="share-toast" class="share-toast" style="display:none;" role="status" aria-live="polite">Copied!</div>
+    </section>
 
-    <footer>
-        <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; {{ forecast.location_name or 'Your Fishing Forecast' }}</p>
-    </footer>
+    <section class="refresh">
+        <form method="post" action="{{ url_for('api.refresh') }}" id="refresh-form" onsubmit="handleRefreshSubmit(this)">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" id="refresh-btn">
+                <span id="refresh-btn-label">Refresh Forecast</span>
+                <span id="refresh-btn-spinner" style="display:none;" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="spin-icon" style="vertical-align:-2px; margin-right:0.25rem;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    Refreshing&hellip;
+                </span>
+            </button>
+        </form>
+        <p class="timestamp">Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}<span id="auto-refresh-note"></span></p>
+    </section>
 
-    <script>
-    /* ---- Alerts collapse/expand ---- */
-    function toggleAlerts(btn) {
-        var detail = document.getElementById('alerts-detail');
-        if (!detail) return;
-        var expanded = btn.getAttribute('aria-expanded') === 'true';
-        btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-        detail.hidden = expanded;
-        var chevron = btn.querySelector('.alerts-toggle-chevron');
-        if (chevron) chevron.innerHTML = expanded ? '&#9660;' : '&#9650;';
+    <!-- Regulations Modal (rendered by species partial JS) -->
+    <div class="reg-modal" id="reg-modal" role="dialog" aria-modal="true" aria-labelledby="reg-modal-title" aria-hidden="true" hidden>
+        <div class="reg-modal__card">
+            <div class="reg-modal__hdr">
+                <h3 id="reg-modal-title" class="reg-modal__title">Fishing Regulations</h3>
+                <button class="reg-modal__close" id="reg-modal-close" aria-label="Close regulations">&times;</button>
+            </div>
+            <div class="reg-modal__body" id="reg-modal-body"></div>
+        </div>
+    </div>
+
+</main>
+
+<footer>
+    <p>&copy; {{ forecast.generated_at[:4] }} Surf &amp; Pier Fishing Outlook &mdash; {{ forecast.location_name or 'Your Fishing Forecast' }}</p>
+</footer>
+
+<script>
+/* ---- HTML escape helper ---- */
+function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ---- Alerts collapse/expand ---- */
+function toggleAlerts(btn) {
+    var detail = document.getElementById('alerts-detail');
+    if (!detail) return;
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+    detail.hidden = expanded;
+    var chevron = btn.querySelector('.alerts-toggle-chevron');
+    if (chevron) chevron.innerHTML = expanded ? '&#9660;' : '&#9650;';
+}
+
+/* ---- Auth state ---- */
+var LOGGED_IN = {{ 'true' if user else 'false' }};
+
+/* ---- Favorite Locations (localStorage) ---- */
+var FAV_KEY = 'favorite_locations';
+var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
+var CURRENT_LOC_STATE = {{ (forecast.location_state or ((forecast.location_name.split(',')[-1].strip()) if forecast.location_name and ',' in forecast.location_name else ''))|tojson }};
+var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
+var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
+
+function getFavorites() {
+    try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
+    catch(e) { return []; }
+}
+
+function saveFavorites(favs) {
+    localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+    syncToServer();
+}
+
+function isFavorite() {
+    return getFavorites().some(function(f) { return f.id === CURRENT_LOC_ID; });
+}
+
+function toggleFavorite() {
+    var favs = getFavorites();
+    var idx = favs.findIndex(function(f) { return f.id === CURRENT_LOC_ID; });
+    if (idx >= 0) {
+        favs.splice(idx, 1);
+    } else {
+        favs.push({ id: CURRENT_LOC_ID, name: CURRENT_LOC_NAME });
+        if (favs.length > 8) favs = favs.slice(-8);
     }
-
-    /* ---- HTML escape helper (used throughout this script) ---- */
-    function esc(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    /* ---- Auth state ---- */
-    var LOGGED_IN = {{ 'true' if user else 'false' }};
-
-    /* ---- Favorite Locations (localStorage) ---- */
-    var FAV_KEY = 'favorite_locations';
-    var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
-    var CURRENT_LOC_STATE = {{ (forecast.location_state or ((forecast.location_name.split(',')[-1].strip()) if forecast.location_name and ',' in forecast.location_name else ''))|tojson }};
-    var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
-    var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
-
-    function getFavorites() {
-        try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
-        catch(e) { return []; }
-    }
-
-    function saveFavorites(favs) {
-        localStorage.setItem(FAV_KEY, JSON.stringify(favs));
-        syncToServer();
-    }
-
-    function isFavorite() {
-        return getFavorites().some(function(f) { return f.id === CURRENT_LOC_ID; });
-    }
-
-    function toggleFavorite() {
-        var favs = getFavorites();
-        var idx = favs.findIndex(function(f) { return f.id === CURRENT_LOC_ID; });
-        if (idx >= 0) {
-            favs.splice(idx, 1);
-        } else {
-            favs.push({ id: CURRENT_LOC_ID, name: CURRENT_LOC_NAME });
-            if (favs.length > 8) favs = favs.slice(-8);
-        }
-        saveFavorites(favs);
-        renderFavorites();
-    }
-
-    function renderFavorites() {
-        var favs = getFavorites();
-        var isFav = isFavorite();
-        var toggle = document.getElementById('fav-toggle');
-        if (toggle) {
-            toggle.classList.toggle('fav-toggle--active', isFav);
-        }
-        var bar = document.getElementById('favorites-bar');
-        if (!bar) return;
-        if (favs.length === 0) { bar.innerHTML = ''; return; }
-        var html = '';
-        favs.forEach(function(f) {
-            var active = f.id === CURRENT_LOC_ID ? ' fav-chip--active' : '';
-            var shortName = f.name.split(',')[0];
-            html += '<a href="/f/' + encodeURIComponent(f.id) + '" class="fav-chip' + active + '">' + esc(shortName) + '</a>';
-        });
-        bar.innerHTML = html;
-    }
-
+    saveFavorites(favs);
     renderFavorites();
+}
 
-    /* ---- Fishing Profile (account-backed) ---- */
-    var SERVER_PROFILE = {{ (profile or {})|tojson }};
-
-    function getProfile() {
-        if (!SERVER_PROFILE || !Object.keys(SERVER_PROFILE).length) return null;
-        return SERVER_PROFILE;
+function renderFavorites() {
+    var favs = getFavorites();
+    var isFav = isFavorite();
+    var toggle = document.getElementById('fav-toggle');
+    if (toggle) {
+        toggle.classList.toggle('fav-toggle--active', isFav);
+        var iconOff = toggle.querySelector('.fav-icon--off');
+        var iconOn  = toggle.querySelector('.fav-icon--on');
+        if (iconOff) iconOff.style.display = isFav ? 'none' : '';
+        if (iconOn)  iconOn.style.display  = isFav ? '' : 'none';
     }
-
-    function buildProfileParams(profile) {
-        var params = new URLSearchParams(window.location.search);
-        var ft = (profile.fishing_types || profile.fishing_type || []).join(',');
-        var tg = (profile.targets || []).join(',');
-        if (ft) params.set('fishing_types', ft);
-        else params.delete('fishing_types');
-        if (tg) params.set('targets', tg);
-        else params.delete('targets');
-        return params;
+    var bar = document.getElementById('favorites-bar');
+    var wrap = document.getElementById('favorites-bar-wrap');
+    if (!bar) return;
+    if (favs.length === 0) {
+        bar.innerHTML = '';
+        if (wrap) wrap.style.display = 'none';
+        return;
     }
+    if (wrap) wrap.style.display = '';
+    var html = '';
+    favs.forEach(function(f) {
+        var active = f.id === CURRENT_LOC_ID ? ' fav-chip--active' : '';
+        var shortName = f.name.split(',')[0];
+        html += '<a href="/f/' + encodeURIComponent(f.id) + '" class="fav-chip' + active + '">' + esc(shortName) + '</a>';
+    });
+    bar.innerHTML = html;
+}
 
-    function profileParamsMatch(profile) {
-        var params = new URLSearchParams(window.location.search);
-        var currentFt = params.get('fishing_types') || '';
-        var currentTg = params.get('targets') || '';
-        var expectedFt = (profile.fishing_types || profile.fishing_type || []).join(',');
-        var expectedTg = (profile.targets || []).join(',');
-        return currentFt === expectedFt && currentTg === expectedTg;
-    }
+renderFavorites();
 
-    function applyBaitFilters() {
-        // Sort bait items by relevance to user's bait method preferences
-        // instead of hiding/dimming non-matching items
-        var profile = getProfile();
-        if (!profile || !profile.completed) return;
+/* ---- Fishing Profile ---- */
+var SERVER_PROFILE = {{ (profile or {})|tojson }};
 
-        var liveKeywords = ['live shrimp', 'live finger', 'live mullet', 'live menhaden', 'live blue runner',
-                            'live cigar', 'live crab', 'live baitfish', 'live eel', 'live minnow', 'live pogies'];
-        var lureKeywords = ['jig', 'spoon', 'plug', 'lure', 'feather', 'cedar plug', 'trolling',
-                            'dart', 'artificial', 'fishbites'];
-        var cutKeywords = ['cut ', 'blood', 'squid', 'clam', 'crab piece', 'shrimp piece', 'sand flea',
-                           'fiddler', 'fresh shrimp', 'mussel'];
+function getProfile() {
+    if (!SERVER_PROFILE || !Object.keys(SERVER_PROFILE).length) return null;
+    return SERVER_PROFILE;
+}
 
-        // Score a bait method preference: yes=2, sometimes=1, no=0
-        function methodScore(pref) {
-            if (pref === 'yes') return 2;
-            if (pref === 'sometimes') return 1;
-            return 0;
-        }
+function buildProfileParams(profile) {
+    var params = new URLSearchParams(window.location.search);
+    var ft = (profile.fishing_types || profile.fishing_type || []).join(',');
+    var tg = (profile.targets || []).join(',');
+    if (ft) params.set('fishing_types', ft);
+    else params.delete('fishing_types');
+    if (tg) params.set('targets', tg);
+    else params.delete('targets');
+    return params;
+}
 
-        // Sort bait items within the bait list by profile relevance
-        var baitList = document.querySelector('.bait-list');
-        if (baitList) {
-            var baitItems = Array.prototype.slice.call(baitList.querySelectorAll('.bait-item[data-bait-name]'));
+function profileParamsMatch(profile) {
+    var params = new URLSearchParams(window.location.search);
+    var currentFt = params.get('fishing_types') || '';
+    var currentTg = params.get('targets') || '';
+    var expectedFt = (profile.fishing_types || profile.fishing_type || []).join(',');
+    var expectedTg = (profile.targets || []).join(',');
+    return currentFt === expectedFt && currentTg === expectedTg;
+}
 
-            baitItems.forEach(function(item, idx) {
-                var name = item.getAttribute('data-bait-name') || '';
-                var isLive = liveKeywords.some(function(k) { return name.indexOf(k) >= 0; });
-                var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
-                var isCut = cutKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+function applyBaitFilters() {
+    var profile = getProfile();
+    if (!profile || !profile.completed) return;
+    var liveKeywords = ['live shrimp','live finger','live mullet','live menhaden','live blue runner','live cigar','live crab','live baitfish','live eel','live minnow','live pogies'];
+    var lureKeywords = ['jig','spoon','plug','lure','feather','cedar plug','trolling','dart','artificial','fishbites'];
+    var cutKeywords  = ['cut ','blood','squid','clam','crab piece','shrimp piece','sand flea','fiddler','fresh shrimp','mussel'];
+    function methodScore(pref) { return pref === 'yes' ? 2 : pref === 'sometimes' ? 1 : 0; }
 
-                // Calculate relevance: highest method score for this bait's categories
-                var score = 0;
-                if (isLive) score = Math.max(score, methodScore(profile.live_bait));
-                if (isLure) score = Math.max(score, methodScore(profile.lures));
-                if (isCut) score = Math.max(score, methodScore(profile.cut_bait));
-                // If bait doesn't match any keyword category, treat as neutral (score 1)
-                if (!isLive && !isLure && !isCut) score = 1;
-
-                item._profileScore = score;
-                item._origIndex = idx;
-            });
-
-            // Stable sort: by profile score desc, then original index asc
-            baitItems.sort(function(a, b) {
-                if (b._profileScore !== a._profileScore) return b._profileScore - a._profileScore;
-                return a._origIndex - b._origIndex;
-            });
-
-            // Re-append in sorted order and update rank numbers
-            baitItems.forEach(function(item, idx) {
-                baitList.appendChild(item);
-                var numEl = item.querySelector('.bait-num');
-                if (numEl) numEl.textContent = idx + 1;
-            });
-        }
-
-        // Highlight matching species bait recommendations
-        var speciesCards = document.querySelectorAll('.species-card[data-species-bait]');
-        speciesCards.forEach(function(card) {
-            var baitText = card.getAttribute('data-species-bait') || '';
-            var metaBait = card.querySelector('.meta-item--bait');
-            if (!metaBait) return;
-
-            var hasLive = liveKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
-            var hasLure = lureKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
-            var hasCut = cutKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
-
-            var tips = [];
-            if (hasLive && (profile.live_bait === 'yes' || profile.live_bait === 'sometimes')) tips.push('live bait');
-            if (hasLure && (profile.lures === 'yes' || profile.lures === 'sometimes')) tips.push('lures');
-            if (hasCut && (profile.cut_bait === 'yes' || profile.cut_bait === 'sometimes')) tips.push('cut bait');
-
-            if (tips.length > 0) {
-                var badge = document.createElement('span');
-                badge.className = 'personalized-label';
-                badge.textContent = 'Your methods: ' + tips.join(', ');
-                metaBait.appendChild(badge);
-            }
+    var baitList = document.querySelector('.bait-list');
+    if (baitList) {
+        var baitItems = Array.prototype.slice.call(baitList.querySelectorAll('.bait-item[data-bait-name]'));
+        baitItems.forEach(function(item, idx) {
+            var name = item.getAttribute('data-bait-name') || '';
+            var isLive = liveKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+            var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
+            var isCut  = cutKeywords.some(function(k)  { return name.indexOf(k) >= 0; });
+            var score = 0;
+            if (isLive) score = Math.max(score, methodScore(profile.live_bait));
+            if (isLure) score = Math.max(score, methodScore(profile.lures));
+            if (isCut)  score = Math.max(score, methodScore(profile.cut_bait));
+            if (!isLive && !isLure && !isCut) score = 1;
+            item._profileScore = score;
+            item._origIndex = idx;
+        });
+        baitItems.sort(function(a,b) {
+            if (b._profileScore !== a._profileScore) return b._profileScore - a._profileScore;
+            return a._origIndex - b._origIndex;
+        });
+        baitItems.forEach(function(item, idx) {
+            baitList.appendChild(item);
+            var numEl = item.querySelector('.bait-num');
+            if (numEl) numEl.textContent = idx + 1;
         });
     }
 
-    // On page load: sync profile to URL for server-side filtering
-    (function() {
-        var profile = getProfile();
-        if (!profile || !profile.completed) {
-            // First visit — redirect to profile setup
-            var profilePrompted = sessionStorage.getItem('profile_prompted');
-            if (!profilePrompted) {
-                sessionStorage.setItem('profile_prompted', 'true');
-                window.location.href = '/profile';
-                return;
-            }
+    var speciesCards = document.querySelectorAll('.species-card[data-species-bait]');
+    speciesCards.forEach(function(card) {
+        var baitText = card.getAttribute('data-species-bait') || '';
+        var metaBait = card.querySelector('.meta-item--bait');
+        if (!metaBait) return;
+        var hasLive = liveKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
+        var hasLure = lureKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
+        var hasCut  = cutKeywords.some(function(k)  { return baitText.indexOf(k) >= 0; });
+        var tips = [];
+        if (hasLive && (profile.live_bait === 'yes' || profile.live_bait === 'sometimes')) tips.push('live bait');
+        if (hasLure && (profile.lures === 'yes' || profile.lures === 'sometimes')) tips.push('lures');
+        if (hasCut  && (profile.cut_bait === 'yes' || profile.cut_bait === 'sometimes')) tips.push('cut bait');
+        if (tips.length > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'personalized-label';
+            badge.textContent = 'Your methods: ' + tips.join(', ');
+            metaBait.appendChild(badge);
+        }
+    });
+}
+
+(function() {
+    var profile = getProfile();
+    if (!profile || !profile.completed) {
+        var profilePrompted = sessionStorage.getItem('profile_prompted');
+        if (!profilePrompted) {
+            sessionStorage.setItem('profile_prompted', 'true');
+            window.location.href = '/profile';
             return;
         }
+        return;
+    }
+    if (!profileParamsMatch(profile)) {
+        var params = buildProfileParams(profile);
+        var newUrl = window.location.pathname + '?' + params.toString();
+        window.location.replace(newUrl);
+        return;
+    }
+    applyBaitFilters();
+})();
 
-        // If profile exists but URL doesn't have matching params, redirect
-        // once so the server can filter species for this user
-        if (!profileParamsMatch(profile)) {
-            var params = buildProfileParams(profile);
-            var newUrl = window.location.pathname + '?' + params.toString();
-            window.location.replace(newUrl);
-            return;
-        }
+/* ---- Theme toggle (legacy, called by menu) ---- */
+function toggleTheme() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+    }
+    syncToServer();
+}
 
-        applyBaitFilters();
-    })();
-
-    function toggleTheme() {
-        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDark) {
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
+/* ---- Unit toggle ---- */
+function applyUnits(unit) {
+    var els = document.querySelectorAll('.unit-temp');
+    els.forEach(function(el) {
+        var f = parseFloat(el.getAttribute('data-f'));
+        if (isNaN(f)) return;
+        if (unit === 'C') {
+            var c = Math.round((f - 32) * 5 / 9);
+            el.innerHTML = c + '&deg;C';
         } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
+            el.innerHTML = Math.round(f) + '&deg;F';
         }
-        syncToServer();
+    });
+}
+
+function toggleUnits() {
+    var current = localStorage.getItem('units') || 'F';
+    var next = current === 'F' ? 'C' : 'F';
+    localStorage.setItem('units', next);
+    applyUnits(next);
+    syncToServer();
+}
+
+(function() {
+    var u = localStorage.getItem('units');
+    if (u === 'C') applyUnits('C');
+})();
+
+/* ---- Toast ---- */
+function showToast(msg) {
+    var t = document.getElementById('share-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(function() { t.style.display = 'none'; }, 2200);
+}
+
+/* ---- Share ---- */
+function shareLink() {
+    var shareId = {{ share_id|tojson }};
+    var url = window.location.origin + '/f/' + shareId;
+    if (navigator.share) {
+        navigator.share({ title: 'Fishing Forecast', url: url }).catch(function(){});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() { showToast('Link copied!'); });
+    } else {
+        prompt('Copy this link:', url);
     }
+}
 
-    // Unit toggle (°F ↔ °C)
-    function applyUnits(unit) {
-        var label = document.getElementById('unit-label');
-        var els = document.querySelectorAll('.unit-temp');
-        els.forEach(function(el) {
-            var f = parseFloat(el.getAttribute('data-f'));
-            if (isNaN(f)) return;
-            if (unit === 'C') {
-                var c = Math.round((f - 32) * 5 / 9);
-                el.innerHTML = c + '&deg;C';
-            } else {
-                el.innerHTML = Math.round(f) + '&deg;F';
-            }
-        });
-        if (label) label.textContent = '°' + unit;
-    }
-
-    function toggleUnits() {
-        var current = localStorage.getItem('units') || 'F';
-        var next = current === 'F' ? 'C' : 'F';
-        localStorage.setItem('units', next);
-        applyUnits(next);
-        syncToServer();
-    }
-
-    // Apply saved unit preference
-    (function() {
-        var u = localStorage.getItem('units');
-        if (u === 'C') applyUnits('C');
-    })();
-
-    function showToast(msg) {
-        var t = document.getElementById('share-toast');
-        t.textContent = msg;
-        t.style.display = 'block';
-        setTimeout(function() { t.style.display = 'none'; }, 2200);
-    }
-
-    function shareLink() {
-        var shareId = {{ share_id|tojson }};
-        var url = window.location.origin + '/f/' + shareId;
-        if (navigator.share) {
-            navigator.share({ title: 'Fishing Forecast', url: url }).catch(function(){});
-        } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(url).then(function() {
-                showToast('Link copied!');
-            });
-        } else {
-            prompt('Copy this link:', url);
-        }
-    }
-
-    function shareText() {
-        fetch('{{ url_for("api.share_text") }}')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.text) {
-                    var url = window.location.origin + '/f/' + data.location_id;
-                    var full = data.text + '\n\n' + url;
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(full).then(function() {
-                            showToast('Summary copied!');
-                        });
-                    } else {
-                        prompt('Copy this summary:', full);
-                    }
+function shareText() {
+    fetch('{{ url_for("api.share_text") }}')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.text) {
+                var url = window.location.origin + '/f/' + data.location_id;
+                var full = data.text + '\n\n' + url;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(full).then(function() { showToast('Summary copied!'); });
+                } else {
+                    prompt('Copy this summary:', full);
                 }
-            });
-    }
+            }
+        });
+}
 
-    /* ---- Sync localStorage → server for logged-in users ---- */
-    function syncToServer() {
-        if (!LOGGED_IN) return;
-        var payload = {};
-        var theme = localStorage.getItem('theme');
-        if (theme) payload.theme = theme;
-        var units = localStorage.getItem('units');
-        if (units) payload.units = units;
-        var profile = getProfile();
-        if (profile) payload.fishing_profile = profile;
-        var favs = getFavorites();
-        if (favs.length) payload.favorites = favs;
-        if (CURRENT_LOC_ID) payload.location_id = CURRENT_LOC_ID;
-        if (Object.keys(payload).length === 0) return;
-        fetch('/api/preferences', {
+/* ---- Sync localStorage → server ---- */
+function syncToServer() {
+    if (!LOGGED_IN) return;
+    var payload = {};
+    var theme = localStorage.getItem('theme');
+    if (theme) payload.theme = theme;
+    var units = localStorage.getItem('units');
+    if (units) payload.units = units;
+    var profile = getProfile();
+    if (profile) payload.fishing_profile = profile;
+    var favs = getFavorites();
+    if (favs.length) payload.favorites = favs;
+    if (CURRENT_LOC_ID) payload.location_id = CURRENT_LOC_ID;
+    if (Object.keys(payload).length === 0) return;
+    fetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).catch(function() {});
+}
+syncToServer();
+
+function syncLogToServer() {
+    if (!LOGGED_IN || !CURRENT_LOC_ID) return;
+    if (typeof getLog !== 'function' || typeof saveLog !== 'function') return;
+    var entries = getLog();
+    if (!entries.length) return;
+    entries.forEach(function(e) {
+        if (e.synced) return;
+        fetch('/api/log?location=' + encodeURIComponent(CURRENT_LOC_ID), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).catch(function() {});
-    }
+            body: JSON.stringify({ species: e.species, size: e.size || '', notes: e.notes || '' })
+        }).then(function(r) { if (r.ok) e.synced = true; saveLog(entries); }).catch(function() {});
+    });
+}
+syncLogToServer();
 
-    // Sync once on page load
-    syncToServer();
+/* ---- Refresh ---- */
+function handleRefreshSubmit(form) {
+    var btn = document.getElementById('refresh-btn');
+    var label = document.getElementById('refresh-btn-label');
+    var spinner = document.getElementById('refresh-btn-spinner');
+    if (btn) btn.disabled = true;
+    if (label) label.style.display = 'none';
+    if (spinner) spinner.style.display = 'inline';
+}
 
-    // Also sync fishing log entries to server
-    function syncLogToServer() {
-        if (!LOGGED_IN || !CURRENT_LOC_ID) return;
-        if (typeof getLog !== 'function' || typeof saveLog !== 'function') return;
-        var entries = getLog();
-        if (!entries.length) return;
-        // Send each entry that hasn't been synced yet
-        entries.forEach(function(e) {
-            if (e.synced) return;
-            fetch('/api/log?location=' + encodeURIComponent(CURRENT_LOC_ID), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    species: e.species,
-                    size: e.size || '',
-                    notes: e.notes || ''
-                })
-            }).then(function(r) {
-                if (r.ok) e.synced = true;
-                saveLog(entries);
-            }).catch(function() {});
-        });
-    }
+(function() {
+    var el = document.getElementById('refresh-banner-time');
+    if (!el) return;
+    try {
+        var d = new Date(el.dataset.iso);
+        if (!isNaN(d.getTime())) {
+            el.textContent = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+    } catch(e) {}
+})();
 
-    syncLogToServer();
-
-
-
-    // Refresh button loading state
-    function handleRefreshSubmit(form) {
-        var btn = document.getElementById('refresh-btn');
-        var label = document.getElementById('refresh-btn-label');
-        var spinner = document.getElementById('refresh-btn-spinner');
-        if (btn) btn.disabled = true;
-        if (label) label.style.display = 'none';
-        if (spinner) spinner.style.display = 'inline';
-    }
-
-    // Format the cached-data timestamp in the banner to be human-readable
+if (IS_REFRESHING && CURRENT_LOC_ID) {
     (function() {
-        var el = document.getElementById('refresh-banner-time');
-        if (!el) return;
-        try {
-            var d = new Date(el.dataset.iso);
-            if (!isNaN(d.getTime())) {
-                el.textContent = d.toLocaleString(undefined, {
-                    month: 'short', day: 'numeric',
-                    hour: 'numeric', minute: '2-digit'
-                });
-            }
-        } catch (e) {}
+        var POLL_MS = 3000;
+        var MAX_MS = 120000;
+        var started = Date.now();
+        var statusUrl = '/api/v1/forecast/' + encodeURIComponent(CURRENT_LOC_ID) + '/status';
+        function check() {
+            if (Date.now() - started > MAX_MS) { window.location.href = window.location.pathname; return; }
+            fetch(statusUrl).then(function(r) { return r.json(); }).then(function(data) {
+                var d = data && data.data;
+                if (d && !d.is_refreshing) { window.location.href = window.location.pathname; }
+                else { setTimeout(check, POLL_MS); }
+            }).catch(function() { setTimeout(check, POLL_MS); });
+        }
+        setTimeout(check, POLL_MS);
     })();
+}
 
-    // Poll for refresh completion and reload without the ?cached param when done
-    if (IS_REFRESHING && CURRENT_LOC_ID) {
-        (function() {
-            var POLL_MS = 3000;
-            var MAX_MS = 120000;
-            var started = Date.now();
-            var statusUrl = '/api/v1/forecast/' + encodeURIComponent(CURRENT_LOC_ID) + '/status';
-            function check() {
-                if (Date.now() - started > MAX_MS) {
-                    window.location.href = window.location.pathname;
-                    return;
-                }
-                fetch(statusUrl)
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        var d = data && data.data;
-                        if (d && !d.is_refreshing) {
-                            window.location.href = window.location.pathname;
-                        } else {
-                            setTimeout(check, POLL_MS);
-                        }
-                    })
-                    .catch(function() { setTimeout(check, POLL_MS); });
-            }
-            setTimeout(check, POLL_MS);
-        })();
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+
+(function() {
+    var REFRESH_MS = 30 * 60 * 1000;
+    var note = document.getElementById('auto-refresh-note');
+    var start = Date.now();
+    function updateCountdown() {
+        var elapsed = Date.now() - start;
+        var remaining = Math.max(0, REFRESH_MS - elapsed);
+        var mins = Math.ceil(remaining / 60000);
+        if (remaining <= 0) { if (note) note.textContent = '— refreshing...'; window.location.reload(); return; }
+        if (note && mins <= 5) { note.textContent = '— auto-refresh in ' + mins + ' min'; }
+    }
+    setInterval(updateCountdown, 30000);
+})();
+
+/* ---- Species Expand/Collapse ---- */
+(function() {
+    var expandBtn = document.getElementById('species-expand-btn');
+    var viewAllBtn = document.getElementById('view-all-species-btn');
+    var panel = document.getElementById('full-species-panel');
+    var icon = document.getElementById('species-btn-icon');
+
+    function expandSpecies() {
+        if (!panel) return;
+        panel.hidden = false;
+        panel.classList.add('full-species-list--visible');
+        if (expandBtn) { expandBtn.setAttribute('aria-expanded','true'); expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg> Collapse Species List'; }
+        if (viewAllBtn) viewAllBtn.setAttribute('aria-expanded','true');
+        applyBaitFilters();
     }
 
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(function(){});
+    function collapseSpecies() {
+        if (!panel) return;
+        panel.hidden = true;
+        panel.classList.remove('full-species-list--visible');
+        if (expandBtn) { expandBtn.setAttribute('aria-expanded','false'); expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg> View Full Species Forecast'; }
+        if (viewAllBtn) viewAllBtn.setAttribute('aria-expanded','false');
     }
 
-    // Auto-refresh forecast every 30 minutes
-    (function() {
-        var REFRESH_MS = 30 * 60 * 1000;
-        var note = document.getElementById('auto-refresh-note');
-        var start = Date.now();
-        function updateCountdown() {
-            var elapsed = Date.now() - start;
-            var remaining = Math.max(0, REFRESH_MS - elapsed);
-            var mins = Math.ceil(remaining / 60000);
-            if (remaining <= 0) {
-                if (note) note.textContent = '— refreshing...';
-                window.location.reload();
-                return;
-            }
-            if (note && mins <= 5) {
-                note.textContent = '— auto-refresh in ' + mins + ' min';
-            }
-        }
-        setInterval(updateCountdown, 30000);
-    })();
+    if (expandBtn) expandBtn.addEventListener('click', function() {
+        var isExpanded = this.getAttribute('aria-expanded') === 'true';
+        isExpanded ? collapseSpecies() : expandSpecies();
+    });
+    if (viewAllBtn) viewAllBtn.addEventListener('click', function() {
+        var isExpanded = this.getAttribute('aria-expanded') === 'true';
+        isExpanded ? collapseSpecies() : expandSpecies();
+    });
+})();
 
-    /* ================================================================
-       TAB SWITCHING
-       ================================================================ */
-    (function() {
-        var TAB_KEY = 'dash_active_tab';
-
-        function activateTab(tabId) {
-            // Update tab buttons
-            document.querySelectorAll('.dash-tab[data-tab]').forEach(function(t) {
-                var isActive = t.dataset.tab === tabId;
-                t.classList.toggle('active', isActive);
-                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            });
-            // Update panels
-            document.querySelectorAll('.dash-panel').forEach(function(p) {
-                p.classList.toggle('active', p.id === 'panel-' + tabId);
-            });
-            localStorage.setItem(TAB_KEY, tabId);
-        }
-
-        document.querySelectorAll('.dash-tab[data-tab]').forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                activateTab(this.dataset.tab);
-            });
-        });
-
-        // Restore last active tab
-        var saved = localStorage.getItem(TAB_KEY) || 'today';
-        activateTab(saved);
-    })();
-
-    /* ================================================================
-       DASHBOARD CUSTOMIZATION — toggle + reorder sections
-       ================================================================ */
-    (function() {
-        var PREFS_KEY = 'dash_section_prefs_v2';
-
-        // Default order mirrors the HTML order in each tab panel
-        var DEFAULTS = {
-            today:   ['conditions-hero','bite-alerts','best-windows','timeline','outlook'],
-            species: ['species','bait','forage','spawning'],
-            tides:   ['tides','conditions','solunar'],
-            plan:    ['rigs','spot-tips','calendar','checklists']
-        };
-
-        function loadPrefs() {
-            try {
-                return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
-            } catch(e) { return {}; }
-        }
-
-        function savePrefs(prefs) {
-            localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-        }
-
-        // Returns { tabId: [ {id, visible}, ... ] }
-        function buildFullPrefs() {
-            var stored = loadPrefs();
-            var result = {};
-            Object.keys(DEFAULTS).forEach(function(tab) {
-                // Merge stored order/visibility with defaults (handles new sections)
-                var storedTab = stored[tab] || [];
-                var storedIds = storedTab.map(function(s) { return s.id; });
-                // Start with stored order
-                var merged = storedTab.slice();
-                // Add any defaults not yet in stored
-                DEFAULTS[tab].forEach(function(id) {
-                    if (storedIds.indexOf(id) === -1) {
-                        merged.push({ id: id, visible: true });
-                    }
-                });
-                result[tab] = merged;
-            });
-            return result;
-        }
-
-        function applyPrefs(prefs) {
-            Object.keys(prefs).forEach(function(tab) {
-                var panel = document.getElementById('panel-' + tab);
-                if (!panel) return;
-                var sections = prefs[tab];
-                sections.forEach(function(pref, idx) {
-                    var el = panel.querySelector('[data-section-id="' + pref.id + '"]');
-                    if (!el) return;
-                    // Skip empty sections (no data from server)
-                    if (el.dataset.empty === 'true') return;
-                    el.dataset.hidden = pref.visible ? 'false' : 'true';
-                    el.style.order = idx;
-                });
-                // Show "all hidden" notice if every non-empty section is hidden
-                updateEmptyState(tab, prefs[tab]);
-            });
-        }
-
-        function updateEmptyState(tab, tabPrefs) {
-            var panel = document.getElementById('panel-' + tab);
-            var emptyMsg = document.getElementById(tab + '-empty');
-            if (!panel || !emptyMsg) return;
-            var allHidden = tabPrefs.every(function(pref) {
-                var el = panel.querySelector('[data-section-id="' + pref.id + '"]');
-                if (!el || el.dataset.empty === 'true') return true;
-                return !pref.visible;
-            });
-            emptyMsg.classList.toggle('visible', allHidden);
-        }
-
-        // Run on load
-        var currentPrefs = buildFullPrefs();
-        applyPrefs(currentPrefs);
-
-        /* ---- Customize drawer UI ---- */
-        var overlay = document.getElementById('customize-overlay');
-        var drawer = document.getElementById('customize-drawer');
-        var openBtn = document.getElementById('customize-btn');
-        var closeBtn = document.getElementById('customize-close');
-        var doneBtn = document.getElementById('cust-done-btn');
-        var resetBtn = document.getElementById('cust-reset-btn');
-        var list = document.getElementById('customize-section-list');
-        var custTabBtns = document.querySelectorAll('.cust-tab-btn');
-        var activeCustTab = 'today';
-        // working copy of prefs being edited
-        var editPrefs = {};
-
-        function openDrawer() {
-            editPrefs = buildFullPrefs();
-            renderCustTab(activeCustTab);
-            overlay.classList.add('open');
-            drawer.classList.add('open');
-            overlay.removeAttribute('aria-hidden');
-            drawer.removeAttribute('aria-hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeDrawer() {
-            overlay.classList.remove('open');
-            drawer.classList.remove('open');
-            overlay.setAttribute('aria-hidden', 'true');
-            drawer.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-        }
-
-        function getLabelForSection(id) {
-            var el = document.querySelector('[data-section-id="' + id + '"]');
-            return el ? (el.dataset.sectionLabel || id) : id;
-        }
-
-        // Drag-and-drop state
-        var dragSrcId = null;
-
-        function renderCustTab(tab) {
-            activeCustTab = tab;
-            custTabBtns.forEach(function(btn) {
-                btn.classList.toggle('active', btn.dataset.custTab === tab);
-            });
-            var tabPrefs = editPrefs[tab] || [];
-            list.innerHTML = '';
-            tabPrefs.forEach(function(pref, idx) {
-                var el = document.querySelector('[data-section-id="' + pref.id + '"]');
-                // Skip sections the server didn't render (no data)
-                if (!el || el.dataset.empty === 'true') return;
-
-                var li = document.createElement('li');
-                li.className = 'customize-section-item';
-                li.dataset.sectionId = pref.id;
-                li.setAttribute('draggable', 'true');
-
-                // Drag handle
-                var handle = document.createElement('span');
-                handle.className = 'drag-handle';
-                handle.setAttribute('aria-hidden', 'true');
-                handle.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>';
-
-                var label = document.createElement('span');
-                label.className = 'cust-section-label';
-                label.textContent = getLabelForSection(pref.id);
-
-                var toggleWrap = document.createElement('label');
-                toggleWrap.className = 'cust-toggle';
-                toggleWrap.setAttribute('aria-label', 'Toggle ' + getLabelForSection(pref.id));
-
-                var checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = pref.visible;
-                checkbox.dataset.sectionId = pref.id;
-
-                var slider = document.createElement('span');
-                slider.className = 'cust-toggle-slider';
-                toggleWrap.appendChild(checkbox);
-                toggleWrap.appendChild(slider);
-
-                li.appendChild(handle);
-                li.appendChild(label);
-                li.appendChild(toggleWrap);
-                list.appendChild(li);
-
-                // Checkbox toggle
-                checkbox.addEventListener('change', function() {
-                    var id = this.dataset.sectionId;
-                    var tabArr = editPrefs[activeCustTab];
-                    var entry = tabArr.find(function(p) { return p.id === id; });
-                    if (entry) entry.visible = this.checked;
-                });
-
-                // HTML5 drag events (desktop)
-                li.addEventListener('dragstart', function(e) {
-                    dragSrcId = pref.id;
-                    li.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-                li.addEventListener('dragend', function() {
-                    li.classList.remove('dragging');
-                    list.querySelectorAll('.drag-over').forEach(function(el) {
-                        el.classList.remove('drag-over');
-                    });
-                });
-                li.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    if (pref.id !== dragSrcId) li.classList.add('drag-over');
-                });
-                li.addEventListener('dragleave', function() {
-                    li.classList.remove('drag-over');
-                });
-                li.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    li.classList.remove('drag-over');
-                    if (!dragSrcId || dragSrcId === pref.id) return;
-                    var arr = editPrefs[activeCustTab];
-                    var fromIdx = arr.findIndex(function(p) { return p.id === dragSrcId; });
-                    var toIdx   = arr.findIndex(function(p) { return p.id === pref.id; });
-                    if (fromIdx < 0 || toIdx < 0) return;
-                    var moved = arr.splice(fromIdx, 1)[0];
-                    arr.splice(toIdx, 0, moved);
-                    dragSrcId = null;
-                    renderCustTab(activeCustTab);
-                });
-
-                // Touch drag (mobile)
-                (function(currentLi, currentId) {
-                    var startY = 0, lastY = 0, isDragging = false;
-                    handle.addEventListener('touchstart', function(e) {
-                        startY = e.touches[0].clientY;
-                        lastY  = startY;
-                        isDragging = false;
-                    }, { passive: true });
-                    handle.addEventListener('touchmove', function(e) {
-                        lastY = e.touches[0].clientY;
-                        var totalDy = e.touches[0].clientY - startY;
-                        if (Math.abs(totalDy) < 8) return;
-                        isDragging = true;
-                        e.preventDefault();
-                        // Find item under finger
-                        var items = Array.from(list.querySelectorAll('.customize-section-item'));
-                        var target = null;
-                        items.forEach(function(item) {
-                            var rect = item.getBoundingClientRect();
-                            if (e.touches[0].clientY >= rect.top && e.touches[0].clientY <= rect.bottom) {
-                                target = item;
-                            }
-                        });
-                        items.forEach(function(item) { item.classList.remove('drag-over'); });
-                        if (target && target !== currentLi) target.classList.add('drag-over');
-                    }, { passive: false });
-                    handle.addEventListener('touchend', function(e) {
-                        if (!isDragging) return;
-                        var items = Array.from(list.querySelectorAll('.customize-section-item'));
-                        var targetId = null;
-                        items.forEach(function(item) {
-                            if (item.classList.contains('drag-over')) {
-                                targetId = item.dataset.sectionId;
-                            }
-                            item.classList.remove('drag-over');
-                        });
-                        if (!targetId || targetId === currentId) return;
-                        var arr = editPrefs[activeCustTab];
-                        var fromIdx = arr.findIndex(function(p) { return p.id === currentId; });
-                        var toIdx   = arr.findIndex(function(p) { return p.id === targetId; });
-                        if (fromIdx < 0 || toIdx < 0) return;
-                        var moved = arr.splice(fromIdx, 1)[0];
-                        arr.splice(toIdx, 0, moved);
-                        renderCustTab(activeCustTab);
-                    }, { passive: true });
-                })(li, pref.id);
-            });
-        }
-
-        custTabBtns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                renderCustTab(this.dataset.custTab);
-            });
-        });
-
-        openBtn.addEventListener('click', openDrawer);
-        closeBtn.addEventListener('click', closeDrawer);
-        overlay.addEventListener('click', closeDrawer);
-
-        doneBtn.addEventListener('click', function() {
-            savePrefs(editPrefs);
-            currentPrefs = editPrefs;
-            applyPrefs(currentPrefs);
-            // Mark customize btn as having customizations
-            var hasCustom = false;
-            var defaults = JSON.stringify(DEFAULTS);
-            // Simple check: if stored prefs differ from ordering/visibility defaults
-            Object.keys(DEFAULTS).forEach(function(tab) {
-                var arr = editPrefs[tab] || [];
-                arr.forEach(function(p) { if (!p.visible) hasCustom = true; });
-                var defOrder = DEFAULTS[tab];
-                arr.forEach(function(p, i) { if (defOrder[i] !== p.id) hasCustom = true; });
-            });
-            openBtn.classList.toggle('has-custom', hasCustom);
-            closeDrawer();
-        });
-
-        resetBtn.addEventListener('click', function() {
-            if (!confirm('Reset all sections to default order and visibility?')) return;
-            localStorage.removeItem(PREFS_KEY);
-            editPrefs = buildFullPrefs();
-            renderCustTab(activeCustTab);
-        });
-
-        // Swipe down to close on mobile
-        var touchStartY = 0;
-        drawer.addEventListener('touchstart', function(e) {
-            touchStartY = e.touches[0].clientY;
-        }, { passive: true });
-        drawer.addEventListener('touchmove', function(e) {
-            var dy = e.touches[0].clientY - touchStartY;
-            if (dy > 60) closeDrawer();
-        }, { passive: true });
-    })();
-    </script>
-<!-- ── Regulations modal ─────────────────────────────────────────────── -->
-<dialog id="reg-modal" class="reg-modal" aria-labelledby="reg-modal-title">
-    <div class="reg-modal__card">
-        <header class="reg-modal__hdr">
-            <h2 class="reg-modal__title" id="reg-modal-title"></h2>
-            <button class="reg-modal__close" type="button" aria-label="Close">&times;</button>
-        </header>
-        <p class="reg-modal__disclaimer">Always verify current rules with your state&rsquo;s official fish &amp; wildlife agency before fishing.</p>
-        <div class="reg-modal__body" id="reg-modal-body"></div>
-    </div>
-</dialog>
-<script>
-(function () {
-    'use strict';
+/* ---- Regulations Modal ---- */
+(function() {
     var modal = document.getElementById('reg-modal');
-    var modalTitle = document.getElementById('reg-modal-title');
-    var modalBody  = document.getElementById('reg-modal-body');
-    if (!modal || !modalTitle || !modalBody) return;
+    var modalBody = document.getElementById('reg-modal-body');
+    var closeBtn = document.getElementById('reg-modal-close');
+    if (!modal) return;
 
-    function esc(s) {
-        return String(s || '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    // Inline SVG icons for regulation fields
-    var ICON_RULER = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 7l18 0M7 3v4M11 5v2M15 3v4M19 5v2"/><rect x="3" y="7" width="18" height="10" rx="1"/></svg>';
-    var ICON_BAG  = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a5 5 0 0 1 5 5v1H7V7a5 5 0 0 1 5-5z"/><rect x="3" y="8" width="18" height="13" rx="2"/></svg>';
-    var ICON_CAL  = '<svg class="reg-field-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-
-    function _hoursAgo(isoStr) {
-        if (!isoStr) return -1;
-        try {
-            var ms = Date.now() - new Date(isoStr.replace(' ', 'T') + 'Z').getTime();
-            return Math.max(0, Math.round(ms / 3600000));
-        } catch (e) { return -1; }
-    }
-
-    function renderRegs(reg, state) {
-        var sourceLink = (reg && reg.official_source)
-            ? '<a class="reg-source__link" href="' + esc(reg.official_source) + '" target="_blank" rel="noopener noreferrer">Official ' + esc(state || '') + ' source ↗</a>'
-            : '';
-
-        var isStale = reg && (reg.is_stale === true || reg.is_stale === 'true');
-
-        if (!reg || (!reg.min_size && !reg.bag_limit && !reg.season && !reg.notes)) {
-            return '<p class="reg-no-data">No specific regulation data found for this species'
-                + (state ? ' in ' + esc(state) : '') + '.'
-                + ' Verify current rules with your state\u2019s fish &amp; wildlife agency before fishing.</p>'
-                + (sourceLink ? '<div class="reg-source">' + sourceLink + '</div>' : '');
-        }
+    function openRegs(btn) {
+        var card = btn.closest('[data-reg-min-size], [data-reg-bag-limit], [data-reg-season]');
+        if (!card) return;
+        var species = card.getAttribute('data-species-name') || 'Species';
+        var minSize = card.getAttribute('data-reg-min-size') || '';
+        var bagLimit = card.getAttribute('data-reg-bag-limit') || '';
+        var season = card.getAttribute('data-reg-season') || '';
+        var notes = card.getAttribute('data-reg-notes') || '';
+        var officialSrc = card.getAttribute('data-reg-official-source') || '';
+        var isStale = card.getAttribute('data-reg-is-stale') === 'true';
+        var lastUpdated = card.getAttribute('data-reg-last-updated') || '';
 
         var html = '';
-
-        // Prominent stale data warning shown above everything else
-        if (isStale && reg.data_status !== 'live') {
-            var ageLabel = reg.last_updated ? ' (last updated ' + esc(reg.last_updated) + ')' : '';
-            html += '<div class="reg-stale-alert" role="alert">'
-                + '<svg class="reg-stale-alert__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-                + '<div><strong>These limits may be outdated' + ageLabel + '.</strong>'
-                + ' Always confirm current rules at the official source before keeping any fish.</div>'
-                + '</div>';
-        }
-
-        if (state) {
-            html += '<p class="reg-state-label">' + esc(state) + ' Regulations</p>';
+        if (isStale) {
+            html += '<div class="reg-stale-alert"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Regulation data may be outdated. Verify before fishing.</div>';
         }
         html += '<div class="reg-modal__grid">';
-        if (reg.min_size)  html += '<div class="reg-modal__item"><span class="reg-modal__label">' + ICON_RULER + 'Min Size</span><span class="reg-modal__value">'  + esc(reg.min_size)  + '</span></div>';
-        if (reg.bag_limit) html += '<div class="reg-modal__item"><span class="reg-modal__label">' + ICON_BAG   + 'Bag Limit</span><span class="reg-modal__value">' + esc(reg.bag_limit) + '</span></div>';
-        if (reg.season)    html += '<div class="reg-modal__item"><span class="reg-modal__label">' + ICON_CAL   + 'Season</span><span class="reg-modal__value">'    + esc(reg.season)    + '</span></div>';
+        if (minSize) html += '<div><span class="reg-label">Min. Size</span><span class="reg-value">' + esc(minSize) + '</span></div>';
+        if (bagLimit) html += '<div><span class="reg-label">Bag Limit</span><span class="reg-value">' + esc(bagLimit) + '</span></div>';
+        if (season) html += '<div><span class="reg-label">Season</span><span class="reg-value">' + esc(season) + '</span></div>';
+        if (notes) html += '<div style="grid-column:1/-1"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
         html += '</div>';
-        if (reg.notes) {
-            html += '<div class="reg-notes-callout" role="note">'
-                + '<svg class="reg-notes-callout__icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-                + '<p class="reg-notes-callout__text">' + esc(reg.notes) + '</p>'
-                + '</div>';
+        if (officialSrc) {
+            html += '<div class="reg-source"><a href="' + esc(officialSrc) + '" target="_blank" rel="noopener noreferrer">Official Source ↗</a></div>';
         }
-        if (sourceLink) {
-            var freshness = '';
-            if (reg.data_status === 'live') {
-                var h = _hoursAgo(reg.fetched_at || '');
-                var timeLabel = h >= 0 ? (h < 1 ? ' \u00b7 just now' : ' \u00b7 ' + h + 'h ago') : '';
-                freshness = '<span class="reg-source__badge reg-source__badge--live" title="Scraped from official state source">verified' + timeLabel + '</span>';
-            } else if (reg.data_status === 'snapshot') {
-                var dateStr = reg.last_updated ? ' \u00b7 ' + esc(reg.last_updated) : '';
-                var titleStr = 'Cached data' + (reg.last_updated ? ', last updated ' + esc(reg.last_updated) : '');
-                freshness = '<span class="reg-source__badge reg-source__badge--snapshot" title="' + titleStr + '">cached' + dateStr + '</span>';
-            }
-            html += '<div class="reg-source">' + freshness + sourceLink + '</div>';
+        if (lastUpdated) {
+            html += '<p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Updated: ' + esc(lastUpdated) + '</p>';
         }
-        return html;
+
+        document.getElementById('reg-modal-title').textContent = species + ' — Regulations';
+        modalBody.innerHTML = html;
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn.focus();
     }
 
-    function retryFetch(speciesName, fallbackState) {
-        var state = (typeof CURRENT_LOC_STATE !== 'undefined' && CURRENT_LOC_STATE) ? CURRENT_LOC_STATE : '';
-        var cacheKey = speciesName + '::' + (state || (typeof CURRENT_LOC_ID !== 'undefined' ? CURRENT_LOC_ID : '') || '');
-        delete regCache[cacheKey];
-        modalBody.innerHTML = '<p class="reg-loading">Loading\u2026</p>';
-        var reqId = ++latestRegRequest;
-        fetchRegulation(speciesName)
-            .then(function (result) {
-                if (reqId !== latestRegRequest) return;
-                modalBody.innerHTML = renderRegs((result || {}).regulation || null, (result || {}).state || fallbackState);
-            })
-            .catch(function () {
-                if (reqId !== latestRegRequest) return;
-                modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations. Check your connection and try again.</p>';
-            });
+    function closeRegs() {
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
     }
 
-    function openModal(speciesName, reg, state) {
-        modalTitle.textContent = speciesName;
-        modalBody.innerHTML = renderRegs(reg, state);
-        modal.showModal();
-    }
-
-    function getEmbeddedReg(card) {
-        if (!card || !card.hasAttribute('data-reg-min-size')) return null;
-        return {
-            min_size: card.dataset.regMinSize || '',
-            bag_limit: card.dataset.regBagLimit || '',
-            season: card.dataset.regSeason || '',
-            notes: card.dataset.regNotes || '',
-            official_source: card.dataset.regOfficialSource || '',
-            data_status: card.dataset.regDataStatus || '',
-            last_updated: card.dataset.regLastUpdated || '',
-            is_stale: card.dataset.regIsStale === 'true',
-            fetched_at: card.dataset.regFetchedAt || '',
-        };
-    }
-
-    var regCache = Object.create(null);
-    var latestRegRequest = 0;
-
-    function fetchRegulation(speciesName) {
-        var state = (typeof CURRENT_LOC_STATE !== 'undefined' && CURRENT_LOC_STATE) ? CURRENT_LOC_STATE : '';
-        var cacheKey = speciesName + '::' + (state || CURRENT_LOC_ID || '');
-        if (regCache[cacheKey]) return Promise.resolve(regCache[cacheKey]);
-
-        var url = '/api/v1/regulations?species=' + encodeURIComponent(speciesName);
-        if (typeof CURRENT_LOC_ID !== 'undefined' && CURRENT_LOC_ID) {
-            url += '&location_id=' + encodeURIComponent(CURRENT_LOC_ID);
-        }
-        if (state) {
-            url += '&state=' + encodeURIComponent(state);
-        }
-        return fetch(url)
-            .then(function (r) { return r.json(); })
-            .then(function (json) {
-                var data = json.data || {};
-                var payload = {
-                    state: data.state || state || '',
-                    regulation: data.regulation || null,
-                };
-                regCache[cacheKey] = payload;
-                return payload;
-            });
-    }
-
-    // Click handler: each "Regs" pill button
-    document.querySelectorAll('[data-open-regs]').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            var card = btn.closest('.species-card');
-            if (!card) return;
-            var name = card.dataset.speciesName || '';
-            var embedded = getEmbeddedReg(card);
-            var fallbackState = (typeof CURRENT_LOC_STATE !== 'undefined' && CURRENT_LOC_STATE) ? CURRENT_LOC_STATE : '';
-            var requestId = ++latestRegRequest;
-
-            if (embedded) {
-                openModal(name, embedded, fallbackState);
-            } else {
-                modalTitle.textContent = name;
-                modalBody.innerHTML = '<p class="reg-loading">Loading…</p>';
-                modal.showModal();
-            }
-
-            fetchRegulation(name)
-                .then(function (result) {
-                    if (requestId !== latestRegRequest) return;
-                    var reg = (result || {}).regulation || null;
-                    var state = (result || {}).state || fallbackState;
-                    if (reg || !embedded) {
-                        modalBody.innerHTML = renderRegs(reg, state);
-                    }
-                })
-                .catch(function () {
-                    if (requestId !== latestRegRequest) return;
-                    if (!embedded) {
-                        modalBody.innerHTML = '<p class="reg-no-data">Could not load regulations.</p>'
-                            + '<button class="reg-retry-btn" type="button">Try again</button>';
-                        var retryBtn = modalBody.querySelector('.reg-retry-btn');
-                        if (retryBtn) retryBtn.addEventListener('click', function () { retryFetch(name, fallbackState); });
-                    }
-                });
-        });
+    if (closeBtn) closeBtn.addEventListener('click', closeRegs);
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeRegs(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !modal.hidden) closeRegs(); });
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-open-regs]');
+        if (btn) { e.preventDefault(); openRegs(btn); }
     });
-
-    // Close: button or clicking the backdrop
-    var closeBtn = document.querySelector('.reg-modal__close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function () { modal.close(); });
-    }
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) modal.close();
-    });
-}());
+})();
 </script>
 </body>
 </html>

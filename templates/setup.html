@@ -9,24 +9,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#0e5f78">
+    <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description" content="Choose your coastal fishing location for real-time surf and pier fishing forecasts">
     {% include 'partials/_theme_bootstrap.html' %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
-<body>
+<body class="has-app-header">
     {% import 'partials/_location_macros.html' as loc_macros with context %}
-    <header>
-        <div class="header-inner">
-            <h1>Surf &amp; Pier Fishing Outlook</h1>
-            <p class="subtitle">Choose your fishing location</p>
-        </div>
-    </header>
     {% include 'partials/_main_nav.html' %}
+    <div class="page-hero">
+        <h1>Choose Your Location</h1>
+        <p class="page-subtitle">{{ all_locations|length }} coastal fishing areas across the US</p>
+    </div>
 
 
     <main>
+        <!-- Unified location search bar -->
+        <section class="setup-section" style="padding-bottom:0">
+            <h2>Search by City, Zip, or Beach</h2>
+            <p class="section-sub">Find your nearest supported fishing location</p>
+            <div class="location-search-bar" id="loc-search-bar">
+                <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
+                <input id="loc-search-input" type="search" class="location-search-input" placeholder="City, zip code, or beach name&hellip;" autocomplete="off" inputmode="search">
+                <button type="button" class="location-search-btn" id="loc-search-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Search
+                </button>
+            </div>
+            <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
+        </section>
+
         <section class="setup-flow-card">
             <p class="setup-flow-title">Quick setup</p>
             <div class="setup-flow-steps">
@@ -284,7 +297,73 @@
                 renderRecentSection();
                 setupFavoritesForAnonymous();
                 bindRecentTracking();
+                setupUnifiedSearch();
             });
+
+            /* Unified location search: city, zip, beach */
+            function setupUnifiedSearch() {
+                var input = document.getElementById('loc-search-input');
+                var resultsEl = document.getElementById('loc-search-results');
+                var btn = document.getElementById('loc-search-btn');
+                if (!input || !resultsEl) return;
+
+                function esc2(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+                function doSearch() {
+                    var q = input.value.trim().toLowerCase();
+                    if (!q) { resultsEl.innerHTML = ''; return; }
+
+                    /* Check if it looks like a zip code */
+                    var isZip = /^\d{3,5}$/.test(q.replace(/\s/g,''));
+
+                    /* Filter allLocations by name, state, or id */
+                    var matches = allLocations.filter(function(loc) {
+                        var name = (loc.name || '').toLowerCase();
+                        var state = (loc.state || '').toLowerCase();
+                        var id = (loc.id || '').toLowerCase();
+                        return name.indexOf(q) !== -1 || state.indexOf(q) !== -1 || id.indexOf(q) !== -1;
+                    }).slice(0, 8);
+
+                    if (isZip) {
+                        /* Also trigger zip code form submission */
+                        var zipInput = document.querySelector('input[name="zipcode"]');
+                        if (zipInput) zipInput.value = q;
+                    }
+
+                    if (matches.length === 0) {
+                        if (isZip) {
+                            /* For zip codes, submit the zip form */
+                            resultsEl.innerHTML = '<p class="setup-help">Searching by zip code&hellip;</p>';
+                            var zipForm = document.querySelector('.zip-form');
+                            if (zipForm) { var zipInput = zipForm.querySelector('input[name="zipcode"]'); if (zipInput) zipInput.value = q; zipForm.submit(); }
+                        } else {
+                            resultsEl.innerHTML = '<p class="setup-help" style="color:var(--text-muted)">No locations match &ldquo;' + esc2(q) + '&rdquo;. Try a zip code or browse below.</p>';
+                        }
+                        return;
+                    }
+
+                    var html = '';
+                    matches.forEach(function(loc) {
+                        html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
+                        html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
+                        html += '<button type="submit" class="location-search-result-item">';
+                        html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span></div>';
+                        html += '<span class="location-search-result-state">' + esc2(loc.state) + '</span>';
+                        html += '</button></form>';
+                    });
+                    resultsEl.innerHTML = html;
+                }
+
+                var debounceTimer;
+                input.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(doSearch, 200);
+                });
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') { clearTimeout(debounceTimer); doSearch(); }
+                });
+                if (btn) btn.addEventListener('click', function() { clearTimeout(debounceTimer); doSearch(); });
+            }
         })();
     </script>
 </body>
