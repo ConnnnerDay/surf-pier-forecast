@@ -1851,7 +1851,7 @@ def generate_forecast(
     }
 
     # Determine coast for wind direction scoring and species filtering
-    coast = _derive_coast(location)
+    coast = _derive_coast(location) or "east"
 
     loc_state = (location or {}).get("state", "")
     loc_fish_region = (location or {}).get("fish_region", "")
