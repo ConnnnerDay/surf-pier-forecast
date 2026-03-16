@@ -284,12 +284,11 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
                               protection)
         "unknown"           — no usable regulation data found for this state/species
 
-    **Critical distinction**: ``catch_and_release`` means the fishery is *open for
-    targeting* but retention is banned.  Anglers can legally fish for the species;
-    they simply must release every fish caught.  This is fundamentally different from
-    ``out_of_season`` / ``prohibited``, where fishing for the species is not permitted
-    at all.  The :func:`should_hide_from_forecast` helper encodes this policy: only
-    ``out_of_season`` and ``prohibited`` suppress a species from the forecast.
+    The :func:`should_hide_from_forecast` helper enforces a strict visibility
+    policy: only ``"legal"`` status allows a species to appear in forecast
+    recommendation surfaces.  All other statuses — including ``"unknown"`` where
+    regulations could not be verified — are hidden so the app never recommends
+    targeting a species unless legality is confirmed.
 
     This function is **advisory only**.  Regulations change frequently; always
     verify with the official state source before fishing.
@@ -378,24 +377,23 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
 
 
 def should_hide_from_forecast(status: str) -> bool:
-    """Return True when a species should be suppressed from 'What\'s Biting'
-    and 'What\'s Spawning Now' based on its legality *status*.
+    """Return True when a species should be suppressed from 'What\'s Biting',
+    'What\'s Spawning Now', and all other ranked forecast surfaces.
 
-    Hide policy — only species explicitly classified as ``"legal"`` or with no
-    regulation data (``"unknown"``) are shown in the forecast:
-      - ``"prohibited"``        — year-round closure or federal protection; do not target
-      - ``"out_of_season"``     — currently in a closed season window; do not target
-      - ``"catch_and_release"`` — retention/harvest prohibited; hide to avoid recommending
-                                  unlawful catches (anglers cannot keep these fish)
-      - ``"restricted"``        — conditional rules that may prohibit retention; hide so
-                                  anglers are not inadvertently guided toward illegal keeps
+    The rule is intentionally strict: a species is shown **only** when its
+    status is ``"legal"``.  Every other outcome is hidden:
 
-    Show policy (only open or data-less species):
-      - ``"legal"``   — open fishery with standard limits; show normally
-      - ``"unknown"`` — no regulation data found; show with an 'unverified' note so the
-                        angler is prompted to check the official source
+      - ``"catch_and_release"`` — retention/harvest prohibited; cannot keep the fish
+      - ``"restricted"``        — conditional rules that may prohibit retention
+      - ``"out_of_season"``     — currently inside a closed season window
+      - ``"prohibited"``        — year-round closure or federal protection
+      - ``"unknown"``           — regulations could not be verified; we must not
+                                  recommend targeting a species of unknown legality
+
+    Only ``"legal"`` is visible because that is the only status that confirms
+    the angler can lawfully target and keep the species at the current time.
     """
-    return status in ("prohibited", "out_of_season", "catch_and_release", "restricted")
+    return status != "legal"
 
 
 def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]:
