@@ -481,6 +481,7 @@ _VERDICT_CHALLENGING = 32
 # Canonical coast derivation
 # ---------------------------------------------------------------------------
 
+
 def _derive_coast(location: Optional[Dict[str, Any]]) -> Optional[str]:
     """Return the canonical coast string for a location, or ``None`` if unknown.
 
@@ -1882,7 +1883,9 @@ def generate_forecast(
         "location_name": loc_name,
         "location_id": (location or {}).get("id", ""),
         "location_state": loc_state,
-        "official_regulations_url": get_official_regulations_url(loc_state) if loc_state else "",
+        "official_regulations_url": get_official_regulations_url(loc_state)
+        if loc_state
+        else "",
         "conditions": conditions,
         "species": species,
         "rig_recommendations": rig_recommendations,

@@ -361,6 +361,7 @@ def _render_forecast(
         forecast["location_state"] = location.get("state", "")
     if not forecast.get("official_regulations_url"):
         from regulations import get_official_regulations_url as _get_reg_url
+
         _st = forecast.get("location_state") or location.get("state", "")
         if _st:
             forecast["official_regulations_url"] = _get_reg_url(_st)

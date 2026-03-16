@@ -721,6 +721,7 @@ def test_tide_predictions_fall_back_to_available_date_when_today_missing(monkeyp
 # _derive_coast() — canonical coast derivation helper
 # ---------------------------------------------------------------------------
 
+
 class TestDeriveCoast:
     """Unit tests for the canonical _derive_coast() helper.
 
@@ -730,6 +731,7 @@ class TestDeriveCoast:
 
     def _coast(self, conditions_region):
         from domain.forecast import _derive_coast
+
         return _derive_coast({"conditions_region": conditions_region})
 
     # ---- Atlantic (east) ----
@@ -760,6 +762,7 @@ class TestDeriveCoast:
     # ---- Unknown / missing → None ----
     def test_missing_conditions_region_returns_none(self):
         from domain.forecast import _derive_coast
+
         assert _derive_coast({"state": "NC"}) is None
 
     def test_empty_conditions_region_returns_none(self):
@@ -770,16 +773,19 @@ class TestDeriveCoast:
 
     def test_none_location_returns_none(self):
         from domain.forecast import _derive_coast
+
         assert _derive_coast(None) is None
 
     def test_empty_location_returns_none(self):
         from domain.forecast import _derive_coast
+
         assert _derive_coast({}) is None
 
     # ---- Integration: coast drives species filtering ----
     def test_east_location_produces_only_east_species(self):
         """An east-coast location must not return west or Hawaii species."""
         from domain.species import build_species_ranking, SPECIES_DB
+
         ranking = build_species_ranking(month=7, water_temp=76, coast="east")
         for sp in ranking:
             db_entry = next(s for s in SPECIES_DB if s["name"] == sp["name"])
@@ -790,6 +796,7 @@ class TestDeriveCoast:
     def test_west_location_produces_only_west_species(self):
         """A west-coast location must not return east or Hawaii species."""
         from domain.species import build_species_ranking, SPECIES_DB
+
         ranking = build_species_ranking(month=11, water_temp=60, coast="west")
         for sp in ranking:
             db_entry = next(s for s in SPECIES_DB if s["name"] == sp["name"])
@@ -800,6 +807,7 @@ class TestDeriveCoast:
     def test_hawaii_location_produces_only_hawaii_species(self):
         """A Hawaii location must not return east or west species."""
         from domain.species import build_species_ranking, SPECIES_DB
+
         ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
         for sp in ranking:
             db_entry = next(s for s in SPECIES_DB if s["name"] == sp["name"])
@@ -811,6 +819,7 @@ class TestDeriveCoast:
         """A location with no conditions_region must produce no species (coast=None)."""
         from domain.forecast import _derive_coast
         from domain.species import build_species_ranking
+
         coast = _derive_coast({"state": "XX"})  # no conditions_region
         assert coast is None
         ranking = build_species_ranking(month=7, water_temp=72, coast=coast)

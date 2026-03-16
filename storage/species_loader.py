@@ -98,9 +98,7 @@ def _validate(entries: List[Dict[str, Any]]) -> None:
 
         if "categories" in entry:
             cats = entry["categories"]
-            if not isinstance(cats, list) or not all(
-                isinstance(c, str) for c in cats
-            ):
+            if not isinstance(cats, list) or not all(isinstance(c, str) for c in cats):
                 raise ValueError(
                     f"Species '{name}': 'categories' must be a list of strings"
                 )
