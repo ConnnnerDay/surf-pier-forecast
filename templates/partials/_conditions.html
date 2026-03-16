@@ -3,14 +3,20 @@
             <h2>Marine Conditions</h2>
             <!-- Wind quality indicator -->
             {% set _wind_str = forecast.conditions.wind or '' %}
-            {% set _wind_spd = _wind_str.split(' ')[0].split('-')[0] | int %}
-            {% if 'calm' in _wind_str.lower() or _wind_spd == 0 %}
+            {# Find the first digit-starting token to get speed (handles "S 16-21 kt", "NNW 20 kt", "16 kt", "Calm") #}
+            {% set _wind_speed = namespace(val=0) %}
+            {% for _tok in _wind_str.split(' ') %}
+                {% if _wind_speed.val == 0 and _tok and _tok[0].isdigit() %}
+                    {% set _wind_speed.val = _tok.split('-')[0] | int %}
+                {% endif %}
+            {% endfor %}
+            {% if 'calm' in _wind_str.lower() or _wind_speed.val == 0 %}
                 {% set _wqc = 'calm' %}{% set _wql = 'Calm Seas' %}
-            {% elif _wind_spd <= 8 %}
+            {% elif _wind_speed.val <= 8 %}
                 {% set _wqc = 'light' %}{% set _wql = 'Light Wind — good fishing conditions' %}
-            {% elif _wind_spd <= 15 %}
+            {% elif _wind_speed.val <= 15 %}
                 {% set _wqc = 'moderate' %}{% set _wql = 'Moderate Wind — manageable' %}
-            {% elif _wind_spd <= 25 %}
+            {% elif _wind_speed.val <= 25 %}
                 {% set _wqc = 'strong' %}{% set _wql = 'Strong Wind — difficult conditions' %}
             {% else %}
                 {% set _wqc = 'gale' %}{% set _wql = 'Gale Warning — stay off piers' %}
@@ -39,11 +45,12 @@
                     <span class="stat-label">Water Temp</span>
                     <span class="stat-value">
                         <span class="unit-temp" data-f="{{ forecast.conditions.water_temp_f }}">{{ forecast.conditions.water_temp_f }}&deg;F</span>
-                        {% if forecast.conditions.water_temp_trend == 'warming' %}
+                        {% set _trend = (forecast.conditions.water_temp_trend or '')|lower|trim %}
+                        {% if _trend == 'warming' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><path d="M8 3l4 5H4z" fill="#e05830"/></svg>
-                        {% elif forecast.conditions.water_temp_trend == 'cooling' %}
+                        {% elif _trend == 'cooling' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><path d="M8 13l4-5H4z" fill="#2980b9"/></svg>
-                        {% elif forecast.conditions.water_temp_trend == 'stable' %}
+                        {% elif _trend in ('stable', 'steady') %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><rect x="2" y="7" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
                         {% endif %}
                     </span>
@@ -98,11 +105,14 @@
                 {% if forecast.tide_state %}
                 <div class="stat-card">
                     <span class="stat-label">Tide</span>
+                    {% set _ts = (forecast.tide_state or '')|lower|trim %}
                     <span class="stat-value">
-                        {% if forecast.tide_state == 'Rising' %}
+                        {% if _ts == 'rising' %}
                         <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><path d="M10 4l5 6H5z" fill="var(--ocean)"/></svg>
-                        {% else %}
+                        {% elif _ts == 'falling' %}
                         <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><path d="M10 16l5-6H5z" fill="var(--amber)"/></svg>
+                        {% elif _ts == 'slack' %}
+                        <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><rect x="4" y="9" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
                         {% endif %}
                         {{ forecast.tide_state }}
                     </span>
@@ -116,11 +126,12 @@
                     <span class="stat-label">Pressure</span>
                     <span class="stat-value">
                         {{ pressure_inhg }}"
-                        {% if forecast.pressure and forecast.pressure.trend == 'Rising' %}
+                        {% set _ptrd = ((forecast.pressure.trend if forecast.pressure and forecast.pressure.trend else '') or '')|lower|trim %}
+                        {% if _ptrd == 'rising' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><path d="M8 3l4 5H4z" fill="#27ae60"/></svg>
-                        {% elif forecast.pressure and forecast.pressure.trend == 'Falling' %}
+                        {% elif _ptrd == 'falling' %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><path d="M8 13l4-5H4z" fill="#e05830"/></svg>
-                        {% elif forecast.pressure and forecast.pressure.trend %}
+                        {% elif _ptrd %}
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="12" height="12"><rect x="2" y="7" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
                         {% endif %}
                     </span>

@@ -158,15 +158,21 @@
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
                     Tide
                 </div>
-                {% if forecast.tide_state == 'Rising' %}
+                {% set _csc_ts = (forecast.tide_state or '')|lower|trim %}
+                {% if _csc_ts == 'rising' %}
                 <span class="tide-state-badge tide-state--rising csc-stat-value" style="font-size:1rem">
                     <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
                     Incoming
                 </span>
-                {% elif forecast.tide_state == 'Falling' %}
+                {% elif _csc_ts == 'falling' %}
                 <span class="tide-state-badge tide-state--falling csc-stat-value" style="font-size:1rem">
                     <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
                     Outgoing
+                </span>
+                {% elif _csc_ts == 'slack' %}
+                <span class="csc-stat-value" style="font-size:1rem;color:var(--text-muted)">
+                    <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><rect x="2" y="7" width="12" height="2" rx="1"/></svg>
+                    Slack
                 </span>
                 {% else %}
                 <span class="csc-stat-value">{{ forecast.tide_state or '—' }}</span>

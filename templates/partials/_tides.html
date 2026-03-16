@@ -7,13 +7,17 @@
                     <p class="section-sub" style="margin-bottom:0">High &amp; low tide times from NOAA predictions</p>
                 </div>
                 {% if forecast.tide_state %}
-                <span class="section-context-badge section-context-badge--{{ 'incoming-tide' if forecast.tide_state == 'Rising' else 'outgoing-tide' }}">
-                    {% if forecast.tide_state == 'Rising' %}
+                {% set _ts = (forecast.tide_state or '')|lower|trim %}
+                <span class="section-context-badge section-context-badge--{{ 'incoming-tide' if _ts == 'rising' else ('slack-tide' if _ts == 'slack' else 'outgoing-tide') }}">
+                    {% if _ts == 'rising' %}
                     <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
                     Incoming Tide
-                    {% elif forecast.tide_state == 'Falling' %}
+                    {% elif _ts == 'falling' %}
                     <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
                     Outgoing Tide
+                    {% elif _ts == 'slack' %}
+                    <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><rect x="2" y="7" width="12" height="2" rx="1"/></svg>
+                    Slack Tide
                     {% else %}
                     {{ forecast.tide_state }}
                     {% endif %}
@@ -21,13 +25,17 @@
                 {% endif %}
             </div>
             {% if forecast.tide_state %}
-            <div class="tide-state-banner tide-state-banner--{{ 'rising' if forecast.tide_state == 'Rising' else 'falling' }}">
-                {% if forecast.tide_state == 'Rising' %}
+            {% set _ts2 = (forecast.tide_state or '')|lower|trim %}
+            <div class="tide-state-banner tide-state-banner--{{ 'rising' if _ts2 == 'rising' else ('slack' if _ts2 == 'slack' else 'falling') }}">
+                {% if _ts2 == 'rising' %}
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
                 <strong>Incoming Tide</strong> &mdash; Water is rising, prime time for feeding fish near structure
-                {% elif forecast.tide_state == 'Falling' %}
+                {% elif _ts2 == 'falling' %}
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>
                 <strong>Outgoing Tide</strong> &mdash; Water is falling, fish concentrate at channel edges
+                {% elif _ts2 == 'slack' %}
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <strong>Slack Tide</strong> &mdash; Minimal current, good window to reposition and change rigs
                 {% endif %}
             </div>
             {% endif %}
@@ -50,7 +58,7 @@
                         <span class="tide-type">{{ tide.type }}</span>
                         <span class="tide-time">{{ tide.time }}</span>
                     </div>
-                    <span class="tide-height">{{ tide.height_ft }} ft</span>
+                    <span class="tide-height">{% if tide.height_ft is not none and tide.height_ft != '' %}{{ tide.height_ft }} ft{% else %}&mdash;{% endif %}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -72,7 +80,7 @@
                         fill="{{ '#27ae60' if m.type == 'High' else '#e05830' }}"
                         stroke="white" stroke-width="2"/>
                     <text x="{{ m.cx }}" y="{{ (m.cy|float - 10)|round(1) }}"
-                        text-anchor="middle" font-size="11" fill="#6b7b8d">{{ m.height }}ft</text>
+                        text-anchor="middle" font-size="11" fill="#6b7b8d">{% if m.height is not none and m.height != '' %}{{ m.height }}ft{% endif %}</text>
                     <text x="{{ m.cx }}" y="{{ tc.height - 5 }}"
                         text-anchor="middle" font-size="10" fill="#6b7b8d">{{ m.time }}</text>
                     {% endfor %}
