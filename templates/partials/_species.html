@@ -54,42 +54,27 @@
                                 <span class="meta-value">{{ sp.sinker }}</span>
                             </div>
                         </div>
-                        {# Catch-and-release badge — targeting is legal but all fish must be released #}
-                        {% if sp.regulation_status == 'catch_and_release' %}
-                        <div class="reg-inline-cr">
-                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/><path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/><path d="M6.5 12h11"/><path d="M17.5 12c1.5 1.5 3 2.5 4.5 2.5-.5-1.5-.5-3.5 0-5-1.5 0-3 1-4.5 2.5z"/></svg>
-                            Catch &amp; Release Only &mdash; legal to target; all fish must be released
-                        </div>
-                        {% endif %}
-                        {# Verify Rules prompt — shown for conditional/area-specific restrictions #}
-                        {% if sp.regulation_status == 'restricted' %}
-                        <div class="reg-inline-verify">
-                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Seasonal or area restrictions may apply &mdash;
-                            {% if sp.regulation and sp.regulation.official_source %}
-                            <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-verify__link">verify current rules ↗</a>
-                            {% elif forecast.official_regulations_url %}
-                            <a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-inline-verify__link">verify current rules ↗</a>
-                            {% else %}
-                            verify current rules before fishing
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                        {# Stale regulation warning — shown in HTML so it's visible without opening the modal #}
-                        {% if sp.regulation and sp.regulation.is_stale and sp.regulation.data_status != 'live' %}
+                        {# Unified regulation warning — one message per species, prioritising staleness #}
+                        {% if sp.regulation and sp.regulation.data_status != 'live' %}
+                            {% if sp.regulation.is_stale %}
                         <div class="reg-inline-stale">
                             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Regulations data may be outdated
-                            {% if sp.regulation.official_source %}
-                            &ndash; <a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">verify ↗</a>
-                            {% endif %}
+                            Regulations may be outdated &ndash;
+                            {% if sp.regulation.official_source %}<a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">verify with the official source ↗</a>{% else %}verify with the official source{% endif %}
                         </div>
-                        {% endif %}
-                        {# Unknown regulation status — shown when no data was found for this state/species #}
-                        {% if sp.regulation_status == 'unknown' and forecast.location_state %}
-                        <p class="reg-inline-unknown">Regulations unverified for {{ forecast.location_state }} &ndash;
-                            {% if forecast.official_regulations_url %}<a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-disclaimer-link">check official source ↗</a>{% else %}check official source{% endif %}
-                        </p>
+                            {% elif sp.regulation.data_status in ('snapshot', 'official_reference') %}
+                        <div class="reg-inline-stale">
+                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Regulations unverified &ndash;
+                            {% if sp.regulation.official_source %}<a href="{{ sp.regulation.official_source }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">please check the official source ↗</a>{% else %}please check the official source{% endif %}
+                        </div>
+                            {% endif %}
+                        {% elif sp.regulation_status == 'unknown' and forecast.location_state %}
+                        <div class="reg-inline-stale">
+                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Regulations unverified &ndash;
+                            {% if forecast.official_regulations_url %}<a href="{{ forecast.official_regulations_url }}" target="_blank" rel="noopener noreferrer" class="reg-inline-stale__link">please check the official source ↗</a>{% else %}please check the official source{% endif %}
+                        </div>
                         {% endif %}
                     </div>
                 </div>

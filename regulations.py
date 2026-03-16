@@ -381,21 +381,21 @@ def should_hide_from_forecast(status: str) -> bool:
     """Return True when a species should be suppressed from 'What\'s Biting'
     and 'What\'s Spawning Now' based on its legality *status*.
 
-    Hide policy (minimal, deliberate):
-      - ``"prohibited"``    — year-round closure or federal protection; do not target
-      - ``"out_of_season"`` — currently in a closed season window; do not target
+    Hide policy — only species explicitly classified as ``"legal"`` or with no
+    regulation data (``"unknown"``) are shown in the forecast:
+      - ``"prohibited"``        — year-round closure or federal protection; do not target
+      - ``"out_of_season"``     — currently in a closed season window; do not target
+      - ``"catch_and_release"`` — retention/harvest prohibited; hide to avoid recommending
+                                  unlawful catches (anglers cannot keep these fish)
+      - ``"restricted"``        — conditional rules that may prohibit retention; hide so
+                                  anglers are not inadvertently guided toward illegal keeps
 
-    Show policy (everything else is visible):
-      - ``"catch_and_release"`` — legal to target; show with a C&R badge
-      - ``"restricted"``        — conditional; show with a 'verify' prompt
-      - ``"legal"``             — open; show normally
-      - ``"unknown"``           — data missing; show with an 'unverified' note
-
-    C&R species are *not* hidden because anglers can legally fish for them —
-    they just must release every fish caught.  Hiding them would remove useful
-    information from the forecast.
+    Show policy (only open or data-less species):
+      - ``"legal"``   — open fishery with standard limits; show normally
+      - ``"unknown"`` — no regulation data found; show with an 'unverified' note so the
+                        angler is prompted to check the official source
     """
-    return status in ("prohibited", "out_of_season")
+    return status in ("prohibited", "out_of_season", "catch_and_release", "restricted")
 
 
 def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]:
