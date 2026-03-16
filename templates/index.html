@@ -78,57 +78,17 @@
             {% endif %}
         </div>
     </header>
-    <nav class="main-nav" aria-label="Main navigation">
+    {% include 'partials/_main_nav.html' %}
+    <nav class="main-nav" aria-label="Forecast sections">
         <div class="main-nav-tabs" role="tablist" aria-label="Forecast sections" id="dash-tabs">
-            <button class="dash-tab" data-tab="today" role="tab" aria-selected="true" aria-controls="panel-today" id="tab-today">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-                Today
-            </button>
-            <button class="dash-tab" data-tab="species" role="tab" aria-selected="false" aria-controls="panel-species" id="tab-species">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/><path d="M6 4l6 3 6-3"/></svg>
-                Species
-            </button>
-            <button class="dash-tab" data-tab="tides" role="tab" aria-selected="false" aria-controls="panel-tides" id="tab-tides">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                Conditions
-            </button>
-            <button class="dash-tab" data-tab="plan" role="tab" aria-selected="false" aria-controls="panel-plan" id="tab-plan">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Plan
-            </button>
+            <button class="dash-tab" data-tab="today" role="tab" aria-selected="true" aria-controls="panel-today" id="tab-today">Today</button>
+            <button class="dash-tab" data-tab="species" role="tab" aria-selected="false" aria-controls="panel-species" id="tab-species">Species</button>
+            <button class="dash-tab" data-tab="tides" role="tab" aria-selected="false" aria-controls="panel-tides" id="tab-tides">Conditions</button>
+            <button class="dash-tab" data-tab="plan" role="tab" aria-selected="false" aria-controls="panel-plan" id="tab-plan">Plan</button>
         </div>
-        <div class="main-nav-pages">
-            <a href="{{ url_for('views.setup') }}" class="main-nav-page" title="Change location">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                Location
-            </a>
-            <a href="{{ url_for('views.live_cams') }}" class="main-nav-page{% if request.endpoint == 'views.live_cams' %} main-nav-page--active{% endif %}">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                Cams
-            </a>
-            <a href="{{ url_for('views.fishing_log') }}" class="main-nav-page{% if request.endpoint == 'views.fishing_log' %} main-nav-page--active{% endif %}">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                Log
-            </a>
-            {% if user %}
-            <a href="{{ url_for('views.profile') }}" class="main-nav-page{% if request.endpoint == 'views.profile' %} main-nav-page--active{% endif %}" title="Edit fishing profile">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/><path d="M6 4l6 3 6-3"/></svg>
-                Profile
-            </a>
-            <a href="{{ url_for('auth.account') }}" class="main-nav-page{% if request.endpoint in ('auth.account', 'auth.account_settings') %} main-nav-page--active{% endif %}">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Account
-            </a>
-            {% else %}
-            <a href="{{ url_for('auth.login') }}" class="main-nav-page">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                Log In
-            </a>
-            {% endif %}
-        </div>
-        <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-            <span style="font-size:0.59rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">Edit</span>
+        <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize sections">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Sections</span>
         </button>
     </nav>
 
@@ -137,23 +97,34 @@
         <!-- Weather Alerts (always visible, outside tabs) -->
         {% set all_alerts = (forecast.alerts or []) + (forecast.state_alerts or []) %}
         {% if all_alerts %}
-        <div class="alerts-banner" role="alert" aria-label="Weather alerts">
-            {% set ns = namespace(seen=[]) %}
-            {% for alert in all_alerts %}{% if alert.event not in ns.seen %}{% set ns.seen = ns.seen + [alert.event] %}
-            <div class="alert-item alert-{{ alert.severity|lower }}">
-                <div class="alert-icon">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                        <line x1="12" y1="9" x2="12" y2="13"/>
-                        <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
+        {% set ns = namespace(seen=[], top_severity='moderate') %}
+        {% for alert in all_alerts %}{% if alert.event not in ns.seen %}{% set ns.seen = ns.seen + [alert.event] %}{% if alert.severity|lower in ('extreme','warning','severe') %}{% set ns.top_severity = alert.severity|lower %}{% endif %}{% endif %}{% endfor %}
+        {% set unique_count = ns.seen|length %}
+        <div class="alerts-banner alerts-banner--collapsed alert-{{ ns.top_severity }}" role="region" aria-label="Weather alerts">
+            <button class="alerts-summary-btn" type="button" onclick="toggleAlerts(this)" aria-expanded="false" aria-controls="alerts-detail">
+                <span class="alerts-summary-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </span>
+                <span class="alerts-summary-text">
+                    {% if unique_count == 1 %}
+                    {{ ns.seen[0] }}
+                    {% else %}
+                    {{ unique_count }} weather alerts active — {{ ns.seen[0] }}{% if unique_count > 1 %} + {{ unique_count - 1 }} more{% endif %}
+                    {% endif %}
+                </span>
+                <span class="alerts-toggle-chevron" aria-hidden="true">&#9660;</span>
+            </button>
+            <div class="alerts-detail" id="alerts-detail" hidden>
+                {% set ns2 = namespace(seen=[]) %}
+                {% for alert in all_alerts %}{% if alert.event not in ns2.seen %}{% set ns2.seen = ns2.seen + [alert.event] %}
+                <div class="alert-item alert-{{ alert.severity|lower }}">
+                    <div class="alert-body">
+                        <strong class="alert-event">{{ alert.event }}</strong>
+                        <span class="alert-headline">{{ alert.headline }}</span>
+                    </div>
                 </div>
-                <div class="alert-body">
-                    <strong class="alert-event">{{ alert.event }}</strong>
-                    <span class="alert-headline">{{ alert.headline }}</span>
-                </div>
+                {% endif %}{% endfor %}
             </div>
-            {% endif %}{% endfor %}
         </div>
         {% endif %}
 
@@ -589,6 +560,17 @@
     </footer>
 
     <script>
+    /* ---- Alerts collapse/expand ---- */
+    function toggleAlerts(btn) {
+        var detail = document.getElementById('alerts-detail');
+        if (!detail) return;
+        var expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        detail.hidden = expanded;
+        var chevron = btn.querySelector('.alerts-toggle-chevron');
+        if (chevron) chevron.innerHTML = expanded ? '&#9660;' : '&#9650;';
+    }
+
     /* ---- HTML escape helper (used throughout this script) ---- */
     function esc(s) {
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
