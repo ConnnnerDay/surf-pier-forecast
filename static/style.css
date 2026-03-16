@@ -6457,6 +6457,14 @@ body:not(.forecast-page) main {
   top: 0;
   z-index: 200;
   box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+  /* Override the old `header` rule's large padding */
+  padding: 0;
+  text-align: left;
+  overflow: visible;
+}
+
+.app-header::before {
+  display: none;
 }
 
 [data-theme="dark"] .app-header {
@@ -6740,7 +6748,7 @@ body.has-app-header main {
 
 .page-hero {
   background: var(--ocean-dark);
-  padding: 1.5rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   text-align: center;
   color: #fff;
 }
@@ -6752,9 +6760,9 @@ body.has-app-header main {
 
 .page-hero h1 {
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 400;
-  margin: 0 0 0.3rem;
+  margin: 0 0 0.2rem;
   letter-spacing: 0.01em;
 }
 
@@ -7141,7 +7149,7 @@ body.has-app-header main {
 .location-bar {
   background: var(--bg-subtle);
   border-bottom: 1px solid var(--border-light);
-  padding: 0.55rem 1rem;
+  padding: 0.4rem 1rem;
 }
 
 .location-bar-inner {
