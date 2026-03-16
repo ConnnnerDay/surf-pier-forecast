@@ -228,16 +228,36 @@ def _base_payload(state: str) -> Dict[str, str]:
 # Month abbreviations for closed-season parsing in classify_legality
 # ---------------------------------------------------------------------------
 _LEGALITY_MONTH_ABBREVS: Dict[str, int] = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
-    "january": 1, "february": 2, "march": 3, "april": 4,
-    "june": 6, "july": 7, "august": 8, "september": 9,
-    "october": 10, "november": 11, "december": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
 }
 
 _CLOSED_RANGE_RE = re.compile(r"closed\s+([a-z]+)[–\-]([a-z]+)")
 _CLOSED_SEASON_RE = re.compile(r"(season\s+closed|closed\s+season)", re.IGNORECASE)
-_QUALIFIER_WORDS = frozenset(("some", "certain", "have", "having", "with", "may", "areas"))
+_QUALIFIER_WORDS = frozenset(
+    ("some", "certain", "have", "having", "with", "may", "areas")
+)
 
 
 def _parse_closed_months_text(text: str) -> set:
@@ -268,7 +288,9 @@ def get_official_regulations_url(state: str) -> str:
     Falls back to the NOAA recreational fishing rules page when the state is
     not recognised or when *state* is empty.
     """
-    return _STATE_REGULATION_SOURCES.get((state or "").upper().strip(), _FALLBACK_SOURCE)
+    return _STATE_REGULATION_SOURCES.get(
+        (state or "").upper().strip(), _FALLBACK_SOURCE
+    )
 
 
 def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
@@ -333,7 +355,7 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
 
     # Standalone "season closed" / "closed season" (without qualifying hedges)
     for m in _CLOSED_SEASON_RE.finditer(combined):
-        preceding = combined[max(0, m.start() - 30): m.start()].lower()
+        preceding = combined[max(0, m.start() - 30) : m.start()].lower()
         if not any(q in preceding for q in _QUALIFIER_WORDS):
             return "out_of_season"
 
@@ -369,7 +391,13 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
 
     if "seasonal" in season or ("check" in season and "open year-round" not in season):
         return "restricted"
-    _SOFT_RESTRICTED = ("some areas", "certain areas", "may be closed", "area closures", "varies by")
+    _SOFT_RESTRICTED = (
+        "some areas",
+        "certain areas",
+        "may be closed",
+        "area closures",
+        "varies by",
+    )
     if any(phrase in combined for phrase in _SOFT_RESTRICTED):
         return "restricted"
 

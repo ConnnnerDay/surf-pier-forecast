@@ -997,7 +997,7 @@ if ('serviceWorker' in navigator) {
         var bagLimit = card.getAttribute('data-reg-bag-limit') || '';
         var season = card.getAttribute('data-reg-season') || '';
         var notes = card.getAttribute('data-reg-notes') || '';
-        var officialSrc = card.getAttribute('data-reg-official-source') || '';
+        var regOfficialSource = card.getAttribute('data-reg-official-source') || ''; // official_source
         var isStale = card.getAttribute('data-reg-is-stale') === 'true';
         var lastUpdated = card.getAttribute('data-reg-last-updated') || '';
 
@@ -1011,8 +1011,8 @@ if ('serviceWorker' in navigator) {
         if (season) html += '<div><span class="reg-label">Season</span><span class="reg-value">' + esc(season) + '</span></div>';
         if (notes) html += '<div style="grid-column:1/-1"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
         html += '</div>';
-        if (officialSrc) {
-            html += '<div class="reg-source"><a href="' + esc(officialSrc) + '" target="_blank" rel="noopener noreferrer">Official Source ↗</a></div>';
+        if (regOfficialSource) {
+            html += '<div class="reg-source"><a href="' + esc(regOfficialSource) + '" target="_blank" rel="noopener noreferrer">Official Source ↗</a></div>';
         }
         if (lastUpdated) {
             html += '<p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Updated: ' + esc(lastUpdated) + '</p>';

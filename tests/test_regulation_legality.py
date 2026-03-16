@@ -11,15 +11,18 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
-
 from domain.species import build_spawning_report, build_species_ranking
-from regulations import classify_legality, get_official_regulations_url, should_hide_from_forecast
+from regulations import (
+    classify_legality,
+    get_official_regulations_url,
+    should_hide_from_forecast,
+)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _open_reg(**extra) -> dict:
     """Return a minimal regulation dict indicating an open, legal fishery."""
@@ -98,14 +101,25 @@ def _unknown_reg(**extra) -> dict:
 # Tests: classify_legality() unit behaviour
 # ---------------------------------------------------------------------------
 
+
 class TestClassifyLegality:
     """Unit tests for the public classify_legality() helper in regulations.py."""
 
     def test_open_year_round_returns_legal(self):
-        assert classify_legality({"bag_limit": "3 per day", "season": "Open year-round", "notes": ""}) == "legal"
+        assert (
+            classify_legality(
+                {"bag_limit": "3 per day", "season": "Open year-round", "notes": ""}
+            )
+            == "legal"
+        )
 
     def test_explicit_bag_limit_no_season_keywords_returns_legal(self):
-        assert classify_legality({"bag_limit": "10 per day", "season": "Open", "notes": ""}) == "legal"
+        assert (
+            classify_legality(
+                {"bag_limit": "10 per day", "season": "Open", "notes": ""}
+            )
+            == "legal"
+        )
 
     # ── Catch-and-release: targeting legal, retention prohibited ────────────
 
@@ -116,19 +130,33 @@ class TestClassifyLegality:
 
     def test_catch_release_notes_returns_catch_and_release(self):
         """C&R in notes (with an otherwise open season) → catch_and_release."""
-        reg = {"bag_limit": "5 per day", "season": "Open", "notes": "Catch and release only."}
+        reg = {
+            "bag_limit": "5 per day",
+            "season": "Open",
+            "notes": "Catch and release only.",
+        }
         assert classify_legality(reg) == "catch_and_release"
 
     def test_bag_limit_zero_returns_catch_and_release(self):
         """bag_limit=0 means no retention allowed; anglers can still fish (C&R)."""
-        assert classify_legality({"bag_limit": "0/day", "season": "Open", "notes": ""}) == "catch_and_release"
+        assert (
+            classify_legality({"bag_limit": "0/day", "season": "Open", "notes": ""})
+            == "catch_and_release"
+        )
 
     def test_bag_limit_zero_per_day_returns_catch_and_release(self):
-        assert classify_legality({"bag_limit": "0 per day", "season": "Open", "notes": ""}) == "catch_and_release"
+        assert (
+            classify_legality({"bag_limit": "0 per day", "season": "Open", "notes": ""})
+            == "catch_and_release"
+        )
 
     def test_harvest_prohibited_phrase_returns_catch_and_release(self):
         """'Harvest prohibited' = retention not allowed; targeting is still permitted."""
-        reg = {"bag_limit": "", "season": "", "notes": "Harvest prohibited in all areas."}
+        reg = {
+            "bag_limit": "",
+            "season": "",
+            "notes": "Harvest prohibited in all areas.",
+        }
         assert classify_legality(reg) == "catch_and_release"
 
     def test_no_harvest_phrase_returns_catch_and_release(self):
@@ -166,8 +194,8 @@ class TestClassifyLegality:
     def test_year_wrapping_closed_range(self):
         # Closed Nov-Feb wraps the year end
         reg = {"bag_limit": "5/day", "season": "Closed Nov-Feb", "notes": ""}
-        assert classify_legality(reg, month=1) == "out_of_season"   # Jan is closed
-        assert classify_legality(reg, month=6) == "legal"           # Jun is open
+        assert classify_legality(reg, month=1) == "out_of_season"  # Jan is closed
+        assert classify_legality(reg, month=6) == "legal"  # Jun is open
 
     def test_standalone_season_closed_returns_out_of_season(self):
         reg = {"bag_limit": "3/day", "season": "Season closed", "notes": ""}
@@ -175,12 +203,20 @@ class TestClassifyLegality:
 
     def test_qualified_season_closed_returns_restricted(self):
         # Qualifiers like "some areas have closed seasons" must NOT trigger out_of_season
-        reg = {"bag_limit": "3/day", "season": "Some areas have closed seasons", "notes": ""}
+        reg = {
+            "bag_limit": "3/day",
+            "season": "Some areas have closed seasons",
+            "notes": "",
+        }
         result = classify_legality(reg)
         assert result in ("restricted",), f"Expected restricted, got {result!r}"
 
     def test_seasonal_keyword_returns_restricted(self):
-        reg = {"bag_limit": "2/day", "season": "Seasonal closure may apply; check state", "notes": ""}
+        reg = {
+            "bag_limit": "2/day",
+            "season": "Seasonal closure may apply; check state",
+            "notes": "",
+        }
         assert classify_legality(reg) == "restricted"
 
     def test_some_areas_closed_returns_restricted(self):
@@ -191,7 +227,9 @@ class TestClassifyLegality:
         assert classify_legality(None) == "unknown"
 
     def test_empty_fields_returns_unknown(self):
-        assert classify_legality({"bag_limit": "", "season": "", "notes": ""}) == "unknown"
+        assert (
+            classify_legality({"bag_limit": "", "season": "", "notes": ""}) == "unknown"
+        )
 
     def test_link_only_payload_returns_unknown(self):
         reg = {
@@ -215,6 +253,7 @@ class TestClassifyLegality:
 # ---------------------------------------------------------------------------
 # Tests: should_hide_from_forecast()
 # ---------------------------------------------------------------------------
+
 
 class TestShouldHideFromForecast:
     """Unit tests for the should_hide_from_forecast() helper.
@@ -262,6 +301,7 @@ class TestShouldHideFromForecast:
 # Tests: get_official_regulations_url()
 # ---------------------------------------------------------------------------
 
+
 class TestGetOfficialRegulationsUrl:
     def test_known_state_returns_url(self):
         url = get_official_regulations_url("NC")
@@ -284,14 +324,18 @@ class TestGetOfficialRegulationsUrl:
 # Tests: build_species_ranking() — regulation_status field & filtering
 # ---------------------------------------------------------------------------
 
-class TestSpeciesRankingRegulationStatus:
 
+class TestSpeciesRankingRegulationStatus:
     # -- Test 1: legal species remains visible and carries regulation_status='legal'
     def test_legal_species_visible_and_status_is_legal(self, monkeypatch):
         """Species with open regulations must appear in ranking with regulation_status='legal'."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _open_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _open_reg()
+        )
 
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
 
         assert len(ranking) > 0, "Expected at least one species in ranking"
         statuses = {sp.get("regulation_status") for sp in ranking}
@@ -300,6 +344,7 @@ class TestSpeciesRankingRegulationStatus:
     # -- Test 2: prohibited species is hidden from "What's Biting"
     def test_prohibited_species_hidden_from_biting(self, monkeypatch):
         """Sheepshead with bag_limit=0 / C&R must NOT appear in What's Biting."""
+
         def fake_lookup(name, state):
             if name == "Sheepshead":
                 return _prohibited_reg()
@@ -311,15 +356,24 @@ class TestSpeciesRankingRegulationStatus:
             month=3, water_temp=62, coast="east", fishing_types=["pier"], state="NC"
         )
         names = [sp["name"] for sp in ranking]
-        assert "Sheepshead" not in names, "Prohibited species Sheepshead should be absent"
+        assert "Sheepshead" not in names, (
+            "Prohibited species Sheepshead should be absent"
+        )
 
     def test_out_of_season_species_hidden_from_biting(self, monkeypatch):
         """Species in a closed season this month must NOT appear in What's Biting."""
+
         # Use month=2; regulation says closed Jan-Apr → out_of_season for Feb
         def fake_lookup(name, state):
             if name == "Sheepshead":
-                return {"bag_limit": "5/day", "season": "Closed Jan-Apr", "notes": "",
-                        "official_source": "https://example.com", "is_stale": False, "data_status": "snapshot"}
+                return {
+                    "bag_limit": "5/day",
+                    "season": "Closed Jan-Apr",
+                    "notes": "",
+                    "official_source": "https://example.com",
+                    "is_stale": False,
+                    "data_status": "snapshot",
+                }
             return _open_reg()
 
         monkeypatch.setattr("domain.species.lookup_regulation", fake_lookup)
@@ -328,7 +382,9 @@ class TestSpeciesRankingRegulationStatus:
             month=2, water_temp=55, coast="east", fishing_types=["pier"], state="NC"
         )
         names = [sp["name"] for sp in ranking]
-        assert "Sheepshead" not in names, "Out-of-season Sheepshead should be absent in Feb"
+        assert "Sheepshead" not in names, (
+            "Out-of-season Sheepshead should be absent in Feb"
+        )
 
     # -- Test 4: unknown regulation status is hidden (cannot verify legality)
     def test_unknown_status_hidden_from_ranking(self, monkeypatch):
@@ -337,9 +393,13 @@ class TestSpeciesRankingRegulationStatus:
         Under the strict policy, 'unknown' legality is not safe to recommend —
         we cannot confirm the angler can legally keep the fish.
         """
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _unknown_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _unknown_reg()
+        )
 
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
 
         assert len(ranking) == 0, (
             "Species with 'unknown' regulation status must be hidden from the ranking. "
@@ -348,8 +408,12 @@ class TestSpeciesRankingRegulationStatus:
 
     def test_regulation_status_field_present_when_state_given(self, monkeypatch):
         """Every ranked species should have a regulation_status key when state is provided."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _open_reg())
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _open_reg()
+        )
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         for sp in ranking:
             assert "regulation_status" in sp, (
                 f"'{sp['name']}' missing regulation_status field"
@@ -366,6 +430,7 @@ class TestSpeciesRankingRegulationStatus:
 
     def test_ranks_are_sequential_after_regulation_filter(self, monkeypatch):
         """Ranks must form a continuous sequence 1..N after prohibited species are removed."""
+
         def fake_lookup(name, state):
             if name == "Sheepshead":
                 return _prohibited_reg()
@@ -376,10 +441,13 @@ class TestSpeciesRankingRegulationStatus:
             month=3, water_temp=62, coast="east", fishing_types=["pier"], state="NC"
         )
         ranks = [sp["rank"] for sp in ranking]
-        assert ranks == list(range(1, len(ranking) + 1)), "Ranks must be 1..N with no gaps"
+        assert ranks == list(range(1, len(ranking) + 1)), (
+            "Ranks must be 1..N with no gaps"
+        )
 
     def test_catch_and_release_species_hidden_from_biting(self, monkeypatch):
         """C&R species must be absent from 'What's Biting' — anglers cannot keep the fish."""
+
         def fake_lookup(name, state):
             if name == "Sheepshead":
                 return _cr_reg()
@@ -407,7 +475,9 @@ class TestSpeciesRankingRegulationStatus:
                 "data_status": "snapshot",
             },
         )
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         assert len(ranking) == 0, (
             "bag_limit=0 (catch_and_release) must suppress all species from the ranking"
         )
@@ -425,11 +495,16 @@ class TestSpeciesRankingRegulationStatus:
                 "data_status": "snapshot",
             },
         )
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
-        assert len(ranking) == 0, "'No harvest' (catch_and_release) must suppress species from ranking"
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
+        assert len(ranking) == 0, (
+            "'No harvest' (catch_and_release) must suppress species from ranking"
+        )
 
     def test_federally_protected_species_hidden_from_biting(self, monkeypatch):
         """Federally protected species must be absent — targeting is not legally permitted."""
+
         def fake_lookup(name, state):
             if name == "Sheepshead":
                 return {
@@ -457,8 +532,12 @@ class TestSpeciesRankingRegulationStatus:
         We cannot confirm the angler can legally keep the fish, so we must not
         recommend targeting it.  Missing data is not the same as legal.
         """
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _unknown_reg())
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _unknown_reg()
+        )
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         assert len(ranking) == 0, (
             "Unknown-status species must be hidden from ranking — "
             "cannot recommend targeting a species of unverified legality"
@@ -469,41 +548,59 @@ class TestSpeciesRankingRegulationStatus:
 # Tests: build_spawning_report() — filtering and regulation_status field
 # ---------------------------------------------------------------------------
 
-class TestSpawningReportRegulationStatus:
 
+class TestSpawningReportRegulationStatus:
     # -- Test 3: truly closed species hidden from "What's Spawning Now"
     def test_prohibited_species_hidden_from_spawning(self, monkeypatch):
         """Species with a year-round closure must not appear in the spawning list."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _prohibited_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _prohibited_reg()
+        )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         assert spawning == [], (
             "All species should be hidden when every lookup returns a prohibited regulation"
         )
 
     def test_legal_species_visible_in_spawning(self, monkeypatch):
         """Species with open regulations should appear in the spawning report."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _open_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _open_reg()
+        )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         assert len(spawning) > 0, "Expected at least one species in spawning report"
 
     def test_spawning_regulation_status_legal_for_open_regs(self, monkeypatch):
         """Spawning entries with open regs must carry regulation_status='legal'."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _open_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _open_reg()
+        )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         for sp in spawning:
-            assert "regulation_status" in sp, f"'{sp['name']}' missing regulation_status"
+            assert "regulation_status" in sp, (
+                f"'{sp['name']}' missing regulation_status"
+            )
             assert sp["regulation_status"] == "legal", (
                 f"'{sp['name']}' has regulation_status={sp['regulation_status']!r}"
             )
 
     def test_spawning_regulation_status_unknown_when_no_data(self, monkeypatch):
         """When no reg data exists, spawning entries should carry regulation_status='unknown'."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _unknown_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _unknown_reg()
+        )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         # Unknown regs → show the entry (conservative but useful)
         for sp in spawning:
             assert sp.get("regulation_status") == "unknown", (
@@ -512,18 +609,33 @@ class TestSpawningReportRegulationStatus:
 
     def test_spawning_legal_status_field_preserved(self, monkeypatch):
         """The legacy legal_status field must still be present (backward compatibility)."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _open_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _open_reg()
+        )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         for sp in spawning:
-            assert "legal_status" in sp, f"'{sp['name']}' missing legacy legal_status field"
-            assert sp["legal_status"] in ("catch_release", "restricted", "open", "unknown")
+            assert "legal_status" in sp, (
+                f"'{sp['name']}' missing legacy legal_status field"
+            )
+            assert sp["legal_status"] in (
+                "catch_release",
+                "restricted",
+                "open",
+                "unknown",
+            )
 
     def test_catch_and_release_species_hidden_from_spawning(self, monkeypatch):
         """C&R species must be absent from 'What's Spawning' — anglers cannot keep the fish."""
-        monkeypatch.setattr("domain.species.lookup_regulation", lambda name, st: _cr_reg())
+        monkeypatch.setattr(
+            "domain.species.lookup_regulation", lambda name, st: _cr_reg()
+        )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         assert len(spawning) == 0, (
             "C&R species must be hidden from the spawning list — cannot keep the fish"
         )
@@ -532,6 +644,7 @@ class TestSpawningReportRegulationStatus:
 # ---------------------------------------------------------------------------
 # Regression guard: retention logic must never become the visibility gate
 # ---------------------------------------------------------------------------
+
 
 class TestRetentionLogicNotVisibilityGate:
     """Regression tests ensuring the visibility gate stays as should_hide_from_forecast().
@@ -561,7 +674,9 @@ class TestRetentionLogicNotVisibilityGate:
                 "data_status": "snapshot",
             },
         )
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         assert len(ranking) == 0, (
             "REGRESSION: 'Catch and release only' must suppress species from the ranking. "
             "should_hide_from_forecast() must return True for 'catch_and_release'."
@@ -580,7 +695,9 @@ class TestRetentionLogicNotVisibilityGate:
                 "data_status": "snapshot",
             },
         )
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         assert len(ranking) == 0, (
             "REGRESSION: bag_limit=0 (catch_and_release) must suppress species. "
             "should_hide_from_forecast() must return True for 'catch_and_release'."
@@ -603,7 +720,9 @@ class TestRetentionLogicNotVisibilityGate:
                     "data_status": "snapshot",
                 },
             )
-            ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+            ranking = build_species_ranking(
+                month=6, water_temp=72, coast="east", state="NC"
+            )
             assert len(ranking) == 0, (
                 f"REGRESSION: season='{season_text}' must hide all species from the ranking."
             )
@@ -613,8 +732,8 @@ class TestRetentionLogicNotVisibilityGate:
 # Tests: stale regulation data is flagged
 # ---------------------------------------------------------------------------
 
-class TestStaleRegulationBehavior:
 
+class TestStaleRegulationBehavior:
     # -- Test 5: stale cached regulations flagged via is_stale
     def test_stale_species_still_shown_in_ranking(self, monkeypatch):
         """Stale regulation data should NOT hide a species — show it with a warning instead."""
@@ -623,7 +742,9 @@ class TestStaleRegulationBehavior:
             lambda name, st: _open_reg(is_stale=True, last_updated="2023-01"),
         )
 
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         assert len(ranking) > 0, "Stale regs must not hide species from the ranking"
 
     def test_stale_regulation_is_flagged_in_entry(self, monkeypatch):
@@ -633,7 +754,9 @@ class TestStaleRegulationBehavior:
             lambda name, st: _open_reg(is_stale=True, last_updated="2023-01"),
         )
 
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         for sp in ranking:
             reg = sp.get("regulation") or {}
             assert reg.get("is_stale") is True, (
@@ -647,7 +770,9 @@ class TestStaleRegulationBehavior:
             lambda name, st: _open_reg(is_stale=True, last_updated="2023-01"),
         )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         assert len(spawning) > 0, "Stale regs must not hide spawning entries"
         for sp in spawning:
             reg = sp.get("regulation") or {}
@@ -658,8 +783,8 @@ class TestStaleRegulationBehavior:
 # Tests: official regulations URL present in payloads
 # ---------------------------------------------------------------------------
 
-class TestOfficialRegulationsUrl:
 
+class TestOfficialRegulationsUrl:
     # -- Test 6: official state regulation link present
     def test_official_source_in_species_regulation(self, monkeypatch):
         """Each ranked species must carry an official_source URL in its regulation dict."""
@@ -669,7 +794,9 @@ class TestOfficialRegulationsUrl:
             lambda name, st: _open_reg(official_source=expected_url),
         )
 
-        ranking = build_species_ranking(month=6, water_temp=72, coast="east", state="NC")
+        ranking = build_species_ranking(
+            month=6, water_temp=72, coast="east", state="NC"
+        )
         assert len(ranking) > 0
         for sp in ranking:
             assert sp.get("regulation", {}).get("official_source") == expected_url
@@ -682,15 +809,37 @@ class TestOfficialRegulationsUrl:
             lambda name, st: _open_reg(official_source=expected_url),
         )
 
-        spawning = build_spawning_report(month=5, water_temp=72, coast="east", state="NC")
+        spawning = build_spawning_report(
+            month=5, water_temp=72, coast="east", state="NC"
+        )
         assert len(spawning) > 0
         for sp in spawning:
             assert sp.get("regulation", {}).get("official_source") == expected_url
 
     def test_get_official_regulations_url_for_all_supported_states(self):
         """Every state we explicitly support should return a non-empty URL."""
-        supported = ["AL", "CA", "DE", "FL", "GA", "HI", "LA", "MA", "MD",
-                     "ME", "MS", "NC", "NJ", "NY", "OR", "RI", "SC", "TX", "VA", "WA"]
+        supported = [
+            "AL",
+            "CA",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "LA",
+            "MA",
+            "MD",
+            "ME",
+            "MS",
+            "NC",
+            "NJ",
+            "NY",
+            "OR",
+            "RI",
+            "SC",
+            "TX",
+            "VA",
+            "WA",
+        ]
         for state in supported:
             url = get_official_regulations_url(state)
             assert url.startswith("https://"), (

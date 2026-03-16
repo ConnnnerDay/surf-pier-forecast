@@ -574,7 +574,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Kemp's ridley sea turtle": ["other"],
     "Hardhead catfish (sea catfish)": ["other"],
     "Gafftopsail catfish": ["other"],
-    "Lizardfish": ["other"],
     "Pigfish": ["other"],
     "Pinfish": ["other"],
     "Spottail pinfish": ["other"],
@@ -590,9 +589,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Fluke (summer flounder)": ["game_fish"],
     "Weakfish": ["game_fish"],
     "Mojarra (yellowfin mojarra)": ["other"],
-    "Sheepshead minnow (killifish)": ["bait_fish"],
-    "Northern puffer (blowfish)": ["panfish", "reef_fish"],
-    "Spadefish (Atlantic)": ["reef_fish"],
     # ── Fresh / brackish water ──────────────────────────────────────────────
     "Largemouth bass": ["game_fish"],
     "Channel catfish": ["panfish"],
@@ -2170,9 +2166,7 @@ def build_species_ranking(
         # Look up display categories: JSON field takes precedence if present,
         # then the curated _SPECIES_CATEGORIES dict, then default to ["other"].
         categories: List[str] = (
-            sp.get("categories")
-            or _SPECIES_CATEGORIES.get(sp["name"])
-            or ["other"]
+            sp.get("categories") or _SPECIES_CATEGORIES.get(sp["name"]) or ["other"]
         )
 
         entry: Dict[str, Any] = {
@@ -3467,9 +3461,7 @@ def build_spawning_report(
         legal_status = _LEGACY_MAP.get(regulation_status, "unknown")
 
         # Resolve display categories from the canonical dict (or JSON field).
-        spawn_sp = next(
-            (s for s in SPECIES_DB if s["name"] == entry["name"]), None
-        )
+        spawn_sp = next((s for s in SPECIES_DB if s["name"] == entry["name"]), None)
         sp_categories: List[str] = (
             (spawn_sp.get("categories") if spawn_sp else None)
             or _SPECIES_CATEGORIES.get(entry["name"])

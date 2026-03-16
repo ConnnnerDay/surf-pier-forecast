@@ -314,6 +314,7 @@ class TestRetentionProhibited:
         Policy: only species classified as 'legal' appear in the forecast.
         C&R status means anglers cannot keep the fish, so it must be hidden.
         """
+
         def fake_lookup(species_name, _state):
             if species_name == "Sheepshead":
                 return {
@@ -345,6 +346,7 @@ class TestRetentionProhibited:
 
     def test_closed_season_species_hidden_from_ranking(self, monkeypatch):
         """A species with 'Season closed' must be absent — targeting is not permitted."""
+
         def fake_lookup(species_name, _state):
             if species_name == "Sheepshead":
                 return {
@@ -369,16 +371,29 @@ class TestRetentionProhibited:
         )
         names = [sp["name"] for sp in ranking]
 
-        assert "Sheepshead" not in names, "Season-closed Sheepshead must be hidden from forecast"
+        assert "Sheepshead" not in names, (
+            "Season-closed Sheepshead must be hidden from forecast"
+        )
         assert [sp["rank"] for sp in ranking] == list(range(1, len(ranking) + 1))
+
 
 # ---------------------------------------------------------------------------
 # Categories
 # ---------------------------------------------------------------------------
 
 _VALID_CATEGORIES = frozenset(
-    {"game_fish", "bait_fish", "panfish", "shark", "ray", "reef_fish",
-     "pelagic", "migratory", "shellfish", "other"}
+    {
+        "game_fish",
+        "bait_fish",
+        "panfish",
+        "shark",
+        "ray",
+        "reef_fish",
+        "pelagic",
+        "migratory",
+        "shellfish",
+        "other",
+    }
 )
 
 
@@ -468,8 +483,10 @@ class TestCategoriesInRankingPayload:
         # Patch SPECIES_DB to inject a species with a categories field
         fake_sp = {
             "name": "Red drum (puppy drum)",
-            "temp_min": 45, "temp_max": 85,
-            "temp_ideal_low": 55, "temp_ideal_high": 75,
+            "temp_min": 45,
+            "temp_max": 85,
+            "temp_ideal_low": 55,
+            "temp_ideal_high": 75,
             "peak_months": [9, 10],
             "good_months": [3, 4],
             "bait": "Cut bait",
@@ -539,9 +556,13 @@ class TestNewSpeciesInDB:
     def test_new_species_have_valid_categories_in_json(self):
         """New species JSON entries must have valid categories lists."""
         target_names = {
-            "Longfin inshore squid", "Blue shark", "Great hammerhead shark",
+            "Longfin inshore squid",
+            "Blue shark",
+            "Great hammerhead shark",
             "Pacific barracuda (California barracuda)",
-            "Toau (blacktail snapper)", "Roi (peacock grouper)", "Weke (goatfish)",
+            "Toau (blacktail snapper)",
+            "Roi (peacock grouper)",
+            "Weke (goatfish)",
         }
         for sp in SPECIES_DB:
             if sp["name"] in target_names:
@@ -559,7 +580,8 @@ class TestNewSpeciesInDB:
 
     def test_pacific_barracuda_game_fish_pelagic(self):
         sp = next(
-            s for s in SPECIES_DB
+            s
+            for s in SPECIES_DB
             if s["name"] == "Pacific barracuda (California barracuda)"
         )
         assert "game_fish" in sp["categories"]
@@ -578,7 +600,9 @@ class TestNewSpeciesInDB:
         ranking = build_species_ranking(month=6, water_temp=78, coast="hawaii")
         names = [sp["name"] for sp in ranking]
         new_hawaii = {
-            "Toau (blacktail snapper)", "Roi (peacock grouper)", "Weke (goatfish)"
+            "Toau (blacktail snapper)",
+            "Roi (peacock grouper)",
+            "Weke (goatfish)",
         }
         assert new_hawaii & set(names), (
             f"None of {new_hawaii} appeared in Hawaii ranking: {names}"
@@ -622,9 +646,11 @@ class TestNonRodReelSpeciesRemoved:
             f"Non-rod-and-reel species still in _SPECIES_CATEGORIES: {present}"
         )
 
+
 # ---------------------------------------------------------------------------
 # Coast filtering — species and spawning surfaces
 # ---------------------------------------------------------------------------
+
 
 class TestCoastFiltering:
     """Verify that build_species_ranking() and build_spawning_report() strictly
@@ -707,7 +733,9 @@ class TestCoastFiltering:
         for coast in ("east", "west", "hawaii"):
             ranking = build_species_ranking(month=6, water_temp=72, coast=coast)
             for sp in ranking:
-                db_entry = next((s for s in SPECIES_DB if s["name"] == sp["name"]), None)
+                db_entry = next(
+                    (s for s in SPECIES_DB if s["name"] == sp["name"]), None
+                )
                 assert db_entry is not None
                 assert db_entry.get("coast") == coast, (
                     f"Species '{sp['name']}' has coast={db_entry.get('coast')!r} "
@@ -718,6 +746,7 @@ class TestCoastFiltering:
 
     def test_east_spawning_excludes_west_and_hawaii(self):
         from domain.species import SPAWNING_DATA
+
         west_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "west"}
         hawaii_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "hawaii"}
         report = build_spawning_report(month=5, water_temp=68, coast="east")
@@ -731,6 +760,7 @@ class TestCoastFiltering:
 
     def test_west_spawning_excludes_east_and_hawaii(self):
         from domain.species import SPAWNING_DATA
+
         east_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "east"}
         hawaii_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "hawaii"}
         report = build_spawning_report(month=5, water_temp=58, coast="west")
@@ -744,6 +774,7 @@ class TestCoastFiltering:
 
     def test_hawaii_spawning_excludes_east_and_west(self):
         from domain.species import SPAWNING_DATA
+
         east_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "east"}
         west_names = {e["name"] for e in SPAWNING_DATA if e["coast"] == "west"}
         report = build_spawning_report(month=5, water_temp=76, coast="hawaii")
