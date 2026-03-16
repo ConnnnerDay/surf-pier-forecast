@@ -72,8 +72,51 @@
             {% endif %}
         </div>
     </header>
-    {% include 'partials/_main_nav.html' %}
-
+    <nav class="unified-nav" aria-label="Main navigation">
+        <div class="unified-nav-pages">
+            <a href="{{ url_for('views.live_cams') }}" class="unified-nav-link{% if request.endpoint == 'views.live_cams' %} unified-nav-active{% endif %}">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                Live Cams
+            </a>
+            <a href="{{ url_for('views.fishing_log') }}" class="unified-nav-link{% if request.endpoint == 'views.fishing_log' %} unified-nav-active{% endif %}">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Fish Log
+            </a>
+            {% if user %}
+            <a href="{{ url_for('auth.account') }}" class="unified-nav-link{% if request.endpoint in ('auth.account', 'auth.account_settings') %} unified-nav-active{% endif %}">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Account
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="unified-nav-link{% if request.endpoint in ('auth.login', 'auth.register') %} unified-nav-active{% endif %}">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Log In
+            </a>
+            {% endif %}
+        </div>
+        <div class="dash-tabs" role="tablist" aria-label="Forecast sections" id="dash-tabs">
+            <button class="dash-tab" data-tab="today" role="tab" aria-selected="true" aria-controls="panel-today" id="tab-today">
+                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+                Today
+            </button>
+            <button class="dash-tab" data-tab="species" role="tab" aria-selected="false" aria-controls="panel-species" id="tab-species">
+                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/><path d="M6 4l6 3 6-3"/></svg>
+                Species
+            </button>
+            <button class="dash-tab" data-tab="tides" role="tab" aria-selected="false" aria-controls="panel-tides" id="tab-tides">
+                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                Tides
+            </button>
+            <button class="dash-tab" data-tab="plan" role="tab" aria-selected="false" aria-controls="panel-plan" id="tab-plan">
+                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Plan
+            </button>
+            <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                <span style="font-size:0.59rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">Edit</span>
+            </button>
+        </div>
+    </nav>
 
     <main id="main-content" role="main">
 
@@ -98,32 +141,6 @@
             {% endfor %}
         </div>
         {% endif %}
-
-        <!-- ============================================================
-             TAB NAVIGATION
-             ============================================================ -->
-        <nav class="dash-tabs" role="tablist" aria-label="Forecast sections" id="dash-tabs">
-            <button class="dash-tab" data-tab="today" role="tab" aria-selected="true" aria-controls="panel-today" id="tab-today">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-                Today
-            </button>
-            <button class="dash-tab" data-tab="species" role="tab" aria-selected="false" aria-controls="panel-species" id="tab-species">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/><path d="M6 4l6 3 6-3"/></svg>
-                Species
-            </button>
-            <button class="dash-tab" data-tab="tides" role="tab" aria-selected="false" aria-controls="panel-tides" id="tab-tides">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                Tides
-            </button>
-            <button class="dash-tab" data-tab="plan" role="tab" aria-selected="false" aria-controls="panel-plan" id="tab-plan">
-                <svg class="dash-tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Plan
-            </button>
-            <button class="dash-tab dash-tab--settings" id="customize-btn" aria-label="Customize dashboard sections" title="Customize">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                <span style="font-size:0.59rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">Edit</span>
-            </button>
-        </nav>
 
         <!-- ============================================================
              TAB: TODAY
@@ -308,49 +325,6 @@
                 </section>
             </div>
 
-            <div class="dash-section" data-section-id="rigs" data-section-label="Recommended Rigs" data-section-tab="species" {% if not forecast.rig_recommendations %}data-empty="true"{% endif %}>
-                {% if forecast.rig_recommendations %}
-                <section class="rig-section">
-                    <h2>Recommended Rigs</h2>
-                    <p class="section-sub">Matched to species biting now</p>
-                    <div class="rig-cards">
-                        {% for rig in forecast.rig_recommendations %}
-                        <div class="rig-card">
-                            <h3>{{ rig.name }}</h3>
-                            {% if rig.image %}
-                            <div class="rig-diagram">
-                                <img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy">
-                            </div>
-                            {% endif %}
-                            <p class="rig-desc">{{ rig.description }}</p>
-                            <div class="rig-targets">
-                                <span class="rig-targets-label">Good for:</span>
-                                {% for t in rig.targets %}<span class="rig-target-tag">{{ t }}</span>{% endfor %}
-                            </div>
-                            <dl class="rig-specs">
-                                <dt>Mainline</dt><dd>{{ rig.mainline }}</dd>
-                                <dt>Leader</dt><dd>{{ rig.leader }}</dd>
-                                <dt>Hook</dt><dd>{{ rig.hook }}</dd>
-                                <dt>Sinker</dt><dd>{{ rig.sinker }}</dd>
-                            </dl>
-                            {% if rig.knots %}
-                            <div class="rig-knots">
-                                <h4 class="rig-knots-title">Recommended Knots</h4>
-                                {% for knot in rig.knots %}
-                                <details class="knot-detail">
-                                    <summary><strong>{{ knot.name }}</strong><span class="knot-strength">{{ knot.strength }}</span><span class="knot-use">{{ knot.use }}</span></summary>
-                                    <p class="knot-steps">{{ knot.steps }}</p>
-                                </details>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-                {% endif %}
-            </div>
-
             <div class="dash-section" data-section-id="forage" data-section-label="What's in the Water" data-section-tab="species" {% if not forecast.natural_bait %}data-empty="true"{% endif %}>
                 {% if forecast.natural_bait %}
                 <section class="forage-section">
@@ -400,6 +374,49 @@
              Outlook, tips, spawning, calendar, checklists
              ============================================================ -->
         <div class="dash-panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan">
+
+            <div class="dash-section" data-section-id="rigs" data-section-label="Recommended Rigs" data-section-tab="plan" {% if not forecast.rig_recommendations %}data-empty="true"{% endif %}>
+                {% if forecast.rig_recommendations %}
+                <section class="rig-section">
+                    <h2>Recommended Rigs</h2>
+                    <p class="section-sub">Matched to species biting now</p>
+                    <div class="rig-cards">
+                        {% for rig in forecast.rig_recommendations %}
+                        <div class="rig-card">
+                            <h3>{{ rig.name }}</h3>
+                            {% if rig.image %}
+                            <div class="rig-diagram">
+                                <img src="{{ url_for('static', filename=rig.image) }}" alt="{{ rig.name }} diagram" loading="lazy">
+                            </div>
+                            {% endif %}
+                            <p class="rig-desc">{{ rig.description }}</p>
+                            <div class="rig-targets">
+                                <span class="rig-targets-label">Good for:</span>
+                                {% for t in rig.targets %}<span class="rig-target-tag">{{ t }}</span>{% endfor %}
+                            </div>
+                            <dl class="rig-specs">
+                                <dt>Mainline</dt><dd>{{ rig.mainline }}</dd>
+                                <dt>Leader</dt><dd>{{ rig.leader }}</dd>
+                                <dt>Hook</dt><dd>{{ rig.hook }}</dd>
+                                <dt>Sinker</dt><dd>{{ rig.sinker }}</dd>
+                            </dl>
+                            {% if rig.knots %}
+                            <div class="rig-knots">
+                                <h4 class="rig-knots-title">Recommended Knots</h4>
+                                {% for knot in rig.knots %}
+                                <details class="knot-detail">
+                                    <summary><strong>{{ knot.name }}</strong><span class="knot-strength">{{ knot.strength }}</span><span class="knot-use">{{ knot.use }}</span></summary>
+                                    <p class="knot-steps">{{ knot.steps }}</p>
+                                </details>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+            </div>
 
             <div class="dash-section" data-section-id="outlook" data-section-label="3-Day Outlook" data-section-tab="plan">
                 {% include 'partials/_outlook.html' %}

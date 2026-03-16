@@ -5395,19 +5395,64 @@ footer p {
    TABBED DASHBOARD + CUSTOMIZATION SYSTEM
    ========================================================================== */
 
+/* ---------- Unified Navigation (dashboard only) ---------- */
+
+.unified-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.unified-nav-pages {
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.unified-nav-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.unified-nav-link:hover,
+.unified-nav-link:focus-visible {
+  color: var(--ocean);
+  background: var(--ocean-light);
+}
+
+.unified-nav-link.unified-nav-active {
+  color: var(--ocean);
+}
+
+[data-theme="dark"] .unified-nav {
+  background: var(--card-bg, #1e2a35);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .unified-nav-pages {
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+
 /* ---------- Tab Navigation Bar ---------- */
 
 .dash-tabs {
   display: flex;
   align-items: stretch;
   background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 0.75rem;
   overflow: hidden;
-  position: sticky;
-  top: 0;
-  z-index: 20;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -5490,6 +5535,7 @@ footer p {
 
 .dash-panel.active {
   display: block;
+  padding-top: 0.75rem;
 }
 
 /* ---------- Section wrappers ---------- */
