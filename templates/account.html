@@ -56,14 +56,12 @@
         }
     </style>
 </head>
-<body>
-    <header>
-        <div class="header-inner">
-            <h1>Surf &amp; Pier Fishing Outlook</h1>
-            <p class="subtitle">Your Account</p>
-        </div>
-    </header>
+<body class="has-app-header">
     {% include 'partials/_main_nav.html' %}
+    <div class="page-hero">
+        <h1>{{ user.username }}</h1>
+        <p class="page-subtitle">Account Settings</p>
+    </div>
 
 
     <main>
@@ -74,9 +72,8 @@
                 Settings saved successfully.
             </div>
             {% endif %}
-            <div class="account-heading">
-                <h2>{{ user.username }}</h2>
-                <p class="account-subtitle">Manage your location preferences, account settings, and fishing activity.</p>
+            <div class="account-heading" style="margin-bottom:1rem">
+                <p class="account-subtitle" style="margin:0">Manage your location preferences, account settings, and fishing activity.</p>
             </div>
 
             <div class="quick-links">
@@ -161,58 +158,73 @@
                 <button type="submit" class="auth-btn">Save Settings</button>
             </form>
 
-            <h3 class="section-title">Your Activity</h3>
-            <div class="dashboard-metrics">
-                <div class="metric-card">
-                    <span class="metric-value">{{ recent_logs|length }}</span>
-                    <span class="metric-label">Recent Fishing Logs</span>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-value">{{ favorite_locations|length }}</span>
-                    <span class="metric-label">Favorite Locations</span>
-                </div>
-            </div>
-            {% if recent_logs %}
-            <ul class="recent-log-list">
-                {% for entry in recent_logs %}
-                <li class="log-entry-row" data-entry-id="{{ entry.id }}">
-                    <span class="log-entry-text">{{ entry.date[:10] }} — {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</span>
-                    <div class="log-entry-photos">
-                        {% if entry.photo1_path %}
-                        <img src="/{{ entry.photo1_path }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb">
-                        {% endif %}
-                        {% if entry.photo2_path %}
-                        <img src="/{{ entry.photo2_path }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb">
-                        {% endif %}
+            <!-- Activity & Stats (collapsed by default) -->
+            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
+                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between" onclick="">
+                    <span style="display:flex;align-items:center;gap:0.5rem">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+                        Fishing Activity &amp; Stats
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <div style="padding:1rem">
+                    <div class="dashboard-metrics">
+                        <div class="metric-card">
+                            <span class="metric-value">{{ recent_logs|length }}</span>
+                            <span class="metric-label">Recent Fishing Logs</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-value">{{ favorite_locations|length }}</span>
+                            <span class="metric-label">Favorite Locations</span>
+                        </div>
                     </div>
-                    <form class="photo-upload-form" data-entry-id="{{ entry.id }}">
-                        <label class="photo-upload-label">
-                            {% if not entry.photo1_path %}Add photo{% else %}Replace photo{% endif %}
-                            <input type="file" name="photo1" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
-                        </label>
-                        {% if entry.photo1_path and not entry.photo2_path %}
-                        <label class="photo-upload-label">
-                            Add 2nd photo
-                            <input type="file" name="photo2" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
-                        </label>
-                        {% endif %}
-                    </form>
-                    <span class="log-upload-status" aria-live="polite"></span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-            {% if favorite_locations %}
-            <ul class="favorites-list">
-                {% for loc in favorite_locations %}
-                <li>
-                    <a href="{{ url_for('views.shared_forecast', location_id=loc.id) }}" style="color:var(--ocean);text-decoration:none;">{{ loc.name }}, {{ loc.state }}</a>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="section-sub" style="margin-top:0.5rem;">No pinned locations yet. <a href="{{ url_for('views.setup') }}">Add locations from the setup page.</a></p>
-            {% endif %}
+                    {% if recent_logs %}
+                    <ul class="recent-log-list">
+                        {% for entry in recent_logs %}
+                        <li class="log-entry-row" data-entry-id="{{ entry.id }}">
+                            <span class="log-entry-text">{{ entry.date[:10] }} &mdash; {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</span>
+                            <div class="log-entry-photos">
+                                {% if entry.photo1_path %}
+                                <img src="/{{ entry.photo1_path }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb">
+                                {% endif %}
+                                {% if entry.photo2_path %}
+                                <img src="/{{ entry.photo2_path }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb">
+                                {% endif %}
+                            </div>
+                            <form class="photo-upload-form" data-entry-id="{{ entry.id }}">
+                                <label class="photo-upload-label">
+                                    {% if not entry.photo1_path %}Add photo{% else %}Replace photo{% endif %}
+                                    <input type="file" name="photo1" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
+                                </label>
+                                {% if entry.photo1_path and not entry.photo2_path %}
+                                <label class="photo-upload-label">
+                                    Add 2nd photo
+                                    <input type="file" name="photo2" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
+                                </label>
+                                {% endif %}
+                            </form>
+                            <span class="log-upload-status" aria-live="polite"></span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="section-sub"><a href="{{ url_for('views.fishing_log') }}">Start your fishing log →</a></p>
+                    {% endif %}
+
+                    {% if favorite_locations %}
+                    <h4 style="margin:0.75rem 0 0.4rem;font-size:0.9rem">Favorite Locations</h4>
+                    <ul class="favorites-list">
+                        {% for loc in favorite_locations %}
+                        <li>
+                            <a href="{{ url_for('views.shared_forecast', location_id=loc.id) }}" style="color:var(--ocean);text-decoration:none;">{{ loc.name }}, {{ loc.state }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="section-sub" style="margin-top:0.5rem;">No pinned locations yet. <a href="{{ url_for('views.setup') }}">Add locations from the setup page.</a></p>
+                    {% endif %}
+                </div>
+            </details>
 
             <div class="account-actions account-footer-actions">
                 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">

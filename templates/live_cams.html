@@ -10,15 +10,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
-<body class="forecast-page">
-    <header>
-        <div class="header-inner">
-            <h1>Live Cams</h1>
-            <p class="subtitle">Nearby beach and pier cams for {{ location.name }}, {{ location.state }}</p>
-        </div>
-    </header>
-
+<body class="forecast-page has-app-header">
     {% include 'partials/_main_nav.html' %}
+    <div class="page-hero">
+        <h1>Live Cams</h1>
+        <p class="page-subtitle">Beach &amp; pier cams near {{ location.name }}, {{ location.state }}</p>
+    </div>
 
     <main>
         <section class="live-cams-page-card">

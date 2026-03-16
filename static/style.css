@@ -6441,3 +6441,1050 @@ body:not(.forecast-page) main {
   margin-bottom: 0;
 }
 
+/* ==========================================================================
+   REFACTOR v2 — Dark-first, mobile-first, hamburger nav, clean dashboard
+   ========================================================================== */
+
+/* ---- Dark mode is now the default ---- */
+/* The :root already has light values; dark values via [data-theme="dark"].
+   _theme_bootstrap.html sets dark by default unless user picked light. */
+
+/* ---- App Header (replaces old <header>) ---- */
+
+.app-header {
+  background: var(--ocean-dark);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .app-header {
+  background: #0a1a24;
+}
+
+[data-theme="light"] .app-header,
+:root:not([data-theme="dark"]) .app-header {
+  background: var(--ocean);
+}
+
+.app-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  text-decoration: none;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+  opacity: 0.95;
+}
+
+.app-logo svg {
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.app-logo:hover {
+  opacity: 1;
+}
+
+.hamburger-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  padding: 0;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.ham-icon--close { display: none; }
+.hamburger-btn--open .ham-icon--open { display: none; }
+.hamburger-btn--open .ham-icon--close { display: block; }
+
+/* ---- Menu overlay ---- */
+
+.menu-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 299;
+  backdrop-filter: blur(2px);
+}
+
+.menu-overlay--visible {
+  display: block;
+}
+
+/* ---- Menu drawer (slide in from right) ---- */
+
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  background: var(--card-bg);
+  z-index: 300;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.menu-drawer--open {
+  transform: translateX(0);
+}
+
+.menu-drawer-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.menu-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.menu-drawer-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.menu-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.menu-close-btn:hover {
+  color: var(--text);
+}
+
+.menu-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--bg-subtle);
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.menu-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  flex: 1;
+}
+
+.menu-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.2rem;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.97rem;
+  font-weight: 500;
+  transition: background 0.12s, color 0.12s;
+  border-radius: 0;
+}
+
+.menu-nav-link:hover {
+  background: var(--bg-subtle);
+  color: var(--ocean);
+}
+
+.menu-nav-link--active {
+  color: var(--ocean);
+  background: var(--ocean-light);
+  font-weight: 600;
+}
+
+[data-theme="dark"] .menu-nav-link--active {
+  background: rgba(26, 138, 181, 0.12);
+}
+
+.menu-settings {
+  border-top: 1px solid var(--border-light);
+  padding: 0.75rem 0;
+  flex-shrink: 0;
+}
+
+.menu-settings-label {
+  padding: 0.4rem 1.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.menu-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.2rem;
+}
+
+.menu-setting-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.menu-theme-toggle,
+.menu-unit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.menu-theme-toggle:hover,
+.menu-unit-toggle:hover {
+  background: var(--border-light);
+}
+
+.menu-footer {
+  border-top: 1px solid var(--border-light);
+  padding: 0.75rem 1.2rem;
+  flex-shrink: 0;
+}
+
+.menu-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  width: 100%;
+  cursor: pointer;
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.menu-logout-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--red);
+}
+
+/* Hide old header elements — now handled by app-header via _main_nav.html */
+header.legacy-header { display: none; }
+/* Old standalone header (non-main-nav pages) stays for non-refactored pages */
+
+/* ---- Main content padding for sticky app-header ---- */
+
+body.has-app-header main {
+  padding-top: 0;
+}
+
+/* ---- Page header block (title + subtitle inside main on non-dashboard pages) ---- */
+
+.page-hero {
+  background: var(--ocean-dark);
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  color: #fff;
+}
+
+[data-theme="light"] .page-hero,
+:root:not([data-theme="dark"]) .page-hero {
+  background: linear-gradient(135deg, var(--ocean) 0%, var(--ocean-dark) 100%);
+}
+
+.page-hero h1 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0 0 0.3rem;
+  letter-spacing: 0.01em;
+}
+
+.page-hero .page-subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.8;
+}
+
+/* ---- CONDITIONS SUMMARY CARD (hero card, most prominent) ---- */
+
+.conditions-summary-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  margin: 1rem;
+  overflow: hidden;
+}
+
+.csc-verdict-bar {
+  padding: 1.25rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.csc-location {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin: 0 0 0.4rem;
+}
+
+.csc-verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.csc-verdict-summary {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.4rem 0 0;
+  line-height: 1.45;
+}
+
+.csc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+
+@media (min-width: 500px) {
+  .csc-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.csc-stat {
+  padding: 1rem 1.1rem;
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.csc-stat:nth-child(2n) {
+  border-right: none;
+}
+
+@media (min-width: 500px) {
+  .csc-stat:nth-child(2n) {
+    border-right: 1px solid var(--border-light);
+  }
+  .csc-stat:nth-child(4n) {
+    border-right: none;
+  }
+}
+
+.csc-stat:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+@media (min-width: 500px) {
+  .csc-stat:nth-last-child(-n+4) {
+    border-bottom: none;
+  }
+}
+
+.csc-stat-icon-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.csc-stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.csc-stat-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ---- TOP SPECIES SECTION ---- */
+
+.top-species-section {
+  margin: 1rem;
+}
+
+.top-species-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.top-species-header h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+}
+
+.top-species-viewall {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ocean);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+.top-species-viewall:hover {
+  text-decoration: underline;
+}
+
+.top-species-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.top-species-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.tsr-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.tsr-rank--1 {
+  background: linear-gradient(135deg, #d4a017, #f0c040);
+  color: #5a3a00;
+}
+
+.tsr-rank--2 {
+  background: linear-gradient(135deg, #8a9ba8, #b0c0ca);
+  color: #1a2a35;
+}
+
+.tsr-rank--3 {
+  background: linear-gradient(135deg, #c47a4a, #e09a6a);
+  color: #3a1500;
+}
+
+.tsr-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tsr-name {
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tsr-bait {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tsr-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tsr-badge--hot {
+  background: rgba(224, 88, 48, 0.15);
+  color: var(--coral);
+}
+
+.tsr-badge--active {
+  background: rgba(26, 138, 92, 0.15);
+  color: var(--sea-green);
+}
+
+.tsr-badge--possible {
+  background: rgba(212, 146, 11, 0.12);
+  color: var(--amber);
+}
+
+.top-species-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.65rem;
+  background: var(--bg-subtle);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ocean);
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.15s;
+}
+
+.top-species-expand-btn:hover {
+  background: var(--border-light);
+}
+
+/* ---- 24H ACTIVITY TIMELINE IMPROVEMENTS ---- */
+
+.timeline-section-v2 {
+  margin: 1rem;
+}
+
+.timeline-section-v2 h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ---- COLLAPSIBLE SECONDARY SECTIONS ---- */
+
+.collapsible-module {
+  margin: 0.75rem 1rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  background: var(--card-bg);
+}
+
+.collapsible-module summary {
+  list-style: none;
+  padding: 0.95rem 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.collapsible-module summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-module summary:hover {
+  background: var(--bg-subtle);
+}
+
+.collapsible-module-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.collapsible-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.collapsible-module[open] .collapsible-chevron {
+  transform: rotate(180deg);
+}
+
+.collapsible-module-body {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ---- DASHBOARD SECTION HEADERS (inside collapsibles) ---- */
+
+.dash-section-inner h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1rem 0 0.6rem;
+  color: var(--text);
+}
+
+/* ---- BEST FISHING WINDOWS ---- */
+
+.best-windows-section {
+  margin: 1rem;
+}
+
+.best-windows-section h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ---- FULL SPECIES LIST (expandable) ---- */
+
+.full-species-list {
+  display: none;
+  margin-top: 0.75rem;
+}
+
+.full-species-list--visible {
+  display: block;
+}
+
+/* ---- LOCATION INFO BAR (below app header on dashboard) ---- */
+
+.location-bar {
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0.55rem 1rem;
+}
+
+.location-bar-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.location-bar-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.location-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.location-bar-change {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ocean);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid var(--ocean);
+  transition: background 0.12s;
+}
+
+.location-bar-change:hover {
+  background: var(--ocean-light);
+}
+
+.location-bar-fav {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.location-bar-fav:hover,
+.location-bar-fav.fav-toggle--active {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+.location-bar-cached {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ---- FAVORITES BAR (in location-bar) ---- */
+
+.location-bar-favs {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0.1rem;
+  flex-wrap: nowrap;
+}
+
+.location-bar-favs::-webkit-scrollbar { display: none; }
+
+/* ---- RESPONSIVE PADDING ---- */
+
+@media (max-width: 480px) {
+  .conditions-summary-card,
+  .top-species-section,
+  .timeline-section-v2,
+  .best-windows-section,
+  .collapsible-module {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .csc-stat-value {
+    font-size: 1.15rem;
+  }
+}
+
+@media (min-width: 760px) {
+  .csc-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .csc-stat:nth-child(2n) {
+    border-right: 1px solid var(--border-light);
+  }
+  .csc-stat:nth-child(4n) {
+    border-right: none;
+  }
+}
+
+/* ---- SETUP PAGE: LOCATION SEARCH BAR ---- */
+
+.location-search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.location-search-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  background: var(--card-bg);
+  color: var(--text);
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.location-search-input:focus {
+  outline: none;
+  border-color: var(--ocean);
+}
+
+.location-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.location-search-btn {
+  padding: 0.7rem 1.2rem;
+  background: var(--ocean);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.location-search-btn:hover {
+  background: var(--ocean-dark);
+}
+
+.location-search-results {
+  margin-top: 0.5rem;
+}
+
+.location-search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.4rem;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.location-search-result-item:hover {
+  background: var(--bg-subtle);
+  border-color: var(--ocean);
+}
+
+.location-search-result-name {
+  font-weight: 600;
+  font-size: 0.93rem;
+}
+
+.location-search-result-state {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ---- PROFILE PAGE: SINGLE-PAGE GROUP IMPROVEMENTS ---- */
+
+.profile-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0.3rem 0 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* ---- ACCOUNT PAGE: STATS COLLAPSE ---- */
+
+.account-stats-details {
+  margin-top: 0.75rem;
+}
+
+.account-stats-details summary {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem 0;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.account-stats-details summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ---- SPACING IMPROVEMENTS ---- */
+
+main {
+  /* Ensure main content area has reasonable bottom padding */
+  padding-bottom: 3rem;
+}
+
+.forecast-page main {
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---- IMPROVED TYPOGRAPHY SCALE ---- */
+
+@media (max-width: 480px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 760px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* ---- HIGH CONTRAST MODE ---- */
+
+@media (prefers-contrast: high) {
+  .csc-stat-value {
+    font-weight: 900;
+  }
+  .verdict-badge {
+    outline: 2px solid currentColor;
+  }
+}
+
+/* ---- FOCUS IMPROVEMENTS ---- */
+
+.menu-nav-link:focus-visible,
+.collapsible-module summary:focus-visible,
+.top-species-expand-btn:focus-visible {
+  outline: 3px solid var(--ocean);
+  outline-offset: 2px;
+}
+
+/* ---- TRANSITION SMOOTHING ---- */
+
+.collapsible-module-body {
+  animation: none;
+}
+
+details[open] .collapsible-module-body {
+  animation: fadeInDown 0.18s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- OLD HEADER & SITE-NAV: HIDE on pages that use app-header ---- */
+
+/* Pages that include _main_nav.html now render app-header instead of <header> */
+/* The old standalone <header> in each page is kept for non-refactored pages */
+/* For the new refactored pages, the old header is replaced by page-hero or removed */
+
+/* ---- REFRESH SECTION ---- */
+
+.refresh {
+  margin: 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ---- SHARE SECTION ---- */
+
+.share-section {
+  margin: 1rem;
+}
+
+/* ---- SCROLLBAR STYLING (WebKit) ---- */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+

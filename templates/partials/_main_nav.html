@@ -1,14 +1,215 @@
-<nav class="site-nav" aria-label="Site navigation">
-  <div class="site-nav-inner">
-    <a href="{{ url_for('views.index') }}" class="site-nav-link{% if request.endpoint == 'views.index' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.index' %}page{% else %}false{% endif %}">Forecast</a>
-    <a href="{{ url_for('views.setup') }}" class="site-nav-link{% if request.endpoint == 'views.setup' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.setup' %}page{% else %}false{% endif %}">Location</a>
-    {% if user %}<a href="{{ url_for('views.profile') }}" class="site-nav-link{% if request.endpoint == 'views.profile' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.profile' %}page{% else %}false{% endif %}">Profile</a>{% endif %}
-    <a href="{{ url_for('views.fishing_log') }}" class="site-nav-link{% if request.endpoint == 'views.fishing_log' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.fishing_log' %}page{% else %}false{% endif %}">Fish Log</a>
-    <a href="{{ url_for('views.live_cams') }}" class="site-nav-link{% if request.endpoint == 'views.live_cams' %} site-nav-active{% endif %}" aria-current="{% if request.endpoint == 'views.live_cams' %}page{% else %}false{% endif %}">Live Cams</a>
+<header class="app-header" role="banner">
+  <div class="app-header-inner">
+    <a href="{{ url_for('views.index') }}" class="app-logo" aria-label="Surf &amp; Pier Forecast Home">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+      <span>Surf &amp; Pier</span>
+    </a>
+    <button class="hamburger-btn" id="menu-toggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="app-menu-drawer">
+      <svg class="ham-icon ham-icon--open" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <svg class="ham-icon ham-icon--close" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- Menu overlay backdrop -->
+<div class="menu-overlay" id="menu-overlay" aria-hidden="true"></div>
+
+<!-- Slide-out menu drawer -->
+<nav class="menu-drawer" id="app-menu-drawer" role="navigation" aria-label="App menu" aria-hidden="true">
+  <div class="menu-drawer-inner">
+    <div class="menu-drawer-header">
+      <span class="menu-drawer-title">Menu</span>
+      <button class="menu-close-btn" id="menu-close" aria-label="Close menu">&times;</button>
+    </div>
+
     {% if user %}
-    <a href="{{ url_for('auth.account') }}" class="site-nav-link{% if request.endpoint in ('auth.account', 'auth.account_settings') %} site-nav-active{% endif %}" aria-current="{% if request.endpoint in ('auth.account', 'auth.account_settings') %}page{% else %}false{% endif %}">Account</a>
-    {% else %}
-    <a href="{{ url_for('auth.login') }}" class="site-nav-link{% if request.endpoint in ('auth.login', 'auth.register') %} site-nav-active{% endif %}">Log In</a>
+    <div class="menu-user-badge">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>{{ user.username }}</span>
+    </div>
+    {% endif %}
+
+    <ul class="menu-nav-list" role="list">
+      <li>
+        <a href="{{ url_for('views.index') }}" class="menu-nav-link{% if request.endpoint == 'views.index' %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+          Forecast
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('views.setup') }}" class="menu-nav-link{% if request.endpoint == 'views.setup' %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
+          Location
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('views.profile') }}" class="menu-nav-link{% if request.endpoint == 'views.profile' %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('views.fishing_log') }}" class="menu-nav-link{% if request.endpoint == 'views.fishing_log' %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          Fish Log
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('views.live_cams') }}" class="menu-nav-link{% if request.endpoint == 'views.live_cams' %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          Live Cams
+        </a>
+      </li>
+      {% if user %}
+      <li>
+        <a href="{{ url_for('auth.account') }}" class="menu-nav-link{% if request.endpoint in ('auth.account','auth.account_settings') %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          Account
+        </a>
+      </li>
+      {% else %}
+      <li>
+        <a href="{{ url_for('auth.login') }}" class="menu-nav-link{% if request.endpoint in ('auth.login','auth.register') %} menu-nav-link--active{% endif %}">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Log In / Sign Up
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+
+    <div class="menu-settings">
+      <div class="menu-settings-label">Settings</div>
+
+      <div class="menu-setting-row">
+        <span class="menu-setting-name">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Theme
+        </span>
+        <button class="menu-theme-toggle" id="menu-theme-toggle" type="button" aria-label="Toggle light/dark theme">
+          <span class="menu-theme-label" id="menu-theme-label">Dark</span>
+          <svg class="menu-theme-icon" id="menu-theme-icon-dark" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="menu-theme-icon" id="menu-theme-icon-light" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="display:none" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        </button>
+      </div>
+
+      <div class="menu-setting-row">
+        <span class="menu-setting-name">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+          Temperature
+        </span>
+        <button class="menu-unit-toggle" id="menu-unit-toggle" type="button" aria-label="Toggle temperature units">
+          <span id="menu-unit-label">°F</span>
+        </button>
+      </div>
+    </div>
+
+    {% if user %}
+    <div class="menu-footer">
+      <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="menu-logout-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </button>
+      </form>
+    </div>
     {% endif %}
   </div>
 </nav>
+
+<script>
+(function() {
+  var toggle = document.getElementById('menu-toggle');
+  var overlay = document.getElementById('menu-overlay');
+  var drawer = document.getElementById('app-menu-drawer');
+  var closeBtn = document.getElementById('menu-close');
+
+  function openMenu() {
+    drawer.setAttribute('aria-hidden', 'false');
+    drawer.classList.add('menu-drawer--open');
+    overlay.classList.add('menu-overlay--visible');
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.classList.add('hamburger-btn--open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    drawer.setAttribute('aria-hidden', 'true');
+    drawer.classList.remove('menu-drawer--open');
+    overlay.classList.remove('menu-overlay--visible');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.classList.remove('hamburger-btn--open');
+    document.body.style.overflow = '';
+  }
+
+  if (toggle) toggle.addEventListener('click', function() {
+    var isOpen = drawer.classList.contains('menu-drawer--open');
+    isOpen ? closeMenu() : openMenu();
+  });
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+  if (overlay) overlay.addEventListener('click', closeMenu);
+
+  // Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && drawer.classList.contains('menu-drawer--open')) closeMenu();
+  });
+
+  // Theme toggle in menu
+  var themeBtn = document.getElementById('menu-theme-toggle');
+  var themeLabel = document.getElementById('menu-theme-label');
+  var iconDark = document.getElementById('menu-theme-icon-dark');
+  var iconLight = document.getElementById('menu-theme-icon-light');
+
+  function updateThemeUI() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (themeLabel) themeLabel.textContent = isDark ? 'Dark' : 'Light';
+    if (iconDark) iconDark.style.display = isDark ? '' : 'none';
+    if (iconLight) iconLight.style.display = isDark ? 'none' : '';
+  }
+
+  if (themeBtn) {
+    updateThemeUI();
+    themeBtn.addEventListener('click', function() {
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      }
+      updateThemeUI();
+      // Sync to server if logged in
+      if (typeof syncToServer === 'function') syncToServer();
+    });
+  }
+
+  // Unit toggle in menu
+  var unitBtn = document.getElementById('menu-unit-toggle');
+  var unitLabel = document.getElementById('menu-unit-label');
+
+  function updateUnitUI() {
+    var u = localStorage.getItem('units') || 'F';
+    if (unitLabel) unitLabel.textContent = '°' + u;
+  }
+
+  if (unitBtn) {
+    updateUnitUI();
+    unitBtn.addEventListener('click', function() {
+      var current = localStorage.getItem('units') || 'F';
+      var next = current === 'F' ? 'C' : 'F';
+      localStorage.setItem('units', next);
+      updateUnitUI();
+      if (typeof applyUnits === 'function') applyUnits(next);
+      if (typeof syncToServer === 'function') syncToServer();
+    });
+  }
+})();
+</script>

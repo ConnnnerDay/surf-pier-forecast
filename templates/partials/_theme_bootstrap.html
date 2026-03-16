@@ -1,8 +1,12 @@
 <script>
 (function() {
     var t = localStorage.getItem('theme');
-    if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    // Dark mode is the default; only switch to light if explicitly saved
+    if (t === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
         document.documentElement.setAttribute('data-theme', 'dark');
+        if (!t) localStorage.setItem('theme', 'dark');
     }
 })();
 </script>

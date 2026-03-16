@@ -10,15 +10,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
-<body class="forecast-page">
-    <header>
-        <div class="header-inner">
-            <h1>Fishing Log</h1>
-            <p class="subtitle">Track your catches for {{ location.name }}, {{ location.state }} &mdash; saved on this device</p>
-        </div>
-    </header>
-
+<body class="forecast-page has-app-header">
     {% include 'partials/_main_nav.html' %}
+    <div class="page-hero">
+        <h1>Fishing Log</h1>
+        <p class="page-subtitle">{{ location.name }}, {{ location.state }} &mdash; saved on this device</p>
+    </div>
 
     <main>
         <section class="fishlog-section" id="fish-log" data-location-id="{{ location.id }}" data-logged-in="{{ 1 if user else 0 }}">
