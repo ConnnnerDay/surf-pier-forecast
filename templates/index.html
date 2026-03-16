@@ -57,7 +57,13 @@
                 <a href="{{ url_for('auth.register') }}">Sign up</a>
                 {% endif %}
             </div>
-            <p class="subtitle">{{ forecast.location_name or 'Your Fishing Forecast' }}</p>
+            <div class="subtitle-row">
+                <p class="subtitle">{{ forecast.location_name or 'Your Fishing Forecast' }}</p>
+                <a href="{{ url_for('views.setup') }}" class="location-change-link" title="Change location">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    Change
+                </a>
+            </div>
             <div class="header-actions">
                 <button class="fav-toggle" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
                     <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -92,6 +98,10 @@
             </button>
         </div>
         <div class="main-nav-pages">
+            <a href="{{ url_for('views.setup') }}" class="main-nav-page" title="Change location">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                Location
+            </a>
             <a href="{{ url_for('views.live_cams') }}" class="main-nav-page{% if request.endpoint == 'views.live_cams' %} main-nav-page--active{% endif %}">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                 Cams
@@ -101,6 +111,10 @@
                 Log
             </a>
             {% if user %}
+            <a href="{{ url_for('views.profile') }}" class="main-nav-page{% if request.endpoint == 'views.profile' %} main-nav-page--active{% endif %}" title="Edit fishing profile">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/><path d="M6 4l6 3 6-3"/></svg>
+                Profile
+            </a>
             <a href="{{ url_for('auth.account') }}" class="main-nav-page{% if request.endpoint in ('auth.account', 'auth.account_settings') %} main-nav-page--active{% endif %}">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Account
@@ -165,15 +179,22 @@
 
             <div class="dash-section" data-section-id="conditions-hero" data-section-label="Conditions Summary" data-section-tab="today">
                 <section class="conditions-hero" aria-label="Current conditions summary">
-                    <div class="conditions-hero-top">
-                        <div>
-                            <div class="conditions-hero-label">Current Conditions</div>
-                            <div class="conditions-hero-location">{{ forecast.location_name or 'Your Location' }}</div>
+                    <div class="conditions-hero-header">
+                        <div class="conditions-hero-label">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+                            Today's Forecast
                         </div>
-                        {% if forecast.conditions.verdict %}
+                        <span class="conditions-hero-location">{{ forecast.location_name or 'Your Location' }}</span>
+                    </div>
+                    {% if forecast.conditions.verdict %}
+                    <div class="conditions-hero-verdict">
                         <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }}">{{ forecast.conditions.verdict }}</span>
+                        {% if forecast.conditions.summary %}
+                        <p class="verdict-summary">{{ forecast.conditions.summary }}</p>
                         {% endif %}
                     </div>
+                    {% endif %}
+                    <div class="conditions-hero-divider"></div>
                     <div class="conditions-hero-grid">
                         <div class="hero-stat">
                             <div class="hero-stat-header">

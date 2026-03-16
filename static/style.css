@@ -6132,3 +6132,181 @@ footer p {
   color: var(--ocean);
   border-top-color: var(--ocean);
 }
+
+/* ==========================================================================
+   UI/UX Improvements — Added for clarity and navigation
+   ========================================================================== */
+
+/* ---------- Dashboard header: subtitle row with location change link ---------- */
+
+.subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.subtitle-row .subtitle {
+  margin: 0;
+}
+
+.location-change-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.location-change-link:hover,
+.location-change-link:focus-visible {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+
+/* ---------- Conditions hero: restructured verdict layout ---------- */
+
+.conditions-hero-header {
+  margin-bottom: 0.5rem;
+}
+
+.conditions-hero-header .conditions-hero-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.conditions-hero-verdict {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0 0.75rem;
+}
+
+.conditions-hero-verdict .verdict-badge {
+  font-size: 1.1rem;
+  padding: 0.45rem 1.4rem;
+  flex-shrink: 0;
+}
+
+.verdict-summary {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.conditions-hero-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 0 0 0.85rem;
+}
+
+/* ---------- Setup page: clickable flow steps ---------- */
+
+.setup-flow-step--link {
+  text-decoration: none;
+  color: var(--ocean-dark);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.setup-flow-step--link:hover,
+.setup-flow-step--link:focus-visible {
+  background: linear-gradient(135deg, var(--ocean-dark), #14738c);
+  color: #fff;
+}
+
+/* ---------- Profile page: intro actions ---------- */
+
+.profile-intro-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.profile-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ocean);
+  text-decoration: none;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--ocean-light);
+  background: var(--ocean-light);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.profile-back-link:hover,
+.profile-back-link:focus-visible {
+  background: var(--border-light);
+  border-color: var(--ocean);
+}
+
+/* ---------- Account page: preferences grid ---------- */
+
+.account-prefs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .account-prefs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quick links on account page: accommodate 4 buttons */
+.quick-links {
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+}
+
+.quick-link-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* ---------- Favorites list: clickable ---------- */
+
+.favorites-list li {
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+/* ---------- App nav: desktop compact when many items ---------- */
+
+@media (min-width: 600px) {
+  .app-nav-label {
+    display: inline;
+  }
+}
+
