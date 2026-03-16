@@ -2142,14 +2142,13 @@ def build_species_ranking(
             activity = "Possible"
 
         # ── Visibility gate ─────────────────────────────────────────────────
-        # A species is hidden ONLY when targeting itself is not permitted:
-        #   • "prohibited"    — year-round closure or federal protection
-        #   • "out_of_season" — current month falls inside a closed season
-        #
-        # Retention-prohibited / catch-and-release regulations do NOT hide a
-        # species.  Anglers can legally fish for C&R species; they just must
-        # release every catch.  Hiding them would remove valid targeting info.
-        # Those species remain visible with a "Catch & Release Only" badge.
+        # Only species with status "legal" (or "unknown" where no data exists)
+        # appear in the forecast.  All other statuses are hidden to avoid
+        # recommending unlawful catches:
+        #   • "prohibited"        — year-round closure or federal protection
+        #   • "out_of_season"     — current month falls inside a closed season
+        #   • "catch_and_release" — retention/harvest prohibited; cannot keep
+        #   • "restricted"        — conditional rules that may prohibit retention
         regulation = None
         regulation_status: Optional[str] = None
         if state:
@@ -3434,14 +3433,13 @@ def build_spawning_report(
                 reg = None
 
         # ── Visibility gate ─────────────────────────────────────────────────
-        # A species is hidden ONLY when targeting itself is not permitted:
-        #   • "prohibited"    — year-round closure or federal protection
-        #   • "out_of_season" — current month falls inside a closed season
-        #
-        # Retention-prohibited / catch-and-release regulations do NOT hide a
-        # species.  Anglers can legally fish for C&R species; they just must
-        # release every catch.  Hiding them would remove valid targeting info.
-        # Those species remain visible with a "Catch & Release Only" badge.
+        # Only species with status "legal" (or "unknown" where no data exists)
+        # appear in the forecast.  All other statuses are hidden to avoid
+        # recommending unlawful catches:
+        #   • "prohibited"        — year-round closure or federal protection
+        #   • "out_of_season"     — current month falls inside a closed season
+        #   • "catch_and_release" — retention/harvest prohibited; cannot keep
+        #   • "restricted"        — conditional rules that may prohibit retention
         regulation_status = classify_legality(reg, month)
         if should_hide_from_forecast(regulation_status):
             continue
