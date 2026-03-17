@@ -1859,61 +1859,285 @@ h2 {
   color: white;
 }
 
-/* Toggle chips for all lure types */
-.lure-bag-toggles {
+/* ── Lure bag search row ── */
+
+.lure-search-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.65rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.65rem;
+  transition: border-color 0.15s;
 }
 
-.lure-bag-toggle-chip {
-  display: inline-flex;
-  align-items: center;
+.lure-search-row:focus-within {
+  border-color: var(--ocean);
+}
+
+.lure-search-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.lure-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.lure-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Reset browser default search-cancel button */
+.lure-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.lure-search-clear {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.15rem;
+  line-height: 1;
+  border-radius: 50%;
+  transition: color 0.1s, background 0.1s;
+}
+
+.lure-search-clear:hover {
+  color: var(--text);
+  background: var(--bg-subtle);
+}
+
+/* ── Category filter chips ── */
+
+.lure-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
-  padding: 0.3rem 0.6rem 0.3rem 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.lure-filter-chip {
+  padding: 0.25rem 0.65rem;
   background: var(--card-bg);
   border: 1.5px solid var(--border-light);
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 500;
-  color: var(--text);
+  color: var(--text-muted);
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s, color 0.12s;
   white-space: nowrap;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
 }
 
-.lure-bag-toggle-chip:hover {
+.lure-filter-chip:hover {
   border-color: var(--ocean);
-  background: #eff6ff;
   color: var(--ocean);
+  background: #eff6ff;
 }
 
-.lure-bag-toggle-chip[aria-pressed="true"] {
+.lure-filter-chip--active {
   background: var(--ocean);
   border-color: var(--ocean);
   color: white;
 }
 
-.lure-bag-toggle-chip[aria-pressed="true"] .lure-chip-hot {
-  color: #fbbf24;
+.lure-filter-chip--active:hover {
+  background: var(--ocean-dark);
+  border-color: var(--ocean-dark);
+  color: white;
 }
 
-.lure-chip-img {
-  display: block;
-  object-fit: contain;
+/* ── Search results list ── */
+
+.lure-search-results {
+  margin-top: 0.65rem;
+}
+
+.lure-search-hint,
+.lure-no-results {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.lure-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s;
+}
+
+.lure-result-item:hover {
+  background: var(--bg-subtle);
+}
+
+.lure-result-item + .lure-result-item {
+  border-top: 1px solid var(--border-light);
+}
+
+.lure-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lure-result-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.1rem;
+}
+
+.lure-result-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.lure-result-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.lure-color-tag {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+  background: var(--ocean-light, #dbeafe);
+  color: var(--ocean);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.lure-color-more {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+.lure-result-add-btn {
   flex-shrink: 0;
-  /* invert chip image to white when selected */
+  padding: 0.3rem 0.65rem;
+  background: var(--ocean);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: center;
+  transition: background 0.12s;
 }
 
-.lure-bag-toggle-chip[aria-pressed="true"] .lure-chip-img {
-  filter: brightness(0) invert(1);
+.lure-result-add-btn:hover {
+  background: var(--ocean-dark);
 }
 
-.lure-chip-hot {
-  font-size: 0.6rem;
-  color: #2563eb;
-  margin-left: 0.1rem;
+.lure-result-add-btn.in-bag {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1.5px solid var(--border-light);
+}
+
+.lure-result-add-btn.in-bag:hover {
+  background: #fee2e2;
+  color: var(--red);
+  border-color: #fca5a5;
+}
+
+/* ── Your Bag section ── */
+
+.lure-your-bag {
+  margin-top: 1.1rem;
+  border-top: 1.5px solid var(--border-light);
+  padding-top: 0.75rem;
+}
+
+.lure-your-bag-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lure-your-bag-heading h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.lure-bag-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s;
+}
+
+.lure-bag-row + .lure-bag-row {
+  border-top: 1px solid var(--border-light);
+}
+
+.lure-bag-row:hover {
+  background: var(--bg-subtle);
+}
+
+.lure-bag-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lure-bag-row-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.1rem;
+}
+
+.lure-bag-row-meta {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.lure-bag-row-species {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lure-bag-remove-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.25rem;
+  border-radius: 4px;
+  align-self: center;
+  line-height: 1;
+  transition: color 0.1s, background 0.1s;
+}
+
+.lure-bag-remove-btn:hover {
+  color: var(--red);
+  background: #fee2e2;
 }
 
 /* Bag matches area */
@@ -2002,13 +2226,22 @@ h2 {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .lure-bag-toggles {
-    gap: 0.3rem;
+  .lure-filter-chips {
+    gap: 0.25rem;
   }
 
-  .lure-bag-toggle-chip {
-    font-size: 0.72rem;
-    padding: 0.25rem 0.5rem 0.25rem 0.35rem;
+  .lure-filter-chip {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .lure-result-item {
+    gap: 0.5rem;
+  }
+
+  .lure-result-add-btn {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
   }
 }
 
