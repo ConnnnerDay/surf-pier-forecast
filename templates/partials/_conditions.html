@@ -1,6 +1,14 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
-            <h2>Marine Conditions</h2>
+            <div class="csc-verdict-bar" style="margin-bottom:0.5rem">
+                <p class="csc-location" style="margin:0 0 0.25rem">Today&rsquo;s Forecast</p>
+                {% if forecast.conditions.verdict %}
+                <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
+                {% endif %}
+                {% if forecast.conditions.summary %}
+                <p class="csc-verdict-summary" style="margin:0.25rem 0 0">{{ forecast.conditions.summary }}</p>
+                {% endif %}
+            </div>
             <!-- Wind quality indicator -->
             {% set _wind_str = forecast.conditions.wind or '' %}
             {# Find the first digit-starting token to get speed (handles "S 16-21 kt", "NNW 20 kt", "16 kt", "Calm") #}
