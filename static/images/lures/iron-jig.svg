@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Line tie at top -->
+  <circle cx="100" cy="10" r="6" stroke="#94a3b8" stroke-width="2"/>
+
+  <!-- Iron jig body — wide, flat, leaf/knife shape -->
+  <path d="M100 16 C128 18 155 30 158 55 C155 76 128 94 100 96 C72 94 45 76 42 55 C45 30 72 18 100 16 Z" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+
+  <!-- Chrome highlight left face -->
+  <path d="M100 16 C72 18 52 32 48 52 C52 36 72 22 100 22 Z" fill="white" opacity="0.55"/>
+
+  <!-- Blue/sardine accent color band -->
+  <path d="M58 38 C72 28 100 24 126 30 L124 38 C100 32 74 34 62 44 Z" fill="#3b82f6" opacity="0.3"/>
+
+  <!-- Second blue band -->
+  <path d="M55 55 C62 45 80 40 100 40 C120 40 138 45 145 55 C138 48 120 44 100 44 C80 44 62 50 55 58 Z" fill="#3b82f6" opacity="0.2"/>
+
+  <!-- Center spine line -->
+  <line x1="100" y1="18" x2="100" y2="96" stroke="#94a3b8" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Assist hook at top -->
+  <line x1="100" y1="10" x2="100" y2="4" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M100 4 Q92 2 90 8" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M90 8 Q88 12 93 13" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+  <!-- Rear treble hook -->
+  <line x1="100" y1="96" x2="100" y2="103" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="100" cy="106" r="3" stroke="#94a3b8" stroke-width="1.8"/>
+  <path d="M100 106 Q91 107 89 113 M100 106 Q100 110 98 115 M100 106 Q109 107 111 113" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</svg>

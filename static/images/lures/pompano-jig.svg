@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Jighead — round, slightly forward-weighted -->
+  <circle cx="55" cy="50" r="24" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+
+  <!-- Eye -->
+  <circle cx="64" cy="44" r="5" fill="white"/>
+  <circle cx="65" cy="44" r="2.5" fill="#0f172a"/>
+
+  <!-- Hook shank -->
+  <line x1="76" y1="55" x2="120" y2="55" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Hook bend -->
+  <path d="M120 55 Q128 55 130 63 Q132 72 124 76" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Hook point/barb -->
+  <path d="M124 76 Q116 80 115 72" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Soft tail — teardrop/diamond shape -->
+  <path d="M78 44 C100 36 140 38 158 46 Q164 50 158 55 C142 62 100 64 78 56 Z" fill="#fb923c" stroke="#ea580c" stroke-width="1.5"/>
+
+  <!-- Tail highlight -->
+  <path d="M80 48 C102 42 138 43 156 48 C138 46 102 46 80 50 Z" fill="white" opacity="0.3"/>
+
+  <!-- Sparkle/glitter dots -->
+  <circle cx="108" cy="48" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="122" cy="52" r="1.2" fill="white" opacity="0.6"/>
+  <circle cx="96" cy="54" r="1.3" fill="white" opacity="0.5"/>
+  <circle cx="135" cy="49" r="1" fill="white" opacity="0.6"/>
+</svg>

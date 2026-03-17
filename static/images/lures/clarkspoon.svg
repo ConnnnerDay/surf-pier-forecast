@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Line hole at top of spoon -->
+  <circle cx="100" cy="8" r="5" stroke="#94a3b8" stroke-width="2"/>
+  <!-- Wire clasp/leader connection indicator -->
+  <line x1="100" y1="13" x2="100" y2="18" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Clarkspoon body — narrow elongated oval, very slim, characteristic shape -->
+  <path d="M100 18 C112 20 124 30 125 55 C124 76 112 92 100 94 C88 92 76 76 75 55 C76 30 88 20 100 18 Z" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+
+  <!-- Chrome shine on convex side -->
+  <path d="M100 18 C88 20 78 32 77 52 C80 36 88 24 100 22 Z" fill="white" opacity="0.55"/>
+
+  <!-- Second shine spot -->
+  <ellipse cx="94" cy="38" rx="5" ry="10" transform="rotate(-8 94 38)" fill="white" opacity="0.3"/>
+
+  <!-- Chartreuse painted section (classic Clarkspoon detail) -->
+  <path d="M100 60 C108 60 118 66 120 75 C116 80 108 86 100 86 C92 86 82 80 80 75 C82 66 92 60 100 60 Z" fill="#a3e635" stroke="#65a30d" stroke-width="1.5"/>
+
+  <!-- Hook at bottom (stinger rigging attachment) -->
+  <line x1="100" y1="94" x2="100" y2="100" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Treble hook -->
+  <circle cx="100" cy="103" r="3.5" stroke="#94a3b8" stroke-width="1.8"/>
+  <path d="M100 103 Q91 104 89 110 M100 103 Q100 107 98 112 M100 103 Q109 104 111 110" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</svg>

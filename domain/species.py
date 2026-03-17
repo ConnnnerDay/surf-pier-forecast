@@ -2272,6 +2272,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "White, chartreuse, natural (match baitfish)",
         "retrieve": "Slow steady retrieve or bounce on bottom",
         "notes": "Versatile inshore lure; works for almost any predator species. Use on 1/4-3/8 oz jighead.",
+        "image": "images/lures/swimbait-paddle.svg",
         "available_months": list(range(1, 13)),
         "targets": [
             "Red drum", "Speckled trout", "Flounder", "Gray trout", "Striped bass",
@@ -2284,6 +2285,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Gold, silver, copper",
         "retrieve": "Medium to fast steady retrieve; varies flash",
         "notes": "Classic surf and pier lure for mackerel, bluefish, and drum. Attach with split ring to reduce line twist.",
+        "image": "images/lures/spoon-gold.svg",
         "available_months": list(range(1, 13)),
         "targets": [
             "Spanish mackerel", "Bluefish", "Red drum", "Jack crevalle",
@@ -2296,6 +2298,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Silver, chrome, blue/white",
         "retrieve": "Fast jerk-and-fall or speed retrieve through the water column",
         "notes": "Deadly for pelagic species when fish are busting bait on the surface. Also vertical-jig from piers.",
+        "image": "images/lures/metal-jig.svg",
         "available_months": list(range(1, 13)),
         "targets": [
             "False albacore", "Bluefish", "Spanish mackerel", "Atlantic bonito",
@@ -2308,6 +2311,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "White, bone, mullet pattern",
         "retrieve": "Walk-the-dog with slack-line twitches at dawn and dusk",
         "notes": "Most productive during low-light periods and calm conditions. Surface explosions make this a favorite lure.",
+        "image": "images/lures/topwater-plug.svg",
         "notes_seasonal": {
             "winter": "Topwater bite slows in cold water; switch to subsurface lures in water below 60°F.",
         },
@@ -2323,6 +2327,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "White, chartreuse, pink",
         "retrieve": "Bounce on bottom with rod tip lifts, or slow swim near structure",
         "notes": "Old-school lure that still outfishes everything for flounder and stripers. Add a soft plastic trailer for extra action.",
+        "image": "images/lures/bucktail-jig.svg",
         "available_months": list(range(1, 13)),
         "targets": [
             "Flounder", "Striped bass", "Weakfish", "Gray trout",
@@ -2335,6 +2340,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Yellow, orange, chartreuse, pink",
         "retrieve": "Bounce and hop along the sandy bottom through the trough",
         "notes": "Purpose-built jig for surf-zone pompano and whiting. Bright colors are key.",
+        "image": "images/lures/pompano-jig.svg",
         "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "targets": ["Pompano", "Whiting", "Permit"],
     },
@@ -2344,6 +2350,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "New penny, pink shine, natural",
         "retrieve": "Slow drag or short hops on bottom; extremely versatile",
         "notes": "Scented soft plastic that outperforms natural bait in many situations. Popular for surf perch and flatfish.",
+        "image": "images/lures/gulp-soft.svg",
         "available_months": list(range(1, 13)),
         "targets": [
             "Barred surfperch", "Corbina", "California halibut", "Pompano",
@@ -2356,6 +2363,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Mullet pattern, sardine pattern, white",
         "retrieve": "Slow to medium; allow natural swimming action near structure",
         "notes": "Best for big predators — lingcod, yellowtail, cobia, tarpon. Match local baitfish size.",
+        "image": "images/lures/swimbait-large.svg",
         "notes_seasonal": {
             "fall": "Fall baitfish migrations bring large predators close to shore; large swimbaits shine during this period.",
         },
@@ -2371,6 +2379,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Sardine/blue, chrome, anchovy pattern",
         "retrieve": "Cast and let flutter on a semi-slack line; or fast retrieve with rod pumps",
         "notes": "West Coast staple for yellowtail and white seabass at the kelp. Keep the bail open and let it flutter on the drop.",
+        "image": "images/lures/iron-jig.svg",
         "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "targets": ["Yellowtail", "White seabass", "Pacific bonito", "Kelp bass"],
     },
@@ -2380,6 +2389,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Pink, chartreuse, white, yellow",
         "retrieve": "Drift downstream in current; short hops near river mouths",
         "notes": "Essential spring lure for shad runs. Tandem rigs with two darts increase hook-up rates.",
+        "image": "images/lures/shad-dart.svg",
         "notes_seasonal": {
             "spring": "Shad darts are at their best during the spring river run; bright colors (pink, chartreuse) in fast water.",
             "fall": "Not productive in fall; shad are offshore. Save these for the spring run.",
@@ -2393,6 +2403,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "White, chartreuse, fire tiger",
         "retrieve": "Aggressive popping action; pause between pops",
         "notes": "Excellent for pier and jetty fishing when birds are working. Creates a commotion that calls fish from a distance.",
+        "image": "images/lures/popper.svg",
         "notes_seasonal": {
             "winter": "Poppers slow down in cold water; fish them when water temp is above 60°F.",
         },
@@ -2408,6 +2419,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Blue/white, pink/white, black/red",
         "retrieve": "Trolled at 6-18 knots (speed depends on species)",
         "notes": "Skirted lures run behind the boat in spread formation. Ilanders for wahoo and marlin; smaller skirts for mahi and tuna.",
+        "image": "images/lures/trolling-lure.svg",
         "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
         "targets": [
             "Mahi-mahi", "Wahoo", "Yellowfin tuna", "Blackfin tuna",
@@ -2420,6 +2432,7 @@ LURE_DB: List[Dict[str, Any]] = [
         "colors": "Silver, gold, chartreuse",
         "retrieve": "Trolled on planer or inline spinner at 4-8 knots",
         "notes": "Classic king mackerel and Spanish mackerel lure. Add a stinger hook for short-striking fish.",
+        "image": "images/lures/clarkspoon.svg",
         "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "targets": ["King mackerel", "Spanish mackerel", "False albacore"],
     },
@@ -2434,24 +2447,32 @@ def build_lure_recommendations(
 
     Follows the same scoring approach as build_bait_ranking: lure types whose
     target species rank highly float to the top, and out-of-season lures are
-    penalised.  Returns a de-duplicated list of lure recommendations with
-    full details (sizes, colors, retrieve, notes).
+    penalised.  Returns a list of lure entries with full details plus
+    ``active_species`` — the currently-ranked species that respond to each lure.
+    The full list (all 13 entries, sorted by relevance) is returned so the
+    front-end can show both a "top picks today" view and a complete "lure bag"
+    selector showing which lures have active fish right now.
     """
     season = _get_season(month)
 
-    # Map species short names (before parenthetical) to rank for scoring
+    # Map species short names (before parenthetical) to their full display name
+    # and rank for scoring / active-fish display.
     species_ranks: Dict[str, int] = {}
+    species_display: Dict[str, str] = {}
     for sp in species_ranking:
         short = sp["name"].split("(")[0].strip()
         species_ranks[short] = sp["rank"]
+        species_display[short] = sp["name"]
 
     scored_lures: List[tuple] = []
     for lure_entry in LURE_DB:
         score = 0.0
+        active: List[str] = []
         for target in lure_entry["targets"]:
             rank = species_ranks.get(target)
             if rank is not None:
                 score += max(0, 20 - rank)
+                active.append(species_display.get(target, target))
 
         # Penalise out-of-season lures
         available = lure_entry.get("available_months")
@@ -2470,6 +2491,9 @@ def build_lure_recommendations(
             "colors": lure_entry.get("colors", ""),
             "retrieve": lure_entry.get("retrieve", ""),
             "notes": notes,
+            "image": lure_entry.get("image", ""),
+            "active_species": active,
+            "score": round(score, 1),
         }))
 
     scored_lures.sort(key=lambda x: x[0], reverse=True)

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Split ring / line tie at top -->
+  <circle cx="100" cy="10" r="6" stroke="#94a3b8" stroke-width="2"/>
+
+  <!-- Jig body — elongated diamond, wider in upper-middle, narrow at bottom -->
+  <path d="M100 16 C115 18 136 35 138 60 C136 78 120 96 100 98 C80 96 64 78 62 60 C60 35 84 18 100 16 Z" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+
+  <!-- Chrome shine / bevel effect — left face lighter -->
+  <path d="M100 16 C84 18 68 35 66 58 C68 45 80 28 100 22 Z" fill="white" opacity="0.5"/>
+
+  <!-- Dark stripe down middle for 3D effect -->
+  <line x1="100" y1="16" x2="100" y2="98" stroke="#94a3b8" stroke-width="1" opacity="0.4"/>
+
+  <!-- Blue accent stripe -->
+  <path d="M94 35 C88 45 86 60 88 72 L92 72 C90 60 92 45 98 35 Z" fill="#3b82f6" opacity="0.25"/>
+
+  <!-- Assist hook / rear treble at bottom -->
+  <line x1="100" y1="98" x2="100" y2="105" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="100" cy="108" r="3.5" stroke="#94a3b8" stroke-width="1.8"/>
+  <path d="M100 108 Q90 109 88 116" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M100 108 Q100 113 97 118" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M100 108 Q110 109 112 116" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+</svg>

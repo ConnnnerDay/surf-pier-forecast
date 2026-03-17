@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Jighead (weighted) -->
+  <circle cx="28" cy="57" r="18" fill="#64748b" stroke="#334155" stroke-width="1.5"/>
+  <!-- Eye white -->
+  <circle cx="34" cy="51" r="5" fill="white"/>
+  <!-- Eye pupil -->
+  <circle cx="35" cy="51" r="2.5" fill="#1e293b"/>
+  <!-- Hook shank -->
+  <line x1="28" y1="75" x2="28" y2="85" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Hook bend -->
+  <path d="M28 85 Q28 96 40 96 Q52 96 52 87" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Hook point barb -->
+  <path d="M52 87 Q56 82 50 80" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Swimbait body -->
+  <path d="M44 43 C72 32 120 35 160 50 C148 58 110 65 44 67 Z" fill="#93c5fd" stroke="#3b82f6" stroke-width="2"/>
+  <!-- Belly (lighter) -->
+  <path d="M44 55 C72 48 120 49 160 50 C148 54 110 58 44 62 Z" fill="white" opacity="0.45"/>
+  <!-- Lateral line dots -->
+  <path d="M55 50 C90 45 130 47 160 50" fill="none" stroke="#2563eb" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+
+  <!-- Paddle tail -->
+  <path d="M160 50 L172 32 Q182 50 172 68 Z" fill="#60a5fa" stroke="#2563eb" stroke-width="1.5"/>
+</svg>

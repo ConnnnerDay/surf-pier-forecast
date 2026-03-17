@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Jighead -->
+  <circle cx="30" cy="58" r="16" fill="#64748b" stroke="#334155" stroke-width="1.5"/>
+  <!-- Eye -->
+  <circle cx="36" cy="53" r="4" fill="white"/>
+  <circle cx="37" cy="53" r="2" fill="#0f172a"/>
+
+  <!-- Hook shank + bend (visible below body) -->
+  <path d="M42 65 Q42 80 54 82 Q65 82 65 72" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M65 72 Q68 67 63 65" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Shrimp body — curved segmented shape -->
+  <path d="M44 48 C68 38 105 36 135 42 C150 46 158 54 155 62 C148 72 115 76 78 72 C58 70 44 64 44 56 Z" fill="#fb923c" stroke="#ea580c" stroke-width="1.8"/>
+
+  <!-- Shrimp segments -->
+  <path d="M70 40 C68 52 68 62 70 72" stroke="#d97706" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <path d="M90 38 C88 50 88 64 90 74" stroke="#d97706" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <path d="M110 38 C108 50 108 66 110 74" stroke="#d97706" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <path d="M130 40 C128 52 128 64 130 73" stroke="#d97706" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Belly highlight -->
+  <path d="M48 58 C72 62 115 64 152 60 C115 67 72 67 48 63 Z" fill="white" opacity="0.3"/>
+
+  <!-- Curly tail -->
+  <path d="M155 52 C165 44 172 40 178 44 C182 48 180 56 172 60 C166 64 160 62 158 66 C156 70 158 76 164 78" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Antennae -->
+  <path d="M80 39 C75 28 70 22 65 18" fill="none" stroke="#ea580c" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M90 38 C90 26 88 18 85 12" fill="none" stroke="#ea580c" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+</svg>
