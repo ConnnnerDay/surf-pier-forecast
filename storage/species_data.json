@@ -27,7 +27,8 @@
     "sinker": "2-4 oz egg sinker",
     "explanation_cold": "Winter red drum congregate in deeper marsh channels and holes, foraging along the bottom for shrimp, crabs and small fish.",
     "explanation_warm": "Red drum actively feed in the surf zone and around inlets, chasing mullet, menhaden and crabs in warmer water.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Gold/copper spoons, paddle-tail swimbaits (3-5\"), Z-Man soft plastics on 1/4-3/8 oz jighead, topwater plugs at dawn/dusk"
   },
   {
     "name": "Speckled trout (spotted seatrout)",
@@ -55,7 +56,8 @@
     "sinker": "1-2 oz",
     "explanation_cold": "Speckled trout hold in deeper holes and backwater creeks; live shrimp or finger mullet entice sluggish winter fish.",
     "explanation_warm": "Speckled trout are aggressively feeding on shrimp and small baitfish in the shallows and around grass flats.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "MirrOlure (MR17, 52M), soft plastic tails (Gulp shrimp, DOA Terror Eyz) on 1/4 oz jighead, topwater walk-the-dog lures"
   },
   {
     "name": "Black drum",
@@ -82,7 +84,8 @@
     "sinker": "2-4 oz pyramid or bank sinker",
     "explanation_cold": "Black drum are bottom feeders that locate prey with chin barbels; they prefer mollusks, shrimp and crab pieces in cooler water.",
     "explanation_warm": "Black drum move through inlets and along structure, actively rooting for crabs, clams and shrimp in warming water.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; slow-rolled paddle-tail swimbaits near oyster structure occasionally work"
   },
   {
     "name": "Sheepshead",
@@ -106,7 +109,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Sheepshead feed around pilings and rock structures, nibbling barnacles and crustaceans; bites are subtle and require fishing straight down.",
     "explanation_warm": "Sheepshead stack up around nearshore structure and pilings, picking at barnacles and crabs before moving offshore for spawning.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Rarely taken on lures; small jigs with soft crab imitations near pilings occasionally work"
   },
   {
     "name": "Tautog (blackfish)",
@@ -135,7 +139,8 @@
     "regions": [
       "northeast",
       "midatlantic"
-    ]
+    ],
+    "lures": "Not a strong lure target; slow-rolled swimbaits near rocky structure occasionally work"
   },
   {
     "name": "Black sea bass",
@@ -160,7 +165,8 @@
     "sinker": "3-4 oz pyramid or bank sinker",
     "explanation_cold": "Inshore black sea bass inhabit wrecks and hard bottom, feeding on crabs, shrimp and small fish; bottom-fish with squid or cut bait.",
     "explanation_warm": "Black sea bass are abundant over nearshore reefs and wrecks, aggressively hitting squid strips and cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs (1-2 oz bucktail), soft plastic crabs/shrimp on drop-shot rigs, small diamond jigs near structure"
   },
   {
     "name": "Bluefish",
@@ -186,7 +192,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Smaller bluefish (snappers/tailors) roam nearshore waters and readily hit cut bait; wire or heavy leaders are essential.",
     "explanation_warm": "Bluefish schools are actively chasing baitfish along the surf line and around piers; cut menhaden and mullet draw explosive strikes.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Metal spoons (Hopkins, Kastmaster), topwater poppers, Clarkspoons, metal jigs; bluefish hit almost any fast-moving lure"
   },
   {
     "name": "Whiting (sea mullet, kingfish)",
@@ -213,7 +220,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Whiting patrol sandy bottoms along beaches and piers; they feed on shrimp, mole crabs and worms in the winter surf.",
     "explanation_warm": "Whiting are schooling up along the beach and biting aggressively on shrimp and sand fleas in the wash zone.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs (1/16-1/8 oz) tipped with Fishbites; not a primary lure target"
   },
   {
     "name": "Northern puffer (blowfish)",
@@ -243,7 +251,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Small jigs with soft plastic; rarely targeted with lures"
   },
   {
     "name": "Striped bass (rockfish)",
@@ -273,7 +282,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Bucktail jigs (1-3 oz), soft plastic swimbaits, topwater plugs (Rapala X-Rap, Bomber), metal jigs at night under lights"
   },
   {
     "name": "Flounder (summer flounder)",
@@ -300,7 +310,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Flounder are mostly offshore in cold water; stragglers around inlets may bite live mullet drifted slowly along the bottom.",
     "explanation_warm": "Flounder are ambushing baitfish in the surf, around inlets and near pier pilings; live finger mullet is the top producer.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Bucktail jig (1/4-1/2 oz) with paddle tail, Gulp Nemesis or shrimp, Carolina-rigged swimming grub bounced on bottom"
   },
   {
     "name": "Spanish mackerel",
@@ -331,7 +342,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Clarkspoon (1/0-3/0) on inline spinner or planer, small metal jigs, silver or gold spoons; fast retrieve"
   },
   {
     "name": "Pompano",
@@ -361,7 +373,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Pompano jigs (1/4-3/8 oz, yellow/orange/chartreuse), Silly Willy jigs, Clouser minnows near breaking waves"
   },
   {
     "name": "Spot",
@@ -392,7 +405,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Rarely taken on lures; not a primary lure target"
   },
   {
     "name": "Cobia",
@@ -422,7 +436,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Large paddle-tail swimbaits on 1-3 oz jighead, bucktail jigs, soft plastic eels; sight-fish near rays and manta"
   },
   {
     "name": "Atlantic croaker",
@@ -454,7 +469,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Not typically lure-caught; small jigs occasionally work"
   },
   {
     "name": "Gray trout (weakfish)",
@@ -485,7 +501,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Paddle-tail soft plastics on 1/4 oz jighead, metal spoons, shrimp imitations"
   },
   {
     "name": "King mackerel (kingfish)",
@@ -515,7 +532,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Clarkspoons on planers, Drone spoons, dive-bomb rigs; troll at 6-8 knots with stinger hook setup"
   },
   {
     "name": "False albacore (little tunny)",
@@ -544,7 +562,8 @@
       "midatlantic",
       "southeast",
       "florida"
-    ]
+    ],
+    "lures": "Small metal jigs (1-1.5 oz Deadly Dick, Kastmaster), Clouser minnows, small tube lures; fast retrieve critical"
   },
   {
     "name": "Triggerfish (gray)",
@@ -574,7 +593,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs (1-2 oz) with squid strip; not a primary hard-lure target"
   },
   {
     "name": "Spadefish (Atlantic)",
@@ -604,7 +624,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Rarely lure-caught; ultra-light jigs occasionally take them near jellyfish"
   },
   {
     "name": "Tarpon",
@@ -632,7 +653,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Large swimbaits (6-9\"), topwater plugs, soft plastic eels, DOA Baitbuster; target in passes and inlets"
   },
   {
     "name": "Pigfish",
@@ -656,7 +678,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Pigfish are offshore or in deeper channels during cold months; not commonly caught inshore.",
     "explanation_warm": "Pigfish are abundant around piers and in the surf; they make excellent live bait for flounder and are fun to catch on light tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Pinfish",
@@ -682,7 +705,8 @@
     "sinker": "1/2-1 oz split shot or pyramid",
     "explanation_cold": "Pinfish move to deeper water during cold months and are scarce inshore.",
     "explanation_warm": "Pinfish are everywhere around piers, docks and structure; excellent live bait when caught on sabiki rigs or small hooks.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Blacktip shark",
@@ -706,7 +730,8 @@
     "sinker": "4-8 oz pyramid sinker",
     "explanation_cold": "Blacktip sharks have migrated south and are not present in NC nearshore waters during cold months.",
     "explanation_warm": "Blacktip sharks are cruising the surf zone and around piers chasing baitfish schools; they are one of the most common sharks caught from shore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Large fast-retrieved swimbaits; primarily caught on bait"
   },
   {
     "name": "Spinner shark",
@@ -729,7 +754,8 @@
     "sinker": "4-8 oz pyramid sinker",
     "explanation_cold": "Spinner sharks migrate south for winter and are absent from NC waters.",
     "explanation_warm": "Spinner sharks are feeding in the surf zone, often leaping and spinning out of the water while chasing baitfish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Large fast-retrieved surface lures; primarily caught on bait"
   },
   {
     "name": "Atlantic sharpnose shark",
@@ -754,7 +780,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Atlantic sharpnose sharks move offshore or south during cold months.",
     "explanation_warm": "Sharpnose sharks are the most common small shark caught from piers and the surf; they readily hit almost any cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait; small jigs occasionally"
   },
   {
     "name": "Bull shark",
@@ -778,7 +805,8 @@
     "sinker": "6-10 oz pyramid sinker",
     "explanation_cold": "Bull sharks move to warmer southern waters during winter months.",
     "explanation_warm": "Bull sharks patrol inlets, piers and the surf zone; they are powerful fighters requiring very heavy tackle and wire leader.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Large swimbaits or jigs; primarily caught on bait"
   },
   {
     "name": "Sandbar shark",
@@ -802,7 +830,8 @@
     "sinker": "5-8 oz pyramid sinker",
     "explanation_cold": "Sandbar sharks migrate to deeper offshore waters or south during cold months.",
     "explanation_warm": "Sandbar sharks are one of the most abundant large sharks nearshore in NC; target them from piers or the surf with heavy cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Bonnethead shark",
@@ -831,7 +860,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Soft plastic crab/shrimp imitations on the flats; primarily bait-caught"
   },
   {
     "name": "Lemon shark",
@@ -859,7 +889,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Primarily caught on bait; large swimbaits occasionally"
   },
   {
     "name": "Dusky shark",
@@ -884,7 +915,8 @@
     "sinker": "6-10 oz pyramid sinker",
     "explanation_cold": "Dusky sharks are migratory and pass through NC waters mainly during seasonal transitions.",
     "explanation_warm": "Dusky sharks migrate through NC nearshore waters in spring and fall following baitfish; they are large, powerful fish requiring the heaviest tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Southern stingray",
@@ -909,7 +941,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Southern stingrays move to deeper water or migrate south during cold months.",
     "explanation_warm": "Southern stingrays are common in the surf and around piers; they are powerful fighters often caught incidentally while bottom fishing.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Cownose ray",
@@ -934,7 +967,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Cownose rays migrate south in large schools during fall and are absent from NC in winter.",
     "explanation_warm": "Cownose rays travel in large schools through the surf and inlets; they are strong fighters often hooked while bottom fishing for other species.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Jack crevalle",
@@ -963,7 +997,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Topwater plugs, fast-retrieved metal jigs, poppers; jacks are aggressive and hit almost any fast lure"
   },
   {
     "name": "Blue runner (hardtail)",
@@ -993,7 +1028,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small metal jigs, spoons; also caught incidentally on sabiki rigs"
   },
   {
     "name": "Lookdown",
@@ -1021,7 +1057,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs; incidentally caught"
   },
   {
     "name": "Greater amberjack",
@@ -1053,7 +1090,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Heavy jigs (4-8 oz) vertically jigged, large swimbaits; very aggressive"
   },
   {
     "name": "Almaco jack",
@@ -1083,7 +1121,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Heavy vertical jigs (4-8 oz), large swimbaits near structure"
   },
   {
     "name": "Banded rudderfish",
@@ -1113,7 +1152,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs, spoons near structure"
   },
   {
     "name": "Permit",
@@ -1139,7 +1179,8 @@
     "coast": "east",
     "regions": [
       "florida"
-    ]
+    ],
+    "lures": "Crab imitations (Del Brown Merkin fly, soft plastic crabs), weighted crab lures on the flats; fly fishing staple"
   },
   {
     "name": "Red snapper",
@@ -1170,7 +1211,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Vertical jigs (2-4 oz), soft plastic shrimp, drop-shot rigs with paddle tails near structure"
   },
   {
     "name": "Vermilion snapper (beeliner)",
@@ -1201,7 +1243,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs (1-2 oz), sabiki rigs, soft plastics near bottom structure"
   },
   {
     "name": "Mangrove snapper (gray snapper)",
@@ -1230,7 +1273,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs, soft plastic shrimp/grubs, topwater at night near docks and bridges"
   },
   {
     "name": "Lane snapper",
@@ -1258,7 +1302,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs, soft plastics near structure"
   },
   {
     "name": "Gag grouper",
@@ -1290,7 +1335,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Large paddle-tail swimbaits, heavy jigs (2-4 oz) worked near structure, soft plastic eels"
   },
   {
     "name": "Red grouper",
@@ -1320,7 +1366,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Heavy jigs (2-4 oz) and soft plastic swimbaits worked slowly near bottom"
   },
   {
     "name": "Scamp grouper",
@@ -1350,7 +1397,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Heavy jigs, swimbaits near structure"
   },
   {
     "name": "Black grouper",
@@ -1378,7 +1426,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Large swimbaits, heavy vertical jigs; aggressive and will chase fast lures"
   },
   {
     "name": "Mahi-mahi (dolphinfish)",
@@ -1408,7 +1457,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Offshore trolling lures (squid skirts, cedar plugs), poppers, swimbaits; very willing lure target"
   },
   {
     "name": "Wahoo",
@@ -1439,7 +1489,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "High-speed trolling lures (Ilander, Rapala X-Rap Magnum), Sea Witches; troll at 12-18 knots"
   },
   {
     "name": "Blackfin tuna",
@@ -1471,7 +1522,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small metal jigs (1-2 oz), feather jigs, diamond jigs; match baitfish size"
   },
   {
     "name": "Yellowfin tuna",
@@ -1504,7 +1556,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Offshore trolling lures, heavy metal jigs (slow-pitch jigging), poppers near chunking grounds"
   },
   {
     "name": "Atlantic bonito",
@@ -1534,7 +1587,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Small metal jigs, spoons, feather jigs; fast retrieve through busting fish"
   },
   {
     "name": "Sailfish",
@@ -1562,7 +1616,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Offshore trolling lures with sea witches, rigged ballyhoo; not a hard-lure target from shore"
   },
   {
     "name": "Blue marlin",
@@ -1590,7 +1645,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Large offshore trolling lures (Ilander, Pakula), rigged skip baits; deep offshore"
   },
   {
     "name": "White marlin",
@@ -1619,7 +1675,8 @@
       "midatlantic",
       "southeast",
       "florida"
-    ]
+    ],
+    "lures": "Medium offshore trolling lures, rigged ballyhoo; offshore only"
   },
   {
     "name": "Tripletail",
@@ -1648,7 +1705,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Soft plastic crabs, shrimp flies near floating debris"
   },
   {
     "name": "Ladyfish",
@@ -1677,7 +1735,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small metal jigs, spoons, soft plastic tails; acrobatic fighters that hit readily"
   },
   {
     "name": "Great barracuda",
@@ -1706,7 +1765,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Long tube lures, Stretch plugs trolled slowly, large silver spoons; needlefish-style"
   },
   {
     "name": "Southern flounder",
@@ -1731,7 +1791,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Southern flounder move offshore to spawn in late fall and are scarce inshore during winter.",
     "explanation_warm": "Southern flounder are the primary flounder species in NC inshore waters; they ambush prey around inlets, docks and creek mouths.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Bucktail jigs with paddle tail, Gulp shrimp/Nemesis; same technique as summer flounder"
   },
   {
     "name": "White grunt",
@@ -1756,7 +1817,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "White grunt are on deeper offshore reefs during cold months.",
     "explanation_warm": "White grunt school over nearshore hard bottom and reefs; they are reliable biters and excellent eating when pan-fried.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure; not a primary lure target"
   },
   {
     "name": "Red porgy",
@@ -1788,7 +1850,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs (1-2 oz), soft plastics near bottom structure"
   },
   {
     "name": "Scup (porgy)",
@@ -1818,7 +1881,8 @@
     "regions": [
       "northeast",
       "midatlantic"
-    ]
+    ],
+    "lures": "Small jigs, sabiki rigs; not a primary lure target"
   },
   {
     "name": "Sea robin",
@@ -1848,7 +1912,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Small jigs; incidentally caught; not typically targeted"
   },
   {
     "name": "Oyster toadfish",
@@ -1879,7 +1944,8 @@
       "midatlantic",
       "southeast",
       "florida"
-    ]
+    ],
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Hogfish",
@@ -1908,7 +1974,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Not typically targeted with lures; primarily caught on bait"
   },
   {
     "name": "Planehead filefish",
@@ -1932,7 +1999,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Filefish move to deeper water during cold months and are scarce inshore.",
     "explanation_warm": "Planehead filefish are common bait stealers around pier pilings and structure; they pick at baits with their tiny mouths.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Hickory shad",
@@ -1958,7 +2026,8 @@
     "regions": [
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Shad darts (1/8-1/4 oz), small spoons, small Clouser minnows in rivers"
   },
   {
     "name": "American shad",
@@ -1986,7 +2055,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Shad darts (pink/chartreuse/white, 1/16-1/8 oz), small spoons; tandem rigs in river current"
   },
   {
     "name": "Striped mullet",
@@ -2011,7 +2081,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Mullet school in inlets and deeper channels during fall migration; the fall mullet run is a major event for bait and food.",
     "explanation_warm": "Striped mullet are everywhere in the surf, inlets and ICW; they are the primary bait source and also caught for food during the fall run.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Ribbonfish (Atlantic cutlassfish)",
@@ -2036,7 +2107,8 @@
     "sinker": "Small split shot or 1 oz",
     "explanation_cold": "Ribbonfish move to deeper water during cold months but may be present around warm-water discharges.",
     "explanation_warm": "Ribbonfish (cutlassfish) are common at piers at night; their long, silvery bodies and sharp teeth make them unmistakable.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Metal spoons, jigs; incidentally caught while targeting other species"
   },
   {
     "name": "Hardhead catfish (sea catfish)",
@@ -2066,7 +2138,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Gafftopsail catfish",
@@ -2096,7 +2169,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Soft plastics, small jigs; also caught on bait"
   },
   {
     "name": "Atlantic needlefish",
@@ -2121,7 +2195,8 @@
     "sinker": "None or tiny split shot",
     "explanation_cold": "Needlefish move to deeper or warmer waters during cold months.",
     "explanation_warm": "Atlantic needlefish are surface predators commonly seen around piers and docks; they slash through schools of small baitfish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small tube lures, Clarkspoons; fast retrieve"
   },
   {
     "name": "Lizardfish",
@@ -2146,7 +2221,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Lizardfish are in deeper water during cold months and rarely caught inshore.",
     "explanation_warm": "Lizardfish are toothy bottom ambush predators common in the surf and around piers; they aggressively hit cut bait and small live baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs; incidentally caught"
   },
   {
     "name": "Smooth dogfish",
@@ -2173,7 +2249,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Smooth dogfish are less common inshore during the coldest months but may be present in deeper channels.",
     "explanation_warm": "Smooth dogfish are one of the most common sharks caught from piers and the surf; they pull hard and eat almost any cut bait on the bottom.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs occasionally; primarily caught on bait"
   },
   {
     "name": "Spiny dogfish",
@@ -2201,7 +2278,8 @@
     "regions": [
       "northeast",
       "midatlantic"
-    ]
+    ],
+    "lures": "Small jigs occasionally; primarily caught on bait"
   },
   {
     "name": "Sand tiger shark",
@@ -2230,7 +2308,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Tiger shark",
@@ -2254,7 +2333,8 @@
     "sinker": "8-16 oz pyramid sinker",
     "explanation_cold": "Tiger sharks are in warmer waters to the south and not present in NC nearshore during winter.",
     "explanation_warm": "Tiger sharks are the apex predator in NC waters; they patrol the surf zone and near piers eating anything. Landing one from shore is a major event.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Scalloped hammerhead shark",
@@ -2278,7 +2358,8 @@
     "sinker": "6-10 oz pyramid sinker",
     "explanation_cold": "Hammerhead sharks have migrated south and are not present in NC during cold months.",
     "explanation_warm": "Scalloped hammerheads cruise the surf zone and near piers hunting stingrays and other prey; they are powerful fighters requiring the heaviest tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait offshore"
   },
   {
     "name": "Shortfin mako shark",
@@ -2303,7 +2384,8 @@
     "sinker": "6-10 oz or trolling weight",
     "explanation_cold": "Mako sharks are offshore or in warmer waters during winter months.",
     "explanation_warm": "Shortfin makos are the fastest sharks in the ocean; they are found offshore and occasionally near the beach chasing bluefish and mackerel.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Fast-retrieved lures and jigs offshore; primarily caught on bait"
   },
   {
     "name": "Thresher shark",
@@ -2328,7 +2410,8 @@
     "sinker": "6-10 oz pyramid sinker",
     "explanation_cold": "Thresher sharks pass through NC waters during seasonal migrations and are less common in the coldest months.",
     "explanation_warm": "Thresher sharks use their incredibly long tails to stun baitfish; they pass through NC in spring and fall migrations and are prized catches.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Offshore trolling lures; primarily caught on bait"
   },
   {
     "name": "Clearnose skate",
@@ -2353,7 +2436,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Clearnose skates are very common bottom catches from piers during winter; they are flat, diamond-shaped rays with translucent nose patches.",
     "explanation_warm": "Clearnose skates move to deeper, cooler water as temperatures rise and are uncommon inshore during summer.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Atlantic stingray",
@@ -2378,7 +2462,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Atlantic stingrays are in deeper water during cold months and less likely to be encountered.",
     "explanation_warm": "Atlantic stingrays are the small, very common stingrays that bury in the sand in the surf zone; shuffle your feet to avoid stepping on them.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Bluntnose stingray",
@@ -2403,7 +2488,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Bluntnose stingrays are in deeper water or have migrated during cold months.",
     "explanation_warm": "Bluntnose stingrays are mid-size rays common in the surf and around piers; they are frequently caught incidentally while bottom fishing.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Butterfly ray",
@@ -2428,7 +2514,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Butterfly rays move offshore during cold months.",
     "explanation_warm": "Butterfly rays are broad, flat rays that inhabit sandy bottoms in the surf zone; they are strong fighters frequently hooked while bottom fishing.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Eagle ray (spotted)",
@@ -2453,7 +2540,8 @@
     "sinker": "4-6 oz pyramid sinker",
     "explanation_cold": "Spotted eagle rays migrate to warmer waters during winter.",
     "explanation_warm": "Spotted eagle rays are spectacular rays that swim in groups near the surface; occasionally hooked from piers, they are powerful fighters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Silver perch",
@@ -2480,7 +2568,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Silver perch move to deeper channels during cold months and are uncommon inshore.",
     "explanation_warm": "Silver perch are common panfish caught from piers and the surf; they school in good numbers and bite small baits readily.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics"
   },
   {
     "name": "Sand perch",
@@ -2505,7 +2594,8 @@
     "sinker": "1-3 oz bank sinker",
     "explanation_cold": "Sand perch are in deeper water during cold months and seldom caught inshore.",
     "explanation_warm": "Sand perch are colorful, aggressive little bottom fish found over hard bottom and around structure; they readily hit small cut baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Tomtate grunt",
@@ -2530,7 +2620,8 @@
     "sinker": "1-3 oz bank sinker",
     "explanation_cold": "Tomtate grunt move to deeper reefs during cold months.",
     "explanation_warm": "Tomtate are small, abundant grunts that school around pier pilings and nearshore structure; they are reliable biters and useful as live bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near structure"
   },
   {
     "name": "Bermuda chub (sea chub)",
@@ -2554,7 +2645,8 @@
     "sinker": "Small split shot or 1 oz egg",
     "explanation_cold": "Bermuda chub move to deeper water or are absent inshore during cold months.",
     "explanation_warm": "Bermuda chub (sea chub) school around pier pilings in large numbers, feeding on algae and small invertebrates; they fight hard for their size.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Butterfish",
@@ -2580,7 +2672,8 @@
     "sinker": "1-2 oz bank sinker",
     "explanation_cold": "Butterfish are common inshore during cooler months, schooling around piers and structure in large numbers.",
     "explanation_warm": "Butterfish move to deeper, cooler water during warm months and are uncommon inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Harvestfish",
@@ -2605,7 +2698,8 @@
     "sinker": "1-2 oz bank sinker",
     "explanation_cold": "Harvestfish are present inshore during cooler transitional months, often associated with jellyfish.",
     "explanation_warm": "Harvestfish move offshore during the warmest months; they are most common in spring and fall when jellyfish are abundant.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Sand seatrout (white trout)",
@@ -2630,7 +2724,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Sand seatrout move to deeper channels and are less common inshore during cold months.",
     "explanation_warm": "Sand seatrout are smaller cousins of speckled trout, common from piers and in the surf; they school in good numbers and hit shrimp and cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Soft plastic tails on light jighead, small spoons; similar to speckled trout"
   },
   {
     "name": "Star drum",
@@ -2655,7 +2750,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Star drum move to deeper water during cold months and are uncommon inshore.",
     "explanation_warm": "Star drum are small members of the drum family caught from the surf and piers; they resemble spot and croaker and bite similar baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics"
   },
   {
     "name": "Banded drum",
@@ -2680,7 +2776,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Banded drum move to deeper water during cold months.",
     "explanation_warm": "Banded drum are distinctly marked members of the drum family found in the surf and around piers; they bite shrimp and sand fleas on bottom rigs.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics"
   },
   {
     "name": "Atlantic menhaden (bunker)",
@@ -2708,7 +2805,8 @@
     "sinker": "1-2 oz weight below sabiki",
     "explanation_cold": "Menhaden are offshore in large schools during the coldest months; some remain in deeper inshore channels.",
     "explanation_warm": "Atlantic menhaden are THE most important bait fish in NC; massive schools move along the beach and through inlets. Cast net or sabiki rig them for bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures; used as bait"
   },
   {
     "name": "Round scad (cigar minnow)",
@@ -2733,7 +2831,8 @@
     "sinker": "1-2 oz weight below sabiki",
     "explanation_cold": "Round scad are offshore or have migrated south during cold months.",
     "explanation_warm": "Cigar minnows school around piers and nearshore structure; they are the premier live bait for king mackerel and other pelagics.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Sabiki rigs; used as bait"
   },
   {
     "name": "Ballyhoo (balao)",
@@ -2758,7 +2857,8 @@
     "sinker": "1/2-1 oz weight below sabiki",
     "explanation_cold": "Ballyhoo move to warmer waters during cold months and are not present inshore.",
     "explanation_warm": "Ballyhoo are needlefish-like bait fish that school near the surface around piers; they are top trolling bait for billfish and kingfish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Rigged as trolling bait; not targeted with lures"
   },
   {
     "name": "Atlantic thread herring (greenback)",
@@ -2782,7 +2882,8 @@
     "sinker": "1-2 oz weight below sabiki",
     "explanation_cold": "Thread herring migrate south or offshore during cold months.",
     "explanation_warm": "Atlantic thread herring (greenbacks) are excellent live bait schooling around piers; they are oily and attract king mackerel, tarpon and cobia.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Sabiki rigs; bait species"
   },
   {
     "name": "Bigeye scad",
@@ -2806,7 +2907,8 @@
     "sinker": "1-2 oz weight below sabiki",
     "explanation_cold": "Bigeye scad are offshore or have migrated during cold months.",
     "explanation_warm": "Bigeye scad are large-eyed bait fish that school around piers and lights at night; they are hardy live baits for larger gamefish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Sabiki rigs; bait species"
   },
   {
     "name": "Spanish sardine",
@@ -2830,7 +2932,8 @@
     "sinker": "1-2 oz weight below sabiki",
     "explanation_cold": "Spanish sardines are in warmer waters to the south during cold months.",
     "explanation_warm": "Spanish sardines school in large numbers around piers and nearshore structure; they are excellent live and cut bait for pelagics.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Sabiki rigs; bait species"
   },
   {
     "name": "African pompano",
@@ -2854,7 +2957,8 @@
     "sinker": "4-8 oz bank sinker or jig head",
     "explanation_cold": "African pompano are on deeper offshore structure during cold months.",
     "explanation_warm": "African pompano are found on nearshore wrecks and reefs; juveniles have long, trailing filaments and adults are powerful, deep-bodied fighters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy vertical jigs (4-6 oz), large swimbaits; most caught incidentally"
   },
   {
     "name": "Bar jack",
@@ -2877,7 +2981,8 @@
     "sinker": "None or small split shot",
     "explanation_cold": "Bar jacks are in warmer tropical waters and not present in NC during cold months.",
     "explanation_warm": "Bar jacks occasionally appear around NC piers and nearshore structure during peak summer when water is warmest.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small spoons, jigs near structure"
   },
   {
     "name": "Rainbow runner",
@@ -2901,7 +3006,8 @@
     "sinker": "None or trolling weight",
     "explanation_cold": "Rainbow runners are in warmer offshore waters and not available near NC in cold months.",
     "explanation_warm": "Rainbow runners are colorful, fast-swimming jacks found around offshore structure and occasionally near piers; they are strong fighters on light tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Fast-retrieved spoons, small jigs"
   },
   {
     "name": "Skipjack tuna",
@@ -2925,7 +3031,8 @@
     "sinker": "None or trolling weight",
     "explanation_cold": "Skipjack tuna are offshore in warm Gulf Stream water and not accessible nearshore in winter.",
     "explanation_warm": "Skipjack tuna school in large numbers near the Gulf Stream edge; they are fast, hard-fighting fish useful as bait for marlin and sharks.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small metal jigs, feathers; often caught while targeting larger pelagics"
   },
   {
     "name": "Yellowtail snapper",
@@ -2951,7 +3058,8 @@
     "coast": "east",
     "regions": [
       "florida"
-    ]
+    ],
+    "lures": "Small jigs, Clouser minnows, shrimp imitations near structure"
   },
   {
     "name": "Mutton snapper",
@@ -2977,7 +3085,8 @@
     "coast": "east",
     "regions": [
       "florida"
-    ]
+    ],
+    "lures": "Jigs, swimbaits near bottom structure"
   },
   {
     "name": "Black snapper (black sea bass juvenile)",
@@ -3003,7 +3112,8 @@
     "sinker": "1-3 oz bank sinker",
     "explanation_cold": "Juvenile black sea bass are common around pier pilings and jetties during cooler months, feeding on small crustaceans.",
     "explanation_warm": "Juvenile black sea bass school around structure in good numbers; they are fun to catch on light tackle and make excellent cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Vertical jigs (2-4 oz), soft plastic swimbaits, and drop-shot rigs near structure"
   },
   {
     "name": "Slippery dick (wrasse)",
@@ -3027,7 +3137,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Slippery dick wrasse are inactive or on deeper reefs during cold months.",
     "explanation_warm": "Slippery dick are small, colorful wrasses common around pier pilings and rocky structure; they are aggressive bait stealers.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Cunner (bergall)",
@@ -3052,7 +3163,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Cunner are small wrasse-like fish that cling to structure year-round; they are one of the few species that consistently bite in cold water.",
     "explanation_warm": "Cunner become less active in warmer water and are replaced by other structure species.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Remora (sharksucker)",
@@ -3076,7 +3188,8 @@
     "sinker": "Varies",
     "explanation_cold": "Remoras follow large marine animals to warmer waters during winter.",
     "explanation_warm": "Remoras (sharksuckers) are caught incidentally from piers, usually detached from sharks, rays or sea turtles; they have a suction disc on their head.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Atlantic bumper",
@@ -3100,7 +3213,8 @@
     "sinker": "1/2-1 oz",
     "explanation_cold": "Atlantic bumpers move to warmer waters during cold months.",
     "explanation_warm": "Atlantic bumpers are small, silvery fish that school in large numbers around pier pilings; they are common incidental catches and useful as bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs; incidentally caught"
   },
   {
     "name": "Windowpane flounder",
@@ -3125,7 +3239,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Windowpane flounder are present inshore during cooler months; they are thin, nearly translucent flatfish found on sandy bottom.",
     "explanation_warm": "Windowpane flounder move to deeper, cooler water during warm months and are uncommon inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, Gulp grubs near sandy bottom"
   },
   {
     "name": "Spottail pinfish",
@@ -3151,7 +3266,8 @@
     "sinker": "1/2-1 oz split shot or pyramid",
     "explanation_cold": "Spottail pinfish move to deeper water during cold months.",
     "explanation_warm": "Spottail pinfish are common around piers and structure; they are similar to regular pinfish but have a distinct dark spot near the tail.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; check local tackle shop for lure recommendations"
   },
   {
     "name": "Sheepshead minnow (killifish)",
@@ -3178,7 +3294,8 @@
     "sinker": "Tiny split shot",
     "explanation_cold": "Sheepshead minnows are less active during cold months but remain in shallow marshes and tidal pools.",
     "explanation_warm": "Sheepshead minnows (killifish) are tiny, hardy bait fish found in shallow water and tidal pools; they are excellent live bait for flounder.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; check local tackle shop for lure recommendations"
   },
   {
     "name": "Mojarra (yellowfin mojarra)",
@@ -3202,7 +3319,8 @@
     "sinker": "1/2-1 oz split shot",
     "explanation_cold": "Mojarras move to deeper water or are absent during cold months.",
     "explanation_warm": "Mojarras are small, silvery fish common around piers and in the surf; they school in good numbers and are used as live bait for flounder and reds.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs; incidentally caught"
   },
   {
     "name": "Blueline tilefish",
@@ -3230,7 +3348,8 @@
     "sinker": "8-16 oz bank sinker",
     "explanation_cold": "Blueline tilefish remain on deep structure year-round; they are accessible in cooler months from deep-drop rigs.",
     "explanation_warm": "Blueline tilefish inhabit deep ledges and hard bottom in 200-600 ft; they are premium table fare caught on deep-drop rigs with cut squid.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Golden tilefish",
@@ -3257,7 +3376,8 @@
     "sinker": "2-5 lb bank sinker or deep-drop weight",
     "explanation_cold": "Golden tilefish are on deep bottom year-round and accessible via deep-drop rigs in winter.",
     "explanation_warm": "Golden tilefish live in burrows on the continental shelf edge in 500-1000+ ft; they are caught on deep-drop rigs and are outstanding table fare.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Snowy grouper",
@@ -3285,7 +3405,8 @@
     "sinker": "2-5 lb bank sinker",
     "explanation_cold": "Snowy grouper remain on deep structure year-round and are accessible via deep-drop rigs.",
     "explanation_warm": "Snowy grouper inhabit deep reefs and ledges in 300-600+ ft; they are caught on deep-drop rigs and are excellent table fare.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Wreckfish",
@@ -3309,7 +3430,8 @@
     "sinker": "3-8 lb bank sinker",
     "explanation_cold": "Wreckfish are deep-water grouper-like fish found on deep structure in 1000+ ft; winter is peak season off NC.",
     "explanation_warm": "Wreckfish are in very deep, cold water year-round; they are less commonly targeted in summer but remain accessible via deep-drop rigs.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Tilefish (blueline juvenile/grey)",
@@ -3335,7 +3457,8 @@
     "sinker": "6-12 oz bank sinker",
     "explanation_cold": "Grey tilefish are on moderate-depth structure and accessible year-round with deep rigs.",
     "explanation_warm": "Grey tilefish inhabit hard bottom and ledges in 150-400 ft; they are reliable biters on cut squid and useful for filling coolers.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near bottom"
   },
   {
     "name": "American eel",
@@ -3361,7 +3484,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "American eels are less active during cold months but can be found in deeper channels and around structure.",
     "explanation_warm": "American eels are caught around piers, docks and inlets, especially at night; they are slimy and hard to handle but make outstanding live bait for stripers and cobia.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small soft plastic jigs, worm-style soft baits; occasionally taken on lures"
   },
   {
     "name": "Conger eel",
@@ -3386,8 +3510,9 @@
     "hook_size": "3/0-7/0 circle hook",
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Conger eels are in deeper nearshore structure and wrecks during cold months; they are nocturnal bottom feeders.",
-    "explanation_warm": "Conger eels inhabit wrecks and rocky structure; they are caught from piers at night and can grow very large. Handle with caution — they bite.",
-    "coast": "east"
+    "explanation_warm": "Conger eels inhabit wrecks and rocky structure; they are caught from piers at night and can grow very large. Handle with caution \u2014 they bite.",
+    "coast": "east",
+    "lures": "Large jigs near structure; primarily caught on bait"
   },
   {
     "name": "Gulf flounder",
@@ -3414,7 +3539,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Gulf flounder move offshore during the coldest months; occasional catches near inlets on warmer days.",
     "explanation_warm": "Gulf flounder are found alongside summer and southern flounder in the surf and around inlets; live finger mullet on the bottom is the top bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Bucktail jigs with paddle tail, Gulp grubs; same as summer flounder"
   },
   {
     "name": "Hogchoker",
@@ -3440,7 +3566,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Hogchokers are in deeper channels and estuaries during cold months.",
     "explanation_warm": "Hogchokers are tiny sole-like flatfish common in estuaries and around piers; they are too small to eat but are frequently caught on small baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Knobbed porgy",
@@ -3465,7 +3592,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Knobbed porgy are on deeper offshore structure during cold months.",
     "explanation_warm": "Knobbed porgy are found on nearshore and offshore hard bottom; they have a distinctive knobby forehead and readily hit cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Whitebone porgy",
@@ -3491,7 +3619,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Whitebone porgy remain on offshore reefs during cold months.",
     "explanation_warm": "Whitebone porgy are common on nearshore reefs and hard bottom off NC; they school over structure and are reliable bottom biters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Jolthead porgy",
@@ -3516,7 +3645,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Jolthead porgy are on deeper reefs and less accessible during cold months.",
     "explanation_warm": "Jolthead porgy are the largest porgy species in NC waters; they inhabit reefs and hard bottom and put up a good fight on bottom rigs.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Grass porgy",
@@ -3541,7 +3671,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Grass porgy move to deeper structure during cold months.",
     "explanation_warm": "Grass porgy are small, colorful porgies found over nearshore hard bottom and grass beds; they are aggressive biters on small cut baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near grass and structure"
   },
   {
     "name": "Saucereye porgy",
@@ -3565,7 +3696,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Saucereye porgy are on deeper offshore reefs during cold months.",
     "explanation_warm": "Saucereye porgy have distinctively large eyes and inhabit nearshore and offshore reefs; they school over hard bottom and hit cut bait readily.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Blue-striped grunt",
@@ -3589,7 +3721,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Blue-striped grunt are on deeper reefs or have moved south during cold months.",
     "explanation_warm": "Blue-striped grunt are colorful reef fish that school around pier pilings and nearshore structure in warm months; they are aggressive biters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Sailor's choice grunt",
@@ -3614,7 +3747,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Sailor's choice grunt are on deeper reefs during cold months.",
     "explanation_warm": "Sailor's choice are small grunts common around nearshore reefs and structure; they bite readily and make good cut bait for larger species.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Margate",
@@ -3638,7 +3772,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Margate are on deeper offshore reefs during cold months.",
     "explanation_warm": "Margate are the largest grunt species; they inhabit nearshore reefs and occasionally piers, and are excellent table fare when caught.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Porkfish",
@@ -3661,7 +3796,8 @@
     "sinker": "1-3 oz bank sinker",
     "explanation_cold": "Porkfish are in warmer waters to the south during cold months.",
     "explanation_warm": "Porkfish are striking yellow-and-black striped grunts that occasionally appear around NC piers and reefs during peak summer.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Bandtail puffer",
@@ -3686,7 +3822,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Bandtail puffers move to deeper water during cold months.",
     "explanation_warm": "Bandtail puffers are larger than northern puffers and common around piers and structure in warmer months; they have tasty meat behind the head.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Checkered puffer",
@@ -3711,7 +3848,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Checkered puffers are in deeper water during cold months.",
     "explanation_warm": "Checkered puffers are common around pier pilings and grass flats; they are notorious bait stealers with strong beaks that crush shells.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Striped burrfish (spiny boxfish)",
@@ -3738,7 +3876,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Striped burrfish are common inshore during cooler months, inflating into spiny balls when caught; they inhabit structure and grass beds.",
     "explanation_warm": "Striped burrfish move to deeper water during the warmest months; they are most common inshore during transitional seasons.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Scrawled cowfish",
@@ -3762,7 +3901,8 @@
     "sinker": "Small split shot or 1 oz egg",
     "explanation_cold": "Scrawled cowfish are in deeper water or warmer areas during cold months.",
     "explanation_warm": "Scrawled cowfish are quirky, box-shaped fish with horns; they are caught around pier pilings and structure and release a toxin when stressed.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Ocean triggerfish",
@@ -3786,7 +3926,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Ocean triggerfish move to deeper offshore waters during cold months.",
     "explanation_warm": "Ocean triggerfish are found on nearshore reefs and around pier structure; they are smaller than gray triggers but equally adept at stealing bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs (1-2 oz) near structure"
   },
   {
     "name": "Queen triggerfish",
@@ -3809,7 +3950,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Queen triggerfish are in warmer tropical waters during cold months.",
     "explanation_warm": "Queen triggerfish are the most colorful triggerfish, occasionally appearing on NC reefs and around structure during peak summer.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Scrawled filefish",
@@ -3833,7 +3975,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Scrawled filefish move offshore during cold months.",
     "explanation_warm": "Scrawled filefish are the largest filefish species, with blue scrawl markings; they drift near pier pilings and structure eating jellyfish and small invertebrates.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Orange filefish",
@@ -3858,7 +4001,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Orange filefish are on deeper structure during cold months.",
     "explanation_warm": "Orange filefish are medium-sized filefish found around piers and reefs; they pick at baits with tiny mouths and change color to match surroundings.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Nurse shark",
@@ -3885,7 +4029,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Primarily caught on bait; not typically targeted with lures"
   },
   {
     "name": "Finetooth shark",
@@ -3909,7 +4054,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Finetooth sharks migrate south during cold months.",
     "explanation_warm": "Finetooth sharks are fast, slender sharks common in the surf zone during summer; they aggressively chase baitfish and fight hard for their size.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Fast-retrieved lures; primarily caught on bait"
   },
   {
     "name": "Atlantic angel shark",
@@ -3934,7 +4080,8 @@
     "sinker": "3-5 oz pyramid sinker",
     "explanation_cold": "Atlantic angel sharks are flat, ray-like sharks that bury in sand on the bottom; they are caught inshore during cooler months from piers and the surf.",
     "explanation_warm": "Angel sharks move to deeper, cooler water during warm months and are uncommon inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Yellow jack",
@@ -3957,7 +4104,8 @@
     "sinker": "None or small split shot",
     "explanation_cold": "Yellow jacks are in tropical waters and not present in NC during cold months.",
     "explanation_warm": "Yellow jacks occasionally visit NC waters during peak summer; they are beautiful golden fish that fight hard and school around structure.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Spoons, jigs; aggressive jack species"
   },
   {
     "name": "Horse-eye jack",
@@ -3980,7 +4128,8 @@
     "sinker": "None or 1-2 oz egg sinker",
     "explanation_cold": "Horse-eye jacks are in warmer waters to the south during cold months.",
     "explanation_warm": "Horse-eye jacks are large-eyed jacks that occasionally school around NC piers and nearshore structure during warm months; they are strong fighters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Spoons, jigs, topwater; similar to jack crevalle"
   },
   {
     "name": "Palometa",
@@ -4003,7 +4152,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Palometa are a tropical species not found in NC during cold months.",
     "explanation_warm": "Palometa are small, deep-bodied jacks related to permit; they occasionally appear in the NC surf zone during peak summer and hit sand fleas.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, spoons near surface"
   },
   {
     "name": "Cero mackerel",
@@ -4026,7 +4176,8 @@
     "sinker": "None or small split shot",
     "explanation_cold": "Cero mackerel are in warmer tropical waters during cold months.",
     "explanation_warm": "Cero mackerel resemble Spanish mackerel but with spots arranged in rows; they occasionally show up around NC piers during peak summer.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Metal spoons, small jigs; same tactics as Spanish mackerel"
   },
   {
     "name": "Bigeye tuna",
@@ -4054,7 +4205,8 @@
     "sinker": "Deep-drop weight or trolling weight",
     "explanation_cold": "Bigeye tuna are along the Gulf Stream and shelf edge year-round; winter deep-dropping produces trophy fish.",
     "explanation_warm": "Bigeye tuna inhabit deep water along the Gulf Stream edge; they are caught trolling and deep-dropping and are among the best sashimi fish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy metal jigs, offshore trolling lures"
   },
   {
     "name": "Albacore tuna",
@@ -4079,7 +4231,8 @@
     "sinker": "Trolling weight or none",
     "explanation_cold": "Albacore tuna pass through NC offshore waters during fall and winter, preferring cooler water than other tunas.",
     "explanation_warm": "Albacore prefer cooler water and are most accessible off NC during fall and early winter along temperature breaks.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy metal jigs, feather lures, trolling lures"
   },
   {
     "name": "Frigate mackerel",
@@ -4103,7 +4256,8 @@
     "sinker": "1-2 oz or trolling weight",
     "explanation_cold": "Frigate mackerel are offshore in warm water and not available nearshore during cold months.",
     "explanation_warm": "Frigate mackerel are small tunas that school nearshore and around piers; they are useful as cut or live bait for larger gamefish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small metal jigs, feathers"
   },
   {
     "name": "Sergeant major (damselfish)",
@@ -4127,7 +4281,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Sergeant majors move offshore or south during cold months.",
     "explanation_warm": "Sergeant majors are bold, black-and-yellow striped damselfish that school around pier pilings; males aggressively guard purple egg patches on structure.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Rock hind",
@@ -4152,7 +4307,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Rock hind remain on deeper structure during cold months.",
     "explanation_warm": "Rock hind are small, spotted groupers found on nearshore reefs and hard bottom; they are ambush predators that hit live and cut baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near structure"
   },
   {
     "name": "Red hind",
@@ -4176,7 +4332,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Red hind are on deeper offshore reefs during cold months.",
     "explanation_warm": "Red hind are beautifully red-spotted small groupers found on nearshore and offshore reefs; they are aggressive biters and good eating.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near structure"
   },
   {
     "name": "Yellowedge grouper",
@@ -4204,7 +4361,8 @@
     "sinker": "2-5 lb bank sinker",
     "explanation_cold": "Yellowedge grouper remain on deep structure year-round; they are accessible via deep-drop rigs.",
     "explanation_warm": "Yellowedge grouper inhabit deep ledges and hard bottom in 300-600+ ft; they are premier deep-drop targets and outstanding table fare.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Coney",
@@ -4227,7 +4385,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Coney are a tropical species not commonly found on NC reefs during cold months.",
     "explanation_warm": "Coney are small, colorful groupers that occasionally appear on NC nearshore reefs during peak summer; they come in multiple color phases.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Sand tilefish",
@@ -4252,7 +4411,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Sand tilefish are on moderate-depth sandy bottom during cold months.",
     "explanation_warm": "Sand tilefish build burrows in sandy bottom near reefs in 100-300 ft; they are colorful fish that bite cut squid and shrimp on bottom rigs.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; check local tackle shop for lure recommendations"
   },
   {
     "name": "Spotted scorpionfish",
@@ -4277,7 +4437,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Spotted scorpionfish are on deeper structure during cold months.",
     "explanation_warm": "Spotted scorpionfish are well-camouflaged ambush predators on reefs and hard bottom; handle with extreme care as dorsal spines are venomous.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near rocky bottom"
   },
   {
     "name": "Goosefish (monkfish)",
@@ -4301,7 +4462,8 @@
     "sinker": "4-8 oz pyramid sinker",
     "explanation_cold": "Goosefish are large, flat ambush predators that move inshore during winter; they use a lure-like appendage on their head to attract prey.",
     "explanation_warm": "Goosefish move to deeper, cooler water during warm months and are not available inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs bounced near bottom"
   },
   {
     "name": "Spotted moray eel",
@@ -4324,8 +4486,9 @@
     "hook_size": "2/0-5/0 hook",
     "sinker": "2-4 oz",
     "explanation_cold": "Spotted morays retreat deeper into structure and are inactive during cold months.",
-    "explanation_warm": "Spotted moray eels hide in pier pilings and rocky structure; they are caught incidentally on cut bait — handle with extreme caution as they bite aggressively.",
-    "coast": "east"
+    "explanation_warm": "Spotted moray eels hide in pier pilings and rocky structure; they are caught incidentally on cut bait \u2014 handle with extreme caution as they bite aggressively.",
+    "coast": "east",
+    "lures": "Primarily caught on bait"
   },
   {
     "name": "Green moray eel",
@@ -4348,8 +4511,9 @@
     "hook_size": "3/0-6/0 hook",
     "sinker": "2-4 oz",
     "explanation_cold": "Green morays are deep in structure crevices and inactive during cold months.",
-    "explanation_warm": "Green moray eels are the largest morays in NC waters; they inhabit pier pilings, jetties and wrecks. Do not attempt to handle — they deliver severe bites.",
-    "coast": "east"
+    "explanation_warm": "Green moray eels are the largest morays in NC waters; they inhabit pier pilings, jetties and wrecks. Do not attempt to handle \u2014 they deliver severe bites.",
+    "coast": "east",
+    "lures": "Primarily caught on bait near reef structure"
   },
   {
     "name": "Snook",
@@ -4375,7 +4539,8 @@
     "coast": "east",
     "regions": [
       "florida"
-    ]
+    ],
+    "lures": "Large soft plastic jerkbaits, DOA Baitbuster, topwater walk-the-dog plugs, Rapala X-Rap; target structure and inlet edges"
   },
   {
     "name": "Southern sennet",
@@ -4399,7 +4564,8 @@
     "sinker": "None or small split shot",
     "explanation_cold": "Southern sennet migrate south during cold months.",
     "explanation_warm": "Southern sennet are small, schooling barracuda relatives that swarm around pier pilings and nearshore structure; they hit small, flashy lures.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, spoons; barracuda-like in behavior"
   },
   {
     "name": "Greater soapfish",
@@ -4422,8 +4588,9 @@
     "hook_size": "#1-3/0 circle hook",
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Greater soapfish are on deeper reefs during cold months.",
-    "explanation_warm": "Greater soapfish are small, grouper-like fish found on reefs and hard bottom; they produce a soapy skin mucus when handled — do not eat them.",
-    "coast": "east"
+    "explanation_warm": "Greater soapfish are small, grouper-like fish found on reefs and hard bottom; they produce a soapy skin mucus when handled \u2014 do not eat them.",
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Yellowmouth grouper",
@@ -4448,7 +4615,8 @@
     "sinker": "4-8 oz bank sinker",
     "explanation_cold": "Yellowmouth grouper remain on deeper offshore structure during cold months.",
     "explanation_warm": "Yellowmouth grouper are found on nearshore and offshore reefs; they have distinctive yellow coloring inside the mouth and hit live and cut baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Jigs, swimbaits near structure"
   },
   {
     "name": "Speckled hind",
@@ -4476,7 +4644,8 @@
     "sinker": "2-4 lb bank sinker",
     "explanation_cold": "Speckled hind are on deep structure year-round; they are a rare, protected species.",
     "explanation_warm": "Speckled hind are rare, beautifully spotted groupers found on deep reefs in 200-500+ ft; they are protected and must be released in federal waters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Warsaw grouper",
@@ -4502,7 +4671,8 @@
     "sinker": "3-8 lb bank sinker",
     "explanation_cold": "Warsaw grouper inhabit deep ledges year-round and are accessible via deep-drop rigs.",
     "explanation_warm": "Warsaw grouper are the largest grouper caught off NC, living on deep ledges in 300-800+ ft; they can exceed 300 lbs and require the heaviest tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Goliath grouper (jewfish)",
@@ -4519,13 +4689,14 @@
       6,
       10
     ],
-    "bait": "PROTECTED SPECIES — catch and release only; large live baitfish if encountered incidentally",
+    "bait": "PROTECTED SPECIES \u2014 catch and release only; large live baitfish if encountered incidentally",
     "rig": "Heavy tackle (usually incidental catch)",
     "hook_size": "8/0-14/0 circle hook",
     "sinker": "Heavy",
     "explanation_cold": "Goliath grouper are in warmer waters to the south during cold months.",
-    "explanation_warm": "Goliath grouper are the largest Atlantic grouper, occasionally visiting NC wrecks and piers during summer. PROTECTED — must be immediately released.",
-    "coast": "east"
+    "explanation_warm": "Goliath grouper are the largest Atlantic grouper, occasionally visiting NC wrecks and piers during summer. PROTECTED \u2014 must be immediately released.",
+    "coast": "east",
+    "lures": "Very large swimbaits and jigs; primarily caught on bait"
   },
   {
     "name": "Black drum (large bull)",
@@ -4550,7 +4721,8 @@
     "sinker": "4-6 oz pyramid sinker",
     "explanation_cold": "Large bull black drum stage near inlets during late winter before the spring spawning run.",
     "explanation_warm": "Bull black drum (40+ lbs) move through inlets and along structure during the spring spawn; whole blue crabs on heavy tackle are the standard bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; very large paddle-tail swimbaits occasionally work near structure"
   },
   {
     "name": "Northern stargazer",
@@ -4576,8 +4748,9 @@
     "hook_size": "1/0-4/0 circle hook",
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Northern stargazers bury in sandy bottom year-round but are less commonly caught in the coldest months.",
-    "explanation_warm": "Northern stargazers bury in the sand with only their eyes exposed, ambushing prey from below; they can deliver an electric shock — handle with caution.",
-    "coast": "east"
+    "explanation_warm": "Northern stargazers bury in the sand with only their eyes exposed, ambushing prey from below; they can deliver an electric shock \u2014 handle with caution.",
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Atlantic sturgeon",
@@ -4597,13 +4770,14 @@
       2,
       6
     ],
-    "bait": "PROTECTED SPECIES — no targeting allowed; occasionally hooked incidentally on cut bait",
-    "rig": "N/A — protected species, must release immediately if hooked",
+    "bait": "PROTECTED SPECIES \u2014 no targeting allowed; occasionally hooked incidentally on cut bait",
+    "rig": "N/A \u2014 protected species, must release immediately if hooked",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Atlantic sturgeon are in deeper river channels and nearshore waters during winter; they are federally protected.",
-    "explanation_warm": "Atlantic sturgeon are ancient, armored fish that migrate through NC rivers and nearshore waters. ENDANGERED — must be immediately released if hooked.",
-    "coast": "east"
+    "explanation_warm": "Atlantic sturgeon are ancient, armored fish that migrate through NC rivers and nearshore waters. ENDANGERED \u2014 must be immediately released if hooked.",
+    "coast": "east",
+    "lures": "Not typically targeted with lures; catch-and-release"
   },
   {
     "name": "Shortnose sturgeon",
@@ -4622,13 +4796,14 @@
       11,
       12
     ],
-    "bait": "PROTECTED SPECIES — no targeting allowed",
-    "rig": "N/A — protected species, must release immediately if hooked",
+    "bait": "PROTECTED SPECIES \u2014 no targeting allowed",
+    "rig": "N/A \u2014 protected species, must release immediately if hooked",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Shortnose sturgeon inhabit deeper river pools during winter; they are federally protected.",
-    "explanation_warm": "Shortnose sturgeon are smaller than Atlantic sturgeon and found in NC rivers. ENDANGERED — must be immediately released if hooked.",
-    "coast": "east"
+    "explanation_warm": "Shortnose sturgeon are smaller than Atlantic sturgeon and found in NC rivers. ENDANGERED \u2014 must be immediately released if hooked.",
+    "coast": "east",
+    "lures": "Not typically targeted with lures; federally protected"
   },
   {
     "name": "Blue tang (surgeonfish)",
@@ -4645,12 +4820,13 @@
       10
     ],
     "bait": "Rarely caught on hook and line; occasionally caught in cast nets",
-    "rig": "N/A — not a typical hook-and-line target",
+    "rig": "N/A \u2014 not a typical hook-and-line target",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Blue tang are a tropical reef species not found in NC during cold months.",
     "explanation_warm": "Blue tang occasionally appear around NC pier pilings and jetties during late summer as tropical strays; they are herbivores with a sharp tail spine.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Gray angelfish",
@@ -4673,7 +4849,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Gray angelfish are in tropical waters during cold months.",
     "explanation_warm": "Gray angelfish are large, disc-shaped reef fish that occasionally visit NC pier pilings and jetties as tropical strays during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Spotfin butterflyfish",
@@ -4690,12 +4867,13 @@
       10
     ],
     "bait": "Rarely caught; occasionally seen around pier pilings",
-    "rig": "N/A — not a hook-and-line target",
+    "rig": "N/A \u2014 not a hook-and-line target",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Spotfin butterflyfish are tropical and not present in NC during cold months.",
     "explanation_warm": "Spotfin butterflyfish are beautiful tropical strays that appear around NC pier pilings in late summer; they feed on small invertebrates on structure.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; check local tackle shop for lure recommendations"
   },
   {
     "name": "Doctorfish (tang)",
@@ -4712,12 +4890,13 @@
       10
     ],
     "bait": "Rarely caught on hook and line",
-    "rig": "N/A — not a typical hook-and-line target",
+    "rig": "N/A \u2014 not a typical hook-and-line target",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Doctorfish are tropical and not present in NC during cold months.",
     "explanation_warm": "Doctorfish are tropical tangs that occasionally appear around NC structure as summer strays; they are herbivores with a scalpel-like tail spine.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not a primary lure target; check local tackle shop for lure recommendations"
   },
   {
     "name": "Squirrelfish",
@@ -4740,7 +4919,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Squirrelfish are in deeper or tropical waters during cold months.",
     "explanation_warm": "Squirrelfish are red, big-eyed nocturnal reef fish found around pier pilings and structure; they are most active at night and caught on small cut baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Red lionfish (invasive)",
@@ -4766,7 +4946,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Lionfish remain on deeper reefs during cold months but survive NC winters on offshore structure.",
     "explanation_warm": "Red lionfish are an invasive Indo-Pacific species now established on NC reefs; they have venomous spines but are excellent eating once spines are removed.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures; usually speared"
   },
   {
     "name": "Puddingwife (wrasse)",
@@ -4790,7 +4971,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Puddingwife wrasse are on deeper reefs or in warmer waters during cold months.",
     "explanation_warm": "Puddingwife are colorful, medium-sized wrasses found around NC pier pilings and reefs; they feed on small crustaceans and are strong for their size.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Bluehead wrasse",
@@ -4813,7 +4995,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Bluehead wrasse are tropical and not present in NC during cold months.",
     "explanation_warm": "Bluehead wrasse are small, colorful tropical wrasses that occasionally appear around NC pier pilings and reefs as summer strays.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Kemp's ridley sea turtle",
@@ -4833,13 +5016,14 @@
       4,
       11
     ],
-    "bait": "PROTECTED SPECIES — do not target; may be hooked incidentally while fishing",
-    "rig": "N/A — if hooked, cut line as close to hook as safely possible",
+    "bait": "PROTECTED SPECIES \u2014 do not target; may be hooked incidentally while fishing",
+    "rig": "N/A \u2014 if hooked, cut line as close to hook as safely possible",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Kemp's ridley turtles migrate south during winter months.",
-    "explanation_warm": "Kemp's ridley sea turtles are the most commonly hooked turtle from NC piers. ENDANGERED — if hooked, do NOT pull on line. Call pier staff or wildlife officials.",
-    "coast": "east"
+    "explanation_warm": "Kemp's ridley sea turtles are the most commonly hooked turtle from NC piers. ENDANGERED \u2014 if hooked, do NOT pull on line. Call pier staff or wildlife officials.",
+    "coast": "east",
+    "lures": "Not targeted; federally protected"
   },
   {
     "name": "Southern kingfish (ground mullet)",
@@ -4866,7 +5050,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Southern kingfish are in deeper water during the coldest months but move inshore earlier than northern kingfish.",
     "explanation_warm": "Southern kingfish (ground mullet) are a whiting species common in the surf; they are slightly larger than northern kingfish and prefer sandy bottom.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs (1/16-1/8 oz); not a primary lure target"
   },
   {
     "name": "Gulf kingfish (gulf whiting)",
@@ -4891,7 +5076,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Gulf kingfish are in deeper water during cold months.",
     "explanation_warm": "Gulf kingfish are the largest whiting species, occasionally exceeding 3 lbs; they prefer high-energy surf zones and hit sand fleas and shrimp.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs; not a primary lure target"
   },
   {
     "name": "Silver seatrout",
@@ -4916,7 +5102,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Silver seatrout are in deeper channels during cold months.",
     "explanation_warm": "Silver seatrout are similar to sand seatrout but with a more silvery sheen; they school around piers and in the surf and hit live shrimp readily.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastic tails"
   },
   {
     "name": "Striped sea robin",
@@ -4941,7 +5128,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Striped sea robins are common winter bottom catches; they have large, wing-like pectoral fins and make grunting sounds when caught.",
     "explanation_warm": "Striped sea robins move offshore as water warms; they are most common inshore during fall through spring.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Northern sea robin",
@@ -4966,7 +5154,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Northern sea robins are common winter bottom fish; they use finger-like pectoral fin rays to walk along the bottom and locate prey.",
     "explanation_warm": "Northern sea robins move to deeper, cooler water during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Atlantic herring",
@@ -4990,7 +5179,8 @@
     "sinker": "1-2 oz weight below sabiki",
     "explanation_cold": "Atlantic herring school inshore during winter, providing bait for striped bass and bluefish; catch them on sabiki rigs for cut bait.",
     "explanation_warm": "Atlantic herring move to deeper, cooler waters during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, sabiki rigs"
   },
   {
     "name": "Blueback herring",
@@ -5013,7 +5203,8 @@
     "sinker": "1/4-1/2 oz jig head",
     "explanation_cold": "Blueback herring are offshore staging before their spring river runs.",
     "explanation_warm": "Blueback herring run up NC rivers alongside shad in spring; they hit small, bright darts and jigs and are excellent cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, sabiki rigs"
   },
   {
     "name": "Alewife",
@@ -5035,7 +5226,8 @@
     "sinker": "1/4-1/2 oz jig head",
     "explanation_cold": "Alewife are offshore before their spring spawning run into rivers.",
     "explanation_warm": "Alewife are anadromous herring that run up NC rivers in spring for spawning; they hit small darts and make excellent cut and live bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures; incidentally caught"
   },
   {
     "name": "Winter skate",
@@ -5059,7 +5251,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Winter skates move inshore during the coldest months; they are larger than clearnose skates and common bottom catches from piers.",
     "explanation_warm": "Winter skates move to deeper, cooler water during warm months and are absent inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Little skate",
@@ -5083,7 +5276,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Little skates are small, common bottom catches during winter months; they are the smallest skate species in NC waters.",
     "explanation_warm": "Little skates move to deeper, cooler water during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Cubera snapper",
@@ -5106,7 +5300,8 @@
     "sinker": "4-8 oz bank sinker",
     "explanation_cold": "Cubera snapper are in tropical waters and not present in NC during cold months.",
     "explanation_warm": "Cubera snapper are the largest snapper species, rarely encountered on NC reefs during peak summer; they are immensely powerful around structure.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Large jigs, swimbaits near deep structure"
   },
   {
     "name": "Schoolmaster snapper",
@@ -5129,7 +5324,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Schoolmaster snapper are tropical and not found in NC during cold months.",
     "explanation_warm": "Schoolmaster snapper are occasional tropical visitors to NC structure during warm summers; they have distinctive yellow fins and are wary biters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near structure"
   },
   {
     "name": "Silk snapper",
@@ -5155,7 +5351,8 @@
     "sinker": "8-16 oz bank sinker",
     "explanation_cold": "Silk snapper are on deep reefs year-round and accessible via deep-drop rigs.",
     "explanation_warm": "Silk snapper are deep-water snappers found on reefs in 300-600+ ft off NC; they are beautiful pink fish caught on deep-drop rigs.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Vertical jigs near deep structure"
   },
   {
     "name": "Queen snapper",
@@ -5183,7 +5380,8 @@
     "sinker": "2-5 lb bank sinker",
     "explanation_cold": "Queen snapper inhabit very deep water (600-1500+ ft) year-round off NC.",
     "explanation_warm": "Queen snapper are brilliant red deep-water fish caught in 600-1500+ ft; they are among the most prized deep-drop catches off NC.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Vertical jigs near deep bottom"
   },
   {
     "name": "Gray snapper (juvenile)",
@@ -5207,7 +5405,8 @@
     "sinker": "Small split shot or 1/2 oz egg",
     "explanation_cold": "Juvenile gray snapper move to deeper or warmer waters during cold months.",
     "explanation_warm": "Juvenile mangrove (gray) snapper swarm pier pilings in summer, stealing bait with precision; use light fluorocarbon and small hooks to catch them.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near structure"
   },
   {
     "name": "Yellowtail damselfish",
@@ -5229,7 +5428,8 @@
     "sinker": "Tiny split shot",
     "explanation_cold": "Yellowtail damselfish are tropical and not present in NC during cold months.",
     "explanation_warm": "Yellowtail damselfish are small, bright tropical strays that appear around NC pier pilings in late summer; they aggressively defend small territories.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Creole wrasse",
@@ -5253,7 +5453,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Creole wrasse are on deeper offshore reefs during cold months.",
     "explanation_warm": "Creole wrasse are purple reef fish that school above hard bottom and reefs; they are common on NC offshore structure.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Leopard toadfish",
@@ -5278,7 +5479,8 @@
     "sinker": "1-3 oz sinker",
     "explanation_cold": "Leopard toadfish are less active and deeper in structure during cold months.",
     "explanation_warm": "Leopard toadfish are smaller, spotted relatives of oyster toadfish found around structure; they produce loud grunting calls during spawning season.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Channel catfish",
@@ -5303,7 +5505,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Channel catfish are in deeper holes during cold months and feed less actively.",
     "explanation_warm": "Channel catfish are primarily freshwater but enter brackish estuaries and inlets near the coast; they hit cut bait and stinkbaits aggressively.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait; occasionally take soft plastics"
   },
   {
     "name": "Fringed flounder",
@@ -5330,7 +5533,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Fringed flounder are in deeper water during cold months.",
     "explanation_warm": "Fringed flounder are small flatfish found in estuaries and around structure; they are occasionally caught from piers while targeting other flounder species.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics"
   },
   {
     "name": "Blackcheek tonguefish",
@@ -5355,7 +5559,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "Blackcheek tonguefish are in deeper channels during cold months.",
     "explanation_warm": "Blackcheek tonguefish are tiny, tongue-shaped flatfish occasionally caught on small baits; they are too small to keep but are common in estuaries.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Largemouth bass",
@@ -5382,7 +5587,8 @@
     "sinker": "1/4-1/2 oz bullet weight",
     "explanation_cold": "Largemouth bass are in deeper holes in brackish creeks during cold months.",
     "explanation_warm": "Largemouth bass enter brackish water in the ICW and tidal creeks; they hit live shrimp and soft plastics near structure.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Swimbaits, soft plastics, topwater plugs; standard freshwater bass lures"
   },
   {
     "name": "Blue catfish",
@@ -5407,7 +5613,8 @@
     "sinker": "2-4 oz egg sinker",
     "explanation_cold": "Blue catfish are in deeper river holes during cold months but can still be caught.",
     "explanation_warm": "Blue catfish have expanded into tidal rivers near the coast and occasionally enter brackish water; they can grow very large and fight hard.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Primarily caught on bait; large swimbaits occasionally"
   },
   {
     "name": "Striped bass (hybrid)",
@@ -5434,7 +5641,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Hybrid striped bass are in deeper river holes and channels during cold months.",
     "explanation_warm": "Hybrid striped bass (wipers) are stocked in Cape Fear River tributaries and enter brackish water; they fight harder than pure stripers pound-for-pound.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Swimbaits, topwater plugs, bucktail jigs; same as striped bass"
   },
   {
     "name": "Tilefish (golden juvenile)",
@@ -5460,7 +5668,8 @@
     "sinker": "1-3 lb bank sinker",
     "explanation_cold": "Juvenile golden tilefish are on moderate-depth structure and accessible year-round.",
     "explanation_warm": "Juvenile golden tilefish are found shallower than adults, on hard bottom and ledges in 200-400 ft; they hit cut squid and clam.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near bottom"
   },
   {
     "name": "Barrelfish",
@@ -5485,7 +5694,8 @@
     "sinker": "3-8 lb bank sinker",
     "explanation_cold": "Barrelfish inhabit deep structure in 600-1200+ ft off NC; they are most commonly targeted during winter deep-drop trips.",
     "explanation_warm": "Barrelfish are deep-water species found well below the thermocline; they are caught on deep-drop rigs and have firm, white flesh.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Blackbelly rosefish",
@@ -5511,7 +5721,8 @@
     "sinker": "2-5 lb bank sinker",
     "explanation_cold": "Blackbelly rosefish are deep-water scorpionfish found in 500-1500 ft off NC; they are bright red with large eyes.",
     "explanation_warm": "Blackbelly rosefish remain in deep, cold water year-round; they are occasional catches on deep-drop trips targeting tilefish and snowy grouper.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near deep structure"
   },
   {
     "name": "White perch",
@@ -5538,7 +5749,8 @@
     "sinker": "1-2 oz pyramid sinker",
     "explanation_cold": "White perch are in deeper brackish channels during cold months but can be caught on bloodworms.",
     "explanation_warm": "White perch are found in brackish tidal creeks and the ICW near the coast; they school in good numbers and bite small baits readily.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, spinners, soft plastics"
   },
   {
     "name": "Yellow perch",
@@ -5565,7 +5777,8 @@
     "sinker": "1/2-1 oz split shot",
     "explanation_cold": "Yellow perch are in deeper pools during cold months; they can be caught through slow presentations.",
     "explanation_warm": "Yellow perch occasionally enter brackish creeks near the coast; they are popular panfish that school and bite small live baits.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, swimbaits, spinners; standard perch lures"
   },
   {
     "name": "Spotted hake",
@@ -5590,7 +5803,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Spotted hake are common winter bottom catches from piers; they have a slender body with a long chin barbel and are decent eating.",
     "explanation_warm": "Spotted hake move to deeper, cooler water during warm months and are uncommon inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near bottom"
   },
   {
     "name": "Red hake (ling)",
@@ -5614,7 +5828,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Red hake move inshore during the coldest months; they are elongated bottom fish with a chin barbel and are good eating when fresh.",
     "explanation_warm": "Red hake move to deeper, cooler water during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, soft plastics near bottom"
   },
   {
     "name": "Longhorn sculpin",
@@ -5638,7 +5853,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Longhorn sculpin are spiny bottom fish that move inshore during the coldest months; they have prominent head spines and are common winter bycatch.",
     "explanation_warm": "Longhorn sculpin move to deeper, cooler water during warm months and are not found inshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs; primarily caught on bait"
   },
   {
     "name": "Pollock",
@@ -5661,7 +5877,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Pollock are rare visitors to NC waters during exceptionally cold winters; they are more common further north but occasionally appear.",
     "explanation_warm": "Pollock are a cold-water species not present in NC during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Metal jigs, swimbaits, diamond jigs; excellent jig target in cold water"
   },
   {
     "name": "Atlantic cod",
@@ -5683,7 +5900,8 @@
     "sinker": "4-8 oz bank sinker",
     "explanation_cold": "Atlantic cod are extremely rare visitors to NC waters during the coldest winters; they are at the far southern edge of their range.",
     "explanation_warm": "Atlantic cod are a cold-water species not found in NC waters during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs (4-8 oz), large swimbaits and pirks near bottom; good jigging target"
   },
   {
     "name": "Bigeye (Priacanthus arenatus)",
@@ -5707,7 +5925,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Bigeye are on deeper offshore reefs during cold months.",
     "explanation_warm": "Bigeye are bright red, large-eyed reef fish found on nearshore and offshore structure; they are nocturnal and caught mostly at night on cut bait.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Short bigeye",
@@ -5731,7 +5950,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Short bigeye are on deeper reefs during cold months.",
     "explanation_warm": "Short bigeye are small, red-orange reef fish found on offshore structure; they are nocturnal and caught on deep reef trips.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Ocean pout",
@@ -5753,7 +5973,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Ocean pout are eel-like bottom fish at the far southern edge of their range in NC; extremely rare but occasionally caught in the coldest winters.",
     "explanation_warm": "Ocean pout are a cold-water species not found in NC during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near bottom; primarily caught on bait"
   },
   {
     "name": "Amberjack (juvenile, banded)",
@@ -5778,7 +5999,8 @@
     "sinker": "None or small split shot",
     "explanation_cold": "Juvenile amberjack move offshore during cold months.",
     "explanation_warm": "Juvenile amberjack with distinctive dark bands school under floating debris, sargassum mats and around pier ends; they are fun on light tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, spoons"
   },
   {
     "name": "Sargassumfish",
@@ -5802,7 +6024,8 @@
     "sinker": "None",
     "explanation_cold": "Sargassumfish are offshore in floating weed mats during cold months.",
     "explanation_warm": "Sargassumfish are bizarre, frogfish-like creatures that live in floating sargassum weed; they occasionally drift near piers with weed mats.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Almaco jack (large adult)",
@@ -5827,7 +6050,8 @@
     "sinker": "4-8 oz bank sinker",
     "explanation_cold": "Large almaco jacks are on deeper offshore structure during cold months.",
     "explanation_warm": "Large adult almaco jacks are found on offshore wrecks and ledges; they are among the hardest-fighting jacks and excellent table fare.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Metal jigs, spoons, poppers; jacks are aggressive lure targets"
   },
   {
     "name": "Lesser amberjack",
@@ -5852,7 +6076,8 @@
     "sinker": "3-6 oz bank sinker",
     "explanation_cold": "Lesser amberjack are on deeper offshore structure during cold months.",
     "explanation_warm": "Lesser amberjack are smaller than greater amberjack, found on offshore reefs and wrecks; they are good fighters often mistaken for juvenile greaters.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Medium jigs, swimbaits near structure"
   },
   {
     "name": "Misty grouper",
@@ -5878,7 +6103,8 @@
     "sinker": "3-8 lb bank sinker",
     "explanation_cold": "Misty grouper inhabit very deep structure (600-1500+ ft) year-round off NC.",
     "explanation_warm": "Misty grouper are rare, deep-water groupers found on deep ledges; they are occasionally caught on deep-drop trips targeting wreckfish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Kitty Mitchell (yellowfin grouper)",
@@ -5903,7 +6129,8 @@
     "sinker": "4-8 oz bank sinker",
     "explanation_cold": "Yellowfin grouper are on deeper offshore reefs during cold months.",
     "explanation_warm": "Yellowfin grouper (kitty mitchells) are found on offshore reefs and wrecks; they are colorful groupers with yellow-trimmed fins.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs, swimbaits near structure"
   },
   {
     "name": "Nassau grouper",
@@ -5920,13 +6147,14 @@
       6,
       10
     ],
-    "bait": "PROTECTED SPECIES — must be released if caught",
-    "rig": "N/A — protected species",
+    "bait": "PROTECTED SPECIES \u2014 must be released if caught",
+    "rig": "N/A \u2014 protected species",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Nassau grouper are in warmer tropical waters during cold months.",
-    "explanation_warm": "Nassau grouper are critically endangered and rarely encountered on NC reefs. PROTECTED — must be immediately released if hooked.",
-    "coast": "east"
+    "explanation_warm": "Nassau grouper are critically endangered and rarely encountered on NC reefs. PROTECTED \u2014 must be immediately released if hooked.",
+    "coast": "east",
+    "lures": "Jigs, swimbaits near structure"
   },
   {
     "name": "Atlantic wolffish",
@@ -5946,9 +6174,10 @@
     "rig": "Fish finder rig with heavy fluorocarbon leader",
     "hook_size": "5/0-8/0 circle hook",
     "sinker": "4-8 oz bank sinker",
-    "explanation_cold": "Atlantic wolffish are extremely rare visitors to NC — if one shows up, it's at the very southern extreme of their range during the coldest winters.",
+    "explanation_cold": "Atlantic wolffish are extremely rare visitors to NC \u2014 if one shows up, it's at the very southern extreme of their range during the coldest winters.",
     "explanation_warm": "Atlantic wolffish are a cold-water species never found in NC during warm months.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Heavy jigs near bottom in cold water"
   },
   {
     "name": "Northern kingfish",
@@ -5975,7 +6204,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Northern kingfish (the true 'whiting') are in deeper water during the coldest months but accessible in mild winters.",
     "explanation_warm": "Northern kingfish are the classic NC whiting, common in the surf during spring and fall; they prefer cooler water than their southern and gulf cousins.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs; not a primary lure target"
   },
   {
     "name": "Lined seahorse",
@@ -5994,13 +6224,14 @@
       4,
       10
     ],
-    "bait": "NOT A TARGET SPECIES — occasionally found in cast nets or around pier pilings",
-    "rig": "N/A — do not target; observe and release",
+    "bait": "NOT A TARGET SPECIES \u2014 occasionally found in cast nets or around pier pilings",
+    "rig": "N/A \u2014 do not target; observe and release",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Lined seahorses are in deeper grass beds during cold months.",
     "explanation_warm": "Lined seahorses cling to pier pilings, sargassum and structure; they are occasionally brought up on lines. Handle gently and return to water.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not targeted with lures"
   },
   {
     "name": "Dusky pipefish",
@@ -6019,13 +6250,14 @@
       4,
       10
     ],
-    "bait": "NOT A TARGET SPECIES — occasionally caught in cast nets",
-    "rig": "N/A — observe and release",
+    "bait": "NOT A TARGET SPECIES \u2014 occasionally caught in cast nets",
+    "rig": "N/A \u2014 observe and release",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Dusky pipefish are in deeper grass beds during cold months.",
     "explanation_warm": "Dusky pipefish are elongated seahorse relatives found in grass beds and around pier pilings; males carry eggs in a brood pouch.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not targeted with lures"
   },
   {
     "name": "Shortnose batfish",
@@ -6050,7 +6282,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Shortnose batfish are in deeper water during cold months.",
     "explanation_warm": "Shortnose batfish are bizarre, flat bottom fish that 'walk' on modified fins; they are rare incidental catches from piers and the surf.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Flying gurnard",
@@ -6074,7 +6307,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Flying gurnards move to deeper water during cold months.",
     "explanation_warm": "Flying gurnards are stunning bottom fish that spread enormous, wing-like pectoral fins when startled; they are rare, memorable catches from piers.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Yellowhead wrasse",
@@ -6096,7 +6330,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Yellowhead wrasse are tropical and not present in NC during cold months.",
     "explanation_warm": "Yellowhead wrasse are colorful tropical wrasses that occasionally appear around NC structure as late-summer strays from the Gulf Stream.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Barbfish (scorpionfish)",
@@ -6120,8 +6355,9 @@
     "hook_size": "#1-3/0 hook",
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Barbfish are on deeper structure during cold months.",
-    "explanation_warm": "Barbfish are small scorpionfish found on hard bottom and reefs; like all scorpionfish, their dorsal spines are venomous — handle with extreme care.",
-    "coast": "east"
+    "explanation_warm": "Barbfish are small scorpionfish found on hard bottom and reefs; like all scorpionfish, their dorsal spines are venomous \u2014 handle with extreme care.",
+    "coast": "east",
+    "lures": "Small jigs near rocky bottom"
   },
   {
     "name": "Plumed scorpionfish",
@@ -6145,8 +6381,9 @@
     "hook_size": "#1-3/0 hook",
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Plumed scorpionfish are on deeper reefs during cold months.",
-    "explanation_warm": "Plumed scorpionfish have feathery head appendages for camouflage; they ambush prey on reefs and hard bottom. Venomous dorsal spines — do not handle.",
-    "coast": "east"
+    "explanation_warm": "Plumed scorpionfish have feathery head appendages for camouflage; they ambush prey on reefs and hard bottom. Venomous dorsal spines \u2014 do not handle.",
+    "coast": "east",
+    "lures": "Small jigs near rocky bottom"
   },
   {
     "name": "Striped blenny",
@@ -6171,7 +6408,8 @@
     "sinker": "Tiny split shot",
     "explanation_cold": "Striped blennies hunker down in structure crevices during cold months.",
     "explanation_warm": "Striped blennies are small, colorful fish found in pier pilings and shells; males have elaborate head crests during breeding season.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Feather blenny",
@@ -6197,7 +6435,8 @@
     "sinker": "Tiny split shot",
     "explanation_cold": "Feather blennies are in structure crevices during cold months.",
     "explanation_warm": "Feather blennies are abundant on pier pilings and oyster reefs; they have distinctive feathery head cirri and are fun micro-fishing targets.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Naked goby",
@@ -6218,12 +6457,13 @@
       10
     ],
     "bait": "Micro baits (not a hook-and-line target); minnow traps",
-    "rig": "N/A — too small for conventional fishing",
+    "rig": "N/A \u2014 too small for conventional fishing",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Naked gobies shelter in oyster shells during cold months.",
     "explanation_warm": "Naked gobies are tiny, translucent fish living in oyster reefs around piers; they are a key food source for larger fish.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Smooth trunkfish",
@@ -6245,7 +6485,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Smooth trunkfish are tropical and not found in NC during cold months.",
     "explanation_warm": "Smooth trunkfish are cube-shaped tropical strays that occasionally appear around NC pier pilings during peak summer; they secrete a mild toxin.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Honeycomb cowfish",
@@ -6267,7 +6508,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Honeycomb cowfish are tropical and not found in NC during cold months.",
     "explanation_warm": "Honeycomb cowfish are quirky, horned boxfish with honeycomb patterning; they are rare tropical strays around NC pier pilings in late summer.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Ocean sunfish (mola mola)",
@@ -6286,13 +6528,14 @@
       4,
       10
     ],
-    "bait": "NOT A TARGET SPECIES — occasionally seen basking near piers and offshore",
-    "rig": "N/A — observe only",
+    "bait": "NOT A TARGET SPECIES \u2014 occasionally seen basking near piers and offshore",
+    "rig": "N/A \u2014 observe only",
     "hook_size": "N/A",
     "sinker": "N/A",
     "explanation_cold": "Ocean sunfish are in warmer offshore waters during cold months.",
     "explanation_warm": "Ocean sunfish (mola mola) are the world's heaviest bony fish; they are occasionally spotted basking on the surface near piers and offshore.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Sharksucker (whitefin)",
@@ -6316,7 +6559,8 @@
     "sinker": "Varies",
     "explanation_cold": "Whitefin sharksuckers follow host animals to warmer waters in winter.",
     "explanation_warm": "Whitefin sharksuckers are similar to common remoras but with a white-tipped dorsal fin; they detach from hosts near piers and are caught incidentally.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Redear sunfish (shellcracker)",
@@ -6342,7 +6586,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Redear sunfish are in deeper holes in brackish creeks during cold months.",
     "explanation_warm": "Redear sunfish (shellcrackers) enter brackish tidal creeks near the coast; they crush snails and mussels with their pharyngeal teeth.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, tiny spinners; panfish lures"
   },
   {
     "name": "Bluegill",
@@ -6368,7 +6613,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Bluegill are in deeper holes during cold months.",
     "explanation_warm": "Bluegill occasionally enter low-salinity tidal creeks near the ICW; they are aggressive panfish that hit small baits and are fun on ultralight tackle.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small spinners, tiny jigs, rubber worms; standard panfish lures"
   },
   {
     "name": "Warmouth",
@@ -6393,7 +6639,8 @@
     "sinker": "Small split shot",
     "explanation_cold": "Warmouth hunker in deep holes in brackish creeks during cold months.",
     "explanation_warm": "Warmouth are chunky sunfish that tolerate brackish water; they are found in tidal creeks near the coast and are aggressive feeders.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Small jigs, spinners; freshwater panfish"
   },
   {
     "name": "Flathead catfish",
@@ -6417,7 +6664,8 @@
     "sinker": "3-6 oz egg sinker",
     "explanation_cold": "Flathead catfish are in deep river holes during cold months.",
     "explanation_warm": "Flathead catfish are apex freshwater predators found in the Cape Fear River system; they prefer live bait and can exceed 50 lbs in NC.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Large soft plastic swimbaits; primarily caught on bait"
   },
   {
     "name": "Longnose gar",
@@ -6442,7 +6690,8 @@
     "sinker": "None or small split shot",
     "explanation_cold": "Longnose gar are sluggish in deep holes during cold months.",
     "explanation_warm": "Longnose gar enter brackish tidal rivers near the coast; these armored, prehistoric fish have needle-like snouts and are tough to hook conventionally.",
-    "coast": "east"
+    "coast": "east",
+    "lures": "Wire leader and spoon or soft plastic near surface"
   },
   {
     "name": "Snook",
@@ -6472,7 +6721,8 @@
     "coast": "east",
     "regions": [
       "florida"
-    ]
+    ],
+    "lures": "Large soft plastic jerkbaits, DOA Baitbuster, topwater walk-the-dog plugs, Rapala X-Rap; target structure and inlet edges"
   },
   {
     "name": "Winter flounder",
@@ -6496,12 +6746,13 @@
     "hook_size": "#8-#4 long-shank hook",
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Winter flounder move inshore to bays and harbors in late winter to spawn; they are a cold-water staple of Northeast pier and jetty anglers.",
-    "explanation_warm": "Winter flounder move offshore as water warms past 60°F; they are rarely caught from shore in summer.",
+    "explanation_warm": "Winter flounder move offshore as water warms past 60\u00b0F; they are rarely caught from shore in summer.",
     "coast": "east",
     "regions": [
       "northeast",
       "midatlantic"
-    ]
+    ],
+    "lures": "Small jigs, Gulp grubs; primarily bait caught but jigs work in clean water"
   },
   {
     "name": "Cunner",
@@ -6524,12 +6775,13 @@
     "rig": "Simple bottom rig with small hook close to sinker",
     "hook_size": "#8-#4 bait hook",
     "sinker": "1-2 oz bank sinker",
-    "explanation_cold": "Cunner become torpid in cold water and are rarely caught below 45°F.",
+    "explanation_cold": "Cunner become torpid in cold water and are rarely caught below 45\u00b0F.",
     "explanation_warm": "Cunner are eager biters around rocky structure, jetties, and pilings; small but plentiful, they are great for kids and beginners.",
     "coast": "east",
     "regions": [
       "northeast"
-    ]
+    ],
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Fluke (summer flounder)",
@@ -6557,7 +6809,8 @@
     "regions": [
       "northeast",
       "midatlantic"
-    ]
+    ],
+    "lures": "Bucktail jigs with paddle tail, Gulp Nemesis, soft plastic crab; jig-and-drift technique"
   },
   {
     "name": "Weakfish",
@@ -6588,7 +6841,8 @@
       "northeast",
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Soft plastic tails, metal spoons, popping corks with jig; similar to speckled trout"
   },
   {
     "name": "Tilefish (golden)",
@@ -6617,7 +6871,8 @@
     "regions": [
       "midatlantic",
       "southeast"
-    ]
+    ],
+    "lures": "Heavy jigs near deep structure"
   },
   {
     "name": "Red porgy",
@@ -6648,7 +6903,8 @@
       "southeast",
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Small jigs (1-2 oz), soft plastics near bottom structure"
   },
   {
     "name": "Yellowtail snapper",
@@ -6678,7 +6934,8 @@
     "coast": "east",
     "regions": [
       "florida"
-    ]
+    ],
+    "lures": "Small jigs, Clouser minnows, shrimp imitations near structure"
   },
   {
     "name": "Sheepshead (Gulf)",
@@ -6707,7 +6964,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Rarely caught on lures; small jigs near pilings occasionally work"
   },
   {
     "name": "Redfish (Gulf red drum)",
@@ -6741,7 +6999,8 @@
     "regions": [
       "florida",
       "gulf"
-    ]
+    ],
+    "lures": "Gold spoons, paddle-tail swimbaits, topwater at dawn/dusk; same as red drum"
   },
   {
     "name": "Barred surfperch",
@@ -6767,7 +7026,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Barred surfperch are actively spawning and feeding aggressively in the winter surf zone -- this is peak season on the Pacific Coast.",
     "explanation_warm": "Barred surfperch are present but less concentrated; they move to deeper water as surf warms.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small paddle-tail swimbaits (2-3\"), Berkley Gulp Sand Crab, tube jigs in the surf zone"
   },
   {
     "name": "Redtail surfperch",
@@ -6798,7 +7058,8 @@
     "regions": [
       "norcal",
       "pacific_nw"
-    ]
+    ],
+    "lures": "Small paddle tails, Gulp Sand Crab in the surf; same tactics as barred surfperch"
   },
   {
     "name": "Calico surfperch",
@@ -6823,7 +7084,8 @@
     "sinker": "1-2 oz egg sinker",
     "explanation_cold": "Calico surfperch are abundant in the Northern California and Oregon surf during winter months.",
     "explanation_warm": "Calico surfperch move to slightly deeper water but can still be found near jetties.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small jigs, Gulp lures in the surf"
   },
   {
     "name": "Rubberlip seaperch",
@@ -6848,7 +7110,8 @@
     "sinker": "1-2 oz egg or bank sinker",
     "explanation_cold": "Rubberlip seaperch hold near rocky structure and pilings during winter.",
     "explanation_warm": "Rubberlip seaperch feed actively around piers, jetties, and rocky shorelines; they are one of the largest surfperch species.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "California halibut",
@@ -6878,7 +7141,8 @@
     "regions": [
       "socal",
       "norcal"
-    ]
+    ],
+    "lures": "Live bait-style swimbaits, paddle tails on 3/8-3/4 oz jighead, Berkley Gulp grubs drifted on bottom"
   },
   {
     "name": "Starry flounder",
@@ -6903,7 +7167,8 @@
     "sinker": "1-3 oz pyramid sinker",
     "explanation_cold": "Starry flounder move into bays and estuaries during winter and are a popular pier catch from NorCal through Washington.",
     "explanation_warm": "Starry flounder retreat to deeper, cooler water during summer months.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small paddle-tail swimbaits, Gulp grubs on jighead"
   },
   {
     "name": "Lingcod",
@@ -6932,7 +7197,8 @@
     "regions": [
       "norcal",
       "pacific_nw"
-    ]
+    ],
+    "lures": "Large swimbaits (5-8\"), heavy jigs (4-8 oz), plastic eels; very aggressive; retrieve with erratic action"
   },
   {
     "name": "Vermilion rockfish",
@@ -6958,7 +7224,8 @@
     "sinker": "4-8 oz bank or cannon ball sinker",
     "explanation_cold": "Vermilion rockfish are deeper and less accessible in cold months.",
     "explanation_warm": "Vermilion rockfish (red snapper of the Pacific) are found around rocky structure; they're a prized catch from deepwater piers and jetties.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Heavy jigs (2-4 oz), soft plastic shrimp/grubs near rocky structure"
   },
   {
     "name": "Blue rockfish",
@@ -6984,7 +7251,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Blue rockfish hold deep during winter but can be caught from deep piers.",
     "explanation_warm": "Blue rockfish are common around kelp beds, piers, and rocky structures in NorCal and Oregon; they school up and can be caught readily on small baits.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Jigs, soft plastics near rocky structure"
   },
   {
     "name": "Copper rockfish",
@@ -7009,7 +7277,8 @@
     "sinker": "4-8 oz bank sinker",
     "explanation_cold": "Copper rockfish hold near rocky structure year-round but are less active in cold months.",
     "explanation_warm": "Copper rockfish are solitary ambush predators found around kelp and rocky reefs; they're accessible from deep piers and jetties.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small-medium jigs, swimbaits near rocky bottom"
   },
   {
     "name": "Grass rockfish",
@@ -7036,7 +7305,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Grass rockfish hunker in rocky crevices during winter.",
     "explanation_warm": "Grass rockfish inhabit shallow rocky areas and tide pools; they are common from piers and jetties along central and northern California.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small jigs, paddle tails near kelp and grass beds"
   },
   {
     "name": "Cabezon",
@@ -7066,7 +7336,8 @@
     "regions": [
       "norcal",
       "pacific_nw"
-    ]
+    ],
+    "lures": "Large swimbaits and jigs near rocky structure; aggressive on large rubber baits"
   },
   {
     "name": "Pacific mackerel (chub mackerel)",
@@ -7091,7 +7362,8 @@
     "sinker": "1-2 oz torpedo sinker",
     "explanation_cold": "Pacific mackerel move offshore during winter.",
     "explanation_warm": "Pacific mackerel run in large schools around piers and harbors in SoCal; they're fun to catch on Sabiki rigs and make excellent live bait for larger fish.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Metal spoons, small jigs; caught on sabiki rigs or small fast-retrieved lures"
   },
   {
     "name": "Jack mackerel (Spanish jack)",
@@ -7116,7 +7388,8 @@
     "sinker": "1-2 oz torpedo sinker",
     "explanation_cold": "Jack mackerel are offshore and not typically available from piers in winter.",
     "explanation_warm": "Jack mackerel school around SoCal piers in summer and fall; they are aggressive feeders and excellent for bait or eating.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small jigs, metal spoons; same as Pacific mackerel"
   },
   {
     "name": "Pacific bonito",
@@ -7140,7 +7413,8 @@
     "sinker": "None or 1 oz rubber-core sinker",
     "explanation_cold": "Pacific bonito are offshore during cool months.",
     "explanation_warm": "Pacific bonito (a small tuna relative) chase baitfish schools past SoCal piers; they fight hard and are great on light tackle.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Metal spoons, fast jigs, feather lures; excellent topwater action when schooling"
   },
   {
     "name": "Yellowtail (California yellowtail)",
@@ -7167,7 +7441,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Swimbaits (6-9\" kite-fish style), iron jigs (flylined), Yo-Zuri/Rapala plugs; premier lure target"
   },
   {
     "name": "White seabass",
@@ -7196,7 +7471,8 @@
     "regions": [
       "socal",
       "norcal"
-    ]
+    ],
+    "lures": "Large swimbaits (5-7\"), iron jigs, trolling lures near kelp and structure at night"
   },
   {
     "name": "Corbina",
@@ -7223,7 +7499,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Berkley Gulp Sand Crab, small swimbaits, Yamamoto Senko-style worms in the surf"
   },
   {
     "name": "Spotfin croaker",
@@ -7249,7 +7526,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Small paddle-tail swimbaits, tube jigs in the surf"
   },
   {
     "name": "Yellowfin croaker",
@@ -7276,7 +7554,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Small swimbaits, Gulp lures"
   },
   {
     "name": "Leopard shark",
@@ -7304,7 +7583,8 @@
     "regions": [
       "socal",
       "norcal"
-    ]
+    ],
+    "lures": "Primarily bait-caught; large soft plastic swimbaits near bottom"
   },
   {
     "name": "Shovelnose guitarfish",
@@ -7331,7 +7611,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Bat ray",
@@ -7361,7 +7642,8 @@
     "regions": [
       "socal",
       "norcal"
-    ]
+    ],
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Thornback ray",
@@ -7386,7 +7668,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Thornback rays are deeper during cold months but occasionally taken from piers.",
     "explanation_warm": "Thornback rays are a common catch from NorCal piers; they have distinctive thorny spines on their back and tail.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Kelp greenling",
@@ -7416,7 +7699,8 @@
     "regions": [
       "norcal",
       "pacific_nw"
-    ]
+    ],
+    "lures": "Small jigs, Gulp shrimp near kelp"
   },
   {
     "name": "Rock greenling",
@@ -7445,7 +7729,8 @@
     "regions": [
       "norcal",
       "pacific_nw"
-    ]
+    ],
+    "lures": "Small jigs near rocky bottom"
   },
   {
     "name": "Pacific staghorn sculpin",
@@ -7472,7 +7757,8 @@
     "sinker": "1-2 oz bank sinker",
     "explanation_cold": "Staghorn sculpin are abundant year-round in bays and off piers; they're one of the most common catches in Pacific NW.",
     "explanation_warm": "Staghorn sculpin are in slightly deeper water during warmer months but still common from piers.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Not typically targeted with lures"
   },
   {
     "name": "Pacific herring",
@@ -7496,7 +7782,8 @@
     "sinker": "1-2 oz torpedo sinker",
     "explanation_cold": "Pacific herring spawn in bays during winter, creating huge schools that are easy to catch on Sabiki rigs from piers; great for bait.",
     "explanation_warm": "Pacific herring are offshore during warm months.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Not typically targeted with lures; incidentally caught on sabiki rigs"
   },
   {
     "name": "Jacksmelt",
@@ -7522,7 +7809,8 @@
     "sinker": "Split shot or small torpedo sinker",
     "explanation_cold": "Jacksmelt are less concentrated near shore in winter.",
     "explanation_warm": "Jacksmelt are one of the most common pier fish in California; they school near the surface and are fun on ultra-light tackle.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small jigs, sabiki rigs"
   },
   {
     "name": "Walleye surfperch",
@@ -7547,7 +7835,8 @@
     "sinker": "1-2 oz bank sinker",
     "explanation_cold": "Walleye surfperch move to deeper water in winter.",
     "explanation_warm": "Walleye surfperch are a staple pier catch in California; they school around pilings and rocky areas and are fun on light gear.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small paddle tails, jigs in the surf"
   },
   {
     "name": "White croaker (tomcod)",
@@ -7573,7 +7862,8 @@
     "sinker": "1-3 oz bank sinker",
     "explanation_cold": "White croaker are deeper during winter months.",
     "explanation_warm": "White croaker (tomcod/kingfish) are one of the most abundant fish at SoCal and central CA piers; they eat almost anything.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Small jigs, soft plastics"
   },
   {
     "name": "Kelp bass (calico bass)",
@@ -7601,7 +7891,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Swimbaits, topwater poppers, rubber worms near kelp; voracious lure fish"
   },
   {
     "name": "Sand bass (barred sand bass)",
@@ -7629,7 +7920,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Swimbaits, drop-shot rigs with small plastics; excellent jig target"
   },
   {
     "name": "California sheephead",
@@ -7657,7 +7949,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Heavy jigs, swimbaits near rocky structure"
   },
   {
     "name": "Opaleye",
@@ -7685,7 +7978,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Small jigs, Gulp shrimp near kelp; not a strong lure target"
   },
   {
     "name": "Halfmoon (Catalina perch)",
@@ -7713,7 +8007,8 @@
     "coast": "west",
     "regions": [
       "socal"
-    ]
+    ],
+    "lures": "Small jigs and soft plastics near structure"
   },
   {
     "name": "Pacific sardine",
@@ -7738,7 +8033,8 @@
     "sinker": "1-2 oz torpedo sinker",
     "explanation_cold": "Pacific sardines move offshore during winter.",
     "explanation_warm": "Pacific sardines school in massive numbers around SoCal piers; they're prized as live bait for yellowtail, white seabass, and halibut.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Not typically targeted with lures; bait species"
   },
   {
     "name": "Northern anchovy",
@@ -7766,7 +8062,8 @@
     "sinker": "1 oz torpedo sinker",
     "explanation_cold": "Northern anchovies are deeper and less concentrated near piers in winter.",
     "explanation_warm": "Northern anchovies are the backbone of the California baitfish; catching them on Sabiki rigs provides the best live bait for nearly every gamefish.",
-    "coast": "west"
+    "coast": "west",
+    "lures": "Not typically targeted with lures; bait species"
   },
   {
     "name": "Giant trevally (ulua)",
@@ -7792,7 +8089,8 @@
     "sinker": "6-16 oz pyramid or breakaway sinker",
     "explanation_cold": "Giant trevally are present year-round in Hawaii but slightly less active during cooler months.",
     "explanation_warm": "Giant trevally (ulua) are the ultimate shore-fishing trophy in Hawaii; they're powerful predators caught from rocky shores and piers on heavy tackle.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Large poppers, stickbaits (GT poppers), heavy swimbaits; very powerful fighter"
   },
   {
     "name": "Bluefin trevally (omilu)",
@@ -7818,7 +8116,8 @@
     "sinker": "2-6 oz pyramid sinker",
     "explanation_cold": "Bluefin trevally are present year-round but slightly less active in winter.",
     "explanation_warm": "Bluefin trevally (omilu) are strikingly beautiful blue-finned jacks found around reefs and rocky shores in Hawaii; they hit lures and bait aggressively.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Poppers, jigs, stickbaits; aggressive lure fish"
   },
   {
     "name": "Papio (juvenile jack)",
@@ -7845,7 +8144,8 @@
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Papio are present year-round in Hawaii; smaller jacks are always near shore.",
     "explanation_warm": "Papio are the most popular shore-fishing target in Hawaii; these juvenile jacks roam reefs and harbors and are a great family fishing species.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Small jigs, spoons, swimbaits; juvenile jacks are aggressive"
   },
   {
     "name": "Bonefish (oio)",
@@ -7871,7 +8171,8 @@
     "sinker": "1/2-1 oz egg sinker",
     "explanation_cold": "Bonefish are present year-round in Hawaii flats but slightly less active in winter.",
     "explanation_warm": "Bonefish (oio) feed on shallow sand flats in Hawaii; they are the ghosts of the flats -- fast, wary, and an incredible fight on light tackle.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Clouser minnows, shrimp fly imitations, Crazy Charlie flies; almost exclusively sight-fished with lures/flies"
   },
   {
     "name": "Menpachi (soldierfish)",
@@ -7900,7 +8201,8 @@
     "sinker": "Split shot or small bank sinker",
     "explanation_cold": "Menpachi are active year-round in Hawaii, feeding at night around rocky areas.",
     "explanation_warm": "Menpachi (soldierfish/squirrelfish) are a prized eating fish in Hawaii; they come out at night to feed around rocks and reef edges near piers.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Small jigs near structure at night"
   },
   {
     "name": "Moi (Pacific threadfin)",
@@ -7925,7 +8227,8 @@
     "sinker": "2-4 oz pyramid sinker",
     "explanation_cold": "Moi are present in cooler months but less concentrated in the shallows.",
     "explanation_warm": "Moi (Pacific threadfin) is Hawaii's most revered eating fish; once reserved for royalty, they feed in the sandy surf zone and are caught from beaches and piers.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Small jigs, soft plastics; delicate fighters"
   },
   {
     "name": "Mu (bigeye emperor)",
@@ -7951,7 +8254,8 @@
     "sinker": "2-4 oz bank sinker",
     "explanation_cold": "Mu are present year-round around reef structure but less active in cooler months.",
     "explanation_warm": "Mu (bigeye emperor) are prized bottom fish in Hawaii caught from rocky shores and piers over reef; they are excellent eating.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Small jigs, soft plastics near bottom structure"
   },
   {
     "name": "Kaku (barracuda)",
@@ -7977,7 +8281,8 @@
     "sinker": "None (cast and retrieve) or 1-2 oz sliding sinker",
     "explanation_cold": "Kaku are present year-round in Hawaii harbors and reefs.",
     "explanation_warm": "Kaku (great barracuda) patrol Hawaii harbors, piers, and reef edges; they strike fast and fight hard on light tackle.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Long tube lures, needlefish-style jigs, large silver spoons; fast retrieve"
   },
   {
     "name": "Aholehole (Hawaiian flagtail)",
@@ -8006,7 +8311,8 @@
     "sinker": "Split shot or small sinker",
     "explanation_cold": "Aholehole are active year-round in Hawaii harbors and rocky shorelines.",
     "explanation_warm": "Aholehole are one of Hawaii's most popular panfish; they school around piers, harbors, and river mouths and are great eating.",
-    "coast": "hawaii"
+    "coast": "hawaii",
+    "lures": "Small jigs near structure"
   },
   {
     "name": "Longfin inshore squid",
@@ -8029,7 +8335,7 @@
     ],
     "bait": "Squid jigs (luminous or chrome); small sabiki rigs baited with fish flesh; small spoons",
     "rig": "Squid jig rig with a small sinker; light spinning or jigging rod",
-    "hook_size": "Size 2-4 squid jig; no hook — jig has prongs",
+    "hook_size": "Size 2-4 squid jig; no hook \u2014 jig has prongs",
     "sinker": "1-2 oz inline sinker above jig",
     "explanation_cold": "Longfin squid are most abundant inshore during fall and winter as they follow cold-water baitfish schools; jigging at night under lights near piers produces steady action.",
     "explanation_warm": "Longfin squid have largely moved offshore into cooler deep water; occasional catches still occur near inlets on overcast days or at night.",
@@ -8040,7 +8346,8 @@
     ],
     "categories": [
       "other"
-    ]
+    ],
+    "lures": "Not a typical lure target; caught on sabiki/squid jigs"
   },
   {
     "name": "Blue shark",
@@ -8063,13 +8370,14 @@
     "rig": "Float rig with 6-9 ft of wire or heavy mono leader; or bottom rig with large circle hook",
     "hook_size": "6/0-9/0 circle hook",
     "sinker": "None for float rig; 4-8 oz for bottom rig",
-    "explanation_cold": "Blue sharks are pelagic and move offshore or south in cold water — nearshore catches are uncommon below 55°F.",
+    "explanation_cold": "Blue sharks are pelagic and move offshore or south in cold water \u2014 nearshore catches are uncommon below 55\u00b0F.",
     "explanation_warm": "Blue sharks are among the most abundant pelagic sharks from Cape Hatteras to New England in summer; they cruise near the surface offshore and occasionally come within a few miles of shore following baitfish and menhaden schools.",
     "coast": "east",
     "categories": [
       "shark",
       "pelagic"
-    ]
+    ],
+    "lures": "Primarily caught on bait offshore"
   },
   {
     "name": "Great hammerhead shark",
@@ -8093,7 +8401,7 @@
     "rig": "Heavy conventional tackle (50-130 class); 10-15 ft of 480-lb steel cable leader; large circle hook",
     "hook_size": "12/0-16/0 circle hook",
     "sinker": "4-8 oz egg sinker or fish-finder rig",
-    "explanation_cold": "Great hammerheads move south to warmer Florida and Gulf waters as temperatures drop — rarely encountered north of Florida below 65°F.",
+    "explanation_cold": "Great hammerheads move south to warmer Florida and Gulf waters as temperatures drop \u2014 rarely encountered north of Florida below 65\u00b0F.",
     "explanation_warm": "Great hammerheads patrol nearshore flats, surf zones, and inlets along the Southeast US and Gulf; they are particularly attracted to stingray-rich sandy flats and are one of the most prized shark targets from shore.",
     "coast": "east",
     "regions": [
@@ -8103,7 +8411,8 @@
     "categories": [
       "shark",
       "game_fish"
-    ]
+    ],
+    "lures": "Primarily caught on bait; large swimbaits near bottom"
   },
   {
     "name": "Pacific barracuda (California barracuda)",
@@ -8127,13 +8436,14 @@
     "rig": "Light to medium spinning or casting rod; wire or heavy fluorocarbon leader (single strand wire preferred)",
     "hook_size": "1/0-3/0 treble hook (jigs); 2/0-4/0 live bait hook",
     "sinker": "None for surface jigs; split shot for live bait",
-    "explanation_cold": "Pacific barracuda move south into Mexican waters or offshore when temperatures drop below 60°F; catches are uncommon in Southern California from December through February.",
+    "explanation_cold": "Pacific barracuda move south into Mexican waters or offshore when temperatures drop below 60\u00b0F; catches are uncommon in Southern California from December through February.",
     "explanation_warm": "Pacific barracuda school near kelp paddies, the surface, and nearshore reefs from San Diego to Point Conception; they hit chrome surface iron jigs and live anchovies aggressively on light tackle from boats and piers.",
     "coast": "west",
     "categories": [
       "game_fish",
       "pelagic"
-    ]
+    ],
+    "lures": "Long tube lures, Rapala plugs, large needlefish-style jigs; fast retrieve"
   },
   {
     "name": "Toau (blacktail snapper)",
@@ -8161,12 +8471,13 @@
     "hook_size": "#4-1/0 circle or J-hook",
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Toau are active year-round around Hawaii's shallow reef flats and rocky shorelines; water temperature in Hawaii rarely limits the bite.",
-    "explanation_warm": "Toau (blacktail snapper) are one of Hawaii's most common and easily caught shore fish; they congregate around reef structure, rocky points, and reef edges — great eating and fun on light tackle.",
+    "explanation_warm": "Toau (blacktail snapper) are one of Hawaii's most common and easily caught shore fish; they congregate around reef structure, rocky points, and reef edges \u2014 great eating and fun on light tackle.",
     "coast": "hawaii",
     "categories": [
       "game_fish",
       "reef_fish"
-    ]
+    ],
+    "lures": "Small jigs, soft plastics near reef structure"
   },
   {
     "name": "Roi (peacock grouper)",
@@ -8194,11 +8505,12 @@
     "hook_size": "1/0-3/0 J-hook or circle hook",
     "sinker": "1-3 oz egg sinker",
     "explanation_cold": "Roi are active year-round in Hawaii; this invasive grouper occupies reef habitat year-round and can be caught on most bottom rigs near structure.",
-    "explanation_warm": "Roi (peacock grouper) are an invasive species in Hawaii introduced in the 1950s; they are abundant on coral reefs, rocky bottoms, and rubble zones — anglers are encouraged to keep all they catch as part of control efforts.",
+    "explanation_warm": "Roi (peacock grouper) are an invasive species in Hawaii introduced in the 1950s; they are abundant on coral reefs, rocky bottoms, and rubble zones \u2014 anglers are encouraged to keep all they catch as part of control efforts.",
     "coast": "hawaii",
     "categories": [
       "reef_fish"
-    ]
+    ],
+    "lures": "Jigs, swimbaits near reef"
   },
   {
     "name": "Weke (goatfish)",
@@ -8231,6 +8543,7 @@
     "categories": [
       "panfish",
       "reef_fish"
-    ]
+    ],
+    "lures": "Small jigs, soft plastics near sandy bottom"
   }
 ]
