@@ -1,5 +1,4 @@
 {# Dedicated lures section — shown only when user uses lures (yes or sometimes) #}
-{# Embed full lure data + active species as JSON for the bag JS #}
 <script>
 window._lureData = {{ forecast.lure_recommendations | tojson }};
 </script>
@@ -8,10 +7,10 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
 <!-- ── Top picks ── -->
 <section class="lure-picks-section">
     <h2>Top Lures Today</h2>
-    <p class="section-sub">Ranked by what&rsquo;s biting now</p>
+    <p class="section-sub">Ranked by what&rsquo;s biting now &mdash; click any card to browse that type in your bag</p>
     <div class="lure-picks-grid">
         {% for lure in forecast.lure_recommendations[:5] %}
-        <div class="lure-pick-card">
+        <div class="lure-pick-card" data-lure-type="{{ lure.lure }}">
             <div class="lure-pick-image">
                 {% if lure.image %}
                 <img src="{{ url_for('static', filename=lure.image) }}" alt="{{ lure.lure }}" loading="lazy">
@@ -32,8 +31,11 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
                     {% endif %}
                 </div>
                 {% else %}
-                <p class="lure-no-active">No active species match right now</p>
+                <p class="lure-no-active">No active species right now</p>
                 {% endif %}
+                <button class="lure-pick-find-btn" type="button" style="display:none" aria-label="Find {{ lure.lure }} in your lure bag">
+                    Browse in bag &rarr;
+                </button>
             </div>
         </div>
         {% endfor %}
@@ -46,7 +48,7 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
         <h2>My Lure Bag</h2>
         <span class="lure-bag-count" id="lure-bag-count" aria-live="polite">0 lures</span>
     </div>
-    <p class="section-sub">Search through the lure database and add what you own &mdash; see which active fish you can target today</p>
+    <p class="section-sub">Search the lure database and add what you own &mdash; we&rsquo;ll show you which active fish you can target. Press <kbd>/</kbd> to search.</p>
 
     <!-- Search row -->
     <div class="lure-search-row">
@@ -79,20 +81,24 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
         <button class="lure-filter-chip" data-filter="Offshore" type="button">Offshore</button>
     </div>
 
-    <!-- Search results list (populated by JS) -->
-    <div class="lure-search-results" id="lure-search-results" aria-live="polite">
-        <p class="lure-search-hint" id="lure-search-hint">Type to search or pick a category above to browse lures</p>
+    <!-- Result count + scroll container -->
+    <div class="lure-results-header" id="lure-result-count" aria-live="polite"></div>
+    <div class="lure-results-scroll">
+        <div class="lure-search-results" id="lure-search-results" aria-live="polite">
+            <p class="lure-search-hint" id="lure-search-hint">Type to search or pick a category above to browse</p>
+        </div>
     </div>
 
     <!-- ── Your Bag ── -->
     <div class="lure-your-bag" id="lure-your-bag">
         <div class="lure-your-bag-heading">
             <h3>Your Bag</h3>
+            <button class="lure-bag-clear-btn" id="lure-bag-clear-btn" type="button" style="display:none">Clear all</button>
         </div>
         <div id="lure-bag-items">
             <div class="lure-bag-empty" id="lure-bag-empty">
                 <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="opacity:.35"><path d="M6 2L3 6v14h14V6l-3-4z"/><line x1="3" y1="6" x2="17" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                <p>Add lures from the search above &mdash; we&rsquo;ll show you which active fish you can target today</p>
+                <p>Add lures from the search above &mdash; we&rsquo;ll show which active fish you can target today</p>
             </div>
         </div>
     </div>

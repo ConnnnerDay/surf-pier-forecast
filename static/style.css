@@ -1979,6 +1979,7 @@ h2 {
   gap: 0.75rem;
   padding: 0.5rem 0.6rem;
   border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
   transition: background 0.1s;
 }
 
@@ -2086,6 +2087,7 @@ h2 {
   gap: 0.6rem;
   padding: 0.5rem 0.5rem;
   border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
   transition: background 0.1s;
 }
 
@@ -2243,6 +2245,168 @@ h2 {
     font-size: 0.7rem;
     padding: 0.25rem 0.5rem;
   }
+}
+
+/* ── Lure pick card — "Browse in bag" button ── */
+
+.lure-pick-find-btn {
+  display: none; /* shown by JS when category is mapped */
+  width: 100%;
+  margin-top: 0.45rem;
+  padding: 0.28rem 0.5rem;
+  border: none;
+  border-top: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--ocean);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+.lure-pick-find-btn:hover {
+  background: #eff6ff;
+}
+
+/* Make clickable card show pointer */
+.lure-pick-card[data-lure-type] {
+  cursor: pointer;
+}
+
+/* ── Result count label ── */
+
+.lure-results-header {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-height: 1.1rem;
+  margin-top: 0.45rem;
+  padding-left: 0.1rem;
+}
+
+/* ── Scroll container on results ── */
+
+.lure-results-scroll {
+  max-height: 340px;
+  overflow-y: auto;
+  margin-top: 0.1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+  border-radius: var(--radius-sm);
+}
+
+.lure-results-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lure-results-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lure-results-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}
+
+/* ── Active-today badge on result items ── */
+
+.lure-result-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.lure-active-today-badge {
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 10px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* Active result item — subtle green left border */
+.lure-result-item.is-active {
+  border-left: 3px solid #86efac;
+  padding-left: calc(0.6rem - 3px);
+}
+
+/* ── Lure notes on result items ── */
+
+.lure-result-notes {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.45;
+  margin: 0.2rem 0 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Manufacturer group headers ── */
+
+.lure-mfr-group-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  padding: 0.5rem 0.6rem 0.2rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.lure-mfr-group-header:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+/* ── Active bag row highlight ── */
+
+.lure-bag-row.is-active {
+  border-left: 3px solid #86efac;
+  padding-left: calc(0.5rem - 3px);
+}
+
+/* ── Clear bag button ── */
+
+.lure-bag-clear-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  color: #dc2626;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.lure-bag-clear-btn:hover {
+  background: #fee2e2;
+}
+
+/* ── kbd hint in section-sub ── */
+
+kbd {
+  display: inline-block;
+  padding: 0.05rem 0.35rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--text-muted);
+  line-height: 1.4;
+  vertical-align: baseline;
 }
 
 /* ---------- Nearby live cams ---------- */
