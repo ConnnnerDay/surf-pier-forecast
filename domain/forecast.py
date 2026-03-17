@@ -51,6 +51,7 @@ from domain.species import (
     _score_species,
     _species_matches_profile,
     build_bait_ranking,
+    build_lure_recommendations,
     build_natural_bait_chart,
     build_rig_recommendations,
     build_species_calendar,
@@ -1890,6 +1891,7 @@ def generate_forecast(
         "species": species,
         "rig_recommendations": rig_recommendations,
         "bait_rankings": build_bait_ranking(species, month),
+        "lure_recommendations": build_lure_recommendations(species, month),
         "pier_info": _build_pier_info(location),
     }
 
@@ -2272,6 +2274,7 @@ def personalize_forecast(
     forecast["species"] = species
     forecast["rig_recommendations"] = build_rig_recommendations(species)
     forecast["bait_rankings"] = build_bait_ranking(species, month)
+    forecast["lure_recommendations"] = build_lure_recommendations(species, month)
     forecast["calendar"] = build_species_calendar(
         species,
         location,

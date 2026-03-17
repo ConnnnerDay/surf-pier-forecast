@@ -2179,6 +2179,7 @@ def build_species_ranking(
             "rig": sp["rig"],
             "hook_size": sp["hook_size"],
             "sinker": sp["sinker"],
+            "lures": sp.get("lures", ""),
             "categories": categories,
         }
 
@@ -2255,6 +2256,224 @@ def build_bait_ranking(
         deduped_rankings.append(bait)
 
     return deduped_rankings
+
+
+# ---------------------------------------------------------------------------
+# Lure recommendations
+# ---------------------------------------------------------------------------
+
+# Lure categories with descriptions, target species, and seasonal notes.
+# ``available_months`` can optionally restrict when a lure category is useful.
+# ``targets`` lists species short-names that commonly respond to this lure type.
+LURE_DB: List[Dict[str, Any]] = [
+    {
+        "lure": "Soft plastic paddle-tail swimbait",
+        "sizes": "3-5\"",
+        "colors": "White, chartreuse, natural (match baitfish)",
+        "retrieve": "Slow steady retrieve or bounce on bottom",
+        "notes": "Versatile inshore lure; works for almost any predator species. Use on 1/4-3/8 oz jighead.",
+        "available_months": list(range(1, 13)),
+        "targets": [
+            "Red drum", "Speckled trout", "Flounder", "Gray trout", "Striped bass",
+            "Snook", "Sand bass", "Kelp bass", "California halibut",
+        ],
+    },
+    {
+        "lure": "Gold/silver spoon",
+        "sizes": "1/2-1 oz",
+        "colors": "Gold, silver, copper",
+        "retrieve": "Medium to fast steady retrieve; varies flash",
+        "notes": "Classic surf and pier lure for mackerel, bluefish, and drum. Attach with split ring to reduce line twist.",
+        "available_months": list(range(1, 13)),
+        "targets": [
+            "Spanish mackerel", "Bluefish", "Red drum", "Jack crevalle",
+            "Pacific bonito", "False albacore",
+        ],
+    },
+    {
+        "lure": "Metal jig",
+        "sizes": "1/2-3 oz",
+        "colors": "Silver, chrome, blue/white",
+        "retrieve": "Fast jerk-and-fall or speed retrieve through the water column",
+        "notes": "Deadly for pelagic species when fish are busting bait on the surface. Also vertical-jig from piers.",
+        "available_months": list(range(1, 13)),
+        "targets": [
+            "False albacore", "Bluefish", "Spanish mackerel", "Atlantic bonito",
+            "Blackfin tuna", "Striped bass", "Pacific bonito", "Yellowtail",
+        ],
+    },
+    {
+        "lure": "Topwater plug / walk-the-dog",
+        "sizes": "3.5-5\"",
+        "colors": "White, bone, mullet pattern",
+        "retrieve": "Walk-the-dog with slack-line twitches at dawn and dusk",
+        "notes": "Most productive during low-light periods and calm conditions. Surface explosions make this a favorite lure.",
+        "notes_seasonal": {
+            "winter": "Topwater bite slows in cold water; switch to subsurface lures in water below 60°F.",
+        },
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": [
+            "Speckled trout", "Red drum", "Striped bass", "Snook",
+            "Jack crevalle", "Bluefish", "Tarpon",
+        ],
+    },
+    {
+        "lure": "Bucktail jig",
+        "sizes": "1/4-1 oz",
+        "colors": "White, chartreuse, pink",
+        "retrieve": "Bounce on bottom with rod tip lifts, or slow swim near structure",
+        "notes": "Old-school lure that still outfishes everything for flounder and stripers. Add a soft plastic trailer for extra action.",
+        "available_months": list(range(1, 13)),
+        "targets": [
+            "Flounder", "Striped bass", "Weakfish", "Gray trout",
+            "Fluke", "White seabass",
+        ],
+    },
+    {
+        "lure": "Pompano jig",
+        "sizes": "1/4-3/8 oz",
+        "colors": "Yellow, orange, chartreuse, pink",
+        "retrieve": "Bounce and hop along the sandy bottom through the trough",
+        "notes": "Purpose-built jig for surf-zone pompano and whiting. Bright colors are key.",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": ["Pompano", "Whiting", "Permit"],
+    },
+    {
+        "lure": "Gulp! soft bait (shrimp / sand crab)",
+        "sizes": "2-3\"",
+        "colors": "New penny, pink shine, natural",
+        "retrieve": "Slow drag or short hops on bottom; extremely versatile",
+        "notes": "Scented soft plastic that outperforms natural bait in many situations. Popular for surf perch and flatfish.",
+        "available_months": list(range(1, 13)),
+        "targets": [
+            "Barred surfperch", "Corbina", "California halibut", "Pompano",
+            "Flounder", "Whiting",
+        ],
+    },
+    {
+        "lure": "Swimbaits (large, 5-9\")",
+        "sizes": "5-9\"",
+        "colors": "Mullet pattern, sardine pattern, white",
+        "retrieve": "Slow to medium; allow natural swimming action near structure",
+        "notes": "Best for big predators — lingcod, yellowtail, cobia, tarpon. Match local baitfish size.",
+        "notes_seasonal": {
+            "fall": "Fall baitfish migrations bring large predators close to shore; large swimbaits shine during this period.",
+        },
+        "available_months": list(range(1, 13)),
+        "targets": [
+            "Lingcod", "Yellowtail", "Cobia", "Tarpon", "Greater amberjack",
+            "White seabass", "Snook",
+        ],
+    },
+    {
+        "lure": "Iron jig (flylined)",
+        "sizes": "2-4 oz",
+        "colors": "Sardine/blue, chrome, anchovy pattern",
+        "retrieve": "Cast and let flutter on a semi-slack line; or fast retrieve with rod pumps",
+        "notes": "West Coast staple for yellowtail and white seabass at the kelp. Keep the bail open and let it flutter on the drop.",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": ["Yellowtail", "White seabass", "Pacific bonito", "Kelp bass"],
+    },
+    {
+        "lure": "Shad dart",
+        "sizes": "1/16-1/4 oz",
+        "colors": "Pink, chartreuse, white, yellow",
+        "retrieve": "Drift downstream in current; short hops near river mouths",
+        "notes": "Essential spring lure for shad runs. Tandem rigs with two darts increase hook-up rates.",
+        "notes_seasonal": {
+            "spring": "Shad darts are at their best during the spring river run; bright colors (pink, chartreuse) in fast water.",
+            "fall": "Not productive in fall; shad are offshore. Save these for the spring run.",
+        },
+        "available_months": [2, 3, 4, 5],
+        "targets": ["Hickory shad", "American shad"],
+    },
+    {
+        "lure": "Popper / surface plug",
+        "sizes": "3-4\"",
+        "colors": "White, chartreuse, fire tiger",
+        "retrieve": "Aggressive popping action; pause between pops",
+        "notes": "Excellent for pier and jetty fishing when birds are working. Creates a commotion that calls fish from a distance.",
+        "notes_seasonal": {
+            "winter": "Poppers slow down in cold water; fish them when water temp is above 60°F.",
+        },
+        "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": [
+            "Bluefish", "Spanish mackerel", "Jack crevalle", "Giant trevally",
+            "Bluefin trevally", "Snook",
+        ],
+    },
+    {
+        "lure": "Offshore trolling lure",
+        "sizes": "6-12\"",
+        "colors": "Blue/white, pink/white, black/red",
+        "retrieve": "Trolled at 6-18 knots (speed depends on species)",
+        "notes": "Skirted lures run behind the boat in spread formation. Ilanders for wahoo and marlin; smaller skirts for mahi and tuna.",
+        "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": [
+            "Mahi-mahi", "Wahoo", "Yellowfin tuna", "Blackfin tuna",
+            "Sailfish", "Blue marlin", "White marlin",
+        ],
+    },
+    {
+        "lure": "Clarkspoon / drone spoon",
+        "sizes": "#1-#3",
+        "colors": "Silver, gold, chartreuse",
+        "retrieve": "Trolled on planer or inline spinner at 4-8 knots",
+        "notes": "Classic king mackerel and Spanish mackerel lure. Add a stinger hook for short-striking fish.",
+        "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "targets": ["King mackerel", "Spanish mackerel", "False albacore"],
+    },
+]
+
+
+def build_lure_recommendations(
+    species_ranking: List[Dict[str, Any]],
+    month: int,
+) -> List[Dict[str, Any]]:
+    """Rank lure types by relevance to current top species and season.
+
+    Follows the same scoring approach as build_bait_ranking: lure types whose
+    target species rank highly float to the top, and out-of-season lures are
+    penalised.  Returns a de-duplicated list of lure recommendations with
+    full details (sizes, colors, retrieve, notes).
+    """
+    season = _get_season(month)
+
+    # Map species short names (before parenthetical) to rank for scoring
+    species_ranks: Dict[str, int] = {}
+    for sp in species_ranking:
+        short = sp["name"].split("(")[0].strip()
+        species_ranks[short] = sp["rank"]
+
+    scored_lures: List[tuple] = []
+    for lure_entry in LURE_DB:
+        score = 0.0
+        for target in lure_entry["targets"]:
+            rank = species_ranks.get(target)
+            if rank is not None:
+                score += max(0, 20 - rank)
+
+        # Penalise out-of-season lures
+        available = lure_entry.get("available_months")
+        if available and month not in available:
+            score *= 0.25
+
+        # Season-specific notes override default notes
+        notes = lure_entry["notes"]
+        seasonal_notes = lure_entry.get("notes_seasonal", {})
+        if season in seasonal_notes:
+            notes = seasonal_notes[season]
+
+        scored_lures.append((score, {
+            "lure": lure_entry["lure"],
+            "sizes": lure_entry.get("sizes", ""),
+            "colors": lure_entry.get("colors", ""),
+            "retrieve": lure_entry.get("retrieve", ""),
+            "notes": notes,
+        }))
+
+    scored_lures.sort(key=lambda x: x[0], reverse=True)
+    return [entry for _, entry in scored_lures]
 
 
 # ---------------------------------------------------------------------------

@@ -36,7 +36,12 @@
                             </div>
                             <span class="score-label">{{ sp.score }}/100</span>
                         </div>
+                        {# Determine what to show based on the user's fishing method preferences #}
+                        {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
+                        {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
                         <div class="species-meta">
+                            {# Bait and rig — hidden for lure-only anglers #}
+                            {% if not lures_only %}
                             <div class="meta-item meta-item--bait">
                                 <span class="meta-label">Bait</span>
                                 <span class="meta-value">{{ sp.bait }}</span>
@@ -53,6 +58,14 @@
                                 <span class="meta-label">Sinker</span>
                                 <span class="meta-value">{{ sp.sinker }}</span>
                             </div>
+                            {% endif %}
+                            {# Lure recommendation — shown for anglers who use lures #}
+                            {% if uses_lures and sp.lures %}
+                            <div class="meta-item meta-item--lures">
+                                <span class="meta-label">Lures</span>
+                                <span class="meta-value">{{ sp.lures }}</span>
+                            </div>
+                            {% endif %}
                         </div>
                         {# Unified regulation warning — one message per species, prioritising staleness #}
                         {% if sp.regulation and sp.regulation.data_status != 'live' %}
