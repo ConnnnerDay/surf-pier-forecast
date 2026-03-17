@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Jighead — large rounded lead head -->
+  <path d="M15 55 C15 34 55 28 68 40 C75 46 76 52 74 58 C72 66 60 74 42 74 C24 74 15 68 15 55 Z" fill="#64748b" stroke="#334155" stroke-width="2"/>
+
+  <!-- Eye -->
+  <circle cx="52" cy="47" r="5.5" fill="white"/>
+  <circle cx="53" cy="47" r="2.5" fill="#0f172a"/>
+  <!-- Eye glint -->
+  <circle cx="54" cy="45" r="1" fill="white"/>
+
+  <!-- Hook shank running through head -->
+  <path d="M68 58 L120 58" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Hook bend at the tail end -->
+  <path d="M120 58 Q128 58 130 65 Q132 74 125 78" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Hook point -->
+  <path d="M125 78 Q118 82 116 74" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Bucktail hair — multiple flowing strands from collar -->
+  <path d="M74 42 Q100 30 148 22 Q170 18 185 20" stroke="#f9fafb" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M74 48 Q100 38 148 32 Q168 28 185 30" stroke="#f9fafb" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M74 53 Q100 48 150 46 Q170 45 185 46" stroke="#f9fafb" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M74 58 Q100 58 150 58 Q170 58 185 58" stroke="#f9fafb" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M74 63 Q100 68 150 70 Q170 72 185 71" stroke="#f9fafb" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M74 68 Q100 76 148 80 Q168 84 185 83" stroke="#f9fafb" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M74 72 Q100 82 148 88 Q168 92 185 90" stroke="#f9fafb" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Chartreuse accent strands -->
+  <path d="M74 44 Q100 34 148 26 Q168 22 184 24" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+  <path d="M74 66 Q100 72 148 76 Q168 78 184 76" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+
+  <!-- Collar wrap (thread) -->
+  <rect x="72" y="40" width="5" height="34" rx="1" fill="#ef4444" opacity="0.8"/>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Split ring at top -->
+  <circle cx="100" cy="14" r="7" stroke="#94a3b8" stroke-width="2.5"/>
+
+  <!-- Spoon body — wide oval tapering to a point at bottom, tilted slightly -->
+  <path d="M100 20 C128 22 148 42 145 70 C142 88 124 98 100 96 C76 94 58 82 57 62 C55 38 72 22 100 20 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+
+  <!-- Shine highlight on concave side -->
+  <path d="M90 28 C110 28 128 42 126 58 C118 42 104 32 90 32 Z" fill="white" opacity="0.38"/>
+
+  <!-- Second shine streak -->
+  <path d="M80 50 C82 40 90 35 96 38 C88 40 84 48 84 55 Z" fill="white" opacity="0.22"/>
+
+  <!-- Treble hook connector link -->
+  <line x1="100" y1="96" x2="100" y2="103" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Treble hook ring -->
+  <circle cx="100" cy="107" r="4" stroke="#94a3b8" stroke-width="2"/>
+
+  <!-- Three hook points -->
+  <path d="M100 107 Q88 107 85 114" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M100 107 Q100 112 97 118" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M100 107 Q112 107 115 114" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+</svg>

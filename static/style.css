@@ -1658,6 +1658,593 @@ h2 {
   color: var(--ocean);
 }
 
+/* ============================================================
+   Lure Box module — top picks + lure bag
+   ============================================================ */
+
+/* --- Top picks grid --- */
+
+.lure-picks-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.lure-picks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+}
+
+.lure-pick-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: default;
+}
+
+.lure-pick-card:hover {
+  border-color: #93c5fd;
+  box-shadow: var(--shadow-md);
+}
+
+.lure-pick-card.in-bag {
+  border-color: var(--ocean);
+  background: #eff6ff;
+}
+
+.lure-pick-image {
+  background: #f0f4f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.lure-pick-image img {
+  max-width: 100%;
+  max-height: 72px;
+  object-fit: contain;
+  display: block;
+}
+
+.lure-pick-body {
+  padding: 0.5rem 0.6rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.lure-pick-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ocean-dark, #1e40af);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.lure-pick-hint {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lure-pick-retrieve {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lure-active-species {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.lure-active-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ocean);
+  white-space: nowrap;
+}
+
+.lure-species-tag {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 0.1rem 0.4rem;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.lure-species-more {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.lure-no-active {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0.2rem 0 0;
+}
+
+/* "Add to bag" button inside top-pick card */
+.lure-bag-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.38rem 0.5rem;
+  margin-top: auto;
+  border: none;
+  border-top: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--ocean);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.lure-bag-btn:hover {
+  background: #eff6ff;
+}
+
+.lure-pick-card.in-bag .lure-bag-btn {
+  background: var(--ocean);
+  color: white;
+  border-top-color: transparent;
+}
+
+.lure-pick-card.in-bag .lure-bag-btn:hover {
+  background: #1d4ed8;
+}
+
+/* --- Lure bag section --- */
+
+.lure-bag-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 0.85rem 1rem;
+}
+
+.lure-bag-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.1rem;
+}
+
+.lure-bag-header h2 {
+  margin: 0;
+}
+
+.lure-bag-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  background: var(--ocean-light, #dbeafe);
+  color: var(--ocean);
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.lure-bag-count.has-items {
+  background: var(--ocean);
+  color: white;
+}
+
+/* ── Lure bag search row ── */
+
+.lure-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.65rem;
+  transition: border-color 0.15s;
+}
+
+.lure-search-row:focus-within {
+  border-color: var(--ocean);
+}
+
+.lure-search-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.lure-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.lure-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Reset browser default search-cancel button */
+.lure-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.lure-search-clear {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.15rem;
+  line-height: 1;
+  border-radius: 50%;
+  transition: color 0.1s, background 0.1s;
+}
+
+.lure-search-clear:hover {
+  color: var(--text);
+  background: var(--bg-subtle);
+}
+
+/* ── Category filter chips ── */
+
+.lure-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.lure-filter-chip {
+  padding: 0.25rem 0.65rem;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.lure-filter-chip:hover {
+  border-color: var(--ocean);
+  color: var(--ocean);
+  background: #eff6ff;
+}
+
+.lure-filter-chip--active {
+  background: var(--ocean);
+  border-color: var(--ocean);
+  color: white;
+}
+
+.lure-filter-chip--active:hover {
+  background: var(--ocean-dark);
+  border-color: var(--ocean-dark);
+  color: white;
+}
+
+/* ── Search results list ── */
+
+.lure-search-results {
+  margin-top: 0.65rem;
+}
+
+.lure-search-hint,
+.lure-no-results {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.lure-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s;
+}
+
+.lure-result-item:hover {
+  background: var(--bg-subtle);
+}
+
+.lure-result-item + .lure-result-item {
+  border-top: 1px solid var(--border-light);
+}
+
+.lure-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lure-result-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.1rem;
+}
+
+.lure-result-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.lure-result-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.lure-color-tag {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+  background: var(--ocean-light, #dbeafe);
+  color: var(--ocean);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.lure-color-more {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+.lure-result-add-btn {
+  flex-shrink: 0;
+  padding: 0.3rem 0.65rem;
+  background: var(--ocean);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: center;
+  transition: background 0.12s;
+}
+
+.lure-result-add-btn:hover {
+  background: var(--ocean-dark);
+}
+
+.lure-result-add-btn.in-bag {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1.5px solid var(--border-light);
+}
+
+.lure-result-add-btn.in-bag:hover {
+  background: #fee2e2;
+  color: var(--red);
+  border-color: #fca5a5;
+}
+
+/* ── Your Bag section ── */
+
+.lure-your-bag {
+  margin-top: 1.1rem;
+  border-top: 1.5px solid var(--border-light);
+  padding-top: 0.75rem;
+}
+
+.lure-your-bag-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lure-your-bag-heading h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.lure-bag-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s;
+}
+
+.lure-bag-row + .lure-bag-row {
+  border-top: 1px solid var(--border-light);
+}
+
+.lure-bag-row:hover {
+  background: var(--bg-subtle);
+}
+
+.lure-bag-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lure-bag-row-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.1rem;
+}
+
+.lure-bag-row-meta {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.lure-bag-row-species {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lure-bag-remove-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.25rem;
+  border-radius: 4px;
+  align-self: center;
+  line-height: 1;
+  transition: color 0.1s, background 0.1s;
+}
+
+.lure-bag-remove-btn:hover {
+  color: var(--red);
+  background: #fee2e2;
+}
+
+/* Bag matches area */
+.lure-bag-matches {
+  margin-top: 0.85rem;
+}
+
+.lure-bag-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.83rem;
+}
+
+.lure-bag-empty p {
+  margin: 0;
+}
+
+.lure-bag-match-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.lure-bag-match-row:last-child {
+  border-bottom: none;
+}
+
+.lure-bag-match-img {
+  flex-shrink: 0;
+  width: 52px;
+  height: 34px;
+  object-fit: contain;
+  background: #f0f4f8;
+  border-radius: 6px;
+  padding: 3px;
+  border: 1px solid var(--border-light);
+}
+
+.lure-bag-match-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lure-bag-match-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+.lure-bag-match-species {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.lure-bag-match-species .lure-species-tag {
+  font-size: 0.7rem;
+}
+
+.lure-bag-no-match {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Hot/active indicator on match row */
+.lure-bag-match-active {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--sea-green, #22c55e);
+  white-space: nowrap;
+  align-self: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .lure-picks-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lure-filter-chips {
+    gap: 0.25rem;
+  }
+
+  .lure-filter-chip {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .lure-result-item {
+    gap: 0.5rem;
+  }
+
+  .lure-result-add-btn {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
 /* ---------- Nearby live cams ---------- */
 
 .live-cams-section {

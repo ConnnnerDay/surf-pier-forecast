@@ -1,0 +1,99 @@
+{# Dedicated lures section — shown only when user uses lures (yes or sometimes) #}
+{# Embed full lure data + active species as JSON for the bag JS #}
+<script>
+window._lureData = {{ forecast.lure_recommendations | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/lure_bag.js') }}" defer></script>
+
+<!-- ── Top picks ── -->
+<section class="lure-picks-section">
+    <h2>Top Lures Today</h2>
+    <p class="section-sub">Ranked by what&rsquo;s biting now</p>
+    <div class="lure-picks-grid">
+        {% for lure in forecast.lure_recommendations[:5] %}
+        <div class="lure-pick-card">
+            <div class="lure-pick-image">
+                {% if lure.image %}
+                <img src="{{ url_for('static', filename=lure.image) }}" alt="{{ lure.lure }}" loading="lazy">
+                {% endif %}
+            </div>
+            <div class="lure-pick-body">
+                <h3 class="lure-pick-name">{{ lure.lure }}</h3>
+                <p class="lure-pick-hint">{{ lure.sizes }}{% if lure.colors %} &middot; {{ lure.colors.split(',')[:2] | join(', ') }}{% endif %}</p>
+                <p class="lure-pick-retrieve">{{ lure.retrieve }}</p>
+                {% if lure.active_species %}
+                <div class="lure-active-species">
+                    <span class="lure-active-label">Biting today:</span>
+                    {% for sp in lure.active_species[:3] %}
+                    <span class="lure-species-tag">{{ sp.split('(')[0].strip() }}</span>
+                    {% endfor %}
+                    {% if lure.active_species | length > 3 %}
+                    <span class="lure-species-more">+{{ lure.active_species | length - 3 }} more</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="lure-no-active">No active species match right now</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ── My Lure Bag ── -->
+<section class="lure-bag-section" id="lure-bag-section">
+    <div class="lure-bag-header">
+        <h2>My Lure Bag</h2>
+        <span class="lure-bag-count" id="lure-bag-count" aria-live="polite">0 lures</span>
+    </div>
+    <p class="section-sub">Search through the lure database and add what you own &mdash; see which active fish you can target today</p>
+
+    <!-- Search row -->
+    <div class="lure-search-row">
+        <svg class="lure-search-icon" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="14" y1="14" x2="18" y2="18"/></svg>
+        <input
+            type="search"
+            class="lure-search-input"
+            id="lure-search-input"
+            placeholder="Search by name, brand, or color&hellip;"
+            autocomplete="off"
+            spellcheck="false">
+        <button class="lure-search-clear" id="lure-search-clear" type="button" aria-label="Clear search" style="display:none">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+        </button>
+    </div>
+
+    <!-- Category filter chips -->
+    <div class="lure-filter-chips" id="lure-filter-chips" role="group" aria-label="Filter by category">
+        <button class="lure-filter-chip lure-filter-chip--active" data-filter="" type="button">All</button>
+        <button class="lure-filter-chip" data-filter="Soft plastic" type="button">Soft Plastic</button>
+        <button class="lure-filter-chip" data-filter="Metal jig" type="button">Metal Jig</button>
+        <button class="lure-filter-chip" data-filter="Spoon" type="button">Spoon</button>
+        <button class="lure-filter-chip" data-filter="Topwater" type="button">Topwater</button>
+        <button class="lure-filter-chip" data-filter="Hard bait" type="button">Hard Bait</button>
+        <button class="lure-filter-chip" data-filter="Bucktail" type="button">Bucktail</button>
+        <button class="lure-filter-chip" data-filter="Pompano jig" type="button">Pompano Jig</button>
+        <button class="lure-filter-chip" data-filter="Popper" type="button">Popper</button>
+        <button class="lure-filter-chip" data-filter="Iron jig" type="button">Iron Jig</button>
+        <button class="lure-filter-chip" data-filter="Shad dart" type="button">Shad Dart</button>
+        <button class="lure-filter-chip" data-filter="Offshore" type="button">Offshore</button>
+    </div>
+
+    <!-- Search results list (populated by JS) -->
+    <div class="lure-search-results" id="lure-search-results" aria-live="polite">
+        <p class="lure-search-hint" id="lure-search-hint">Type to search or pick a category above to browse lures</p>
+    </div>
+
+    <!-- ── Your Bag ── -->
+    <div class="lure-your-bag" id="lure-your-bag">
+        <div class="lure-your-bag-heading">
+            <h3>Your Bag</h3>
+        </div>
+        <div id="lure-bag-items">
+            <div class="lure-bag-empty" id="lure-bag-empty">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="opacity:.35"><path d="M6 2L3 6v14h14V6l-3-4z"/><line x1="3" y1="6" x2="17" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <p>Add lures from the search above &mdash; we&rsquo;ll show you which active fish you can target today</p>
+            </div>
+        </div>
+    </div>
+</section>

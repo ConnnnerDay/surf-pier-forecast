@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Jighead -->
+  <circle cx="22" cy="56" r="16" fill="#475569" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- Eye -->
+  <circle cx="28" cy="51" r="4.5" fill="white"/>
+  <circle cx="29" cy="51" r="2.2" fill="#0f172a"/>
+
+  <!-- Hook -->
+  <path d="M22 72 Q22 84 34 86 Q46 86 46 77" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M46 77 Q50 72 44 70" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Main body (large fish, mullet/shad profile) -->
+  <path d="M36 42 C60 30 105 30 150 42 C162 48 166 55 162 62 C154 72 105 78 60 76 C44 74 36 68 36 58 Z" fill="#7dd3fc" stroke="#0284c7" stroke-width="2"/>
+
+  <!-- Dark back -->
+  <path d="M36 42 C60 30 105 30 150 42 C148 38 106 33 60 35 C46 37 38 40 36 42 Z" fill="#0369a1" opacity="0.5"/>
+
+  <!-- Belly -->
+  <path d="M38 60 C62 66 108 68 160 62 C108 70 62 70 38 65 Z" fill="white" opacity="0.4"/>
+
+  <!-- Segment joints (articulated) -->
+  <path d="M88 32 C86 46 86 62 88 76" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M118 33 C116 46 116 64 118 77" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M145 40 C143 50 143 62 145 73" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Lateral line -->
+  <path d="M46 49 C80 44 125 45 160 50" fill="none" stroke="#0284c7" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+
+  <!-- Dorsal fin -->
+  <path d="M75 32 C82 18 95 16 108 18 L108 32" fill="#0369a1" stroke="#0284c7" stroke-width="1.2" opacity="0.7"/>
+
+  <!-- Pectoral fin -->
+  <path d="M56 50 C52 60 50 68 55 72 C58 66 60 60 64 56 Z" fill="#7dd3fc" stroke="#0284c7" stroke-width="1.2" opacity="0.6"/>
+
+  <!-- Forked tail -->
+  <path d="M162 52 L178 34 Q184 52 178 70 Z" fill="#0369a1" stroke="#0284c7" stroke-width="1.5"/>
+</svg>

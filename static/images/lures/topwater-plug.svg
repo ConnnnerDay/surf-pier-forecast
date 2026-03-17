@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" fill="none">
+  <!-- Line tie ring at nose -->
+  <circle cx="22" cy="55" r="5" stroke="#94a3b8" stroke-width="2"/>
+
+  <!-- Plug body — pencil/cigar shape, flat nose for walk-the-dog -->
+  <path d="M27 43 C45 36 130 36 168 42 C175 46 178 52 175 58 C172 64 168 68 162 69 C128 74 44 74 27 67 C20 64 18 60 18 55 C18 50 22 46 27 43 Z" fill="#f8fafc" stroke="#475569" stroke-width="2"/>
+
+  <!-- Back-half color pattern (dark top) -->
+  <path d="M90 37 C120 36 155 38 168 42 C175 46 178 52 175 58 L170 58 C174 52 172 47 165 43 C152 39 120 38 90 39 Z" fill="#475569" opacity="0.55"/>
+
+  <!-- Belly highlight -->
+  <path d="M30 60 C70 64 140 64 162 62 C140 67 70 68 30 65 Z" fill="white" opacity="0.35"/>
+
+  <!-- Front treble hook hanger -->
+  <line x1="70" y1="74" x2="70" y2="82" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="70" cy="85" r="3" stroke="#94a3b8" stroke-width="1.8"/>
+  <path d="M70 85 Q62 86 60 92 M70 85 Q70 89 68 94 M70 85 Q78 86 80 92" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+
+  <!-- Rear treble hook hanger -->
+  <line x1="140" y1="72" x2="140" y2="80" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="140" cy="83" r="3" stroke="#94a3b8" stroke-width="1.8"/>
+  <path d="M140 83 Q132 84 130 90 M140 83 Q140 87 138 92 M140 83 Q148 84 150 90" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+
+  <!-- Tail tie (split ring) -->
+  <circle cx="173" cy="55" r="4" stroke="#94a3b8" stroke-width="1.8"/>
+</svg>
