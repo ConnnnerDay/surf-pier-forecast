@@ -64,19 +64,40 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
     </div>
 
     <!-- Category filter chips -->
-    <div class="lure-filter-chips" id="lure-filter-chips" role="group" aria-label="Filter by category">
-        <button class="lure-filter-chip lure-filter-chip--active" data-filter="" type="button">All</button>
-        <button class="lure-filter-chip" data-filter="Soft plastic" type="button">Soft Plastic</button>
-        <button class="lure-filter-chip" data-filter="Metal jig" type="button">Metal Jig</button>
-        <button class="lure-filter-chip" data-filter="Spoon" type="button">Spoon</button>
-        <button class="lure-filter-chip" data-filter="Topwater" type="button">Topwater</button>
-        <button class="lure-filter-chip" data-filter="Hard bait" type="button">Hard Bait</button>
-        <button class="lure-filter-chip" data-filter="Bucktail" type="button">Bucktail</button>
-        <button class="lure-filter-chip" data-filter="Pompano jig" type="button">Pompano Jig</button>
-        <button class="lure-filter-chip" data-filter="Popper" type="button">Popper</button>
-        <button class="lure-filter-chip" data-filter="Iron jig" type="button">Iron Jig</button>
-        <button class="lure-filter-chip" data-filter="Shad dart" type="button">Shad Dart</button>
-        <button class="lure-filter-chip" data-filter="Offshore" type="button">Offshore</button>
+    <div class="lure-filter-row">
+        <span class="lure-filter-row-label">Category</span>
+        <div class="lure-filter-chips" id="lure-filter-chips" role="group" aria-label="Filter by category">
+            <button class="lure-filter-chip lure-filter-chip--active" data-filter="" type="button">All</button>
+            <button class="lure-filter-chip" data-filter="Soft plastic" type="button">Soft Plastic</button>
+            <button class="lure-filter-chip" data-filter="Metal jig" type="button">Metal Jig</button>
+            <button class="lure-filter-chip" data-filter="Spoon" type="button">Spoon</button>
+            <button class="lure-filter-chip" data-filter="Topwater" type="button">Topwater</button>
+            <button class="lure-filter-chip" data-filter="Hard bait" type="button">Hard Bait</button>
+            <button class="lure-filter-chip" data-filter="Bucktail" type="button">Bucktail</button>
+            <button class="lure-filter-chip" data-filter="Pompano jig" type="button">Pompano Jig</button>
+            <button class="lure-filter-chip" data-filter="Popper" type="button">Popper</button>
+            <button class="lure-filter-chip" data-filter="Iron jig" type="button">Iron Jig</button>
+            <button class="lure-filter-chip" data-filter="Shad dart" type="button">Shad Dart</button>
+            <button class="lure-filter-chip" data-filter="Offshore" type="button">Offshore</button>
+        </div>
+    </div>
+
+    <!-- Brand filter chips -->
+    <div class="lure-filter-row">
+        <span class="lure-filter-row-label">Brand</span>
+        <div class="lure-brand-chips" id="lure-brand-chips" role="group" aria-label="Filter by brand">
+            <button class="lure-filter-chip lure-brand-chip lure-brand-chip--active" data-brand="" type="button">All</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Berkley" type="button">Gulp</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Z-Man" type="button">Z-Man</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Rapala" type="button">Rapala</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="MirrOlure" type="button">MirrOlure</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Heddon" type="button">Heddon</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Hopkins" type="button">Hopkins</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="D.O.A." type="button">D.O.A.</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Yo-Zuri" type="button">Yo-Zuri</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Spro" type="button">Spro</button>
+            <button class="lure-filter-chip lure-brand-chip" data-brand="Tsunami" type="button">Tsunami</button>
+        </div>
     </div>
 
     <!-- Search results list (populated by JS) -->

@@ -45,6 +45,42 @@
     "notes": "Finesse bait for pressured fish. Best on a 1/16–1/8 oz jighead; very effective for flounder and trout."
   },
   {
+    "id": "zman-shrimpz-25in",
+    "name": "ShrimpZ 2.5\"",
+    "manufacturer": "Z-Man",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Shrimp", "Chartreuse", "Motor Oil", "New Penny", "Pro Blue"],
+    "notes": "Realistic ElaZtech shrimp that outlasts ordinary soft plastics. Weedless on a light jighead; superb for redfish on shallow flats."
+  },
+  {
+    "id": "zman-diezel-minnowz-4in",
+    "name": "Diezel MinnowZ 4\"",
+    "manufacturer": "Z-Man",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["White", "Chartreuse", "Pearl Blue", "Smelt", "Ayu"],
+    "notes": "Wide-wobble paddle tail with thick body. Great for slower retrieves in cooler water."
+  },
+  {
+    "id": "zman-crabz-25in",
+    "name": "CrabZ 2.5\"",
+    "manufacturer": "Z-Man",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Rootbeer", "Chartreuse", "Green Pumpkin", "Natural"],
+    "notes": "ElaZtech crab imitation — nearly indestructible. Sheepshead and redfish tear these up around structure and oyster bars."
+  },
+  {
+    "id": "zman-finesse-shrimpz-3in",
+    "name": "Finesse ShrimpZ 3\"",
+    "manufacturer": "Z-Man",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Shrimp", "Chartreuse", "Houdini", "Pearl", "New Penny"],
+    "notes": "Slightly larger shrimp profile with added legs for more water displacement. Deadly on a drop-shot or light jighead."
+  },
+  {
     "id": "berkley-gulp-shrimp-3in",
     "name": "Gulp! Shrimp 3\"",
     "manufacturer": "Berkley",
@@ -52,6 +88,15 @@
     "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
     "colors": ["New Penny", "Pink Shine", "Nuclear Chicken", "Natural", "Chartreuse"],
     "notes": "Scented attractant outfishes plain plastic in dirty water. Fish under a cork or on a jighead."
+  },
+  {
+    "id": "berkley-gulp-shrimp-4in",
+    "name": "Gulp! Shrimp 4\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["New Penny", "Pink Shine", "Nuclear Chicken", "Natural", "Chartreuse"],
+    "notes": "Larger scent-loaded shrimp for bigger fish. Heavy Gulp attractant makes it effective in stained water."
   },
   {
     "id": "berkley-gulp-sand-crab",
@@ -63,6 +108,15 @@
     "notes": "Best soft plastic for surf perch and corbina. Drag slowly along sandy bottom in the swash zone."
   },
   {
+    "id": "berkley-gulp-crab-2in",
+    "name": "Gulp! Crab 2\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Natural Sand", "Green Crab", "Brown/Orange"],
+    "notes": "Crab imitation with potent Gulp scent. Excellent for sheepshead, permit, and tautog near structure."
+  },
+  {
     "id": "berkley-gulp-nemesis-4in",
     "name": "Gulp! Nemesis 4\"",
     "manufacturer": "Berkley",
@@ -70,6 +124,69 @@
     "lure_type_key": "Soft plastic paddle-tail swimbait",
     "colors": ["New Penny", "Chartreuse", "White", "Natural Shrimp"],
     "notes": "Scent-loaded paddle-tail. Great for flounder on a drag-and-lift retrieve near structure."
+  },
+  {
+    "id": "berkley-gulp-swimming-mullet-3in",
+    "name": "Gulp! Swimming Mullet 3\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["New Penny", "Chartreuse", "White", "Natural Mullet", "Neon Yellow"],
+    "notes": "Paddle-tail mullet with heavy Gulp scent. Works great under a popping cork for speckled trout and redfish."
+  },
+  {
+    "id": "berkley-gulp-swimming-mullet-4in",
+    "name": "Gulp! Swimming Mullet 4\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["New Penny", "Chartreuse", "White", "Natural Mullet", "Lime Tiger"],
+    "notes": "Larger scent-loaded paddle tail for redfish and trophy trout. Match the hatch during fall mullet runs."
+  },
+  {
+    "id": "berkley-gulp-jerk-shad-4in",
+    "name": "Gulp! Jerk Shad 4\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["New Penny", "Chartreuse", "Pearl White", "Rootbeer/Chart"],
+    "notes": "Shad-profile jerkbait with heavy Gulp attractant. Twitch on a light jighead for flounder and speckled trout."
+  },
+  {
+    "id": "berkley-gulp-sandworm-6in",
+    "name": "Gulp! Sandworm 6\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Natural", "Red", "Chartreuse", "Pink"],
+    "notes": "Worm imitation with heavy attractant. Rig on a dropper loop or Carolina rig for surf perch, spot, and flounder from the surf."
+  },
+  {
+    "id": "berkley-gulp-fry-1in",
+    "name": "Gulp! Fry 1\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Smelt", "Chartreuse", "White", "New Penny"],
+    "notes": "Tiny scent-loaded baitfish imitation. Deadly for panfish, spot, and croaker on ultralight tackle from piers."
+  },
+  {
+    "id": "berkley-gulp-saltwater-grub-3in",
+    "name": "Gulp! Saltwater Grub 3\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["New Penny", "Chartreuse", "White Glow", "Pink", "Nuclear Chicken"],
+    "notes": "Curly tail with heavy Gulp scent. Versatile jig trailer or standalone on a 1/8 oz head in the surf."
+  },
+  {
+    "id": "berkley-gulp-mantis-shrimp-3in",
+    "name": "Gulp! Mantis Shrimp 3\"",
+    "manufacturer": "Berkley",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Natural", "Chartreuse", "Olive", "Pink"],
+    "notes": "Realistic mantis shrimp profile with Gulp attractant. Particularly effective for permit and pompano on sandy flats."
   },
   {
     "id": "doa-terror-eyz-3in",
@@ -106,6 +223,24 @@
     "lure_type_key": "Soft plastic paddle-tail swimbait",
     "colors": ["Chartreuse/White", "Rootbeer Gold", "Pumpkinseed", "Chicken on a Chain", "Morning Glory"],
     "notes": "Texas staple for speckled trout and redfish. Lively paddle tail on a 1/4 oz jighead."
+  },
+  {
+    "id": "bass-assassin-die-dapper-3in",
+    "name": "Die Dapper 3\"",
+    "manufacturer": "Bass Assassin",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Chartreuse/White", "Rootbeer Gold", "Pumpkinseed", "Opening Night", "Morning Glory"],
+    "notes": "Shrimp-tail action bait. Twitched under a popping cork, it's irresistible to speckled trout and redfish."
+  },
+  {
+    "id": "bass-assassin-saltwater-shad-5in",
+    "name": "Saltwater Shad 5\"",
+    "manufacturer": "Bass Assassin",
+    "category": "Soft plastic",
+    "lure_type_key": "Swimbaits (large, 5-9\")",
+    "colors": ["Chartreuse/White", "Rootbeer Gold", "Pumpkinseed", "Nuclear Chicken"],
+    "notes": "Big paddle tail for trophy trout and big redfish. Slow-roll on a 3/4 oz jighead near structure."
   },
   {
     "id": "zoom-fluke-5in",
@@ -153,6 +288,51 @@
     "notes": "Lifelike shrimp with LED insert option. Self-weedless; works well around oyster bars."
   },
   {
+    "id": "kalin-grub-3in",
+    "name": "Kalin's Grub 3\"",
+    "manufacturer": "Kalin",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["White", "Chartreuse", "Smoke/Silver", "Watermelon", "Motor Oil"],
+    "notes": "Curly tail grub for all-around jigging. Great for flounder and weakfish on a 1/4 oz jighead."
+  },
+  {
+    "id": "storm-wildeye-3in",
+    "name": "WildEye Swim Shad 3\"",
+    "manufacturer": "Storm",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Silver/Blue", "White", "Chartreuse/Silver", "Natural Shad"],
+    "notes": "Pre-rigged paddle-tail with a realistic eye and lifelike finish. Ready to fish out of the pack."
+  },
+  {
+    "id": "owner-c-worm-jig",
+    "name": "Ultrahead Swimbait Hook",
+    "manufacturer": "Owner",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Black", "Silver/Red", "Chartreuse/Glow"],
+    "notes": "Weighted swimbait hook for rigging paddle-tails weedless. Perfect for heavy grass and structure."
+  },
+  {
+    "id": "fishbites-ez-shrimp",
+    "name": "EZ Shrimp Strip",
+    "manufacturer": "Fishbites",
+    "category": "Soft plastic",
+    "lure_type_key": "Gulp! soft bait (shrimp / sand crab)",
+    "colors": ["Shrimp", "Crab", "Squid", "Chartreuse"],
+    "notes": "Scent-loaded attractant strips that mimic shrimp. Cut to length and tip a jig or hook for extra attraction in the surf."
+  },
+  {
+    "id": "mirrolure-lil-john",
+    "name": "Lil' John",
+    "manufacturer": "MirrOlure",
+    "category": "Soft plastic",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["White/Chartreuse", "Rootbeer/Gold", "Glow", "Pink/White"],
+    "notes": "Paddle tail with internal rattle and bold eyes. Extra flash and noise for trout in dingy or stained water."
+  },
+  {
     "id": "hopkins-shorty-1oz",
     "name": "Hopkins Shorty 1 oz",
     "manufacturer": "Hopkins",
@@ -160,6 +340,15 @@
     "lure_type_key": "Metal jig",
     "colors": ["Chrome", "Gold", "Blue/Silver", "Green/Silver"],
     "notes": "Classic surf and pier metal. Cast as far as possible, burn back through the water column."
+  },
+  {
+    "id": "hopkins-shorty-34oz",
+    "name": "Hopkins Shorty 3/4 oz",
+    "manufacturer": "Hopkins",
+    "category": "Metal jig",
+    "lure_type_key": "Metal jig",
+    "colors": ["Chrome", "Gold", "Blue/Silver"],
+    "notes": "Lighter version of the classic shorty. Better for lighter tackle and calm surf conditions."
   },
   {
     "id": "hopkins-noeql-15oz",
@@ -180,6 +369,15 @@
     "notes": "Compact aerodynamic jig that casts a mile. Deadly on false albacore and Spanish mackerel."
   },
   {
+    "id": "acme-phoebe-38oz",
+    "name": "Phoebe 3/8 oz",
+    "manufacturer": "Acme",
+    "category": "Metal jig",
+    "lure_type_key": "Metal jig",
+    "colors": ["Gold", "Silver", "Firetiger", "Rainbow"],
+    "notes": "Ultra-thin blade jig with intense fluttering action. Excellent for false albacore and bonito on light tackle."
+  },
+  {
     "id": "deadly-dick-15oz",
     "name": "Deadly Dick 1.5 oz",
     "manufacturer": "Deadly Dick",
@@ -187,6 +385,15 @@
     "lure_type_key": "Metal jig",
     "colors": ["Chrome", "Gold", "Blue/White", "Green/Yellow"],
     "notes": "Rhode Island classic for false albacore and bonito. Fast fluttering action on the fall."
+  },
+  {
+    "id": "deadly-dick-eel-2oz",
+    "name": "Eel Jig 2 oz",
+    "manufacturer": "Deadly Dick",
+    "category": "Metal jig",
+    "lure_type_key": "Metal jig",
+    "colors": ["Chrome", "Blue/White", "Green/Yellow"],
+    "notes": "Slim eel profile drops fast to depth. Great for striped bass around structure when fish are holding deep."
   },
   {
     "id": "ava-007",
@@ -205,6 +412,15 @@
     "lure_type_key": "Metal jig",
     "colors": ["Chrome", "Yellow", "Pink", "Blue", "Chartreuse"],
     "notes": "All-around Northeast metal. Surf, pier, and boat; great for bass and blues from the rocks."
+  },
+  {
+    "id": "shimano-butterfly-jig-150g",
+    "name": "Butterfly Flat-Fall 150g",
+    "manufacturer": "Shimano",
+    "category": "Metal jig",
+    "lure_type_key": "Metal jig",
+    "colors": ["Silver", "Gold/Orange", "Blue/Pink", "Sardine"],
+    "notes": "Slow-pitch/flat-fall jig for deeper structure. Flutter action on the fall triggers reaction strikes."
   },
   {
     "id": "johnson-silver-minnow",
@@ -270,6 +486,15 @@
     "notes": "West Coast classic. Deadly for Pacific bonito and yellowtail; cast and burn or troll."
   },
   {
+    "id": "buckeye-fatso-spoon",
+    "name": "Fatso Spoon 1/2 oz",
+    "manufacturer": "Buckeye",
+    "category": "Spoon",
+    "lure_type_key": "Gold/silver spoon",
+    "colors": ["Gold", "Silver", "Chartreuse/Gold", "Copper"],
+    "notes": "Compact fluttering spoon. Cast to breaking schools of Spanish mackerel; works well off piers."
+  },
+  {
     "id": "heddon-zara-spook",
     "name": "Zara Spook",
     "manufacturer": "Heddon",
@@ -286,6 +511,24 @@
     "lure_type_key": "Topwater plug / walk-the-dog",
     "colors": ["Bone", "Chrome/Black", "Chartreuse", "Pink", "Mullet"],
     "notes": "Downsized Spook for speckled trout and smaller reds. Walk-the-dog on light tackle."
+  },
+  {
+    "id": "heddon-one-knocker",
+    "name": "One Knocker Spook",
+    "manufacturer": "Heddon",
+    "category": "Topwater",
+    "lure_type_key": "Topwater plug / walk-the-dog",
+    "colors": ["Bone", "Chrome/Black", "Chartreuse", "Natural Shad"],
+    "notes": "Single ball-bearing rattle for extra noise. Good in murky water or at night."
+  },
+  {
+    "id": "heddon-chug-n-spook",
+    "name": "Chug'n Spook Jr.",
+    "manufacturer": "Heddon",
+    "category": "Popper",
+    "lure_type_key": "Popper / surface plug",
+    "colors": ["Bone", "Chrome/Black", "Chartreuse", "Clear/Mylar"],
+    "notes": "Cup-face popper for bluefish and striped bass from piers and jetties. Pop aggressively around bait schools."
   },
   {
     "id": "mirrolure-top-dog",
@@ -306,6 +549,15 @@
     "notes": "Smaller profile for finicky fish. Great for trout in skinny water."
   },
   {
+    "id": "mirrolure-top-pup",
+    "name": "Top Pup",
+    "manufacturer": "MirrOlure",
+    "category": "Popper",
+    "lure_type_key": "Popper / surface plug",
+    "colors": ["White/Chartreuse", "Black/Gold", "Ghost", "Pink/White"],
+    "notes": "Hard chugger popper for speckled trout and snook in the surf. Walk-and-pop retrieve along grass edges."
+  },
+  {
     "id": "rapala-skitter-walk-11",
     "name": "Skitter Walk 11",
     "manufacturer": "Rapala",
@@ -315,13 +567,22 @@
     "notes": "Loud topwater with rattle. Works well in choppy water when fish need help finding it."
   },
   {
-    "id": "heddon-one-knocker",
-    "name": "One Knocker Spook",
-    "manufacturer": "Heddon",
+    "id": "rapala-subwalk-11",
+    "name": "SubWalk 11",
+    "manufacturer": "Rapala",
     "category": "Topwater",
     "lure_type_key": "Topwater plug / walk-the-dog",
-    "colors": ["Bone", "Chrome/Black", "Chartreuse", "Natural Shad"],
-    "notes": "Single ball-bearing rattle for extra noise. Good in murky water or at night."
+    "colors": ["Mullet", "Silver", "Chartreuse", "Black/Gold"],
+    "notes": "Sub-surface walker that creates a V-wake just under the surface. Effective when fish are shallow but won't commit to a topwater."
+  },
+  {
+    "id": "strike-king-sexy-dawg",
+    "name": "Sexy Dawg Jr.",
+    "manufacturer": "Strike King",
+    "category": "Topwater",
+    "lure_type_key": "Topwater plug / walk-the-dog",
+    "colors": ["Chrome/Blue Back", "Natural Shad", "Sexy Trout", "Bone"],
+    "notes": "Easy walk-the-dog action with less rod work. Great for beginners learning topwater fishing."
   },
   {
     "id": "mirrolure-52m",
@@ -342,6 +603,15 @@
     "notes": "Shallow-running hardbait for speckled trout and redfish. Works well around dock lights."
   },
   {
+    "id": "mirrolure-catch-2000",
+    "name": "Catch 2000",
+    "manufacturer": "MirrOlure",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["808 (Red/White)", "CH (Chartreuse)", "723 (Black/Gold)", "31 (Pink)"],
+    "notes": "Slow-sink twitchbait that rivals the 52M in clear Gulf water. Superb in cold winter conditions for trophy trout."
+  },
+  {
     "id": "rapala-xrap-10",
     "name": "X-Rap 10",
     "manufacturer": "Rapala",
@@ -349,6 +619,24 @@
     "lure_type_key": "Soft plastic paddle-tail swimbait",
     "colors": ["Silver", "Gold", "Mullet", "Chartreuse", "Bunker", "Glass Ghost"],
     "notes": "Aggressive slash-bait action. Deadly for striped bass and bluefish along jetties."
+  },
+  {
+    "id": "rapala-xrap-saltwater-12",
+    "name": "X-Rap Saltwater 12",
+    "manufacturer": "Rapala",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Silver", "Mullet", "Pilchard", "Bunker", "Olive"],
+    "notes": "Saltwater-specific X-Rap with heavy-duty hooks and split rings. Cast along jetties for snook, stripers, and blues."
+  },
+  {
+    "id": "rapala-countdown-11",
+    "name": "Countdown 11",
+    "manufacturer": "Rapala",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Silver", "Gold", "Blue/Silver", "Perch"],
+    "notes": "Sinking minnow — count down to depth, then retrieve at any speed. Classics never die."
   },
   {
     "id": "yozuri-crystal-minnow-3d",
@@ -360,6 +648,51 @@
     "notes": "3D holographic finish for maximum flash. Trolling or casting for coastal pelagics."
   },
   {
+    "id": "yozuri-mag-minnow-4in",
+    "name": "Mag Minnow 4\"",
+    "manufacturer": "Yo-Zuri",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Holographic Silver", "Sardine", "Anchovy", "Chartreuse", "Ghost"],
+    "notes": "Sinking minnow with magnetic weight transfer for ultra-long casts. Great for surf stripers and snook."
+  },
+  {
+    "id": "yo-zuri-crystal-minnow-shad",
+    "name": "3D Inshore Twitch Bait",
+    "manufacturer": "Yo-Zuri",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Holographic Silver", "Ghost Mullet", "Ghost Pilchard", "Chartreuse"],
+    "notes": "Suspending twitchbait for speckled trout and flounder. Twitch-pause in grass flat pockets."
+  },
+  {
+    "id": "gotcha-plug-78oz",
+    "name": "Got-Cha Plug 7/8 oz",
+    "manufacturer": "Got-Cha",
+    "category": "Hard bait",
+    "lure_type_key": "Metal jig",
+    "colors": ["Glow/Silver", "Chartreuse/Silver", "Natural/Silver", "Pink/Gold", "Blue/Silver"],
+    "notes": "Classic pier lure for Spanish mackerel, bluefish, and jack. Cast and burn fast through surface schools — a must-have for any pier bag."
+  },
+  {
+    "id": "paul-brown-fat-boy",
+    "name": "Fat Boy Corky",
+    "manufacturer": "Paul Brown",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Pink/White", "Clear/Glitter", "Chartreuse/Silver", "Root Beer", "Gold/Black Back"],
+    "notes": "Gulf Coast legend for speckled trout. Slow sink with a walk-the-dog twitch; deadly in cold winter water."
+  },
+  {
+    "id": "paul-brown-devil",
+    "name": "Devil Corky",
+    "manufacturer": "Paul Brown",
+    "category": "Hard bait",
+    "lure_type_key": "Topwater plug / walk-the-dog",
+    "colors": ["Pink/White", "Clear/Glitter", "Chartreuse/Silver", "Root Beer"],
+    "notes": "Floating Corky with loud rattle. Walk-the-dog near grass beds at dawn for big speckled trout on the Gulf."
+  },
+  {
     "id": "bomber-long-a",
     "name": "Long A 4.5\"",
     "manufacturer": "Bomber",
@@ -367,6 +700,15 @@
     "lure_type_key": "Soft plastic paddle-tail swimbait",
     "colors": ["Chrome/Blue Back", "Gold/Black Back", "Chartreuse", "White/Red Head"],
     "notes": "Slow sinking minnow. Trolled on the surface for striped bass; also cast to breaking fish."
+  },
+  {
+    "id": "bomber-saltwater-grade-a",
+    "name": "Saltwater Grade A",
+    "manufacturer": "Bomber",
+    "category": "Hard bait",
+    "lure_type_key": "Soft plastic paddle-tail swimbait",
+    "colors": ["Chart/Gold", "Silver/Blue", "White/Red Head", "Mullet"],
+    "notes": "Deep-diving crankbait for structure. Trolled around piers and bridges for speckled trout."
   },
   {
     "id": "rapala-xrap-magnum-15",
@@ -423,6 +765,15 @@
     "notes": "Heavier model for deeper water and stronger current. Essential pier and inlet striper jig."
   },
   {
+    "id": "mojo-bucktail-1oz",
+    "name": "Bucktail Jig 1 oz",
+    "manufacturer": "Mojo",
+    "category": "Bucktail",
+    "lure_type_key": "Bucktail jig",
+    "colors": ["White", "Yellow", "Pink", "Chartreuse"],
+    "notes": "Hand-tied with premium hair and a strong hook. Bounce along sandy bottoms for flounder and weakfish."
+  },
+  {
     "id": "hogy-epoxy-jig-15oz",
     "name": "Epoxy Jig 1.5 oz",
     "manufacturer": "Hogy",
@@ -459,15 +810,6 @@
     "notes": "Combines scent of Gulp with a pompano-style head. Extremely effective in off-color water."
   },
   {
-    "id": "heddon-chug-n-spook",
-    "name": "Chug'n Spook Jr.",
-    "manufacturer": "Heddon",
-    "category": "Popper",
-    "lure_type_key": "Popper / surface plug",
-    "colors": ["Bone", "Chrome/Black", "Chartreuse", "Clear/Mylar"],
-    "notes": "Cup-face popper for bluefish and striped bass from piers and jetties. Pop aggressively around bait schools."
-  },
-  {
     "id": "rapala-skitter-pop",
     "name": "Skitter Pop 9",
     "manufacturer": "Rapala",
@@ -484,6 +826,24 @@
     "lure_type_key": "Popper / surface plug",
     "colors": ["Sardine", "Blue Pink", "White", "Chartreuse/Silver"],
     "notes": "Combination walker/popper for jack crevalle and large surf species. Pop-and-walk retrieve."
+  },
+  {
+    "id": "tsunami-talkin-popper",
+    "name": "Talkin' Popper 4.5\"",
+    "manufacturer": "Tsunami",
+    "category": "Popper",
+    "lure_type_key": "Popper / surface plug",
+    "colors": ["Silver/Blue", "Chartreuse/White", "White/Red Head", "Black/Silver"],
+    "notes": "Loud cup-face popper for bluefish and striped bass. Pop hard when fish are busting bait."
+  },
+  {
+    "id": "tsunami-swim-shad-5in",
+    "name": "Holographic Swim Shad 5\"",
+    "manufacturer": "Tsunami",
+    "category": "Soft plastic",
+    "lure_type_key": "Swimbaits (large, 5-9\")",
+    "colors": ["Blue/Silver", "Bunker", "Sand Eel", "Chartreuse/White"],
+    "notes": "Pre-rigged paddle tail with holographic finish and weighted jighead. Northeast pier staple for striped bass."
   },
   {
     "id": "luhr-jensen-krocodile-iron-3oz",
@@ -513,33 +873,6 @@
     "notes": "California iron jig for yellowtail and bonito. Fast retrieve near the surface when fish are busting."
   },
   {
-    "id": "yo-zuri-crystal-minnow-shad",
-    "name": "3D Inshore Twitch Bait",
-    "manufacturer": "Yo-Zuri",
-    "category": "Hard bait",
-    "lure_type_key": "Soft plastic paddle-tail swimbait",
-    "colors": ["Holographic Silver", "Ghost Mullet", "Ghost Pilchard", "Chartreuse"],
-    "notes": "Suspending twitchbait for speckled trout and flounder. Twitch-pause in grass flat pockets."
-  },
-  {
-    "id": "rapala-countdown-11",
-    "name": "Countdown 11",
-    "manufacturer": "Rapala",
-    "category": "Hard bait",
-    "lure_type_key": "Soft plastic paddle-tail swimbait",
-    "colors": ["Silver", "Gold", "Blue/Silver", "Perch"],
-    "notes": "Sinking minnow — count down to depth, then retrieve at any speed. Classics never die."
-  },
-  {
-    "id": "strike-king-sexy-dawg",
-    "name": "Sexy Dawg Jr.",
-    "manufacturer": "Strike King",
-    "category": "Topwater",
-    "lure_type_key": "Topwater plug / walk-the-dog",
-    "colors": ["Chrome/Blue Back", "Natural Shad", "Sexy Trout", "Bone"],
-    "notes": "Easy walk-the-dog action with less rod work. Great for beginners learning topwater fishing."
-  },
-  {
     "id": "adams-shad-dart-18oz",
     "name": "Shad Dart 1/8 oz",
     "manufacturer": "Adams",
@@ -556,68 +889,5 @@
     "lure_type_key": "Shad dart",
     "colors": ["Pink/White", "Chartreuse/White", "Yellow", "Orange/White"],
     "notes": "Ultralight shad dart for clear rivers and finicky fish. Drift on a 4 lb mono leader."
-  },
-  {
-    "id": "kalin-grub-3in",
-    "name": "Kalin's Grub 3\"",
-    "manufacturer": "Kalin",
-    "category": "Soft plastic",
-    "lure_type_key": "Soft plastic paddle-tail swimbait",
-    "colors": ["White", "Chartreuse", "Smoke/Silver", "Watermelon", "Motor Oil"],
-    "notes": "Curly tail grub for all-around jigging. Great for flounder and weakfish on a 1/4 oz jighead."
-  },
-  {
-    "id": "shimano-butterfly-jig-150g",
-    "name": "Butterfly Flat-Fall 150g",
-    "manufacturer": "Shimano",
-    "category": "Metal jig",
-    "lure_type_key": "Metal jig",
-    "colors": ["Silver", "Gold/Orange", "Blue/Pink", "Sardine"],
-    "notes": "Slow-pitch/flat-fall jig for deeper structure. Flutter action on the fall triggers reaction strikes."
-  },
-  {
-    "id": "owner-c-worm-jig",
-    "name": "Ultrahead Swimbait Hook",
-    "manufacturer": "Owner",
-    "category": "Soft plastic",
-    "lure_type_key": "Soft plastic paddle-tail swimbait",
-    "colors": ["Black", "Silver/Red", "Chartreuse/Glow"],
-    "notes": "Weighted swimbait hook for rigging paddle-tails weedless. Perfect for heavy grass and structure."
-  },
-  {
-    "id": "storm-wildeye-3in",
-    "name": "WildEye Swim Shad 3\"",
-    "manufacturer": "Storm",
-    "category": "Soft plastic",
-    "lure_type_key": "Soft plastic paddle-tail swimbait",
-    "colors": ["Silver/Blue", "White", "Chartreuse/Silver", "Natural Shad"],
-    "notes": "Pre-rigged paddle-tail with a realistic eye and lifelike finish. Ready to fish out of the pack."
-  },
-  {
-    "id": "tsunami-talkin-popper",
-    "name": "Talkin' Popper 4.5\"",
-    "manufacturer": "Tsunami",
-    "category": "Popper",
-    "lure_type_key": "Popper / surface plug",
-    "colors": ["Silver/Blue", "Chartreuse/White", "White/Red Head", "Black/Silver"],
-    "notes": "Loud cup-face popper for bluefish and striped bass. Pop hard when fish are busting bait."
-  },
-  {
-    "id": "buckeye-fatso-spoon",
-    "name": "Fatso Spoon 1/2 oz",
-    "manufacturer": "Buckeye",
-    "category": "Spoon",
-    "lure_type_key": "Gold/silver spoon",
-    "colors": ["Gold", "Silver", "Chartreuse/Gold", "Copper"],
-    "notes": "Compact fluttering spoon. Cast to breaking schools of Spanish mackerel; works well off piers."
-  },
-  {
-    "id": "bomber-saltwater-grade-a",
-    "name": "Saltwater Grade A",
-    "manufacturer": "Bomber",
-    "category": "Hard bait",
-    "lure_type_key": "Soft plastic paddle-tail swimbait",
-    "colors": ["Chart/Gold", "Silver/Blue", "White/Red Head", "Mullet"],
-    "notes": "Deep-diving crankbait for structure. Trolled around piers and bridges for speckled trout."
   }
 ]
