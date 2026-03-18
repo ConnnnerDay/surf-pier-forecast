@@ -12,9 +12,10 @@
   'use strict';
 
   var STORAGE_KEY = 'surf_pier_lure_bag_v1';
-  var luresDb = [];       // full product catalogue from lures_db.json
-  var activeFilter = '';  // '' = all, else category string
-  var searchQuery = '';   // current search text
+  var luresDb = [];          // full product catalogue from lures_db.json
+  var activeFilter = '';     // '' = all, else category string
+  var activeBrandFilter = ''; // '' = all, else manufacturer string
+  var searchQuery = '';      // current search text
 
   // ── localStorage helpers ─────────────────────────────────────────────────
 
@@ -61,10 +62,11 @@
     return (typeEntry && typeEntry.active_species) ? typeEntry.active_species : [];
   }
 
-  function filterLures(query, category) {
+  function filterLures(query, category, brand) {
     var q = query.trim().toLowerCase();
-    return luresDb.filter(function (l) {
+    var results = luresDb.filter(function (l) {
       if (category && l.category !== category) return false;
+      if (brand && l.manufacturer !== brand) return false;
       if (q) {
         var haystack = [l.name, l.manufacturer]
           .concat(l.colors || [])
@@ -74,6 +76,10 @@
       }
       return true;
     });
+    results.sort(function (a, b) {
+      return (b.popularity || 0) - (a.popularity || 0);
+    });
+    return results;
   }
 
   // ── render: bag count badge ───────────────────────────────────────────────
@@ -146,14 +152,14 @@
       if (child.id !== 'lure-search-hint') child.remove();
     });
 
-    var isBlank = !searchQuery.trim() && !activeFilter;
+    var isBlank = !searchQuery.trim() && !activeFilter && !activeBrandFilter;
     if (isBlank) {
       if (hint) hint.style.display = '';
       return;
     }
     if (hint) hint.style.display = 'none';
 
-    var filtered = filterLures(searchQuery, activeFilter);
+    var filtered = filterLures(searchQuery, activeFilter, activeBrandFilter);
     var bag = loadBag();
 
     if (filtered.length === 0) {
@@ -298,7 +304,8 @@
   function init() {
     var searchInput = document.getElementById('lure-search-input');
     var clearBtn = document.getElementById('lure-search-clear');
-    var filterChips = document.querySelectorAll('.lure-filter-chip');
+    var filterChips = document.querySelectorAll('#lure-filter-chips .lure-filter-chip');
+    var brandChips = document.querySelectorAll('.lure-brand-chip');
     var resultsContainer = document.getElementById('lure-search-results');
 
     if (searchInput) {
@@ -323,6 +330,16 @@
         activeFilter = chip.dataset.filter || '';
         filterChips.forEach(function (c) {
           c.classList.toggle('lure-filter-chip--active', c === chip);
+        });
+        renderResults();
+      });
+    });
+
+    brandChips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        activeBrandFilter = chip.dataset.brand || '';
+        brandChips.forEach(function (c) {
+          c.classList.toggle('lure-brand-chip--active', c === chip);
         });
         renderResults();
       });

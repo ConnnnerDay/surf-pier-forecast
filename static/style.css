@@ -1918,13 +1918,41 @@ h2 {
   background: var(--bg-subtle);
 }
 
+/* ── Filter rows (category + brand) ── */
+
+.lure-filter-row {
+  margin-top: 0.55rem;
+}
+
+.lure-filter-row-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
 /* ── Category filter chips ── */
 
-.lure-filter-chips {
+.lure-filter-chips,
+.lure-brand-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.55rem;
+}
+
+.lure-brand-chip--active {
+  background: var(--ocean);
+  border-color: var(--ocean);
+  color: white;
+}
+
+.lure-brand-chip--active:hover {
+  background: var(--ocean-dark);
+  border-color: var(--ocean-dark);
+  color: white;
 }
 
 .lure-filter-chip {
@@ -2226,7 +2254,8 @@ h2 {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .lure-filter-chips {
+  .lure-filter-chips,
+  .lure-brand-chips {
     gap: 0.25rem;
   }
 
