@@ -98,6 +98,17 @@
     item.className = 'lure-result-item' + (inBag ? ' in-bag' : '');
     item.dataset.lureId = lure.id;
 
+    if (lure.image) {
+      var thumb = document.createElement('div');
+      thumb.className = 'lure-result-thumb';
+      var thumbImg = document.createElement('img');
+      thumbImg.src = '/static/' + lure.image;
+      thumbImg.alt = lure.name;
+      thumbImg.loading = 'lazy';
+      thumb.appendChild(thumbImg);
+      item.appendChild(thumb);
+    }
+
     var info = document.createElement('div');
     info.className = 'lure-result-info';
 
@@ -189,6 +200,17 @@
     var row = document.createElement('div');
     row.className = 'lure-bag-row';
     row.dataset.lureId = lure.id;
+
+    if (lure.image) {
+      var thumb = document.createElement('div');
+      thumb.className = 'lure-bag-thumb';
+      var thumbImg = document.createElement('img');
+      thumbImg.src = '/static/' + lure.image;
+      thumbImg.alt = lure.name;
+      thumbImg.loading = 'lazy';
+      thumb.appendChild(thumbImg);
+      row.appendChild(thumb);
+    }
 
     var info = document.createElement('div');
     info.className = 'lure-bag-row-info';
