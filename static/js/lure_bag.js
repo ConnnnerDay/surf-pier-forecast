@@ -64,7 +64,7 @@
 
   function filterLures(query, category, brand) {
     var q = query.trim().toLowerCase();
-    return luresDb.filter(function (l) {
+    var results = luresDb.filter(function (l) {
       if (category && l.category !== category) return false;
       if (brand && l.manufacturer !== brand) return false;
       if (q) {
@@ -76,6 +76,10 @@
       }
       return true;
     });
+    results.sort(function (a, b) {
+      return (b.popularity || 0) - (a.popularity || 0);
+    });
+    return results;
   }
 
   // ── render: bag count badge ───────────────────────────────────────────────
