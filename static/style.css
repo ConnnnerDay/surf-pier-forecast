@@ -1674,9 +1674,9 @@ h2 {
 
 .lure-picks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-  gap: 0.65rem;
-  margin-top: 0.65rem;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .lure-pick-card {
@@ -1702,20 +1702,38 @@ h2 {
 }
 
 .lure-pick-image {
-  background: #f0f4f8;
+  background: linear-gradient(160deg, #e8f0fe 0%, #f0f4f8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 90px;
-  padding: 0.5rem 0.75rem;
+  height: 130px;
+  padding: 1rem;
   border-bottom: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.lure-pick-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 110%, rgba(59,130,246,0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .lure-pick-image img {
-  max-width: 100%;
-  max-height: 72px;
+  max-width: 85%;
+  max-height: 100px;
   object-fit: contain;
   display: block;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+  transition: transform 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.lure-pick-card:hover .lure-pick-image img {
+  transform: scale(1.06);
 }
 
 .lure-pick-body {
@@ -2001,6 +2019,28 @@ h2 {
   margin: 0;
 }
 
+.lure-result-thumb {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, #e8f0fe 0%, #f0f4f8 100%);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  overflow: hidden;
+}
+
+.lure-result-thumb img {
+  max-width: 40px;
+  max-height: 40px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.1));
+}
+
 .lure-result-item {
   display: flex;
   align-items: flex-start;
@@ -2106,6 +2146,28 @@ h2 {
 .lure-your-bag-heading h3 {
   margin: 0;
   font-size: 0.95rem;
+}
+
+.lure-bag-thumb {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, #e8f0fe 0%, #f0f4f8 100%);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  overflow: hidden;
+}
+
+.lure-bag-thumb img {
+  max-width: 36px;
+  max-height: 36px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.1));
 }
 
 .lure-bag-row {
