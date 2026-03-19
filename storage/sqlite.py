@@ -111,9 +111,17 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
     return row is not None
 
 
+_KNOWN_TABLES = frozenset({
+    "users", "profiles", "locations", "forecasts",
+    "forecast_cache", "catch_log", "reg_scrape_cache",
+})
+
+
 def _column_names(conn: sqlite3.Connection, table: str) -> List[str]:
-    if not _table_exists(conn, table):
+    if table not in _KNOWN_TABLES or not _table_exists(conn, table):
         return []
+    # PRAGMA does not support parameter binding; validate against the known-table
+    # whitelist above before interpolating the name into the statement.
     rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
     return [r["name"] for r in rows]
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import threading
 import time
@@ -31,13 +32,19 @@ bp = Blueprint("auth", __name__)
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 10
 _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
+_REGISTER_RATE_LIMIT_MAX_ATTEMPTS = 5
+_REGISTER_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
+
 # ---------------------------------------------------------------------------
-# Server-side IP-keyed rate limiting for the login endpoint.
+# Server-side IP-keyed rate limiting for the login and registration endpoints.
 #
-# The previous implementation stored attempt counts in the session cookie,
-# which an attacker could trivially bypass by clearing cookies or making
-# requests without a session.  This implementation keys on the client IP so
-# the limit cannot be circumvented by the client.
+# Keying on the client IP prevents circumvention by clearing cookies or making
+# requests without a session.
+#
+# X-Forwarded-For is only trusted when TRUSTED_PROXY=1 is set in the
+# environment (i.e. the app is explicitly deployed behind a reverse proxy).
+# Without that flag, request.remote_addr is used directly, preventing an
+# attacker from spoofing arbitrary IPs to bypass rate limits.
 #
 # Data structure: {ip: (window_start_ts, attempt_count)}
 # A single lock guards all reads and writes.
@@ -45,50 +52,99 @@ _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 _rate_limit_store: Dict[str, Tuple[float, int]] = {}
 _rate_limit_lock = threading.Lock()
 
+_register_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_register_rate_limit_lock = threading.Lock()
+
+# Only trust X-Forwarded-For when running behind a known reverse proxy.
+_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
+
 
 def _client_ip() -> str:
-    """Return the best-effort client IP, honouring X-Forwarded-For when set.
+    """Return the best-effort client IP.
 
-    In production behind a reverse proxy (nginx/gunicorn) the real IP arrives
-    in the X-Forwarded-For header.  We take only the first entry (the original
-    client) to prevent IP spoofing via header injection.
+    X-Forwarded-For is only honoured when the app is explicitly configured to
+    run behind a trusted reverse proxy (``TRUSTED_PROXY=1``).  Without that
+    flag, blindly reading X-Forwarded-For would let any client forge a
+    different IP on every request and trivially bypass IP-based rate limiting.
     """
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    if _TRUST_PROXY:
+        forwarded = request.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            # Take the left-most entry — the original client IP.
+            return forwarded.split(",")[0].strip()
     return request.remote_addr or "unknown"
 
 
-def _login_is_rate_limited() -> bool:
-    """Return True if the current client IP has exceeded the login rate limit."""
+def _is_rate_limited(
+    store: Dict[str, Tuple[float, int]],
+    lock: threading.Lock,
+    max_attempts: int,
+    window_s: float,
+) -> bool:
+    """Return True if the current client IP has exceeded the given rate limit."""
     ip = _client_ip()
     now = time.time()
-    with _rate_limit_lock:
-        start, attempts = _rate_limit_store.get(ip, (now, 0))
-        if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
-            # Window expired — reset
-            _rate_limit_store[ip] = (now, 0)
+    with lock:
+        start, attempts = store.get(ip, (now, 0))
+        if now - start > window_s:
+            store[ip] = (now, 0)
             return False
-        return attempts >= _LOGIN_RATE_LIMIT_MAX_ATTEMPTS
+        return attempts >= max_attempts
+
+
+def _record_attempt(
+    store: Dict[str, Tuple[float, int]],
+    lock: threading.Lock,
+    window_s: float,
+) -> None:
+    """Increment the attempt counter for the current client IP."""
+    ip = _client_ip()
+    now = time.time()
+    with lock:
+        start, attempts = store.get(ip, (now, 0))
+        if now - start > window_s:
+            store[ip] = (now, 1)
+        else:
+            store[ip] = (start, attempts + 1)
+
+
+def _clear_attempts(
+    store: Dict[str, Tuple[float, int]],
+    lock: threading.Lock,
+) -> None:
+    """Clear the attempt counter for the current client IP."""
+    ip = _client_ip()
+    with lock:
+        store.pop(ip, None)
+
+
+def _login_is_rate_limited() -> bool:
+    return _is_rate_limited(
+        _rate_limit_store, _rate_limit_lock,
+        _LOGIN_RATE_LIMIT_MAX_ATTEMPTS, _LOGIN_RATE_LIMIT_WINDOW_S,
+    )
 
 
 def _record_login_failure() -> None:
-    """Increment the failure counter for the current client IP."""
-    ip = _client_ip()
-    now = time.time()
-    with _rate_limit_lock:
-        start, attempts = _rate_limit_store.get(ip, (now, 0))
-        if now - start > _LOGIN_RATE_LIMIT_WINDOW_S:
-            _rate_limit_store[ip] = (now, 1)
-        else:
-            _rate_limit_store[ip] = (start, attempts + 1)
+    _record_attempt(_rate_limit_store, _rate_limit_lock, _LOGIN_RATE_LIMIT_WINDOW_S)
 
 
 def _clear_login_failures() -> None:
-    """Clear the failure counter for the current client IP on successful login."""
-    ip = _client_ip()
-    with _rate_limit_lock:
-        _rate_limit_store.pop(ip, None)
+    _clear_attempts(_rate_limit_store, _rate_limit_lock)
+
+
+def _register_is_rate_limited() -> bool:
+    return _is_rate_limited(
+        _register_rate_limit_store, _register_rate_limit_lock,
+        _REGISTER_RATE_LIMIT_MAX_ATTEMPTS, _REGISTER_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _record_register_attempt() -> None:
+    _record_attempt(
+        _register_rate_limit_store, _register_rate_limit_lock,
+        _REGISTER_RATE_LIMIT_WINDOW_S,
+    )
 
 
 def _password_complexity_error(password: str) -> str:
@@ -162,6 +218,11 @@ def register() -> Any:
         if g.user is not None:
             return redirect(url_for("views.index"))
         return render_template("register.html", error=None)
+    if _register_is_rate_limited():
+        return render_template(
+            "register.html",
+            error="Too many registration attempts. Please try again later.",
+        )
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm", "")
@@ -190,6 +251,7 @@ def register() -> Any:
         return render_template(
             "register.html", error="Passwords do not match.", username=username
         )
+    _record_register_attempt()
     user_id = create_user(username, password)
     if user_id is None:
         return render_template(
