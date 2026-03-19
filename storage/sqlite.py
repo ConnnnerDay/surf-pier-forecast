@@ -13,6 +13,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 logger = logging.getLogger(__name__)
 
+# Dummy hash used in authenticate_user to ensure a constant-time password check
+# is always performed, regardless of whether the username exists.  This
+# prevents an attacker from enumerating valid usernames by measuring how long
+# the login endpoint takes to respond.
+_DUMMY_HASH = generate_password_hash("__sentinel__", method="pbkdf2:sha256")
+
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "app.db")
 
 SCHEMA = """
@@ -236,7 +242,9 @@ def init_db() -> None:
 
 
 def create_user(username: str, password: str) -> Optional[int]:
-    pw_hash = generate_password_hash(password)
+    # Explicitly specify the algorithm so we are not dependent on Werkzeug's
+    # default changing in a future release.
+    pw_hash = generate_password_hash(password, method="pbkdf2:sha256")
     conn = get_db()
     try:
         cur = conn.execute(
@@ -263,13 +271,14 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
         ).fetchone()
     finally:
         conn.close()
-    if (
-        row
-        and row["password_hash"]
-        and check_password_hash(row["password_hash"], password)
-    ):
-        return {"id": row["id"], "username": row["username"]}
-    return None
+    # Always run the hash check to prevent timing-based user enumeration.
+    # When no matching row exists, compare against the dummy hash so the
+    # response time is indistinguishable from a real (failed) comparison.
+    stored_hash = (row["password_hash"] if (row and row["password_hash"]) else _DUMMY_HASH)
+    password_ok = check_password_hash(stored_hash, password)
+    if not password_ok or not row:
+        return None
+    return {"id": row["id"], "username": row["username"]}
 
 
 def get_user(user_id: int) -> Optional[Dict[str, Any]]:

@@ -75,6 +75,23 @@ def _client_ip() -> str:
     return request.remote_addr or "unknown"
 
 
+_PRUNE_EVERY = 200  # prune expired entries every N rate-limit checks
+_prune_counter = 0
+
+
+def _prune_store(store: Dict[str, Tuple[float, int]], window_s: float) -> None:
+    """Remove entries whose rate-limit window has expired.
+
+    Called periodically (every _PRUNE_EVERY checks) to keep the in-memory
+    stores from growing without bound when the app is hit from many unique IPs.
+    Must be called while holding the relevant lock.
+    """
+    now = time.time()
+    expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
+    for ip in expired:
+        del store[ip]
+
+
 def _is_rate_limited(
     store: Dict[str, Tuple[float, int]],
     lock: threading.Lock,
@@ -82,9 +99,13 @@ def _is_rate_limited(
     window_s: float,
 ) -> bool:
     """Return True if the current client IP has exceeded the given rate limit."""
+    global _prune_counter
     ip = _client_ip()
     now = time.time()
     with lock:
+        _prune_counter += 1
+        if _prune_counter % _PRUNE_EVERY == 0:
+            _prune_store(store, window_s)
         start, attempts = store.get(ip, (now, 0))
         if now - start > window_s:
             store[ip] = (now, 0)
