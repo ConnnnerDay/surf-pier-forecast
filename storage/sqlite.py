@@ -445,8 +445,12 @@ def change_password(user_id: int, new_password: str) -> int:
     pw_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
     conn = get_db()
     try:
+        # Also clear any pending email-verification token: it was issued under
+        # the old credentials, so it should not remain valid after a password
+        # change (the user can request a new verification email afterwards).
         conn.execute(
-            "UPDATE users SET password_hash = ?, session_version = session_version + 1 "
+            "UPDATE users SET password_hash = ?, session_version = session_version + 1, "
+            "email_verification_token = NULL, email_verification_sent_at = NULL "
             "WHERE id = ?",
             (pw_hash, user_id),
         )

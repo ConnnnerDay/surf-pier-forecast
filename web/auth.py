@@ -358,12 +358,18 @@ def login() -> Any:
             "login.html", error="Please enter both fields.", username=username
         )
     if _login_is_rate_limited():
+        logger.warning("security.login_ip_rate_limited ip=%s", _client_ip())
         return render_template(
             "login.html",
             error="Too many attempts. Please wait a few minutes and try again.",
             username=username,
         )
     if _account_is_locked(username):
+        logger.warning(
+            "security.login_account_locked username=%r ip=%s",
+            username,
+            _client_ip(),
+        )
         return render_template(
             "login.html",
             error="Too many failed attempts. Please try again in 30 minutes.",
@@ -373,11 +379,17 @@ def login() -> Any:
     if user is None:
         _record_login_failure()
         _record_account_failure(username)
+        logger.warning(
+            "security.login_failed username=%r ip=%s",
+            username,
+            _client_ip(),
+        )
         return render_template(
             "login.html", error="Invalid username or password.", username=username
         )
     _clear_login_failures()
     _clear_account_failures(username)
+    logger.info("security.login_success user_id=%s ip=%s", user["id"], _client_ip())
     # Regenerate session to prevent session fixation: preserve the anonymous
     # location choice, then clear everything else before setting credentials.
     prior_location_id = session.get("location_id")
@@ -387,6 +399,7 @@ def login() -> Any:
     new_version = bump_session_version(user["id"])
     session["user_id"] = user["id"]
     session["session_version"] = new_version
+    session["login_at"] = time.time()  # used for absolute session-age enforcement
     session.permanent = True
     # Issue a fresh CSRF token post-login so any token captured before
     # authentication is no longer valid for authenticated endpoints.
