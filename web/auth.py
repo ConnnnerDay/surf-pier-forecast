@@ -397,6 +397,12 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "outlook.pt", "outlook.be", "outlook.nl", "outlook.at", "outlook.dk",
     "outlook.fi", "outlook.se", "outlook.no", "outlook.ie", "outlook.sg",
     "outlook.jp", "outlook.kr", "outlook.ph", "outlook.my",
+    "outlook.co.nz", "outlook.co.za", "outlook.co.th", "outlook.com.vn",
+    "outlook.com.ng", "outlook.com.pk", "outlook.com.co", "outlook.com.pe",
+    "outlook.com.tr", "outlook.hr", "outlook.rs", "outlook.hu",
+    "outlook.ro", "outlook.cz", "outlook.sk", "outlook.bg",
+    "outlook.gr", "outlook.lv", "outlook.lt", "outlook.ee",
+    "outlook.sa", "outlook.ae", "outlook.co.il",
     # Hotmail regional
     "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
     "hotmail.es", "hotmail.it", "hotmail.com.au", "hotmail.co.in",
@@ -404,12 +410,20 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "hotmail.pt", "hotmail.be", "hotmail.nl", "hotmail.gr",
     "hotmail.dk", "hotmail.fi", "hotmail.se", "hotmail.no",
     "hotmail.co.jp", "hotmail.rs", "hotmail.hr",
+    "hotmail.co.nz", "hotmail.co.za", "hotmail.com.tr", "hotmail.com.vn",
+    "hotmail.com.co", "hotmail.com.pe", "hotmail.hu", "hotmail.ro",
+    "hotmail.cz", "hotmail.sk", "hotmail.bg", "hotmail.lv",
+    "hotmail.lt", "hotmail.ee",
     # Live regional
     "live.com", "live.co.uk", "live.fr", "live.de", "live.com.au",
     "live.co.in", "live.it", "live.ca", "live.be", "live.nl",
     "live.at", "live.dk", "live.fi", "live.se", "live.no", "live.ie",
     "live.sg", "live.jp", "live.in", "live.cl",
     "live.com.ar", "live.com.mx", "live.com.pt",
+    "live.co.nz", "live.co.za", "live.co.th", "live.com.vn",
+    "live.com.tr", "live.ph", "live.my", "live.kr",
+    "live.hu", "live.ro", "live.cz", "live.sk", "live.bg",
+    "live.lv", "live.lt", "live.ee", "live.sa", "live.ae",
     "msn.com",
 
     # ── Yahoo / Oath ──────────────────────────────────────────────────────────
@@ -418,15 +432,18 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "yahoo.co.in", "yahoo.com.br", "yahoo.com.ar", "yahoo.com.mx",
     "yahoo.com.hk", "yahoo.com.sg", "yahoo.com.ph", "yahoo.com.tw",
     "yahoo.com.my", "yahoo.com.vn", "yahoo.com.pe", "yahoo.com.co",
+    "yahoo.com.pk", "yahoo.co.id", "yahoo.co.nz", "yahoo.co.za",
+    "yahoo.co.th",
     "yahoo.gr", "yahoo.ro", "yahoo.hu", "yahoo.dk", "yahoo.se",
     "yahoo.no", "yahoo.fi", "yahoo.be", "yahoo.at", "yahoo.pt",
     "yahoo.nl", "yahoo.ie", "yahoo.in",
+    "yahoo.pl", "yahoo.cz", "yahoo.sk", "yahoo.hr", "yahoo.rs",
+    "yahoo.bg", "yahoo.lv", "yahoo.lt",
     "ymail.com",
 
     # ── Apple — standard + Hide My Email (Private Relay) ─────────────────────
-    # Standard Apple accounts
     "icloud.com", "me.com", "mac.com",
-    # Hide My Email relay addresses (format: random@privaterelay.appleid.com)
+    # Hide My Email / Private Relay (format: random@privaterelay.appleid.com)
     "privaterelay.appleid.com",
 
     # ── AOL / Verizon Media ───────────────────────────────────────────────────
@@ -441,6 +458,7 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "earthlink.net",
     "windstream.net",
     "centurylink.net", "lumen.com",
+    "mindspring.com",           # legacy EarthLink brand
 
     # ── Proton ────────────────────────────────────────────────────────────────
     "proton.me", "protonmail.com", "pm.me",
@@ -459,13 +477,17 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "fastmail.com", "fastmail.fm",
 
     # ── Yandex (Russia / CIS) ────────────────────────────────────────────────
-    "yandex.com", "yandex.ru", "ya.ru",
+    "yandex.com", "yandex.ru", "yandex.ua", "yandex.by",
+    "yandex.kz", "yandex.com.tr", "ya.ru",
 
     # ── Mail.ru / VK (Russia) ─────────────────────────────────────────────────
     "mail.ru", "list.ru", "inbox.ru", "bk.ru", "internet.ru",
 
     # ── Rambler (Russia) ──────────────────────────────────────────────────────
     "rambler.ru", "lenta.ru", "ro.ru",
+
+    # ── UKR.net (Ukraine) ────────────────────────────────────────────────────
+    "ukr.net",
 
     # ── NetEase / 163 (China) ─────────────────────────────────────────────────
     "163.com", "126.com", "yeah.net",
@@ -479,43 +501,111 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     # ── Sohu (China) ──────────────────────────────────────────────────────────
     "sohu.com",
 
-    # ── Naver / Daum / Kakao (South Korea) ───────────────────────────────────
-    "naver.com", "hanmail.net", "daum.net", "kakao.com",
+    # ── 21CN (China) ──────────────────────────────────────────────────────────
+    "21cn.com",
+
+    # ── Naver / Daum / Kakao / Nate (South Korea) ────────────────────────────
+    "naver.com", "hanmail.net", "daum.net", "kakao.com", "nate.com",
+
+    # ── Japanese carrier / ISP email ─────────────────────────────────────────
+    "docomo.ne.jp", "softbank.ne.jp", "i.softbank.jp",
+    "ezweb.ne.jp", "au.com",
+    "biglobe.ne.jp", "nifty.com",
 
     # ── Rediffmail (India) ───────────────────────────────────────────────────
-    "rediffmail.com",
+    "rediffmail.com", "indiatimes.com",
 
-    # ── T-Online / Telekom (Germany) ──────────────────────────────────────────
+    # ── UK ISPs ──────────────────────────────────────────────────────────────
+    "btinternet.com", "bt.com", "btopenworld.com",
+    "sky.com", "skymail.com",
+    "virginmedia.com", "virgin.net",
+    "talktalk.net", "talktalk.co.uk",
+    "ntlworld.com",
+    "plusnet.com",
+    "tiscali.co.uk",
+
+    # ── German ISPs ──────────────────────────────────────────────────────────
     "t-online.de",
-
-    # ── Freenet (Germany) ────────────────────────────────────────────────────
     "freenet.de",
+    "arcor.de", "vodafone.de",
+    "kabelbw.de",
 
-    # ── Orange / SFR / Laposte (France) ──────────────────────────────────────
+    # ── French ISPs / portals ────────────────────────────────────────────────
     "orange.fr", "sfr.fr", "neuf.fr", "laposte.net",
+    "free.fr", "wanadoo.fr",
+    "bbox.fr", "bouyguestelecom.fr",
+    "club-internet.fr",
 
-    # ── Libero / Virgilio / Tiscali (Italy) ──────────────────────────────────
+    # ── Italian ISP / portals ────────────────────────────────────────────────
     "libero.it", "virgilio.it", "alice.it", "tiscali.it",
+    "tim.it", "vodafone.it",
 
-    # ── Telstra (Australia) ───────────────────────────────────────────────────
+    # ── Dutch ISPs ───────────────────────────────────────────────────────────
+    "ziggo.nl", "kpn.nl", "hetnet.nl", "planet.nl",
+    "xs4all.nl", "casema.nl",
+
+    # ── Belgian ISPs ────────────────────────────────────────────────────────
+    "skynet.be", "telenet.be", "proximus.be",
+
+    # ── Swedish / Norwegian / Danish / Finnish ISPs ───────────────────────────
+    "telia.com", "swipnet.se", "tele2.se",
+    "online.no", "telenor.no",
+    "tdc.dk", "telenor.dk",
+    "kolumbus.fi",
+
+    # ── Polish portals (dominant in Poland) ──────────────────────────────────
+    "wp.pl", "onet.pl", "interia.pl", "o2.pl", "gazeta.pl",
+
+    # ── Czech portals ────────────────────────────────────────────────────────
+    "seznam.cz", "centrum.cz", "email.cz", "volny.cz",
+
+    # ── Hungarian portals ────────────────────────────────────────────────────
+    "freemail.hu", "citromail.hu",
+
+    # ── Australian ISPs ──────────────────────────────────────────────────────
     "bigpond.com", "bigpond.net.au",
+    "optusnet.com.au", "iinet.net.au",
+    "westnet.com.au", "internode.on.net",
+
+    # ── New Zealand ISPs ─────────────────────────────────────────────────────
+    "xtra.co.nz", "slingshot.co.nz",
+
+    # ── South African ISPs ───────────────────────────────────────────────────
+    "mweb.co.za", "webmail.co.za", "vodamail.co.za",
 
     # ── Canadian ISPs ────────────────────────────────────────────────────────
     "rogers.com", "shaw.ca", "bell.net", "sympatico.ca",
-    "telus.net", "videotron.ca",
+    "telus.net", "videotron.ca", "eastlink.ca",
 
     # ── Brazilian portals ────────────────────────────────────────────────────
     "uol.com.br", "bol.com.br", "terra.com.br", "ig.com.br",
+    "r7.com", "msn.com.br",
+
+    # ── Other Latin American portals ─────────────────────────────────────────
+    "fibertel.com.ar",          # Argentina ISP
+    "speedy.com.ar",            # Argentina ISP
+    "telmex.net.mx",            # Mexico ISP
+
+    # ── Email relay / alias services (like Apple Hide My Email) ──────────────
+    "duck.com",                 # DuckDuckGo Email Protection
+    "mozmail.com",              # Firefox Relay
+    "simplelogin.io", "simplelogin.co", "slmail.me",  # SimpleLogin
+    "anonaddy.com", "anonaddy.me",  # AnonAddy / addy.io
 
     # ── Other privacy-focused / reputable independent providers ──────────────
-    "mailbox.org",          # Germany, privacy-first
+    "mailbox.org",              # Germany, privacy-first
     "posteo.de", "posteo.net",  # Germany, privacy-first
-    "mailfence.com",        # Belgium, encrypted
-    "runbox.com",           # Norway, privacy-first
-    "startmail.com",        # Netherlands, privacy-first
-    "disroot.org",          # Netherlands, open-source community
-    "cock.li",              # Reputable independent provider
-    "teknik.io",            # Privacy-focused
+    "mailfence.com",            # Belgium, encrypted
+    "runbox.com",               # Norway, privacy-first
+    "startmail.com",            # Netherlands, privacy-first
+    "disroot.org",              # Netherlands, open-source community
+    "riseup.net",               # Privacy/activism
+    "kolabnow.com",             # Switzerland, privacy
+    "countermail.com",          # Sweden, encrypted
+    "hushmail.com",             # Canada, encrypted
+    "lavabit.com",              # Privacy-focused (relaunched)
+    "cock.li",                  # Reputable independent provider
+    "teknik.io",                # Privacy-focused
 })
 
 
