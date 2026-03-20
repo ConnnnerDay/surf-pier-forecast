@@ -36,7 +36,7 @@ try:
 except ImportError:
     pass
 
-from flask import Flask, abort, g, render_template, request, send_from_directory, session
+from flask import Flask, abort, g, redirect, render_template, request, send_from_directory, session, url_for
 import werkzeug
 
 from storage.sqlite import init_db, get_user
@@ -153,6 +153,63 @@ def create_app() -> Flask:
                 g.user = None
         else:
             g.user = None
+
+    # Endpoints that do NOT require a confirmed email address.
+    # Everything else is gated so that unverified accounts cannot access the
+    # application.  Using a whitelist (rather than a blacklist) is the safer
+    # pattern: new routes are protected by default.
+    _VERIFICATION_EXEMPT_ENDPOINTS: frozenset[str] = frozenset({
+        # Auth flows
+        "auth.landing",
+        "auth.login",
+        "auth.register",
+        "auth.logout",
+        "auth.verify_email",
+        "auth.resend_verification",
+        "auth.verify_pending",
+        # Account management (users must be able to see/manage their account
+        # and change their password even before verifying).
+        "auth.account",
+        "auth.account_settings",
+        "auth.change_password_route",
+        "auth.delete_account_route",
+        # Location + profile setup wizard (users need to complete onboarding).
+        "views.setup",
+        "views.setup_search",
+        "views.setup_coords",
+        "views.setup_select",
+        "views.setup_favorite",
+        "views.profile",
+        # Static assets are served outside the blueprint system.
+        "static",
+    })
+
+    @app.before_request
+    def _require_email_verification() -> None:
+        """Redirect logged-in users with unconfirmed email away from protected routes.
+
+        Users who have provided an email address but have not yet confirmed it
+        are redirected to the "verify pending" page when they try to access any
+        route that is not on the exemption whitelist above.
+
+        Users created without an email address (legacy or anonymous accounts)
+        are not affected — this gate only triggers when email is present but
+        unconfirmed.
+        """
+        # Only applies to authenticated users who have an unconfirmed email.
+        if g.user is None:
+            return
+        if g.user.get("email_confirmed"):
+            return
+        if not g.user.get("email"):
+            # No email on file — skip enforcement (pre-email-requirement accounts).
+            return
+
+        endpoint = request.endpoint
+        if endpoint is None or endpoint in _VERIFICATION_EXEMPT_ENDPOINTS:
+            return
+
+        return redirect(url_for("auth.verify_pending"))  # type: ignore[return-value]
 
     @app.before_request
     def _csrf_protect() -> None:

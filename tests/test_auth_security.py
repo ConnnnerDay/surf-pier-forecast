@@ -6,11 +6,13 @@ import pytest
 
 from app import create_app
 from storage.sqlite import (
+    confirm_email,
     create_user,
     get_preferences,
     get_user,
     init_db,
     save_preferences,
+    set_email_verification_token,
 )
 
 
@@ -48,6 +50,7 @@ def test_register_requires_complex_password(client):
         data={
             "csrf_token": token,
             "username": "complex_user",
+            "email": "complex@example.com",
             "password": "alllowercase",
             "confirm": "alllowercase",
         },
@@ -93,6 +96,7 @@ def test_account_settings_updates_preferences(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
 
     page = client.get("/account")
     token = _csrf_from_html(page.data)
@@ -128,6 +132,7 @@ def test_setup_shows_favorites_for_logged_in_user(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
 
     resp = client.get("/setup")
     assert resp.status_code == 200
@@ -141,6 +146,7 @@ def test_setup_favorite_toggle_updates_preferences(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
 
     page = client.get("/setup")
     token = _csrf_from_html(page.data)
@@ -168,6 +174,7 @@ def test_setup_location_select_forms_include_valid_csrf(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
 
     page = client.get("/setup")
     html = page.data.decode("utf-8")
@@ -200,6 +207,7 @@ def test_index_requires_profile_after_location_selected(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
         sess["location_id"] = "wrightsville-beach-nc"
 
     resp = client.get("/", follow_redirects=False)
@@ -219,6 +227,7 @@ def test_index_allowed_once_profile_exists(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
         sess["location_id"] = "wrightsville-beach-nc"
 
     resp = client.get("/", follow_redirects=False)
@@ -231,6 +240,7 @@ def test_setup_favorite_rejects_external_next_redirect(client):
 
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
 
     page = client.get("/setup")
     token = _csrf_from_html(page.data)
@@ -242,3 +252,175 @@ def test_setup_favorite_rejects_external_next_redirect(client):
     )
     assert resp.status_code == 302
     assert resp.headers["Location"].endswith("/setup")
+
+
+# ---------------------------------------------------------------------------
+# Email verification tests
+# ---------------------------------------------------------------------------
+
+
+def test_register_requires_email(client):
+    """Registration without an email address is rejected."""
+    page = client.get("/register")
+    token = _csrf_from_html(page.data)
+    resp = client.post(
+        "/register",
+        data={
+            "csrf_token": token,
+            "username": "no_email_user",
+            "password": "Aa123456",
+            "confirm": "Aa123456",
+        },
+    )
+    assert resp.status_code == 200
+    assert b"fill in all fields" in resp.data
+
+
+def test_register_rejects_invalid_email(client):
+    """Registration with a malformed email is rejected."""
+    page = client.get("/register")
+    token = _csrf_from_html(page.data)
+    resp = client.post(
+        "/register",
+        data={
+            "csrf_token": token,
+            "username": "bad_email_user",
+            "email": "not-an-email",
+            "password": "Aa123456",
+            "confirm": "Aa123456",
+        },
+    )
+    assert resp.status_code == 200
+    assert b"valid email" in resp.data
+
+
+def test_register_rejects_duplicate_email(client):
+    """Two accounts cannot share the same email address."""
+    uid = create_user("first_email_user", "Aa123456", "shared@example.com")
+    assert uid is not None
+
+    page = client.get("/register")
+    token = _csrf_from_html(page.data)
+    resp = client.post(
+        "/register",
+        data={
+            "csrf_token": token,
+            "username": "second_email_user",
+            "email": "shared@example.com",
+            "password": "Aa123456",
+            "confirm": "Aa123456",
+        },
+    )
+    assert resp.status_code == 200
+    assert b"already exists" in resp.data
+
+
+def test_unverified_user_blocked_from_dashboard(client):
+    """A logged-in user with an unconfirmed email cannot reach the dashboard."""
+    uid = create_user("unverified_dash_user", "Aa123456", "unverified@example.com")
+    assert uid is not None
+    save_preferences(
+        uid,
+        location_id="wrightsville-beach-nc",
+        default_location_id="wrightsville-beach-nc",
+        fishing_profile={"fishing_types": ["surf"], "targets": ["anything"]},
+    )
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["session_version"] = 0
+        sess["location_id"] = "wrightsville-beach-nc"
+
+    resp = client.get("/", follow_redirects=False)
+    assert resp.status_code == 302
+    assert "/verify-pending" in resp.headers["Location"]
+
+
+def test_verified_user_can_access_dashboard(client):
+    """A user whose email is confirmed can reach the dashboard normally."""
+    uid = create_user("verified_dash_user", "Aa123456", "verified@example.com")
+    assert uid is not None
+    confirm_email(uid)
+    save_preferences(
+        uid,
+        location_id="wrightsville-beach-nc",
+        default_location_id="wrightsville-beach-nc",
+        fishing_profile={"fishing_types": ["surf"], "targets": ["anything"]},
+    )
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["session_version"] = 0
+        sess["location_id"] = "wrightsville-beach-nc"
+
+    resp = client.get("/", follow_redirects=False)
+    assert resp.status_code == 200
+
+
+def test_unverified_user_can_access_account_page(client):
+    """Unverified users must still be able to reach /account to resend the link."""
+    uid = create_user("unverified_acct_user", "Aa123456", "unverified_acct@example.com")
+    assert uid is not None
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["session_version"] = 0
+
+    resp = client.get("/account", follow_redirects=False)
+    assert resp.status_code == 200
+
+
+def test_verify_email_token_confirms_account(client):
+    """Clicking a valid verification link sets email_confirmed = True."""
+    uid = create_user("token_verify_user", "Aa123456", "tokenverify@example.com")
+    assert uid is not None
+
+    token = "validtoken123"
+    set_email_verification_token(uid, token)
+
+    resp = client.get(f"/verify-email/{token}", follow_redirects=False)
+    assert resp.status_code == 200
+    assert b"verified" in resp.data.lower()
+
+    user = get_user(uid)
+    assert user is not None
+    assert user["email_confirmed"] is True
+
+
+def test_verify_email_invalid_token_rejected(client):
+    """An unknown verification token returns the error page."""
+    resp = client.get("/verify-email/totallybogustoken", follow_redirects=False)
+    assert resp.status_code == 200
+    assert b"invalid or has expired" in resp.data
+
+
+def test_resend_verification_rate_limited_per_account(client, monkeypatch):
+    """A second resend within the throttle window is rejected."""
+    import time as _time
+
+    uid = create_user("resend_throttle_user", "Aa123456", "resend_throttle@example.com")
+    assert uid is not None
+
+    # Plant a recent sent_at timestamp so the per-account throttle fires.
+    monkeypatch.setattr("storage.sqlite.DB_PATH", monkeypatch._patches[-1].temp_path
+                        if hasattr(monkeypatch, "_patches") else None) if False else None
+
+    # Set a very recent sent_at by doing a legitimate first resend.
+    set_email_verification_token(uid, "firsttoken")
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["session_version"] = 0
+
+    page = client.get("/verify-pending")
+    token = _csrf_from_html(page.data)
+
+    # Immediate second resend should be throttled.
+    resp = client.post(
+        "/resend-verification",
+        data={"csrf_token": token},
+        follow_redirects=False,
+    )
+    # Throttled → rendered page (200) with an error, not a redirect.
+    assert resp.status_code == 200
+    assert b"just sent" in resp.data or b"wait" in resp.data.lower()

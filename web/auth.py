@@ -7,6 +7,7 @@ import re
 import secrets
 import threading
 import time
+from datetime import datetime
 from typing import Any, Dict, Tuple
 
 import logging
@@ -34,6 +35,7 @@ from storage.db import (
     create_user,
     delete_user,
     get_all_user_photo_paths,
+    get_email_verification_sent_at,
     get_preferences,
     get_recent_logs,
     get_user_by_email,
@@ -125,6 +127,17 @@ _register_rate_limit_lock = threading.Lock()
 
 _refresh_rate_limit_store: Dict[str, Tuple[float, int]] = {}
 _refresh_rate_limit_lock = threading.Lock()
+
+# Resend-verification: 3 attempts per 30 minutes per IP.
+_RESEND_RATE_LIMIT_MAX_ATTEMPTS = 3
+_RESEND_RATE_LIMIT_WINDOW_S = 30 * 60
+
+_resend_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_resend_rate_limit_lock = threading.Lock()
+
+# Minimum seconds that must elapse between two verification emails for the
+# same account (DB-level per-user throttle, independent of IP).
+_RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 
 # Keyed by lowercase username rather than IP.
 _account_lockout_store: Dict[str, Tuple[float, int]] = {}
@@ -485,7 +498,12 @@ def verify_email(token: str) -> Any:
 
 @bp.route("/resend-verification", methods=["POST"])
 def resend_verification() -> Any:
-    """Resend the email verification link to the logged-in user."""
+    """Resend the email verification link to the logged-in user.
+
+    Protected by two independent throttles:
+    - IP-based: 3 resends per 30 minutes per source IP.
+    - Per-account: at most one resend every 2 minutes (checked via DB timestamp).
+    """
     if g.user is None:
         return redirect(url_for("auth.login"))
     if g.user.get("email_confirmed"):
@@ -493,11 +511,54 @@ def resend_verification() -> Any:
     email = g.user.get("email")
     if not email:
         return redirect(url_for("auth.account"))
+
+    # IP-based rate limit.
+    if _is_rate_limited(
+        _resend_rate_limit_store,
+        _resend_rate_limit_lock,
+        _RESEND_RATE_LIMIT_MAX_ATTEMPTS,
+        _RESEND_RATE_LIMIT_WINDOW_S,
+    ):
+        return render_template(
+            "verify_pending.html",
+            error="Too many resend attempts. Please wait 30 minutes before trying again.",
+        )
+
+    # Per-account DB throttle: don't resend if a recent email was just sent.
+    sent_at_raw = get_email_verification_sent_at(g.user["id"])
+    if sent_at_raw:
+        try:
+            from datetime import timezone as _tz
+            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=_tz.utc)
+            elapsed = (datetime.now(tz=_tz.utc) - sent_at).total_seconds()
+            if elapsed < _RESEND_MIN_INTERVAL_S:
+                wait = int(_RESEND_MIN_INTERVAL_S - elapsed)
+                return render_template(
+                    "verify_pending.html",
+                    error=f"A verification email was just sent. Please wait {wait} seconds before requesting another.",
+                )
+        except Exception:
+            pass
+
+    _record_attempt(_resend_rate_limit_store, _resend_rate_limit_lock, _RESEND_RATE_LIMIT_WINDOW_S)
     token = secrets.token_urlsafe(32)
     set_email_verification_token(g.user["id"], token)
     base_url = request.host_url
     send_verification_email(email, g.user["username"], token, base_url)
-    return redirect(url_for("auth.account", verify_sent="1"))
+    return redirect(url_for("auth.verify_pending", sent="1"))
+
+
+@bp.route("/verify-pending")
+def verify_pending() -> Any:
+    """Holding page shown to logged-in users who have not yet verified their email."""
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+    if g.user.get("email_confirmed"):
+        return redirect(url_for("views.index"))
+    return render_template(
+        "verify_pending.html",
+        sent=request.args.get("sent") == "1",
+    )
 
 
 @bp.route("/logout", methods=["POST"])

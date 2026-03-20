@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -331,28 +332,55 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     return {"id": row["id"]} if row else None
 
 
+def _hash_verification_token(token: str) -> str:
+    """Return the SHA-256 hex digest of a verification token.
+
+    Tokens are stored hashed so that a database read alone cannot produce a
+    working verification URL.  The raw token travels only in the email link.
+    """
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def set_email_verification_token(user_id: int, token: str) -> None:
-    """Store a verification token and record when it was sent."""
+    """Hash *token* and store it along with the current timestamp."""
+    token_hash = _hash_verification_token(token)
     conn = get_db()
     try:
         conn.execute(
             "UPDATE users SET email_verification_token = ?, "
             "email_verification_sent_at = datetime('now') WHERE id = ?",
-            (token, user_id),
+            (token_hash, user_id),
         )
         conn.commit()
     finally:
         conn.close()
 
 
+def get_email_verification_sent_at(user_id: int) -> Optional[str]:
+    """Return the ISO timestamp of the last verification email, or None."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT email_verification_sent_at FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    return row["email_verification_sent_at"] if row else None
+
+
 def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
-    """Return the user matching *token* if the token was sent within 24 hours."""
+    """Return the user matching *token* if the token was sent within 24 hours.
+
+    The token is hashed before querying so the raw value never touches the DB.
+    """
+    token_hash = _hash_verification_token(token)
     conn = get_db()
     try:
         row = conn.execute(
             "SELECT id, email_confirmed, email_verification_sent_at "
             "FROM users WHERE email_verification_token = ? AND is_anonymous = 0",
-            (token,),
+            (token_hash,),
         ).fetchone()
     finally:
         conn.close()
@@ -362,7 +390,6 @@ def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
     sent_at_raw = row["email_verification_sent_at"]
     if sent_at_raw:
         try:
-            from datetime import timezone
             sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
             now = datetime.now(tz=timezone.utc)
             if (now - sent_at).total_seconds() > 86400:
