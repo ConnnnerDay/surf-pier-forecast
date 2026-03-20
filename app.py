@@ -36,7 +36,7 @@ try:
 except ImportError:
     pass
 
-from flask import Flask, abort, g, request, send_from_directory, session
+from flask import Flask, abort, g, redirect, render_template, request, send_from_directory, session, url_for
 import werkzeug
 
 from storage.sqlite import init_db, get_user
@@ -154,13 +154,99 @@ def create_app() -> Flask:
         else:
             g.user = None
 
+    # Endpoints that do NOT require a confirmed email address.
+    # Everything else is gated so that unverified accounts cannot access the
+    # application.  Using a whitelist (rather than a blacklist) is the safer
+    # pattern: new routes are protected by default.
+    _VERIFICATION_EXEMPT_ENDPOINTS: frozenset[str] = frozenset({
+        # Auth flows
+        "auth.landing",
+        "auth.login",
+        "auth.register",
+        "auth.logout",
+        "auth.verify_email",
+        "auth.resend_verification",
+        "auth.verify_pending",
+        # Account management (users must be able to see/manage their account
+        # and change their password even before verifying).
+        "auth.account",
+        "auth.account_settings",
+        "auth.change_password_route",
+        "auth.delete_account_route",
+        # Location + profile setup wizard (users need to complete onboarding).
+        "views.setup",
+        "views.setup_search",
+        "views.setup_coords",
+        "views.setup_select",
+        "views.setup_favorite",
+        "views.profile",
+        # Static assets are served outside the blueprint system.
+        "static",
+    })
+
+    @app.before_request
+    def _require_email_verification() -> None:
+        """Redirect logged-in users with unconfirmed email away from protected routes.
+
+        Users who have provided an email address but have not yet confirmed it
+        are redirected to the "verify pending" page when they try to access any
+        route that is not on the exemption whitelist above.
+
+        Users created without an email address (legacy or anonymous accounts)
+        are not affected — this gate only triggers when email is present but
+        unconfirmed.
+        """
+        # Only applies to authenticated users who have an unconfirmed email.
+        if g.user is None:
+            return
+        if g.user.get("email_confirmed"):
+            return
+        if not g.user.get("email"):
+            # No email on file — skip enforcement (pre-email-requirement accounts).
+            return
+
+        endpoint = request.endpoint
+        if endpoint is None or endpoint in _VERIFICATION_EXEMPT_ENDPOINTS:
+            return
+
+        return redirect(url_for("auth.verify_pending"))  # type: ignore[return-value]
+
     @app.before_request
     def _csrf_protect() -> None:
-        """Require CSRF token for browser form POST requests."""
-        if request.method != "POST":
+        """Require CSRF token for browser form POST requests.
+
+        JSON API endpoints are exempt from the double-submit-cookie CSRF check
+        because the session cookie is SameSite=Lax, which prevents browsers
+        from sending it on cross-origin XHR/fetch POST requests.  As a belt-
+        and-suspenders measure we also reject JSON state-changing requests that
+        arrive without a same-origin Origin or Referer header, blocking the
+        unlikely case where SameSite protection is not enforced (e.g. very old
+        browsers or non-browser HTTP clients that have somehow obtained a cookie).
+        """
+        if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
             return
+
         if request.is_json:
+            # For JSON API calls, verify that the request comes from this
+            # origin.  Allow missing Origin/Referer only for same-host requests
+            # (e.g. server-side tests or native mobile clients).
+            origin = request.headers.get("Origin", "")
+            referer = request.headers.get("Referer", "")
+            host = request.host  # includes port if non-standard
+            if origin:
+                # origin is "scheme://host[:port]" — must match our host exactly.
+                from urllib.parse import urlparse as _urlparse
+                parsed = _urlparse(origin)
+                if parsed.netloc != host:
+                    abort(400)
+            elif referer:
+                from urllib.parse import urlparse as _urlparse
+                parsed = _urlparse(referer)
+                if parsed.netloc != host:
+                    abort(400)
+            # No Origin/Referer — allow (same-host curl, mobile app, tests).
             return
+
         if request.blueprint not in {"auth", "views", "api"}:
             return
         sent = request.form.get("csrf_token", "")
@@ -259,6 +345,13 @@ def create_app() -> Flask:
             from flask import jsonify
             return jsonify({"ok": False, "error": {"code": "too_large", "message": "Request too large"}}), 413
         return render_template("error.html", message="Upload is too large."), 413
+
+    @app.errorhandler(429)
+    def _rate_limited(exc: Any) -> Any:
+        if request.accept_mimetypes.best == "application/json":
+            from flask import jsonify
+            return jsonify({"ok": False, "error": {"code": "rate_limited", "message": "Too many requests"}}), 429
+        return render_template("error.html", message="Too many requests. Please slow down and try again."), 429
 
     @app.errorhandler(500)
     def _internal_error(exc: Any) -> Any:

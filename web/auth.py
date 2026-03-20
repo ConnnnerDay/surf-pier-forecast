@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import os
 import re
+import secrets
 import threading
 import time
+from datetime import datetime
 from typing import Any, Dict, Tuple
 
 import logging
@@ -29,14 +31,20 @@ from storage.db import (
     authenticate_user,
     bump_session_version,
     change_password,
+    confirm_email,
     create_user,
     delete_user,
     get_all_user_photo_paths,
+    get_email_verification_sent_at,
     get_preferences,
     get_recent_logs,
+    get_user_by_email,
+    get_user_by_verification_token,
     get_user_password_hash,
     save_preferences,
+    set_email_verification_token,
 )
+from services.email import send_verification_email
 
 bp = Blueprint("auth", __name__)
 
@@ -50,6 +58,39 @@ _REGISTER_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
 # Limit each IP to 4 force refreshes per 5-minute window.
 _REFRESH_RATE_LIMIT_MAX_ATTEMPTS = 4
 _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
+
+# Sensitive account-action rate limiting (password change, account delete).
+#
+# Even an authenticated attacker (via XSS, session hijack, or a shared
+# computer) should not be able to rapidly brute-force the "current password"
+# field on these forms.  Each IP is limited to 5 attempts per 15 minutes.
+_ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS = 5
+_ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S = 15 * 60
+
+_account_action_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_account_action_rate_limit_lock = threading.Lock()
+
+
+def _account_action_is_rate_limited() -> bool:
+    return _is_rate_limited(
+        _account_action_rate_limit_store,
+        _account_action_rate_limit_lock,
+        _ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS,
+        _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _record_account_action_failure() -> None:
+    _record_attempt(
+        _account_action_rate_limit_store,
+        _account_action_rate_limit_lock,
+        _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _clear_account_action_failures() -> None:
+    _clear_attempts(_account_action_rate_limit_store, _account_action_rate_limit_lock)
+
 
 # Per-username account lockout.
 #
@@ -86,6 +127,17 @@ _register_rate_limit_lock = threading.Lock()
 
 _refresh_rate_limit_store: Dict[str, Tuple[float, int]] = {}
 _refresh_rate_limit_lock = threading.Lock()
+
+# Resend-verification: 3 attempts per 30 minutes per IP.
+_RESEND_RATE_LIMIT_MAX_ATTEMPTS = 3
+_RESEND_RATE_LIMIT_WINDOW_S = 30 * 60
+
+_resend_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_resend_rate_limit_lock = threading.Lock()
+
+# Minimum seconds that must elapse between two verification emails for the
+# same account (DB-level per-user throttle, independent of IP).
+_RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 
 # Keyed by lowercase username rather than IP.
 _account_lockout_store: Dict[str, Tuple[float, int]] = {}
@@ -328,6 +380,9 @@ def login() -> Any:
     return redirect(url_for("views.index"))
 
 
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
 @bp.route("/register", methods=["GET", "POST"])
 def register() -> Any:
     """Registration page and form handler."""
@@ -341,50 +396,169 @@ def register() -> Any:
             error="Too many registration attempts. Please try again later.",
         )
     username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm", "")
-    if not username or not password:
+    if not username or not email or not password:
         return render_template(
-            "register.html", error="Please fill in all fields.", username=username
+            "register.html", error="Please fill in all fields.",
+            username=username, email=email,
         )
     if len(username) < 2 or len(username) > 30:
         return render_template(
             "register.html",
             error="Username must be 2-30 characters.",
-            username=username,
+            username=username, email=email,
         )
     if not re.match(r"^[A-Za-z0-9_-]+$", username):
         return render_template(
             "register.html",
             error="Username may only contain letters, numbers, underscores, and hyphens.",
-            username=username,
+            username=username, email=email,
+        )
+    if not _EMAIL_RE.match(email):
+        return render_template(
+            "register.html",
+            error="Please enter a valid email address.",
+            username=username, email=email,
+        )
+    if len(email) > 254:
+        return render_template(
+            "register.html",
+            error="Email address is too long.",
+            username=username, email=email,
+        )
+    if get_user_by_email(email):
+        return render_template(
+            "register.html",
+            error="An account with that email address already exists.",
+            username=username, email=email,
         )
     complexity_error = _password_complexity_error(password)
     if complexity_error:
         return render_template(
-            "register.html", error=complexity_error, username=username
+            "register.html", error=complexity_error, username=username, email=email,
         )
     if password != confirm:
         return render_template(
-            "register.html", error="Passwords do not match.", username=username
+            "register.html", error="Passwords do not match.", username=username, email=email,
         )
     _record_register_attempt()
-    user_id = create_user(username, password)
+    user_id = create_user(username, password, email)
     if user_id is None:
         return render_template(
-            "register.html", error="That username is already taken.", username=username
+            "register.html", error="That username is already taken.",
+            username=username, email=email,
         )
+    # Send verification email (best-effort; account is created regardless).
+    token = secrets.token_urlsafe(32)
+    set_email_verification_token(user_id, token)
+    base_url = request.host_url
+    send_verification_email(email, username, token, base_url)
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
     session.clear()
     session["user_id"] = user_id
-    session["session_version"] = 0  # New user; version_version starts at 0
+    session["session_version"] = 0  # New user; session_version starts at 0
     session.permanent = True
     # Carry over current location if one is set
     if loc_id:
         session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
     return redirect(url_for("views.index"))
+
+
+@bp.route("/verify-email/<token>")
+def verify_email(token: str) -> Any:
+    """Confirm a user's email address via the one-time token link."""
+    user = get_user_by_verification_token(token)
+    if user is None:
+        return render_template(
+            "verify_email.html",
+            success=False,
+            message="This verification link is invalid or has expired.",
+        )
+    if user["email_confirmed"]:
+        return render_template(
+            "verify_email.html",
+            success=True,
+            message="Your email is already verified.",
+        )
+    confirm_email(user["id"])
+    # If the user is currently logged in, refresh g.user so templates reflect
+    # the confirmed state immediately.
+    if g.user and g.user["id"] == user["id"]:
+        g.user["email_confirmed"] = True
+    return render_template(
+        "verify_email.html",
+        success=True,
+        message="Your email has been verified. Welcome to Surf & Pier!",
+    )
+
+
+@bp.route("/resend-verification", methods=["POST"])
+def resend_verification() -> Any:
+    """Resend the email verification link to the logged-in user.
+
+    Protected by two independent throttles:
+    - IP-based: 3 resends per 30 minutes per source IP.
+    - Per-account: at most one resend every 2 minutes (checked via DB timestamp).
+    """
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+    if g.user.get("email_confirmed"):
+        return redirect(url_for("auth.account"))
+    email = g.user.get("email")
+    if not email:
+        return redirect(url_for("auth.account"))
+
+    # IP-based rate limit.
+    if _is_rate_limited(
+        _resend_rate_limit_store,
+        _resend_rate_limit_lock,
+        _RESEND_RATE_LIMIT_MAX_ATTEMPTS,
+        _RESEND_RATE_LIMIT_WINDOW_S,
+    ):
+        return render_template(
+            "verify_pending.html",
+            error="Too many resend attempts. Please wait 30 minutes before trying again.",
+        )
+
+    # Per-account DB throttle: don't resend if a recent email was just sent.
+    sent_at_raw = get_email_verification_sent_at(g.user["id"])
+    if sent_at_raw:
+        try:
+            from datetime import timezone as _tz
+            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=_tz.utc)
+            elapsed = (datetime.now(tz=_tz.utc) - sent_at).total_seconds()
+            if elapsed < _RESEND_MIN_INTERVAL_S:
+                wait = int(_RESEND_MIN_INTERVAL_S - elapsed)
+                return render_template(
+                    "verify_pending.html",
+                    error=f"A verification email was just sent. Please wait {wait} seconds before requesting another.",
+                )
+        except Exception:
+            pass
+
+    _record_attempt(_resend_rate_limit_store, _resend_rate_limit_lock, _RESEND_RATE_LIMIT_WINDOW_S)
+    token = secrets.token_urlsafe(32)
+    set_email_verification_token(g.user["id"], token)
+    base_url = request.host_url
+    send_verification_email(email, g.user["username"], token, base_url)
+    return redirect(url_for("auth.verify_pending", sent="1"))
+
+
+@bp.route("/verify-pending")
+def verify_pending() -> Any:
+    """Holding page shown to logged-in users who have not yet verified their email."""
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+    if g.user.get("email_confirmed"):
+        return redirect(url_for("views.index"))
+    return render_template(
+        "verify_pending.html",
+        sent=request.args.get("sent") == "1",
+    )
 
 
 @bp.route("/logout", methods=["POST"])
@@ -459,10 +633,6 @@ def change_password_route() -> Any:
     if g.user is None:
         return redirect(url_for("auth.login"))
 
-    current_pw = request.form.get("current_password", "")
-    new_pw = request.form.get("new_password", "")
-    confirm_pw = request.form.get("confirm_password", "")
-
     def _pw_error(msg: str) -> Any:
         prefs = get_preferences(g.user["id"])
         prefs.setdefault("notification_prefs", {})
@@ -475,9 +645,17 @@ def change_password_route() -> Any:
             pw_error=msg,
         )
 
+    if _account_action_is_rate_limited():
+        return _pw_error("Too many attempts. Please wait before trying again.")
+
+    current_pw = request.form.get("current_password", "")
+    new_pw = request.form.get("new_password", "")
+    confirm_pw = request.form.get("confirm_password", "")
+
     # Verify the current password before allowing any change.
     stored_hash = get_user_password_hash(g.user["id"])
     if not stored_hash or not check_password_hash(stored_hash, current_pw):
+        _record_account_action_failure()
         return _pw_error("Current password is incorrect.")
 
     complexity_error = _password_complexity_error(new_pw)
@@ -492,6 +670,7 @@ def change_password_route() -> Any:
     # while all other devices/sessions are immediately invalidated.
     new_version = change_password(g.user["id"], new_pw)
     session["session_version"] = new_version
+    _clear_account_action_failures()
     return redirect(url_for("auth.account", saved="1"))
 
 
@@ -501,11 +680,7 @@ def delete_account_route() -> Any:
     if g.user is None:
         return redirect(url_for("auth.login"))
 
-    password = request.form.get("password", "")
-
-    # Require password confirmation before destructive action.
-    stored_hash = get_user_password_hash(g.user["id"])
-    if not stored_hash or not check_password_hash(stored_hash, password):
+    def _del_error(msg: str) -> Any:
         prefs = get_preferences(g.user["id"])
         prefs.setdefault("notification_prefs", {})
         return render_template(
@@ -514,8 +689,19 @@ def delete_account_route() -> Any:
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            delete_error="Incorrect password. Account not deleted.",
+            delete_error=msg,
         )
+
+    if _account_action_is_rate_limited():
+        return _del_error("Too many attempts. Please wait before trying again.")
+
+    password = request.form.get("password", "")
+
+    # Require password confirmation before destructive action.
+    stored_hash = get_user_password_hash(g.user["id"])
+    if not stored_hash or not check_password_hash(stored_hash, password):
+        _record_account_action_failure()
+        return _del_error("Incorrect password. Account not deleted.")
 
     user_id = g.user["id"]
 
