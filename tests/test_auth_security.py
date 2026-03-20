@@ -294,9 +294,45 @@ def test_register_rejects_invalid_email(client):
     assert b"valid email" in resp.data
 
 
+def test_register_rejects_unknown_email_domain(client):
+    """Registration with an unlisted email domain is rejected."""
+    page = client.get("/register")
+    token = _csrf_from_html(page.data)
+    resp = client.post(
+        "/register",
+        data={
+            "csrf_token": token,
+            "username": "unknown_domain_user",
+            "email": "user@randomdomain.xyz",
+            "password": "Aa123456",
+            "confirm": "Aa123456",
+        },
+    )
+    assert resp.status_code == 200
+    assert b"major email provider" in resp.data
+
+
+def test_register_accepts_allowed_email_domains(client, monkeypatch):
+    """Spot-check that key domains — including Apple Private Relay — are listed."""
+    from web.auth import _ALLOWED_EMAIL_DOMAINS
+
+    sample_domains = [
+        # Big consumer providers
+        "gmail.com", "outlook.com", "yahoo.com", "icloud.com",
+        # Privacy-focused
+        "proton.me", "tuta.com", "mailbox.org", "posteo.de",
+        # Apple Hide My Email / Private Relay
+        "privaterelay.appleid.com",
+        # Regional / ISP
+        "comcast.net", "qq.com", "naver.com", "mail.ru",
+    ]
+    for domain in sample_domains:
+        assert domain in _ALLOWED_EMAIL_DOMAINS, f"{domain} should be in the allowlist"
+
+
 def test_register_rejects_duplicate_email(client):
     """Two accounts cannot share the same email address."""
-    uid = create_user("first_email_user", "Aa123456", "shared@example.com")
+    uid = create_user("first_email_user", "Aa123456", "shared@gmail.com")
     assert uid is not None
 
     page = client.get("/register")
@@ -306,7 +342,7 @@ def test_register_rejects_duplicate_email(client):
         data={
             "csrf_token": token,
             "username": "second_email_user",
-            "email": "shared@example.com",
+            "email": "shared@gmail.com",
             "password": "Aa123456",
             "confirm": "Aa123456",
         },
@@ -392,6 +428,17 @@ def test_verify_email_invalid_token_rejected(client):
     resp = client.get("/verify-email/totallybogustoken", follow_redirects=False)
     assert resp.status_code == 200
     assert b"invalid or has expired" in resp.data
+
+
+def test_csrf_comparison_uses_constant_time(app):
+    """CSRF protection must use hmac.compare_digest (not ==) for constant-time comparison."""
+    import inspect
+    import app as app_module
+
+    source = inspect.getsource(app_module.create_app)
+    assert "hmac.compare_digest" in source, (
+        "CSRF token comparison must use hmac.compare_digest() to prevent timing attacks"
+    )
 
 
 def test_resend_verification_rate_limited_per_account(client, monkeypatch):

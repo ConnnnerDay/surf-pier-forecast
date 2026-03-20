@@ -2461,7 +2461,7 @@ def build_lure_recommendations(
     species_display: Dict[str, str] = {}
     for sp in species_ranking:
         short = sp["name"].split("(")[0].strip()
-        species_ranks[short] = sp["rank"]
+        species_ranks[short] = sp.get("rank", 0)
         species_display[short] = sp["name"]
 
     scored_lures: List[tuple] = []

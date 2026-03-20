@@ -21,6 +21,7 @@ No API keys required.  Data cached per-location to ``data/``.
 
 from __future__ import annotations
 
+import hmac
 import logging
 import os
 import secrets
@@ -251,7 +252,7 @@ def create_app() -> Flask:
             return
         sent = request.form.get("csrf_token", "")
         expected = session.get("csrf_token", "")
-        if not sent or not expected or sent != expected:
+        if not sent or not expected or not hmac.compare_digest(sent, expected):
             abort(400)
 
     def _get_csrf_token() -> str:

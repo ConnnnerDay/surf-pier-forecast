@@ -223,10 +223,10 @@
                 recentIds.forEach(function (id) {
                     var loc = byId[id];
                     if (!loc) return;
-                    html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" class="location-card-form" data-recent-select="' + loc.id + '">';
+                    html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" class="location-card-form" data-recent-select="' + esc2(loc.id) + '">';
                     html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
                     html += '<button type="submit" class="location-card">';
-                    html += '<div class="location-card-body"><h3>' + loc.name + '</h3><span class="location-state">' + loc.state + '</span></div>';
+                    html += '<div class="location-card-body"><h3>' + esc2(loc.name) + '</h3><span class="location-state">' + esc2(loc.state) + '</span></div>';
                     html += '<span class="location-distance">Recent</span>';
                     html += '</button></form>';
                 });

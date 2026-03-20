@@ -36,13 +36,24 @@ _CSRF_TOKEN = "test-csrf-token"
 def _login(client, user_id):
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
+        sess["session_version"] = 0
         sess["csrf_token"] = _CSRF_TOKEN
 
 
 def _jpeg_bytes(size: int = 100) -> bytes:
-    """Return a tiny JPEG-like byte string (valid enough for MIME sniffing in tests)."""
-    # Flask test client doesn't validate actual image content; mimetype is passed explicitly.
+    """Return minimal JPEG magic bytes so the server-side magic-byte check passes."""
     return b"\xff\xd8\xff\xe0" + b"\x00" * size
+
+
+def _png_bytes(size: int = 100) -> bytes:
+    """Return minimal PNG magic bytes so the server-side magic-byte check passes."""
+    return b"\x89PNG\r\n\x1a\n" + b"\x00" * size
+
+
+def _webp_bytes(size: int = 100) -> bytes:
+    """Return minimal WebP magic bytes (RIFF....WEBP) so the magic-byte check passes."""
+    # WebP: bytes 0-3 = "RIFF", bytes 4-7 = file size (4 bytes LE), bytes 8-11 = "WEBP"
+    return b"RIFF" + b"\x00" * 4 + b"WEBP" + b"\x00" * size
 
 
 def _upload(
@@ -160,7 +171,10 @@ class TestPhotoUploadHappy:
         entry_id = add_log_entry(uid, "loc1", "Flounder")
         _login(client, uid)
 
-        resp = _upload(client, entry_id, filename="catch.png", mimetype="image/png")
+        resp = _upload(
+            client, entry_id,
+            content=_png_bytes(), filename="catch.png", mimetype="image/png",
+        )
         assert resp.status_code == 201
 
     def test_webp_accepted(self, client):
@@ -168,7 +182,10 @@ class TestPhotoUploadHappy:
         entry_id = add_log_entry(uid, "loc1", "Sheepshead")
         _login(client, uid)
 
-        resp = _upload(client, entry_id, filename="catch.webp", mimetype="image/webp")
+        resp = _upload(
+            client, entry_id,
+            content=_webp_bytes(), filename="catch.webp", mimetype="image/webp",
+        )
         assert resp.status_code == 201
 
 
@@ -249,7 +266,9 @@ class TestDeleteCascade:
         abs_path = os.path.join(app.config["UPLOAD_FOLDER"], sub)
         assert os.path.exists(abs_path), "file should exist before delete"
 
-        del_resp = client.delete(f"/api/v1/log/{entry_id}")
+        del_resp = client.delete(
+            f"/api/v1/log/{entry_id}", content_type="application/json"
+        )
         assert del_resp.status_code == 200
 
         assert not os.path.exists(abs_path), "file should be gone after delete"
@@ -258,5 +277,5 @@ class TestDeleteCascade:
         uid = create_user("deluser2", "pw123456")
         _login(client, uid)
 
-        resp = client.delete("/api/v1/log/99999")
+        resp = client.delete("/api/v1/log/99999", content_type="application/json")
         assert resp.status_code == 404

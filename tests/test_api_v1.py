@@ -24,6 +24,7 @@ def client(app):
 def _login_session(client, user_id, location_id="wrightsville-beach-nc"):
     with client.session_transaction() as sess:
         sess["user_id"] = user_id
+        sess["session_version"] = 0
         sess["location_id"] = location_id
 
 
@@ -139,7 +140,7 @@ def test_v1_log_crud(client):
     assert isinstance(lbody["data"]["entries"], list)
     assert "stats" in lbody["data"]
 
-    delete = client.delete(f"/api/v1/log/{entry_id}")
+    delete = client.delete(f"/api/v1/log/{entry_id}", content_type="application/json")
     assert delete.status_code == 200
     dbody = delete.get_json()
     assert dbody["ok"] is True
@@ -376,6 +377,7 @@ def test_v1_regulations_uses_account_saved_location_when_no_params(
     # falls back to the DB preference.
     with client.session_transaction() as sess:
         sess["user_id"] = uid
+        sess["session_version"] = 0
 
     resp = client.get("/api/v1/regulations?species=Red+drum+%28puppy+drum%29")
     assert resp.status_code == 200
@@ -403,6 +405,85 @@ def test_v1_forecast_section_endpoints_404_when_missing_cache(client, monkeypatc
     solunar = client.get("/api/v1/forecast/wrightsville-beach-nc/solunar")
     assert solunar.status_code == 404
     assert solunar.get_json()["error"]["code"] == "forecast_not_cached"
+
+
+# ---------------------------------------------------------------------------
+# Security regression tests for recent fixes
+# ---------------------------------------------------------------------------
+
+
+def test_regulations_refresh_requires_auth(client):
+    """/api/v1/regulations/refresh must return 401 when the caller is unauthenticated."""
+    # Plain POST without session — should be rejected
+    resp = client.post(
+        "/api/v1/regulations/refresh",
+        json={},
+    )
+    assert resp.status_code == 401
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert body["error"]["code"] == "unauthorized"
+
+
+def test_regulations_refresh_allowed_when_authenticated(client, monkeypatch):
+    """/api/v1/regulations/refresh succeeds for a logged-in user."""
+    monkeypatch.setattr(
+        "web.api.invalidate_cache" if hasattr(__import__("web.api", fromlist=["invalidate_cache"]), "invalidate_cache") else "storage.reg_scraper.invalidate_cache",
+        lambda state=None: 0,
+        raising=False,
+    )
+
+    uid = create_user("reg_refresh_user", "Aa123456")
+    assert uid is not None
+    _login_session(client, uid)
+
+    resp = client.post("/api/v1/regulations/refresh", json={})
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+
+
+def test_legacy_refresh_endpoint_is_rate_limited(client, monkeypatch):
+    """/api/refresh must enforce the shared forecast refresh rate limit."""
+    from web import auth as auth_module
+
+    # Isolate from other tests' state
+    monkeypatch.setattr(auth_module, "_refresh_rate_limit_store", {})
+
+    # Exhaust the rate limit
+    uid = create_user("refresh_rl_user", "Aa123456")
+    assert uid is not None
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = uid
+        sess["session_version"] = 0
+        sess["location_id"] = "wrightsville-beach-nc"
+
+    # Get a CSRF token from any page
+    page = client.get("/setup")
+    import re as _re
+    m = _re.search(r'name="csrf_token" value="([^"]+)"', page.data.decode())
+    assert m is not None
+    token = m.group(1)
+
+    monkeypatch.setattr("web.api.enqueue_forecast_refresh", lambda loc_id, user_id=None: None)
+
+    # Exhaust the rate limit
+    for _ in range(auth_module._REFRESH_RATE_LIMIT_MAX_ATTEMPTS):
+        client.post("/api/refresh", data={"csrf_token": token})
+
+    # The next call should be silently redirected back to index (not refresh)
+    resp = client.post("/api/refresh", data={"csrf_token": token}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert "refreshing" not in resp.headers.get("Location", "")
+
+
+def test_forecast_query_location_id_is_bounded(client, monkeypatch):
+    """location_id longer than 100 chars is silently truncated to avoid oversized DB keys."""
+    from web.schemas import ForecastQuery
+    long_id = "x" * 200
+    q = ForecastQuery.from_request({"location_id": long_id})
+    assert len(q.location_id) <= 100
 
 
 def test_v1_forecast_section_endpoints_fall_back_to_shared_cache_for_logged_in_user(

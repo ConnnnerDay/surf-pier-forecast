@@ -376,6 +376,9 @@ def refresh() -> Any:
     location = get_session_location()
     if location is None:
         return redirect(url_for("views.setup"))
+    if refresh_is_rate_limited():
+        return redirect(url_for("views.index"))
+    record_refresh_attempt()
     enqueue_forecast_refresh(location["id"], user_id=None)
     return redirect(url_for("views.index", cached="refreshing"))
 
@@ -384,10 +387,13 @@ def refresh() -> Any:
 def regulations_refresh_v1() -> Any:
     """Invalidate the live-scrape regulation cache.
 
-    Optionally filter to a single state via the ``state`` query param.
-    The next regulation lookup for affected entries will re-scrape the
-    official state agency website.
+    Requires an authenticated session.  Optionally filter to a single state
+    via the ``state`` query param.  The next regulation lookup for affected
+    entries will re-scrape the official state agency website.
     """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
     state = request.args.get("state", "").strip().upper() or None
     try:
         from storage.reg_scraper import invalidate_cache
@@ -517,6 +523,10 @@ def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
     abs_path = os.path.join(user_dir, filename)
     with open(abs_path, "wb") as fh:
         fh.write(data)
+    try:
+        os.chmod(abs_path, 0o600)
+    except OSError:
+        pass
 
     rel_path = f"uploads/{user_id}/{filename}"
     return rel_path, abs_path
