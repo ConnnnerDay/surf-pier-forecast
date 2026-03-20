@@ -10,6 +10,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 import requests
 
@@ -113,13 +114,18 @@ def _fetch_cam_status(url: str) -> None:
     headers = {"User-Agent": "Mozilla/5.0 (compatible; SurfPierForecast/1.0)"}
     try:
         resp = requests.get(
-            url, timeout=(2.5, 7.0), allow_redirects=True, headers=headers
+            url,
+            timeout=(2.5, 7.0),
+            # Disable redirect following: the cam URLs are hardcoded, so
+            # redirects are unexpected and could lead to unintended hosts.
+            allow_redirects=False,
+            headers=headers,
         )
         if resp.status_code < 400:
             status["is_live"] = True
             status["status_label"] = "Live now"
-        else:
-            status["status_label"] = f"HTTP {resp.status_code}"
+        # Do not surface the raw HTTP status code from the external site —
+        # it leaks information about third-party infrastructure.
     except requests.RequestException:
         pass
     with _cam_status_lock:
@@ -283,14 +289,18 @@ def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     return context
 
 
+_PROFILE_PARAM_MAX_LEN = 200  # per query-string parameter
+
+
 def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
     """Extract fishing profile from query parameters.
 
     Expected params: fishing_types (comma-separated), targets (comma-separated).
     Returns None if no profile params are present.
     """
-    ft = request.args.get("fishing_types", "").strip()
-    tg = request.args.get("targets", "").strip()
+    # Cap raw values before any processing to prevent DoS via enormous inputs.
+    ft = request.args.get("fishing_types", "")[:_PROFILE_PARAM_MAX_LEN].strip()
+    tg = request.args.get("targets", "")[:_PROFILE_PARAM_MAX_LEN].strip()
     if not ft and not tg:
         return None
     profile: Dict[str, Any] = {}
@@ -402,7 +412,10 @@ def index() -> Any:
             return redirect(url_for("auth.landing"))
         return redirect(url_for("views.setup"))
 
-    cached_flag = request.args.get("cached")
+    # Whitelist the cached= flag to its only known values so arbitrary strings
+    # are never forwarded into the template context.
+    _raw_cached = request.args.get("cached", "")
+    cached_flag = "refreshing" if _raw_cached == "refreshing" else None
     return _render_forecast(location, cached_flag)
 
 
@@ -549,13 +562,12 @@ def setup_favorite(location_id: str) -> Any:
     save_preferences(g.user["id"], favorites=favorites)
 
     next_url = request.form.get("next", "")
-    # Only allow same-origin relative paths. Block // (protocol-relative) and
-    # backslash tricks (/\evil.com) that Chrome/Edge normalise to external URLs.
-    if (
-        next_url.startswith("/")
-        and not next_url.startswith("//")
-        and "\\" not in next_url
-    ):
+    # Only redirect to same-origin relative paths.  Use urlparse to reject
+    # anything with a scheme ("http:") or authority ("//evil.com"), which
+    # covers URL-encoded variants, protocol-relative URLs, and backslash
+    # tricks that browsers normalise to external navigations.
+    _parsed = urlparse(next_url)
+    if next_url and not _parsed.scheme and not _parsed.netloc and next_url.startswith("/"):
         return redirect(next_url)
     return redirect(url_for("views.setup"))
 
