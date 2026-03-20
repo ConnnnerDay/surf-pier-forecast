@@ -65,7 +65,7 @@ class ForecastQuery:
     def from_request(
         cls, args: Dict[str, Any], fallback_location_id: str = ""
     ) -> "ForecastQuery":
-        loc_id = (args.get("location_id") or "").strip() or fallback_location_id
+        loc_id = (args.get("location_id") or "")[:100].strip() or fallback_location_id
         return cls(
             location_id=loc_id,
             force_refresh=parse_bool(args.get("force_refresh"), False),

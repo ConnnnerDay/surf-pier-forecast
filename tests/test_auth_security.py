@@ -394,6 +394,17 @@ def test_verify_email_invalid_token_rejected(client):
     assert b"invalid or has expired" in resp.data
 
 
+def test_csrf_comparison_uses_constant_time(app):
+    """CSRF protection must use hmac.compare_digest (not ==) for constant-time comparison."""
+    import inspect
+    import app as app_module
+
+    source = inspect.getsource(app_module.create_app)
+    assert "hmac.compare_digest" in source, (
+        "CSRF token comparison must use hmac.compare_digest() to prevent timing attacks"
+    )
+
+
 def test_resend_verification_rate_limited_per_account(client, monkeypatch):
     """A second resend within the throttle window is rejected."""
     import time as _time

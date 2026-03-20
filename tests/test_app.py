@@ -81,8 +81,8 @@ class TestBasicRoutes:
         resp = client.get(f"/f/{sample_location}")
 
         assert resp.status_code == 200
-        assert b"Marine Conditions" in resp.data
         assert b"When to Fish" in resp.data
+        assert b"3-Day Outlook" in resp.data
         assert b"Surf &amp; Pier Fishing Outlook" in resp.data
 
     def test_setup_select_requires_csrf(self, client):
