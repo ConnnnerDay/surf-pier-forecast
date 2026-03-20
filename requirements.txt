@@ -8,3 +8,6 @@ beautifulsoup4>=4.12,<5.0
 
 # Production WSGI server (recommended outside development)
 gunicorn>=21.2,<26.0
+
+# WebAuthn / passkey support (Face ID, Touch ID, Windows Hello)
+webauthn>=2.7,<3.0

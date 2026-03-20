@@ -16,6 +16,7 @@ from flask import (
     Blueprint,
     current_app,
     g,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -38,11 +39,17 @@ from storage.db import (
     get_email_verification_sent_at,
     get_preferences,
     get_recent_logs,
+    get_user,
     get_user_by_email,
     get_user_by_verification_token,
     get_user_password_hash,
     save_preferences,
     set_email_verification_token,
+    save_webauthn_credential,
+    get_webauthn_credentials,
+    get_webauthn_credential_by_id,
+    update_webauthn_sign_count,
+    delete_webauthn_credential,
 )
 from services.email import send_verification_email
 
@@ -858,12 +865,14 @@ def account() -> Any:
     favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
     recent_logs = get_recent_logs(g.user["id"], limit=5)
+    passkeys = get_webauthn_credentials(g.user["id"])
     return render_template(
         "account.html",
         prefs=prefs,
         saved_location=loc,
         recent_logs=recent_logs,
         favorite_locations=favorites,
+        passkeys=passkeys,
     )
 
 
@@ -1000,3 +1009,164 @@ def delete_account_route() -> Any:
     delete_user(user_id)
     session.clear()
     return redirect(url_for("auth.landing"))
+
+
+# ── WebAuthn / passkey (biometric) endpoints ──────────────────────────────────
+
+def _webauthn_rp_id() -> str:
+    return request.host.split(":")[0]
+
+
+def _webauthn_origin() -> str:
+    return request.scheme + "://" + request.host
+
+
+@bp.route("/webauthn/register/begin")
+def webauthn_register_begin() -> Any:
+    """Return WebAuthn registration options for the logged-in user."""
+    from webauthn import generate_registration_options, options_to_json
+    from webauthn.helpers.structs import (
+        AuthenticatorSelectionCriteria,
+        PublicKeyCredentialDescriptor,
+        ResidentKeyRequirement,
+        UserVerificationRequirement,
+    )
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+
+    existing = get_webauthn_credentials(g.user["id"])
+    options = generate_registration_options(
+        rp_id=_webauthn_rp_id(),
+        rp_name="Surf & Pier Fishing Forecast",
+        user_id=str(g.user["id"]).encode(),
+        user_name=g.user["username"],
+        user_display_name=g.user["username"],
+        authenticator_selection=AuthenticatorSelectionCriteria(
+            resident_key=ResidentKeyRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.PREFERRED,
+        ),
+        exclude_credentials=[
+            PublicKeyCredentialDescriptor(id=base64url_to_bytes(c["credential_id"]))
+            for c in existing
+        ],
+    )
+    session["webauthn_reg_challenge"] = bytes_to_base64url(options.challenge)
+    session["webauthn_reg_origin"] = _webauthn_origin()
+    return options_to_json(options), 200, {"Content-Type": "application/json"}
+
+
+@bp.route("/webauthn/register/complete", methods=["POST"])
+def webauthn_register_complete() -> Any:
+    """Verify the registration response and store the new credential."""
+    from webauthn import verify_registration_response
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+
+    challenge_b64 = session.pop("webauthn_reg_challenge", None)
+    origin = session.pop("webauthn_reg_origin", None)
+    if not challenge_b64 or not origin:
+        return jsonify({"error": "No challenge in session"}), 400
+
+    try:
+        verified = verify_registration_response(
+            credential=request.json,
+            expected_challenge=base64url_to_bytes(challenge_b64),
+            expected_rp_id=_webauthn_rp_id(),
+            expected_origin=origin,
+        )
+    except Exception as exc:
+        logger.warning("webauthn.register_failed user_id=%s: %s", g.user["id"], exc)
+        return jsonify({"error": "Registration failed"}), 400
+
+    save_webauthn_credential(
+        user_id=g.user["id"],
+        credential_id=bytes_to_base64url(verified.credential_id),
+        public_key=bytes_to_base64url(verified.credential_public_key),
+        sign_count=verified.sign_count,
+    )
+    logger.info("webauthn.register_complete user_id=%s ip=%s", g.user["id"], _client_ip())
+    return jsonify({"ok": True})
+
+
+@bp.route("/webauthn/authenticate/begin", methods=["POST"])
+def webauthn_authenticate_begin() -> Any:
+    """Return WebAuthn authentication options (discoverable credentials)."""
+    from webauthn import generate_authentication_options, options_to_json
+    from webauthn.helpers.structs import UserVerificationRequirement
+    from webauthn.helpers import bytes_to_base64url
+
+    options = generate_authentication_options(
+        rp_id=_webauthn_rp_id(),
+        user_verification=UserVerificationRequirement.PREFERRED,
+    )
+    session["webauthn_auth_challenge"] = bytes_to_base64url(options.challenge)
+    session["webauthn_auth_origin"] = _webauthn_origin()
+    return options_to_json(options), 200, {"Content-Type": "application/json"}
+
+
+@bp.route("/webauthn/authenticate/complete", methods=["POST"])
+def webauthn_authenticate_complete() -> Any:
+    """Verify the authentication response and log the user in."""
+    from webauthn import verify_authentication_response
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+
+    challenge_b64 = session.pop("webauthn_auth_challenge", None)
+    origin = session.pop("webauthn_auth_origin", None)
+    if not challenge_b64 or not origin:
+        return jsonify({"error": "No challenge in session"}), 400
+
+    data = request.json or {}
+    credential_id = data.get("id", "")
+    stored = get_webauthn_credential_by_id(credential_id)
+    if not stored:
+        return jsonify({"error": "Unknown credential"}), 400
+
+    try:
+        verified = verify_authentication_response(
+            credential=data,
+            expected_challenge=base64url_to_bytes(challenge_b64),
+            expected_rp_id=_webauthn_rp_id(),
+            expected_origin=origin,
+            credential_public_key=base64url_to_bytes(stored["public_key"]),
+            credential_current_sign_count=stored["sign_count"],
+        )
+    except Exception as exc:
+        logger.warning("webauthn.auth_failed credential_id=%s: %s", credential_id, exc)
+        return jsonify({"error": "Authentication failed"}), 400
+
+    update_webauthn_sign_count(credential_id, verified.new_sign_count)
+
+    user = get_user(stored["user_id"])
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    prior_location_id = session.get("location_id")
+    session.clear()
+    new_version = bump_session_version(user["id"])
+    session["user_id"] = user["id"]
+    session["session_version"] = new_version
+    session.permanent = True
+    session["csrf_token"] = secrets.token_urlsafe(24)
+    prefs = get_preferences(user["id"])
+    if prefs.get("location_id"):
+        session["location_id"] = prefs["location_id"]
+    elif user.get("default_location_id"):
+        session["location_id"] = user["default_location_id"]
+    elif prior_location_id:
+        session["location_id"] = prior_location_id
+
+    logger.info("webauthn.auth_complete user_id=%s ip=%s", user["id"], _client_ip())
+    return jsonify({"ok": True, "redirect": url_for("views.index")})
+
+
+@bp.route("/webauthn/credential/<credential_id>/delete", methods=["POST"])
+def webauthn_delete_credential(credential_id: str) -> Any:
+    """Remove a registered passkey from the logged-in user's account."""
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+    deleted = delete_webauthn_credential(credential_id, g.user["id"])
+    return jsonify({"ok": deleted})

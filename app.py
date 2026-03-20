@@ -90,7 +90,7 @@ def create_app() -> Flask:
                 _key_file,
             )
     app.config["SECRET_KEY"] = secret_key
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=3)
     app.config["MAX_CONTENT_LENGTH"] = (
         16 * 1024 * 1024
     )  # 16 MB hard limit for file uploads
@@ -174,6 +174,12 @@ def create_app() -> Flask:
         "auth.account_settings",
         "auth.change_password_route",
         "auth.delete_account_route",
+        # WebAuthn / passkey flows (biometric login, passkey registration)
+        "auth.webauthn_register_begin",
+        "auth.webauthn_register_complete",
+        "auth.webauthn_authenticate_begin",
+        "auth.webauthn_authenticate_complete",
+        "auth.webauthn_delete_credential",
         # Location + profile setup wizard (users need to complete onboarding).
         "views.setup",
         "views.setup_search",
