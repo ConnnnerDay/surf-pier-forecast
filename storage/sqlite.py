@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_reset_sent_at TEXT,
     default_location_id TEXT,
     is_anonymous  INTEGER NOT NULL DEFAULT 0,
+    session_version INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -152,6 +153,10 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN password_reset_sent_at TEXT")
     if "default_location_id" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN default_location_id TEXT")
+    if "session_version" not in user_cols:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0"
+        )
 
     profile_cols = set(_column_names(conn, "profiles"))
     if "wind_units" not in profile_cols:
@@ -285,7 +290,8 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT id, username, email_confirmed, default_location_id FROM users WHERE id = ?",
+            "SELECT id, username, email_confirmed, default_location_id, session_version "
+            "FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
     finally:
@@ -297,7 +303,30 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
         "username": row["username"],
         "email_confirmed": bool(row["email_confirmed"]),
         "default_location_id": row["default_location_id"],
+        "session_version": row["session_version"],
     }
+
+
+def bump_session_version(user_id: int) -> int:
+    """Increment the session version for a user and return the new value.
+
+    Incrementing the version invalidates all existing sessions for that user
+    (on other devices/browsers) because ``_load_user`` rejects sessions whose
+    stored version no longer matches the DB value.
+    """
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET session_version = session_version + 1 WHERE id = ?",
+            (user_id,),
+        )
+        conn.commit()
+        row = conn.execute(
+            "SELECT session_version FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        return row["session_version"] if row else 0
+    finally:
+        conn.close()
 
 
 # Profiles + locations ------------------------------------------------------

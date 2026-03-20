@@ -135,12 +135,22 @@ def create_app() -> Flask:
 
     @app.before_request
     def _load_user() -> None:
-        """Populate g.user from the session on every request."""
+        """Populate g.user from the session on every request.
+
+        Also validates the session_version stored in the cookie against the
+        database.  When a user logs in from a new device their session_version
+        is incremented, which causes this check to clear any older sessions
+        that are still in use on other browsers/devices.
+        """
         user_id = session.get("user_id")
         if user_id:
             g.user = get_user(user_id)
             if g.user is None:
-                session.pop("user_id", None)
+                session.clear()
+            elif session.get("session_version") != g.user["session_version"]:
+                # Session is stale — a newer login invalidated it.
+                session.clear()
+                g.user = None
         else:
             g.user = None
 
@@ -215,6 +225,48 @@ def create_app() -> Flask:
                 "max-age=31536000; includeSubDomains",
             )
         return response
+
+    # -- Error handlers ----------------------------------------------------
+    # Explicit handlers prevent Flask from falling back to its built-in error
+    # pages, which include the Werkzeug version string and (in debug mode) full
+    # stack traces.  All errors return the same generic template so no internal
+    # detail is accidentally exposed in production.
+
+    @app.errorhandler(400)
+    def _bad_request(exc: Any) -> Any:
+        if request.accept_mimetypes.best == "application/json":
+            from flask import jsonify
+            return jsonify({"ok": False, "error": {"code": "bad_request", "message": "Bad request"}}), 400
+        return render_template("error.html", message="Bad request."), 400
+
+    @app.errorhandler(404)
+    def _not_found(exc: Any) -> Any:
+        if request.accept_mimetypes.best == "application/json":
+            from flask import jsonify
+            return jsonify({"ok": False, "error": {"code": "not_found", "message": "Not found"}}), 404
+        return render_template("error.html", message="Page not found."), 404
+
+    @app.errorhandler(405)
+    def _method_not_allowed(exc: Any) -> Any:
+        if request.accept_mimetypes.best == "application/json":
+            from flask import jsonify
+            return jsonify({"ok": False, "error": {"code": "method_not_allowed", "message": "Method not allowed"}}), 405
+        return render_template("error.html", message="Method not allowed."), 405
+
+    @app.errorhandler(413)
+    def _request_too_large(exc: Any) -> Any:
+        if request.accept_mimetypes.best == "application/json":
+            from flask import jsonify
+            return jsonify({"ok": False, "error": {"code": "too_large", "message": "Request too large"}}), 413
+        return render_template("error.html", message="Upload is too large."), 413
+
+    @app.errorhandler(500)
+    def _internal_error(exc: Any) -> Any:
+        logging.getLogger(__name__).exception("Unhandled exception")
+        if request.accept_mimetypes.best == "application/json":
+            from flask import jsonify
+            return jsonify({"ok": False, "error": {"code": "server_error", "message": "An unexpected error occurred"}}), 500
+        return render_template("error.html", message="An unexpected error occurred. Please try again later."), 500
 
     # -- Service worker at root scope --------------------------------------
 

@@ -21,6 +21,7 @@ from flask import (
 from locations import get_location
 from storage.db import (
     authenticate_user,
+    bump_session_version,
     create_user,
     get_preferences,
     get_recent_logs,
@@ -34,6 +35,11 @@ _LOGIN_RATE_LIMIT_WINDOW_S = 15 * 60
 
 _REGISTER_RATE_LIMIT_MAX_ATTEMPTS = 5
 _REGISTER_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
+
+# Forecast force-refresh is expensive (external API calls + DB writes).
+# Limit each IP to 4 force refreshes per 5-minute window.
+_REFRESH_RATE_LIMIT_MAX_ATTEMPTS = 4
+_REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
 
 # ---------------------------------------------------------------------------
 # Server-side IP-keyed rate limiting for the login and registration endpoints.
@@ -54,6 +60,9 @@ _rate_limit_lock = threading.Lock()
 
 _register_rate_limit_store: Dict[str, Tuple[float, int]] = {}
 _register_rate_limit_lock = threading.Lock()
+
+_refresh_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_refresh_rate_limit_lock = threading.Lock()
 
 # Only trust X-Forwarded-For when running behind a known reverse proxy.
 _TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
@@ -168,6 +177,21 @@ def _record_register_attempt() -> None:
     )
 
 
+def refresh_is_rate_limited() -> bool:
+    """Return True if this IP has exceeded the forecast force-refresh rate limit."""
+    return _is_rate_limited(
+        _refresh_rate_limit_store, _refresh_rate_limit_lock,
+        _REFRESH_RATE_LIMIT_MAX_ATTEMPTS, _REFRESH_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def record_refresh_attempt() -> None:
+    _record_attempt(
+        _refresh_rate_limit_store, _refresh_rate_limit_lock,
+        _REFRESH_RATE_LIMIT_WINDOW_S,
+    )
+
+
 def _password_complexity_error(password: str) -> str:
     """Return an error message if the password fails complexity requirements, else ''."""
     if len(password) < 8:
@@ -219,7 +243,11 @@ def login() -> Any:
     # location choice, then clear everything else before setting credentials.
     prior_location_id = session.get("location_id")
     session.clear()
+    # Bump the session version so any existing sessions on other devices are
+    # immediately invalidated the next time they hit _load_user().
+    new_version = bump_session_version(user["id"])
     session["user_id"] = user["id"]
+    session["session_version"] = new_version
     session.permanent = True
     # Restore saved location preference (DB preference wins over anonymous choice).
     prefs = get_preferences(user["id"])
@@ -282,6 +310,7 @@ def register() -> Any:
     loc_id = session.get("location_id")
     session.clear()
     session["user_id"] = user_id
+    session["session_version"] = 0  # New user; version_version starts at 0
     session.permanent = True
     # Carry over current location if one is set
     if loc_id:
