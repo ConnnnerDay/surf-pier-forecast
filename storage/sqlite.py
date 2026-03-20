@@ -329,6 +329,77 @@ def bump_session_version(user_id: int) -> int:
         conn.close()
 
 
+def change_password(user_id: int, new_password: str) -> int:
+    """Hash *new_password* and store it, then bump and return the new session_version.
+
+    Bumping the version invalidates every other active session so the user is
+    effectively logged out everywhere except the current device (which receives
+    the new version in its cookie immediately after this call).
+    """
+    pw_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET password_hash = ?, session_version = session_version + 1 "
+            "WHERE id = ?",
+            (pw_hash, user_id),
+        )
+        conn.commit()
+        row = conn.execute(
+            "SELECT session_version FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        return row["session_version"] if row else 0
+    finally:
+        conn.close()
+
+
+def get_user_password_hash(user_id: int) -> Optional[str]:
+    """Return the stored password hash for *user_id*, or None if not found."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT password_hash FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        return row["password_hash"] if row else None
+    finally:
+        conn.close()
+
+
+def get_all_user_photo_paths(user_id: int) -> List[str]:
+    """Return every stored photo path for *user_id* across all catch-log entries."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT photo1_path, photo2_path FROM catch_log WHERE user_id = ?",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    paths: List[str] = []
+    for row in rows:
+        if row["photo1_path"]:
+            paths.append(row["photo1_path"])
+        if row["photo2_path"]:
+            paths.append(row["photo2_path"])
+    return paths
+
+
+def delete_user(user_id: int) -> None:
+    """Permanently delete a user and all their data.
+
+    The users table has ON DELETE CASCADE on every child table (profiles,
+    locations, catch_log, forecast_cache), so a single DELETE removes
+    everything.  Callers must delete uploaded files from disk before calling
+    this function, because the file paths are stored in catch_log rows.
+    """
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # Profiles + locations ------------------------------------------------------
 
 

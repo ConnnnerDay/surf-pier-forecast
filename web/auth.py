@@ -8,8 +8,11 @@ import threading
 import time
 from typing import Any, Dict, Tuple
 
+import logging
+
 from flask import (
     Blueprint,
+    current_app,
     g,
     redirect,
     render_template,
@@ -17,14 +20,21 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.security import check_password_hash
+
+logger = logging.getLogger(__name__)
 
 from locations import get_location
 from storage.db import (
     authenticate_user,
     bump_session_version,
+    change_password,
     create_user,
+    delete_user,
+    get_all_user_photo_paths,
     get_preferences,
     get_recent_logs,
+    get_user_password_hash,
     save_preferences,
 )
 
@@ -40,6 +50,19 @@ _REGISTER_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
 # Limit each IP to 4 force refreshes per 5-minute window.
 _REFRESH_RATE_LIMIT_MAX_ATTEMPTS = 4
 _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
+
+# Per-username account lockout.
+#
+# IP-based rate limiting alone does not stop a distributed brute-force attack
+# where many different IPs target the same account.  Tracking failures per
+# username (case-folded) provides a second, independent layer: after
+# _ACCOUNT_LOCKOUT_MAX_FAILURES consecutive wrong passwords for a given
+# username the account is locked for _ACCOUNT_LOCKOUT_WINDOW_S seconds,
+# regardless of how many source IPs are involved.
+#
+# On successful login the counter for that username is cleared.
+_ACCOUNT_LOCKOUT_MAX_FAILURES = 10
+_ACCOUNT_LOCKOUT_WINDOW_S = 30 * 60  # 30 minutes
 
 # ---------------------------------------------------------------------------
 # Server-side IP-keyed rate limiting for the login and registration endpoints.
@@ -63,6 +86,10 @@ _register_rate_limit_lock = threading.Lock()
 
 _refresh_rate_limit_store: Dict[str, Tuple[float, int]] = {}
 _refresh_rate_limit_lock = threading.Lock()
+
+# Keyed by lowercase username rather than IP.
+_account_lockout_store: Dict[str, Tuple[float, int]] = {}
+_account_lockout_lock = threading.Lock()
 
 # Only trust X-Forwarded-For when running behind a known reverse proxy.
 _TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
@@ -192,6 +219,39 @@ def record_refresh_attempt() -> None:
     )
 
 
+# -- Per-username account lockout -------------------------------------------
+
+def _account_is_locked(username: str) -> bool:
+    """Return True if *username* has exceeded the per-account failure threshold."""
+    key = username.lower()
+    now = time.time()
+    with _account_lockout_lock:
+        start, failures = _account_lockout_store.get(key, (now, 0))
+        if now - start > _ACCOUNT_LOCKOUT_WINDOW_S:
+            _account_lockout_store[key] = (now, 0)
+            return False
+        return failures >= _ACCOUNT_LOCKOUT_MAX_FAILURES
+
+
+def _record_account_failure(username: str) -> None:
+    """Increment the per-username failure counter."""
+    key = username.lower()
+    now = time.time()
+    with _account_lockout_lock:
+        start, failures = _account_lockout_store.get(key, (now, 0))
+        if now - start > _ACCOUNT_LOCKOUT_WINDOW_S:
+            _account_lockout_store[key] = (now, 1)
+        else:
+            _account_lockout_store[key] = (start, failures + 1)
+
+
+def _clear_account_failures(username: str) -> None:
+    """Clear the failure counter for *username* after a successful login."""
+    key = username.lower()
+    with _account_lockout_lock:
+        _account_lockout_store.pop(key, None)
+
+
 def _password_complexity_error(password: str) -> str:
     """Return an error message if the password fails complexity requirements, else ''."""
     if len(password) < 8:
@@ -232,13 +292,21 @@ def login() -> Any:
             error="Too many attempts. Please wait a few minutes and try again.",
             username=username,
         )
+    if _account_is_locked(username):
+        return render_template(
+            "login.html",
+            error="Too many failed attempts. Please try again in 30 minutes.",
+            username=username,
+        )
     user = authenticate_user(username, password)
     if user is None:
         _record_login_failure()
+        _record_account_failure(username)
         return render_template(
             "login.html", error="Invalid username or password.", username=username
         )
     _clear_login_failures()
+    _clear_account_failures(username)
     # Regenerate session to prevent session fixation: preserve the anonymous
     # location choice, then clear everything else before setting credentials.
     prior_location_id = session.get("location_id")
@@ -383,3 +451,89 @@ def account_settings() -> Any:
     if default_location_id:
         session["location_id"] = default_location_id
     return redirect(url_for("auth.account", saved="1"))
+
+
+@bp.route("/account/change-password", methods=["POST"])
+def change_password_route() -> Any:
+    """Change the current user's password."""
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+
+    current_pw = request.form.get("current_password", "")
+    new_pw = request.form.get("new_password", "")
+    confirm_pw = request.form.get("confirm_password", "")
+
+    def _pw_error(msg: str) -> Any:
+        prefs = get_preferences(g.user["id"])
+        prefs.setdefault("notification_prefs", {})
+        return render_template(
+            "account.html",
+            prefs=prefs,
+            saved_location=None,
+            recent_logs=[],
+            favorite_locations=[],
+            pw_error=msg,
+        )
+
+    # Verify the current password before allowing any change.
+    stored_hash = get_user_password_hash(g.user["id"])
+    if not stored_hash or not check_password_hash(stored_hash, current_pw):
+        return _pw_error("Current password is incorrect.")
+
+    complexity_error = _password_complexity_error(new_pw)
+    if complexity_error:
+        return _pw_error(complexity_error)
+
+    if new_pw != confirm_pw:
+        return _pw_error("New passwords do not match.")
+
+    # change_password() atomically updates the hash and bumps session_version.
+    # Store the new version in the session so the current browser stays logged in
+    # while all other devices/sessions are immediately invalidated.
+    new_version = change_password(g.user["id"], new_pw)
+    session["session_version"] = new_version
+    return redirect(url_for("auth.account", saved="1"))
+
+
+@bp.route("/account/delete", methods=["POST"])
+def delete_account_route() -> Any:
+    """Permanently delete the current user's account and all associated data."""
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+
+    password = request.form.get("password", "")
+
+    # Require password confirmation before destructive action.
+    stored_hash = get_user_password_hash(g.user["id"])
+    if not stored_hash or not check_password_hash(stored_hash, password):
+        prefs = get_preferences(g.user["id"])
+        prefs.setdefault("notification_prefs", {})
+        return render_template(
+            "account.html",
+            prefs=prefs,
+            saved_location=None,
+            recent_logs=[],
+            favorite_locations=[],
+            delete_error="Incorrect password. Account not deleted.",
+        )
+
+    user_id = g.user["id"]
+
+    # Remove all uploaded photo files from disk before deleting the DB rows.
+    upload_root = current_app.config.get("UPLOAD_FOLDER", "")
+    if upload_root:
+        upload_root_real = os.path.realpath(upload_root)
+        for rel_path in get_all_user_photo_paths(user_id):
+            if not rel_path:
+                continue
+            sub = rel_path[len("uploads/"):] if rel_path.startswith("uploads/") else rel_path
+            abs_path = os.path.realpath(os.path.join(upload_root, sub))
+            if abs_path.startswith(upload_root_real + os.sep):
+                try:
+                    os.remove(abs_path)
+                except OSError:
+                    logger.warning("Could not remove photo file during account deletion: %s", rel_path)
+
+    delete_user(user_id)
+    session.clear()
+    return redirect(url_for("auth.landing"))
