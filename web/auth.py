@@ -51,6 +51,39 @@ _REGISTER_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
 _REFRESH_RATE_LIMIT_MAX_ATTEMPTS = 4
 _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
 
+# Sensitive account-action rate limiting (password change, account delete).
+#
+# Even an authenticated attacker (via XSS, session hijack, or a shared
+# computer) should not be able to rapidly brute-force the "current password"
+# field on these forms.  Each IP is limited to 5 attempts per 15 minutes.
+_ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS = 5
+_ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S = 15 * 60
+
+_account_action_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_account_action_rate_limit_lock = threading.Lock()
+
+
+def _account_action_is_rate_limited() -> bool:
+    return _is_rate_limited(
+        _account_action_rate_limit_store,
+        _account_action_rate_limit_lock,
+        _ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS,
+        _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _record_account_action_failure() -> None:
+    _record_attempt(
+        _account_action_rate_limit_store,
+        _account_action_rate_limit_lock,
+        _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _clear_account_action_failures() -> None:
+    _clear_attempts(_account_action_rate_limit_store, _account_action_rate_limit_lock)
+
+
 # Per-username account lockout.
 #
 # IP-based rate limiting alone does not stop a distributed brute-force attack
@@ -459,10 +492,6 @@ def change_password_route() -> Any:
     if g.user is None:
         return redirect(url_for("auth.login"))
 
-    current_pw = request.form.get("current_password", "")
-    new_pw = request.form.get("new_password", "")
-    confirm_pw = request.form.get("confirm_password", "")
-
     def _pw_error(msg: str) -> Any:
         prefs = get_preferences(g.user["id"])
         prefs.setdefault("notification_prefs", {})
@@ -475,9 +504,17 @@ def change_password_route() -> Any:
             pw_error=msg,
         )
 
+    if _account_action_is_rate_limited():
+        return _pw_error("Too many attempts. Please wait before trying again.")
+
+    current_pw = request.form.get("current_password", "")
+    new_pw = request.form.get("new_password", "")
+    confirm_pw = request.form.get("confirm_password", "")
+
     # Verify the current password before allowing any change.
     stored_hash = get_user_password_hash(g.user["id"])
     if not stored_hash or not check_password_hash(stored_hash, current_pw):
+        _record_account_action_failure()
         return _pw_error("Current password is incorrect.")
 
     complexity_error = _password_complexity_error(new_pw)
@@ -492,6 +529,7 @@ def change_password_route() -> Any:
     # while all other devices/sessions are immediately invalidated.
     new_version = change_password(g.user["id"], new_pw)
     session["session_version"] = new_version
+    _clear_account_action_failures()
     return redirect(url_for("auth.account", saved="1"))
 
 
@@ -501,11 +539,7 @@ def delete_account_route() -> Any:
     if g.user is None:
         return redirect(url_for("auth.login"))
 
-    password = request.form.get("password", "")
-
-    # Require password confirmation before destructive action.
-    stored_hash = get_user_password_hash(g.user["id"])
-    if not stored_hash or not check_password_hash(stored_hash, password):
+    def _del_error(msg: str) -> Any:
         prefs = get_preferences(g.user["id"])
         prefs.setdefault("notification_prefs", {})
         return render_template(
@@ -514,8 +548,19 @@ def delete_account_route() -> Any:
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            delete_error="Incorrect password. Account not deleted.",
+            delete_error=msg,
         )
+
+    if _account_action_is_rate_limited():
+        return _del_error("Too many attempts. Please wait before trying again.")
+
+    password = request.form.get("password", "")
+
+    # Require password confirmation before destructive action.
+    stored_hash = get_user_password_hash(g.user["id"])
+    if not stored_hash or not check_password_hash(stored_hash, password):
+        _record_account_action_failure()
+        return _del_error("Incorrect password. Account not deleted.")
 
     user_id = g.user["id"]
 
