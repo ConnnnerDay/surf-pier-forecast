@@ -382,6 +382,50 @@ def login() -> Any:
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# Allowlist of widely-distributed consumer email domains.
+# Only these domains are accepted at registration to reduce spam, disposable
+# address abuse, and accounts with unreachable mailboxes.
+_ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
+    # Google
+    "gmail.com", "googlemail.com",
+    # Microsoft
+    "outlook.com", "outlook.co.uk", "outlook.com.au", "outlook.fr",
+    "outlook.de", "outlook.es", "outlook.it", "outlook.co.in",
+    "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
+    "hotmail.es", "hotmail.it", "hotmail.com.au", "hotmail.co.in",
+    "live.com", "live.co.uk", "live.fr", "live.de", "live.com.au",
+    "live.co.in", "msn.com",
+    # Yahoo
+    "yahoo.com", "yahoo.co.uk", "yahoo.ca", "yahoo.com.au",
+    "yahoo.fr", "yahoo.de", "yahoo.es", "yahoo.it", "yahoo.co.jp",
+    "yahoo.co.in", "yahoo.com.br", "ymail.com",
+    # Apple
+    "icloud.com", "me.com", "mac.com",
+    # AOL / Verizon Media
+    "aol.com", "aol.co.uk",
+    # Proton
+    "proton.me", "protonmail.com",
+    # Zoho
+    "zoho.com",
+    # GMX / Web.de / Mail.com (United Internet)
+    "gmx.com", "gmx.net", "gmx.de", "gmx.at", "gmx.ch",
+    "web.de", "mail.com",
+    # Yandex
+    "yandex.com", "yandex.ru", "ya.ru",
+    # Tuta (formerly Tutanota) — privacy-focused
+    "tuta.com", "tutanota.com", "tutanota.de", "tutamail.com",
+    # Fastmail
+    "fastmail.com", "fastmail.fm",
+})
+
+
+def _email_domain_allowed(email: str) -> bool:
+    """Return True if the email's domain is in the accepted-provider list."""
+    parts = email.rsplit("@", 1)
+    if len(parts) != 2:
+        return False
+    return parts[1].lower() in _ALLOWED_EMAIL_DOMAINS
+
 
 @bp.route("/register", methods=["GET", "POST"])
 def register() -> Any:
@@ -420,6 +464,15 @@ def register() -> Any:
         return render_template(
             "register.html",
             error="Please enter a valid email address.",
+            username=username, email=email,
+        )
+    if not _email_domain_allowed(email):
+        return render_template(
+            "register.html",
+            error=(
+                "Please use a major email provider such as Gmail, Outlook, "
+                "Yahoo, iCloud, or ProtonMail."
+            ),
             username=username, email=email,
         )
     if len(email) > 254:

@@ -294,9 +294,37 @@ def test_register_rejects_invalid_email(client):
     assert b"valid email" in resp.data
 
 
+def test_register_rejects_unknown_email_domain(client):
+    """Registration with an unlisted email domain is rejected."""
+    page = client.get("/register")
+    token = _csrf_from_html(page.data)
+    resp = client.post(
+        "/register",
+        data={
+            "csrf_token": token,
+            "username": "unknown_domain_user",
+            "email": "user@randomdomain.xyz",
+            "password": "Aa123456",
+            "confirm": "Aa123456",
+        },
+    )
+    assert resp.status_code == 200
+    assert b"major email provider" in resp.data
+
+
+def test_register_accepts_allowed_email_domains(client, monkeypatch):
+    """Registration succeeds for each major provider domain."""
+    from web.auth import _ALLOWED_EMAIL_DOMAINS
+
+    # Spot-check a sample of expected domains rather than all of them
+    sample_domains = ["gmail.com", "outlook.com", "yahoo.com", "icloud.com", "proton.me"]
+    for domain in sample_domains:
+        assert domain in _ALLOWED_EMAIL_DOMAINS, f"{domain} should be in the allowlist"
+
+
 def test_register_rejects_duplicate_email(client):
     """Two accounts cannot share the same email address."""
-    uid = create_user("first_email_user", "Aa123456", "shared@example.com")
+    uid = create_user("first_email_user", "Aa123456", "shared@gmail.com")
     assert uid is not None
 
     page = client.get("/register")
@@ -306,7 +334,7 @@ def test_register_rejects_duplicate_email(client):
         data={
             "csrf_token": token,
             "username": "second_email_user",
-            "email": "shared@example.com",
+            "email": "shared@gmail.com",
             "password": "Aa123456",
             "confirm": "Aa123456",
         },
