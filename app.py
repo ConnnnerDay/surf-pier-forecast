@@ -109,7 +109,24 @@ def create_app() -> Flask:
     # /uploads/<user_id>/<filename> route defined in web/views.py.
     _upload_folder = os.path.join(os.path.dirname(__file__), "data", "uploads")
     os.makedirs(_upload_folder, exist_ok=True)
+    # Restrict uploads directory to the owning process so that other users on
+    # a shared host cannot browse uploaded photos.
+    try:
+        os.chmod(_upload_folder, 0o700)
+    except OSError:
+        pass
     app.config["UPLOAD_FOLDER"] = _upload_folder
+
+    # Warn operators when the app is deployed behind a reverse proxy but the
+    # TRUSTED_PROXY flag has not been set.  Without it, rate limiting keys on
+    # the proxy's IP (127.0.0.1) rather than the real client IP, making it
+    # trivially bypassable.
+    if not os.environ.get("TRUSTED_PROXY") and not app.debug:
+        logging.getLogger(__name__).info(
+            "TRUSTED_PROXY is not set.  If this app is behind a reverse proxy "
+            "(nginx, Caddy, etc.) set TRUSTED_PROXY=1 so that IP-based rate "
+            "limiting uses the real client IP from X-Forwarded-For."
+        )
 
     # Initialize user database
     init_db()
@@ -173,6 +190,23 @@ def create_app() -> Flask:
         response.headers.setdefault(
             "Permissions-Policy",
             "interest-cohort=(), geolocation=(), microphone=(), camera=()",
+        )
+        # Content Security Policy — restrict resource origins to reduce XSS impact.
+        # Google Fonts (style + font) and unpkg.com (Leaflet) are explicit allow-listed
+        # CDNs used by the templates; all other external sources are blocked.
+        # 'unsafe-inline' is required for the existing inline <script> and <style>
+        # blocks; if those are ever moved to external files this can be tightened.
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: blob:; "
+                "connect-src 'self'; "
+                "frame-ancestors 'none';"
+            ),
         )
         # Enforce HTTPS for one year when served over TLS (safe no-op over plain HTTP).
         if request.is_secure:

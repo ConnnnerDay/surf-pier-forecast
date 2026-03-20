@@ -438,6 +438,26 @@ _ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
 _ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 _MAX_PHOTO_BYTES = 8 * 1024 * 1024  # 8 MB per photo
 
+# Magic byte signatures for each allowed image format.
+# Validated against the raw file content to prevent MIME-type spoofing — a
+# client-controlled header that cannot be trusted on its own.
+_JPEG_MAGIC = b"\xff\xd8\xff"
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+_WEBP_RIFF = b"RIFF"
+_WEBP_TAG = b"WEBP"
+
+
+def _check_magic_bytes(data: bytes, claimed_mime: str) -> bool:
+    """Return True if ``data`` starts with the magic bytes for ``claimed_mime``."""
+    if claimed_mime == "image/jpeg":
+        return data[:3] == _JPEG_MAGIC
+    if claimed_mime == "image/png":
+        return data[:8] == _PNG_MAGIC
+    if claimed_mime == "image/webp":
+        # WebP container: bytes 0-3 = "RIFF", bytes 8-11 = "WEBP"
+        return len(data) >= 12 and data[:4] == _WEBP_RIFF and data[8:12] == _WEBP_TAG
+    return False
+
 
 def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
     """Validate + write an uploaded photo.
@@ -451,7 +471,7 @@ def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
     if mime not in _ALLOWED_MIME:
         raise ApiError(
             "invalid_file_type",
-            f"Unsupported file type '{mime}'. Use JPEG, PNG, or WebP.",
+            "Unsupported file type. Use JPEG, PNG, or WebP.",
             status=400,
         )
 
@@ -459,7 +479,7 @@ def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
     if ext not in _ALLOWED_EXT:
         raise ApiError(
             "invalid_file_type",
-            f"Unsupported extension '{ext}'. Use .jpg, .png, or .webp.",
+            "Unsupported extension. Use .jpg, .png, or .webp.",
             status=400,
         )
 
@@ -467,9 +487,22 @@ def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
     if len(data) > _MAX_PHOTO_BYTES:
         raise ApiError("file_too_large", "Photo must be 8 MB or smaller.", status=413)
 
+    # Validate actual file content against known magic bytes so that a client
+    # cannot bypass the MIME / extension checks by spoofing headers.
+    if not _check_magic_bytes(data, mime):
+        raise ApiError(
+            "invalid_file_type",
+            "File content does not match the declared type.",
+            status=400,
+        )
+
     upload_root = current_app.config["UPLOAD_FOLDER"]
     user_dir = os.path.join(upload_root, str(user_id))
     os.makedirs(user_dir, exist_ok=True)
+    try:
+        os.chmod(user_dir, 0o700)
+    except OSError:
+        pass
 
     filename = f"{uuid.uuid4()}{ext}"
     abs_path = os.path.join(user_dir, filename)
@@ -489,7 +522,14 @@ def _delete_upload_file(rel_path: Optional[str]) -> None:
         return
     # rel_path is "uploads/<user_id>/<filename>"; strip the leading "uploads/" part
     sub = rel_path[len("uploads/") :] if rel_path.startswith("uploads/") else rel_path
-    abs_path = os.path.join(upload_root, sub)
+    # Resolve symlinks and normalise to prevent path traversal (e.g. "../../etc")
+    # before constructing the absolute path.
+    upload_root_real = os.path.realpath(upload_root)
+    abs_path = os.path.realpath(os.path.join(upload_root, sub))
+    # Only delete files that are actually inside the upload root.
+    if not abs_path.startswith(upload_root_real + os.sep):
+        logger.warning("Blocked attempt to delete file outside upload root: %s", rel_path)
+        return
     try:
         os.remove(abs_path)
     except OSError:

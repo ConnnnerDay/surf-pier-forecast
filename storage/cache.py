@@ -27,6 +27,13 @@ CACHE_MAX_AGE_HOURS = 4
 # Legacy JSON cache directory (kept for migration / fallback reads)
 CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 os.makedirs(CACHE_DIR, exist_ok=True)
+# Restrict the data directory to the owning user so forecast cache files,
+# the SQLite database, and the secret key file cannot be read by other users
+# on a shared host.
+try:
+    os.chmod(CACHE_DIR, 0o700)
+except OSError:
+    pass
 CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 
 

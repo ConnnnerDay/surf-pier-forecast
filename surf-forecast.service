@@ -14,7 +14,7 @@ WorkingDirectory=REPLACE_DIR
 # nginx or another reverse proxy in front for TLS termination.
 ExecStart=REPLACE_DIR/.venv/bin/gunicorn \
     --workers 2 \
-    --bind 0.0.0.0:5757 \
+    --bind 127.0.0.1:5757 \
     --timeout 60 \
     --access-logfile - \
     --error-logfile - \

@@ -99,12 +99,22 @@ class ProfilePayload:
 
         favorites = data.get("favorites")
         if favorites is not None:
-            if not isinstance(favorites, list) or not all(
-                isinstance(x, str) for x in favorites
-            ):
+            if not isinstance(favorites, list):
                 raise ApiError(
                     "invalid_favorites",
                     "favorites must be a list of strings",
+                    status=400,
+                )
+            if len(favorites) > 20:
+                raise ApiError(
+                    "invalid_favorites",
+                    "favorites may not contain more than 20 entries",
+                    status=400,
+                )
+            if not all(isinstance(x, str) and len(x) <= 100 for x in favorites):
+                raise ApiError(
+                    "invalid_favorites",
+                    "favorites must be a list of strings (max 100 characters each)",
                     status=400,
                 )
 
@@ -136,10 +146,17 @@ class ProfilePayload:
                     )
 
         location_id = data.get("location_id")
-        if location_id is not None and not isinstance(location_id, str):
-            raise ApiError(
-                "invalid_location_id", "location_id must be a string", status=400
-            )
+        if location_id is not None:
+            if not isinstance(location_id, str):
+                raise ApiError(
+                    "invalid_location_id", "location_id must be a string", status=400
+                )
+            if len(location_id) > 100:
+                raise ApiError(
+                    "invalid_location_id",
+                    "location_id must be 100 characters or fewer",
+                    status=400,
+                )
 
         return cls(
             location_id=location_id,
