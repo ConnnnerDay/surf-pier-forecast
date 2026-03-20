@@ -38,6 +38,7 @@ from storage.sqlite import (
     get_preferences,
     save_preferences,
 )
+from web.auth import record_refresh_attempt, refresh_is_rate_limited
 from web.helpers import get_session_location
 from web.openapi import build_openapi_spec
 from web.schemas import (
@@ -73,6 +74,13 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
     user_id = g.user["id"] if g.user else None
     forecast_data: Optional[Dict[str, Any]] = None
     if query.force_refresh:
+        if refresh_is_rate_limited():
+            raise ApiError(
+                "rate_limited",
+                "Too many forecast refreshes. Please wait a few minutes.",
+                status=429,
+            )
+        record_refresh_attempt()
         logger.info("cache.force_refresh location_id=%s", loc_id)
         forecast_data = generate_forecast(location)
         save_forecast(forecast_data, loc_id, user_id=user_id)
@@ -402,7 +410,7 @@ def regulations_v1() -> Any:
 
     Always returns HTTP 200.  ``regulation`` is ``null`` when no data is available.
     """
-    species_name = request.args.get("species", "").strip()
+    species_name = request.args.get("species", "")[:200].strip()
     if not species_name:
         return _json_error(
             ApiError(
@@ -412,9 +420,10 @@ def regulations_v1() -> Any:
 
     # Resolve state: explicit param takes priority, else derive from location_id,
     # else fall back to the current session location.
-    state = request.args.get("state", "").strip().upper()
+    # Cap state to 2 chars; anything longer is invalid and rejected below.
+    state = request.args.get("state", "")[:2].strip().upper()
     if not state:
-        location_id = request.args.get("location_id", "").strip()
+        location_id = request.args.get("location_id", "")[:100].strip()
         loc = get_location(location_id) if location_id else None
         if not loc:
             loc = get_session_location()

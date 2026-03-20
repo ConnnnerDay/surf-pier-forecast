@@ -35,12 +35,46 @@ _log = logging.getLogger(__name__)
 
 _CACHE_TTL_SECONDS = 86_400  # 24 hours
 _REQUEST_TIMEOUT = 12  # seconds
+_MAX_RESPONSE_BYTES = 2 * 1024 * 1024  # 2 MB — refuse larger regulation pages
 _USER_AGENT = "Mozilla/5.0 (compatible; SurfForecast/1.0 fishing-regulation-lookup)"
 
 
 # ──────────────────────────────────────────────────────────────────
 # Shared helpers
 # ──────────────────────────────────────────────────────────────────
+
+
+def _fetch_page(url: str) -> Optional[str]:
+    """Fetch *url* and return its text content, or None on error.
+
+    Enforces a hard cap of _MAX_RESPONSE_BYTES to prevent a misbehaving or
+    compromised state-agency site from forcing the process to load an
+    arbitrarily large HTML document into memory.
+    """
+    try:
+        resp = requests.get(
+            url,
+            timeout=_REQUEST_TIMEOUT,
+            headers={"User-Agent": _USER_AGENT},
+            stream=True,
+        )
+        resp.raise_for_status()
+        chunks: list[bytes] = []
+        total = 0
+        for chunk in resp.iter_content(chunk_size=65_536):
+            total += len(chunk)
+            if total > _MAX_RESPONSE_BYTES:
+                _log.warning(
+                    "reg_scraper: response for %s exceeded %d bytes; aborting",
+                    url, _MAX_RESPONSE_BYTES,
+                )
+                return None
+            chunks.append(chunk)
+        encoding = resp.encoding or "utf-8"
+        return b"".join(chunks).decode(encoding, errors="replace")
+    except Exception as exc:
+        _log.warning("reg_scraper: fetch failed for %s: %s", url, exc)
+        return None
 
 
 def _normalize_name(name: str) -> str:
@@ -218,17 +252,11 @@ def _scrape_fl(species_name: str) -> Optional[Dict[str, str]]:
     if not slug:
         return None
     url = f"{_FL_BASE}{slug}/"
-    try:
-        resp = requests.get(
-            url,
-            timeout=_REQUEST_TIMEOUT,
-            headers={"User-Agent": _USER_AGENT},
-        )
-        resp.raise_for_status()
-        return _parse_fl_page(resp.text)
-    except Exception as exc:
-        _log.warning("FL scrape failed for %s: %s", species_name, exc)
+    html = _fetch_page(url)
+    if not html:
+        _log.warning("FL scrape failed for %s", species_name)
         return None
+    return _parse_fl_page(html)
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -265,18 +293,10 @@ def _get_va_html() -> Optional[str]:
     with _va_page_lock:
         if _va_page_cache is not None:
             return _va_page_cache
-        try:
-            resp = requests.get(
-                _VA_URL,
-                timeout=_REQUEST_TIMEOUT,
-                headers={"User-Agent": _USER_AGENT},
-            )
-            resp.raise_for_status()
-            _va_page_cache = resp.text
-            return _va_page_cache
-        except Exception as exc:
-            _log.warning("VA page fetch failed: %s", exc)
-            return None
+        html = _fetch_page(_VA_URL)
+        if html:
+            _va_page_cache = html
+        return html
 
 
 def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
@@ -384,18 +404,10 @@ def _get_ga_html() -> Optional[str]:
     with _ga_page_lock:
         if _ga_page_cache is not None:
             return _ga_page_cache
-        try:
-            resp = requests.get(
-                _GA_URL,
-                timeout=_REQUEST_TIMEOUT,
-                headers={"User-Agent": _USER_AGENT},
-            )
-            resp.raise_for_status()
-            _ga_page_cache = resp.text
-            return _ga_page_cache
-        except Exception as exc:
-            _log.warning("GA page fetch failed: %s", exc)
-            return None
+        html = _fetch_page(_GA_URL)
+        if html:
+            _ga_page_cache = html
+        return html
 
 
 def _parse_ga_dd(dd_text: str) -> Dict[str, str]:
@@ -544,18 +556,10 @@ def _get_nc_html() -> Optional[str]:
     with _nc_page_lock:
         if _nc_page_cache is not None:
             return _nc_page_cache
-        try:
-            resp = requests.get(
-                _NC_URL,
-                timeout=_REQUEST_TIMEOUT,
-                headers={"User-Agent": _USER_AGENT},
-            )
-            resp.raise_for_status()
-            _nc_page_cache = resp.text
-            return _nc_page_cache
-        except Exception as exc:
-            _log.warning("NC page fetch failed: %s", exc)
-            return None
+        html = _fetch_page(_NC_URL)
+        if html:
+            _nc_page_cache = html
+        return html
 
 
 def _parse_nc_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
@@ -667,18 +671,10 @@ def _get_ny_html() -> Optional[str]:
     with _ny_page_lock:
         if _ny_page_cache is not None:
             return _ny_page_cache
-        try:
-            resp = requests.get(
-                _NY_URL,
-                timeout=_REQUEST_TIMEOUT,
-                headers={"User-Agent": _USER_AGENT},
-            )
-            resp.raise_for_status()
-            _ny_page_cache = resp.text
-            return _ny_page_cache
-        except Exception as exc:
-            _log.warning("NY page fetch failed: %s", exc)
-            return None
+        html = _fetch_page(_NY_URL)
+        if html:
+            _ny_page_cache = html
+        return html
 
 
 def _parse_ny_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
@@ -775,18 +771,10 @@ def _get_al_html() -> Optional[str]:
     with _al_page_lock:
         if _al_page_cache is not None:
             return _al_page_cache
-        try:
-            resp = requests.get(
-                _AL_URL,
-                timeout=_REQUEST_TIMEOUT,
-                headers={"User-Agent": _USER_AGENT},
-            )
-            resp.raise_for_status()
-            _al_page_cache = resp.text
-            return _al_page_cache
-        except Exception as exc:
-            _log.warning("AL page fetch failed: %s", exc)
-            return None
+        html = _fetch_page(_AL_URL)
+        if html:
+            _al_page_cache = html
+        return html
 
 
 def _parse_al_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
@@ -869,18 +857,10 @@ def _get_ri_html() -> Optional[str]:
     with _ri_page_lock:
         if _ri_page_cache is not None:
             return _ri_page_cache
-        try:
-            resp = requests.get(
-                _RI_URL,
-                timeout=_REQUEST_TIMEOUT,
-                headers={"User-Agent": _USER_AGENT},
-            )
-            resp.raise_for_status()
-            _ri_page_cache = resp.text
-            return _ri_page_cache
-        except Exception as exc:
-            _log.warning("RI page fetch failed: %s", exc)
-            return None
+        html = _fetch_page(_RI_URL)
+        if html:
+            _ri_page_cache = html
+        return html
 
 
 def _parse_ri_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
@@ -1072,19 +1052,16 @@ def _scrape_tx(species_name: str) -> Optional[Dict[str, str]]:
         return None
 
     url = f"{_TX_BASE}{slug}"
+    html = _fetch_page(url)
+    if not html:
+        _log.warning("TX scrape failed for %s", species_name)
+        return None
     try:
-        resp = requests.get(
-            url,
-            timeout=_REQUEST_TIMEOUT,
-            headers={"User-Agent": _USER_AGENT},
-        )
-        resp.raise_for_status()
         from bs4 import BeautifulSoup
-
-        soup = BeautifulSoup(resp.text, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
         return _parse_tx_page(soup.get_text("\n", strip=True), target)
     except Exception as exc:
-        _log.warning("TX scrape failed for %s: %s", species_name, exc)
+        _log.warning("TX parse failed for %s: %s", species_name, exc)
         return None
 
 
@@ -1121,17 +1098,26 @@ def _get_ms_html() -> Optional[str]:
     with _ms_page_lock:
         if _ms_page_cache is not None:
             return _ms_page_cache
+        # eregulations.com declares ISO-8859-1 but actually serves UTF-8;
+        # _fetch_page decodes with errors="replace", so we re-encode and
+        # force UTF-8 to get correct curly-quote characters.
         try:
             resp = requests.get(
                 _MS_URL,
                 timeout=_REQUEST_TIMEOUT,
                 headers={"User-Agent": _USER_AGENT},
+                stream=True,
             )
             resp.raise_for_status()
-            # eregulations.com serves UTF-8 content but declares ISO-8859-1;
-            # force correct decoding so curly-quote characters render properly.
-            resp.encoding = "utf-8"
-            _ms_page_cache = resp.text
+            chunks: list[bytes] = []
+            total = 0
+            for chunk in resp.iter_content(chunk_size=65_536):
+                total += len(chunk)
+                if total > _MAX_RESPONSE_BYTES:
+                    _log.warning("reg_scraper: MS response exceeded limit; aborting")
+                    return None
+                chunks.append(chunk)
+            _ms_page_cache = b"".join(chunks).decode("utf-8", errors="replace")
             return _ms_page_cache
         except Exception as exc:
             _log.warning("MS page fetch failed: %s", exc)
