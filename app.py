@@ -134,10 +134,6 @@ def create_app() -> Flask:
 
     # -- Request hooks -----------------------------------------------------
 
-    # Hard cap on how long any single session stays valid, regardless of
-    # activity.  This limits damage if a session cookie is stolen.
-    _SESSION_ABSOLUTE_MAX_AGE_S = 7 * 24 * 60 * 60  # 7 days
-
     @app.before_request
     def _load_user() -> None:
         """Populate g.user from the session on every request.
@@ -146,22 +142,9 @@ def create_app() -> Flask:
         database.  When a user logs in from a new device their session_version
         is incremented, which causes this check to clear any older sessions
         that are still in use on other browsers/devices.
-
-        Additionally enforces a 7-day absolute session lifetime: even if the
-        rolling PERMANENT_SESSION_LIFETIME cookie would still be valid, sessions
-        older than 7 days are forcibly expired so stolen cookies eventually
-        become useless.
         """
         user_id = session.get("user_id")
         if user_id:
-            # Absolute session age check — independent of the rolling cookie expiry.
-            login_at = session.get("login_at")
-            if login_at is not None:
-                import time as _time
-                if _time.time() - login_at > _SESSION_ABSOLUTE_MAX_AGE_S:
-                    session.clear()
-                    g.user = None
-                    return
             g.user = get_user(user_id)
             if g.user is None:
                 session.clear()

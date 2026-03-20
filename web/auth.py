@@ -399,7 +399,6 @@ def login() -> Any:
     new_version = bump_session_version(user["id"])
     session["user_id"] = user["id"]
     session["session_version"] = new_version
-    session["login_at"] = time.time()  # used for absolute session-age enforcement
     session.permanent = True
     # Issue a fresh CSRF token post-login so any token captured before
     # authentication is no longer valid for authenticated endpoints.
