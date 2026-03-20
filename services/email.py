@@ -12,6 +12,7 @@ Configure via environment variables:
 
 from __future__ import annotations
 
+import html as _html
 import logging
 import os
 import smtplib
@@ -33,11 +34,27 @@ def _is_configured() -> bool:
     return bool(_SMTP_HOST and _SMTP_FROM)
 
 
+def _sanitize_header(value: str) -> str:
+    """Strip CR/LF characters to prevent SMTP header injection.
+
+    RFC 5322 headers must not contain bare CR or LF characters.  An attacker
+    who can control the ``to`` or ``subject`` field could inject additional
+    headers (Bcc:, Cc:, Subject:) by embedding newlines.  Stripping them here
+    is a defence-in-depth measure; the caller is expected to validate addresses
+    before passing them in.
+    """
+    return value.replace("\r", "").replace("\n", "")
+
+
 def send_email(to: str, subject: str, body_text: str, body_html: str = "") -> bool:
     """Send an email. Returns True on success, False on failure.
 
     If SMTP is not configured, logs a warning and returns False.
     """
+    # Strip control characters that could be used for header injection.
+    to = _sanitize_header(to)
+    subject = _sanitize_header(subject)
+
     if not _is_configured():
         logger.warning(
             "SMTP not configured (set SMTP_HOST and SMTP_FROM). "
@@ -91,6 +108,9 @@ def send_verification_email(
     """Send an account verification email with a one-time link."""
     verify_url = f"{base_url.rstrip('/')}/verify-email/{token}"
     subject = "Verify your Surf & Pier account"
+    # HTML-escape username before embedding in the HTML body so that any
+    # unexpected characters (e.g. '<', '>') cannot break the HTML structure.
+    username_html = _html.escape(username)
     body_text = (
         f"Hi {username},\n\n"
         "Thanks for signing up for Surf & Pier Fishing Forecast!\n\n"
@@ -105,7 +125,7 @@ def send_verification_email(
 <html>
 <body style="font-family:sans-serif;max-width:480px;margin:auto;padding:2rem;color:#222;">
   <h2 style="color:#0e5f78;">Surf &amp; Pier Fishing Forecast</h2>
-  <p>Hi <strong>{username}</strong>,</p>
+  <p>Hi <strong>{username_html}</strong>,</p>
   <p>Thanks for signing up! Please verify your email address to activate your account.</p>
   <p style="margin:1.5rem 0;">
     <a href="{verify_url}"
