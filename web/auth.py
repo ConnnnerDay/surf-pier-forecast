@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import secrets
 import threading
 import time
 from typing import Any, Dict, Tuple
@@ -29,14 +30,19 @@ from storage.db import (
     authenticate_user,
     bump_session_version,
     change_password,
+    confirm_email,
     create_user,
     delete_user,
     get_all_user_photo_paths,
     get_preferences,
     get_recent_logs,
+    get_user_by_email,
+    get_user_by_verification_token,
     get_user_password_hash,
     save_preferences,
+    set_email_verification_token,
 )
+from services.email import send_verification_email
 
 bp = Blueprint("auth", __name__)
 
@@ -361,6 +367,9 @@ def login() -> Any:
     return redirect(url_for("views.index"))
 
 
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
 @bp.route("/register", methods=["GET", "POST"])
 def register() -> Any:
     """Registration page and form handler."""
@@ -374,50 +383,121 @@ def register() -> Any:
             error="Too many registration attempts. Please try again later.",
         )
     username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm", "")
-    if not username or not password:
+    if not username or not email or not password:
         return render_template(
-            "register.html", error="Please fill in all fields.", username=username
+            "register.html", error="Please fill in all fields.",
+            username=username, email=email,
         )
     if len(username) < 2 or len(username) > 30:
         return render_template(
             "register.html",
             error="Username must be 2-30 characters.",
-            username=username,
+            username=username, email=email,
         )
     if not re.match(r"^[A-Za-z0-9_-]+$", username):
         return render_template(
             "register.html",
             error="Username may only contain letters, numbers, underscores, and hyphens.",
-            username=username,
+            username=username, email=email,
+        )
+    if not _EMAIL_RE.match(email):
+        return render_template(
+            "register.html",
+            error="Please enter a valid email address.",
+            username=username, email=email,
+        )
+    if len(email) > 254:
+        return render_template(
+            "register.html",
+            error="Email address is too long.",
+            username=username, email=email,
+        )
+    if get_user_by_email(email):
+        return render_template(
+            "register.html",
+            error="An account with that email address already exists.",
+            username=username, email=email,
         )
     complexity_error = _password_complexity_error(password)
     if complexity_error:
         return render_template(
-            "register.html", error=complexity_error, username=username
+            "register.html", error=complexity_error, username=username, email=email,
         )
     if password != confirm:
         return render_template(
-            "register.html", error="Passwords do not match.", username=username
+            "register.html", error="Passwords do not match.", username=username, email=email,
         )
     _record_register_attempt()
-    user_id = create_user(username, password)
+    user_id = create_user(username, password, email)
     if user_id is None:
         return render_template(
-            "register.html", error="That username is already taken.", username=username
+            "register.html", error="That username is already taken.",
+            username=username, email=email,
         )
+    # Send verification email (best-effort; account is created regardless).
+    token = secrets.token_urlsafe(32)
+    set_email_verification_token(user_id, token)
+    base_url = request.host_url
+    send_verification_email(email, username, token, base_url)
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
     session.clear()
     session["user_id"] = user_id
-    session["session_version"] = 0  # New user; version_version starts at 0
+    session["session_version"] = 0  # New user; session_version starts at 0
     session.permanent = True
     # Carry over current location if one is set
     if loc_id:
         session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
     return redirect(url_for("views.index"))
+
+
+@bp.route("/verify-email/<token>")
+def verify_email(token: str) -> Any:
+    """Confirm a user's email address via the one-time token link."""
+    user = get_user_by_verification_token(token)
+    if user is None:
+        return render_template(
+            "verify_email.html",
+            success=False,
+            message="This verification link is invalid or has expired.",
+        )
+    if user["email_confirmed"]:
+        return render_template(
+            "verify_email.html",
+            success=True,
+            message="Your email is already verified.",
+        )
+    confirm_email(user["id"])
+    # If the user is currently logged in, refresh g.user so templates reflect
+    # the confirmed state immediately.
+    if g.user and g.user["id"] == user["id"]:
+        g.user["email_confirmed"] = True
+    return render_template(
+        "verify_email.html",
+        success=True,
+        message="Your email has been verified. Welcome to Surf & Pier!",
+    )
+
+
+@bp.route("/resend-verification", methods=["POST"])
+def resend_verification() -> Any:
+    """Resend the email verification link to the logged-in user."""
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+    if g.user.get("email_confirmed"):
+        return redirect(url_for("auth.account"))
+    email = g.user.get("email")
+    if not email:
+        return redirect(url_for("auth.account"))
+    token = secrets.token_urlsafe(32)
+    set_email_verification_token(g.user["id"], token)
+    base_url = request.host_url
+    send_verification_email(email, g.user["username"], token, base_url)
+    return redirect(url_for("auth.account", verify_sent="1"))
 
 
 @bp.route("/logout", methods=["POST"])

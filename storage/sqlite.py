@@ -26,7 +26,10 @@ CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT UNIQUE COLLATE NOCASE,
     password_hash TEXT,
+    email         TEXT UNIQUE COLLATE NOCASE,
     email_confirmed INTEGER NOT NULL DEFAULT 0,
+    email_verification_token TEXT,
+    email_verification_sent_at TEXT,
     password_reset_token TEXT,
     password_reset_sent_at TEXT,
     default_location_id TEXT,
@@ -157,6 +160,12 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0"
         )
+    if "email" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN email TEXT UNIQUE COLLATE NOCASE")
+    if "email_verification_token" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN email_verification_token TEXT")
+    if "email_verification_sent_at" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN email_verification_sent_at TEXT")
 
     profile_cols = set(_column_names(conn, "profiles"))
     if "wind_units" not in profile_cols:
@@ -246,15 +255,16 @@ def init_db() -> None:
 # User auth -----------------------------------------------------------------
 
 
-def create_user(username: str, password: str) -> Optional[int]:
+def create_user(username: str, password: str, email: Optional[str] = None) -> Optional[int]:
     # Explicitly specify the algorithm so we are not dependent on Werkzeug's
     # default changing in a future release.
     pw_hash = generate_password_hash(password, method="pbkdf2:sha256")
+    email_val = email.strip().lower() if email else None
     conn = get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO users (username, password_hash, is_anonymous) VALUES (?, ?, 0)",
-            (username.strip(), pw_hash),
+            "INSERT INTO users (username, password_hash, email, is_anonymous) VALUES (?, ?, ?, 0)",
+            (username.strip(), pw_hash, email_val),
         )
         user_id = cur.lastrowid
         conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
@@ -290,7 +300,7 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT id, username, email_confirmed, default_location_id, session_version "
+            "SELECT id, username, email, email_confirmed, default_location_id, session_version "
             "FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
@@ -301,10 +311,79 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     return {
         "id": row["id"],
         "username": row["username"],
+        "email": row["email"],
         "email_confirmed": bool(row["email_confirmed"]),
         "default_location_id": row["default_location_id"],
         "session_version": row["session_version"],
     }
+
+
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    """Return the user with the given email address (case-insensitive), or None."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id FROM users WHERE email = ? COLLATE NOCASE AND is_anonymous = 0",
+            (email.strip().lower(),),
+        ).fetchone()
+    finally:
+        conn.close()
+    return {"id": row["id"]} if row else None
+
+
+def set_email_verification_token(user_id: int, token: str) -> None:
+    """Store a verification token and record when it was sent."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET email_verification_token = ?, "
+            "email_verification_sent_at = datetime('now') WHERE id = ?",
+            (token, user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
+    """Return the user matching *token* if the token was sent within 24 hours."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id, email_confirmed, email_verification_sent_at "
+            "FROM users WHERE email_verification_token = ? AND is_anonymous = 0",
+            (token,),
+        ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return None
+    # Expire tokens after 24 hours.
+    sent_at_raw = row["email_verification_sent_at"]
+    if sent_at_raw:
+        try:
+            from datetime import timezone
+            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
+            now = datetime.now(tz=timezone.utc)
+            if (now - sent_at).total_seconds() > 86400:
+                return None
+        except Exception:
+            pass
+    return {"id": row["id"], "email_confirmed": bool(row["email_confirmed"])}
+
+
+def confirm_email(user_id: int) -> None:
+    """Mark the user's email as confirmed and clear the verification token."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET email_confirmed = 1, email_verification_token = NULL, "
+            "email_verification_sent_at = NULL WHERE id = ?",
+            (user_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def bump_session_version(user_id: int) -> int:

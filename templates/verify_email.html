@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="theme-color" content="#0e5f78">
+    {% include 'partials/_theme_bootstrap.html' %}
+</head>
+<body class="auth-page">
+    <header>
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+            <p class="subtitle">Email Verification</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="auth-section">
+            {% if success %}
+            <div style="text-align:center;padding:1.5rem 0;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#2a7d6e" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="margin-bottom:1rem"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                <h2 style="color:#2a7d6e;margin-bottom:0.5rem;">Verified!</h2>
+                <p style="color:var(--muted,#5c6b73);margin-bottom:1.5rem;">{{ message }}</p>
+                <a href="{{ url_for('views.index') }}" class="auth-btn">Go to Forecast</a>
+            </div>
+            {% else %}
+            <div style="text-align:center;padding:1.5rem 0;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="margin-bottom:1rem"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <h2 style="color:#c0392b;margin-bottom:0.5rem;">Link Expired</h2>
+                <p style="color:var(--muted,#5c6b73);margin-bottom:1.5rem;">{{ message }}</p>
+                {% if user %}
+                <form method="post" action="{{ url_for('auth.resend_verification') }}" style="margin-bottom:1rem">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="auth-btn">Resend Verification Email</button>
+                </form>
+                {% endif %}
+                <a href="{{ url_for('auth.login') }}" style="color:#0e5f78;">Back to login</a>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <p>Surf &amp; Pier Fishing Outlook</p>
+    </footer>
+</body>
+</html>
