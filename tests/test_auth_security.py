@@ -313,11 +313,19 @@ def test_register_rejects_unknown_email_domain(client):
 
 
 def test_register_accepts_allowed_email_domains(client, monkeypatch):
-    """Registration succeeds for each major provider domain."""
+    """Spot-check that key domains — including Apple Private Relay — are listed."""
     from web.auth import _ALLOWED_EMAIL_DOMAINS
 
-    # Spot-check a sample of expected domains rather than all of them
-    sample_domains = ["gmail.com", "outlook.com", "yahoo.com", "icloud.com", "proton.me"]
+    sample_domains = [
+        # Big consumer providers
+        "gmail.com", "outlook.com", "yahoo.com", "icloud.com",
+        # Privacy-focused
+        "proton.me", "tuta.com", "mailbox.org", "posteo.de",
+        # Apple Hide My Email / Private Relay
+        "privaterelay.appleid.com",
+        # Regional / ISP
+        "comcast.net", "qq.com", "naver.com", "mail.ru",
+    ]
     for domain in sample_domains:
         assert domain in _ALLOWED_EMAIL_DOMAINS, f"{domain} should be in the allowlist"
 

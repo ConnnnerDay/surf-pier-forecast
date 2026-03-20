@@ -386,36 +386,136 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # Only these domains are accepted at registration to reduce spam, disposable
 # address abuse, and accounts with unreachable mailboxes.
 _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
-    # Google
+    # ── Google ────────────────────────────────────────────────────────────────
     "gmail.com", "googlemail.com",
-    # Microsoft
+
+    # ── Microsoft (Outlook / Hotmail / Live / MSN) ────────────────────────────
+    # Global + regional Outlook
     "outlook.com", "outlook.co.uk", "outlook.com.au", "outlook.fr",
     "outlook.de", "outlook.es", "outlook.it", "outlook.co.in",
+    "outlook.com.br", "outlook.com.ar", "outlook.com.mx", "outlook.cl",
+    "outlook.pt", "outlook.be", "outlook.nl", "outlook.at", "outlook.dk",
+    "outlook.fi", "outlook.se", "outlook.no", "outlook.ie", "outlook.sg",
+    "outlook.jp", "outlook.kr", "outlook.ph", "outlook.my",
+    # Hotmail regional
     "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
     "hotmail.es", "hotmail.it", "hotmail.com.au", "hotmail.co.in",
+    "hotmail.com.br", "hotmail.com.ar", "hotmail.com.mx", "hotmail.cl",
+    "hotmail.pt", "hotmail.be", "hotmail.nl", "hotmail.gr",
+    "hotmail.dk", "hotmail.fi", "hotmail.se", "hotmail.no",
+    "hotmail.co.jp", "hotmail.rs", "hotmail.hr",
+    # Live regional
     "live.com", "live.co.uk", "live.fr", "live.de", "live.com.au",
-    "live.co.in", "msn.com",
-    # Yahoo
+    "live.co.in", "live.it", "live.ca", "live.be", "live.nl",
+    "live.at", "live.dk", "live.fi", "live.se", "live.no", "live.ie",
+    "live.sg", "live.jp", "live.in", "live.cl",
+    "live.com.ar", "live.com.mx", "live.com.pt",
+    "msn.com",
+
+    # ── Yahoo / Oath ──────────────────────────────────────────────────────────
     "yahoo.com", "yahoo.co.uk", "yahoo.ca", "yahoo.com.au",
     "yahoo.fr", "yahoo.de", "yahoo.es", "yahoo.it", "yahoo.co.jp",
-    "yahoo.co.in", "yahoo.com.br", "ymail.com",
-    # Apple
+    "yahoo.co.in", "yahoo.com.br", "yahoo.com.ar", "yahoo.com.mx",
+    "yahoo.com.hk", "yahoo.com.sg", "yahoo.com.ph", "yahoo.com.tw",
+    "yahoo.com.my", "yahoo.com.vn", "yahoo.com.pe", "yahoo.com.co",
+    "yahoo.gr", "yahoo.ro", "yahoo.hu", "yahoo.dk", "yahoo.se",
+    "yahoo.no", "yahoo.fi", "yahoo.be", "yahoo.at", "yahoo.pt",
+    "yahoo.nl", "yahoo.ie", "yahoo.in",
+    "ymail.com",
+
+    # ── Apple — standard + Hide My Email (Private Relay) ─────────────────────
+    # Standard Apple accounts
     "icloud.com", "me.com", "mac.com",
-    # AOL / Verizon Media
+    # Hide My Email relay addresses (format: random@privaterelay.appleid.com)
+    "privaterelay.appleid.com",
+
+    # ── AOL / Verizon Media ───────────────────────────────────────────────────
     "aol.com", "aol.co.uk",
-    # Proton
-    "proton.me", "protonmail.com",
-    # Zoho
+
+    # ── US ISP / cable email ──────────────────────────────────────────────────
+    "comcast.net", "xfinity.com",
+    "att.net", "sbcglobal.net", "bellsouth.net", "pacbell.net",
+    "verizon.net",
+    "cox.net",
+    "charter.net", "spectrum.net",
+    "earthlink.net",
+    "windstream.net",
+    "centurylink.net", "lumen.com",
+
+    # ── Proton ────────────────────────────────────────────────────────────────
+    "proton.me", "protonmail.com", "pm.me",
+
+    # ── Tuta (formerly Tutanota) ──────────────────────────────────────────────
+    "tuta.com", "tutanota.com", "tutanota.de", "tutamail.com", "tuta.io",
+
+    # ── Zoho ──────────────────────────────────────────────────────────────────
     "zoho.com",
-    # GMX / Web.de / Mail.com (United Internet)
+
+    # ── GMX / Web.de / Mail.com (United Internet) ────────────────────────────
     "gmx.com", "gmx.net", "gmx.de", "gmx.at", "gmx.ch",
     "web.de", "mail.com",
-    # Yandex
-    "yandex.com", "yandex.ru", "ya.ru",
-    # Tuta (formerly Tutanota) — privacy-focused
-    "tuta.com", "tutanota.com", "tutanota.de", "tutamail.com",
-    # Fastmail
+
+    # ── Fastmail ──────────────────────────────────────────────────────────────
     "fastmail.com", "fastmail.fm",
+
+    # ── Yandex (Russia / CIS) ────────────────────────────────────────────────
+    "yandex.com", "yandex.ru", "ya.ru",
+
+    # ── Mail.ru / VK (Russia) ─────────────────────────────────────────────────
+    "mail.ru", "list.ru", "inbox.ru", "bk.ru", "internet.ru",
+
+    # ── Rambler (Russia) ──────────────────────────────────────────────────────
+    "rambler.ru", "lenta.ru", "ro.ru",
+
+    # ── NetEase / 163 (China) ─────────────────────────────────────────────────
+    "163.com", "126.com", "yeah.net",
+
+    # ── QQ / Tencent (China) ──────────────────────────────────────────────────
+    "qq.com", "foxmail.com",
+
+    # ── Sina (China) ──────────────────────────────────────────────────────────
+    "sina.com", "sina.cn",
+
+    # ── Sohu (China) ──────────────────────────────────────────────────────────
+    "sohu.com",
+
+    # ── Naver / Daum / Kakao (South Korea) ───────────────────────────────────
+    "naver.com", "hanmail.net", "daum.net", "kakao.com",
+
+    # ── Rediffmail (India) ───────────────────────────────────────────────────
+    "rediffmail.com",
+
+    # ── T-Online / Telekom (Germany) ──────────────────────────────────────────
+    "t-online.de",
+
+    # ── Freenet (Germany) ────────────────────────────────────────────────────
+    "freenet.de",
+
+    # ── Orange / SFR / Laposte (France) ──────────────────────────────────────
+    "orange.fr", "sfr.fr", "neuf.fr", "laposte.net",
+
+    # ── Libero / Virgilio / Tiscali (Italy) ──────────────────────────────────
+    "libero.it", "virgilio.it", "alice.it", "tiscali.it",
+
+    # ── Telstra (Australia) ───────────────────────────────────────────────────
+    "bigpond.com", "bigpond.net.au",
+
+    # ── Canadian ISPs ────────────────────────────────────────────────────────
+    "rogers.com", "shaw.ca", "bell.net", "sympatico.ca",
+    "telus.net", "videotron.ca",
+
+    # ── Brazilian portals ────────────────────────────────────────────────────
+    "uol.com.br", "bol.com.br", "terra.com.br", "ig.com.br",
+
+    # ── Other privacy-focused / reputable independent providers ──────────────
+    "mailbox.org",          # Germany, privacy-first
+    "posteo.de", "posteo.net",  # Germany, privacy-first
+    "mailfence.com",        # Belgium, encrypted
+    "runbox.com",           # Norway, privacy-first
+    "startmail.com",        # Netherlands, privacy-first
+    "disroot.org",          # Netherlands, open-source community
+    "cock.li",              # Reputable independent provider
+    "teknik.io",            # Privacy-focused
 })
 
 
