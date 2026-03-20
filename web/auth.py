@@ -273,11 +273,30 @@ def record_refresh_attempt() -> None:
 
 # -- Per-username account lockout -------------------------------------------
 
+_LOCKOUT_PRUNE_EVERY = 500  # prune expired lockout entries every N checks
+
+
+def _prune_lockout_store() -> None:
+    """Remove expired entries from the lockout store (call while holding the lock)."""
+    now = time.time()
+    expired = [k for k, (start, _) in _account_lockout_store.items()
+               if now - start > _ACCOUNT_LOCKOUT_WINDOW_S]
+    for k in expired:
+        del _account_lockout_store[k]
+
+
+_lockout_prune_counter = 0
+
+
 def _account_is_locked(username: str) -> bool:
     """Return True if *username* has exceeded the per-account failure threshold."""
+    global _lockout_prune_counter
     key = username.lower()
     now = time.time()
     with _account_lockout_lock:
+        _lockout_prune_counter += 1
+        if _lockout_prune_counter % _LOCKOUT_PRUNE_EVERY == 0:
+            _prune_lockout_store()
         start, failures = _account_lockout_store.get(key, (now, 0))
         if now - start > _ACCOUNT_LOCKOUT_WINDOW_S:
             _account_lockout_store[key] = (now, 0)
@@ -369,6 +388,9 @@ def login() -> Any:
     session["user_id"] = user["id"]
     session["session_version"] = new_version
     session.permanent = True
+    # Issue a fresh CSRF token post-login so any token captured before
+    # authentication is no longer valid for authenticated endpoints.
+    session["csrf_token"] = secrets.token_urlsafe(24)
     # Restore saved location preference (DB preference wins over anonymous choice).
     prefs = get_preferences(user["id"])
     if prefs.get("location_id"):
@@ -674,7 +696,7 @@ def register() -> Any:
     if get_user_by_email(email):
         return render_template(
             "register.html",
-            error="An account with that email address already exists.",
+            error="Registration could not be completed. Please check your details and try again.",
             username=username, email=email,
         )
     complexity_error = _password_complexity_error(password)

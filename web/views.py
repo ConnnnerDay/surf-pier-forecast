@@ -53,7 +53,50 @@ from web.helpers import get_session_location
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
 
+# -- Setup endpoint rate limiting --------------------------------------------
+# Zip-code lookup and coordinate searches hit external geocoding services.
+# Limit each IP to 30 requests per 10 minutes to prevent abuse.
+_SETUP_RATE_LIMIT_MAX = 30
+_SETUP_RATE_LIMIT_WINDOW_S = 10 * 60
+_setup_rate_limit_store: Dict[str, tuple] = {}
+_setup_rate_limit_lock = threading.Lock()
+_setup_prune_counter = 0
+
+
+def _setup_client_ip() -> str:
+    from flask import request as _req
+    from web.auth import _TRUST_PROXY  # type: ignore[attr-defined]
+    if _TRUST_PROXY:
+        forwarded = _req.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return _req.remote_addr or "unknown"
+
+
+def _setup_is_rate_limited() -> bool:
+    global _setup_prune_counter
+    ip = _setup_client_ip()
+    now = time.time()
+    with _setup_rate_limit_lock:
+        _setup_prune_counter += 1
+        if _setup_prune_counter % 200 == 0:
+            expired = [k for k, (s, _) in _setup_rate_limit_store.items()
+                       if now - s > _SETUP_RATE_LIMIT_WINDOW_S]
+            for k in expired:
+                del _setup_rate_limit_store[k]
+        start, count = _setup_rate_limit_store.get(ip, (now, 0))
+        if now - start > _SETUP_RATE_LIMIT_WINDOW_S:
+            _setup_rate_limit_store[ip] = (now, 1)
+            return False
+        if count >= _SETUP_RATE_LIMIT_MAX:
+            return True
+        _setup_rate_limit_store[ip] = (start, count + 1)
+        return False
+
+
+# -- Camera status cache -----------------------------------------------------
 _CAM_STATUS_TTL_SECONDS = 30 * 60
+_CAM_STATUS_CACHE_MAX = 500  # prevent unbounded growth with many unique URLs
 _cam_status_cache: Dict[str, Dict[str, Any]] = {}
 _cam_status_lock = threading.Lock()
 # Shared daemon pool for background cam probes — never blocks a WSGI worker.
@@ -129,6 +172,10 @@ def _fetch_cam_status(url: str) -> None:
     except requests.RequestException:
         pass
     with _cam_status_lock:
+        # Evict the oldest entry when the cache is full to prevent unbounded growth.
+        if url not in _cam_status_cache and len(_cam_status_cache) >= _CAM_STATUS_CACHE_MAX:
+            oldest = min(_cam_status_cache, key=lambda u: _cam_status_cache[u].get("checked_at_ts", 0))
+            del _cam_status_cache[oldest]
         _cam_status_cache[url] = status
 
 
@@ -289,7 +336,8 @@ def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     return context
 
 
-_PROFILE_PARAM_MAX_LEN = 200  # per query-string parameter
+_PROFILE_PARAM_MAX_LEN = 200   # per query-string parameter (chars)
+_PROFILE_PARAM_MAX_ITEMS = 20  # max comma-separated values per parameter
 
 
 def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
@@ -305,9 +353,9 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
         return None
     profile: Dict[str, Any] = {}
     if ft:
-        profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()]
+        profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()][:_PROFILE_PARAM_MAX_ITEMS]
     if tg:
-        profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()]
+        profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()][:_PROFILE_PARAM_MAX_ITEMS]
     return profile
 
 
@@ -454,6 +502,11 @@ def setup() -> str:
 @bp.route("/setup/search", methods=["POST"])
 def setup_search() -> str:
     """Process a zip code search and show nearby locations."""
+    if _setup_is_rate_limited():
+        return render_template(
+            "setup.html",
+            **_setup_context(error="Too many searches. Please wait a few minutes and try again."),
+        )
     zipcode = request.form.get("zipcode", "").strip()
     if not zipcode or not zipcode.isdigit() or len(zipcode) != 5:
         return render_template(
@@ -493,6 +546,11 @@ def setup_search() -> str:
 @bp.route("/setup/coords", methods=["POST"])
 def setup_coords() -> Any:
     """Accept lat/lon from the map picker and show nearby locations."""
+    if _setup_is_rate_limited():
+        return render_template(
+            "setup.html",
+            **_setup_context(error="Too many searches. Please wait a few minutes and try again."),
+        )
     raw_lat = request.form.get("location_lat", "").strip()
     raw_lon = request.form.get("location_lon", "").strip()
     try:

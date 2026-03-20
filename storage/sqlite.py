@@ -386,13 +386,13 @@ def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
         conn.close()
     if not row:
         return None
-    # Expire tokens after 24 hours.
+    # Expire tokens after 2 hours to limit the window if a link is leaked.
     sent_at_raw = row["email_verification_sent_at"]
     if sent_at_raw:
         try:
             sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
             now = datetime.now(tz=timezone.utc)
-            if (now - sent_at).total_seconds() > 86400:
+            if (now - sent_at).total_seconds() > 7200:
                 return None
         except Exception:
             pass
@@ -646,13 +646,23 @@ def get_log_entries(
     ]
 
 
+_CATCH_LOG_SIZE_MAX = 50    # e.g. "24 inches"
+_CATCH_LOG_NOTES_MAX = 1000  # free-text field
+
+
 def add_log_entry(
     user_id: int, location_id: str, species: str, size: str = "", notes: str = ""
 ) -> int:
     conn = get_db()
     cur = conn.execute(
         "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
-        (user_id, location_id, species.strip(), size.strip(), notes.strip()),
+        (
+            user_id,
+            location_id,
+            species.strip()[:100],
+            size.strip()[:_CATCH_LOG_SIZE_MAX],
+            notes.strip()[:_CATCH_LOG_NOTES_MAX],
+        ),
     )
     conn.commit()
     entry_id = cur.lastrowid or 0
