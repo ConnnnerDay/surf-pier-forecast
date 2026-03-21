@@ -196,7 +196,50 @@
     {% endif %}
 
     <!-- ============================================================
-         5. SECONDARY DATA — COLLAPSIBLE SECTIONS
+         5. PACK FOR TODAY — personalised tackle/bait card
+         ============================================================ -->
+    {% if trip_setup %}
+    <section class="trip-setup-section" aria-label="Tackle and bait for today">
+        <h2 class="trip-setup-heading">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Pack for Today
+        </h2>
+        <p class="trip-setup-sub">{{ trip_setup.headline }}</p>
+        <div class="trip-setup-rows">
+            {% for row in trip_setup.rows %}
+            <div class="trip-row trip-row--{{ row.icon }}">
+                <span class="trip-row-label">
+                    {% if row.icon == 'lure' %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l2 2 4-4"/></svg>
+                    {% elif row.icon == 'bait' %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M12 12v8M8 16h8"/></svg>
+                    {% elif row.icon == 'rig' %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                    {% elif row.icon == 'hook' %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v10a4 4 0 0 1-4 4H6"/><path d="M4 14l2 2-2 2"/></svg>
+                    {% elif row.icon == 'weight' %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="15" r="5"/><path d="M9 9h6l-1.5-4h-3L9 9z"/></svg>
+                    {% elif row.icon == 'color' %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+                    {% else %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {% endif %}
+                    {{ row.label }}
+                </span>
+                <span class="trip-row-value">{{ row.value }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% if not profile or not (profile.lures or profile.live_bait or profile.cut_bait) %}
+        <p class="trip-setup-personalise">
+            <a href="{{ url_for('views.profile') }}">Set your gear preferences</a> for personalised recommendations
+        </p>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- ============================================================
+         6. SECONDARY DATA — COLLAPSIBLE SECTIONS
          ============================================================ -->
 
     <!-- 3-Day Outlook -->

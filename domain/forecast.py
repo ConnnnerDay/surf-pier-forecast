@@ -2615,3 +2615,156 @@ def build_share_text(forecast: Dict[str, Any]) -> str:
             lines.append(f"  • {sp['name']}{tag}")
 
     return "\n".join(lines)
+
+
+def build_trip_setup(
+    forecast: Dict[str, Any],
+    profile: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Build a personalised tackle/bait card for today's trip.
+
+    Combines the user's gear preferences (lures / live bait / cut bait) with
+    the top-ranked species data and current conditions to produce a short,
+    actionable list of exactly what to pack and how to fish it today.
+
+    Returns None when there's not enough species data to be useful.
+    """
+    profile = profile or {}
+    species_list = forecast.get("species") or []
+    if not species_list:
+        return None
+
+    # ── Gear preferences ──────────────────────────────────────────────────
+    wants_lures = profile.get("lures") not in ("no",)
+    wants_live = profile.get("live_bait") not in ("no",)
+    wants_cut = profile.get("cut_bait") not in ("no",)
+    wants_bait = wants_live or wants_cut
+    has_profile = bool(profile)
+
+    # When no profile exists, show everything so first-time users get value.
+    if not has_profile:
+        wants_lures = wants_bait = True
+
+    # ── Pick working species (Hot/Active, up to 3) ────────────────────────
+    working = [s for s in species_list[:6] if s.get("activity") in ("Hot", "Active")][:3]
+    if not working:
+        working = species_list[:2]
+
+    # ── Conditions context ────────────────────────────────────────────────
+    cond = forecast.get("conditions", {})
+    water_temp: Optional[float] = cond.get("water_temp_f")
+    waves_str: str = cond.get("waves") or ""
+    wind_str: str = cond.get("wind") or ""
+    tide_state: str = (forecast.get("tide_state") or "").lower()
+
+    # Parse max wave height (e.g. "2-4 ft" → 4)
+    max_wave = 0.0
+    m = re.search(r"(\d+(?:\.\d+)?)\s*ft", waves_str)
+    if m:
+        max_wave = float(m.group(1))
+
+    # Parse max wind knots (e.g. "S 16-21 kt" → 21)
+    max_wind = 0.0
+    wind_nums = re.findall(r"\d+", wind_str)
+    if wind_nums:
+        max_wind = float(max(int(x) for x in wind_nums))
+
+    murky = max_wave >= 3 or max_wind >= 18
+    cold_water = water_temp is not None and water_temp < 58
+    warm_water = water_temp is not None and water_temp > 72
+
+    # ── Sunrise/sunset for topwater window detection ───────────────────────
+    ss_str: str = cond.get("sunrise_sunset") or ""
+    now_hour = datetime.now().hour
+    is_low_light = now_hour < 8 or now_hour >= 18
+
+    # ── Harvest unique values from species ────────────────────────────────
+    def _tokens(field: str) -> List[str]:
+        """Collect unique comma-separated tokens across the working species."""
+        seen: List[str] = []
+        seen_lower: set = set()
+        for sp in working:
+            for tok in (sp.get(field) or "").split(","):
+                tok = tok.strip()
+                tl = tok.lower()
+                if tok and tl not in seen_lower:
+                    seen_lower.add(tl)
+                    seen.append(tok)
+        return seen
+
+    raw_lures = _tokens("lures")
+    raw_bait = _tokens("bait")
+    raw_rig = _tokens("rig")
+
+    # ── Build rows ─────────────────────────────────────────────────────────
+    rows: List[Dict[str, str]] = []
+
+    # -- Lure suggestions --
+    if wants_lures and raw_lures:
+        lure_picks = raw_lures[:4]
+        # Prepend topwater if conditions favour it
+        if is_low_light and warm_water and not any("topwater" in l.lower() for l in lure_picks):
+            lure_picks = ["Topwater plugs (early/late)"] + lure_picks[:3]
+        rows.append({"icon": "lure", "label": "Lures", "value": ", ".join(lure_picks)})
+
+    # -- Lure color / action tip --
+    if wants_lures:
+        if murky:
+            rows.append({"icon": "color", "label": "Color/action",
+                         "value": "Chartreuse, white, or bright orange \u2014 murky water today"})
+        elif cold_water:
+            rows.append({"icon": "color", "label": "Color/action",
+                         "value": "Natural colors, slow-roll or dead-stick \u2014 cold water slows metabolism"})
+        elif warm_water and is_low_light:
+            rows.append({"icon": "color", "label": "Color/action",
+                         "value": "Dark silhouettes (black/purple) for low-light topwater"})
+
+    # -- Bait suggestions --
+    if wants_bait and raw_bait:
+        rows.append({"icon": "bait", "label": "Bait", "value": ", ".join(raw_bait[:4])})
+
+    # -- Rig --
+    if raw_rig:
+        rows.append({"icon": "rig", "label": "Rig", "value": ", ".join(raw_rig[:2])})
+
+    # -- Hook and sinker from primary species --
+    primary = working[0]
+    if primary.get("hook_size"):
+        rows.append({"icon": "hook", "label": "Hook", "value": primary["hook_size"]})
+    if primary.get("sinker"):
+        sinker = primary["sinker"]
+        if murky and "pyramid" not in sinker.lower():
+            sinker += " \u2014 go heavier in rough surf"
+        rows.append({"icon": "weight", "label": "Weight", "value": sinker})
+
+    # -- Conditions-driven tackle tip --
+    if tide_state == "rising":
+        rows.append({"icon": "tip", "label": "Tide tip",
+                     "value": "Incoming tide \u2014 work bait close to the wash; predators follow the surge"})
+    elif tide_state == "falling":
+        rows.append({"icon": "tip", "label": "Tide tip",
+                     "value": "Falling tide \u2014 focus on deeper holes and channels as water drains"})
+
+    # -- Species tip --
+    for sp in working:
+        if sp.get("tip"):
+            rows.append({"icon": "tip", "label": "Pro tip", "value": sp["tip"]})
+            break
+
+    if not rows:
+        return None
+
+    # ── Headline ──────────────────────────────────────────────────────────
+    sp_names = [sp["name"].split(" (")[0] for sp in working[:2]]
+    if has_profile and not wants_lures and wants_bait:
+        headline = "Bait setup for " + " & ".join(sp_names)
+    elif has_profile and wants_lures and not wants_bait:
+        headline = "Lure setup for " + " & ".join(sp_names)
+    else:
+        headline = "Tackle for " + " & ".join(sp_names)
+
+    return {
+        "headline": headline,
+        "rows": rows,
+        "species_names": [sp["name"] for sp in working],
+    }

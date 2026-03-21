@@ -38,6 +38,7 @@ from domain.forecast import (
     generate_forecast,
     personalize_forecast,
     recompute_current_uv,
+    build_trip_setup,
 )
 from services.forecast_refresh import enqueue_forecast_refresh
 from storage.cache import (
@@ -440,12 +441,15 @@ def _render_forecast(
     if profile:
         client_profile.update(profile)
 
+    trip_setup = build_trip_setup(forecast, client_profile or None)
+
     return render_template(
         "index.html",
         forecast=forecast,
         cached=cached_flag,
         share_id=loc_id,
         profile=client_profile,
+        trip_setup=trip_setup,
     )
 
 
