@@ -3070,14 +3070,119 @@ h2 {
   margin-top: 0.15rem;
 }
 
-.fishlog-photo-upload label {
+.fishlog-photo-upload > label {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
 }
 
-.fishlog-photo-upload input[type="file"] {
-  font-size: 0.78rem;
+.fishlog-photo-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.fishlog-camera-btn,
+.fishlog-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--ocean, #0e5f78);
+  background: transparent;
+  color: var(--ocean, #0e5f78);
+  transition: background 0.15s, color 0.15s;
+}
+
+.fishlog-camera-btn:hover,
+.fishlog-file-label:hover {
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+}
+
+/* In-app camera modal */
+.camera-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-modal-inner {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-preview {
+  width: 100%;
+  max-height: 80vh;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.camera-controls {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-capture-btn {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 3px solid #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.camera-capture-btn:active { transform: scale(0.92); }
+
+.camera-capture-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fff;
+  display: block;
+}
+
+.camera-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .fishlog-photo-help {

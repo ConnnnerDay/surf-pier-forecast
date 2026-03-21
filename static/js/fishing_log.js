@@ -175,7 +175,12 @@
       }
     }
 
-    readPhotos(photosInput.files).then(function (photos) {
+    // Merge in-app captured photos with any chosen from the file picker
+    var capturedPhotos = window._capturedPhotos || [];
+    window._capturedPhotos = [];
+
+    readPhotos(photosInput.files).then(function (pickerPhotos) {
+      var photos = capturedPhotos.concat(pickerPhotos).slice(0, 8);
       var entries = getLog();
       var now = new Date();
       entries.unshift({
@@ -192,6 +197,8 @@
       sizeInput.value = '';
       notesInput.value = '';
       photosInput.value = '';
+      var help = document.getElementById('fishlog-photo-help');
+      if (help) { help.textContent = 'You can add multiple photos per catch.'; help.style.color = ''; }
       renderLog();
 
       if (loggedIn && currentLocId) {
@@ -239,6 +246,87 @@
     link.click();
     URL.revokeObjectURL(link.href);
   }
+
+  // ── In-app camera capture ──────────────────────────────────────────────────
+  (function () {
+    var cameraBtn = document.getElementById('camera-btn');
+    var modal = document.getElementById('camera-modal');
+    var preview = document.getElementById('camera-preview');
+    var captureBtn = document.getElementById('camera-capture-btn');
+    var closeBtn = document.getElementById('camera-close-btn');
+    var canvas = document.getElementById('camera-canvas');
+    if (!cameraBtn || !modal || !preview || !canvas) return;
+
+    // Show camera button only if getUserMedia is available
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      cameraBtn.hidden = false;
+    } else {
+      return;
+    }
+
+    var stream = null;
+
+    function stopStream() {
+      if (stream) {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        stream = null;
+      }
+    }
+
+    function openCamera() {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(function (s) {
+          stream = s;
+          preview.srcObject = s;
+          modal.hidden = false;
+          captureBtn.focus();
+        })
+        .catch(function () {
+          // Permission denied or no camera — silently fall back to file picker
+          document.getElementById('log-photos').click();
+        });
+    }
+
+    function closeCamera() {
+      stopStream();
+      modal.hidden = true;
+      preview.srcObject = null;
+    }
+
+    function capturePhoto() {
+      if (!stream) return;
+      canvas.width = preview.videoWidth;
+      canvas.height = preview.videoHeight;
+      canvas.getContext('2d').drawImage(preview, 0, 0);
+
+      canvas.toBlob(function (blob) {
+        if (!blob) return;
+        // Convert blob to data URL and inject it into the pending photos list
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var dataUrl = ev.target.result;
+          // Store captured photo in a staging area for addLogEntry to pick up
+          if (!window._capturedPhotos) window._capturedPhotos = [];
+          window._capturedPhotos.push(dataUrl);
+          var help = document.getElementById('fishlog-photo-help');
+          if (help) {
+            var n = window._capturedPhotos.length;
+            help.textContent = n + ' photo' + (n === 1 ? '' : 's') + ' ready to add with your catch.';
+            help.style.color = 'var(--ocean, #0e5f78)';
+          }
+        };
+        reader.readAsDataURL(blob);
+        closeCamera();
+      }, 'image/jpeg', 0.88);
+    }
+
+    cameraBtn.addEventListener('click', openCamera);
+    captureBtn.addEventListener('click', capturePhoto);
+    closeBtn.addEventListener('click', closeCamera);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeCamera();
+    });
+  })();
 
   document.getElementById('fishlog-form').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {

@@ -208,6 +208,8 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE profiles ADD COLUMN notification_prefs TEXT DEFAULT '{}'"
         )
+    if "timezone" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN timezone TEXT")
 
     catch_log_cols = set(_column_names(conn, "catch_log"))
     if "photo1_path" not in catch_log_cols:
@@ -588,7 +590,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
     row = conn.execute(
         """
         SELECT l.location_id, p.theme, p.units, p.wind_units, p.temp_units,
-               p.notification_prefs, p.fishing_profile, p.favorites
+               p.notification_prefs, p.fishing_profile, p.favorites, p.timezone
         FROM profiles p
         LEFT JOIN locations l ON l.user_id = p.user_id
         WHERE p.user_id = ?
@@ -640,6 +642,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
         "notification_prefs": notification_prefs,
         "fishing_profile": profile,
         "favorites": favorites,
+        "timezone": row["timezone"] or "",
     }
 
 
@@ -665,6 +668,7 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
             "notification_prefs": "notification_prefs",
             "fishing_profile": "fishing_profile",
             "favorites": "favorites",
+            "timezone": "timezone",
         }
         for key, col in map_fields.items():
             if key not in kwargs:

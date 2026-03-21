@@ -969,5 +969,40 @@ if ('serviceWorker' in navigator) {
     });
 })();
 </script>
+<script>
+// ── Fishing condition alert — fires if the user opted in ──────────────────
+(function () {
+    var ALERTS_KEY = 'fish_alerts_enabled';
+    var NOTIF_THROTTLE_KEY = 'fish_alert_last_' + {{ (forecast.location_id or '') | tojson }};
+    var THROTTLE_MS = 60 * 60 * 1000; // max once per hour per location
+
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    if (localStorage.getItem(ALERTS_KEY) !== '1') return;
+    if (!navigator.serviceWorker) return;
+
+    var verdict = {{ (forecast.conditions.verdict or '') | tojson }}.toLowerCase();
+    var isGood = verdict.indexOf('good') !== -1 || verdict.indexOf('great') !== -1 ||
+                 verdict.indexOf('excellent') !== -1 || verdict.indexOf('prime') !== -1;
+    if (!isGood) return;
+
+    var lastSent = parseInt(localStorage.getItem(NOTIF_THROTTLE_KEY) || '0', 10);
+    if (Date.now() - lastSent < THROTTLE_MS) return;
+    localStorage.setItem(NOTIF_THROTTLE_KEY, String(Date.now()));
+
+    var locationName = {{ (forecast.location_name or 'your location') | tojson }};
+    var body = 'Conditions are looking great at ' + locationName + ' right now — ' +
+               {{ (forecast.conditions.verdict or 'good fishing today') | tojson }} + '.';
+
+    navigator.serviceWorker.ready.then(function (reg) {
+        reg.showNotification('Great fishing conditions!', {
+            body: body,
+            icon: '/static/icons/icon-192.svg',
+            tag: 'fish-conditions',
+            data: { url: window.location.href },
+        });
+    }).catch(function () {});
+})();
+</script>
 </body>
 </html>

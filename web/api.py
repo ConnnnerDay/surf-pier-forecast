@@ -63,6 +63,23 @@ def _json_error(err: ApiError) -> Any:
     ), err.status
 
 
+@bp.route("/api/v1/timezone", methods=["POST"])
+def set_timezone() -> Any:
+    """Store the client-detected IANA timezone in the user's profile.
+
+    Called once by the nav script when the detected timezone differs from
+    what the server already has. No-op for anonymous users.
+    """
+    if not g.user:
+        return jsonify({"ok": True})
+    data = request.get_json(silent=True) or {}
+    tz = str(data.get("timezone", "")).strip()
+    # Validate: IANA names contain a slash (e.g. "America/New_York") or are "UTC"
+    if tz and (tz == "UTC" or "/" in tz) and len(tz) <= 64:
+        save_preferences(g.user["id"], timezone=tz)
+    return jsonify({"ok": True})
+
+
 def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
     location = (
         get_location(query.location_id) if query.location_id else get_session_location()
