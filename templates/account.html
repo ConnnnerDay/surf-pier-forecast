@@ -59,7 +59,13 @@
 <body class="has-app-header">
     {% include 'partials/_main_nav.html' %}
     <div class="page-hero">
-        <h1>{{ user.username }}</h1>
+        {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="Profile photo" class="account-avatar" width="64" height="64">
+        {% endif %}
+        <h1>{{ user.display_name or user.username }}</h1>
+        {% if user.display_name and user.display_name != user.username %}
+        <p class="page-subtitle" style="opacity:0.75;font-size:0.9rem">@{{ user.username }}</p>
+        {% endif %}
         <p class="page-subtitle">Account Settings</p>
     </div>
 
@@ -280,6 +286,42 @@
                     <div id="passkey-msg" style="margin-top:0.5rem;font-size:0.85rem;display:none"></div>
                 </div>
             </details>
+
+            {% if social_accounts %}
+            <!-- Connected social accounts -->
+            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
+                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
+                    <span style="display:flex;align-items:center;gap:0.5rem">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        Connected Accounts
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <div style="padding:1rem">
+                    {% for acct in social_accounts %}
+                    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border-light)">
+                        {% if acct.provider == 'google' %}
+                        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" style="flex-shrink:0">
+                            <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+                            <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+                            <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
+                            <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
+                        </svg>
+                        <span style="font-size:0.9rem"><strong>Google</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
+                        {% elif acct.provider == 'apple' %}
+                        <svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor" style="flex-shrink:0">
+                            <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
+                        </svg>
+                        <span style="font-size:0.9rem"><strong>Apple</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
+                        {% else %}
+                        <span style="font-size:0.9rem"><strong>{{ acct.provider|capitalize }}</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
+                        {% endif %}
+                        <span style="margin-left:auto;font-size:0.78rem;color:var(--text-muted)">since {{ acct.created_at[:10] }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
 
             <div class="account-actions account-footer-actions">
                 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
