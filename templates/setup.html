@@ -28,7 +28,7 @@
         <!-- Unified location search bar -->
         <section class="setup-section" style="padding-bottom:0">
             <h2>Search by City, Zip, or Beach</h2>
-            <p class="section-sub">Find your nearest supported fishing location</p>
+            <p class="section-sub" id="geo-subtitle">Find your nearest supported fishing location</p>
             <div class="location-search-bar" id="loc-search-bar">
                 <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
                 <input id="loc-search-input" type="search" class="location-search-input" placeholder="City, zip code, or beach name&hellip;" autocomplete="off" inputmode="search">
@@ -36,14 +36,6 @@
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     Search
                 </button>
-            </div>
-            <!-- Geolocation shortcut -->
-            <div style="margin-top:0.75rem">
-                <button type="button" id="use-my-location-btn" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50);display:inline-flex;align-items:center;gap:0.5rem;width:auto">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M12 1v2M12 21v2M1 12h2M21 12h2"/></svg>
-                    Use My Location
-                </button>
-                <span id="geo-status" style="margin-left:0.6rem;font-size:0.85rem;color:var(--text-muted)" aria-live="polite"></span>
             </div>
             <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
         </section>
@@ -306,58 +298,37 @@
                 setupFavoritesForAnonymous();
                 bindRecentTracking();
                 setupUnifiedSearch();
-                setupGeolocation();
+                autoRequestGeolocation();
             });
 
-            function setupGeolocation() {
-                var btn = document.getElementById('use-my-location-btn');
-                var status = document.getElementById('geo-status');
-                if (!btn) return;
+            function autoRequestGeolocation() {
+                if (!navigator.geolocation) return;
 
-                // Hide the button entirely if the browser doesn't support geolocation
-                if (!navigator.geolocation) {
-                    btn.hidden = true;
-                    return;
-                }
+                var subtitle = document.getElementById('geo-subtitle');
 
-                btn.addEventListener('click', function () {
-                    btn.disabled = true;
-                    status.textContent = 'Finding your location\u2026';
+                // Show a subtle "detecting…" hint so the user knows what the
+                // incoming permission prompt is about.
+                if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
 
-                    navigator.geolocation.getCurrentPosition(
-                        function (pos) {
-                            var lat = pos.coords.latitude;
-                            var lon = pos.coords.longitude;
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        var latInput = document.getElementById('location_lat');
+                        var lonInput = document.getElementById('location_lon');
+                        var coordsForm = document.getElementById('map-coords-form');
+                        if (!latInput || !lonInput || !coordsForm) return;
 
-                            // Reuse the existing hidden coords form that the map picker already uses
-                            var latInput = document.getElementById('location_lat');
-                            var lonInput = document.getElementById('location_lon');
-                            var coordsForm = document.getElementById('map-coords-form');
-
-                            if (latInput && lonInput && coordsForm) {
-                                status.textContent = 'Got it \u2014 finding nearest spots\u2026';
-                                latInput.value = lat;
-                                lonInput.value = lon;
-                                coordsForm.submit();
-                            } else {
-                                // Fallback: just fill the unified search with the coords and let the server handle it
-                                status.textContent = 'Error: could not submit. Try searching by zip code.';
-                                btn.disabled = false;
-                            }
-                        },
-                        function (err) {
-                            btn.disabled = false;
-                            if (err.code === err.PERMISSION_DENIED) {
-                                status.textContent = 'Location access denied. Search by zip code instead.';
-                            } else if (err.code === err.POSITION_UNAVAILABLE) {
-                                status.textContent = 'Location unavailable. Try searching by zip code.';
-                            } else {
-                                status.textContent = 'Could not get location. Try searching by zip code.';
-                            }
-                        },
-                        { timeout: 10000, maximumAge: 60000 }
-                    );
-                });
+                        if (subtitle) subtitle.textContent = 'Finding nearest spots\u2026';
+                        latInput.value = pos.coords.latitude;
+                        lonInput.value = pos.coords.longitude;
+                        coordsForm.submit();
+                    },
+                    function () {
+                        // Permission denied or unavailable — restore original subtitle
+                        // and let the user find their location manually. No error shown.
+                        if (subtitle) subtitle.textContent = 'Find your nearest supported fishing location';
+                    },
+                    { timeout: 10000, maximumAge: 60000 }
+                );
             }
 
             /* Unified location search: city, zip, beach */
