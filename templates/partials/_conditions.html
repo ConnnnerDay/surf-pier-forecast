@@ -124,7 +124,7 @@
                         {% endif %}
                         {{ forecast.tide_state }}
                     </span>
-                    <span class="stat-detail">current tidal flow</span>
+                    <span class="stat-detail" id="tide-next-detail">current tidal flow</span>
                 </div>
                 {% endif %}
                 {% set pressure_mb = (forecast.pressure.pressure_mb if forecast.pressure and forecast.pressure.pressure_mb is defined else (forecast.environment.air_pressure_mb if forecast.environment and forecast.environment.air_pressure_mb is defined else none)) %}

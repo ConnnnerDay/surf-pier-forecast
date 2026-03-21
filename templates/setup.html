@@ -28,7 +28,7 @@
         <!-- Unified location search bar -->
         <section class="setup-section" style="padding-bottom:0">
             <h2>Search by City, Zip, or Beach</h2>
-            <p class="section-sub">Find your nearest supported fishing location</p>
+            <p class="section-sub" id="geo-subtitle">Find your nearest supported fishing location</p>
             <div class="location-search-bar" id="loc-search-bar">
                 <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
                 <input id="loc-search-input" type="search" class="location-search-input" placeholder="City, zip code, or beach name&hellip;" autocomplete="off" inputmode="search">
@@ -298,7 +298,38 @@
                 setupFavoritesForAnonymous();
                 bindRecentTracking();
                 setupUnifiedSearch();
+                autoRequestGeolocation();
             });
+
+            function autoRequestGeolocation() {
+                if (!navigator.geolocation) return;
+
+                var subtitle = document.getElementById('geo-subtitle');
+
+                // Show a subtle "detecting…" hint so the user knows what the
+                // incoming permission prompt is about.
+                if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
+
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        var latInput = document.getElementById('location_lat');
+                        var lonInput = document.getElementById('location_lon');
+                        var coordsForm = document.getElementById('map-coords-form');
+                        if (!latInput || !lonInput || !coordsForm) return;
+
+                        if (subtitle) subtitle.textContent = 'Finding nearest spots\u2026';
+                        latInput.value = pos.coords.latitude;
+                        lonInput.value = pos.coords.longitude;
+                        coordsForm.submit();
+                    },
+                    function () {
+                        // Permission denied or unavailable — restore original subtitle
+                        // and let the user find their location manually. No error shown.
+                        if (subtitle) subtitle.textContent = 'Find your nearest supported fishing location';
+                    },
+                    { timeout: 10000, maximumAge: 60000 }
+                );
+            }
 
             /* Unified location search: city, zip, beach */
             function setupUnifiedSearch() {

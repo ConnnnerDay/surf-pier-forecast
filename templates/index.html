@@ -862,6 +862,148 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function(){});
 }
 
+// ── Screen Wake Lock ──────────────────────────────────────────────────────
+// Keep the screen on while the user views the forecast (useful at the pier).
+// The lock is automatically released when the tab is hidden and re-acquired
+// when the user returns.
+(function () {
+    if (!('wakeLock' in navigator)) return;
+    var _lock = null;
+    function acquireLock() {
+        navigator.wakeLock.request('screen').then(function (l) {
+            _lock = l;
+        }).catch(function () {}); // silently ignore — permission may be denied
+    }
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') acquireLock();
+    });
+    acquireLock();
+})();
+
+// ── Live solunar + tide countdowns ───────────────────────────────────────
+(function () {
+    // Data injected at render time — all times are local 12-hr strings e.g. "6:15 AM"
+    var SOL_MAJOR = {{ (forecast.solunar.major_periods if forecast.solunar else []) | tojson }};
+    var SOL_MINOR = {{ (forecast.solunar.minor_periods if forecast.solunar else []) | tojson }};
+    var TIDES     = {{ (forecast.tides if forecast.tides else []) | tojson }};
+
+    // Parse "6:15 AM" / "12:30 PM" into a Date set to today
+    function parseLocalTime(str) {
+        if (!str) return null;
+        var m = str.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!m) return null;
+        var h = parseInt(m[1], 10), min = parseInt(m[2], 10), ampm = m[3].toUpperCase();
+        if (ampm === 'AM' && h === 12) h = 0;
+        if (ampm === 'PM' && h !== 12) h += 12;
+        var d = new Date();
+        d.setHours(h, min, 0, 0);
+        return d;
+    }
+
+    function fmtCountdown(ms) {
+        var totalMin = Math.round(ms / 60000);
+        if (totalMin <= 0) return null;
+        if (totalMin < 60) return totalMin + ' min';
+        var h = Math.floor(totalMin / 60), mn = totalMin % 60;
+        return mn > 0 ? h + 'h ' + mn + 'm' : h + 'h';
+    }
+
+    // ── Solunar countdown ─────────────────────────────────────────────────
+    var solChip = document.getElementById('sol-countdown');
+    function updateSolunar() {
+        if (!solChip) return;
+        var now = Date.now();
+
+        // Are we inside a major period right now?
+        for (var i = 0; i < SOL_MAJOR.length; i++) {
+            var s = parseLocalTime(SOL_MAJOR[i].start), e = parseLocalTime(SOL_MAJOR[i].end);
+            if (s && e && now >= s.getTime() && now <= e.getTime()) {
+                var rem = fmtCountdown(e.getTime() - now);
+                solChip.textContent = '\u2605 Major feeding window' + (rem ? ' \u2014 ends in ' + rem : ' now!');
+                solChip.className = 'sol-countdown-chip sol-countdown-chip--active';
+                solChip.hidden = false;
+                return;
+            }
+        }
+        // Inside a minor period?
+        for (var j = 0; j < SOL_MINOR.length; j++) {
+            var ms = parseLocalTime(SOL_MINOR[j].start), me = parseLocalTime(SOL_MINOR[j].end);
+            if (ms && me && now >= ms.getTime() && now <= me.getTime()) {
+                var rem2 = fmtCountdown(me.getTime() - now);
+                solChip.textContent = '\u25cf Minor feeding window' + (rem2 ? ' \u2014 ends in ' + rem2 : ' now!');
+                solChip.className = 'sol-countdown-chip sol-countdown-chip--minor-active';
+                solChip.hidden = false;
+                return;
+            }
+        }
+        // Next upcoming period
+        var all = SOL_MAJOR.map(function (p) { return { t: parseLocalTime(p.start), major: true }; })
+                  .concat(SOL_MINOR.map(function (p) { return { t: parseLocalTime(p.start), major: false }; }));
+        all = all.filter(function (p) { return p.t && p.t.getTime() > now; });
+        if (!all.length) { solChip.hidden = true; return; }
+        all.sort(function (a, b) { return a.t - b.t; });
+        var next = all[0], cd = fmtCountdown(next.t.getTime() - now);
+        if (!cd) { solChip.hidden = true; return; }
+        solChip.textContent = (next.major ? '\u2605 Major period' : '\u25cf Minor period') + ' in ' + cd;
+        solChip.className = 'sol-countdown-chip' + (next.major ? '' : ' sol-countdown-chip--minor');
+        solChip.hidden = false;
+    }
+
+    // ── Tide countdown in conditions stat card ────────────────────────────
+    var tideDetail = document.getElementById('tide-next-detail');
+    function updateTide() {
+        if (!tideDetail || !TIDES.length) return;
+        var now = Date.now();
+        var next = null;
+        for (var i = 0; i < TIDES.length; i++) {
+            var t = parseLocalTime(TIDES[i].time);
+            if (t && t.getTime() > now) { next = { tide: TIDES[i], d: t }; break; }
+        }
+        if (!next) { tideDetail.textContent = 'current tidal flow'; return; }
+        var cd = fmtCountdown(next.d.getTime() - now);
+        if (!cd) { tideDetail.textContent = 'current tidal flow'; return; }
+        var htStr = next.tide.height_ft != null ? ' (' + next.tide.height_ft + ' ft)' : '';
+        tideDetail.textContent = next.tide.type + ' tide in ' + cd + htStr;
+    }
+
+    updateSolunar();
+    updateTide();
+    setInterval(function () { updateSolunar(); updateTide(); }, 30000);
+})();
+
+// ── Install-to-homescreen prompt ─────────────────────────────────────────
+// Surfaces the browser's native install prompt as a small bottom banner.
+(function () {
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (window.navigator.standalone) return; // iOS Safari installed
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (sessionStorage.getItem('install_nudge_shown')) return;
+        sessionStorage.setItem('install_nudge_shown', '1');
+        var banner = document.createElement('div');
+        banner.className = 'install-banner';
+        banner.setAttribute('role', 'status');
+        banner.innerHTML =
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink:0"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><rect x="3" y="17" width="18" height="4" rx="2"/></svg>' +
+            '<span>Add to home screen for offline access at the water</span>' +
+            '<button class="install-banner-btn" id="install-yes">Install</button>' +
+            '<button class="install-banner-close" id="install-dismiss" aria-label="Dismiss">&times;</button>';
+        document.body.appendChild(banner);
+        requestAnimationFrame(function () { banner.classList.add('install-banner--visible'); });
+        document.getElementById('install-yes').addEventListener('click', function () {
+            banner.remove();
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
+        });
+        document.getElementById('install-dismiss').addEventListener('click', function () {
+            banner.classList.remove('install-banner--visible');
+            setTimeout(function () { banner.remove(); }, 300);
+        });
+    });
+})();
+
 (function() {
     var REFRESH_MS = 30 * 60 * 1000;
     var note = document.getElementById('auto-refresh-note');
@@ -969,5 +1111,63 @@ if ('serviceWorker' in navigator) {
     });
 })();
 </script>
-</body>
+<script>
+// ── Fishing condition alert — fires if the user opted in ──────────────────
+(function () {
+    var ALERTS_KEY = 'fish_alerts_enabled';
+    var NOTIF_THROTTLE_KEY = 'fish_alert_last_' + {{ (forecast.location_id or '') | tojson }};
+    var THROTTLE_MS = 60 * 60 * 1000; // max once per hour per location
+
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    if (localStorage.getItem(ALERTS_KEY) !== '1') return;
+    if (!navigator.serviceWorker) return;
+
+    var verdict = {{ (forecast.conditions.verdict or '') | tojson }}.toLowerCase();
+    var isGood = verdict.indexOf('good') !== -1 || verdict.indexOf('great') !== -1 ||
+                 verdict.indexOf('excellent') !== -1 || verdict.indexOf('prime') !== -1;
+    if (!isGood) return;
+
+    var lastSent = parseInt(localStorage.getItem(NOTIF_THROTTLE_KEY) || '0', 10);
+    if (Date.now() - lastSent < THROTTLE_MS) return;
+    localStorage.setItem(NOTIF_THROTTLE_KEY, String(Date.now()));
+
+    var locationName = {{ (forecast.location_name or 'your location') | tojson }};
+    var body = 'Conditions are looking great at ' + locationName + ' right now — ' +
+               {{ (forecast.conditions.verdict or 'good fishing today') | tojson }} + '.';
+
+    navigator.serviceWorker.ready.then(function (reg) {
+        reg.showNotification('Great fishing conditions!', {
+            body: body,
+            icon: '/static/icons/icon-192.svg',
+            tag: 'fish-conditions',
+            data: { url: window.location.href },
+        });
+    }).catch(function () {});
+})();
+</script>
+<script>
+// ── Offline snapshot — saves key forecast data so offline.html can show it ──
+(function () {
+    try {
+        var snap = {
+            location_name: {{ (forecast.location_name or '') | tojson }},
+            generated_at:  {{ (forecast.generated_at or '') | tojson }},
+            saved_at: Date.now(),
+            conditions: {
+                verdict:      {{ (forecast.conditions.verdict or '') | tojson }},
+                water_temp_f: {{ (forecast.conditions.water_temp_f | string) if forecast.conditions.water_temp_f is not none else 'null' }},
+                wind:         {{ (forecast.conditions.wind or '') | tojson }},
+                waves:        {{ (forecast.conditions.waves or '') | tojson }},
+                swell:        {{ (forecast.conditions.swell or '') | tojson }}
+            },
+            tide_state: {{ (forecast.tide_state or '') | tojson }},
+            tides: {{ (forecast.tides[:6] if forecast.tides else []) | tojson }},
+            species: {{ (forecast.species[:5] if forecast.species else []) | tojson }},
+            solunar: {{ (forecast.solunar) | tojson if forecast.solunar else 'null' }}
+        };
+        localStorage.setItem('fishforecast_snapshot', JSON.stringify(snap));
+    } catch (e) {}
+})();
+</script>
 </html>

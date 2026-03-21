@@ -299,7 +299,11 @@ def create_app() -> Flask:
         # Opt out of FLoC / Topics API and limit sensitive permissions (privacy).
         response.headers.setdefault(
             "Permissions-Policy",
-            "interest-cohort=(), geolocation=(), microphone=(), camera=()",
+            # geolocation=self: required for setup-page auto-location.
+            # camera=self: required for fishing-log in-app camera.
+            # Both are restricted to same-origin — no cross-origin iframe can
+            # use them.  microphone stays fully blocked (never needed).
+            "interest-cohort=(), geolocation=self, microphone=(), camera=self",
         )
         # Content Security Policy — restrict resource origins to reduce XSS impact.
         # Google Fonts (style + font) and unpkg.com (Leaflet) are explicit allow-listed
@@ -315,6 +319,7 @@ def create_app() -> Flask:
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: blob: https://lh3.googleusercontent.com; "
                 "connect-src 'self'; "
+                "worker-src 'self'; "
                 "frame-ancestors 'none';"
             ),
         )

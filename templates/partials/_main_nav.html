@@ -149,6 +149,37 @@
     if (e.key === 'Escape' && drawer.classList.contains('menu-drawer--open')) closeMenu();
   });
 
+  // ── Timezone detection + locale-based unit defaults ──────────────────────
+  (function () {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+
+      // Auto-set temperature units on first visit based on locale.
+      // Only applies if the user hasn't already stored a preference.
+      if (!localStorage.getItem('units')) {
+        var lang = (navigator.language || navigator.userLanguage || 'en-US').toLowerCase();
+        // Fahrenheit countries: US, Belize, Cayman Islands, Palau, Bahamas, Micronesia, Marshall Islands
+        // Simplify: if locale starts with "en-us" → F, everything else → C
+        var usF = /^en-us/.test(lang);
+        localStorage.setItem('units', usF ? 'F' : 'C');
+      }
+
+      // Save timezone to server once per session (or when it changes).
+      if (!tz) return;
+      var stored = sessionStorage.getItem('tz_sent');
+      if (stored === tz) return;
+      sessionStorage.setItem('tz_sent', tz);
+
+      {% if g.user %}
+      fetch('/api/v1/timezone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timezone: tz })
+      }).catch(function () {});
+      {% endif %}
+    } catch (e) {}
+  })();
+
   // Theme toggle in menu
   var themeBtn = document.getElementById('menu-theme-toggle');
   var themeLabel = document.getElementById('menu-theme-label');

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
+import time
 import uuid
+from zoneinfo import available_timezones
 from typing import Any, Dict, Optional, Tuple
 
 from flask import (
@@ -56,11 +59,157 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("api", __name__)
 
+# ── Timezone validation ───────────────────────────────────────────────────────
+# Build the allowed set once at import time from the system's zoneinfo database.
+# This is the authoritative list of valid IANA timezone names — anything not in
+# this set is rejected outright.
+_VALID_TIMEZONES: frozenset[str] = frozenset(available_timezones())
+
+# ── Rate limiting for /api/v1/timezone ───────────────────────────────────────
+# 5 updates per IP per hour.  Timezone detection is a one-shot per-session
+# event; anything beyond that is suspicious.
+_TZ_RATE_LIMIT_MAX = 5
+_TZ_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
+_tz_rate_store: Dict[str, tuple[float, int]] = {}
+_tz_rate_lock = threading.Lock()
+
+
+def _client_ip() -> str:
+    """Return the best-effort client IP for rate limiting."""
+    return (
+        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        or request.remote_addr
+        or "unknown"
+    )
+
+
+# Keep the old alias used by the timezone helpers below.
+_tz_client_ip = _client_ip
+
+
+def _is_rate_limited_ip(
+    store: Dict[str, Tuple[float, int]],
+    lock: threading.Lock,
+    max_attempts: int,
+    window_s: int,
+) -> bool:
+    """Generic IP-keyed sliding-window rate limiter (read-only check)."""
+    ip = _client_ip()
+    now = time.time()
+    with lock:
+        start, count = store.get(ip, (now, 0))
+        if now - start > window_s:
+            return False
+        return count >= max_attempts
+
+
+def _record_ip_attempt(
+    store: Dict[str, Tuple[float, int]],
+    lock: threading.Lock,
+    window_s: int,
+) -> None:
+    """Record one attempt in a generic IP-keyed sliding-window rate store."""
+    ip = _client_ip()
+    now = time.time()
+    with lock:
+        start, count = store.get(ip, (now, 0))
+        if now - start > window_s:
+            store[ip] = (now, 1)
+        else:
+            store[ip] = (start, count + 1)
+
+
+def _tz_is_rate_limited() -> bool:
+    return _is_rate_limited_ip(_tz_rate_store, _tz_rate_lock, _TZ_RATE_LIMIT_MAX, _TZ_RATE_LIMIT_WINDOW_S)
+
+
+def _tz_record_attempt() -> None:
+    _record_ip_attempt(_tz_rate_store, _tz_rate_lock, _TZ_RATE_LIMIT_WINDOW_S)
+
+
+# ── Rate limiting for /api/v1/regulations ────────────────────────────────────
+# The regulations endpoint can trigger external web-scraping, making it
+# relatively expensive.  Limit to 30 lookups per IP per hour to prevent
+# abuse without affecting legitimate usage.
+_REG_RATE_LIMIT_MAX = 30
+_REG_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
+_reg_rate_store: Dict[str, Tuple[float, int]] = {}
+_reg_rate_lock = threading.Lock()
+
+
+def _reg_is_rate_limited() -> bool:
+    return _is_rate_limited_ip(_reg_rate_store, _reg_rate_lock, _REG_RATE_LIMIT_MAX, _REG_RATE_LIMIT_WINDOW_S)
+
+
+def _reg_record_attempt() -> None:
+    _record_ip_attempt(_reg_rate_store, _reg_rate_lock, _REG_RATE_LIMIT_WINDOW_S)
+
+
+# ── Rate limiting for forecast sub-endpoints (status/outlook/solunar) ─────────
+# These serve cached data only, but are polled frequently by the dashboard.
+# Limit to 120 requests per IP per minute (2/sec on average) to prevent
+# deliberate polling storms.
+_FORECAST_SUB_RATE_LIMIT_MAX = 120
+_FORECAST_SUB_RATE_LIMIT_WINDOW_S = 60  # 1 minute
+_forecast_sub_rate_store: Dict[str, Tuple[float, int]] = {}
+_forecast_sub_rate_lock = threading.Lock()
+
+
+def _forecast_sub_is_rate_limited() -> bool:
+    return _is_rate_limited_ip(
+        _forecast_sub_rate_store,
+        _forecast_sub_rate_lock,
+        _FORECAST_SUB_RATE_LIMIT_MAX,
+        _FORECAST_SUB_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _forecast_sub_record_attempt() -> None:
+    _record_ip_attempt(_forecast_sub_rate_store, _forecast_sub_rate_lock, _FORECAST_SUB_RATE_LIMIT_WINDOW_S)
+
 
 def _json_error(err: ApiError) -> Any:
     return jsonify(
         error_envelope(err.code, err.message, details=err.details)
     ), err.status
+
+
+@bp.route("/api/v1/timezone", methods=["POST"])
+def set_timezone() -> Any:
+    """Store the client-detected IANA timezone in the user's profile.
+
+    Called once per session by the nav script. No-op for anonymous users.
+
+    Security:
+    - Requires authentication (anonymous requests are silently ignored)
+    - Rate-limited: 5 updates per IP per hour
+    - Timezone validated against the authoritative zoneinfo database — rejects
+      anything that isn't a real IANA zone name (including path-like strings)
+    """
+    if not g.user:
+        return jsonify({"ok": True})
+
+    if _tz_is_rate_limited():
+        logger.warning("security.timezone_rate_limit user_id=%s ip=%s", g.user["id"], _tz_client_ip())
+        return jsonify({"ok": True})  # silent — no need to reveal rate limiting to client
+
+    _tz_record_attempt()
+
+    data = request.get_json(silent=True) or {}
+    tz = str(data.get("timezone", "")).strip()
+
+    if tz not in _VALID_TIMEZONES:
+        # Log suspicious input (anything outside the zoneinfo whitelist).
+        if tz:
+            logger.warning(
+                "security.invalid_timezone user_id=%s tz=%r ip=%s",
+                g.user["id"], tz[:80], _tz_client_ip(),
+            )
+        return jsonify({"ok": True})  # silent rejection — no error info to caller
+
+    save_preferences(g.user["id"], timezone=tz)
+    logger.info("timezone.saved user_id=%s tz=%s", g.user["id"], tz)
+    return jsonify({"ok": True})
 
 
 def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
@@ -295,6 +444,9 @@ def forecast_v1() -> Any:
 @bp.route("/api/v1/forecast/<location_id>/status", methods=["GET"])
 def forecast_status_v1(location_id: str) -> Any:
     """Return cache status for dashboard polling."""
+    if _forecast_sub_is_rate_limited():
+        return _json_error(ApiError("rate_limited", "Too many requests", status=429))
+    _forecast_sub_record_attempt()
     forecast_data = load_cached_forecast(location_id, user_id=None, include_stale=True)
     if not forecast_data:
         return jsonify(
@@ -325,6 +477,9 @@ def forecast_status_v1(location_id: str) -> Any:
 @bp.route("/api/v1/forecast/<location_id>/outlook", methods=["GET"])
 def forecast_outlook_v1(location_id: str) -> Any:
     """Return cached 3-day outlook payload for lazy dashboard hydration."""
+    if _forecast_sub_is_rate_limited():
+        return _json_error(ApiError("rate_limited", "Too many requests", status=429))
+    _forecast_sub_record_attempt()
     user_id = g.user["id"] if g.user else None
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
     if not forecast_data and user_id is not None:
@@ -351,6 +506,9 @@ def forecast_outlook_v1(location_id: str) -> Any:
 @bp.route("/api/v1/forecast/<location_id>/solunar", methods=["GET"])
 def forecast_solunar_v1(location_id: str) -> Any:
     """Return cached solunar payload for lazy dashboard hydration."""
+    if _forecast_sub_is_rate_limited():
+        return _json_error(ApiError("rate_limited", "Too many requests", status=429))
+    _forecast_sub_record_attempt()
     user_id = g.user["id"] if g.user else None
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
     if not forecast_data and user_id is not None:
@@ -416,6 +574,10 @@ def regulations_v1() -> Any:
 
     Always returns HTTP 200.  ``regulation`` is ``null`` when no data is available.
     """
+    if _reg_is_rate_limited():
+        logger.warning("security.regulations_rate_limit ip=%s", _client_ip())
+        return _json_error(ApiError("rate_limited", "Too many requests", status=429))
+    _reg_record_attempt()
     species_name = request.args.get("species", "")[:200].strip()
     if not species_name:
         return _json_error(

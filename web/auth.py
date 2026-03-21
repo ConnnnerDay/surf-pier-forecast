@@ -1265,23 +1265,135 @@ def _social_login_or_create(
     return user_id, True
 
 
-def _decode_jwt_payload(token: str) -> Optional[Dict[str, Any]]:
-    """Decode the payload section of a JWT without verifying the signature.
+# ---------------------------------------------------------------------------
+# Apple id_token verification
+# ---------------------------------------------------------------------------
 
-    Used to extract claims from Apple's id_token, which arrives over HTTPS
-    from a trusted provider endpoint so transport-level integrity is sufficient
-    for our purposes.
-    """
-    import base64
-    parts = token.split(".")
-    if len(parts) != 3:
-        return None
-    payload_b64 = parts[1]
-    padding = "=" * (-len(payload_b64) % 4)
+# JWKS cache: (keys_list, fetched_at_epoch)
+_apple_jwks_cache: Tuple[list, float] = ([], 0.0)
+_apple_jwks_lock = threading.Lock()
+_APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
+_APPLE_JWKS_TTL_S = 3600  # re-fetch at most once per hour
+_APPLE_ISSUER = "https://appleid.apple.com"
+
+
+def _get_apple_jwks() -> list:
+    """Return Apple's current JWKS keys, using a 1-hour in-memory cache."""
+    import urllib.request
+
+    global _apple_jwks_cache
+    with _apple_jwks_lock:
+        keys, fetched_at = _apple_jwks_cache
+        if keys and (time.time() - fetched_at) < _APPLE_JWKS_TTL_S:
+            return keys
+
     try:
-        return json.loads(base64.urlsafe_b64decode(payload_b64 + padding))
+        with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=8) as resp:
+            data = json.loads(resp.read())
+        keys = data.get("keys", [])
+    except Exception as exc:
+        logger.error("apple_jwks.fetch_failed: %s", exc)
+        keys = []
+
+    with _apple_jwks_lock:
+        _apple_jwks_cache = (keys, time.time())
+    return keys
+
+
+def _jwk_to_rsa_public_key(jwk: Dict[str, Any]) -> Any:
+    """Convert an RSA JWK dict to a cryptography RSAPublicKey object, or None."""
+    import base64
+
+    try:
+        from cryptography.hazmat.primitives.asymmetric.rsa import (
+            RSAPublicNumbers,
+        )
+
+        def _b64_to_int(s: str) -> int:
+            padding = "=" * (-len(s) % 4)
+            return int.from_bytes(base64.urlsafe_b64decode(s + padding), "big")
+
+        n = _b64_to_int(jwk["n"])
+        e = _b64_to_int(jwk["e"])
+        return RSAPublicNumbers(e, n).public_key()
     except Exception:
         return None
+
+
+def _verify_apple_id_token(token: str, client_id: str) -> Optional[Dict[str, Any]]:
+    """Verify an Apple id_token JWT and return its payload, or None on failure.
+
+    Steps:
+    1. Decode the JWT header to find the key ID (kid) and algorithm.
+    2. Fetch Apple's JWKS and select the matching key.
+    3. Reconstruct the RSA public key and verify the RS256 signature.
+    4. Validate iss, aud, and exp claims.
+    """
+    import base64
+
+    from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+    from cryptography.hazmat.primitives.hashes import SHA256
+
+    parts = token.split(".")
+    if len(parts) != 3:
+        logger.warning("apple_jwt.invalid_format")
+        return None
+
+    def _b64decode(s: str) -> bytes:
+        return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+    try:
+        header = json.loads(_b64decode(parts[0]))
+        payload = json.loads(_b64decode(parts[1]))
+    except Exception:
+        logger.warning("apple_jwt.decode_failed")
+        return None
+
+    if header.get("alg") != "RS256":
+        logger.warning("apple_jwt.unexpected_alg: %s", header.get("alg"))
+        return None
+
+    kid = header.get("kid", "")
+    jwks = _get_apple_jwks()
+    matching_jwk = next((k for k in jwks if k.get("kid") == kid), None)
+    if matching_jwk is None:
+        # kid may have changed — evict cache and retry once
+        with _apple_jwks_lock:
+            global _apple_jwks_cache
+            _apple_jwks_cache = ([], 0.0)
+        jwks = _get_apple_jwks()
+        matching_jwk = next((k for k in jwks if k.get("kid") == kid), None)
+    if matching_jwk is None:
+        logger.warning("apple_jwt.unknown_kid: %s", kid)
+        return None
+
+    public_key = _jwk_to_rsa_public_key(matching_jwk)
+    if public_key is None:
+        logger.error("apple_jwt.key_construction_failed kid=%s", kid)
+        return None
+
+    # Verify the signature: RS256 = RSASSA-PKCS1-v1_5 + SHA-256
+    signing_input = f"{parts[0]}.{parts[1]}".encode("ascii")
+    try:
+        signature = _b64decode(parts[2])
+        public_key.verify(signature, signing_input, PKCS1v15(), SHA256())
+    except Exception:
+        logger.warning("apple_jwt.signature_invalid ip=%s", _client_ip())
+        return None
+
+    # Validate standard claims
+    now = int(time.time())
+    if payload.get("iss") != _APPLE_ISSUER:
+        logger.warning("apple_jwt.bad_iss: %r", payload.get("iss"))
+        return None
+    if payload.get("aud") != client_id:
+        logger.warning("apple_jwt.bad_aud: %r", payload.get("aud"))
+        return None
+    if payload.get("exp", 0) < now:
+        logger.warning("apple_jwt.token_expired exp=%s now=%s", payload.get("exp"), now)
+        return None
+
+    return payload
 
 
 # ---------------------------------------------------------------------------
@@ -1526,7 +1638,7 @@ def apple_callback() -> Any:
         logger.warning("apple_oauth.token_error: %s", token_data.get("error"))
         return render_template("login.html", error="Apple Sign In failed. Please try again.")
 
-    payload = _decode_jwt_payload(token_data["id_token"])
+    payload = _verify_apple_id_token(token_data["id_token"], client_id)
     if not payload:
         return render_template("login.html", error="Apple Sign In failed: could not read token.")
 

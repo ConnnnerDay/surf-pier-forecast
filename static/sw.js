@@ -1,13 +1,76 @@
 // Service Worker for Surf & Pier Fishing Forecast
-// v3: Navigate requests fall back to a branded offline page on network failure.
+// v4: Push notifications + geolocation-driven condition alerts.
+//     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v3';
+var CACHE_NAME = 'fishforecast-v4';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
   '/static/style.css',
   '/static/icons/icon-192.svg',
   OFFLINE_URL,
 ];
+
+// ── Push notification handler ─────────────────────────────────────────────
+self.addEventListener('push', function (event) {
+  var data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) {}
+
+  // Sanitise all string fields — truncate to safe lengths and strip anything
+  // non-printable.  This limits the impact of a compromised push payload.
+  function safeStr(val, maxLen, fallback) {
+    if (typeof val !== 'string') return fallback;
+    return val.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '').slice(0, maxLen) || fallback;
+  }
+
+  // Validate the URL: only allow same-origin paths.
+  var safeUrl = '/';
+  try {
+    var parsed = new URL(data.url || '/', self.location.origin);
+    if (parsed.origin === self.location.origin) {
+      safeUrl = parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch (e) {}
+
+  var title = safeStr(data.title, 80, 'Surf & Pier Forecast');
+  var options = {
+    body: safeStr(data.body, 200, 'Check your fishing conditions.'),
+    icon: '/static/icons/icon-192.svg',
+    badge: '/static/icons/icon-192.svg',
+    tag: safeStr(data.tag, 40, 'fish-forecast'),
+    data: { url: safeUrl },
+    requireInteraction: false,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Open the app (or focus the existing tab) when a notification is tapped.
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+
+  // Validate the target URL so a crafted push payload cannot redirect the
+  // user to an external site or trigger a javascript: navigation.
+  var rawUrl = (event.notification.data && event.notification.data.url) || '/';
+  var target = '/'; // safe default
+  try {
+    var parsed = new URL(rawUrl, self.location.origin);
+    // Only allow navigation within our own origin.
+    if (parsed.origin === self.location.origin) {
+      target = parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch (e) { /* malformed URL — fall back to '/' */ }
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        var c = list[i];
+        if (c.url.indexOf(self.location.origin) === 0 && 'focus' in c) {
+          return c.navigate(target).then(function (cl) { return cl.focus(); });
+        }
+      }
+      return clients.openWindow(target);
+    })
+  );
+});
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
