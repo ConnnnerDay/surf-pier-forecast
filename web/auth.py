@@ -16,6 +16,7 @@ from flask import (
     Blueprint,
     current_app,
     g,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -38,11 +39,17 @@ from storage.db import (
     get_email_verification_sent_at,
     get_preferences,
     get_recent_logs,
+    get_user,
     get_user_by_email,
     get_user_by_verification_token,
     get_user_password_hash,
     save_preferences,
     set_email_verification_token,
+    save_webauthn_credential,
+    get_webauthn_credentials,
+    get_webauthn_credential_by_id,
+    update_webauthn_sign_count,
+    delete_webauthn_credential,
 )
 from services.email import send_verification_email
 
@@ -273,11 +280,30 @@ def record_refresh_attempt() -> None:
 
 # -- Per-username account lockout -------------------------------------------
 
+_LOCKOUT_PRUNE_EVERY = 500  # prune expired lockout entries every N checks
+
+
+def _prune_lockout_store() -> None:
+    """Remove expired entries from the lockout store (call while holding the lock)."""
+    now = time.time()
+    expired = [k for k, (start, _) in _account_lockout_store.items()
+               if now - start > _ACCOUNT_LOCKOUT_WINDOW_S]
+    for k in expired:
+        del _account_lockout_store[k]
+
+
+_lockout_prune_counter = 0
+
+
 def _account_is_locked(username: str) -> bool:
     """Return True if *username* has exceeded the per-account failure threshold."""
+    global _lockout_prune_counter
     key = username.lower()
     now = time.time()
     with _account_lockout_lock:
+        _lockout_prune_counter += 1
+        if _lockout_prune_counter % _LOCKOUT_PRUNE_EVERY == 0:
+            _prune_lockout_store()
         start, failures = _account_lockout_store.get(key, (now, 0))
         if now - start > _ACCOUNT_LOCKOUT_WINDOW_S:
             _account_lockout_store[key] = (now, 0)
@@ -339,12 +365,18 @@ def login() -> Any:
             "login.html", error="Please enter both fields.", username=username
         )
     if _login_is_rate_limited():
+        logger.warning("security.login_ip_rate_limited ip=%s", _client_ip())
         return render_template(
             "login.html",
             error="Too many attempts. Please wait a few minutes and try again.",
             username=username,
         )
     if _account_is_locked(username):
+        logger.warning(
+            "security.login_account_locked username=%r ip=%s",
+            username,
+            _client_ip(),
+        )
         return render_template(
             "login.html",
             error="Too many failed attempts. Please try again in 30 minutes.",
@@ -354,11 +386,17 @@ def login() -> Any:
     if user is None:
         _record_login_failure()
         _record_account_failure(username)
+        logger.warning(
+            "security.login_failed username=%r ip=%s",
+            username,
+            _client_ip(),
+        )
         return render_template(
             "login.html", error="Invalid username or password.", username=username
         )
     _clear_login_failures()
     _clear_account_failures(username)
+    logger.info("security.login_success user_id=%s ip=%s", user["id"], _client_ip())
     # Regenerate session to prevent session fixation: preserve the anonymous
     # location choice, then clear everything else before setting credentials.
     prior_location_id = session.get("location_id")
@@ -369,6 +407,9 @@ def login() -> Any:
     session["user_id"] = user["id"]
     session["session_version"] = new_version
     session.permanent = True
+    # Issue a fresh CSRF token post-login so any token captured before
+    # authentication is no longer valid for authenticated endpoints.
+    session["csrf_token"] = secrets.token_urlsafe(24)
     # Restore saved location preference (DB preference wins over anonymous choice).
     prefs = get_preferences(user["id"])
     if prefs.get("location_id"):
@@ -397,6 +438,12 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "outlook.pt", "outlook.be", "outlook.nl", "outlook.at", "outlook.dk",
     "outlook.fi", "outlook.se", "outlook.no", "outlook.ie", "outlook.sg",
     "outlook.jp", "outlook.kr", "outlook.ph", "outlook.my",
+    "outlook.co.nz", "outlook.co.za", "outlook.co.th", "outlook.com.vn",
+    "outlook.com.ng", "outlook.com.pk", "outlook.com.co", "outlook.com.pe",
+    "outlook.com.tr", "outlook.hr", "outlook.rs", "outlook.hu",
+    "outlook.ro", "outlook.cz", "outlook.sk", "outlook.bg",
+    "outlook.gr", "outlook.lv", "outlook.lt", "outlook.ee",
+    "outlook.sa", "outlook.ae", "outlook.co.il",
     # Hotmail regional
     "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
     "hotmail.es", "hotmail.it", "hotmail.com.au", "hotmail.co.in",
@@ -404,12 +451,20 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "hotmail.pt", "hotmail.be", "hotmail.nl", "hotmail.gr",
     "hotmail.dk", "hotmail.fi", "hotmail.se", "hotmail.no",
     "hotmail.co.jp", "hotmail.rs", "hotmail.hr",
+    "hotmail.co.nz", "hotmail.co.za", "hotmail.com.tr", "hotmail.com.vn",
+    "hotmail.com.co", "hotmail.com.pe", "hotmail.hu", "hotmail.ro",
+    "hotmail.cz", "hotmail.sk", "hotmail.bg", "hotmail.lv",
+    "hotmail.lt", "hotmail.ee",
     # Live regional
     "live.com", "live.co.uk", "live.fr", "live.de", "live.com.au",
     "live.co.in", "live.it", "live.ca", "live.be", "live.nl",
     "live.at", "live.dk", "live.fi", "live.se", "live.no", "live.ie",
     "live.sg", "live.jp", "live.in", "live.cl",
     "live.com.ar", "live.com.mx", "live.com.pt",
+    "live.co.nz", "live.co.za", "live.co.th", "live.com.vn",
+    "live.com.tr", "live.ph", "live.my", "live.kr",
+    "live.hu", "live.ro", "live.cz", "live.sk", "live.bg",
+    "live.lv", "live.lt", "live.ee", "live.sa", "live.ae",
     "msn.com",
 
     # ── Yahoo / Oath ──────────────────────────────────────────────────────────
@@ -418,15 +473,18 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "yahoo.co.in", "yahoo.com.br", "yahoo.com.ar", "yahoo.com.mx",
     "yahoo.com.hk", "yahoo.com.sg", "yahoo.com.ph", "yahoo.com.tw",
     "yahoo.com.my", "yahoo.com.vn", "yahoo.com.pe", "yahoo.com.co",
+    "yahoo.com.pk", "yahoo.co.id", "yahoo.co.nz", "yahoo.co.za",
+    "yahoo.co.th",
     "yahoo.gr", "yahoo.ro", "yahoo.hu", "yahoo.dk", "yahoo.se",
     "yahoo.no", "yahoo.fi", "yahoo.be", "yahoo.at", "yahoo.pt",
     "yahoo.nl", "yahoo.ie", "yahoo.in",
+    "yahoo.pl", "yahoo.cz", "yahoo.sk", "yahoo.hr", "yahoo.rs",
+    "yahoo.bg", "yahoo.lv", "yahoo.lt",
     "ymail.com",
 
     # ── Apple — standard + Hide My Email (Private Relay) ─────────────────────
-    # Standard Apple accounts
     "icloud.com", "me.com", "mac.com",
-    # Hide My Email relay addresses (format: random@privaterelay.appleid.com)
+    # Hide My Email / Private Relay (format: random@privaterelay.appleid.com)
     "privaterelay.appleid.com",
 
     # ── AOL / Verizon Media ───────────────────────────────────────────────────
@@ -441,6 +499,7 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "earthlink.net",
     "windstream.net",
     "centurylink.net", "lumen.com",
+    "mindspring.com",           # legacy EarthLink brand
 
     # ── Proton ────────────────────────────────────────────────────────────────
     "proton.me", "protonmail.com", "pm.me",
@@ -459,13 +518,17 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     "fastmail.com", "fastmail.fm",
 
     # ── Yandex (Russia / CIS) ────────────────────────────────────────────────
-    "yandex.com", "yandex.ru", "ya.ru",
+    "yandex.com", "yandex.ru", "yandex.ua", "yandex.by",
+    "yandex.kz", "yandex.com.tr", "ya.ru",
 
     # ── Mail.ru / VK (Russia) ─────────────────────────────────────────────────
     "mail.ru", "list.ru", "inbox.ru", "bk.ru", "internet.ru",
 
     # ── Rambler (Russia) ──────────────────────────────────────────────────────
     "rambler.ru", "lenta.ru", "ro.ru",
+
+    # ── UKR.net (Ukraine) ────────────────────────────────────────────────────
+    "ukr.net",
 
     # ── NetEase / 163 (China) ─────────────────────────────────────────────────
     "163.com", "126.com", "yeah.net",
@@ -479,43 +542,111 @@ _ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
     # ── Sohu (China) ──────────────────────────────────────────────────────────
     "sohu.com",
 
-    # ── Naver / Daum / Kakao (South Korea) ───────────────────────────────────
-    "naver.com", "hanmail.net", "daum.net", "kakao.com",
+    # ── 21CN (China) ──────────────────────────────────────────────────────────
+    "21cn.com",
+
+    # ── Naver / Daum / Kakao / Nate (South Korea) ────────────────────────────
+    "naver.com", "hanmail.net", "daum.net", "kakao.com", "nate.com",
+
+    # ── Japanese carrier / ISP email ─────────────────────────────────────────
+    "docomo.ne.jp", "softbank.ne.jp", "i.softbank.jp",
+    "ezweb.ne.jp", "au.com",
+    "biglobe.ne.jp", "nifty.com",
 
     # ── Rediffmail (India) ───────────────────────────────────────────────────
-    "rediffmail.com",
+    "rediffmail.com", "indiatimes.com",
 
-    # ── T-Online / Telekom (Germany) ──────────────────────────────────────────
+    # ── UK ISPs ──────────────────────────────────────────────────────────────
+    "btinternet.com", "bt.com", "btopenworld.com",
+    "sky.com", "skymail.com",
+    "virginmedia.com", "virgin.net",
+    "talktalk.net", "talktalk.co.uk",
+    "ntlworld.com",
+    "plusnet.com",
+    "tiscali.co.uk",
+
+    # ── German ISPs ──────────────────────────────────────────────────────────
     "t-online.de",
-
-    # ── Freenet (Germany) ────────────────────────────────────────────────────
     "freenet.de",
+    "arcor.de", "vodafone.de",
+    "kabelbw.de",
 
-    # ── Orange / SFR / Laposte (France) ──────────────────────────────────────
+    # ── French ISPs / portals ────────────────────────────────────────────────
     "orange.fr", "sfr.fr", "neuf.fr", "laposte.net",
+    "free.fr", "wanadoo.fr",
+    "bbox.fr", "bouyguestelecom.fr",
+    "club-internet.fr",
 
-    # ── Libero / Virgilio / Tiscali (Italy) ──────────────────────────────────
+    # ── Italian ISP / portals ────────────────────────────────────────────────
     "libero.it", "virgilio.it", "alice.it", "tiscali.it",
+    "tim.it", "vodafone.it",
 
-    # ── Telstra (Australia) ───────────────────────────────────────────────────
+    # ── Dutch ISPs ───────────────────────────────────────────────────────────
+    "ziggo.nl", "kpn.nl", "hetnet.nl", "planet.nl",
+    "xs4all.nl", "casema.nl",
+
+    # ── Belgian ISPs ────────────────────────────────────────────────────────
+    "skynet.be", "telenet.be", "proximus.be",
+
+    # ── Swedish / Norwegian / Danish / Finnish ISPs ───────────────────────────
+    "telia.com", "swipnet.se", "tele2.se",
+    "online.no", "telenor.no",
+    "tdc.dk", "telenor.dk",
+    "kolumbus.fi",
+
+    # ── Polish portals (dominant in Poland) ──────────────────────────────────
+    "wp.pl", "onet.pl", "interia.pl", "o2.pl", "gazeta.pl",
+
+    # ── Czech portals ────────────────────────────────────────────────────────
+    "seznam.cz", "centrum.cz", "email.cz", "volny.cz",
+
+    # ── Hungarian portals ────────────────────────────────────────────────────
+    "freemail.hu", "citromail.hu",
+
+    # ── Australian ISPs ──────────────────────────────────────────────────────
     "bigpond.com", "bigpond.net.au",
+    "optusnet.com.au", "iinet.net.au",
+    "westnet.com.au", "internode.on.net",
+
+    # ── New Zealand ISPs ─────────────────────────────────────────────────────
+    "xtra.co.nz", "slingshot.co.nz",
+
+    # ── South African ISPs ───────────────────────────────────────────────────
+    "mweb.co.za", "webmail.co.za", "vodamail.co.za",
 
     # ── Canadian ISPs ────────────────────────────────────────────────────────
     "rogers.com", "shaw.ca", "bell.net", "sympatico.ca",
-    "telus.net", "videotron.ca",
+    "telus.net", "videotron.ca", "eastlink.ca",
 
     # ── Brazilian portals ────────────────────────────────────────────────────
     "uol.com.br", "bol.com.br", "terra.com.br", "ig.com.br",
+    "r7.com", "msn.com.br",
+
+    # ── Other Latin American portals ─────────────────────────────────────────
+    "fibertel.com.ar",          # Argentina ISP
+    "speedy.com.ar",            # Argentina ISP
+    "telmex.net.mx",            # Mexico ISP
+
+    # ── Email relay / alias services (like Apple Hide My Email) ──────────────
+    "duck.com",                 # DuckDuckGo Email Protection
+    "mozmail.com",              # Firefox Relay
+    "simplelogin.io", "simplelogin.co", "slmail.me",  # SimpleLogin
+    "anonaddy.com", "anonaddy.me",  # AnonAddy / addy.io
 
     # ── Other privacy-focused / reputable independent providers ──────────────
-    "mailbox.org",          # Germany, privacy-first
+    "mailbox.org",              # Germany, privacy-first
     "posteo.de", "posteo.net",  # Germany, privacy-first
-    "mailfence.com",        # Belgium, encrypted
-    "runbox.com",           # Norway, privacy-first
-    "startmail.com",        # Netherlands, privacy-first
-    "disroot.org",          # Netherlands, open-source community
-    "cock.li",              # Reputable independent provider
-    "teknik.io",            # Privacy-focused
+    "mailfence.com",            # Belgium, encrypted
+    "runbox.com",               # Norway, privacy-first
+    "startmail.com",            # Netherlands, privacy-first
+    "disroot.org",              # Netherlands, open-source community
+    "riseup.net",               # Privacy/activism
+    "kolabnow.com",             # Switzerland, privacy
+    "countermail.com",          # Sweden, encrypted
+    "hushmail.com",             # Canada, encrypted
+    "lavabit.com",              # Privacy-focused (relaunched)
+    "cock.li",                  # Reputable independent provider
+    "teknik.io",                # Privacy-focused
 })
 
 
@@ -584,7 +715,7 @@ def register() -> Any:
     if get_user_by_email(email):
         return render_template(
             "register.html",
-            error="An account with that email address already exists.",
+            error="Registration could not be completed. Please check your details and try again.",
             username=username, email=email,
         )
     complexity_error = _password_complexity_error(password)
@@ -734,12 +865,14 @@ def account() -> Any:
     favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
     recent_logs = get_recent_logs(g.user["id"], limit=5)
+    passkeys = get_webauthn_credentials(g.user["id"])
     return render_template(
         "account.html",
         prefs=prefs,
         saved_location=loc,
         recent_logs=recent_logs,
         favorite_locations=favorites,
+        passkeys=passkeys,
     )
 
 
@@ -876,3 +1009,164 @@ def delete_account_route() -> Any:
     delete_user(user_id)
     session.clear()
     return redirect(url_for("auth.landing"))
+
+
+# ── WebAuthn / passkey (biometric) endpoints ──────────────────────────────────
+
+def _webauthn_rp_id() -> str:
+    return request.host.split(":")[0]
+
+
+def _webauthn_origin() -> str:
+    return request.scheme + "://" + request.host
+
+
+@bp.route("/webauthn/register/begin")
+def webauthn_register_begin() -> Any:
+    """Return WebAuthn registration options for the logged-in user."""
+    from webauthn import generate_registration_options, options_to_json
+    from webauthn.helpers.structs import (
+        AuthenticatorSelectionCriteria,
+        PublicKeyCredentialDescriptor,
+        ResidentKeyRequirement,
+        UserVerificationRequirement,
+    )
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+
+    existing = get_webauthn_credentials(g.user["id"])
+    options = generate_registration_options(
+        rp_id=_webauthn_rp_id(),
+        rp_name="Surf & Pier Fishing Forecast",
+        user_id=str(g.user["id"]).encode(),
+        user_name=g.user["username"],
+        user_display_name=g.user["username"],
+        authenticator_selection=AuthenticatorSelectionCriteria(
+            resident_key=ResidentKeyRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.PREFERRED,
+        ),
+        exclude_credentials=[
+            PublicKeyCredentialDescriptor(id=base64url_to_bytes(c["credential_id"]))
+            for c in existing
+        ],
+    )
+    session["webauthn_reg_challenge"] = bytes_to_base64url(options.challenge)
+    session["webauthn_reg_origin"] = _webauthn_origin()
+    return options_to_json(options), 200, {"Content-Type": "application/json"}
+
+
+@bp.route("/webauthn/register/complete", methods=["POST"])
+def webauthn_register_complete() -> Any:
+    """Verify the registration response and store the new credential."""
+    from webauthn import verify_registration_response
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+
+    challenge_b64 = session.pop("webauthn_reg_challenge", None)
+    origin = session.pop("webauthn_reg_origin", None)
+    if not challenge_b64 or not origin:
+        return jsonify({"error": "No challenge in session"}), 400
+
+    try:
+        verified = verify_registration_response(
+            credential=request.json,
+            expected_challenge=base64url_to_bytes(challenge_b64),
+            expected_rp_id=_webauthn_rp_id(),
+            expected_origin=origin,
+        )
+    except Exception as exc:
+        logger.warning("webauthn.register_failed user_id=%s: %s", g.user["id"], exc)
+        return jsonify({"error": "Registration failed"}), 400
+
+    save_webauthn_credential(
+        user_id=g.user["id"],
+        credential_id=bytes_to_base64url(verified.credential_id),
+        public_key=bytes_to_base64url(verified.credential_public_key),
+        sign_count=verified.sign_count,
+    )
+    logger.info("webauthn.register_complete user_id=%s ip=%s", g.user["id"], _client_ip())
+    return jsonify({"ok": True})
+
+
+@bp.route("/webauthn/authenticate/begin", methods=["POST"])
+def webauthn_authenticate_begin() -> Any:
+    """Return WebAuthn authentication options (discoverable credentials)."""
+    from webauthn import generate_authentication_options, options_to_json
+    from webauthn.helpers.structs import UserVerificationRequirement
+    from webauthn.helpers import bytes_to_base64url
+
+    options = generate_authentication_options(
+        rp_id=_webauthn_rp_id(),
+        user_verification=UserVerificationRequirement.PREFERRED,
+    )
+    session["webauthn_auth_challenge"] = bytes_to_base64url(options.challenge)
+    session["webauthn_auth_origin"] = _webauthn_origin()
+    return options_to_json(options), 200, {"Content-Type": "application/json"}
+
+
+@bp.route("/webauthn/authenticate/complete", methods=["POST"])
+def webauthn_authenticate_complete() -> Any:
+    """Verify the authentication response and log the user in."""
+    from webauthn import verify_authentication_response
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+
+    challenge_b64 = session.pop("webauthn_auth_challenge", None)
+    origin = session.pop("webauthn_auth_origin", None)
+    if not challenge_b64 or not origin:
+        return jsonify({"error": "No challenge in session"}), 400
+
+    data = request.json or {}
+    credential_id = data.get("id", "")
+    stored = get_webauthn_credential_by_id(credential_id)
+    if not stored:
+        return jsonify({"error": "Unknown credential"}), 400
+
+    try:
+        verified = verify_authentication_response(
+            credential=data,
+            expected_challenge=base64url_to_bytes(challenge_b64),
+            expected_rp_id=_webauthn_rp_id(),
+            expected_origin=origin,
+            credential_public_key=base64url_to_bytes(stored["public_key"]),
+            credential_current_sign_count=stored["sign_count"],
+        )
+    except Exception as exc:
+        logger.warning("webauthn.auth_failed credential_id=%s: %s", credential_id, exc)
+        return jsonify({"error": "Authentication failed"}), 400
+
+    update_webauthn_sign_count(credential_id, verified.new_sign_count)
+
+    user = get_user(stored["user_id"])
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    prior_location_id = session.get("location_id")
+    session.clear()
+    new_version = bump_session_version(user["id"])
+    session["user_id"] = user["id"]
+    session["session_version"] = new_version
+    session.permanent = True
+    session["csrf_token"] = secrets.token_urlsafe(24)
+    prefs = get_preferences(user["id"])
+    if prefs.get("location_id"):
+        session["location_id"] = prefs["location_id"]
+    elif user.get("default_location_id"):
+        session["location_id"] = user["default_location_id"]
+    elif prior_location_id:
+        session["location_id"] = prior_location_id
+
+    logger.info("webauthn.auth_complete user_id=%s ip=%s", user["id"], _client_ip())
+    return jsonify({"ok": True, "redirect": url_for("views.index")})
+
+
+@bp.route("/webauthn/credential/<credential_id>/delete", methods=["POST"])
+def webauthn_delete_credential(credential_id: str) -> Any:
+    """Remove a registered passkey from the logged-in user's account."""
+    if not g.user:
+        return jsonify({"error": "Not logged in"}), 401
+    deleted = delete_webauthn_credential(credential_id, g.user["id"])
+    return jsonify({"ok": deleted})

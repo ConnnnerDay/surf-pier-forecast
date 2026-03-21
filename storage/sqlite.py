@@ -97,6 +97,18 @@ CREATE TABLE IF NOT EXISTS reg_scrape_cache (
     scraped_at  TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (species_key, state)
 );
+
+CREATE TABLE IF NOT EXISTS webauthn_credentials (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    credential_id TEXT NOT NULL UNIQUE,
+    public_key    TEXT NOT NULL,
+    sign_count    INTEGER NOT NULL DEFAULT 0,
+    name          TEXT NOT NULL DEFAULT 'Passkey',
+    created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_webauthn_user
+ON webauthn_credentials(user_id);
 """
 
 
@@ -124,7 +136,7 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
 
 _KNOWN_TABLES = frozenset({
     "users", "profiles", "locations", "forecasts",
-    "forecast_cache", "catch_log", "reg_scrape_cache",
+    "forecast_cache", "catch_log", "reg_scrape_cache", "webauthn_credentials",
 })
 
 
@@ -219,6 +231,24 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             INSERT INTO forecasts (location_id, forecast_json, generated_at, created_at)
             SELECT location_id, data, generated_at, COALESCE(updated_at, datetime('now'))
             FROM forecasts_legacy
+            """
+        )
+
+    # webauthn_credentials table (added for passkey / biometric login support)
+    if not _table_exists(conn, "webauthn_credentials"):
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS webauthn_credentials (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                credential_id TEXT NOT NULL UNIQUE,
+                public_key    TEXT NOT NULL,
+                sign_count    INTEGER NOT NULL DEFAULT 0,
+                name          TEXT NOT NULL DEFAULT 'Passkey',
+                created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_webauthn_user
+            ON webauthn_credentials(user_id);
             """
         )
 
@@ -386,13 +416,13 @@ def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
         conn.close()
     if not row:
         return None
-    # Expire tokens after 24 hours.
+    # Expire tokens after 2 hours to limit the window if a link is leaked.
     sent_at_raw = row["email_verification_sent_at"]
     if sent_at_raw:
         try:
             sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
             now = datetime.now(tz=timezone.utc)
-            if (now - sent_at).total_seconds() > 86400:
+            if (now - sent_at).total_seconds() > 7200:
                 return None
         except Exception:
             pass
@@ -445,8 +475,12 @@ def change_password(user_id: int, new_password: str) -> int:
     pw_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
     conn = get_db()
     try:
+        # Also clear any pending email-verification token: it was issued under
+        # the old credentials, so it should not remain valid after a password
+        # change (the user can request a new verification email afterwards).
         conn.execute(
-            "UPDATE users SET password_hash = ?, session_version = session_version + 1 "
+            "UPDATE users SET password_hash = ?, session_version = session_version + 1, "
+            "email_verification_token = NULL, email_verification_sent_at = NULL "
             "WHERE id = ?",
             (pw_hash, user_id),
         )
@@ -646,13 +680,23 @@ def get_log_entries(
     ]
 
 
+_CATCH_LOG_SIZE_MAX = 50    # e.g. "24 inches"
+_CATCH_LOG_NOTES_MAX = 1000  # free-text field
+
+
 def add_log_entry(
     user_id: int, location_id: str, species: str, size: str = "", notes: str = ""
 ) -> int:
     conn = get_db()
     cur = conn.execute(
         "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
-        (user_id, location_id, species.strip(), size.strip(), notes.strip()),
+        (
+            user_id,
+            location_id,
+            species.strip()[:100],
+            size.strip()[:_CATCH_LOG_SIZE_MAX],
+            notes.strip()[:_CATCH_LOG_NOTES_MAX],
+        ),
     )
     conn.commit()
     entry_id = cur.lastrowid or 0
@@ -902,6 +946,69 @@ def list_cached_locations() -> List[Dict[str, str]]:
 def delete_forecast(location_id: str) -> bool:
     conn = get_db()
     cur = conn.execute("DELETE FROM forecasts WHERE location_id = ?", (location_id,))
+    conn.commit()
+    deleted = cur.rowcount > 0
+    conn.close()
+    return deleted
+
+
+# ── WebAuthn / passkey credential storage ─────────────────────────────────────
+
+def save_webauthn_credential(
+    user_id: int,
+    credential_id: str,
+    public_key: str,
+    sign_count: int,
+    name: str = "Passkey",
+) -> None:
+    conn = get_db()
+    conn.execute(
+        """
+        INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count, name)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (user_id, credential_id, public_key, sign_count, name),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_webauthn_credentials(user_id: int) -> List[Dict[str, Any]]:
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
+        (user_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_webauthn_credential_by_id(credential_id: str) -> Optional[Dict[str, Any]]:
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM webauthn_credentials WHERE credential_id = ?",
+        (credential_id,),
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_webauthn_sign_count(credential_id: str, sign_count: int) -> None:
+    conn = get_db()
+    conn.execute(
+        "UPDATE webauthn_credentials SET sign_count = ? WHERE credential_id = ?",
+        (sign_count, credential_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_webauthn_credential(credential_id: str, user_id: int) -> bool:
+    conn = get_db()
+    cur = conn.execute(
+        "DELETE FROM webauthn_credentials WHERE credential_id = ? AND user_id = ?",
+        (credential_id, user_id),
+    )
     conn.commit()
     deleted = cur.rowcount > 0
     conn.close()

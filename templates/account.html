@@ -247,6 +247,40 @@
                 </div>
             </details>
 
+            <!-- Passkey / biometric login management -->
+            <details id="passkey-section" class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
+                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
+                    <span style="display:flex;align-items:center;gap:0.5rem">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg>
+                        Face ID / Touch ID (Passkeys)
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <div style="padding:1rem">
+                    <p style="margin:0 0 0.75rem;font-size:0.875rem;color:var(--muted,#5c6b73)">Set up Face ID or Touch ID to sign back in instantly — no password needed.</p>
+                    {% if passkeys %}
+                    <div style="margin-bottom:0.75rem">
+                        {% for pk in passkeys %}
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border,#eee)">
+                            <span style="font-size:0.875rem">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:0.3rem" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                {{ pk.name }} <span style="font-size:0.78rem;color:var(--muted,#5c6b73)">&mdash; added {{ pk.created_at[:10] }}</span>
+                            </span>
+                            <button type="button" class="delete-passkey-btn" data-id="{{ pk.credential_id }}"
+                                    style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:0.8rem;padding:0.2rem 0.4rem">Remove</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p id="passkey-none-msg" style="font-size:0.85rem;color:var(--muted,#5c6b73);margin:0 0 0.75rem">No passkeys registered yet.</p>
+                    {% endif %}
+                    <button type="button" id="register-passkey-btn" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)" disabled>
+                        Set Up Face ID / Touch ID
+                    </button>
+                    <div id="passkey-msg" style="margin-top:0.5rem;font-size:0.85rem;display:none"></div>
+                </div>
+            </details>
+
             <div class="account-actions account-footer-actions">
                 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -257,6 +291,103 @@
     </main>
 
     <footer><p>Surf &amp; Pier Fishing Outlook</p></footer>
+    <script>
+    // ── Passkey / WebAuthn management ──────────────────────────────────────────
+    (function () {
+        if (!window.PublicKeyCredential) return;
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (available) {
+            if (!available) return;
+            var btn = document.getElementById('register-passkey-btn');
+            btn.disabled = false;
+
+            function b64urlToBuffer(b64url) {
+                var base64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+                var bin = atob(base64);
+                var buf = new Uint8Array(bin.length);
+                for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+                return buf.buffer;
+            }
+
+            function bufferToB64url(buf) {
+                var bytes = new Uint8Array(buf);
+                var str = '';
+                for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+                return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            }
+
+            function showMsg(text, isError) {
+                var el = document.getElementById('passkey-msg');
+                el.textContent = text;
+                el.style.color = isError ? '#c0392b' : '#2a7d6e';
+                el.style.display = '';
+            }
+
+            // Wire up remove buttons rendered server-side
+            document.querySelectorAll('.delete-passkey-btn').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    if (!confirm('Remove this passkey?')) return;
+                    var credId = b.dataset.id;
+                    fetch('/auth/webauthn/credential/' + encodeURIComponent(credId) + '/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: '{}'
+                    }).then(function () { location.reload(); });
+                });
+            });
+
+            btn.addEventListener('click', function () {
+                btn.disabled = true;
+                btn.textContent = 'Waiting for Face ID\u2026';
+                showMsg('', false);
+
+                fetch('{{ url_for("auth.webauthn_register_begin") }}')
+                    .then(function (r) { return r.json(); })
+                    .then(function (opts) {
+                        opts.challenge = b64urlToBuffer(opts.challenge);
+                        opts.user.id = b64urlToBuffer(opts.user.id);
+                        if (opts.excludeCredentials) {
+                            opts.excludeCredentials = opts.excludeCredentials.map(function (c) {
+                                return Object.assign({}, c, { id: b64urlToBuffer(c.id) });
+                            });
+                        }
+                        return navigator.credentials.create({ publicKey: opts });
+                    })
+                    .then(function (cred) {
+                        var payload = {
+                            id: cred.id,
+                            rawId: bufferToB64url(cred.rawId),
+                            type: cred.type,
+                            response: {
+                                clientDataJSON: bufferToB64url(cred.response.clientDataJSON),
+                                attestationObject: bufferToB64url(cred.response.attestationObject)
+                            }
+                        };
+                        return fetch('{{ url_for("auth.webauthn_register_complete") }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        }).then(function (r) { return r.json(); });
+                    })
+                    .then(function (result) {
+                        if (result.ok) {
+                            location.reload();
+                        } else {
+                            throw new Error(result.error || 'Registration failed');
+                        }
+                    })
+                    .catch(function (err) {
+                        if (err && err.name === 'NotAllowedError') {
+                            showMsg('Biometric prompt cancelled.', true);
+                        } else {
+                            showMsg((err && err.message) || 'Could not set up passkey.', true);
+                        }
+                        btn.disabled = false;
+                        btn.textContent = 'Set Up Face ID / Touch ID';
+                    });
+            });
+        }).catch(function () {});
+    })();
+    </script>
     <script>
     document.querySelectorAll('.photo-upload-form').forEach(function(form) {
         var entryId = form.dataset.entryId;

@@ -90,7 +90,7 @@ def create_app() -> Flask:
                 _key_file,
             )
     app.config["SECRET_KEY"] = secret_key
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=3)
     app.config["MAX_CONTENT_LENGTH"] = (
         16 * 1024 * 1024
     )  # 16 MB hard limit for file uploads
@@ -174,6 +174,12 @@ def create_app() -> Flask:
         "auth.account_settings",
         "auth.change_password_route",
         "auth.delete_account_route",
+        # WebAuthn / passkey flows (biometric login, passkey registration)
+        "auth.webauthn_register_begin",
+        "auth.webauthn_register_complete",
+        "auth.webauthn_authenticate_begin",
+        "auth.webauthn_authenticate_complete",
+        "auth.webauthn_delete_credential",
         # Location + profile setup wizard (users need to complete onboarding).
         "views.setup",
         "views.setup_search",
@@ -305,6 +311,16 @@ def create_app() -> Flask:
                 "frame-ancestors 'none';"
             ),
         )
+        # Block Adobe Flash/Acrobat from loading cross-domain policy files.
+        response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+        # Authenticated HTML responses must not be stored in any cache so that
+        # the browser back-button cannot reveal them after the user logs out.
+        if (
+            getattr(g, "user", None) is not None
+            and "text/html" in response.content_type
+            and "Cache-Control" not in response.headers
+        ):
+            response.headers["Cache-Control"] = "no-store, private"
         # Enforce HTTPS for one year when served over TLS (safe no-op over plain HTTP).
         if request.is_secure:
             response.headers.setdefault(

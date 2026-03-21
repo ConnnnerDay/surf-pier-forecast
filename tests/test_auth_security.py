@@ -348,7 +348,7 @@ def test_register_rejects_duplicate_email(client):
         },
     )
     assert resp.status_code == 200
-    assert b"already exists" in resp.data
+    assert b"Registration could not be completed" in resp.data
 
 
 def test_unverified_user_blocked_from_dashboard(client):

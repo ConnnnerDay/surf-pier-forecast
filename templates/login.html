@@ -44,6 +44,19 @@
                 <button type="submit" class="auth-btn">Log In</button>
             </form>
 
+            <div id="webauthn-section" style="display:none;margin-top:0.5rem">
+                <button type="button" id="webauthn-btn" class="auth-btn" style="width:100%;background:linear-gradient(135deg,#2a7d6e,#1a5c50);display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg>
+                    Use Face ID / Touch ID
+                </button>
+                <div id="webauthn-error" style="display:none;margin-top:0.5rem;color:#c0392b;font-size:0.85rem"></div>
+                <div style="display:flex;align-items:center;gap:0.5rem;margin:0.75rem 0">
+                    <hr style="flex:1;border:none;border-top:1px solid var(--border,#d8dee3)">
+                    <span style="font-size:0.8rem;color:var(--muted,#5c6b73)">or sign in with password</span>
+                    <hr style="flex:1;border:none;border-top:1px solid var(--border,#d8dee3)">
+                </div>
+            </div>
+
             <p class="auth-switch">Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a></p>
             <p class="auth-switch"><a href="{{ url_for('auth.landing') }}">&larr; Back</a></p>
         </section>
@@ -52,5 +65,84 @@
     <footer>
         <p>Surf &amp; Pier Fishing Outlook</p>
     </footer>
+    <script>
+    (function () {
+        if (!window.PublicKeyCredential) return;
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (available) {
+            if (!available) return;
+            document.getElementById('webauthn-section').style.display = '';
+        }).catch(function () {});
+
+        function b64urlToBuffer(b64url) {
+            var base64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+            var bin = atob(base64);
+            var buf = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+            return buf.buffer;
+        }
+
+        function bufferToB64url(buf) {
+            var bytes = new Uint8Array(buf);
+            var str = '';
+            for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        document.getElementById('webauthn-btn').addEventListener('click', function () {
+            var btn = this;
+            var errEl = document.getElementById('webauthn-error');
+            btn.disabled = true;
+            btn.textContent = 'Waiting for Face ID\u2026';
+            errEl.style.display = 'none';
+
+            fetch('{{ url_for("auth.webauthn_authenticate_begin") }}', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (opts) {
+                    opts.challenge = b64urlToBuffer(opts.challenge);
+                    if (opts.allowCredentials) {
+                        opts.allowCredentials = opts.allowCredentials.map(function (c) {
+                            return Object.assign({}, c, { id: b64urlToBuffer(c.id) });
+                        });
+                    }
+                    return navigator.credentials.get({ publicKey: opts });
+                })
+                .then(function (cred) {
+                    var payload = {
+                        id: cred.id,
+                        rawId: bufferToB64url(cred.rawId),
+                        type: cred.type,
+                        response: {
+                            clientDataJSON: bufferToB64url(cred.response.clientDataJSON),
+                            authenticatorData: bufferToB64url(cred.response.authenticatorData),
+                            signature: bufferToB64url(cred.response.signature),
+                            userHandle: cred.response.userHandle ? bufferToB64url(cred.response.userHandle) : null
+                        }
+                    };
+                    return fetch('{{ url_for("auth.webauthn_authenticate_complete") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(function (r) { return r.json(); });
+                })
+                .then(function (result) {
+                    if (result.ok) {
+                        window.location.href = result.redirect || '/';
+                    } else {
+                        throw new Error(result.error || 'Authentication failed');
+                    }
+                })
+                .catch(function (err) {
+                    if (err && err.name === 'NotAllowedError') {
+                        errEl.textContent = 'Biometric prompt cancelled.';
+                    } else {
+                        errEl.textContent = (err && err.message) || 'Could not sign in with Face ID.';
+                    }
+                    errEl.style.display = '';
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg> Use Face ID / Touch ID';
+                });
+        });
+    })();
+    </script>
 </body>
 </html>
