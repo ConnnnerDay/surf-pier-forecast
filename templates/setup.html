@@ -37,6 +37,14 @@
                     Search
                 </button>
             </div>
+            <!-- Geolocation shortcut -->
+            <div style="margin-top:0.75rem">
+                <button type="button" id="use-my-location-btn" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50);display:inline-flex;align-items:center;gap:0.5rem;width:auto">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M12 1v2M12 21v2M1 12h2M21 12h2"/></svg>
+                    Use My Location
+                </button>
+                <span id="geo-status" style="margin-left:0.6rem;font-size:0.85rem;color:var(--text-muted)" aria-live="polite"></span>
+            </div>
             <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
         </section>
 
@@ -298,7 +306,59 @@
                 setupFavoritesForAnonymous();
                 bindRecentTracking();
                 setupUnifiedSearch();
+                setupGeolocation();
             });
+
+            function setupGeolocation() {
+                var btn = document.getElementById('use-my-location-btn');
+                var status = document.getElementById('geo-status');
+                if (!btn) return;
+
+                // Hide the button entirely if the browser doesn't support geolocation
+                if (!navigator.geolocation) {
+                    btn.hidden = true;
+                    return;
+                }
+
+                btn.addEventListener('click', function () {
+                    btn.disabled = true;
+                    status.textContent = 'Finding your location\u2026';
+
+                    navigator.geolocation.getCurrentPosition(
+                        function (pos) {
+                            var lat = pos.coords.latitude;
+                            var lon = pos.coords.longitude;
+
+                            // Reuse the existing hidden coords form that the map picker already uses
+                            var latInput = document.getElementById('location_lat');
+                            var lonInput = document.getElementById('location_lon');
+                            var coordsForm = document.getElementById('map-coords-form');
+
+                            if (latInput && lonInput && coordsForm) {
+                                status.textContent = 'Got it \u2014 finding nearest spots\u2026';
+                                latInput.value = lat;
+                                lonInput.value = lon;
+                                coordsForm.submit();
+                            } else {
+                                // Fallback: just fill the unified search with the coords and let the server handle it
+                                status.textContent = 'Error: could not submit. Try searching by zip code.';
+                                btn.disabled = false;
+                            }
+                        },
+                        function (err) {
+                            btn.disabled = false;
+                            if (err.code === err.PERMISSION_DENIED) {
+                                status.textContent = 'Location access denied. Search by zip code instead.';
+                            } else if (err.code === err.POSITION_UNAVAILABLE) {
+                                status.textContent = 'Location unavailable. Try searching by zip code.';
+                            } else {
+                                status.textContent = 'Could not get location. Try searching by zip code.';
+                            }
+                        },
+                        { timeout: 10000, maximumAge: 60000 }
+                    );
+                });
+            }
 
             /* Unified location search: city, zip, beach */
             function setupUnifiedSearch() {
