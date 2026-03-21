@@ -326,6 +326,14 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !modal.hidden) closeCamera();
     });
+
+    // Always stop the camera stream when leaving the page so the browser
+    // camera-in-use indicator doesn't stay on after navigation.
+    window.addEventListener('pagehide', stopStream);
+    // Also stop when the tab is hidden (switching apps on mobile).
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && !modal.hidden) closeCamera();
+    });
   })();
 
   document.getElementById('fishlog-form').addEventListener('keydown', function (e) {

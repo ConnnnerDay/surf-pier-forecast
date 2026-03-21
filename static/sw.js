@@ -14,13 +14,30 @@ var PRECACHE = [
 self.addEventListener('push', function (event) {
   var data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) {}
-  var title = data.title || 'Surf & Pier Forecast';
+
+  // Sanitise all string fields — truncate to safe lengths and strip anything
+  // non-printable.  This limits the impact of a compromised push payload.
+  function safeStr(val, maxLen, fallback) {
+    if (typeof val !== 'string') return fallback;
+    return val.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '').slice(0, maxLen) || fallback;
+  }
+
+  // Validate the URL: only allow same-origin paths.
+  var safeUrl = '/';
+  try {
+    var parsed = new URL(data.url || '/', self.location.origin);
+    if (parsed.origin === self.location.origin) {
+      safeUrl = parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch (e) {}
+
+  var title = safeStr(data.title, 80, 'Surf & Pier Forecast');
   var options = {
-    body: data.body || 'Check your fishing conditions.',
+    body: safeStr(data.body, 200, 'Check your fishing conditions.'),
     icon: '/static/icons/icon-192.svg',
     badge: '/static/icons/icon-192.svg',
-    tag: data.tag || 'fish-forecast',
-    data: { url: data.url || '/' },
+    tag: safeStr(data.tag, 40, 'fish-forecast'),
+    data: { url: safeUrl },
     requireInteraction: false,
   };
   event.waitUntil(self.registration.showNotification(title, options));
@@ -29,7 +46,19 @@ self.addEventListener('push', function (event) {
 // Open the app (or focus the existing tab) when a notification is tapped.
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
-  var target = (event.notification.data && event.notification.data.url) || '/';
+
+  // Validate the target URL so a crafted push payload cannot redirect the
+  // user to an external site or trigger a javascript: navigation.
+  var rawUrl = (event.notification.data && event.notification.data.url) || '/';
+  var target = '/'; // safe default
+  try {
+    var parsed = new URL(rawUrl, self.location.origin);
+    // Only allow navigation within our own origin.
+    if (parsed.origin === self.location.origin) {
+      target = parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch (e) { /* malformed URL — fall back to '/' */ }
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
+import time
 import uuid
+from zoneinfo import available_timezones
 from typing import Any, Dict, Optional, Tuple
 
 from flask import (
@@ -56,6 +59,51 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("api", __name__)
 
+# ── Timezone validation ───────────────────────────────────────────────────────
+# Build the allowed set once at import time from the system's zoneinfo database.
+# This is the authoritative list of valid IANA timezone names — anything not in
+# this set is rejected outright.
+_VALID_TIMEZONES: frozenset[str] = frozenset(available_timezones())
+
+# ── Rate limiting for /api/v1/timezone ───────────────────────────────────────
+# 5 updates per IP per hour.  Timezone detection is a one-shot per-session
+# event; anything beyond that is suspicious.
+_TZ_RATE_LIMIT_MAX = 5
+_TZ_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
+_tz_rate_store: Dict[str, tuple[float, int]] = {}
+_tz_rate_lock = threading.Lock()
+
+
+def _tz_client_ip() -> str:
+    """Return the best-effort client IP for rate limiting."""
+    return (
+        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        or request.remote_addr
+        or "unknown"
+    )
+
+
+def _tz_is_rate_limited() -> bool:
+    ip = _tz_client_ip()
+    now = time.time()
+    with _tz_rate_lock:
+        start, count = _tz_rate_store.get(ip, (now, 0))
+        if now - start > _TZ_RATE_LIMIT_WINDOW_S:
+            _tz_rate_store[ip] = (now, 0)
+            return False
+        return count >= _TZ_RATE_LIMIT_MAX
+
+
+def _tz_record_attempt() -> None:
+    ip = _tz_client_ip()
+    now = time.time()
+    with _tz_rate_lock:
+        start, count = _tz_rate_store.get(ip, (now, 0))
+        if now - start > _TZ_RATE_LIMIT_WINDOW_S:
+            _tz_rate_store[ip] = (now, 1)
+        else:
+            _tz_rate_store[ip] = (start, count + 1)
+
 
 def _json_error(err: ApiError) -> Any:
     return jsonify(
@@ -67,16 +115,37 @@ def _json_error(err: ApiError) -> Any:
 def set_timezone() -> Any:
     """Store the client-detected IANA timezone in the user's profile.
 
-    Called once by the nav script when the detected timezone differs from
-    what the server already has. No-op for anonymous users.
+    Called once per session by the nav script. No-op for anonymous users.
+
+    Security:
+    - Requires authentication (anonymous requests are silently ignored)
+    - Rate-limited: 5 updates per IP per hour
+    - Timezone validated against the authoritative zoneinfo database — rejects
+      anything that isn't a real IANA zone name (including path-like strings)
     """
     if not g.user:
         return jsonify({"ok": True})
+
+    if _tz_is_rate_limited():
+        logger.warning("security.timezone_rate_limit user_id=%s ip=%s", g.user["id"], _tz_client_ip())
+        return jsonify({"ok": True})  # silent — no need to reveal rate limiting to client
+
+    _tz_record_attempt()
+
     data = request.get_json(silent=True) or {}
     tz = str(data.get("timezone", "")).strip()
-    # Validate: IANA names contain a slash (e.g. "America/New_York") or are "UTC"
-    if tz and (tz == "UTC" or "/" in tz) and len(tz) <= 64:
-        save_preferences(g.user["id"], timezone=tz)
+
+    if tz not in _VALID_TIMEZONES:
+        # Log suspicious input (anything outside the zoneinfo whitelist).
+        if tz:
+            logger.warning(
+                "security.invalid_timezone user_id=%s tz=%r ip=%s",
+                g.user["id"], tz[:80], _tz_client_ip(),
+            )
+        return jsonify({"ok": True})  # silent rejection — no error info to caller
+
+    save_preferences(g.user["id"], timezone=tz)
+    logger.info("timezone.saved user_id=%s tz=%s", g.user["id"], tz)
     return jsonify({"ok": True})
 
 
