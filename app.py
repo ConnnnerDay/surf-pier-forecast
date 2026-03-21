@@ -319,6 +319,7 @@ def create_app() -> Flask:
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: blob: https://lh3.googleusercontent.com; "
                 "connect-src 'self'; "
+                "worker-src 'self'; "
                 "frame-ancestors 'none';"
             ),
         )
