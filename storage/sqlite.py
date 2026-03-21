@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS users (
     default_location_id TEXT,
     is_anonymous  INTEGER NOT NULL DEFAULT 0,
     session_version INTEGER NOT NULL DEFAULT 0,
+    display_name  TEXT,
+    avatar_url    TEXT,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -192,6 +194,10 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN email_verification_token TEXT")
     if "email_verification_sent_at" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN email_verification_sent_at TEXT")
+    if "display_name" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
+    if "avatar_url" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
 
     profile_cols = set(_column_names(conn, "profiles"))
     if "wind_units" not in profile_cols:
@@ -362,7 +368,8 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_db()
     try:
         row = conn.execute(
-            "SELECT id, username, email, email_confirmed, default_location_id, session_version "
+            "SELECT id, username, email, email_confirmed, default_location_id, "
+            "session_version, display_name, avatar_url "
             "FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
@@ -377,6 +384,8 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
         "email_confirmed": bool(row["email_confirmed"]),
         "default_location_id": row["default_location_id"],
         "session_version": row["session_version"],
+        "display_name": row["display_name"],
+        "avatar_url": row["avatar_url"],
     }
 
 
@@ -1083,6 +1092,8 @@ def create_social_user(
     email: Optional[str],
     provider: str,
     provider_uid: str,
+    display_name: Optional[str] = None,
+    avatar_url: Optional[str] = None,
 ) -> Optional[int]:
     """Create a new user for social login (no password) and link the social account.
 
@@ -1093,9 +1104,10 @@ def create_social_user(
     conn = get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO users (username, password_hash, email, email_confirmed, is_anonymous) "
-            "VALUES (?, NULL, ?, 1, 0)",
-            (username.strip(), email_val),
+            "INSERT INTO users "
+            "(username, password_hash, email, email_confirmed, is_anonymous, display_name, avatar_url) "
+            "VALUES (?, NULL, ?, 1, 0, ?, ?)",
+            (username.strip(), email_val, display_name, avatar_url),
         )
         user_id = cur.lastrowid
         conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
@@ -1111,3 +1123,43 @@ def create_social_user(
         return None
     finally:
         conn.close()
+
+
+def update_user_social_profile(
+    user_id: int,
+    display_name: Optional[str] = None,
+    avatar_url: Optional[str] = None,
+) -> None:
+    """Update display_name and/or avatar_url for an existing social login user.
+
+    Only overwrites fields that are currently NULL — preserves any display name
+    the user may have set themselves.
+    """
+    conn = get_db()
+    try:
+        if display_name:
+            conn.execute(
+                "UPDATE users SET display_name = ? WHERE id = ? AND display_name IS NULL",
+                (display_name, user_id),
+            )
+        if avatar_url:
+            conn.execute(
+                "UPDATE users SET avatar_url = ? WHERE id = ? AND avatar_url IS NULL",
+                (avatar_url, user_id),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_social_accounts_for_user(user_id: int) -> List[Dict[str, Any]]:
+    """Return all social accounts linked to a user."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT provider, email, created_at FROM social_accounts WHERE user_id = ?",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [{"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]} for r in rows]

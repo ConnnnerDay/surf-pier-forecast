@@ -43,6 +43,7 @@ from storage.db import (
     get_preferences,
     get_recent_logs,
     get_social_account,
+    get_social_accounts_for_user,
     get_user,
     get_user_by_email,
     get_user_by_verification_token,
@@ -50,6 +51,7 @@ from storage.db import (
     link_social_account,
     save_preferences,
     set_email_verification_token,
+    update_user_social_profile,
     save_webauthn_credential,
     get_webauthn_credentials,
     get_webauthn_credential_by_id,
@@ -871,6 +873,7 @@ def account() -> Any:
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
     recent_logs = get_recent_logs(g.user["id"], limit=5)
     passkeys = get_webauthn_credentials(g.user["id"])
+    social_accounts = get_social_accounts_for_user(g.user["id"])
     return render_template(
         "account.html",
         prefs=prefs,
@@ -878,6 +881,7 @@ def account() -> Any:
         recent_logs=recent_logs,
         favorite_locations=favorites,
         passkeys=passkeys,
+        social_accounts=social_accounts,
     )
 
 
@@ -1206,15 +1210,26 @@ def _establish_session(user_id: int) -> None:
 
 
 def _generate_social_username(display_name: Optional[str], email: Optional[str]) -> str:
-    """Derive a username from a social profile, appending a random suffix for uniqueness."""
+    """Derive a readable username from a social profile.
+
+    Tries to build a clean name from the display name or email prefix, then
+    appends a short random hex suffix to ensure uniqueness without a DB lookup.
+    e.g. "John Smith" + "jsmith_3a7f"  or  "jsmith_3a7f" from "jsmith@…"
+    """
     base = ""
     if display_name:
-        base = re.sub(r"[^a-zA-Z0-9_]", "", display_name.replace(" ", "_"))[:20]
+        parts = display_name.strip().split()
+        if len(parts) >= 2:
+            # FirstnameLastinitial  e.g. "jsmith"
+            base = re.sub(r"[^a-zA-Z0-9]", "", parts[0].lower())[:12]
+            base += re.sub(r"[^a-zA-Z0-9]", "", parts[-1].lower())[:1]
+        elif parts:
+            base = re.sub(r"[^a-zA-Z0-9_]", "", parts[0].lower())[:15]
     if not base and email:
-        base = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0])[:20]
+        base = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0].lower())[:15]
     if not base:
-        base = "user"
-    return f"{base}_{secrets.token_hex(4)}"[:30]
+        base = "angler"
+    return f"{base}_{secrets.token_hex(3)}"[:30]
 
 
 def _social_login_or_create(
@@ -1222,26 +1237,32 @@ def _social_login_or_create(
     provider_uid: str,
     email: Optional[str],
     display_name: Optional[str],
-) -> Optional[int]:
-    """Return the user_id for a social login, creating a new account if needed.
+    avatar_url: Optional[str] = None,
+) -> tuple[Optional[int], bool]:
+    """Return (user_id, is_new_account) for a social login.
 
     Resolution order:
-    1. Existing social_accounts row  →  return its user_id
+    1. Existing social_accounts row  →  return its user_id, update profile if needed
     2. Matching email in users table →  link the social account, return user_id
     3. New user                      →  create account + social_accounts row
     """
     existing = get_social_account(provider, provider_uid)
     if existing:
-        return existing["user_id"]
+        user_id = existing["user_id"]
+        # Fill in display_name / avatar if the user doesn't have them yet
+        update_user_social_profile(user_id, display_name, avatar_url)
+        return user_id, False
 
     if email:
         user_by_email = get_user_by_email(email)
         if user_by_email:
             link_social_account(user_by_email["id"], provider, provider_uid, email)
-            return user_by_email["id"]
+            update_user_social_profile(user_by_email["id"], display_name, avatar_url)
+            return user_by_email["id"], False
 
     username = _generate_social_username(display_name, email)
-    return create_social_user(username, email, provider, provider_uid)
+    user_id = create_social_user(username, email, provider, provider_uid, display_name, avatar_url)
+    return user_id, True
 
 
 def _decode_jwt_payload(token: str) -> Optional[Dict[str, Any]]:
@@ -1352,18 +1373,22 @@ def google_callback() -> Any:
 
     provider_uid = userinfo.get("sub", "")
     email = userinfo.get("email") or None
-    display_name = userinfo.get("name") or None
+    # Prefer given_name for display (friendlier); fall back to full name
+    display_name = (userinfo.get("given_name") or userinfo.get("name") or None)
+    avatar_url = userinfo.get("picture") or None
 
     if not provider_uid:
         return render_template("login.html", error="Google sign-in failed: missing user ID.")
 
-    user_id = _social_login_or_create("google", provider_uid, email, display_name)
+    user_id, is_new = _social_login_or_create("google", provider_uid, email, display_name, avatar_url)
     if user_id is None:
         return render_template("login.html", error="Could not create account. Please try again.")
 
-    logger.info("security.social_login provider=google user_id=%s ip=%s", user_id, _client_ip())
+    logger.info("security.social_login provider=google user_id=%s new=%s ip=%s", user_id, is_new, _client_ip())
     _establish_session(user_id)
-    return redirect(url_for("views.index"))
+    # New accounts skip straight to the profile wizard so they can set up
+    # their fishing preferences before hitting the forecast.
+    return redirect(url_for("views.profile") if is_new else url_for("views.index"))
 
 
 # ---------------------------------------------------------------------------
@@ -1511,10 +1536,10 @@ def apple_callback() -> Any:
     if not provider_uid:
         return render_template("login.html", error="Apple Sign In failed: missing user ID.")
 
-    user_id = _social_login_or_create("apple", provider_uid, email, None)
+    user_id, is_new = _social_login_or_create("apple", provider_uid, email, None, None)
     if user_id is None:
         return render_template("login.html", error="Could not create account. Please try again.")
 
-    logger.info("security.social_login provider=apple user_id=%s ip=%s", user_id, _client_ip())
+    logger.info("security.social_login provider=apple user_id=%s new=%s ip=%s", user_id, is_new, _client_ip())
     _establish_session(user_id)
-    return redirect(url_for("views.index"))
+    return redirect(url_for("views.profile") if is_new else url_for("views.index"))

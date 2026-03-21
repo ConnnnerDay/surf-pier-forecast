@@ -313,7 +313,7 @@ def create_app() -> Flask:
                 "script-src 'self' 'unsafe-inline' https://unpkg.com; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
-                "img-src 'self' data: blob:; "
+                "img-src 'self' data: blob: https://lh3.googleusercontent.com; "
                 "connect-src 'self'; "
                 "frame-ancestors 'none';"
             ),

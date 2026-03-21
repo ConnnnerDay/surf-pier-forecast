@@ -4104,6 +4104,19 @@ footer p {
   text-decoration: underline;
 }
 
+/* Account page avatar */
+.account-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255,255,255,0.4);
+  margin-bottom: 0.5rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Social login buttons */
 .social-divider {
   display: flex;
