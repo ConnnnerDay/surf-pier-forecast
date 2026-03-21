@@ -11,3 +11,7 @@ gunicorn>=21.2,<26.0
 
 # WebAuthn / passkey support (Face ID, Touch ID, Windows Hello)
 webauthn>=2.7,<3.0
+
+# Cryptography — used for Apple Sign In JWT client_secret generation (ES256).
+# Also a transitive dependency of webauthn; pinned here explicitly.
+cryptography>=41.0,<45.0

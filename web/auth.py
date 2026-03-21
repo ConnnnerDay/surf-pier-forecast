@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import secrets
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
+from urllib.parse import urlencode
 
 import logging
 
@@ -34,15 +36,18 @@ from storage.db import (
     change_password,
     confirm_email,
     create_user,
+    create_social_user,
     delete_user,
     get_all_user_photo_paths,
     get_email_verification_sent_at,
     get_preferences,
     get_recent_logs,
+    get_social_account,
     get_user,
     get_user_by_email,
     get_user_by_verification_token,
     get_user_password_hash,
+    link_social_account,
     save_preferences,
     set_email_verification_token,
     save_webauthn_credential,
@@ -1170,3 +1175,346 @@ def webauthn_delete_credential(credential_id: str) -> Any:
         return jsonify({"error": "Not logged in"}), 401
     deleted = delete_webauthn_credential(credential_id, g.user["id"])
     return jsonify({"ok": deleted})
+
+
+# ---------------------------------------------------------------------------
+# Social login — shared helpers
+# ---------------------------------------------------------------------------
+
+def _establish_session(user_id: int) -> None:
+    """Clear the current session and establish a fresh authenticated one.
+
+    Mirrors the session-setup block used in the password login handler so
+    that social logins get the same security guarantees (session fixation
+    prevention, CSRF token rotation, session version bump).
+    """
+    prior_location_id = session.get("location_id")
+    session.clear()
+    new_version = bump_session_version(user_id)
+    session["user_id"] = user_id
+    session["session_version"] = new_version
+    session.permanent = True
+    session["csrf_token"] = secrets.token_urlsafe(24)
+    prefs = get_preferences(user_id)
+    user = get_user(user_id)
+    if prefs.get("location_id"):
+        session["location_id"] = prefs["location_id"]
+    elif user and user.get("default_location_id"):
+        session["location_id"] = user["default_location_id"]
+    elif prior_location_id:
+        session["location_id"] = prior_location_id
+
+
+def _generate_social_username(display_name: Optional[str], email: Optional[str]) -> str:
+    """Derive a username from a social profile, appending a random suffix for uniqueness."""
+    base = ""
+    if display_name:
+        base = re.sub(r"[^a-zA-Z0-9_]", "", display_name.replace(" ", "_"))[:20]
+    if not base and email:
+        base = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0])[:20]
+    if not base:
+        base = "user"
+    return f"{base}_{secrets.token_hex(4)}"[:30]
+
+
+def _social_login_or_create(
+    provider: str,
+    provider_uid: str,
+    email: Optional[str],
+    display_name: Optional[str],
+) -> Optional[int]:
+    """Return the user_id for a social login, creating a new account if needed.
+
+    Resolution order:
+    1. Existing social_accounts row  →  return its user_id
+    2. Matching email in users table →  link the social account, return user_id
+    3. New user                      →  create account + social_accounts row
+    """
+    existing = get_social_account(provider, provider_uid)
+    if existing:
+        return existing["user_id"]
+
+    if email:
+        user_by_email = get_user_by_email(email)
+        if user_by_email:
+            link_social_account(user_by_email["id"], provider, provider_uid, email)
+            return user_by_email["id"]
+
+    username = _generate_social_username(display_name, email)
+    return create_social_user(username, email, provider, provider_uid)
+
+
+def _decode_jwt_payload(token: str) -> Optional[Dict[str, Any]]:
+    """Decode the payload section of a JWT without verifying the signature.
+
+    Used to extract claims from Apple's id_token, which arrives over HTTPS
+    from a trusted provider endpoint so transport-level integrity is sufficient
+    for our purposes.
+    """
+    import base64
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
+    payload_b64 = parts[1]
+    padding = "=" * (-len(payload_b64) % 4)
+    try:
+        return json.loads(base64.urlsafe_b64decode(payload_b64 + padding))
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Google OAuth 2.0
+# ---------------------------------------------------------------------------
+
+_GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+_GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+
+@bp.route("/auth/google")
+def google_login() -> Any:
+    """Start the Google OAuth 2.0 authorisation flow."""
+    if g.user is not None:
+        return redirect(url_for("views.index"))
+    client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
+    if not client_id:
+        return render_template("login.html", error="Google login is not configured on this server.")
+    state = secrets.token_urlsafe(24)
+    session["oauth_state"] = state
+    session["oauth_provider"] = "google"
+    params = {
+        "client_id": client_id,
+        "redirect_uri": url_for("auth.google_callback", _external=True),
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "online",
+        "prompt": "select_account",
+    }
+    return redirect(f"{_GOOGLE_AUTH_URL}?{urlencode(params)}")
+
+
+@bp.route("/auth/google/callback")
+def google_callback() -> Any:
+    """Handle the redirect back from Google and complete sign-in."""
+    if g.user is not None:
+        return redirect(url_for("views.index"))
+
+    if request.args.get("error"):
+        return render_template("login.html", error="Google sign-in was cancelled.")
+
+    state = request.args.get("state", "")
+    stored_state = session.pop("oauth_state", None)
+    stored_provider = session.pop("oauth_provider", None)
+    if not state or state != stored_state or stored_provider != "google":
+        return render_template("login.html", error="Login session expired. Please try again.")
+
+    code = request.args.get("code", "")
+    if not code:
+        return render_template("login.html", error="Google sign-in failed. Please try again.")
+
+    client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+
+    import requests as _req
+    try:
+        token_resp = _req.post(
+            _GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": url_for("auth.google_callback", _external=True),
+                "grant_type": "authorization_code",
+            },
+            timeout=10,
+        )
+        token_data = token_resp.json()
+    except Exception as exc:
+        logger.error("google_oauth.token_exchange_failed: %s", exc)
+        return render_template("login.html", error="Could not complete Google sign-in. Please try again.")
+
+    if "error" in token_data or "access_token" not in token_data:
+        logger.warning("google_oauth.token_error: %s", token_data.get("error"))
+        return render_template("login.html", error="Google sign-in failed. Please try again.")
+
+    try:
+        userinfo_resp = _req.get(
+            _GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+            timeout=10,
+        )
+        userinfo = userinfo_resp.json()
+    except Exception as exc:
+        logger.error("google_oauth.userinfo_failed: %s", exc)
+        return render_template("login.html", error="Could not retrieve Google profile. Please try again.")
+
+    provider_uid = userinfo.get("sub", "")
+    email = userinfo.get("email") or None
+    display_name = userinfo.get("name") or None
+
+    if not provider_uid:
+        return render_template("login.html", error="Google sign-in failed: missing user ID.")
+
+    user_id = _social_login_or_create("google", provider_uid, email, display_name)
+    if user_id is None:
+        return render_template("login.html", error="Could not create account. Please try again.")
+
+    logger.info("security.social_login provider=google user_id=%s ip=%s", user_id, _client_ip())
+    _establish_session(user_id)
+    return redirect(url_for("views.index"))
+
+
+# ---------------------------------------------------------------------------
+# Apple Sign In
+# ---------------------------------------------------------------------------
+
+_APPLE_AUTH_URL = "https://appleid.apple.com/auth/authorize"
+_APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token"
+
+
+def _generate_apple_client_secret() -> str:
+    """Generate a short-lived JWT client_secret for Apple's token endpoint.
+
+    Apple requires the client_secret to be a JWT signed with ES256 using the
+    private key downloaded from the Apple Developer portal.
+
+    Required environment variables:
+      APPLE_TEAM_ID     — 10-character Apple Developer team ID
+      APPLE_KEY_ID      — Key ID of the Sign in with Apple private key
+      APPLE_CLIENT_ID   — Service ID (e.g. com.example.app.service)
+      APPLE_PRIVATE_KEY — PEM content of the .p8 private key (newlines as \\n)
+    """
+    try:
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+    except ImportError as exc:
+        raise RuntimeError("cryptography package is required for Apple Sign In") from exc
+
+    team_id = os.environ.get("APPLE_TEAM_ID", "")
+    key_id = os.environ.get("APPLE_KEY_ID", "")
+    client_id = os.environ.get("APPLE_CLIENT_ID", "")
+    private_key_pem = os.environ.get("APPLE_PRIVATE_KEY", "").replace("\\n", "\n")
+
+    if not all([team_id, key_id, client_id, private_key_pem]):
+        raise ValueError(
+            "Apple Sign In requires APPLE_TEAM_ID, APPLE_KEY_ID, "
+            "APPLE_CLIENT_ID, and APPLE_PRIVATE_KEY to be set."
+        )
+
+    import base64
+
+    def _b64url(data: bytes) -> str:
+        return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+    now = int(time.time())
+    header = _b64url(json.dumps({"alg": "ES256", "kid": key_id}, separators=(",", ":")).encode())
+    payload = _b64url(
+        json.dumps(
+            {
+                "iss": team_id,
+                "iat": now,
+                "exp": now + 86400,
+                "aud": "https://appleid.apple.com",
+                "sub": client_id,
+            },
+            separators=(",", ":"),
+        ).encode()
+    )
+    message = f"{header}.{payload}".encode()
+    private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=None)
+    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))  # type: ignore[arg-type]
+    r, s = decode_dss_signature(der_sig)
+    raw_sig = _b64url(r.to_bytes(32, "big") + s.to_bytes(32, "big"))
+    return f"{header}.{payload}.{raw_sig}"
+
+
+@bp.route("/auth/apple")
+def apple_login() -> Any:
+    """Start the Apple Sign In authorisation flow."""
+    if g.user is not None:
+        return redirect(url_for("views.index"))
+    client_id = os.environ.get("APPLE_CLIENT_ID", "")
+    if not client_id:
+        return render_template("login.html", error="Apple Sign In is not configured on this server.")
+    state = secrets.token_urlsafe(24)
+    session["oauth_state"] = state
+    session["oauth_provider"] = "apple"
+    params = {
+        "client_id": client_id,
+        "redirect_uri": url_for("auth.apple_callback", _external=True),
+        "response_type": "code",
+        "scope": "name email",
+        "state": state,
+    }
+    return redirect(f"{_APPLE_AUTH_URL}?{urlencode(params)}")
+
+
+@bp.route("/auth/apple/callback")
+def apple_callback() -> Any:
+    """Handle the redirect back from Apple and complete sign-in."""
+    if g.user is not None:
+        return redirect(url_for("views.index"))
+
+    if request.args.get("error"):
+        return render_template("login.html", error="Apple Sign In was cancelled.")
+
+    state = request.args.get("state", "")
+    stored_state = session.pop("oauth_state", None)
+    stored_provider = session.pop("oauth_provider", None)
+    if not state or state != stored_state or stored_provider != "apple":
+        return render_template("login.html", error="Login session expired. Please try again.")
+
+    code = request.args.get("code", "")
+    if not code:
+        return render_template("login.html", error="Apple Sign In failed. Please try again.")
+
+    client_id = os.environ.get("APPLE_CLIENT_ID", "")
+    try:
+        client_secret = _generate_apple_client_secret()
+    except Exception as exc:
+        logger.error("apple_oauth.client_secret_failed: %s", exc)
+        return render_template("login.html", error="Apple Sign In is misconfigured. Please contact support.")
+
+    import requests as _req
+    try:
+        token_resp = _req.post(
+            _APPLE_TOKEN_URL,
+            data={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": url_for("auth.apple_callback", _external=True),
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10,
+        )
+        token_data = token_resp.json()
+    except Exception as exc:
+        logger.error("apple_oauth.token_exchange_failed: %s", exc)
+        return render_template("login.html", error="Could not complete Apple Sign In. Please try again.")
+
+    if "error" in token_data or "id_token" not in token_data:
+        logger.warning("apple_oauth.token_error: %s", token_data.get("error"))
+        return render_template("login.html", error="Apple Sign In failed. Please try again.")
+
+    payload = _decode_jwt_payload(token_data["id_token"])
+    if not payload:
+        return render_template("login.html", error="Apple Sign In failed: could not read token.")
+
+    provider_uid = payload.get("sub", "")
+    email = payload.get("email") or None
+
+    if not provider_uid:
+        return render_template("login.html", error="Apple Sign In failed: missing user ID.")
+
+    user_id = _social_login_or_create("apple", provider_uid, email, None)
+    if user_id is None:
+        return render_template("login.html", error="Could not create account. Please try again.")
+
+    logger.info("security.social_login provider=apple user_id=%s ip=%s", user_id, _client_ip())
+    _establish_session(user_id)
+    return redirect(url_for("views.index"))

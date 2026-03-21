@@ -109,6 +109,18 @@ CREATE TABLE IF NOT EXISTS webauthn_credentials (
 );
 CREATE INDEX IF NOT EXISTS idx_webauthn_user
 ON webauthn_credentials(user_id);
+
+CREATE TABLE IF NOT EXISTS social_accounts (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider      TEXT NOT NULL,
+    provider_uid  TEXT NOT NULL,
+    email         TEXT,
+    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(provider, provider_uid)
+);
+CREATE INDEX IF NOT EXISTS idx_social_accounts_user
+ON social_accounts(user_id);
 """
 
 
@@ -137,6 +149,7 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
 _KNOWN_TABLES = frozenset({
     "users", "profiles", "locations", "forecasts",
     "forecast_cache", "catch_log", "reg_scrape_cache", "webauthn_credentials",
+    "social_accounts",
 })
 
 
@@ -249,6 +262,24 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             );
             CREATE INDEX IF NOT EXISTS idx_webauthn_user
             ON webauthn_credentials(user_id);
+            """
+        )
+
+    # social_accounts table (added for Google / Apple social login support)
+    if not _table_exists(conn, "social_accounts"):
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS social_accounts (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                provider      TEXT NOT NULL,
+                provider_uid  TEXT NOT NULL,
+                email         TEXT,
+                created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(provider, provider_uid)
+            );
+            CREATE INDEX IF NOT EXISTS idx_social_accounts_user
+            ON social_accounts(user_id);
             """
         )
 
@@ -1013,3 +1044,70 @@ def delete_webauthn_credential(credential_id: str, user_id: int) -> bool:
     deleted = cur.rowcount > 0
     conn.close()
     return deleted
+
+
+# Social login (Google / Apple OAuth) --------------------------------------
+
+
+def get_social_account(provider: str, provider_uid: str) -> Optional[Dict[str, Any]]:
+    """Return the user_id linked to a social provider account, or None."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT user_id FROM social_accounts WHERE provider = ? AND provider_uid = ?",
+            (provider, provider_uid),
+        ).fetchone()
+    finally:
+        conn.close()
+    return {"user_id": row["user_id"]} if row else None
+
+
+def link_social_account(
+    user_id: int, provider: str, provider_uid: str, email: Optional[str] = None
+) -> None:
+    """Link an existing user account to a social provider."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO social_accounts (user_id, provider, provider_uid, email) "
+            "VALUES (?, ?, ?, ?)",
+            (user_id, provider, provider_uid, email),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def create_social_user(
+    username: str,
+    email: Optional[str],
+    provider: str,
+    provider_uid: str,
+) -> Optional[int]:
+    """Create a new user for social login (no password) and link the social account.
+
+    The user is created with email_confirmed=1 because the identity provider has
+    already verified the email address.
+    """
+    email_val = email.strip().lower() if email else None
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "INSERT INTO users (username, password_hash, email, email_confirmed, is_anonymous) "
+            "VALUES (?, NULL, ?, 1, 0)",
+            (username.strip(), email_val),
+        )
+        user_id = cur.lastrowid
+        conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
+        conn.execute("INSERT OR IGNORE INTO locations (user_id) VALUES (?)", (user_id,))
+        conn.execute(
+            "INSERT INTO social_accounts (user_id, provider, provider_uid, email) "
+            "VALUES (?, ?, ?, ?)",
+            (user_id, provider, provider_uid, email_val),
+        )
+        conn.commit()
+        return user_id
+    except sqlite3.IntegrityError:
+        return None
+    finally:
+        conn.close()

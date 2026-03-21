@@ -180,6 +180,11 @@ def create_app() -> Flask:
         "auth.webauthn_authenticate_begin",
         "auth.webauthn_authenticate_complete",
         "auth.webauthn_delete_credential",
+        # Social login OAuth flows (Google, Apple)
+        "auth.google_login",
+        "auth.google_callback",
+        "auth.apple_login",
+        "auth.apple_callback",
         # Location + profile setup wizard (users need to complete onboarding).
         "views.setup",
         "views.setup_search",
@@ -270,10 +275,12 @@ def create_app() -> Flask:
 
     @app.context_processor
     def _inject_user() -> Dict[str, Any]:
-        """Make ``user`` available in every template."""
+        """Make ``user``, CSRF token, and social-login flags available in every template."""
         return {
             "user": getattr(g, "user", None),
             "csrf_token": _get_csrf_token(),
+            "google_login_enabled": bool(os.environ.get("GOOGLE_CLIENT_ID")),
+            "apple_login_enabled": bool(os.environ.get("APPLE_CLIENT_ID")),
         }
 
     # -- Security response headers -----------------------------------------
