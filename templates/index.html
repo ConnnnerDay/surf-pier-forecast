@@ -118,36 +118,6 @@
     {% include 'partials/_conditions.html' %}
 
     <!-- ============================================================
-         3. 24-HOUR ACTIVITY TIMELINE
-         ============================================================ -->
-    {% if forecast.activity_timeline %}
-    <section class="timeline-section-v2" aria-label="24-hour activity forecast">
-        <h2>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            24-Hour Activity
-        </h2>
-        <div class="activity-timeline">
-            <div class="timeline-bars">
-                {% for t in forecast.activity_timeline %}
-                <div class="timeline-bar-col" title="{{ t.label }}: {{ t.level }}% activity">
-                    <div class="timeline-bar timeline-bar--{{ t.tag }}" style="height: {{ t.level }}%"></div>
-                    {% if t.hour % 3 == 0 %}
-                    <span class="timeline-hour">{{ t.label|replace(' AM','a')|replace(' PM','p') }}</span>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-            <div class="timeline-legend">
-                <span class="tl-key tl-key--prime"></span> Prime
-                <span class="tl-key tl-key--high"></span> High
-                <span class="tl-key tl-key--med"></span> Moderate
-                <span class="tl-key tl-key--low"></span> Low
-            </div>
-        </div>
-    </section>
-    {% endif %}
-
-    <!-- ============================================================
          4. TOP 5 SPECIES BITING
          ============================================================ -->
     {% if forecast.species %}
