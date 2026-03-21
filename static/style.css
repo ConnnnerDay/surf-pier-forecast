@@ -8614,3 +8614,15 @@ details[open] .collapsible-module-body {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* ── Collapsible summary sub-label (e.g. Pack for Today headline) ──────── */
+.collapsible-module-sub {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-muted, #6b7b8d);
+  margin-left: 0.5rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

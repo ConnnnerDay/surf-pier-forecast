@@ -120,32 +120,30 @@
                 {% endif %}
             </div>
 
-            {% if forecast.conditions_explainer %}
-            <div class="conditions-explainer">
-                {% for bullet in forecast.conditions_explainer %}
-                <div class="explainer-item explainer-{{ bullet.impact }}">
-                    <span class="explainer-label">{{ bullet.label }}</span>
-                    <span class="explainer-text">{{ bullet.text }}</span>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
         </section>
 
         {% if forecast.currents %}
-        <section class="conditions-section">
-            <h2>Currents &amp; Slack Windows</h2>
-            <div class="table-scroll">
-                <table class="currents-table">
-                    <thead><tr><th>Time</th><th>Event</th><th>Speed</th><th>Direction</th></tr></thead>
-                    <tbody>
-                    {% for c in forecast.currents %}
-                        <tr {% if 'Slack' in c.event %}class="currents-table__slack"{% endif %}><td>{{ c.time }}</td><td>{{ c.event }}</td><td>{{ c.speed_kt }} kt</td><td>{{ c.direction or '&mdash;' }}</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        <details class="collapsible-module">
+            <summary>
+                <span class="collapsible-module-title">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 12c0 0-4 6-10 6S2 12 2 12s4-6 10-6 10 6 10 6z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Currents &amp; Slack Windows
+                </span>
+                <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </summary>
+            <div class="collapsible-module-body">
+                <div class="table-scroll">
+                    <table class="currents-table">
+                        <thead><tr><th>Time</th><th>Event</th><th>Speed</th><th>Direction</th></tr></thead>
+                        <tbody>
+                        {% for c in forecast.currents %}
+                            <tr {% if 'Slack' in c.event %}class="currents-table__slack"{% endif %}><td>{{ c.time }}</td><td>{{ c.event }}</td><td>{{ c.speed_kt }} kt</td><td>{{ c.direction or '&mdash;' }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </section>
+        </details>
         {% endif %}
 
         {% if forecast.best_times %}
