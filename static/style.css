@@ -8615,6 +8615,167 @@ details[open] .collapsible-module-body {
   text-underline-offset: 2px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT EDITOR
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Section wrapper — invisible by default */
+.section-block { position: relative; }
+
+/* ── Edit FAB ─────────────────────────────────────────────────────────── */
+.layout-edit-fab {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1rem;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 0.55rem 1rem 0.55rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.layout-edit-fab:hover { opacity: 0.9; transform: translateY(-1px); }
+.layout-edit-fab[hidden] { display: none; }
+
+/* ── Toolbar ─────────────────────────────────────────────────────────── */
+.layout-edit-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 950;
+  background: var(--card-bg, #fff);
+  border-top: 1px solid var(--border, rgba(14,95,120,0.12));
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.layout-edit-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b7b8d);
+}
+.layout-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.layout-edit-btn {
+  border: none;
+  border-radius: 20px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.layout-edit-btn:hover { opacity: 0.85; }
+.layout-edit-cancel {
+  background: var(--border, rgba(14,95,120,0.12));
+  color: var(--text, #1a2533);
+}
+.layout-edit-save {
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+}
+
+/* ── Edit mode — section overlays ────────────────────────────────────── */
+.layout-edit-mode .section-block {
+  border: 2px dashed rgba(14,95,120,0.25);
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.15s;
+}
+.layout-edit-mode .section-block:hover {
+  border-color: var(--ocean, #0e5f78);
+}
+
+.section-edit-overlay {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+  border-radius: 9px 9px 0 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  user-select: none;
+}
+
+.section-drag-handle {
+  cursor: grab;
+  color: rgba(255,255,255,0.8);
+  display: flex;
+  align-items: center;
+  padding: 0.2rem;
+  touch-action: none;
+}
+.section-drag-handle:active { cursor: grabbing; }
+
+.section-edit-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section-visibility-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.section-visibility-btn:hover { color: #fff; }
+
+/* Dimmed = will be hidden on save */
+.layout-edit-mode .section-edit-dimmed {
+  opacity: 0.45;
+}
+.layout-edit-mode .section-edit-dimmed .section-edit-overlay {
+  background: var(--text-muted, #6b7b8d);
+  opacity: 1;
+}
+
+/* ── Drag ghost & placeholder ─────────────────────────────────────────── */
+.section-drag-ghost {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.88;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  border-radius: 12px;
+  border: 2px solid var(--ocean, #0e5f78);
+  overflow: hidden;
+}
+
+.section-dragging { opacity: 0; }
+
+.section-drag-placeholder {
+  border-radius: 12px;
+  background: var(--ocean-light, rgba(14,95,120,0.08));
+  border: 2px dashed var(--ocean, #0e5f78);
+  margin-bottom: 0.5rem;
+}
+
 /* ── Collapsible summary sub-label (e.g. Pack for Today headline) ──────── */
 .collapsible-module-sub {
   font-size: 0.78rem;

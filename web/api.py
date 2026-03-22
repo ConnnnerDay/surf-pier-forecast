@@ -38,7 +38,9 @@ from storage.sqlite import (
     get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
+    get_page_layout,
     get_preferences,
+    save_page_layout,
     save_preferences,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
@@ -307,6 +309,32 @@ def profile_v1() -> Any:
 
     prefs = normalize_preferences(get_preferences(uid))
     return jsonify(success_envelope({"profile": prefs}))
+
+
+@bp.route("/api/v1/page-layout", methods=["GET", "POST"])
+def page_layout_v1() -> Any:
+    """Get or save the user's custom page section layout."""
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    uid = g.user["id"]
+    if request.method == "GET":
+        layout = get_page_layout(uid)
+        return jsonify(success_envelope({"layout": layout}))
+
+    data = request.get_json(silent=True) or {}
+    layout = data.get("layout")
+    if not isinstance(layout, list):
+        return _json_error(ApiError("invalid_param", "layout must be an array", status=400))
+    if len(layout) > 25:
+        return _json_error(ApiError("invalid_param", "layout too large", status=400))
+    for item in layout:
+        if not isinstance(item, dict) or "id" not in item:
+            return _json_error(
+                ApiError("invalid_param", "each layout item must have an id", status=400)
+            )
+    save_page_layout(uid, layout)
+    return jsonify(success_envelope({"ok": True}))
 
 
 @bp.route("/api/log", methods=["GET", "POST"])
