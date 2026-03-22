@@ -610,15 +610,25 @@ h2 {
 .stat-card {
   background: var(--ocean-light);
   border-radius: var(--radius-sm);
-  padding: 0.5rem;
+  padding: 0.5rem 0.5rem 0.55rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
+/* Semantic icon above the stat label */
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ocean);
+  opacity: 0.72;
+  margin-bottom: 0.15rem;
+}
+
 .stat-label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1247,6 +1257,9 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ocean);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .meta-value {
@@ -2604,6 +2617,9 @@ h2 {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .outlook-detail-value {
