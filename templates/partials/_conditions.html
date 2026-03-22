@@ -1,13 +1,18 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
             <div class="csc-verdict-bar" style="margin-bottom:0.5rem">
-                <p class="csc-location" style="margin:0 0 0.25rem">Today&rsquo;s Forecast</p>
-                {% if forecast.conditions.verdict %}
-                <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
-                {% endif %}
-                {% if forecast.conditions.summary %}
-                <p class="csc-verdict-summary" style="margin:0.25rem 0 0">{{ forecast.conditions.summary }}</p>
-                {% endif %}
+                <div class="csc-verdict-info">
+                    <p class="csc-location" style="margin:0 0 0.25rem">Today&rsquo;s Forecast</p>
+                    {% if forecast.conditions.verdict %}
+                    <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
+                    {% endif %}
+                    {% if forecast.conditions.summary %}
+                    <p class="csc-verdict-summary" style="margin:0.25rem 0 0">{{ forecast.conditions.summary }}</p>
+                    {% endif %}
+                </div>
+                <button class="csc-share-btn" type="button" aria-label="Share forecast" onclick="shareConditions(this)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                </button>
             </div>
 
             <!-- Wind quality: go/no-go signal at a glance -->

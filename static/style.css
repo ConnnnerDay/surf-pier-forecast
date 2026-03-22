@@ -7760,6 +7760,31 @@ body.has-app-header main {
   line-height: 1.45;
 }
 
+/* Wrapper so share btn can sit flush top-right without disrupting badge/summary flow */
+.csc-verdict-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.csc-share-btn {
+  background: none;
+  border: none;
+  padding: 0.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: var(--radius, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* pull flush to top-right edge of the verdict bar */
+  margin-top: -0.15rem;
+  margin-right: -0.15rem;
+  transition: color 0.15s, background 0.15s, transform 0.1s;
+}
+.csc-share-btn:hover { color: var(--ocean, #0e5f78); background: var(--bg-subtle); }
+.csc-share-btn:active { transform: scale(0.88); }
+
 .csc-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
