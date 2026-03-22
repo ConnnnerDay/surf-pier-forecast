@@ -43,26 +43,26 @@
                             {# Bait and rig — hidden for lure-only anglers #}
                             {% if not lures_only %}
                             <div class="meta-item meta-item--bait">
-                                <span class="meta-label">Bait</span>
+                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M12 12v8M8 16h8"/></svg>Bait</span>
                                 <span class="meta-value">{{ sp.bait }}</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Rig</span>
+                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Rig</span>
                                 <span class="meta-value">{{ sp.rig }}</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Hook</span>
+                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v10a4 4 0 0 1-4 4H6"/><path d="M4 14l2 2-2 2"/></svg>Hook</span>
                                 <span class="meta-value">{{ sp.hook_size }}</span>
                             </div>
                             <div class="meta-item">
-                                <span class="meta-label">Sinker</span>
+                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="15" r="5"/><path d="M9 9h6l-1.5-4h-3L9 9z"/></svg>Sinker</span>
                                 <span class="meta-value">{{ sp.sinker }}</span>
                             </div>
                             {% endif %}
                             {# Lure recommendation — shown for anglers who use lures #}
                             {% if uses_lures and sp.lures %}
                             <div class="meta-item meta-item--lures">
-                                <span class="meta-label">Lures</span>
+                                <span class="meta-label"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l2 2 4-4"/></svg>Lures</span>
                                 <span class="meta-value">{{ sp.lures }}</span>
                             </div>
                             {% endif %}
