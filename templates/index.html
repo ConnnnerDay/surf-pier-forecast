@@ -535,7 +535,7 @@
                 </span>
             </button>
         </form>
-        <p class="timestamp">Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}<span id="auto-refresh-note"></span></p>
+        <p class="timestamp" data-ts="{{ forecast.generated_at }}">Updated {{ forecast.age_human if forecast.age_human else forecast.generated_at }}<span id="auto-refresh-note"></span></p>
     </section>
 
     <!-- Regulations Modal (rendered by species partial JS) -->

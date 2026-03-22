@@ -284,6 +284,138 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
+     4.  FRESHNESS WARNING  (offline + stale forecast detection)
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  var STALE_HOURS = 4;
+  var freshnessEl = null;
+  var freshnessDismissed = false;
+
+  function getAgeHours(isoStr) {
+    if (!isoStr) return 0;
+    try {
+      var t = new Date(isoStr).getTime();
+      return isNaN(t) ? 0 : (Date.now() - t) / 3600000;
+    } catch (e) { return 0; }
+  }
+
+  function ageLabel(hours) {
+    if (hours < 1) return 'less than an hour old';
+    if (hours < 2) return '1 hr old';
+    return Math.floor(hours) + ' hrs old';
+  }
+
+  function createFreshnessBanner() {
+    var el = document.createElement('div');
+    el.id = 'freshness-banner';
+    el.className = 'freshness-banner';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.hidden = true;
+    // Icon placeholder + message span + action button + dismiss
+    el.innerHTML =
+      '<span class="freshness-icon" aria-hidden="true"></span>' +
+      '<span class="freshness-msg"></span>' +
+      '<button class="freshness-refresh-btn" type="button">Refresh</button>' +
+      '<button class="freshness-dismiss-btn" type="button" aria-label="Dismiss">' +
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>';
+
+    el.querySelector('.freshness-refresh-btn').addEventListener('click', function () {
+      freshnessDismissed = false; // allow re-show after refresh
+      triggerRefresh();
+    });
+
+    el.querySelector('.freshness-dismiss-btn').addEventListener('click', function () {
+      freshnessDismissed = true;
+      hideFreshnessBanner();
+    });
+
+    // Insert right at the top of main-content (before alerts or conditions)
+    var main = document.getElementById('main-content');
+    if (main) main.insertBefore(el, main.firstChild);
+
+    return el;
+  }
+
+  var WIFI_OFF_ICON =
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<line x1="1" y1="1" x2="23" y2="23"/>' +
+      '<path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>' +
+      '<path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>' +
+      '<path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>' +
+      '<path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>' +
+      '<path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>' +
+      '<circle cx="12" cy="20" r="1" fill="currentColor"/>' +
+    '</svg>';
+
+  var CLOCK_ICON =
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="10"/>' +
+      '<polyline points="12 6 12 12 16 14"/>' +
+    '</svg>';
+
+  function showFreshnessBanner(mode, ageHours) {
+    if (!freshnessEl || freshnessDismissed) return;
+    var icon = freshnessEl.querySelector('.freshness-icon');
+    var msg = freshnessEl.querySelector('.freshness-msg');
+
+    if (mode === 'offline') {
+      freshnessEl.className = 'freshness-banner freshness-banner--offline';
+      icon.innerHTML = WIFI_OFF_ICON;
+      msg.textContent = ageHours > 0
+        ? 'Offline \u00b7 Showing cached forecast (' + ageLabel(ageHours) + ')'
+        : 'Offline \u00b7 Showing cached forecast';
+    } else {
+      freshnessEl.className = 'freshness-banner freshness-banner--stale';
+      icon.innerHTML = CLOCK_ICON;
+      msg.textContent = 'Forecast is ' + ageLabel(ageHours) + ' \u00b7 May not reflect current conditions';
+    }
+
+    freshnessEl.hidden = false;
+  }
+
+  function hideFreshnessBanner() {
+    if (freshnessEl) freshnessEl.hidden = true;
+  }
+
+  function checkFreshness() {
+    if (!freshnessEl) return;
+    var tsEl = document.querySelector('.timestamp[data-ts]');
+    var isoStr = tsEl ? tsEl.getAttribute('data-ts') : '';
+    var ageHours = getAgeHours(isoStr);
+    var isOffline = !navigator.onLine;
+    var isStale = ageHours >= STALE_HOURS;
+
+    if (isOffline) {
+      showFreshnessBanner('offline', ageHours);
+    } else if (isStale) {
+      showFreshnessBanner('stale', ageHours);
+    } else {
+      hideFreshnessBanner();
+    }
+  }
+
+  function initFreshnessWarning() {
+    // Only on pages with a timestamped forecast
+    var tsEl = document.querySelector('.timestamp[data-ts]');
+    if (!tsEl) return;
+
+    freshnessEl = createFreshnessBanner();
+    checkFreshness();
+
+    // Re-evaluate on connectivity change
+    window.addEventListener('online', function () {
+      freshnessDismissed = false; // going back online resets dismiss state
+      checkFreshness();
+    });
+    window.addEventListener('offline', checkFreshness);
+
+    // Re-check every 5 minutes in case page stays open across the stale threshold
+    setInterval(checkFreshness, 5 * 60 * 1000);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
      BOOT
      ═══════════════════════════════════════════════════════════════════════ */
 
@@ -291,6 +423,7 @@
     initCollapsibles();
     initPullToRefresh();
     initScrollToTop();
+    initFreshnessWarning();
   }
 
   if (document.readyState === 'loading') {
