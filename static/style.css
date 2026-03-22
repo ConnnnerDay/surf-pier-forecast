@@ -8545,3 +8545,84 @@ details[open] .collapsible-module-body {
   flex-shrink: 0;
 }
 .install-banner-close:hover { color: var(--text, #1a2533); }
+
+/* ── Pack for Today card ───────────────────────────────────────────────── */
+.trip-setup-section {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow, 0 2px 12px rgba(0,0,0,0.07));
+  padding: 1.1rem 1.25rem 1rem;
+  margin: 0 0 0.75rem;
+}
+.trip-setup-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text, #1a2533);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+.trip-setup-heading svg { color: var(--ocean, #0e5f78); }
+.trip-setup-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b7b8d);
+  margin-bottom: 0.85rem;
+}
+.trip-setup-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.trip-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid var(--border-light, rgba(0,0,0,0.06));
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.trip-row:last-child { border-bottom: none; }
+.trip-row-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 90px;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ocean, #0e5f78);
+  flex-shrink: 0;
+}
+.trip-row-label svg { flex-shrink: 0; }
+.trip-row-value {
+  color: var(--text, #1a2533);
+  flex: 1;
+}
+.trip-row--tip .trip-row-label { color: var(--text-muted, #6b7b8d); }
+.trip-row--tip .trip-row-value { color: var(--text-muted, #6b7b8d); font-style: italic; }
+.trip-row--color .trip-row-label { color: #9b59b6; }
+.trip-setup-personalise {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7b8d);
+}
+.trip-setup-personalise a {
+  color: var(--ocean, #0e5f78);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Collapsible summary sub-label (e.g. Pack for Today headline) ──────── */
+.collapsible-module-sub {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-muted, #6b7b8d);
+  margin-left: 0.5rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
