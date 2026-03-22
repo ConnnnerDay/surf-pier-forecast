@@ -92,9 +92,12 @@
     </div>
     {% endif %}
 
+    <div id="sections-container">
+
     <!-- ============================================================
          1. CONDITIONS SUMMARY CARD — most prominent element
          ============================================================ -->
+    <div class="section-block" data-section-id="conditions" data-section-label="Conditions" data-required="1">
     {% set wind_str = forecast.conditions.wind or '' %}
     {# Find the first token that starts with a digit (handles "S 16-21 kt", "16 kt", "Calm", etc.) #}
     {% set wind_speed = namespace(val=0) %}
@@ -116,11 +119,13 @@
     {% endif %}
 
     {% include 'partials/_conditions.html' %}
+    </div><!-- /.section-block conditions -->
 
     <!-- ============================================================
          4. TOP 5 SPECIES BITING
          ============================================================ -->
     {% if forecast.species %}
+    <div class="section-block" data-section-id="whats-biting" data-section-label="What's Biting" data-required="1">
     <section class="top-species-section" aria-label="Top species biting now">
         <div class="top-species-header">
             <h2>
@@ -163,12 +168,14 @@
     <div id="full-species-panel" class="full-species-list" aria-label="Full species forecast" hidden>
         {% include 'partials/_species.html' %}
     </div>
+    </div><!-- /.section-block whats-biting -->
     {% endif %}
 
     <!-- ============================================================
          5. PACK FOR TODAY — personalised tackle/bait card
          ============================================================ -->
     {% if trip_setup %}
+    <div class="section-block" data-section-id="pack-for-today" data-section-label="Pack for Today">
     <details class="collapsible-module" id="pack-for-today">
         <summary>
             <span class="collapsible-module-title">
@@ -211,6 +218,7 @@
         {% endif %}
         </div>
     </details>
+    </div><!-- /.section-block pack-for-today -->
     {% endif %}
 
     <!-- ============================================================
@@ -218,6 +226,7 @@
          ============================================================ -->
 
     <!-- 3-Day Outlook -->
+    <div class="section-block" data-section-id="next-3-days" data-section-label="Next 3 Days">
     <details class="collapsible-module">
         <summary>
             <span class="collapsible-module-title">
@@ -230,8 +239,10 @@
             {% include 'partials/_outlook.html' %}
         </div>
     </details>
+    </div><!-- /.section-block next-3-days -->
 
     <!-- Tides -->
+    <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
     <details class="collapsible-module">
         <summary>
             <span class="collapsible-module-title">
@@ -244,8 +255,10 @@
             {% include 'partials/_tides.html' %}
         </div>
     </details>
+    </div><!-- /.section-block todays-tides -->
 
     <!-- Solunar Times -->
+    <div class="section-block" data-section-id="peak-feeding" data-section-label="Peak Feeding Times">
     <details class="collapsible-module">
         <summary>
             <span class="collapsible-module-title">
@@ -258,8 +271,10 @@
             {% include 'partials/_solunar.html' %}
         </div>
     </details>
+    </div><!-- /.section-block peak-feeding -->
 
     <!-- Fishing Plan (rigs, tips, bait) -->
+    <div class="section-block" data-section-id="rigs-tips" data-section-label="Rigs &amp; Tips">
     <details class="collapsible-module">
         <summary>
             <span class="collapsible-module-title">
@@ -379,10 +394,12 @@
             {% endif %}
         </div>
     </details>
+    </div><!-- /.section-block rigs-tips -->
 
     <!-- Lure Box — only for anglers who use lures -->
     {% set _uses_lures_mod = profile and profile.lures in ('yes', 'sometimes') %}
     {% if _uses_lures_mod and forecast.lure_recommendations %}
+    <div class="section-block" data-section-id="lure-guide" data-section-label="Lure Guide">
     <details class="collapsible-module lure-module">
         <summary>
             <span class="collapsible-module-title">
@@ -395,9 +412,11 @@
             {% include 'partials/_lures.html' %}
         </div>
     </details>
+    </div><!-- /.section-block lure-guide -->
     {% endif %}
 
     <!-- Gear & Safety -->
+    <div class="section-block" data-section-id="what-to-bring" data-section-label="What to Bring">
     <details class="collapsible-module">
         <summary>
             <span class="collapsible-module-title">
@@ -410,8 +429,10 @@
             {% include 'partials/_checklists.html' %}
         </div>
     </details>
+    </div><!-- /.section-block what-to-bring -->
 
     <!-- Additional Data (spawning, calendar, forage) -->
+    <div class="section-block" data-section-id="species-calendar" data-section-label="Species Calendar">
     <details class="collapsible-module">
         <summary>
             <span class="collapsible-module-title">
@@ -479,6 +500,9 @@
             {% endif %}
         </div>
     </details>
+    </div><!-- /.section-block species-calendar -->
+
+    </div><!-- /#sections-container -->
 
     <!-- Share & Refresh -->
     <section class="share-section">
@@ -1188,4 +1212,6 @@ if ('serviceWorker' in navigator) {
     } catch (e) {}
 })();
 </script>
+<script src="{{ url_for('static', filename='js/collapsibles.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
 </html>

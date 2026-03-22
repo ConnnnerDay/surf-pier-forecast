@@ -210,6 +210,8 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
     if "timezone" not in profile_cols:
         conn.execute("ALTER TABLE profiles ADD COLUMN timezone TEXT")
+    if "page_layout" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN page_layout TEXT")
 
     catch_log_cols = set(_column_names(conn, "catch_log"))
     if "photo1_path" not in catch_log_cols:
@@ -692,6 +694,36 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
                 f"UPDATE profiles SET {', '.join(profile_sets)} WHERE user_id = ?", vals
             )
 
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# Page layout ----------------------------------------------------------------
+
+
+def get_page_layout(user_id: int) -> Optional[List[Any]]:
+    conn = get_db()
+    row = conn.execute(
+        "SELECT page_layout FROM profiles WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    conn.close()
+    if not row or not row["page_layout"]:
+        return None
+    try:
+        return json.loads(row["page_layout"])
+    except Exception:
+        return None
+
+
+def save_page_layout(user_id: int, layout: List[Any]) -> None:
+    conn = get_db()
+    try:
+        conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
+        conn.execute(
+            "UPDATE profiles SET page_layout = ?, updated_at = datetime('now') WHERE user_id = ?",
+            (json.dumps(layout), user_id),
+        )
         conn.commit()
     finally:
         conn.close()

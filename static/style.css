@@ -8615,6 +8615,342 @@ details[open] .collapsible-module-body {
   text-underline-offset: 2px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   PULL-TO-REFRESH
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.ptr-indicator {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-28px);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.45rem 1rem 0.45rem 0.7rem;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: background 0.2s;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+.ptr-indicator.ptr-ready {
+  background: var(--sea-green, #1a9c72);
+}
+.ptr-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ptr-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCROLL-TO-TOP BUTTON
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.scroll-top-btn {
+  position: fixed;
+  /* sits above the Edit Layout FAB */
+  bottom: max(4.75rem, env(safe-area-inset-bottom, 0px) + 4.25rem);
+  right: 1rem;
+  z-index: 895;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--card-bg, #fff);
+  color: var(--ocean, #0e5f78);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px) scale(0.85);
+  pointer-events: none;
+  transition: opacity 0.22s, transform 0.22s;
+}
+.scroll-top-btn--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.scroll-top-btn:hover { background: var(--ocean, #0e5f78); color: #fff; }
+.scroll-top-btn:active { transform: scale(0.93); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT EDITOR
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Section wrapper — invisible by default */
+.section-block { position: relative; }
+
+/* ── Edit FAB ─────────────────────────────────────────────────────────── */
+.layout-edit-fab {
+  position: fixed;
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px) + 0.75rem);
+  right: 1rem;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 0.6rem 1.1rem 0.6rem 0.85rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.28);
+  /* scroll-aware hide */
+  transition: opacity 0.25s, transform 0.25s;
+  will-change: transform, opacity;
+  /* min touch target */
+  min-height: 44px;
+}
+.layout-edit-fab:hover,
+.layout-edit-fab:focus-visible { opacity: 0.9; transform: translateY(-2px); }
+.layout-edit-fab.fab-hidden { opacity: 0; transform: translateY(16px); pointer-events: none; }
+.layout-edit-fab[hidden] { display: none; }
+
+/* ── Toolbar ─────────────────────────────────────────────────────────── */
+.layout-edit-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 950;
+  background: var(--card-bg, #fff);
+  border-top: 1px solid var(--border, rgba(14,95,120,0.12));
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.13);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
+  flex-wrap: wrap;
+}
+.layout-edit-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7b8d);
+  flex: 1;
+  min-width: 0;
+}
+.layout-edit-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.layout-edit-btn {
+  border: none;
+  border-radius: 22px;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.layout-edit-btn:active { transform: scale(0.96); }
+.layout-edit-reset {
+  background: transparent;
+  color: var(--text-muted, #6b7b8d);
+  border: 1px solid var(--border, rgba(14,95,120,0.2));
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+}
+.layout-edit-cancel {
+  background: var(--border, rgba(14,95,120,0.12));
+  color: var(--text, #1a2533);
+}
+.layout-edit-save {
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+}
+
+/* ── Edit mode — section outlines ────────────────────────────────────── */
+.layout-edit-mode #sections-container {
+  padding-bottom: 80px; /* clear toolbar */
+}
+.layout-edit-mode .section-block {
+  border: 2px dashed rgba(14,95,120,0.22);
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.layout-edit-mode .section-block:hover {
+  border-color: var(--ocean, #0e5f78);
+  box-shadow: 0 2px 12px rgba(14,95,120,0.1);
+}
+/* Disable tapping into section content during edit */
+.layout-edit-mode .section-block > *:not(.section-edit-overlay) {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Edit overlay bar ─────────────────────────────────────────────────── */
+.section-edit-overlay {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+  border-radius: 9px 9px 0 0;
+  /* min touch height */
+  min-height: 44px;
+  padding: 0 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  user-select: none;
+  pointer-events: all; /* overlay stays interactive */
+}
+
+/* Drag handle — big touch target */
+.section-drag-handle {
+  cursor: grab;
+  color: rgba(255,255,255,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -0.35rem;
+  flex-shrink: 0;
+  touch-action: none;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.section-drag-handle:hover,
+.section-drag-handle:focus-visible {
+  color: #fff;
+  background: rgba(255,255,255,0.15);
+}
+.section-drag-handle:active { cursor: grabbing; }
+.section-drag-handle:focus-visible { outline: 2px solid rgba(255,255,255,0.6); }
+
+.section-edit-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.83rem;
+}
+
+/* Required badge */
+.section-required-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 0.15rem 0.5rem;
+  color: rgba(255,255,255,0.8);
+  flex-shrink: 0;
+}
+
+/* Eye toggle — big touch target */
+.section-visibility-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  margin-right: -0.35rem;
+}
+.section-visibility-btn:hover,
+.section-visibility-btn:focus-visible { color: #fff; background: rgba(255,255,255,0.15); }
+.section-visibility-btn:focus-visible { outline: 2px solid rgba(255,255,255,0.6); }
+
+/* Dimmed = will be hidden on save */
+.layout-edit-mode .section-edit-dimmed {
+  opacity: 0.5;
+}
+.layout-edit-mode .section-edit-dimmed .section-edit-overlay {
+  background: var(--text-muted, #6b7b8d);
+  opacity: 1;
+}
+
+/* ── Drag ghost (compact pill) & placeholder ─────────────────────────── */
+.section-drag-ghost {
+  position: fixed;   /* fixed so scrolling doesn't misplace it */
+  z-index: 1000;
+  pointer-events: none;
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.65rem 1.25rem;
+  border-radius: 30px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  opacity: 0.95;
+  transform: scale(1.04);
+}
+
+.section-dragging { display: none !important; }
+
+.section-drag-placeholder {
+  border-radius: 12px;
+  background: rgba(14,95,120,0.07);
+  border: 2px dashed var(--ocean, #0e5f78);
+  margin-bottom: 0.5rem;
+  transition: height 0.15s;
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
+.layout-toast {
+  position: fixed;
+  bottom: max(5rem, env(safe-area-inset-bottom) + 4rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 1100;
+  background: #1a2533;
+  color: #fff;
+  font-size: 0.83rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.55rem 1.2rem;
+  border-radius: 22px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.layout-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* ── Collapsible summary sub-label (e.g. Pack for Today headline) ──────── */
 .collapsible-module-sub {
   font-size: 0.78rem;
