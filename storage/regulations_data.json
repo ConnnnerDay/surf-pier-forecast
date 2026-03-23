@@ -1,6 +1,6 @@
 {
   "last_updated": "2025-01",
-  "snapshot_source": "General recreational limits compiled from state agency publications as of early 2025. Regulations change frequently — always verify with the official state source before fishing.",
+  "snapshot_source": "General recreational limits compiled from state agency publications as of early 2025. Regulations change frequently \u2014 always verify with the official state source before fishing.",
   "name_map": {
     "Red drum (puppy drum)": "red_drum",
     "Speckled trout (spotted seatrout)": "spotted_seatrout",
@@ -47,7 +47,7 @@
         "min_size": "18 in TL",
         "bag_limit": "3 per day",
         "season": "Open year-round",
-        "notes": "Slot limit: 18–27 in TL. Verify current rules before fishing."
+        "notes": "Slot limit: 18\u201327 in TL. Verify current rules before fishing."
       },
       "spotted_seatrout": {
         "min_size": "12 in TL",
@@ -72,6 +72,48 @@
         "bag_limit": "2 per day",
         "season": "Open year-round",
         "notes": "Fork length minimum. Verify current rules before fishing."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Federal season (varies yearly; typically Jun-Oct)",
+        "notes": "Season dates set annually by NOAA/SAFMC; verify before fishing."
+      },
+      "gag_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Part of 3-grouper aggregate bag limit. Verify current rules."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Closed Jan 1\u2013May 31 in federal Gulf waters",
+        "notes": "Federal season restrictions apply offshore; verify before fishing."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "From a vessel: 3 per person. Verify for any vessel limit changes."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with ADCNR."
+      },
+      "tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with ADCNR."
+      },
+      "bluefish": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "No size limit; bag limit may change. Verify."
       }
     },
     "CA": {
@@ -108,7 +150,7 @@
       "lingcod": {
         "min_size": "22 in TL",
         "bag_limit": "2 per day",
-        "season": "Seasonal — check CDFW for current open dates",
+        "season": "Seasonal \u2014 check CDFW for current open dates",
         "notes": "Season dates and bag limits vary by area (north vs. south). Verify before fishing."
       },
       "corbina": {
@@ -126,9 +168,39 @@
       "pacific_barracuda": {
         "min_size": "28 in total length",
         "bag_limit": "10 per day",
-        "season": "Open year-round; peak April–September",
+        "season": "Open year-round; peak April\u2013September",
         "notes": "Single barbless hooks required. 28 in TL minimum statewide.",
         "official_source": "https://wildlife.ca.gov/Fishing/Ocean/Fish/Pelagic/Pacific-Barracuda"
+      },
+      "pacific_halibut": {
+        "min_size": "22 in TL",
+        "bag_limit": "5 per day",
+        "season": "Varies by zone; generally open year-round south of Pt. Conception",
+        "notes": "Check CDFW for area-specific rules; northern zones may have different seasons."
+      },
+      "chinook_salmon": {
+        "min_size": "24 in TL",
+        "bag_limit": "2 per day",
+        "season": "Set annually; varies by zone and river system",
+        "notes": "Season dates set by CDFW and PFMC each year. ALWAYS verify before fishing \u2014 rules change frequently."
+      },
+      "coho_salmon": {
+        "min_size": "Varies by zone",
+        "bag_limit": "Varies",
+        "season": "Often closed or very restricted",
+        "notes": "Coho salmon are protected in many CA waters. Verify current rules before fishing."
+      },
+      "striped_bass": {
+        "min_size": "18 in TL",
+        "bag_limit": "2 per day (ocean/bay)",
+        "season": "Open year-round in ocean and SF Bay",
+        "notes": "Bag limit is 2 in tidal waters. Verify for Delta rules which differ."
+      },
+      "rockfish_general": {
+        "min_size": "Varies by species",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Varies by zone and depth; consult CDFW for closures",
+        "notes": "Rockfish rules are complex with depth/area restrictions. Verify current open areas before fishing."
       }
     },
     "CT": {
@@ -147,7 +219,7 @@
       "black_sea_bass": {
         "min_size": "11 in TL",
         "bag_limit": "10 per day",
-        "season": "Seasonal — check CT DEEP for open dates",
+        "season": "Seasonal \u2014 check CT DEEP for open dates",
         "notes": "Size and bag limits vary by season. Verify current rules before fishing."
       },
       "bluefish": {
@@ -159,7 +231,7 @@
       "tautog": {
         "min_size": "16 in TL",
         "bag_limit": "3 per day",
-        "season": "Seasonal — check CT DEEP for open dates",
+        "season": "Seasonal \u2014 check CT DEEP for open dates",
         "notes": "Bag limit varies by season. Spring season is more restrictive. Verify with CT DEEP."
       },
       "scup": {
@@ -167,13 +239,25 @@
         "bag_limit": "30 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with CT DEEP."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Very restrictive bag limit due to depleted stock. Verify."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "8 per day",
+        "season": "Mar 1 \u2013 May 31",
+        "notes": "Shore/pier season may differ from boat season. Verify with CT DEEP."
       }
     },
     "DE": {
       "striped_bass": {
         "min_size": "28 in TL",
         "bag_limit": "1 per day",
-        "season": "Seasonal — check DNREC for dates",
+        "season": "Seasonal \u2014 check DNREC for dates",
         "notes": "Regulations may include a slot limit. Verify current rules with DE DNREC."
       },
       "summer_flounder": {
@@ -193,6 +277,36 @@
         "bag_limit": "10 per day",
         "season": "Seasonal",
         "notes": "Verify current season dates and limits with DE DNREC."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with DE DNREC."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day (varies by season)",
+        "season": "Open most of year; check closed periods",
+        "notes": "DE tautog rules align with Atlantic coast management; verify before fishing."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Very restrictive due to population decline; verify current DE rules."
+      },
+      "tilefish": {
+        "min_size": "14 in FL (blueline); 16 in TL (golden)",
+        "bag_limit": "7 per day (aggregate)",
+        "season": "Open year-round in federal waters",
+        "notes": "Federal regulations apply offshore; verify current rules."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "6 per day",
+        "season": "Apr 1 \u2013 Dec 31",
+        "notes": "Verify with DE DNREC; bag limit may change annually."
       }
     },
     "FL": {
@@ -200,19 +314,19 @@
         "min_size": "18 in TL",
         "bag_limit": "1 per day (inshore/nearshore)",
         "season": "Open year-round",
-        "notes": "Slot limit: 18–27 in TL inshore/nearshore; 18 in minimum offshore with 5/day limit. Rules vary by zone — verify with FWC."
+        "notes": "Slot limit: 18\u201327 in TL inshore/nearshore; 18 in minimum offshore with 5/day limit. Rules vary by zone \u2014 verify with FWC."
       },
       "spotted_seatrout": {
         "min_size": "15 in TL",
-        "bag_limit": "4–5 per day (zone-dependent)",
+        "bag_limit": "4\u20135 per day (zone-dependent)",
         "season": "Open year-round",
         "notes": "Bag limit and size vary by zone (Northeast, East Central, Brevard, Southwest, etc.). Verify your zone's rules with FWC."
       },
       "snook": {
         "min_size": "28 in TL",
         "bag_limit": "1 per day",
-        "season": "Open season varies by zone — check FWC",
-        "notes": "Slot limit: 28–33 in TL. Season closed portions of year depending on Atlantic vs. Gulf side. Verify with FWC."
+        "season": "Open season varies by zone \u2014 check FWC",
+        "notes": "Slot limit: 28\u201333 in TL. Season closed portions of year depending on Atlantic vs. Gulf side. Verify with FWC."
       },
       "tarpon": {
         "min_size": "75 in FL",
@@ -241,13 +355,13 @@
       "gag_grouper": {
         "min_size": "22 in TL",
         "bag_limit": "3 per day (Gulf) / 3 per day (Atlantic)",
-        "season": "Seasonal — Gulf closed Jan–May; check FWC",
+        "season": "Seasonal \u2014 Gulf closed Jan\u2013May; check FWC",
         "notes": "Included in aggregate grouper bag limit. Season and limits vary Gulf vs. Atlantic. Verify with FWC."
       },
       "red_snapper": {
         "min_size": "16 in TL",
         "bag_limit": "2 per day",
-        "season": "Seasonal — limited season in both state and federal waters",
+        "season": "Seasonal \u2014 limited season in both state and federal waters",
         "notes": "Season length and dates vary year to year. Verify current season with FWC before targeting red snapper."
       },
       "pompano": {
@@ -289,10 +403,58 @@
       },
       "great_hammerhead_shark": {
         "min_size": "No retention",
-        "bag_limit": "0 — Prohibited; Great hammerhead is prohibited for harvest in Atlantic and Gulf federal waters",
+        "bag_limit": "0 \u2014 Prohibited; Great hammerhead is prohibited for harvest in Atlantic and Gulf federal waters",
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are prohibited for harvest in state and federal waters. Must be released immediately.",
         "official_source": "https://myfwc.com/fishing/saltwater/sharks/"
+      },
+      "bonefish": {
+        "min_size": "None",
+        "bag_limit": "0 (catch and release only)",
+        "season": "Open year-round (C&R only)",
+        "notes": "Harvest of bonefish is prohibited in Florida. Catch and release only."
+      },
+      "permit": {
+        "min_size": "11 in FL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Applies to both Atlantic and Gulf sides."
+      },
+      "tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current FWC rules before fishing."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day (Gulf); 1 per person per day (Atlantic)",
+        "season": "Closed Jan 1\u2013May 31 in Gulf federal waters",
+        "notes": "Federal season applies offshore; verify FWC and NOAA rules."
+      },
+      "wahoo": {
+        "min_size": "None",
+        "bag_limit": "No limit (state); varies in federal",
+        "season": "Open year-round in state waters",
+        "notes": "No state bag or size limit; verify federal waters rules."
+      },
+      "sailfish": {
+        "min_size": "63 in LJFL (Atlantic); 57 in LJFL (Gulf)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Lower jaw fork length minimum. Highly prized catch-and-release species."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Unregulated in Florida state waters."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify for any changes to FWC bag limits."
       }
     },
     "GA": {
@@ -319,6 +481,36 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with GA DNR."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal rules apply offshore; verify with GA DNR."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current limits with GA DNR."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current GA rules."
+      },
+      "bluefish": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current GA limits."
+      },
+      "tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current GA DNR rules."
       }
     },
     "LA": {
@@ -326,7 +518,7 @@
         "min_size": "18 in TL",
         "bag_limit": "5 per day",
         "season": "Open year-round",
-        "notes": "Slot limit: 18–27 in TL. Verify current rules with LDWF."
+        "notes": "Slot limit: 18\u201327 in TL. Verify current rules with LDWF."
       },
       "spotted_seatrout": {
         "min_size": "12 in TL",
@@ -337,7 +529,7 @@
       "southern_flounder": {
         "min_size": "10 in TL",
         "bag_limit": "15 per day",
-        "season": "Open year-round (seasonal closure Nov–Dec in some years)",
+        "season": "Open year-round (seasonal closure Nov\u2013Dec in some years)",
         "notes": "Flounder season may close in fall to protect spawning fish. Verify with LDWF."
       },
       "sheepshead": {
@@ -355,15 +547,51 @@
       "red_snapper": {
         "min_size": "16 in TL",
         "bag_limit": "2 per day",
-        "season": "Seasonal — check LDWF for current year's open dates",
+        "season": "Seasonal \u2014 check LDWF for current year's open dates",
         "notes": "Season is limited and dates vary year to year. Verify with LDWF."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Federal season applies; closed Jan 1\u2013May 31 in Gulf federal waters",
+        "notes": "Verify LDWF and NOAA federal season before fishing."
+      },
+      "gag_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round in state waters",
+        "notes": "Part of 3-fish grouper aggregate offshore. Verify current rules."
+      },
+      "tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current LDWF rules."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify for any vessel limits."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current LDWF limits."
+      },
+      "wahoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations in Louisiana state waters."
       }
     },
     "MA": {
       "striped_bass": {
         "min_size": "28 in TL",
         "bag_limit": "1 per day",
-        "season": "Seasonal — check MA DMF for open dates",
+        "season": "Seasonal \u2014 check MA DMF for open dates",
         "notes": "Regulations may include a slot limit or reduced season. Verify current rules with MA DMF."
       },
       "summer_flounder": {
@@ -375,7 +603,7 @@
       "black_sea_bass": {
         "min_size": "12.5 in TL",
         "bag_limit": "8 per day",
-        "season": "Seasonal — check MA DMF for open dates",
+        "season": "Seasonal \u2014 check MA DMF for open dates",
         "notes": "Season and bag limits vary. Verify current rules with MA DMF."
       },
       "bluefish": {
@@ -387,7 +615,7 @@
       "tautog": {
         "min_size": "16 in TL",
         "bag_limit": "3 per day",
-        "season": "Seasonal — check MA DMF for open dates",
+        "season": "Seasonal \u2014 check MA DMF for open dates",
         "notes": "Bag limit varies by season. Verify current rules with MA DMF."
       },
       "scup": {
@@ -414,13 +642,49 @@
         "season": "Open year-round; peak fall-spring nearshore",
         "notes": "No state restrictions for recreational take; consult NOAA for commercial quota status.",
         "official_source": "https://www.mass.gov/saltwater-fishing"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; federal closures apply in some areas",
+        "notes": "Cod stocks are critically depleted; verify all applicable federal closures before fishing."
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Federal groundfish rules apply offshore. Verify with NOAA and MA DMF."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round (check bay-specific closures)",
+        "notes": "Some embayments closed to protect spawning fish; verify with MA DMF."
+      },
+      "atlantic_halibut": {
+        "min_size": "None (closed to harvest)",
+        "bag_limit": "0 (prohibited)",
+        "season": "Catch and release only",
+        "notes": "Atlantic halibut harvest is prohibited in US federal waters; catch and release only."
+      },
+      "pollock": {
+        "min_size": "16 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Pollock are unregulated by size but verify any changes with MA DMF."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "No size limit; excellent bait and table fish."
       }
     },
     "MD": {
       "striped_bass": {
         "min_size": "19 in TL",
         "bag_limit": "1 per day",
-        "season": "Seasonal — Chesapeake Bay has a spring and fall season; coastal waters open most of year",
+        "season": "Seasonal \u2014 Chesapeake Bay has a spring and fall season; coastal waters open most of year",
         "notes": "Regulations vary greatly by area (Chesapeake Bay vs. coastal). Slot limits may apply. Verify with MD DNR."
       },
       "red_drum": {
@@ -464,13 +728,31 @@
         "bag_limit": "2 per day",
         "season": "Open year-round",
         "notes": "Fork length minimum. Verify current rules with MD DNR."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current MD DNR limits."
+      },
+      "white_perch": {
+        "min_size": "7 in TL",
+        "bag_limit": "25 per day",
+        "season": "Open year-round",
+        "notes": "Verify for any seasonal restrictions in spawning areas."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current MD DNR rules."
       }
     },
     "ME": {
       "striped_bass": {
         "min_size": "28 in TL",
         "bag_limit": "1 per day",
-        "season": "Seasonal — check ME DMR for open dates",
+        "season": "Seasonal \u2014 check ME DMR for open dates",
         "notes": "Regulations may include slot or season restrictions. Verify with ME DMR."
       },
       "bluefish": {
@@ -484,6 +766,36 @@
         "bag_limit": "8 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with ME DMR."
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; federal closures may apply offshore",
+        "notes": "Cod stocks are critically low; verify current federal area closures before fishing."
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Federal groundfish rules apply offshore. Verify with NOAA and ME DMR."
+      },
+      "tautog": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day",
+        "season": "May 1 \u2013 Nov 30",
+        "notes": "Verify current ME DMR rules before fishing."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Apr 1 \u2013 Jun 30",
+        "notes": "Verify current ME DMR season and limits."
+      },
+      "mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Atlantic mackerel; no size limit. Great bait fish."
       }
     },
     "MS": {
@@ -491,7 +803,7 @@
         "min_size": "18 in TL",
         "bag_limit": "3 per day",
         "season": "Open year-round",
-        "notes": "Slot limit: 18–30 in TL. Verify current rules with MS MDWFP."
+        "notes": "Slot limit: 18\u201330 in TL. Verify current rules with MS MDWFP."
       },
       "spotted_seatrout": {
         "min_size": "12 in TL",
@@ -510,6 +822,36 @@
         "bag_limit": "15 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with MS MDWFP."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Verify with MDWFP; federal rules apply offshore."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Fork length minimum. Verify current MDWFP rules."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Closed Jan 1\u2013May 31 in federal waters",
+        "notes": "Verify federal season restrictions before fishing offshore."
+      },
+      "tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Verify current MDWFP rules."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current MDWFP limits."
       }
     },
     "NC": {
@@ -517,7 +859,7 @@
         "min_size": "18 in TL",
         "bag_limit": "1 per day",
         "season": "Open year-round",
-        "notes": "Slot limit: 18–27 in TL. Verify emergency proclamations before fishing."
+        "notes": "Slot limit: 18\u201327 in TL. Verify emergency proclamations before fishing."
       },
       "spotted_seatrout": {
         "min_size": "14 in TL",
@@ -528,7 +870,7 @@
       "southern_flounder": {
         "min_size": "14 in TL",
         "bag_limit": "4 per day",
-        "season": "Open spring–fall; seasonal closure in effect some years",
+        "season": "Open spring\u2013fall; seasonal closure in effect some years",
         "notes": "NC has implemented harvest reductions in recent years. Verify current season and bag limit with NC DMF."
       },
       "striped_bass": {
@@ -597,13 +939,55 @@
         "season": "Open year-round offshore",
         "notes": "Consult NOAA HMS regulations. Most shark harvests offshore are federally regulated.",
         "official_source": "https://www.ncwildlife.org/Fishing/Saltwater-Fishing/Sharks"
+      },
+      "speckled_trout": {
+        "min_size": "14 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current DMF rules; seasonal closures have been implemented in recent years."
+      },
+      "flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "8 per day",
+        "season": "Open year-round",
+        "notes": "Both summer and southern flounder; verify current season and bag limit."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Federal season (varies yearly)",
+        "notes": "Season dates set annually by NOAA; verify before fishing offshore."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Closed Jan 1\u2013May 31 in federal waters",
+        "notes": "Federal restrictions apply offshore; verify with NOAA and DMF."
+      },
+      "wahoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No NC state size or bag limit for wahoo."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current DMF rules before fishing."
+      },
+      "tarpon": {
+        "min_size": "None",
+        "bag_limit": "0 (tag required to harvest)",
+        "season": "Open year-round (C&R or with $300 tarpon tag)",
+        "notes": "A $300 harvest tag is required. Most anglers practice catch and release."
       }
     },
     "NJ": {
       "striped_bass": {
         "min_size": "28 in TL",
         "bag_limit": "1 per day",
-        "season": "Seasonal — check NJ DEP for open dates",
+        "season": "Seasonal \u2014 check NJ DEP for open dates",
         "notes": "Regulations have changed in recent years and may include slot limits. Verify with NJ DEP."
       },
       "summer_flounder": {
@@ -615,7 +999,7 @@
       "black_sea_bass": {
         "min_size": "12.5 in TL",
         "bag_limit": "15 per day",
-        "season": "Seasonal — check NJ DEP for open dates",
+        "season": "Seasonal \u2014 check NJ DEP for open dates",
         "notes": "Season and bag limits vary. Verify current rules with NJ DEP."
       },
       "bluefish": {
@@ -627,7 +1011,7 @@
       "tautog": {
         "min_size": "16 in TL",
         "bag_limit": "3 per day",
-        "season": "Seasonal — check NJ DEP for open dates",
+        "season": "Seasonal \u2014 check NJ DEP for open dates",
         "notes": "Bag limit varies by season. Verify current rules with NJ DEP."
       },
       "scup": {
@@ -661,6 +1045,36 @@
         "season": "Open year-round offshore",
         "notes": "Consult NOAA Highly Migratory Species regulations. Fins must remain naturally attached.",
         "official_source": "https://www.fisheries.noaa.gov/species/blue-shark"
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current NJ DEP Marine rules; season and bag may change."
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; federal closures may apply",
+        "notes": "Verify federal groundfish area closures before offshore fishing."
+      },
+      "pollock": {
+        "min_size": "16 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Pollock are plentiful in NJ waters in fall and winter."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Summer visitor to NJ; verify current NJ DEP rules."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Summer visitor to NJ. Verify current NJ DEP limits."
       }
     },
     "NY": {
@@ -679,7 +1093,7 @@
       "black_sea_bass": {
         "min_size": "12.5 in TL",
         "bag_limit": "15 per day",
-        "season": "Seasonal — check NY DEC for open dates",
+        "season": "Seasonal \u2014 check NY DEC for open dates",
         "notes": "Season and bag limits vary. Verify current rules with NY DEC."
       },
       "bluefish": {
@@ -691,7 +1105,7 @@
       "tautog": {
         "min_size": "16 in TL",
         "bag_limit": "3 per day",
-        "season": "Seasonal — check NY DEC for open dates",
+        "season": "Seasonal \u2014 check NY DEC for open dates",
         "notes": "Bag limit varies by season. Verify current rules with NY DEC."
       },
       "scup": {
@@ -705,13 +1119,37 @@
         "bag_limit": "1 per day",
         "season": "Open year-round",
         "notes": "Stock is depleted; bag limit is very restrictive. Verify current rules with NY DEC."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current NY DEC rules; seasonal closures may apply in some bays."
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; federal closures may apply",
+        "notes": "Verify federal groundfish closures before offshore fishing."
+      },
+      "pollock": {
+        "min_size": "16 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Pollock are accessible on fall and winter cod trips."
+      },
+      "cobia": {
+        "min_size": "33 in FL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round (rare summer visitor)",
+        "notes": "Cobia are uncommon in NY waters but do occur in summer. Verify NY DEC rules."
       }
     },
     "OR": {
       "lingcod": {
         "min_size": "22 in TL",
         "bag_limit": "5 per day",
-        "season": "Seasonal — check ODFW for current open dates",
+        "season": "Seasonal \u2014 check ODFW for current open dates",
         "notes": "Season and bag limits vary by zone (north vs. south). Verify current rules with ODFW."
       },
       "cabezon": {
@@ -731,6 +1169,36 @@
         "bag_limit": "15 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with ODFW."
+      },
+      "pacific_halibut": {
+        "min_size": "32 in TL (north of Cape Falcon); 26 in south",
+        "bag_limit": "1 per day",
+        "season": "Set annually; typically May\u2013Oct with quota closures",
+        "notes": "OR halibut season is quota-based and closes when quota is reached; verify ODFW status before going."
+      },
+      "chinook_salmon": {
+        "min_size": "24 in TL",
+        "bag_limit": "2 per day (ocean)",
+        "season": "Set annually by PFMC; varies by zone",
+        "notes": "OR salmon seasons are set each year and vary significantly by area. ALWAYS verify current ODFW rules."
+      },
+      "coho_salmon": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day (ocean; varies)",
+        "season": "Set annually; varies by zone and river",
+        "notes": "Coho rules vary greatly by zone and year. Verify with ODFW before fishing."
+      },
+      "dungeness_crab": {
+        "min_size": "5.75 in CW (male only)",
+        "bag_limit": "12 per day",
+        "season": "Dec 1 \u2013 Aug 14 (varies)",
+        "notes": "Only male crabs above minimum size may be retained. Verify current ODFW season."
+      },
+      "striped_bass": {
+        "min_size": "18 in TL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round in Umpqua River system",
+        "notes": "OR coastal striped bass are in the Umpqua River system; verify current ODFW rules."
       }
     },
     "RI": {
@@ -749,7 +1217,7 @@
       "black_sea_bass": {
         "min_size": "12.5 in TL",
         "bag_limit": "8 per day",
-        "season": "Seasonal — check RI DEM for open dates",
+        "season": "Seasonal \u2014 check RI DEM for open dates",
         "notes": "Season and bag limits vary. Verify current rules with RI DEM."
       },
       "bluefish": {
@@ -761,7 +1229,7 @@
       "tautog": {
         "min_size": "16 in TL",
         "bag_limit": "5 per day",
-        "season": "Seasonal — check RI DEM for open dates",
+        "season": "Seasonal \u2014 check RI DEM for open dates",
         "notes": "Bag limit varies by season. Verify current rules with RI DEM."
       },
       "scup": {
@@ -775,6 +1243,24 @@
         "bag_limit": "No bag limit",
         "season": "Open year-round",
         "notes": "Not subject to state size or bag limits. Catch and release strongly encouraged."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "8 per day",
+        "season": "Open year-round",
+        "notes": "Verify current RI DEM rules."
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; federal closures may apply",
+        "notes": "Verify federal groundfish area closures before offshore fishing."
+      },
+      "weakfish": {
+        "min_size": "13 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Very restrictive bag limit due to population decline. Verify current RI DEM rules."
       }
     },
     "SC": {
@@ -825,6 +1311,42 @@
         "bag_limit": "5 per day",
         "season": "Open year-round (Santee-Cooper area has different rules)",
         "notes": "Rules vary by area. Verify with SC DNR."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Federal rules apply offshore. Verify with SC DNR."
+      },
+      "tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current SC DNR rules."
+      },
+      "tarpon": {
+        "min_size": "None",
+        "bag_limit": "0 (C&R only)",
+        "season": "Open year-round (C&R only)",
+        "notes": "Harvest of tarpon is prohibited in SC. Catch and release only."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Federal season applies offshore",
+        "notes": "Federal restrictions apply; verify NOAA and SC DNR rules."
+      },
+      "wahoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No SC state size or bag limit for wahoo."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current SC DNR rules."
       }
     },
     "TX": {
@@ -832,18 +1354,18 @@
         "min_size": "20 in TL",
         "bag_limit": "3 per day",
         "season": "Open year-round",
-        "notes": "Slot limit: 20–28 in TL. Verify current rules with TPWD."
+        "notes": "Slot limit: 20\u201328 in TL. Verify current rules with TPWD."
       },
       "spotted_seatrout": {
         "min_size": "15 in TL",
         "bag_limit": "10 per day",
         "season": "Open year-round",
-        "notes": "Upper Laguna Madre and Baffin Bay have a 17–23 in slot limit with 5/day bag. Verify your specific bay with TPWD."
+        "notes": "Upper Laguna Madre and Baffin Bay have a 17\u201323 in slot limit with 5/day bag. Verify your specific bay with TPWD."
       },
       "southern_flounder": {
         "min_size": "12 in TL",
         "bag_limit": "10 per day",
-        "season": "Open year-round (seasonal closure Oct 15 – Nov 30 in some years)",
+        "season": "Open year-round (seasonal closure Oct 15 \u2013 Nov 30 in some years)",
         "notes": "Fall closures have been implemented to protect spawning fish. Verify current season with TPWD."
       },
       "cobia": {
@@ -879,8 +1401,44 @@
       "red_snapper": {
         "min_size": "16 in TL",
         "bag_limit": "4 per day (state waters)",
-        "season": "Open year-round in state waters (0–9 nautical miles)",
+        "season": "Open year-round in state waters (0\u20139 nautical miles)",
         "notes": "Texas state waters red snapper season is open year-round. Federal waters season is limited. Verify current rules with TPWD."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "No state limit (federal rules apply offshore)",
+        "season": "Federal season applies in Gulf federal waters",
+        "notes": "TX state waters have no specific limit; federal rules apply for offshore fishing."
+      },
+      "wahoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for wahoo in Texas waters."
+      },
+      "tripletail": {
+        "min_size": "17 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Verify current TPWD rules."
+      },
+      "mahi_mahi": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit for mahi in Texas."
+      },
+      "tarpon": {
+        "min_size": "None",
+        "bag_limit": "0 (catch and release only; tag required to harvest)",
+        "season": "Open year-round",
+        "notes": "A tarpon tag ($300) is required to harvest; most anglers practice catch and release."
+      },
+      "bluefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No Texas state regulations for bluefish."
       }
     },
     "VA": {
@@ -949,13 +1507,43 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Fork length minimum. Verify current limits with VA MRC."
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Verify current VA MRC limits."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round (summer-fall visitor)",
+        "notes": "King mackerel arrive off VA in summer; verify current VA MRC rules."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Federal season applies offshore",
+        "notes": "Federal restrictions apply offshore; verify with NOAA and VA MRC."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current VA MRC rules."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round (offshore visitor)",
+        "notes": "Verify current VA MRC rules."
       }
     },
     "WA": {
       "lingcod": {
         "min_size": "22 in TL",
         "bag_limit": "5 per day",
-        "season": "Seasonal — check WDFW for current open dates",
+        "season": "Seasonal \u2014 check WDFW for current open dates",
         "notes": "Season and bag limits vary by Puget Sound vs. coastal marine areas. Verify current rules with WDFW."
       },
       "cabezon": {
@@ -975,6 +1563,36 @@
         "bag_limit": "15 per day",
         "season": "Open year-round",
         "notes": "Verify current limits with WDFW."
+      },
+      "pacific_halibut": {
+        "min_size": "32 in TL (north of Pt. Chehalis); varies by area",
+        "bag_limit": "1 per day",
+        "season": "Set annually with quota closures; typically May\u2013Oct",
+        "notes": "WA halibut season closes when quota is met. Check WDFW status before fishing \u2014 quotas can close the season quickly."
+      },
+      "chinook_salmon": {
+        "min_size": "24 in TL (most areas)",
+        "bag_limit": "2 per day (varies by area and season)",
+        "season": "Set annually by PFMC; varies greatly by area and month",
+        "notes": "WA salmon rules are extremely complex and change by year, area, and week. ALWAYS verify current WDFW Emergency Rules before fishing."
+      },
+      "coho_salmon": {
+        "min_size": "16 in TL (most areas)",
+        "bag_limit": "2 per day (varies)",
+        "season": "Set annually; varies by area",
+        "notes": "Verify current WDFW rules; coho seasons and quotas change frequently."
+      },
+      "dungeness_crab": {
+        "min_size": "6.25 in CW (male only; Puget Sound); 5.75 in coastal",
+        "bag_limit": "6 per day (most areas)",
+        "season": "Varies by area; coastal Dec\u2013Sep; Puget Sound varies",
+        "notes": "Only male crabs above minimum size. Season and bag limit vary by management area; verify with WDFW."
+      },
+      "striped_bass": {
+        "min_size": "18 in TL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Striped bass are in the Columbia River system and some coastal areas. Verify current WDFW rules."
       }
     },
     "HI": {
@@ -998,6 +1616,36 @@
         "season": "Open year-round",
         "notes": "No size or bag restrictions in Hawaii for recreational fishing.",
         "official_source": "https://dlnr.hawaii.gov/dar/fishing/"
+      },
+      "mahi_mahi": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit in Hawaii state waters."
+      },
+      "yellowfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ahi (yellowfin and bigeye) have no state bag limit."
+      },
+      "giant_trevally": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ulua (GT) have no statewide bag limit but some areas may have restrictions."
+      },
+      "bonefish": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Oio (bonefish) regulations; most anglers practice catch and release."
+      },
+      "wahoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ono (wahoo) have no state bag limit in Hawaii."
       }
     }
   }

@@ -57,6 +57,11 @@ _OFFSHORE_ONLY_SPECIES: set = {
     "Thresher shark",
     "Tiger shark",
     "Ocean sunfish (mola mola)",
+    "Swordfish",
+    "Black marlin",
+    "Sablefish (black cod)",
+    "Atlantic halibut",
+    "Pacific halibut",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
@@ -103,6 +108,7 @@ _PIER_SPECIES: set = {
     "Halfmoon (Catalina perch)",
     "Kelp greenling",
     "Rock greenling",
+    "Dungeness crab",
 }
 
 # Species primarily caught from the surf zone.
@@ -125,6 +131,8 @@ _SURF_SPECIES: set = {
     "Shovelnose guitarfish",
     "Moi (Pacific threadfin)",
     "Bonefish (oio)",
+    "Pink salmon (humpy)",
+    "Chum salmon (dog salmon)",
 }
 
 # Species primarily caught from jetties and rock structures (inlet mouths,
@@ -285,6 +293,16 @@ _CHARTER_SPECIES: set = {
     "Blue rockfish",
     "Cabezon",
     "Pacific bonito",
+    "Pacific halibut",
+    "Chinook salmon (king salmon)",
+    "Coho salmon (silver salmon)",
+    "Chum salmon (dog salmon)",
+    "Pink salmon (humpy)",
+    "Haddock",
+    "Atlantic cod",
+    "Swordfish",
+    "Black marlin",
+    "Greater amberjack",
 }
 
 # Species well-suited for saltwater fly fishing — must be catchable on a fly
@@ -318,6 +336,11 @@ _FLY_SPECIES: set = {
     "Pacific bonito",
     "Corbina",
     "Barred surfperch",
+    "Coho salmon (silver salmon)",
+    "Pink salmon (humpy)",
+    "Chum salmon (dog salmon)",
+    "Chinook salmon (king salmon)",
+    "Atlantic bonito",
 }
 
 # Species best caught inshore (inlet, marsh, flats).
@@ -374,6 +397,10 @@ _BOTTOM_SPECIES: set = {
     "Fringed flounder",
     "Hogchoker",
     "California halibut",
+    "Pacific halibut",
+    "Atlantic halibut",
+    "Haddock",
+    "Atlantic cod",
     "Starry flounder",
     "Pompano",
     "White croaker (tomcod)",
@@ -422,6 +449,15 @@ _PELAGIC_SPECIES: set = {
     "Bluefin trevally (omilu)",
     "Papio (juvenile jack)",
     "Striped bass (rockfish)",
+    "Chinook salmon (king salmon)",
+    "Coho salmon (silver salmon)",
+    "Chum salmon (dog salmon)",
+    "Pink salmon (humpy)",
+    "Swordfish",
+    "Black marlin",
+    "Greater amberjack",
+    "Wahoo",
+    "Tripletail",
 }
 
 _STRUCTURE_SPECIES: set = {
@@ -460,6 +496,10 @@ _STRUCTURE_SPECIES: set = {
     "Opaleye",
     "Mu (bigeye emperor)",
     "Menpachi (soldierfish)",
+    "Greater amberjack",
+    "Haddock",
+    "Atlantic cod",
+    "Sablefish (black cod)",
 }
 
 _GAMEFISH_SPECIES: set = {
@@ -810,6 +850,18 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     # ── Gulf region variants ─────────────────────────────────────────────────
     "Sheepshead (Gulf)": ["game_fish", "reef_fish"],
     "Redfish (Gulf red drum)": ["game_fish"],
+    # ── New species additions ────────────────────────────────────────────────
+    "Haddock": ["game_fish", "reef_fish"],
+    "Atlantic halibut": ["game_fish"],
+    "Swordfish": ["game_fish", "pelagic"],
+    "Black marlin": ["game_fish", "pelagic"],
+    "Pacific halibut": ["game_fish"],
+    "Chinook salmon (king salmon)": ["game_fish", "pelagic"],
+    "Coho salmon (silver salmon)": ["game_fish", "pelagic"],
+    "Chum salmon (dog salmon)": ["game_fish", "pelagic"],
+    "Pink salmon (humpy)": ["game_fish", "pelagic"],
+    "Sablefish (black cod)": ["game_fish", "reef_fish"],
+    "Dungeness crab": ["other"],
     # ── West Coast ───────────────────────────────────────────────────────────
     "Barred surfperch": ["panfish"],
     "Redtail surfperch": ["panfish"],

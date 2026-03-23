@@ -8545,5 +8545,326 @@
       "reef_fish"
     ],
     "lures": "Small jigs, soft plastics near sandy bottom"
+  },
+  {
+    "name": "Atlantic halibut",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 34,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 46,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "good_months": [
+      3,
+      8,
+      9
+    ],
+    "bait": "Large whole or chunk baits \u2014 whole herring, mackerel, large squid, haddock belly strips; bait must be very fresh",
+    "rig": "Heavy single hook bottom rig with 80-100 lb fluorocarbon leader; hi-lo rig for smaller fish",
+    "hook_size": "6/0-10/0 circle or J hook",
+    "sinker": "16-32 oz bank sinker depending on depth",
+    "lures": "Heavy metal jigs (400-800g) worked slowly near the bottom at depth",
+    "explanation_cold": "Atlantic halibut inhabit very deep, cold water (200-2000 ft) in winter and are only accessible on specialized deep-water charter trips; they are the largest flatfish in the Atlantic.",
+    "explanation_warm": "Spring through early summer is the prime season when halibut move to slightly shallower grounds (100-400 ft) on Stellwagen Bank and similar offshore ledges; they are critically endangered and all must be released."
+  },
+  {
+    "name": "Black marlin",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 90,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Large rigged baits \u2014 whole mackerel, bonito, large squid, or live blue runner; skip baits at speed",
+    "rig": "Heavy offshore trolling spread; 130-200 lb leader; IGFA-class heavy gear (50-130 lb class)",
+    "hook_size": "8/0-12/0 hook in rigged bait",
+    "sinker": "None for trolling; live bait fished in current",
+    "lures": "Large offshore lures \u2014 Ilander, Islander, skirted ballyhoo; dark colors work well in warm water",
+    "explanation_cold": "Black marlin are warm-water billfish rarely found in US waters in winter; they are primarily encountered in tropical and subtropical offshore waters of the Gulf Stream.",
+    "explanation_warm": "The peak US east coast encounter for black marlin is during the summer months in the Gulf Stream corridor; they are a prized catch-and-release trophy requiring serious offshore tackle."
+  },
+  {
+    "name": "Chinook salmon (king salmon)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 45,
+    "temp_max": 65,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      7,
+      8,
+      11
+    ],
+    "bait": "Whole or plug-cut herring trolled with flasher; anchovies; sand lance; cured roe near river mouths in fall",
+    "rig": "Mooching rig with 2-hook herring setup; downrigger trolling with flasher-herring at 40-120 ft",
+    "hook_size": "3/0-5/0 octopus hook",
+    "sinker": "4-12 oz mooching sinker; downrigger ball to depth",
+    "lures": "Spoons (Coho Killer, Coyote, Apex), hoochies on 36-in leader behind flasher, spinners near river mouths",
+    "explanation_cold": "Fall and winter Chinook (blackmouth) school nearshore in Puget Sound and coastal bays; they feed near the bottom in 60-200 ft and are targeted on downriggers with herring.",
+    "explanation_warm": "Spring ocean Chinook feed aggressively on herring and anchovies; trolling cut-plug herring with a 4-6 oz mooching sinker near bait balls at 40-80 ft produces the most fish."
+  },
+  {
+    "name": "Chum salmon (dog salmon)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      8,
+      12
+    ],
+    "bait": "Pink or chartreuse shrimp flies; chum entry flasher rigs; small herring near estuaries",
+    "rig": "Light jig or shrimp fly below a small float; drift fishing near river mouths",
+    "hook_size": "1/0-2/0 octopus or siwash hook",
+    "sinker": "1/4-1 oz depending on current",
+    "lures": "Pink or chartreuse shrimp flies, Buzz Bombs in pink, small spoons, Clouser minnows in pink/white",
+    "explanation_cold": "Chum salmon return to estuaries and rivers from September through December; they stack up in tidewater and respond well to pink shrimp flies near staging areas.",
+    "explanation_warm": "Ocean chum can be encountered offshore in summer but are rarely targeted specifically; the main fishery is in fall when they congregate near river mouths."
+  },
+  {
+    "name": "Coho salmon (silver salmon)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 62,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      6,
+      11
+    ],
+    "bait": "Whole herring, anchovies, sand lance; pink shrimp; cured salmon eggs near estuaries in fall",
+    "rig": "Trolling with flasher and 36-inch leader; mooching rig with whole herring; surface trolling in summer",
+    "hook_size": "1/0-3/0 octopus hook",
+    "sinker": "2-6 oz mooching weight or no weight at surface",
+    "lures": "Spoons (Krocodile, Coyote), hoochies in pink/chartreuse/white, buzz bombs, Stingsilda jigs; Clousers on fly",
+    "explanation_cold": "Coho stage in estuaries and near river mouths in fall before their spawning run; they feed heavily and are accessible from river-mouth jetties and near-shore structure.",
+    "explanation_warm": "Summer coho feed aggressively near the surface and upper water column; surface trolling with flasher-hoochie at 20-60 ft is standard, and fish will smash spoons and jigs near bait schools."
+  },
+  {
+    "name": "Dungeness crab",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 42,
+    "temp_max": 60,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 55,
+    "peak_months": [
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Chicken legs, turkey legs, herring, salmon carcasses; any oily, strong-smelling bait in crab pots or rings",
+    "rig": "Crab pot or ring net; bait tied in center; dropped from pier, jetty or boat",
+    "hook_size": "N/A (pot or ring fishing)",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Dungeness crab season runs primarily November through April in most Pacific states; crab are most active in cold water and concentrate in sandy bottom areas near kelp beds and eelgrass.",
+    "explanation_warm": "Summer Dungeness crab are mostly molting and soft; regulations often close the season in summer months to protect them during this vulnerable period."
+  },
+  {
+    "name": "Haddock",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 34,
+    "temp_max": 55,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      4,
+      5,
+      6,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      7,
+      8,
+      9,
+      12
+    ],
+    "bait": "Fresh surf clams (top choice), sandworms, squid strips, cut herring or mackerel; clam is the gold standard for haddock",
+    "rig": "Hi-lo bottom rig with 2 dropper loops on 30-50 lb leader; single hook fish finder rig on rough bottom",
+    "hook_size": "#1-2/0 Chestertown or O'Shaughnessy hook",
+    "sinker": "6-12 oz bank or sea anchor sinker",
+    "lures": "Slow-pitch jigs (100-300g) in white or pink, Norwegian-style diamond jigs, spreader bar rigs with squid",
+    "explanation_cold": "Haddock school tightly over rocky and gravelly bottom at 100-300 ft in winter; they feed actively in cold water and clam bait fished straight down is highly effective.",
+    "explanation_warm": "Haddock fishing tapers as water warms above 52\u00b0F; early spring (April-May) and fall produce the best catches before temperatures peak and fish move deeper."
+  },
+  {
+    "name": "Pacific halibut",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 62,
+    "temp_ideal_low": 45,
+    "temp_ideal_high": 55,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Whole or plug-cut herring; fresh salmon belly strips; octopus pieces; large chunk bait on heavy jigs",
+    "rig": "Spreader bar rig or slip sinker with 80-150 lb fluorocarbon leader; drift fishing over sand/gravel bottom",
+    "hook_size": "5/0-9/0 circle hook",
+    "sinker": "8-32 oz depending on depth and current",
+    "lures": "Heavy metal jigs (Crippled Herring, Buzz Bomb, Point Wilson Dart), large paddle-tail swimbaits on 4-8 oz jighead",
+    "explanation_cold": "Pacific halibut move into deep water 200-400+ ft in late fall and winter; targeting them is difficult and largely confined to commercial operators outside of summer season.",
+    "explanation_warm": "Peak season runs May through September when halibut migrate into nearshore shallows of 60-250 ft to feed on herring and sand lance; drifting cut herring over sandy bottom is the classic method."
+  },
+  {
+    "name": "Pink salmon (humpy)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 60,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      6,
+      10
+    ],
+    "bait": "Small herring, krill, shrimp; pink shrimp flies near estuaries",
+    "rig": "Small jig or shrimp fly under a bobber; light spinning gear works well",
+    "hook_size": "#2-1/0 siwash or octopus hook",
+    "sinker": "1/8-1/2 oz jig head",
+    "lures": "Pink spoons and spinners, small pink jigs, shrimp flies; nearly anything pink works during a pink salmon run",
+    "explanation_cold": "Pink salmon runs occur on odd years in most areas; outside of their late-summer run window they are not present.",
+    "explanation_warm": "Pink salmon return July through September, often in enormous numbers; they readily hit small pink lures and can provide explosive action near river mouths and tidal flats."
+  },
+  {
+    "name": "Sablefish (black cod)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 58,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Squid, octopus pieces, herring, cut rockfish; sablefish are opportunistic deepwater scavengers",
+    "rig": "Deep-drop rig with multiple dropper loops; heavy leaders; electric reels commonly used at depth",
+    "hook_size": "4/0-6/0 circle hook",
+    "sinker": "16-32 oz or heavier depending on depth and current",
+    "lures": "Heavy slow-pitch jigs (300-600g) in deep water; flutter jigs worked near the bottom",
+    "explanation_cold": "Sablefish inhabit very deep water (1000-5000 ft) in winter and are rarely targeted by recreational anglers outside of specialized deep-drop charter trips.",
+    "explanation_warm": "Shallower sablefish (300-800 ft) can be encountered on deep-drop trips in spring and summer; they are prized for their rich, buttery flesh and fight well on heavy tackle."
+  },
+  {
+    "name": "Swordfish",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "midatlantic"
+    ],
+    "temp_min": 65,
+    "temp_max": 86,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Whole rigged squid (top choice), large mackerel or bluefish belly strips; deep-drop with 8-inch squid rig",
+    "rig": "Heavy stand-up tackle; 200-400 lb monofilament or wire leader; chemical light sticks on deep-drop rig",
+    "hook_size": "7/0-12/0 offset or J hook",
+    "sinker": "32-64 oz on deep-drop daytime rig; 8-16 oz at night in shallower water",
+    "lures": "Natural bait is primary; large swim-head lures with squid skirt used at night on surface",
+    "explanation_cold": "Swordfish move offshore to warmer Gulf Stream waters in winter; accessible only via overnight deep-drop trips to 1500-2000 ft on the stream edge.",
+    "explanation_warm": "Daytime swordfish are targeted with deep-drop squid rigs at 1000-2000 ft on the Gulf Stream; at night, fish migrate shallower (100-400 ft) and can be targeted more easily near structure."
   }
 ]

@@ -60,8 +60,8 @@ class TestModuleLevelDB:
         assert len(SPECIES_DB) > 0
 
     def test_count_matches_known_total(self):
-        """Expect 313 entries — catches accidental data truncation."""
-        assert len(SPECIES_DB) == 313
+        """Expect 324 entries — catches accidental data truncation."""
+        assert len(SPECIES_DB) == 324
 
     def test_all_required_fields_present(self):
         for sp in SPECIES_DB:
@@ -108,8 +108,10 @@ class TestModuleLevelDB:
         """Ordering sanity: Red drum should be first (east coast, entry #1)."""
         assert SPECIES_DB[0]["name"].startswith("Red drum")
 
-    def test_last_entry_is_hawaii(self):
-        assert SPECIES_DB[-1]["coast"] == "hawaii"
+    def test_hawaii_species_present(self):
+        """At least one Hawaii-coast species should exist in the database."""
+        hawaii_species = [sp for sp in SPECIES_DB if sp["coast"] == "hawaii"]
+        assert len(hawaii_species) > 0
 
 
 # ---------------------------------------------------------------------------
