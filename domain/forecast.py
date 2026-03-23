@@ -1182,16 +1182,70 @@ def build_gear_checklist(
     hour: int = 12,
     water_temp: float = 65.0,
     weather: Optional[Dict[str, Any]] = None,
+    fishing_types: Optional[List[str]] = None,
 ) -> List[Dict[str, str]]:
     """Generate a conditions-aware packing list for a fishing trip."""
     items: List[Dict[str, str]] = []
     categories_seen: set = set()
+    ft = set(fishing_types or [])
 
     def _add(category: str, item: str, reason: str = "") -> None:
         key = f"{category}:{item}"
         if key not in categories_seen:
             categories_seen.add(key)
             items.append({"category": category, "item": item, "reason": reason})
+
+    # ---- Fishing-type-specific essentials (shown first) ----
+    if "kayak" in ft:
+        _add("Kayak", "PFD (life jacket)", "Required by law when underway")
+        _add("Kayak", "Paddle + spare paddle leash", "")
+        _add("Kayak", "Anchor trolley or stake-out pole", "Keep position in current")
+        _add("Kayak", "Waterproof dry bag", "Protect phone, keys, and food")
+        _add("Kayak", "Rod holders (2 minimum)", "Hands-free paddling between spots")
+        _add("Kayak", "Bilge pump or sponge", "Bail water quickly")
+        _add("Kayak", "VHF radio or waterproof phone case", "Emergency communication")
+
+    if "jetty" in ft:
+        _add("Jetty", "Cleated or studded wading boots", "Grip on wet, algae-covered rocks")
+        _add("Jetty", "Wading staff or walking stick", "Balance on uneven rock surface")
+        _add("Jetty", "Rod holder spike", "Free hands while watching the surf")
+
+    if "wade" in ft:
+        _add("Wade", "Wading boots with felt or rubber soles", "Grip on slippery substrate")
+        _add("Wade", "Waders or wetsuit (water temp dependent)", "")
+        _add("Wade", "Wading staff", "Stability in current")
+        _add("Wade", "Polarized sunglasses", "Essential for sight-fishing")
+        _add("Wade", "Sun buff / neck gaiter", "Protection while scanning flats")
+        _add("Wade", "Stripping basket or waist pack", "Keep fly line off water")
+
+    if "fly" in ft:
+        _add("Fly", "Fly rod (8–12 wt depending on target species)", "")
+        _add("Fly", "Fly line matched to rod weight", "")
+        _add("Fly", "Fluorocarbon tippet (various sizes)", "")
+        _add("Fly", "Fly box with appropriate patterns", "")
+        _add("Fly", "Stripping basket", "Manage line in wind and current")
+        _add("Fly", "Polarized sunglasses", "Sight-fishing essential")
+        _add("Fly", "Line cleaner/conditioner", "Maintain floating line")
+
+    if "bridge" in ft:
+        _add("Bridge", "Drop net or cast net for landing fish", "No beach to walk fish in")
+        _add("Bridge", "Heavy bucktail jigs or live bait rigs", "Current fishing")
+        _add("Bridge", "Headlamp", "Night bridge fishing is highly productive")
+        _add("Bridge", "Reflective vest or light-colored clothing", "Visibility to vehicles")
+
+    if "charter" in ft:
+        _add("Charter", "Motion sickness medication (taken night before)", "Prevention is key")
+        _add("Charter", "Non-slip deck shoes", "Required on most charter boats")
+        _add("Charter", "Waterproof sunscreen SPF 50+", "Offshore sun is intense")
+        _add("Charter", "Polarized sunglasses", "Spot color changes and weed lines")
+        _add("Charter", "Cooler / ice for catch", "Coordinate with captain beforehand")
+        _add("Charter", "Light rain jacket", "Offshore weather changes quickly")
+
+    if "offshore" in ft and "charter" not in ft:
+        _add("Offshore", "Heavy-duty tackle (50–80 lb class)", "")
+        _add("Offshore", "Safety harness for heavy trolling", "Prevent rod pull")
+        _add("Offshore", "Offshore first aid kit", "Distance from help")
+        _add("Offshore", "VHF radio and EPIRB / PLB", "Required safety equipment")
 
     # ---- Always bring ----
     _add("Essentials", "Rod & reel (medium-heavy for surf)", "")
@@ -1419,9 +1473,12 @@ def build_safety_checklist(
     wave_range: Optional[Tuple[float, float]] = None,
     hour: int = 12,
     alerts: Optional[List[Dict[str, str]]] = None,
+    fishing_types: Optional[List[str]] = None,
+    water_temp: Optional[float] = None,
 ) -> List[Dict[str, str]]:
     """Build a conditions-aware safety checklist for surf/pier fishing."""
     items: List[Dict[str, str]] = []
+    ft = set(fishing_types or [])
 
     # Always show basics
     items.append(
@@ -1431,9 +1488,81 @@ def build_safety_checklist(
         }
     )
 
-    # Wave-based warnings
+    max_wave = (wave_range[1] if isinstance(wave_range, tuple) else 3) if wave_range else 0
+    max_wind = (wind_range[1] if isinstance(wind_range, tuple) else 10) if wind_range else 0
+
+    # --- Kayak-specific safety (highest priority) ---
+    if "kayak" in ft:
+        if max_wind >= 20:
+            items.append(
+                {
+                    "text": "Small craft advisory conditions — do not launch a kayak in 20+ kt winds",
+                    "icon": "warning",
+                }
+            )
+        elif max_wind >= 15:
+            items.append(
+                {
+                    "text": "Elevated wind for kayak — stay close to shore and have a shore-exit plan",
+                    "icon": "caution",
+                }
+            )
+        if max_wave >= 3:
+            items.append(
+                {
+                    "text": "Rough chop for a kayak — consider postponing or fishing protected water",
+                    "icon": "caution",
+                }
+            )
+        items.append(
+            {
+                "text": "Wear your PFD at all times when on the water — required by law when underway",
+                "icon": "info",
+            }
+        )
+
+    # --- Jetty/rock-specific safety ---
+    if "jetty" in ft:
+        if max_wave >= 4:
+            items.append(
+                {
+                    "text": "Dangerous wave surge on jetty rocks — stay off exposed structure, waves may wash over",
+                    "icon": "warning",
+                }
+            )
+        elif max_wave >= 2:
+            items.append(
+                {
+                    "text": "Wave surge on jetty — wear cleated/gripped footwear and never turn your back to the water",
+                    "icon": "caution",
+                }
+            )
+
+    # --- Wade fishing-specific safety ---
+    if "wade" in ft:
+        if water_temp is not None and water_temp < 55:
+            items.append(
+                {
+                    "text": f"Cold water wading ({water_temp:.0f}°F) — cold shock risk; use a wading staff and stay shallow",
+                    "icon": "warning",
+                }
+            )
+        elif water_temp is not None and water_temp < 65:
+            items.append(
+                {
+                    "text": f"Cool water wading ({water_temp:.0f}°F) — neoprene waders recommended",
+                    "icon": "caution",
+                }
+            )
+        items.append(
+            {
+                "text": "Never wade alone in tidal current — always have a buddy or shore spotter",
+                "icon": "info",
+            }
+        )
+
+    # --- Wave-based warnings (surf/general) ---
     if wave_range:
-        max_wave = wave_range[1] if isinstance(wave_range, tuple) else 3
         if max_wave >= 6:
             items.append(
                 {
@@ -1455,9 +1584,8 @@ def build_safety_checklist(
                 }
             )
 
-    # Wind-based
+    # --- Wind-based ---
     if wind_range:
-        max_wind = wind_range[1] if isinstance(wind_range, tuple) else 10
         if max_wind >= 25:
             items.append(
                 {
@@ -1465,13 +1593,31 @@ def build_safety_checklist(
                     "icon": "warning",
                 }
             )
-        elif max_wind >= 15:
+        elif max_wind >= 15 and "kayak" not in ft:
             items.append(
                 {
                     "text": "Strong winds — secure coolers/gear and watch for blown tackle",
                     "icon": "caution",
                 }
             )
+
+    # --- Fly fishing cast-safety note ---
+    if "fly" in ft and max_wind >= 15:
+        items.append(
+            {
+                "text": "High wind makes fly casting difficult and dangerous — watch your backcast for bystanders",
+                "icon": "caution",
+            }
+        )
+
+    # --- Bridge/night fishing ---
+    if "bridge" in ft and (hour < 6 or hour >= 20):
+        items.append(
+            {
+                "text": "Bridge night fishing — use a headlamp, wear light-colored clothing, and stay behind railings",
+                "icon": "info",
+            }
+        )
 
     # Time-based
     if hour < 6 or hour >= 20:
@@ -1719,6 +1865,84 @@ def _build_education_cards(
             {
                 "title": "Pier etiquette",
                 "text": "Call out when casting, avoid crossing lines, and net fish quickly to keep traffic moving safely.",
+            }
+        )
+    if "jetty" in fishing_types:
+        cards.append(
+            {
+                "title": "Jetty safety",
+                "text": "Never turn your back to the water on jetty rocks — sneaker waves are the #1 hazard. Fish the incoming tide for best access to bait schools pushed against the rocks.",
+            }
+        )
+        cards.append(
+            {
+                "title": "Jetty technique",
+                "text": "Work the downcurrent side of the jetty tip at tide changes. Sheepshead and tautog hold tight to structure; drop vertically with a knocker or Carolina rig for best results.",
+            }
+        )
+    if "bridge" in fishing_types:
+        cards.append(
+            {
+                "title": "Bridge fishing tips",
+                "text": "Position on the downcurrent side of pilings — fish face into current and ambush bait swept around the structure. Night fishing under bridge lights is premier for snook and striped bass in season.",
+            }
+        )
+        cards.append(
+            {
+                "title": "Bridge current reading",
+                "text": "The bite at bridges is most reliable during the first hour of a moving tide. Slack water often kills the bite; plan your session around current change windows.",
+            }
+        )
+    if "wade" in fishing_types:
+        cards.append(
+            {
+                "title": "Wade fishing approach",
+                "text": "Move slowly and push minimal water — wade fish are highly aware of pressure waves. Fish into the sun when possible so your shadow falls behind you, not over fish.",
+            }
+        )
+        cards.append(
+            {
+                "title": "Sight-fishing basics",
+                "text": "Look for wakes, tails, push-wakes, and nervous water. Polarized glasses are non-negotiable. Present your bait ahead of the fish's travel path — never cast directly at the fish.",
+            }
+        )
+    if "kayak" in fishing_types:
+        cards.append(
+            {
+                "title": "Kayak fishing spots",
+                "text": "Kayaks excel at accessing spots between shore and offshore — tidal creeks, backcountry flats, and nearshore structure. Scout low-tide terrain to understand where fish hold at high tide.",
+            }
+        )
+        cards.append(
+            {
+                "title": "Kayak drift fishing",
+                "text": "Use a stake-out pole or anchor trolley to position perpendicular to structure. Drift fishing with the tidal current and a jig or live bait is one of the most effective kayak techniques.",
+            }
+        )
+    if "charter" in fishing_types:
+        cards.append(
+            {
+                "title": "Charter boat tips",
+                "text": "Arrive early, tip the mate (they rig, bait, and gaff fish), and follow the captain's instructions on which side of the boat to fish. Listen for the 'lines in / lines out' call.",
+            }
+        )
+        cards.append(
+            {
+                "title": "What to ask the captain",
+                "text": "Before the trip: ask what species are biting, what gear the boat provides, and whether the trip is live bait or jigging focused. After the trip: mates can often fillet your catch for a tip.",
+            }
+        )
+    if "fly" in fishing_types:
+        cards.append(
+            {
+                "title": "Saltwater fly selection",
+                "text": "Match the primary baitfish — Clouser Minnows for stripers and redfish, Crab/EP flies for permit and bonefish, weedless Toad flies for snook in grass. Size down in clear water.",
+            }
+        )
+        cards.append(
+            {
+                "title": "Wind management",
+                "text": "In saltwater, wind is your biggest challenge. Cast at a 45° angle to the wind (not into it). Haul early and keep your backcast tight. A stiff rod with a weight-forward line handles wind best.",
             }
         )
     return cards
@@ -2135,6 +2359,7 @@ def generate_forecast(
         wave_range=wave_range,
         hour=now.hour,
         alerts=forecast.get("alerts"),
+        water_temp=water_temp,
     )
 
     # Best fishing times (synthesize solunar + tides + sunrise/sunset)
@@ -2293,6 +2518,17 @@ def personalize_forecast(
         hour=now.hour,
         water_temp=water_temp,
         weather=forecast.get("weather"),
+        fishing_types=fishing_types,
+    )
+
+    # Rebuild safety checklist with profile fishing types
+    forecast["safety"] = build_safety_checklist(
+        wind_range=wind_range,
+        wave_range=wave_range,
+        hour=now.hour,
+        alerts=forecast.get("alerts"),
+        fishing_types=fishing_types,
+        water_temp=water_temp,
     )
 
     # Rebuild 3-day outlook with profile-filtered species
@@ -2736,6 +2972,42 @@ def build_trip_setup(
         if murky and "pyramid" not in sinker.lower():
             sinker += " \u2014 go heavier in rough surf"
         rows.append({"icon": "weight", "label": "Weight", "value": sinker})
+
+    # -- Fishing-type-specific tackle tips --
+    ft = set(profile.get("fishing_types") or [])
+    if "fly" in ft:
+        if murky:
+            rows.append({"icon": "tip", "label": "Fly tip",
+                         "value": "Murky water — use large, dark Clouser or Deceiver patterns with rattle beads; fish sense vibration over sight"})
+        elif cold_water:
+            rows.append({"icon": "tip", "label": "Fly tip",
+                         "value": "Cold water — slow down your strip retrieve; a near-dead-drift crab or shrimp pattern often outfishes a fast retrieve"})
+        else:
+            rows.append({"icon": "tip", "label": "Fly tip",
+                         "value": "Lead fish by 3–6 feet; let the fly sink to eye level before starting your strip retrieve"})
+    if "wade" in ft:
+        if murky:
+            rows.append({"icon": "tip", "label": "Wade tip",
+                         "value": "Low visibility — switch to scented soft plastics or live shrimp; rely on noise (rattles, popping cork) over sight-fishing"})
+        else:
+            rows.append({"icon": "tip", "label": "Wade tip",
+                         "value": "Clear water sight-fishing — crouch low on approach, cast past the fish and bring the lure through the zone"})
+    if "kayak" in ft:
+        rows.append({"icon": "tip", "label": "Kayak tip",
+                     "value": "Anchor upcurrent of your target structure and drift baits naturally into the strike zone rather than casting into the current"})
+    if "bridge" in ft:
+        if tide_state == "rising":
+            rows.append({"icon": "tip", "label": "Bridge tip",
+                         "value": "Incoming tide — position on the upcurrent side; fish sweep bait through shadow lines under the bridge"})
+        elif tide_state == "falling":
+            rows.append({"icon": "tip", "label": "Bridge tip",
+                         "value": "Outgoing tide — position on the downcurrent side of pilings; fish face into current waiting for bait to come to them"})
+        else:
+            rows.append({"icon": "tip", "label": "Bridge tip",
+                         "value": "Fish the shadow lines where light meets darkness; snook and tarpon ambush prey along these edges after dark"})
+    if "jetty" in ft:
+        rows.append({"icon": "tip", "label": "Jetty tip",
+                     "value": "Work the tip of the jetty on an incoming tide for the best mix of species; predators stage here to intercept bait flushed out of the inlet"})
 
     # -- Conditions-driven tackle tip --
     if tide_state == "rising":
