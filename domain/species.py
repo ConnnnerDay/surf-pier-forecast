@@ -494,6 +494,43 @@ _GAMEFISH_SPECIES: set = {
     "Permit",
 }
 
+# The classic inshore slam: redfish, speckled trout, snook, and flounder —
+# the four species most commonly referred to when anglers chase an inshore slam.
+# Tarpon is included as the "grand slam" completion fish.
+_INSHORE_SLAM_SPECIES: set = {
+    "Red drum (puppy drum)",
+    "Redfish (Gulf red drum)",
+    "Speckled trout (spotted seatrout)",
+    "Snook",
+    "Flounder (summer flounder)",
+    "Southern flounder",
+    "Gulf flounder",
+    "Tarpon",
+    "Ladyfish",
+    "Sand seatrout (white trout)",
+    "Silver seatrout",
+    "Gray trout (weakfish)",
+    "Jack crevalle",
+    "Tripletail",
+}
+
+# Species associated with crab and shellfish targeting — primarily heavy
+# shellfish feeders that concentrate around oyster bars, crab traps, and
+# hard-bottom structure where shellfish are harvested.
+_CRAB_SHELLFISH_SPECIES: set = {
+    "Sheepshead",               # Primary fiddler crab / barnacle feeder
+    "Sheepshead (Gulf)",
+    "Black drum",               # Oysters, clams, mussels — primary diet
+    "Black drum (large bull)",
+    "Tautog (blackfish)",       # Green crab specialist on rocky structure
+    "Permit",                   # Sand fleas and crabs in flats/inlets
+    "Red drum (puppy drum)",    # Feeds heavily on blue crabs
+    "Redfish (Gulf red drum)",
+    "Scup (porgy)",             # Crabs and shellfish around piers/reefs
+    "Red porgy",
+    "Hogfish",                  # Crushes urchins and shellfish on reefs
+}
+
 # Species that are nuisance bycatch and not worth targeting from the surf or pier.
 # These are excluded from the "What's Biting Now" ranking entirely.
 _NUISANCE_SPECIES: set = {
@@ -946,6 +983,10 @@ def _species_matches_profile(
         if "structure" in targets and sp_name in _STRUCTURE_SPECIES:
             in_any_target = True
         if "gamefish" in targets and sp_name in _GAMEFISH_SPECIES:
+            in_any_target = True
+        if "inshore_slam" in targets and sp_name in _INSHORE_SLAM_SPECIES:
+            in_any_target = True
+        if "crab_shellfish" in targets and sp_name in _CRAB_SHELLFISH_SPECIES:
             in_any_target = True
         if not in_any_target:
             return False

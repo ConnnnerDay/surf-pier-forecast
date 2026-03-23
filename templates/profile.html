@@ -44,6 +44,20 @@
             </div>
         </section>
 
+        <!-- Quick-start presets -->
+        <section class="profile-wizard-card" style="margin:1rem">
+            <h3 style="margin:0 0 0.5rem;font-size:1rem">Quick-start presets</h3>
+            <p style="margin:0 0 0.75rem;font-size:0.85rem;color:var(--text-muted)">Choose a profile that matches your style — you can fine-tune below.</p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                <button type="button" class="profile-preset-btn" onclick="applyPreset('surf_angler')">Surf Angler</button>
+                <button type="button" class="profile-preset-btn" onclick="applyPreset('pier_regular')">Pier Regular</button>
+                <button type="button" class="profile-preset-btn" onclick="applyPreset('inshore_hunter')">Inshore Slam Hunter</button>
+                <button type="button" class="profile-preset-btn" onclick="applyPreset('kayak_angler')">Kayak Angler</button>
+                <button type="button" class="profile-preset-btn" onclick="applyPreset('fly_fisherman')">Saltwater Fly Fisher</button>
+                <button type="button" class="profile-preset-btn" onclick="applyPreset('offshore_charter')">Offshore / Charter</button>
+            </div>
+        </section>
+
         <form id="profile-form" class="profile-form" onsubmit="return saveProfile(event)" style="padding:0 1rem">
 
             <p class="profile-group-label">How do you fish?</p>
@@ -301,6 +315,102 @@
     </footer>
 
     <script>
+    // ---------------------------------------------------------------------------
+    // Fisherman presets — quick-start profile templates
+    // ---------------------------------------------------------------------------
+    var _PRESETS = {
+        surf_angler: {
+            fishing_types: ['surf'],
+            live_bait: 'sometimes',
+            cut_bait: 'yes',
+            lures: 'sometimes',
+            experience: 'intermediate',
+            targets: ['bottom', 'pelagic'],
+        },
+        pier_regular: {
+            fishing_types: ['pier', 'jetty'],
+            live_bait: 'sometimes',
+            cut_bait: 'yes',
+            lures: 'sometimes',
+            experience: 'intermediate',
+            targets: ['bottom', 'structure'],
+        },
+        inshore_hunter: {
+            fishing_types: ['inshore', 'wade', 'kayak'],
+            live_bait: 'yes',
+            cut_bait: 'sometimes',
+            lures: 'yes',
+            experience: 'experienced',
+            targets: ['inshore_slam'],
+        },
+        kayak_angler: {
+            fishing_types: ['kayak', 'inshore'],
+            live_bait: 'sometimes',
+            cut_bait: 'sometimes',
+            lures: 'yes',
+            experience: 'intermediate',
+            targets: ['inshore_slam', 'pelagic'],
+        },
+        fly_fisherman: {
+            fishing_types: ['fly'],
+            live_bait: 'no',
+            cut_bait: 'no',
+            lures: 'yes',
+            experience: 'experienced',
+            targets: ['inshore_slam', 'gamefish'],
+        },
+        offshore_charter: {
+            fishing_types: ['offshore', 'charter'],
+            live_bait: 'yes',
+            cut_bait: 'sometimes',
+            lures: 'sometimes',
+            experience: 'intermediate',
+            targets: ['pelagic', 'gamefish'],
+        },
+    };
+
+    function applyPreset(key) {
+        var preset = _PRESETS[key];
+        if (!preset) return;
+
+        // Clear all checkboxes/radios first
+        document.querySelectorAll('#profile-form input[type="checkbox"]').forEach(function(el) {
+            el.checked = false;
+        });
+        document.querySelectorAll('#profile-form input[type="radio"]').forEach(function(el) {
+            el.checked = false;
+        });
+
+        // Apply fishing types
+        (preset.fishing_types || []).forEach(function(t) {
+            var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
+            if (el) el.checked = true;
+        });
+
+        // Apply radio fields
+        ['live_bait', 'cut_bait', 'lures', 'experience'].forEach(function(name) {
+            if (preset[name]) {
+                var el = document.querySelector('input[name="' + name + '"][value="' + preset[name] + '"]');
+                if (el) el.checked = true;
+            }
+        });
+
+        // Apply targets
+        (preset.targets || []).forEach(function(t) {
+            var el = document.querySelector('input[name="targets"][value="' + t + '"]');
+            if (el) el.checked = true;
+        });
+
+        updateProfileProgress();
+
+        // Highlight active preset button
+        document.querySelectorAll('.profile-preset-btn').forEach(function(btn) {
+            btn.classList.remove('profile-preset-btn--active');
+        });
+        var activeBtn = document.querySelector('.profile-preset-btn[onclick="applyPreset(\'' + key + '\')"]');
+        if (activeBtn) activeBtn.classList.add('profile-preset-btn--active');
+    }
+
     // Server-side profile (authoritative, account-backed)
     var _serverProfile = {{ (prefs.fishing_profile or {}) | tojson }};
 
