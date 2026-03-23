@@ -5267,6 +5267,25 @@ footer p {
 }
 .species-name-row h3 { margin: 0; }
 
+.caught-here-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #1a6b36;
+  background: #d4edda;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+[data-theme="dark"] .caught-here-badge {
+  color: #6fcf97;
+  background: rgba(111,207,151,0.15);
+}
+
 .regs-pill {
   display: inline-flex;
   align-items: center;

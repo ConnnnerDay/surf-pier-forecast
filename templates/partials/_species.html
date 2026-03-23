@@ -18,6 +18,9 @@
                     <div class="species-body">
                         <div class="species-name-row">
                             <h3>{{ sp.name }}</h3>
+                            {% if caught_species and sp.name|lower in caught_species %}
+                            <span class="caught-here-badge" title="You've caught this species at this location before">Caught here</span>
+                            {% endif %}
                             <button class="regs-pill" type="button" data-open-regs aria-label="View regulations for {{ sp.name }}">
                                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                 Regs

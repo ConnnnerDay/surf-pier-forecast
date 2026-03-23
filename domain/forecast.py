@@ -1010,6 +1010,7 @@ def build_spot_tips(
     coast: str = "east",
     tide_state: str = "",
     fishing_types: Optional[List[str]] = None,
+    experience: str = "",
 ) -> List[Dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
@@ -1320,6 +1321,31 @@ def build_spot_tips(
                     "gaff, and fillet fish all day.",
                 }
             )
+
+    # ── Experience-level tip ────────────────────────────────────────────────
+    if experience == "beginner":
+        tips.append(
+            {
+                "icon": "beginner",
+                "title": "Getting Started",
+                "detail": "Start with a simple bottom rig (fish-finder or hi-lo) baited with "
+                "cut shrimp or sand fleas. Cast straight out, set the rod in a "
+                "spike, and keep your drag slightly loose so fish can run without "
+                "breaking off. Circle hooks set themselves — don't jerk the rod, "
+                "just reel steadily when you feel weight.",
+            }
+        )
+    elif experience == "experienced":
+        tips.append(
+            {
+                "icon": "advanced",
+                "title": "Read the Water",
+                "detail": "Look for color changes, current seams, nervous bait, birds diving, "
+                "or dark patches indicating structure. The best spot on any beach "
+                "or pier shifts hourly with current and light — keep moving until "
+                "you find active fish, then stay put.",
+            }
+        )
 
     # Prepend type-specific tips, then fill remaining slots with generic tips
     return (type_tips + tips)[: max(5, len(type_tips) + 2)]
@@ -2664,6 +2690,10 @@ def personalize_forecast(
     """
     fishing_types = profile.get("fishing_types")
     targets = profile.get("targets")
+    experience = profile.get("experience") or ""
+    live_bait = profile.get("live_bait") or ""
+    cut_bait = profile.get("cut_bait") or ""
+    lures = profile.get("lures") or ""
     if not fishing_types and not targets:
         return forecast
 
@@ -2747,7 +2777,14 @@ def personalize_forecast(
     # Rebuild species-dependent sections
     forecast = dict(forecast)  # shallow copy to avoid mutating cache
     forecast["species"] = species
-    forecast["rig_recommendations"] = build_rig_recommendations(species, fishing_types=fishing_types)
+    forecast["rig_recommendations"] = build_rig_recommendations(
+        species,
+        fishing_types=fishing_types,
+        experience=experience,
+        live_bait=live_bait,
+        cut_bait=cut_bait,
+        lures=lures,
+    )
     forecast["bait_rankings"] = build_bait_ranking(species, month)
     forecast["lure_recommendations"] = build_lure_recommendations(species, month)
     forecast["calendar"] = build_species_calendar(
@@ -2807,6 +2844,7 @@ def personalize_forecast(
         coast=loc_coast,
         tide_state=tide_state_val,
         fishing_types=fishing_types,
+        experience=experience,
     )
 
     # Rebuild best fishing times with type-specific windows

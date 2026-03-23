@@ -1602,9 +1602,38 @@ def _classify_rig(rig_text: str) -> str:
     return "fishfinder"
 
 
+# Maps rig keys to their primary gear style ("bait", "lure", or "mixed").
+# Used to filter recommendations based on user bait/lure preferences.
+_RIG_GEAR_TYPE: Dict[str, str] = {
+    "fishfinder": "bait",
+    "hi-lo": "bait",
+    "knocker": "bait",
+    "pompano": "bait",
+    "float": "mixed",
+    "popping-cork": "mixed",
+    "kingfish-stinger": "bait",
+    "shark": "bait",
+    "sabiki": "bait",
+    "deep-drop": "bait",
+    "trolling": "mixed",
+    "tandem-jig": "lure",
+    "fly_pattern": "lure",
+    "current_jig": "lure",
+    "wade_light": "mixed",
+    "kayak_live_bait": "bait",
+}
+
+# Rigs that work well as a first introduction — simple setup, forgiving tackle.
+_BEGINNER_FRIENDLY_RIGS = frozenset({"fishfinder", "hi-lo", "pompano", "float", "popping-cork"})
+
+
 def build_rig_recommendations(
     species_ranking: List[Dict[str, Any]],
     fishing_types: Optional[List[str]] = None,
+    experience: str = "",
+    live_bait: str = "",
+    cut_bait: str = "",
+    lures: str = "",
 ) -> List[Dict[str, Any]]:
     """Build rig recommendations based on currently-active species.
 
@@ -1612,8 +1641,18 @@ def build_rig_recommendations(
     per rig, ordered by the highest-ranked species that uses it.
     When *fishing_types* is provided, type-specific rigs are prepended
     even if no species in the ranking explicitly reference them.
+
+    Bait/lure preference filtering:
+    - lures=="no": lure-only rigs are removed.
+    - live_bait=="no" and cut_bait=="no" (lure-only): bait rigs are deprioritised.
+    Experience-level filtering:
+    - experience=="beginner": only beginner-friendly rigs are shown (top 3 max).
     """
     ft = set(fishing_types or [])
+
+    wants_lures = lures != "no"
+    wants_bait = not (live_bait == "no" and cut_bait == "no")
+    lures_only = (lures == "yes" or lures == "sometimes") and live_bait == "no" and cut_bait == "no"
 
     rig_groups: Dict[str, List[Dict[str, Any]]] = {}
     rig_order: List[str] = []
@@ -1670,6 +1709,34 @@ def build_rig_recommendations(
         rec = _make_rec(key, rig_groups[key])
         if rec:
             recommendations.append(rec)
+
+    # ── Bait/lure preference filtering ─────────────────────────────────────
+    # Annotate each rec with its gear type for template use, then filter.
+    # We need to track which key produced each rec — rebuild with key metadata.
+    def _gear_type_for_rec(rec: Dict[str, Any]) -> str:
+        # Match rec name back to a rig key via RIG_CATEGORIES.
+        for k, cat in RIG_CATEGORIES.items():
+            if cat.get("name") == rec.get("name"):
+                return _RIG_GEAR_TYPE.get(k, "mixed")
+        return "mixed"
+
+    if live_bait or cut_bait or lures:
+        if not wants_lures:
+            # User explicitly doesn't use lures — drop lure-only rigs.
+            recommendations = [r for r in recommendations if _gear_type_for_rec(r) != "lure"]
+        elif lures_only:
+            # Lure-only angler: sort lure/mixed rigs first, bait rigs last.
+            recommendations.sort(key=lambda r: 0 if _gear_type_for_rec(r) in ("lure", "mixed") else 1)
+
+    # ── Experience-level filtering ──────────────────────────────────────────
+    if experience == "beginner":
+        beginner = [r for r in recommendations if any(
+            RIG_CATEGORIES.get(k, {}).get("name") == r.get("name") and k in _BEGINNER_FRIENDLY_RIGS
+            for k in RIG_CATEGORIES
+        )]
+        advanced = [r for r in recommendations if r not in beginner]
+        # Beginners get friendly rigs first, capped at 3 total.
+        recommendations = (beginner + advanced)[:3]
 
     return recommendations
 
