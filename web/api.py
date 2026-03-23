@@ -76,13 +76,21 @@ _tz_rate_store: Dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
 
 
+_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
+
+
 def _client_ip() -> str:
-    """Return the best-effort client IP for rate limiting."""
-    return (
-        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-        or request.remote_addr
-        or "unknown"
-    )
+    """Return the best-effort client IP for rate limiting.
+
+    X-Forwarded-For is only honoured when TRUSTED_PROXY=1 is set in the
+    environment.  Without that flag, the header is ignored to prevent clients
+    from spoofing arbitrary IPs and bypassing IP-based rate limiting.
+    """
+    if _TRUST_PROXY:
+        forwarded = request.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
 
 
 # Keep the old alias used by the timezone helpers below.

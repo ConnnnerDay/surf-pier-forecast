@@ -115,7 +115,7 @@ def send_verification_email(
         f"Hi {username},\n\n"
         "Thanks for signing up for Surf & Pier Fishing Forecast!\n\n"
         "Please verify your email address by visiting the link below.\n"
-        "This link expires in 24 hours.\n\n"
+        "This link expires in 2 hours.\n\n"
         f"  {verify_url}\n\n"
         "If you didn't create an account, you can safely ignore this email.\n\n"
         "— Surf & Pier"
@@ -138,7 +138,7 @@ def send_verification_email(
     Or copy this link into your browser:<br>
     <a href="{verify_url}" style="color:#0e5f78;">{verify_url}</a>
   </p>
-  <p style="font-size:0.85rem;color:#666;">This link expires in 24 hours.</p>
+  <p style="font-size:0.85rem;color:#666;">This link expires in 2 hours.</p>
   <p style="font-size:0.85rem;color:#999;">
     If you didn't create an account, you can safely ignore this email.
   </p>
