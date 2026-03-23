@@ -2694,7 +2694,10 @@ def personalize_forecast(
     live_bait = profile.get("live_bait") or ""
     cut_bait = profile.get("cut_bait") or ""
     lures = profile.get("lures") or ""
-    if not fishing_types and not targets:
+
+    has_type_prefs = bool(fishing_types or targets)
+    has_gear_prefs = bool(experience or live_bait or cut_bait or lures)
+    if not has_type_prefs and not has_gear_prefs:
         return forecast
 
     tz_name = (location or {}).get("timezone", "America/New_York")
@@ -2741,19 +2744,27 @@ def personalize_forecast(
     loc_state = (location or {}).get("state", "")
     loc_fish_region = (location or {}).get("fish_region", "")
 
-    species = build_species_ranking(
-        month,
-        water_temp,
-        wind_dir=wind_dir,
-        wind_range=wind_range,
-        wave_range=wave_range,
-        hour=now.hour,
-        coast=coast,
-        state=loc_state,
-        fishing_types=fishing_types,
-        targets=targets,
-        fish_region=loc_fish_region,
-    )
+    # Re-rank species only when fishing type or target preferences are provided.
+    # When only experience/bait prefs are set, keep existing cached species but
+    # still rebuild rigs and tips with the gear/experience-aware logic below.
+    if has_type_prefs:
+        species = build_species_ranking(
+            month,
+            water_temp,
+            wind_dir=wind_dir,
+            wind_range=wind_range,
+            wave_range=wave_range,
+            hour=now.hour,
+            coast=coast,
+            state=loc_state,
+            fishing_types=fishing_types,
+            targets=targets,
+            fish_region=loc_fish_region,
+        )
+    else:
+        # Shallow-copy each species dict so we don't mutate cached objects
+        # when we add per-session tip fields below.
+        species = [dict(s) for s in (forecast.get("species") or [])]
 
     # Add technique tips
     t_state = forecast.get("tide_state", "")

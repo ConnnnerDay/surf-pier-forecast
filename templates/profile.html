@@ -396,11 +396,17 @@
         }
 
         // Persist to server for the signed-in account, then redirect.
+        // Include all profile fields in the URL so personalization applies
+        // immediately on the first load without waiting for a second page visit.
         var params = new URLSearchParams();
         var ft = profile.fishing_types.join(',');
         var tg = profile.targets.join(',');
         if (ft) params.set('fishing_types', ft);
         if (tg) params.set('targets', tg);
+        if (profile.experience) params.set('experience', profile.experience);
+        if (profile.live_bait) params.set('live_bait', profile.live_bait);
+        if (profile.cut_bait) params.set('cut_bait', profile.cut_bait);
+        if (profile.lures) params.set('lures', profile.lures);
         var dashboardUrl = '{{ url_for("views.index") }}' + (params.toString() ? '?' + params.toString() : '');
 
         fetch('{{ url_for("api.profile_v1") }}', {
