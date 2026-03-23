@@ -127,6 +127,199 @@ _SURF_SPECIES: set = {
     "Bonefish (oio)",
 }
 
+# Species primarily caught from jetties and rock structures (inlet mouths,
+# rocky points).  Heavily overlaps with pier but includes inlet-mouth
+# species like snook and redfish that patrol jetty bases.
+_JETTY_SPECIES: set = {
+    "Sheepshead",
+    "Tautog (blackfish)",
+    "Black sea bass",
+    "Spadefish (Atlantic)",
+    "Triggerfish (gray)",
+    "Lookdown",
+    "Mangrove snapper (gray snapper)",
+    "Hogfish",
+    "Cunner (bergall)",
+    "Kelp bass (calico bass)",
+    "Sand bass (barred sand bass)",
+    "California sheephead",
+    "Kelp greenling",
+    "Rock greenling",
+    "Cabezon",
+    "Lingcod",
+    "Striped bass (rockfish)",
+    "Snook",
+    "Red drum (puppy drum)",
+    "Jack crevalle",
+    "Tarpon",
+    "Cobia",
+}
+
+# Species commonly caught from bridges and causeways over tidal channels.
+# Current-driven feeding is the defining characteristic — snook, sheepshead,
+# and permit hold on pilings; migratory pelagics pass through inlets.
+_BRIDGE_SPECIES: set = {
+    "Sheepshead",
+    "Snook",
+    "Permit",
+    "Jack crevalle",
+    "Mangrove snapper (gray snapper)",
+    "Lookdown",
+    "Cobia",
+    "Spanish mackerel",
+    "Tarpon",
+    "Red drum (puppy drum)",
+    "Black drum",
+    "Flounder (summer flounder)",
+    "Southern flounder",
+    "Striped bass (rockfish)",
+    "Black sea bass",
+    "Tautog (blackfish)",
+    "Spadefish (Atlantic)",
+    "Blue runner (hardtail)",
+    "Bluefish",
+}
+
+# Species accessible by wading — shallow inshore/flats fish only.
+# Excludes anything that requires a boat or depth to reach.
+_WADE_SPECIES: set = {
+    "Speckled trout (spotted seatrout)",
+    "Red drum (puppy drum)",
+    "Southern flounder",
+    "Flounder (summer flounder)",
+    "Gulf flounder",
+    "Snook",
+    "Ladyfish",
+    "Sand seatrout (white trout)",
+    "Silver seatrout",
+    "Gray trout (weakfish)",
+    "Black drum",
+    "Bonefish (oio)",
+    "Permit",
+    "Corbina",
+    "Spotfin croaker",
+    "Yellowfin croaker",
+    "Barred surfperch",
+    "Redtail surfperch",
+    "Walleye surfperch",
+    "White perch",
+    "Striped bass (rockfish)",
+}
+
+# Species reachable by kayak — inshore + nearshore.  Wider range than wade
+# because kayaks can reach structure, nearshore reefs, and tidal creeks.
+_KAYAK_SPECIES: set = {
+    "Speckled trout (spotted seatrout)",
+    "Red drum (puppy drum)",
+    "Southern flounder",
+    "Flounder (summer flounder)",
+    "Gulf flounder",
+    "Snook",
+    "Tarpon",
+    "Cobia",
+    "Ladyfish",
+    "Jack crevalle",
+    "Spanish mackerel",
+    "False albacore (little tunny)",
+    "Sheepshead",
+    "Black sea bass",
+    "Mangrove snapper (gray snapper)",
+    "Sand seatrout (white trout)",
+    "Striped bass (rockfish)",
+    "Bluefish",
+    "Black drum",
+    "Permit",
+    "Tripletail",
+    "Red snapper",
+    "Gag grouper",
+    "Red grouper",
+    "King mackerel (kingfish)",
+    "Yellowtail (California yellowtail)",
+    "White seabass",
+    "Kelp bass (calico bass)",
+    "Lingcod",
+    "Cabezon",
+}
+
+# Species targeted on chartered/head-boat trips — offshore and nearshore
+# bottom structure focused.  Includes all offshore-only species.
+_CHARTER_SPECIES: set = {
+    "Mahi-mahi (dolphinfish)",
+    "Wahoo",
+    "Blackfin tuna",
+    "Yellowfin tuna",
+    "Sailfish",
+    "Blue marlin",
+    "White marlin",
+    "Skipjack tuna",
+    "Bigeye tuna",
+    "Albacore tuna",
+    "King mackerel (kingfish)",
+    "Cobia",
+    "Greater amberjack",
+    "Almaco jack",
+    "Red snapper",
+    "Vermilion snapper (beeliner)",
+    "Mangrove snapper (gray snapper)",
+    "Lane snapper",
+    "Yellowtail snapper",
+    "Mutton snapper",
+    "Gag grouper",
+    "Red grouper",
+    "Scamp grouper",
+    "Black grouper",
+    "Blueline tilefish",
+    "Golden tilefish",
+    "Snowy grouper",
+    "Scup (porgy)",
+    "Red porgy",
+    "White grunt",
+    "Hogfish",
+    "Spanish mackerel",
+    "False albacore (little tunny)",
+    "Yellowtail (California yellowtail)",
+    "White seabass",
+    "Lingcod",
+    "Copper rockfish",
+    "Vermilion rockfish",
+    "Blue rockfish",
+    "Cabezon",
+    "Pacific bonito",
+}
+
+# Species well-suited for saltwater fly fishing — must be catchable on a fly
+# in typical conditions (sight-fish, surface feeders, or active hunters).
+_FLY_SPECIES: set = {
+    "Speckled trout (spotted seatrout)",
+    "Red drum (puppy drum)",
+    "Snook",
+    "Tarpon",
+    "Bonefish (oio)",
+    "Permit",
+    "Jack crevalle",
+    "Ladyfish",
+    "False albacore (little tunny)",
+    "Bluefish",
+    "Striped bass (rockfish)",
+    "Cobia",
+    "Spanish mackerel",
+    "King mackerel (kingfish)",
+    "Pompano",
+    "Tripletail",
+    "Barracuda",
+    "Great barracuda",
+    "Giant trevally (ulua)",
+    "Bluefin trevally (omilu)",
+    "Papio (juvenile jack)",
+    "Mahi-mahi (dolphinfish)",
+    "Yellowtail (California yellowtail)",
+    "White seabass",
+    "Kelp bass (calico bass)",
+    "Pacific bonito",
+    "Corbina",
+    "Barred surfperch",
+}
+
 # Species best caught inshore (inlet, marsh, flats).
 _INSHORE_SPECIES: set = {
     "Speckled trout (spotted seatrout)",
@@ -667,37 +860,84 @@ def _species_matches_profile(
         has_pier = "pier" in fishing_types
         has_inshore = "inshore" in fishing_types
         has_offshore = "offshore" in fishing_types
+        has_jetty = "jetty" in fishing_types
+        has_bridge = "bridge" in fishing_types
+        has_wade = "wade" in fishing_types
+        has_kayak = "kayak" in fishing_types
+        has_charter = "charter" in fishing_types
+        has_fly = "fly" in fishing_types
 
-        # If user doesn't fish offshore, exclude offshore-only species
-        if not has_offshore and sp_name in _OFFSHORE_ONLY_SPECIES:
+        # Jetty/rock is structurally pier-like; bridge is pier+inshore.
+        # Kayak and charter both include offshore species.
+        # Fly fishing skews inshore/flats.
+        effective_pier = has_pier or has_jetty or has_bridge
+        effective_inshore = has_inshore or has_wade or has_fly
+        effective_offshore = has_offshore or has_charter or has_kayak
+
+        # Offshore-only species: only show if at least one boat/offshore method
+        if not effective_offshore and sp_name in _OFFSHORE_ONLY_SPECIES:
             return False
 
-        # If species is exclusively surf/pier/inshore AND user doesn't do
-        # that type, consider excluding.  But most species are catchable
-        # from multiple locations, so we only restrict the tight sets.
-        is_surf_only = (
-            sp_name in _SURF_SPECIES
-            and sp_name not in _PIER_SPECIES
-            and sp_name not in _INSHORE_SPECIES
+        # Charter: if the ONLY types selected are charter, gate to charter set
+        only_charter = has_charter and not (
+            has_surf or has_pier or has_inshore or has_offshore
+            or has_jetty or has_bridge or has_wade or has_kayak or has_fly
         )
-        is_pier_only = (
-            sp_name in _PIER_SPECIES
-            and sp_name not in _SURF_SPECIES
-            and sp_name not in _INSHORE_SPECIES
+        if only_charter and sp_name not in _CHARTER_SPECIES:
+            return False
+
+        # Fly-only gate: if the only type selected is fly, restrict to fly species
+        only_fly = has_fly and not (
+            has_surf or has_pier or has_inshore or has_offshore
+            or has_jetty or has_bridge or has_wade or has_kayak or has_charter
         )
-        is_inshore_only = (
-            sp_name in _INSHORE_SPECIES
-            and sp_name not in _SURF_SPECIES
-            and sp_name not in _PIER_SPECIES
+        if only_fly and sp_name not in _FLY_SPECIES:
+            return False
+
+        # For the original tight sets, check exclusivity before filtering.
+        # A species is "X-only" when it belongs to X's set but not the
+        # other primary method sets.
+        _primary_sets = (
+            _SURF_SPECIES, _PIER_SPECIES, _INSHORE_SPECIES,
+            _JETTY_SPECIES, _BRIDGE_SPECIES, _WADE_SPECIES,
+            _KAYAK_SPECIES, _CHARTER_SPECIES, _FLY_SPECIES,
         )
 
-        # Only exclude if the species' primary method doesn't overlap with
-        # any of the user's chosen types
+        def _in_any_other(sp: str, exclude_set: set) -> bool:
+            return any(sp in s for s in _primary_sets if s is not exclude_set)
+
+        is_surf_only = sp_name in _SURF_SPECIES and not _in_any_other(sp_name, _SURF_SPECIES)
+        is_pier_only = sp_name in _PIER_SPECIES and not _in_any_other(sp_name, _PIER_SPECIES)
+        is_inshore_only = (
+            sp_name in _INSHORE_SPECIES and not _in_any_other(sp_name, _INSHORE_SPECIES)
+        )
+        is_jetty_only = (
+            sp_name in _JETTY_SPECIES and not _in_any_other(sp_name, _JETTY_SPECIES)
+        )
+        is_bridge_only = (
+            sp_name in _BRIDGE_SPECIES and not _in_any_other(sp_name, _BRIDGE_SPECIES)
+        )
+        is_wade_only = sp_name in _WADE_SPECIES and not _in_any_other(sp_name, _WADE_SPECIES)
+        is_kayak_only = (
+            sp_name in _KAYAK_SPECIES and not _in_any_other(sp_name, _KAYAK_SPECIES)
+        )
+        is_fly_only = sp_name in _FLY_SPECIES and not _in_any_other(sp_name, _FLY_SPECIES)
+
         if is_surf_only and not has_surf:
             return False
-        if is_pier_only and not has_pier:
+        if is_pier_only and not effective_pier:
             return False
-        if is_inshore_only and not has_inshore:
+        if is_inshore_only and not effective_inshore:
+            return False
+        if is_jetty_only and not (has_jetty or has_pier):
+            return False
+        if is_bridge_only and not (has_bridge or has_pier or effective_inshore):
+            return False
+        if is_wade_only and not (has_wade or effective_inshore):
+            return False
+        if is_kayak_only and not (has_kayak or effective_offshore):
+            return False
+        if is_fly_only and not (has_fly or effective_inshore):
             return False
 
     # --- Target category filter ---
@@ -1219,6 +1459,72 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "leader": "8-12 lb mono, 18 in between jigs",
         "image": "images/rigs/tandem-jig.svg",
     },
+    "fly_pattern": {
+        "name": "Saltwater Fly Leader Setup",
+        "description": (
+            "A weight-forward floating or intermediate fly line connected "
+            "to a 7-12 ft tapered leader ending in fluorocarbon tippet. "
+            "Leader length varies: 9-12 ft for calm flats (spooked fish), "
+            "7-9 ft in wind. Tippet weight matches species: 12-16 lb for "
+            "redfish and speckled trout, 20-30 lb for snook and tarpon. "
+            "Tie a non-slip mono loop knot for fly action. "
+            "Common patterns: Clouser Minnow (redfish, striped bass), "
+            "EP Crab/Merkin (permit, bonefish), Toad fly (snook), "
+            "Deceivers (bluefish, false albacore)."
+        ),
+        "mainline": "Weight-forward fly line matched to rod weight (8-12 wt)",
+        "leader": "7-12 ft tapered to 12-30 lb fluorocarbon tippet",
+        "image": "images/rigs/fly-leader.svg",
+    },
+    "current_jig": {
+        "name": "Current Jig / Bridge Jig Rig",
+        "description": (
+            "A heavy bucktail or soft-plastic jig (1-3 oz) tied direct "
+            "or with a short fluorocarbon leader, dropped vertically down "
+            "bridge pilings or jetty faces and worked with a slow lift-drop. "
+            "The weight must be heavy enough to reach bottom in tidal current — "
+            "increase jig weight until you feel the bottom. "
+            "White, chartreuse, and olive are standard colors. "
+            "Optional: add a soft-plastic paddle tail or a live shrimp on "
+            "the hook for scent. Targets sheepshead, snook, flounder, "
+            "striped bass, and jack crevalle."
+        ),
+        "mainline": "20-30 lb braid",
+        "leader": "18-24 in of 20-30 lb fluorocarbon",
+        "image": "images/rigs/current-jig.svg",
+    },
+    "wade_light": {
+        "name": "Wade / Flats Light Tackle Rig",
+        "description": (
+            "A jig head (1/8-1/4 oz) with a soft-plastic shrimp, paddle "
+            "tail, or DOA-style bait, fished on light spinning or baitcasting "
+            "gear. Alternatively, a popping cork 18-30 in above a "
+            "fluorocarbon leader and circle hook for live or artificial shrimp. "
+            "The goal is natural presentation with minimal splash — "
+            "waded inshore fish are easily spooked. "
+            "Use scented baits (GULP, DOA) in off-color water "
+            "and finesse unscented plastics in clear conditions."
+        ),
+        "mainline": "10-15 lb braid on light spinning rod",
+        "leader": "12-18 in of 15-20 lb fluorocarbon",
+        "image": "images/rigs/wade-light.svg",
+    },
+    "kayak_live_bait": {
+        "name": "Kayak Live Bait Freeline Rig",
+        "description": (
+            "A live baitfish (pinfish, mullet, grunt) or live shrimp "
+            "hooked lightly through the lips or back and fished with "
+            "minimal weight (split shot only, or weightless) so the bait "
+            "swims freely near structure. From a kayak, anchor upcurrent "
+            "and let the bait drift into the strike zone — snook, cobia, "
+            "and tripletail will track a struggling live bait from a distance. "
+            "Use a circle hook (3/0-5/0) for easy, keel-stable hook sets "
+            "without a stand-up fighting platform."
+        ),
+        "mainline": "20-30 lb braid",
+        "leader": "2-4 ft of 25-40 lb fluorocarbon",
+        "image": "images/rigs/kayak-live-bait.svg",
+    },
 }
 
 
@@ -1235,6 +1541,36 @@ def _classify_rig(rig_text: str) -> str:
         return "sabiki"
     if "shad dart" in text or "tandem" in text:
         return "tandem-jig"
+    # Fly fishing patterns / leader setups
+    if (
+        "fly pattern" in text
+        or "fly leader" in text
+        or "clouser" in text
+        or "deceiver" in text
+        or "fly line" in text
+        or "tippet" in text
+        or ("fly" in text and "rod" in text)
+    ):
+        return "fly_pattern"
+    # Wade / flats light tackle
+    if (
+        "jig head" in text
+        or "doa" in text
+        or ("wade" in text and "light" in text)
+        or "flats rig" in text
+    ):
+        return "wade_light"
+    # Bridge / current jig
+    if (
+        "bridge jig" in text
+        or "current jig" in text
+        or "bucktail jig" in text
+        or ("piling" in text and "jig" in text)
+    ):
+        return "current_jig"
+    # Kayak live bait freeline
+    if "freeline" in text or ("kayak" in text and "live bait" in text):
+        return "kayak_live_bait"
     if "popping" in text or "cork" in text:
         return "popping-cork"
     if "stinger" in text or ("king" in text and "wire" in text):
@@ -1268,12 +1604,17 @@ def _classify_rig(rig_text: str) -> str:
 
 def build_rig_recommendations(
     species_ranking: List[Dict[str, Any]],
+    fishing_types: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """Build rig recommendations based on currently-active species.
 
     Groups active species by rig type and produces one recommendation
     per rig, ordered by the highest-ranked species that uses it.
+    When *fishing_types* is provided, type-specific rigs are prepended
+    even if no species in the ranking explicitly reference them.
     """
+    ft = set(fishing_types or [])
+
     rig_groups: Dict[str, List[Dict[str, Any]]] = {}
     rig_order: List[str] = []
 
@@ -1284,30 +1625,51 @@ def build_rig_recommendations(
             rig_order.append(key)
         rig_groups[key].append(sp)
 
-    recommendations: List[Dict[str, Any]] = []
-    for key in rig_order:
-        group = rig_groups[key]
+    # Prepend fishing-type-specific rigs that may not emerge from species data
+    type_rig_keys: List[str] = []
+    if "fly" in ft and "fly_pattern" not in rig_order:
+        type_rig_keys.append("fly_pattern")
+    if ("bridge" in ft or "jetty" in ft) and "current_jig" not in rig_order:
+        type_rig_keys.append("current_jig")
+    if "wade" in ft and "wade_light" not in rig_order:
+        type_rig_keys.append("wade_light")
+    if "kayak" in ft and "kayak_live_bait" not in rig_order:
+        type_rig_keys.append("kayak_live_bait")
+
+    def _make_rec(key: str, group: Optional[List[Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
         category = RIG_CATEGORIES.get(key)
         if category is None:
-            continue
+            return None
+        species_names = [sp["name"] for sp in (group or [])]
+        hooks = list(dict.fromkeys(sp["hook_size"] for sp in (group or [])))
+        sinkers = list(dict.fromkeys(sp["sinker"] for sp in (group or [])))
+        return {
+            "name": category["name"],
+            "description": category["description"],
+            "mainline": category["mainline"],
+            "leader": category["leader"],
+            "hook": " or ".join(hooks[:3]) if hooks else "",
+            "sinker": " or ".join(sinkers[:3]) if sinkers else "",
+            "targets": species_names,
+            "image": category.get("image", ""),
+            "knots": get_knots_for_rig(key),
+        }
 
-        species_names = [sp["name"] for sp in group]
-        hooks = list(dict.fromkeys(sp["hook_size"] for sp in group))
-        sinkers = list(dict.fromkeys(sp["sinker"] for sp in group))
+    recommendations: List[Dict[str, Any]] = []
 
-        recommendations.append(
-            {
-                "name": category["name"],
-                "description": category["description"],
-                "mainline": category["mainline"],
-                "leader": category["leader"],
-                "hook": " or ".join(hooks[:3]),
-                "sinker": " or ".join(sinkers[:3]),
-                "targets": species_names,
-                "image": category.get("image", ""),
-                "knots": get_knots_for_rig(key),
-            }
-        )
+    # Type-specific rigs first
+    for key in type_rig_keys:
+        rec = _make_rec(key)
+        if rec:
+            recommendations.append(rec)
+
+    # Species-derived rigs
+    for key in rig_order:
+        if key in type_rig_keys:
+            continue  # already added
+        rec = _make_rec(key, rig_groups[key])
+        if rec:
+            recommendations.append(rec)
 
     return recommendations
 
