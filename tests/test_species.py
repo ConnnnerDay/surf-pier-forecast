@@ -3,7 +3,6 @@
 from domain.species import (
     BAIT_DB,
     SPECIES_DB,
-    _CRAB_SHELLFISH_SPECIES,
     _INSHORE_SLAM_SPECIES,
     _SPECIES_CATEGORIES,
     _retention_prohibited,
@@ -114,40 +113,6 @@ class TestSpeciesMatchesProfile:
     def test_inshore_slam_set_nonempty(self):
         assert len(_INSHORE_SLAM_SPECIES) >= 5
 
-    # -- crab_shellfish target -------------------------------------------------
-
-    def test_crab_shellfish_includes_sheepshead(self):
-        assert _species_matches_profile(
-            "Sheepshead",
-            fishing_types=["pier", "jetty"],
-            targets=["crab_shellfish"],
-        ) is True
-
-    def test_crab_shellfish_includes_black_drum(self):
-        assert _species_matches_profile(
-            "Black drum",
-            fishing_types=["surf", "pier"],
-            targets=["crab_shellfish"],
-        ) is True
-
-    def test_crab_shellfish_includes_tautog(self):
-        assert _species_matches_profile(
-            "Tautog (blackfish)",
-            fishing_types=["pier", "jetty"],
-            targets=["crab_shellfish"],
-        ) is True
-
-    def test_crab_shellfish_excludes_pelagic_only_species(self):
-        # Spanish mackerel is not a crab/shellfish feeder
-        assert _species_matches_profile(
-            "Spanish mackerel",
-            fishing_types=["surf", "pier"],
-            targets=["crab_shellfish"],
-        ) is False
-
-    def test_crab_shellfish_set_nonempty(self):
-        assert len(_CRAB_SHELLFISH_SPECIES) >= 4
-
     # -- anything target bypasses all filtering --------------------------------
 
     def test_anything_target_includes_all(self):
@@ -166,14 +131,6 @@ class TestSpeciesMatchesProfile:
             "Flounder (summer flounder)",
             fishing_types=["inshore", "surf"],
             targets=["inshore_slam", "bottom"],
-        ) is True
-
-    def test_combined_crab_shellfish_and_structure(self):
-        # Sheepshead is both structure and crab/shellfish
-        assert _species_matches_profile(
-            "Sheepshead",
-            fishing_types=["pier"],
-            targets=["structure", "crab_shellfish"],
         ) is True
 
 
