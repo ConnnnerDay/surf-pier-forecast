@@ -47,7 +47,7 @@ _VALID_FISHING_TYPES = frozenset({
     "surf", "pier", "jetty", "bridge", "wade",
     "kayak", "inshore", "offshore", "fly", "charter",
 })
-_VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "crab_shellfish", "anything"})
+_VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "anything"})
 _VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
 _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
 
