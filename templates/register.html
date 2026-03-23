@@ -9,22 +9,52 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta name="theme-color" content="#0e5f78">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body class="auth-page">
     <header>
         <div class="header-inner">
             <h1>Surf &amp; Pier Fishing Outlook</h1>
-            <p class="subtitle">Create your account</p>
+            <p class="subtitle">Create your free account</p>
         </div>
     </header>
 
     <main>
         <section class="auth-section">
-            <h2>Create Account</h2>
 
             {% if error %}
-            <div class="setup-error">{{ error }}</div>
+            <div class="setup-error" role="alert">{{ error }}</div>
+            {% endif %}
+
+            <!-- Social sign-up (shown first — fastest path) -->
+            {% if google_login_enabled or apple_login_enabled %}
+            <div class="auth-social-primary">
+                {% if google_login_enabled %}
+                <a href="{{ url_for('auth.google_login') }}" class="social-btn social-btn--google social-btn--lg">
+                    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+                        <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+                        <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+                        <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
+                        <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
+                    </svg>
+                    Sign up with Google
+                </a>
+                {% endif %}
+                {% if apple_login_enabled %}
+                <a href="{{ url_for('auth.apple_login') }}" class="social-btn social-btn--apple social-btn--lg">
+                    <svg width="18" height="20" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor">
+                        <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
+                    </svg>
+                    Sign up with Apple
+                </a>
+                {% endif %}
+            </div>
+            <div class="social-divider">
+                <span>or sign up with email</span>
+            </div>
+            {% else %}
+            <h2 class="auth-section-title">Create Account</h2>
             {% endif %}
 
             <form method="post" action="{{ url_for('auth.register') }}" class="auth-form">
@@ -42,7 +72,7 @@
                            value="{{ email|default('', true) }}" class="auth-input" maxlength="254"
                            autocomplete="email" autocorrect="off" autocapitalize="off" spellcheck="false"
                            required>
-                    <p style="margin:0.25rem 0 0;font-size:0.8rem;color:var(--muted,#5c6b73);">Used to verify your account. We won&rsquo;t spam you.</p>
+                    <p class="auth-field-hint">Used to verify your account. We won&rsquo;t spam you.</p>
                 </div>
                 <div class="auth-field">
                     <label for="password">Password</label>
@@ -71,86 +101,6 @@
                 </div>
                 <button type="submit" class="auth-btn">Create Account</button>
             </form>
-            <script>
-            function togglePwVis(id, btn) {
-                var input = document.getElementById(id);
-                if (!input) return;
-                input.type = input.type === 'password' ? 'text' : 'password';
-                btn.style.opacity = input.type === 'text' ? '1' : '0.55';
-            }
-            </script>
-            <script>
-            (function() {
-                var pw  = document.getElementById('password');
-                var cf  = document.getElementById('confirm');
-                var matchHint = document.getElementById('pw-match-hint');
-
-                function setReq(id, ok) {
-                    var el = document.getElementById(id);
-                    if (!el) return;
-                    el.classList.toggle('pw-req--ok',   ok);
-                    el.classList.toggle('pw-req--fail', pw.value.length > 0 && !ok);
-                }
-
-                pw.addEventListener('input', function() {
-                    var v = pw.value;
-                    setReq('req-len', v.length >= 8);
-                    setReq('req-up',  /[A-Z]/.test(v));
-                    setReq('req-low', /[a-z]/.test(v));
-                    setReq('req-num', /\d/.test(v));
-                    if (cf.value) checkMatch();
-                });
-
-                function checkMatch() {
-                    if (!cf.value) { matchHint.textContent = ''; return; }
-                    var match = pw.value === cf.value;
-                    matchHint.textContent = match ? '\u2713 Passwords match' : '\u2717 Passwords do not match';
-                    matchHint.style.color  = match ? 'var(--sea-green, #2a7d6e)' : '#c0392b';
-                }
-                cf.addEventListener('input', checkMatch);
-
-                document.querySelector('.auth-form').addEventListener('submit', function(e) {
-                    if (pw.value !== cf.value) {
-                        e.preventDefault();
-                        var err = document.querySelector('.setup-error');
-                        if (!err) {
-                            err = document.createElement('div');
-                            err.className = 'setup-error';
-                            this.parentNode.insertBefore(err, this);
-                        }
-                        err.textContent = 'Passwords do not match.';
-                        cf.focus();
-                    }
-                });
-            }());
-            </script>
-
-            {% if google_login_enabled or apple_login_enabled %}
-            <div class="social-divider">
-                <span>or sign up with</span>
-            </div>
-            <div class="social-buttons">
-                {% if google_login_enabled %}
-                <a href="{{ url_for('auth.google_login') }}" class="social-btn social-btn--google">
-                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                        <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
-                        <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
-                        <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
-                        <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
-                    </svg>
-                    Continue with Google
-                </a>
-                {% endif %}
-                {% if apple_login_enabled %}
-                <a href="{{ url_for('auth.apple_login') }}" class="social-btn social-btn--apple">
-                    <svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor">
-                        <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
-                    </svg>
-                    Continue with Apple
-                </a>
-                {% endif %}
-            </div>
-            {% endif %}
 
             <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
             <p class="auth-switch"><a href="{{ url_for('auth.landing') }}">&larr; Back</a></p>
@@ -160,5 +110,59 @@
     <footer>
         <p>Surf &amp; Pier Fishing Outlook</p>
     </footer>
+
+    <script>
+    function togglePwVis(id, btn) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.style.opacity = input.type === 'text' ? '1' : '0.55';
+    }
+    </script>
+    <script>
+    (function() {
+        var pw  = document.getElementById('password');
+        var cf  = document.getElementById('confirm');
+        var matchHint = document.getElementById('pw-match-hint');
+
+        function setReq(id, ok) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('pw-req--ok',   ok);
+            el.classList.toggle('pw-req--fail', pw.value.length > 0 && !ok);
+        }
+
+        pw.addEventListener('input', function() {
+            var v = pw.value;
+            setReq('req-len', v.length >= 8);
+            setReq('req-up',  /[A-Z]/.test(v));
+            setReq('req-low', /[a-z]/.test(v));
+            setReq('req-num', /\d/.test(v));
+            if (cf.value) checkMatch();
+        });
+
+        function checkMatch() {
+            if (!cf.value) { matchHint.textContent = ''; return; }
+            var match = pw.value === cf.value;
+            matchHint.textContent = match ? '\u2713 Passwords match' : '\u2717 Passwords do not match';
+            matchHint.style.color  = match ? 'var(--sea-green, #2a7d6e)' : '#c0392b';
+        }
+        cf.addEventListener('input', checkMatch);
+
+        document.querySelector('.auth-form').addEventListener('submit', function(e) {
+            if (pw.value !== cf.value) {
+                e.preventDefault();
+                var err = document.querySelector('.setup-error');
+                if (!err) {
+                    err = document.createElement('div');
+                    err.className = 'setup-error';
+                    this.parentNode.insertBefore(err, this);
+                }
+                err.textContent = 'Passwords do not match.';
+                cf.focus();
+            }
+        });
+    }());
+    </script>
 </body>
 </html>

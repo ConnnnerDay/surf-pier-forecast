@@ -704,15 +704,6 @@ def register() -> Any:
             error="Please enter a valid email address.",
             username=username, email=email,
         )
-    if not _email_domain_allowed(email):
-        return render_template(
-            "register.html",
-            error=(
-                "Please use a major email provider such as Gmail, Outlook, "
-                "Yahoo, iCloud, or ProtonMail."
-            ),
-            username=username, email=email,
-        )
     if len(email) > 254:
         return render_template(
             "register.html",

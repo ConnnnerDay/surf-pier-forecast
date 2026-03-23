@@ -9084,3 +9084,356 @@ details[open] .collapsible-module-body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ================================================================
+   Landing page — mobile-first redesign
+   ================================================================ */
+
+.landing-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #0a2a3a 0%, #0e5f78 55%, #1a8ab5 100%);
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-hero-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 1.5rem;
+}
+
+.landing-hero-inner {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.landing-logo-mark {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.landing-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.landing-tagline {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.55;
+  margin: 0 0 1.75rem;
+}
+
+/* CTA stack */
+.landing-cta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.landing-social-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.landing-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-social-btn:hover,
+.landing-social-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+.landing-social-btn--google {
+  background: #fff;
+  color: #3c4043;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.landing-social-btn--apple {
+  background: #000;
+  color: #fff;
+}
+
+[data-theme="dark"] .landing-social-btn--google {
+  background: #f8f9fa;
+  color: #3c4043;
+}
+
+.landing-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.82rem;
+}
+
+.landing-divider::before,
+.landing-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.25);
+}
+
+.landing-btn {
+  display: block;
+  padding: 0.8rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-btn:hover,
+.landing-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+.landing-btn--primary {
+  background: linear-gradient(135deg, #14a0c0, #0e7fa0);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(14,95,120,0.4);
+}
+
+.landing-btn--ghost {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.9);
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+
+.landing-location-count {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+}
+
+/* Features section on landing */
+.landing-features-section {
+  background: var(--bg, #f2f4f6);
+  padding: 1.5rem 1.25rem 2rem;
+}
+
+.landing-features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (min-width: 500px) {
+  .landing-features {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .landing-title {
+    font-size: 2.6rem;
+  }
+}
+
+@media (min-width: 760px) {
+  .landing-hero-section {
+    padding: 3rem 2rem 2rem;
+  }
+  .landing-title {
+    font-size: 3rem;
+  }
+  .landing-features-section {
+    padding: 2rem 2rem 3rem;
+  }
+  .landing-features {
+    max-width: 860px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .landing-social-btns {
+    flex-direction: row;
+  }
+  .landing-social-btn {
+    flex: 1;
+  }
+}
+
+.landing-feature {
+  background: var(--white, #fff);
+  border-radius: var(--radius, 12px);
+  box-shadow: var(--shadow-sm, 0 1px 4px rgba(0,0,0,0.07));
+  padding: 1rem 1rem 0.85rem;
+  text-align: center;
+}
+
+.landing-feature-icon {
+  font-size: 1.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.landing-feature strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ocean, #0e5f78);
+  margin-bottom: 0.35rem;
+}
+
+.landing-feature p {
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b7b8d);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.landing-footer {
+  background: rgba(0,0,0,0.2);
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  padding: 0.85rem 1rem;
+  font-size: 0.78rem;
+}
+
+.landing-footer p {
+  margin: 0;
+}
+
+/* ================================================================
+   Auth pages — social-first layout additions
+   ================================================================ */
+
+/* Larger social buttons used as primary sign-in/up method */
+.auth-social-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+
+.social-btn--lg {
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  justify-content: center;
+}
+
+.auth-section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.auth-field-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted, #5c6b73);
+}
+
+/* Biometric button styling */
+.auth-btn--biometric {
+  background: linear-gradient(135deg, #2a7d6e, #1a5c50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Larger inputs on mobile for easier tapping */
+@media (max-width: 480px) {
+  .auth-input {
+    padding: 0.65rem 0.85rem;
+    font-size: 1rem;
+  }
+
+  .auth-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .social-btn--lg {
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+  }
+
+  .auth-section {
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* ================================================================
+   Profile page — 2-column chip grid on mobile
+   ================================================================ */
+
+/* 2-col grid for fishing type chips (large option set) */
+.profile-options--grid2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 480px) {
+  .profile-options--grid2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 760px) {
+  .profile-options--grid2 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Make profile chips slightly more generous on mobile */
+@media (max-width: 480px) {
+  .chip-body {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .chip-body strong {
+    font-size: 0.85rem;
+  }
+
+  .chip-desc {
+    font-size: 0.73rem;
+  }
+
+  .profile-save-btn {
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+}
