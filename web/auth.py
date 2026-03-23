@@ -1590,22 +1590,27 @@ def apple_login() -> Any:
     return redirect(f"{_APPLE_AUTH_URL}?{urlencode(params)}")
 
 
-@bp.route("/auth/apple/callback")
+@bp.route("/auth/apple/callback", methods=["GET", "POST"])
 def apple_callback() -> Any:
-    """Handle the redirect back from Apple and complete sign-in."""
+    """Handle the redirect back from Apple and complete sign-in.
+
+    Apple sends the callback as a POST with form-encoded parameters (not a
+    GET redirect like Google).  ``request.values`` reads from both the URL
+    query string and the POST body, so the handler works for either method.
+    """
     if g.user is not None:
         return redirect(url_for("views.index"))
 
-    if request.args.get("error"):
+    if request.values.get("error"):
         return render_template("login.html", error="Apple Sign In was cancelled.")
 
-    state = request.args.get("state", "")
+    state = request.values.get("state", "")
     stored_state = session.pop("oauth_state", None)
     stored_provider = session.pop("oauth_provider", None)
     if not state or state != stored_state or stored_provider != "apple":
         return render_template("login.html", error="Login session expired. Please try again.")
 
-    code = request.args.get("code", "")
+    code = request.values.get("code", "")
     if not code:
         return render_template("login.html", error="Apple Sign In failed. Please try again.")
 

@@ -261,6 +261,12 @@ def create_app() -> Flask:
 
         if request.blueprint not in {"auth", "views", "api"}:
             return
+        # OAuth provider callbacks arrive as cross-origin POSTs from the
+        # provider's servers and therefore cannot carry our CSRF token.
+        # CSRF for these flows is handled by the OAuth "state" parameter
+        # that each callback handler validates against the session value.
+        if request.endpoint in {"auth.apple_callback"}:
+            return
         sent = request.form.get("csrf_token", "")
         expected = session.get("csrf_token", "")
         if not sent or not expected or not hmac.compare_digest(sent, expected):

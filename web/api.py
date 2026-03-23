@@ -785,6 +785,11 @@ def log_photos_v1(entry_id: int) -> Any:
         return _json_error(err)
 
     attach_photos_to_entry(uid, entry_id, **saved)
+    # Delete old photo files that were just replaced so they don't become orphans.
+    if "photo1_path" in saved:
+        _delete_upload_file(paths[0])
+    if "photo2_path" in saved:
+        _delete_upload_file(paths[1])
     return jsonify(success_envelope({"entry_id": entry_id, **saved})), 201
 
 
