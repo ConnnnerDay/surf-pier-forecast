@@ -704,6 +704,12 @@ def register() -> Any:
             error="Please enter a valid email address.",
             username=username, email=email,
         )
+    if not _email_domain_allowed(email):
+        return render_template(
+            "register.html",
+            error="Please use an email from a major email provider (Gmail, Outlook, Yahoo, iCloud, etc.).",
+            username=username, email=email,
+        )
     if len(email) > 254:
         return render_template(
             "register.html",
@@ -928,6 +934,8 @@ def change_password_route() -> Any:
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
+            passkeys=get_webauthn_credentials(g.user["id"]),
+            social_accounts=get_social_accounts_for_user(g.user["id"]),
             pw_error=msg,
         )
 
@@ -975,6 +983,8 @@ def delete_account_route() -> Any:
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
+            passkeys=get_webauthn_credentials(g.user["id"]),
+            social_accounts=get_social_accounts_for_user(g.user["id"]),
             delete_error=msg,
         )
 

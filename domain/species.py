@@ -894,50 +894,46 @@ def _species_matches_profile(
         if only_fly and sp_name not in _FLY_SPECIES:
             return False
 
-        # For the original tight sets, check exclusivity before filtering.
-        # A species is "X-only" when it belongs to X's set but not the
-        # other primary method sets.
+        # Build the set of all species accessible from the user's fishing types.
+        # A species in any primary method set is only shown when the user has at
+        # least one method that can reach it.  This replaces the fragile
+        # "is_X_only" logic which broke whenever a species appeared in multiple
+        # sets (e.g. Pompano in both _SURF_SPECIES and _FLY_SPECIES prevented it
+        # from ever being recognised as surf-only from a pier-only user's view).
         _primary_sets = (
             _SURF_SPECIES, _PIER_SPECIES, _INSHORE_SPECIES,
             _JETTY_SPECIES, _BRIDGE_SPECIES, _WADE_SPECIES,
             _KAYAK_SPECIES, _CHARTER_SPECIES, _FLY_SPECIES,
         )
-
-        def _in_any_other(sp: str, exclude_set: set) -> bool:
-            return any(sp in s for s in _primary_sets if s is not exclude_set)
-
-        is_surf_only = sp_name in _SURF_SPECIES and not _in_any_other(sp_name, _SURF_SPECIES)
-        is_pier_only = sp_name in _PIER_SPECIES and not _in_any_other(sp_name, _PIER_SPECIES)
-        is_inshore_only = (
-            sp_name in _INSHORE_SPECIES and not _in_any_other(sp_name, _INSHORE_SPECIES)
-        )
-        is_jetty_only = (
-            sp_name in _JETTY_SPECIES and not _in_any_other(sp_name, _JETTY_SPECIES)
-        )
-        is_bridge_only = (
-            sp_name in _BRIDGE_SPECIES and not _in_any_other(sp_name, _BRIDGE_SPECIES)
-        )
-        is_wade_only = sp_name in _WADE_SPECIES and not _in_any_other(sp_name, _WADE_SPECIES)
-        is_kayak_only = (
-            sp_name in _KAYAK_SPECIES and not _in_any_other(sp_name, _KAYAK_SPECIES)
-        )
-        is_fly_only = sp_name in _FLY_SPECIES and not _in_any_other(sp_name, _FLY_SPECIES)
-
-        if is_surf_only and not has_surf:
-            return False
-        if is_pier_only and not effective_pier:
-            return False
-        if is_inshore_only and not effective_inshore:
-            return False
-        if is_jetty_only and not (has_jetty or has_pier):
-            return False
-        if is_bridge_only and not (has_bridge or has_pier or effective_inshore):
-            return False
-        if is_wade_only and not (has_wade or effective_inshore):
-            return False
-        if is_kayak_only and not (has_kayak or effective_offshore):
-            return False
-        if is_fly_only and not (has_fly or effective_inshore):
+        _accessible: set = set()
+        if has_surf:
+            _accessible |= _SURF_SPECIES
+        if effective_pier:  # pier, jetty, or bridge
+            _accessible |= _PIER_SPECIES
+        if has_jetty or has_pier:
+            _accessible |= _JETTY_SPECIES
+        if has_bridge or has_pier or effective_inshore:
+            _accessible |= _BRIDGE_SPECIES
+        if effective_inshore:  # inshore, wade, or fly
+            _accessible |= _INSHORE_SPECIES
+        if has_wade or effective_inshore:
+            _accessible |= _WADE_SPECIES
+        if has_kayak:
+            _accessible |= _KAYAK_SPECIES
+        if has_charter:
+            _accessible |= _CHARTER_SPECIES
+        if has_fly or effective_inshore:
+            _accessible |= _FLY_SPECIES
+        # Exclude species that belong to at least one primary method set but
+        # are not reachable from any of the user's selected fishing methods.
+        # Species not present in any primary set pass through unfiltered.
+        # Species already gated by _OFFSHORE_ONLY_SPECIES (handled above) are
+        # exempt so that offshore users can still see them.
+        if (
+            any(sp_name in s for s in _primary_sets)
+            and sp_name not in _accessible
+            and sp_name not in _OFFSHORE_ONLY_SPECIES
+        ):
             return False
 
     # --- Target category filter ---
