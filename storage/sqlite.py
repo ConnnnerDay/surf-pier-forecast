@@ -444,7 +444,7 @@ def get_email_verification_sent_at(user_id: int) -> Optional[str]:
 
 
 def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
-    """Return the user matching *token* if the token was sent within 24 hours.
+    """Return the user matching *token* if the token was sent within 2 hours.
 
     The token is hashed before querying so the raw value never touches the DB.
     """

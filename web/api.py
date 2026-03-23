@@ -76,17 +76,37 @@ _tz_rate_store: Dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
 
 
+_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
+
+
 def _client_ip() -> str:
-    """Return the best-effort client IP for rate limiting."""
-    return (
-        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-        or request.remote_addr
-        or "unknown"
-    )
+    """Return the best-effort client IP for rate limiting.
+
+    X-Forwarded-For is only honoured when TRUSTED_PROXY=1 is set in the
+    environment.  Without that flag, the header is ignored to prevent clients
+    from spoofing arbitrary IPs and bypassing IP-based rate limiting.
+    """
+    if _TRUST_PROXY:
+        forwarded = request.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
 
 
 # Keep the old alias used by the timezone helpers below.
 _tz_client_ip = _client_ip
+
+
+_PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks
+_prune_counter = 0
+
+
+def _prune_rate_store(store: Dict[str, Tuple[float, int]], window_s: int) -> None:
+    """Remove expired entries from a rate store.  Must be called under its lock."""
+    now = time.time()
+    expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
+    for ip in expired:
+        del store[ip]
 
 
 def _is_rate_limited_ip(
@@ -96,9 +116,13 @@ def _is_rate_limited_ip(
     window_s: int,
 ) -> bool:
     """Generic IP-keyed sliding-window rate limiter (read-only check)."""
+    global _prune_counter
     ip = _client_ip()
     now = time.time()
     with lock:
+        _prune_counter += 1
+        if _prune_counter % _PRUNE_EVERY == 0:
+            _prune_rate_store(store, window_s)
         start, count = store.get(ip, (now, 0))
         if now - start > window_s:
             return False
@@ -145,6 +169,32 @@ def _reg_is_rate_limited() -> bool:
 
 def _reg_record_attempt() -> None:
     _record_ip_attempt(_reg_rate_store, _reg_rate_lock, _REG_RATE_LIMIT_WINDOW_S)
+
+
+# ── Rate limiting for /api/v1/regulations/refresh ─────────────────────────────
+# Cache invalidation forces re-scraping on the next lookup.  Any authenticated
+# user can call this, so limit to 5 invalidations per IP per hour.
+_REG_REFRESH_RATE_LIMIT_MAX = 5
+_REG_REFRESH_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
+_reg_refresh_rate_store: Dict[str, Tuple[float, int]] = {}
+_reg_refresh_rate_lock = threading.Lock()
+
+
+def _reg_refresh_is_rate_limited() -> bool:
+    return _is_rate_limited_ip(
+        _reg_refresh_rate_store,
+        _reg_refresh_rate_lock,
+        _REG_REFRESH_RATE_LIMIT_MAX,
+        _REG_REFRESH_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _reg_refresh_record_attempt() -> None:
+    _record_ip_attempt(
+        _reg_refresh_rate_store,
+        _reg_refresh_rate_lock,
+        _REG_REFRESH_RATE_LIMIT_WINDOW_S,
+    )
 
 
 # ── Rate limiting for forecast sub-endpoints (status/outlook/solunar) ─────────
@@ -580,6 +630,11 @@ def regulations_refresh_v1() -> Any:
     if g.user is None:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
 
+    if _reg_refresh_is_rate_limited():
+        logger.warning("security.reg_refresh_rate_limit ip=%s", _client_ip())
+        return _json_error(ApiError("rate_limited", "Too many requests", status=429))
+    _reg_refresh_record_attempt()
+
     state = request.args.get("state", "").strip().upper() or None
     try:
         from storage.reg_scraper import invalidate_cache
@@ -785,6 +840,11 @@ def log_photos_v1(entry_id: int) -> Any:
         return _json_error(err)
 
     attach_photos_to_entry(uid, entry_id, **saved)
+    # Delete old photo files that were just replaced so they don't become orphans.
+    if "photo1_path" in saved:
+        _delete_upload_file(paths[0])
+    if "photo2_path" in saved:
+        _delete_upload_file(paths[1])
     return jsonify(success_envelope({"entry_id": entry_id, **saved})), 201
 
 
