@@ -1459,6 +1459,72 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "leader": "8-12 lb mono, 18 in between jigs",
         "image": "images/rigs/tandem-jig.svg",
     },
+    "fly_pattern": {
+        "name": "Saltwater Fly Leader Setup",
+        "description": (
+            "A weight-forward floating or intermediate fly line connected "
+            "to a 7-12 ft tapered leader ending in fluorocarbon tippet. "
+            "Leader length varies: 9-12 ft for calm flats (spooked fish), "
+            "7-9 ft in wind. Tippet weight matches species: 12-16 lb for "
+            "redfish and speckled trout, 20-30 lb for snook and tarpon. "
+            "Tie a non-slip mono loop knot for fly action. "
+            "Common patterns: Clouser Minnow (redfish, striped bass), "
+            "EP Crab/Merkin (permit, bonefish), Toad fly (snook), "
+            "Deceivers (bluefish, false albacore)."
+        ),
+        "mainline": "Weight-forward fly line matched to rod weight (8-12 wt)",
+        "leader": "7-12 ft tapered to 12-30 lb fluorocarbon tippet",
+        "image": "images/rigs/fly-leader.svg",
+    },
+    "current_jig": {
+        "name": "Current Jig / Bridge Jig Rig",
+        "description": (
+            "A heavy bucktail or soft-plastic jig (1-3 oz) tied direct "
+            "or with a short fluorocarbon leader, dropped vertically down "
+            "bridge pilings or jetty faces and worked with a slow lift-drop. "
+            "The weight must be heavy enough to reach bottom in tidal current — "
+            "increase jig weight until you feel the bottom. "
+            "White, chartreuse, and olive are standard colors. "
+            "Optional: add a soft-plastic paddle tail or a live shrimp on "
+            "the hook for scent. Targets sheepshead, snook, flounder, "
+            "striped bass, and jack crevalle."
+        ),
+        "mainline": "20-30 lb braid",
+        "leader": "18-24 in of 20-30 lb fluorocarbon",
+        "image": "images/rigs/current-jig.svg",
+    },
+    "wade_light": {
+        "name": "Wade / Flats Light Tackle Rig",
+        "description": (
+            "A jig head (1/8-1/4 oz) with a soft-plastic shrimp, paddle "
+            "tail, or DOA-style bait, fished on light spinning or baitcasting "
+            "gear. Alternatively, a popping cork 18-30 in above a "
+            "fluorocarbon leader and circle hook for live or artificial shrimp. "
+            "The goal is natural presentation with minimal splash — "
+            "waded inshore fish are easily spooked. "
+            "Use scented baits (GULP, DOA) in off-color water "
+            "and finesse unscented plastics in clear conditions."
+        ),
+        "mainline": "10-15 lb braid on light spinning rod",
+        "leader": "12-18 in of 15-20 lb fluorocarbon",
+        "image": "images/rigs/wade-light.svg",
+    },
+    "kayak_live_bait": {
+        "name": "Kayak Live Bait Freeline Rig",
+        "description": (
+            "A live baitfish (pinfish, mullet, grunt) or live shrimp "
+            "hooked lightly through the lips or back and fished with "
+            "minimal weight (split shot only, or weightless) so the bait "
+            "swims freely near structure. From a kayak, anchor upcurrent "
+            "and let the bait drift into the strike zone — snook, cobia, "
+            "and tripletail will track a struggling live bait from a distance. "
+            "Use a circle hook (3/0-5/0) for easy, keel-stable hook sets "
+            "without a stand-up fighting platform."
+        ),
+        "mainline": "20-30 lb braid",
+        "leader": "2-4 ft of 25-40 lb fluorocarbon",
+        "image": "images/rigs/kayak-live-bait.svg",
+    },
 }
 
 
@@ -1475,6 +1541,36 @@ def _classify_rig(rig_text: str) -> str:
         return "sabiki"
     if "shad dart" in text or "tandem" in text:
         return "tandem-jig"
+    # Fly fishing patterns / leader setups
+    if (
+        "fly pattern" in text
+        or "fly leader" in text
+        or "clouser" in text
+        or "deceiver" in text
+        or "fly line" in text
+        or "tippet" in text
+        or ("fly" in text and "rod" in text)
+    ):
+        return "fly_pattern"
+    # Wade / flats light tackle
+    if (
+        "jig head" in text
+        or "doa" in text
+        or ("wade" in text and "light" in text)
+        or "flats rig" in text
+    ):
+        return "wade_light"
+    # Bridge / current jig
+    if (
+        "bridge jig" in text
+        or "current jig" in text
+        or "bucktail jig" in text
+        or ("piling" in text and "jig" in text)
+    ):
+        return "current_jig"
+    # Kayak live bait freeline
+    if "freeline" in text or ("kayak" in text and "live bait" in text):
+        return "kayak_live_bait"
     if "popping" in text or "cork" in text:
         return "popping-cork"
     if "stinger" in text or ("king" in text and "wire" in text):
@@ -1508,12 +1604,17 @@ def _classify_rig(rig_text: str) -> str:
 
 def build_rig_recommendations(
     species_ranking: List[Dict[str, Any]],
+    fishing_types: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """Build rig recommendations based on currently-active species.
 
     Groups active species by rig type and produces one recommendation
     per rig, ordered by the highest-ranked species that uses it.
+    When *fishing_types* is provided, type-specific rigs are prepended
+    even if no species in the ranking explicitly reference them.
     """
+    ft = set(fishing_types or [])
+
     rig_groups: Dict[str, List[Dict[str, Any]]] = {}
     rig_order: List[str] = []
 
@@ -1524,30 +1625,51 @@ def build_rig_recommendations(
             rig_order.append(key)
         rig_groups[key].append(sp)
 
-    recommendations: List[Dict[str, Any]] = []
-    for key in rig_order:
-        group = rig_groups[key]
+    # Prepend fishing-type-specific rigs that may not emerge from species data
+    type_rig_keys: List[str] = []
+    if "fly" in ft and "fly_pattern" not in rig_order:
+        type_rig_keys.append("fly_pattern")
+    if ("bridge" in ft or "jetty" in ft) and "current_jig" not in rig_order:
+        type_rig_keys.append("current_jig")
+    if "wade" in ft and "wade_light" not in rig_order:
+        type_rig_keys.append("wade_light")
+    if "kayak" in ft and "kayak_live_bait" not in rig_order:
+        type_rig_keys.append("kayak_live_bait")
+
+    def _make_rec(key: str, group: Optional[List[Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
         category = RIG_CATEGORIES.get(key)
         if category is None:
-            continue
+            return None
+        species_names = [sp["name"] for sp in (group or [])]
+        hooks = list(dict.fromkeys(sp["hook_size"] for sp in (group or [])))
+        sinkers = list(dict.fromkeys(sp["sinker"] for sp in (group or [])))
+        return {
+            "name": category["name"],
+            "description": category["description"],
+            "mainline": category["mainline"],
+            "leader": category["leader"],
+            "hook": " or ".join(hooks[:3]) if hooks else "",
+            "sinker": " or ".join(sinkers[:3]) if sinkers else "",
+            "targets": species_names,
+            "image": category.get("image", ""),
+            "knots": get_knots_for_rig(key),
+        }
 
-        species_names = [sp["name"] for sp in group]
-        hooks = list(dict.fromkeys(sp["hook_size"] for sp in group))
-        sinkers = list(dict.fromkeys(sp["sinker"] for sp in group))
+    recommendations: List[Dict[str, Any]] = []
 
-        recommendations.append(
-            {
-                "name": category["name"],
-                "description": category["description"],
-                "mainline": category["mainline"],
-                "leader": category["leader"],
-                "hook": " or ".join(hooks[:3]),
-                "sinker": " or ".join(sinkers[:3]),
-                "targets": species_names,
-                "image": category.get("image", ""),
-                "knots": get_knots_for_rig(key),
-            }
-        )
+    # Type-specific rigs first
+    for key in type_rig_keys:
+        rec = _make_rec(key)
+        if rec:
+            recommendations.append(rec)
+
+    # Species-derived rigs
+    for key in rig_order:
+        if key in type_rig_keys:
+            continue  # already added
+        rec = _make_rec(key, rig_groups[key])
+        if rec:
+            recommendations.append(rec)
 
     return recommendations
 

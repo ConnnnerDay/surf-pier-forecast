@@ -525,10 +525,15 @@ def classify_conditions(
     now: Optional[datetime] = None,
     solunar: Optional[Dict[str, Any]] = None,
     coast: str = "east",
+    fishing_types: Optional[List[str]] = None,
 ) -> str:
     """Classify fishability using all available marine + astronomical signals.
 
     Produces a 5-tier verdict: Excellent / Good / Fair / Challenging / Poor.
+    When *fishing_types* is supplied the score is adjusted to reflect what
+    actually matters for each method — e.g. kayak anglers are penalised
+    more steeply for wind/waves, fly anglers for wind, wade/bridge anglers
+    get a partial offset on the open-ocean wave penalty.
     """
     if wind_range is None or wave_range is None:
         return "Unknown"
@@ -643,6 +648,84 @@ def classify_conditions(
                 score += 2
             elif illum < 10 or illum > 95:
                 score += 1
+
+    # --- Fishing-type-specific score modifiers ---
+    # Applied after base scoring so they shift the verdict relative to the
+    # generic baseline rather than replacing it entirely.
+    if fishing_types:
+        ft = set(fishing_types)
+
+        # Kayak — wind and wave height are safety signals, not just fishability.
+        # Lower thresholds than the generic model.
+        if "kayak" in ft:
+            if wind_max >= 20:
+                score -= 16  # Severe: do-not-launch territory
+            elif wind_max >= 15:
+                score -= 10  # Significant: stay near shore
+            elif wind_max >= 10:
+                score -= 4   # Noticeable: plan exit route
+            if wave_max >= 3:
+                score -= 10  # Rough chop for a kayak
+            elif wave_max >= 2:
+                score -= 4
+
+        # Fly fishing — casting ability is the primary constraint.
+        # Wind dominates; wave height is mostly irrelevant inshore.
+        if "fly" in ft:
+            if wind_max >= 20:
+                score -= 12  # Near-impossible casting
+            elif wind_max >= 15:
+                score -= 8   # Very difficult
+            elif wind_max >= 10:
+                score -= 3   # Challenging but manageable
+            # Wave height at sea doesn't affect inshore flats/wade fly fishing;
+            # partially cancel the generic wave penalty.
+            if wave_max < 4:
+                score += 5
+
+        # Wade fishing — sheltered inshore, so open-ocean wave height largely
+        # irrelevant.  Wind still matters for clarity and casting.
+        if "wade" in ft and "surf" not in ft:
+            if wave_max < 4:
+                score += 4   # Calm flats/bay conditions unaffected by offshore swell
+            # Slight bonus for calm wind (ideal sight-fishing conditions)
+            if wind_max <= 8:
+                score += 3
+
+        # Jetty / rock structure — wave surge is a safety issue at lower heights
+        # than the generic model treats as dangerous.
+        if "jetty" in ft:
+            if wave_max >= 4:
+                score -= 12  # Unsafe on rocks
+            elif wave_max >= 2:
+                score -= 5   # Slippery, caution required
+
+        # Bridge / causeway — open-ocean wave height is mostly irrelevant;
+        # tidal current (already captured via tide_state) is what matters.
+        if "bridge" in ft:
+            if wave_max < 4:
+                score += 4   # Ocean swell doesn't affect protected tidal channels
+            # Extra bonus for a moving tide (current activates the bite)
+            if tide_state in ("Rising", "Falling"):
+                score += 4
+
+        # Charter / head boat — passenger comfort and sea-state are key.
+        # Penalise rougher conditions more than the generic model does.
+        if "charter" in ft:
+            if wave_max >= 6:
+                score -= 10  # Dangerous / trip-cancellation territory
+            elif wave_max >= 4:
+                score -= 5   # Rough — many passengers will struggle
+            if wind_max >= 20:
+                score -= 6   # Gale-force additions beyond the base penalty
+
+        # Offshore (private boat, not charter) — similar to charter but anglers
+        # are generally more experienced; slightly less aggressive penalty.
+        if "offshore" in ft and "charter" not in ft:
+            if wave_max >= 6:
+                score -= 6
+            elif wave_max >= 4:
+                score -= 2
 
     score = max(0, min(100, score))
     if score >= _VERDICT_EXCELLENT:
@@ -865,6 +948,7 @@ def build_multiday_outlook(
                 sunset=future_sunset,
                 solunar=future_solunar,
                 coast=coast or "east",
+                fishing_types=fishing_types,
             )
         else:
             verdict = "Unknown"
@@ -925,12 +1009,16 @@ def build_spot_tips(
     month: int = 6,
     coast: str = "east",
     tide_state: str = "",
+    fishing_types: Optional[List[str]] = None,
 ) -> List[Dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
     Each tip has an 'icon' (emoji-free label), 'title', and 'detail'.
+    When *fishing_types* is supplied, type-specific tips are prepended so
+    they occupy the most prominent slots.
     """
     tips: List[Dict[str, str]] = []
+    ft = set(fishing_types or [])
 
     # Wind-based tips
     avg_wind = 0.0
@@ -1072,7 +1160,169 @@ def build_spot_tips(
             }
         )
 
-    return tips[:5]
+    # --- Fishing-type-specific tips (prepended to be prominent) ---
+    type_tips: List[Dict[str, str]] = []
+
+    if "bridge" in ft:
+        avg_wind = ((wind_range[0] + wind_range[1]) / 2) if wind_range else 0
+        if tide_state == "Rising":
+            type_tips.append(
+                {
+                    "icon": "tide",
+                    "title": "Bridge: Incoming Tide Position",
+                    "detail": "Set up on the upcurrent side of the bridge. Cast into the current and "
+                    "let bait sweep through the shadow line between pilings — snook and "
+                    "tarpon stage in the current seam right at the light/dark boundary.",
+                }
+            )
+        elif tide_state == "Falling":
+            type_tips.append(
+                {
+                    "icon": "tide",
+                    "title": "Bridge: Outgoing Tide Position",
+                    "detail": "Move to the downcurrent side of pilings. Sheepshead, jacks, and "
+                    "snapper hold here waiting for bait swept off the bridge structure. "
+                    "A live shrimp or small jig bouncing through is hard to beat.",
+                }
+            )
+        else:
+            type_tips.append(
+                {
+                    "icon": "tide",
+                    "title": "Bridge: Slack Tide Tactics",
+                    "detail": "Slack tide around bridges often slows action; fish the shadow lines "
+                    "under lights with a slow-sinking live bait. Night bridge fishing "
+                    "under LED lights is premier for snook — target the edge of the light cone.",
+                }
+            )
+
+    if "jetty" in ft:
+        avg_wave = ((wave_range[0] + wave_range[1]) / 2) if wave_range else 0
+        if avg_wave >= 2:
+            type_tips.append(
+                {
+                    "icon": "waves",
+                    "title": "Jetty: Work the Wash",
+                    "detail": "Wave surge on the jetty rocks activates feeding — "
+                    "sheepshead and tautog move tight to the base as crabs and "
+                    "worms get dislodged. Fish a knocker rig right against the rocks "
+                    "and be patient: let the bait sit.",
+                }
+            )
+        elif tide_state in ("Rising", "Falling"):
+            type_tips.append(
+                {
+                    "icon": "tide",
+                    "title": "Jetty Tip Position",
+                    "detail": "The tip of the jetty on a moving tide is the prime station. "
+                    "Bait schools funnel through the inlet mouth — predators (cobia, "
+                    "tarpon, jacks, striped bass) stack up here to intercept them. "
+                    "Bring a heavy jig or live bait under a float.",
+                }
+            )
+
+    if "wade" in ft:
+        avg_wind = ((wind_range[0] + wind_range[1]) / 2) if wind_range else 0
+        if avg_wind > 12:
+            type_tips.append(
+                {
+                    "icon": "wind",
+                    "title": "Wade: Wind and Clarity",
+                    "detail": "Wind chop reduces water clarity on the flats — switch from "
+                    "sight-fishing to scented soft plastics or live shrimp under a "
+                    "popping cork. Position yourself with the wind at your back to "
+                    "maximize casting distance.",
+                }
+            )
+        else:
+            type_tips.append(
+                {
+                    "icon": "waves",
+                    "title": "Wade: Sight-Fishing Conditions",
+                    "detail": "Low wind means excellent flat visibility. "
+                    "Wear neutral colors and move slowly — push minimal water. "
+                    "Look for tailing reds, wakes, push-waves, and nervous water "
+                    "along grass edges and shell bars.",
+                }
+            )
+
+    if "kayak" in ft:
+        avg_wind = ((wind_range[0] + wind_range[1]) / 2) if wind_range else 0
+        if avg_wind > 12:
+            type_tips.append(
+                {
+                    "icon": "wind",
+                    "title": "Kayak: Wind Strategy",
+                    "detail": "Paddle into the wind first so you have an easier return trip "
+                    "when you're fatigued. Hug the shoreline to stay in wind shadow "
+                    "and avoid open-water crossings. Consider anchoring with a "
+                    "stake-out pole in protected coves.",
+                }
+            )
+        else:
+            type_tips.append(
+                {
+                    "icon": "tide",
+                    "title": "Kayak: Drift Tactics",
+                    "detail": "Use the tidal current to drift-fish structure without burning "
+                    "energy paddling. Anchor upcurrent of your target, cast downcurrent, "
+                    "and let bait sweep naturally through the zone. Back-country "
+                    "creek mouths on a falling tide concentrate fish.",
+                }
+            )
+
+    if "fly" in ft:
+        avg_wind = ((wind_range[0] + wind_range[1]) / 2) if wind_range else 0
+        if avg_wind > 15:
+            type_tips.append(
+                {
+                    "icon": "wind",
+                    "title": "Fly: High Wind Adjustments",
+                    "detail": "Shorten your leader to 7-9 ft in high wind so the fly turns "
+                    "over cleanly. Use a heavier fly (weighted Clouser) that punches "
+                    "through wind. Cast at 45° to the wind rather than directly into "
+                    "or with it — the crosswind cast is most efficient.",
+                }
+            )
+        else:
+            type_tips.append(
+                {
+                    "icon": "waves",
+                    "title": "Fly: Sight-Casting Setup",
+                    "detail": "Ideal conditions for sight-fishing. Strip out 30-40 ft of fly "
+                    "line before wading in — false casts stir up bottom. Pre-load "
+                    "your cast and lead the fish by 3-6 ft so the fly sinks to eye "
+                    "level before beginning your strip retrieve.",
+                }
+            )
+
+    if "charter" in ft:
+        avg_wave = ((wave_range[0] + wave_range[1]) / 2) if wave_range else 0
+        if avg_wave >= 4:
+            type_tips.append(
+                {
+                    "icon": "waves",
+                    "title": "Charter: Rough Weather Tips",
+                    "detail": "Take seasick medication the night before (Meclizine / Bonine). "
+                    "Stay on deck, keep eyes on the horizon, and stay hydrated. "
+                    "Stand near the stern where motion is least. The captain may "
+                    "adjust plans to sheltered nearshore structure on rough days.",
+                }
+            )
+        else:
+            type_tips.append(
+                {
+                    "icon": "tide",
+                    "title": "Charter: Maximize Your Trip",
+                    "detail": "Follow the mate's lead on hook baiting and technique — they "
+                    "know what's working. Ask the captain what species are running "
+                    "before you leave the dock. Tip the mate well: they rig, bait, "
+                    "gaff, and fillet fish all day.",
+                }
+            )
+
+    # Prepend type-specific tips, then fill remaining slots with generic tips
+    return (type_tips + tips)[: max(5, len(type_tips) + 2)]
 
 
 def build_bite_alerts(
@@ -2497,7 +2747,7 @@ def personalize_forecast(
     # Rebuild species-dependent sections
     forecast = dict(forecast)  # shallow copy to avoid mutating cache
     forecast["species"] = species
-    forecast["rig_recommendations"] = build_rig_recommendations(species)
+    forecast["rig_recommendations"] = build_rig_recommendations(species, fishing_types=fishing_types)
     forecast["bait_rankings"] = build_bait_ranking(species, month)
     forecast["lure_recommendations"] = build_lure_recommendations(species, month)
     forecast["calendar"] = build_species_calendar(
@@ -2545,6 +2795,44 @@ def personalize_forecast(
             outlook,
         )
 
+    # Rebuild spot tips with type-specific content
+    tide_state_val = forecast.get("tide_state", "")
+    loc_coast = (location or {}).get("coast", "east")
+    forecast["spot_tips"] = build_spot_tips(
+        wind_range=wind_range,
+        wave_range=wave_range,
+        wind_dir=wind_dir or "",
+        hour=now.hour,
+        month=month,
+        coast=loc_coast,
+        tide_state=tide_state_val,
+        fishing_types=fishing_types,
+    )
+
+    # Rebuild best fishing times with type-specific windows
+    forecast["best_times"] = build_best_times(forecast, fishing_types=fishing_types)
+
+    # Recalculate the conditions verdict with fishing-type adjustments so
+    # the dashboard shows an accurate rating for this angler's method.
+    if fishing_types and wind_range and wave_range:
+        adjusted_verdict = classify_conditions(
+            wind_range,
+            wave_range,
+            wind_dir=wind_dir or "",
+            water_temp_f=water_temp,
+            tide_state=forecast.get("tide_state", ""),
+            tides=forecast.get("tides"),
+            now=now,
+            solunar=forecast.get("solunar"),
+            coast=loc_coast,
+            fishing_types=fishing_types,
+        )
+        # Store as a separate field so the template can show both the generic
+        # verdict and the method-specific one without breaking cached data.
+        updated_conditions = dict(forecast.get("conditions", {}))
+        updated_conditions["verdict_for_type"] = adjusted_verdict
+        forecast["conditions"] = updated_conditions
+
     return forecast
 
 
@@ -2565,13 +2853,20 @@ def _parse_time_str(s: str) -> float:
         return 12.0
 
 
-def build_best_times(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
+def build_best_times(
+    forecast: Dict[str, Any],
+    fishing_types: Optional[List[str]] = None,
+) -> List[Dict[str, str]]:
     """Build a list of recommended fishing windows.
 
     Combines solunar major/minor periods with tide change windows and
     low-light periods (dawn/dusk) to suggest the best 2-3 windows.
     Each entry: {"window": "5:30 - 7:30 AM", "reason": "...", "quality": "Prime"}
+
+    When *fishing_types* includes bridge or jetty, low-tide current-change
+    windows are added as prime current-reversal opportunities.
     """
+    ft = set(fishing_types or [])
     windows: List[Dict[str, Any]] = []
 
     # Sunrise/sunset windows (dawn and dusk are prime fishing)
@@ -2649,6 +2944,39 @@ def build_best_times(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
                     "label": f"{t['time']}",
                     "reason": "Incoming high tide pushes bait into range",
                     "score": 2,
+                }
+            )
+
+    # Bridge / jetty: low-tide current reversal is a prime window.
+    # As the tide bottoms out and reverses, fish stack at inlet mouths
+    # and bridge pilings waiting for bait to sweep through.
+    if "bridge" in ft or "jetty" in ft:
+        for t in tides:
+            if t.get("type") == "Low":
+                t_h = t.get("hour", _parse_time_str(t["time"]))
+                windows.append(
+                    {
+                        "start_h": t_h - 0.5,
+                        "end_h": t_h + 1.5,
+                        "label": f"{t['time']}",
+                        "reason": (
+                            "Current reversal at low tide — fish stack at "
+                            "bridge pilings and jetty tips as flow changes direction"
+                        ),
+                        "score": 3,  # High value for current-structure fishing
+                    }
+                )
+
+    # Bridge: night window bonus — bridge lights activate the bite after dark
+    if "bridge" in ft:
+        for night_h in (21.0, 22.0):  # 9-10 PM window
+            windows.append(
+                {
+                    "start_h": night_h,
+                    "end_h": night_h + 2.0,
+                    "label": "After Dark",
+                    "reason": "Bridge light edges after dark — snook and tarpon stage under LED lights",
+                    "score": 3,
                 }
             )
 
