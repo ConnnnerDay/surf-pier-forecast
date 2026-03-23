@@ -9437,3 +9437,92 @@ details[open] .collapsible-module-body {
     font-size: 1rem;
   }
 }
+
+/* ================================================================
+   Setup page — map + onboarding flow improvements
+   ================================================================ */
+
+/* Responsive map container */
+.setup-map {
+  height: 300px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 600px) {
+  .setup-map {
+    height: 380px;
+  }
+}
+
+@media (min-width: 900px) {
+  .setup-map {
+    height: 460px;
+  }
+}
+
+/* Enhanced onboarding flow card */
+.setup-flow-card--onboarding .setup-flow-steps {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+.setup-flow-card--onboarding .setup-flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.8rem;
+  position: relative;
+}
+
+/* Arrow separator between steps */
+.setup-flow-card--onboarding .setup-flow-step:not(:last-child)::after {
+  content: '›';
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: var(--text-muted, #8a9ba8);
+  pointer-events: none;
+}
+
+.setup-flow-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--border-light, #e5eaee);
+  color: var(--text-muted, #6b7b8d);
+  flex-shrink: 0;
+}
+
+.setup-flow-step.is-active .setup-flow-step-num {
+  background: var(--ocean, #0e5f78);
+  color: #fff;
+}
+
+.setup-flow-step--link .setup-flow-step-num {
+  background: var(--ocean-light, #e8f4f8);
+  color: var(--ocean, #0e5f78);
+}
+
+/* Account page mobile improvements */
+@media (max-width: 480px) {
+  .quick-links {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
