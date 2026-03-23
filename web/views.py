@@ -48,7 +48,7 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
-from storage.sqlite import get_preferences, save_preferences
+from storage.sqlite import get_preferences, save_preferences, get_log_stats
 from web.helpers import get_session_location
 
 bp = Blueprint("views", __name__)
@@ -341,22 +341,41 @@ _PROFILE_PARAM_MAX_LEN = 200   # per query-string parameter (chars)
 _PROFILE_PARAM_MAX_ITEMS = 20  # max comma-separated values per parameter
 
 
+_VALID_EXPERIENCE_PARAMS = frozenset({"beginner", "intermediate", "experienced"})
+_VALID_BAIT_PARAMS = frozenset({"yes", "sometimes", "no"})
+
+
 def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
     """Extract fishing profile from query parameters.
 
-    Expected params: fishing_types (comma-separated), targets (comma-separated).
+    Expected params: fishing_types (comma-separated), targets (comma-separated),
+    experience, live_bait, cut_bait, lures.
     Returns None if no profile params are present.
     """
     # Cap raw values before any processing to prevent DoS via enormous inputs.
     ft = request.args.get("fishing_types", "")[:_PROFILE_PARAM_MAX_LEN].strip()
     tg = request.args.get("targets", "")[:_PROFILE_PARAM_MAX_LEN].strip()
-    if not ft and not tg:
+    exp = request.args.get("experience", "")[:20].strip()
+    live_bait = request.args.get("live_bait", "")[:20].strip()
+    cut_bait = request.args.get("cut_bait", "")[:20].strip()
+    lures = request.args.get("lures", "")[:20].strip()
+
+    if not ft and not tg and not exp and not live_bait and not cut_bait and not lures:
         return None
+
     profile: Dict[str, Any] = {}
     if ft:
         profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()][:_PROFILE_PARAM_MAX_ITEMS]
     if tg:
         profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()][:_PROFILE_PARAM_MAX_ITEMS]
+    if exp in _VALID_EXPERIENCE_PARAMS:
+        profile["experience"] = exp
+    if live_bait in _VALID_BAIT_PARAMS:
+        profile["live_bait"] = live_bait
+    if cut_bait in _VALID_BAIT_PARAMS:
+        profile["cut_bait"] = cut_bait
+    if lures in _VALID_BAIT_PARAMS:
+        profile["lures"] = lures
     return profile
 
 
@@ -401,8 +420,9 @@ def _render_forecast(
         stored_profile = user_prefs.get("fishing_profile") or {}
 
     profile = _extract_profile_from_request()
-    if not profile and (
-        stored_profile.get("fishing_types") or stored_profile.get("targets")
+    if not profile and any(
+        stored_profile.get(k)
+        for k in ("fishing_types", "targets", "experience", "live_bait", "cut_bait", "lures")
     ):
         profile = stored_profile
     if profile:
@@ -443,6 +463,26 @@ def _render_forecast(
 
     trip_setup = build_trip_setup(forecast, client_profile or None)
 
+    # Build favorite locations list for the quick-switch bar.
+    favorite_locations = []
+    caught_species: set = set()
+    if g.user:
+        fav_ids = user_prefs.get("favorites") or []
+        for fav_id in fav_ids:
+            fav_loc = get_location(fav_id)
+            if fav_loc:
+                favorite_locations.append({"id": fav_id, "name": fav_loc["name"]})
+
+        # Collect species the user has logged at this location for badge display.
+        try:
+            log_stats = get_log_stats(g.user["id"], loc_id)
+            caught_species = {
+                entry["species"].lower()
+                for entry in log_stats.get("species_breakdown", [])
+            }
+        except Exception:
+            pass
+
     return render_template(
         "index.html",
         forecast=forecast,
@@ -450,6 +490,8 @@ def _render_forecast(
         share_id=loc_id,
         profile=client_profile,
         trip_setup=trip_setup,
+        favorite_locations=favorite_locations,
+        caught_species=caught_species,
     )
 
 

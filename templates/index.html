@@ -638,6 +638,24 @@ function renderFavorites() {
     bar.innerHTML = html;
 }
 
+// Seed localStorage favorites from server-stored account data (logged-in users).
+// This ensures favorites appear immediately on first load from a new device.
+{% if favorite_locations %}
+(function() {
+    var serverFavs = {{ favorite_locations|tojson }};
+    if (serverFavs && serverFavs.length) {
+        var local = getFavorites();
+        var localIds = local.map(function(f) { return f.id; });
+        serverFavs.forEach(function(sf) {
+            if (localIds.indexOf(sf.id) < 0) {
+                local.push({ id: sf.id, name: sf.name });
+            }
+        });
+        localStorage.setItem(FAV_KEY, JSON.stringify(local));
+    }
+})();
+{% endif %}
+
 renderFavorites();
 
 /* ---- Fishing Profile ---- */

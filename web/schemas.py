@@ -43,8 +43,13 @@ def error_envelope(
     }
 
 
-_VALID_FISHING_TYPES = frozenset({"surf", "pier", "inshore", "offshore"})
-_VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "gamefish", "anything"})
+_VALID_FISHING_TYPES = frozenset({
+    "surf", "pier", "jetty", "bridge", "wade",
+    "kayak", "inshore", "offshore", "fly", "charter",
+})
+_VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "crab_shellfish", "anything"})
+_VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
+_VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
 
 
 def parse_bool(value: Any, default: bool = False) -> bool:
@@ -142,6 +147,21 @@ class ProfilePayload:
                     raise ApiError(
                         "invalid_targets",
                         f"targets must be a list of: {sorted(_VALID_TARGETS)}",
+                        status=400,
+                    )
+            fp_experience = fishing_profile.get("experience")
+            if fp_experience is not None and fp_experience not in _VALID_EXPERIENCE:
+                raise ApiError(
+                    "invalid_experience",
+                    f"experience must be one of: {sorted(_VALID_EXPERIENCE)}",
+                    status=400,
+                )
+            for bait_field in ("live_bait", "cut_bait", "lures"):
+                bait_val = fishing_profile.get(bait_field)
+                if bait_val is not None and bait_val not in _VALID_BAIT_PREF:
+                    raise ApiError(
+                        f"invalid_{bait_field}",
+                        f"{bait_field} must be one of: {sorted(_VALID_BAIT_PREF)}",
                         status=400,
                     )
 
