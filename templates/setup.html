@@ -40,12 +40,21 @@
             <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
         </section>
 
-        <section class="setup-flow-card">
-            <p class="setup-flow-title">Quick setup</p>
+        <section class="setup-flow-card setup-flow-card--onboarding">
+            <p class="setup-flow-title">Getting started</p>
             <div class="setup-flow-steps">
-                <span class="setup-flow-step is-active">1. Pick location</span>
-                <a href="{{ url_for('views.profile') }}" class="setup-flow-step setup-flow-step--link">2. Set fishing profile</a>
-                <a href="{{ url_for('views.index') }}" class="setup-flow-step setup-flow-step--link">3. View live forecast</a>
+                <span class="setup-flow-step is-active">
+                    <span class="setup-flow-step-num">1</span>
+                    Pick location
+                </span>
+                <a href="{{ url_for('views.profile') }}" class="setup-flow-step setup-flow-step--link">
+                    <span class="setup-flow-step-num">2</span>
+                    Fishing profile
+                </a>
+                <a href="{{ url_for('views.index') }}" class="setup-flow-step setup-flow-step--link">
+                    <span class="setup-flow-step-num">3</span>
+                    View forecast
+                </a>
             </div>
         </section>
 
@@ -85,7 +94,7 @@
         <section class="setup-section">
             <h2>Pick on the Map</h2>
             <p class="section-sub">Click a location marker on the coast to select it</p>
-            <div id="map" data-supported-locations='{{ all_locations|tojson }}' style="height: 380px; border-radius: 8px; margin-bottom: 1rem;"></div>
+            <div id="map" data-supported-locations='{{ all_locations|tojson }}' class="setup-map"></div>
             <form method="post" action="{{ url_for('views.setup_coords') }}" class="zip-form" id="map-coords-form" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="location_lat" id="location_lat">

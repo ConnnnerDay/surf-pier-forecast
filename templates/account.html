@@ -138,6 +138,58 @@
                         <div class="account-row"><span class="account-label">Temperature</span><span class="account-value">{{ '°F' if (prefs.temp_units or 'F') == 'F' else '°C' }}</span></div>
                     </div>
                 </div>
+                {% set fp = prefs.fishing_profile or {} %}
+                {% set type_labels = {
+                    'surf': 'Surf Fishing',
+                    'pier': 'Pier / Dock',
+                    'jetty': 'Jetty / Rock',
+                    'bridge': 'Bridge / Causeway',
+                    'wade': 'Wade Fishing',
+                    'kayak': 'Kayak Fishing',
+                    'inshore': 'Inshore / Inlet',
+                    'offshore': 'Offshore / Deep Sea',
+                    'charter': 'Charter / Head Boat',
+                    'fly': 'Saltwater Fly'
+                } %}
+                {% set exp_labels = {'beginner': 'Beginner', 'intermediate': 'Intermediate', 'experienced': 'Experienced'} %}
+                <div class="summary-card">
+                    <h3 style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
+                        Fishing Profile
+                        <a href="{{ url_for('views.profile') }}" style="font-size:0.78rem;font-weight:600;color:var(--ocean);text-decoration:none;white-space:nowrap">Edit &rarr;</a>
+                    </h3>
+                    {% if fp and fp.get('completed') %}
+                    <div class="account-details compact">
+                        {% set ftypes = fp.fishing_types or fp.fishing_type or [] %}
+                        {% if ftypes %}
+                        <div class="account-row">
+                            <span class="account-label">Style</span>
+                            <span class="account-value" style="text-align:right">
+                                {% for t in ftypes %}{{ type_labels.get(t, t)|title }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% if fp.get('experience') %}
+                        <div class="account-row">
+                            <span class="account-label">Experience</span>
+                            <span class="account-value">{{ exp_labels.get(fp.experience, fp.experience)|title }}</span>
+                        </div>
+                        {% endif %}
+                        {% set targets = fp.targets or [] %}
+                        {% if targets %}
+                        {% set tgt_labels = {'bottom': 'Bottom fish', 'pelagic': 'Pelagics', 'structure': 'Structure', 'inshore_slam': 'Inshore slam', 'gamefish': 'Big game', 'crab_shellfish': 'Crab/Shellfish', 'anything': 'Whatever bites'} %}
+                        <div class="account-row">
+                            <span class="account-label">Targets</span>
+                            <span class="account-value" style="text-align:right">
+                                {% for t in targets %}{{ tgt_labels.get(t, t) }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p style="font-size:0.85rem;color:var(--muted,#5c6b73);margin:0.25rem 0 0.5rem">Profile not set up yet.</p>
+                    <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;font-size:0.85rem;padding:0.45rem 1rem">Set Up Profile</a>
+                    {% endif %}
+                </div>
             </div>
 
             <h3 class="section-title">Display Preferences</h3>

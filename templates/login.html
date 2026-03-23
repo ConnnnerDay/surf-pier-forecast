@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta name="theme-color" content="#0e5f78">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body class="auth-page">
@@ -21,10 +22,49 @@
 
     <main>
         <section class="auth-section">
-            <h2>Log In</h2>
 
             {% if error %}
-            <div class="setup-error">{{ error }}</div>
+            <div class="setup-error" role="alert">{{ error }}</div>
+            {% endif %}
+
+            <!-- Passkey / biometrics (shown when available) -->
+            <div id="webauthn-section" style="display:none">
+                <button type="button" id="webauthn-btn" class="auth-btn auth-btn--biometric">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg>
+                    Use Face ID / Touch ID
+                </button>
+                <div id="webauthn-error" style="display:none;margin-top:0.5rem;color:#c0392b;font-size:0.85rem" role="alert"></div>
+                <div class="social-divider" style="margin:0.75rem 0">
+                    <span>or sign in with password</span>
+                </div>
+            </div>
+
+            <!-- Social login (shown first when available) -->
+            {% if google_login_enabled or apple_login_enabled %}
+            <div class="auth-social-primary" id="social-login-section">
+                {% if google_login_enabled %}
+                <a href="{{ url_for('auth.google_login') }}" class="social-btn social-btn--google social-btn--lg">
+                    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+                        <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+                        <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+                        <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
+                        <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
+                    </svg>
+                    Continue with Google
+                </a>
+                {% endif %}
+                {% if apple_login_enabled %}
+                <a href="{{ url_for('auth.apple_login') }}" class="social-btn social-btn--apple social-btn--lg">
+                    <svg width="18" height="20" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor">
+                        <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
+                    </svg>
+                    Continue with Apple
+                </a>
+                {% endif %}
+            </div>
+            <div class="social-divider">
+                <span>or sign in with email</span>
+            </div>
             {% endif %}
 
             <form method="post" action="{{ url_for('auth.login') }}" class="auth-form">
@@ -44,46 +84,6 @@
                 <button type="submit" class="auth-btn">Log In</button>
             </form>
 
-            <div id="webauthn-section" style="display:none;margin-top:0.5rem">
-                <button type="button" id="webauthn-btn" class="auth-btn" style="width:100%;background:linear-gradient(135deg,#2a7d6e,#1a5c50);display:flex;align-items:center;justify-content:center;gap:0.5rem">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg>
-                    Use Face ID / Touch ID
-                </button>
-                <div id="webauthn-error" style="display:none;margin-top:0.5rem;color:#c0392b;font-size:0.85rem"></div>
-                <div style="display:flex;align-items:center;gap:0.5rem;margin:0.75rem 0">
-                    <hr style="flex:1;border:none;border-top:1px solid var(--border,#d8dee3)">
-                    <span style="font-size:0.8rem;color:var(--muted,#5c6b73)">or sign in with password</span>
-                    <hr style="flex:1;border:none;border-top:1px solid var(--border,#d8dee3)">
-                </div>
-            </div>
-
-            {% if google_login_enabled or apple_login_enabled %}
-            <div class="social-divider">
-                <span>or continue with</span>
-            </div>
-            <div class="social-buttons">
-                {% if google_login_enabled %}
-                <a href="{{ url_for('auth.google_login') }}" class="social-btn social-btn--google">
-                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                        <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
-                        <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
-                        <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
-                        <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
-                    </svg>
-                    Continue with Google
-                </a>
-                {% endif %}
-                {% if apple_login_enabled %}
-                <a href="{{ url_for('auth.apple_login') }}" class="social-btn social-btn--apple">
-                    <svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor">
-                        <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
-                    </svg>
-                    Continue with Apple
-                </a>
-                {% endif %}
-            </div>
-            {% endif %}
-
             <p class="auth-switch">Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a></p>
             <p class="auth-switch"><a href="{{ url_for('auth.landing') }}">&larr; Back</a></p>
         </section>
@@ -97,7 +97,18 @@
         if (!window.PublicKeyCredential) return;
         PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (available) {
             if (!available) return;
-            document.getElementById('webauthn-section').style.display = '';
+            var section = document.getElementById('webauthn-section');
+            if (section) section.style.display = '';
+            // When biometrics available, move social section below password form
+            var social = document.getElementById('social-login-section');
+            var form   = document.querySelector('.auth-form');
+            if (social && form && form.nextElementSibling) {
+                form.parentNode.insertBefore(social, form);
+                var div = social.nextElementSibling;
+                if (div && div.classList.contains('social-divider')) {
+                    form.parentNode.insertBefore(div, form);
+                }
+            }
         }).catch(function () {});
 
         function b64urlToBuffer(b64url) {
@@ -166,7 +177,7 @@
                     }
                     errEl.style.display = '';
                     btn.disabled = false;
-                    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg> Use Face ID / Touch ID';
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg> Use Face ID / Touch ID';
                 });
         });
     })();
