@@ -168,6 +168,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
+      },
+      "bigeye_scad_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "round_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "CA": {
@@ -387,6 +417,60 @@
         "bag_limit": "Included in 10-fish aggregate",
         "season": "Open year-round; check depth rules",
         "notes": "Part of rockfish aggregate. Verify current rules."
+      },
+      "pacific_sand_dab": {
+        "min_size": "None",
+        "bag_limit": "No limit for sanddabs",
+        "season": "Open year-round",
+        "notes": "Pacific sand dabs have no bag or size limit in most Pacific states. They are among the most lightly regulated flatfish species."
+      },
+      "speckled_sand_dab": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations; verify current state rules."
+      },
+      "butter_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate in some areas)",
+        "season": "Open year-round",
+        "notes": "Part of the general flatfish group. Verify current state flatfish aggregate rules."
+      },
+      "sand_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate in some areas)",
+        "season": "Open year-round",
+        "notes": "Part of the general flatfish group. Verify current state flatfish aggregate rules."
+      },
+      "white_croaker": {
+        "min_size": "None",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "No size limit for white croaker. Check local consumption advisories \u2014 some Southern California harbors have fish consumption warnings due to sediment contamination."
+      },
+      "pacific_mackerel": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit for Pacific mackerel. Abundance varies with ocean conditions."
+      },
+      "jack_mackerel_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific jack mackerel in most states."
+      },
+      "surf_smelt": {
+        "min_size": "None",
+        "bag_limit": "25 lbs per day",
+        "season": "Open during run seasons",
+        "notes": "Check CDFW current rules for surf smelt dip-netting at specific Northern California beaches."
+      },
+      "barred_sand_bass": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day (aggregate with spotted sand bass)",
+        "season": "Closed Mar 1 \u2013 Jun 15 (spawning closure in many years)",
+        "notes": "Barred and spotted sand bass share a 10-fish aggregate limit. Spawning closure applies in Southern California. Verify current CDFW rules before fishing."
       }
     },
     "CT": {
@@ -533,6 +617,18 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "barndoor_skate": {
+        "min_size": "None (prohibited to retain in federal waters)",
+        "bag_limit": "0 in federal waters; verify state rules",
+        "season": "Prohibited",
+        "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
       }
     },
     "DE": {
@@ -655,6 +751,12 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
       }
     },
     "FL": {
@@ -899,6 +1001,102 @@
         "bag_limit": "3 per day (grouper aggregate)",
         "season": "Open year-round (may have seasonal closure)",
         "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "cero_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Cero mackerel rules are similar to Spanish mackerel in most states. Verify current FL FWC and NC/SC rules."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit but rays are considered a species of concern. Practice catch and release; they have venomous tail spines \u2014 handle with great care."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No state regulations for cownose ray in most Mid-Atlantic states. Some states run bow-fishing and bowfishing tournaments during spring/fall runs."
+      },
+      "atlantic_guitarfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic guitarfish. Handle with care \u2014 they have small dorsal spines."
+      },
+      "french_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Grunts fall under a 100-fish aggregate bag limit in Florida. Verify current FL FWC rules."
+      },
+      "cottonwick_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Grunts fall under a 100-fish aggregate bag limit in Florida. Verify current FL FWC rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Grunts fall under a 100-fish aggregate bag limit in Florida. Verify current FL FWC rules."
+      },
+      "bigeye_scad_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "round_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "GA": {
@@ -1045,6 +1243,48 @@
         "bag_limit": "2 per vessel per day",
         "season": "Open year-round",
         "notes": "Spearfish are covered by NOAA HMS regulations. Verify current rules; most are released."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit but rays are considered a species of concern. Practice catch and release; they have venomous tail spines \u2014 handle with great care."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "LA": {
@@ -1173,6 +1413,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
+      },
+      "atlantic_guitarfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic guitarfish. Handle with care \u2014 they have small dorsal spines."
+      },
+      "bigeye_scad_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "round_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "MA": {
@@ -1344,6 +1626,30 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "barndoor_skate": {
+        "min_size": "None (prohibited to retain in federal waters)",
+        "bag_limit": "0 in federal waters; verify state rules",
+        "season": "Prohibited",
+        "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
       }
     },
     "MD": {
@@ -1514,6 +1820,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit but rays are considered a species of concern. Practice catch and release; they have venomous tail spines \u2014 handle with great care."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No state regulations for cownose ray in most Mid-Atlantic states. Some states run bow-fishing and bowfishing tournaments during spring/fall runs."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
       }
     },
     "ME": {
@@ -1612,6 +1954,18 @@
         "bag_limit": "15 per day",
         "season": "Varies annually",
         "notes": "Season and bag limit change each year. Verify with state agency."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "barndoor_skate": {
+        "min_size": "None (prohibited to retain in federal waters)",
+        "bag_limit": "0 in federal waters; verify state rules",
+        "season": "Prohibited",
+        "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
       }
     },
     "MS": {
@@ -1734,6 +2088,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
+      },
+      "bigeye_scad_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "round_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "NC": {
@@ -2025,6 +2409,78 @@
         "bag_limit": "3 per day (grouper aggregate)",
         "season": "Open year-round (may have seasonal closure)",
         "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "cero_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Cero mackerel rules are similar to Spanish mackerel in most states. Verify current FL FWC and NC/SC rules."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit but rays are considered a species of concern. Practice catch and release; they have venomous tail spines \u2014 handle with great care."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No state regulations for cownose ray in most Mid-Atlantic states. Some states run bow-fishing and bowfishing tournaments during spring/fall runs."
+      },
+      "bigeye_scad_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "round_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "NJ": {
@@ -2215,6 +2671,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No state regulations for cownose ray in most Mid-Atlantic states. Some states run bow-fishing and bowfishing tournaments during spring/fall runs."
+      },
+      "barndoor_skate": {
+        "min_size": "None (prohibited to retain in federal waters)",
+        "bag_limit": "0 in federal waters; verify state rules",
+        "season": "Prohibited",
+        "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
       }
     },
     "NY": {
@@ -2379,6 +2865,30 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "barndoor_skate": {
+        "min_size": "None (prohibited to retain in federal waters)",
+        "bag_limit": "0 in federal waters; verify state rules",
+        "season": "Prohibited",
+        "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
       }
     },
     "OR": {
@@ -2543,6 +3053,60 @@
         "bag_limit": "Included in 10-fish aggregate",
         "season": "Open year-round; check depth rules",
         "notes": "Part of rockfish aggregate. Verify current rules."
+      },
+      "pacific_sand_dab": {
+        "min_size": "None",
+        "bag_limit": "No limit for sanddabs",
+        "season": "Open year-round",
+        "notes": "Pacific sand dabs have no bag or size limit in most Pacific states. They are among the most lightly regulated flatfish species."
+      },
+      "speckled_sand_dab": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations; verify current state rules."
+      },
+      "butter_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate in some areas)",
+        "season": "Open year-round",
+        "notes": "Part of the general flatfish group. Verify current state flatfish aggregate rules."
+      },
+      "sand_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate in some areas)",
+        "season": "Open year-round",
+        "notes": "Part of the general flatfish group. Verify current state flatfish aggregate rules."
+      },
+      "white_croaker": {
+        "min_size": "None",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "No size limit for white croaker. Check local consumption advisories \u2014 some Southern California harbors have fish consumption warnings due to sediment contamination."
+      },
+      "pacific_mackerel": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit for Pacific mackerel. Abundance varies with ocean conditions."
+      },
+      "jack_mackerel_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific jack mackerel in most states."
+      },
+      "surf_smelt": {
+        "min_size": "None",
+        "bag_limit": "10 lbs per person (or check current dip-net rules)",
+        "season": "Open during run seasons (varies by beach)",
+        "notes": "Surf smelt dip-netting rules vary by location and run. Check ODFW or WDFW for current beach-specific regulations before dip-netting."
+      },
+      "night_smelt": {
+        "min_size": "None",
+        "bag_limit": "10 lbs per person",
+        "season": "Spring run season (March-June)",
+        "notes": "Night smelt dip-netting permitted at designated beaches. Verify ODFW/WDFW current rules."
       }
     },
     "RI": {
@@ -2689,6 +3253,30 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "barndoor_skate": {
+        "min_size": "None (prohibited to retain in federal waters)",
+        "bag_limit": "0 in federal waters; verify state rules",
+        "season": "Prohibited",
+        "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
       }
     },
     "SC": {
@@ -2877,6 +3465,60 @@
         "bag_limit": "3 per day (grouper aggregate)",
         "season": "Open year-round (may have seasonal closure)",
         "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "cero_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Cero mackerel rules are similar to Spanish mackerel in most states. Verify current FL FWC and NC/SC rules."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit but rays are considered a species of concern. Practice catch and release; they have venomous tail spines \u2014 handle with great care."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "TX": {
@@ -3029,6 +3671,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
+      },
+      "atlantic_guitarfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic guitarfish. Handle with care \u2014 they have small dorsal spines."
+      },
+      "bigeye_scad_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "round_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scad species. Commonly used as live bait."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "striped_burrfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "sharpnose_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "balloonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
       }
     },
     "VA": {
@@ -3205,6 +3889,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "swordfish": {
+        "min_size": "47 in lower jaw fork length",
+        "bag_limit": "1 per angler per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS recreational permit. Verify current NOAA HMS rules and possession limits. Strong conservation ethic \u2014 most are released."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round; Atlantic bigeye quota applies",
+        "notes": "Bigeye tuna are under ICCAT quota management. Verify current NOAA HMS possession limits. Charter captains must check current quota availability."
+      },
+      "atlantic_menhaden": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit but rays are considered a species of concern. Practice catch and release; they have venomous tail spines \u2014 handle with great care."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No state regulations for cownose ray in most Mid-Atlantic states. Some states run bow-fishing and bowfishing tournaments during spring/fall runs."
+      },
+      "gizzard_shad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
       }
     },
     "WA": {
@@ -3375,6 +4095,42 @@
         "bag_limit": "Included in 10-fish aggregate",
         "season": "Open year-round; check depth rules",
         "notes": "Part of rockfish aggregate. Verify current rules."
+      },
+      "pacific_sand_dab": {
+        "min_size": "None",
+        "bag_limit": "No limit for sanddabs",
+        "season": "Open year-round",
+        "notes": "Pacific sand dabs have no bag or size limit in most Pacific states. They are among the most lightly regulated flatfish species."
+      },
+      "speckled_sand_dab": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations; verify current state rules."
+      },
+      "butter_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate in some areas)",
+        "season": "Open year-round",
+        "notes": "Part of the general flatfish group. Verify current state flatfish aggregate rules."
+      },
+      "sand_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate in some areas)",
+        "season": "Open year-round",
+        "notes": "Part of the general flatfish group. Verify current state flatfish aggregate rules."
+      },
+      "surf_smelt": {
+        "min_size": "None",
+        "bag_limit": "10 lbs per person (or check current dip-net rules)",
+        "season": "Open during run seasons (varies by beach)",
+        "notes": "Surf smelt dip-netting rules vary by location and run. Check ODFW or WDFW for current beach-specific regulations before dip-netting."
+      },
+      "night_smelt": {
+        "min_size": "None",
+        "bag_limit": "10 lbs per person",
+        "season": "Spring run season (March-June)",
+        "notes": "Night smelt dip-netting permitted at designated beaches. Verify ODFW/WDFW current rules."
       }
     },
     "HI": {
@@ -3506,6 +4262,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No regulations for opelu (mackerel scad). Important live bait species; cast net fishing permitted in most areas."
+      },
+      "oio_bonefish": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit",
+        "season": "Open year-round",
+        "notes": "No state bag or size limit for oio (bonefish) in Hawaii. Most anglers practice catch and release. Check for any local area closure rules."
+      },
+      "omilu_bluefin_trevally": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit",
+        "season": "Open year-round",
+        "notes": "No state regulations specifically for omilu. Verify current DLNR rules."
+      },
+      "kole_surgeonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for kole in Hawaii. Some reef areas may have general marine reserve restrictions."
+      },
+      "toau_snapper": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for toau in Hawaii."
+      },
+      "menpachi_soldierfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations for menpachi. Check for local marine reserve restrictions."
       }
     }
   }

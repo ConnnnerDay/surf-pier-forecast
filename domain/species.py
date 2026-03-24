@@ -1219,6 +1219,44 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Northern stargazer": ["panfish"],
     "Bowfin": ["game_fish"],
     "Rubberlip seaperch": ["panfish"],
+    # West Coast flatfish / smelt / mackerel
+    "Pacific sand dab": ["panfish"],
+    "Speckled sand dab": ["panfish"],
+    "Butter sole": ["panfish"],
+    "Sand sole": ["panfish"],
+    "White croaker (tomcod, kingfish)": ["panfish"],
+    "Pacific mackerel": ["game_fish", "baitfish"],
+    "Jack mackerel (Pacific)": ["game_fish", "baitfish"],
+    "Surf smelt": ["panfish", "baitfish"],
+    "Night smelt": ["panfish", "baitfish"],
+    "Barred sand bass": ["game_fish"],
+    # Rays, skates
+    "Spotted eagle ray": ["game_fish", "catch_and_release"],
+    "Cownose ray": ["game_fish"],
+    "Atlantic guitarfish": ["panfish"],
+    "Barndoor skate": ["catch_and_release"],
+    # Atlantic scads, grunts
+    "Bigeye scad (Atlantic)": ["baitfish", "panfish"],
+    "Round scad": ["baitfish", "panfish"],
+    "French grunt": ["panfish"],
+    "Cottonwick grunt": ["panfish"],
+    "Caesar grunt": ["panfish"],
+    # Hawaii additions
+    "Oio (bonefish, Hawaii)": ["game_fish", "catch_and_release"],
+    "Omilu (bluefin trevally)": ["game_fish"],
+    "Kole (surgeonfish)": ["reef_fish"],
+    "Menpachi (soldierfish)": ["reef_fish", "panfish"],
+    "Roi (peacock grouper)": ["game_fish", "reef_fish"],
+    "Toau (blacktail snapper)": ["game_fish", "reef_fish"],
+    # Tropical/misc East
+    "Atlantic menhaden": ["baitfish"],
+    "Gizzard shad": ["baitfish"],
+    "Cero mackerel": ["game_fish"],
+    "Striped burrfish": ["panfish"],
+    "Balloonfish": ["panfish"],
+    "Sharpnose puffer": ["panfish"],
+    "Fringed filefish": ["panfish"],
+    "Leatherjacket (Atlantic)": ["panfish"],
 }
 
 
