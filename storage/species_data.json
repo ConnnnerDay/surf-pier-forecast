@@ -16739,5 +16739,1086 @@
     "lures": "Small topwater plugs, DOA shrimp, and small streamers near creek mouths",
     "explanation_cold": "Juvenile tarpon inhabit warm tidal creeks, backwater canals, and shallow lagoons year-round in SE and Gulf coastal areas.",
     "explanation_warm": "Year-round in warm SE and Gulf backwater areas; juvenile tarpon in small creeks are more accessible than migratory adult tarpon \u2014 they leap spectacularly even at 5-10 lbs and give a preview of why tarpon are called the Silver King."
+  },
+  {
+    "name": "Pacific spadefish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Shrimp, squid, small invertebrates near structure and buoys in Southern California",
+    "rig": "Light rig near surface structure, buoys, and kelp in Southern California",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "None to split shot",
+    "lures": "Small jigs near floating structure",
+    "explanation_cold": "Pacific spadefish are rarely encountered; Atlantic spadefish are more common. Incidental catch near structure.",
+    "explanation_warm": "Occasionally seen near buoys and offshore structure in SoCal; mostly incidental."
+  },
+  {
+    "name": "Pacific jack mackerel",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 56,
+    "temp_max": 72,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small live baitfish, anchovies near the surface and mid-water from piers and boats",
+    "rig": "Light spinning or sabiki near schooling fish; free-lined small live anchovy",
+    "hook_size": "#6-2 hook",
+    "sinker": "None to 1/4 oz",
+    "lures": "Small spoons, small jigs, and sabiki rigs worked near surface schools",
+    "explanation_cold": "Pacific jack mackerel school in enormous numbers off California; they are a forage species also called 'horse mackerel'.",
+    "explanation_warm": "Year-round off California piers and nearshore; jack mackerel form dense schools and hit small lures and sabiki rigs readily \u2014 a fun fast-action species for beginners."
+  },
+  {
+    "name": "Pacific barracuda",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 62,
+    "temp_max": 78,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live anchovies, sardines, small baitfish near kelp and rocky bottom in Southern California",
+    "rig": "Light to medium spinning near kelp; free-lined live bait or fast retrieved spoon",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None",
+    "lures": "Kastmaster spoons, small chrome jigs, and pencil plugs retrieved fast near the surface",
+    "explanation_cold": "Pacific barracuda inhabit Southern California nearshore waters in summer and fall; they arrive with warm water.",
+    "explanation_warm": "Summer through fall in Southern California nearshore; 'cuda school near kelp and hit fast-retrieved spoons and live bait \u2014 excellent on light tackle. Very good eating when fresh."
+  },
+  {
+    "name": "Halfmoon perch",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Kelp, small invertebrates, shrimp near rocky reef and kelp beds in Southern California",
+    "rig": "Light rig near rocky reef and kelp",
+    "hook_size": "#6-#2 hook",
+    "sinker": "None to split shot",
+    "lures": "Small grubs near rocky bottom",
+    "explanation_cold": "Halfmoon perch (catalina perch) are common around rocky reef and kelp in Southern California; they are bluish with a distinctive half-moon shaped tail.",
+    "explanation_warm": "Year-round on Southern California rocky reef; halfmoon are a frequent catch near kelp beds and rocky structure \u2014 fun on ultra-light tackle."
+  },
+  {
+    "name": "Brown shark (sandbar)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "northeast"
+    ],
+    "temp_min": 54,
+    "temp_max": 76,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Cut fish, large squid near sandy bottom nearshore",
+    "rig": "Heavy rig; 200 lb leader",
+    "hook_size": "9/0-14/0 hook",
+    "sinker": "6-16 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Brown shark is a common name for the sandbar shark on the Mid-Atlantic coast.",
+    "explanation_warm": "Same as sandbar shark \u2014 a prohibited species in the Atlantic. Release immediately."
+  },
+  {
+    "name": "Kingfish (Northern/Southern)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "northeast"
+    ],
+    "temp_min": 54,
+    "temp_max": 74,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Bloodworms, sandworms, sand fleas, shrimp in the surf and bays",
+    "rig": "Light two-hook bottom rig in the surf and bay",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/2-2 oz",
+    "lures": "Small grubs and Gulp Sandworm near bottom",
+    "explanation_cold": "Northern and Southern kingfish (sea mullet) are a popular Mid-Atlantic and SE surf and bay species; they bite hard and are excellent panfish.",
+    "explanation_warm": "Spring through fall in Mid-Atlantic and SE surf; kingfish run in schools and are easy to catch on bloodworms and cut bait \u2014 a staple of pier and surf fishing up and down the coast."
+  },
+  {
+    "name": "Bluefish (small)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "southeast",
+      "new_england"
+    ],
+    "temp_min": 56,
+    "temp_max": 76,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live baitfish, cut bunker near surface schools; voracious striker",
+    "rig": "Light to medium spinning near surface feeding schools",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None to 1/4 oz",
+    "lures": "Metal spoons, poppers, Gotcha plugs near feeding fish",
+    "explanation_cold": "Smaller bluefish (under 3 lbs) school near the surface and provide fast light-tackle action throughout their range.",
+    "explanation_warm": "Summer through fall from Maine to Florida; small bluefish school in bays and nearshore blitzing bait \u2014 any metal spoon or small surface plug thrown into the school produces instant results."
+  },
+  {
+    "name": "Yellowfin grouper",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live fish, shrimp, squid near tropical reef at 15-120 ft",
+    "rig": "Medium live-bait rig near coral reef and rocky bottom",
+    "hook_size": "3/0-6/0 hook",
+    "sinker": "1-6 oz",
+    "lures": "Large swimbaits near reef structure",
+    "explanation_cold": "Yellowfin grouper inhabit Florida Keys and SE Atlantic tropical reef year-round; they have distinctive yellow-tipped pectoral fins.",
+    "explanation_warm": "Year-round near Florida Keys reef; yellowfin grouper are wary and targeted near deep coral ledges \u2014 they have vivid yellow fin margins and are excellent eating."
+  },
+  {
+    "name": "Atlantic pollock",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 38,
+    "temp_max": 58,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "good_months": [
+      9,
+      6
+    ],
+    "bait": "Clams, squid, cut herring, jigs near rocky bottom at 50-300 ft",
+    "rig": "Medium to heavy rig at 50-300 ft; also caught jigging",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "6-16 oz",
+    "lures": "Large diamond jigs worked near bottom",
+    "explanation_cold": "Atlantic pollock are a cold-water bottom fish from New England to the Maritimes; faster and more aggressive than cod.",
+    "explanation_warm": "Fall through spring on NE party boats; pollock hit jigs aggressively and fight harder than cod \u2014 superb light-tackle bottom fish. Excellent eating."
+  },
+  {
+    "name": "Tautog (Mid-Atlantic)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 46,
+    "temp_max": 64,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      6,
+      9,
+      12
+    ],
+    "bait": "Green crabs, rock crabs, clams near rocky jetties, wrecks, and mussel beds",
+    "rig": "Medium to heavy bottom rig right at rocky structure; minimal weight",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "None to 1 oz",
+    "lures": "Not a lure target; bait-only species",
+    "explanation_cold": "Tautog (blackfish) are year-round Mid-Atlantic and NE residents near rocky structure; powerful crushing jaws for hard-shelled prey.",
+    "explanation_warm": "Spring and fall at rocky structure; must fish literally on the rocks. Green crab is the go-to bait. Excellent white flaky meat."
+  },
+  {
+    "name": "Red snapper (Gulf)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 66,
+    "temp_max": 82,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Live or cut fish, squid near rocky reef and artificial reef at 40-200 ft",
+    "rig": "Medium to heavy bottom rig at 40-200 ft near rocky structure",
+    "hook_size": "4/0-8/0 hook",
+    "sinker": "4-16 oz",
+    "lures": "Large jigs near rocky structure",
+    "explanation_cold": "Red snapper are the most prized reef fish in the Gulf; their populations have recovered significantly under strict management.",
+    "explanation_warm": "Short federal season (usually July-August in Gulf); check current NOAA season dates before fishing. Outstanding table fare \u2014 they hit baits aggressively near the bottom."
+  },
+  {
+    "name": "Blacknose shark",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Cut fish, squid near nearshore sandy bottom; incidental catch",
+    "rig": "Heavy nearshore shark rig; 100 lb leader",
+    "hook_size": "7/0-10/0 hook",
+    "sinker": "3-10 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Blacknose sharks are a small coastal shark common in SE and Gulf nearshore waters.",
+    "explanation_warm": "Spring through fall nearshore; smaller than blacktip sharks \u2014 incidental catch on shark rigs. Practice catch-and-release."
+  },
+  {
+    "name": "Spotted seatrout (Gulf)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live shrimp under a popping cork, live finger mullet near grass flats",
+    "rig": "Light to medium inshore rig with popping cork or soft plastic jig head",
+    "hook_size": "1/0-3/0 hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Mirrolure, DOA shrimp, soft plastic paddle-tails, and topwater plugs near grass flats",
+    "explanation_cold": "Spotted seatrout are the most popular inshore gamefish in the Gulf; they inhabit grass flats and oyster reefs year-round.",
+    "explanation_warm": "Year-round in SE and Gulf grass flats; hitting a topwater plug at dawn is a quintessential SE experience. School near submerged grass and oyster bars."
+  },
+  {
+    "name": "Crevalle jack (small)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live baitfish, live shrimp near the surface near structure in bays and nearshore",
+    "rig": "Light to medium spinning near surface schooling fish",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None to 1/4 oz",
+    "lures": "Metal spoons, topwater plugs, and jigs near schooling fish",
+    "explanation_cold": "Juvenile crevalle jacks school in bays and nearshore from the SE through Mid-Atlantic in summer.",
+    "explanation_warm": "Spring through fall inshore; jack schools crash baitfish near the surface \u2014 pound for pound one of the hardest-fighting fish in coastal waters."
+  },
+  {
+    "name": "Tarpon (adult)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 72,
+    "temp_max": 88,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9
+    ],
+    "bait": "Live mullet, live crabs, live pinfish, large streamers near passes, channels, and flats",
+    "rig": "Medium to heavy casting or fly tackle; 100 lb shock leader",
+    "hook_size": "5/0-9/0 hook",
+    "sinker": "None",
+    "lures": "Large streamers (Puglisi, Tarpon Toad), large swimbaits near rolling fish",
+    "explanation_cold": "Adult tarpon are the premier light-tackle gamefish in Florida and the Gulf; they migrate along the coast in huge pods in spring and summer.",
+    "explanation_warm": "Spring through summer migration along FL and Gulf coasts; tarpon (Silver King) are the holy grail of inshore fishing \u2014 they jump spectacularly, run 100+ yards in seconds, and reach 200 lbs. Primarily catch-and-release."
+  },
+  {
+    "name": "Wahoo (East)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 70,
+    "temp_max": 86,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Large trolled lures, ballyhoo near offshore structure and dropoffs",
+    "rig": "Heavy trolling rig at 7-16 knots; 300 lb mono or wire leader",
+    "hook_size": "8/0-12/0 hook",
+    "sinker": "None",
+    "lures": "High-speed skirted lures, Ilander combos, large Rapalas trolled at 12-16 knots",
+    "explanation_cold": "Wahoo are among the fastest fish in the ocean; they inhabit offshore tropical waters and are prized for sport and table.",
+    "explanation_warm": "Year-round near SE and Gulf offshore structure; the bite is an instantaneous shock and the run is explosive. Excellent eating."
+  },
+  {
+    "name": "Sailfish (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ],
+    "good_months": [
+      10,
+      4
+    ],
+    "bait": "Trolled ballyhoo, live bait near warm offshore current and color changes",
+    "rig": "Light to medium trolling tackle; 100-200 lb leader",
+    "hook_size": "7/0-9/0 hook",
+    "sinker": "None",
+    "lures": "Rigged ballyhoo, small skirted lures; live bait under kite for sailfish",
+    "explanation_cold": "Atlantic sailfish are the most abundant billfish; they concentrate in winter off SE Florida.",
+    "explanation_warm": "Best November through April off SE Florida; sailfish are nearly always released. Kite fishing with live bait off Miami is world-famous."
+  },
+  {
+    "name": "Dolphinfish (mahi) school",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "gulf",
+      "northeast"
+    ],
+    "temp_min": 66,
+    "temp_max": 84,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Small trolled lures, flying fish, live baits near offshore weedlines",
+    "rig": "Light to medium trolling or casting offshore; 30-80 lb leader",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "None",
+    "lures": "Small skirted lures, small Rapalas, Mahi bombs near weed lines",
+    "explanation_cold": "School dolphinfish (mahi-mahi) school near offshore weedlines and debris in huge numbers.",
+    "explanation_warm": "Spring through fall near offshore weedlines; school mahi travel in massive packs near sargassum \u2014 non-stop action casting small lures."
+  },
+  {
+    "name": "Longfin albacore",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "new_england"
+    ],
+    "temp_min": 56,
+    "temp_max": 74,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Chunked butterfish, squid, and trolled lures offshore in cold water",
+    "rig": "Medium trolling or live-bait rig; 50-100 lb leader",
+    "hook_size": "5/0-7/0 hook",
+    "sinker": "None",
+    "lures": "Small skirted lures, cedar plugs, and metal jigs trolled or cast to breaking fish",
+    "explanation_cold": "Longfin albacore are a cold-water tuna that appears offshore NE and Mid-Atlantic in summer and fall.",
+    "explanation_warm": "Summer through fall offshore NE and Mid-Atlantic; prized for canning and sashimi \u2014 hit trolled lures eagerly. Excellent eating."
+  },
+  {
+    "name": "Pacific bluefin tuna (juvenile)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 62,
+    "temp_max": 78,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Anchovies, sardines, small trolled lures offshore Southern California",
+    "rig": "Medium to heavy casting or trolling near offshore surface schools; 50-100 lb leader",
+    "hook_size": "4/0-7/0 hook",
+    "sinker": "None",
+    "lures": "Flat-fall jigs, iron jigs, small skirted lures cast to breaking fish",
+    "explanation_cold": "Pacific bluefin tuna juveniles appear off Southern California and the Pacific Northwest annually.",
+    "explanation_warm": "July through October off Southern California and Pacific Northwest; schools appear nearshore and are sight-fished with surface iron and live bait \u2014 one of the most exciting events in West Coast fishing."
+  },
+  {
+    "name": "Dorado (Pacific mahi)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Flying fish, small baitfish, trolled lures near offshore weed lines",
+    "rig": "Light to medium trolling or casting offshore",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "None",
+    "lures": "Small Rapalas, skirted lures near sargassum and debris lines",
+    "explanation_cold": "Dorado (Pacific mahi-mahi) appear seasonally off Southern California and Baja in warm-water years.",
+    "explanation_warm": "Summer through fall in warm-water years off SoCal and Baja; electric blue-green and gold colors \u2014 excellent eating."
+  },
+  {
+    "name": "Pacific yellowtail (amberjack)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 60,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live sardines, anchovies, squid, large swimbaits near kelp and rocky offshore islands",
+    "rig": "Medium to heavy casting or live-bait rig near kelp paddies and rocky islands",
+    "hook_size": "4/0-7/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Surface iron jigs, swimbaits, and large poppers near kelp and rocky structure",
+    "explanation_cold": "Pacific yellowtail (California yellowtail) are a premier gamefish off Southern California and Baja; related to amberjack and fight extremely hard.",
+    "explanation_warm": "Year-round in Baja, spring through fall off Southern California; yellowtail near kelp paddies sight-fished with live bait and surface iron \u2014 the SoCal equivalent of East Coast striper fishing."
+  },
+  {
+    "name": "Permit (flats)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live crabs near sandy flats and reef edges; the ultimate sight-fishing target",
+    "rig": "Light fly or spinning near tailing and cruising permit on flats",
+    "hook_size": "1/0-4/0 hook",
+    "sinker": "None",
+    "lures": "Crab fly imitations and small jigs mimicking crabs",
+    "explanation_cold": "Permit are the holy grail of flats fishing; they inhabit sand flats and reef edges in the Florida Keys and Gulf year-round.",
+    "explanation_warm": "Year-round in Florida Keys flats; incredibly intelligent and wary \u2014 a flats permit on fly is considered the pinnacle of inshore fishing."
+  },
+  {
+    "name": "Bonefish (flats)",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live shrimp, small crabs near sandy flats",
+    "rig": "Light fly or spinning near tailing bonefish on shallow flats",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "None",
+    "lures": "Crazy Charlie, Gotcha, small crab and shrimp flies sight-fished on flats",
+    "explanation_cold": "Bonefish are the iconic flats gamefish of the Florida Keys; catch-and-release only in Florida.",
+    "explanation_warm": "Year-round in Florida Keys flats; sight-fished on shallow sand and marl flats \u2014 incredibly fast and powerful for their size. Almost exclusively catch-and-release."
+  },
+  {
+    "name": "Snook (inshore)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 86,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live pilchards, live shrimp, live pinfish near mangrove edges, passes, and bridges",
+    "rig": "Light to medium inshore rig near mangrove edges and bridge pilings",
+    "hook_size": "3/0-6/0 hook",
+    "sinker": "None to split shot",
+    "lures": "DOA lures, swimbaits, topwater plugs near mangrove edges",
+    "explanation_cold": "Snook are the premier inshore gamefish in Florida and the Gulf Coast; they ambush prey near mangrove edges and tidal passes.",
+    "explanation_warm": "Year-round in warm SE inshore waters; structure-oriented \u2014 lurk in ambush just inside mangrove edges and under bridges. Live pilchards free-lined into snook holes produce explosive strikes."
+  },
+  {
+    "name": "Flounder (winter)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "new_england"
+    ],
+    "temp_min": 36,
+    "temp_max": 56,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      3,
+      4,
+      5,
+      11,
+      12
+    ],
+    "good_months": [
+      2,
+      6,
+      10
+    ],
+    "bait": "Sandworms, clam strips near sandy-mud bottom in coastal bays and harbors",
+    "rig": "Light to medium bottom rig in coastal bays at 5-30 ft",
+    "hook_size": "#6-#2 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small jigs tipped with worm near the bottom",
+    "explanation_cold": "Winter flounder inhabit NE coastal bays and harbors from fall through spring; populations have declined significantly in the Mid-Atlantic.",
+    "explanation_warm": "Fall through spring in NE and Mid-Atlantic coastal bays; gather in bay channels in cold months \u2014 sandworms on the bottom near submerged eelgrass is the classic technique."
+  },
+  {
+    "name": "Longnose gar (tidal)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 56,
+    "temp_max": 80,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Frayed rope lure that entangles teeth, or live/cut fish in tidal rivers",
+    "rig": "Light to medium in tidal rivers; frayed nylon rope lure or live baitfish",
+    "hook_size": "No hook needed for rope lure",
+    "sinker": "None",
+    "lures": "Frayed nylon rope lure worked slowly near surface",
+    "explanation_cold": "Longnose gar inhabit tidal freshwater rivers throughout the Mid-Atlantic and SE; elongated beaks and diamond-scale armor.",
+    "explanation_warm": "Late spring through summer in tidal rivers; frayed rope lure catches in their teeth since scales deflect hooks \u2014 a fascinating prehistoric catch."
+  },
+  {
+    "name": "Bowfin (tidal)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 54,
+    "temp_max": 78,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Large lures, cut fish in shallow tidal backwater and swamps",
+    "rig": "Heavy spinning or baitcasting in shallow backwater; heavy fluorocarbon leader",
+    "hook_size": "3/0-6/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Large swimbaits, spinnerbaits, frogs in heavy cover",
+    "explanation_cold": "Bowfin (mudfish, swamp bass) inhabit tidal backwater swamps and slow rivers; primitive fish from an ancient lineage.",
+    "explanation_warm": "Spring through summer in tidal backwater swamps; incredibly powerful \u2014 guard nests aggressively and bite lures fearlessly. A surprising and memorable catch."
+  },
+  {
+    "name": "Pink salmon (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      6,
+      10
+    ],
+    "bait": "Small spinners, pink lures, small spoons near river mouths and estuaries",
+    "rig": "Light spinning near tidal zones and river mouths",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Pink Pixee, Mepps spinners, small spoons in pink or chartreuse",
+    "explanation_cold": "Pink salmon (humpback) run in massive numbers on odd years in Washington; the most abundant Pacific salmon.",
+    "explanation_warm": "July through September near river mouths; pinks run in phenomenal numbers and hit small lures eagerly \u2014 on strong run years you can catch dozens in a morning."
+  },
+  {
+    "name": "Sockeye salmon (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Small red or pink lures near river mouths; difficult to catch on hook and line",
+    "rig": "Light to medium spinning or fly near tidal river mouths",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Small red/pink Buzz Bombs, sockeye flies, and small spoons near river mouths",
+    "explanation_cold": "Sockeye salmon are the most commercially valuable Pacific salmon; they feed on plankton and are challenging to catch recreationally.",
+    "explanation_warm": "June through August near river mouths; notoriously difficult on hook and line \u2014 feed on plankton. Small red flies near their mouths is the best bet. Premium eating fish."
+  },
+  {
+    "name": "Chum salmon (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      8,
+      12
+    ],
+    "bait": "Fluorescent lures, streamers near river mouths and tidal zones",
+    "rig": "Medium spinning or fly near tidal zones and lower rivers",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Chartreuse or orange streamers, large flies, fluorescent spoons",
+    "explanation_cold": "Chum salmon (dog salmon) run in fall in the Pacific Northwest and Alaska; large and aggressive fighters.",
+    "explanation_warm": "September through November near river mouths; chum develop fangs as they enter freshwater \u2014 fight extremely hard on medium gear. Better catch-and-release than table fare."
+  },
+  {
+    "name": "Steelhead (tidal)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      10,
+      4
+    ],
+    "bait": "Roe, shrimp, sand shrimp in tidal and lower river zones during winter runs",
+    "rig": "Light to medium drift rig or float rig in tidal and lower river reaches",
+    "hook_size": "2/0-5/0 hook",
+    "sinker": "Split shot or pencil lead",
+    "lures": "Large spoons, streamers, and Corkies near the bottom in tidal river runs",
+    "explanation_cold": "Winter steelhead are sea-run rainbow trout returning to PNW rivers from winter through spring; the pinnacle of Pacific Northwest sportfishing.",
+    "explanation_warm": "November through March in tidal and lower river reaches; powerful, acrobatic fighters that can leap several feet. The ultimate PNW freshwater experience."
+  },
+  {
+    "name": "Dolly Varden (tidal)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Small spinners, spoons, and salmon eggs near tidal rivers in PNW and Alaska",
+    "rig": "Light to medium spinning near tidal rivers and estuaries",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Mepps spinners, small spoons, Pixee lures",
+    "explanation_cold": "Dolly Varden are char that move between saltwater and freshwater in the Pacific Northwest and Alaska; they follow salmon runs.",
+    "explanation_warm": "Summer through fall in PNW and Alaska tidal rivers; follow salmon upstream and feed on their eggs \u2014 surprising fighters on salmon rigs."
+  },
+  {
+    "name": "Speckled trout (Gulf)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live shrimp under a popping cork near grass flats and oyster reefs",
+    "rig": "Light to medium popping cork rig or soft plastic jig head",
+    "hook_size": "1/0-3/0 hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Mirrolure Lil John, DOA shrimp, Paul Brown Corky, and topwater plugs at dawn",
+    "explanation_cold": "Speckled trout (spotted seatrout) are the most popular inshore fish in the Gulf; inhabit grass flats and oyster reefs year-round.",
+    "explanation_warm": "Year-round in Gulf grass flats; topwater explosions at dawn over grass flats are the quintessential Gulf inshore experience."
+  },
+  {
+    "name": "Redfish (slot size)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 62,
+    "temp_max": 82,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live shrimp, gold spoon, crab near grass flats and oyster reef edges",
+    "rig": "Light to medium inshore rig on grass flats; popping cork or free-line",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "None",
+    "lures": "Gold Johnson Sprite spoon, Gulp Shrimp, and topwater plug near grass flat edges",
+    "explanation_cold": "Slot redfish (18-27 in in most Gulf states) are the prime keeper-size red drum inhabiting Gulf grass flats and oyster reefs.",
+    "explanation_warm": "Year-round in Gulf and SE inshore; tailing redfish with tail waving in the air while rooting for crabs is one of the most exciting sights in inshore fishing. Gold spoon near tailing fish."
   }
 ]

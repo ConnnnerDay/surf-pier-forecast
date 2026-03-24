@@ -366,6 +366,72 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "snook_inshore": {
+        "min_size": "24 in (varies)",
+        "bag_limit": "2 per day (varies)",
+        "season": "Check current state rules",
+        "notes": "Snook regulations vary by Gulf state. Verify current state rules."
+      },
+      "tarpon_adult": {
+        "min_size": "85 in (TX) or varies",
+        "bag_limit": "1 per vessel per day",
+        "season": "Check current state rules",
+        "notes": "Tarpon regulations vary by Gulf state. Most tarpon are released. Verify current state rules."
+      },
+      "spotted_seatrout_gulf": {
+        "min_size": "15 in (TX); varies by state",
+        "bag_limit": "10-25 per day (varies by state)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for spotted seatrout."
+      },
+      "speckled_trout_gulf": {
+        "min_size": "15 in (TX); varies",
+        "bag_limit": "10-25 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Speckled trout and spotted seatrout are the same species. Verify current state rules."
+      },
+      "sheepshead_gulf": {
+        "min_size": "12 in (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for sheepshead."
+      },
+      "red_snapper_gulf": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Short federal season \u2014 check current NOAA season announcement (typically July-August, varies annually)",
+        "notes": "Gulf red snapper have a 16-inch minimum and 2-fish bag limit. The season is VERY SHORT and changes each year. Check NOAA Fisheries for current season dates before planning a trip. State waters may have different rules."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A",
+        "bag_limit": "Catch-and-release strongly recommended",
+        "season": "Open year-round",
+        "notes": "Sailfish primarily caught off SE Florida coast. HMS Angling Permit required for harvest. Almost always released."
+      },
+      "wahoo_east": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for wahoo in Gulf/SE states. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in (fork length)",
+        "bag_limit": "3 per person per day (NOAA HMS)",
+        "season": "Open year-round",
+        "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for skipjack tuna. Verify current state and NOAA HMS rules."
       }
     },
     "CA": {
@@ -909,6 +975,42 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "No size limit for California corbina. 10-fish bag limit. Verify current CDFW rules."
+      },
+      "pacific_jack_mackerel": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit. Verify current CDFW rules."
+      },
+      "halfmoon_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Part of general nearshore rules. Verify current CDFW rules."
+      },
+      "pacific_yellowtail_amberjack": {
+        "min_size": "24 in (fork length)",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Pacific yellowtail have a 24-inch minimum and 10-fish bag limit in California. Verify current CDFW rules."
+      },
+      "dorado_pacific_mahi": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific dorado in California. Verify current CDFW rules."
+      },
+      "pacific_spadefish": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current CDFW rules."
+      },
+      "pacific_bluefin_tuna_juvenile": {
+        "min_size": "27 in (curved fork length)",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Pacific bluefin tuna have a 27-inch minimum and 2-fish bag limit in California. Bag limit may change annually \u2014 check current CDFW and PFMC rules before fishing."
       }
     },
     "CT": {
@@ -1115,6 +1217,42 @@
         "bag_limit": "7 per person per day",
         "season": "Open year-round",
         "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "flounder_winter": {
+        "min_size": "12 in (NJ/NY); 12.5 in (MA/RI/CT)",
+        "bag_limit": "10 per day (varies by state)",
+        "season": "September through March (varies by state)",
+        "notes": "Winter flounder seasons are complex and vary by state. Many NE states have closed winter flounder in some waters due to stock declines. Verify current state rules before fishing."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
       }
     },
     "DE": {
@@ -1273,6 +1411,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies)",
+        "bag_limit": "5 per day (varies by season)",
+        "season": "Spring and fall seasons; summer closure in most states",
+        "notes": "Tautog have a summer closure in most Mid-Atlantic states. Verify current state rules."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
       }
     },
     "FL": {
@@ -1967,6 +2135,72 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "snook_inshore": {
+        "min_size": "28 in (Gulf) / 28 in (Atlantic)",
+        "bag_limit": "1 per person per day",
+        "season": "Atlantic coast: Jun 1-Aug 31 and Dec 1-Feb 28 closed. Gulf: closed Jun-Aug and Dec-Feb. Check FL FWC for current dates.",
+        "notes": "Snook have season closures and a 1-fish bag limit in Florida. Snook require a special snook permit (included in FL recreational license). Verify current FL FWC rules carefully \u2014 snook regulations are complex."
+      },
+      "bonefish_flats": {
+        "min_size": "N/A \u2014 CATCH-AND-RELEASE ONLY",
+        "bag_limit": "0 \u2014 catch-and-release only",
+        "season": "Open year-round (catch-and-release only)",
+        "notes": "Bonefish are catch-and-release only in Florida. Handle gently, use wet hands, and release immediately. Do not lift by jaw."
+      },
+      "permit_flats": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Permit have a 22-inch minimum and 2-fish bag limit in Florida. Handle gently and release large fish. Verify current FL FWC rules."
+      },
+      "tarpon_adult": {
+        "min_size": "N/A for catch-and-release; harvest requires special tag",
+        "bag_limit": "Catch-and-release only without tag; 1 fish with special tarpon tag ($50)",
+        "season": "Open year-round",
+        "notes": "Tarpon require a special tarpon tag to harvest in Florida. Almost all recreational tarpon are released. Handle gently, minimize air exposure, and revive before releasing."
+      },
+      "ladyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ladyfish in Florida."
+      },
+      "spotted_seatrout_gulf": {
+        "min_size": "15 in TL (Gulf); 12 in (SE)",
+        "bag_limit": "5 per person per day (Gulf)",
+        "season": "Open year-round",
+        "notes": "Spotted seatrout regulations vary by region within Florida \u2014 Gulf coast has different rules than Atlantic coast. Verify current FL FWC rules."
+      },
+      "sheepshead_gulf": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Same as sheepshead Atlantic \u2014 verify current FL FWC rules."
+      },
+      "red_snapper_gulf": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Short federal season \u2014 check current NOAA season announcement (typically July-August, varies annually)",
+        "notes": "Gulf red snapper have a 16-inch minimum and 2-fish bag limit. The season is VERY SHORT and changes each year. Check NOAA Fisheries for current season dates before planning a trip. State waters may have different rules."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A",
+        "bag_limit": "Catch-and-release strongly recommended",
+        "season": "Open year-round",
+        "notes": "Sailfish primarily caught off SE Florida coast. HMS Angling Permit required for harvest. Almost always released."
+      },
+      "wahoo_east": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for wahoo in Gulf/SE states. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
       }
     },
     "GA": {
@@ -2365,6 +2599,30 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "atlantic_pollock": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic pollock rare in SE waters. No specific regulations. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in (fork length)",
+        "bag_limit": "3 per person per day (NOAA HMS)",
+        "season": "Open year-round",
+        "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for skipjack tuna. Verify current state and NOAA HMS rules."
       }
     },
     "LA": {
@@ -2715,6 +2973,66 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "snook_inshore": {
+        "min_size": "24 in (varies)",
+        "bag_limit": "2 per day (varies)",
+        "season": "Check current state rules",
+        "notes": "Snook regulations vary by Gulf state. Verify current state rules."
+      },
+      "tarpon_adult": {
+        "min_size": "85 in (TX) or varies",
+        "bag_limit": "1 per vessel per day",
+        "season": "Check current state rules",
+        "notes": "Tarpon regulations vary by Gulf state. Most tarpon are released. Verify current state rules."
+      },
+      "spotted_seatrout_gulf": {
+        "min_size": "15 in (TX); varies by state",
+        "bag_limit": "10-25 per day (varies by state)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for spotted seatrout."
+      },
+      "speckled_trout_gulf": {
+        "min_size": "15 in (TX); varies",
+        "bag_limit": "10-25 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Speckled trout and spotted seatrout are the same species. Verify current state rules."
+      },
+      "sheepshead_gulf": {
+        "min_size": "12 in (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for sheepshead."
+      },
+      "red_snapper_gulf": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Short federal season \u2014 check current NOAA season announcement (typically July-August, varies annually)",
+        "notes": "Gulf red snapper have a 16-inch minimum and 2-fish bag limit. The season is VERY SHORT and changes each year. Check NOAA Fisheries for current season dates before planning a trip. State waters may have different rules."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A",
+        "bag_limit": "Catch-and-release strongly recommended",
+        "season": "Open year-round",
+        "notes": "Sailfish primarily caught off SE Florida coast. HMS Angling Permit required for harvest. Almost always released."
+      },
+      "wahoo_east": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for wahoo in Gulf/SE states. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in (fork length)",
+        "bag_limit": "3 per person per day (NOAA HMS)",
+        "season": "Open year-round",
+        "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
       }
     },
     "MA": {
@@ -2958,6 +3276,42 @@
         "bag_limit": "7 per person per day",
         "season": "Open year-round",
         "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "flounder_winter": {
+        "min_size": "12 in (NJ/NY); 12.5 in (MA/RI/CT)",
+        "bag_limit": "10 per day (varies by state)",
+        "season": "September through March (varies by state)",
+        "notes": "Winter flounder seasons are complex and vary by state. Many NE states have closed winter flounder in some waters due to stock declines. Verify current state rules before fishing."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
       }
     },
     "MD": {
@@ -3278,6 +3632,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies)",
+        "bag_limit": "5 per day (varies by season)",
+        "season": "Spring and fall seasons; summer closure in most states",
+        "notes": "Tautog have a summer closure in most Mid-Atlantic states. Verify current state rules."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "longfin_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for longfin albacore. Verify current NOAA HMS and state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL) \u2014 varies",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
       }
     },
     "ME": {
@@ -3424,6 +3820,12 @@
         "bag_limit": "No recreational limit",
         "season": "Open year-round",
         "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
       }
     },
     "MS": {
@@ -3738,6 +4140,72 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "snook_inshore": {
+        "min_size": "24 in (varies)",
+        "bag_limit": "2 per day (varies)",
+        "season": "Check current state rules",
+        "notes": "Snook regulations vary by Gulf state. Verify current state rules."
+      },
+      "tarpon_adult": {
+        "min_size": "85 in (TX) or varies",
+        "bag_limit": "1 per vessel per day",
+        "season": "Check current state rules",
+        "notes": "Tarpon regulations vary by Gulf state. Most tarpon are released. Verify current state rules."
+      },
+      "spotted_seatrout_gulf": {
+        "min_size": "15 in (TX); varies by state",
+        "bag_limit": "10-25 per day (varies by state)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for spotted seatrout."
+      },
+      "speckled_trout_gulf": {
+        "min_size": "15 in (TX); varies",
+        "bag_limit": "10-25 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Speckled trout and spotted seatrout are the same species. Verify current state rules."
+      },
+      "sheepshead_gulf": {
+        "min_size": "12 in (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for sheepshead."
+      },
+      "red_snapper_gulf": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Short federal season \u2014 check current NOAA season announcement (typically July-August, varies annually)",
+        "notes": "Gulf red snapper have a 16-inch minimum and 2-fish bag limit. The season is VERY SHORT and changes each year. Check NOAA Fisheries for current season dates before planning a trip. State waters may have different rules."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A",
+        "bag_limit": "Catch-and-release strongly recommended",
+        "season": "Open year-round",
+        "notes": "Sailfish primarily caught off SE Florida coast. HMS Angling Permit required for harvest. Almost always released."
+      },
+      "wahoo_east": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for wahoo in Gulf/SE states. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in (fork length)",
+        "bag_limit": "3 per person per day (NOAA HMS)",
+        "season": "Open year-round",
+        "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for skipjack tuna. Verify current state and NOAA HMS rules."
       }
     },
     "NC": {
@@ -4365,6 +4833,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
+      },
+      "atlantic_pollock": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic pollock rare in SE waters. No specific regulations. Verify current state rules."
+      },
+      "tripletail": {
+        "min_size": "15 in (varies)",
+        "bag_limit": "2 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for tripletail."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "longfin_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for longfin albacore. Verify current NOAA HMS and state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL) \u2014 varies",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
       }
     },
     "NJ": {
@@ -4711,6 +5215,54 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "flounder_winter": {
+        "min_size": "12 in (NJ/NY); 12.5 in (MA/RI/CT)",
+        "bag_limit": "10 per day (varies by state)",
+        "season": "September through March (varies by state)",
+        "notes": "Winter flounder seasons are complex and vary by state. Many NE states have closed winter flounder in some waters due to stock declines. Verify current state rules before fishing."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "longfin_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for longfin albacore. Verify current NOAA HMS and state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL) \u2014 varies",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
       }
     },
     "NY": {
@@ -5019,6 +5571,54 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "flounder_winter": {
+        "min_size": "12 in (NJ/NY); 12.5 in (MA/RI/CT)",
+        "bag_limit": "10 per day (varies by state)",
+        "season": "September through March (varies by state)",
+        "notes": "Winter flounder seasons are complex and vary by state. Many NE states have closed winter flounder in some waters due to stock declines. Verify current state rules before fishing."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "longfin_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for longfin albacore. Verify current NOAA HMS and state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL) \u2014 varies",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
       }
     },
     "OR": {
@@ -5435,6 +6035,48 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "No size limit for California corbina. 10-fish bag limit. Verify current CDFW rules."
+      },
+      "pacific_yellowtail_amberjack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules."
+      },
+      "pacific_bluefin_tuna_juvenile": {
+        "min_size": "27 in",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Check current PFMC and state rules for Pacific bluefin tuna."
+      },
+      "pink_salmon_pacific": {
+        "min_size": "None (or varies)",
+        "bag_limit": "8 per day (varies)",
+        "season": "July through September odd years (WA); check ODFW for OR",
+        "notes": "Pink salmon runs are on odd years for most WA waters. Check current WDFW/ODFW rules."
+      },
+      "sockeye_salmon_pacific": {
+        "min_size": "None",
+        "bag_limit": "Varies by water body",
+        "season": "Extremely variable \u2014 check current state rules for specific water body",
+        "notes": "Sockeye salmon regulations are highly specific by location and year. Many waters have very limited or no sockeye retention. Verify current WDFW/ODFW rules."
+      },
+      "chum_salmon_pacific": {
+        "min_size": "None",
+        "bag_limit": "2-6 per day (varies)",
+        "season": "September through November generally",
+        "notes": "Chum salmon seasons vary by water body. Check current WDFW/ODFW rules."
+      },
+      "steelhead_tidal": {
+        "min_size": "Hatchery fish only in many rivers (marked by clipped adipose fin)",
+        "bag_limit": "2 per day hatchery (varies)",
+        "season": "November through March generally",
+        "notes": "Steelhead regulations are extremely complex \u2014 wild steelhead must be released in most waters. Only hatchery fish (clipped adipose fin) may be retained in most rivers. Check current WDFW/ODFW rules for specific water bodies."
+      },
+      "dolly_varden_tidal": {
+        "min_size": "12-16 in (varies)",
+        "bag_limit": "2-5 per day (varies by region)",
+        "season": "Varies by region; summer through fall generally",
+        "notes": "Dolly Varden regulations vary by watershed. Check current WDFW/ODFW rules."
       }
     },
     "RI": {
@@ -5653,6 +6295,42 @@
         "bag_limit": "7 per person per day",
         "season": "Open year-round",
         "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "flounder_winter": {
+        "min_size": "12 in (NJ/NY); 12.5 in (MA/RI/CT)",
+        "bag_limit": "10 per day (varies by state)",
+        "season": "September through March (varies by state)",
+        "notes": "Winter flounder seasons are complex and vary by state. Many NE states have closed winter flounder in some waters due to stock declines. Verify current state rules before fishing."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
       }
     },
     "SC": {
@@ -6129,6 +6807,18 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "atlantic_pollock": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic pollock rare in SE waters. No specific regulations. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
       }
     },
     "TX": {
@@ -6497,6 +7187,66 @@
         "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
         "season": "Open year-round catch-and-release",
         "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "snook_inshore": {
+        "min_size": "24 in (varies)",
+        "bag_limit": "2 per day (varies)",
+        "season": "Check current state rules",
+        "notes": "Snook regulations vary by Gulf state. Verify current state rules."
+      },
+      "tarpon_adult": {
+        "min_size": "85 in (TX) or varies",
+        "bag_limit": "1 per vessel per day",
+        "season": "Check current state rules",
+        "notes": "Tarpon regulations vary by Gulf state. Most tarpon are released. Verify current state rules."
+      },
+      "spotted_seatrout_gulf": {
+        "min_size": "15 in (TX); varies by state",
+        "bag_limit": "10-25 per day (varies by state)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for spotted seatrout."
+      },
+      "speckled_trout_gulf": {
+        "min_size": "15 in (TX); varies",
+        "bag_limit": "10-25 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Speckled trout and spotted seatrout are the same species. Verify current state rules."
+      },
+      "sheepshead_gulf": {
+        "min_size": "12 in (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for sheepshead."
+      },
+      "red_snapper_gulf": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Short federal season \u2014 check current NOAA season announcement (typically July-August, varies annually)",
+        "notes": "Gulf red snapper have a 16-inch minimum and 2-fish bag limit. The season is VERY SHORT and changes each year. Check NOAA Fisheries for current season dates before planning a trip. State waters may have different rules."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A",
+        "bag_limit": "Catch-and-release strongly recommended",
+        "season": "Open year-round",
+        "notes": "Sailfish primarily caught off SE Florida coast. HMS Angling Permit required for harvest. Almost always released."
+      },
+      "wahoo_east": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for wahoo in Gulf/SE states. Verify current state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for mahi-mahi."
+      },
+      "bigeye_tuna": {
+        "min_size": "27 in (fork length)",
+        "bag_limit": "3 per person per day (NOAA HMS)",
+        "season": "Open year-round",
+        "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
       }
     },
     "VA": {
@@ -6841,6 +7591,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies)",
+        "bag_limit": "5 per day (varies by season)",
+        "season": "Spring and fall seasons; summer closure in most states",
+        "notes": "Tautog have a summer closure in most Mid-Atlantic states. Verify current state rules."
+      },
+      "scup_porgy": {
+        "min_size": "9 in (most states)",
+        "bag_limit": "50 per person per day",
+        "season": "Open year-round",
+        "notes": "Scup have a 9-inch minimum and 50-fish bag limit in most Mid-Atlantic and NE states. Verify current NOAA and state rules."
+      },
+      "weakfish_seatrout": {
+        "min_size": "13 in",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Weakfish have a 1-fish daily bag limit in most Mid-Atlantic states due to stock decline. Verify current ASMFC and state rules."
+      },
+      "white_marlin": {
+        "min_size": "N/A \u2014 protected; catch-and-release recommended",
+        "bag_limit": "Not retained (de facto)",
+        "season": "Open year-round",
+        "notes": "White marlin are highly migratory and subject to NOAA HMS regulations. Requires federal HMS Angling Permit. Almost always released \u2014 they are an overfished stock. Report catches to the HMS recreational fishery observer program."
+      },
+      "sailfish_atlantic": {
+        "min_size": "N/A \u2014 catch-and-release recommended",
+        "bag_limit": "0 retained (quota managed)",
+        "season": "Open year-round",
+        "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "longfin_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for longfin albacore. Verify current NOAA HMS and state rules."
+      },
+      "dolphinfish_mahi_school": {
+        "min_size": "20 in (FL) \u2014 varies",
+        "bag_limit": "No limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
       }
     },
     "WA": {
@@ -7233,6 +8025,48 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Sablefish recreational bag limit is 10 per day. Verify current ODFW/WDFW rules."
+      },
+      "pacific_yellowtail_amberjack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Verify current state rules."
+      },
+      "pacific_bluefin_tuna_juvenile": {
+        "min_size": "27 in",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Check current PFMC and state rules for Pacific bluefin tuna."
+      },
+      "pink_salmon_pacific": {
+        "min_size": "None (or varies)",
+        "bag_limit": "8 per day (varies)",
+        "season": "July through September odd years (WA); check ODFW for OR",
+        "notes": "Pink salmon runs are on odd years for most WA waters. Check current WDFW/ODFW rules."
+      },
+      "sockeye_salmon_pacific": {
+        "min_size": "None",
+        "bag_limit": "Varies by water body",
+        "season": "Extremely variable \u2014 check current state rules for specific water body",
+        "notes": "Sockeye salmon regulations are highly specific by location and year. Many waters have very limited or no sockeye retention. Verify current WDFW/ODFW rules."
+      },
+      "chum_salmon_pacific": {
+        "min_size": "None",
+        "bag_limit": "2-6 per day (varies)",
+        "season": "September through November generally",
+        "notes": "Chum salmon seasons vary by water body. Check current WDFW/ODFW rules."
+      },
+      "steelhead_tidal": {
+        "min_size": "Hatchery fish only in many rivers (marked by clipped adipose fin)",
+        "bag_limit": "2 per day hatchery (varies)",
+        "season": "November through March generally",
+        "notes": "Steelhead regulations are extremely complex \u2014 wild steelhead must be released in most waters. Only hatchery fish (clipped adipose fin) may be retained in most rivers. Check current WDFW/ODFW rules for specific water bodies."
+      },
+      "dolly_varden_tidal": {
+        "min_size": "12-16 in (varies)",
+        "bag_limit": "2-5 per day (varies by region)",
+        "season": "Varies by region; summer through fall generally",
+        "notes": "Dolly Varden regulations vary by watershed. Check current WDFW/ODFW rules."
       }
     },
     "HI": {
@@ -7468,6 +8302,12 @@
         "bag_limit": "No recreational limit in most states",
         "season": "Open year-round",
         "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "tautog_mid_atlantic": {
+        "min_size": "16 in (varies by state)",
+        "bag_limit": "3-10 per day (varies by state and season)",
+        "season": "Check current state season \u2014 tautog have complex season closures in many states",
+        "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
       }
     }
   }
