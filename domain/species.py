@@ -1333,6 +1333,58 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Southern kingfish (sea mullet)": ["panfish"],
     "Atlantic threadfin": ["baitfish"],
     "Tripletail (Gulf)": ["game_fish"],
+    # West Coast rockfish additions
+    "Yellowtail rockfish": ["game_fish"],
+    "Cowcod": ["catch_and_release"],
+    "Greenspotted rockfish": ["game_fish"],
+    "Sharpchin rockfish": ["game_fish"],
+    "Redbanded rockfish": ["game_fish"],
+    # West Coast reef/inshore
+    "Puddingwife wrasse": ["reef_fish", "panfish"],
+    "California moray": ["catch_and_release"],
+    "Silver perch (Atlantic)": ["panfish", "baitfish"],
+    # Pacific salmon
+    "Coho salmon (Pacific)": ["game_fish"],
+    "Chum salmon": ["game_fish"],
+    "Pink salmon": ["game_fish"],
+    "Sockeye salmon": ["game_fish"],
+    "Dolly Varden": ["game_fish"],
+    # Pacific offshore pelagics
+    "Wahoo (Pacific)": ["game_fish"],
+    "Mahi-mahi (Pacific)": ["game_fish"],
+    "Yellowfin tuna (Pacific)": ["game_fish"],
+    "Pacific bluefin tuna": ["game_fish"],
+    "Striped marlin": ["game_fish", "catch_and_release"],
+    "Pacific sailfish": ["game_fish", "catch_and_release"],
+    # Atlantic offshore pelagics
+    "Wahoo (Atlantic)": ["game_fish"],
+    "Blue marlin": ["game_fish", "catch_and_release"],
+    # Southeast moray eels
+    "Green moray": ["catch_and_release"],
+    "Spotted moray": ["catch_and_release"],
+    "Chain moray": ["catch_and_release"],
+    # Hawaii deep reef
+    "Uku (green jobfish)": ["game_fish", "reef_fish"],
+    "Kahala (amberjack, Hawaii)": ["game_fish"],
+    "Mu (bigscale soldierfish)": ["reef_fish", "panfish"],
+    "Ehu (squirrelfish snapper)": ["game_fish", "reef_fish"],
+    "Onaga (longtail snapper)": ["game_fish", "reef_fish"],
+    "Lehi (silver jaw snapper)": ["game_fish", "reef_fish"],
+    "Nairagi (striped marlin, Hawaii)": ["game_fish", "catch_and_release"],
+    # NE groundfish / pollock
+    "Pollock (Atlantic)": ["game_fish"],
+    "Witch flounder": ["game_fish"],
+    "American plaice": ["game_fish"],
+    "Greenland halibut (turbot)": ["game_fish"],
+    # Misc SE/Gulf
+    "Vermilion snapper": ["game_fish", "reef_fish"],
+    "Yelloweye snapper": ["game_fish", "reef_fish"],
+    "Wenchman snapper": ["game_fish", "reef_fish"],
+    "Three-line grunt": ["panfish"],
+    "Belted sandfish": ["panfish"],
+    "Gulf kingfish (sea mullet)": ["panfish"],
+    "Northern kingfish (sea mullet)": ["panfish"],
+    "Southern kingfish (sea mullet)": ["panfish"],
 }
 
 

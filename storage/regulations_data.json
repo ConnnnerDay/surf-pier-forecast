@@ -300,6 +300,12 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
       }
     },
     "CA": {
@@ -651,6 +657,126 @@
         "bag_limit": "0 \u2014 fully protected",
         "season": "Fully protected year-round",
         "notes": "Garibaldi are the California state marine fish and are FULLY PROTECTED. It is illegal to take, possess, or harm them. Violations are a misdemeanor and carry fines up to $1,000."
+      },
+      "cowcod": {
+        "min_size": "N/A \u2014 prohibited from retention",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed \u2014 Cowcod Conservation Areas (CCAs) restrict access",
+        "notes": "Cowcod retention is prohibited in California and in federal Cowcod Conservation Areas. Release immediately. Check CDFW and NMFS closure maps before deep-water rockfish fishing south of Point Conception."
+      },
+      "yellowtail_rockfish": {
+        "min_size": "12 in (part of shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate in most areas)",
+        "season": "Check current CDFW/ODFW/WDFW season calendar \u2014 seasons and depths vary by area",
+        "notes": "Yellowtail rockfish count toward the general shelf rockfish daily bag limit. Verify current state rules and area-specific depth restrictions."
+      },
+      "greenspotted_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "sharpchin_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "redbanded_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "coho_salmon_pacific": {
+        "min_size": "16 in TL (ocean)",
+        "bag_limit": "2 per day in ocean (varies by area)",
+        "season": "Check CDFW ocean and river seasons carefully \u2014 coho are protected in most California rivers; ocean season typically July-October",
+        "notes": "Coho salmon regulations are extremely complex in California. Some river populations are listed as Threatened. Always verify current CDFW rules before fishing."
+      },
+      "chum_salmon": {
+        "min_size": "None (rare in CA)",
+        "bag_limit": "2 per day where open",
+        "season": "Check CDFW \u2014 chum are rare in California",
+        "notes": "Chum salmon are rare south of Washington. Limited returns to some northern California rivers."
+      },
+      "pink_salmon": {
+        "min_size": "None (limited CA runs)",
+        "bag_limit": "2 per day where available",
+        "season": "Check CDFW \u2014 pinks rarely reach California",
+        "notes": "Pink salmon barely enter California. Mostly a Washington/Oregon species."
+      },
+      "sockeye_salmon": {
+        "min_size": "None (rare in CA)",
+        "bag_limit": "2 per day where available",
+        "season": "Check CDFW \u2014 sockeye rare in California",
+        "notes": "Sockeye are rare in California. Primarily a PNW species."
+      },
+      "dolly_varden": {
+        "min_size": "None",
+        "bag_limit": "5 per day",
+        "season": "Check CDFW \u2014 Dolly Varden are rare in California",
+        "notes": "Dolly Varden are rare in California; primarily found in far northern CA streams."
+      },
+      "wahoo_pacific": {
+        "min_size": "None for mahi; varies for billfish",
+        "bag_limit": "10 per day mahi; billfish: check NOAA HMS rules",
+        "season": "Open year-round (offshore)",
+        "notes": "Pacific billfish and large pelagics require federal NOAA HMS permits for some species. Striped marlin and sailfish should be released. Verify current CDFW and NOAA HMS rules."
+      },
+      "mahi_mahi_pacific": {
+        "min_size": "None for mahi; varies for billfish",
+        "bag_limit": "10 per day mahi; billfish: check NOAA HMS rules",
+        "season": "Open year-round (offshore)",
+        "notes": "Pacific billfish and large pelagics require federal NOAA HMS permits for some species. Striped marlin and sailfish should be released. Verify current CDFW and NOAA HMS rules."
+      },
+      "striped_marlin": {
+        "min_size": "None for mahi; varies for billfish",
+        "bag_limit": "10 per day mahi; billfish: check NOAA HMS rules",
+        "season": "Open year-round (offshore)",
+        "notes": "Pacific billfish and large pelagics require federal NOAA HMS permits for some species. Striped marlin and sailfish should be released. Verify current CDFW and NOAA HMS rules."
+      },
+      "pacific_sailfish": {
+        "min_size": "None for mahi; varies for billfish",
+        "bag_limit": "10 per day mahi; billfish: check NOAA HMS rules",
+        "season": "Open year-round (offshore)",
+        "notes": "Pacific billfish and large pelagics require federal NOAA HMS permits for some species. Striped marlin and sailfish should be released. Verify current CDFW and NOAA HMS rules."
+      },
+      "yellowfin_tuna_pacific": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "10 per day for yellowfin",
+        "season": "Open year-round offshore",
+        "notes": "Pacific yellowfin tuna are regulated under NOAA HMS. Verify current state and federal bag limits."
+      },
+      "pacific_bluefin_tuna": {
+        "min_size": "27 in curved fork length",
+        "bag_limit": "3 per day (ICCAT/NOAA western Atlantic and Pacific bluefin quota may apply)",
+        "season": "Open year-round offshore; quota may close season early",
+        "notes": "Pacific bluefin tuna are under international quota management (IATTC). Verify current NOAA HMS rules before fishing \u2014 seasons may be shortened based on quota."
+      },
+      "green_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "spotted_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "chain_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "california_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
       }
     },
     "CT": {
@@ -1523,6 +1649,48 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "green_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "spotted_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "chain_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "california_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "puddingwife_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "silver_perch_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
       }
     },
     "GA": {
@@ -1813,6 +1981,24 @@
         "bag_limit": "No limit (baitfish)",
         "season": "Open year-round",
         "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "puddingwife_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "silver_perch_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
       }
     },
     "LA": {
@@ -2079,6 +2265,24 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "puddingwife_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "silver_perch_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
       }
     },
     "MA": {
@@ -2546,6 +2750,12 @@
         "bag_limit": "No recreational limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
       }
     },
     "ME": {
@@ -2940,6 +3150,12 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
       }
     },
     "NC": {
@@ -3417,6 +3633,48 @@
         "bag_limit": "No limit (baitfish)",
         "season": "Open year-round",
         "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "green_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "spotted_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "chain_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "california_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "puddingwife_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "silver_perch_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
       }
     },
     "NJ": {
@@ -3697,6 +3955,12 @@
         "bag_limit": "No recreational limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
       }
     },
     "NY": {
@@ -4229,6 +4493,84 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations for plainfin midshipman. Mild venom in dorsal spines \u2014 handle with care."
+      },
+      "cowcod": {
+        "min_size": "N/A \u2014 prohibited from retention",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed \u2014 Cowcod Conservation Areas (CCAs) restrict access",
+        "notes": "Cowcod retention is prohibited in California and in federal Cowcod Conservation Areas. Release immediately. Check CDFW and NMFS closure maps before deep-water rockfish fishing south of Point Conception."
+      },
+      "yellowtail_rockfish": {
+        "min_size": "12 in (part of shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate in most areas)",
+        "season": "Check current CDFW/ODFW/WDFW season calendar \u2014 seasons and depths vary by area",
+        "notes": "Yellowtail rockfish count toward the general shelf rockfish daily bag limit. Verify current state rules and area-specific depth restrictions."
+      },
+      "greenspotted_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "sharpchin_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "redbanded_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "coho_salmon_pacific": {
+        "min_size": "24 in (ocean)",
+        "bag_limit": "2 per day in ocean",
+        "season": "Check ODFW ocean and river seasons carefully",
+        "notes": "Coho regulations vary by management area. Some populations are ESA-listed. Always verify current ODFW rules."
+      },
+      "chum_salmon": {
+        "min_size": "None (river)",
+        "bag_limit": "5 per day in designated rivers",
+        "season": "Check ODFW for open rivers and dates",
+        "notes": "Chum salmon regulations vary by river. Not all rivers are open."
+      },
+      "pink_salmon": {
+        "min_size": "None",
+        "bag_limit": "No limit in ocean; river limits vary",
+        "season": "Ocean: July-September odd years; rivers: check ODFW",
+        "notes": "Pink salmon run in large numbers in odd years only. Verify current ODFW rules."
+      },
+      "dolly_varden": {
+        "min_size": "None in most rivers",
+        "bag_limit": "5 per day (check for hatchery-only requirements)",
+        "season": "Open in most streams year-round; check for seasonal closures",
+        "notes": "Dolly Varden regulations vary by river in WA and OR. Some rivers are open only for hatchery fish (adipose fin clipped). Always verify current state rules."
+      },
+      "wahoo_pacific": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "mahi_mahi_pacific": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "striped_marlin": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "pacific_sailfish": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
       }
     },
     "RI": {
@@ -4773,6 +5115,48 @@
         "bag_limit": "No limit (baitfish)",
         "season": "Open year-round",
         "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "green_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "spotted_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "chain_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "california_moray": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "puddingwife_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "silver_perch_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
       }
     },
     "TX": {
@@ -5057,6 +5441,24 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "puddingwife_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "silver_perch_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
       }
     },
     "VA": {
@@ -5305,6 +5707,12 @@
         "bag_limit": "No recreational limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "wahoo_atlantic": {
+        "min_size": "None",
+        "bag_limit": "2 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
       }
     },
     "WA": {
@@ -5571,6 +5979,84 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations for plainfin midshipman. Mild venom in dorsal spines \u2014 handle with care."
+      },
+      "cowcod": {
+        "min_size": "N/A \u2014 prohibited from retention",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed \u2014 Cowcod Conservation Areas (CCAs) restrict access",
+        "notes": "Cowcod retention is prohibited in California and in federal Cowcod Conservation Areas. Release immediately. Check CDFW and NMFS closure maps before deep-water rockfish fishing south of Point Conception."
+      },
+      "yellowtail_rockfish": {
+        "min_size": "12 in (part of shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate in most areas)",
+        "season": "Check current CDFW/ODFW/WDFW season calendar \u2014 seasons and depths vary by area",
+        "notes": "Yellowtail rockfish count toward the general shelf rockfish daily bag limit. Verify current state rules and area-specific depth restrictions."
+      },
+      "greenspotted_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "sharpchin_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "redbanded_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current state season calendar",
+        "notes": "Counted in the general rockfish aggregate. Verify current state rules."
+      },
+      "coho_salmon_pacific": {
+        "min_size": "16 in minimum",
+        "bag_limit": "2 per day in ocean",
+        "season": "Check WDFW season \u2014 varies by area and year",
+        "notes": "Coho regulations vary significantly by management area in Washington. Check WDFW for current rules."
+      },
+      "chum_salmon": {
+        "min_size": "None",
+        "bag_limit": "5 per day",
+        "season": "Check WDFW for open rivers and seasons",
+        "notes": "Chum salmon regulations vary significantly by river and region."
+      },
+      "pink_salmon": {
+        "min_size": "None",
+        "bag_limit": "No limit in ocean; river limits vary",
+        "season": "Odd years only \u2014 check WDFW for specific dates",
+        "notes": "Massive pink salmon runs occur in odd years in Puget Sound and coastal rivers. Check WDFW for current rules."
+      },
+      "dolly_varden": {
+        "min_size": "None in most rivers",
+        "bag_limit": "5 per day (check for hatchery-only requirements)",
+        "season": "Open in most streams year-round; check for seasonal closures",
+        "notes": "Dolly Varden regulations vary by river in WA and OR. Some rivers are open only for hatchery fish (adipose fin clipped). Always verify current state rules."
+      },
+      "wahoo_pacific": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "mahi_mahi_pacific": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "striped_marlin": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "pacific_sailfish": {
+        "min_size": "Varies",
+        "bag_limit": "Varies by species",
+        "season": "Offshore year-round where accessible",
+        "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
       }
     },
     "HI": {
@@ -5756,6 +6242,48 @@
         "bag_limit": "No state bag limit",
         "season": "Open year-round",
         "notes": "No specific state bag or size limit. Check DLNR for any local marine reserve area closures. Amaama (mullet) are traditionally harvested by cast net."
+      },
+      "uku_green_jobfish": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
+      },
+      "kahala_amberjack_hawaii": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
+      },
+      "mu_soldierfish": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
+      },
+      "ehu_snapper": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
+      },
+      "onaga_longtail_snapper": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
+      },
+      "lehi_snapper": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
+      },
+      "nairagi_striped_marlin": {
+        "min_size": "None specific (check DLNR for bottomfish complex rules)",
+        "bag_limit": "No state bag limit for most species; Federal bottomfish complex limits apply",
+        "season": "Check federal Western Pacific bottomfish management plan",
+        "notes": "Hawaiian deep-reef bottomfish (onaga, ehu, opakapaka, lehi) are managed under the Western Pacific Regional Fishery Management Council bottomfish plan. Verify current NOAA WPFMC rules for bag and size limits."
       }
     },
     "NH": {

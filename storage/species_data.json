@@ -14813,5 +14813,843 @@
     "lures": "DOA shrimp, small paddletail swimbaits, or surface flies cast to visible fish",
     "explanation_cold": "Gulf tripletail are seasonally abundant in warm Gulf coastal waters; sight-fished near crab trap buoys and floating debris.",
     "explanation_warm": "Late spring through fall in Gulf coastal waters; cruise nearshore in a shallow-draft boat scanning crab buoys for tripletail lying sideways near the surface."
+  },
+  {
+    "name": "Yellowtail rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live anchovies, squid strips, cut herring near rocky reef at 60-300 ft",
+    "rig": "Medium to heavy bottom rig at 60-300 ft near rocky reef; dropper loop",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "8-24 oz",
+    "lures": "Lead-head jigs with soft plastic tails; knife jigs near reef structure",
+    "explanation_cold": "Yellowtail rockfish inhabit mid-depth rocky reef from California to Alaska; they school in large numbers and are among the most commonly caught rockfish on Pacific party boats.",
+    "explanation_warm": "Year-round near Pacific rocky reef; yellowtail rockfish form large schools at mid-depth and are a staple catch on West Coast party boat trips \u2014 they hit jigs and bait readily and are excellent eating."
+  },
+  {
+    "name": "Cowcod",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 64,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Squid, cut herring near deep rocky reef at 300-1200 ft; cowcod conservation areas restrict access",
+    "rig": "Heavy deep-drop rig at 300-1200 ft; check for cowcod conservation area closures before fishing",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "24-48 oz",
+    "lures": "Large diamond jigs near deep rocky bottom",
+    "explanation_cold": "Cowcod are a large slow-growing deepwater rockfish off Southern California; they are heavily protected.",
+    "explanation_warm": "Cowcod are prohibited from retention in California waters and in federally designated Cowcod Conservation Areas. Release immediately if caught. Check current CDFW and NMFS closure maps before deep-water rockfish fishing."
+  },
+  {
+    "name": "Greenspotted rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Squid, cut herring near rocky reef and ledges at 60-300 ft",
+    "rig": "Medium to heavy bottom rig at 60-300 ft near rocky reef",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "8-24 oz",
+    "lures": "Soft plastic jigs and knife jigs near reef structure",
+    "explanation_cold": "Greenspotted rockfish inhabit rocky reef at moderate depth on the Pacific coast; common on Southern California party boat trips.",
+    "explanation_warm": "Year-round on Southern California party boat trips; greenspotted rockfish are part of the mixed-rockfish bag and are excellent eating with firm white flesh."
+  },
+  {
+    "name": "Sharpchin rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Squid, small fish near rocky bottom at 100-600 ft",
+    "rig": "Heavy bottom rig at 100-600 ft",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "12-32 oz",
+    "lures": "Knife jigs at depth",
+    "explanation_cold": "Sharpchin rockfish inhabit deep rocky bottom on the Pacific coast; a common deep-water rockfish species.",
+    "explanation_warm": "Year-round on Pacific deep-water trips; sharpchin rockfish are part of the mixed-rockfish bag."
+  },
+  {
+    "name": "Redbanded rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 42,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      2,
+      10
+    ],
+    "bait": "Squid, cut herring near very deep rocky bottom at 600-1500 ft",
+    "rig": "Very heavy deep-drop rig at 600-1500 ft; electric reel recommended",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "48-96 oz",
+    "lures": "Very large diamond jigs at extreme depth",
+    "explanation_cold": "Redbanded rockfish inhabit very deep water on the Pacific coast; they are one of the deepest-dwelling rockfish species.",
+    "explanation_warm": "Extreme-depth specialty on Pacific offshore trips; redbanded rockfish are bright red with distinctive bands and have very large eyes adapted to the deep \u2014 a remarkable deep-drop catch."
+  },
+  {
+    "name": "Puddingwife wrasse",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, small crabs, invertebrates near reef and hard bottom",
+    "rig": "Light bottom rig at 10-80 ft near reef",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-2 oz",
+    "lures": "Small jigs near reef structure",
+    "explanation_cold": "Puddingwife are a large colorful wrasse on SE Atlantic and Florida Keys reef year-round.",
+    "explanation_warm": "Year-round near Florida Keys reef; dramatically color-changing from juvenile (orange with white spots) to adult (bright green and blue)."
+  },
+  {
+    "name": "California moray",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Squid, cut fish near rocky reef crevices; incidental catch",
+    "rig": "Medium bottom rig near rocky reef; morays attack baits near crevices",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "California moray eels inhabit rocky reef and crevices in Southern California nearshore waters.",
+    "explanation_warm": "Year-round in SoCal rocky reef; sharp teeth \u2014 cut the leader if accidentally hooked. Do not attempt to handle."
+  },
+  {
+    "name": "Green moray",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, cut fish near rocky reef crevices; incidental catch",
+    "rig": "Medium to heavy bottom rig near reef",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Green moray eels are year-round residents in rocky reef throughout SE Atlantic and Florida Keys.",
+    "explanation_warm": "Year-round near Florida Keys reef; very sharp teeth \u2014 cut the leader if accidentally hooked."
+  },
+  {
+    "name": "Spotted moray",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Squid, cut fish near reef crevices; incidental catch",
+    "rig": "Medium bottom rig near reef crevices",
+    "hook_size": "4/0-7/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Spotted moray eels inhabit shallow reef and rocky areas in SE and Gulf waters.",
+    "explanation_warm": "Year-round near SE reef; smaller than green morays but equally sharp-toothed \u2014 cut the leader rather than handling."
+  },
+  {
+    "name": "Chain moray",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Small crabs, shrimp near shallow reef; incidental catch",
+    "rig": "Light rig near shallow reef",
+    "hook_size": "#4-2/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Chain morays are a smaller moray found in shallow SE reef areas year-round.",
+    "explanation_warm": "Year-round near shallow Florida Keys reef; distinctive yellow-and-brown chain-link pattern \u2014 cut leader if hooked."
+  },
+  {
+    "name": "Silver perch (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, small fish, clam bits near seagrass and sandy bottom in coastal bays",
+    "rig": "Ultra-light bottom or float rig near seagrass and shallow sandy bottom",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Very small jigs near seagrass",
+    "explanation_cold": "Silver perch are year-round residents in SE and Gulf coastal bays; they are small but make excellent live bait.",
+    "explanation_warm": "Year-round in SE and Gulf coastal bays; silver perch are a common bycatch on light inshore tackle \u2014 prized as live bait for speckled trout and redfish."
+  },
+  {
+    "name": "Coho salmon (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 62,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      7,
+      12
+    ],
+    "bait": "Herring, sand lance, squid; trolled hoochies, Apex lures, or spoons in ocean",
+    "rig": "Medium trolling or mooching rig at 20-100 ft; flasher-fly or spoon",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "4-12 oz trolling weight",
+    "lures": "Hoochie squid flies on flasher; silver spoons; Apex lures trolled 2-3 knots",
+    "explanation_cold": "Coho (silver) salmon return to Pacific rivers and bays fall through winter; they school in ocean nearshore in summer.",
+    "explanation_warm": "Ocean season July-October; coho are the most acrobatic salmon \u2014 they leap repeatedly when hooked. Rivers peak September-November."
+  },
+  {
+    "name": "Chum salmon",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 60,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [
+      8,
+      1
+    ],
+    "bait": "Pink or orange marabou flies, Kwikfish near river mouths and tidal estuaries",
+    "rig": "Medium to heavy spinning or fly rod near river mouths during fall run",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "1/2-2 oz",
+    "lures": "Pink/chartreuse marabou jigs, Comet flies, and bright-colored spoons",
+    "explanation_cold": "Chum (dog) salmon return to Pacific estuaries and rivers in fall; they are aggressive fighters that hit bright-colored lures.",
+    "explanation_warm": "September through December near Pacific river mouths; underrated fighters that hit flies and jigs aggressively near tidal water."
+  },
+  {
+    "name": "Pink salmon",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 60,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      6,
+      10
+    ],
+    "bait": "Small pink spoons, pink jigs, small herring near river mouths; odd-year peaks",
+    "rig": "Light to medium spinning near river mouths and tidal areas during summer run",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small pink spoons (Pixee, Crocodile), pink marabou jigs, Comet flies",
+    "explanation_cold": "Pink (humpy) salmon have a strict 2-year cycle and return in enormous numbers in odd years; the most abundant Pacific salmon.",
+    "explanation_warm": "July-September in odd years; runs can be so thick that every cast produces a fish \u2014 the most underrated Pacific salmon on light tackle."
+  },
+  {
+    "name": "Sockeye salmon",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 60,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      6,
+      10
+    ],
+    "bait": "Small red or pink flies, small spoons in rivers during spawning run; rarely feed in salt water",
+    "rig": "Light to medium fly or spinning in rivers during summer run",
+    "hook_size": "#4-2/0 hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Small red/pink Comet flies, tiny spoons; sockeye rarely feed in fresh water",
+    "explanation_cold": "Sockeye salmon return to Pacific Northwest rivers in summer; they are the most prized salmon for eating.",
+    "explanation_warm": "July-September; notoriously difficult to hook \u2014 flossing or drifting small flies near their mouths is the primary technique. The finest salmon for smoking."
+  },
+  {
+    "name": "Dolly Varden",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 42,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Salmon eggs (single egg or cluster), small spoons, and streamers near stream bottom",
+    "rig": "Light to medium spinning or fly rod in streams and glacier-fed rivers",
+    "hook_size": "#6-#2 hook",
+    "sinker": "1/4-3/4 oz",
+    "lures": "Small spoons (Pixee, Kastmaster), egg-sucking leech flies, and beads near salmon redds",
+    "explanation_cold": "Dolly Varden (a char) inhabit cold Pacific streams year-round and feed heavily on salmon eggs during fall runs.",
+    "explanation_warm": "Fall through early winter near salmon-bearing streams; dead-drifting a single salmon egg or pink bead near the bottom is the classic technique."
+  },
+  {
+    "name": "Wahoo (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Live baitfish, whole mackerel, trolled high-speed lures in warm offshore Pacific",
+    "rig": "Heavy high-speed trolling; 60-100 lb fluorocarbon or wire leader; 30-50 lb class",
+    "hook_size": "7/0-10/0 hook",
+    "sinker": "None for trolling",
+    "lures": "High-speed trolling lures (Marauders, Ilanders), rigged ballyhoo at 12-20 knots",
+    "explanation_cold": "Pacific wahoo are found in warm offshore California waters during warm-water years; the fastest fish in the ocean.",
+    "explanation_warm": "Summer through fall during warm-water years off Southern California; blazing speed runs that strip 200+ yards of line instantly."
+  },
+  {
+    "name": "Mahi-mahi (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 66,
+    "temp_max": 82,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Live flyingfish, small yellowtail, trolled lures near floating debris offshore",
+    "rig": "Medium to heavy trolling or casting near floating structure; 50-80 lb fluorocarbon leader",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "None for trolling",
+    "lures": "Trolled skirted lures; soft plastics and metals cast to visible fish near sargassum",
+    "explanation_cold": "Pacific mahi-mahi are warm-season visitors in Southern California offshore waters; they congregate near floating debris.",
+    "explanation_warm": "Summer through fall off Southern California in warm years; spectacular jumpers that school under floating debris."
+  },
+  {
+    "name": "Yellowfin tuna (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 64,
+    "temp_max": 80,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      7,
+      12
+    ],
+    "bait": "Live sardines, anchovies, squid near surface schools offshore",
+    "rig": "Medium to heavy baitcasting or spinning for live bait; 50-80 lb fluorocarbon leader",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "None for live bait",
+    "lures": "Surface iron (Tady, Salas, Yo-Zuri) and poppers",
+    "explanation_cold": "Pacific yellowfin tuna range offshore in warm California waters near temperature breaks.",
+    "explanation_warm": "Late summer through fall off Southern California; 30-200+ lb fish caught on the same live-bait trips as bluefin tuna out of San Diego."
+  },
+  {
+    "name": "Pacific bluefin tuna",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      6,
+      12
+    ],
+    "bait": "Live sardines, anchovies, squid near the surface; kite fishing with live flyingfish",
+    "rig": "Heavy baitcasting or spinning; 40-80 lb fluorocarbon; 30-50 lb class conventional",
+    "hook_size": "4/0-7/0 hook",
+    "sinker": "None for live bait",
+    "lures": "Flat-fall jigs, surface iron (Tady 45, Salas 6X), and stick baits near tuna schools",
+    "explanation_cold": "Pacific bluefin tuna range the open Pacific and come near Southern California in summer and fall; giants exceed 500 lbs.",
+    "explanation_warm": "Summer through fall off San Diego and Baja; a premier target with large numbers appearing near Southern California in recent years."
+  },
+  {
+    "name": "Pacific sailfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      7,
+      12
+    ],
+    "bait": "Live baitfish, trolled lures; primarily found in Baja/Mexico offshore",
+    "rig": "Medium to heavy offshore trolling; 50-80 lb class conventional",
+    "hook_size": "7/0-10/0 hook",
+    "sinker": "None for trolling",
+    "lures": "Skirted sailfish lures trolled at 7-9 knots; pitch baits to raised fish",
+    "explanation_cold": "Pacific sailfish are warm-water billfish more common off Mexico and Baja than mainland California.",
+    "explanation_warm": "Occasionally encountered off Southern California in very warm years; most Pacific sailfish action is off Cabo San Lucas."
+  },
+  {
+    "name": "Wahoo (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "midatlantic",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      4,
+      12
+    ],
+    "bait": "Live baitfish, whole rigged mackerel, high-speed trolled lures offshore",
+    "rig": "Heavy high-speed trolling; 80-100 lb wire or fluorocarbon leader; 30-50 lb class",
+    "hook_size": "7/0-10/0 hook",
+    "sinker": "None for trolling",
+    "lures": "High-speed trolling lures (Marauders, Ilanders), rigged ballyhoo at 12-20 knots",
+    "explanation_cold": "Wahoo range the Gulf Stream and warm offshore Atlantic waters; known as the fastest fish in the ocean.",
+    "explanation_warm": "Year-round near the Gulf Stream with peaks in fall and winter; the holy grail of offshore trolling \u2014 their initial run is stunning and their flesh is exceptional."
+  },
+  {
+    "name": "Uku (green jobfish)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live fish, squid, cut bait near offshore rocky bottom and reef structure at 50-300 ft",
+    "rig": "Medium to heavy bottom rig at 50-300 ft near rocky bottom",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "4-16 oz",
+    "lures": "Large soft plastic jigs and butterfly jigs near reef structure",
+    "explanation_cold": "Uku (green jobfish) are year-round residents on Hawaiian offshore rocky bottom and reef at moderate depth.",
+    "explanation_warm": "Year-round near Hawaiian offshore reef; uku are a highly prized food fish and a quality sportfish \u2014 they are aggressive strikers on jigs worked at mid-depth near rocky structure."
+  },
+  {
+    "name": "Kahala (amberjack, Hawaii)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live fish, squid near offshore structure and reef at 30-200 ft",
+    "rig": "Heavy live-bait rig or jigging at 30-200 ft near offshore structure",
+    "hook_size": "7/0-10/0 hook",
+    "sinker": "2-8 oz",
+    "lures": "Large vertical jigs and swimbaits near deep reef",
+    "explanation_cold": "Kahala (amberjack) are powerful offshore jacks found on Hawaiian deep reef and offshore structure year-round.",
+    "explanation_warm": "Year-round near Hawaiian offshore structure; kahala are the Hawaiian equivalent of greater amberjack \u2014 powerful fish that immediately run for structure and are difficult to stop."
+  },
+  {
+    "name": "Mu (bigscale soldierfish)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      9,
+      4
+    ],
+    "bait": "Small shrimp, small fish, squid near rocky reef caves at night",
+    "rig": "Light bottom rig near rocky reef at night at 5-60 ft",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small glow jigs at night near reef",
+    "explanation_cold": "Mu (bigscale soldierfish) are nocturnal reef fish similar to menpachi; they inhabit rocky reef and caves year-round in Hawaii.",
+    "explanation_warm": "Night fishing near Hawaiian rocky reef; mu have very large scales and large eyes adapted for nocturnal hunting \u2014 a respected food fish."
+  },
+  {
+    "name": "Ehu (squirrelfish snapper)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Squid, cut fish near deep rocky reef at 100-500 ft",
+    "rig": "Heavy bottom rig at 100-500 ft near rocky deep reef",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "8-32 oz",
+    "lures": "Large butterfly jigs near deep reef",
+    "explanation_cold": "Ehu (squirrelfish snapper) are a deep-reef Hawaiian snapper; they are one of the most prized deep-water food fish in Hawaii.",
+    "explanation_warm": "Year-round on Hawaiian deep reef; ehu are considered one of the finest-eating Hawaiian fish \u2014 their bright orange-red flesh has rich flavor and their deep habitat means they are only caught by serious deep-drop anglers."
+  },
+  {
+    "name": "Onaga (longtail snapper)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Squid, cut fish near very deep rocky reef at 400-1200 ft",
+    "rig": "Very heavy deepdrop rig at 400-1200 ft; electric reel mandatory",
+    "hook_size": "7/0-10/0 hook",
+    "sinker": "32-64 oz",
+    "lures": "Large deepdrop lures with glow sticks",
+    "explanation_cold": "Onaga (longtail red snapper) are a Hawaii deepwater specialty; they inhabit very deep rocky reef and are one of the most prized fish in the Hawaiian islands.",
+    "explanation_warm": "Year-round on Hawaiian very deep reef; onaga are the most prestigious fish served at traditional Hawaiian celebrations \u2014 deep-drop fishing (400-1200 ft) is required with electric reels. The signature fish of Hawaiian seafood cuisine."
+  },
+  {
+    "name": "Lehi (silver jaw snapper)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Squid, cut fish near deep rocky reef at 200-800 ft",
+    "rig": "Heavy deepdrop rig at 200-800 ft",
+    "hook_size": "6/0-9/0 hook",
+    "sinker": "16-48 oz",
+    "lures": "Large deepdrop lures",
+    "explanation_cold": "Lehi (silver jaw snapper) inhabit deep rocky reef in Hawaiian waters year-round; they are part of the Hawaiian deep-drop 'Opakapaka-Lehi-Onaga-Ehu' snapper complex.",
+    "explanation_warm": "Year-round on Hawaiian deep reef; lehi are one of the four premium Hawaiian bottomfish \u2014 together with onaga, ehu, and opakapaka they represent the most sought-after deepwater fish in Hawaii."
+  },
+  {
+    "name": "Nairagi (striped marlin, Hawaii)",
+    "coast": "hawaii",
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live baitfish, rigged ballyhoo or mackerel trolled offshore",
+    "rig": "Heavy offshore trolling; 80-130 lb class conventional or standup",
+    "hook_size": "9/0-12/0 hook",
+    "sinker": "None for trolling",
+    "lures": "Large skirted marlin lures trolled 7-10 knots",
+    "explanation_cold": "Nairagi (striped marlin) are year-round in Hawaiian offshore waters; they are the dominant billfish species in Hawaiian waters.",
+    "explanation_warm": "Year-round offshore Hawaii with summer peak; nairagi are incredibly acrobatic and tailwalk dramatically \u2014 almost universally catch-and-release by Hawaiian tournament anglers."
   }
 ]
