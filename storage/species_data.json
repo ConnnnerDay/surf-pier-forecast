@@ -8692,36 +8692,6 @@
     "explanation_warm": "Summer coho feed aggressively near the surface and upper water column; surface trolling with flasher-hoochie at 20-60 ft is standard, and fish will smash spoons and jigs near bait schools."
   },
   {
-    "name": "Dungeness crab",
-    "coast": "west",
-    "regions": [
-      "pacific_northwest"
-    ],
-    "temp_min": 42,
-    "temp_max": 60,
-    "temp_ideal_low": 46,
-    "temp_ideal_high": 55,
-    "peak_months": [
-      11,
-      12,
-      1,
-      2,
-      3,
-      4
-    ],
-    "good_months": [
-      5,
-      10
-    ],
-    "bait": "Chicken legs, turkey legs, herring, salmon carcasses; any oily, strong-smelling bait in crab pots or rings",
-    "rig": "Crab pot or ring net; bait tied in center; dropped from pier, jetty or boat",
-    "hook_size": "N/A (pot or ring fishing)",
-    "sinker": "N/A",
-    "lures": "N/A",
-    "explanation_cold": "Dungeness crab season runs primarily November through April in most Pacific states; crab are most active in cold water and concentrate in sandy bottom areas near kelp beds and eelgrass.",
-    "explanation_warm": "Summer Dungeness crab are mostly molting and soft; regulations often close the season in summer months to protect them during this vulnerable period."
-  },
-  {
     "name": "Haddock",
     "coast": "east",
     "regions": [
@@ -8866,5 +8836,862 @@
     "lures": "Natural bait is primary; large swim-head lures with squid skirt used at night on surface",
     "explanation_cold": "Swordfish move offshore to warmer Gulf Stream waters in winter; accessible only via overnight deep-drop trips to 1500-2000 ft on the stream edge.",
     "explanation_warm": "Daytime swordfish are targeted with deep-drop squid rigs at 1000-2000 ft on the Gulf Stream; at night, fish migrate shallower (100-400 ft) and can be targeted more easily near structure."
+  },
+  {
+    "name": "Atlantic bluefin tuna",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 55,
+    "temp_max": 80,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Chunk mackerel, butterfish, herring, squid; live bait (bluefish, pogies) for giants",
+    "rig": "Chunking: hi-lo heavy mono rig; kite-fishing: specialized kite rod; live-bait: circle hook free-line",
+    "hook_size": "7/0-12/0 circle hook",
+    "sinker": "None for chunking; 8-16 oz for deep presentations",
+    "lures": "Large cedar plugs, jet heads, vinyl skirted lures at trolling speed 7-9 kts",
+    "explanation_cold": "Bluefin move south along the coast in late fall; the November Hudson Canyon bite for giants is legendary but weather-dependent.",
+    "explanation_warm": "School bluefin (under 73 in) work bait balls near the surface June-October; giant bluefin (over 73 in) arrive on inshore lumps in fall. Strict NOAA quota \u2014 verify your vessel's category before fishing."
+  },
+  {
+    "name": "Atlantic mackerel",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "new_england"
+    ],
+    "temp_min": 45,
+    "temp_max": 65,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      9,
+      12
+    ],
+    "bait": "Sabiki rigs (best); small pieces of clam, squid, or any shiny flash",
+    "rig": "Sabiki rig with 6-8 size 8-10 hooks; drift in the current over schools",
+    "hook_size": "#8-#10 sabiki hook",
+    "sinker": "1-4 oz to get rig to depth",
+    "lures": "Tiny metal jigs (1/4-1/2 oz), small spoons, Sabiki rigs",
+    "explanation_cold": "Atlantic mackerel overwinter offshore in deep water; they return to coastal waters in spring as the biggest schools of the year push north.",
+    "explanation_warm": "Mackerel are a schooling species accessible from piers, jetties, and boats spring through early summer; they are one of the best live baits for stripers, blues, and tuna \u2014 and excellent eating."
+  },
+  {
+    "name": "Steelhead trout (sea-run rainbow)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 42,
+    "temp_max": 60,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 55,
+    "peak_months": [
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      10,
+      4
+    ],
+    "bait": "Cured salmon roe (top choice); sand shrimp; nightcrawlers; small herring near estuary",
+    "rig": "Drift rig with pencil lead; bobber-and-jig; float rig with sand shrimp or roe",
+    "hook_size": "1/0-3/0 octopus hook",
+    "sinker": "Pencil lead 1/4-3/4 oz; split shot on light gear",
+    "lures": "Jigs in pink/chartreuse/white, spoons (Little Cleo), spinners (Mepps, Blue Fox), egg-sucking leech flies",
+    "explanation_cold": "Winter steelhead (Dec-Mar) are the primary run in most Pacific NW rivers; they hold in deep pools and runs and respond to slow-drifted roe or jigs in low, clear water.",
+    "explanation_warm": "Summer steelhead (Jun-Oct) enter rivers while water is still warm; they are more active and will chase lures \u2014 swinging flies and spinners through runs produces aggressive strikes."
+  },
+  {
+    "name": "Pacific cod",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 36,
+    "temp_max": 55,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Squid, herring, clams, cut fish; any fresh bait on a bottom rig",
+    "rig": "Hi-lo bottom rig with two dropper loops; heavy single-hook bottom rig on rocky ground",
+    "hook_size": "3/0-5/0 Chestertown or O'Shaughnessy hook",
+    "sinker": "8-16 oz bank sinker",
+    "lures": "Heavy diamond jigs (6-12 oz) in silver; Norwegian-style pirks worked near the bottom",
+    "explanation_cold": "Pacific cod are most active in cold winter water at 100-400 ft; they are the West Coast equivalent of Atlantic cod and school over rocky and sandy bottom in deeper bays and offshore.",
+    "explanation_warm": "Pacific cod fishing tapers as water warms above 52\u00b0F; fall and winter are prime, especially in Puget Sound and along the Washington coast."
+  },
+  {
+    "name": "Black rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 65,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10,
+      11
+    ],
+    "bait": "Live or cut herring; tube worms; squid strips; live anchovies",
+    "rig": "Light to medium tackle; drift-fishing with a single hook on 20-30 lb leader; jig straight down to schools",
+    "hook_size": "2/0-4/0 live bait or octopus hook",
+    "sinker": "1-4 oz egg or rubber-core sinker",
+    "lures": "Tube jigs in black/purple, soft plastic paddle tails, metal jigs (Crippled Herring), and Buzz Bombs \u2014 black rockfish readily hit surface lures",
+    "explanation_cold": "Black rockfish hold near rocky reefs and kelp at 30-150 ft year-round; they are less active in winter but can be found schooling tight to structure.",
+    "explanation_warm": "Spring and summer are prime for black rockfish along the Pacific coast; they school near the surface around kelp beds and rocky points and aggressively hit surface poppers, tube jigs, and cut herring."
+  },
+  {
+    "name": "Yelloweye rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 58,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Squid, cut herring, octopus; any oily bait fished on the bottom in deep water",
+    "rig": "Heavy bottom rig with 60-80 lb leader; deep-drop setup with electric reel for depths over 300 ft",
+    "hook_size": "5/0-8/0 circle hook",
+    "sinker": "16-32 oz bank sinker",
+    "lures": "Heavy slow-pitch jigs (200-400g) in orange/red/gold; flutter jigs worked near rocky bottom",
+    "explanation_cold": "Yelloweye rockfish inhabit very deep rocky reefs (200-1200 ft) year-round; they are slow-growing and extremely long-lived (up to 120 years) making them heavily protected.",
+    "explanation_warm": "Yelloweye are targeted by deep-drop anglers year-round; spring and summer are preferred due to calmer seas. Oregon and Washington allow limited harvest \u2014 verify current rockfish complex rules before fishing."
+  },
+  {
+    "name": "Quillback rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 62,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live herring, cut squid, tube worms fished near rocky structure",
+    "rig": "Medium tackle bottom rig; single hook on 20-30 lb leader near rocky reefs at 30-150 ft",
+    "hook_size": "2/0-3/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Tube jigs, small metal jigs, soft plastic paddle tails in brown/orange",
+    "explanation_cold": "Quillback rockfish are resident on shallow rocky reefs year-round; they are territorial and solitary, typically found as singles or pairs near the bottom.",
+    "explanation_warm": "Spring through fall is the most accessible season as seas calm and fish become more active near reef structure at 30-120 ft depth."
+  },
+  {
+    "name": "Olive rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 66,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live anchovies or small herring; tube worms; small cut squid",
+    "rig": "Light to medium spinning or conventional; drift over kelp and rocky reefs",
+    "hook_size": "#2-2/0 live bait hook",
+    "sinker": "1-3 oz",
+    "lures": "Small tube jigs, soft plastic paddle tails, Buzz Bombs",
+    "explanation_cold": "Olive rockfish congregate near the bottom of rocky reefs and kelp beds year-round in nearshore waters.",
+    "explanation_warm": "Most active spring through fall near kelp canopy at 20-80 ft; a common catch on inshore rockfish trips along the Oregon and Washington coast."
+  },
+  {
+    "name": "Opakapaka (pink snapper)",
+    "coast": "hawaii",
+    "temp_min": 62,
+    "temp_max": 82,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Fresh whole fish, squid, octopus, or cut bait fished deep on bottom rigs",
+    "rig": "Deep-drop bottom rig with multiple dropper loops; heavy 100-200 lb leader; electric reel at 600-1200 ft",
+    "hook_size": "6/0-9/0 circle hook",
+    "sinker": "32-64 oz or heavier for deep drops",
+    "lures": "Heavy slow-pitch jigs (400-800g) in red/pink/silver near deep rocky ledges",
+    "explanation_cold": "Opakapaka are Hawaii's most prized bottomfish, inhabiting deep rocky ledges at 600-1200 ft; they are targeted year-round on deep-drop trips.",
+    "explanation_warm": "Fall through winter is considered peak season; opakapaka feed actively at depth and are excellent table fish \u2014 one of Hawaii's finest eating species."
+  },
+  {
+    "name": "Onaga (long-tail red snapper)",
+    "coast": "hawaii",
+    "temp_min": 62,
+    "temp_max": 82,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2
+    ],
+    "good_months": [
+      3,
+      9
+    ],
+    "bait": "Fresh whole fish, squid, octopus fished very deep on heavy bottom rigs",
+    "rig": "Deep-drop rig at 900-1800 ft; electric reel required; multiple hook dropper loops",
+    "hook_size": "7/0-10/0 circle hook",
+    "sinker": "64+ oz for extreme depth",
+    "lures": "Heavy jigs (500g+) in red/pink for shallower encounters; mostly bait at depth",
+    "explanation_cold": "Onaga are found at extreme depths (900-1800 ft) in Hawaii year-round; they require specialized deep-drop gear and electric reels.",
+    "explanation_warm": "Winter and early spring produce the best onaga fishing; this deep, ruby-red snapper is among the most prized and valuable of Hawaii's bottomfish."
+  },
+  {
+    "name": "Uku (gray snapper / jobfish)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10,
+      11
+    ],
+    "bait": "Live baitfish (small akule, nehu), fresh squid, or cut fish near mid-depth reefs",
+    "rig": "Live bait rig with 40-60 lb fluorocarbon leader; light to medium bottom rig at 100-300 ft",
+    "hook_size": "3/0-5/0 live bait or circle hook",
+    "sinker": "2-8 oz depending on depth",
+    "lures": "Vertical jigs in blue/silver/white (100-200g), soft plastic swimbaits, live bait on light gear",
+    "explanation_cold": "Uku hold near mid-depth reefs and bottom structure at 100-400 ft year-round and are accessible throughout winter.",
+    "explanation_warm": "Spring and summer are peak uku season in Hawaii; they school near rocky bottom and pinnacles and hit jigs and live bait aggressively \u2014 one of Hawaii's most popular nearshore targets."
+  },
+  {
+    "name": "Hapu'upu'u (Hawaiian grouper)",
+    "coast": "hawaii",
+    "temp_min": 65,
+    "temp_max": 82,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Fresh whole fish, large squid, octopus fished deep on heavy bottom rigs",
+    "rig": "Heavy bottom rig with 150-300 lb leader; multiple dropper loops; electric reel at 300-900 ft",
+    "hook_size": "7/0-10/0 circle or J hook",
+    "sinker": "32-64 oz",
+    "lures": "Heavy jigs (300-600g) in dark colors near rocky deep ledges",
+    "explanation_cold": "Hapu'upu'u inhabit deep rocky ledges at 300-900 ft in Hawaiian waters; they are one of Hawaii's deepwater bottomfish species.",
+    "explanation_warm": "Winter through early spring produces the best catches; this Hawaiian sea bass can grow to 50+ lbs and is a prized trophy and table fish."
+  },
+  {
+    "name": "Striped marlin",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 68,
+    "temp_max": 86,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      7,
+      12
+    ],
+    "bait": "Whole rigged ballyhoo, mackerel, small bonito; skip baits trolled at 7-9 kts",
+    "rig": "Medium to heavy offshore trolling spread; 150-300 lb leader; 30-50 lb class tackle",
+    "hook_size": "7/0-9/0 hook in rigged bait",
+    "sinker": "None for trolling",
+    "lures": "Skirted lures in blue/white/pink, cedar plugs, swim-head lures behind teasers",
+    "explanation_cold": "Striped marlin are most common in fall along the US West Coast; they follow warm water currents and are primarily encountered offshore of Southern California.",
+    "explanation_warm": "Late summer through fall is the peak window for striped marlin off the California coast; they are an exciting catch-and-release billfish requiring serious offshore tackle."
+  },
+  {
+    "name": "Opah (moonfish)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Squid, herring, or small mackerel fished at mid-water depths offshore",
+    "rig": "Slow trolling with a spreader bar or deep-set trolling rig at 150-400 ft depth",
+    "hook_size": "5/0-7/0 circle hook",
+    "sinker": "None for trolling; 16-32 oz for deep-drop",
+    "lures": "Heavy slow-pitch jigs at mid-water depth; opah are caught incidentally on albacore and swordfish trips",
+    "explanation_cold": "Opah are year-round offshore residents that migrate with warm-water eddies; they are rarely targeted directly but frequently caught as bycatch on tuna and swordfish trips.",
+    "explanation_warm": "Summer through fall is the peak season when opah are most abundant near the surface in warm Pacific waters; they are exceptional eating fish and highly prized."
+  },
+  {
+    "name": "Porbeagle shark",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 40,
+    "temp_max": 62,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      7,
+      8,
+      12
+    ],
+    "bait": "Fresh whole mackerel, herring, or bluefish; large chunk baits on heavy mono or wire leader",
+    "rig": "Heavy shark rig with 300-400 lb wire or heavy mono leader; balloon float for drifting bait",
+    "hook_size": "8/0-12/0 circle or J hook",
+    "sinker": "None for drifting; 4-8 oz to sink bait",
+    "lures": "Large soft plastic swimbaits trolled slowly; primarily a bait fishery",
+    "explanation_cold": "Porbeagle are cold-water sharks that stay active year-round in the North Atlantic; they are found at the surface and near bottom over offshore banks in cool water.",
+    "explanation_warm": "Spring through early summer is peak season when porbeagle approach the continental shelf; they are a powerful, acrobatic catch and must be released in US waters (prohibited to harvest)."
+  },
+  {
+    "name": "Acadian redfish (ocean perch)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 34,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      4,
+      5,
+      6,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      7,
+      9
+    ],
+    "bait": "Fresh or frozen squid strips, sandworms, clams, small cut herring",
+    "rig": "Hi-lo rig with small dropper loops; fish in schools at 200-600 ft depth",
+    "hook_size": "#1-2/0 Chestertown or O'Shaughnessy hook",
+    "sinker": "8-16 oz bank sinker",
+    "lures": "Small diamond jigs (4-6 oz) in silver; Norwegian-style jigs with tube tails",
+    "explanation_cold": "Acadian redfish are year-round residents of deep offshore banks (200-600 ft); they school densely and provide fast action \u2014 a 20-fish bag on a drift is common.",
+    "explanation_warm": "Spring trips to Stellwagen Bank and Georges Bank produce the best Acadian redfish fishing; they are a great eating species that are underutilized by recreational anglers."
+  },
+  {
+    "name": "Petrale sole",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Squid strips, sand lance, small herring, clams; any fresh bait fished on sandy bottom",
+    "rig": "Light bottom rig with two small dropper loops; drift over sandy or mud bottom at 60-200 ft",
+    "hook_size": "#1-2/0 baitholder hook",
+    "sinker": "2-6 oz bank sinker",
+    "lures": "Small jigs or blade baits tipped with squid fished near the bottom",
+    "explanation_cold": "Petrale sole move into deeper water (200-400 ft) in winter to spawn; fall through winter offshore trips can target them specifically.",
+    "explanation_warm": "Spring and early summer petrale sole move into shallower nearshore grounds (60-150 ft); they are the most prized of West Coast flatfish for the table."
+  },
+  {
+    "name": "Pacific sanddab",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 65,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Clams, sand lance, squid strips, small shrimp; tiny baits on small hooks are best",
+    "rig": "Light multi-hook bottom rig with 4-6 small dropper loops; drift over sandy bottom at 20-100 ft",
+    "hook_size": "#4-#1 baitholder hook",
+    "sinker": "1-3 oz",
+    "lures": "Very small jigs tipped with bait",
+    "explanation_cold": "Pacific sanddabs are found on sandy bottom year-round at 20-300 ft; they are accessible from piers and party boats throughout the year.",
+    "explanation_warm": "Summer and fall are the best times for sanddabs on party boats; limits of these small but delicious flatfish are common \u2014 they are considered one of California's finest eating fish."
+  },
+  {
+    "name": "English sole",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 64,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9,
+      10
+    ],
+    "bait": "Sandworms, clams, squid strips; small baits presented near bottom in bays and estuaries",
+    "rig": "Ultra-light bottom rig with very small hooks; fish in bays and estuaries near eelgrass beds",
+    "hook_size": "#6-#2 baitholder hook",
+    "sinker": "1/2-2 oz",
+    "lures": "Very small jig heads tipped with worm or squid",
+    "explanation_cold": "English sole are bay and nearshore residents found year-round on sandy and mud bottoms; they are active in cold water and accessible from shore in winter.",
+    "explanation_warm": "Spring and summer are the most productive seasons for English sole in bays and estuaries; a fun light-tackle species great for introducing beginners to flatfish fishing."
+  },
+  {
+    "name": "Arrowtooth flounder",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9,
+      10
+    ],
+    "bait": "Herring, sand lance, small squid; the same baits as halibut but for a smaller target",
+    "rig": "Light to medium bottom rig at 60-300 ft on sandy or soft bottom; standard halibut-style setup",
+    "hook_size": "2/0-4/0 circle hook",
+    "sinker": "4-12 oz bank sinker",
+    "lures": "Small metal jigs, paddle-tail swimbaits near the bottom",
+    "explanation_cold": "Arrowtooth flounder are abundant on the West Coast at 100-400 ft over sandy and soft bottom; they are common bycatch on halibut and other bottomfish trips.",
+    "explanation_warm": "Available year-round; most commonly caught spring through fall on bottomfish trips off Oregon and Washington. Often misidentified \u2014 arrowtooth have large, arrow-shaped teeth unlike halibut."
+  },
+  {
+    "name": "Cusk",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 34,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Fresh clams (top bait), squid, herring, sandworms; bait must be fresh for cusk",
+    "rig": "Single-hook bottom rig with 40-60 lb leader; fish near the bottom over rocky ledges and wrecks",
+    "hook_size": "3/0-5/0 O'Shaughnessy or circle hook",
+    "sinker": "8-16 oz bank sinker",
+    "lures": "Heavy diamond jigs (8-12 oz) worked slowly near the bottom; cusk occasionally hit jigs",
+    "explanation_cold": "Cusk are deepwater cod-relatives found at 100-600 ft over hard rocky bottom; they are most active in cold water from fall through spring.",
+    "explanation_warm": "Cusk are primarily a winter and early spring target in New England; they fight well and are excellent eating \u2014 an underappreciated sportfish on deep cod and haddock trips."
+  },
+  {
+    "name": "China rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live or cut herring, squid strips, tube worms near structure",
+    "rig": "Light to medium bottom rig; drift near vertical rock walls and caves at 20-150 ft",
+    "hook_size": "2/0-3/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Tube jigs in black/yellow, small metal jigs; China rockfish are visual strikers",
+    "explanation_cold": "China rockfish are year-round residents on shallow rocky reefs and are not strongly seasonal; they sit in caves and crevices waiting for prey.",
+    "explanation_warm": "Spring through fall produces the most accessible fishing for China rockfish along rocky shores of the Pacific Northwest coast; they are easily recognized by their distinctive yellow racing stripe."
+  },
+  {
+    "name": "Black-and-yellow rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 65,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Tube worms, small live herring, squid strips near structure",
+    "rig": "Light tackle; single hook on 15-20 lb leader; fish near kelp and rocky substrate at 10-60 ft",
+    "hook_size": "#2-1/0 hook",
+    "sinker": "1/2-2 oz",
+    "lures": "Small tube jigs, tiny metal jigs, soft plastics",
+    "explanation_cold": "Black-and-yellow rockfish are shallow-water residents on rocky reefs and kelp beds, present year-round in California.",
+    "explanation_warm": "Spring and summer are most productive in the upper water column around kelp; they are a popular pier target in central and northern California."
+  },
+  {
+    "name": "Surf smelt (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Sabiki rigs; very small hooks with tiny bait are ideal; they also beach-spawn and can be scooped",
+    "rig": "Sabiki rig in the surf zone; fine-mesh scoop net during beach spawning events",
+    "hook_size": "#10-#8 sabiki hook",
+    "sinker": "1-2 oz",
+    "lures": "Tiny metal flash jigs or sabiki rigs",
+    "explanation_cold": "Surf smelt overwinter offshore and are largely inaccessible; they are a bycatch species on winter pier outings.",
+    "explanation_warm": "Summer spawning runs bring surf smelt onto sandy beaches in the Pacific Northwest; they are excellent live bait for salmon and halibut and good table fare when pan-fried."
+  },
+  {
+    "name": "Gray triggerfish",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 65,
+    "temp_max": 85,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small blue crabs or fiddler crabs (best); squid strips; clam pieces on very small hooks",
+    "rig": "Small hook on light 20-30 lb fluorocarbon leader; free-line bait near structure",
+    "hook_size": "#1-1/0 small strong hook \u2014 triggerfish have hard beaks and strip bait from large hooks",
+    "sinker": "1/4-1 oz",
+    "lures": "Small jigs with crab or squid trailer; triggerfish rarely hit lures but will sometimes investigate",
+    "explanation_cold": "Gray triggerfish retreat to deeper offshore reefs in winter and are rarely caught nearshore.",
+    "explanation_warm": "Summer and fall around nearshore artificial reefs, live bottoms, and offshore wrecks; triggerfish are clever bait-stealers that require tiny hooks and fresh crab \u2014 one of the most fun and frustrating reef fish to target."
+  },
+  {
+    "name": "Lehi (amberjack / silvermouth jack)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      2,
+      9,
+      10
+    ],
+    "bait": "Live baitfish (small akule, nehu, opelu); fresh squid or cut fish near deep ledges",
+    "rig": "Live bait rig with 80-100 lb fluorocarbon leader; drift or vertical presentation near structure",
+    "hook_size": "5/0-8/0 circle hook",
+    "sinker": "None for live bait; 2-4 oz to keep bait near structure",
+    "lures": "Large vertical jigs (150-300g) in blue/silver near ledges and pinnacles",
+    "explanation_cold": "Lehi are deep-reef amberjack found at 200-600 ft on Hawaiian rocky ledges; they are less accessible in winter but present year-round.",
+    "explanation_warm": "Spring and summer are peak lehi season in Hawaii; these powerful, deep-dwelling amberjack run hard when hooked and are excellent eating \u2014 one of Hawaii's prized but less-known sportfish."
+  },
+  {
+    "name": "Atlantic salmon",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 42,
+    "temp_max": 62,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      5,
+      6,
+      7,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      8,
+      11
+    ],
+    "bait": "Cured salmon roe; sand shrimp; small herring near estuary mouths",
+    "rig": "Fly rod with sink-tip line is the traditional approach; drift rig with roe near river mouths",
+    "hook_size": "#6-#2 salmon fly or siwash hook",
+    "sinker": "Split shot or light pencil lead for drift",
+    "lures": "Classic Atlantic salmon wet flies (Green Highlander, Jock Scott, Rusty Rat), tube flies, spey flies; small spinners near estuary",
+    "explanation_cold": "Atlantic salmon overwinter at sea and are not a freshwater target in winter; they return to rivers in spring and fall.",
+    "explanation_warm": "Wild Atlantic salmon are critically endangered in the US; most Maine rivers hold very few fish. The traditional Maine salmon flies fishery is a catch-and-release cultural institution. Verify all current rules \u2014 harvest is generally prohibited."
+  },
+  {
+    "name": "Sockeye salmon (red salmon)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 60,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Tiny red or orange spinners, small jigs, or sockeye flies; they do not actively feed in fresh water",
+    "rig": "Light spinning or fly rod; small hook presentations that aggravate territorial instinct",
+    "hook_size": "#6-#4 small colored hook or spinner treble",
+    "sinker": "1/4-1/2 oz at most",
+    "lures": "Small red/orange spinners (size 0-2), tiny bright-colored jigs, short-shank sockeye flies; sockeye must be aggravated into striking",
+    "explanation_cold": "Sockeye are not a freshwater target outside their summer return; they are unavailable at other times.",
+    "explanation_warm": "Sockeye return to Pacific NW rivers July-August in massive numbers; they are notoriously difficult to catch on rod-and-reel because they stop feeding on return \u2014 very small aggravation presentations are the only reliable method."
+  },
+  {
+    "name": "Rock sole",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 58,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "good_months": [
+      2,
+      8,
+      9
+    ],
+    "bait": "Clams, sandworms, squid strips; any fresh bait on small hooks near bottom",
+    "rig": "Light multi-hook bottom rig; drift over sandy and gravel bottom at 30-200 ft",
+    "hook_size": "#2-1/0 hook",
+    "sinker": "2-4 oz",
+    "lures": "Small jigs tipped with bait",
+    "explanation_cold": "Rock sole are most active in cold water; they move into shallow estuaries and bays in spring to spawn.",
+    "explanation_warm": "Spring spawning aggregations bring rock sole into accessible shallow water; they are a tasty and commonly caught flatfish on Pacific NW party boats."
   }
 ]

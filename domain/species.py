@@ -62,6 +62,16 @@ _OFFSHORE_ONLY_SPECIES: set = {
     "Sablefish (black cod)",
     "Atlantic halibut",
     "Pacific halibut",
+    "Atlantic bluefin tuna",
+    "Yelloweye rockfish",
+    "Striped marlin",
+    "Opah (moonfish)",
+    "Opakapaka (pink snapper)",
+    "Onaga (long-tail red snapper)",
+    "Hapu'upu'u (Hawaiian grouper)",
+    "Lehi (amberjack / silvermouth jack)",
+    "Acadian redfish (ocean perch)",
+    "Cusk",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
@@ -108,7 +118,12 @@ _PIER_SPECIES: set = {
     "Halfmoon (Catalina perch)",
     "Kelp greenling",
     "Rock greenling",
-    "Dungeness crab",
+    "Pacific sanddab",
+    "English sole",
+    "Black-and-yellow rockfish",
+    "Surf smelt (Pacific)",
+    "Gray triggerfish",
+    "Uku (gray snapper / jobfish)",
 }
 
 # Species primarily caught from the surf zone.
@@ -303,6 +318,25 @@ _CHARTER_SPECIES: set = {
     "Swordfish",
     "Black marlin",
     "Greater amberjack",
+    "Atlantic bluefin tuna",
+    "Striped marlin",
+    "Opah (moonfish)",
+    "Opakapaka (pink snapper)",
+    "Onaga (long-tail red snapper)",
+    "Hapu'upu'u (Hawaiian grouper)",
+    "Lehi (amberjack / silvermouth jack)",
+    "Acadian redfish (ocean perch)",
+    "Pacific cod",
+    "Black rockfish",
+    "Yelloweye rockfish",
+    "Quillback rockfish",
+    "Olive rockfish",
+    "China rockfish",
+    "Black-and-yellow rockfish",
+    "Petrale sole",
+    "Steelhead trout (sea-run rainbow)",
+    "Sockeye salmon (red salmon)",
+    "Cusk",
 }
 
 # Species well-suited for saltwater fly fishing — must be catchable on a fly
@@ -341,6 +375,13 @@ _FLY_SPECIES: set = {
     "Chum salmon (dog salmon)",
     "Chinook salmon (king salmon)",
     "Atlantic bonito",
+    "Sockeye salmon (red salmon)",
+    "Steelhead trout (sea-run rainbow)",
+    "Atlantic salmon",
+    "Striped marlin",
+    "Atlantic bluefin tuna",
+    "Uku (gray snapper / jobfish)",
+    "Giant trevally (ulua)",
 }
 
 # Species best caught inshore (inlet, marsh, flats).
@@ -458,6 +499,14 @@ _PELAGIC_SPECIES: set = {
     "Greater amberjack",
     "Wahoo",
     "Tripletail",
+    "Atlantic bluefin tuna",
+    "Striped marlin",
+    "Opah (moonfish)",
+    "Chinook salmon (king salmon)",
+    "Coho salmon (silver salmon)",
+    "Sockeye salmon (red salmon)",
+    "Atlantic mackerel",
+    "Atlantic salmon",
 }
 
 _STRUCTURE_SPECIES: set = {
@@ -500,6 +549,22 @@ _STRUCTURE_SPECIES: set = {
     "Haddock",
     "Atlantic cod",
     "Sablefish (black cod)",
+    "Opakapaka (pink snapper)",
+    "Onaga (long-tail red snapper)",
+    "Uku (gray snapper / jobfish)",
+    "Hapu'upu'u (Hawaiian grouper)",
+    "Lehi (amberjack / silvermouth jack)",
+    "Black rockfish",
+    "Yelloweye rockfish",
+    "Quillback rockfish",
+    "Olive rockfish",
+    "China rockfish",
+    "Black-and-yellow rockfish",
+    "Pacific cod",
+    "Cusk",
+    "Acadian redfish (ocean perch)",
+    "Petrale sole",
+    "Gray triggerfish",
 }
 
 _GAMEFISH_SPECIES: set = {
@@ -861,7 +926,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Chum salmon (dog salmon)": ["game_fish", "pelagic"],
     "Pink salmon (humpy)": ["game_fish", "pelagic"],
     "Sablefish (black cod)": ["game_fish", "reef_fish"],
-    "Dungeness crab": ["other"],
     # ── West Coast ───────────────────────────────────────────────────────────
     "Barred surfperch": ["panfish"],
     "Redtail surfperch": ["panfish"],
@@ -911,6 +975,36 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Mu (bigeye emperor)": ["game_fish", "reef_fish"],
     "Kaku (barracuda)": ["game_fish", "pelagic"],
     "Aholehole (Hawaiian flagtail)": ["reef_fish"],
+    # ── New species (batch 2+) ────────────────────────────────────────────────
+    "Atlantic bluefin tuna": ["game_fish", "pelagic"],
+    "Atlantic mackerel": ["game_fish", "pelagic", "bait_fish"],
+    "Steelhead trout (sea-run rainbow)": ["game_fish"],
+    "Pacific cod": ["game_fish", "reef_fish"],
+    "Black rockfish": ["game_fish", "reef_fish"],
+    "Yelloweye rockfish": ["game_fish", "reef_fish"],
+    "Quillback rockfish": ["game_fish", "reef_fish"],
+    "Olive rockfish": ["game_fish", "reef_fish"],
+    "China rockfish": ["game_fish", "reef_fish"],
+    "Black-and-yellow rockfish": ["game_fish", "reef_fish"],
+    "Opakapaka (pink snapper)": ["game_fish", "reef_fish"],
+    "Onaga (long-tail red snapper)": ["game_fish", "reef_fish"],
+    "Uku (gray snapper / jobfish)": ["game_fish", "reef_fish"],
+    "Hapu'upu'u (Hawaiian grouper)": ["game_fish", "reef_fish"],
+    "Striped marlin": ["game_fish", "pelagic"],
+    "Opah (moonfish)": ["game_fish", "pelagic"],
+    "Porbeagle shark": ["shark"],
+    "Acadian redfish (ocean perch)": ["game_fish", "reef_fish"],
+    "Petrale sole": ["game_fish"],
+    "Pacific sanddab": ["panfish"],
+    "English sole": ["panfish"],
+    "Arrowtooth flounder": ["game_fish"],
+    "Cusk": ["game_fish", "reef_fish"],
+    "Surf smelt (Pacific)": ["bait_fish"],
+    "Gray triggerfish": ["game_fish", "reef_fish"],
+    "Lehi (amberjack / silvermouth jack)": ["game_fish", "pelagic"],
+    "Atlantic salmon": ["game_fish"],
+    "Sockeye salmon (red salmon)": ["game_fish", "pelagic"],
+    "Rock sole": ["panfish"],
 }
 
 

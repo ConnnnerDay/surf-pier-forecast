@@ -114,6 +114,12 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "No size limit; bag limit may change. Verify."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "CA": {
@@ -201,6 +207,42 @@
         "bag_limit": "10 per day (aggregate)",
         "season": "Varies by zone and depth; consult CDFW for closures",
         "notes": "Rockfish rules are complex with depth/area restrictions. Verify current open areas before fishing."
+      },
+      "black_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish bag limit",
+        "season": "Varies by management area; check CDFW depth restrictions",
+        "notes": "CA rockfish rules are complex with Rockfish Conservation Areas. Verify open zones before fishing."
+      },
+      "yelloweye_rockfish": {
+        "min_size": "None",
+        "bag_limit": "1 per day within aggregate; some areas CLOSED to harvest",
+        "season": "Varies; many areas prohibit retention due to rebuilding plan",
+        "notes": "Yelloweye rockfish are a rebuilding species. Retention is prohibited in many areas. Verify current rules \u2014 this is a high-compliance-risk species."
+      },
+      "petrale_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the CA flatfish aggregate limit. Verify with CDFW."
+      },
+      "pacific_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "One of the best eating fish in California; minimal regulation. Verify CDFW."
+      },
+      "steelhead": {
+        "min_size": "Varies by river",
+        "bag_limit": "0 on most rivers (catch and release only)",
+        "season": "Varies by river; typically Nov-Mar in coastal rivers",
+        "notes": "Most California steelhead rivers are catch-and-release only for wild fish. Hatchery fish (clipped) may be retained where allowed. Verify CDFW rules by river."
+      },
+      "california_spiny_lobster": {
+        "min_size": "3.25 in CL (carapace length)",
+        "bag_limit": "7 per day",
+        "season": "Oct 1 \u2013 Mar 17 (approx)",
+        "notes": "Hoop nets and hand-picking only (no traps for recreational). Minimum size is measured from rear of eye socket to rear of carapace. Verify CDFW season dates."
       }
     },
     "CT": {
@@ -251,6 +293,18 @@
         "bag_limit": "8 per day",
         "season": "Mar 1 \u2013 May 31",
         "notes": "Shore/pier season may differ from boat season. Verify with CT DEEP."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
       }
     },
     "DE": {
@@ -307,6 +361,18 @@
         "bag_limit": "6 per day",
         "season": "Apr 1 \u2013 Dec 31",
         "notes": "Verify with DE DNREC; bag limit may change annually."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
       }
     },
     "FL": {
@@ -455,6 +521,12 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round",
         "notes": "Verify for any changes to FWC bag limits."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "GA": {
@@ -511,6 +583,12 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "Verify current GA DNR rules."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "LA": {
@@ -585,6 +663,12 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No state regulations in Louisiana state waters."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "MA": {
@@ -678,6 +762,24 @@
         "bag_limit": "20 per day",
         "season": "Open year-round",
         "notes": "No size limit; excellent bait and table fish."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "porbeagle_shark": {
+        "min_size": "None (prohibited to harvest)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Porbeagle sharks are prohibited species in US Atlantic waters. Must be released immediately if caught."
+      },
+      "cusk": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific MA regulations for cusk; caught as bycatch on deep cod/haddock trips."
       }
     },
     "MD": {
@@ -746,6 +848,18 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "Verify current MD DNR rules."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
       }
     },
     "ME": {
@@ -796,6 +910,24 @@
         "bag_limit": "20 per day",
         "season": "Open year-round",
         "notes": "Atlantic mackerel; no size limit. Great bait fish."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "atlantic_salmon": {
+        "min_size": "None (prohibited to harvest)",
+        "bag_limit": "0 \u2014 catch and release only",
+        "season": "Open for C&R in designated rivers only",
+        "notes": "Wild Atlantic salmon are federally protected. Harvest is prohibited. Check ME DMR for which rivers allow any angling."
+      },
+      "cusk": {
+        "min_size": "None specific",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round",
+        "notes": "Cusk have no specific recreational size or bag limit in Maine. Verify with ME DMR."
       }
     },
     "MS": {
@@ -852,6 +984,12 @@
         "bag_limit": "15 per day",
         "season": "Open year-round",
         "notes": "Verify current MDWFP limits."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "NC": {
@@ -981,6 +1119,24 @@
         "bag_limit": "0 (tag required to harvest)",
         "season": "Open year-round (C&R or with $300 tarpon tag)",
         "notes": "A $300 harvest tag is required. Most anglers practice catch and release."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "NJ": {
@@ -1075,6 +1231,24 @@
         "bag_limit": "1 per day",
         "season": "Open year-round",
         "notes": "Summer visitor to NJ. Verify current NJ DEP limits."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "porbeagle_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0",
+        "season": "C&R only",
+        "notes": "Prohibited species. Must be immediately released."
       }
     },
     "NY": {
@@ -1143,6 +1317,18 @@
         "bag_limit": "1 per day",
         "season": "Open year-round (rare summer visitor)",
         "notes": "Cobia are uncommon in NY waters but do occur in summer. Verify NY DEC rules."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
       }
     },
     "OR": {
@@ -1199,6 +1385,42 @@
         "bag_limit": "2 per day",
         "season": "Open year-round in Umpqua River system",
         "notes": "OR coastal striped bass are in the Umpqua River system; verify current ODFW rules."
+      },
+      "steelhead": {
+        "min_size": "Varies by river system",
+        "bag_limit": "Varies by river; typically 2 per day for hatchery fish only",
+        "season": "Varies by river; winter runs Dec-Mar, summer runs Jun-Oct",
+        "notes": "Wild steelhead must be released in most OR systems. Adipose-fin-clipped (hatchery) fish only may be retained. ALWAYS verify ODFW current emergency rules by river."
+      },
+      "pacific_cod": {
+        "min_size": "None state",
+        "bag_limit": "No state limit; federal rules may apply offshore",
+        "season": "Open year-round",
+        "notes": "Pacific cod rules are minimal in Oregon state waters; verify ODFW rules."
+      },
+      "black_rockfish": {
+        "min_size": "None",
+        "bag_limit": "10 aggregate rockfish per day (includes black rockfish)",
+        "season": "Open most of year; check depth/area restrictions",
+        "notes": "Part of the nearshore/shelf rockfish complex. Verify current ODFW rules for open areas."
+      },
+      "yelloweye_rockfish": {
+        "min_size": "None",
+        "bag_limit": "1 per day within aggregate; some areas CLOSED to harvest",
+        "season": "Varies; many areas prohibit retention due to rebuilding plan",
+        "notes": "Yelloweye rockfish are a rebuilding species. Retention is prohibited in many areas. Verify current rules \u2014 this is a high-compliance-risk species."
+      },
+      "petrale_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current ODFW rules."
+      },
+      "sockeye_salmon": {
+        "min_size": "16 in TL",
+        "bag_limit": "Varies by river/system",
+        "season": "Set annually; Columbia River June-August when open",
+        "notes": "Sockeye seasons on the Columbia River are set annually by OR/WA/tribes. ALWAYS verify ODFW rules."
       }
     },
     "RI": {
@@ -1261,6 +1483,18 @@
         "bag_limit": "1 per day",
         "season": "Open year-round",
         "notes": "Very restrictive bag limit due to population decline. Verify current RI DEM rules."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
       }
     },
     "SC": {
@@ -1347,6 +1581,12 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round",
         "notes": "Verify current SC DNR rules."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "TX": {
@@ -1439,6 +1679,12 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No Texas state regulations for bluefish."
+      },
+      "gray_triggerfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
+        "season": "Open year-round state waters; federal Gulf waters: open year-round",
+        "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
       }
     },
     "VA": {
@@ -1537,6 +1783,18 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round (offshore visitor)",
         "notes": "Verify current VA MRC rules."
+      },
+      "atlantic_bluefin_tuna": {
+        "min_size": "73 in curved fork length (school/large school); 27 in (Highly Migratory Species)",
+        "bag_limit": "Varies by HMS permit category; General category: 1 per vessel per trip",
+        "season": "General category: June 1 \u2013 Nov 14 (approx); varies by NOAA in-season adjustments",
+        "notes": "Bluefin tuna require a federal Highly Migratory Species permit. Size categories and quotas change in-season \u2014 ALWAYS verify current NOAA HMS rules before fishing."
+      },
+      "atlantic_mackerel": {
+        "min_size": "None",
+        "bag_limit": "20 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
       }
     },
     "WA": {
@@ -1593,6 +1851,42 @@
         "bag_limit": "2 per day",
         "season": "Open year-round",
         "notes": "Striped bass are in the Columbia River system and some coastal areas. Verify current WDFW rules."
+      },
+      "steelhead": {
+        "min_size": "Varies by river system",
+        "bag_limit": "Varies; typically 2 hatchery fish per day where open",
+        "season": "Varies by river; winter Dec-Mar, summer Jun-Oct",
+        "notes": "Wild steelhead are catch-and-release only statewide. Only clipped hatchery fish may be retained. Verify WDFW Emergency Rules for the specific river before fishing."
+      },
+      "pacific_cod": {
+        "min_size": "None",
+        "bag_limit": "No limit in most Puget Sound areas",
+        "season": "Open year-round",
+        "notes": "Pacific cod are common in Puget Sound; verify WDFW rules for any area-specific closures."
+      },
+      "black_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open year-round in most areas; check for closed depth zones",
+        "notes": "Verify WDFW rules for any area-specific closures, particularly for bottom-contact fisheries."
+      },
+      "yelloweye_rockfish": {
+        "min_size": "None",
+        "bag_limit": "1 per day within aggregate; some areas CLOSED to harvest",
+        "season": "Varies; many areas prohibit retention due to rebuilding plan",
+        "notes": "Yelloweye rockfish are a rebuilding species. Retention is prohibited in many areas. Verify current rules \u2014 this is a high-compliance-risk species."
+      },
+      "petrale_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Verify current WDFW rules."
+      },
+      "sockeye_salmon": {
+        "min_size": "16 in TL",
+        "bag_limit": "Varies; typically 6 per day when open on Lake Wenatchee and Columbia",
+        "season": "Set annually; Lake Wenatchee July-Aug when open",
+        "notes": "Sockeye seasons and quotas are negotiated annually. Verify WDFW current rules."
       }
     },
     "HI": {
@@ -1646,6 +1940,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Ono (wahoo) have no state bag limit in Hawaii."
+      },
+      "opakapaka": {
+        "min_size": "None specific",
+        "bag_limit": "50 lbs + 1 fish per day (aggregate bottomfish)",
+        "season": "Open year-round; check for any Restricted Fishing Areas",
+        "notes": "Part of the Hawaii Deep 7 bottomfish aggregate; verify current DLNR rules before deep-drop fishing."
+      },
+      "onaga": {
+        "min_size": "None",
+        "bag_limit": "Included in Hawaii Deep 7 aggregate (50 lbs + 1 fish per day)",
+        "season": "Open year-round",
+        "notes": "Verify DLNR current rules; some nearshore areas may be restricted."
+      },
+      "uku": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit for uku specifically",
+        "season": "Open year-round",
+        "notes": "Verify current DLNR rules for any area restrictions."
+      },
+      "striped_marlin": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state bag or size limit in Hawaii. Catch and release is encouraged."
+      },
+      "opah": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No Hawaii state regulations for opah."
       }
     }
   }
