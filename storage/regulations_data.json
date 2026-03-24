@@ -492,6 +492,60 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Florida gar in most states."
+      },
+      "alligator_gar": {
+        "min_size": "None (TX: 48 in in some areas)",
+        "bag_limit": "1 per day in TX; no limit in some states",
+        "season": "Check current state season; TX requires a tag",
+        "notes": "Alligator gar regulations vary significantly by state. Texas requires a tag and has seasonal rules. Louisiana has no limit. Verify current state rules \u2014 alligator gar populations are a conservation concern in some areas."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "wahoo_gulf": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for wahoo in Gulf states. Verify current state rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
       }
     },
     "CA": {
@@ -1137,6 +1191,102 @@
         "bag_limit": "No limit (or general nearshore limit)",
         "season": "Open year-round",
         "notes": "No specific bag limit. Verify current CDFW rules."
+      },
+      "cabezon_large": {
+        "min_size": "15 in TL",
+        "bag_limit": "10 per day",
+        "season": "Check current CDFW season; can have depth/area closures",
+        "notes": "Cabezon 15-inch minimum and 10-fish bag limit in California. CAUTION: cabezon roe (eggs) are toxic \u2014 do not eat the roe. Verify current CDFW rules."
+      },
+      "wolf_eel": {
+        "min_size": "None",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Wolf eel 2-fish bag limit in California. They form monogamous pairs \u2014 handle carefully and release one if you catch a pair. Verify current CDFW rules."
+      },
+      "pacific_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Pacific hake. Commercial fishery is managed by PFMC. Verify current state rules."
+      },
+      "c_o_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California/Pacific flatfish aggregate. Verify current state rules."
+      },
+      "longfin_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day (sanddab aggregate)",
+        "season": "Open year-round",
+        "notes": "Sanddabs have a 30-fish daily limit in California. Verify current CDFW rules."
+      },
+      "speckled_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day (sanddab aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the sanddab aggregate. Verify current state rules."
+      },
+      "horn_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit (no specific regulation)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for horn sharks in California. They have two venomous dorsal spines \u2014 handle carefully. Release recommended."
+      },
+      "swellshark": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for swellsharks. Release immediately \u2014 they are a fascinating benthic species."
+      },
+      "smoothhound_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit (CA: 10/day)",
+        "season": "Open year-round",
+        "notes": "California limits smoothhound sharks to 10 per day. Verify current CDFW rules."
+      },
+      "big_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific skate aggregate. Edible wing meat. Verify current state rules."
+      },
+      "longnose_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific skate aggregate. Verify current state rules."
+      },
+      "california_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California skate aggregate. Verify current state rules."
+      },
+      "albacore_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for Pacific albacore in California. Subject to PFMC management. Verify current CDFW and PFMC rules."
+      },
+      "skipjack_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "oceanic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "pacific_saury": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
       }
     },
     "CT": {
@@ -1397,6 +1547,36 @@
         "bag_limit": "25 per person per day (varies)",
         "season": "Open year-round (elver season is separate and highly regulated)",
         "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
       }
     },
     "DE": {
@@ -1603,6 +1783,42 @@
         "bag_limit": "25 per person per day (varies)",
         "season": "Open year-round (elver season is separate and highly regulated)",
         "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "hybrid_striped_bass": {
+        "min_size": "12-15 in (varies)",
+        "bag_limit": "5 per person per day (varies)",
+        "season": "Open year-round in most freshwater/tidal areas",
+        "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
       }
     },
     "FL": {
@@ -2465,6 +2681,138 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Florida gar in most states."
+      },
+      "alligator_gar": {
+        "min_size": "None (TX: 48 in in some areas)",
+        "bag_limit": "1 per day in TX; no limit in some states",
+        "season": "Check current state season; TX requires a tag",
+        "notes": "Alligator gar regulations vary significantly by state. Texas requires a tag and has seasonal rules. Louisiana has no limit. Verify current state rules \u2014 alligator gar populations are a conservation concern in some areas."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "slippery_dick": {
+        "min_size": "None",
+        "bag_limit": "No limit (part of reef fish complex)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for slippery dick wrasse."
+      },
+      "spotted_drum": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "jackknife_fish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "highhat": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "cubbyu": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "reef_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "longspine_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Blueline tilefish count toward the Southeast tilefish complex (7-fish limit). Verify current FL FWC and NOAA rules."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "wahoo_gulf": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for wahoo in Gulf states. Verify current state rules."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "GA": {
@@ -2983,6 +3331,126 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "African pompano have a 24-inch minimum and 2-fish bag limit in Florida. Verify current FL FWC and state rules."
+      },
+      "alligator_gar": {
+        "min_size": "None (TX: 48 in in some areas)",
+        "bag_limit": "1 per day in TX; no limit in some states",
+        "season": "Check current state season; TX requires a tag",
+        "notes": "Alligator gar regulations vary significantly by state. Texas requires a tag and has seasonal rules. Louisiana has no limit. Verify current state rules \u2014 alligator gar populations are a conservation concern in some areas."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "slippery_dick": {
+        "min_size": "None",
+        "bag_limit": "No limit (part of reef fish complex)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for slippery dick wrasse."
+      },
+      "spotted_drum": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "jackknife_fish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "highhat": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "cubbyu": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "reef_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "longspine_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the tilefish complex. Verify current SAFMC/MAFMC and state rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue runner. Primarily used as live bait."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "LA": {
@@ -3471,6 +3939,66 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Florida gar in most states."
+      },
+      "alligator_gar": {
+        "min_size": "None (TX: 48 in in some areas)",
+        "bag_limit": "1 per day in TX; no limit in some states",
+        "season": "Check current state season; TX requires a tag",
+        "notes": "Alligator gar regulations vary significantly by state. Texas requires a tag and has seasonal rules. Louisiana has no limit. Verify current state rules \u2014 alligator gar populations are a conservation concern in some areas."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "wahoo_gulf": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for wahoo in Gulf states. Verify current state rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
       }
     },
     "MA": {
@@ -3768,6 +4296,42 @@
         "bag_limit": "25 per person per day (varies)",
         "season": "Open year-round (elver season is separate and highly regulated)",
         "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
       }
     },
     "MD": {
@@ -4172,6 +4736,102 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "hybrid_striped_bass": {
+        "min_size": "12-15 in (varies)",
+        "bag_limit": "5 per person per day (varies)",
+        "season": "Open year-round in most freshwater/tidal areas",
+        "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the tilefish complex. Verify current SAFMC/MAFMC and state rules."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue runner. Primarily used as live bait."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "ME": {
@@ -4764,6 +5424,60 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Florida gar in most states."
+      },
+      "alligator_gar": {
+        "min_size": "None (TX: 48 in in some areas)",
+        "bag_limit": "1 per day in TX; no limit in some states",
+        "season": "Check current state season; TX requires a tag",
+        "notes": "Alligator gar regulations vary significantly by state. Texas requires a tag and has seasonal rules. Louisiana has no limit. Verify current state rules \u2014 alligator gar populations are a conservation concern in some areas."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "wahoo_gulf": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for wahoo in Gulf states. Verify current state rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
       }
     },
     "NC": {
@@ -5511,6 +6225,150 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific size or bag limit for great barracuda in most SE states. Ciguatera fish poisoning risk \u2014 most anglers release large barracuda. Use wire leader."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "slippery_dick": {
+        "min_size": "None",
+        "bag_limit": "No limit (part of reef fish complex)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for slippery dick wrasse."
+      },
+      "spotted_drum": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "jackknife_fish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "highhat": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "cubbyu": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "reef_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "longspine_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the tilefish complex. Verify current SAFMC/MAFMC and state rules."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "NJ": {
@@ -5941,6 +6799,84 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "hybrid_striped_bass": {
+        "min_size": "12-15 in (varies)",
+        "bag_limit": "5 per person per day (varies)",
+        "season": "Open year-round in most freshwater/tidal areas",
+        "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the tilefish complex. Verify current SAFMC/MAFMC and state rules."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "NY": {
@@ -6315,6 +7251,48 @@
         "bag_limit": "25 per person per day (varies)",
         "season": "Open year-round (elver season is separate and highly regulated)",
         "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "hybrid_striped_bass": {
+        "min_size": "12-15 in (varies)",
+        "bag_limit": "5 per person per day (varies)",
+        "season": "Open year-round in most freshwater/tidal areas",
+        "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
       }
     },
     "OR": {
@@ -6797,6 +7775,102 @@
         "bag_limit": "2 per day",
         "season": "Check current state season",
         "notes": "Verify current ODFW/WDFW lingcod rules."
+      },
+      "cabezon_large": {
+        "min_size": "10 in (OR) / 10 in (WA)",
+        "bag_limit": "10 per day",
+        "season": "Check current ODFW/WDFW season",
+        "notes": "Verify current state cabezon rules."
+      },
+      "wolf_eel": {
+        "min_size": "None",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state wolf eel rules."
+      },
+      "pacific_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Pacific hake. Commercial fishery is managed by PFMC. Verify current state rules."
+      },
+      "c_o_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California/Pacific flatfish aggregate. Verify current state rules."
+      },
+      "longfin_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day (sanddab aggregate)",
+        "season": "Open year-round",
+        "notes": "Sanddabs have a 30-fish daily limit in California. Verify current CDFW rules."
+      },
+      "speckled_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day (sanddab aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the sanddab aggregate. Verify current state rules."
+      },
+      "horn_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit (no specific regulation)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for horn sharks in California. They have two venomous dorsal spines \u2014 handle carefully. Release recommended."
+      },
+      "swellshark": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for swellsharks. Release immediately \u2014 they are a fascinating benthic species."
+      },
+      "smoothhound_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit (CA: 10/day)",
+        "season": "Open year-round",
+        "notes": "California limits smoothhound sharks to 10 per day. Verify current CDFW rules."
+      },
+      "big_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific skate aggregate. Edible wing meat. Verify current state rules."
+      },
+      "longnose_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific skate aggregate. Verify current state rules."
+      },
+      "california_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California skate aggregate. Verify current state rules."
+      },
+      "albacore_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for Pacific albacore. Verify current state and PFMC rules."
+      },
+      "skipjack_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "oceanic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "pacific_saury": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
       }
     },
     "RI": {
@@ -7069,6 +8143,36 @@
         "bag_limit": "25 per person per day (varies)",
         "season": "Open year-round (elver season is separate and highly regulated)",
         "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
       }
     },
     "SC": {
@@ -7641,6 +8745,126 @@
         "bag_limit": "2 per person per day",
         "season": "Open year-round",
         "notes": "African pompano have a 24-inch minimum and 2-fish bag limit in Florida. Verify current FL FWC and state rules."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "slippery_dick": {
+        "min_size": "None",
+        "bag_limit": "No limit (part of reef fish complex)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for slippery dick wrasse."
+      },
+      "spotted_drum": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "jackknife_fish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "highhat": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "cubbyu": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are incidental catches. Verify current state rules."
+      },
+      "reef_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "longspine_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for squirrelfish. Verify current state rules."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the tilefish complex. Verify current SAFMC/MAFMC and state rules."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue runner. Primarily used as live bait."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "TX": {
@@ -8147,6 +9371,66 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Florida gar in most states."
+      },
+      "alligator_gar": {
+        "min_size": "None (TX: 48 in in some areas)",
+        "bag_limit": "1 per day in TX; no limit in some states",
+        "season": "Check current state season; TX requires a tag",
+        "notes": "Alligator gar regulations vary significantly by state. Texas requires a tag and has seasonal rules. Louisiana has no limit. Verify current state rules \u2014 alligator gar populations are a conservation concern in some areas."
+      },
+      "spotted_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted gar in most states."
+      },
+      "shortnose_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for shortnose gar."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "wahoo_gulf": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for wahoo in Gulf states. Verify current state rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
       }
     },
     "VA": {
@@ -8575,6 +9859,108 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "striped_bass_adult": {
+        "min_size": "28 in (most states); varies \u2014 check current ASMFC rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Coastal migratory: check current state season calendar",
+        "notes": "Striped bass regulations are under ASMFC management and have been tightened significantly due to stock decline. Size limits and seasons change frequently. Verify current state and ASMFC rules BEFORE every trip. Most states: 1 fish/day, 28-35 in minimum."
+      },
+      "hybrid_striped_bass": {
+        "min_size": "12-15 in (varies)",
+        "bag_limit": "5 per person per day (varies)",
+        "season": "Open year-round in most freshwater/tidal areas",
+        "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
+      },
+      "atlantic_sturgeon_catch_release": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Atlantic sturgeon are a federally protected species under the Endangered Species Act. Harvest, possession, or intentional targeting is PROHIBITED. Release immediately if caught. Report to NOAA."
+      },
+      "white_perch": {
+        "min_size": "None (most states)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "White perch are abundant schooling fish in tidal rivers. Most states have no size limit and generous bag limits. Verify current state rules."
+      },
+      "yellow_perch_tidal": {
+        "min_size": "7-8 in (varies by state)",
+        "bag_limit": "25-50 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Yellow perch regulations vary by state and water body. Verify current state rules for tidal areas."
+      },
+      "tilefish_blueline": {
+        "min_size": "None",
+        "bag_limit": "7 per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the tilefish complex. Verify current SAFMC/MAFMC and state rules."
+      },
+      "swordfish_atlantic": {
+        "min_size": "47 in lower jaw fork length (LJFL)",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "opah_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "crevalle_jack_adult": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for crevalle jack in most states. Verify current state rules."
+      },
+      "horse_eye_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Note ciguatera risk in large fish. Verify current state rules."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue runner. Primarily used as live bait."
+      },
+      "bigeye_scad": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeye scad. Primarily used as live bait."
+      },
+      "red_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "jolthead_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "whitebone_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "knobbed_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "saucereye_porgy": {
+        "min_size": "10 in TL (SE porgy complex)",
+        "bag_limit": "20 per day (porgy complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
       }
     },
     "WA": {
@@ -9033,6 +10419,102 @@
         "bag_limit": "2 per day",
         "season": "Check current state season",
         "notes": "Verify current ODFW/WDFW lingcod rules."
+      },
+      "cabezon_large": {
+        "min_size": "10 in (OR) / 10 in (WA)",
+        "bag_limit": "10 per day",
+        "season": "Check current ODFW/WDFW season",
+        "notes": "Verify current state cabezon rules."
+      },
+      "wolf_eel": {
+        "min_size": "None",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state wolf eel rules."
+      },
+      "pacific_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Pacific hake. Commercial fishery is managed by PFMC. Verify current state rules."
+      },
+      "c_o_sole": {
+        "min_size": "None",
+        "bag_limit": "10 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California/Pacific flatfish aggregate. Verify current state rules."
+      },
+      "longfin_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day (sanddab aggregate)",
+        "season": "Open year-round",
+        "notes": "Sanddabs have a 30-fish daily limit in California. Verify current CDFW rules."
+      },
+      "speckled_sanddab": {
+        "min_size": "None",
+        "bag_limit": "30 per day (sanddab aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the sanddab aggregate. Verify current state rules."
+      },
+      "horn_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit (no specific regulation)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for horn sharks in California. They have two venomous dorsal spines \u2014 handle carefully. Release recommended."
+      },
+      "swellshark": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for swellsharks. Release immediately \u2014 they are a fascinating benthic species."
+      },
+      "smoothhound_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit (CA: 10/day)",
+        "season": "Open year-round",
+        "notes": "California limits smoothhound sharks to 10 per day. Verify current CDFW rules."
+      },
+      "big_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific skate aggregate. Edible wing meat. Verify current state rules."
+      },
+      "longnose_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific skate aggregate. Verify current state rules."
+      },
+      "california_skate": {
+        "min_size": "None",
+        "bag_limit": "10 per day (skate aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California skate aggregate. Verify current state rules."
+      },
+      "albacore_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for Pacific albacore. Verify current state and PFMC rules."
+      },
+      "skipjack_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "oceanic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "pacific_saury": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
       }
     },
     "HI": {
@@ -9274,6 +10756,14 @@
         "bag_limit": "3-10 per day (varies by state and season)",
         "season": "Check current state season \u2014 tautog have complex season closures in many states",
         "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      }
+    },
+    "PA": {
+      "hybrid_striped_bass": {
+        "min_size": "12-15 in (varies)",
+        "bag_limit": "5 per person per day (varies)",
+        "season": "Open year-round in most freshwater/tidal areas",
+        "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
       }
     }
   }

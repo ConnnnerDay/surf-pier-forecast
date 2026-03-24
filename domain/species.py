@@ -1533,6 +1533,58 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Burfish (spiny boxfish)": ["panfish"],
     "Mutton hamlet": ["reef_fish", "panfish"],
     "Spotted eagle ray": ["catch_and_release"],
+    # West Coast benthic round 2
+    "Cabezon (large)": ["game_fish"],
+    "Wolf eel": ["game_fish"],
+    "Pacific hake": ["game_fish"],
+    "C-O sole": ["panfish"],
+    "Longfin sanddab": ["panfish"],
+    "Speckled sanddab": ["panfish"],
+    "Horn shark": ["catch_and_release"],
+    "Swellshark": ["catch_and_release"],
+    "Smoothhound shark": ["game_fish"],
+    "Big skate": ["game_fish"],
+    "Longnose skate": ["panfish"],
+    "California skate": ["panfish"],
+    # West Coast pelagic
+    "Albacore (Pacific)": ["game_fish"],
+    "Skipjack (Pacific)": ["game_fish"],
+    "Oceanic bonito": ["game_fish"],
+    "Pacific saury": ["panfish"],
+    "California flying fish": ["panfish"],
+    # East Coast additions
+    "Striped bass (adult)": ["game_fish"],
+    "Hybrid striped bass": ["game_fish"],
+    "Alligator gar": ["game_fish"],
+    "Spotted gar": ["game_fish"],
+    "Shortnose gar": ["game_fish"],
+    "Yellow perch (tidal)": ["panfish"],
+    "Atlantic sturgeon (catch-release)": ["catch_and_release"],
+    # SE/Gulf offshore
+    "Swordfish (Atlantic)": ["game_fish"],
+    "Opah (Atlantic)": ["game_fish"],
+    "Wahoo (Gulf)": ["game_fish"],
+    # SE/Gulf reef wrasse/drum/squirrelfish
+    "Slippery dick": ["reef_fish", "panfish"],
+    "Spotted drum": ["reef_fish", "panfish"],
+    "Jackknife fish": ["reef_fish", "panfish"],
+    "Highhat": ["reef_fish", "panfish"],
+    "Cubbyu": ["reef_fish", "panfish"],
+    "Reef squirrelfish": ["reef_fish", "panfish"],
+    "Longspine squirrelfish": ["reef_fish", "panfish"],
+    "Tilefish (blueline)": ["game_fish"],
+    # SE/Gulf jack complex
+    "Crevalle jack (adult)": ["game_fish"],
+    "Horse-eye jack": ["game_fish"],
+    "Bar jack": ["game_fish"],
+    "Blue runner": ["game_fish"],
+    "Bigeye scad": ["panfish"],
+    # SE/Gulf porgy complex
+    "Red porgy": ["game_fish"],
+    "Jolthead porgy": ["game_fish"],
+    "Whitebone porgy": ["panfish"],
+    "Knobbed porgy": ["panfish"],
+    "Saucereye porgy": ["panfish"],
 }
 
 

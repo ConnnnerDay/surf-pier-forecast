@@ -18790,5 +18790,1132 @@
     "lures": "Small jigs near reef",
     "explanation_cold": "Mutton hamlet are a small, colorful hamlet grouper on SE Atlantic and Florida Keys reef year-round.",
     "explanation_warm": "Year-round near Florida Keys reef; mutton hamlet are small (under 1 lb) hamlet grouper with rich reddish colors \u2014 an interesting incidental catch on light tackle near shallow reef."
+  },
+  {
+    "name": "Cabezon (large)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 64,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      9,
+      4
+    ],
+    "bait": "Crabs, squid, mussels, small fish near rocky reef at 5-150 ft",
+    "rig": "Medium bottom rig directly on rocky reef; minimal weight",
+    "hook_size": "3/0-6/0 hook",
+    "sinker": "None to 2 oz",
+    "lures": "Large swimbaits and crabs near rocky bottom",
+    "explanation_cold": "Cabezon are the largest sculpin in the Pacific; they inhabit rocky reef from Baja to Alaska year-round.",
+    "explanation_warm": "Fall through spring on Pacific rocky reef; ambush predators \u2014 their roe is toxic (bright red and poisonous) but the white flesh is excellent eating."
+  },
+  {
+    "name": "Wolf eel",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Clams, crabs, sea urchins, squid near rocky reef crevices at 10-200 ft",
+    "rig": "Medium to heavy bottom rig near rocky reef and crevices",
+    "hook_size": "4/0-7/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Not a typical lure target",
+    "explanation_cold": "Wolf eels are large eel-like fish (a sculpin relative) found on Pacific rocky reef; they live in dens and form monogamous pairs.",
+    "explanation_warm": "Year-round on Pacific rocky reef; mate for life and both parents guard eggs. Excellent eating despite fearsome appearance. Powerful jaws can crush a hand \u2014 handle carefully."
+  },
+  {
+    "name": "Pacific hake",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      9,
+      5
+    ],
+    "bait": "Squid, herring, small fish near mid-water and bottom at 100-500 ft",
+    "rig": "Medium bottom or mid-water rig at 100-500 ft",
+    "hook_size": "#2-3/0 hook",
+    "sinker": "8-24 oz",
+    "lures": "Diamond jigs and knife jigs worked at depth",
+    "explanation_cold": "Pacific hake (whiting) are highly abundant mid-water fish in the Pacific Northwest; the basis of a major commercial fishery.",
+    "explanation_warm": "Fall through spring offshore Pacific Northwest; form large schools and are easily caught on jigs \u2014 excellent battered and fried."
+  },
+  {
+    "name": "C-O sole",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Shrimp, worms, small crabs near sandy-mud bottom in bays and nearshore",
+    "rig": "Light bottom rig near sandy-muddy bottom",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small grubs near bottom",
+    "explanation_cold": "C-O sole are a small flatfish in Pacific bays; named for C-shaped and O-shaped marks on their tail.",
+    "explanation_warm": "Year-round in Pacific coastal bays; distinctive C and O tail markings. Caught incidentally on bay bottom rigs."
+  },
+  {
+    "name": "Longfin sanddab",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 64,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Shrimp, worms, small crabs near sandy bottom at 5-120 ft",
+    "rig": "Light bottom rig near sandy bottom",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small grubs near sandy bottom",
+    "explanation_cold": "Longfin sanddabs are a small flatfish on sandy bottom along the California coast.",
+    "explanation_warm": "Year-round on Pacific sandy bottom; delicious panfish \u2014 lightly fried whole or filleted, considered a delicacy."
+  },
+  {
+    "name": "Speckled sanddab",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 64,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Shrimp, worms near sandy bottom at 5-100 ft",
+    "rig": "Light bottom rig near sandy bottom",
+    "hook_size": "#4-#1 hook",
+    "sinker": "1/4-3/4 oz",
+    "lures": "Small grubs near sandy bottom",
+    "explanation_cold": "Speckled sanddabs are a small flatfish on sandy bottom along the Pacific coast.",
+    "explanation_warm": "Year-round on Pacific sandy bottom; delicious eating \u2014 same approach as Pacific sanddab."
+  },
+  {
+    "name": "Horn shark",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 72,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Sea urchins, clams, crabs near rocky reef and kelp at 5-150 ft; incidental",
+    "rig": "Medium bottom rig near rocky reef; incidental catch",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Horn sharks are small, sluggish sharks on California rocky reef; they lay spiral corkscrew egg cases.",
+    "explanation_warm": "Year-round on California rocky reef; have two venomous dorsal spines \u2014 handle carefully. Nocturnal. Release immediately if caught."
+  },
+  {
+    "name": "Swellshark",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 72,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Small fish, squid near rocky reef and kelp at 5-150 ft; incidental",
+    "rig": "Light to medium bottom rig near rocky reef; incidental catch",
+    "hook_size": "#2-3/0 hook",
+    "sinker": "1/2-3 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Swellsharks are a catshark that inflates its body when threatened; they inhabit California rocky reef year-round.",
+    "explanation_warm": "Year-round on California rocky reef; inflates stomach with water when threatened and wedges in crevices \u2014 fascinating defensive behavior. Release immediately."
+  },
+  {
+    "name": "Smoothhound shark",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 54,
+    "temp_max": 70,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Squid, shrimp, small crabs near sandy-mud bottom in bays and nearshore",
+    "rig": "Light to medium bottom rig in bays and nearshore",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Gray and brown smoothhound sharks are common in Pacific coastal bays year-round; closely related to leopard sharks.",
+    "explanation_warm": "Year-round in Pacific coastal bays; school near the bottom in bays \u2014 slender, fast-swimming sharks common as bycatch on bottom rigs."
+  },
+  {
+    "name": "Big skate",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 62,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Clams, worms, squid near sandy-mud bottom in bays and nearshore",
+    "rig": "Medium to heavy bottom rig near sandy-mud bottom",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "3-10 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Big skate are the largest skate in the Pacific; they inhabit sandy-mud bottom from California to Alaska.",
+    "explanation_warm": "Year-round in Pacific nearshore; the edible 'wings' are common in Pacific Northwest fish and chips."
+  },
+  {
+    "name": "Longnose skate",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Worms, clams, small fish near sandy-rocky bottom at 5-200 ft",
+    "rig": "Medium bottom rig near sandy-rocky bottom",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "2-8 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Longnose skate inhabit deep sandy and rocky bottom on the Pacific coast; identified by their elongated pointed snout.",
+    "explanation_warm": "Year-round in Pacific nearshore and offshore; edible wing meat similar to big skate."
+  },
+  {
+    "name": "California skate",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 64,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Worms, clams, shrimp near sandy bottom in bays and nearshore",
+    "rig": "Light to medium bottom rig near sandy bottom",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "1-6 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "California skate inhabit sandy bottom in California bays and nearshore year-round.",
+    "explanation_warm": "Year-round in California coastal bays; common incidental catch on bay bottom rigs. Edible wing meat."
+  },
+  {
+    "name": "Albacore (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Squid, anchovies near the surface offshore Pacific Northwest and California",
+    "rig": "Medium trolling or casting; 30-50 lb leader",
+    "hook_size": "3/0-6/0 hook",
+    "sinker": "None",
+    "lures": "Cedar plugs, feathers, and small skirted lures trolled at 5-8 knots",
+    "explanation_cold": "Pacific albacore are a prized tuna that school offshore from California to British Columbia each summer and fall.",
+    "explanation_warm": "July through October offshore Pacific coast; albacore schools are found 20-80 miles offshore following the warm-water edge \u2014 they hit trolled cedar plugs and cast jigs eagerly. The best-eating tuna for canning."
+  },
+  {
+    "name": "Skipjack (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 62,
+    "temp_max": 78,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Small baitfish, squid near the surface offshore in warm California current water",
+    "rig": "Light to medium casting or trolling offshore; 20-40 lb leader",
+    "hook_size": "2/0-5/0 hook",
+    "sinker": "None",
+    "lures": "Small metal jigs, feathers, and cedar plugs cast or trolled near surface schools",
+    "explanation_cold": "Skipjack tuna appear offshore in warm water off California and the Pacific Northwest in summer and fall.",
+    "explanation_warm": "Summer through fall offshore California and Pacific Northwest; skipjack school with albacore and yellowfin \u2014 they are aggressive surface feeders and excellent live bait for marlin."
+  },
+  {
+    "name": "Oceanic bonito",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 62,
+    "temp_max": 78,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Small baitfish, anchovies near the surface offshore Southern California",
+    "rig": "Light to medium spinning or trolling near surface schools",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None",
+    "lures": "Small spoons, jigs, and feathers near surface breaking fish",
+    "explanation_cold": "Oceanic bonito (plain bonito) are a pelagic schooling fish offshore California in warm months.",
+    "explanation_warm": "Summer through fall offshore Southern California; bonito school near the surface and hit small lures readily \u2014 a fast-action species on light tackle."
+  },
+  {
+    "name": "Pacific saury",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 56,
+    "temp_max": 70,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Caught incidentally on tiny hooks; primarily used as bait",
+    "rig": "Light rig near surface; sabiki for bait",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None",
+    "lures": "Not a lure target",
+    "explanation_cold": "Pacific saury are elongated, needle-like forage fish that appear offshore in the Pacific Northwest in summer and fall.",
+    "explanation_warm": "Summer through fall offshore; Pacific saury appear in large schools near the surface and are used as bait. Occasionally caught incidentally."
+  },
+  {
+    "name": "California flying fish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 62,
+    "temp_max": 76,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Not a rod-and-reel target; observed offshore in warm California current water",
+    "rig": "Not applicable \u2014 not a hook-and-line species",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "Not a lure target",
+    "explanation_cold": "California flying fish leap and glide above the water surface for distances up to 1,000 ft; they appear in warm California current water offshore.",
+    "explanation_warm": "Summer offshore Southern California; California flying fish are a spectacular sight offshore \u2014 they leap to escape predators and can glide hundreds of feet. Not a hook-and-line target but sometimes dip-netted at night with a light."
+  },
+  {
+    "name": "Striped bass (adult)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "new_england"
+    ],
+    "temp_min": 50,
+    "temp_max": 72,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Live eels, live bunker, large poppers, swimmer plugs near rocky structure, inlets, and surf",
+    "rig": "Medium to heavy surf or boat casting near rocky structure and sandy beaches",
+    "hook_size": "5/0-10/0 hook",
+    "sinker": "None to 4 oz",
+    "lures": "Super Strike Needle, Bomber plug, large pencil popper, soft plastic eel on jig head, large bucktail",
+    "explanation_cold": "Adult striped bass are the premier inshore gamefish of the Northeast US; they migrate along the coast annually and are the focus of a massive recreational fishery.",
+    "explanation_warm": "Spring and fall migration in surf and nearshore; large stripers (30+ in) require large baits and heavy tackle \u2014 live eels near rocky points at night and large plugs in white water are the classic approaches. Strictly regulated due to stock decline."
+  },
+  {
+    "name": "Hybrid striped bass",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 52,
+    "temp_max": 74,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live shad, live baitfish, surface lures near open water in reservoirs and tidal rivers",
+    "rig": "Light to medium spinning near schooling fish; popping corks and live bait",
+    "hook_size": "2/0-5/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Topwater plugs, chrome spoons, swimbaits near surface schooling fish",
+    "explanation_cold": "Hybrid striped bass (sunshine bass) are a cross between striped bass and white bass; they are stocked in reservoirs and inhabit some tidal rivers.",
+    "explanation_warm": "Spring through fall in reservoirs and tidal rivers; hybrid stripers crash shad schools near the surface creating explosive surface feeding \u2014 chrome spoons thrown into the melee produce instant hookups. Excellent eating."
+  },
+  {
+    "name": "Alligator gar",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 66,
+    "temp_max": 84,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Large live fish, large cut fish in tidal rivers, bayous, and large slow-moving rivers",
+    "rig": "Heavy spinning or baitcasting in tidal rivers; heavy cable or braided leader",
+    "hook_size": "9/0-14/0 hook",
+    "sinker": "None to 2 oz",
+    "lures": "Large swimbaits and chunky lures near the surface in slow-moving rivers; frayed rope lure",
+    "explanation_cold": "Alligator gar are the largest gar species, reaching over 8 feet and 300 lbs; they inhabit Gulf Coast rivers, bayous, and tidal areas.",
+    "explanation_warm": "Spring through summer in Gulf Coast tidal rivers and bayous; alligator gar are prehistoric giants \u2014 they roll at the surface and can be sight-fished in slow tidal rivers. Heavily scaled and powerful; an unforgettable encounter."
+  },
+  {
+    "name": "Spotted gar",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Small fish, frayed rope lure in shallow tidal backwaters, swamps, and bayous",
+    "rig": "Light to medium rig in shallow tidal backwater; frayed nylon rope lure",
+    "hook_size": "No hook needed for rope lure",
+    "sinker": "None",
+    "lures": "Frayed nylon rope lure worked slowly near surface",
+    "explanation_cold": "Spotted gar inhabit warm tidal backwaters and shallow rivers in Gulf Coast states; they are smaller than alligator gar.",
+    "explanation_warm": "Spring through summer in Gulf tidal backwater; spotted gar are a common encounter in slow bayous and backwaters \u2014 frayed rope lure works by entangling their teeth. A fascinating primitive catch."
+  },
+  {
+    "name": "Shortnose gar",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 58,
+    "temp_max": 78,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Small fish, frayed rope lure in tidal rivers and coastal plains streams",
+    "rig": "Light spinning; frayed rope lure or small live baitfish",
+    "hook_size": "No hook needed for rope lure",
+    "sinker": "None",
+    "lures": "Frayed nylon rope lure near surface",
+    "explanation_cold": "Shortnose gar inhabit tidal rivers and coastal plains streams from the Mid-Atlantic south through the Gulf.",
+    "explanation_warm": "Spring through summer in tidal river zones; shortnose gar are widely distributed but seldom targeted \u2014 frayed rope lure is the classic catch technique."
+  },
+  {
+    "name": "Yellow perch (tidal)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "northeast"
+    ],
+    "temp_min": 46,
+    "temp_max": 66,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Bloodworms, small minnows, nightcrawlers near the bottom in tidal rivers and estuaries",
+    "rig": "Ultra-light to light rig near the bottom in tidal river zones",
+    "hook_size": "#6-#2 hook",
+    "sinker": "None to 1/4 oz",
+    "lures": "Small tube jigs and soft plastic grubs near the bottom",
+    "explanation_cold": "Yellow perch move into tidal river zones in spring and fall in Mid-Atlantic coastal areas; they are a beloved panfish.",
+    "explanation_warm": "Spring and fall in tidal creeks and river tributaries; yellow perch are schooling fish that stack up in tidal pools in early spring \u2014 blood worms and small jigs near the bottom produce fast action. Outstanding eating."
+  },
+  {
+    "name": "Swordfish (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "new_england",
+      "northeast"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Large squid, bonito strips deep-dropped at 1000-2000 ft overnight or near surface at dawn",
+    "rig": "Very heavy 130-class or deep-drop rig; 400 lb leader or wire; electric reel for deep-drop",
+    "hook_size": "9/0-14/0 hook",
+    "sinker": "None (surface) or 64-256 oz (deep-drop)",
+    "lures": "Not a lure target; bait only",
+    "explanation_cold": "Atlantic swordfish inhabit offshore waters from New England to the Gulf; targeted by deep-dropping overnight and drifting near surface at dawn near canyon edges.",
+    "explanation_warm": "Summer through fall near Mid-Atlantic and NE canyon edges; swordfish (broadbill) are the ultimate blue-water trophy. HMS permit required. Deep-dropping at 1500 ft with squid and light sticks is most reliable."
+  },
+  {
+    "name": "Opah (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "new_england"
+    ],
+    "temp_min": 60,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, small fish; incidental deep-water catch at 300-1500 ft",
+    "rig": "Heavy deep-drop or trolling rig; incidental catch",
+    "hook_size": "7/0-12/0 hook",
+    "sinker": "None",
+    "lures": "Not a typical target",
+    "explanation_cold": "Opah (moonfish) are appearing with increasing frequency in the Atlantic; incidentally caught on swordfish deep-drop gear.",
+    "explanation_warm": "Incidental on Atlantic deep-drop swordfish trips; the only fully warm-blooded fish \u2014 bright red meat with rich, lobster-like flavor."
+  },
+  {
+    "name": "Wahoo (Gulf)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Large trolled lures, ballyhoo, rigged mullet near offshore structure and humps",
+    "rig": "Heavy trolling at 12-18 knots; wire or 300 lb fluorocarbon leader",
+    "hook_size": "8/0-12/0 hook",
+    "sinker": "None",
+    "lures": "High-speed skirted lures trolled near Gulf offshore humps and rigs",
+    "explanation_cold": "Gulf wahoo are present year-round near offshore oil rigs, reefs, and humps throughout the Gulf of Mexico.",
+    "explanation_warm": "Year-round in Gulf offshore waters near rigs and reef humps; wahoo are particularly abundant in the Gulf \u2014 strike at lightning speed. A single clean wahoo fillet is considered one of the finest fish in the Gulf."
+  },
+  {
+    "name": "Crevalle jack (adult)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Large live baitfish, large lures near the surface in bays, inlets, and nearshore",
+    "rig": "Medium to heavy spinning near surface schools and structure",
+    "hook_size": "4/0-7/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Large topwater plugs, large spoons, and big swimbaits near surface schooling fish",
+    "explanation_cold": "Adult crevalle jacks are one of the strongest inshore fish on the SE and Gulf coast; they school in large pods attacking baitfish near the surface.",
+    "explanation_warm": "Year-round in SE and Gulf inshore; big jacks (10-30 lbs) are pound-for-pound one of the hardest-fighting fish in coastal waters \u2014 will break rods and burn drag on medium tackle."
+  },
+  {
+    "name": "Slippery dick",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, small invertebrates near sandy bottom adjacent to reef at 3-100 ft",
+    "rig": "Light bottom rig near sandy bottom adjacent to reef",
+    "hook_size": "#4-#1 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small grubs near sandy reef base",
+    "explanation_cold": "Slippery dick are an extremely common wrasse on sandy bottom near SE and Gulf reef; they are frequent bycatch.",
+    "explanation_warm": "Year-round near SE reef; slippery dick are notoriously good at stealing bait \u2014 they dart in and steal shrimp before target species get it. Edible but rarely targeted intentionally."
+  },
+  {
+    "name": "Spotted drum",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, small crabs, worms near rocky reef and coral at 5-100 ft; incidental catch",
+    "rig": "Light rig near rocky reef at night",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Tiny jigs near reef at night",
+    "explanation_cold": "Spotted drum are a striking nocturnal reef fish with distinctive white spots and long dorsal filaments; they inhabit SE Atlantic reef and the Florida Keys.",
+    "explanation_warm": "Year-round near Florida Keys reef; spotted drum are one of the most beautiful reef fish \u2014 long trailing dorsal fin and bold white spots on a black body. Juveniles have even longer streamers. Mainly caught at night."
+  },
+  {
+    "name": "Jackknife fish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, small crabs near shallow reef at night; incidental catch",
+    "rig": "Light rig near shallow reef at night",
+    "hook_size": "#4-#1 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Not a typical target",
+    "explanation_cold": "Jackknife fish are a strikingly marked drum related to the spotted drum; they inhabit SE Atlantic shallow reef.",
+    "explanation_warm": "Year-round near Florida Keys reef; jackknife fish have dramatic black-and-white stripes and an extremely long dorsal fin \u2014 a spectacular sight near reef at night."
+  },
+  {
+    "name": "Highhat",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, small invertebrates near shallow reef at night; incidental",
+    "rig": "Light rig near reef at night; incidental catch",
+    "hook_size": "#4-#1 hook",
+    "sinker": "None to 1/4 oz",
+    "lures": "Not a typical target",
+    "explanation_cold": "Highhat are a striped drum related to spotted drum and jackknife fish; they inhabit SE Atlantic shallow reef.",
+    "explanation_warm": "Year-round near Florida Keys reef; highhat have dramatic black-and-white vertical stripes \u2014 they are nocturnal and an exciting incidental catch at night near reef."
+  },
+  {
+    "name": "Cubbyu",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 60,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, small crabs, worms near mangrove edges and nearshore structure",
+    "rig": "Light bottom rig near mangrove edges and structure",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small jigs near structure",
+    "explanation_cold": "Cubbyu (reef croaker) are a small drum found near mangrove edges and nearshore structure in SE and Gulf coastal waters.",
+    "explanation_warm": "Year-round in SE and Gulf nearshore; cubbyu are a small, easily overlooked drum that are caught incidentally near mangroves and structure \u2014 they make a distinctive drumming sound."
+  },
+  {
+    "name": "Reef squirrelfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small shrimp, small fish near coral reef at night; incidental catch",
+    "rig": "Light rig near reef at night",
+    "hook_size": "#6-#2 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small glow jigs at night",
+    "explanation_cold": "Reef squirrelfish are a common nocturnal squirrelfish on SE Atlantic coral reef; they are bright red with large eyes.",
+    "explanation_warm": "Best at night near Florida Keys reef; squirrelfish hide in reef crevices during the day and emerge to feed at night \u2014 bright red color with enormous eyes. Occasionally caught on small baits."
+  },
+  {
+    "name": "Longspine squirrelfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small shrimp near coral reef at night; incidental catch",
+    "rig": "Light rig near reef at night",
+    "hook_size": "#6-#2 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small glow jigs at night",
+    "explanation_cold": "Longspine squirrelfish have extremely long dorsal spines; they inhabit SE Atlantic coral reef and are nocturnal.",
+    "explanation_warm": "Best at night near Florida Keys reef; similar to reef squirrelfish but with dramatically elongated dorsal spines. An interesting and colorful incidental night catch."
+  },
+  {
+    "name": "Tilefish (blueline)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "new_england"
+    ],
+    "temp_min": 46,
+    "temp_max": 64,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Squid, crabs, shrimp near clay bottom at 200-600 ft; shallow enough for conventional gear",
+    "rig": "Heavy bottom rig at 200-600 ft; conventional reel works without electric assist",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "16-48 oz",
+    "lures": "Large deep jigs with glow sticks",
+    "explanation_cold": "Blueline tilefish are a smaller tilefish inhabiting clay and sandy bottom at 200-600 ft; they are more accessible than golden tilefish.",
+    "explanation_warm": "Year-round on Mid-Atlantic clay bottom; blueline tilefish are one of the most accessible deep-water species \u2014 found shallower than golden tilefish, no electric reel required. Excellent eating."
+  },
+  {
+    "name": "Atlantic sturgeon (catch-release)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "new_england"
+    ],
+    "temp_min": 44,
+    "temp_max": 64,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Bloodworms, clams, small crayfish near sandy-mud bottom in tidal rivers and bays",
+    "rig": "Heavy bottom rig near tidal river bottom; incidental catch",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "4-12 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Atlantic sturgeon are a federally protected species in tidal rivers along the East Coast; they are incidentally caught on bottom rigs in tidal rivers.",
+    "explanation_warm": "Atlantic sturgeon are FEDERALLY PROTECTED \u2014 do not target, retain, or harm them. Release immediately if caught accidentally. They can reach over 10 feet and 800 lbs \u2014 a prehistoric giant. Report any incidentally caught fish to NOAA."
   }
 ]
