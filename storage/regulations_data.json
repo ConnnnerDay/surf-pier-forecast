@@ -432,6 +432,66 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific bag limit for skipjack tuna. Verify current state and NOAA HMS rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "33 in (Atlantic FL) / 36 in (Gulf FL) fork length",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person (Gulf)",
+        "season": "Open year-round",
+        "notes": "Cobia minimum and bag limits differ on Atlantic and Gulf coasts of Florida. Verify current FL FWC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "banded_rudderfish": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "florida_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Florida gar in most states."
       }
     },
     "CA": {
@@ -1011,6 +1071,72 @@
         "bag_limit": "2 per day",
         "season": "Open year-round",
         "notes": "Pacific bluefin tuna have a 27-inch minimum and 2-fish bag limit in California. Bag limit may change annually \u2014 check current CDFW and PFMC rules before fishing."
+      },
+      "treefish_rockfish": {
+        "min_size": "12 in TL (general rockfish)",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Check current CDFW season and depth restrictions",
+        "notes": "Treefish count toward the general nearshore rockfish bag limit in California. Verify current CDFW rules."
+      },
+      "pacific_halibut_small": {
+        "min_size": "22 in TL (California waters)",
+        "bag_limit": "3 per day",
+        "season": "Open year-round in California state waters",
+        "notes": "Pacific halibut in California have a 22-inch minimum and 3-fish bag limit. Federal (IPHC) rules apply offshore. Verify current CDFW and IPHC rules."
+      },
+      "topsmelt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for topsmelt in California."
+      },
+      "sharpnose_surfperch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California surfperch aggregate limit. Verify current CDFW rules."
+      },
+      "silver_surfperch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the California surfperch aggregate limit. Verify current CDFW rules."
+      },
+      "lingcod_small": {
+        "min_size": "22 in TL (CA)",
+        "bag_limit": "2 per day",
+        "season": "Check current CDFW and PFMC season",
+        "notes": "Lingcod have a 22-inch minimum and 2-fish bag limit in California. The season has complex area closures. Verify current CDFW rules \u2014 sub-legal lingcod must be released."
+      },
+      "spiny_lobster_pacific": {
+        "min_size": "3.25 in carapace length",
+        "bag_limit": "7 per day",
+        "season": "First Wednesday in October through mid-March (dates vary annually)",
+        "notes": "California spiny lobster season opens the first Wednesday in October. Requires a California fishing license and lobster report card. Measured from back of eye socket to rear of carapace \u2014 no measure, no keep. Season dates may vary."
+      },
+      "pacific_sierra_mackerel": {
+        "min_size": "None",
+        "bag_limit": "No limit (or general nearshore limit)",
+        "season": "Open year-round",
+        "notes": "No specific bag limit. Verify current CDFW rules."
+      },
+      "queenfish": {
+        "min_size": "None",
+        "bag_limit": "No limit (or general nearshore limit)",
+        "season": "Open year-round",
+        "notes": "No specific bag limit. Verify current CDFW rules."
+      },
+      "sargo": {
+        "min_size": "None",
+        "bag_limit": "No limit (or general nearshore limit)",
+        "season": "Open year-round",
+        "notes": "No specific bag limit. Verify current CDFW rules."
+      },
+      "salema": {
+        "min_size": "None",
+        "bag_limit": "No limit (or general nearshore limit)",
+        "season": "Open year-round",
+        "notes": "No specific bag limit. Verify current CDFW rules."
       }
     },
     "CT": {
@@ -1253,6 +1379,24 @@
         "bag_limit": "0 retained (quota managed)",
         "season": "Open year-round",
         "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
       }
     },
     "DE": {
@@ -1441,6 +1585,24 @@
         "bag_limit": "0 retained (quota managed)",
         "season": "Open year-round",
         "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
       }
     },
     "FL": {
@@ -2201,6 +2363,108 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Verify current state rules for mahi-mahi."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "33 in (Atlantic FL) / 36 in (Gulf FL) fork length",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person (Gulf)",
+        "season": "Open year-round",
+        "notes": "Cobia minimum and bag limits differ on Atlantic and Gulf coasts of Florida. Verify current FL FWC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Gray snapper (mangrove snapper) count toward the snapper aggregate limit in Florida. Verify current FL FWC rules."
+      },
+      "tiger_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "3 per day (grouper complex)",
+        "season": "Open year-round",
+        "notes": "Tiger grouper count toward the Southeast grouper complex. Verify current FL FWC rules."
+      },
+      "yellowtail_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Yellowtail snapper count toward the Florida snapper aggregate. Verify current FL FWC rules."
+      },
+      "lane_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Lane snapper count toward the FL snapper aggregate. Verify current FL FWC rules."
+      },
+      "bluestriped_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per person per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida grunt aggregate. Verify current FL FWC rules."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "blue_tang": {
+        "min_size": "None (not typically a target)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue tang. They are primarily herbivores and rarely targeted. Release immediately in most contexts."
+      },
+      "ocean_surgeonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Handle with extreme caution \u2014 razor-sharp scalpel spine at tail base can inflict deep cuts. Release quickly."
+      },
+      "great_barracuda": {
+        "min_size": "None (FL: no minimum)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for great barracuda in most SE states. Ciguatera fish poisoning risk \u2014 most anglers release large barracuda. Use wire leader."
+      },
+      "florida_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Florida gar in most states."
       }
     },
     "GA": {
@@ -2623,6 +2887,102 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific bag limit for skipjack tuna. Verify current state and NOAA HMS rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "37 in FL (fork length) \u2014 36 in most Mid-Atlantic states",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Cobia have a 1-fish daily bag limit in most states. Atlantic coast minimum is typically 36-37 in fork length. Verify current ASMFC and state rules."
+      },
+      "greater_amberjack": {
+        "min_size": "28 in (fork length)",
+        "bag_limit": "1 per person per day",
+        "season": "March 1 through May 31 CLOSED in Gulf; verify current NOAA and state rules",
+        "notes": "Greater amberjack have seasonal closures in the Gulf (March-May closed) and a 1-fish daily bag limit. The species is overfished; regulations are strict. Verify current NOAA and state rules before fishing."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for cownose rays in most states. Some areas have encouraged harvest due to shellfish bed damage. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "blue_tang": {
+        "min_size": "None (not typically a target)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue tang. They are primarily herbivores and rarely targeted. Release immediately in most contexts."
+      },
+      "ocean_surgeonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Handle with extreme caution \u2014 razor-sharp scalpel spine at tail base can inflict deep cuts. Release quickly."
+      },
+      "great_barracuda": {
+        "min_size": "None (FL: no minimum)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for great barracuda in most SE states. Ciguatera fish poisoning risk \u2014 most anglers release large barracuda. Use wire leader."
+      },
+      "florida_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Florida gar in most states."
+      },
+      "african_pompano": {
+        "min_size": "24 in FL (fork length)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "African pompano have a 24-inch minimum and 2-fish bag limit in Florida. Verify current FL FWC and state rules."
       }
     },
     "LA": {
@@ -3033,6 +3393,84 @@
         "bag_limit": "3 per person per day (NOAA HMS)",
         "season": "Open year-round",
         "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "33 in (Atlantic FL) / 36 in (Gulf FL) fork length",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person (Gulf)",
+        "season": "Open year-round",
+        "notes": "Cobia minimum and bag limits differ on Atlantic and Gulf coasts of Florida. Verify current FL FWC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "banded_rudderfish": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None (not a regulated target)",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Spotted eagle rays have a venomous tail barb \u2014 handle with extreme caution. They are a protected species in some states. Minimize handling and release quickly."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for cownose rays in most states. Some areas have encouraged harvest due to shellfish bed damage. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "florida_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Florida gar in most states."
       }
     },
     "MA": {
@@ -3312,6 +3750,24 @@
         "bag_limit": "0 retained (quota managed)",
         "season": "Open year-round",
         "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
       }
     },
     "MD": {
@@ -3674,6 +4130,48 @@
         "bag_limit": "No limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "cobia_adult": {
+        "min_size": "37 in FL (fork length) \u2014 36 in most Mid-Atlantic states",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Cobia have a 1-fish daily bag limit in most states. Atlantic coast minimum is typically 36-37 in fork length. Verify current ASMFC and state rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
       }
     },
     "ME": {
@@ -4206,6 +4704,66 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific bag limit for skipjack tuna. Verify current state and NOAA HMS rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "33 in (Atlantic FL) / 36 in (Gulf FL) fork length",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person (Gulf)",
+        "season": "Open year-round",
+        "notes": "Cobia minimum and bag limits differ on Atlantic and Gulf coasts of Florida. Verify current FL FWC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "banded_rudderfish": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "florida_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Florida gar in most states."
       }
     },
     "NC": {
@@ -4869,6 +5427,90 @@
         "bag_limit": "No limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "cobia_adult": {
+        "min_size": "37 in FL (fork length) \u2014 36 in most Mid-Atlantic states",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Cobia have a 1-fish daily bag limit in most states. Atlantic coast minimum is typically 36-37 in fork length. Verify current ASMFC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "blue_tang": {
+        "min_size": "None (not typically a target)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue tang. They are primarily herbivores and rarely targeted. Release immediately in most contexts."
+      },
+      "ocean_surgeonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Handle with extreme caution \u2014 razor-sharp scalpel spine at tail base can inflict deep cuts. Release quickly."
+      },
+      "great_barracuda": {
+        "min_size": "None (FL: no minimum)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for great barracuda in most SE states. Ciguatera fish poisoning risk \u2014 most anglers release large barracuda. Use wire leader."
       }
     },
     "NJ": {
@@ -5263,6 +5905,42 @@
         "bag_limit": "No limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None (not a regulated target)",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Spotted eagle rays have a venomous tail barb \u2014 handle with extreme caution. They are a protected species in some states. Minimize handling and release quickly."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
       }
     },
     "NY": {
@@ -5619,6 +6297,24 @@
         "bag_limit": "No limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
       }
     },
     "OR": {
@@ -6077,6 +6773,30 @@
         "bag_limit": "2-5 per day (varies by region)",
         "season": "Varies by region; summer through fall generally",
         "notes": "Dolly Varden regulations vary by watershed. Check current WDFW/ODFW rules."
+      },
+      "pacific_halibut_small": {
+        "min_size": "32 in TL (most fisheries)",
+        "bag_limit": "1-2 per day (varies by area)",
+        "season": "Complex season set annually by IPHC \u2014 check current year season before fishing",
+        "notes": "Pacific halibut seasons are set by the International Pacific Halibut Commission (IPHC) and change annually. Regulations are complex and vary by area. Verify current IPHC and state rules each year."
+      },
+      "sharpnose_surfperch": {
+        "min_size": "None",
+        "bag_limit": "Aggregate surfperch limit",
+        "season": "Open year-round",
+        "notes": "Verify current state surfperch rules."
+      },
+      "silver_surfperch": {
+        "min_size": "None",
+        "bag_limit": "Aggregate surfperch limit",
+        "season": "Open year-round",
+        "notes": "Verify current state surfperch rules."
+      },
+      "lingcod_small": {
+        "min_size": "22 in TL",
+        "bag_limit": "2 per day",
+        "season": "Check current state season",
+        "notes": "Verify current ODFW/WDFW lingcod rules."
       }
     },
     "RI": {
@@ -6331,6 +7051,24 @@
         "bag_limit": "0 retained (quota managed)",
         "season": "Open year-round",
         "notes": "Sailfish require an HMS Angling Permit. The Atlantic sailfish retention quota is very small \u2014 most anglers practice catch-and-release. Verify current NOAA HMS rules."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
       }
     },
     "SC": {
@@ -6819,6 +7557,90 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Verify current state rules for mahi-mahi."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "37 in FL (fork length) \u2014 36 in most Mid-Atlantic states",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Cobia have a 1-fish daily bag limit in most states. Atlantic coast minimum is typically 36-37 in fork length. Verify current ASMFC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for cownose rays in most states. Some areas have encouraged harvest due to shellfish bed damage. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "blue_tang": {
+        "min_size": "None (not typically a target)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for blue tang. They are primarily herbivores and rarely targeted. Release immediately in most contexts."
+      },
+      "ocean_surgeonfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Handle with extreme caution \u2014 razor-sharp scalpel spine at tail base can inflict deep cuts. Release quickly."
+      },
+      "great_barracuda": {
+        "min_size": "None (FL: no minimum)",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for great barracuda in most SE states. Ciguatera fish poisoning risk \u2014 most anglers release large barracuda. Use wire leader."
+      },
+      "african_pompano": {
+        "min_size": "24 in FL (fork length)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "African pompano have a 24-inch minimum and 2-fish bag limit in Florida. Verify current FL FWC and state rules."
       }
     },
     "TX": {
@@ -7247,6 +8069,84 @@
         "bag_limit": "3 per person per day (NOAA HMS)",
         "season": "Open year-round",
         "notes": "Bigeye tuna are subject to NOAA HMS regulations. Requires HMS Angling Permit for vessel. 3-fish limit per person. Verify current NOAA HMS rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "cobia_adult": {
+        "min_size": "33 in (Atlantic FL) / 36 in (Gulf FL) fork length",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person (Gulf)",
+        "season": "Open year-round",
+        "notes": "Cobia minimum and bag limits differ on Atlantic and Gulf coasts of Florida. Verify current FL FWC and state rules."
+      },
+      "lesser_amberjack": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "banded_rudderfish": {
+        "min_size": "None",
+        "bag_limit": "5 per day (amberjack complex)",
+        "season": "Open year-round",
+        "notes": "Part of the amberjack complex. Verify current state rules."
+      },
+      "ballyhoo": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for ballyhoo. Primarily used as bait."
+      },
+      "gray_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for gray snapper (mangrove snapper)."
+      },
+      "hardhead_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for hardhead catfish. Considered a nuisance in most areas. Has venomous spines \u2014 handle with extreme care."
+      },
+      "gafftopsail_catfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for gafftopsail catfish. Has venomous spines; handle carefully. Better eating than hardhead catfish."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "spotted_eagle_ray": {
+        "min_size": "None (not a regulated target)",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Spotted eagle rays have a venomous tail barb \u2014 handle with extreme caution. They are a protected species in some states. Minimize handling and release quickly."
+      },
+      "cownose_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for cownose rays in most states. Some areas have encouraged harvest due to shellfish bed damage. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
+      },
+      "florida_gar": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Florida gar in most states."
       }
     },
     "VA": {
@@ -7633,6 +8533,48 @@
         "bag_limit": "No limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag limit for mahi-mahi in most states. Verify current state rules."
+      },
+      "red_drum_adult": {
+        "min_size": "Typically over the slot (27 in and above) \u2014 must be RELEASED in most states",
+        "bag_limit": "0 (must release oversized fish above slot in most states)",
+        "season": "Open year-round (catch-and-release for oversized fish)",
+        "notes": "Oversized red drum above the slot limit (typically 27 in) must be released in most states. Slot limits vary by state \u2014 verify current state rules. Oversized fish are prime breeders and critical to the population."
+      },
+      "striped_bass_small": {
+        "min_size": "28 in (most states); 35 in (NJ recreational); check state rules",
+        "bag_limit": "1 per person per day (most states)",
+        "season": "Open year-round in coastal waters; check current state seasons",
+        "notes": "Striped bass regulations are complex and change frequently due to stock concerns. Most schoolie fish under the minimum must be released. Verify current ASMFC and state rules \u2014 regulations have changed significantly in recent years due to stock decline."
+      },
+      "summer_flounder_fluke": {
+        "min_size": "12-16 in (varies significantly by state)",
+        "bag_limit": "3-5 per person per day (varies)",
+        "season": "May through October in most states; check current state season",
+        "notes": "Summer flounder (fluke) regulations differ significantly by state and are set annually. Minimum size and bag limits change each year \u2014 verify current ASMFC and state rules before fishing. NJ and NY have different rules."
+      },
+      "cobia_adult": {
+        "min_size": "37 in FL (fork length) \u2014 36 in most Mid-Atlantic states",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round",
+        "notes": "Cobia have a 1-fish daily bag limit in most states. Atlantic coast minimum is typically 36-37 in fork length. Verify current ASMFC and state rules."
+      },
+      "american_eel": {
+        "min_size": "9 in (varies by state)",
+        "bag_limit": "25 per person per day (varies)",
+        "season": "Open year-round (elver season is separate and highly regulated)",
+        "notes": "American eel recreational regulations vary by state. Glass eel (elver) fishery is separately managed and requires specific permits in states like ME and RI. Yellow/silver eels have size and bag limits. Verify current ASMFC and state rules."
+      },
+      "atlantic_torpedo_ray": {
+        "min_size": "N/A \u2014 not a target species",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "Atlantic torpedo rays can deliver powerful electric shocks (up to 220 volts) \u2014 DO NOT TOUCH. Cut the leader and release at the waterline. No regulations but no reason to retain them."
+      },
+      "atlantic_spadefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic spadefish. Verify current state rules."
       }
     },
     "WA": {
@@ -8067,6 +9009,30 @@
         "bag_limit": "2-5 per day (varies by region)",
         "season": "Varies by region; summer through fall generally",
         "notes": "Dolly Varden regulations vary by watershed. Check current WDFW/ODFW rules."
+      },
+      "pacific_halibut_small": {
+        "min_size": "32 in TL (most fisheries)",
+        "bag_limit": "1-2 per day (varies by area)",
+        "season": "Complex season set annually by IPHC \u2014 check current year season before fishing",
+        "notes": "Pacific halibut seasons are set by the International Pacific Halibut Commission (IPHC) and change annually. Regulations are complex and vary by area. Verify current IPHC and state rules each year."
+      },
+      "sharpnose_surfperch": {
+        "min_size": "None",
+        "bag_limit": "Aggregate surfperch limit",
+        "season": "Open year-round",
+        "notes": "Verify current state surfperch rules."
+      },
+      "silver_surfperch": {
+        "min_size": "None",
+        "bag_limit": "Aggregate surfperch limit",
+        "season": "Open year-round",
+        "notes": "Verify current state surfperch rules."
+      },
+      "lingcod_small": {
+        "min_size": "22 in TL",
+        "bag_limit": "2 per day",
+        "season": "Check current state season",
+        "notes": "Verify current ODFW/WDFW lingcod rules."
       }
     },
     "HI": {
