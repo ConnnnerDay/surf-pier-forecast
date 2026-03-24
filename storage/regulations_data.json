@@ -138,6 +138,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific state regulations for sand drum; verify current state rules."
+      },
+      "florida_pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "scamp_grouper": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day (in grouper aggregate)",
+        "season": "Varies; seasonal closure may apply",
+        "notes": "Scamp are included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
       }
     },
     "CA": {
@@ -467,6 +497,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "walleye_coastal": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Walleye in tidal waters follow state freshwater regulations; verify local rules as tidal sections may have different limits than inland waters."
+      },
+      "chain_pickerel": {
+        "min_size": "15 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "DE": {
@@ -553,6 +619,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "walleye_coastal": {
+        "min_size": "15 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Walleye in tidal waters follow state freshwater regulations; verify local rules as tidal sections may have different limits than inland waters."
+      },
+      "chain_pickerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "FL": {
@@ -731,6 +833,72 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific state regulations for sand drum; verify current state rules."
+      },
+      "florida_pompano": {
+        "min_size": "11 in FL (fork)",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "mutton_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "10 per day (in snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Mutton snapper count toward the snapper aggregate limit. Verify current FL and Atlantic state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are rare; they count toward the snapper aggregate limit. No specific separate regulation in most states."
+      },
+      "scamp_grouper": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day (in grouper aggregate)",
+        "season": "Varies; seasonal closure may apply",
+        "notes": "Scamp are included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "longbill_spearfish": {
+        "min_size": "None specified",
+        "bag_limit": "2 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spearfish are covered by NOAA HMS regulations. Verify current rules; most are released."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
+      },
+      "rock_hind_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round (may have seasonal closure)",
+        "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "yellowmouth_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round (may have seasonal closure)",
+        "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
       }
     },
     "GA": {
@@ -847,6 +1015,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round (fall migration)",
         "notes": "No state size or bag limit for false albacore in most states."
+      },
+      "florida_pompano": {
+        "min_size": "11 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "gag_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 per day",
+        "season": "Varies annually; seasonal closure often applies",
+        "notes": "Gag grouper are managed under strict quotas with seasonal closures. Verify NOAA HMS and state current season before targeting."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "longbill_spearfish": {
+        "min_size": "None specified",
+        "bag_limit": "2 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spearfish are covered by NOAA HMS regulations. Verify current rules; most are released."
       }
     },
     "LA": {
@@ -945,6 +1143,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific state regulations for sand drum; verify current state rules."
+      },
+      "florida_pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "scamp_grouper": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day (in grouper aggregate)",
+        "season": "Varies; seasonal closure may apply",
+        "notes": "Scamp are included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
       }
     },
     "MA": {
@@ -1080,6 +1308,42 @@
         "bag_limit": "0 \u2014 prohibited",
         "season": "Catch and release only",
         "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "walleye_coastal": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Walleye in tidal waters follow state freshwater regulations; verify local rules as tidal sections may have different limits than inland waters."
+      },
+      "chain_pickerel": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "MD": {
@@ -1208,6 +1472,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "walleye_coastal": {
+        "min_size": "15 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Walleye in tidal waters follow state freshwater regulations; verify local rules as tidal sections may have different limits than inland waters."
+      },
+      "chain_pickerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "ME": {
@@ -1392,6 +1698,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific state regulations for sand drum; verify current state rules."
+      },
+      "florida_pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "gag_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "3 per day",
+        "season": "Varies annually; seasonal closure often applies",
+        "notes": "Gag grouper are managed under strict quotas with seasonal closures. Verify NOAA HMS and state current season before targeting."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "scamp_grouper": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day (in grouper aggregate)",
+        "season": "Varies; seasonal closure may apply",
+        "notes": "Scamp are included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
       }
     },
     "NC": {
@@ -1581,6 +1923,108 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "weakfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Weakfish are under strict management due to population declines. Verify current ASMFC coastwide limits before fishing."
+      },
+      "florida_pompano": {
+        "min_size": "11 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "gag_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 per day",
+        "season": "Varies annually; seasonal closure often applies",
+        "notes": "Gag grouper are managed under strict quotas with seasonal closures. Verify NOAA HMS and state current season before targeting."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "mutton_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "10 per day (in snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Mutton snapper count toward the snapper aggregate limit. Verify current FL and Atlantic state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are rare; they count toward the snapper aggregate limit. No specific separate regulation in most states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "longbill_spearfish": {
+        "min_size": "None specified",
+        "bag_limit": "2 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spearfish are covered by NOAA HMS regulations. Verify current rules; most are released."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "chain_pickerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
+      },
+      "rock_hind_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round (may have seasonal closure)",
+        "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "yellowmouth_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round (may have seasonal closure)",
+        "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
       }
     },
     "NJ": {
@@ -1729,6 +2173,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "walleye_coastal": {
+        "min_size": "15 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Walleye in tidal waters follow state freshwater regulations; verify local rules as tidal sections may have different limits than inland waters."
+      },
+      "chain_pickerel": {
+        "min_size": "15 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "NY": {
@@ -1851,6 +2337,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "walleye_coastal": {
+        "min_size": "15 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Walleye in tidal waters follow state freshwater regulations; verify local rules as tidal sections may have different limits than inland waters."
+      },
+      "chain_pickerel": {
+        "min_size": "15 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "OR": {
@@ -2131,6 +2659,36 @@
         "bag_limit": "1 per person per day",
         "season": "Open year-round (rare summer visitor)",
         "notes": "Cobia occasionally appear in these northern waters in summer. Verify current ASMFC coastwide rules."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "chain_pickerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "SC": {
@@ -2259,6 +2817,66 @@
         "bag_limit": "No limit",
         "season": "Open year-round (fall migration)",
         "notes": "No state size or bag limit for false albacore in most states."
+      },
+      "florida_pompano": {
+        "min_size": "11 in TL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "gag_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 per day",
+        "season": "Varies annually; seasonal closure often applies",
+        "notes": "Gag grouper are managed under strict quotas with seasonal closures. Verify NOAA HMS and state current season before targeting."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "mutton_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "10 per day (in snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Mutton snapper count toward the snapper aggregate limit. Verify current FL and Atlantic state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are rare; they count toward the snapper aggregate limit. No specific separate regulation in most states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "longbill_spearfish": {
+        "min_size": "None specified",
+        "bag_limit": "2 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spearfish are covered by NOAA HMS regulations. Verify current rules; most are released."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "rock_hind_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round (may have seasonal closure)",
+        "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "yellowmouth_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round (may have seasonal closure)",
+        "notes": "Included in the grouper complex aggregate limit. Verify current NOAA and state rules."
       }
     },
     "TX": {
@@ -2375,6 +2993,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific state regulations for sand drum; verify current state rules."
+      },
+      "florida_pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Florida pompano season is open year-round in most states. Verify current state limits."
+      },
+      "gag_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "3 per day",
+        "season": "Varies annually; seasonal closure often applies",
+        "notes": "Gag grouper are managed under strict quotas with seasonal closures. Verify NOAA HMS and state current season before targeting."
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Vermilion snapper (beeliners) are abundant offshore and lightly regulated; 10-fish aggregate limit in most Gulf and SE states."
+      },
+      "scamp_grouper": {
+        "min_size": "16 in TL",
+        "bag_limit": "3 per day (in grouper aggregate)",
+        "season": "Varies; seasonal closure may apply",
+        "notes": "Scamp are included in the grouper complex aggregate limit. Verify current NOAA and state rules."
+      },
+      "blackfin_tuna": {
+        "min_size": "None",
+        "bag_limit": "No limit (not under quota management)",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna have no federal bag or size limit. Check state rules; generally no restriction for recreational anglers."
+      },
+      "blue_runner": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for blue runner in most Gulf and SE states; excellent live bait species."
       }
     },
     "VA": {
@@ -2515,6 +3169,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round (summer-fall)",
         "notes": "No state regulations for Atlantic bonito in most states."
+      },
+      "atlantic_blue_marlin": {
+        "min_size": "99 in LJFL",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Atlantic blue marlin require an HMS recreational permit. 99 in LJFL minimum. Strong conservation ethic \u2014 most released. Verify NOAA HMS rules."
+      },
+      "little_tunny": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No size or bag limit for little tunny in most states. Primarily catch-and-release fishery; flesh is strong-flavored."
+      },
+      "bay_anchovy": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "mummichog": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "striped_killifish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for this baitfish species; may require a general bait license in some states."
+      },
+      "chain_pickerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Chain pickerel in tidal freshwater zones follow state freshwater regulations. Verify current tidal vs. non-tidal rules."
       }
     },
     "WA": {
