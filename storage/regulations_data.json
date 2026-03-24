@@ -306,6 +306,66 @@
         "bag_limit": "2 per person per day in most states",
         "season": "Open year-round",
         "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "CA": {
@@ -777,6 +837,78 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations for moray eels. Handle with extreme caution \u2014 they have sharp teeth and powerful jaws. Cut the leader rather than attempting to handle."
+      },
+      "darkblotched_rockfish": {
+        "min_size": "12 in (shelf rockfish complex)",
+        "bag_limit": "10 per day (shelf rockfish aggregate)",
+        "season": "Check current CDFW depth/area closures; darkblotched is a rebuilding stock",
+        "notes": "Darkblotched rockfish count toward the general shelf rockfish bag limit. Some areas have depth restrictions. Verify current CDFW and PFMC rules."
+      },
+      "pacific_grenadier": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "walleye_pollock": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "spiny_dogfish_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific spiny dogfish have no bag or size limit. Handle with care \u2014 they have a venomous dorsal spine."
+      },
+      "pacific_angel_shark": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Pacific angel sharks are fully protected in California. Release immediately if caught. Federal listing as Endangered Species applies."
+      },
+      "bat_ray_pacific": {
+        "min_size": "None",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Bat ray bag limit is 2 per day in California. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "banded_guitarfish": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded guitarfish. Verify current state rules."
+      },
+      "rock_wrasse": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Part of general nearshore fish rules in California."
+      },
+      "senorita_wrasse": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Part of general nearshore fish rules in California."
+      },
+      "sablefish_pacific": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Sablefish have a 10-fish bag limit in California. The commercial fishery is managed under PFMC with individual fishing quotas. Verify current CDFW rules."
+      },
+      "black_sea_bass_pacific": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Pacific black sea bass are fully protected in California. It is illegal to take, possess, or harm them. Release immediately if caught accidentally."
+      },
+      "california_corbina": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "No size limit for California corbina. 10-fish bag limit. Verify current CDFW rules."
       }
     },
     "CT": {
@@ -971,6 +1103,18 @@
         "bag_limit": "No recreational limit",
         "season": "Open year-round",
         "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
       }
     },
     "DE": {
@@ -1105,6 +1249,30 @@
         "bag_limit": "No recreational limit",
         "season": "Open year-round",
         "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "northern_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
       }
     },
     "FL": {
@@ -1691,6 +1859,114 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "10 in TL (SE)",
+        "bag_limit": "15 per day",
+        "season": "Open year-round in most SE states",
+        "notes": "Verify current SAFMC and state rules for black sea bass."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Florida sheepshead have a 12-inch minimum and 15-fish bag limit. Verify current FL FWC rules."
+      },
+      "dog_snapper": {
+        "min_size": "8-10 in (snapper aggregate)",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the snapper complex in Florida. Verify current FL FWC rules."
+      },
+      "mahogany_snapper": {
+        "min_size": "8-10 in (snapper aggregate)",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the snapper complex in Florida. Verify current FL FWC rules."
+      },
+      "glasseye_snapper": {
+        "min_size": "8-10 in (snapper aggregate)",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the snapper complex in Florida. Verify current FL FWC rules."
+      },
+      "graysby": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day (part of grouper complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast grouper complex. Verify current FL FWC and NOAA rules."
+      },
+      "coney_grouper": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day (part of grouper complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Southeast grouper complex. Verify current FL FWC and NOAA rules."
+      },
+      "schoolmaster_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Verify current FL FWC rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "GA": {
@@ -1999,6 +2275,96 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "10 in TL (SE)",
+        "bag_limit": "15 per day",
+        "season": "Open year-round in most SE states",
+        "notes": "Verify current SAFMC and state rules for black sea bass."
+      },
+      "bank_sea_bass": {
+        "min_size": "8 in TL",
+        "bag_limit": "15 per day (sea bass complex)",
+        "season": "Open year-round",
+        "notes": "Part of the SE sea bass complex. Verify current SAFMC rules."
+      },
+      "rock_sea_bass": {
+        "min_size": "8 in TL",
+        "bag_limit": "15 per day (sea bass complex)",
+        "season": "Open year-round",
+        "notes": "Part of the SE sea bass complex. Verify current SAFMC rules."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "blue_catfish_tidal": {
+        "min_size": "None",
+        "bag_limit": "No limit (invasive)",
+        "season": "Open year-round",
+        "notes": "Blue catfish are invasive; harvest encouraged. Verify current state rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "LA": {
@@ -2283,6 +2649,72 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Verify current state rules."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "MA": {
@@ -2514,6 +2946,18 @@
         "bag_limit": "No recreational limit",
         "season": "Open year-round",
         "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "15 in TL",
+        "bag_limit": "15 per day (June 27\u2013Sept 30); 10 per day other open periods",
+        "season": "Check current NOAA/state season \u2014 seasons change annually",
+        "notes": "Black sea bass in New England are managed under NEFMC with annual season and bag-limit changes. Verify current NOAA rules before fishing."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
       }
     },
     "MD": {
@@ -2756,6 +3200,84 @@
         "bag_limit": "2 per person per day in most states",
         "season": "Open year-round",
         "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "blue_catfish_tidal": {
+        "min_size": "None (VA and MD encourage harvest \u2014 no minimum)",
+        "bag_limit": "No limit (unlimited harvest encouraged)",
+        "season": "Open year-round",
+        "notes": "Blue catfish are an invasive species in Chesapeake Bay tributaries. VA and MD encourage unlimited harvest. No bag or size limit \u2014 take as many as you want."
+      },
+      "channel_catfish_tidal": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for tidal channel catfish."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "northern_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
       }
     },
     "ME": {
@@ -3156,6 +3678,66 @@
         "bag_limit": "2 per person per day in most states",
         "season": "Open year-round",
         "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "NC": {
@@ -3675,6 +4257,114 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "10 in TL (SE)",
+        "bag_limit": "15 per day",
+        "season": "Open year-round in most SE states",
+        "notes": "Verify current SAFMC and state rules for black sea bass."
+      },
+      "bank_sea_bass": {
+        "min_size": "8 in TL",
+        "bag_limit": "15 per day (sea bass complex)",
+        "season": "Open year-round",
+        "notes": "Part of the SE sea bass complex. Verify current SAFMC rules."
+      },
+      "rock_sea_bass": {
+        "min_size": "8 in TL",
+        "bag_limit": "15 per day (sea bass complex)",
+        "season": "Open year-round",
+        "notes": "Part of the SE sea bass complex. Verify current SAFMC rules."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "blue_catfish_tidal": {
+        "min_size": "None",
+        "bag_limit": "No limit (invasive)",
+        "season": "Open year-round",
+        "notes": "Blue catfish are invasive; harvest encouraged. Verify current state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "northern_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
       }
     },
     "NJ": {
@@ -3961,6 +4651,66 @@
         "bag_limit": "2 per person per day in most states",
         "season": "Open year-round",
         "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "northern_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
       }
     },
     "NY": {
@@ -4209,6 +4959,66 @@
         "bag_limit": "No recreational limit in most states",
         "season": "Open year-round",
         "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "northern_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
       }
     },
     "OR": {
@@ -4571,6 +5381,60 @@
         "bag_limit": "Varies by species",
         "season": "Offshore year-round where accessible",
         "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "darkblotched_rockfish": {
+        "min_size": "12 in",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Check current ODFW/WDFW season",
+        "notes": "Verify current state rockfish rules."
+      },
+      "pacific_grenadier": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "walleye_pollock": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "spiny_dogfish_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific spiny dogfish have no bag or size limit. Handle with care \u2014 they have a venomous dorsal spine."
+      },
+      "pacific_angel_shark": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Pacific angel sharks are fully protected in California. Release immediately if caught. Federal listing as Endangered Species applies."
+      },
+      "bat_ray_pacific": {
+        "min_size": "None",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Bat ray bag limit is 2 per day in California. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "banded_guitarfish": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded guitarfish. Verify current state rules."
+      },
+      "sablefish_pacific": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Sablefish recreational bag limit is 10 per day. Verify current ODFW/WDFW rules."
+      },
+      "california_corbina": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "No size limit for California corbina. 10-fish bag limit. Verify current CDFW rules."
       }
     },
     "RI": {
@@ -4777,6 +5641,18 @@
         "bag_limit": "No recreational limit",
         "season": "Open year-round",
         "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
       }
     },
     "SC": {
@@ -5157,6 +6033,102 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "10 in TL (SE)",
+        "bag_limit": "15 per day",
+        "season": "Open year-round in most SE states",
+        "notes": "Verify current SAFMC and state rules for black sea bass."
+      },
+      "bank_sea_bass": {
+        "min_size": "8 in TL",
+        "bag_limit": "15 per day (sea bass complex)",
+        "season": "Open year-round",
+        "notes": "Part of the SE sea bass complex. Verify current SAFMC rules."
+      },
+      "rock_sea_bass": {
+        "min_size": "8 in TL",
+        "bag_limit": "15 per day (sea bass complex)",
+        "season": "Open year-round",
+        "notes": "Part of the SE sea bass complex. Verify current SAFMC rules."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "blue_catfish_tidal": {
+        "min_size": "None",
+        "bag_limit": "No limit (invasive)",
+        "season": "Open year-round",
+        "notes": "Blue catfish are invasive; harvest encouraged. Verify current state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "TX": {
@@ -5459,6 +6431,72 @@
         "bag_limit": "No specific limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Verify current state rules."
+      },
+      "sheepshead_atlantic": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "10-15 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Sheepshead regulations vary by state. Most SE and Gulf states have a 12-inch minimum. Verify current state rules."
+      },
+      "gray_tilefish": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day (tilefish complex)",
+        "season": "Open year-round",
+        "notes": "Part of the Gulf/SE tilefish complex. Verify current GMFMC/SAFMC rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
       }
     },
     "VA": {
@@ -5713,6 +6751,96 @@
         "bag_limit": "2 per person per day in most states",
         "season": "Open year-round",
         "notes": "Wahoo regulations vary by state. Most SE/Gulf states have a 2-fish bag limit. Verify current state rules."
+      },
+      "black_sea_bass_atlantic": {
+        "min_size": "12.5-13 in TL (varies by state and season)",
+        "bag_limit": "15 per day in season",
+        "season": "Check current NOAA/state season calendar \u2014 varies annually",
+        "notes": "Black sea bass regulations are complex and change annually. Verify current state and federal rules before fishing."
+      },
+      "spot_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No size or bag limit for Atlantic spot in most states. A beloved fall panfish throughout the Mid-Atlantic."
+      },
+      "tilefish_golden": {
+        "min_size": "None",
+        "bag_limit": "7 per person per day",
+        "season": "Open year-round",
+        "notes": "Golden tilefish have a 7-fish bag limit in most Mid-Atlantic and NE states under MAFMC rules. Verify current state and federal rules."
+      },
+      "atlantic_blacktip_shark": {
+        "min_size": "54 in FL (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Shark regulations require a federal HMS Angling Permit for non-Atlantic coastal state recreational fishing. Verify current NOAA HMS rules for blacktip shark."
+      },
+      "spinner_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Spinner sharks are managed under NOAA HMS shark rules. Verify current regulations."
+      },
+      "caribbean_reef_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Managed under NOAA HMS. Verify current federal shark regulations. Practice catch-and-release."
+      },
+      "lemon_shark": {
+        "min_size": "54 in (fork length)",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Lemon sharks managed under NOAA HMS. Verify current regulations."
+      },
+      "sand_tiger_shark": {
+        "min_size": "N/A \u2014 prohibited in some states",
+        "bag_limit": "0 in many states",
+        "season": "Check current state and federal rules",
+        "notes": "Sand tiger sharks are protected in some states (NC, VA). Release immediately. Check current NOAA HMS and state rules."
+      },
+      "blue_catfish_tidal": {
+        "min_size": "None (VA and MD encourage harvest \u2014 no minimum)",
+        "bag_limit": "No limit (unlimited harvest encouraged)",
+        "season": "Open year-round",
+        "notes": "Blue catfish are an invasive species in Chesapeake Bay tributaries. VA and MD encourage unlimited harvest. No bag or size limit \u2014 take as many as you want."
+      },
+      "channel_catfish_tidal": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for tidal channel catfish."
+      },
+      "skipjack_tuna_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational bag limit for skipjack tuna in most Atlantic states. Verify current NOAA HMS rules."
+      },
+      "cobia_juvenile": {
+        "min_size": "Same as adult cobia \u2014 33 in (Atlantic) or 36 in (Gulf) FL",
+        "bag_limit": "1 per person per day (Atlantic); 2 per person Gulf",
+        "season": "Open year-round",
+        "notes": "Cobia regulations apply regardless of size. Atlantic: 33 in minimum, 1 fish per day. Gulf: 36 in minimum, 2 fish per day. Verify current state rules."
+      },
+      "redfish_juvenile": {
+        "min_size": "18 in (FL Gulf); 18 in (most states)",
+        "bag_limit": "1 per person per day in most states; FL Gulf 2 per day",
+        "season": "Open year-round",
+        "notes": "Redfish (red drum) slot limits apply \u2014 fish outside the slot must be released. Florida Gulf: 18-27 in slot, 2 fish/day. Verify current state slot limits carefully."
+      },
+      "tarpon_juvenile": {
+        "min_size": "No minimum for catch-and-release; harvesting requires special permit in FL",
+        "bag_limit": "Catch-and-release only (FL requires tarpon tag to harvest)",
+        "season": "Open year-round catch-and-release",
+        "notes": "Tarpon are primarily catch-and-release. Florida requires a $50 tarpon tag to harvest a tarpon. Most anglers release all tarpon."
+      },
+      "northern_puffer": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for northern puffer. Properly cleaning pufferfish is important \u2014 the liver, skin, and gonads contain tetrodotoxin. Only eat the skinned back-strap meat."
       }
     },
     "WA": {
@@ -6057,6 +7185,54 @@
         "bag_limit": "Varies by species",
         "season": "Offshore year-round where accessible",
         "notes": "Billfish and large pelagics are rarely encountered in OR/WA. Verify federal NOAA HMS rules."
+      },
+      "darkblotched_rockfish": {
+        "min_size": "12 in",
+        "bag_limit": "10 per day (aggregate)",
+        "season": "Check current ODFW/WDFW season",
+        "notes": "Verify current state rockfish rules."
+      },
+      "pacific_grenadier": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "walleye_pollock": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "spiny_dogfish_pacific": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific spiny dogfish have no bag or size limit. Handle with care \u2014 they have a venomous dorsal spine."
+      },
+      "pacific_angel_shark": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected year-round",
+        "notes": "Pacific angel sharks are fully protected in California. Release immediately if caught. Federal listing as Endangered Species applies."
+      },
+      "bat_ray_pacific": {
+        "min_size": "None",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Bat ray bag limit is 2 per day in California. They have a venomous tail spine \u2014 handle carefully."
+      },
+      "banded_guitarfish": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded guitarfish. Verify current state rules."
+      },
+      "sablefish_pacific": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Sablefish recreational bag limit is 10 per day. Verify current ODFW/WDFW rules."
       }
     },
     "HI": {
