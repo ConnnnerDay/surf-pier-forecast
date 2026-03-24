@@ -120,6 +120,24 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "sand_drum": {
+        "min_size": "None specific",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations for sand drum; verify current state rules."
       }
     },
     "CA": {
@@ -309,6 +327,36 @@
         "bag_limit": "Included in flatfish aggregate",
         "season": "Open year-round",
         "notes": "Included in flatfish aggregate. Verify state rules."
+      },
+      "surfperch_aggregate": {
+        "min_size": "Varies by species; most have no minimum size",
+        "bag_limit": "20 per day (aggregate surfperch)",
+        "season": "Open year-round for most species",
+        "notes": "Surfperch (pile perch, rainbow seaperch, striped seaperch, pink seaperch, shiner perch, etc.) fall under a 20-fish daily bag aggregate in most Pacific states. Verify current state rules."
+      },
+      "spotted_sand_bass": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day (sand bass aggregate with barred sand bass)",
+        "season": "Closed Mar 1 \u2013 Jun 15 (spawning closure in some years)",
+        "notes": "Spotted and barred sand bass share a 10-fish aggregate limit. Spawning closure applies in Southern California waters; verify current CDFW rules."
+      },
+      "chilipepper_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Part of the rockfish complex. Verify current area/depth rules."
+      },
+      "shortbelly_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in aggregate",
+        "season": "Open year-round",
+        "notes": "No specific limit; part of rockfish aggregate."
+      },
+      "greenstriped_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate",
+        "season": "Open year-round; check depth rules",
+        "notes": "Part of rockfish aggregate. Verify current rules."
       }
     },
     "CT": {
@@ -383,6 +431,42 @@
         "bag_limit": "15 per day",
         "season": "Open year-round (summer visitor)",
         "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "atlantic_wolffish": {
+        "min_size": "None (prohibited to retain)",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Catch and release only",
+        "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
+      },
+      "cobia": {
+        "min_size": "37 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round (rare summer visitor)",
+        "notes": "Cobia occasionally appear in these northern waters in summer. Verify current ASMFC coastwide rules."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "DE": {
@@ -451,6 +535,24 @@
         "bag_limit": "20 per day (recreational)",
         "season": "Open year-round",
         "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "false_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No state size or bag limit for false albacore in most states."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "FL": {
@@ -605,6 +707,30 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "scaled_sardine": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "Scaled sardines are unregulated as recreational bait in Florida. Cast netting for live bait is widely practiced."
+      },
+      "sand_drum": {
+        "min_size": "None specific",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations for sand drum; verify current state rules."
       }
     },
     "GA": {
@@ -691,6 +817,36 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round (offshore, summer-fall)",
         "notes": "No closed season; verify any changes to current state or federal rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "black_sea_bass": {
+        "min_size": "15 in TL",
+        "bag_limit": "15 per day",
+        "season": "Varies annually",
+        "notes": "Season and bag limit change each year. Verify with state agency."
+      },
+      "sailfish": {
+        "min_size": "63 in LJFL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Atlantic sailfish. Most released; verify current NOAA and state rules."
+      },
+      "false_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No state size or bag limit for false albacore in most states."
       }
     },
     "LA": {
@@ -771,6 +927,24 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "sand_drum": {
+        "min_size": "None specific",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations for sand drum; verify current state rules."
       }
     },
     "MA": {
@@ -882,6 +1056,30 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific MA regulations for cusk; caught as bycatch on deep cod/haddock trips."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "atlantic_wolffish": {
+        "min_size": "None (prohibited to retain)",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Catch and release only",
+        "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
       }
     },
     "MD": {
@@ -974,6 +1172,42 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round (offshore, summer-fall)",
         "notes": "No closed season; verify any changes to current state or federal rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round (summer-fall visitor)",
+        "notes": "King mackerel arrive offshore in summer. Verify current state rules."
+      },
+      "false_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No state size or bag limit for false albacore in most states."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "ME": {
@@ -1048,6 +1282,30 @@
         "bag_limit": "15 per day",
         "season": "Open year-round (summer visitor)",
         "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "atlantic_wolffish": {
+        "min_size": "None (prohibited to retain)",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Catch and release only",
+        "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
+      },
+      "black_sea_bass": {
+        "min_size": "15 in TL",
+        "bag_limit": "15 per day",
+        "season": "Varies annually",
+        "notes": "Season and bag limit change each year. Verify with state agency."
       }
     },
     "MS": {
@@ -1116,6 +1374,24 @@
         "bag_limit": "2 per day",
         "season": "Federal season (set annually by NOAA/SAFMC or GMFMC)",
         "notes": "Season dates and bag limits are set each year; verify with NOAA before fishing federal waters."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "sand_drum": {
+        "min_size": "None specific",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations for sand drum; verify current state rules."
       }
     },
     "NC": {
@@ -1269,6 +1545,42 @@
         "bag_limit": "10 per day",
         "season": "Open year-round (rare south of NY)",
         "notes": "Winter flounder are uncommon south of New Jersey; verify current state rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "sailfish": {
+        "min_size": "63 in LJFL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Atlantic sailfish. Most released; verify current NOAA and state rules."
+      },
+      "false_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No state size or bag limit for false albacore in most states."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "NJ": {
@@ -1387,6 +1699,36 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round (offshore, summer-fall)",
         "notes": "No closed season; verify any changes to current state or federal rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "atlantic_wolffish": {
+        "min_size": "None (prohibited to retain)",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Catch and release only",
+        "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "NY": {
@@ -1479,6 +1821,36 @@
         "bag_limit": "10 per person per day",
         "season": "Open year-round (offshore, summer-fall)",
         "notes": "No closed season; verify any changes to current state or federal rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "atlantic_wolffish": {
+        "min_size": "None (prohibited to retain)",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Catch and release only",
+        "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "OR": {
@@ -1619,6 +1991,30 @@
         "bag_limit": "Included in flatfish aggregate",
         "season": "Open year-round",
         "notes": "Included in flatfish aggregate. Verify state rules."
+      },
+      "surfperch_aggregate": {
+        "min_size": "Varies by species; most have no minimum size",
+        "bag_limit": "20 per day (aggregate surfperch)",
+        "season": "Open year-round for most species",
+        "notes": "Surfperch (pile perch, rainbow seaperch, striped seaperch, pink seaperch, shiner perch, etc.) fall under a 20-fish daily bag aggregate in most Pacific states. Verify current state rules."
+      },
+      "chilipepper_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Part of the rockfish complex. Verify current area/depth rules."
+      },
+      "shortbelly_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in aggregate",
+        "season": "Open year-round",
+        "notes": "No specific limit; part of rockfish aggregate."
+      },
+      "greenstriped_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate",
+        "season": "Open year-round; check depth rules",
+        "notes": "Part of rockfish aggregate. Verify current rules."
       }
     },
     "RI": {
@@ -1705,6 +2101,36 @@
         "bag_limit": "15 per day",
         "season": "Open year-round (summer visitor)",
         "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "atlantic_wolffish": {
+        "min_size": "None (prohibited to retain)",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Catch and release only",
+        "notes": "Atlantic wolffish are a species of concern. Retention is prohibited in US federal waters. Release immediately."
+      },
+      "cobia": {
+        "min_size": "37 in FL",
+        "bag_limit": "1 per person per day",
+        "season": "Open year-round (rare summer visitor)",
+        "notes": "Cobia occasionally appear in these northern waters in summer. Verify current ASMFC coastwide rules."
       }
     },
     "SC": {
@@ -1809,6 +2235,30 @@
         "bag_limit": "2 per day",
         "season": "Federal season (set annually by NOAA/SAFMC or GMFMC)",
         "notes": "Season dates and bag limits are set each year; verify with NOAA before fishing federal waters."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "sailfish": {
+        "min_size": "63 in LJFL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Atlantic sailfish. Most released; verify current NOAA and state rules."
+      },
+      "false_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No state size or bag limit for false albacore in most states."
       }
     },
     "TX": {
@@ -1907,6 +2357,24 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "sand_drum": {
+        "min_size": "None specific",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations for sand drum; verify current state rules."
       }
     },
     "VA": {
@@ -2017,6 +2485,36 @@
         "bag_limit": "20 per day (recreational)",
         "season": "Open year-round",
         "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "oceanic_whitetip_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Oceanic whitetip shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "silky_shark": {
+        "min_size": "None (prohibited)",
+        "bag_limit": "0 \u2014 prohibited to harvest or retain",
+        "season": "Catch and release only",
+        "notes": "Silky shark are prohibited species in US Atlantic and Gulf waters. Must be released immediately."
+      },
+      "common_thresher_shark": {
+        "min_size": "54 in FL",
+        "bag_limit": "1 per vessel per trip",
+        "season": "Open year-round",
+        "notes": "Common thresher require a federal HMS recreational permit. Verify NOAA HMS rules for current season and limits."
+      },
+      "false_albacore": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (fall migration)",
+        "notes": "No state size or bag limit for false albacore in most states."
+      },
+      "atlantic_bonito": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer-fall)",
+        "notes": "No state regulations for Atlantic bonito in most states."
       }
     },
     "WA": {
@@ -2163,6 +2661,30 @@
         "bag_limit": "Included in flatfish aggregate",
         "season": "Open year-round",
         "notes": "Included in flatfish aggregate. Verify state rules."
+      },
+      "surfperch_aggregate": {
+        "min_size": "Varies by species; most have no minimum size",
+        "bag_limit": "20 per day (aggregate surfperch)",
+        "season": "Open year-round for most species",
+        "notes": "Surfperch (pile perch, rainbow seaperch, striped seaperch, pink seaperch, shiner perch, etc.) fall under a 20-fish daily bag aggregate in most Pacific states. Verify current state rules."
+      },
+      "chilipepper_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Part of the rockfish complex. Verify current area/depth rules."
+      },
+      "shortbelly_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in aggregate",
+        "season": "Open year-round",
+        "notes": "No specific limit; part of rockfish aggregate."
+      },
+      "greenstriped_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate",
+        "season": "Open year-round; check depth rules",
+        "notes": "Part of rockfish aggregate. Verify current rules."
       }
     },
     "HI": {
@@ -2270,6 +2792,30 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No state size or bag limit for manini (convict tang) in Hawaii."
+      },
+      "uhu_parrotfish": {
+        "min_size": "12 in TL (minimum for uhu in some species)",
+        "bag_limit": "Varies by species; some species restricted",
+        "season": "Open year-round; certain species have seasonal closures",
+        "notes": "Parrotfish (uhu) rules vary by species in Hawaii. Some species are fully protected. Verify DLNR current rules before keeping any."
+      },
+      "taape": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Taape (bluestripe snapper) are an introduced species in Hawaii with no bag or size limit; harvest is encouraged."
+      },
+      "akule": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state bag or size limit for akule (bigeye scad) in Hawaii. Cast net and sabiki rig fishing allowed."
+      },
+      "opelu": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No regulations for opelu (mackerel scad). Important live bait species; cast net fishing permitted in most areas."
       }
     }
   }

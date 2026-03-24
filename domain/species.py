@@ -77,6 +77,13 @@ _OFFSHORE_ONLY_SPECIES: set = {
     "Shortspine thornyhead",
     "Sixgill shark",
     "Pacific ocean perch",
+    "Oceanic whitetip shark",
+    "Silky shark",
+    "Common thresher shark",
+    "Shortbill spearfish",
+    "Splitnose rockfish",
+    "Greenstriped rockfish",
+    "Rougheye rockfish",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
@@ -135,6 +142,22 @@ _PIER_SPECIES: set = {
     "Kala (unicornfish)",
     "Manini (convict tang)",
     "Kumu (whitesaddle goatfish)",
+    "Akule (bigeye scad)",
+    "Opelu (mackerel scad)",
+    "Taape (bluestripe snapper)",
+    "Moano (goatfish)",
+    "Uhu (parrotfish)",
+    "Nenue (Hawaiian chub)",
+    "Shiner perch",
+    "Pile perch",
+    "Rainbow seaperch",
+    "Squarespot rockfish",
+    "Pygmy rockfish",
+    "Spotted sand bass",
+    "Atlantic silverside",
+    "Southern puffer",
+    "Gulf toadfish",
+    "Sand drum",
 }
 
 # Species primarily caught from the surf zone.
@@ -159,6 +182,11 @@ _SURF_SPECIES: set = {
     "Bonefish (oio)",
     "Pink salmon (humpy)",
     "Chum salmon (dog salmon)",
+    "Sand drum",
+    "Striped seaperch",
+    "Pink seaperch",
+    "Painted greenling",
+    "Monkeyface prickleback",
 }
 
 # Species primarily caught from jetties and rock structures (inlet mouths,
@@ -368,6 +396,13 @@ _CHARTER_SPECIES: set = {
     "Sixgill shark",
     "Sevengill shark",
     "Tope shark (soupfin)",
+    "Common thresher shark",
+    "Shortbill spearfish",
+    "Bocaccio",
+    "Widow rockfish",
+    "Chilipepper rockfish",
+    "Dover sole",
+    "Petrale sole",
 }
 
 # Species well-suited for saltwater fly fishing — must be catchable on a fly
@@ -541,6 +576,14 @@ _PELAGIC_SPECIES: set = {
     "Sockeye salmon (red salmon)",
     "Atlantic mackerel",
     "Atlantic salmon",
+    "Oceanic whitetip shark",
+    "Silky shark",
+    "Common thresher shark",
+    "Shortbill spearfish",
+    "Akule (bigeye scad)",
+    "Opelu (mackerel scad)",
+    "Atlantic silverside",
+    "Scaled sardine (pilchard)",
 }
 
 _STRUCTURE_SPECIES: set = {
@@ -1084,6 +1127,43 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Rex sole": ["panfish"],
     "Kala (unicornfish)": ["reef_fish"],
     "Manini (convict tang)": ["reef_fish"],
+    "Kumu (whitesaddle goatfish)": ["reef_fish"],
+    # New Hawaii species
+    "Akule (bigeye scad)": ["baitfish", "panfish"],
+    "Opelu (mackerel scad)": ["baitfish", "panfish"],
+    "Uhu (parrotfish)": ["reef_fish"],
+    "Taape (bluestripe snapper)": ["game_fish", "reef_fish"],
+    "Moano (goatfish)": ["reef_fish", "panfish"],
+    # New West Coast species
+    "Pile perch": ["panfish"],
+    "Shiner perch": ["panfish", "baitfish"],
+    "Rainbow seaperch": ["panfish"],
+    "Striped seaperch": ["panfish"],
+    "Pink seaperch": ["panfish"],
+    "Painted greenling": ["panfish"],
+    "Monkeyface prickleback": ["panfish"],
+    "Spotted sand bass": ["game_fish"],
+    "Squarespot rockfish": ["game_fish", "reef_fish"],
+    "Greenstriped rockfish": ["game_fish", "reef_fish"],
+    "Splitnose rockfish": ["game_fish", "reef_fish"],
+    "Shortbelly rockfish": ["game_fish", "reef_fish"],
+    "Chilipepper rockfish": ["game_fish", "reef_fish"],
+    "Pygmy rockfish": ["panfish", "reef_fish"],
+    # New Gulf/SE species
+    "Sand drum": ["game_fish"],
+    "Southern puffer": ["panfish"],
+    "Gulf toadfish": ["panfish"],
+    "Scaled sardine (pilchard)": ["baitfish"],
+    # New East Coast species
+    "Atlantic silverside": ["baitfish", "panfish"],
+    "Sea raven": ["panfish"],
+    "Lumpfish": ["panfish"],
+    "Atlantic wolffish": ["game_fish"],
+    # New offshore/pelagic
+    "Oceanic whitetip shark": ["game_fish", "catch_and_release"],
+    "Silky shark": ["game_fish", "catch_and_release"],
+    "Common thresher shark": ["game_fish"],
+    "Shortbill spearfish": ["game_fish", "billfish"],
 }
 
 
