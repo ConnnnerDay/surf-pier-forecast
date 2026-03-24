@@ -198,6 +198,108 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "african_pompano": {
+        "min_size": "None specific",
+        "bag_limit": "10 per person per day (jack complex in most states)",
+        "season": "Open year-round",
+        "notes": "African pompano may be counted under the general jack aggregate limit. Verify current state rules. Excellent eating \u2014 worth keeping a few."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per person per day (snapper complex)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are counted under the snapper complex daily limit. Verify current GMFMC rules."
+      },
+      "nassau_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round",
+        "notes": "Nassau grouper are critically endangered and fully protected under federal and Florida law. Immediate release required. Violations carry significant federal penalties."
+      },
+      "yellowmouth_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "Counted in grouper complex limit",
+        "season": "Check current NOAA grouper season",
+        "notes": "Yellowmouth grouper count toward the grouper complex daily limit. Verify current GMFMC/SAFMC rules."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "tripletail_gulf": {
+        "min_size": "15 in TL (Gulf)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
       }
     },
     "CA": {
@@ -471,6 +573,84 @@
         "bag_limit": "10 per day (aggregate with spotted sand bass)",
         "season": "Closed Mar 1 \u2013 Jun 15 (spawning closure in many years)",
         "notes": "Barred and spotted sand bass share a 10-fish aggregate limit. Spawning closure applies in Southern California. Verify current CDFW rules before fishing."
+      },
+      "leopard_shark": {
+        "min_size": "24 in TL (CA)",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Leopard sharks are managed under California Leopard/Soupfin/Smoothhound complex. Verify current CDFW rules. Most anglers practice catch and release."
+      },
+      "soupfin_shark": {
+        "min_size": "None",
+        "bag_limit": "10 per day (shark general limit)",
+        "season": "Open year-round",
+        "notes": "Soupfin shark has no specific size limit but counts toward the general elasmobranch bag limit. Verify current CDFW/ODFW/WDFW rules."
+      },
+      "gray_smoothhound": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gray and brown smoothhounds share the general Pacific shark bag limit. No specific size limit. Verify current state rules."
+      },
+      "brown_smoothhound": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gray and brown smoothhounds share the general Pacific shark bag limit. No specific size limit. Verify current state rules."
+      },
+      "pacific_electric_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific electric ray. WARNING: they deliver a strong electric shock \u2014 never handle directly. Cut the leader to release."
+      },
+      "pacific_tomcod": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for Pacific tomcod in most Pacific states. Verify current state rules."
+      },
+      "eulachon": {
+        "min_size": "None",
+        "bag_limit": "25 lbs per day",
+        "season": "Feb-April during run (check CDFW)",
+        "notes": "Eulachon are listed as a Species of Concern; some California populations have limited or no open seasons. Check current CDFW rules."
+      },
+      "black_croaker": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "No specific size limit for black croaker. Check local consumption advisories for Southern California bays."
+      },
+      "white_seaperch": {
+        "min_size": "None",
+        "bag_limit": "15 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "White seaperch count toward the general surfperch aggregate bag limit. Verify current state rules."
+      },
+      "pacific_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Pacific whiting. The commercial fishery is managed under PFMC. Check current CDFW/ODFW/WDFW rules."
+      },
+      "blacksmith_pacific": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore rockfish/perch aggregate)",
+        "season": "Open year-round",
+        "notes": "Blacksmith are part of the general nearshore fish regulations in California. Verify current CDFW rules."
+      },
+      "plainfin_midshipman": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for plainfin midshipman. Mild venom in dorsal spines \u2014 handle with care."
+      },
+      "garibaldi": {
+        "min_size": "N/A",
+        "bag_limit": "0 \u2014 fully protected",
+        "season": "Fully protected year-round",
+        "notes": "Garibaldi are the California state marine fish and are FULLY PROTECTED. It is illegal to take, possess, or harm them. Violations are a misdemeanor and carry fines up to $1,000."
       }
     },
     "CT": {
@@ -629,6 +809,42 @@
         "bag_limit": "0 in federal waters; verify state rules",
         "season": "Prohibited",
         "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "offshore_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for offshore hake. Verify current NEFMC rules for any updated stock-specific guidance."
+      },
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "witch_flounder": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Witch flounder (gray sole) \u2014 excellent eating. No specific recreational size/bag limit in most states."
+      },
+      "american_plaice": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "American plaice (dab) \u2014 no specific recreational limit in most states."
+      },
+      "greenland_halibut": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
       }
     },
     "DE": {
@@ -757,6 +973,12 @@
         "bag_limit": "No recreational limit",
         "season": "Open year-round",
         "notes": "No recreational bag or size limit for menhaden in most Atlantic states. Commercial harvest is managed by ASMFC. Cast-netting for live bait is widely practiced."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
       }
     },
     "FL": {
@@ -1097,6 +1319,210 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Florida has a 15 in minimum and 2-fish bag limit for tripletail. Verify current FL FWC rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "hogfish_atlantic": {
+        "min_size": "12 in TL in Gulf; 14 in TL in Atlantic",
+        "bag_limit": "5 per person per day",
+        "season": "Gulf: open year-round. Atlantic: check FL FWC for current season.",
+        "notes": "Hogfish are heavily regulated in Florida. Atlantic hogfish have seasonal closures. Verify current FL FWC rules as they change frequently."
+      },
+      "spanish_hogfish": {
+        "min_size": "None",
+        "bag_limit": "No specific limit (counted in wrasse/reef fish aggregate)",
+        "season": "Open year-round",
+        "notes": "Spanish hogfish are not specifically regulated in most states; may count toward a general reef fish bag limit."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "banded_rudderfish": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded rudderfish in most states. Verify current rules."
+      },
+      "bar_jack": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bar jack in Florida. Verify current FL FWC rules."
+      },
+      "african_pompano": {
+        "min_size": "None specific",
+        "bag_limit": "10 per person per day (jack complex in most states)",
+        "season": "Open year-round",
+        "notes": "African pompano may be counted under the general jack aggregate limit. Verify current state rules. Excellent eating \u2014 worth keeping a few."
+      },
+      "blue_tang_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "ocean_surgeon": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "doctorfish": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "foureye_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "rock_beauty": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "french_angelfish": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "queen_angelfish": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "clown_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "yellowhead_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "creole_wrasse": {
+        "min_size": "None",
+        "bag_limit": "No specific recreational limit",
+        "season": "Open year-round",
+        "notes": "Most ornamental reef fish have no specific recreational bag limit in Florida but are subject to the general reef fish regulations. Some species may be prohibited from collection for commercial aquarium trade without permits. Verify current FL FWC rules."
+      },
+      "longtail_tuna": {
+        "min_size": "27 in curved fork length (grouped with large tuna)",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round",
+        "notes": "Longtail tuna are grouped under NOAA HMS tuna regulations. Verify current federal and state rules."
+      },
+      "three_line_grunt": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations. Part of general reef fish rules in Florida."
+      },
+      "belted_sandfish": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific state regulations. Part of general reef fish rules in Florida."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "11 in FL (permit and pompano combined)",
+        "bag_limit": "100 per person per day (permit)",
+        "season": "Open year-round",
+        "notes": "Florida permits have a 100-fish daily bag limit and 11-inch minimum; offshore permit on wrecks count the same. Verify current FL FWC rules."
+      },
+      "nassau_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round",
+        "notes": "Nassau grouper are critically endangered and fully protected under federal and Florida law. Immediate release required. Violations carry significant federal penalties."
+      },
+      "black_grouper": {
+        "min_size": "24 in TL in Atlantic; 20 in TL in Gulf (verify current rules)",
+        "bag_limit": "3 grouper per day (complex)",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Black grouper regulations are complex and change frequently. They count toward the grouper complex limit. Always verify current FL FWC and NOAA rules before targeting."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "tripletail_gulf": {
+        "min_size": "15 in TL (Gulf)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
       }
     },
     "GA": {
@@ -1285,6 +1711,108 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "hogfish_atlantic": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for hogfish. FL FWC regulations are more complex than neighboring states."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "banded_rudderfish": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded rudderfish in most states. Verify current rules."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current SAFMC rules for cubera snapper."
+      },
+      "nassau_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round",
+        "notes": "Nassau grouper are critically endangered and fully protected under federal and Florida law. Immediate release required. Violations carry significant federal penalties."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
       }
     },
     "LA": {
@@ -1455,6 +1983,102 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "african_pompano": {
+        "min_size": "None specific",
+        "bag_limit": "10 per person per day (jack complex in most states)",
+        "season": "Open year-round",
+        "notes": "African pompano may be counted under the general jack aggregate limit. Verify current state rules. Excellent eating \u2014 worth keeping a few."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per person per day (snapper complex)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are counted under the snapper complex daily limit. Verify current GMFMC rules."
+      },
+      "yellowmouth_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "Counted in grouper complex limit",
+        "season": "Check current NOAA grouper season",
+        "notes": "Yellowmouth grouper count toward the grouper complex daily limit. Verify current GMFMC/SAFMC rules."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "tripletail_gulf": {
+        "min_size": "15 in TL (Gulf)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
       }
     },
     "MA": {
@@ -1650,6 +2274,42 @@
         "bag_limit": "0 in federal waters; verify state rules",
         "season": "Prohibited",
         "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "offshore_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for offshore hake. Verify current NEFMC rules for any updated stock-specific guidance."
+      },
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "witch_flounder": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Witch flounder (gray sole) \u2014 excellent eating. No specific recreational size/bag limit in most states."
+      },
+      "american_plaice": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "American plaice (dab) \u2014 no specific recreational limit in most states."
+      },
+      "greenland_halibut": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
       }
     },
     "MD": {
@@ -1856,6 +2516,36 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
       }
     },
     "ME": {
@@ -1966,6 +2656,42 @@
         "bag_limit": "0 in federal waters; verify state rules",
         "season": "Prohibited",
         "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "offshore_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for offshore hake. Verify current NEFMC rules for any updated stock-specific guidance."
+      },
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "witch_flounder": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Witch flounder (gray sole) \u2014 excellent eating. No specific recreational size/bag limit in most states."
+      },
+      "american_plaice": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "American plaice (dab) \u2014 no specific recreational limit in most states."
+      },
+      "greenland_halibut": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
       }
     },
     "MS": {
@@ -2118,6 +2844,102 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "african_pompano": {
+        "min_size": "None specific",
+        "bag_limit": "10 per person per day (jack complex in most states)",
+        "season": "Open year-round",
+        "notes": "African pompano may be counted under the general jack aggregate limit. Verify current state rules. Excellent eating \u2014 worth keeping a few."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per person per day (snapper complex)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are counted under the snapper complex daily limit. Verify current GMFMC rules."
+      },
+      "yellowmouth_grouper": {
+        "min_size": "12 in TL",
+        "bag_limit": "Counted in grouper complex limit",
+        "season": "Check current NOAA grouper season",
+        "notes": "Yellowmouth grouper count toward the grouper complex daily limit. Verify current GMFMC/SAFMC rules."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "tripletail_gulf": {
+        "min_size": "15 in TL (Gulf)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
       }
     },
     "NC": {
@@ -2481,6 +3303,120 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "hogfish_atlantic": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for hogfish. FL FWC regulations are more complex than neighboring states."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "banded_rudderfish": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded rudderfish in most states. Verify current rules."
+      },
+      "african_pompano": {
+        "min_size": "None specific",
+        "bag_limit": "10 per person per day (jack complex in most states)",
+        "season": "Open year-round",
+        "notes": "African pompano may be counted under the general jack aggregate limit. Verify current state rules. Excellent eating \u2014 worth keeping a few."
+      },
+      "longtail_tuna": {
+        "min_size": "27 in curved fork length (grouped with large tuna)",
+        "bag_limit": "3 per person per day",
+        "season": "Open year-round",
+        "notes": "Longtail tuna are grouped under NOAA HMS tuna regulations. Verify current federal and state rules."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "nassau_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round",
+        "notes": "Nassau grouper are critically endangered and fully protected under federal and Florida law. Immediate release required. Violations carry significant federal penalties."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
       }
     },
     "NJ": {
@@ -2701,6 +3637,66 @@
         "bag_limit": "0 in federal waters; verify state rules",
         "season": "Prohibited",
         "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "offshore_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for offshore hake. Verify current NEFMC rules for any updated stock-specific guidance."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "witch_flounder": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Witch flounder (gray sole) \u2014 excellent eating. No specific recreational size/bag limit in most states."
+      },
+      "american_plaice": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "American plaice (dab) \u2014 no specific recreational limit in most states."
+      },
+      "greenland_halibut": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
       }
     },
     "NY": {
@@ -2889,6 +3885,66 @@
         "bag_limit": "0 in federal waters; verify state rules",
         "season": "Prohibited",
         "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "offshore_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for offshore hake. Verify current NEFMC rules for any updated stock-specific guidance."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "witch_flounder": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Witch flounder (gray sole) \u2014 excellent eating. No specific recreational size/bag limit in most states."
+      },
+      "american_plaice": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "American plaice (dab) \u2014 no specific recreational limit in most states."
+      },
+      "greenland_halibut": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
       }
     },
     "OR": {
@@ -3107,6 +4163,72 @@
         "bag_limit": "10 lbs per person",
         "season": "Spring run season (March-June)",
         "notes": "Night smelt dip-netting permitted at designated beaches. Verify ODFW/WDFW current rules."
+      },
+      "leopard_shark": {
+        "min_size": "24 in TL (CA)",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Leopard sharks are managed under California Leopard/Soupfin/Smoothhound complex. Verify current CDFW rules. Most anglers practice catch and release."
+      },
+      "soupfin_shark": {
+        "min_size": "None",
+        "bag_limit": "10 per day (shark general limit)",
+        "season": "Open year-round",
+        "notes": "Soupfin shark has no specific size limit but counts toward the general elasmobranch bag limit. Verify current CDFW/ODFW/WDFW rules."
+      },
+      "gray_smoothhound": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gray and brown smoothhounds share the general Pacific shark bag limit. No specific size limit. Verify current state rules."
+      },
+      "brown_smoothhound": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gray and brown smoothhounds share the general Pacific shark bag limit. No specific size limit. Verify current state rules."
+      },
+      "pacific_electric_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific electric ray. WARNING: they deliver a strong electric shock \u2014 never handle directly. Cut the leader to release."
+      },
+      "pacific_tomcod": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for Pacific tomcod in most Pacific states. Verify current state rules."
+      },
+      "eulachon": {
+        "min_size": "None",
+        "bag_limit": "10 lbs per day during open seasons",
+        "season": "Open during designated river run periods (typically Feb-April)",
+        "notes": "Eulachon harvest is heavily regulated by river and by year based on run strength. Some rivers are closed in poor-run years. Always check ODFW before dip-netting."
+      },
+      "white_seaperch": {
+        "min_size": "None",
+        "bag_limit": "15 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "White seaperch count toward the general surfperch aggregate bag limit. Verify current state rules."
+      },
+      "pacific_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Pacific whiting. The commercial fishery is managed under PFMC. Check current CDFW/ODFW/WDFW rules."
+      },
+      "blacksmith_pacific": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore rockfish/perch aggregate)",
+        "season": "Open year-round",
+        "notes": "Blacksmith are part of the general nearshore fish regulations in California. Verify current CDFW rules."
+      },
+      "plainfin_midshipman": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for plainfin midshipman. Mild venom in dorsal spines \u2014 handle with care."
       }
     },
     "RI": {
@@ -3277,6 +4399,42 @@
         "bag_limit": "0 in federal waters; verify state rules",
         "season": "Prohibited",
         "notes": "Barndoor skates are a species of concern and retention is prohibited in US federal waters. Release immediately."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "offshore_hake": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for offshore hake. Verify current NEFMC rules for any updated stock-specific guidance."
+      },
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
+      },
+      "witch_flounder": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Witch flounder (gray sole) \u2014 excellent eating. No specific recreational size/bag limit in most states."
+      },
+      "american_plaice": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "American plaice (dab) \u2014 no specific recreational limit in most states."
+      },
+      "greenland_halibut": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Greenland halibut (turbot) \u2014 primarily commercial species; no specific recreational regulations in US waters."
       }
     },
     "SC": {
@@ -3519,6 +4677,102 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "hogfish_atlantic": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per person per day",
+        "season": "Open year-round",
+        "notes": "Verify current state rules for hogfish. FL FWC regulations are more complex than neighboring states."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "banded_rudderfish": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for banded rudderfish in most states. Verify current rules."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "nassau_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round",
+        "notes": "Nassau grouper are critically endangered and fully protected under federal and Florida law. Immediate release required. Violations carry significant federal penalties."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
       }
     },
     "TX": {
@@ -3713,6 +4967,96 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific regulations. Most anglers release incidental catches. Note: pufferfish can be toxic if improperly cleaned."
+      },
+      "atlantic_tripletail": {
+        "min_size": "15 in TL (varies by state)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Tripletail regulations vary by state. Most SE/Gulf states have a 15 in size limit and 5-fish bag limit or less. Verify current state rules."
+      },
+      "goldface_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "blackline_tilefish": {
+        "min_size": "None specific (grouped with tilefish complex)",
+        "bag_limit": "See golden/gray tilefish complex limits",
+        "season": "Open year-round",
+        "notes": "Goldface and blackline tilefish are part of the Gulf/Atlantic deepwater tilefish complex. Verify current NOAA/GULF COUNCIL regulations."
+      },
+      "almaco_jack": {
+        "min_size": "No specific minimum",
+        "bag_limit": "No specific bag limit (part of amberjack complex in some states)",
+        "season": "Open year-round",
+        "notes": "Almaco jack are often grouped under the amberjack complex in state and federal regulations. Verify current rules with FL FWC or relevant state agency."
+      },
+      "african_pompano": {
+        "min_size": "None specific",
+        "bag_limit": "10 per person per day (jack complex in most states)",
+        "season": "Open year-round",
+        "notes": "African pompano may be counted under the general jack aggregate limit. Verify current state rules. Excellent eating \u2014 worth keeping a few."
+      },
+      "yelloweye_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "wenchman_snapper": {
+        "min_size": "8 in TL",
+        "bag_limit": "10 per person per day (snapper aggregate)",
+        "season": "Open year-round",
+        "notes": "Grouped under the snapper complex in most Gulf and SE states. Verify current GMFMC/SAFMC rules."
+      },
+      "permit_offshore": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "Varies by state",
+        "season": "Open year-round",
+        "notes": "Permit regulations vary by state. Verify current state rules."
+      },
+      "cubera_snapper": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per person per day (snapper complex)",
+        "season": "Open year-round",
+        "notes": "Cubera snapper are counted under the snapper complex daily limit. Verify current GMFMC rules."
+      },
+      "goliath_grouper": {
+        "min_size": "N/A \u2014 FULLY PROTECTED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Closed year-round (protected since 1990)",
+        "notes": "Goliath grouper are fully protected in US waters. Do not target; release immediately if caught without removing from water. Violations carry federal penalties."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "atlantic_threadfin": {
+        "min_size": "None",
+        "bag_limit": "No limit (baitfish)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic threadfin. Primarily used as live bait; cast-netting is the standard harvest method."
+      },
+      "tripletail_gulf": {
+        "min_size": "15 in TL (Gulf)",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Gulf tripletail have a 15-inch minimum and 2-fish bag limit in most Gulf states. Verify current GMFMC and state rules."
       }
     },
     "VA": {
@@ -3925,6 +5269,42 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No recreational regulations for gizzard shad in most states. Cast-netting permitted as bait collection."
+      },
+      "silver_hake_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No federal or state recreational bag or size limit for silver hake/whiting. Commercial quota applies under NEFMC. A common winter nearshore species."
+      },
+      "atlantic_spanish_mackerel": {
+        "min_size": "12 in FL/SC/NC; varies by state",
+        "bag_limit": "15 per person per day in most states",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel regulations are similar across SE/Mid-Atlantic states. FL has a 12-inch minimum. Verify current state rules."
+      },
+      "florida_pompano": {
+        "min_size": "12 in TL (varies)",
+        "bag_limit": "6 per day (varies)",
+        "season": "Open year-round",
+        "notes": "Verify current state pompano regulations as rules vary."
+      },
+      "gulf_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "northern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
+      },
+      "southern_kingfish": {
+        "min_size": "None specific",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for sea mullet/kingfish in most Atlantic and Gulf states. Verify current state rules."
       }
     },
     "WA": {
@@ -4131,6 +5511,66 @@
         "bag_limit": "10 lbs per person",
         "season": "Spring run season (March-June)",
         "notes": "Night smelt dip-netting permitted at designated beaches. Verify ODFW/WDFW current rules."
+      },
+      "soupfin_shark": {
+        "min_size": "None",
+        "bag_limit": "10 per day (shark general limit)",
+        "season": "Open year-round",
+        "notes": "Soupfin shark has no specific size limit but counts toward the general elasmobranch bag limit. Verify current CDFW/ODFW/WDFW rules."
+      },
+      "gray_smoothhound": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gray and brown smoothhounds share the general Pacific shark bag limit. No specific size limit. Verify current state rules."
+      },
+      "brown_smoothhound": {
+        "min_size": "None",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gray and brown smoothhounds share the general Pacific shark bag limit. No specific size limit. Verify current state rules."
+      },
+      "pacific_electric_ray": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific electric ray. WARNING: they deliver a strong electric shock \u2014 never handle directly. Cut the leader to release."
+      },
+      "pacific_tomcod": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag or size limit for Pacific tomcod in most Pacific states. Verify current state rules."
+      },
+      "eulachon": {
+        "min_size": "None",
+        "bag_limit": "10 lbs per day",
+        "season": "Varies by river; check WDFW",
+        "notes": "Eulachon dip-netting regulations vary by river system in Washington. Check WDFW current season rules before fishing."
+      },
+      "white_seaperch": {
+        "min_size": "None",
+        "bag_limit": "15 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "White seaperch count toward the general surfperch aggregate bag limit. Verify current state rules."
+      },
+      "pacific_whiting": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for Pacific whiting. The commercial fishery is managed under PFMC. Check current CDFW/ODFW/WDFW rules."
+      },
+      "blacksmith_pacific": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore rockfish/perch aggregate)",
+        "season": "Open year-round",
+        "notes": "Blacksmith are part of the general nearshore fish regulations in California. Verify current CDFW rules."
+      },
+      "plainfin_midshipman": {
+        "min_size": "None",
+        "bag_limit": "No specific limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for plainfin midshipman. Mild venom in dorsal spines \u2014 handle with care."
       }
     },
     "HI": {
@@ -4292,6 +5732,38 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific state regulations for menpachi. Check for local marine reserve restrictions."
+      },
+      "weke_ula_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit",
+        "season": "Open year-round",
+        "notes": "No specific state bag or size limit. Check DLNR for any local marine reserve area closures. Amaama (mullet) are traditionally harvested by cast net."
+      },
+      "kumu_squirrelfish": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit",
+        "season": "Open year-round",
+        "notes": "No specific state bag or size limit. Check DLNR for any local marine reserve area closures. Amaama (mullet) are traditionally harvested by cast net."
+      },
+      "nenue_chub": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit",
+        "season": "Open year-round",
+        "notes": "No specific state bag or size limit. Check DLNR for any local marine reserve area closures. Amaama (mullet) are traditionally harvested by cast net."
+      },
+      "amaama_mullet": {
+        "min_size": "None",
+        "bag_limit": "No state bag limit",
+        "season": "Open year-round",
+        "notes": "No specific state bag or size limit. Check DLNR for any local marine reserve area closures. Amaama (mullet) are traditionally harvested by cast net."
+      }
+    },
+    "NH": {
+      "atlantic_pollock": {
+        "min_size": "12 in",
+        "bag_limit": "No recreational limit in most states",
+        "season": "Open year-round",
+        "notes": "No recreational bag limit for pollock in most New England states. Excellent eating \u2014 check for any current NEFMC updates."
       }
     }
   }

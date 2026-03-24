@@ -13234,5 +13234,1584 @@
     "lures": "Small jigs and tiny spoons",
     "explanation_cold": "Atlantic leatherjackets are a tropical species found near reef and sandy nearshore areas in warm SE and Gulf waters.",
     "explanation_warm": "Year-round in South Florida and the Gulf; interesting bycatch with rough skin and small mouth on light inshore tackle."
+  },
+  {
+    "name": "Leopard shark (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Clams, pile worms, squid, and live mudsuckers near sandy-mud bottom in bays",
+    "rig": "Medium bottom rig at 5-30 ft in bays near sandy-mud bottom",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Occasionally taken on cut bait near bottom; not a lure species",
+    "explanation_cold": "Leopard sharks are year-round residents in California bays and nearshore; most abundant in SF Bay and major SoCal bays.",
+    "explanation_warm": "Year-round but most active spring through fall in California bays; leopard sharks gather in large groups in shallow warm water \u2014 a favorite for kayak anglers on sandy flats."
+  },
+  {
+    "name": "Soupfin shark",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 54,
+    "temp_max": 70,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Whole squid, mackerel fillet, large pile worms near sandy-mud bottom in bays and nearshore",
+    "rig": "Medium-heavy bottom rig at 10-60 ft; 60-80 lb leader",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "4-10 oz",
+    "lures": "Not typically targeted on lures",
+    "explanation_cold": "Soupfin sharks inhabit California and Pacific Northwest bays and nearshore; can reach 6+ feet.",
+    "explanation_warm": "Spring through fall in California bays and nearshore; heavily overfished in the 1930s-40s for their livers, populations have recovered and they are a popular large-shark target."
+  },
+  {
+    "name": "Gray smoothhound",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 56,
+    "temp_max": 72,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Pile worms, clams, squid near sandy-mud bottom in estuaries and bays",
+    "rig": "Light to medium bottom rig at 5-30 ft in bays near soft bottom",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Not targeted on lures; bait only",
+    "explanation_cold": "Gray smoothhound sharks inhabit Pacific estuaries and coastal bays year-round; slender sharks reaching about 5 ft.",
+    "explanation_warm": "Year-round in California estuaries and bays; common bycatch for leopard shark anglers \u2014 will hit virtually any fresh bait on the bottom."
+  },
+  {
+    "name": "Brown smoothhound",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 56,
+    "temp_max": 72,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Pile worms, squid, small crabs, shrimp near soft bottom in Pacific bays",
+    "rig": "Light to medium bottom rig at 5-30 ft near soft bottom",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Not targeted on lures",
+    "explanation_cold": "Brown smoothhound sharks inhabit nearshore Pacific waters; nearly identical in habits to gray smoothhound.",
+    "explanation_warm": "Year-round in California coastal bays; closely related to the gray smoothhound and often caught together."
+  },
+  {
+    "name": "Pacific electric ray",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Small fish, squid near sandy bottom in shallow to mid-depth Pacific coastal areas; incidental catch",
+    "rig": "Medium bottom rig at 5-100 ft near sandy bottom; incidental catch",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Pacific electric rays inhabit sandy-bottom coastal areas from California to Alaska; can deliver a powerful electric shock.",
+    "explanation_warm": "Occasional bycatch year-round; Pacific electric rays deliver a strong electric shock \u2014 never handle directly. Cut the leader and release."
+  },
+  {
+    "name": "Pacific tomcod",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      10,
+      5
+    ],
+    "bait": "Pile worms, shrimp, small clams near the bottom in bays, estuaries, and nearshore Pacific waters",
+    "rig": "Light bottom rig at 5-60 ft near soft bottom",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/2-2 oz",
+    "lures": "Small soft plastic jigs tipped with worm or shrimp",
+    "explanation_cold": "Pacific tomcod inhabit shallow coastal waters from California to Alaska; most abundant in colder months.",
+    "explanation_warm": "Fall through spring in Pacific Northwest bays and estuaries; a classic winter fish for pier anglers in WA and OR \u2014 hits small baits readily and excellent table fare."
+  },
+  {
+    "name": "Eulachon (smelt)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 42,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      1,
+      5
+    ],
+    "bait": "Dip net in rivers during spring spawning runs; tiny sabiki rigs in estuaries",
+    "rig": "Dip net in rivers during spawning run; tiny sabiki rigs at river mouths",
+    "hook_size": "#12-#8 sabiki hook",
+    "sinker": "None",
+    "lures": "Tiny micro jigs near river mouths",
+    "explanation_cold": "Eulachon (oolichan or candlefish) make spring spawning runs into Pacific Northwest rivers; so oily they were historically dried and burned as candles.",
+    "explanation_warm": "February through April in Pacific Northwest rivers and estuaries; dip-netting a spawning run is one of the most culturally rich fishing experiences on the Pacific coast."
+  },
+  {
+    "name": "Black croaker (xieb)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 60,
+    "temp_max": 74,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Sandworms, clam strips, shrimp near rocky or sandy bottom in Southern California bays and nearshore",
+    "rig": "Light to medium bottom rig at 5-50 ft near rocky-sandy bottom",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "1/2-3 oz",
+    "lures": "Small soft plastic grubs near the bottom",
+    "explanation_cold": "Black croaker inhabit rocky and sandy nearshore areas and kelp bed edges in Southern California.",
+    "explanation_warm": "Summer through fall in Southern California nearshore; much less common than white croaker and a prized catch \u2014 makes a deep thudding sound when landed."
+  },
+  {
+    "name": "Silver hake (whiting)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "new_england"
+    ],
+    "temp_min": 38,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      9,
+      10,
+      11,
+      12,
+      1,
+      2
+    ],
+    "good_months": [
+      8,
+      3
+    ],
+    "bait": "Sandworms, small squid, cut clam, small fish near sandy bottom at 60-300 ft",
+    "rig": "Light to medium bottom rig at 60-300 ft; multi-hook spreader",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "3-12 oz",
+    "lures": "Diamond jigs and small metals at depth",
+    "explanation_cold": "Silver hake (whiting) migrate inshore in fall and winter; they form dense schools near the bottom.",
+    "explanation_warm": "Fall through early spring in the Mid-Atlantic and New England; silver hake school near sandy bottom and can be caught rapidly \u2014 one of the Northeast's most underrated eating fish."
+  },
+  {
+    "name": "Offshore hake",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "new_england"
+    ],
+    "temp_min": 38,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      9,
+      4
+    ],
+    "bait": "Squid, cut fish, clam strips at depth on deep rocky-sandy bottom",
+    "rig": "Heavy deep-drop rig at 200-600 ft over deep hard bottom",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "16-32 oz",
+    "lures": "Large diamond jigs at depth",
+    "explanation_cold": "Offshore hake inhabit deep offshore waters year-round; come shallower in winter.",
+    "explanation_warm": "Winter through spring on deep New England offshore trips; caught in quantity on the same trips targeting offshore cod and haddock."
+  },
+  {
+    "name": "Atlantic tripletail",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 68,
+    "temp_max": 86,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live shrimp, small crabs, small fish near floating debris and crab trap buoys",
+    "rig": "Light to medium spinning or fly rod; cast live shrimp to a visible fish near surface debris",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None to split shot",
+    "lures": "Small paddle tail swimbaits, DOA shrimp, or surface flies cast to visible fish",
+    "explanation_cold": "Atlantic tripletail are warm-season visitors; they lie on their sides near floating debris and crab trap buoys, ambushing prey.",
+    "explanation_warm": "Late spring through fall in SE and Gulf coastal waters; tripletail are a sight-fishing species \u2014 motoring slowly through nearshore waters and spotting them near crab buoys is a unique experience."
+  },
+  {
+    "name": "Goldface tilefish",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Squid, cut fish, shrimp at depth 200-700 ft near hard clay or coral bottom",
+    "rig": "Heavy deepdrop rig at 200-700 ft; electric reel recommended",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "16-48 oz",
+    "lures": "Large deepdrop lures with glow sticks",
+    "explanation_cold": "Goldface tilefish inhabit deep-water clay and coral bottom in the Gulf and SE Atlantic year-round.",
+    "explanation_warm": "Year-round deepdrop target; goldface tilefish build burrows in deep Gulf clay bottom \u2014 electric reels are nearly mandatory at 400+ ft."
+  },
+  {
+    "name": "Blackline tilefish",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Squid, cut fish, shrimp at depth near hard or clay bottom",
+    "rig": "Heavy deepdrop rig at 200-600 ft",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "16-48 oz",
+    "lures": "Large deepdrop lures",
+    "explanation_cold": "Blackline tilefish are a close relative of golden tilefish found in the Gulf of Mexico at moderate depths.",
+    "explanation_warm": "Year-round deepdrop; inhabit similar habitat to golden tilefish and are excellent eating."
+  },
+  {
+    "name": "Pilotfish",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "midatlantic"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Small fish, squid near sharks, large rays, sea turtles, and floating debris offshore",
+    "rig": "Light spinning; incidental catch near offshore vessels and large animals",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small jigs near offshore floating debris",
+    "explanation_cold": "Pilotfish associate with large marine animals in warm offshore waters; rarely specifically targeted.",
+    "explanation_warm": "Summer through fall in warm offshore waters; pilotfish swim alongside sharks and rays \u2014 an unusual and memorable catch."
+  },
+  {
+    "name": "Blue tang (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10,
+      11
+    ],
+    "bait": "Algae, small invertebrates; not commonly targeted",
+    "rig": "Very light rig near reef; rarely targeted",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Not a lure target; occasionally bycatch",
+    "explanation_cold": "Blue tang are a brilliant electric-blue surgeonfish on Florida and Caribbean reef year-round.",
+    "explanation_warm": "Year-round near Florida Keys reef; sharp scalpel spine at tail base \u2014 handle carefully."
+  },
+  {
+    "name": "Ocean surgeon",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10,
+      11
+    ],
+    "bait": "Algae-based baits or small invertebrates near reef; incidental catches",
+    "rig": "Very light rig near shallow reef",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Not a lure target",
+    "explanation_cold": "Ocean surgeons are a brownish surgeonfish found near Florida and Gulf reef year-round.",
+    "explanation_warm": "Year-round near reef; herbivores rarely targeted \u2014 most are released after an incidental catch."
+  },
+  {
+    "name": "Doctorfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10,
+      11
+    ],
+    "bait": "Algae-based baits near reef and hard bottom",
+    "rig": "Ultra-light rig near shallow reef",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Not a lure target",
+    "explanation_cold": "Doctorfish are a surgeonfish found on Florida and Caribbean reef near rubble and hard bottom.",
+    "explanation_warm": "Year-round near Florida Keys reef; among the most common surgeonfish in shallow Caribbean-type reef environments."
+  },
+  {
+    "name": "Foureye butterflyfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Small worms and crustaceans near reef; rarely caught on hook and line",
+    "rig": "Very light rig near coral reef; almost always bycatch",
+    "hook_size": "#10-#8 hook",
+    "sinker": "None",
+    "lures": "Not a lure target",
+    "explanation_cold": "Foureye butterflyfish are year-round residents on Florida Keys and SE Atlantic coral reef.",
+    "explanation_warm": "Year-round near Florida Keys reef; named for the false eyespot on their tail \u2014 almost always encountered while snorkeling rather than fishing."
+  },
+  {
+    "name": "Hogfish (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      9,
+      5
+    ],
+    "bait": "Live shrimp, small crabs, and sea urchin pieces near reef and rocky bottom at 10-100 ft",
+    "rig": "Light to medium bottom rig at 10-100 ft near reef structure",
+    "hook_size": "#4-2/0 hook",
+    "sinker": "1/4-3 oz",
+    "lures": "Not typically a lure target; live or fresh dead shrimp is best",
+    "explanation_cold": "Hogfish are a wrasse species that use their long snout to root shellfish from reef rubble; they are considered the finest-eating reef fish by many Florida anglers.",
+    "explanation_warm": "Best in cooler months when hogfish are more active near shallow reef; hogfish are a prized target for spearfishers and bottom anglers alike \u2014 they won't bite cut fish, only live or freshly dead shellfish."
+  },
+  {
+    "name": "Spanish hogfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp pieces, small crabs, small invertebrates near reef and hard bottom",
+    "rig": "Light bottom rig at 10-80 ft near reef and rocky structure",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-2 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Spanish hogfish are a smaller wrasse found on Florida and Caribbean reef year-round.",
+    "explanation_warm": "Year-round near Florida Keys reef; Spanish hogfish are colorful purple-and-gold fish and excellent eating \u2014 they are smaller than Atlantic hogfish and often caught as bycatch on shrimp bait."
+  },
+  {
+    "name": "Rock beauty",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Very difficult to target on bait; occasionally small sponge or algae-based baits near reef",
+    "rig": "Ultra-light rig near reef; incidental catch only",
+    "hook_size": "#10-#6 hook",
+    "sinker": "None",
+    "lures": "Not a lure target",
+    "explanation_cold": "Rock beauty are a striking black-and-yellow angelfish on Florida Keys and Caribbean reef; they feed primarily on sponges and are nearly impossible to catch on conventional bait.",
+    "explanation_warm": "Year-round near Florida Keys reef; rock beauty are more commonly observed by divers and snorkelers than caught by anglers \u2014 mostly an incidental bycatch on tiny hooks."
+  },
+  {
+    "name": "French angelfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Very difficult on bait; occasionally small sponge pieces or algae-based bait near reef",
+    "rig": "Ultra-light rig near reef; incidental catch",
+    "hook_size": "#10-#6 hook",
+    "sinker": "None",
+    "lures": "Not a lure target",
+    "explanation_cold": "French angelfish are large, dark, circle-marked angelfishes on Florida Keys and Caribbean coral reef.",
+    "explanation_warm": "Year-round near Florida Keys reef; French angelfish are sponge-feeders and are almost always caught incidentally by snapper anglers fishing small baits near reef."
+  },
+  {
+    "name": "Queen angelfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Very difficult; occasionally small pieces of sponge or algae near coral reef",
+    "rig": "Ultra-light rig near coral reef",
+    "hook_size": "#10-#6 hook",
+    "sinker": "None",
+    "lures": "Not a lure target",
+    "explanation_cold": "Queen angelfish are arguably the most beautiful fish on the Florida Keys reef \u2014 vivid blue and yellow with a spotted crown.",
+    "explanation_warm": "Year-round near Florida Keys deep reef; queen angelfish are sponge-feeders and nearly impossible to catch deliberately \u2014 an accidental catch is considered very lucky."
+  },
+  {
+    "name": "White seaperch",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Pile worms, shrimp, small clams near rocky jetties, piers, and kelp in Pacific coastal waters",
+    "rig": "Light rig near jetties, piers, and rocky structure at 5-40 ft",
+    "hook_size": "#6-#2 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small soft plastic jigs on 1/8-1/4 oz heads near structure",
+    "explanation_cold": "White seaperch are year-round residents near rocky shores, jetties, and kelp from Southern California to Oregon.",
+    "explanation_warm": "Year-round from piers and jetties; white seaperch are one of the most common catch-from-shore species on the Pacific coast \u2014 they hit small baits and jigs readily on light tackle."
+  },
+  {
+    "name": "Weke ula (goatfish)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, sandworms, small crabs near sandy bottom and reef flats",
+    "rig": "Light bottom rig near sandy bottom and reef flats at 5-40 ft",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small shrimp-imitation jigs near sandy bottom",
+    "explanation_cold": "Weke ula (yellowfin goatfish) are year-round residents on Hawaiian sandy bottom and reef flats; they use chin barbels to probe sand for prey.",
+    "explanation_warm": "Year-round on Hawaiian sandy flats and reef edges; weke ula are a prized Hawaiian food fish and particularly sought by local anglers for traditional preparations."
+  },
+  {
+    "name": "Nenue (chub)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Bread balls, dough bait, small pieces of musubi, or tiny pieces of algae near rocky reef",
+    "rig": "Light float or bottom rig near rocky reef and shoreline; bread bait is traditional",
+    "hook_size": "#6-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Not a lure target; bread ball bait is the most effective",
+    "explanation_cold": "Nenue (rudderfish/Hawaiian chub) school near rocky reef and shorelines year-round in Hawaii.",
+    "explanation_warm": "Year-round near rocky Hawaiian shorelines; nenue are fished with bread balls thrown into the water to chum them up \u2014 a beloved local style of fishing especially popular with families."
+  },
+  {
+    "name": "Amaama (striped mullet, Hawaii)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      9,
+      4
+    ],
+    "bait": "Algae, dough bait, micro-bread balls near shallow sandy flats and estuaries; cast net is most effective",
+    "rig": "Cast net in shallow estuaries and fishponds; light float rig with bread bait",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Not typically a lure target",
+    "explanation_cold": "Amaama (striped mullet) are year-round in Hawaiian coastal waters and fishponds; they run in schools that are traditionally netted.",
+    "explanation_warm": "Year-round but best in cooler months; amaama are deeply embedded in Hawaiian cultural fishing history \u2014 traditionally harvested with throw nets in coastal fishponds. They are excellent eating."
+  },
+  {
+    "name": "Kumu (squirrelfish, Hawaii)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      9,
+      4
+    ],
+    "bait": "Small shrimp, small fish, squid at night near rocky reef caves and crevices",
+    "rig": "Light bottom rig fished at night near rocky reef at 10-60 ft",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small glow jigs at night near reef",
+    "explanation_cold": "Kumu (squirrelfish) are nocturnal reef fish, similar to menpachi; they inhabit rocky reef caves and are active at night.",
+    "explanation_warm": "Night fishing near Hawaiian rocky shorelines and reef; kumu are large-eyed nocturnal hunters that come out of reef caves after dark \u2014 excellent eating and well worth the nighttime trip."
+  },
+  {
+    "name": "Clown wrasse",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Shrimp pieces, small crab, invertebrates near reef and rubble",
+    "rig": "Light rig near reef and rubble; incidental catch",
+    "hook_size": "#6-#2 hook",
+    "sinker": "None to split shot",
+    "lures": "Not a lure target",
+    "explanation_cold": "Clown wrasse are colorful tropical wrasse on Florida Keys reef and Caribbean structure year-round.",
+    "explanation_warm": "Year-round near Florida Keys reef; phase-changing fish that look completely different as juveniles vs adults \u2014 an interesting incidental catch on small hooks."
+  },
+  {
+    "name": "Atlantic Spanish mackerel",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "midatlantic"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Small live or dead baitfish, cut strips trolled or free-lined near the surface",
+    "rig": "Light to medium trolling or casting; 30-50 lb fluorocarbon leader; wire trace optional",
+    "hook_size": "#1-3/0 hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Clarkspoon, Got-Cha plug, silver spoon trolled 4-8 knots; or small jigs cast into schooling fish",
+    "explanation_cold": "Atlantic Spanish mackerel migrate the East Coast in spring and fall; massive schools run nearshore and inside inlets chasing baitfish.",
+    "explanation_warm": "Spring and fall migration runs bring huge schools nearshore; one of the most accessible and exciting light-tackle gamefish on the East Coast."
+  },
+  {
+    "name": "Longtail tuna",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Small live fish, squid, trolled lures near the surface offshore",
+    "rig": "Medium to heavy trolling or casting offshore; 80-100 lb leader",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "None for trolling",
+    "lures": "Small to medium skirted trolling lures, feathers, and tuna-style jigs",
+    "explanation_cold": "Longtail tuna are an offshore pelagic occasionally encountered in warm SE Atlantic and Gulf waters.",
+    "explanation_warm": "Summer offshore; most common near the Bahamas and Greater Antilles \u2014 an exciting accidental catch during offshore trolling trips."
+  },
+  {
+    "name": "Pacific whiting (hake)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      5,
+      12
+    ],
+    "bait": "Squid strips, cut herring, small anchovy at depth near mid-water and bottom",
+    "rig": "Medium to heavy bottom or mid-water rig at 60-400 ft",
+    "hook_size": "#2-3/0 hook",
+    "sinker": "4-16 oz",
+    "lures": "Large diamond jigs worked at depth",
+    "explanation_cold": "Pacific whiting form enormous mid-water schools off the Pacific coast in summer and fall; the most abundant groundfish in the Pacific.",
+    "explanation_warm": "Summer through fall in Pacific coastal waters; recreationally caught on deep jigs by party boat anglers in Washington and Oregon."
+  },
+  {
+    "name": "Blacksmith (Pacific)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 72,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Small crustaceans and plankton near kelp in Southern California; rarely caught deliberately",
+    "rig": "Light float rig near kelp; incidental catch",
+    "hook_size": "#8-#4 hook",
+    "sinker": "None to split shot",
+    "lures": "Not a lure target",
+    "explanation_cold": "Blacksmith are a deep-blue damselfish that school in midwater columns above Southern California kelp beds.",
+    "explanation_warm": "Year-round in Southern California kelp; blacksmiths form dense schools around kelp beds \u2014 an incidental catch while fishing for other species."
+  },
+  {
+    "name": "Garibaldi (California state fish)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [
+      1,
+      12
+    ],
+    "bait": "FULLY PROTECTED \u2014 it is illegal to catch, possess, or harm garibaldi in California",
+    "rig": "None; fully protected",
+    "hook_size": "None",
+    "sinker": "None",
+    "lures": "None; fully protected",
+    "explanation_cold": "The garibaldi is the California state marine fish; it is brilliant orange and fully protected by law.",
+    "explanation_warm": "Do not target garibaldi \u2014 they are fully protected and violations carry significant fines. If accidentally hooked, release immediately."
+  },
+  {
+    "name": "Plainfin midshipman",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Pile worms, small fish, shrimp near shallow rocky shoreline; nocturnal species",
+    "rig": "Light bottom rig near rocky intertidal at night; incidental catch",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Not a lure target",
+    "explanation_cold": "Plainfin midshipman are nocturnal fish of the Pacific intertidal; males produce a loud buzzing hum to attract females during spawning.",
+    "explanation_warm": "Spring through summer near rocky Pacific tidal zones at night; midshipmen hum loudly under rocks during spawning (May-August) \u2014 a surreal experience. Mild venom in dorsal spines."
+  },
+  {
+    "name": "Pollock (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "new_england",
+      "northeast"
+    ],
+    "temp_min": 36,
+    "temp_max": 56,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "good_months": [
+      9,
+      6
+    ],
+    "bait": "Jigs, small metal lures, sandworms, and cut herring near the surface or mid-depth",
+    "rig": "Light to medium spinning or conventional; often caught near the surface in fall",
+    "hook_size": "#2-4/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Norwegian jigs, diamond jigs, small soft plastic tails \u2014 pollock are aggressive lure-strikers",
+    "explanation_cold": "Atlantic pollock school in large numbers near the surface and mid-water in New England fall and winter; they are aggressive strikers.",
+    "explanation_warm": "Fall through spring in New England inshore and offshore; pollock are one of the most fun inshore fish of the New England fall season \u2014 they will aggressively hit metal jigs near the surface and fight hard on light tackle."
+  },
+  {
+    "name": "Witch flounder",
+    "coast": "east",
+    "regions": [
+      "new_england",
+      "northeast"
+    ],
+    "temp_min": 34,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      9,
+      4
+    ],
+    "bait": "Clam strips, sandworms, squid strips near sandy-mud bottom at 100-400 ft",
+    "rig": "Light to medium bottom rig at 100-400 ft near deep sandy bottom",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "6-16 oz",
+    "lures": "Small Gulp jigs tipped with bait",
+    "explanation_cold": "Witch flounder (gray sole) inhabit deep sandy-mud bottom in New England offshore waters; they are excellent eating.",
+    "explanation_warm": "Fall through winter on New England offshore trips; witch flounder (or 'gray sole') are considered some of the finest eating flatfish in the Northwest Atlantic \u2014 a welcome bycatch on deep cod trips."
+  },
+  {
+    "name": "American plaice",
+    "coast": "east",
+    "regions": [
+      "new_england",
+      "northeast"
+    ],
+    "temp_min": 34,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      9,
+      5
+    ],
+    "bait": "Clam strips, sandworms near sandy bottom at 100-400 ft",
+    "rig": "Light to medium bottom rig at 100-400 ft over deep sandy bottom",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "6-16 oz",
+    "lures": "Small Gulp tipped with bait near bottom",
+    "explanation_cold": "American plaice inhabit deep sandy-mud bottom in New England and Canadian waters; similar to yellowtail flounder but larger.",
+    "explanation_warm": "Fall through spring on New England offshore trips; American plaice (dab) are excellent eating and frequently taken alongside haddock and cod on deep bank trips."
+  },
+  {
+    "name": "Greenland halibut (turbot)",
+    "coast": "east",
+    "regions": [
+      "new_england"
+    ],
+    "temp_min": 32,
+    "temp_max": 50,
+    "temp_ideal_low": 36,
+    "temp_ideal_high": 46,
+    "peak_months": [
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      10,
+      5
+    ],
+    "bait": "Large squid, herring, or clams near deep cold-water bottom at 300-1500 ft",
+    "rig": "Very heavy bottom rig at 300-1500 ft in deep cold water; electric reel almost mandatory",
+    "hook_size": "8/0-12/0 hook",
+    "sinker": "32-64 oz",
+    "lures": "Large diamond jigs at depth",
+    "explanation_cold": "Greenland halibut (turbot) inhabit very deep cold-water bottom in New England, Canadian, and Arctic waters.",
+    "explanation_warm": "Deep cold-water specialty; Greenland halibut are primarily a commercial species and are rarely targeted recreationally in the US \u2014 a remarkable accidental catch on extremely deep winter trips."
+  },
+  {
+    "name": "Three-line grunt",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, squid, small crabs near reef and rocky structure at 10-80 ft",
+    "rig": "Light bottom rig near reef and rocky structure",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-2 oz",
+    "lures": "Small jigs near reef",
+    "explanation_cold": "Three-line grunt inhabit tropical reef and rocky structure in South Florida and the Keys year-round.",
+    "explanation_warm": "Year-round near Florida Keys reef; three-line grunts school tightly around coral heads and are part of the diverse grunt complex."
+  },
+  {
+    "name": "Belted sandfish",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 80,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Small shrimp, small fish near sandy bottom in shallow Gulf and SE waters",
+    "rig": "Light bottom rig near sandy bottom in shallow bays",
+    "hook_size": "#6-#2 hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Very small jigs near sandy bottom",
+    "explanation_cold": "Belted sandfish are a small serranid found near sandy shallow bottom in warm Gulf and SE Atlantic waters.",
+    "explanation_warm": "Summer through fall in warm shallow sandy areas; belted sandfish are a colorful small fish rarely targeted deliberately \u2014 mostly caught incidentally on ultra-light tackle."
+  },
+  {
+    "name": "Vermilion snapper",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, cut fish, live shrimp near reef and rocky structure at 60-300 ft",
+    "rig": "Medium bottom rig at 60-300 ft near reef; double-dropper loop or spreader",
+    "hook_size": "#4-2/0 hook",
+    "sinker": "4-16 oz",
+    "lures": "Small vertical jigs and diamond jigs near reef structure",
+    "explanation_cold": "Vermilion snapper inhabit mid-depth reef structure in the Gulf and SE Atlantic year-round; they form dense schools.",
+    "explanation_warm": "Year-round near offshore reef; vermilion snapper (b-liners) school in large numbers over rocky bottom \u2014 small baits on multi-hook rigs can produce dozens quickly."
+  },
+  {
+    "name": "Yelloweye snapper",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, cut fish near moderate-depth reef and hard bottom at 100-400 ft",
+    "rig": "Medium to heavy bottom rig at 100-400 ft near reef",
+    "hook_size": "4/0-6/0 hook",
+    "sinker": "8-24 oz",
+    "lures": "Large diamond jigs near reef",
+    "explanation_cold": "Yelloweye snapper inhabit moderate-depth reef and hard bottom in the Gulf and SE Atlantic.",
+    "explanation_warm": "Year-round near offshore reef; less commonly targeted than red or vermilion but excellent eating."
+  },
+  {
+    "name": "Wenchman snapper",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, cut fish near deep rocky bottom at 300-900 ft",
+    "rig": "Heavy deepdrop rig at 300-900 ft near deep reef",
+    "hook_size": "5/0-8/0 hook",
+    "sinker": "24-48 oz",
+    "lures": "Large deep-drop lures",
+    "explanation_cold": "Wenchman snapper inhabit deep reef in the Gulf and SE Atlantic; resemble vermilion snapper but are deeper-dwelling.",
+    "explanation_warm": "Deepdrop specialty year-round; plentiful over deep hard bottom and excellent eating."
+  },
+  {
+    "name": "Longspine porgy",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 64,
+    "temp_max": 80,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Small crustaceans, clams, squid near deep reef at 100-400 ft",
+    "rig": "Medium to heavy bottom rig at 100-400 ft near deep reef",
+    "hook_size": "#4-2/0 hook",
+    "sinker": "6-16 oz",
+    "lures": "Small diamond jigs near deep reef",
+    "explanation_cold": "Longspine porgy inhabit deep reef in SE Atlantic; identified by very long dorsal spines.",
+    "explanation_warm": "Year-round on SE offshore deep reef; a common bycatch on snapper trips in the Carolinas."
+  },
+  {
+    "name": "Permit (offshore)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live crabs, live shrimp near offshore wrecks and reef structure at 10-60 ft",
+    "rig": "Light to medium live-bait rig near reef and wreck structure",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None to split shot",
+    "lures": "Crab imitation flies and DOA crab lures near wrecks and reef",
+    "explanation_cold": "Offshore permit congregate around offshore wrecks, ledges, and reef in SE and Gulf waters.",
+    "explanation_warm": "Year-round near offshore structure; even offshore permit can be highly selective \u2014 one of the ultimate light-tackle challenges."
+  },
+  {
+    "name": "Goliath grouper",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Fully protected in US waters \u2014 release immediately if caught; do not target",
+    "rig": "Release immediately",
+    "hook_size": "Heavy",
+    "sinker": "Heavy",
+    "lures": "Release immediately if caught",
+    "explanation_cold": "Goliath grouper are fully protected in US waters; they can reach 800 lbs and are the largest grouper in the Atlantic.",
+    "explanation_warm": "Goliath grouper must be immediately released \u2014 do not remove from the water. Commonly seen stealing caught fish. A thrilling encounter but do not target them."
+  },
+  {
+    "name": "Gulf kingfish (sea mullet)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Sand fleas, sand worms, shrimp in the surf over sandy bottom",
+    "rig": "Light surf rig at 5-20 ft in the surf zone near troughs and sandbars",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small pompano-style jigs with sand flea trailers",
+    "explanation_cold": "Gulf kingfish are year-round surf fish on the Gulf Coast; school over sandy bottom and are excellent eating.",
+    "explanation_warm": "Year-round in Gulf surf; the most common sea mullet on the Gulf Coast \u2014 excellent eating and easy to catch on sand fleas from the beach."
+  },
+  {
+    "name": "Northern kingfish (sea mullet)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "northeast",
+      "southeast"
+    ],
+    "temp_min": 58,
+    "temp_max": 76,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Sand fleas, bloodworms, sandworms, clam bits in the surf over sandy bottom",
+    "rig": "Light surf or spinning rig at 5-20 ft in the surf zone",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-3/4 oz",
+    "lures": "Small pompano-style jigs; occasional small bucktail",
+    "explanation_cold": "Northern kingfish run Mid-Atlantic and NE beaches from spring through fall; they school in the surf over sandy bottom.",
+    "explanation_warm": "Spring through fall on Mid-Atlantic and NE beaches; one of the most underrated eating fish on the East Coast \u2014 sweet white flesh and easy to catch in the surf on bloodworms."
+  },
+  {
+    "name": "Southern kingfish (sea mullet)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "midatlantic"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Sand fleas, sandworms, shrimp in the surf over sandy bottom",
+    "rig": "Light surf or spinning rig at 5-20 ft in the surf zone",
+    "hook_size": "#4-1/0 hook",
+    "sinker": "1/4-3/4 oz",
+    "lures": "Small pompano-style jigs",
+    "explanation_cold": "Southern kingfish inhabit SE Atlantic and Gulf Coast surf zones year-round.",
+    "explanation_warm": "Year-round in SE surf and nearshore; nearly indistinguishable from northern kingfish in the overlap zone and caught on the same rigs."
+  },
+  {
+    "name": "Atlantic threadfin",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 64,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Cast net near the surface in coastal bays and inlets",
+    "rig": "Cast net over surface schools; sabiki rig",
+    "hook_size": "#10-#8 sabiki hook",
+    "sinker": "None",
+    "lures": "Not typically a lure target; baitfish species",
+    "explanation_cold": "Atlantic threadfin are coastal baitfish that school near the surface in warm SE and Gulf waters.",
+    "explanation_warm": "Year-round in warm SE coastal waters; excellent live bait for snook, tarpon, and inshore predators."
+  },
+  {
+    "name": "Tripletail (Gulf)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 86,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live shrimp, small fish near floating crab buoys and offshore structure",
+    "rig": "Light spinning or fly; cast to visible fish near surface debris and buoys",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "None to split shot",
+    "lures": "DOA shrimp, small paddletail swimbaits, or surface flies cast to visible fish",
+    "explanation_cold": "Gulf tripletail are seasonally abundant in warm Gulf coastal waters; sight-fished near crab trap buoys and floating debris.",
+    "explanation_warm": "Late spring through fall in Gulf coastal waters; cruise nearshore in a shallow-draft boat scanning crab buoys for tripletail lying sideways near the surface."
   }
 ]
