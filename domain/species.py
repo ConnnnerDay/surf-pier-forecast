@@ -72,6 +72,11 @@ _OFFSHORE_ONLY_SPECIES: set = {
     "Lehi (amberjack / silvermouth jack)",
     "Acadian redfish (ocean perch)",
     "Cusk",
+    "Rougheye rockfish",
+    "Longspine thornyhead",
+    "Shortspine thornyhead",
+    "Sixgill shark",
+    "Pacific ocean perch",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
@@ -124,6 +129,12 @@ _PIER_SPECIES: set = {
     "Surf smelt (Pacific)",
     "Gray triggerfish",
     "Uku (gray snapper / jobfish)",
+    "Brown rockfish",
+    "Rosy rockfish",
+    "Nenue (Hawaiian chub)",
+    "Kala (unicornfish)",
+    "Manini (convict tang)",
+    "Kumu (whitesaddle goatfish)",
 }
 
 # Species primarily caught from the surf zone.
@@ -337,6 +348,26 @@ _CHARTER_SPECIES: set = {
     "Steelhead trout (sea-run rainbow)",
     "Sockeye salmon (red salmon)",
     "Cusk",
+    "Bocaccio",
+    "Widow rockfish",
+    "Tiger rockfish",
+    "Gopher rockfish",
+    "Kelp rockfish",
+    "Brown rockfish",
+    "Rosy rockfish",
+    "Canary rockfish",
+    "Starry rockfish",
+    "Treefish",
+    "Dover sole",
+    "Rex sole",
+    "Pacific ocean perch",
+    "Rougheye rockfish",
+    "Longspine thornyhead",
+    "Shortspine thornyhead",
+    "Pacific spiny dogfish",
+    "Sixgill shark",
+    "Sevengill shark",
+    "Tope shark (soupfin)",
 }
 
 # Species well-suited for saltwater fly fishing — must be catchable on a fly
@@ -382,6 +413,9 @@ _FLY_SPECIES: set = {
     "Atlantic bluefin tuna",
     "Uku (gray snapper / jobfish)",
     "Giant trevally (ulua)",
+    "Kumu (whitesaddle goatfish)",
+    "Sevengill shark",
+    "Tope shark (soupfin)",
 }
 
 # Species best caught inshore (inlet, marsh, flats).
@@ -565,6 +599,25 @@ _STRUCTURE_SPECIES: set = {
     "Acadian redfish (ocean perch)",
     "Petrale sole",
     "Gray triggerfish",
+    "Bocaccio",
+    "Widow rockfish",
+    "Tiger rockfish",
+    "Treefish",
+    "Gopher rockfish",
+    "Kelp rockfish",
+    "Brown rockfish",
+    "Rosy rockfish",
+    "Canary rockfish",
+    "Starry rockfish",
+    "Pacific ocean perch",
+    "Rougheye rockfish",
+    "Longspine thornyhead",
+    "Shortspine thornyhead",
+    "Opakapaka (pink snapper)",
+    "Onaga (long-tail red snapper)",
+    "Uku (gray snapper / jobfish)",
+    "Hapu'upu'u (Hawaiian grouper)",
+    "Lehi (amberjack / silvermouth jack)",
 }
 
 _GAMEFISH_SPECIES: set = {
@@ -1005,6 +1058,32 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Atlantic salmon": ["game_fish"],
     "Sockeye salmon (red salmon)": ["game_fish", "pelagic"],
     "Rock sole": ["panfish"],
+    # ── Batch 3 additions ─────────────────────────────────────────────────────
+    "Bocaccio": ["game_fish", "reef_fish"],
+    "Widow rockfish": ["game_fish", "reef_fish"],
+    "Tiger rockfish": ["game_fish", "reef_fish"],
+    "Treefish": ["game_fish", "reef_fish"],
+    "Gopher rockfish": ["game_fish", "reef_fish"],
+    "Kelp rockfish": ["game_fish", "reef_fish"],
+    "Brown rockfish": ["game_fish", "reef_fish"],
+    "Rosy rockfish": ["game_fish", "reef_fish"],
+    "Canary rockfish": ["game_fish", "reef_fish"],
+    "Starry rockfish": ["game_fish", "reef_fish"],
+    "Pacific spiny dogfish": ["shark"],
+    "Sixgill shark": ["shark"],
+    "Sevengill shark": ["shark"],
+    "Tope shark (soupfin)": ["shark"],
+    "Kumu (whitesaddle goatfish)": ["reef_fish"],
+    "Nenue (Hawaiian chub)": ["reef_fish"],
+    "Pacific ocean perch": ["game_fish", "reef_fish"],
+    "Rougheye rockfish": ["game_fish", "reef_fish"],
+    "Longspine thornyhead": ["game_fish", "reef_fish"],
+    "Shortspine thornyhead": ["game_fish", "reef_fish"],
+    "Brown rockfish": ["game_fish", "reef_fish"],
+    "Dover sole": ["game_fish"],
+    "Rex sole": ["panfish"],
+    "Kala (unicornfish)": ["reef_fish"],
+    "Manini (convict tang)": ["reef_fish"],
 }
 
 

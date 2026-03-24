@@ -9693,5 +9693,706 @@
     "lures": "Small jigs tipped with bait",
     "explanation_cold": "Rock sole are most active in cold water; they move into shallow estuaries and bays in spring to spawn.",
     "explanation_warm": "Spring spawning aggregations bring rock sole into accessible shallow water; they are a tasty and commonly caught flatfish on Pacific NW party boats."
+  },
+  {
+    "name": "Bocaccio",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 64,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10,
+      11
+    ],
+    "bait": "Live or cut herring, squid strips, anchovies near deep rocky reefs",
+    "rig": "Bottom rig or dropper loop at 100-400 ft on rocky structure",
+    "hook_size": "3/0-5/0 circle hook",
+    "sinker": "6-16 oz",
+    "lures": "Heavy jigs (150-300g) in red/orange, soft plastic swimbaits near deep structure",
+    "explanation_cold": "Bocaccio hold in deeper rocky habitat year-round; winter finds them concentrated in 200-400 ft over hard bottom.",
+    "explanation_warm": "Spring and summer are most productive at 100-250 ft; bocaccio are a rebuilding species with retention limits \u2014 verify current rockfish complex rules before fishing."
+  },
+  {
+    "name": "Widow rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9,
+      10
+    ],
+    "bait": "Herring, anchovies, squid; widow rockfish school mid-water and take bait readily",
+    "rig": "Mid-water dropper loop rig at 150-400 ft; jig straight down to schooling fish",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "8-16 oz",
+    "lures": "Heavy diamond jigs (200-400g) in silver, flutter jigs worked mid-water column",
+    "explanation_cold": "Widow rockfish school in mid-water at 150-500 ft year-round along the Pacific coast.",
+    "explanation_warm": "Spring and early summer produce the best fishing as fish school densely over offshore banks; a mainstay catch on Pacific NW party boat rockfish trips."
+  },
+  {
+    "name": "Tiger rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live or cut herring, tube worms, squid strips fished tight to rocky structure",
+    "rig": "Single hook bottom rig at 30-200 ft on hard rocky bottom; territorial fish found one at a time",
+    "hook_size": "2/0-3/0 hook",
+    "sinker": "2-8 oz",
+    "lures": "Tube jigs in orange/black/red, small metal jigs worked near crevices and ledges",
+    "explanation_cold": "Tiger rockfish are solitary territorial fish on shallow to mid-depth rocky reefs year-round.",
+    "explanation_warm": "Accessible from spring through fall at 30-150 ft on rocky PNW reefs; recognized by distinctive tiger-stripe pattern."
+  },
+  {
+    "name": "Treefish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 65,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Tube worms, small herring or anchovies, squid strips near structure",
+    "rig": "Light to medium tackle; single hook near rocky bottom at 10-80 ft",
+    "hook_size": "#2-1/0 hook",
+    "sinker": "1-3 oz",
+    "lures": "Small tube jigs, tiny metal jigs near rocky ledges and caves",
+    "explanation_cold": "Treefish are shallow-water residents on rocky reefs and kelp beds year-round in central and northern California.",
+    "explanation_warm": "Spring through fall near shallow rocky structures; striking yellow/black striped pattern makes them unmistakable."
+  },
+  {
+    "name": "Gopher rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 65,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Tube worms, small anchovies or herring, squid strips near bottom structure",
+    "rig": "Light bottom rig on rocky reef at 10-100 ft; single hook close to structure",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Small tube jigs, soft plastic grubs in brown/white/pink",
+    "explanation_cold": "Gopher rockfish are resident on shallow rocky reefs and kelp beds year-round.",
+    "explanation_warm": "Spring and summer are the most accessible season for gopher rockfish near shallow rocky structure of central California; commonly caught from kayaks and small boats."
+  },
+  {
+    "name": "Kelp rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Live anchovies or small herring, tube worms; must be presented in or near kelp canopy",
+    "rig": "Lightweight float or free-line rig in the kelp canopy at 10-40 ft",
+    "hook_size": "#2-1/0 hook",
+    "sinker": "None or split shot only",
+    "lures": "Small swimbaits, tube jigs, small surface lures worked through kelp gaps",
+    "explanation_cold": "Kelp rockfish inhabit kelp forests year-round but are less active in winter when kelp senescence reduces cover.",
+    "explanation_warm": "Summer is prime for kelp rockfish suspended in the kelp canopy at 5-30 ft; they are a top kayak and small-boat target in southern and central California kelp forests."
+  },
+  {
+    "name": "Dover sole",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Clams, squid strips, sand lance, tube worms on very small hooks near soft bottom",
+    "rig": "Ultra-light multi-hook bottom rig; drift over soft mud or sandy bottom at 60-400 ft",
+    "hook_size": "#4-#2 baitholder hook",
+    "sinker": "2-6 oz",
+    "lures": "Tiny jig heads tipped with bait",
+    "explanation_cold": "Dover sole inhabit deeper soft-bottom habitat (100-400 ft) year-round and are most accessible in winter on offshore party boat trips.",
+    "explanation_warm": "Spring and early summer catch rates improve as fish move to shallower grounds; Dover sole are exceptional eating \u2014 one of the best-tasting flatfish on the West Coast."
+  },
+  {
+    "name": "Rex sole",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9
+    ],
+    "bait": "Very small baits \u2014 clams, tube worms, tiny squid strips; rex sole have tiny mouths",
+    "rig": "Ultra-light multi-hook bottom rig at 30-200 ft on sandy-mud bottom",
+    "hook_size": "#6-#4 hook \u2014 small mouth requires small hook",
+    "sinker": "1-3 oz",
+    "lures": "N/A; bait-only due to small mouth size",
+    "explanation_cold": "Rex sole are available year-round on sandy and soft bottom in nearshore waters; they concentrate in bays in winter.",
+    "explanation_warm": "Spring and summer on sandy bottom at 30-150 ft; caught alongside other flatfish species on party boat bottomfish trips."
+  },
+  {
+    "name": "Pacific spiny dogfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 42,
+    "temp_max": 62,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10,
+      11
+    ],
+    "bait": "Herring, squid, clams, cut fish; dogfish are opportunistic and will eat almost anything",
+    "rig": "Medium bottom rig at 30-200 ft; wire leader not required but 40-60 lb mono helps with abrasion",
+    "hook_size": "3/0-5/0 hook",
+    "sinker": "4-12 oz",
+    "lures": "Heavy metal jigs, large swim shads worked near the bottom",
+    "explanation_cold": "Pacific spiny dogfish are year-round residents on the West Coast and are most commonly encountered in Puget Sound and along the Oregon/Washington coast.",
+    "explanation_warm": "Spring through fall produces the most active dogfish schools near bait balls; they are the most abundant shark in Pacific NW waters and a prolific bycatch species \u2014 very good eating if prepared fresh."
+  },
+  {
+    "name": "Sixgill shark",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Large cut baits \u2014 whole herring, squid, salmon carcasses, large chunk fish; sixgills are deep scavengers",
+    "rig": "Heavy shark rig with 200-400 lb mono or wire leader; deep-drop from anchored boat at 100-600 ft at night",
+    "hook_size": "10/0-14/0 circle hook",
+    "sinker": "16-32 oz to reach depth",
+    "lures": "Not a lure target; bait-only deep-drop fishery",
+    "explanation_cold": "Sixgill sharks inhabit deep cold water (300-6000 ft) year-round but come to relatively shallow water at night in Puget Sound and Hood Canal.",
+    "explanation_warm": "Summer night-fishing in Puget Sound produces the best sixgill encounters at 100-300 ft; these prehistoric-looking sharks can exceed 15 ft and 1,300 lbs \u2014 a bucket-list catch in the Pacific NW."
+  },
+  {
+    "name": "Sevengill shark",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 68,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Fresh cut fish \u2014 herring, mackerel, jacksmelt, fresh squid; strong-smelling fresh bait is best",
+    "rig": "Medium-heavy rig with 80-200 lb mono leader; fish from shore or boat in bays and estuaries",
+    "hook_size": "7/0-10/0 circle hook",
+    "sinker": "4-8 oz",
+    "lures": "Large swimbaits fished slowly near the bottom; sevengills occasionally hit lures",
+    "explanation_cold": "Sevengill sharks use bays and estuaries as pupping grounds in fall; they are present in San Francisco Bay and similar habitats year-round.",
+    "explanation_warm": "Spring and summer produce the best sevengill fishing in California bays; they are a popular shore-fishing target from bridge pilings and bay shores, particularly in the SF Bay Area."
+  },
+  {
+    "name": "Tope shark (soupfin)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10
+    ],
+    "bait": "Fresh herring, mackerel, squid; tope sharks prefer fresh, oily baitfish",
+    "rig": "Medium shark rig with 80-150 lb mono leader; drift bait near bottom or mid-water",
+    "hook_size": "5/0-8/0 circle hook",
+    "sinker": "2-6 oz or free-line",
+    "lures": "Large swimbaits slowly retrieved near the bottom; occasional lure takes in kelp areas",
+    "explanation_cold": "Tope (soupfin) sharks are migratory, moving south in winter and returning to California bays and nearshore in spring.",
+    "explanation_warm": "Summer and fall are peak tope season along the California coast; they are a strong fighter and excellent food fish \u2014 one of California's most underrated sportfish."
+  },
+  {
+    "name": "Kumu (whitesaddle goatfish)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 86,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10,
+      11
+    ],
+    "bait": "Small shrimp, tiny crab pieces, sandworms; kumu root around in sand for invertebrates",
+    "rig": "Very light bottom rig with tiny hooks near sandy bottom; light 10-15 lb fluorocarbon",
+    "hook_size": "#4-#1 hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Very small jigs tipped with shrimp; micro soft plastic grubs",
+    "explanation_cold": "Kumu are found year-round in Hawaiian waters on sandy flats and rubble near reef edges.",
+    "explanation_warm": "Spring through fall produces the best kumu fishing near sand patches adjacent to shallow Hawaiian reefs; they are highly prized table fish and a traditional Hawaiian subsistence species."
+  },
+  {
+    "name": "Nenue (Hawaiian chub)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10,
+      11
+    ],
+    "bait": "Sea lettuce and other algae (natural food); bread balls, cooked rice, or dough bait work best",
+    "rig": "Ultra-light float rig with tiny hooks and dough bait or algae; light 8-12 lb line",
+    "hook_size": "#6-#4 hook",
+    "sinker": "None or split shot only",
+    "lures": "Not a lure target; requires natural or dough bait presentations",
+    "explanation_cold": "Nenue (chub) are resident on shallow Hawaiian reefs and surge zones year-round.",
+    "explanation_warm": "Summer is peak nenue fishing around Hawaiian pier pilings, rocky shores, and shallow reef areas; they respond to bread and dough bait and are a fun light-tackle species."
+  },
+  {
+    "name": "Pacific ocean perch",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 36,
+    "temp_max": 54,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9,
+      10
+    ],
+    "bait": "Squid strips, herring, clams, sandworms; any fresh bait on a bottom rig",
+    "rig": "Hi-lo bottom rig at 200-600 ft; deep-drop on offshore banks and ridges",
+    "hook_size": "#1-2/0 hook",
+    "sinker": "12-24 oz",
+    "lures": "Medium diamond jigs (100-200g) in red/silver worked near deep bottom",
+    "explanation_cold": "Pacific ocean perch inhabit deep rocky habitat (200-900 ft) year-round; they are a common catch on offshore bank fishing trips.",
+    "explanation_warm": "Spring and summer are most accessible on offshore party boat trips to Pacific NW banks; they school densely over rocky bottom and provide fast-paced action when located."
+  },
+  {
+    "name": "Rougheye rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 36,
+    "temp_max": 54,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Squid, herring, cut fish fished deep on heavy bottom rigs; an extremely slow-growing deep species",
+    "rig": "Deep-drop bottom rig at 400-1500 ft; electric reel may be needed for greatest depths",
+    "hook_size": "4/0-6/0 circle hook",
+    "sinker": "24-48 oz",
+    "lures": "Heavy slow-pitch jigs (300-500g) near deep rocky bottom",
+    "explanation_cold": "Rougheye rockfish are among the longest-lived rockfish (up to 205 years); they inhabit very deep cold water year-round and are rarely targeted specifically.",
+    "explanation_warm": "Encountered as bycatch on deep-drop trips for sablefish and halibut; regulations are very conservative due to extreme age and slow recovery time \u2014 verify all current rockfish rules."
+  },
+  {
+    "name": "Longspine thornyhead",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 36,
+    "temp_max": 52,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Squid, cut fish, herring; any fresh bait on a deep-drop rig",
+    "rig": "Deep-drop bottom rig at 600-2000 ft; electric reel typically required",
+    "hook_size": "3/0-5/0 circle hook",
+    "sinker": "32-64 oz",
+    "lures": "Heavy slow-pitch jigs (400-800g) at extreme depth",
+    "explanation_cold": "Longspine thornyheads (idiots) live at extreme depths (600-2000 ft); rarely targeted specifically and encountered mainly as deep-drop bycatch.",
+    "explanation_warm": "Spring and summer are the most practical time to deep-drop for thornyheads; they are prized for their excellent flavor and sold commercially as 'idiot fish' or 'channel rockfish'."
+  },
+  {
+    "name": "Brown rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Live or cut herring, tube worms, squid strips near shallow rocky habitat",
+    "rig": "Light to medium bottom rig at 20-120 ft in bays, estuaries, and nearshore rocky areas",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "1-4 oz",
+    "lures": "Small tube jigs, soft plastic grubs in brown/red, small metal jigs",
+    "explanation_cold": "Brown rockfish are year-round residents in bays and nearshore waters, tolerating warmer and brackish conditions better than most rockfish.",
+    "explanation_warm": "Spring and summer near shallow rocky structure in California bays and estuaries; commonly caught from docks, piers, and kayaks \u2014 one of the most accessible rockfish species."
+  },
+  {
+    "name": "Rosy rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 64,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Small herring or anchovies, squid strips, tube worms near rocky structure at moderate depth",
+    "rig": "Light bottom rig at 50-200 ft on rocky or mixed bottom",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Small tube jigs in pink/red, tiny metal jigs worked near rocky bottom",
+    "explanation_cold": "Rosy rockfish inhabit rocky reefs at 50-200 ft year-round along the California and Oregon coast.",
+    "explanation_warm": "Spring through fall on nearshore rocky reefs; a brightly colored species often caught alongside vermilion and copper rockfish on inshore trips."
+  },
+  {
+    "name": "Canary rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      3,
+      9,
+      10
+    ],
+    "bait": "Herring, anchovies, squid strips near rocky mid-depth reefs",
+    "rig": "Medium bottom rig at 100-350 ft on rocky bottom",
+    "hook_size": "2/0-4/0 hook",
+    "sinker": "8-16 oz",
+    "lures": "Diamond jigs (150-300g) in orange/gold near the bottom",
+    "explanation_cold": "Canary rockfish inhabit rocky reefs at 80-400 ft year-round; they are a rebuilding species with very restrictive retention rules.",
+    "explanation_warm": "Encountered on offshore rockfish trips spring through fall; canary rockfish are often prohibited from retention \u2014 verify current rockfish complex rules and area closures before keeping any."
+  },
+  {
+    "name": "Starry rockfish",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Anchovies, small herring, squid strips; presents best near rocky structure at moderate depth",
+    "rig": "Light to medium bottom rig at 30-150 ft on rocky and mixed bottom",
+    "hook_size": "#2-2/0 hook",
+    "sinker": "2-6 oz",
+    "lures": "Small tube jigs, soft plastics in orange/red/white",
+    "explanation_cold": "Starry rockfish are resident on shallow to mid-depth rocky reefs year-round in California.",
+    "explanation_warm": "Spring and summer near rocky structure at 30-150 ft; recognized by their distinctive star-shaped white spots on bright orange body \u2014 a visually striking southern California rockfish."
+  },
+  {
+    "name": "Kala (unicornfish)",
+    "coast": "hawaii",
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10,
+      11
+    ],
+    "bait": "Limu (seaweed), bread bait, or tiny invertebrate pieces near reef edges",
+    "rig": "Ultra-light float or bottom rig with very small hook; light 10-15 lb line",
+    "hook_size": "#6-#4 hook",
+    "sinker": "None to 1/4 oz",
+    "lures": "Not a lure target; requires plant-based or dough bait",
+    "explanation_cold": "Kala (bluespine unicornfish) are resident on Hawaiian reefs year-round, grazing on algae along reef edges and surge zones.",
+    "explanation_warm": "Year-round target on Hawaiian reefs; most active in warmer months near surge channels and reef edges where algae grows abundantly \u2014 a light-tackle challenge on small hooks."
+  },
+  {
+    "name": "Manini (convict tang)",
+    "coast": "hawaii",
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      4,
+      10,
+      11
+    ],
+    "bait": "Limu (algae), bread balls, cooked noodles, or rice compressed on a tiny hook",
+    "rig": "Ultra-light float rig with size 8-12 hook; 6-10 lb line; fish in tide pools and shallow reef",
+    "hook_size": "#10-#6 hook",
+    "sinker": "None",
+    "lures": "Not a lure species; requires plant-based bait",
+    "explanation_cold": "Manini are schooling surgeonfish resident on shallow Hawaiian reefs year-round.",
+    "explanation_warm": "Year-round shallow-water target in Hawaii; often seen in large schools over rocky reef and tide pools \u2014 challenging to hook due to small mouth but a traditional Hawaiian subsistence fish."
+  },
+  {
+    "name": "Shortspine thornyhead",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest"
+    ],
+    "temp_min": 36,
+    "temp_max": 52,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Squid, cut fish, shrimp; any fresh bait at deep-water depths",
+    "rig": "Deep-drop rig at 400-1800 ft; similar setup to sablefish fishing",
+    "hook_size": "3/0-5/0 circle hook",
+    "sinker": "32-64 oz",
+    "lures": "Heavy slow-pitch jigs (400g+) in red near deep rocky bottom",
+    "explanation_cold": "Shortspine thornyheads inhabit deep rocky bottom (400-1800 ft) year-round; commonly sold in Asian markets as 'channel rockfish.'",
+    "explanation_warm": "Occasionally targeted specifically by deep-drop anglers; more often caught as bycatch alongside sablefish \u2014 superb eating fish with rich, flaky white flesh."
   }
 ]

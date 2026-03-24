@@ -243,6 +243,72 @@
         "bag_limit": "7 per day",
         "season": "Oct 1 \u2013 Mar 17 (approx)",
         "notes": "Hoop nets and hand-picking only (no traps for recreational). Minimum size is measured from rear of eye socket to rear of carapace. Verify CDFW season dates."
+      },
+      "bocaccio": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in 10-fish aggregate rockfish bag limit",
+        "season": "Varies by area; check Rockfish Conservation Areas and depth restrictions",
+        "notes": "Bocaccio is a rebuilding species. Retention rules vary by zone and year. Verify current rules before keeping any."
+      },
+      "canary_rockfish": {
+        "min_size": "None",
+        "bag_limit": "1 per day within aggregate in some areas; prohibited in others",
+        "season": "Check current year rules \u2014 often prohibited from retention",
+        "notes": "Canary rockfish is a rebuilding species. Retention is prohibited in many zones. HIGH compliance risk \u2014 verify before keeping."
+      },
+      "widow_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Verify current open areas before fishing."
+      },
+      "pacific_ocean_perch": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Verify current regulations."
+      },
+      "rougheye_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in aggregate; very restrictive",
+        "season": "Check current CDFW rules",
+        "notes": "Deep-water species; limited retention. Verify."
+      },
+      "thornyheads": {
+        "min_size": "None",
+        "bag_limit": "10 per day (combined longspine and shortspine)",
+        "season": "Open year-round",
+        "notes": "Shortspine and longspine thornyheads have a combined 10-fish limit in most Pacific Coast regulations."
+      },
+      "pacific_spiny_dogfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No California bag or size limit for spiny dogfish."
+      },
+      "sevengill_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific California regulations for sevengill sharks. Popular in SF Bay; most anglers practice catch and release."
+      },
+      "tope_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tope (soupfin) sharks are unregulated for recreational anglers in California state waters."
+      },
+      "dover_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the flatfish aggregate limit. Verify current state rules."
+      },
+      "rex_sole": {
+        "min_size": "None",
+        "bag_limit": "Included in flatfish aggregate",
+        "season": "Open year-round",
+        "notes": "Included in flatfish aggregate. Verify state rules."
       }
     },
     "CT": {
@@ -305,6 +371,18 @@
         "bag_limit": "20 per day (recreational)",
         "season": "Open year-round",
         "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "pollock": {
+        "min_size": "16 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Pollock are abundant on fall/winter cod trips in the Northeast; no specific state bag limit beyond federal groundfish rules."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round (summer visitor)",
+        "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
       }
     },
     "DE": {
@@ -589,6 +667,30 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "striped_bass": {
+        "min_size": "28\u201335 in slot limit (follows ASMFC)",
+        "bag_limit": "1 per day",
+        "season": "Open year-round in most areas",
+        "notes": "Slot limit aligns with ASMFC coastwide rules. Verify current state-specific rules before fishing."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (rare south of NY)",
+        "notes": "Winter flounder are uncommon south of New Jersey; verify current state rules."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Federal season (set annually by NOAA/SAFMC or GMFMC)",
+        "notes": "Season dates and bag limits are set each year; verify with NOAA before fishing federal waters."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round (offshore, summer-fall)",
+        "notes": "No closed season; verify any changes to current state or federal rules."
       }
     },
     "LA": {
@@ -860,6 +962,18 @@
         "bag_limit": "20 per day (recreational)",
         "season": "Open year-round",
         "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Sheepshead are common around structure in summer; verify current state rules."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round (offshore, summer-fall)",
+        "notes": "No closed season; verify any changes to current state or federal rules."
       }
     },
     "ME": {
@@ -928,6 +1042,12 @@
         "bag_limit": "No bag limit",
         "season": "Open year-round",
         "notes": "Cusk have no specific recreational size or bag limit in Maine. Verify with ME DMR."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round (summer visitor)",
+        "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
       }
     },
     "MS": {
@@ -990,6 +1110,12 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Federal season (set annually by NOAA/SAFMC or GMFMC)",
+        "notes": "Season dates and bag limits are set each year; verify with NOAA before fishing federal waters."
       }
     },
     "NC": {
@@ -1137,6 +1263,12 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (rare south of NY)",
+        "notes": "Winter flounder are uncommon south of New Jersey; verify current state rules."
       }
     },
     "NJ": {
@@ -1249,6 +1381,12 @@
         "bag_limit": "0",
         "season": "C&R only",
         "notes": "Prohibited species. Must be immediately released."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round (offshore, summer-fall)",
+        "notes": "No closed season; verify any changes to current state or federal rules."
       }
     },
     "NY": {
@@ -1329,6 +1467,18 @@
         "bag_limit": "20 per day (recreational)",
         "season": "Open year-round",
         "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round (summer visitor)",
+        "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
+      },
+      "mahi_mahi": {
+        "min_size": "20 in TL",
+        "bag_limit": "10 per person per day",
+        "season": "Open year-round (offshore, summer-fall)",
+        "notes": "No closed season; verify any changes to current state or federal rules."
       }
     },
     "OR": {
@@ -1421,6 +1571,54 @@
         "bag_limit": "Varies by river/system",
         "season": "Set annually; Columbia River June-August when open",
         "notes": "Sockeye seasons on the Columbia River are set annually by OR/WA/tribes. ALWAYS verify ODFW rules."
+      },
+      "bocaccio": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in 10-fish aggregate rockfish bag limit",
+        "season": "Varies by area; check Rockfish Conservation Areas and depth restrictions",
+        "notes": "Bocaccio is a rebuilding species. Retention rules vary by zone and year. Verify current rules before keeping any."
+      },
+      "canary_rockfish": {
+        "min_size": "None",
+        "bag_limit": "1 per day within aggregate in some areas; prohibited in others",
+        "season": "Check current year rules \u2014 often prohibited from retention",
+        "notes": "Canary rockfish is a rebuilding species. Retention is prohibited in many zones. HIGH compliance risk \u2014 verify before keeping."
+      },
+      "widow_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Verify current open areas before fishing."
+      },
+      "pacific_ocean_perch": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Verify current regulations."
+      },
+      "thornyheads": {
+        "min_size": "None",
+        "bag_limit": "10 per day (combined longspine and shortspine)",
+        "season": "Open year-round",
+        "notes": "Shortspine and longspine thornyheads have a combined 10-fish limit in most Pacific Coast regulations."
+      },
+      "pacific_spiny_dogfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No Oregon state regulations for spiny dogfish."
+      },
+      "dover_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the flatfish aggregate limit. Verify current state rules."
+      },
+      "rex_sole": {
+        "min_size": "None",
+        "bag_limit": "Included in flatfish aggregate",
+        "season": "Open year-round",
+        "notes": "Included in flatfish aggregate. Verify state rules."
       }
     },
     "RI": {
@@ -1495,6 +1693,18 @@
         "bag_limit": "20 per day (recreational)",
         "season": "Open year-round",
         "notes": "No minimum size. Federal mackerel quota applies to commercial; recreational is generally open."
+      },
+      "pollock": {
+        "min_size": "16 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Pollock are abundant on fall/winter cod trips in the Northeast; no specific state bag limit beyond federal groundfish rules."
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in FL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round (summer visitor)",
+        "notes": "Spanish mackerel arrive in summer; no closed season. Verify current state rules."
       }
     },
     "SC": {
@@ -1587,6 +1797,18 @@
         "bag_limit": "20 per person per day (10 per person in Gulf federal waters)",
         "season": "Open year-round state waters; federal Gulf waters: open year-round",
         "notes": "Gulf federal waters bag limit is 10 per person. Verify state rules for any changes."
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (rare south of NY)",
+        "notes": "Winter flounder are uncommon south of New Jersey; verify current state rules."
+      },
+      "red_snapper": {
+        "min_size": "16 in TL",
+        "bag_limit": "2 per day",
+        "season": "Federal season (set annually by NOAA/SAFMC or GMFMC)",
+        "notes": "Season dates and bag limits are set each year; verify with NOAA before fishing federal waters."
       }
     },
     "TX": {
@@ -1887,6 +2109,60 @@
         "bag_limit": "Varies; typically 6 per day when open on Lake Wenatchee and Columbia",
         "season": "Set annually; Lake Wenatchee July-Aug when open",
         "notes": "Sockeye seasons and quotas are negotiated annually. Verify WDFW current rules."
+      },
+      "bocaccio": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in 10-fish aggregate rockfish bag limit",
+        "season": "Varies by area; check Rockfish Conservation Areas and depth restrictions",
+        "notes": "Bocaccio is a rebuilding species. Retention rules vary by zone and year. Verify current rules before keeping any."
+      },
+      "canary_rockfish": {
+        "min_size": "None",
+        "bag_limit": "1 per day within aggregate in some areas; prohibited in others",
+        "season": "Check current year rules \u2014 often prohibited from retention",
+        "notes": "Canary rockfish is a rebuilding species. Retention is prohibited in many zones. HIGH compliance risk \u2014 verify before keeping."
+      },
+      "widow_rockfish": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Verify current open areas before fishing."
+      },
+      "pacific_ocean_perch": {
+        "min_size": "None",
+        "bag_limit": "Included in 10-fish aggregate rockfish limit",
+        "season": "Open most of year; check depth restrictions",
+        "notes": "Verify current regulations."
+      },
+      "thornyheads": {
+        "min_size": "None",
+        "bag_limit": "10 per day (combined longspine and shortspine)",
+        "season": "Open year-round",
+        "notes": "Shortspine and longspine thornyheads have a combined 10-fish limit in most Pacific Coast regulations."
+      },
+      "pacific_spiny_dogfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish are abundant in Puget Sound; no state bag limit. Check WDFW for any area-specific rules."
+      },
+      "sixgill_shark": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state regulations for sixgill sharks in Washington; catch and release strongly encouraged."
+      },
+      "dover_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the flatfish aggregate limit. Verify current state rules."
+      },
+      "rex_sole": {
+        "min_size": "None",
+        "bag_limit": "Included in flatfish aggregate",
+        "season": "Open year-round",
+        "notes": "Included in flatfish aggregate. Verify state rules."
       }
     },
     "HI": {
@@ -1970,6 +2246,30 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No Hawaii state regulations for opah."
+      },
+      "kumu_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state bag or size limit for kumu (whitesaddle goatfish) in Hawaii."
+      },
+      "nenue": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit for nenue (Hawaiian chub) in Hawaii."
+      },
+      "kala_unicornfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific Hawaiian regulations for kala (unicornfish)."
+      },
+      "manini": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No state size or bag limit for manini (convict tang) in Hawaii."
       }
     }
   }
