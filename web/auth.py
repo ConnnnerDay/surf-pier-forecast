@@ -1258,6 +1258,10 @@ def _social_login_or_create(
         user_by_email = get_user_by_email(email)
         if user_by_email:
             link_social_account(user_by_email["id"], provider, provider_uid, email)
+            # The OAuth provider has already verified ownership of this email address,
+            # so confirm the email now — the user should not be stuck on the
+            # verify-pending page after authenticating via a trusted identity provider.
+            confirm_email(user_by_email["id"])
             update_user_social_profile(user_by_email["id"], display_name, avatar_url)
             return user_by_email["id"], False
 

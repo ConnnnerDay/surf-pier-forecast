@@ -221,6 +221,17 @@ def create_app() -> Flask:
         if endpoint is None or endpoint in _VERIFICATION_EXEMPT_ENDPOINTS:
             return
 
+        # JSON API callers (blueprint="api") expect a JSON error, not an HTML redirect.
+        if request.blueprint == "api":
+            from flask import jsonify
+            return jsonify({
+                "ok": False,
+                "error": {
+                    "code": "email_not_verified",
+                    "message": "Please verify your email address to use this feature.",
+                },
+            }), 403
+
         return redirect(url_for("auth.verify_pending"))  # type: ignore[return-value]
 
     @app.before_request
