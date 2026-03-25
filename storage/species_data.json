@@ -23941,5 +23941,512 @@
     "lures": "Large jigs near reef bottom",
     "explanation_cold": "Gulf red snapper support one of the most politically charged fishery management battles in US fisheries history. The stock has recovered significantly but recreational season is extremely short (historically 3-9 days per year in federal waters). Large red snapper (10-25 lbs) are common on Gulf offshore reef at 80-200 ft. Excellent eating \u2014 widely considered the best table snapper.",
     "explanation_warm": "Gulf red snapper: 16-inch minimum; 2 fish per day federal waters. Annual season typically July-September for a very short window \u2014 check NOAA SERO regulations. Many charter boats use for-hire quota that allows longer seasons. State waters (0-9 miles off TX, LA) may have separate rules. Barotrauma is a significant concern \u2014 use descender devices to return released fish safely."
+  },
+  {
+    "name": "Permit (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live crabs (blue crabs, fiddler crabs), shrimp on flats and nearshore reefs",
+    "rig": "Light to medium spinning or fly rod near shallow reefs and flats",
+    "hook_size": "2/0-4/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Crab flies, Merkin crab patterns, EP flies on flats",
+    "explanation_cold": "Atlantic permit are considered the most difficult flats fish to catch \u2014 revered in fly fishing circles as the ultimate challenge. They cruise shallow flats and patch reefs feeding primarily on crabs. Found from Massachusetts to South America but most accessible from the Florida Keys and Gulf flats. Individually territorial and highly suspicious of imitation baits. World-record fish come from Key West flats.",
+    "explanation_warm": "Permit are notoriously picky \u2014 they will approach a crab fly, inspect it, and reject it after a long agonizing pause. The crab must be presented accurately and the angler must stay calm. Live crabs work better than artificials but even then permit refuse more than they eat. When one finally eats, the fight is exceptional \u2014 fast runs and jumps."
+  },
+  {
+    "name": "Southern flounder (gigging)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 60,
+    "temp_max": 80,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      8,
+      12
+    ],
+    "bait": "Wading at night with bright light and gig in shallow estuaries",
+    "rig": "Flounder gig (long-handled pole with multi-tined spear)",
+    "hook_size": "N/A \u2014 gigging technique",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Flounder gigging is a traditional Gulf Coast and south Atlantic harvest method. At night, anglers wade shallow estuaries and grass flats with a bright light (headlamp or handheld) and a long-handled gig. Flounder bury in the sand or mud with only eyes visible \u2014 the gigging light illuminates them against the substrate. Fall is peak season when flounder migrate to pass mouths.",
+    "explanation_warm": "Flounder gigging regulations are the same as rod-and-reel limits. The gig season follows standard flounder season. Important: always gig in open water areas \u2014 grass bed damage from wading stresses estuarine habitat. The light reveals many other species too \u2014 redfish, speckled trout, and crabs are commonly encountered."
+  },
+  {
+    "name": "Crab (stone) harvest",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 66,
+    "temp_max": 84,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "good_months": [
+      6,
+      9
+    ],
+    "bait": "Stone crab traps baited with fish near rocky bottom",
+    "rig": "Stone crab trap near rocky or jetty substrate",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Stone crab claw harvesting is a sustainable fishery unique to Florida. Only the large claw is removed and the crab returned alive to regrow the claw over 12-18 months. Stone crabs are found around rocky bottom, jetty rubble, and dock pilings from south Florida north to Cape Hatteras. The claws are served cold with mustard sauce \u2014 a legendary Florida seafood experience.",
+    "explanation_warm": "Stone crab season October 15 - May 1. Minimum 2.75-inch propodus. Only one claw per crab. Both claws taking is illegal. Return crab alive. Egg-bearing females must be released. Stone crabs are not line-caught \u2014 trap or hand collection only."
+  },
+  {
+    "name": "Cobia (early season)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "good_months": [
+      1,
+      6
+    ],
+    "bait": "Live eels, large crabs, swimbaits near surface-cruising fish",
+    "rig": "Heavy spinning near surface-cruising fish from boat, jetty, or pier",
+    "hook_size": "5/0-10/0 circle hook",
+    "sinker": "None to 1 oz",
+    "lures": "Large bucktail jigs, paddle eels",
+    "explanation_cold": "Early-season cobia (February-May in the south, April-June farther north) represent the exciting spring sight-fishing run as fish move north along the coast following warming water. Early fish are fresh from the Gulf or wintering grounds and are often in excellent condition. Sightings are unpredictable but explosive when encountered.",
+    "explanation_warm": "Early-season cobia are encountered randomly near warm water outflows, buoys, and nearshore structure. In Florida, January cobia appearances near power plant outflows are possible. Keep a heavy spinning rod rigged at all times from February onward when on the water near the coast."
+  },
+  {
+    "name": "Pacific lamprey",
+    "coast": "west",
+    "regions": [
+      "pacific northwest",
+      "alaska"
+    ],
+    "temp_min": 44,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "N/A \u2014 incidental encounter; important prey and bait species",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Pacific lamprey are anadromous jawless fish that are among the oldest vertebrates on Earth. They are culturally significant to Pacific Northwest Native tribes as food and medicine. Lamprey have declined significantly due to dam passage issues. They serve as important prey for large predators. Adult lamprey use a sucker-like mouth to parasitize salmon and other large fish in the ocean.",
+    "explanation_warm": "Pacific lamprey are not targeted by sport anglers. If encountered, they can attach to skin with their sucker \u2014 remove by prying the oral disc off the skin. Some tribes harvest lamprey at waterfalls during their upstream migration. Not regulated for recreational anglers but important ecologically."
+  },
+  {
+    "name": "Green sturgeon",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      2,
+      10
+    ],
+    "bait": "N/A \u2014 threatened species; catch-and-release only",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Green sturgeon are the smaller of the two Pacific sturgeon species. The Southern Distinct Population Segment (California) is listed as threatened under the ESA. They inhabit the Sacramento River and coastal marine waters. Green sturgeon are bycatch in shrimp trawls and other fisheries. They are larger and darker olive-green compared to white sturgeon.",
+    "explanation_warm": "Green sturgeon: Southern DPS is ESA THREATENED. Cannot be harvested in California. Northern DPS has limited harvest in some OR/WA river fisheries \u2014 check state regulations carefully. If accidentally caught, immediately release. Green sturgeon are distinguishable from white sturgeon by their greenish color and rows of scutes."
+  },
+  {
+    "name": "White sturgeon (sport)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 48,
+    "temp_max": 62,
+    "temp_ideal_low": 50,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Pile worms, clam necks, ghost shrimp, sand shrimp in tidal rivers",
+    "rig": "Heavy bottom rig in tidal rivers with 30-80 lb leader",
+    "hook_size": "5/0-10/0 circle hook",
+    "sinker": "4-12 oz flat sinker",
+    "lures": "N/A \u2014 only natural bait for sturgeon",
+    "explanation_cold": "White sturgeon are the largest freshwater fish in North America (to 20 feet, 1,500 lbs). They inhabit the Columbia, Sacramento, and other Pacific Coast rivers and estuaries. Sport fishing for white sturgeon in the Columbia River between Bonneville Dam and Willamette River is world-famous. Strict slot limits protect the population.",
+    "explanation_warm": "White sturgeon slot limits: typically 38-54 inches in the Columbia and Sacramento systems (no harvest outside slot). Fish must be measured before retention. Use barbless hooks in most Columbia River sections. Check WDFW/ODFW/CDFW for current year rules \u2014 regulations change frequently. Permit required in some areas."
+  },
+  {
+    "name": "Striped bass (Sacramento)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 54,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live anchovies, shad, swimbaits in San Francisco Bay and Sacramento River",
+    "rig": "Medium to heavy spinning or conventional in bay and delta",
+    "hook_size": "3/0-6/0 circle hook",
+    "sinker": "1/2-3 oz",
+    "lures": "Swimbaits, topwater lures, trolled lures in bay and delta",
+    "explanation_cold": "Sacramento striped bass are a non-native population introduced from the Atlantic in 1879. They established themselves as one of the most popular game fish in California, supporting a world-class fishery in San Francisco Bay and the Sacramento-San Joaquin Delta. Large fish (over 50 lbs) are occasionally caught. Population has declined from historical levels but remains significant.",
+    "explanation_warm": "California striped bass minimum size is 18 inches with a 2-fish daily bag limit. Fall migration into the Delta in October-November draws large numbers of fish. San Francisco Bay striped bass are plentiful in spring when anchovies school near the bay. No commercial harvest of striped bass in California."
+  },
+  {
+    "name": "Largemouth bass (tidal)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 58,
+    "temp_max": 76,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Soft plastics, topwater lures, swimbaits near tidal creek structure",
+    "rig": "Medium spinning or baitcasting in tidal creeks and rivers",
+    "hook_size": "3/0-5/0 wide-gap hook",
+    "sinker": "None to 1/2 oz",
+    "lures": "Topwater frogs, creature baits, swimbaits near tidal cover",
+    "explanation_cold": "Largemouth bass in tidal freshwater areas are technically the same species as freshwater bass but are included here because they inhabit tidal rivers, brackish creeks, and freshwater marsh areas along the Atlantic and Gulf coastal plain. They are found in tidal freshwater areas from New Jersey south through the entire Gulf Coast. Tidal bass often grow very large due to abundant forage.",
+    "explanation_warm": "Tidal largemouth bass fall under state freshwater fishing regulations in most states \u2014 freshwater license required. Florida: 14-inch minimum, 5 fish/day. Texas: 14-inch minimum, 5 fish/day. The James and York Rivers in Virginia host excellent tidal bass fishing. Bass anglers in coastal areas should explore tidal rivers for overlooked fisheries."
+  },
+  {
+    "name": "Blue catfish (invasive tidal)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic"
+    ],
+    "temp_min": 54,
+    "temp_max": 74,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Cut bait, live fish, clams in tidal rivers",
+    "rig": "Medium to heavy bottom rig in tidal rivers",
+    "hook_size": "4/0-8/0 circle hook",
+    "sinker": "2-8 oz",
+    "lures": "N/A \u2014 cut bait most effective",
+    "explanation_cold": "Blue catfish were introduced to Virginia tidal rivers in the 1970s for sport fishing and have become an ecological disaster \u2014 an apex predator invader that now dominates tidal river communities in the Chesapeake Bay watershed. They eat blue crab, shad, herring, and any other prey. Virginia and Maryland actively encourage unlimited harvest.",
+    "explanation_warm": "HARVEST STRONGLY ENCOURAGED \u2014 Blue catfish are invasive in Chesapeake Bay tributaries and are devastating native species. No minimum size, no bag limit in Virginia tidal rivers. Maryland: no limit. Take as many as possible. Excellent eating \u2014 firm, white, mild flesh. Commercial markets for blue catfish are being developed to incentivize harvest."
+  },
+  {
+    "name": "Pompano (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 66,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Sand fleas (mole crabs), small crabs, shrimp in the surf zone",
+    "rig": "Light surf rig with small hooks in the surf at first bar",
+    "hook_size": "#2-1/0",
+    "sinker": "1-3 oz pyramid or egg sinker",
+    "lures": "Pompano jigs (3/8-1/2 oz teardrop heads) with yellow or orange bodies",
+    "explanation_cold": "Florida pompano are perhaps the premier surf fishing target on the southeast Atlantic and Gulf coasts. They are members of the jack family built for speed. Their primary food is sand fleas (mole crabs) which they root out of the surf sand. Found from Massachusetts to Brazil but most abundant in Florida and along Gulf beaches year-round. Considered one of the finest eating fish \u2014 firm, buttery white flesh.",
+    "explanation_warm": "Pompano are caught in the surf by running pompano rigs (two small hooks on top of a pyramid sinker) baited with fresh sand fleas cast to the first or second bar. They bite softly \u2014 the rod tip will pulse. Pompano are price-controlled at restaurants due to their exceptional flavor. Florida minimum 11 inches; bag limit 6 per day."
+  },
+  {
+    "name": "Mako shark (shortfin)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 62,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Bluefish, mackerel, menhaden near surface offshore and canyon edges",
+    "rig": "Heavy conventional offshore with wire leader",
+    "hook_size": "10/0-14/0 circle hook",
+    "sinker": "N/A \u2014 drifted near surface",
+    "lures": "Large trolled lures near surface",
+    "explanation_cold": "Shortfin mako sharks are the fastest sharks in the ocean (over 45 mph bursts) and the premier shark sport fish of the Northeast. They are spectacular fighters \u2014 leaping 20+ feet vertically when hooked. Most Northeast shark tournaments target mako. Populations have declined significantly. Mako are excellent eating \u2014 firm, steak-like flesh.",
+    "explanation_warm": "Mako sharks require NOAA HMS Angling Permit. MINIMUM 83 inches (approximately 7 feet) for females; 54 inches for males \u2014 designed to protect reproductive females. CATCH-AND-RELEASE IS STRONGLY ENCOURAGED \u2014 mako populations are declining. They are extremely dangerous to handle \u2014 have injured and killed anglers. Use lip gaffs or tail ropes only."
+  },
+  {
+    "name": "Pacific white shark (encounter)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 54,
+    "temp_max": 66,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      1
+    ],
+    "good_months": [
+      7,
+      2
+    ],
+    "bait": "N/A \u2014 protected; encounter only",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "White sharks (great white sharks) are fully protected in California and throughout US waters. They are apex predators found along the Pacific Coast, particularly near pinniped colonies. Young white sharks aggregate near beaches in southern California from June through January. Encounters with juvenile white sharks at beaches are increasingly common. Adults patrol from central California to Alaska.",
+    "explanation_warm": "White sharks are FULLY PROTECTED \u2014 illegal to target, harm, possess, or harass in California and US federal waters. If accidentally hooked, cut the line. Juvenile white sharks near SoCal beaches are generally not aggressive toward humans but give them space. Report all encounters to CDFW. They are critical apex predators of the Pacific ecosystem."
+  },
+  {
+    "name": "Swordfish (daytime deep-drop)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 72,
+    "temp_max": 82,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, mackerel rigged on circle hooks deployed deep at night or daytime",
+    "rig": "Heavy conventional with electric reel at 800-1800 ft",
+    "hook_size": "12/0-16/0 circle hook on heavy wire",
+    "sinker": "24-64 oz weighted rig",
+    "lures": "N/A \u2014 natural bait only",
+    "explanation_cold": "Daytime deep-drop swordfishing uses electric reels to present bait at 1000-1800 ft where swordfish hold during the day. Revolutionized the offshore swordfish fishery from South Florida through the Gulf. Modern electric reels make this accessible from 30 ft center console boats. Productive year-round in South Florida.",
+    "explanation_warm": "Minimum 47 in lower jaw fork length (LJFL). HMS Angling Permit required. Electric reels essential. Squid on large circle hooks at depth. A slow steady double pump of the rod tip signals a bite \u2014 wait for steady pressure then sweep hard multiple times."
+  },
+  {
+    "name": "Blue marlin (Gulf)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Large trolled lures, rigged mullet, and ballyhoo near Gulf Stream and eddies",
+    "rig": "Very heavy conventional trolling offshore",
+    "hook_size": "9/0-14/0 hook on rigged lures",
+    "sinker": "N/A \u2014 trolled lures",
+    "lures": "Large skirted lures (Islander, Pete) in blue and white or black and red",
+    "explanation_cold": "Blue marlin in the Gulf of Mexico and south Atlantic are trophy billfish that can exceed 1,000 lbs. They are found near Gulf Loop Current eddies, the Gulf Stream, and temperature breaks far offshore. Caught primarily by trolling large lures at 7-9 knots. Catch-and-release is strongly encouraged \u2014 the population has declined and ICCAT has set strict quotas.",
+    "explanation_warm": "Blue marlin are catch-and-release only at virtually all US tournaments. Minimum 99 in LJFL for retention under NOAA HMS. HMS Angling Permit required. Very heavy tackle \u2014 130 lb class minimum for large fish. Fighting a large blue marlin can take hours. Release immediately \u2014 a trophy photo at boatside is appropriate but return the fish quickly."
+  },
+  {
+    "name": "Dolphinfish (mahi-mahi)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live baitfish, flyingfish, squid near sargassum and floating debris offshore",
+    "rig": "Light to medium offshore near sargassum mats and color changes",
+    "hook_size": "4/0-7/0",
+    "sinker": "None to 1 oz",
+    "lures": "Trolled lures, Rapalas, and large jigs near sargassum",
+    "explanation_cold": "Mahi-mahi (dolphinfish, dorado) are the most colorful and acrobatic offshore fish. They live fast and die young (3-5 years maximum). Males have the characteristic square forehead (bull mahi). They aggregate under sargassum mats and floating debris. Available to offshore anglers from Virginia through the Gulf. The fastest-growing fish in the ocean \u2014 populations recover quickly despite heavy fishing pressure.",
+    "explanation_warm": "Mahi minimum 20 inches in most SE states with a 10-fish bag limit. No regulations in some Gulf states \u2014 check current rules. They cannot resist a live bait or jig thrown into a school. Once hooked, keep a second fish in the water \u2014 mahi school tightly and a hooked fish will keep the school nearby. Bleed immediately for best eating quality."
   }
 ]

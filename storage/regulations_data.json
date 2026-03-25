@@ -792,6 +792,24 @@
         "bag_limit": 2,
         "season": "Short annual season (typically July-September, 3-45 days)",
         "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Gulf: no minimum size."
       }
     },
     "CA": {
@@ -1671,6 +1689,30 @@
         "bag_limit": "2 per day",
         "season": "Mar-Nov (varies)",
         "notes": "IPHC managed. Check CDFW."
+      },
+      "striped_bass_sacramento": {
+        "min_size": "18 in",
+        "bag_limit": 2,
+        "season": "Year-round",
+        "notes": "No commercial harvest of striped bass in CA. License required."
+      },
+      "white_sturgeon_sport": {
+        "min_size": "38-54 in slot (fork length)",
+        "bag_limit": 1,
+        "season": "Year-round (barbless hook required in most areas)",
+        "notes": "Harvest only fish within 38-54 in slot. Permit required in some areas. Check CDFW."
+      },
+      "green_sturgeon": {
+        "min_size": "PROHIBITED (Southern DPS ESA Threatened)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Cannot harvest green sturgeon in CA. If accidentally caught release immediately."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "White sharks are protected in California. Do not target, harm, or harass. Report encounters to CDFW."
       }
     },
     "CT": {
@@ -2069,6 +2111,12 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
       }
     },
     "DE": {
@@ -3893,6 +3941,72 @@
         "bag_limit": 1,
         "season": "Mar 1-May 31, Sep 1-Nov 30 (closed Jun-Aug and Dec-Jan)",
         "notes": "Special snook permit required. Atlantic slot is 28-33 in (vs 28-32 on Gulf)."
+      },
+      "permit_atlantic": {
+        "min_size": "11 in",
+        "bag_limit": 2,
+        "season": "Year-round",
+        "notes": "Permit are catch-and-release in most tournament settings. Legal to keep with 11-inch minimum in FL (2/day)."
+      },
+      "pompano_atlantic": {
+        "min_size": "11 in",
+        "bag_limit": 6,
+        "season": "Year-round",
+        "notes": "One of the finest eating fish in Florida. Found in surf year-round."
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged \u2014 depleted population."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm in US waters."
+      },
+      "swordfish_daytime_deep_drop": {
+        "min_size": "47 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Minimum 47-inch lower jaw fork length."
+      },
+      "white_marlin": {
+        "min_size": "No harvest in tournament circuits; 66 in LJFL if retaining",
+        "bag_limit": "1 per vessel per day",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Severely depleted \u2014 release all white marlin."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "GA": {
@@ -4933,6 +5047,78 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged \u2014 depleted population."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm in US waters."
+      },
+      "swordfish_daytime_deep_drop": {
+        "min_size": "47 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Minimum 47-inch lower jaw fork length."
+      },
+      "sailfish_atlantic": {
+        "min_size": "No minimum (catch-and-release)",
+        "bag_limit": "2 per person per day if retaining",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged and universally practiced in tournaments."
+      },
+      "white_marlin": {
+        "min_size": "No harvest in tournament circuits; 66 in LJFL if retaining",
+        "bag_limit": "1 per vessel per day",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Severely depleted \u2014 release all white marlin."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "LA": {
@@ -5775,6 +5961,60 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "swordfish_daytime_deep_drop": {
+        "min_size": "47 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Minimum 47-inch lower jaw fork length."
+      },
+      "white_marlin": {
+        "min_size": "No harvest in tournament circuits; 66 in LJFL if retaining",
+        "bag_limit": "1 per vessel per day",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Severely depleted \u2014 release all white marlin."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Gulf: no minimum size."
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "MA": {
@@ -6216,6 +6456,12 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
       }
     },
     "MD": {
@@ -6950,6 +7196,48 @@
         "bag_limit": 1,
         "season": "Spring (Apr-May) and Fall (Oct-Nov)",
         "notes": "Complex zone-specific regulations. Check MD DNR."
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "blue_catfish_invasive_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "Unlimited \u2014 harvest encouraged",
+        "season": "Year-round",
+        "notes": "INVASIVE SPECIES \u2014 unlimited harvest. No possession limit."
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "ME": {
@@ -7168,6 +7456,12 @@
         "bag_limit": 3,
         "season": "Year-round",
         "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
       }
     },
     "MS": {
@@ -7908,6 +8202,24 @@
         "bag_limit": 2,
         "season": "Short annual season (typically July-September, 3-45 days)",
         "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Gulf: no minimum size."
       }
     },
     "NC": {
@@ -9225,6 +9537,66 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged \u2014 depleted population."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm in US waters."
+      },
+      "swordfish_daytime_deep_drop": {
+        "min_size": "47 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Minimum 47-inch lower jaw fork length."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "NJ": {
@@ -9943,6 +10315,24 @@
         "bag_limit": 1,
         "season": "Apr 15 - Dec 15",
         "notes": ""
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "NY": {
@@ -10539,6 +10929,24 @@
         "bag_limit": 1,
         "season": "Apr 15 - Dec 15",
         "notes": "PCB consumption advisories \u2014 check NYS DEC before eating Hudson River stripers."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "OR": {
@@ -11237,6 +11645,30 @@
         "bag_limit": "2 per day",
         "season": "Mar-Nov",
         "notes": "IPHC managed."
+      },
+      "white_sturgeon_sport": {
+        "min_size": "38-54 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Barbless hooks required. Check ODFW river-specific regulations."
+      },
+      "green_sturgeon": {
+        "min_size": "Limited harvest Northern DPS only",
+        "bag_limit": "1 per day (where open)",
+        "season": "Varies by river",
+        "notes": "Check ODFW \u2014 most Oregon rivers prohibit green sturgeon retention."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Protected in US federal waters."
+      },
+      "pacific_lamprey": {
+        "min_size": "Tribal harvest areas \u2014 check tribal regulations",
+        "bag_limit": "Check tribal regs",
+        "season": "Summer-fall upstream migration",
+        "notes": "Pacific lamprey have cultural significance to Pacific Northwest tribes. Sport harvest not common."
       }
     },
     "RI": {
@@ -11647,6 +12079,12 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
       }
     },
     "SC": {
@@ -12747,6 +13185,78 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged \u2014 depleted population."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm in US waters."
+      },
+      "swordfish_daytime_deep_drop": {
+        "min_size": "47 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Minimum 47-inch lower jaw fork length."
+      },
+      "sailfish_atlantic": {
+        "min_size": "No minimum (catch-and-release)",
+        "bag_limit": "2 per person per day if retaining",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged and universally practiced in tournaments."
+      },
+      "white_marlin": {
+        "min_size": "No harvest in tournament circuits; 66 in LJFL if retaining",
+        "bag_limit": "1 per vessel per day",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Severely depleted \u2014 release all white marlin."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "TX": {
@@ -13625,6 +14135,60 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "southern_flounder_gigging": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round (TX: special fall restrictions)",
+        "notes": "Gigging regulations same as rod-and-reel limits. TX has restricted fall gigging season at pass mouths."
+      },
+      "swordfish_daytime_deep_drop": {
+        "min_size": "47 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Minimum 47-inch lower jaw fork length."
+      },
+      "white_marlin": {
+        "min_size": "No harvest in tournament circuits; 66 in LJFL if retaining",
+        "bag_limit": "1 per vessel per day",
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Severely depleted \u2014 release all white marlin."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Gulf: no minimum size."
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "VA": {
@@ -14401,6 +14965,48 @@
         "bag_limit": 1,
         "season": "Spring and Fall",
         "notes": "VMRC regulations. Multiple seasons with different size limits."
+      },
+      "pompano_atlantic": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "blue_catfish_invasive_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "Unlimited \u2014 harvest encouraged",
+        "season": "Year-round",
+        "notes": "INVASIVE SPECIES \u2014 unlimited harvest encouraged to reduce population. Excellent eating."
+      },
+      "cobia_early_season": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Same rules as regular cobia. Atlantic and Gulf cobia share 33-inch minimum. 1 fish per day."
+      },
+      "mako_shark_shortfin": {
+        "min_size": "83 in (females); 54 in (males)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required."
+      },
+      "blue_marlin_gulf": {
+        "min_size": "99 in LJFL",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS Angling Permit required. Catch-and-release strongly encouraged. 99-inch minimum if retaining."
+      },
+      "dolphinfish_mahi_mahi": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "largemouth_bass_tidal": {
+        "min_size": "14 in (freshwater regulations)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
       }
     },
     "WA": {
@@ -15081,6 +15687,24 @@
         "bag_limit": "2 per day",
         "season": "Mar-Nov",
         "notes": "IPHC managed."
+      },
+      "white_sturgeon_sport": {
+        "min_size": "38-54 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "Barbless hooks. Columbia River rules complex \u2014 check WDFW."
+      },
+      "pacific_white_shark_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Protected in US federal waters."
+      },
+      "pacific_lamprey": {
+        "min_size": "Tribal harvest areas \u2014 check tribal regulations",
+        "bag_limit": "Check tribal regs",
+        "season": "Summer-fall upstream migration",
+        "notes": "Pacific lamprey have cultural significance to Pacific Northwest tribes. Sport harvest not common."
       }
     },
     "HI": {

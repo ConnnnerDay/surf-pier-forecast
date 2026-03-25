@@ -1730,6 +1730,23 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Pufferfish (northern)": ["panfish"],
     "Northern pipefish": ["panfish"],
     "Atlantic halfbeak": ["panfish"],
+    # Batches 88-92
+    "Permit (Atlantic)": ["game_fish", "catch_and_release"],
+    "Southern flounder (gigging)": ["game_fish"],
+    "Crab (stone) harvest": ["panfish"],
+    "Cobia (early season)": ["game_fish"],
+    "Pacific lamprey": ["panfish"],
+    "Green sturgeon": ["catch_and_release"],
+    "White sturgeon (sport)": ["game_fish"],
+    "Striped bass (Sacramento)": ["game_fish"],
+    "Largemouth bass (tidal)": ["game_fish"],
+    "Blue catfish (invasive tidal)": ["game_fish"],
+    "Pompano (Atlantic)": ["game_fish"],
+    "Pacific white shark (encounter)": ["catch_and_release"],
+    "Swordfish (daytime deep-drop)": ["game_fish"],
+    "Blue marlin (Gulf)": ["game_fish", "catch_and_release"],
+    "Dolphinfish (mahi-mahi)": ["game_fish"],
+    "Mako shark (shortfin)": ["game_fish", "catch_and_release"],
 }
 
 
