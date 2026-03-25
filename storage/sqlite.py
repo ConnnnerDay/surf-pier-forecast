@@ -198,6 +198,10 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
     if "avatar_url" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+    if "is_anonymous" not in user_cols:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0"
+        )
 
     profile_cols = set(_column_names(conn, "profiles"))
     if "wind_units" not in profile_cols:
