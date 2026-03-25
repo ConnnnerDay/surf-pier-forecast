@@ -1747,6 +1747,26 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Blue marlin (Gulf)": ["game_fish", "catch_and_release"],
     "Dolphinfish (mahi-mahi)": ["game_fish"],
     "Mako shark (shortfin)": ["game_fish", "catch_and_release"],
+    # Batches 93-97
+    "Atlantic mackerel (shore)": ["game_fish"],
+    "Chub mackerel": ["panfish"],
+    "Boston mackerel": ["panfish"],
+    "Longfin squid": ["panfish"],
+    "Market squid (Pacific)": ["panfish"],
+    "Humboldt squid": ["game_fish"],
+    "Northern sea cucumber": ["panfish"],
+    "Blood worm (tidal)": ["panfish"],
+    "Amberjack (Pacific)": ["game_fish"],
+    "Roosterfish": ["game_fish", "catch_and_release"],
+    "Dorado (Pacific)": ["game_fish"],
+    "Pacific crevalle jack": ["game_fish"],
+    "Rockfish (black/blue)": ["game_fish"],
+    "Rockfish (vermilion/canary)": ["game_fish"],
+    "Rockfish (copper/quillback)": ["game_fish"],
+    "Rockfish (olive/yellowtail)": ["game_fish"],
+    "Pileperch": ["panfish"],
+    "Dwarf perch": ["panfish"],
+    "Surfperch (shiner)": ["panfish"],
 }
 
 

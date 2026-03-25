@@ -24448,5 +24448,602 @@
     "lures": "Trolled lures, Rapalas, and large jigs near sargassum",
     "explanation_cold": "Mahi-mahi (dolphinfish, dorado) are the most colorful and acrobatic offshore fish. They live fast and die young (3-5 years maximum). Males have the characteristic square forehead (bull mahi). They aggregate under sargassum mats and floating debris. Available to offshore anglers from Virginia through the Gulf. The fastest-growing fish in the ocean \u2014 populations recover quickly despite heavy fishing pressure.",
     "explanation_warm": "Mahi minimum 20 inches in most SE states with a 10-fish bag limit. No regulations in some Gulf states \u2014 check current rules. They cannot resist a live bait or jig thrown into a school. Once hooked, keep a second fish in the water \u2014 mahi school tightly and a hooked fish will keep the school nearby. Bleed immediately for best eating quality."
+  },
+  {
+    "name": "Atlantic mackerel (shore)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      7,
+      12
+    ],
+    "bait": "Sabiki rigs, small metal jigs, feathers from piers and jetties",
+    "rig": "Light to medium spinning from pier or jetty",
+    "hook_size": "Sabiki size 4-8",
+    "sinker": "1-3 oz",
+    "lures": "Small metal jigs, feathers, and sabiki rigs",
+    "explanation_cold": "Atlantic mackerel travel in enormous schools along the coast in spring and fall. Iridescent fish that hit sabiki rigs with reckless abandon. Excellent eating \u2014 rich, oily, omega-3 packed flesh. Very perishable.",
+    "explanation_warm": "Schools appear near piers in April-May and September-October. Multi-hook rigs can produce 4-6 fish per drop. Very perishable \u2014 eat fresh or smoke within hours. Excellent grilled, smoked, or as sushi (shime saba)."
+  },
+  {
+    "name": "Chub mackerel",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Sabiki rigs, small metal jigs near surface offshore",
+    "rig": "Light to medium spinning offshore",
+    "hook_size": "Sabiki size 6-10",
+    "sinker": "1-2 oz",
+    "lures": "Small metal jigs and feathers",
+    "explanation_cold": "Chub mackerel are smaller than Atlantic mackerel but equally abundant and excellent eating. Found farther offshore than Atlantic mackerel. Important bait fish for large pelagics when used whole or as rigged strips.",
+    "explanation_warm": "Excellent bait and food fish. Rich, oily flesh \u2014 eat immediately or preserve. Sabiki rigs offshore produce them quickly."
+  },
+  {
+    "name": "Boston mackerel",
+    "coast": "east",
+    "regions": [
+      "northeast"
+    ],
+    "temp_min": 44,
+    "temp_max": 60,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      7,
+      12
+    ],
+    "bait": "Sabiki rigs, small feathers from party boats offshore",
+    "rig": "Light spinning from party boat or pier",
+    "hook_size": "Sabiki size 4-8",
+    "sinker": "1-3 oz",
+    "lures": "Small metal jigs and feathers",
+    "explanation_cold": "Boston mackerel is the local New England name for Atlantic mackerel \u2014 same species. Iconic catch on New England party boats in spring and fall. Hundreds of fish per trip possible when schools are thick.",
+    "explanation_warm": "Same as Atlantic mackerel \u2014 sabiki rigs produce multiple fish per drop. Ice immediately. Excellent smoked or baked whole."
+  },
+  {
+    "name": "Longfin squid",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 46,
+    "temp_max": 62,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "good_months": [
+      6,
+      9
+    ],
+    "bait": "Squid jigs (EGI style), sabiki rigs near lights at night",
+    "rig": "Light to medium spinning with squid jig at 10-80 ft",
+    "hook_size": "Squid jig EGI style",
+    "sinker": "1/4-2 oz",
+    "lures": "Squid jigs in various colors near pier lights at night",
+    "explanation_cold": "Longfin squid are the most commercially important squid on the US East Coast. They school in vast numbers. Recreational squid jigging from piers at night is extremely popular in NE and Mid-Atlantic. 100+ squid per night is common when schools are in. Excellent eating and top bait.",
+    "explanation_warm": "Squid jig under pier lights at night \u2014 shine light on water, watch squid swarm in. Ink stains permanently \u2014 wear old clothes. Minimum 4 inches mantle; no bag limit in most states. Blanch tentacles or fry whole."
+  },
+  {
+    "name": "Market squid (Pacific)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 52,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "good_months": [
+      6,
+      9
+    ],
+    "bait": "Squid jigs near pier lights at night during spawning aggregations",
+    "rig": "Light spinning at 5-30 ft under pier lights",
+    "hook_size": "Squid jig EGI style",
+    "sinker": "1/4-1 oz",
+    "lures": "Squid jigs in white, pink, or chartreuse",
+    "explanation_cold": "Market squid are the most commercially important cephalopod on the West Coast. They spawn in massive aggregations nearshore in winter and spring. During spawning runs, thousands gather near piers where they can be jigged quickly. Short-lived \u2014 die after spawning.",
+    "explanation_warm": "Spawning runs at CA piers (Monterey, Santa Barbara) from November through spring. Squid jigs in white or pink near lights at night. Ice immediately. Excellent fresh calamari."
+  },
+  {
+    "name": "Humboldt squid",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 56,
+    "temp_max": 70,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      9,
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      8
+    ],
+    "bait": "Large squid jigs (150-250g), chrome spoons in deep water offshore",
+    "rig": "Heavy spinning or conventional at 100-600 ft offshore",
+    "hook_size": "Large squid jig or 3-hook rig",
+    "sinker": "3-8 oz",
+    "lures": "Large chrome squid jigs jigged aggressively",
+    "explanation_cold": "Humboldt squid (jumbo squid) can reach 6 feet mantle length and 100+ lbs. They travel in huge aggressive schools and attack lights and jigs. Common in the Monterey Canyon system.",
+    "explanation_warm": "CAUTION: Humboldt squid bite, ink heavily, and pull forcefully. Use a net or Boca grip to land. Ink stains permanently \u2014 wear rain gear. Large jigs jigged aggressively near light sources at night. Excellent calamari."
+  },
+  {
+    "name": "Northern sea cucumber",
+    "coast": "east",
+    "regions": [
+      "northeast"
+    ],
+    "temp_min": 40,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "N/A \u2014 not targeted; notable marine invertebrate",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Northern sea cucumbers (Cucumaria frondosa) are large orange echinoderms found on rocky bottoms and kelp beds from the Gulf of Maine to New England. They are ecologically important detritus feeders. Not targeted by recreational anglers. Some commercial harvest in Maine for Asian export markets.",
+    "explanation_warm": "Sea cucumbers are not sport fish. Noted for ecological importance and occasional appearance when diving or raking lobster. Maine has a commercial sea cucumber fishery \u2014 license required. Do not harvest without knowing regulations."
+  },
+  {
+    "name": "Blood worm (tidal)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 42,
+    "temp_max": 60,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "N/A \u2014 premium fishing bait species; harvested from tidal flats",
+    "rig": "Used as bait on hook sizes #4-2/0",
+    "hook_size": "N/A as fish",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Blood worms (Glycera dibranchiata) are large polychaete worms harvested from tidal flats in Maine for use as premium fishing bait throughout the East Coast. They can reach 15 inches and have retractable jaws with teeth. Maine blood worm diggers harvest millions of pounds annually for sale at bait shops. They bite \u2014 handle with care. The most expensive bait per pound on the East Coast.",
+    "explanation_warm": "Blood worms have a retractable proboscis with 4 hooked jaws that can deliver a painful pinch. Hold them just behind the head when baiting a hook. They are a top bait for striped bass, weakfish, summer flounder, and tautog. Very perishable \u2014 keep wrapped in newspaper in the refrigerator and use within 2-3 days."
+  },
+  {
+    "name": "Amberjack (Pacific)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 62,
+    "temp_max": 74,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live anchovies, sardines, iron jigs near offshore kelp and structure",
+    "rig": "Medium to heavy spinning or conventional near kelp and rocky structure",
+    "hook_size": "5/0-8/0",
+    "sinker": "None to 4 oz iron jig",
+    "lures": "Iron jigs, large swimbaits, and surface lures near kelp",
+    "explanation_cold": "Pacific amberjack (Seriola colburni) are found in southern California offshore waters. They fight hard but are less common than yellowtail. Found near rocky offshore structure, kelp beds, and islands. The California amberjack fishery is secondary to yellowtail but can be excellent near offshore islands like Catalina and the Channel Islands.",
+    "explanation_warm": "Pacific amberjack minimum 24 inches in California. Use heavy tackle \u2014 they pull hard and head for structure. Similar to yellowtail tactics: iron jigs and live anchovies. Best near Catalina Island and Channel Islands from late spring through fall."
+  },
+  {
+    "name": "Roosterfish",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 66,
+    "temp_max": 78,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Live baitfish, mullet, surface lures in sandy beach surf",
+    "rig": "Medium to heavy spinning from beach or boat",
+    "hook_size": "5/0-9/0",
+    "sinker": "None to 1 oz",
+    "lures": "Large topwater lures and surface swimmers",
+    "explanation_cold": "Roosterfish are spectacular game fish named for their dramatic dorsal fin with seven elongated spines that erect when excited. They are primarily found in Mexican Pacific waters but occasionally venture into extreme southern California during warm El Nino years. They hunt in the surf zone for mullet and other baitfish. One of the most coveted Pacific game fish.",
+    "explanation_warm": "Roosterfish in California are rare visitors during warm water years. They surf-fish along sandy beaches, often charging bait in the white water. Surface lures retrieved fast through breaking waves trigger aggressive strikes. Catch-and-release is strongly encouraged. Handle carefully \u2014 they tire easily and benefit from careful revival."
+  },
+  {
+    "name": "Dorado (Pacific)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 64,
+    "temp_max": 76,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Flying fish, anchovies, trolled lures near temperature breaks offshore",
+    "rig": "Light to medium spinning or conventional offshore",
+    "hook_size": "4/0-7/0",
+    "sinker": "None to 1 oz",
+    "lures": "Trolled lures, Rapalas, and large jigs near sargassum offshore",
+    "explanation_cold": "Pacific mahi-mahi (dorado) appears off California during warm El Nino years and is common in Mexican waters. They range north into California when water temperatures allow (late summer-fall). Same aggressive behavior as Atlantic mahi \u2014 they gather under floating debris and kelp paddies offshore. Excellent eating.",
+    "explanation_warm": "California dorado are seasonal \u2014 present only when Pacific water temperatures warm sufficiently (typically El Nino years). Kelp paddies offshore drift north from Baja and serve as floating aggregation points. Cast any lure into a kelp paddy \u2014 mahi cannot resist. Excellent eating: same quality as Atlantic mahi."
+  },
+  {
+    "name": "Pacific crevalle jack",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 62,
+    "temp_max": 74,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Small jigs, spoons near surface in warm inshore waters",
+    "rig": "Light to medium spinning near surface",
+    "hook_size": "3/0-6/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small jigs, spoons, and surface lures",
+    "explanation_cold": "Pacific crevalle jack are rare visitors to extreme southern California from Mexican waters. Like their Atlantic cousins, they are powerful, surface-crashing schools of hunters. Occasional warm-water strays into San Diego Bay and nearshore southern California during El Nino events.",
+    "explanation_warm": "Pacific crevalle jack are rare in California \u2014 exciting catch during warm water events. Same hard-fighting behavior as Atlantic crevalle. Catch and photograph \u2014 release after a good fight."
+  },
+  {
+    "name": "Rockfish (black/blue)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Jigs, cut squid, herring near rocky reef at 50-200 ft",
+    "rig": "Medium to heavy bottom rig near rocky reef at 50-200 ft",
+    "hook_size": "3/0-6/0 circle hook",
+    "sinker": "3-8 oz",
+    "lures": "Heavy lead-head jigs (1-4 oz) near rocky bottom",
+    "explanation_cold": "Black rockfish and blue rockfish are among the most commonly caught inshore rockfish species on the West Coast. Black rockfish school actively in the water column over rocky reefs, while blue rockfish school in shallower water near kelp. Both are popular from central California to Alaska. Long-lived and slow-growing \u2014 100 year old fish have been documented.",
+    "explanation_warm": "California rockfish complex: 10-fish aggregate bag limit (groundfish package). Black and blue rockfish are part of the rockfish aggregate. Minimum 10 inches. Depth and area restrictions apply \u2014 check CDFW for current RCA (Rockfish Conservation Area) closures. Barotrauma concern \u2014 use descender device for released fish."
+  },
+  {
+    "name": "Rockfish (vermilion/canary)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 64,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Jigs, cut squid, herring near rocky reef at 60-300 ft",
+    "rig": "Medium to heavy bottom rig near rocky reef at 60-300 ft",
+    "hook_size": "3/0-6/0",
+    "sinker": "4-12 oz",
+    "lures": "Heavy jigs near rocky bottom",
+    "explanation_cold": "Vermilion rockfish and canary rockfish are brightly colored Pacific rockfish prized for their beautiful appearance and excellent taste. Vermilion are reddish-orange with mottled patterns; canary are vivid orange with gray mottling. Both inhabit rocky reefs at moderate depths. Very long-lived \u2014 canary rockfish over 80 years old have been recorded.",
+    "explanation_warm": "Canary rockfish are overfished in some areas \u2014 subject to extra-strict management within the rockfish aggregate. Check CDFW/ODFW for current canary-specific restrictions. Both species are excellent eating. Descender devices are REQUIRED in California for released rockfish caught at depth."
+  },
+  {
+    "name": "Rockfish (copper/quillback)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 62,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Jigs, cut squid near rocky reef at 30-200 ft",
+    "rig": "Medium bottom rig near rocky reef at 30-200 ft",
+    "hook_size": "2/0-5/0",
+    "sinker": "2-8 oz",
+    "lures": "Jigs near rocky bottom",
+    "explanation_cold": "Copper rockfish and quillback rockfish are medium-depth rocky reef species found throughout the Pacific Coast. Copper rockfish have distinctive copper-orange coloration with white mottling; quillback have extremely pronounced dorsal fin spines. Both are components of the inshore rocky reef community from central California to Alaska. Good eating.",
+    "explanation_warm": "Copper and quillback rockfish are part of the rockfish bag limit aggregate. Check CDFW/ODFW depth restrictions and RCA closures. Long-lived \u2014 handle gently and use descender devices for deep-caught fish."
+  },
+  {
+    "name": "Rockfish (olive/yellowtail)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 62,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Jigs, bait near rocky bottom at 30-150 ft",
+    "rig": "Medium bottom rig near rocky reef",
+    "hook_size": "2/0-4/0",
+    "sinker": "2-6 oz",
+    "lures": "Jigs near rocky bottom",
+    "explanation_cold": "Olive rockfish and yellowtail rockfish are common shallow to mid-depth rockfish species in the Pacific. Olive rockfish are particularly common in central California kelp and near rocky shores. Yellowtail rockfish school in large numbers in the water column above deep reef \u2014 common offshore.",
+    "explanation_warm": "Olive rockfish are caught from rocky shores and kelp edges. Yellowtail rockfish school in the water column \u2014 drop jigs to the school. Part of the rockfish aggregate bag limit."
+  },
+  {
+    "name": "Pileperch",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 50,
+    "temp_max": 62,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Mussels, pile worms, shrimp near pier pilings and rocky structure",
+    "rig": "Light bottom rig near pilings at 5-40 ft",
+    "hook_size": "#4-#1",
+    "sinker": "1/4-1 oz",
+    "lures": "Tiny jigs near structure",
+    "explanation_cold": "Pileperch are the largest surfperch species commonly caught from piers (to 17 inches, 3 lbs). They inhabit pier pilings, dock piling, jetty rocks, and kelp. Common from Baja to Alaska. They have distinctive large scales and a forked black-tipped tail. Excellent eating.",
+    "explanation_warm": "Pileperch are the prize surfperch from California piers. Mussels pulled from pilings are the classic bait. They bite gently near the bottom around piling structures. Larger than most surfperch \u2014 worth keeping at 12+ inches. Part of surfperch group with no bag limit."
+  },
+  {
+    "name": "Dwarf perch",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 56,
+    "temp_max": 68,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Tiny invertebrates near eelgrass and soft bottom in bays",
+    "rig": "Ultralight near eelgrass at 3-15 ft",
+    "hook_size": "#8-#6",
+    "sinker": "None",
+    "lures": "Tiny jigs near eelgrass",
+    "explanation_cold": "Dwarf perch are the smallest surfperch, rarely exceeding 4 inches. Found in bays and estuaries of California, particularly in eelgrass beds. Not targeted by anglers due to small size. Good indicator species for eelgrass habitat health.",
+    "explanation_warm": "Dwarf perch are too small to target recreationally. Occasionally caught on tiny hooks near eelgrass. Fascinating to observe in clear-water bays."
+  },
+  {
+    "name": "Surfperch (shiner)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 64,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Pile worms, small shrimp near pier pilings and rocky shore",
+    "rig": "Very light rig near pilings at 3-20 ft",
+    "hook_size": "#8-#4",
+    "sinker": "None to 1/4 oz",
+    "lures": "Tiny jigs near structure",
+    "explanation_cold": "Shiner perch are small but extremely abundant surfperch found around pier pilings, dock structures, and rocky shores from Alaska to Baja. They form large schools visible near the surface. Classic first-fish for young anglers. Easy to catch in numbers. Small (usually 5-8 inches).",
+    "explanation_warm": "Shiner perch are the most commonly caught fish on many California piers \u2014 great for beginners and kids. Tiny hooks with pile worm near pilings. School near the surface around structure. Good bait fish when used alive for larger species."
   }
 ]

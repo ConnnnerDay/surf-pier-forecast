@@ -810,6 +810,12 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Gulf: no minimum size."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "CA": {
@@ -1713,6 +1719,84 @@
         "bag_limit": 0,
         "season": "Year-round",
         "notes": "White sharks are protected in California. Do not target, harm, or harass. Report encounters to CDFW."
+      },
+      "market_squid_pacific": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Commercial license required for commercial harvest. Recreational pier jigging encouraged \u2014 no special permit needed."
+      },
+      "humboldt_squid": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Use large squid jigs (150-250g). Handle carefully \u2014 can bite and ink aggressively."
+      },
+      "rockfish_black_blue": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with depth/area restrictions)",
+        "notes": "Part of 10-fish rockfish aggregate. Depth restrictions and RCA closures apply. Descender devices required for released fish at depth."
+      },
+      "rockfish_vermilion_canary": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Canary rockfish may have special restrictions within aggregate. Check CDFW/ODFW."
+      },
+      "rockfish_copper_quillback": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Part of rockfish aggregate. Depth restrictions apply."
+      },
+      "rockfish_olive_yellowtail": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Part of rockfish aggregate."
+      },
+      "amberjack_pacific": {
+        "min_size": "24 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "California yellowtail and amberjack \u2014 same regulations. License required."
+      },
+      "roosterfish": {
+        "min_size": "No harvest encouraged",
+        "bag_limit": "Catch-and-release",
+        "season": "Year-round",
+        "notes": "Rare visitor to CA from Mexican waters. Catch-and-release strongly encouraged."
+      },
+      "dorado_pacific": {
+        "min_size": "20 in",
+        "bag_limit": 10,
+        "season": "Year-round (seasonal El Nino years)",
+        "notes": "Same regulations as East Coast mahi-mahi in federal waters. Seasonal based on warm water availability."
+      },
+      "pacific_crevalle_jack": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Rare visitor to CA."
+      },
+      "pileperch": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Surfperch family \u2014 no bag limit or size minimum in California."
+      },
+      "dwarf_perch": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Surfperch family \u2014 no bag limit or size minimum in California."
+      },
+      "surfperch_shiner": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Surfperch family \u2014 no bag limit or size minimum in California."
       }
     },
     "CT": {
@@ -2117,6 +2201,36 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS Angling Permit required."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
+      },
+      "blood_worm_tidal": {
+        "min_size": "N/A \u2014 bait use only",
+        "bag_limit": "N/A",
+        "season": "Year-round",
+        "notes": "Blood worms are harvested commercially in Maine for sale as bait throughout the Northeast."
       }
     },
     "DE": {
@@ -2449,6 +2563,30 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
       }
     },
     "FL": {
@@ -4007,6 +4145,12 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "GA": {
@@ -5119,6 +5263,12 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "LA": {
@@ -6015,6 +6165,12 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "MA": {
@@ -6462,6 +6618,30 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS Angling Permit required."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "blood_worm_tidal": {
+        "min_size": "N/A \u2014 bait use only",
+        "bag_limit": "N/A",
+        "season": "Year-round",
+        "notes": "Blood worms are harvested commercially in Maine for sale as bait throughout the Northeast."
       }
     },
     "MD": {
@@ -7238,6 +7418,36 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Rare visitor north of NC in warm months."
       }
     },
     "ME": {
@@ -7462,6 +7672,30 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS Angling Permit required."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "blood_worm_tidal": {
+        "min_size": "Commercial harvest: license required",
+        "bag_limit": "N/A",
+        "season": "Year-round",
+        "notes": "Commercial blood worm digging requires Maine license. Not sport fished \u2014 used as bait. Handle carefully \u2014 they bite with pincer jaws."
       }
     },
     "MS": {
@@ -8220,6 +8454,12 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Gulf: no minimum size."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "NC": {
@@ -9597,6 +9837,30 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
       }
     },
     "NJ": {
@@ -10333,6 +10597,36 @@
         "bag_limit": 10,
         "season": "Year-round",
         "notes": ""
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Rare visitor north of NC in warm months."
+      },
+      "blood_worm_tidal": {
+        "min_size": "N/A \u2014 bait use only",
+        "bag_limit": "N/A",
+        "season": "Year-round",
+        "notes": "Blood worms are harvested commercially in Maine for sale as bait throughout the Northeast."
       }
     },
     "NY": {
@@ -10947,6 +11241,42 @@
         "bag_limit": 10,
         "season": "Year-round",
         "notes": ""
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Rare visitor north of NC in warm months."
+      },
+      "blood_worm_tidal": {
+        "min_size": "N/A \u2014 bait use only",
+        "bag_limit": "N/A",
+        "season": "Year-round",
+        "notes": "Blood worms are harvested commercially in Maine for sale as bait throughout the Northeast."
       }
     },
     "OR": {
@@ -11669,6 +11999,54 @@
         "bag_limit": "Check tribal regs",
         "season": "Summer-fall upstream migration",
         "notes": "Pacific lamprey have cultural significance to Pacific Northwest tribes. Sport harvest not common."
+      },
+      "humboldt_squid": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Use large squid jigs (150-250g). Handle carefully \u2014 can bite and ink aggressively."
+      },
+      "rockfish_black_blue": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with depth/area restrictions)",
+        "notes": "Part of 10-fish rockfish aggregate. Depth restrictions and RCA closures apply. Descender devices required for released fish at depth."
+      },
+      "rockfish_vermilion_canary": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Canary rockfish may have special restrictions within aggregate. Check CDFW/ODFW."
+      },
+      "rockfish_copper_quillback": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Part of rockfish aggregate. Depth restrictions apply."
+      },
+      "rockfish_olive_yellowtail": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Part of rockfish aggregate."
+      },
+      "pileperch": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "dwarf_perch": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "surfperch_shiner": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "RI": {
@@ -12085,6 +12463,36 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS Angling Permit required."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
+      },
+      "blood_worm_tidal": {
+        "min_size": "N/A \u2014 bait use only",
+        "bag_limit": "N/A",
+        "season": "Year-round",
+        "notes": "Blood worms are harvested commercially in Maine for sale as bait throughout the Northeast."
       }
     },
     "SC": {
@@ -13257,6 +13665,12 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "TX": {
@@ -14189,6 +14603,12 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "VA": {
@@ -15007,6 +15427,36 @@
         "bag_limit": 5,
         "season": "Year-round",
         "notes": "Freshwater license required. State freshwater bass regulations apply in tidal freshwater zones."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
+      },
+      "longfin_squid": {
+        "min_size": "4 in mantle",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "EGI squid jigs under pier lights at night. Ink stains permanently. Excellent bait and eating."
+      },
+      "permit_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Rare visitor north of NC in warm months."
       }
     },
     "WA": {
@@ -15705,6 +16155,48 @@
         "bag_limit": "Check tribal regs",
         "season": "Summer-fall upstream migration",
         "notes": "Pacific lamprey have cultural significance to Pacific Northwest tribes. Sport harvest not common."
+      },
+      "rockfish_black_blue": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with depth/area restrictions)",
+        "notes": "Part of 10-fish rockfish aggregate. Depth restrictions and RCA closures apply. Descender devices required for released fish at depth."
+      },
+      "rockfish_vermilion_canary": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Canary rockfish may have special restrictions within aggregate. Check CDFW/ODFW."
+      },
+      "rockfish_copper_quillback": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Part of rockfish aggregate. Depth restrictions apply."
+      },
+      "rockfish_olive_yellowtail": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round (with restrictions)",
+        "notes": "Part of rockfish aggregate."
+      },
+      "pileperch": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "dwarf_perch": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "surfperch_shiner": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "HI": {
@@ -16012,6 +16504,24 @@
         "bag_limit": 3,
         "season": "Year-round",
         "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "atlantic_mackerel_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Very perishable \u2014 ice immediately. ASMFC managed commercially; no recreational bag limit."
+      },
+      "chub_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "boston_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Same species as Atlantic mackerel."
       }
     },
     "PA": {
