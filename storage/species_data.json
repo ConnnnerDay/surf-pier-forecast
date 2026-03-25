@@ -21865,5 +21865,834 @@
     "lures": "N/A",
     "explanation_cold": "Gulf menhaden are a separate species from Atlantic menhaden, slightly smaller on average. They are the dominant forage fish in the Gulf of Mexico, supporting redfish, speckled trout, cobia, king mackerel, and other predators. The Omega Protein processing plant in Louisiana uses Gulf menhaden for fish meal. Important as both bait and in maintaining the Gulf food web.",
     "explanation_warm": "Gulf menhaden are found in enormous schools in the Gulf, particularly in fall. Cast-netted for bait for virtually every Gulf species. Exceptional chum when ground fresh \u2014 draws redfish and speckled trout onto shallow flats. Available at most coastal bait shops as fresh or frozen pogies."
+  },
+  {
+    "name": "Pacific anchovy",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 66,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Sabiki rigs or cast nets \u2014 primarily live bait for salmon, halibut, rockfish",
+    "rig": "Sabiki rig at 5-30 ft from pier or boat",
+    "hook_size": "Sabiki size 10-14",
+    "sinker": "1/2-2 oz",
+    "lures": "N/A",
+    "explanation_cold": "Northern anchovy are the most important forage fish in the California Current ecosystem. They support salmon, albacore, halibut, sea lions, pelicans, and whales. When schools move nearshore they can be caught by the thousands with sabiki rigs and cast nets from piers. Fresh live anchovies are the top bait for Pacific halibut and King salmon. Also excellent eating \u2014 salted, canned, or fresh-grilled.",
+    "explanation_warm": "Live anchovies are the premium salmon and halibut bait in California. Fish them under a large float (slider rig) or on a standard live bait hook through the nose. Keep in a circular livewell with good aeration. Anchovies are fragile \u2014 handle gently. When schools are thick at a pier, sabiki rigs can fill a bucket in minutes."
+  },
+  {
+    "name": "Walleye pollock (shore)",
+    "coast": "west",
+    "regions": [
+      "alaska",
+      "pacific northwest"
+    ],
+    "temp_min": 32,
+    "temp_max": 50,
+    "temp_ideal_low": 34,
+    "temp_ideal_high": 48,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Small jigs, sabiki rigs, cut bait near shore in winter",
+    "rig": "Light to medium rig from shore or pier",
+    "hook_size": "#4-2/0",
+    "sinker": "1-4 oz",
+    "lures": "Small metal jigs and sabiki rigs",
+    "explanation_cold": "Walleye pollock (Alaska pollock) are the world is largest fish fishery by volume \u2014 the basis of most fast food fish and frozen fish products. They inhabit the North Pacific and can be caught from shore in Alaska in winter when schools move into shallow water. Related to cod, their flesh is white, mild, and flaky.",
+    "explanation_warm": "Walleye pollock can be caught from Alaska shores in winter during shallow runs. Use small jigs or sabiki rigs. No state minimum size or bag limit for recreational harvest in Alaska \u2014 regulations change, verify current rules. Excellent eating \u2014 substitute for cod in any recipe."
+  },
+  {
+    "name": "Garibaldi (protected)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 58,
+    "temp_max": 72,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [],
+    "bait": "FULLY PROTECTED \u2014 cannot be caught, harassed, or harmed",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "The garibaldi is California state marine fish \u2014 a brilliant orange damselfish that inhabits kelp forests and rocky reefs from Monterey Bay south to Baja. They are aggressively territorial, guarding algae nesting patches. Garibaldi are fully protected by California law \u2014 it is illegal to catch, harass, touch, or harm them. They are commonly seen while diving and snorkeling.",
+    "explanation_warm": "FULLY PROTECTED \u2014 Do not attempt to catch. Garibaldi are California state marine fish. Fines for harming or possessing garibaldi are severe. If accidentally hooked, release immediately without removing from water. Do not photograph in a way that disturbs the fish."
+  },
+  {
+    "name": "Halfmoon",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 58,
+    "temp_max": 68,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      3,
+      12
+    ],
+    "bait": "Mussels, bread, squid, green algae near pier pilings and kelp",
+    "rig": "Light bottom rig or float rig near pier pilings and kelp at 10-60 ft",
+    "hook_size": "#4-#1",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small jigs near kelp",
+    "explanation_cold": "Halfmoon are medium-sized, moon-shaped blue-black fish common on California piers and rocky reefs from Monterey to Baja. They are omnivores feeding on algae, mussels, and invertebrates near kelp and pier pilings. Popular catch from Southern California piers \u2014 particularly popular bait is green algae (moss) or mussel. Good eating when cleaned fresh.",
+    "explanation_warm": "Halfmoon are a favorite California pier species. Fish mussel or green alga (pulled from pier pilings) on a #4 hook just above the bottom near the pilings. They bite softly \u2014 set with a firm pull. Common on Redondo, Hermosa, and Santa Monica piers in summer. Good eating \u2014 firm, mild white flesh."
+  },
+  {
+    "name": "Pollock (Atlantic surf)",
+    "coast": "east",
+    "regions": [
+      "northeast"
+    ],
+    "temp_min": 36,
+    "temp_max": 54,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Jigs, metal lures, cut herring from jetty and surf",
+    "rig": "Medium to heavy spinning from jetty or surf",
+    "hook_size": "2/0-5/0",
+    "sinker": "1-4 oz",
+    "lures": "Diamond jigs, metal jigs from jetty",
+    "explanation_cold": "Atlantic pollock are excellent game fish caught from New England jetties in fall through spring. They chase large jigs and metal spoons aggressively. Pollock move shallow in cold months and are a prime winter target. Excellent eating.",
+    "explanation_warm": "Pollock move inshore on NE rocky shores and jetties in fall and winter. Cast large diamond jigs from jetty tips with a fast erratic retrieve. Most active at dawn and dusk. Prolific from Maine to Cape Cod in October-February."
+  },
+  {
+    "name": "Tomcod (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "northeast"
+    ],
+    "temp_min": 34,
+    "temp_max": 52,
+    "temp_ideal_low": 36,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      10,
+      4
+    ],
+    "bait": "Shrimp, worms, small jigs from piers and tidal rivers in winter",
+    "rig": "Ultralight bottom rig in tidal rivers and harbors",
+    "hook_size": "#6-#2",
+    "sinker": "1/4-1 oz",
+    "lures": "Tiny jigs near bottom",
+    "explanation_cold": "Atlantic tomcod are small cod family members in coastal estuaries from New Brunswick to Virginia. Tomcod are a winter species caught December through February from piers and tidal rivers.",
+    "explanation_warm": "Tomcod are classic NE winter harbor fish. Tiny jigs or worms near bottom. Hudson River tomcod carry PCB contamination \u2014 check advisories before eating."
+  },
+  {
+    "name": "Tautog (tog)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 44,
+    "temp_max": 62,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "good_months": [
+      6,
+      9
+    ],
+    "bait": "Green crabs, fiddler crabs near rocky structure and wrecks",
+    "rig": "Medium to heavy bottom rig near rocky structure",
+    "hook_size": "2/0-4/0 strong hook",
+    "sinker": "2-6 oz",
+    "lures": "Crab imitations near structure",
+    "explanation_cold": "Tautog (blackfish) are one of the most prized NE game fish, with powerful fights and delicious flesh. They inhabit rocky structure, wrecks, and jetties from Nova Scotia to South Carolina. Available in spring and fall \u2014 absent in summer when they move deep.",
+    "explanation_warm": "Tautog fishing: green crab pieces on 2/0-4/0 hook directly on rocky bottom. Line-shy \u2014 set hard when line tightens. Strong fighters. Exceptional in chowders. Minimum 16 inches in most states with spring and fall seasons."
+  },
+  {
+    "name": "Black sea bass (NE pier)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 54,
+    "temp_max": 72,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Squid, clams, crabs, sea worms near rocky structure at 20-100 ft",
+    "rig": "Medium bottom rig near structure",
+    "hook_size": "2/0-4/0",
+    "sinker": "2-6 oz",
+    "lures": "Small jigs near rocky structure",
+    "explanation_cold": "Black sea bass are popular NE reef fish on rocky structure, wrecks, and reef from Maine to Florida. They are protogynous hermaphrodites. Found in shallow structure in warm months. Highly regulated with size and bag limits.",
+    "explanation_warm": "Black sea bass minimum 15 inches in most NE states with 3-5 fish bag limit. Squid and clam are classic baits. Use circle hooks \u2014 they swallow deeply. Excellent eating \u2014 fine firm white flesh."
+  },
+  {
+    "name": "Bergall",
+    "coast": "east",
+    "regions": [
+      "northeast"
+    ],
+    "temp_min": 42,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Mussels, worms, barnacles near rocky structure",
+    "rig": "Very light bottom rig near rocky structure and pilings",
+    "hook_size": "#6-#2",
+    "sinker": "1/4-1/2 oz",
+    "lures": "N/A",
+    "explanation_cold": "Bergall (cunner) is the regional New England name for the species also called cunner. Same fish \u2014 small wrasse relatives found around pier pilings and rocky structure from Nova Scotia to New Jersey. Bait stealers. Small but abundant. The name bergall is particularly used in New York and New Jersey.",
+    "explanation_warm": "Bergall and cunner are the same species. Classic summer pier fish throughout the Northeast. Small hooks with mussels or worms near pilings. Usually returned due to small size but edible."
+  },
+  {
+    "name": "California halibut (juvenile)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 54,
+    "temp_max": 68,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live anchovies, small sardines, smelt on sandy bottom at 10-60 ft",
+    "rig": "Live bait rig near sandy bottom",
+    "hook_size": "3/0-5/0 live bait hook",
+    "sinker": "1/2-2 oz",
+    "lures": "Swimbaits on 1/2-1 oz swimbait hooks near sandy bottom",
+    "explanation_cold": "Juvenile California halibut are common in bays and shallow nearshore waters from Humboldt Bay south. They inhabit sandy flats and make short ambush strikes at baitfish. Common in San Francisco Bay, Tomales Bay, Morro Bay, and SoCal bays. Excellent eating.",
+    "explanation_warm": "California halibut must be 22 inches to keep in California (5-fish bag limit). Juveniles must be released. They strike swimbaits and live bait aggressively. Release quickly \u2014 small halibut are the future fishery."
+  },
+  {
+    "name": "Pacific halibut (juvenile)",
+    "coast": "west",
+    "regions": [
+      "pacific northwest",
+      "alaska"
+    ],
+    "temp_min": 44,
+    "temp_max": 56,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Herring, squid, jigs on sandy bottom at 60-300 ft",
+    "rig": "Heavy bottom rig on sandy bottom at 60-300 ft",
+    "hook_size": "5/0-10/0 circle hook",
+    "sinker": "8-32 oz",
+    "lures": "Heavy metal jigs (4-16 oz) on sandy bottom",
+    "explanation_cold": "Pacific halibut are the largest flatfish in the world (up to 8 ft, 500 lbs). Managed by the IPHC. Found throughout the North Pacific from CA to Alaska on sandy bottoms at 20-900 ft. Prime spring and summer fishery in Alaska and BC.",
+    "explanation_warm": "Primarily fished from boats. Minimum sizes and possession limits vary by area and year \u2014 check IPHC regulations. Big halibut require brain-spiking before landing. Shore opportunities in Alaska harbors exist for small fish."
+  },
+  {
+    "name": "Flounder (Gulf)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live finger mullet, mud minnows, shrimp in estuaries at 1-20 ft",
+    "rig": "Light to medium bottom rig in estuaries and nearshore",
+    "hook_size": "2/0-4/0",
+    "sinker": "None to 1 oz",
+    "lures": "Gulp shrimp, small paddle tail swimbaits on sandy/muddy bottom",
+    "explanation_cold": "Southern flounder are the primary flounder in the Gulf of Mexico and south Atlantic. They inhabit estuaries and nearshore waters but stage at passes in fall for spawning. Excellent eating.",
+    "explanation_warm": "Fall flounder runs at Gulf Coast passes are epic. Gigging flounder at night in shallow flats with a bright light is a Texas/Louisiana tradition. Minimum 12 inches in most Gulf states with 10-fish limits."
+  },
+  {
+    "name": "Cobia (near-pier)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 66,
+    "temp_max": 84,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live eels, large crabs, live pinfish near buoys, rays, and offshore structure",
+    "rig": "Heavy spinning or conventional near buoys and surface-cruising fish",
+    "hook_size": "5/0-10/0 circle hook",
+    "sinker": "None to 2 oz",
+    "lures": "Large swimbaits, paddle eels, and soft plastic jigs",
+    "explanation_cold": "Cobia are unique shark-like fish that associate with large rays, sea turtles, buoys, and offshore structure. Visual predators caught by sight fishing from boats and occasionally from tall piers. Explosive runners \u2014 one of the strongest inshore game fish pound-for-pound. Excellent eating: firm, white, buttery flesh.",
+    "explanation_warm": "Cobia are sight-fished by cruising boats and from high piers. Drop a large live crab in front of a cruising fish \u2014 they usually eat immediately. Minimum 33 inches in most states with 1-2 fish per day. Among the finest eating fish in the southeast."
+  },
+  {
+    "name": "Cobia (offshore)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live eels, large live crabs, live pinfish near offshore wrecks",
+    "rig": "Heavy spinning or conventional at offshore wrecks",
+    "hook_size": "5/0-10/0",
+    "sinker": "None to 2 oz",
+    "lures": "Large paddle eels, swimbaits, and bucktail jigs",
+    "explanation_cold": "Offshore cobia associate with wrecks and hard bottom in the Gulf and south Atlantic. They often stack below wrecks and circle near the surface. Trophy fish (over 60 lbs) come from offshore Gulf and Atlantic wrecks.",
+    "explanation_warm": "Offshore cobia found at wrecks. Drop live bait or large jigs vertically. They fight powerfully \u2014 use 50-80 lb braid with heavy fluorocarbon leader. Same regulations as near-pier cobia."
+  },
+  {
+    "name": "Sea bream (pinfish)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Shrimp, small crabs, worms near seagrass and pier pilings",
+    "rig": "Very light rig near seagrass and pier pilings",
+    "hook_size": "#6-#2",
+    "sinker": "None to 1/4 oz",
+    "lures": "Tiny jigs near seagrass",
+    "explanation_cold": "Pinfish are extremely abundant small panfish throughout southeastern US estuaries and bays. They are one of the most important bait species \u2014 live pinfish are a top bait for flounder, snook, cobia, and large snapper. They have a distinctive spot near the gill plate and sharp spines. Found in seagrass beds and around any structure from Cape Hatteras to Texas.",
+    "explanation_warm": "Pinfish are caught by the bucketful on tiny hooks with bits of shrimp near seagrass and pier pilings. They are the go-to live bait for many SE species. A cast net over seagrass beds is the fastest way to fill a livewell with pinfish. Keep them lively in well-aerated water \u2014 they are exceptional live bait."
+  },
+  {
+    "name": "Sheepshead porgy",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, squid near reef at 20-80 ft",
+    "rig": "Medium bottom rig near reef",
+    "hook_size": "#2-1/0",
+    "sinker": "1-2 oz",
+    "lures": "Small jigs near reef",
+    "explanation_cold": "Sheepshead porgy (not the sheepshead drum) are reef porgy found in the SE Atlantic and Gulf. They have vertical bars like sheepshead the drum. Found on reef at 20-200 ft. Good eating.",
+    "explanation_warm": "Sheepshead porgy bite shrimp and squid near reef bottom. Often mixed with snapper and other porgy species on live bottom."
+  },
+  {
+    "name": "Atlantic spadefish (pier)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 66,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Jellyfish, salps, small invertebrates near buoys and piers",
+    "rig": "Light spinning near pier pilings and buoys",
+    "hook_size": "#4-#1",
+    "sinker": "None to 1/4 oz",
+    "lures": "Tiny jigs and jellyfish pieces near structure",
+    "explanation_cold": "Atlantic spadefish near piers and inshore structure are the same species as those found offshore but more accessible to shore anglers. They aggregate around large pier pilings, bridge footings, and inshore buoys in warm months. Schools can contain dozens of fish. Very leader-shy.",
+    "explanation_warm": "Spadefish at piers aggregate around the largest pilings. Fish tiny jigs or jellyfish pieces on ultralight fluorocarbon. Be patient \u2014 they may circle a presentation many times before striking. Excellent table fare \u2014 white, flaky flesh."
+  },
+  {
+    "name": "Mud snapper",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 66,
+    "temp_max": 80,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, small crabs, small fish near muddy bottom and mangroves",
+    "rig": "Light bottom rig near mangroves and muddy bottom",
+    "hook_size": "#2-2/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small jigs near mangroves",
+    "explanation_cold": "Mud snapper (also called schoolmaster or creek snapper) refers to juvenile snapper species \u2014 primarily gray snapper and lane snapper \u2014 found in tidal creeks, mangrove edges, and muddy estuaries. These juvenile snapper stage in shallow estuarine habitat before moving to deeper reef as adults. Important component of the inshore snapper fishery.",
+    "explanation_warm": "Inshore snapper in tidal creeks and mangrove habitat are typically small. Use light tackle and small hooks. Many juvenile snapper are below legal size \u2014 handle carefully and release gently. They grow into the reef snapper fishery."
+  },
+  {
+    "name": "Dwarf sand perch",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Tiny invertebrates near sandy bottom at 5-30 ft",
+    "rig": "Ultralight near sandy bottom",
+    "hook_size": "#8-#4",
+    "sinker": "None",
+    "lures": "Tiny jigs near bottom",
+    "explanation_cold": "Dwarf sand perch are the smallest sand bass relative, rarely exceeding 4 inches. They inhabit sandy bottom in shallow coastal waters from the Carolinas to Brazil. Interesting aquarium species. Rarely caught on hook and line due to tiny size.",
+    "explanation_warm": "Dwarf sand perch are too small to be targeted by anglers. Occasionally caught on tiny hooks incidentally. Fascinating fish for naturalists \u2014 colorful and bold despite their tiny size."
+  },
+  {
+    "name": "Butter hamlet",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small invertebrates, shrimp near coral reef",
+    "rig": "Very light tackle near reef at 10-80 ft",
+    "hook_size": "#6-#4",
+    "sinker": "None",
+    "lures": "Tiny jigs near reef",
+    "explanation_cold": "Butter hamlet are small, golden-yellow hamlet grouper relatives found on south Florida and Caribbean coral reefs. All hamlet species are simultaneous hermaphrodites \u2014 each individual is both male and female at the same time. Butter hamlet are one of several color morphs that can be distinguished on the reef. Small (under 6 inches), not targeted by anglers.",
+    "explanation_warm": "Butter hamlet are rarely caught on hook and line due to tiny size. If incidentally hooked near reef, release immediately. Fascinating reef inhabitants worth noting while snorkeling or diving south Florida reefs."
+  },
+  {
+    "name": "Tilefish (sand)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 54,
+    "temp_max": 70,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, small crabs, squid on sandy bottom at 20-80 ft",
+    "rig": "Medium bottom rig on sandy bottom near reef rubble",
+    "hook_size": "#2-2/0",
+    "sinker": "1-3 oz",
+    "lures": "Small jigs bounced on sandy bottom",
+    "explanation_cold": "Sand tilefish (distinct from golden and blueline tilefish) are a separate, smaller species found at moderate depths on sandy and rubble bottoms. They build elaborate burrow systems in sandy habitat and are typically found in colonies. Good eating but small \u2014 typically 8-14 inches.",
+    "explanation_warm": "Sand tilefish colonies are found on sandy bottom with rubble. Fish slow with shrimp or squid near the burrow openings. A curious species that may investigate bait multiple times before committing."
+  },
+  {
+    "name": "Atlantic croaker (large)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 60,
+    "temp_max": 78,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, blood worms, cut bait on sandy/muddy bottom at night",
+    "rig": "Light to medium bottom rig in estuaries and nearshore",
+    "hook_size": "#2-2/0",
+    "sinker": "1/2-2 oz",
+    "lures": "Gulp shrimp near sandy bottom",
+    "explanation_cold": "Atlantic croaker are abundant drum family fish in eastern bays and estuaries. They make a distinctive croaking sound by vibrating their swim bladder with specialized muscles. Very common from Long Island to Texas in warm months. Peak in estuaries in summer and early fall. Important forage species for larger fish.",
+    "explanation_warm": "Croaker are caught on bottom rigs with shrimp or blood worms. Night fishing from piers and surf is most productive. They school in bays and coastal waters in summer. Excellent pan fish \u2014 sweet, flaky white flesh. Keep and eat, particularly in the Gulf where they are abundant."
+  },
+  {
+    "name": "Yellowfin mojarra",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 84,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Shrimp, small crabs, worms near seagrass and sandy flats",
+    "rig": "Very light rig near seagrass and sand",
+    "hook_size": "#6-#2",
+    "sinker": "None to 1/4 oz",
+    "lures": "Tiny jigs",
+    "explanation_cold": "Yellowfin mojarra are small, silver-sided fish common on sandy flats and seagrass beds throughout south Florida and the Gulf. Named for the yellow tinge on the dorsal fin. They school in large numbers in shallow water. Important forage fish for snook, redfish, and permit. Occasionally targeted on ultralight tackle.",
+    "explanation_warm": "Yellowfin mojarra are incidental catches on tiny hooks with bits of shrimp near seagrass and sandy flats. Often seen in large schools in shallow Florida backcountry. Good live bait for snook and permit when rigged carefully."
+  },
+  {
+    "name": "Skipjack tuna (shore)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 70,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live baitfish, sardines near surface at inlet jetties",
+    "rig": "Light to medium spinning at inlet jetties",
+    "hook_size": "2/0-4/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Metal jigs and spoons",
+    "explanation_cold": "Skipjack tuna occasionally come within shore range near large inlet jetties during fall bait migrations. Small (5-10 lbs typically) but hard fighters. Dark, strong-flavored flesh \u2014 best used as bait for larger game fish.",
+    "explanation_warm": "Skipjack near shore are most often encountered at large inlet jetty tips in fall. Cast metal jigs into breaking schools. Their flesh is very dark and strong \u2014 better as marlin bait than eating."
+  },
+  {
+    "name": "Yellowtail amberjack (SoCal)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 62,
+    "temp_max": 74,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Anchovies, sardines, iron jigs near surface",
+    "rig": "Medium to heavy spinning from boat or pier",
+    "hook_size": "4/0-7/0",
+    "sinker": "None to 4 oz",
+    "lures": "Yo-Zuri bonito jigs, Tady iron jigs, swimbaits",
+    "explanation_cold": "California yellowtail are the premier warm-water game fish in southern California from Point Conception to Baja. Powerful, fast fighters found near kelp beds and rocky reefs. One of the most sought-after California sport fish.",
+    "explanation_warm": "California yellowtail are line-peeling game fish \u2014 use 20-40 lb minimum. Fly-lining live anchovies near kelp beds is the classic method. Iron jigs work in deeper water. Excellent eating. Minimum 24 inches in California."
+  },
+  {
+    "name": "Bull shark (inshore)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 62,
+    "temp_max": 82,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Large cut fish, whole baitfish near passes and channels at night",
+    "rig": "Very heavy tackle with wire leader for large sharks",
+    "hook_size": "10/0-14/0 circle hook",
+    "sinker": "4-12 oz",
+    "lures": "N/A \u2014 large cut or live bait",
+    "explanation_cold": "Bull sharks are among the most dangerous sharks encountered in inshore waters. They penetrate far up freshwater rivers and thrive in turbid estuarine environments. Large females can exceed 10 feet. Common in Florida estuaries, Gulf Coast passes, and nearshore waters. Known for unprovoked attacks on humans in shallow water.",
+    "explanation_warm": "Bull sharks require very heavy tackle \u2014 80-130 lb class minimum. Wire leader is mandatory. NEVER attempt to land by hand \u2014 professional fishermen use tail ropes and wooden mallets. Release is encouraged \u2014 large females are important for population. Extreme caution near any water where bull sharks are known to be present. Minimum 54 inches FL."
   }
 ]

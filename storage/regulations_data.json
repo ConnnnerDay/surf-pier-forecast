@@ -708,6 +708,48 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "flounder_gulf": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": "Gulf cobia regulations. 33-inch fork length minimum."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required to target sharks. Very heavy tackle required. Release strongly encouraged \u2014 bull sharks are apex predators with slow reproduction."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
       }
     },
     "CA": {
@@ -1527,6 +1569,54 @@
         "bag_limit": "2 per day",
         "season": "Sep - Nov",
         "notes": "Tribal waters and reservation stretches are closed to non-tribal fishing. Check CDFW regulations. Dam removal (2024) expected to improve future runs."
+      },
+      "california_halibut_juvenile": {
+        "min_size": "22 in total length",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Juvenile halibut under 22 in must be released. No treble hooks in some areas. License required."
+      },
+      "pacific_halibut_juvenile": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "1-2 per day",
+        "season": "Mar 1 - Nov 15 (varies)",
+        "notes": "IPHC managed. Check CDFW for CA-specific regulations."
+      },
+      "pacific_bonito": {
+        "min_size": "24 in",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "License required. Pacific bonito can be caught from piers and boats when schools are nearshore. Population varies year to year."
+      },
+      "yellowtail_amberjack_socal": {
+        "min_size": "24 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "License required. Yellowtail (Seriola lalandi) in California. 10-fish bag limit."
+      },
+      "pacific_anchovy": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "License required. Used primarily as live bait. Cast net or sabiki rigs from piers."
+      },
+      "walleye_pollock_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Check CDFW for any local restrictions."
+      },
+      "garibaldi_protected": {
+        "min_size": "FULLY PROTECTED \u2014 NO HARVEST",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "California state marine fish. Fully protected under California law. It is ILLEGAL to catch, possess, or harm garibaldi. Severe fines."
+      },
+      "halfmoon": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "License required."
       }
     },
     "CT": {
@@ -1871,6 +1961,30 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "tautog_tog": {
+        "min_size": "16 in",
+        "bag_limit": 3,
+        "season": "Aug 1 - Nov 28, Jan 1 - Apr 30",
+        "notes": "Size and season change annually \u2014 check CTDEEP."
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "Jul 1 - Feb 28",
+        "notes": ""
       }
     },
     "DE": {
@@ -2143,6 +2257,24 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "tautog_tog": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "Year-round (varies)",
+        "notes": ""
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "12.5 in",
+        "bag_limit": 5,
+        "season": "Year-round (varies)",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
       }
     },
     "FL": {
@@ -3407,6 +3539,108 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "flounder_gulf": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Gulf and Atlantic coasts \u2014 same size limit."
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round (FL); Spring-Fall elsewhere",
+        "notes": "Atlantic cobia managed by ASMFC. 1 fish per angler. Very popular spring sight-fishing target."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "Same size and bag limit as near-pier cobia."
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required to target sharks. Very heavy tackle required. Release strongly encouraged \u2014 bull sharks are apex predators with slow reproduction."
+      },
+      "skipjack_tuna_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Federal pelagic fish \u2014 no HMS permit needed for recreational hook-and-line. Dark flesh \u2014 best used as bait."
+      },
+      "tilefish_sand": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not managed separately from other tilefish in most SE states. Check state rules."
+      },
+      "yellowfin_mojarra": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not typically regulated \u2014 forage and bait species."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "mud_snapper": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Juvenile snapper in estuaries. Same regulations as the parent species (gray snapper, lane snapper) \u2014 check state rules."
+      },
+      "grass_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated in most states."
+      },
+      "sheepshead_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
+      },
+      "dwarf_sand_perch": {
+        "min_size": "No minimum (too small)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Too small to be targeted or regulated. Release if incidentally caught."
+      },
+      "butter_hamlet": {
+        "min_size": "No harvest",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Hamlet species are small reef fish not targeted by anglers. Incidental hook catches should be immediately released."
       }
     },
     "GA": {
@@ -4285,6 +4519,96 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round (FL); Spring-Fall elsewhere",
+        "notes": "Atlantic cobia managed by ASMFC. 1 fish per angler. Very popular spring sight-fishing target."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "Same size and bag limit as near-pier cobia."
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "skipjack_tuna_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Federal pelagic fish \u2014 no HMS permit needed for recreational hook-and-line. Dark flesh \u2014 best used as bait."
+      },
+      "tilefish_sand": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not managed separately from other tilefish in most SE states. Check state rules."
+      },
+      "yellowfin_mojarra": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not typically regulated \u2014 forage and bait species."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "mud_snapper": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Juvenile snapper in estuaries. Same regulations as the parent species (gray snapper, lane snapper) \u2014 check state rules."
+      },
+      "grass_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated in most states."
+      },
+      "sheepshead_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
+      },
+      "dwarf_sand_perch": {
+        "min_size": "No minimum (too small)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Too small to be targeted or regulated. Release if incidentally caught."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS permit required. Catch-and-release strongly recommended."
       }
     },
     "LA": {
@@ -5001,6 +5325,78 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "flounder_gulf": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": "Gulf cobia regulations. 33-inch fork length minimum."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required to target sharks. Very heavy tackle required. Release strongly encouraged \u2014 bull sharks are apex predators with slow reproduction."
+      },
+      "skipjack_tuna_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Federal pelagic fish \u2014 no HMS permit needed for recreational hook-and-line. Dark flesh \u2014 best used as bait."
+      },
+      "yellowfin_mojarra": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not typically regulated \u2014 forage and bait species."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "mud_snapper": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Juvenile snapper in estuaries. Same regulations as the parent species (gray snapper, lane snapper) \u2014 check state rules."
+      },
+      "grass_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated in most states."
+      },
+      "sheepshead_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
       }
     },
     "MA": {
@@ -5388,6 +5784,30 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "tautog_tog": {
+        "min_size": "16 in",
+        "bag_limit": 5,
+        "season": "Jan 1 - Mar 31, Oct 15 - Dec 31",
+        "notes": ""
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "May 22 - Feb 28",
+        "notes": "Season and limits change annually \u2014 verify with DMF."
       }
     },
     "MD": {
@@ -5990,6 +6410,60 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "tautog_tog": {
+        "min_size": "16 in",
+        "bag_limit": 5,
+        "season": "Apr 1 - Dec 31 (varies)",
+        "notes": ""
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "12.5 in",
+        "bag_limit": 5,
+        "season": "Year-round (varies)",
+        "notes": ""
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round (FL); Spring-Fall elsewhere",
+        "notes": "Atlantic cobia managed by ASMFC. 1 fish per angler. Very popular spring sight-fishing target."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "Same size and bag limit as near-pier cobia."
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "tilefish_sand": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not managed separately from other tilefish in most SE states. Check state rules."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
       }
     },
     "ME": {
@@ -6178,6 +6652,18 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
       }
     },
     "MS": {
@@ -6834,6 +7320,48 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "flounder_gulf": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": "Gulf cobia regulations. 33-inch fork length minimum."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required to target sharks. Very heavy tackle required. Release strongly encouraged \u2014 bull sharks are apex predators with slow reproduction."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
       }
     },
     "NC": {
@@ -7965,6 +8493,96 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "tautog_tog": {
+        "min_size": "14 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "scup_porgy": {
+        "min_size": "8 in",
+        "bag_limit": 50,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "12.5 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round (FL); Spring-Fall elsewhere",
+        "notes": "Atlantic cobia managed by ASMFC. 1 fish per angler. Very popular spring sight-fishing target."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "Same size and bag limit as near-pier cobia."
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "skipjack_tuna_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Federal pelagic fish \u2014 no HMS permit needed for recreational hook-and-line. Dark flesh \u2014 best used as bait."
+      },
+      "tilefish_sand": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not managed separately from other tilefish in most SE states. Check state rules."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "grass_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated in most states."
+      },
+      "sheepshead_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS permit required. Catch-and-release strongly recommended."
       }
     },
     "NJ": {
@@ -8599,6 +9217,48 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "tautog_tog": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "May 1 - Dec 31 (varies)",
+        "notes": ""
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "May 15 - Feb 28",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
       }
     },
     "NY": {
@@ -9111,6 +9771,48 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "tautog_tog": {
+        "min_size": "16 in",
+        "bag_limit": 5,
+        "season": "Apr 15 - Nov 30",
+        "notes": ""
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "May 15 - Feb 28",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
       }
     },
     "OR": {
@@ -9755,6 +10457,24 @@
         "bag_limit": "2 hatchery/day",
         "season": "Mar - Jun (varies by section)",
         "notes": "Mark-selective. Wild spring Chinook must be released in most sections. Buoy 10 fishery: check ODFW/WDFW boundary rules."
+      },
+      "pacific_halibut_juvenile": {
+        "min_size": "Varies by area (IPHC)",
+        "bag_limit": "1-2 per day",
+        "season": "Mar 1 - Nov 15 (varies)",
+        "notes": "IPHC managed. Check ODFW season schedule annually."
+      },
+      "pacific_anchovy": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "walleye_pollock_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "RI": {
@@ -10111,6 +10831,30 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "tautog_tog": {
+        "min_size": "16 in",
+        "bag_limit": 3,
+        "season": "Aug 1 - Nov 28, Jan 1 - Apr 30",
+        "notes": ""
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "May 15 - Feb 28",
+        "notes": ""
       }
     },
     "SC": {
@@ -11043,6 +11787,90 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round (FL); Spring-Fall elsewhere",
+        "notes": "Atlantic cobia managed by ASMFC. 1 fish per angler. Very popular spring sight-fishing target."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "Same size and bag limit as near-pier cobia."
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "skipjack_tuna_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Federal pelagic fish \u2014 no HMS permit needed for recreational hook-and-line. Dark flesh \u2014 best used as bait."
+      },
+      "tilefish_sand": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not managed separately from other tilefish in most SE states. Check state rules."
+      },
+      "yellowfin_mojarra": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not typically regulated \u2014 forage and bait species."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "grass_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated in most states."
+      },
+      "sheepshead_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
+      },
+      "dwarf_sand_perch": {
+        "min_size": "No minimum (too small)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Too small to be targeted or regulated. Release if incidentally caught."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "HMS permit required. Catch-and-release strongly recommended."
       }
     },
     "TX": {
@@ -11777,6 +12605,84 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "flounder_gulf": {
+        "min_size": "12 in",
+        "bag_limit": 5,
+        "season": "Sep 1 - Nov 1",
+        "notes": "Season varies annually \u2014 check TPWD."
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": "Gulf cobia regulations. 33-inch fork length minimum."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "bull_shark_inshore": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required to target sharks. Very heavy tackle required. Release strongly encouraged \u2014 bull sharks are apex predators with slow reproduction."
+      },
+      "skipjack_tuna_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (recreational)",
+        "season": "Year-round",
+        "notes": "Federal pelagic fish \u2014 no HMS permit needed for recreational hook-and-line. Dark flesh \u2014 best used as bait."
+      },
+      "yellowfin_mojarra": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not typically regulated \u2014 forage and bait species."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "sea_bream_pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "mud_snapper": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Juvenile snapper in estuaries. Same regulations as the parent species (gray snapper, lane snapper) \u2014 check state rules."
+      },
+      "grass_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated in most states."
+      },
+      "sheepshead_porgy": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
+      },
+      "dwarf_sand_perch": {
+        "min_size": "No minimum (too small)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Too small to be targeted or regulated. Release if incidentally caught."
       }
     },
     "VA": {
@@ -12409,6 +13315,60 @@
         "bag_limit": "No limit (bait use)",
         "season": "Year-round",
         "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
+      },
+      "tautog_tog": {
+        "min_size": "15 in",
+        "bag_limit": 10,
+        "season": "Jan 1 - Dec 31 (varies)",
+        "notes": ""
+      },
+      "black_sea_bass_ne_pier": {
+        "min_size": "12.5 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "cobia_near_pier": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round (FL); Spring-Fall elsewhere",
+        "notes": "Atlantic cobia managed by ASMFC. 1 fish per angler. Very popular spring sight-fishing target."
+      },
+      "cobia_offshore": {
+        "min_size": "33 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "Same size and bag limit as near-pier cobia."
+      },
+      "atlantic_croaker_large": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "blacktip_shark": {
+        "min_size": "54 in fork length",
+        "bag_limit": "1 per person per day",
+        "season": "Year-round",
+        "notes": "NOAA HMS Angling Permit required if targeting sharks. Catch-and-release encouraged. Never cut fins (federal shark finning ban)."
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per person per day",
+        "season": "Year-round",
+        "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "tilefish_sand": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Not managed separately from other tilefish in most SE states. Check state rules."
+      },
+      "atlantic_spadefish_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
       }
     },
     "WA": {
@@ -13041,6 +14001,24 @@
         "bag_limit": "2 hatchery/day",
         "season": "Mar - Jun",
         "notes": "Mark-selective. WDFW/ODFW joint management. Complex area-specific rules \u2014 check both states regulations."
+      },
+      "pacific_halibut_juvenile": {
+        "min_size": "Varies by area (IPHC)",
+        "bag_limit": "1-2 per day (varies)",
+        "season": "Mar 1 - Nov 15 (varies by area)",
+        "notes": "IPHC regulations. Check current year IPHC schedule. Annual limits may apply."
+      },
+      "pacific_anchovy": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "walleye_pollock_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
       }
     },
     "HI": {
@@ -13318,6 +14296,18 @@
         "bag_limit": "Cast net \u2014 bait use only",
         "season": "Year-round",
         "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "pollock_atlantic_surf": {
+        "min_size": "19 in (commercial)",
+        "bag_limit": "No rec limit",
+        "season": "Year-round",
+        "notes": "No minimum size for recreational fishing in most NE states. Pollock managed under NEFMC."
+      },
+      "tomcod_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
       }
     },
     "PA": {
