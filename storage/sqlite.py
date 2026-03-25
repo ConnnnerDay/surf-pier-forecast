@@ -593,17 +593,19 @@ def delete_user(user_id: int) -> None:
 
 def get_preferences(user_id: int) -> Dict[str, Any]:
     conn = get_db()
-    row = conn.execute(
-        """
-        SELECT l.location_id, p.theme, p.units, p.wind_units, p.temp_units,
-               p.notification_prefs, p.fishing_profile, p.favorites, p.timezone
-        FROM profiles p
-        LEFT JOIN locations l ON l.user_id = p.user_id
-        WHERE p.user_id = ?
-        """,
-        (user_id,),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            """
+            SELECT l.location_id, p.theme, p.units, p.wind_units, p.temp_units,
+                   p.notification_prefs, p.fishing_profile, p.favorites, p.timezone
+            FROM profiles p
+            LEFT JOIN locations l ON l.user_id = p.user_id
+            WHERE p.user_id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+    finally:
+        conn.close()
     if not row:
         return {}
 
@@ -708,10 +710,12 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
 
 def get_page_layout(user_id: int) -> Optional[List[Any]]:
     conn = get_db()
-    row = conn.execute(
-        "SELECT page_layout FROM profiles WHERE user_id = ?", (user_id,)
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT page_layout FROM profiles WHERE user_id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
     if not row or not row["page_layout"]:
         return None
     try:
@@ -740,12 +744,14 @@ def get_log_entries(
     user_id: int, location_id: str, limit: int = 50
 ) -> List[Dict[str, Any]]:
     conn = get_db()
-    rows = conn.execute(
-        "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
-        "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
-        (user_id, location_id, limit),
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
+            "WHERE user_id = ? AND location_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
+            (user_id, location_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
     return [
         {
             "id": r["id"],
@@ -768,30 +774,34 @@ def add_log_entry(
     user_id: int, location_id: str, species: str, size: str = "", notes: str = ""
 ) -> int:
     conn = get_db()
-    cur = conn.execute(
-        "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
-        (
-            user_id,
-            location_id,
-            species.strip()[:100],
-            size.strip()[:_CATCH_LOG_SIZE_MAX],
-            notes.strip()[:_CATCH_LOG_NOTES_MAX],
-        ),
-    )
-    conn.commit()
-    entry_id = cur.lastrowid or 0
-    conn.close()
+    try:
+        cur = conn.execute(
+            "INSERT INTO catch_log (user_id, location_id, species, size, notes) VALUES (?, ?, ?, ?, ?)",
+            (
+                user_id,
+                location_id,
+                species.strip()[:100],
+                size.strip()[:_CATCH_LOG_SIZE_MAX],
+                notes.strip()[:_CATCH_LOG_NOTES_MAX],
+            ),
+        )
+        conn.commit()
+        entry_id = cur.lastrowid or 0
+    finally:
+        conn.close()
     return entry_id
 
 
 def delete_log_entry(user_id: int, entry_id: int) -> bool:
     conn = get_db()
-    cur = conn.execute(
-        "DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id)
-    )
-    conn.commit()
-    ok = cur.rowcount > 0
-    conn.close()
+    try:
+        cur = conn.execute(
+            "DELETE FROM catch_log WHERE id = ? AND user_id = ?", (entry_id, user_id)
+        )
+        conn.commit()
+        ok = cur.rowcount > 0
+    finally:
+        conn.close()
     return ok
 
 
@@ -800,11 +810,13 @@ def get_entry_photo_paths(
 ) -> Optional[Tuple[Optional[str], Optional[str]]]:
     """Return (photo1_path, photo2_path) for the entry, or None if entry not found."""
     conn = get_db()
-    row = conn.execute(
-        "SELECT photo1_path, photo2_path FROM catch_log WHERE id = ? AND user_id = ?",
-        (entry_id, user_id),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT photo1_path, photo2_path FROM catch_log WHERE id = ? AND user_id = ?",
+            (entry_id, user_id),
+        ).fetchone()
+    finally:
+        conn.close()
     if row is None:
         return None
     return (row["photo1_path"], row["photo2_path"])
@@ -901,12 +913,14 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
 
 def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
     conn = get_db()
-    rows = conn.execute(
-        "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
-        "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
-        (user_id, limit),
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
+            "WHERE user_id = ? ORDER BY caught_at DESC, id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
     return [
         {
             "id": r["id"],
@@ -928,46 +942,52 @@ def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
 def save_forecast_to_db(location_id: str, data: Dict[str, Any]) -> None:
     if not location_id:
         return
-    generated_at = data.get("generated_at") or datetime.utcnow().isoformat()
+    generated_at = data.get("generated_at") or datetime.now(timezone.utc).isoformat()
     conn = get_db()
-    conn.execute(
-        "INSERT INTO forecasts (location_id, forecast_json, generated_at) VALUES (?, ?, ?)",
-        (location_id, json.dumps(data), generated_at),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "INSERT INTO forecasts (location_id, forecast_json, generated_at) VALUES (?, ?, ?)",
+            (location_id, json.dumps(data), generated_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def save_forecast_cache(user_id: int, location_id: str, data: Dict[str, Any]) -> None:
     if not location_id:
         return
-    generated_at = data.get("generated_at") or datetime.utcnow().isoformat()
+    generated_at = data.get("generated_at") or datetime.now(timezone.utc).isoformat()
     conn = get_db()
-    conn.execute(
-        """
-        INSERT INTO forecast_cache (user_id, location_id, forecast_json, generated_at, updated_at)
-        VALUES (?, ?, ?, ?, datetime('now'))
-        ON CONFLICT(user_id, location_id)
-        DO UPDATE SET
-            forecast_json = excluded.forecast_json,
-            generated_at = excluded.generated_at,
-            updated_at = datetime('now')
-        """,
-        (user_id, location_id, json.dumps(data), generated_at),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            """
+            INSERT INTO forecast_cache (user_id, location_id, forecast_json, generated_at, updated_at)
+            VALUES (?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(user_id, location_id)
+            DO UPDATE SET
+                forecast_json = excluded.forecast_json,
+                generated_at = excluded.generated_at,
+                updated_at = datetime('now')
+            """,
+            (user_id, location_id, json.dumps(data), generated_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def load_forecast_cache(user_id: int, location_id: str) -> Optional[Dict[str, Any]]:
     if not location_id:
         return None
     conn = get_db()
-    row = conn.execute(
-        "SELECT forecast_json FROM forecast_cache WHERE user_id = ? AND location_id = ?",
-        (user_id, location_id),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT forecast_json FROM forecast_cache WHERE user_id = ? AND location_id = ?",
+            (user_id, location_id),
+        ).fetchone()
+    finally:
+        conn.close()
     if not row:
         return None
     try:
@@ -978,13 +998,15 @@ def load_forecast_cache(user_id: int, location_id: str) -> Optional[Dict[str, An
 
 def delete_forecast_cache(user_id: int, location_id: str) -> bool:
     conn = get_db()
-    cur = conn.execute(
-        "DELETE FROM forecast_cache WHERE user_id = ? AND location_id = ?",
-        (user_id, location_id),
-    )
-    conn.commit()
-    deleted = cur.rowcount > 0
-    conn.close()
+    try:
+        cur = conn.execute(
+            "DELETE FROM forecast_cache WHERE user_id = ? AND location_id = ?",
+            (user_id, location_id),
+        )
+        conn.commit()
+        deleted = cur.rowcount > 0
+    finally:
+        conn.close()
     return deleted
 
 
@@ -992,12 +1014,14 @@ def load_forecast(location_id: str) -> Optional[Dict[str, Any]]:
     if not location_id:
         return None
     conn = get_db()
-    row = conn.execute(
-        "SELECT forecast_json FROM forecasts WHERE location_id = ? "
-        "ORDER BY generated_at DESC, id DESC LIMIT 1",
-        (location_id,),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT forecast_json FROM forecasts WHERE location_id = ? "
+            "ORDER BY generated_at DESC, id DESC LIMIT 1",
+            (location_id,),
+        ).fetchone()
+    finally:
+        conn.close()
     if not row:
         return None
     try:
@@ -1008,11 +1032,13 @@ def load_forecast(location_id: str) -> Optional[Dict[str, Any]]:
 
 def list_cached_locations() -> List[Dict[str, str]]:
     conn = get_db()
-    rows = conn.execute(
-        "SELECT location_id, MAX(generated_at) AS generated_at, MAX(created_at) AS updated_at "
-        "FROM forecasts GROUP BY location_id ORDER BY MAX(created_at) DESC"
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT location_id, MAX(generated_at) AS generated_at, MAX(created_at) AS updated_at "
+            "FROM forecasts GROUP BY location_id ORDER BY MAX(created_at) DESC"
+        ).fetchall()
+    finally:
+        conn.close()
     return [
         {
             "location_id": r["location_id"],
@@ -1025,10 +1051,12 @@ def list_cached_locations() -> List[Dict[str, str]]:
 
 def delete_forecast(location_id: str) -> bool:
     conn = get_db()
-    cur = conn.execute("DELETE FROM forecasts WHERE location_id = ?", (location_id,))
-    conn.commit()
-    deleted = cur.rowcount > 0
-    conn.close()
+    try:
+        cur = conn.execute("DELETE FROM forecasts WHERE location_id = ?", (location_id,))
+        conn.commit()
+        deleted = cur.rowcount > 0
+    finally:
+        conn.close()
     return deleted
 
 
@@ -1042,56 +1070,66 @@ def save_webauthn_credential(
     name: str = "Passkey",
 ) -> None:
     conn = get_db()
-    conn.execute(
-        """
-        INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count, name)
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (user_id, credential_id, public_key, sign_count, name),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            """
+            INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count, name)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (user_id, credential_id, public_key, sign_count, name),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def get_webauthn_credentials(user_id: int) -> List[Dict[str, Any]]:
     conn = get_db()
-    rows = conn.execute(
-        "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
-        (user_id,),
-    ).fetchall()
-    conn.close()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
     return [dict(r) for r in rows]
 
 
 def get_webauthn_credential_by_id(credential_id: str) -> Optional[Dict[str, Any]]:
     conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM webauthn_credentials WHERE credential_id = ?",
-        (credential_id,),
-    ).fetchone()
-    conn.close()
+    try:
+        row = conn.execute(
+            "SELECT * FROM webauthn_credentials WHERE credential_id = ?",
+            (credential_id,),
+        ).fetchone()
+    finally:
+        conn.close()
     return dict(row) if row else None
 
 
 def update_webauthn_sign_count(credential_id: str, sign_count: int) -> None:
     conn = get_db()
-    conn.execute(
-        "UPDATE webauthn_credentials SET sign_count = ? WHERE credential_id = ?",
-        (sign_count, credential_id),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "UPDATE webauthn_credentials SET sign_count = ? WHERE credential_id = ?",
+            (sign_count, credential_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def delete_webauthn_credential(credential_id: str, user_id: int) -> bool:
     conn = get_db()
-    cur = conn.execute(
-        "DELETE FROM webauthn_credentials WHERE credential_id = ? AND user_id = ?",
-        (credential_id, user_id),
-    )
-    conn.commit()
-    deleted = cur.rowcount > 0
-    conn.close()
+    try:
+        cur = conn.execute(
+            "DELETE FROM webauthn_credentials WHERE credential_id = ? AND user_id = ?",
+            (credential_id, user_id),
+        )
+        conn.commit()
+        deleted = cur.rowcount > 0
+    finally:
+        conn.close()
     return deleted
 
 

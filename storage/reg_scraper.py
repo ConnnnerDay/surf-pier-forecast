@@ -23,7 +23,7 @@ import json
 import logging
 import re
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
@@ -1231,7 +1231,7 @@ def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
         if not row:
             return None
         scraped_at = datetime.fromisoformat(str(row["scraped_at"]))
-        age = (datetime.utcnow() - scraped_at).total_seconds()
+        age = (datetime.now(timezone.utc).replace(tzinfo=None) - scraped_at).total_seconds()
         if age > _CACHE_TTL_SECONDS:
             return None
         data = json.loads(row["reg_json"])
