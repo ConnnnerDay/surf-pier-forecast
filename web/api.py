@@ -220,6 +220,26 @@ def _forecast_sub_record_attempt() -> None:
     _record_ip_attempt(_forecast_sub_rate_store, _forecast_sub_rate_lock, _FORECAST_SUB_RATE_LIMIT_WINDOW_S)
 
 
+# ── Rate limiting for photo uploads ───────────────────────────────────────────
+# Each upload writes up to 8 MB to disk.  Limit authenticated users to 20
+# uploads per 10 minutes per IP to prevent disk-filling abuse.
+_UPLOAD_RATE_LIMIT_MAX = 20
+_UPLOAD_RATE_LIMIT_WINDOW_S = 10 * 60
+_upload_rate_store: Dict[str, Tuple[float, int]] = {}
+_upload_rate_lock = threading.Lock()
+
+
+def _upload_is_rate_limited() -> bool:
+    return _is_rate_limited_ip(
+        _upload_rate_store, _upload_rate_lock,
+        _UPLOAD_RATE_LIMIT_MAX, _UPLOAD_RATE_LIMIT_WINDOW_S,
+    )
+
+
+def _upload_record_attempt() -> None:
+    _record_ip_attempt(_upload_rate_store, _upload_rate_lock, _UPLOAD_RATE_LIMIT_WINDOW_S)
+
+
 def _json_error(err: ApiError) -> Any:
     return jsonify(
         error_envelope(err.code, err.message, details=err.details)
@@ -809,6 +829,11 @@ def log_photos_v1(entry_id: int) -> Any:
     """
     if g.user is None:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    if _upload_is_rate_limited():
+        logger.warning("security.upload_rate_limit user_id=%s ip=%s", g.user["id"], _client_ip())
+        return _json_error(ApiError("rate_limited", "Too many uploads. Please slow down.", status=429))
+    _upload_record_attempt()
 
     uid = g.user["id"]
     paths = get_entry_photo_paths(uid, entry_id)

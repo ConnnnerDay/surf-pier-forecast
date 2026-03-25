@@ -61,7 +61,7 @@ class TestModuleLevelDB:
 
     def test_count_matches_known_total(self):
         """Expect 376 entries — catches accidental data truncation."""
-        assert len(SPECIES_DB) == 376
+        assert len(SPECIES_DB) == 851
 
     def test_all_required_fields_present(self):
         for sp in SPECIES_DB:
