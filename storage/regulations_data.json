@@ -750,6 +750,48 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-27 in slot",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_surf": {
+        "min_size": "18-27 in slot",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_flats": {
+        "min_size": "18-27 in slot",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 15,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 15,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "red_snapper_gulf_large": {
+        "min_size": "16 in",
+        "bag_limit": 2,
+        "season": "Short annual season (typically July-September, 3-45 days)",
+        "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
       }
     },
     "CA": {
@@ -1617,6 +1659,18 @@
         "bag_limit": 10,
         "season": "Year-round",
         "notes": "License required."
+      },
+      "lingcod_california": {
+        "min_size": "22 in",
+        "bag_limit": 2,
+        "season": "Jan 1 - Dec 31 (with depth restrictions)",
+        "notes": "Area closures apply. Check CDFW rockfish-lingcod regulations."
+      },
+      "pacific_halibut_large": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "2 per day",
+        "season": "Mar-Nov (varies)",
+        "notes": "IPHC managed. Check CDFW."
       }
     },
     "CT": {
@@ -1985,6 +2039,36 @@
         "bag_limit": 5,
         "season": "Jul 1 - Feb 28",
         "notes": ""
+      },
+      "flounder_summer": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
       }
     },
     "DE": {
@@ -2275,6 +2359,48 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Not regulated in most states. Some states have size or possession limits for commercial harvest. Check state rules."
+      },
+      "flounder_summer": {
+        "min_size": "15 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "delaware_bay_weakfish": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "1 fish per day."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
       }
     },
     "FL": {
@@ -3641,6 +3767,132 @@
         "bag_limit": 0,
         "season": "Year-round",
         "notes": "Hamlet species are small reef fish not targeted by anglers. Incidental hook catches should be immediately released."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-27 in slot (Gulf); 18-27 in (Atlantic)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "One over-slot per day."
+      },
+      "redfish_surf": {
+        "min_size": "18-27 in slot (Gulf); 18-27 in (Atlantic)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "One over-slot per day."
+      },
+      "redfish_flats": {
+        "min_size": "18-27 in slot (Gulf); 18-27 in (Atlantic)",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "One over-slot per day."
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "15 in (Gulf Panhandle: 12 in)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Emergency rules possible after cold kills."
+      },
+      "speckled_trout_winter": {
+        "min_size": "15 in (Gulf Panhandle: 12 in)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Emergency rules possible after cold kills."
+      },
+      "tarpon_gulf_mexico": {
+        "min_size": "No harvest without tag",
+        "bag_limit": "1 per year (FL: $50 tag required)",
+        "season": "Year-round",
+        "notes": "FL: $50 tarpon tag required. Catch-and-release universal. Revive thoroughly before release."
+      },
+      "snook_gulf": {
+        "min_size": "28-32 in slot",
+        "bag_limit": 1,
+        "season": "Mar 1-May 31, Sep 1-Nov 30",
+        "notes": "Special snook permit required. Closed Jun-Aug and Dec-Feb on Gulf coast."
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "red_snapper_gulf_large": {
+        "min_size": "16 in",
+        "bag_limit": 2,
+        "season": "Short annual season (typically July-September, 3-45 days)",
+        "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
+      },
+      "sawfish_encounter": {
+        "min_size": "CRITICALLY ENDANGERED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "If accidentally caught do NOT remove from water. Cut line close to mouth. Call FWC immediately."
+      },
+      "manta_ray_encounter": {
+        "min_size": "PROTECTED (CITES App II)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Cannot be targeted or harassed in US federal waters."
+      },
+      "whale_shark_encounter": {
+        "min_size": "ESA PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm. Observe from 6 ft minimum distance. Do not ride or touch."
+      },
+      "midnight_parrotfish": {
+        "min_size": "No target \u2014 release immediately",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Critical reef species. Not regulated but release is strongly encouraged."
+      },
+      "stoplight_parrotfish": {
+        "min_size": "No target \u2014 release immediately",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Critical reef species."
+      },
+      "graysby_grouper": {
+        "min_size": "12 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Falls under general grouper aggregate."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "common_snook_atlantic_fl": {
+        "min_size": "28-33 in slot",
+        "bag_limit": 1,
+        "season": "Mar 1-May 31, Sep 1-Nov 30 (closed Jun-Aug and Dec-Jan)",
+        "notes": "Special snook permit required. Atlantic slot is 28-33 in (vs 28-32 on Gulf)."
       }
     },
     "GA": {
@@ -4609,6 +4861,78 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS permit required. Catch-and-release strongly recommended."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-27 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_surf": {
+        "min_size": "18-27 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_flats": {
+        "min_size": "18-27 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "cobia_atlantic": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "NOAA Atlantic cobia plan. 1 fish per day. Popular spring sight-fishing near VA Beach/Chesapeake Bay mouth."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
       }
     },
     "LA": {
@@ -5397,6 +5721,60 @@
         "bag_limit": 10,
         "season": "Year-round",
         "notes": "Not separately regulated \u2014 falls under general reef fish or porgy rules."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-27 in slot",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "18-27 inch slot."
+      },
+      "redfish_surf": {
+        "min_size": "18-27 in slot",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "18-27 inch slot."
+      },
+      "redfish_flats": {
+        "min_size": "18-27 in slot",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "18-27 inch slot."
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 25,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 25,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "tarpon_gulf_mexico": {
+        "min_size": "No harvest without tag",
+        "bag_limit": "1 per year (FL: $50 tag required)",
+        "season": "Year-round",
+        "notes": "FL: $50 tarpon tag required. Catch-and-release universal. Revive thoroughly before release."
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "red_snapper_gulf_large": {
+        "min_size": "16 in",
+        "bag_limit": 2,
+        "season": "Short annual season (typically July-September, 3-45 days)",
+        "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
       }
     },
     "MA": {
@@ -5808,6 +6186,36 @@
         "bag_limit": 5,
         "season": "May 22 - Feb 28",
         "notes": "Season and limits change annually \u2014 verify with DMF."
+      },
+      "flounder_summer": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
       }
     },
     "MD": {
@@ -6464,6 +6872,84 @@
         "bag_limit": 10,
         "season": "Year-round",
         "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-26 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_surf": {
+        "min_size": "18-26 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_flats": {
+        "min_size": "18-26 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "flounder_summer": {
+        "min_size": "16.5 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "cobia_atlantic": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "NOAA Atlantic cobia plan. 1 fish per day. Popular spring sight-fishing near VA Beach/Chesapeake Bay mouth."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "delaware_bay_weakfish": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "1 fish per day."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "striped_bass_chesapeake": {
+        "min_size": "18 in (varies by zone)",
+        "bag_limit": 1,
+        "season": "Spring (Apr-May) and Fall (Oct-Nov)",
+        "notes": "Complex zone-specific regulations. Check MD DNR."
       }
     },
     "ME": {
@@ -6664,6 +7150,24 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
       }
     },
     "MS": {
@@ -7362,6 +7866,48 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Primarily used as live bait. Catch by cast net or tiny hook with shrimp."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-30 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_surf": {
+        "min_size": "18-30 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_flats": {
+        "min_size": "18-30 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 15,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 15,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "red_snapper_gulf_large": {
+        "min_size": "16 in",
+        "bag_limit": 2,
+        "season": "Short annual season (typically July-September, 3-45 days)",
+        "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
       }
     },
     "NC": {
@@ -8583,6 +9129,102 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS permit required. Catch-and-release strongly recommended."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-27 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "One over-slot allowed per day."
+      },
+      "redfish_surf": {
+        "min_size": "18-27 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "One over-slot allowed per day."
+      },
+      "redfish_flats": {
+        "min_size": "18-27 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "One over-slot allowed per day."
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "flounder_summer": {
+        "min_size": "14 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "cobia_atlantic": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "NOAA Atlantic cobia plan. 1 fish per day. Popular spring sight-fishing near VA Beach/Chesapeake Bay mouth."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "manta_ray_encounter": {
+        "min_size": "PROTECTED (CITES App II)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Cannot be targeted or harassed in US federal waters."
+      },
+      "whale_shark_encounter": {
+        "min_size": "ESA PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm. Observe from 6 ft minimum distance. Do not ride or touch."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
       }
     },
     "NJ": {
@@ -9259,6 +9901,48 @@
         "bag_limit": "3 per person per day",
         "season": "Year-round",
         "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "flounder_summer": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "striped_bass_hudson_river": {
+        "min_size": "28 in",
+        "bag_limit": 1,
+        "season": "Apr 15 - Dec 15",
+        "notes": ""
       }
     },
     "NY": {
@@ -9813,6 +10497,48 @@
         "bag_limit": "3 per person per day",
         "season": "Year-round",
         "notes": "Small coastal shark \u2014 no minimum size. HMS Angling Permit required."
+      },
+      "flounder_summer": {
+        "min_size": "12 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "striped_bass_hudson_river": {
+        "min_size": "28 in",
+        "bag_limit": 1,
+        "season": "Apr 15 - Dec 15",
+        "notes": "PCB consumption advisories \u2014 check NYS DEC before eating Hudson River stripers."
       }
     },
     "OR": {
@@ -10475,6 +11201,42 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": ""
+      },
+      "coho_salmon_oregon_coast": {
+        "min_size": "20 in",
+        "bag_limit": "2 hatchery per day",
+        "season": "Aug-Nov (varies)",
+        "notes": "Mark-selective \u2014 wild coho must be released. Check ODFW."
+      },
+      "steelhead_summer_run": {
+        "min_size": "20 in",
+        "bag_limit": "1 hatchery per day",
+        "season": "Jun-Oct",
+        "notes": "Wild steelhead must be released. Check ODFW emergency rules."
+      },
+      "pink_salmon_humpback": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Aug-Sep",
+        "notes": "Mark-selective rules apply."
+      },
+      "sockeye_salmon_shore": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Jul-Aug",
+        "notes": "Check ODFW by specific river."
+      },
+      "lingcod_california": {
+        "min_size": "22 in",
+        "bag_limit": 2,
+        "season": "Apr 1 - Nov 15 (varies)",
+        "notes": "Area closures apply."
+      },
+      "pacific_halibut_large": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "2 per day",
+        "season": "Mar-Nov",
+        "notes": "IPHC managed."
       }
     },
     "RI": {
@@ -10855,6 +11617,36 @@
         "bag_limit": 5,
         "season": "May 15 - Feb 28",
         "notes": ""
+      },
+      "flounder_summer": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
       }
     },
     "SC": {
@@ -11871,6 +12663,90 @@
         "bag_limit": 1,
         "season": "Year-round",
         "notes": "HMS permit required. Catch-and-release strongly recommended."
+      },
+      "redfish_red_drum": {
+        "min_size": "15-23 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Slot limit applies."
+      },
+      "redfish_surf": {
+        "min_size": "15-23 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Slot limit applies."
+      },
+      "redfish_flats": {
+        "min_size": "15-23 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Slot limit applies."
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "cobia_atlantic": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "NOAA Atlantic cobia plan. 1 fish per day. Popular spring sight-fishing near VA Beach/Chesapeake Bay mouth."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "manta_ray_encounter": {
+        "min_size": "PROTECTED (CITES App II)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Cannot be targeted or harassed in US federal waters."
+      },
+      "whale_shark_encounter": {
+        "min_size": "ESA PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm. Observe from 6 ft minimum distance. Do not ride or touch."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
       }
     },
     "TX": {
@@ -12683,6 +13559,72 @@
         "bag_limit": 0,
         "season": "Year-round",
         "notes": "Too small to be targeted or regulated. Release if incidentally caught."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-28 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "One oversized per person per day."
+      },
+      "redfish_surf": {
+        "min_size": "18-28 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "One oversized per person per day."
+      },
+      "redfish_flats": {
+        "min_size": "18-28 in slot",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "One oversized per person per day."
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "15 in (slot 15-25)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Slot 15-25 in. One over 25 in per day."
+      },
+      "speckled_trout_winter": {
+        "min_size": "15 in (slot 15-25)",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Slot 15-25 in. One over 25 in per day."
+      },
+      "tarpon_gulf_mexico": {
+        "min_size": "No harvest without tag",
+        "bag_limit": "1 per year (FL: $50 tag required)",
+        "season": "Year-round",
+        "notes": "FL: $50 tarpon tag required. Catch-and-release universal. Revive thoroughly before release."
+      },
+      "goliath_grouper_encounter": {
+        "min_size": "FULLY PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to harvest or possess. FL: cannot be removed from water without scientific permit."
+      },
+      "red_snapper_gulf_large": {
+        "min_size": "16 in",
+        "bag_limit": 2,
+        "season": "Short annual season (typically July-September, 3-45 days)",
+        "notes": "NOAA SERO annual season extremely short. State waters may differ. Barotrauma concern \u2014 use descender device."
+      },
+      "manta_ray_encounter": {
+        "min_size": "PROTECTED (CITES App II)",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Cannot be targeted or harassed in US federal waters."
+      },
+      "whale_shark_encounter": {
+        "min_size": "ESA PROTECTED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Illegal to target or harm. Observe from 6 ft minimum distance. Do not ride or touch."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
       }
     },
     "VA": {
@@ -13369,6 +14311,96 @@
         "bag_limit": 10,
         "season": "Year-round",
         "notes": "Not heavily regulated. Spadefish are excellent table fare \u2014 white, mild flesh."
+      },
+      "redfish_red_drum": {
+        "min_size": "18-26 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_surf": {
+        "min_size": "18-26 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "redfish_flats": {
+        "min_size": "18-26 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_sea_trout": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "speckled_trout_winter": {
+        "min_size": "12 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "flounder_summer": {
+        "min_size": "16 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "cobia_atlantic": {
+        "min_size": "33 in fork length",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "NOAA Atlantic cobia plan. 1 fish per day. Popular spring sight-fishing near VA Beach/Chesapeake Bay mouth."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      },
+      "delaware_bay_weakfish": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "1 fish per day."
+      },
+      "pufferfish_northern": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "SKIN IS TOXIC \u2014 do not eat skin. Properly cleaned northern puffer (sea squab) is edible and considered a delicacy."
+      },
+      "atlantic_halfbeak": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as offshore trolling bait (ballyhoo). No regulations."
+      },
+      "striped_bass_chesapeake": {
+        "min_size": "18 in (varies by zone)",
+        "bag_limit": 1,
+        "season": "Spring and Fall",
+        "notes": "VMRC regulations. Multiple seasons with different size limits."
       }
     },
     "WA": {
@@ -14019,6 +15051,36 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": ""
+      },
+      "steelhead_summer_run": {
+        "min_size": "20 in",
+        "bag_limit": "1 hatchery per day",
+        "season": "Jun-Oct",
+        "notes": "Wild steelhead must be released. Check WDFW."
+      },
+      "pink_salmon_humpback": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Aug-Sep (odd years primarily)",
+        "notes": "Check WDFW regulations."
+      },
+      "sockeye_salmon_shore": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Jul-Aug",
+        "notes": "Check WDFW."
+      },
+      "lingcod_alaska": {
+        "min_size": "26 in",
+        "bag_limit": 2,
+        "season": "Apr-Nov (varies by area)",
+        "notes": "Check WDFW."
+      },
+      "pacific_halibut_large": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "2 per day",
+        "season": "Mar-Nov",
+        "notes": "IPHC managed."
       }
     },
     "HI": {
@@ -14308,6 +15370,24 @@
         "bag_limit": "No limit",
         "season": "Year-round",
         "notes": "Hudson River tomcod: Check consumption advisories (PCB contamination in some areas)."
+      },
+      "atlantic_sturgeon_catch_and_release": {
+        "min_size": "PROHIBITED",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "ESA ENDANGERED. Illegal to target, possess, or harm. Release immediately. Report to NOAA: 1-800-853-1964."
+      },
+      "bluefish_large": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "ASMFC 3-fish bag limit. Use wire or heavy mono leader \u2014 razor teeth."
+      },
+      "bluefish_snapper_blues": {
+        "min_size": "8 in",
+        "bag_limit": 3,
+        "season": "Year-round",
+        "notes": "Same 3-fish bag limit. Wire or heavy mono leader required."
       }
     },
     "PA": {
@@ -14316,6 +15396,86 @@
         "bag_limit": "5 per person per day (varies)",
         "season": "Open year-round in most freshwater/tidal areas",
         "notes": "Hybrid striped bass are a stocked species in many reservoirs. Regulations vary by water body. Verify current state rules."
+      },
+      "weakfish_sea_trout": {
+        "min_size": "13 in",
+        "bag_limit": 1,
+        "season": "Year-round",
+        "notes": "ASMFC: 1 fish per day. Critically low population. Handle gently \u2014 fragile mouths."
+      }
+    },
+    "AK": {
+      "dolly_varden_sea_run": {
+        "min_size": "20 in (for retention)",
+        "bag_limit": "2 over 20 in OR 10 under 20 in per day",
+        "season": "Jun-Oct (varies by drainage)",
+        "notes": "Check ADFG drainage-specific regulations."
+      },
+      "arctic_char_sea_run": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Jun-Sep",
+        "notes": "Check ADFG area regulations."
+      },
+      "pink_salmon_humpback": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Jul-Sep",
+        "notes": "Mark-selective rules may apply in some areas."
+      },
+      "sockeye_salmon_shore": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Jul-Aug",
+        "notes": "Flossing regulations vary by river. Check ADFG."
+      },
+      "halibut_alaska_charter": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "2 per day",
+        "season": "Mar-Nov",
+        "notes": "IPHC regulations. Brain-spike large halibut before landing."
+      },
+      "lingcod_alaska": {
+        "min_size": "35 in",
+        "bag_limit": 5,
+        "season": "Year-round in most areas",
+        "notes": "Check ADFG for area-specific rules."
+      },
+      "sablefish_alaska": {
+        "min_size": "No minimum",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Check ADFG \u2014 sablefish may have annual limits."
+      },
+      "yelloweye_rockfish_alaska": {
+        "min_size": "No harvest in some areas",
+        "bag_limit": "Varies",
+        "season": "Varies",
+        "notes": "CATCH-AND-RELEASE ONLY in many AK areas. Use descender devices. Check ADFG."
+      },
+      "pacific_halibut_large": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "2 per day",
+        "season": "Mar-Nov",
+        "notes": "Brain-spike large halibut before landing. IPHC annual catch limits."
+      },
+      "walleye_pollock_shore": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Check ADFG for local restrictions."
+      },
+      "chum_salmon": {
+        "min_size": "20 in",
+        "bag_limit": 6,
+        "season": "Aug-Oct",
+        "notes": "Check ADFG."
+      },
+      "pacific_halibut_juvenile": {
+        "min_size": "Varies (IPHC)",
+        "bag_limit": "2 per day",
+        "season": "Mar-Nov",
+        "notes": "IPHC managed."
       }
     }
   }

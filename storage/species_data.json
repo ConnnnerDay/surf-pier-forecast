@@ -22694,5 +22694,1252 @@
     "lures": "N/A \u2014 large cut or live bait",
     "explanation_cold": "Bull sharks are among the most dangerous sharks encountered in inshore waters. They penetrate far up freshwater rivers and thrive in turbid estuarine environments. Large females can exceed 10 feet. Common in Florida estuaries, Gulf Coast passes, and nearshore waters. Known for unprovoked attacks on humans in shallow water.",
     "explanation_warm": "Bull sharks require very heavy tackle \u2014 80-130 lb class minimum. Wire leader is mandatory. NEVER attempt to land by hand \u2014 professional fishermen use tail ropes and wooden mallets. Release is encouraged \u2014 large females are important for population. Extreme caution near any water where bull sharks are known to be present. Minimum 54 inches FL."
+  },
+  {
+    "name": "Dolly Varden (sea-run)",
+    "coast": "west",
+    "regions": [
+      "alaska",
+      "pacific northwest"
+    ],
+    "temp_min": 38,
+    "temp_max": 54,
+    "temp_ideal_low": 40,
+    "temp_ideal_high": 52,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Salmon eggs, smolt, small fish, flies in streams and coastal areas",
+    "rig": "Light to medium spinning or fly rod in streams and estuaries",
+    "hook_size": "2/0-4/0 octopus or fly hook",
+    "sinker": "1/4-1 oz split shot",
+    "lures": "Spoons, spinners, egg patterns, and streamer flies",
+    "explanation_cold": "Sea-run Dolly Varden are char (not trout) that migrate between freshwater streams and coastal marine waters. They are named after a colorful dress worn by a character in a Dickens novel. Abundant in Alaska coastal streams and some Pacific Northwest rivers. They feed aggressively on salmon eggs during salmon runs. Beautiful fish with red and orange spots on olive-green sides.",
+    "explanation_warm": "Sea-run Dolly Varden are found in nearly every coastal Alaska stream. Fish egg patterns during pink and chum salmon runs for aggressive strikes. The Alaska daily limit is typically 2 fish over 20 inches or 10 fish under 20 inches, but rules vary by drainage. Check ADFG regulations."
+  },
+  {
+    "name": "Arctic char (sea-run)",
+    "coast": "west",
+    "regions": [
+      "alaska"
+    ],
+    "temp_min": 36,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      5,
+      10
+    ],
+    "bait": "Small fish, invertebrates, salmon eggs in Arctic and sub-Arctic streams",
+    "rig": "Light spinning or fly rod in Arctic streams",
+    "hook_size": "2/0-4/0 octopus or fly hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Small spoons, spinners, and egg patterns",
+    "explanation_cold": "Arctic char are circumpolar char species found in Alaska, northern Canada, Iceland, and Arctic Europe. Sea-run (anadromous) fish in Alaska and Canada are called anadromous char or simply char. They are among the northernmost anadromous fish on Earth. Stunning breeding colors \u2014 brilliant orange-red belly. Excellent eating \u2014 rich, flavorful flesh similar to salmon.",
+    "explanation_warm": "Arctic char are found in coastal drainages of northern and western Alaska. They run to sea in summer and return to freshwater in fall. Best fished on egg patterns and small spoons during salmon runs. Check ADFG regulations \u2014 Arctic char bag limits are typically 10 fish per day with a 10-fish possession limit in most areas."
+  },
+  {
+    "name": "Pink salmon (humpback)",
+    "coast": "west",
+    "regions": [
+      "pacific northwest",
+      "alaska"
+    ],
+    "temp_min": 46,
+    "temp_max": 58,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      6,
+      10
+    ],
+    "bait": "Small spoons, spinners, flies in rivers during odd-year runs",
+    "rig": "Light to medium spinning or fly rod in rivers and estuaries",
+    "hook_size": "2/0-4/0 octopus or fly hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Small pink and chartreuse spoons and spinners",
+    "explanation_cold": "Pink salmon are the smallest and most abundant Pacific salmon. They have a strict two-year life cycle \u2014 in most areas they run only in odd-numbered years (major runs) with smaller even-year runs. Named for the spectacular hump males develop on spawning. They run in enormous numbers in Alaska and Pacific Northwest rivers in July-September. Good eating if caught fresh from the sea.",
+    "explanation_warm": "Odd-year pink salmon runs are exceptional in Puget Sound and SE Alaska in August-September. They hit small spoons aggressively. Pink salmon deteriorate quickly in freshwater \u2014 catch them fresh and bright when they first enter rivers or estuaries. They are lower quality once they color up. Mark-selective rules apply in some Puget Sound areas."
+  },
+  {
+    "name": "Sockeye salmon (shore)",
+    "coast": "west",
+    "regions": [
+      "pacific northwest",
+      "alaska"
+    ],
+    "temp_min": 44,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Small bare hooks, tiny flies, or small bright lures \u2014 sockeye do not bite naturally",
+    "rig": "Drift rig with bare hook or tiny attractor fly",
+    "hook_size": "#4-2/0 octopus or fly hook",
+    "sinker": "Split shot",
+    "lures": "Small bright attractors \u2014 sockeye rarely strike true lures",
+    "explanation_cold": "Sockeye salmon are the most commercially valuable Pacific salmon due to their brilliant red-orange flesh. Unlike other salmon, sockeye feed primarily on zooplankton in the ocean rather than fish. This makes them notoriously difficult to catch on hook and line \u2014 most are caught by snagging (foul-hooking), legal in some Alaska fisheries. Copper River and Bristol Bay runs are world-famous.",
+    "explanation_warm": "Sockeye are legal to target in Alaska but difficult to hook on mouth. Alaska flossing technique (drift rig with long leader past a tight line) hooks them in the mouth as they drift upstream. Check Alaska regulations carefully \u2014 snagging rules are specific to each fishery. Copper River sockeye are considered among the finest salmon for eating."
+  },
+  {
+    "name": "Coho salmon (Oregon coast)",
+    "coast": "west",
+    "regions": [
+      "pacific northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      7,
+      12
+    ],
+    "bait": "Herring, spinners, spoons, and jigs in rivers and bays",
+    "rig": "Medium spinning or casting in rivers and estuaries",
+    "hook_size": "2/0-4/0 octopus hook",
+    "sinker": "1/4-1 oz",
+    "lures": "Coho spinners, spoons, and jigs in rivers and bays",
+    "explanation_cold": "Oregon coast coho salmon support one of the most important recreational fisheries on the Oregon coast. Rivers like the Chetco, Rogue, Umpqua, and Siletz see significant fall coho runs. Hatchery programs supplement wild runs. Mark-selective regulations (clipped adipose fin = hatchery, keep; unclipped = wild, release) are standard. Excellent eating.",
+    "explanation_warm": "Oregon coast coho regulations include complex mark-selective rules, bay-specific closures, and in-season adjustments. Check ODFW regulations before any trip. Hatchery coho are plentiful in good years \u2014 excellent eating and great sport on light tackle. Wild coho must be released in most areas."
+  },
+  {
+    "name": "Steelhead (summer run)",
+    "coast": "west",
+    "regions": [
+      "pacific northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 56,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Dry flies, waking flies, nymphs, and small spoons in Pacific Northwest rivers",
+    "rig": "Spey rod or single-hand rod in rivers",
+    "hook_size": "#2-2/0 low-water or light wire hook",
+    "sinker": "Minimal",
+    "lures": "Dry flies, waking muddlers, and small spoons",
+    "explanation_cold": "Summer-run steelhead enter Pacific Northwest rivers in June through September, reaching holding lies in the upper river before spawning the following winter/spring. They are the premier fly fishing target in North America \u2014 aggressive surface-takers that jump dramatically when hooked. Rivers like the Deschutes, North Umpqua, and Snake are legendary summer steelhead fisheries.",
+    "explanation_warm": "Summer steelhead are aggressive surface-takers \u2014 a waked dry fly is one of the most exciting techniques in fishing. Wild fish (unclipped) must be released in nearly all Oregon and Washington rivers. Hatchery fish (clipped adipose) may be retained where regulations allow. Check river-specific rules carefully \u2014 they change within season based on run counts."
+  },
+  {
+    "name": "Halibut (Alaska charter)",
+    "coast": "west",
+    "regions": [
+      "alaska"
+    ],
+    "temp_min": 36,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Herring, squid, octopus, salmon heads on bottom at 100-600 ft",
+    "rig": "Heavy conventional with 16-32 oz ball sinker at 100-600 ft",
+    "hook_size": "8/0-16/0 circle hook on heavy leader",
+    "sinker": "16-32 oz ball",
+    "lures": "Heavy metal jigs (8-16 oz) on sandy bottom",
+    "explanation_cold": "Alaska Pacific halibut are the dominant offshore charter fish in Alaska. Kodiak, Homer, Ketchikan, and Juneau are premier destinations. Charter boats fish deep sandy bottoms year-round when weather allows. Fish can exceed 300 lbs (informally called barn doors). The charter fishery harvests hundreds of pounds per trip when targeting deep water structure. Excellent eating.",
+    "explanation_warm": "Alaska halibut must be brain-spiked (iki-jime) before bringing large fish aboard. Never bring a live halibut into a boat \u2014 their powerful tail can cause serious injury. The IPHC sets annual catch limits. Check current regulations before any Alaska halibut trip. Most charter boats include bait and tackle \u2014 bring layers for cold weather."
+  },
+  {
+    "name": "Lingcod (Alaska)",
+    "coast": "west",
+    "regions": [
+      "alaska",
+      "pacific northwest"
+    ],
+    "temp_min": 44,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Large jigs, whole herring, rockfish used as live bait at 20-200 ft",
+    "rig": "Heavy bottom rig near rocky structure",
+    "hook_size": "5/0-9/0 circle hook",
+    "sinker": "4-16 oz",
+    "lures": "Heavy lead-head jigs (2-8 oz) near rocky structure",
+    "explanation_cold": "Lingcod in Alaska are larger on average than in California or Oregon, with fish exceeding 60 lbs common in good areas. They inhabit rocky structure throughout SE Alaska and the Gulf of Alaska. They are ambush predators that attack and hold prey without immediately swallowing \u2014 keep the line tight when they strike. Excellent eating \u2014 firm white flesh.",
+    "explanation_warm": "Alaska lingcod respond well to large jigs worked near rocky structure. Tip jigs with a herring strip for better results. They grab and hold bait \u2014 do not immediately set the hook. Alaska minimum size is 35 inches. Check ADFG regulations for current size and bag limits."
+  },
+  {
+    "name": "Sablefish (Alaska)",
+    "coast": "west",
+    "regions": [
+      "alaska",
+      "pacific northwest",
+      "california"
+    ],
+    "temp_min": 36,
+    "temp_max": 52,
+    "temp_ideal_low": 38,
+    "temp_ideal_high": 50,
+    "peak_months": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [],
+    "bait": "Jigs, herring, squid at 600-3000 ft deep water",
+    "rig": "Very heavy deep-dropping rig at 600-3000 ft",
+    "hook_size": "8/0-12/0 circle hook",
+    "sinker": "24-64 oz or electric reel",
+    "lures": "Heavy metal jigs at great depth",
+    "explanation_cold": "Sablefish (black cod) are prized as premium seafood \u2014 the richest, most buttery fish on the West Coast. They inhabit extreme depths (600-3000 ft) throughout the Pacific Coast and Alaska. Sport fishing is primarily done from charter boats using electric reels due to the extreme depths. Commercial quota is very valuable \u2014 sablefish is sometimes called white gold.",
+    "explanation_warm": "Sablefish sport fishing requires specialized deep-water tackle \u2014 electric reels or heavy manual reels with enormous line capacity. Charter boats in SE Alaska and northern California specifically target sablefish. The flesh is extraordinarily rich in omega-3 oils \u2014 often described as butter fish. Check ADFG and CDFW size and possession limits."
+  },
+  {
+    "name": "Yelloweye rockfish (Alaska)",
+    "coast": "west",
+    "regions": [
+      "alaska",
+      "pacific northwest"
+    ],
+    "temp_min": 40,
+    "temp_max": 56,
+    "temp_ideal_low": 42,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Jigs, herring, shrimp at 200-1000 ft near rocky structure",
+    "rig": "Heavy bottom rig near rocky structure at depth",
+    "hook_size": "5/0-9/0",
+    "sinker": "8-24 oz",
+    "lures": "Heavy jigs (4-12 oz) near rocky structure",
+    "explanation_cold": "Yelloweye rockfish are among the most prized Alaska rockfish \u2014 brilliant orange-yellow with distinctive bright yellow eyes. They are also extremely long-lived (over 100 years) and slow-growing, making them vulnerable to overfishing. Found at 200-1000 ft on rocky reefs. Their flesh is excellent \u2014 firm, white, and mild. Often called red snapper in Alaska restaurants.",
+    "explanation_warm": "Yelloweye rockfish are catch-and-release only in many Alaska management areas due to low population estimates. Check ADFG regulations carefully \u2014 limits change annually. Barotrauma (swim bladder expansion) is a serious concern \u2014 use a descender device to return fish to depth. When legal to keep, excellent table fare."
+  },
+  {
+    "name": "Lingcod (California)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 50,
+    "temp_max": 62,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Large jigs, live rock fish, herring at 20-200 ft near rocky structure",
+    "rig": "Heavy bottom rig near rocky reefs and kelp",
+    "hook_size": "5/0-8/0 circle hook",
+    "sinker": "3-12 oz",
+    "lures": "Heavy jigs (2-6 oz) near rocky reef",
+    "explanation_cold": "California lingcod are the premier nearshore game fish for rocky shore and offshore anglers from Big Sur north. They are aggressive ambush predators that attack jigs, live bait, and even other lingcod when hooked. The green- or blue-tinted flesh is natural (from a bile pigment) and turns white when cooked \u2014 excellent eating.",
+    "explanation_warm": "Lingcod season in California: Jan 1 - Dec 31 but with depth restrictions and area closures. Minimum 22 inches. Typical bag limit 2-3 fish. They grab and hold bait rather than immediately swimming \u2014 keep tension and wait for a good hook up. California lingcod respond to large swimbaits and live rockfish."
+  },
+  {
+    "name": "Pacific halibut (large)",
+    "coast": "west",
+    "regions": [
+      "pacific northwest",
+      "alaska"
+    ],
+    "temp_min": 44,
+    "temp_max": 58,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 56,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Herring, squid, octopus on sandy bottom at 150-600 ft",
+    "rig": "Heavy conventional at 150-600 ft with large bait",
+    "hook_size": "10/0-14/0 circle hook",
+    "sinker": "20-48 oz",
+    "lures": "Heavy metal jigs (8-16 oz) for deep water",
+    "explanation_cold": "Large Pacific halibut (over 50 lbs) are found throughout the Bering Sea, Gulf of Alaska, and Pacific Northwest. They are the largest flatfish in the world and can live 55+ years. Landing large halibut requires brain-spiking before bringing aboard. Charter fishing in Alaska for large halibut is a bucket-list experience.",
+    "explanation_warm": "Brain-spike large halibut BEFORE bringing aboard. A 200+ lb halibut thrashing in a boat is dangerous. Use a flying gaff and immediately spike the brain (between the eyes toward the top of the head). IPHC regulations \u2014 check current year limits by area. Homer, Alaska is the self-proclaimed halibut capital of the world."
+  },
+  {
+    "name": "Tarpon (Gulf Mexico)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 70,
+    "temp_max": 86,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live crabs, mullet, pinfish, threadfin herring near passes",
+    "rig": "Heavy spinning or conventional at passes, beaches, and offshore",
+    "hook_size": "7/0-10/0 circle hook",
+    "sinker": "None to 2 oz",
+    "lures": "Large soft plastic swimbaits, DOA lures, topwater near passes at night",
+    "explanation_cold": "Gulf of Mexico tarpon occur in great numbers along the Texas and Louisiana coast as well as throughout the Florida Gulf coast. Giant tarpon to 200+ lbs roll and feed along Gulf beaches and passes, particularly at night. Sight fishing to rolling tarpon with live crabs is considered the pinnacle of nearshore fishing.",
+    "explanation_warm": "Gulf tarpon require a 50-dollar Florida tarpon tag to harvest. Catch-and-release is universal practice. Revive carefully by moving through the water before release. Do not suspend tarpon vertically \u2014 support the body horizontally."
+  },
+  {
+    "name": "Snook (Gulf)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 85,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 83,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live shrimp, croaker, mullet near Gulf pass mouths and estuaries",
+    "rig": "Medium to heavy spinning near passes, jetties, and structure",
+    "hook_size": "3/0-5/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Swimbaits, topwater plugs, and jerkbaits near structure",
+    "explanation_cold": "Gulf Coast snook inhabit estuaries, passes, and nearshore waters from Florida through Mexico. Texas snook fishing is limited to extreme southern Texas near Brownsville. Gulf snook follow the same patterns as Atlantic snook \u2014 structure-oriented ambush predators.",
+    "explanation_warm": "Gulf Coast snook follow Florida common snook regulations. Texas has minimal snook presence near the Mexican border \u2014 check TPWD if attempting to target there."
+  },
+  {
+    "name": "Redfish (red drum)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 60,
+    "temp_max": 82,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live crabs, shrimp, finger mullet, menhaden in bays and surf",
+    "rig": "Light to medium rig on sandy and grassy bottom at 0-20 ft",
+    "hook_size": "2/0-5/0 circle hook",
+    "sinker": "None to 1 oz",
+    "lures": "Gold spoons, Gulp shrimp, popping corks, topwater at dawn",
+    "explanation_cold": "Red drum (redfish, channel bass) are the dominant inshore game fish of the Gulf Coast and south Atlantic. They sight-feed on flats, crash baitfish in passes, and charge the surf on Atlantic beaches. The distinctive black tail spot is the key identification feature. Bull reds (over 27 in) congregate at passes and nearshore structures.",
+    "explanation_warm": "Redfish have slot limits: 18-27 in TX; 18-27 in FL Gulf; 15-23 in SC; 18-27 in LA. Bull reds must be released or one per day. Classic light tackle: gold spoon retrieved fast over grass flats."
+  },
+  {
+    "name": "Redfish (surf)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 58,
+    "temp_max": 78,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      7,
+      12
+    ],
+    "bait": "Cut menhaden, crab, mullet in the surf zone",
+    "rig": "Heavy surf rig with pyramid sinker",
+    "hook_size": "5/0-8/0 circle hook",
+    "sinker": "3-8 oz pyramid sinker",
+    "lures": "Large swimbaits and jigs in the surf",
+    "explanation_cold": "Surf red drum along the Atlantic coast (Outer Banks to Cape Cod in fall) are a prized target for surf casters. Large bull reds over 40 lbs stack in the Outer Banks surf in October-November. The most iconic surf fishing experience on the East Coast.",
+    "explanation_warm": "NC surf channel bass regulations: 18-27 in slot (1 fish/day); one over 27 in also allowed. Bull reds in OBX surf in October are a bucket-list experience. Use stout surf tackle (10-12 ft rod, 50-65 lb braid). Cut menhaden is the classic bait."
+  },
+  {
+    "name": "Redfish (flats)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live shrimp, fiddler crabs, small crabs on shallow grass flats at 1-3 ft",
+    "rig": "Ultralight to light spinning or fly rod on shallow flats",
+    "hook_size": "2/0-4/0 circle hook",
+    "sinker": "None",
+    "lures": "Weedless gold spoon, Clouser minnow, shrimp flies on flats",
+    "explanation_cold": "Sight-fishing to redfish on shallow grass flats is the quintessential Gulf Coast inshore fly fishing experience. Tailing reds in 6-12 inches of water \u2014 feeding head-down with tail out of the water \u2014 are approached quietly. Cast ahead of the fish and strip slowly.",
+    "explanation_warm": "Approach tailing reds from downwind and down-current. Cast at least 3 feet ahead of the fish. A weedless gold spoon or shrimp fly worked slowly triggers strikes. Same slot limits apply. Polarized sunglasses are essential for spotting fish."
+  },
+  {
+    "name": "Speckled trout (sea trout)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 58,
+    "temp_max": 80,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live shrimp, finger mullet, live croaker on grass flats and near structure",
+    "rig": "Light spinning near grass flats, docks, and channel edges",
+    "hook_size": "#2-2/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Mirrolure, Rapala, topwater plugs, and soft plastic shrimp",
+    "explanation_cold": "Speckled trout (spotted sea trout) are the most popular inshore game fish in the Gulf Coast, supporting the largest recreational fishery in the Gulf of Mexico by numbers. They inhabit grass flats, bays, estuaries, and channel edges from Maryland to Mexico. Named for the distinctive black spots on the dorsal fin and back. They are temperature sensitive \u2014 cold kills are a significant mortality factor.",
+    "explanation_warm": "Speckled trout regulations vary significantly by state and are subject to emergency changes after cold kill events. FL minimum 15 in (12 in Gulf Panhandle); TX 15 in slot 15-25, one over 25 per day; LA 12 in; MS 12 in; AL 12 in. Topwater lure fishing at first light on glass-calm flats is a Gulf Coast summer tradition."
+  },
+  {
+    "name": "Speckled trout (winter)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 56,
+    "temp_max": 76,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Live shrimp and small jigs near deep grass edges and channel banks",
+    "rig": "Light to medium spinning near deep grass edges and channels",
+    "hook_size": "#2-2/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Soft plastic shrimp under a popping cork",
+    "explanation_cold": "Winter speckled trout in the Gulf Coast stack in deeper grass edges, channels, and warm water refuges (power plant discharge canals, protected bays) when air temperatures drop. Large trout concentrate in predictable spots. Some of the largest gator trout (over 5 lbs) are caught in winter.",
+    "explanation_warm": "Winter speckled trout fishing requires patience and subtle presentations \u2014 cold fish are lethargic. Work soft plastics slowly along deeper grass edges. Large gator trout often hold near the deepest areas of flats. Be cautious on cold kill mornings \u2014 distressed trout need revival, not harvest."
+  },
+  {
+    "name": "Striped bass (Chesapeake)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic"
+    ],
+    "temp_min": 46,
+    "temp_max": 66,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      6,
+      9,
+      12
+    ],
+    "bait": "Soft crabs, live eels, spot, bunker near structure and channel edges",
+    "rig": "Light to heavy depending on target size \u2014 near structure and channel edges",
+    "hook_size": "5/0-9/0 circle hook",
+    "sinker": "None to 2 oz",
+    "lures": "Swimbaits, topwater lures, bucktail jigs, and spoons",
+    "explanation_cold": "The Chesapeake Bay is the most important striped bass nursery in the Atlantic. Young-of-year striped bass depend on Bay grass beds and tributaries. Spring fishing in the Bay for keeper striped bass is popular from March through May. Fall Bay fishing targets large striped bass staging at Bay Bridge and river mouths before heading south. The Bay also produces the majority of the Atlantic migratory stock.",
+    "explanation_warm": "Chesapeake Bay striped bass regulations: Maryland requires a recreation license. Virginia has a separate recreational license. Slot limits change annually \u2014 check VMRC and MD DNR. Many tributaries are closed or have special rules. Soft crab is an exceptional Bay striper bait in spring \u2014 present it near bridge pilings and channel edges."
+  },
+  {
+    "name": "Striped bass (Hudson River)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "northeast"
+    ],
+    "temp_min": 46,
+    "temp_max": 66,
+    "temp_ideal_low": 48,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      6,
+      9,
+      12
+    ],
+    "bait": "Soft crabs, eels, bunker, herring near rocky structure and tidal rips",
+    "rig": "Medium to heavy spinning or conventional near structure",
+    "hook_size": "5/0-9/0 circle hook",
+    "sinker": "None to 3 oz",
+    "lures": "Large swimbaits, bucktail jigs, and poppers near rocky structure",
+    "explanation_cold": "The Hudson River is the second most important striped bass spawning river in the Atlantic. Large concentrations of stripers spawn upriver from Manhattan every spring. The tidal Hudson from the Battery to Croton offers excellent spring striper fishing. Fall migration pushes fish through the lower river and Lower Bay.",
+    "explanation_warm": "Hudson River striped bass regulations follow New York State rules with additional Hudson River-specific regulations. Check NYSDEC for current regulations. PCB contamination in Hudson River fish is a serious concern \u2014 check consumption advisories before eating striped bass from the Hudson."
+  },
+  {
+    "name": "Delaware Bay weakfish",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic"
+    ],
+    "temp_min": 50,
+    "temp_max": 68,
+    "temp_ideal_low": 52,
+    "temp_ideal_high": 64,
+    "peak_months": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      7,
+      11
+    ],
+    "bait": "Shrimp, sand worms, small baitfish in bay channels and grass edges",
+    "rig": "Light spinning near bay grass edges and channel banks at night",
+    "hook_size": "#2-2/0",
+    "sinker": "None to 1 oz",
+    "lures": "Bucktail jigs, soft plastic shrimp near night lights at docks",
+    "explanation_cold": "Delaware Bay was historically one of the most productive weakfish grounds in the Atlantic. Large weakfish (over 5 lbs) were common. Populations have declined dramatically since the mid-1990s and the fishery is a shadow of its former self. Weakfish are sensitive to seismic surveys and shipping noise. Currently under conservation pressure with low bag limits.",
+    "explanation_warm": "Weakfish regulations are restrictive due to low populations: 1 fish per day in most states, minimum 13 inches. Check state rules before targeting weakfish. Handle gently \u2014 weakfish have notoriously fragile mouths and a powerful hook set tears the hook out. Night fishing near dock lights with soft plastics is most productive."
+  },
+  {
+    "name": "Pufferfish (northern)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "northeast",
+      "southeast"
+    ],
+    "temp_min": 56,
+    "temp_max": 74,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, worms, squid near sandy bottom at 5-40 ft",
+    "rig": "Very light bottom rig near sandy bottom",
+    "hook_size": "#6-#2",
+    "sinker": "1/4-1 oz",
+    "lures": "Tiny jigs near sandy bottom",
+    "explanation_cold": "Northern puffer (swelltoads) are small, roundish fish common in mid-Atlantic bays and estuaries. They are not the same as the highly toxic tropical puffers \u2014 the northern puffer is edible and even considered a delicacy. They puff up with water when threatened. Their skin is rough and must be removed when cleaning (peel off whole). The flesh is sweet and excellent.",
+    "explanation_warm": "Northern puffer skin is TOXIC \u2014 never eat the skin. Properly cleaned puffer (\"sea squab\") is a mid-Atlantic delicacy \u2014 sweet, white, tender flesh that tastes like chicken. Clean by cutting off the head and peeling off the skin from the back. No consumption advisories for northern puffer flesh (unlike skin). Great fun to catch on tiny hooks."
+  },
+  {
+    "name": "Northern pipefish",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 56,
+    "temp_max": 74,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Not typically targeted \u2014 too small and found in seagrass",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Northern pipefish are slender, elongated fish closely related to seahorses. They inhabit seagrass beds and weedy areas throughout the Atlantic coast. Males carry developing eggs in a brood pouch, similar to seahorses. Not targeted by anglers. Fascinating ecological indicator species \u2014 their presence indicates healthy seagrass beds.",
+    "explanation_warm": "Northern pipefish are occasionally caught on tiny hooks or brought up in seaweed tangles near seagrass beds. They are not game fish \u2014 release immediately if caught. Their presence indicates healthy seagrass habitat."
+  },
+  {
+    "name": "Atlantic halfbeak",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 64,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Sabiki rigs, tiny hooks with bread or plankton near surface",
+    "rig": "Ultralight near surface in clear water",
+    "hook_size": "#8-#6 tiny hook",
+    "sinker": "None",
+    "lures": "Tiny flies near surface",
+    "explanation_cold": "Atlantic halfbeak are distinctive small fish with a greatly elongated lower jaw. They school near the surface in warm coastal waters and are an important live bait for sailfish, marlin, and large dolphinfish. Also called ballyhoo \u2014 one of the most important offshore trolling baits in south Florida.",
+    "explanation_warm": "Halfbeak (ballyhoo) are primarily important as offshore trolling bait. They can be caught with tiny hooks at the surface on bits of bread or tiny sabiki rigs near floating weeds. Rigged fresh ballyhoo are the most effective bait for sailfish and white marlin trolling in the Gulf Stream."
+  },
+  {
+    "name": "Flounder (summer)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 52,
+    "temp_max": 70,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live killies, spearing, squid strips, Gulp on sandy bottom at 5-60 ft",
+    "rig": "Light to medium fluke rig drifted over sandy and mixed bottom",
+    "hook_size": "4/0-6/0 wide-gap or Kahle hook",
+    "sinker": "1-4 oz bank or bucktail",
+    "lures": "Bucktail jigs tipped with Gulp, spearing, or squid strips",
+    "explanation_cold": "Summer flounder (fluke) are the premier nearshore flatfish of the Northeast and mid-Atlantic. They are left-eyed, sandy-bottom ambush predators that strike upward at passing prey. Found from Cape Cod to Florida but most abundant from Long Island to Virginia in summer. They chase bucktails aggressively and fight hard for a flatfish. Excellent eating.",
+    "explanation_warm": "Summer flounder minimum size varies: NY 12 in, NJ 14 in, DE 15 in, MD 16.5 in, VA 16 in, NC 14 in. Bag limits typically 3-5 fish. Fish a bucktail tipped with Gulp on a slow drift over sand. Keep moving \u2014 fluke like a moving bait presentation. Target the sand-grass interface for bigger fish."
+  },
+  {
+    "name": "Atlantic sturgeon (catch-and-release)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 44,
+    "temp_max": 64,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 60,
+    "peak_months": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      6,
+      8,
+      12
+    ],
+    "bait": "N/A \u2014 incidental catch only; ESA protected",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Atlantic sturgeon are federally listed as endangered under the ESA. They are ancient fish (over 70 million years in the fossil record) that historically ran in every major Atlantic river. Populations have declined 99% from historical levels. Any accidental catch must be reported and the fish immediately released without removing from water if possible.",
+    "explanation_warm": "PROHIBITED FROM HARVEST \u2014 ESA LISTED as endangered. It is ILLEGAL to target, possess, or harm Atlantic sturgeon. If accidentally caught, release immediately. Do not remove from water if possible. Report accidental catch to NOAA Fisheries (1-800-853-1964). Heavy fines and criminal penalties for violation."
+  },
+  {
+    "name": "Common snook (Atlantic FL)",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 68,
+    "temp_max": 85,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 83,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live pilchards, scaled sardines, shrimp, mullet near inlets and mangroves",
+    "rig": "Medium spinning or baitcasting near Atlantic-side inlets and mangroves",
+    "hook_size": "3/0-5/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Bucktail jigs, swimbaits, topwater plugs, DOA CAL jerk near structure",
+    "explanation_cold": "Atlantic-side Florida snook differ from Gulf-side fish primarily in their location and access points. The Indian River Lagoon, Sebastian Inlet, Fort Lauderdale inlets, and Miami inlets are primary Atlantic-side snook destinations. Atlantic snook slot limit is 28-33 inches. Season closed June 1 - August 31 on the Atlantic coast.",
+    "explanation_warm": "Atlantic coast snook: season closed June 1 - Aug 31 and Dec 1 - Jan 31. Slot 28-33 inches, one fish per day. Special snook permit required year-round. Sebastian Inlet is one of the most famous snook fishing spots in Florida \u2014 large fish gather at the inlet mouth on the outgoing tide."
+  },
+  {
+    "name": "Goliath grouper (encounter)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "N/A \u2014 prohibited from harvest; encounter only",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Goliath grouper (formerly jewfish) are fully protected from harvest in the US. They can exceed 800 lbs and 8 feet in length. Large specimens are common around wrecks, reef, and bridge structure in south Florida. They are notorious for engulfing hooked fish and breaking off other anglers. Catch-and-release handling permitted under a permit in Florida for scientific purposes.",
+    "explanation_warm": "FULLY PROTECTED \u2014 cannot be harvested or removed from water. Goliath grouper are protected under Florida law and federal law. If a goliath grabs your hooked fish, there is nothing you can do \u2014 cut the line. Do not attempt to land a goliath grouper. Their sonic booms (loud underwater thumps used for communication) can be startling when nearby. Report encounters to FWC."
+  },
+  {
+    "name": "Manta ray (encounter)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf",
+      "mid-atlantic"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "N/A \u2014 encounter only; protected",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Atlantic manta rays (Mobula birostris) are the largest rays in the world \u2014 up to 23-foot wingspan. They are pelagic planktivores found offshore along the entire US Atlantic and Gulf Coast. Manta rays are listed on CITES Appendix II and are protected in US federal waters. They are harmless filter feeders but spectacular encounters when encountered nearshore or offshore.",
+    "explanation_warm": "PROTECTED \u2014 Manta rays cannot be targeted, taken, or harassed in US federal waters. They are listed on CITES Appendix II. If encountered while diving or fishing, observe from a distance and do not touch or ride. Mobula rays (smaller relatives) are also protected."
+  },
+  {
+    "name": "Whale shark (encounter)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 74,
+    "temp_max": 86,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "N/A \u2014 protected; encounter only",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Whale sharks are the largest fish on Earth (up to 40 feet) and are harmless filter feeders. They are found in warm tropical and subtropical waters globally including the Gulf of Mexico and south Atlantic. Whale sharks congregate off the Yucatan and Florida offshore waters in summer to feed on fish spawn aggregations. Protected worldwide.",
+    "explanation_warm": "PROTECTED \u2014 Whale sharks cannot be targeted, harassed, or harmed in US waters. They are protected under the Endangered Species Act. Snorkeling or diving with whale sharks is permitted (without disturbing them) in international waters. Observe from at least 6 feet and do not touch, ride, or feed them."
+  },
+  {
+    "name": "Sawfish (encounter)",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "N/A \u2014 federally endangered; release immediately",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Smalltooth sawfish (Pristis pectinata) are critically endangered sawfishes once common throughout the Gulf and Florida coast. They now persist primarily in southwest Florida (Charlotte Harbor to the Everglades). They are one of the most endangered marine species in the world. The saw-like rostrum lined with teeth is used for stunning prey. All US sawfish populations are ESA protected.",
+    "explanation_warm": "FEDERALLY ENDANGERED \u2014 ESA CRITICAL SPECIES. If a sawfish is accidentally caught, do NOT remove from water. Call FWC immediately (1-888-404-FWCC). Cut lines as close to the mouth as possible without handling. Do not touch the rostrum (saw). Report encounters to help track this critically endangered species. Heavy penalties for harm or possession."
+  },
+  {
+    "name": "Midnight parrotfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Coral, algae scraped from rock near reef \u2014 not hook-and-line target",
+    "rig": "N/A \u2014 incidental catch only",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Midnight parrotfish are the largest Atlantic parrotfish species (to 30 inches) with an all-dark blue-black coloration. Like all parrotfish, they use fused beak-like teeth to scrape algae and coral polyps from reef surfaces, producing white coral sand as waste. Critical reef maintainers. Parrotfish are increasingly being protected as reef ecologists.",
+    "explanation_warm": "Parrotfish are not typically targeted by anglers and are ecologically vital to reef health. They produce enormous quantities of coral sand. If accidentally caught near reef, release immediately. Many Caribbean countries protect parrotfish from harvest."
+  },
+  {
+    "name": "Stoplight parrotfish",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 72,
+    "temp_max": 84,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Algae scraped from coral near reef",
+    "rig": "N/A",
+    "hook_size": "N/A",
+    "sinker": "N/A",
+    "lures": "N/A",
+    "explanation_cold": "Stoplight parrotfish are strikingly colored \u2014 terminal phase males have green, blue, orange, and red coloration mimicking a stoplight. Initial phase fish are reddish-brown with white scales. Found on south Florida and Keys reefs. Important reef scrapers that maintain algae balance on coral reef.",
+    "explanation_warm": "Stoplight parrotfish are ecologically critical reef fish. Not targeted by anglers. Incidental catches near reef should be immediately released. Their beak can bite through monofilament \u2014 handle carefully if accidental hook-up occurs."
+  },
+  {
+    "name": "Graysby grouper",
+    "coast": "east",
+    "regions": [
+      "southeast"
+    ],
+    "temp_min": 70,
+    "temp_max": 84,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small baitfish and shrimp near coral reef at 10-80 ft",
+    "rig": "Light to medium bottom rig near reef",
+    "hook_size": "#2-2/0",
+    "sinker": "1-2 oz",
+    "lures": "Small jigs near reef",
+    "explanation_cold": "Graysby are small grouper (rarely over 12 inches) common on south Florida and Keys coral reefs. They are recognized by three or four white spots just below the dorsal fin base. Inhabit coral reefs and rocky ledges at moderate depths. Not widely targeted but caught on light tackle near reef. Eat well for their small size.",
+    "explanation_warm": "Graysby are small and not widely targeted. Common in the Florida Keys on patch reef and scattered coral. Light tackle with small jigs or shrimp catches them near the bottom. Fall under general grouper regulations \u2014 check FWC for current rules."
+  },
+  {
+    "name": "Cobia (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 64,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Live eels, large crabs, live spot near buoys, sea turtles, and cownose rays",
+    "rig": "Heavy spinning or conventional near surface-cruising fish from shore or pier",
+    "hook_size": "5/0-10/0 circle hook",
+    "sinker": "None to 2 oz",
+    "lures": "Bucktail jigs, large soft plastics, paddle eels near buoys",
+    "explanation_cold": "Cobia migrating north along the Atlantic coast pass through Virginia, Maryland, and North Carolina waters each spring in large numbers. They are one of the most exciting sight-fishing targets for mid-Atlantic anglers \u2014 visible at the surface near cownose ray schools, buoys, and sea turtles. Virginia Beach and the Chesapeake Bay mouth are premier spring cobia spots.",
+    "explanation_warm": "Virginia Atlantic cobia run peaks in May-June near the Chesapeake Bay mouth. Fish are often spotted near cownose ray schools from elevated piers. 33-inch minimum, 1 fish per day in most Atlantic states. NOAA HMS management now applies to Atlantic cobia. Spring run highly regulated \u2014 check current NOAA regulations each year."
+  },
+  {
+    "name": "Bluefish (large)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic",
+      "southeast"
+    ],
+    "temp_min": 56,
+    "temp_max": 72,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Live bunker, large cut bait, live eels from jetty and surf",
+    "rig": "Heavy spinning or conventional from jetty, surf, and nearshore",
+    "hook_size": "5/0-9/0 hook or swimbait hook",
+    "sinker": "1-4 oz",
+    "lures": "Large poppers, metal jigs, and swimming lures near surface",
+    "explanation_cold": "Large bluefish (choppers, 5-15 lbs) migrate along the Atlantic coast in fall, crashing massive bait schools and creating the famous bluefish blitzes that draw surf anglers from miles away. They travel with striped bass during fall migrations. Large bluefish have very sharp teeth and will sever fingers \u2014 always use wire or heavy mono leader. Good eating when bled and iced immediately.",
+    "explanation_warm": "Large bluefish REQUIRE wire or 60-80 lb monofilament leader \u2014 their razor teeth cut through standard fluorocarbon instantly. Use long-nose pliers to remove hooks \u2014 never put fingers near mouth. Bag limit 3 fish per day in most NE states. Bleed immediately for edibility \u2014 the flesh oxidizes quickly without bleeding."
+  },
+  {
+    "name": "Bluefish (snapper blues)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "mid-atlantic"
+    ],
+    "temp_min": 54,
+    "temp_max": 70,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Small cut bait, small lures near surface in bays in summer",
+    "rig": "Ultralight to light spinning in bays and estuaries",
+    "hook_size": "#4-2/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small metal jigs, flies, and tiny poppers",
+    "explanation_cold": "Juvenile bluefish (snapper blues, 4-8 inches) flood Northeast bays and estuaries in summer, providing fast action for light tackle anglers. They are aggressive biters and often hit on every cast when a school is located. Even small bluefish have sharp teeth \u2014 handle carefully. Excellent fun for beginners and young anglers.",
+    "explanation_warm": "Snapper blues enter NE bays in July-August and provide fast, near-constant action on small lures. Use a short piece of wire or heavy monofilament leader \u2014 even small bluefish cut through light fluorocarbon. They can bite fingers \u2014 handle carefully even at small size. Good table fare when bled and eaten fresh."
+  },
+  {
+    "name": "Weakfish (sea trout)",
+    "coast": "east",
+    "regions": [
+      "mid-atlantic",
+      "northeast"
+    ],
+    "temp_min": 54,
+    "temp_max": 70,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      7,
+      11
+    ],
+    "bait": "Live shrimp, small baitfish, squid near grass edges and channels",
+    "rig": "Light spinning near bay grass edges, channels, and night lights",
+    "hook_size": "#2-2/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Soft plastic shrimp, bucktail jigs near bay structure and night lights",
+    "explanation_cold": "Weakfish (gray sea trout, squeteague) were once enormously abundant from Maine to Florida and are now at historically low population levels. They are the Northern relative of speckled trout. Large weakfish (over 6 lbs) were once common \u2014 today a 3-lb weakfish is a trophy. The decline has been linked to increased predation, overfishing, and unknown ocean mortality factors.",
+    "explanation_warm": "Weakfish regulations are very restrictive: 1 fish per day, 13-inch minimum in most Atlantic states. Handle very gently \u2014 their mouths are delicate (weak fish) and the hook tears out with heavy pressure. Night fishing near dock lights with soft plastic shrimp on light jig heads is most productive."
+  },
+  {
+    "name": "Red snapper (Gulf large)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 66,
+    "temp_max": 82,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Live bait, cut bait, squid near offshore reef at 60-200 ft",
+    "rig": "Heavy bottom rig near offshore reef at 60-200 ft",
+    "hook_size": "4/0-8/0 circle hook",
+    "sinker": "3-8 oz",
+    "lures": "Large jigs near reef bottom",
+    "explanation_cold": "Gulf red snapper support one of the most politically charged fishery management battles in US fisheries history. The stock has recovered significantly but recreational season is extremely short (historically 3-9 days per year in federal waters). Large red snapper (10-25 lbs) are common on Gulf offshore reef at 80-200 ft. Excellent eating \u2014 widely considered the best table snapper.",
+    "explanation_warm": "Gulf red snapper: 16-inch minimum; 2 fish per day federal waters. Annual season typically July-September for a very short window \u2014 check NOAA SERO regulations. Many charter boats use for-hire quota that allows longer seasons. State waters (0-9 miles off TX, LA) may have separate rules. Barotrauma is a significant concern \u2014 use descender devices to return released fish safely."
   }
 ]
