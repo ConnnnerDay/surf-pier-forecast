@@ -124,8 +124,7 @@ def test_verification_email_html_escapes_username(monkeypatch):
     email_module.send_verification_email(
         "user@example.com",
         "<script>alert(1)</script>",
-        "token123",
-        "https://example.com/",
+        "https://example.com/verify-email/token123",
     )
 
     assert sent.get("body_html") is not None

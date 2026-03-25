@@ -103,10 +103,15 @@ def send_email(to: str, subject: str, body_text: str, body_html: str = "") -> bo
 
 
 def send_verification_email(
-    to_email: str, username: str, token: str, base_url: str
+    to_email: str, username: str, verify_url: str
 ) -> bool:
-    """Send an account verification email with a one-time link."""
-    verify_url = f"{base_url.rstrip('/')}/verify-email/{token}"
+    """Send an account verification email with a one-time link.
+
+    ``verify_url`` is the fully-qualified verification link, already built by
+    the caller with ``url_for("auth.verify_email", token=token, _external=True)``
+    so that Flask's SERVER_NAME config (when set) is respected and no URL
+    string-concatenation is needed here.
+    """
     subject = "Verify your Surf & Pier account"
     # HTML-escape username before embedding in the HTML body so that any
     # unexpected characters (e.g. '<', '>') cannot break the HTML structure.

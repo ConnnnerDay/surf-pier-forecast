@@ -741,8 +741,8 @@ def register() -> Any:
     # Send verification email (best-effort; account is created regardless).
     token = secrets.token_urlsafe(32)
     set_email_verification_token(user_id, token)
-    base_url = request.host_url
-    send_verification_email(email, username, token, base_url)
+    verify_url = url_for("auth.verify_email", token=token, _external=True)
+    send_verification_email(email, username, verify_url)
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
     session.clear()
@@ -831,8 +831,8 @@ def resend_verification() -> Any:
     _record_attempt(_resend_rate_limit_store, _resend_rate_limit_lock, _RESEND_RATE_LIMIT_WINDOW_S)
     token = secrets.token_urlsafe(32)
     set_email_verification_token(g.user["id"], token)
-    base_url = request.host_url
-    send_verification_email(email, g.user["username"], token, base_url)
+    verify_url = url_for("auth.verify_email", token=token, _external=True)
+    send_verification_email(email, g.user["username"], verify_url)
     return redirect(url_for("auth.verify_pending", sent="1"))
 
 
