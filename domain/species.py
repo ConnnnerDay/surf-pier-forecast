@@ -1585,6 +1585,80 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Whitebone porgy": ["panfish"],
     "Knobbed porgy": ["panfish"],
     "Saucereye porgy": ["panfish"],
+    # Batch 59 — SE reef / goatfish / butterflyfish / gobies
+    "Banded butterflyfish": ["reef_fish", "panfish"],
+    "Reef butterflyfish": ["reef_fish", "panfish"],
+    "Neon goby": ["reef_fish", "panfish"],
+    "Cleaning goby": ["reef_fish", "panfish"],
+    "Sharknose goby": ["reef_fish", "panfish"],
+    "Spotted goatfish": ["reef_fish", "panfish"],
+    "Yellow goatfish": ["reef_fish", "panfish"],
+    "Red goatfish": ["reef_fish", "panfish"],
+    "Bigeye (reef)": ["reef_fish", "panfish"],
+    "Sailors choice": ["reef_fish", "panfish"],
+    "Latin grunt": ["reef_fish", "panfish"],
+    "Porcupinefish": ["reef_fish"],
+    "Orangespotted filefish": ["reef_fish", "panfish"],
+    # Batch 60 — sharks / mackerel / pompano / West Coast perch
+    "Great hammerhead": ["catch_and_release"],
+    "Spanish mackerel (Atlantic)": ["game_fish"],
+    "King mackerel (small)": ["game_fish"],
+    "Little tunny (small)": ["game_fish"],
+    "Bonito (Atlantic)": ["game_fish"],
+    "Florida pompano (juvenile)": ["game_fish"],
+    "Permit (small)": ["game_fish"],
+    "Permit (large)": ["game_fish", "catch_and_release"],
+    "White croaker": ["panfish"],
+    "Rubberlip perch": ["panfish"],
+    "Black perch": ["panfish"],
+    "Pacific chub": ["panfish"],
+    # Batch 61 — NE groundfish
+    "Red hake": ["game_fish"],
+    "White hake": ["game_fish"],
+    "Yellowfin sole": ["panfish"],
+    "Flathead sole": ["panfish"],
+    # Batch 62 — misc
+    "Sailor grunt": ["reef_fish", "panfish"],
+    "Inshore shark": ["game_fish"],
+    "Nurse shark (juvenile)": ["catch_and_release"],
+    "Atlantic sharpnose shark (juvenile)": ["game_fish"],
+    "American plaice (small)": ["panfish"],
+    "Alaska pollock": ["panfish"],
+    # Batch 63 — scads
+    "Rough scad": ["panfish"],
+    "Mackerel scad": ["panfish"],
+    # Batch 64 — rocky shore / sea robins
+    "Sea robin (Northern)": ["panfish"],
+    # Batch 65 — SE game fish
+    "Leatherjacket": ["game_fish"],
+    "Bonefish (Gulf)": ["catch_and_release"],
+    "Snook (common)": ["game_fish"],
+    "Fat snook": ["game_fish"],
+    "Swordspine snook": ["game_fish"],
+    # Batch 66 — jacks / snapper
+    "Crevalle jack (pier)": ["game_fish"],
+    "Amberjack (lesser)": ["game_fish"],
+    # Batch 67 — misc reef / spadefish
+    "Moonfish (Atlantic)": ["panfish"],
+    # Batch 68 — PNW/CA salmon and steelhead
+    "Puget Sound king salmon": ["game_fish"],
+    "Puget Sound coho": ["game_fish"],
+    "Olympic Peninsula steelhead": ["game_fish", "catch_and_release"],
+    "Skeena steelhead": ["game_fish", "catch_and_release"],
+    "Columbia River spring chinook": ["game_fish"],
+    "Sacramento River fall chinook": ["game_fish"],
+    "Klamath River fall chinook": ["game_fish"],
+    # Batch 69 — crabs and lobsters
+    "Dungeness crab (shore)": ["panfish"],
+    "Blue crab (Atlantic)": ["panfish"],
+    "Stone crab": ["panfish"],
+    "Rock crab (Pacific)": ["panfish"],
+    "Spiny lobster (Caribbean)": ["panfish"],
+    "American lobster (recreational)": ["panfish"],
+    # Batch 70 — forage / bait species
+    "Gizzard shad (tidal)": ["panfish"],
+    "Menhaden (Atlantic)": ["panfish"],
+    "Gulf menhaden": ["panfish"],
 }
 
 

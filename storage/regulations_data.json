@@ -546,6 +546,168 @@
         "bag_limit": "20 per day",
         "season": "Open year-round",
         "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Do not eat \u2014 contains tetrodotoxin. Release immediately."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Gulf reef fish permit not required for lesser amberjack. Different from greater amberjack regulations."
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gulf_menhaden": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Used as bait. Commercial harvest managed separately."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "CA": {
@@ -1287,6 +1449,84 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "rubberlip_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the surfperch aggregate. Verify current state rules."
+      },
+      "black_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the surfperch aggregate. Verify current state rules."
+      },
+      "pacific_chub": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific chub. Verify current state rules."
+      },
+      "kelp_greenling": {
+        "min_size": "12 in TL (CA)",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Kelp greenling 12-inch minimum in California. 10-fish bag limit. Verify current CDFW/ODFW/WDFW rules."
+      },
+      "painted_greenling": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for painted greenling. Verify current state rules."
+      },
+      "pacific_cod": {
+        "min_size": "None (varies)",
+        "bag_limit": "10 per day",
+        "season": "Complex season set annually \u2014 check PFMC/state rules",
+        "notes": "Pacific cod regulations are set by PFMC and state agencies and vary by area. Verify current rules before fishing."
+      },
+      "yellowfin_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific flatfish aggregate. Verify current state rules."
+      },
+      "flathead_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific flatfish aggregate. Verify current state rules."
+      },
+      "alaska_pollock": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational limit for Alaska pollock. Most recreational pollock are caught incidentally. Verify current state rules."
+      },
+      "dungeness_crab_shore": {
+        "min_size": "6.25 in carapace width",
+        "bag_limit": "10 per day",
+        "season": "Nov 1 - Jun 30 (varies by region)",
+        "notes": "Males only. Season may close early for domoic acid. License required."
+      },
+      "rock_crab_pacific": {
+        "min_size": "4 in carapace width",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "License required. Males only for most species."
+      },
+      "sacramento_river_fall_chinook": {
+        "min_size": "24 in",
+        "bag_limit": "2 per day",
+        "season": "Aug - Dec (varies by section)",
+        "notes": "Salmon season may be closed if run is below threshold. Check CDFW regulations before any salmon trip."
+      },
+      "klamath_river_fall_chinook": {
+        "min_size": "24 in",
+        "bag_limit": "2 per day",
+        "season": "Sep - Nov",
+        "notes": "Tribal waters and reservation stretches are closed to non-tribal fishing. Check CDFW regulations. Dam removal (2024) expected to improve future runs."
       }
     },
     "CT": {
@@ -1577,6 +1817,60 @@
         "bag_limit": "1 per person per day",
         "season": "Open year-round",
         "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "10 traps",
+        "season": "Year-round",
+        "notes": "License required."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "DE": {
@@ -1819,6 +2113,36 @@
         "bag_limit": "1 per person per day",
         "season": "Open year-round",
         "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "FL": {
@@ -2813,6 +3137,276 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "banded_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "reef_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "neon_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "cleaning_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "sharknose_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "yellow_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "bigeye_reef": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeyes. Nocturnal reef fish, rarely targeted."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "latin_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "CAUTION: Porcupinefish contain tetrodotoxin \u2014 do not eat. Handle carefully and release quickly."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for orangespotted filefish. Release recommended."
+      },
+      "smooth_trunkfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth trunkfish secrete pahutoxin when stressed \u2014 do not mix with other fish in a livewell. Release recommended."
+      },
+      "scrawled_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scrawled filefish. Edible once rough skin removed \u2014 most are released."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "snook_common": {
+        "min_size": "28 in (slot: 28-32 in Gulf/Monroe; 28-33 in Atlantic)",
+        "bag_limit": 1,
+        "season": "Atlantic: Mar 1-May 31, Sep 1-Nov 30; Gulf: Mar 1-May 31, Sep 1-Nov 30 (closed Jun-Aug and Dec-Feb)",
+        "notes": "Special snook permit required. One fish per day within slot. Trophy fish (over max) must be released."
+      },
+      "fat_snook": {
+        "min_size": "N/A (too small to retain)",
+        "bag_limit": 0,
+        "season": "Season same as common snook",
+        "notes": "Snook permit required. Species rarely reach legal size \u2014 catch and release."
+      },
+      "swordspine_snook": {
+        "min_size": "N/A (too small to retain)",
+        "bag_limit": 0,
+        "season": "Season same as common snook",
+        "notes": "Snook permit required. Species rarely reach legal size \u2014 catch and release."
+      },
+      "bonefish_gulf": {
+        "min_size": "No harvest",
+        "bag_limit": 0,
+        "season": "Year-round",
+        "notes": "Catch-and-release only. Same rules as Atlantic bonefish. Handle in water, revive fully."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Gulf reef fish permit not required for lesser amberjack. Different from greater amberjack regulations."
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "stone_crab": {
+        "min_size": "2.75 in propodus (claw)",
+        "bag_limit": "No trap limit (permit required commercially)",
+        "season": "Oct 15 - May 1",
+        "notes": "Only one claw per crab may be taken. Crab must be returned alive. Females must be released. No claws in closed season."
+      },
+      "spiny_lobster_caribbean": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "6 per person per day",
+        "season": "Aug 6 - Mar 31; Mini-season last Wed-Thu in July (12/day)",
+        "notes": "No hooks, spears, or wire. Tickle stick and net only. Egg-bearing females must be released. Federal sanctuary rules apply in Keys."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gulf_menhaden": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Used as bait. Commercial harvest managed separately."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "GA": {
@@ -3451,6 +4045,246 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "banded_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "reef_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "neon_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "cleaning_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "sharknose_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "yellow_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "bigeye_reef": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeyes. Nocturnal reef fish, rarely targeted."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "latin_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "cottonwick_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "CAUTION: Porcupinefish contain tetrodotoxin \u2014 do not eat. Handle carefully and release quickly."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for orangespotted filefish. Release recommended."
+      },
+      "smooth_trunkfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth trunkfish secrete pahutoxin when stressed \u2014 do not mix with other fish in a livewell. Release recommended."
+      },
+      "scrawled_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scrawled filefish. Edible once rough skin removed \u2014 most are released."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "LA": {
@@ -3999,6 +4833,174 @@
         "bag_limit": "20 per day",
         "season": "Open year-round",
         "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Do not eat \u2014 contains tetrodotoxin. Release immediately."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Gulf reef fish permit not required for lesser amberjack. Different from greater amberjack regulations."
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gulf_menhaden": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Used as bait. Commercial harvest managed separately."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "MA": {
@@ -4332,6 +5334,60 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "5 traps",
+        "season": "Year-round",
+        "notes": "License required. V-notched females must be released."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "MD": {
@@ -4832,6 +5888,108 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "tripletail": {
+        "min_size": "15 in",
+        "bag_limit": 2,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round except winter closure in some areas",
+        "notes": "Females with egg sponge (sooks) must be released. Soft crabs may have different rules."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "ME": {
@@ -4984,6 +6142,42 @@
         "bag_limit": "3-10 per day (varies by state and season)",
         "season": "Check current state season \u2014 tautog have complex season closures in many states",
         "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "5 traps recreational",
+        "season": "Year-round (commercial)",
+        "notes": "V-notched and egg-bearing females must be released. Max 5 in carapace (protect broodstock). Recreational license required."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "MS": {
@@ -5478,6 +6672,168 @@
         "bag_limit": "20 per day",
         "season": "Open year-round",
         "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Do not eat \u2014 contains tetrodotoxin. Release immediately."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Gulf reef fish permit not required for lesser amberjack. Different from greater amberjack regulations."
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gulf_menhaden": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Used as bait. Commercial harvest managed separately."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "NC": {
@@ -6369,6 +7725,246 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "banded_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "reef_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "neon_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "cleaning_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "sharknose_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "yellow_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "bigeye_reef": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeyes. Nocturnal reef fish, rarely targeted."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "latin_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "cottonwick_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "CAUTION: Porcupinefish contain tetrodotoxin \u2014 do not eat. Handle carefully and release quickly."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for orangespotted filefish. Release recommended."
+      },
+      "smooth_trunkfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth trunkfish secrete pahutoxin when stressed \u2014 do not mix with other fish in a livewell. Release recommended."
+      },
+      "scrawled_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scrawled filefish. Edible once rough skin removed \u2014 most are released."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day (recreational)",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "NJ": {
@@ -6877,6 +8473,132 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "sheepshead": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "4.5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "5 traps",
+        "season": "Year-round",
+        "notes": "License required."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "NY": {
@@ -7293,6 +9015,102 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific recreational regulations for Atlantic opah. Verify current state and NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "sheepshead": {
+        "min_size": "10 in",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "4.5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "5 traps",
+        "season": "Year-round",
+        "notes": "License required."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "OR": {
@@ -7871,6 +9689,72 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "rubberlip_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the surfperch aggregate. Verify current state rules."
+      },
+      "black_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the surfperch aggregate. Verify current state rules."
+      },
+      "pacific_chub": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific chub. Verify current state rules."
+      },
+      "painted_greenling": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for painted greenling. Verify current state rules."
+      },
+      "yellowfin_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific flatfish aggregate. Verify current state rules."
+      },
+      "flathead_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific flatfish aggregate. Verify current state rules."
+      },
+      "alaska_pollock": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational limit for Alaska pollock. Most recreational pollock are caught incidentally. Verify current state rules."
+      },
+      "dungeness_crab_shore": {
+        "min_size": "5.75 in carapace width",
+        "bag_limit": "12 per day",
+        "season": "Dec 1 - Aug 14 (varies by area)",
+        "notes": "Males only. License required."
+      },
+      "rock_crab_pacific": {
+        "min_size": "4 in carapace width",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "olympic_peninsula_steelhead": {
+        "min_size": "20 in",
+        "bag_limit": "1 hatchery fish/day",
+        "season": "Nov-Apr (varies by river)",
+        "notes": "Wild steelhead must be released. Hatchery only. Check ODFW emergency regulations \u2014 rules change within season."
+      },
+      "columbia_river_spring_chinook": {
+        "min_size": "24 in",
+        "bag_limit": "2 hatchery/day",
+        "season": "Mar - Jun (varies by section)",
+        "notes": "Mark-selective. Wild spring Chinook must be released in most sections. Buoy 10 fishery: check ODFW/WDFW boundary rules."
       }
     },
     "RI": {
@@ -8173,6 +10057,60 @@
         "bag_limit": "1 per person per day",
         "season": "Open year-round",
         "notes": "Swordfish require a federal HMS Angling Permit. 47-inch LJFL minimum, 1 fish per person per day. NOAA Observer Program may apply. Verify current NOAA HMS rules before fishing."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "5 traps",
+        "season": "Year-round",
+        "notes": "License required."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "SC": {
@@ -8865,6 +10803,246 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "banded_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "reef_butterflyfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. These are release fish \u2014 please return to reef."
+      },
+      "neon_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "cleaning_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "sharknose_goby": {
+        "min_size": "N/A \u2014 not a hook-and-line target",
+        "bag_limit": "Not applicable",
+        "season": "N/A",
+        "notes": "Cleaning gobies are not a hook-and-line target. Marine ecosystem role as cleaners \u2014 observe but do not target."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "yellow_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for goatfish. Verify current state rules."
+      },
+      "bigeye_reef": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for bigeyes. Nocturnal reef fish, rarely targeted."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "latin_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "cottonwick_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "100 per day (grunt aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Florida/SE grunt complex. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "CAUTION: Porcupinefish contain tetrodotoxin \u2014 do not eat. Handle carefully and release quickly."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for orangespotted filefish. Release recommended."
+      },
+      "smooth_trunkfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth trunkfish secrete pahutoxin when stressed \u2014 do not mix with other fish in a livewell. Release recommended."
+      },
+      "scrawled_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for scrawled filefish. Edible once rough skin removed \u2014 most are released."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "TX": {
@@ -9431,6 +11609,174 @@
         "bag_limit": "20 per day",
         "season": "Open year-round",
         "notes": "Part of the Gulf porgy complex. Verify current GMFMC and state rules."
+      },
+      "spotted_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "red_goatfish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailors_choice": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "caesar_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "tomtate_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "porcupinefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Do not eat \u2014 contains tetrodotoxin. Release immediately."
+      },
+      "orangespotted_filefish": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations. Verify current state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "florida_pompano_juvenile": {
+        "min_size": "11 in (FL) \u2014 must be released if under minimum",
+        "bag_limit": "6 per day when at or above minimum size",
+        "season": "Open year-round",
+        "notes": "Juvenile pompano under the minimum size must be released. Same regulations as adult Florida pompano."
+      },
+      "permit_small": {
+        "min_size": "22 in fork length (same as flats permit)",
+        "bag_limit": "2 per person per day (same as flats permit)",
+        "season": "Open year-round",
+        "notes": "Same regulations as permit (flats). Verify current state rules."
+      },
+      "permit_large": {
+        "min_size": "22 in fork length",
+        "bag_limit": "2 per person per day",
+        "season": "Open year-round",
+        "notes": "Same permit regulations apply at any size. Verify current FL FWC and state rules."
+      },
+      "crevalle_jack_pier": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "amberjack_lesser": {
+        "min_size": "14 in",
+        "bag_limit": 5,
+        "season": "Year-round",
+        "notes": "Gulf reef fish permit not required for lesser amberjack. Different from greater amberjack regulations."
+      },
+      "rainbow_runner": {
+        "min_size": "No minimum",
+        "bag_limit": 10,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "2 bushels/day",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gulf_menhaden": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Used as bait. Commercial harvest managed separately."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "VA": {
@@ -9961,6 +12307,108 @@
         "bag_limit": "20 per day (porgy complex)",
         "season": "Open year-round",
         "notes": "Part of the Southeast porgy complex. Verify current SAFMC and state rules."
+      },
+      "great_hammerhead": {
+        "min_size": "N/A \u2014 PROHIBITED",
+        "bag_limit": "0 \u2014 prohibited",
+        "season": "Fully protected",
+        "notes": "Great hammerhead sharks are PROHIBITED in the Atlantic and Gulf under federal HMS regulations. Release immediately. Critically Endangered \u2014 minimize handling, use dehooking tools in the water."
+      },
+      "bonnethead_shark": {
+        "min_size": "None",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Bonnethead sharks managed under NOAA HMS. Requires federal HMS Angling Permit from a vessel. 1-fish vessel limit. Mostly released."
+      },
+      "inshore_shark": {
+        "min_size": "54 in (fork length) for most species",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Inshore shark fishing requires a federal HMS Angling Permit. Most small coastal sharks have a 1-fish vessel daily limit. Verify current NOAA HMS rules before fishing."
+      },
+      "nurse_shark_juvenile": {
+        "min_size": "Same as adult nurse shark",
+        "bag_limit": "Same rules as adult",
+        "season": "Year-round",
+        "notes": "Same regulations as adult nurse shark. Release recommended."
+      },
+      "atlantic_sharpnose_shark_juvenile": {
+        "min_size": "Same as adult \u2014 54 in",
+        "bag_limit": "1 per vessel per day (HMS rules)",
+        "season": "Open year-round",
+        "notes": "Same HMS regulations as adult sharpnose shark. Verify current NOAA HMS rules."
+      },
+      "spanish_mackerel_atlantic": {
+        "min_size": "14 in (fork length) Atlantic; 12 in Gulf",
+        "bag_limit": "15 per person per day",
+        "season": "Open year-round",
+        "notes": "Spanish mackerel: 14-inch FL minimum on Atlantic coast, 12-inch Gulf. 15-fish daily bag limit in most states. Verify current ASMFC and GMFMC rules."
+      },
+      "king_mackerel_small": {
+        "min_size": "24 in (fork length) Gulf; 24 in Atlantic",
+        "bag_limit": "3 per person per day (varies)",
+        "season": "Open year-round (check current SAFMC/GMFMC season)",
+        "notes": "King mackerel have a 24-inch minimum and 3-fish bag limit in most states. Gulf regulations may differ. Verify current SAFMC, GMFMC and state rules."
+      },
+      "little_tunny_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific bag limit for little tunny (false albacore). Same as adult little tunny. Not recommended for eating by most anglers."
+      },
+      "bonito_atlantic": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Atlantic bonito. Verify current state rules."
+      },
+      "sailor_grunt": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for grunts in Mid-Atlantic states."
+      },
+      "tripletail": {
+        "min_size": "15 in",
+        "bag_limit": 2,
+        "season": "Year-round",
+        "notes": ""
+      },
+      "moonfish_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "rough_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "mackerel_scad": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": "Primarily used as live bait."
+      },
+      "blue_crab_atlantic": {
+        "min_size": "5 in",
+        "bag_limit": "1 bushel/day",
+        "season": "Year-round",
+        "notes": "No egg-bearing females."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
+      },
+      "gizzard_shad_tidal": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (bait use)",
+        "season": "Year-round",
+        "notes": "Cast net only \u2014 not caught on hook and line. Typically used as bait."
       }
     },
     "WA": {
@@ -10515,6 +12963,84 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "No specific recreational regulations. Verify current state rules."
+      },
+      "rubberlip_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the surfperch aggregate. Verify current state rules."
+      },
+      "black_perch": {
+        "min_size": "None",
+        "bag_limit": "10 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the surfperch aggregate. Verify current state rules."
+      },
+      "pacific_chub": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for Pacific chub. Verify current state rules."
+      },
+      "painted_greenling": {
+        "min_size": "None",
+        "bag_limit": "10 per day (general nearshore)",
+        "season": "Open year-round",
+        "notes": "No specific regulations for painted greenling. Verify current state rules."
+      },
+      "yellowfin_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific flatfish aggregate. Verify current state rules."
+      },
+      "flathead_sole": {
+        "min_size": "None",
+        "bag_limit": "15 per day (flatfish aggregate)",
+        "season": "Open year-round",
+        "notes": "Part of the Pacific flatfish aggregate. Verify current state rules."
+      },
+      "alaska_pollock": {
+        "min_size": "None",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational limit for Alaska pollock. Most recreational pollock are caught incidentally. Verify current state rules."
+      },
+      "dungeness_crab_shore": {
+        "min_size": "6.25 in carapace width",
+        "bag_limit": "6 per day (varies by area)",
+        "season": "Varies by area",
+        "notes": "Males only. License required. Some areas pot limit."
+      },
+      "rock_crab_pacific": {
+        "min_size": "4 in",
+        "bag_limit": "No limit",
+        "season": "Year-round",
+        "notes": ""
+      },
+      "puget_sound_king_salmon": {
+        "min_size": "12 in",
+        "bag_limit": "Varies by area (typically 2/day)",
+        "season": "Mark-selective \u2014 most areas open year-round for hatchery fish; wild fish must be released",
+        "notes": "Adipose-clipped (hatchery) fish only in most Puget Sound areas. Check WDFW regulations closely \u2014 area-specific rules change annually."
+      },
+      "puget_sound_coho": {
+        "min_size": "12 in",
+        "bag_limit": "Typically 2 hatchery coho/day",
+        "season": "Aug-Nov (varies by area)",
+        "notes": "Mark-selective. Wild coho (unclipped) must be released in most Puget Sound areas. WDFW regulations change in-season."
+      },
+      "olympic_peninsula_steelhead": {
+        "min_size": "20 in",
+        "bag_limit": "1 hatchery fish/day",
+        "season": "Nov-Mar (varies by river)",
+        "notes": "Wild steelhead (unclipped) must be RELEASED on all OP rivers. Hatchery fish (clipped adipose) may be retained where allowed. Some sections are catch-and-release only. Check emergency rules."
+      },
+      "columbia_river_spring_chinook": {
+        "min_size": "24 in",
+        "bag_limit": "2 hatchery/day",
+        "season": "Mar - Jun",
+        "notes": "Mark-selective. WDFW/ODFW joint management. Complex area-specific rules \u2014 check both states regulations."
       }
     },
     "HI": {
@@ -10756,6 +13282,42 @@
         "bag_limit": "3-10 per day (varies by state and season)",
         "season": "Check current state season \u2014 tautog have complex season closures in many states",
         "notes": "Tautog (blackfish) regulations are complex and vary significantly by state and season. Verify current state rules carefully before fishing."
+      },
+      "red_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific size or bag limit for red hake (ling) in most NE states. Subject to NEFMC management. Verify current rules."
+      },
+      "white_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for white hake. Verify current NEFMC and state rules."
+      },
+      "spotted_hake": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific regulations for spotted hake. Verify current state rules."
+      },
+      "american_plaice_small": {
+        "min_size": "None",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "No specific recreational regulations for American plaice. Subject to NEFMC groundfish rules. Verify current rules."
+      },
+      "american_lobster_recreational": {
+        "min_size": "3.25 in carapace",
+        "bag_limit": "5 traps",
+        "season": "Year-round",
+        "notes": "License required."
+      },
+      "menhaden_atlantic": {
+        "min_size": "No minimum",
+        "bag_limit": "Cast net \u2014 bait use only",
+        "season": "Year-round",
+        "notes": "Not caught on hook and line. Used as bait and chum. Commercial harvest managed by ASMFC."
       }
     },
     "PA": {
