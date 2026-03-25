@@ -447,6 +447,8 @@ _VALID_CATEGORIES = frozenset(
         "pelagic",
         "migratory",
         "shellfish",
+        "catch_and_release",
+        "billfish",
         "other",
     }
 )
