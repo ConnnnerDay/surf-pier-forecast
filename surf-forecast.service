@@ -29,6 +29,8 @@ Environment=PORT=5757
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
 ReadWritePaths=REPLACE_DIR/data
 
 [Install]
