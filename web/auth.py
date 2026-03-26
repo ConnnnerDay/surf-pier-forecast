@@ -8,7 +8,7 @@ import re
 import secrets
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlencode
 
@@ -818,9 +818,8 @@ def resend_verification() -> Any:
     sent_at_raw = get_email_verification_sent_at(g.user["id"])
     if sent_at_raw:
         try:
-            from datetime import timezone as _tz
-            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=_tz.utc)
-            elapsed = (datetime.now(tz=_tz.utc) - sent_at).total_seconds()
+            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
+            elapsed = (datetime.now(tz=timezone.utc) - sent_at).total_seconds()
             if elapsed < _RESEND_MIN_INTERVAL_S:
                 wait = int(_RESEND_MIN_INTERVAL_S - elapsed)
                 return render_template(

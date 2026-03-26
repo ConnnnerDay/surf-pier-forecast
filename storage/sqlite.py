@@ -1204,14 +1204,17 @@ def create_social_user(
     already verified the email address.
     """
     email_val = email.strip().lower() if email else None
+    if email_val and len(email_val) > 254:
+        email_val = None  # RFC 5321 maximum; drop rather than truncate
     safe_avatar = _sanitize_avatar_url(avatar_url)
+    safe_display = display_name[:100] if display_name else None
     conn = get_db()
     try:
         cur = conn.execute(
             "INSERT INTO users "
             "(username, password_hash, email, email_confirmed, is_anonymous, display_name, avatar_url) "
             "VALUES (?, NULL, ?, 1, 0, ?, ?)",
-            (username.strip(), email_val, display_name, safe_avatar),
+            (username.strip(), email_val, safe_display, safe_avatar),
         )
         user_id = cur.lastrowid
         conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
@@ -1240,12 +1243,13 @@ def update_user_social_profile(
     the user may have set themselves.
     """
     safe_avatar = _sanitize_avatar_url(avatar_url)
+    safe_display = display_name[:100] if display_name else None
     conn = get_db()
     try:
-        if display_name:
+        if safe_display:
             conn.execute(
                 "UPDATE users SET display_name = ? WHERE id = ? AND display_name IS NULL",
-                (display_name, user_id),
+                (safe_display, user_id),
             )
         if safe_avatar:
             conn.execute(
