@@ -1296,7 +1296,9 @@ def _get_apple_jwks() -> list:
 
     try:
         with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=8) as resp:
-            data = json.loads(resp.read())
+            # Cap at 64 KB — a legitimate JWKS response is a few KB at most.
+            raw = resp.read(65536)
+        data = json.loads(raw)
         keys = data.get("keys", [])
     except Exception as exc:
         logger.error("apple_jwks.fetch_failed: %s", exc)

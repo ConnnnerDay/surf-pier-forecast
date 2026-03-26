@@ -10,9 +10,34 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from urllib.parse import urlparse as _urlparse
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 logger = logging.getLogger(__name__)
+
+# Trusted origins for OAuth avatar photos.  Only URLs from these HTTPS hosts
+# are stored — anything else is silently dropped to prevent storing arbitrary
+# URLs in the database that could be used for tracking or content injection.
+_TRUSTED_AVATAR_HOSTS: frozenset = frozenset({
+    "lh3.googleusercontent.com",   # Google profile photos
+    "lh4.googleusercontent.com",
+    "lh5.googleusercontent.com",
+    "lh6.googleusercontent.com",
+})
+
+
+def _sanitize_avatar_url(url: Optional[str]) -> Optional[str]:
+    """Return *url* only when it is a safe HTTPS URL from a trusted host."""
+    if not url:
+        return None
+    try:
+        parsed = _urlparse(url)
+        if parsed.scheme == "https" and parsed.netloc in _TRUSTED_AVATAR_HOSTS:
+            return url
+    except Exception:
+        pass
+    return None
 
 # Dummy hash used in authenticate_user to ensure a constant-time password check
 # is always performed, regardless of whether the username exists.  This
@@ -1179,13 +1204,14 @@ def create_social_user(
     already verified the email address.
     """
     email_val = email.strip().lower() if email else None
+    safe_avatar = _sanitize_avatar_url(avatar_url)
     conn = get_db()
     try:
         cur = conn.execute(
             "INSERT INTO users "
             "(username, password_hash, email, email_confirmed, is_anonymous, display_name, avatar_url) "
             "VALUES (?, NULL, ?, 1, 0, ?, ?)",
-            (username.strip(), email_val, display_name, avatar_url),
+            (username.strip(), email_val, display_name, safe_avatar),
         )
         user_id = cur.lastrowid
         conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
@@ -1213,6 +1239,7 @@ def update_user_social_profile(
     Only overwrites fields that are currently NULL — preserves any display name
     the user may have set themselves.
     """
+    safe_avatar = _sanitize_avatar_url(avatar_url)
     conn = get_db()
     try:
         if display_name:
@@ -1220,10 +1247,10 @@ def update_user_social_profile(
                 "UPDATE users SET display_name = ? WHERE id = ? AND display_name IS NULL",
                 (display_name, user_id),
             )
-        if avatar_url:
+        if safe_avatar:
             conn.execute(
                 "UPDATE users SET avatar_url = ? WHERE id = ? AND avatar_url IS NULL",
-                (avatar_url, user_id),
+                (safe_avatar, user_id),
             )
         conn.commit()
     finally:
