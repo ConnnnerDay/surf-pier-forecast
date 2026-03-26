@@ -22,10 +22,11 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from collections import Counter
 from datetime import datetime, timezone
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
@@ -266,7 +267,8 @@ def _scrape_fl(species_name: str) -> Optional[Dict[str, str]]:
 _VA_URL = "https://webapps.mrc.virginia.gov/public/reports/swrecfishingrules.php"
 
 # Cached full-page HTML (one fetch per process run)
-_va_page_cache: Optional[str] = None
+# (html, monotonic_fetched_at) — refreshed when older than _CACHE_TTL_SECONDS
+_va_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _va_page_lock = Lock()
 
 # species_key → uppercase names as they appear in the VA MRC page
@@ -291,11 +293,12 @@ _VA_NAMES: Dict[str, List[str]] = {
 def _get_va_html() -> Optional[str]:
     global _va_page_cache
     with _va_page_lock:
-        if _va_page_cache is not None:
-            return _va_page_cache
+        cached_html, fetched_at = _va_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         html = _fetch_page(_VA_URL)
         if html:
-            _va_page_cache = html
+            _va_page_cache = (html, time.monotonic())
         return html
 
 
@@ -372,7 +375,7 @@ def _scrape_va(species_name: str) -> Optional[Dict[str, str]]:
 _GA_URL = "https://coastalgadnr.org/Limits"
 
 # Cached full-page HTML (one fetch per process run)
-_ga_page_cache: Optional[str] = None
+_ga_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _ga_page_lock = Lock()
 
 _GA_NAMES: Dict[str, List[str]] = {
@@ -402,11 +405,12 @@ _GA_NAMES: Dict[str, List[str]] = {
 def _get_ga_html() -> Optional[str]:
     global _ga_page_cache
     with _ga_page_lock:
-        if _ga_page_cache is not None:
-            return _ga_page_cache
+        cached_html, fetched_at = _ga_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         html = _fetch_page(_GA_URL)
         if html:
-            _ga_page_cache = html
+            _ga_page_cache = (html, time.monotonic())
         return html
 
 
@@ -525,7 +529,7 @@ _NC_URL = (
     "rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits"
 )
 
-_nc_page_cache: Optional[str] = None
+_nc_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _nc_page_lock = Lock()
 
 # species_key → substrings to look for in the NC table's first column (lowercased)
@@ -554,11 +558,12 @@ _NC_NAMES: Dict[str, List[str]] = {
 def _get_nc_html() -> Optional[str]:
     global _nc_page_cache
     with _nc_page_lock:
-        if _nc_page_cache is not None:
-            return _nc_page_cache
+        cached_html, fetched_at = _nc_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         html = _fetch_page(_NC_URL)
         if html:
-            _nc_page_cache = html
+            _nc_page_cache = (html, time.monotonic())
         return html
 
 
@@ -644,7 +649,7 @@ _NY_URL = (
     "https://dec.ny.gov/things-to-do/saltwater-fishing/recreational-fishing-regulations"
 )
 
-_ny_page_cache: Optional[str] = None
+_ny_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _ny_page_lock = Lock()
 
 # species_key → substrings to look for in NY table first column (lowercased)
@@ -669,11 +674,12 @@ _NY_NAMES: Dict[str, List[str]] = {
 def _get_ny_html() -> Optional[str]:
     global _ny_page_cache
     with _ny_page_lock:
-        if _ny_page_cache is not None:
-            return _ny_page_cache
+        cached_html, fetched_at = _ny_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         html = _fetch_page(_NY_URL)
         if html:
-            _ny_page_cache = html
+            _ny_page_cache = (html, time.monotonic())
         return html
 
 
@@ -742,7 +748,7 @@ _AL_URL = (
     "https://www.outdooralabama.com/fishing/saltwater-recreational-size-creel-limits"
 )
 
-_al_page_cache: Optional[str] = None
+_al_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _al_page_lock = Lock()
 
 _AL_NAMES: Dict[str, List[str]] = {
@@ -769,11 +775,12 @@ _AL_NAMES: Dict[str, List[str]] = {
 def _get_al_html() -> Optional[str]:
     global _al_page_cache
     with _al_page_lock:
-        if _al_page_cache is not None:
-            return _al_page_cache
+        cached_html, fetched_at = _al_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         html = _fetch_page(_AL_URL)
         if html:
-            _al_page_cache = html
+            _al_page_cache = (html, time.monotonic())
         return html
 
 
@@ -834,7 +841,7 @@ _RI_URL = (
     "marine-fisheries-minimum-sizes-possession-limits"
 )
 
-_ri_page_cache: Optional[str] = None
+_ri_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _ri_page_lock = Lock()
 
 _RI_NAMES: Dict[str, List[str]] = {
@@ -855,11 +862,12 @@ _RI_NAMES: Dict[str, List[str]] = {
 def _get_ri_html() -> Optional[str]:
     global _ri_page_cache
     with _ri_page_lock:
-        if _ri_page_cache is not None:
-            return _ri_page_cache
+        cached_html, fetched_at = _ri_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         html = _fetch_page(_RI_URL)
         if html:
-            _ri_page_cache = html
+            _ri_page_cache = (html, time.monotonic())
         return html
 
 
@@ -1071,7 +1079,7 @@ def _scrape_tx(species_name: str) -> Optional[Dict[str, str]]:
 
 _MS_URL = "https://www.eregulations.com/mississippi/fishing/saltwater/recreational-fishing-limits"
 
-_ms_page_cache: Optional[str] = None
+_ms_page_cache: Tuple[Optional[str], float] = (None, 0.0)
 _ms_page_lock = Lock()
 
 _MS_NAMES: Dict[str, List[str]] = {
@@ -1096,8 +1104,9 @@ _MS_NAMES: Dict[str, List[str]] = {
 def _get_ms_html() -> Optional[str]:
     global _ms_page_cache
     with _ms_page_lock:
-        if _ms_page_cache is not None:
-            return _ms_page_cache
+        cached_html, fetched_at = _ms_page_cache
+        if cached_html is not None and time.monotonic() - fetched_at < _CACHE_TTL_SECONDS:
+            return cached_html
         # eregulations.com declares ISO-8859-1 but actually serves UTF-8;
         # _fetch_page decodes with errors="replace", so we re-encode and
         # force UTF-8 to get correct curly-quote characters.
@@ -1117,8 +1126,9 @@ def _get_ms_html() -> Optional[str]:
                     _log.warning("reg_scraper: MS response exceeded limit; aborting")
                     return None
                 chunks.append(chunk)
-            _ms_page_cache = b"".join(chunks).decode("utf-8", errors="replace")
-            return _ms_page_cache
+            html = b"".join(chunks).decode("utf-8", errors="replace")
+            _ms_page_cache = (html, time.monotonic())
+            return html
         except Exception as exc:
             _log.warning("MS page fetch failed: %s", exc)
             return None
@@ -1222,12 +1232,14 @@ def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
     """Return cached regulation dict, or None if missing / expired."""
     try:
         conn = get_db()
-        row = conn.execute(
-            "SELECT reg_json, scraped_at FROM reg_scrape_cache "
-            "WHERE species_key=? AND state=?",
-            (species_key, state),
-        ).fetchone()
-        conn.close()
+        try:
+            row = conn.execute(
+                "SELECT reg_json, scraped_at FROM reg_scrape_cache "
+                "WHERE species_key=? AND state=?",
+                (species_key, state),
+            ).fetchone()
+        finally:
+            conn.close()
         if not row:
             return None
         scraped_at = datetime.fromisoformat(str(row["scraped_at"]))
@@ -1246,14 +1258,16 @@ def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
 def _cache_set(species_key: str, state: str, data: Dict[str, Any]) -> None:
     try:
         conn = get_db()
-        conn.execute(
-            "INSERT OR REPLACE INTO reg_scrape_cache "
-            "(species_key, state, reg_json, scraped_at) "
-            "VALUES (?, ?, ?, datetime('now'))",
-            (species_key, state, json.dumps(data)),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn.execute(
+                "INSERT OR REPLACE INTO reg_scrape_cache "
+                "(species_key, state, reg_json, scraped_at) "
+                "VALUES (?, ?, ?, datetime('now'))",
+                (species_key, state, json.dumps(data)),
+            )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception:
         _log.warning(
             "reg_scraper: failed to write cache for %r/%r",
@@ -1312,16 +1326,18 @@ def invalidate_cache(state: Optional[str] = None) -> int:
     """
     try:
         conn = get_db()
-        if state:
-            cur = conn.execute(
-                "DELETE FROM reg_scrape_cache WHERE state=?",
-                (state.upper().strip(),),
-            )
-        else:
-            cur = conn.execute("DELETE FROM reg_scrape_cache")
-        count = cur.rowcount
-        conn.commit()
-        conn.close()
+        try:
+            if state:
+                cur = conn.execute(
+                    "DELETE FROM reg_scrape_cache WHERE state=?",
+                    (state.upper().strip(),),
+                )
+            else:
+                cur = conn.execute("DELETE FROM reg_scrape_cache")
+            count = cur.rowcount
+            conn.commit()
+        finally:
+            conn.close()
         return count
     except Exception:
         return 0

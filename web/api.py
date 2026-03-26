@@ -97,8 +97,10 @@ def _client_ip() -> str:
 _tz_client_ip = _client_ip
 
 
-_PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks
-_prune_counter = 0
+_PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks per store
+# Per-store check counters keyed by id(store) so each store is pruned
+# independently — a high-traffic store cannot starve low-traffic stores.
+_prune_counters: Dict[int, int] = {}
 
 
 def _prune_rate_store(store: Dict[str, Tuple[float, int]], window_s: int) -> None:
@@ -116,12 +118,12 @@ def _is_rate_limited_ip(
     window_s: int,
 ) -> bool:
     """Generic IP-keyed sliding-window rate limiter (read-only check)."""
-    global _prune_counter
     ip = _client_ip()
     now = time.time()
     with lock:
-        _prune_counter += 1
-        if _prune_counter % _PRUNE_EVERY == 0:
+        sid = id(store)
+        _prune_counters[sid] = _prune_counters.get(sid, 0) + 1
+        if _prune_counters[sid] % _PRUNE_EVERY == 0:
             _prune_rate_store(store, window_s)
         start, count = store.get(ip, (now, 0))
         if now - start > window_s:
