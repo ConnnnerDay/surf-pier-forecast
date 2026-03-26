@@ -49,7 +49,7 @@ from storage.cache import (
     save_forecast,
 )
 from storage.sqlite import get_preferences, save_preferences, get_log_stats
-from web.helpers import get_session_location
+from web.helpers import _client_ip, get_session_location
 
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
@@ -64,19 +64,9 @@ _setup_rate_limit_lock = threading.Lock()
 _setup_prune_counter = 0
 
 
-def _setup_client_ip() -> str:
-    from flask import request as _req
-    from web.auth import _TRUST_PROXY  # type: ignore[attr-defined]
-    if _TRUST_PROXY:
-        forwarded = _req.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return _req.remote_addr or "unknown"
-
-
 def _setup_is_rate_limited() -> bool:
     global _setup_prune_counter
-    ip = _setup_client_ip()
+    ip = _client_ip()
     now = time.time()
     with _setup_rate_limit_lock:
         _setup_prune_counter += 1

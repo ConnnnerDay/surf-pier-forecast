@@ -59,6 +59,7 @@ from storage.db import (
     delete_webauthn_credential,
 )
 from services.email import send_verification_email
+from web.helpers import _TRUST_PROXY, _client_ip  # noqa: F401 (re-exported for views.py back-compat)
 
 bp = Blueprint("auth", __name__)
 
@@ -157,24 +158,6 @@ _RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 _account_lockout_store: Dict[str, Tuple[float, int]] = {}
 _account_lockout_lock = threading.Lock()
 
-# Only trust X-Forwarded-For when running behind a known reverse proxy.
-_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
-
-
-def _client_ip() -> str:
-    """Return the best-effort client IP.
-
-    X-Forwarded-For is only honoured when the app is explicitly configured to
-    run behind a trusted reverse proxy (``TRUSTED_PROXY=1``).  Without that
-    flag, blindly reading X-Forwarded-For would let any client forge a
-    different IP on every request and trivially bypass IP-based rate limiting.
-    """
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the left-most entry — the original client IP.
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
 
 
 _PRUNE_EVERY = 200  # prune expired entries every N rate-limit checks per store

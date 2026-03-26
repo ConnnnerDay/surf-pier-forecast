@@ -45,7 +45,7 @@ from storage.sqlite import (
     save_preferences,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
-from web.helpers import get_session_location
+from web.helpers import _TRUST_PROXY, _client_ip, get_session_location  # noqa: F401
 from web.openapi import build_openapi_spec
 from web.schemas import (
     ApiError,
@@ -77,25 +77,6 @@ _tz_rate_store: Dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
 
 
-_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
-
-
-def _client_ip() -> str:
-    """Return the best-effort client IP for rate limiting.
-
-    X-Forwarded-For is only honoured when TRUSTED_PROXY=1 is set in the
-    environment.  Without that flag, the header is ignored to prevent clients
-    from spoofing arbitrary IPs and bypassing IP-based rate limiting.
-    """
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
-
-
-# Keep the old alias used by the timezone helpers below.
-_tz_client_ip = _client_ip
 
 
 _PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks per store
@@ -265,7 +246,7 @@ def set_timezone() -> Any:
         return jsonify({"ok": True})
 
     if _tz_is_rate_limited():
-        logger.warning("security.timezone_rate_limit user_id=%s ip=%s", g.user["id"], _tz_client_ip())
+        logger.warning("security.timezone_rate_limit user_id=%s ip=%s", g.user["id"], _client_ip())
         return jsonify({"ok": True})  # silent — no need to reveal rate limiting to client
 
     _tz_record_attempt()
@@ -278,7 +259,7 @@ def set_timezone() -> Any:
         if tz:
             logger.warning(
                 "security.invalid_timezone user_id=%s tz=%r ip=%s",
-                g.user["id"], tz[:80], _tz_client_ip(),
+                g.user["id"], tz[:80], _client_ip(),
             )
         return jsonify({"ok": True})  # silent rejection — no error info to caller
 
