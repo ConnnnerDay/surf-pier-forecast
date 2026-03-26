@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import threading
@@ -411,8 +412,7 @@ def page_layout_v1() -> Any:
             )
     # Cap total serialised size so this preference field cannot balloon a user's
     # profile row to megabytes.  8 KB is generous for any realistic section list.
-    import json as _json
-    if len(_json.dumps(layout)) > 8192:
+    if len(json.dumps(layout)) > 8192:
         return _json_error(ApiError("invalid_param", "layout payload too large", status=400))
     save_page_layout(uid, layout)
     return jsonify(success_envelope({"ok": True}))
