@@ -182,7 +182,13 @@
             var FAV_KEY = 'setup_favorite_locations';
             var RECENT_KEY = 'setup_recent_locations';
             var loggedIn = {{ 'true' if g.user else 'false' }};
+            var hasCurrentLocation = {{ 'true' if current_location else 'false' }};
             var allLocations = {{ all_locations|tojson }};
+
+            /* HTML-escape helper — must be in outer scope so all functions can use it */
+            function esc2(s) {
+                return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
 
             function onReady(fn) {
                 if (document.readyState === 'loading') {
@@ -310,30 +316,70 @@
                 autoRequestGeolocation();
             });
 
+            /* Haversine distance in miles between two lat/lon pairs */
+            function haversineMiles(lat1, lon1, lat2, lon2) {
+                var R = 3958.8;
+                var φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+                var Δφ = (lat2 - lat1) * Math.PI / 180;
+                var Δλ = (lon2 - lon1) * Math.PI / 180;
+                var a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            }
+
+            /* Return the location object from allLocations closest to (lat, lon) */
+            function findNearestLocation(lat, lon) {
+                var best = null, bestDist = Infinity;
+                allLocations.forEach(function (loc) {
+                    if (loc.lat == null || loc.lng == null) return;
+                    var d = haversineMiles(lat, lon, loc.lat, loc.lng);
+                    if (d < bestDist) { bestDist = d; best = loc; }
+                });
+                return best;
+            }
+
             function autoRequestGeolocation() {
                 if (!navigator.geolocation) return;
+                // Don't auto-detect if the user already has a location set;
+                // they came here to *change* it, so let them browse normally.
+                if (hasCurrentLocation) return;
 
                 var subtitle = document.getElementById('geo-subtitle');
-
-                // Show a subtle "detecting…" hint so the user knows what the
-                // incoming permission prompt is about.
                 if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
 
                 navigator.geolocation.getCurrentPosition(
                     function (pos) {
-                        var latInput = document.getElementById('location_lat');
-                        var lonInput = document.getElementById('location_lon');
-                        var coordsForm = document.getElementById('map-coords-form');
-                        if (!latInput || !lonInput || !coordsForm) return;
-
-                        if (subtitle) subtitle.textContent = 'Finding nearest spots\u2026';
-                        latInput.value = pos.coords.latitude;
-                        lonInput.value = pos.coords.longitude;
-                        coordsForm.submit();
+                        if (subtitle) subtitle.textContent = 'Finding nearest spot\u2026';
+                        var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
+                        if (nearest) {
+                            // Auto-select the nearest location directly — no extra click needed.
+                            // The user can always come back to /setup to change it.
+                            var form = document.createElement('form');
+                            form.method = 'post';
+                            form.action = '/setup/select/' + encodeURIComponent(nearest.id);
+                            var csrf = document.createElement('input');
+                            csrf.type = 'hidden';
+                            csrf.name = 'csrf_token';
+                            csrf.value = '{{ csrf_token }}';
+                            form.appendChild(csrf);
+                            document.body.appendChild(form);
+                            form.submit();
+                        } else {
+                            // No location data available — fall back to showing nearby results
+                            // via the server-side coord search.
+                            var latInput = document.getElementById('location_lat');
+                            var lonInput = document.getElementById('location_lon');
+                            var coordsForm = document.getElementById('map-coords-form');
+                            if (latInput && lonInput && coordsForm) {
+                                latInput.value = pos.coords.latitude;
+                                lonInput.value = pos.coords.longitude;
+                                coordsForm.submit();
+                            }
+                        }
                     },
                     function () {
-                        // Permission denied or unavailable — restore original subtitle
-                        // and let the user find their location manually. No error shown.
+                        // Permission denied or unavailable — let the user find their
+                        // location manually. No error message needed.
                         if (subtitle) subtitle.textContent = 'Find your nearest supported fishing location';
                     },
                     { timeout: 10000, maximumAge: 60000 }
@@ -346,8 +392,6 @@
                 var resultsEl = document.getElementById('loc-search-results');
                 var btn = document.getElementById('loc-search-btn');
                 if (!input || !resultsEl) return;
-
-                function esc2(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
                 function doSearch() {
                     var q = input.value.trim().toLowerCase();
