@@ -1290,4 +1290,37 @@ if ('serviceWorker' in navigator) {
 </script>
 <script src="{{ url_for('static', filename='js/collapsibles.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
+
+<script>
+/* ── Auto-detected location toast ────────────────────────────────────────── */
+(function () {
+    try {
+        var detected = sessionStorage.getItem('geo_auto_detected');
+        if (!detected) return;
+        sessionStorage.removeItem('geo_auto_detected');
+
+        var toast = document.createElement('div');
+        toast.className = 'layout-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        toast.innerHTML = 'Auto-detected: ' + detected + ' &nbsp;·&nbsp; <a href="{{ url_for("views.setup") }}" style="color:inherit;text-decoration:underline">Change</a>';
+        document.body.appendChild(toast);
+
+        // Two rAF frames to ensure the element is in the DOM before transitioning.
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                toast.classList.add('layout-toast--visible');
+            });
+        });
+
+        // Auto-dismiss after 5 s.
+        setTimeout(function () {
+            toast.classList.remove('layout-toast--visible');
+            setTimeout(function () {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }, 5000);
+    } catch (e) {}
+})();
+</script>
 </html>

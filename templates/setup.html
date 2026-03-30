@@ -29,6 +29,11 @@
         <section class="setup-section" style="padding-bottom:0">
             <h2>Search by City, Zip, or Beach</h2>
             <p class="section-sub" id="geo-subtitle">Find your nearest supported fishing location</p>
+            <!-- Shown only when the browser will prompt for geolocation permission -->
+            <button type="button" class="geo-use-location-btn" id="geo-use-btn" style="display:none" aria-label="Use my device location to find the nearest fishing spot">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
+                Use My Location
+            </button>
             <div class="location-search-bar" id="loc-search-bar">
                 <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
                 <input id="loc-search-input" type="search" class="location-search-input" placeholder="City, zip code, or beach name&hellip;" autocomplete="off" inputmode="search">
@@ -78,8 +83,7 @@
                     <label for="zipcode" class="sr-only">5-digit zip code</label>
                     <input id="zipcode" type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
                            value="{{ zipcode|default('', true) }}" class="zip-input{% if error %} zip-input--error{% endif %}" inputmode="numeric" required
-                           aria-invalid="{{ 'true' if error else 'false' }}" aria-describedby="zip-feedback"
-                           autofocus>
+                           aria-invalid="{{ 'true' if error else 'false' }}" aria-describedby="zip-feedback">
                     <button type="submit" class="zip-btn" aria-label="Search by zip code">Search</button>
                 </div>
             </form>
@@ -174,6 +178,12 @@
     <footer>
         <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
+
+    <!-- Geolocation loading overlay (position:fixed, shown while auto-detecting) -->
+    <div class="geo-detect-overlay" id="geo-detect-overlay" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
+        <div class="geo-detect-spinner" aria-hidden="true"></div>
+        <p style="margin:0">Finding your nearest spot&hellip;</p>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
     <script src="{{ url_for('static', filename='js/setup_map.js') }}"></script>
@@ -344,46 +354,96 @@
                 // they came here to *change* it, so let them browse normally.
                 if (hasCurrentLocation) return;
 
-                var subtitle = document.getElementById('geo-subtitle');
-                if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
+                var useBtn = document.getElementById('geo-use-btn');
 
-                navigator.geolocation.getCurrentPosition(
-                    function (pos) {
-                        if (subtitle) subtitle.textContent = 'Finding nearest spot\u2026';
-                        var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
-                        if (nearest) {
-                            // Auto-select the nearest location directly — no extra click needed.
-                            // The user can always come back to /setup to change it.
-                            var form = document.createElement('form');
-                            form.method = 'post';
-                            form.action = '/setup/select/' + encodeURIComponent(nearest.id);
-                            var csrf = document.createElement('input');
-                            csrf.type = 'hidden';
-                            csrf.name = 'csrf_token';
-                            csrf.value = '{{ csrf_token }}';
-                            form.appendChild(csrf);
-                            document.body.appendChild(form);
-                            form.submit();
-                        } else {
-                            // No location data available — fall back to showing nearby results
-                            // via the server-side coord search.
-                            var latInput = document.getElementById('location_lat');
-                            var lonInput = document.getElementById('location_lon');
-                            var coordsForm = document.getElementById('map-coords-form');
-                            if (latInput && lonInput && coordsForm) {
-                                latInput.value = pos.coords.latitude;
-                                lonInput.value = pos.coords.longitude;
-                                coordsForm.submit();
+                /* Core detect-and-select logic, called either automatically (when
+                   permission is already granted) or when the user taps "Use My Location". */
+                function _runGeoDetect() {
+                    var subtitle = document.getElementById('geo-subtitle');
+                    var overlay  = document.getElementById('geo-detect-overlay');
+
+                    if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
+                    if (useBtn)   useBtn.style.display = 'none';
+                    if (overlay) {
+                        overlay.removeAttribute('aria-hidden');
+                        overlay.classList.add('geo-detect-overlay--visible');
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                        function (pos) {
+                            var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
+                            if (nearest) {
+                                // Store the name so the forecast page can show a
+                                // "Location auto-detected" confirmation toast.
+                                try { sessionStorage.setItem('geo_auto_detected', nearest.name + ', ' + nearest.state); } catch (e) {}
+
+                                // Auto-select the nearest location directly — no extra click needed.
+                                // The user can always return to /setup to change it.
+                                var form = document.createElement('form');
+                                form.method = 'post';
+                                form.action = '/setup/select/' + encodeURIComponent(nearest.id);
+                                var csrf = document.createElement('input');
+                                csrf.type = 'hidden';
+                                csrf.name = 'csrf_token';
+                                csrf.value = '{{ csrf_token }}';
+                                form.appendChild(csrf);
+                                document.body.appendChild(form);
+                                form.submit();
+                            } else {
+                                // No matching location data — fall back to server-side search.
+                                if (overlay) {
+                                    overlay.classList.remove('geo-detect-overlay--visible');
+                                    overlay.setAttribute('aria-hidden', 'true');
+                                }
+                                var latInput  = document.getElementById('location_lat');
+                                var lonInput  = document.getElementById('location_lon');
+                                var coordsForm = document.getElementById('map-coords-form');
+                                if (latInput && lonInput && coordsForm) {
+                                    latInput.value = pos.coords.latitude;
+                                    lonInput.value = pos.coords.longitude;
+                                    coordsForm.submit();
+                                }
                             }
+                        },
+                        function () {
+                            // Permission denied or hardware unavailable — restore UI.
+                            if (overlay) {
+                                overlay.classList.remove('geo-detect-overlay--visible');
+                                overlay.setAttribute('aria-hidden', 'true');
+                            }
+                            var subtitle2 = document.getElementById('geo-subtitle');
+                            if (subtitle2) subtitle2.textContent = 'Find your nearest supported fishing location';
+                        },
+                        { timeout: 10000, maximumAge: 60000 }
+                    );
+                }
+
+                // Wire up the "Use My Location" button so it's accessible inside the IIFE.
+                if (useBtn) useBtn.addEventListener('click', _runGeoDetect);
+
+                // Use the Permissions API (where available) to decide whether to
+                // auto-request silently or ask the user to tap "Use My Location" first.
+                if (navigator.permissions && navigator.permissions.query) {
+                    navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
+                        if (result.state === 'granted') {
+                            // Browser already has permission — detect immediately.
+                            _runGeoDetect();
+                        } else if (result.state === 'prompt') {
+                            // Prompting without a gesture may be blocked on mobile Safari.
+                            // Surface the button so the user can trigger it deliberately.
+                            var subtitle = document.getElementById('geo-subtitle');
+                            if (subtitle) subtitle.textContent = 'Allow location access to auto-detect your spot';
+                            if (useBtn) useBtn.style.display = '';
                         }
-                    },
-                    function () {
-                        // Permission denied or unavailable — let the user find their
-                        // location manually. No error message needed.
-                        if (subtitle) subtitle.textContent = 'Find your nearest supported fishing location';
-                    },
-                    { timeout: 10000, maximumAge: 60000 }
-                );
+                        // 'denied': skip silently, let the user find their location manually.
+                    }).catch(function () {
+                        // Permissions API unavailable or threw — just try anyway.
+                        _runGeoDetect();
+                    });
+                } else {
+                    // No Permissions API (older browsers) — fire the request directly.
+                    _runGeoDetect();
+                }
             }
 
             /* Unified location search: city, zip, beach */
