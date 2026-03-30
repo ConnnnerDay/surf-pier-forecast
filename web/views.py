@@ -274,7 +274,13 @@ def _user_requires_profile_setup() -> bool:
     has_location = bool(
         (prefs.get("location_id") or session.get("location_id") or "").strip()
     )
-    has_profile = bool((prefs.get("fishing_profile") or {}).get("completed"))
+    fp = prefs.get("fishing_profile")
+    if isinstance(fp, dict) and fp:
+        # Legacy profiles lack a ``completed`` key — treat them as complete so
+        # existing users are not permanently bounced to the profile wizard.
+        has_profile = bool(fp.get("completed", True))
+    else:
+        has_profile = bool(fp)
     return has_location and not has_profile
 
 
