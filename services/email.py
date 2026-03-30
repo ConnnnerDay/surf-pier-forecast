@@ -34,6 +34,11 @@ def _is_configured() -> bool:
     return bool(_SMTP_HOST and _SMTP_FROM)
 
 
+def smtp_is_configured() -> bool:
+    """Return True if SMTP env vars are set and verification emails can be sent."""
+    return _is_configured()
+
+
 def _sanitize_header(value: str) -> str:
     """Strip CR/LF characters to prevent SMTP header injection.
 

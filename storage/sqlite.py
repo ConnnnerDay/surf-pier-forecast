@@ -212,6 +212,8 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE profiles ADD COLUMN notification_prefs TEXT DEFAULT '{}'"
         )
+    if "favorites" not in profile_cols:
+        conn.execute("ALTER TABLE profiles ADD COLUMN favorites TEXT DEFAULT '[]'")
     if "timezone" not in profile_cols:
         conn.execute("ALTER TABLE profiles ADD COLUMN timezone TEXT")
     if "page_layout" not in profile_cols:
