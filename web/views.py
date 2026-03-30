@@ -274,7 +274,7 @@ def _user_requires_profile_setup() -> bool:
     has_location = bool(
         (prefs.get("location_id") or session.get("location_id") or "").strip()
     )
-    has_profile = bool(prefs.get("fishing_profile"))
+    has_profile = bool((prefs.get("fishing_profile") or {}).get("completed"))
     return has_location and not has_profile
 
 

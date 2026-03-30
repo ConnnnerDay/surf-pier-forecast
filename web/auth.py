@@ -753,7 +753,7 @@ def register() -> Any:
     if loc_id:
         session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
-    return redirect(url_for("views.index"))
+    return redirect(url_for("auth.verify_pending"))
 
 
 @bp.route("/verify-email/<token>")
@@ -1499,9 +1499,9 @@ def google_callback() -> Any:
 
     logger.info("security.social_login provider=google user_id=%s new=%s ip=%s", user_id, is_new, _client_ip())
     _establish_session(user_id)
-    # New accounts skip straight to the profile wizard so they can set up
-    # their fishing preferences before hitting the forecast.
-    return redirect(url_for("views.profile") if is_new else url_for("views.index"))
+    # New accounts go to location setup first; after picking a location the
+    # before_request hook will redirect them to the profile wizard automatically.
+    return redirect(url_for("views.setup") if is_new else url_for("views.index"))
 
 
 # ---------------------------------------------------------------------------
@@ -1660,4 +1660,6 @@ def apple_callback() -> Any:
 
     logger.info("security.social_login provider=apple user_id=%s new=%s ip=%s", user_id, is_new, _client_ip())
     _establish_session(user_id)
-    return redirect(url_for("views.profile") if is_new else url_for("views.index"))
+    # New accounts go to location setup first; after picking a location the
+    # before_request hook will redirect them to the profile wizard automatically.
+    return redirect(url_for("views.setup") if is_new else url_for("views.index"))
