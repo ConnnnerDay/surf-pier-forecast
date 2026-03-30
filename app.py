@@ -192,6 +192,11 @@ def create_app() -> Flask:
         "views.setup_select",
         "views.setup_favorite",
         "views.profile",
+        # Profile API endpoints — called by the profile setup page, which is
+        # itself exempt.  Without these, the profile save fetch fails silently
+        # for users who haven't yet confirmed their email.
+        "api.profile_v1",
+        "api.preferences",
         # Static assets are served outside the blueprint system.
         "static",
     })
