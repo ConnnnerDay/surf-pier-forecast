@@ -10,11 +10,13 @@ User=REPLACE_USER
 WorkingDirectory=REPLACE_DIR
 # Use gunicorn (production WSGI server) instead of the Flask dev server.
 # 2 sync workers handle concurrent requests without the GIL bottleneck;
-# increase to 4 on multi-core machines.  Bind to localhost only and put
-# nginx or another reverse proxy in front for TLS termination.
+# increase to 4 on multi-core machines.
+# Binds to all interfaces so the app is reachable from other machines on the
+# LAN.  If you put nginx/Caddy in front for TLS, change this back to
+# 127.0.0.1:5757 and proxy_pass from the reverse proxy.
 ExecStart=REPLACE_DIR/.venv/bin/gunicorn \
     --workers 2 \
-    --bind 127.0.0.1:5757 \
+    --bind 0.0.0.0:5757 \
     --timeout 60 \
     --access-logfile - \
     --error-logfile - \
