@@ -58,7 +58,7 @@ from storage.db import (
     update_webauthn_sign_count,
     delete_webauthn_credential,
 )
-from services.email import send_verification_email
+from services.email import send_verification_email, smtp_is_configured
 
 bp = Blueprint("auth", __name__)
 
@@ -704,7 +704,10 @@ def register() -> Any:
             error="Please enter a valid email address.",
             username=username, email=email,
         )
-    if not _email_domain_allowed(email):
+    # Only enforce the consumer-email allowlist when SMTP is configured.
+    # On a local install without email setup the check serves no purpose and
+    # would block developers using corporate or custom domain addresses.
+    if smtp_is_configured() and not _email_domain_allowed(email):
         return render_template(
             "register.html",
             error="Please use an email from a major email provider (Gmail, Outlook, Yahoo, iCloud, etc.).",
@@ -743,6 +746,11 @@ def register() -> Any:
     set_email_verification_token(user_id, token)
     base_url = request.host_url
     send_verification_email(email, username, token, base_url)
+    # When SMTP is not configured there is no way for the user to receive a
+    # verification link, so auto-confirm the email immediately.  This ensures
+    # a fresh local install ("quick start") works without any email setup.
+    if not smtp_is_configured():
+        confirm_email(user_id)
     # Regenerate session to prevent session fixation.
     loc_id = session.get("location_id")
     session.clear()
@@ -753,6 +761,8 @@ def register() -> Any:
     if loc_id:
         session["location_id"] = loc_id
         save_preferences(user_id, location_id=loc_id, default_location_id=loc_id)
+    if not smtp_is_configured():
+        return redirect(url_for("views.setup"))
     return redirect(url_for("auth.verify_pending"))
 
 

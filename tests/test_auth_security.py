@@ -294,8 +294,10 @@ def test_register_rejects_invalid_email(client):
     assert b"valid email" in resp.data
 
 
-def test_register_rejects_unknown_email_domain(client):
-    """Registration with an unlisted email domain is rejected."""
+def test_register_rejects_unknown_email_domain(client, monkeypatch):
+    """Domain allowlist is enforced when SMTP is configured."""
+    # Simulate SMTP being active so the domain check runs.
+    monkeypatch.setattr("web.auth.smtp_is_configured", lambda: True)
     page = client.get("/register")
     token = _csrf_from_html(page.data)
     resp = client.post(
