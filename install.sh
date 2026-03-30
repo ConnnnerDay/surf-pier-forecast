@@ -65,11 +65,24 @@ sed \
     | sudo tee "${SERVICE_FILE}" > /dev/null
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now surf-forecast
+sudo systemctl enable surf-forecast
+# Restart if already running so the updated service file takes effect;
+# start fresh otherwise.
+if sudo systemctl is-active --quiet surf-forecast; then
+    sudo systemctl restart surf-forecast
+else
+    sudo systemctl start surf-forecast
+fi
+
+# Resolve the machine's LAN IP for the printed URL so users know the
+# address to open from other devices on the same network.
+LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+LAN_IP="${LAN_IP:-localhost}"
 
 echo ""
 info "Service installed and started."
-info "App is running at http://localhost:${PORT}"
+info "Open on this machine : http://localhost:${PORT}"
+info "Open from other devices: http://${LAN_IP}:${PORT}"
 echo ""
 echo "  Useful commands:"
 echo "    sudo systemctl status surf-forecast"
