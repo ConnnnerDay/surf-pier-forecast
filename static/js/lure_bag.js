@@ -389,7 +389,9 @@
   }
 
   // Fetch catalogue then boot
-  fetch('/static/data/lures_db.json')
+  var lureCtrl = new AbortController();
+  setTimeout(function() { lureCtrl.abort(); }, 10000);
+  fetch('/static/data/lures_db.json', { signal: lureCtrl.signal })
     .then(function (res) { return res.json(); })
     .then(function (data) {
       luresDb = data;

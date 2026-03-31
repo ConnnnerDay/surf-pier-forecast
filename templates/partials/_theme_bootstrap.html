@@ -9,4 +9,7 @@
         if (!t) localStorage.setItem('theme', 'dark');
     }
 })();
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
 </script>

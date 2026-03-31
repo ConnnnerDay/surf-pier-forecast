@@ -745,11 +745,16 @@ function applyBaitFilters() {
 (function() {
     var profile = getProfile();
     if (!profile || !profile.completed) {
-        var profilePrompted = sessionStorage.getItem('profile_prompted');
-        if (!profilePrompted) {
-            sessionStorage.setItem('profile_prompted', 'true');
-            window.location.href = '/profile';
-            return;
+        // Only prompt logged-in users to complete their profile.
+        // Guests (e.g. someone opening a shared link on mobile) should see the
+        // forecast without being bounced to the login/profile flow.
+        if (LOGGED_IN) {
+            var profilePrompted = sessionStorage.getItem('profile_prompted');
+            if (!profilePrompted) {
+                sessionStorage.setItem('profile_prompted', 'true');
+                window.location.href = '/profile';
+                return;
+            }
         }
         return;
     }

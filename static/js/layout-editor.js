@@ -71,6 +71,8 @@
     try { localStorage.setItem(lsKey, JSON.stringify(layout)); } catch (e) {}
 
     if (window.LOGGED_IN) {
+      var ctrl1 = new AbortController();
+      setTimeout(function() { ctrl1.abort(); }, 10000);
       fetch('/api/v1/page-layout', {
         method: 'POST',
         headers: {
@@ -78,7 +80,8 @@
           'X-CSRFToken': getCsrf(),
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ layout: layout })
+        body: JSON.stringify({ layout: layout }),
+        signal: ctrl1.signal
       }).catch(function () {});
     }
   }
@@ -86,6 +89,8 @@
   function resetLayout() {
     try { localStorage.removeItem(lsKey); } catch (e) {}
     if (window.LOGGED_IN) {
+      var ctrl2 = new AbortController();
+      setTimeout(function() { ctrl2.abort(); }, 10000);
       fetch('/api/v1/page-layout', {
         method: 'POST',
         headers: {
@@ -93,7 +98,8 @@
           'X-CSRFToken': getCsrf(),
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ layout: [] })
+        body: JSON.stringify({ layout: [] }),
+        signal: ctrl2.signal
       }).catch(function () {});
     }
   }
