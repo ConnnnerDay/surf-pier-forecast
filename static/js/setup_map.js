@@ -61,10 +61,7 @@
         return new Promise(function (resolve, reject) {
             var existing = document.querySelector('script[src="' + src + '"]');
             if (existing) {
-                if (window.L) {
-                    resolve();
-                    return;
-                }
+                if (window.L) { resolve(); return; }
                 existing.addEventListener('load', function () { resolve(); }, { once: true });
                 existing.addEventListener('error', function () { reject(new Error('script load failed')); }, { once: true });
                 return;
@@ -96,37 +93,6 @@
             });
     }
 
-    function showMapError(mapEl, hint) {
-        mapEl.classList.add('map-fallback');
-        mapEl.innerHTML = '' +
-            '<p><strong>Map unavailable.</strong> We could not load map libraries from free providers right now.</p>' +
-            '<p>Please use zip search below and try again in a moment.</p>';
-        if (hint) {
-            hint.textContent = 'Map failed to load from external providers. Use zip search for now.';
-        }
-    }
-
-    function addBestAvailableTileLayer(map) {
-        var idx = 0;
-
-        function tryProvider() {
-            if (idx >= TILE_PROVIDERS.length) return;
-            var provider = TILE_PROVIDERS[idx++];
-            var layer = L.tileLayer(provider.url, provider.options);
-            var onError = function () {
-                map.removeLayer(layer);
-                tryProvider();
-            };
-            layer.once('tileerror', onError);
-            layer.once('load', function () {
-                layer.off('tileerror', onError);
-            });
-            layer.addTo(map);
-        }
-
-        tryProvider();
-    }
-
     function escapeHtml(text) {
         return String(text)
             .replace(/&/g, '&amp;')
@@ -136,102 +102,117 @@
             .replace(/'/g, '&#39;');
     }
 
-    function buildLocationPopup(loc) {
-        return '' +
-            '<div class="setup-map-popup">' +
-            '<p class="setup-map-popup__title">' + escapeHtml(loc.name) + ', ' + escapeHtml(loc.state) + '</p>' +
-            '<button type="button" class="setup-map-popup__select" data-map-select-location="' + escapeHtml(loc.id) + '">Select this location</button>' +
-            '</div>';
+    function showMapError(mapEl, confirmEl) {
+        mapEl.classList.add('map-fallback');
+        mapEl.innerHTML =
+            '<p><strong>Map unavailable.</strong> Could not load map libraries from CDN providers.</p>' +
+            '<p>Use the search bar above to find your location.</p>';
+        if (confirmEl) confirmEl.hidden = true;
     }
 
-    function buildMap(mapEl, locations, latInput, lonInput, submitBtn, hint) {
+    function addBestAvailableTileLayer(map) {
+        var idx = 0;
+        function tryProvider() {
+            if (idx >= TILE_PROVIDERS.length) return;
+            var provider = TILE_PROVIDERS[idx++];
+            var layer = L.tileLayer(provider.url, provider.options);
+            var onError = function () {
+                map.removeLayer(layer);
+                tryProvider();
+            };
+            layer.once('tileerror', onError);
+            layer.once('load', function () { layer.off('tileerror', onError); });
+            layer.addTo(map);
+        }
+        tryProvider();
+    }
+
+    /* Directly POST to /setup/select/{id} — same as clicking a search result */
+    function submitLocation(locationId, csrfToken) {
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/setup/select/' + encodeURIComponent(locationId);
+        var csrfField = document.createElement('input');
+        csrfField.type = 'hidden';
+        csrfField.name = 'csrf_token';
+        csrfField.value = csrfToken;
+        form.appendChild(csrfField);
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function buildMap(mapEl, locations, csrfToken, confirmEl) {
         var map = L.map(mapEl).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
         addBestAvailableTileLayer(map);
 
-        var selectedMarker = null;
+        var pendingLoc = null;
 
-        function setHiddenCoords(lat, lng) {
-            latInput.value = lat.toFixed(6);
-            lonInput.value = lng.toFixed(6);
-            submitBtn.disabled = false;
-        }
-
-        function selectLocation(loc) {
-            var lat = Number(loc.lat);
-            var lng = Number(loc.lng);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-            if (selectedMarker) {
-                selectedMarker.setLatLng([lat, lng]);
-            } else {
-                selectedMarker = L.marker([lat, lng]).addTo(map);
-            }
-            setHiddenCoords(lat, lng);
-            if (hint) hint.textContent = 'Selected ' + loc.name + ', ' + loc.state + '. Press "Find Nearest Location" to continue.';
+        /* Show the inline confirm bar below the map when clicking open ocean */
+        function showConfirm(loc) {
+            pendingLoc = loc;
+            if (!confirmEl) return;
+            confirmEl.hidden = false;
+            var nameEl = confirmEl.querySelector('[data-map-confirm-name]');
+            var stateEl = confirmEl.querySelector('[data-map-confirm-state]');
+            if (nameEl) nameEl.textContent = loc.name;
+            if (stateEl) stateEl.textContent = loc.state;
         }
 
         var bounds = [];
-        var byId = {};
         locations.forEach(function (loc) {
             var lat = Number(loc.lat);
             var lng = Number(loc.lng);
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-            byId[String(loc.id)] = loc;
             bounds.push([lat, lng]);
+
             var marker = L.circleMarker([lat, lng], {
-                radius: 5,
-                weight: 1,
+                radius: 6,
+                weight: 1.5,
                 color: '#0e5f78',
                 fillColor: '#1285a6',
                 fillOpacity: 0.85
             }).addTo(map);
-            marker.bindPopup(buildLocationPopup(loc));
-            marker.on('click', function () { selectLocation(loc); });
-        });
 
-        map.on('popupopen', function (event) {
-            var popupEl = event.popup && event.popup.getElement();
-            if (!popupEl) return;
-            var selectBtn = popupEl.querySelector('[data-map-select-location]');
-            if (!selectBtn) return;
-            selectBtn.addEventListener('click', function () {
-                var locationId = selectBtn.getAttribute('data-map-select-location');
-                var selectedLoc = byId[locationId];
-                if (!selectedLoc) return;
-                var csrfInput = document.querySelector('input[name="csrf_token"]');
-                var csrfToken = csrfInput ? csrfInput.value : '';
-                var form = document.createElement('form');
-                form.method = 'post';
-                form.action = '/setup/select/' + encodeURIComponent(locationId);
-                var csrfField = document.createElement('input');
-                csrfField.type = 'hidden';
-                csrfField.name = 'csrf_token';
-                csrfField.value = csrfToken;
-                form.appendChild(csrfField);
-                document.body.appendChild(form);
-                form.submit();
-            }, { once: true });
+            /* Single click on a named marker = immediate selection, no extra step */
+            marker.on('click', function (e) {
+                L.DomEvent.stopPropagation(e);
+                submitLocation(loc.id, csrfToken);
+            });
+
+            marker.bindTooltip(escapeHtml(loc.name) + ', ' + escapeHtml(loc.state), {
+                direction: 'top',
+                offset: [0, -4]
+            });
         });
 
         if (bounds.length) {
             map.fitBounds(bounds, { padding: [20, 20] });
         }
 
+        /* If geolocation is already permitted, silently center the map near the user
+           so nearby markers are immediately visible without needing to pan */
+        if (navigator.permissions) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
+                if (result.state !== 'granted') return;
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 8);
+                }, null, { timeout: 5000, maximumAge: 300000 });
+            }).catch(function () {});
+        }
+
+        /* Clicking open ocean (not a marker) — find nearest and show a confirm step */
         map.on('click', function (e) {
             var nearest = findNearest(locations, e.latlng.lat, e.latlng.lng);
-            if (nearest) selectLocation(nearest);
+            if (nearest) showConfirm(nearest);
         });
 
-        if (navigator.geolocation && locations.length) {
-            navigator.geolocation.getCurrentPosition(
-                function (pos) {
-                    var nearest = findNearest(locations, pos.coords.latitude, pos.coords.longitude);
-                    if (!nearest) return;
-                    map.setView([Number(nearest.lat), Number(nearest.lng)], 7);
-                },
-                function () { /* no-op */ }
-            );
+        if (confirmEl) {
+            var confirmBtn = confirmEl.querySelector('[data-map-confirm-btn]');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', function () {
+                    if (pendingLoc) submitLocation(pendingLoc.id, csrfToken);
+                });
+            }
         }
     }
 
@@ -240,21 +221,19 @@
         if (!mapEl) return;
 
         var locations = parseLocations(mapEl);
-        var latInput = document.getElementById('location_lat');
-        var lonInput = document.getElementById('location_lon');
-        var submitBtn = document.getElementById('map-submit-btn');
-        var hint = document.getElementById('map-hint');
+        var confirmEl = document.getElementById('map-confirm');
+        var csrfToken = mapEl.getAttribute('data-csrf') || '';
 
         ensureLeaflet()
             .then(function () {
                 if (!window.L) {
-                    showMapError(mapEl, hint);
+                    showMapError(mapEl, confirmEl);
                     return;
                 }
-                buildMap(mapEl, locations, latInput, lonInput, submitBtn, hint);
+                buildMap(mapEl, locations, csrfToken, confirmEl);
             })
             .catch(function () {
-                showMapError(mapEl, hint);
+                showMapError(mapEl, confirmEl);
             });
     }
 

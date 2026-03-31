@@ -23,28 +23,7 @@
         <p class="page-subtitle">{{ all_locations|length }} coastal fishing areas across the US</p>
     </div>
 
-
     <main>
-        <!-- Unified location search bar -->
-        <section class="setup-section" style="padding-bottom:0">
-            <h2>Search by City, Zip, or Beach</h2>
-            <p class="section-sub" id="geo-subtitle">Find your nearest supported fishing location</p>
-            <!-- Shown only when the browser will prompt for geolocation permission -->
-            <button type="button" class="geo-use-location-btn" id="geo-use-btn" style="display:none" aria-label="Use my device location to find the nearest fishing spot">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
-                Use My Location
-            </button>
-            <div class="location-search-bar" id="loc-search-bar">
-                <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
-                <input id="loc-search-input" type="search" class="location-search-input" placeholder="City, zip code, or beach name&hellip;" autocomplete="off" inputmode="search">
-                <button type="button" class="location-search-btn" id="loc-search-btn">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Search
-                </button>
-            </div>
-            <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
-        </section>
-
         <section class="setup-flow-card setup-flow-card--onboarding">
             <p class="setup-flow-title">Getting started</p>
             <div class="setup-flow-steps">
@@ -73,39 +52,50 @@
         </section>
         {% endif %}
 
-        <section class="setup-section">
-            <h2>Find Your Spot</h2>
-            <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
-
-            <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form" novalidate>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="zip-input-group">
-                    <label for="zipcode" class="sr-only">5-digit zip code</label>
-                    <input id="zipcode" type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
-                           value="{{ zipcode|default('', true) }}" class="zip-input{% if error %} zip-input--error{% endif %}" inputmode="numeric" required
-                           aria-invalid="{{ 'true' if error else 'false' }}" aria-describedby="zip-feedback">
-                    <button type="submit" class="zip-btn" aria-label="Search by zip code">Search</button>
-                </div>
-            </form>
-
+        <!-- Search section — primary entry point -->
+        <section class="setup-section" style="padding-bottom:0">
+            <h2>Find your spot</h2>
+            <p class="section-sub" id="geo-subtitle">Search by city, beach name, or zip code</p>
+            <div class="location-search-bar" id="loc-search-bar">
+                <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
+                <input id="loc-search-input" type="search" class="location-search-input"
+                       placeholder="City, zip code, or beach name&hellip;"
+                       autocomplete="off" inputmode="search"
+                       {% if not current_location %}autofocus{% endif %}
+                       aria-autocomplete="list" aria-controls="loc-search-results">
+                <button type="button" class="location-search-btn" id="loc-search-btn" aria-label="Search">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Search
+                </button>
+            </div>
+            <!-- Shown only when browser will prompt for geolocation permission -->
+            <button type="button" class="geo-use-location-btn" id="geo-use-btn" style="display:none"
+                    aria-label="Use my device location to find the nearest fishing spot">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
+                Use My Location
+            </button>
             {% if error %}
-            <div id="zip-feedback" class="setup-error" role="alert">{{ error }}</div>
-            {% else %}
-            <div id="zip-feedback" class="setup-help">Fastest way to find your nearest forecast location.</div>
+            <div class="setup-error" role="alert" style="margin-top:0.75rem">{{ error }}</div>
             {% endif %}
+            <div class="location-search-results" id="loc-search-results" role="listbox" aria-live="polite"></div>
         </section>
 
+        <!-- Map section — click any marker to select instantly -->
         <section class="setup-section">
             <h2>Pick on the Map</h2>
-            <p class="section-sub">Click a location marker on the coast to select it</p>
-            <div id="map" data-supported-locations='{{ all_locations|tojson }}' class="setup-map"></div>
-            <form method="post" action="{{ url_for('views.setup_coords') }}" class="zip-form" id="map-coords-form" novalidate>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="location_lat" id="location_lat">
-                <input type="hidden" name="location_lon" id="location_lon">
-                <button type="submit" class="zip-btn" id="map-submit-btn" disabled>Find Nearest Location</button>
-            </form>
-            <p id="map-hint" class="setup-help">Click a supported location marker (NOAA-backed) to continue.</p>
+            <p class="section-sub">Click a marker to select it &mdash; hover to preview the name</p>
+            <div id="map"
+                 data-supported-locations='{{ all_locations|tojson }}'
+                 data-csrf="{{ csrf_token }}"
+                 class="setup-map"></div>
+            <!-- Shown after clicking open ocean; hidden when clicking a named marker directly -->
+            <div id="map-confirm" class="map-confirm" hidden>
+                <div class="map-confirm-info">
+                    <span class="map-confirm-label">Nearest:</span>
+                    <strong data-map-confirm-name></strong><span class="map-confirm-sep">, </span><span data-map-confirm-state></span>
+                </div>
+                <button type="button" class="map-confirm-btn" data-map-confirm-btn>Use this location</button>
+            </div>
         </section>
 
         {% if favorite_locations %}
@@ -130,7 +120,6 @@
         <section class="setup-section">
             <h2>Nearby Locations</h2>
             <p class="section-sub">Select a location to get your fishing forecast</p>
-
             <div class="location-results">
                 {% for loc in results %}
                     {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=false, logged_in=g.user) }}
@@ -139,15 +128,29 @@
         </section>
         {% endif %}
 
+        {% set state_names = {
+            'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+            'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+            'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+            'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+            'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+            'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+            'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+            'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+            'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+            'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+            'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+            'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+            'WI': 'Wisconsin', 'WY': 'Wyoming'
+        } %}
         <section class="setup-section">
-            <h2>Or Browse All Locations</h2>
-            <p class="section-sub">{{ all_locations|length }} coastal fishing areas across the US</p>
-
+            <h2>Browse all locations</h2>
+            <p class="section-sub">Can&rsquo;t find it above? Expand a state to see every supported spot.</p>
             <div class="browse-search-row">
-                <label for="browse-filter" class="browse-filter-label">Filter by location or state</label>
-                <input id="browse-filter" type="search" class="browse-filter-input" placeholder="Type to filter locations..." autocomplete="off">
+                <input id="browse-filter" type="search" class="browse-filter-input"
+                       placeholder="Filter by name or state&hellip;" autocomplete="off"
+                       aria-label="Filter locations by name or state">
             </div>
-
             <div class="location-browse" id="location-browse">
                 {% set ns = namespace(current_state='', state_count=0) %}
                 {% for loc in all_locations %}
@@ -158,9 +161,9 @@
                         {% endif %}
                         {% set ns.current_state = loc.state %}
                         {% set ns.state_count = all_locations|selectattr('state', 'equalto', loc.state)|list|length %}
-                        <details class="state-group" open data-state-group data-state="{{ loc.state|lower }}">
-                            <summary class="state-label" aria-label="Toggle {{ loc.state }} locations">
-                                <span>{{ loc.state }}</span>
+                        <details class="state-group" data-state-group data-state="{{ loc.state|lower }}">
+                            <summary class="state-label" aria-label="Toggle {{ state_names.get(loc.state, loc.state) }} locations">
+                                <span>{{ state_names.get(loc.state, loc.state) }}</span>
                                 <span class="state-count">{{ ns.state_count }}</span>
                             </summary>
                             <div class="state-items">
@@ -179,12 +182,6 @@
         <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
 
-    <!-- Geolocation loading overlay (position:fixed, shown while auto-detecting) -->
-    <div class="geo-detect-overlay" id="geo-detect-overlay" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
-        <div class="geo-detect-spinner" aria-hidden="true"></div>
-        <p style="margin:0">Finding your nearest spot&hellip;</p>
-    </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
     <script src="{{ url_for('static', filename='js/setup_map.js') }}"></script>
     <script>
@@ -195,7 +192,9 @@
             var hasCurrentLocation = {{ 'true' if current_location else 'false' }};
             var allLocations = {{ all_locations|tojson }};
 
-            /* HTML-escape helper — must be in outer scope so all functions can use it */
+            /* Geo suggestion saved so it can be restored if user clears the search field */
+            var geoSuggestion = null;
+
             function esc2(s) {
                 return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             }
@@ -222,9 +221,7 @@
             function saveJSON(key, value) {
                 try {
                     window.localStorage.setItem(key, JSON.stringify(value));
-                } catch (err) {
-                    // no-op
-                }
+                } catch (err) {}
             }
 
             function updateRecent(locationId) {
@@ -277,6 +274,7 @@
                         });
                         group.hidden = visible === 0;
                         if (q && visible > 0) group.open = true;
+                        if (!q) group.open = false;
                     });
                 });
             }
@@ -326,7 +324,7 @@
                 autoRequestGeolocation();
             });
 
-            /* Haversine distance in miles between two lat/lon pairs */
+            /* Haversine distance in miles */
             function haversineMiles(lat1, lon1, lat2, lon2) {
                 var R = 3958.8;
                 var φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
@@ -337,7 +335,6 @@
                 return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             }
 
-            /* Return the location object from allLocations closest to (lat, lon) */
             function findNearestLocation(lat, lon) {
                 var best = null, bestDist = Infinity;
                 allLocations.forEach(function (loc) {
@@ -348,100 +345,75 @@
                 return best;
             }
 
+            /* Render the geo suggestion card in the results area */
+            function showGeoSuggestion(loc) {
+                var subtitle = document.getElementById('geo-subtitle');
+                if (subtitle) subtitle.textContent = 'Nearest supported location to you:';
+                var resultsEl = document.getElementById('loc-search-results');
+                if (!resultsEl) return;
+                var html = '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
+                html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
+                html += '<button type="submit" class="location-search-result-item location-search-result-item--suggested">';
+                html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span>';
+                html += '<span class="location-search-result-geo-label"> &mdash; near you</span></div>';
+                html += '<span class="location-search-result-state">' + esc2(loc.state) + '</span>';
+                html += '</button></form>';
+                resultsEl.innerHTML = html;
+            }
+
             function autoRequestGeolocation() {
                 if (!navigator.geolocation) return;
-                // Don't auto-detect if the user already has a location set;
-                // they came here to *change* it, so let them browse normally.
                 if (hasCurrentLocation) return;
 
                 var useBtn = document.getElementById('geo-use-btn');
 
-                /* Core detect-and-select logic, called either automatically (when
-                   permission is already granted) or when the user taps "Use My Location". */
                 function _runGeoDetect() {
                     var subtitle = document.getElementById('geo-subtitle');
-                    var overlay  = document.getElementById('geo-detect-overlay');
+                    var resultsEl = document.getElementById('loc-search-results');
 
                     if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
-                    if (useBtn)   useBtn.style.display = 'none';
-                    if (overlay) {
-                        overlay.removeAttribute('aria-hidden');
-                        overlay.classList.add('geo-detect-overlay--visible');
+                    if (useBtn) useBtn.style.display = 'none';
+                    /* Inline spinner — no full-screen overlay needed since we no longer auto-submit */
+                    if (resultsEl) {
+                        resultsEl.innerHTML = '<div class="setup-geo-loading" role="status">' +
+                            '<span class="geo-spinner-sm" aria-hidden="true"></span>Finding your nearest spot\u2026</div>';
                     }
 
                     navigator.geolocation.getCurrentPosition(
                         function (pos) {
                             var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
                             if (nearest) {
-                                // Store the name so the forecast page can show a
-                                // "Location auto-detected" confirmation toast.
-                                try { sessionStorage.setItem('geo_auto_detected', nearest.name + ', ' + nearest.state); } catch (e) {}
-
-                                // Auto-select the nearest location directly — no extra click needed.
-                                // The user can always return to /setup to change it.
-                                var form = document.createElement('form');
-                                form.method = 'post';
-                                form.action = '/setup/select/' + encodeURIComponent(nearest.id);
-                                var csrf = document.createElement('input');
-                                csrf.type = 'hidden';
-                                csrf.name = 'csrf_token';
-                                csrf.value = '{{ csrf_token }}';
-                                form.appendChild(csrf);
-                                document.body.appendChild(form);
-                                form.submit();
+                                geoSuggestion = nearest;
+                                showGeoSuggestion(nearest);
                             } else {
-                                // No matching location data — fall back to server-side search.
-                                if (overlay) {
-                                    overlay.classList.remove('geo-detect-overlay--visible');
-                                    overlay.setAttribute('aria-hidden', 'true');
-                                }
-                                var latInput  = document.getElementById('location_lat');
-                                var lonInput  = document.getElementById('location_lon');
-                                var coordsForm = document.getElementById('map-coords-form');
-                                if (latInput && lonInput && coordsForm) {
-                                    latInput.value = pos.coords.latitude;
-                                    lonInput.value = pos.coords.longitude;
-                                    coordsForm.submit();
-                                }
+                                if (resultsEl) resultsEl.innerHTML = '';
+                                if (subtitle) subtitle.textContent = 'Search by city, beach name, or zip code';
                             }
                         },
                         function () {
-                            // Permission denied or hardware unavailable — restore UI.
-                            if (overlay) {
-                                overlay.classList.remove('geo-detect-overlay--visible');
-                                overlay.setAttribute('aria-hidden', 'true');
-                            }
+                            if (resultsEl) resultsEl.innerHTML = '';
                             var subtitle2 = document.getElementById('geo-subtitle');
-                            if (subtitle2) subtitle2.textContent = 'Find your nearest supported fishing location';
+                            if (subtitle2) subtitle2.textContent = 'Search by city, beach name, or zip code';
                         },
                         { timeout: 10000, maximumAge: 60000 }
                     );
                 }
 
-                // Wire up the "Use My Location" button so it's accessible inside the IIFE.
                 if (useBtn) useBtn.addEventListener('click', _runGeoDetect);
 
-                // Use the Permissions API (where available) to decide whether to
-                // auto-request silently or ask the user to tap "Use My Location" first.
                 if (navigator.permissions && navigator.permissions.query) {
                     navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
                         if (result.state === 'granted') {
-                            // Browser already has permission — detect immediately.
                             _runGeoDetect();
                         } else if (result.state === 'prompt') {
-                            // Prompting without a gesture may be blocked on mobile Safari.
-                            // Surface the button so the user can trigger it deliberately.
                             var subtitle = document.getElementById('geo-subtitle');
-                            if (subtitle) subtitle.textContent = 'Allow location access to auto-detect your spot';
+                            if (subtitle) subtitle.textContent = 'Use your device location to find your nearest spot';
                             if (useBtn) useBtn.style.display = '';
                         }
-                        // 'denied': skip silently, let the user find their location manually.
                     }).catch(function () {
-                        // Permissions API unavailable or threw — just try anyway.
                         _runGeoDetect();
                     });
                 } else {
-                    // No Permissions API (older browsers) — fire the request directly.
                     _runGeoDetect();
                 }
             }
@@ -455,31 +427,40 @@
 
                 function doSearch() {
                     var q = input.value.trim().toLowerCase();
-                    if (!q) { resultsEl.innerHTML = ''; return; }
+                    if (!q) {
+                        /* Restore geo suggestion if the user clears the field */
+                        if (geoSuggestion) {
+                            showGeoSuggestion(geoSuggestion);
+                        } else {
+                            resultsEl.innerHTML = '';
+                        }
+                        return;
+                    }
 
-                    /* Check if it looks like a zip code */
-                    var isZip = /^\d{3,5}$/.test(q.replace(/\s/g,''));
+                    var isZip = /^\d{3,5}$/.test(q.replace(/\s/g, ''));
 
-                    /* Filter allLocations by name, state, or id */
-                    var matches = allLocations.filter(function(loc) {
+                    var matches = allLocations.filter(function (loc) {
                         var name = (loc.name || '').toLowerCase();
                         var state = (loc.state || '').toLowerCase();
                         var id = (loc.id || '').toLowerCase();
                         return name.indexOf(q) !== -1 || state.indexOf(q) !== -1 || id.indexOf(q) !== -1;
                     }).slice(0, 8);
 
-                    if (isZip) {
-                        /* Also trigger zip code form submission */
-                        var zipInput = document.querySelector('input[name="zipcode"]');
-                        if (zipInput) zipInput.value = q;
-                    }
-
                     if (matches.length === 0) {
                         if (isZip) {
-                            /* For zip codes, submit the zip form */
-                            resultsEl.innerHTML = '<p class="setup-help">Searching by zip code&hellip;</p>';
-                            var zipForm = document.querySelector('.zip-form');
-                            if (zipForm) { var zipInput = zipForm.querySelector('input[name="zipcode"]'); if (zipInput) zipInput.value = q; zipForm.submit(); }
+                            resultsEl.innerHTML = '<div class="setup-geo-loading"><span class="geo-spinner-sm" aria-hidden="true"></span>Searching by zip code\u2026</div>';
+                            var zipSearchForm = document.createElement('form');
+                            zipSearchForm.method = 'post';
+                            zipSearchForm.action = '{{ url_for("views.setup_search") }}';
+                            var csrfField = document.createElement('input');
+                            csrfField.type = 'hidden'; csrfField.name = 'csrf_token';
+                            csrfField.value = '{{ csrf_token }}';
+                            var zipField = document.createElement('input');
+                            zipField.type = 'hidden'; zipField.name = 'zipcode'; zipField.value = q;
+                            zipSearchForm.appendChild(csrfField);
+                            zipSearchForm.appendChild(zipField);
+                            document.body.appendChild(zipSearchForm);
+                            zipSearchForm.submit();
                         } else {
                             resultsEl.innerHTML = '<p class="setup-help" style="color:var(--text-muted)">No locations match &ldquo;' + esc2(q) + '&rdquo;. Try a zip code or browse below.</p>';
                         }
@@ -487,10 +468,10 @@
                     }
 
                     var html = '';
-                    matches.forEach(function(loc) {
+                    matches.forEach(function (loc) {
                         html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
                         html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
-                        html += '<button type="submit" class="location-search-result-item">';
+                        html += '<button type="submit" class="location-search-result-item" role="option">';
                         html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span></div>';
                         html += '<span class="location-search-result-state">' + esc2(loc.state) + '</span>';
                         html += '</button></form>';
@@ -498,15 +479,54 @@
                     resultsEl.innerHTML = html;
                 }
 
+                /* Keyboard navigation: ArrowDown from input enters result list */
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'ArrowDown') {
+                        var items = resultsEl.querySelectorAll('.location-search-result-item');
+                        if (items.length) { e.preventDefault(); items[0].focus(); }
+                    } else if (e.key === 'Escape') {
+                        input.value = '';
+                        if (geoSuggestion) { showGeoSuggestion(geoSuggestion); } else { resultsEl.innerHTML = ''; }
+                    } else if (e.key === 'Enter') {
+                        clearTimeout(debounceTimer);
+                        doSearch();
+                    }
+                });
+
+                /* Arrow key navigation within results; Escape returns to input */
+                resultsEl.addEventListener('keydown', function (e) {
+                    var items = Array.prototype.slice.call(resultsEl.querySelectorAll('.location-search-result-item'));
+                    var idx = items.indexOf(document.activeElement);
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        items[(idx + 1) % items.length].focus();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (idx <= 0) { input.focus(); } else { items[idx - 1].focus(); }
+                    } else if (e.key === 'Escape') {
+                        input.value = '';
+                        if (geoSuggestion) { showGeoSuggestion(geoSuggestion); } else { resultsEl.innerHTML = ''; }
+                        input.focus();
+                    }
+                });
+
+                /* "/" shortcut focuses the search input from anywhere on the page */
+                document.addEventListener('keydown', function (e) {
+                    if (e.key !== '/') return;
+                    var tag = (document.activeElement || {}).tagName || '';
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                    e.preventDefault();
+                    input.focus();
+                    input.select();
+                });
+
                 var debounceTimer;
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     clearTimeout(debounceTimer);
                     debounceTimer = setTimeout(doSearch, 200);
                 });
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') { clearTimeout(debounceTimer); doSearch(); }
-                });
-                if (btn) btn.addEventListener('click', function() { clearTimeout(debounceTimer); doSearch(); });
+
+                if (btn) btn.addEventListener('click', function () { clearTimeout(debounceTimer); doSearch(); });
             }
         })();
     </script>
