@@ -202,11 +202,15 @@
       renderLog();
 
       if (loggedIn && currentLocId) {
+        var ctrl = new AbortController();
+        var tid = setTimeout(function() { ctrl.abort(); }, 10000);
         fetch('/api/log?location=' + encodeURIComponent(currentLocId), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ species: species, size: size, notes: notes })
-        }).catch(function (err) {
+          body: JSON.stringify({ species: species, size: size, notes: notes }),
+          signal: ctrl.signal
+        }).then(function() { clearTimeout(tid); }).catch(function (err) {
+          clearTimeout(tid);
           console.error('Failed to sync log entry to server:', err);
         });
       }
