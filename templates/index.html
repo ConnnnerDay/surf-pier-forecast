@@ -502,6 +502,74 @@
     </details>
     </div><!-- /.section-block species-calendar -->
 
+    <!-- ============================================================
+         AI FISHING MAP
+         ============================================================ -->
+    <div class="section-block" data-section-id="fishing-map" data-section-label="AI Fishing Map">
+    <section class="fishing-map-section" aria-label="AI Fishing Map">
+        <div class="fishing-map-header">
+            <h2>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                AI Fishing Map
+            </h2>
+            <p class="fishing-map-subtitle">Explore where to fish along the coast &mdash; filter by species or category to see which locations are hottest right now.</p>
+        </div>
+
+        <div class="fishing-map-filters" role="group" aria-label="Map filters">
+            <div class="fmap-filter-row">
+                <div class="fmap-filter-group">
+                    <label for="fmap-species-input" class="fmap-label">Target Species</label>
+                    <div class="fmap-autocomplete-wrap">
+                        <input type="text" id="fmap-species-input" class="fmap-input" placeholder="e.g. Red drum, Striped bass&hellip;" autocomplete="off" aria-autocomplete="list" aria-controls="fmap-species-suggestions" aria-expanded="false">
+                        <ul id="fmap-species-suggestions" class="fmap-suggestions" role="listbox" hidden></ul>
+                    </div>
+                </div>
+                <div class="fmap-filter-group">
+                    <label for="fmap-coast-select" class="fmap-label">Coast</label>
+                    <select id="fmap-coast-select" class="fmap-select">
+                        <option value="all">All Coasts</option>
+                        <option value="east">East / Gulf</option>
+                        <option value="west">West Coast</option>
+                        <option value="hawaii">Hawaii</option>
+                    </select>
+                </div>
+                <div class="fmap-filter-group">
+                    <label for="fmap-category-select" class="fmap-label">Category</label>
+                    <select id="fmap-category-select" class="fmap-select">
+                        <option value="">All Types</option>
+                        <option value="game_fish">Game Fish</option>
+                        <option value="shark">Shark</option>
+                        <option value="reef_fish">Reef Fish</option>
+                        <option value="pelagic">Pelagic</option>
+                        <option value="flatfish">Flatfish</option>
+                        <option value="drum">Drum / Red</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <button type="button" id="fmap-clear-btn" class="fmap-clear-btn" title="Clear filters">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Clear
+                </button>
+            </div>
+
+            <div class="fmap-legend" aria-label="Activity legend">
+                <span class="fmap-legend-item fmap-peak">Peak</span>
+                <span class="fmap-legend-item fmap-good">Good</span>
+                <span class="fmap-legend-item fmap-fair">Fair</span>
+                <span class="fmap-legend-item fmap-slow">Slow</span>
+                <span class="fmap-legend-item fmap-none">N/A</span>
+            </div>
+        </div>
+
+        <div id="fishing-map-container" class="fishing-map-container" aria-label="Interactive fishing location map">
+            <div id="fishing-map-el" class="fishing-map-el"></div>
+            <div id="fmap-loading" class="fmap-loading" aria-live="polite">Loading map&hellip;</div>
+        </div>
+
+        <div id="fmap-status" class="fmap-status" aria-live="polite"></div>
+    </section>
+    </div><!-- /.section-block fishing-map -->
+
     </div><!-- /#sections-container -->
 
     <!-- Share & Refresh -->
@@ -1295,6 +1363,7 @@ if ('serviceWorker' in navigator) {
 </script>
 <script src="{{ url_for('static', filename='js/collapsibles.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/fishing_map.js') }}" defer></script>
 
 <script>
 /* ── Auto-detected location toast ────────────────────────────────────────── */

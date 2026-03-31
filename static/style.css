@@ -3528,6 +3528,355 @@ h2 {
   margin: 0 auto;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   AI FISHING MAP SECTION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.fishing-map-section {
+  padding: 1rem 1rem 0.5rem;
+}
+
+.fishing-map-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+  color: var(--text-primary, #e8f0f5);
+}
+
+.fishing-map-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a9ba8);
+  margin: 0 0 0.85rem;
+  line-height: 1.5;
+}
+
+/* ── Filters ── */
+.fishing-map-filters {
+  margin-bottom: 0.75rem;
+}
+
+.fmap-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.fmap-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 160px;
+  flex: 1 1 160px;
+  max-width: 280px;
+}
+
+.fmap-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a9ba8);
+}
+
+.fmap-input,
+.fmap-select {
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light, #2a3f4d);
+  background: var(--card-bg, #0d2233);
+  color: var(--text-primary, #e8f0f5);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.fmap-input:focus,
+.fmap-select:focus {
+  border-color: var(--ocean, #0e5f78);
+  box-shadow: 0 0 0 2px rgba(14, 95, 120, 0.25);
+}
+
+.fmap-autocomplete-wrap {
+  position: relative;
+}
+
+.fmap-suggestions {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg, #0d2233);
+  border: 1px solid var(--border-light, #2a3f4d);
+  border-radius: 6px;
+  z-index: 600;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+
+.fmap-suggestions li {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+  color: var(--text-primary, #e8f0f5);
+}
+
+.fmap-suggestions li:hover {
+  background: var(--ocean-light, rgba(14,95,120,0.2));
+  color: var(--accent, #1fa8c9);
+}
+
+.fmap-clear-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light, #2a3f4d);
+  background: transparent;
+  color: var(--text-muted, #8a9ba8);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
+.fmap-clear-btn:hover {
+  background: var(--danger-bg, rgba(239,68,68,0.12));
+  color: var(--danger, #ef4444);
+  border-color: var(--danger, #ef4444);
+}
+
+/* ── Legend ── */
+.fmap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.fmap-legend-item {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+
+.fmap-peak  { background: rgba(34,197,94,0.18);  color: #22c55e; border: 1px solid rgba(34,197,94,0.4); }
+.fmap-good  { background: rgba(59,130,246,0.18); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); }
+.fmap-fair  { background: rgba(245,158,11,0.18); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+.fmap-slow  { background: rgba(239,68,68,0.18);  color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+.fmap-none  { background: rgba(107,114,128,0.18);color: #9ca3af; border: 1px solid rgba(107,114,128,0.4); }
+
+/* ── Map container ── */
+.fishing-map-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-light, #2a3f4d);
+  height: 420px;
+}
+
+.fishing-map-el {
+  width: 100%;
+  height: 100%;
+}
+
+.fmap-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg, #0d2233);
+  color: var(--text-muted, #8a9ba8);
+  font-size: 0.9rem;
+  z-index: 500;
+}
+
+.fmap-status {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a9ba8);
+  margin-top: 0.5rem;
+  min-height: 1.1rem;
+}
+
+/* ── Leaflet popup overrides ── */
+.fmap-leaflet-popup .leaflet-popup-content-wrapper {
+  background: var(--card-bg, #0d2233);
+  border: 1px solid var(--border-light, #2a3f4d);
+  border-radius: 8px;
+  color: var(--text-primary, #e8f0f5);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  padding: 0;
+}
+
+.fmap-leaflet-popup .leaflet-popup-tip {
+  background: var(--card-bg, #0d2233);
+}
+
+.fmap-leaflet-popup .leaflet-popup-content {
+  margin: 0;
+}
+
+.fmap-popup {
+  padding: 0.75rem 1rem;
+  min-width: 180px;
+}
+
+.fmap-popup-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  color: var(--text-primary, #e8f0f5);
+}
+
+.fmap-popup-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fmap-popup-badge--peak { background: rgba(34,197,94,0.2);  color: #22c55e; }
+.fmap-popup-badge--good { background: rgba(59,130,246,0.2); color: #60a5fa; }
+.fmap-popup-badge--fair { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.fmap-popup-badge--slow { background: rgba(239,68,68,0.2);  color: #f87171; }
+.fmap-popup-badge--none { background: rgba(107,114,128,0.2);color: #9ca3af; }
+
+.fmap-popup-species-hd {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a9ba8);
+  margin-bottom: 0.25rem;
+}
+
+.fmap-popup-species {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.fmap-popup-species li {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #b0c4ce);
+  padding: 0.1rem 0;
+}
+
+.fmap-popup-species li::before {
+  content: '·  ';
+  color: var(--ocean, #0e5f78);
+}
+
+.fmap-popup-none {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a9ba8);
+  margin: 0 0 0.5rem;
+  font-style: italic;
+}
+
+.fmap-popup-link {
+  display: inline-block;
+  font-size: 0.78rem;
+  color: var(--accent, #1fa8c9);
+  text-decoration: none;
+  margin-top: 0.2rem;
+}
+
+.fmap-popup-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] .fmap-input,
+[data-theme="light"] .fmap-select {
+  background: #f7fafc;
+  color: #1a2f3d;
+  border-color: #c9d8e0;
+}
+
+[data-theme="light"] .fmap-suggestions {
+  background: #fff;
+  border-color: #c9d8e0;
+}
+
+[data-theme="light"] .fmap-suggestions li {
+  color: #1a2f3d;
+}
+
+[data-theme="light"] .fmap-suggestions li:hover {
+  background: #e8f4f8;
+}
+
+[data-theme="light"] .fmap-clear-btn {
+  color: #6b7b8d;
+  border-color: #c9d8e0;
+}
+
+[data-theme="light"] .fishing-map-container {
+  border-color: #c9d8e0;
+}
+
+[data-theme="light"] .fmap-loading {
+  background: #f7fafc;
+  color: #6b7b8d;
+}
+
+[data-theme="light"] .fmap-leaflet-popup .leaflet-popup-content-wrapper {
+  background: #fff;
+  border-color: #c9d8e0;
+  color: #1a2f3d;
+}
+
+[data-theme="light"] .fmap-leaflet-popup .leaflet-popup-tip {
+  background: #fff;
+}
+
+[data-theme="light"] .fmap-popup-title {
+  color: #1a2f3d;
+}
+
+[data-theme="light"] .fmap-popup-species li {
+  color: #3d5a6a;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .fmap-filter-group {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .fmap-clear-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .fishing-map-container {
+    height: 320px;
+  }
+}
+
+/* ── END AI FISHING MAP ── */
+
 .share-section h2 {
   font-size: 1rem;
   margin-bottom: 0.4rem;

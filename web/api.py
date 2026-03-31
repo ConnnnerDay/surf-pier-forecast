@@ -884,3 +884,165 @@ def share_text() -> Any:
         return jsonify({"error": "No forecast available"}), 503
     text = build_share_text(forecast_data)
     return jsonify({"text": text, "location_id": loc_id})
+
+
+# ---------------------------------------------------------------------------
+# Region-to-coast helpers for the fishing map
+# ---------------------------------------------------------------------------
+
+# Maps species 'regions' values → sets of location temp_region strings.
+_SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
+    "northeast":        frozenset({"northeast"}),
+    "new_england":      frozenset({"northeast"}),
+    "mid-atlantic":     frozenset({"midatlantic"}),
+    "midatlantic":      frozenset({"midatlantic"}),
+    "southeast":        frozenset({"nc_outer_banks", "nc_south", "sc_ga"}),
+    "florida":          frozenset({"fl_northeast", "fl_central_east", "fl_south",
+                                   "fl_keys", "fl_gulf_north", "fl_gulf_south"}),
+    "gulf":             frozenset({"gulf_central", "gulf_west",
+                                   "fl_gulf_north", "fl_gulf_south"}),
+    "pacific_nw":       frozenset({"pacific_nw"}),
+    "pacific northwest":frozenset({"pacific_nw"}),
+    "pacific_northwest":frozenset({"pacific_nw"}),
+    "norcal":           frozenset({"pacific_norcal"}),
+    "california":       frozenset({"pacific_norcal", "pacific_central_cal",
+                                   "pacific_socal", "pacific_san_diego"}),
+    "socal":            frozenset({"pacific_socal", "pacific_san_diego"}),
+}
+
+
+def _location_coast(loc: Dict[str, Any]) -> str:
+    """Return 'west', 'hawaii', or 'east' for a location."""
+    region = loc.get("temp_region", "")
+    if region.startswith("pacific_"):
+        return "west"
+    if region == "hawaii":
+        return "hawaii"
+    return "east"
+
+
+def _species_present_at(species: Dict[str, Any], loc: Dict[str, Any]) -> bool:
+    """Return True when a species is plausibly found at a given location.
+
+    Uses the optional per-species ``regions`` list for fine-grained matching;
+    falls back to coast-level matching when no regions are specified.
+    """
+    loc_coast = _location_coast(loc)
+    if species["coast"] != loc_coast:
+        return False
+    regions = species.get("regions")
+    if not regions:
+        return True  # coast match is sufficient
+    loc_region = loc.get("temp_region", "")
+    for r in regions:
+        if loc_region in _SPECIES_REGION_TO_LOC_REGIONS.get(r, frozenset()):
+            return True
+    return False
+
+
+def _month_score(species: Dict[str, Any], month: int) -> int:
+    """Activity score 0-100 for a species in the given calendar month."""
+    if month in species.get("peak_months", []):
+        return 100
+    if month in species.get("good_months", []):
+        return 65
+    return 20
+
+
+@bp.route("/api/fishing-map")
+def fishing_map_data() -> Any:
+    """Return location suitability data for the AI Fishing Map.
+
+    Query params
+    ------------
+    species : str, optional
+        Case-insensitive substring to filter target species.
+    coast   : 'east' | 'west' | 'hawaii', optional
+        Restrict to one coast.  Omit or pass 'all' for every location.
+    category : str, optional
+        Species category filter (e.g. 'shark', 'game_fish', 'reef_fish').
+    month   : int 1-12, optional
+        Override current month (for testing / future planning).
+    """
+    import datetime
+    from storage.species_loader import SPECIES_DB
+    from locations import COASTAL_LOCATIONS
+
+    # -- parse & sanitise params -----------------------------------------------
+    species_q = request.args.get("species", "").strip()[:100].lower()
+    coast_q = request.args.get("coast", "").strip()[:20].lower()
+    category_q = request.args.get("category", "").strip()[:50].lower()
+
+    try:
+        month = int(request.args.get("month", "0"))
+        if not 1 <= month <= 12:
+            raise ValueError
+    except (ValueError, TypeError):
+        month = datetime.date.today().month
+
+    # -- filter the species DB once -------------------------------------------
+    filtered_species = SPECIES_DB
+    if species_q:
+        filtered_species = [s for s in filtered_species
+                            if species_q in s["name"].lower()]
+    if category_q:
+        filtered_species = [s for s in filtered_species
+                            if category_q in [c.lower()
+                                              for c in s.get("categories", [])]]
+
+    # -- score every location -------------------------------------------------
+    results = []
+    for loc in COASTAL_LOCATIONS:
+        loc_coast = _location_coast(loc)
+
+        if coast_q and coast_q not in ("all", "") and loc_coast != coast_q:
+            continue
+
+        # Species relevant to this exact location
+        loc_species = [s for s in filtered_species
+                       if _species_present_at(s, loc)]
+
+        if not loc_species:
+            score = 0
+            activity = "none"
+            top_species: list = []
+        else:
+            scored = sorted(loc_species,
+                            key=lambda s: -_month_score(s, month))
+            best_score = _month_score(scored[0], month)
+            score = best_score
+            if score >= 100:
+                activity = "peak"
+            elif score >= 65:
+                activity = "good"
+            elif score >= 30:
+                activity = "fair"
+            else:
+                activity = "slow"
+            # Top species that are at least "good" for the tooltip
+            top_species = [s["name"] for s in scored[:8]
+                           if _month_score(s, month) >= 65][:5]
+            if not top_species:
+                top_species = [scored[0]["name"]]
+
+        results.append({
+            "id": loc["id"],
+            "name": loc["name"],
+            "state": loc["state"],
+            "lat": loc["lat"],
+            "lng": loc["lng"],
+            "coast": loc_coast,
+            "score": score,
+            "activity": activity,
+            "top_species": top_species,
+        })
+
+    # Collect unique species names for the autocomplete dropdown
+    species_names = sorted({s["name"] for s in SPECIES_DB})
+
+    return jsonify({
+        "locations": results,
+        "month": month,
+        "species_filter": species_q,
+        "species_names": species_names,
+    })
