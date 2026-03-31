@@ -23,28 +23,7 @@
         <p class="page-subtitle">{{ all_locations|length }} coastal fishing areas across the US</p>
     </div>
 
-
     <main>
-        <!-- Unified location search bar -->
-        <section class="setup-section" style="padding-bottom:0">
-            <h2>Search by City, Zip, or Beach</h2>
-            <p class="section-sub" id="geo-subtitle">Find your nearest supported fishing location</p>
-            <!-- Shown only when the browser will prompt for geolocation permission -->
-            <button type="button" class="geo-use-location-btn" id="geo-use-btn" style="display:none" aria-label="Use my device location to find the nearest fishing spot">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
-                Use My Location
-            </button>
-            <div class="location-search-bar" id="loc-search-bar">
-                <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
-                <input id="loc-search-input" type="search" class="location-search-input" placeholder="City, zip code, or beach name&hellip;" autocomplete="off" inputmode="search">
-                <button type="button" class="location-search-btn" id="loc-search-btn">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Search
-                </button>
-            </div>
-            <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
-        </section>
-
         <section class="setup-flow-card setup-flow-card--onboarding">
             <p class="setup-flow-title">Getting started</p>
             <div class="setup-flow-steps">
@@ -73,21 +52,49 @@
         </section>
         {% endif %}
 
-        {% if error %}
-        <div class="setup-error" role="alert" style="margin: 0 auto; max-width: 680px; padding: 0 1rem;">{{ error }}</div>
-        {% endif %}
+        <!-- Search section — primary entry point -->
+        <section class="setup-section" style="padding-bottom:0">
+            <h2>Find your spot</h2>
+            <p class="section-sub" id="geo-subtitle">Search by city, beach name, or zip code</p>
+            <div class="location-search-bar" id="loc-search-bar">
+                <label for="loc-search-input" class="sr-only">Search city, zip code, or beach name</label>
+                <input id="loc-search-input" type="search" class="location-search-input"
+                       placeholder="City, zip code, or beach name&hellip;"
+                       autocomplete="off" inputmode="search"
+                       {% if not current_location %}autofocus{% endif %}>
+                <button type="button" class="location-search-btn" id="loc-search-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Search
+                </button>
+            </div>
+            <!-- Shown only when browser will prompt for geolocation permission -->
+            <button type="button" class="geo-use-location-btn" id="geo-use-btn" style="display:none"
+                    aria-label="Use my device location to find the nearest fishing spot">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
+                Use My Location
+            </button>
+            {% if error %}
+            <div class="setup-error" role="alert" style="margin-top:0.75rem">{{ error }}</div>
+            {% endif %}
+            <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
+        </section>
 
+        <!-- Map section — click any marker to select instantly -->
         <section class="setup-section">
             <h2>Pick on the Map</h2>
-            <p class="section-sub">Click a location marker on the coast to select it</p>
-            <div id="map" data-supported-locations='{{ all_locations|tojson }}' class="setup-map"></div>
-            <form method="post" action="{{ url_for('views.setup_coords') }}" id="map-coords-form" novalidate>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="location_lat" id="location_lat">
-                <input type="hidden" name="location_lon" id="location_lon">
-                <button type="submit" class="zip-btn" id="map-submit-btn" disabled>Find Nearest Location</button>
-            </form>
-            <p id="map-hint" class="setup-help">Click a supported location marker (NOAA-backed) to continue.</p>
+            <p class="section-sub">Click any coastal marker to select it instantly &mdash; hover to preview the name</p>
+            <div id="map"
+                 data-supported-locations='{{ all_locations|tojson }}'
+                 data-csrf="{{ csrf_token }}"
+                 class="setup-map"></div>
+            <!-- Shown after clicking open ocean; hidden when clicking a named marker directly -->
+            <div id="map-confirm" class="map-confirm" hidden>
+                <div class="map-confirm-info">
+                    <span class="map-confirm-label">Nearest:</span>
+                    <strong data-map-confirm-name></strong><span class="map-confirm-sep">, </span><span data-map-confirm-state></span>
+                </div>
+                <button type="button" class="map-confirm-btn" data-map-confirm-btn>Use this location</button>
+            </div>
         </section>
 
         {% if favorite_locations %}
@@ -112,7 +119,6 @@
         <section class="setup-section">
             <h2>Nearby Locations</h2>
             <p class="section-sub">Select a location to get your fishing forecast</p>
-
             <div class="location-results">
                 {% for loc in results %}
                     {{ loc_macros.location_result_card(loc, current_location, favorite_ids=favorite_ids, show_star=false, logged_in=g.user) }}
@@ -122,14 +128,12 @@
         {% endif %}
 
         <section class="setup-section">
-            <h2>Or Browse All Locations</h2>
-            <p class="section-sub">{{ all_locations|length }} coastal fishing areas across the US</p>
-
+            <h2>Browse all locations</h2>
             <div class="browse-search-row">
-                <label for="browse-filter" class="browse-filter-label">Filter by location or state</label>
-                <input id="browse-filter" type="search" class="browse-filter-input" placeholder="Type to filter locations..." autocomplete="off">
+                <input id="browse-filter" type="search" class="browse-filter-input"
+                       placeholder="Filter by name or state&hellip;" autocomplete="off"
+                       aria-label="Filter locations by name or state">
             </div>
-
             <div class="location-browse" id="location-browse">
                 {% set ns = namespace(current_state='', state_count=0) %}
                 {% for loc in all_locations %}
@@ -140,7 +144,7 @@
                         {% endif %}
                         {% set ns.current_state = loc.state %}
                         {% set ns.state_count = all_locations|selectattr('state', 'equalto', loc.state)|list|length %}
-                        <details class="state-group" open data-state-group data-state="{{ loc.state|lower }}">
+                        <details class="state-group" data-state-group data-state="{{ loc.state|lower }}">
                             <summary class="state-label" aria-label="Toggle {{ loc.state }} locations">
                                 <span>{{ loc.state }}</span>
                                 <span class="state-count">{{ ns.state_count }}</span>
@@ -259,6 +263,7 @@
                         });
                         group.hidden = visible === 0;
                         if (q && visible > 0) group.open = true;
+                        if (!q) group.open = false;
                     });
                 });
             }
@@ -338,7 +343,7 @@
 
                 var useBtn = document.getElementById('geo-use-btn');
 
-                /* Core detect-and-select logic, called either automatically (when
+                /* Core detect-and-suggest logic, called either automatically (when
                    permission is already granted) or when the user taps "Use My Location". */
                 function _runGeoDetect() {
                     var subtitle = document.getElementById('geo-subtitle');
@@ -383,7 +388,7 @@
                                 overlay.setAttribute('aria-hidden', 'true');
                             }
                             var subtitle2 = document.getElementById('geo-subtitle');
-                            if (subtitle2) subtitle2.textContent = 'Find your nearest supported fishing location';
+                            if (subtitle2) subtitle2.textContent = 'Search by city, beach name, or zip code';
                         },
                         { timeout: 10000, maximumAge: 60000 }
                     );
@@ -403,7 +408,7 @@
                             // Prompting without a gesture may be blocked on mobile Safari.
                             // Surface the button so the user can trigger it deliberately.
                             var subtitle = document.getElementById('geo-subtitle');
-                            if (subtitle) subtitle.textContent = 'Allow location access to auto-detect your spot';
+                            if (subtitle) subtitle.textContent = 'Use your device location to find your nearest spot';
                             if (useBtn) useBtn.style.display = '';
                         }
                         // 'denied': skip silently, let the user find their location manually.

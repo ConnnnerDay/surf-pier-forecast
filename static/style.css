@@ -4026,33 +4026,51 @@ footer p {
   font-size: 0.82rem;
 }
 
-.setup-map-popup {
-  min-width: 180px;
+/* Inline confirm bar shown below map when user clicks open ocean */
+.map-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: color-mix(in srgb, var(--ocean) 7%, var(--white));
+  border: 1.5px solid var(--ocean);
+  border-radius: var(--radius-sm);
 }
 
-.setup-map-popup__title {
-  margin: 0 0 0.45rem;
-  font-size: 0.87rem;
-  font-weight: 600;
+.map-confirm-info {
+  font-size: 0.9rem;
 }
 
-.setup-map-popup__select {
-  width: 100%;
-  border: none;
-  border-radius: 6px;
-  padding: 0.45rem 0.6rem;
-  background: var(--ocean);
-  color: var(--white);
+.map-confirm-label {
+  color: var(--text-muted);
   font-size: 0.8rem;
+  margin-right: 0.3rem;
+}
+
+.map-confirm-sep {
+  color: var(--text-muted);
+}
+
+.map-confirm-btn {
+  flex-shrink: 0;
+  padding: 0.45rem 1.1rem;
+  background: var(--ocean);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
   font-weight: 600;
+  font-size: 0.85rem;
   font-family: inherit;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
-.setup-map-popup__select:hover {
-  background: #14738c;
+.map-confirm-btn:hover {
+  background: var(--ocean-dark);
 }
-
 
 .map-fallback {
   height: auto !important;
@@ -4470,21 +4488,20 @@ footer p {
   margin: 0.75rem 0 1rem;
 }
 
-.browse-filter-label {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: var(--ocean);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
 .browse-filter-input {
   width: 100%;
   max-width: 420px;
-  border: 2px solid var(--border-light);
+  border: 1.5px solid var(--border-light);
   border-radius: var(--radius-sm);
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.92rem;
+  font: inherit;
+  transition: border-color 0.15s;
+}
+
+.browse-filter-input:focus {
+  outline: none;
+  border-color: var(--ocean);
 }
 
 .location-browse {
