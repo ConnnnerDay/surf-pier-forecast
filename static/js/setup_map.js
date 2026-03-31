@@ -223,16 +223,6 @@
             if (nearest) selectLocation(nearest);
         });
 
-        if (navigator.geolocation && locations.length) {
-            navigator.geolocation.getCurrentPosition(
-                function (pos) {
-                    var nearest = findNearest(locations, pos.coords.latitude, pos.coords.longitude);
-                    if (!nearest) return;
-                    map.setView([Number(nearest.lat), Number(nearest.lng)], 7);
-                },
-                function () { /* no-op */ }
-            );
-        }
     }
 
     function init() {

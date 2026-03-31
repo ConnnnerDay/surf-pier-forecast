@@ -73,33 +73,15 @@
         </section>
         {% endif %}
 
-        <section class="setup-section">
-            <h2>Find Your Spot</h2>
-            <p class="section-sub">Enter your zip code to find the nearest supported fishing location</p>
-
-            <form method="post" action="{{ url_for('views.setup_search') }}" class="zip-form" novalidate>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="zip-input-group">
-                    <label for="zipcode" class="sr-only">5-digit zip code</label>
-                    <input id="zipcode" type="text" name="zipcode" placeholder="Enter zip code" maxlength="5" pattern="[0-9]{5}"
-                           value="{{ zipcode|default('', true) }}" class="zip-input{% if error %} zip-input--error{% endif %}" inputmode="numeric" required
-                           aria-invalid="{{ 'true' if error else 'false' }}" aria-describedby="zip-feedback">
-                    <button type="submit" class="zip-btn" aria-label="Search by zip code">Search</button>
-                </div>
-            </form>
-
-            {% if error %}
-            <div id="zip-feedback" class="setup-error" role="alert">{{ error }}</div>
-            {% else %}
-            <div id="zip-feedback" class="setup-help">Fastest way to find your nearest forecast location.</div>
-            {% endif %}
-        </section>
+        {% if error %}
+        <div class="setup-error" role="alert" style="margin: 0 auto; max-width: 680px; padding: 0 1rem;">{{ error }}</div>
+        {% endif %}
 
         <section class="setup-section">
             <h2>Pick on the Map</h2>
             <p class="section-sub">Click a location marker on the coast to select it</p>
             <div id="map" data-supported-locations='{{ all_locations|tojson }}' class="setup-map"></div>
-            <form method="post" action="{{ url_for('views.setup_coords') }}" class="zip-form" id="map-coords-form" novalidate>
+            <form method="post" action="{{ url_for('views.setup_coords') }}" id="map-coords-form" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="location_lat" id="location_lat">
                 <input type="hidden" name="location_lon" id="location_lon">
@@ -371,37 +353,26 @@
 
                     navigator.geolocation.getCurrentPosition(
                         function (pos) {
+                            if (overlay) {
+                                overlay.classList.remove('geo-detect-overlay--visible');
+                                overlay.setAttribute('aria-hidden', 'true');
+                            }
                             var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
                             if (nearest) {
-                                // Store the name so the forecast page can show a
-                                // "Location auto-detected" confirmation toast.
-                                try { sessionStorage.setItem('geo_auto_detected', nearest.name + ', ' + nearest.state); } catch (e) {}
-
-                                // Auto-select the nearest location directly — no extra click needed.
-                                // The user can always return to /setup to change it.
-                                var form = document.createElement('form');
-                                form.method = 'post';
-                                form.action = '/setup/select/' + encodeURIComponent(nearest.id);
-                                var csrf = document.createElement('input');
-                                csrf.type = 'hidden';
-                                csrf.name = 'csrf_token';
-                                csrf.value = '{{ csrf_token }}';
-                                form.appendChild(csrf);
-                                document.body.appendChild(form);
-                                form.submit();
-                            } else {
-                                // No matching location data — fall back to server-side search.
-                                if (overlay) {
-                                    overlay.classList.remove('geo-detect-overlay--visible');
-                                    overlay.setAttribute('aria-hidden', 'true');
-                                }
-                                var latInput  = document.getElementById('location_lat');
-                                var lonInput  = document.getElementById('location_lon');
-                                var coordsForm = document.getElementById('map-coords-form');
-                                if (latInput && lonInput && coordsForm) {
-                                    latInput.value = pos.coords.latitude;
-                                    lonInput.value = pos.coords.longitude;
-                                    coordsForm.submit();
+                                // Show nearest location as a suggestion — don't auto-submit.
+                                // The user must click to confirm their location.
+                                var subtitle = document.getElementById('geo-subtitle');
+                                if (subtitle) subtitle.textContent = 'Nearest supported location to you:';
+                                if (useBtn) useBtn.style.display = 'none';
+                                var resultsEl = document.getElementById('loc-search-results');
+                                if (resultsEl) {
+                                    var html = '<form method="post" action="/setup/select/' + encodeURIComponent(nearest.id) + '" style="margin:0">';
+                                    html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
+                                    html += '<button type="submit" class="location-search-result-item location-search-result-item--suggested">';
+                                    html += '<div><span class="location-search-result-name">' + esc2(nearest.name) + '</span><span class="location-search-result-geo-label"> &mdash; near you</span></div>';
+                                    html += '<span class="location-search-result-state">' + esc2(nearest.state) + '</span>';
+                                    html += '</button></form>';
+                                    resultsEl.innerHTML = html;
                                 }
                             }
                         },
@@ -468,18 +439,25 @@
                         return name.indexOf(q) !== -1 || state.indexOf(q) !== -1 || id.indexOf(q) !== -1;
                     }).slice(0, 8);
 
-                    if (isZip) {
-                        /* Also trigger zip code form submission */
-                        var zipInput = document.querySelector('input[name="zipcode"]');
-                        if (zipInput) zipInput.value = q;
-                    }
-
                     if (matches.length === 0) {
                         if (isZip) {
-                            /* For zip codes, submit the zip form */
+                            /* Submit directly to the zip search endpoint */
                             resultsEl.innerHTML = '<p class="setup-help">Searching by zip code&hellip;</p>';
-                            var zipForm = document.querySelector('.zip-form');
-                            if (zipForm) { var zipInput = zipForm.querySelector('input[name="zipcode"]'); if (zipInput) zipInput.value = q; zipForm.submit(); }
+                            var zipSearchForm = document.createElement('form');
+                            zipSearchForm.method = 'post';
+                            zipSearchForm.action = '{{ url_for("views.setup_search") }}';
+                            var csrfField = document.createElement('input');
+                            csrfField.type = 'hidden';
+                            csrfField.name = 'csrf_token';
+                            csrfField.value = '{{ csrf_token }}';
+                            var zipField = document.createElement('input');
+                            zipField.type = 'hidden';
+                            zipField.name = 'zipcode';
+                            zipField.value = q;
+                            zipSearchForm.appendChild(csrfField);
+                            zipSearchForm.appendChild(zipField);
+                            document.body.appendChild(zipSearchForm);
+                            zipSearchForm.submit();
                         } else {
                             resultsEl.innerHTML = '<p class="setup-help" style="color:var(--text-muted)">No locations match &ldquo;' + esc2(q) + '&rdquo;. Try a zip code or browse below.</p>';
                         }

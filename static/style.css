@@ -8380,6 +8380,17 @@ body.has-app-header main {
   color: var(--text-muted);
 }
 
+.location-search-result-item--suggested {
+  border-color: var(--ocean);
+  background: color-mix(in srgb, var(--ocean) 6%, transparent);
+}
+
+.location-search-result-geo-label {
+  font-size: 0.78rem;
+  color: var(--ocean);
+  font-weight: 500;
+}
+
 /* ---- PROFILE PAGE: SINGLE-PAGE GROUP IMPROVEMENTS ---- */
 
 .profile-group-label {
