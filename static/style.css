@@ -8382,9 +8382,11 @@ body.has-app-header main {
   color: var(--text);
 }
 
-.location-search-result-item:hover {
+.location-search-result-item:hover,
+.location-search-result-item:focus {
   background: var(--bg-subtle);
   border-color: var(--ocean);
+  outline: none;
 }
 
 .location-search-result-name {
@@ -9148,36 +9150,26 @@ details[open] .collapsible-module-body {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ── Geolocation auto-detect overlay ─────────────────────────────────────── */
-.geo-detect-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 26, 36, 0.82);
-  z-index: 500;
+/* ── Inline geolocation loading indicator ────────────────────────────────── */
+.setup-geo-loading {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
+  gap: 0.55rem;
+  padding: 0.55rem 0;
+  font-size: 0.87rem;
+  color: var(--text-muted);
 }
-.geo-detect-overlay--visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-.geo-detect-spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #fff;
+
+.geo-spinner-sm {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--ocean);
   border-radius: 50%;
   animation: geo-spin 0.7s linear infinite;
 }
+
 @keyframes geo-spin {
   to { transform: rotate(360deg); }
 }

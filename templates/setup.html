@@ -61,8 +61,9 @@
                 <input id="loc-search-input" type="search" class="location-search-input"
                        placeholder="City, zip code, or beach name&hellip;"
                        autocomplete="off" inputmode="search"
-                       {% if not current_location %}autofocus{% endif %}>
-                <button type="button" class="location-search-btn" id="loc-search-btn">
+                       {% if not current_location %}autofocus{% endif %}
+                       aria-autocomplete="list" aria-controls="loc-search-results">
+                <button type="button" class="location-search-btn" id="loc-search-btn" aria-label="Search">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     Search
                 </button>
@@ -76,13 +77,13 @@
             {% if error %}
             <div class="setup-error" role="alert" style="margin-top:0.75rem">{{ error }}</div>
             {% endif %}
-            <div class="location-search-results" id="loc-search-results" aria-live="polite"></div>
+            <div class="location-search-results" id="loc-search-results" role="listbox" aria-live="polite"></div>
         </section>
 
         <!-- Map section — click any marker to select instantly -->
         <section class="setup-section">
             <h2>Pick on the Map</h2>
-            <p class="section-sub">Click any coastal marker to select it instantly &mdash; hover to preview the name</p>
+            <p class="section-sub">Click a marker to select it &mdash; hover to preview the name</p>
             <div id="map"
                  data-supported-locations='{{ all_locations|tojson }}'
                  data-csrf="{{ csrf_token }}"
@@ -127,8 +128,24 @@
         </section>
         {% endif %}
 
+        {% set state_names = {
+            'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+            'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+            'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+            'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+            'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+            'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+            'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+            'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+            'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+            'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+            'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+            'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+            'WI': 'Wisconsin', 'WY': 'Wyoming'
+        } %}
         <section class="setup-section">
             <h2>Browse all locations</h2>
+            <p class="section-sub">Can&rsquo;t find it above? Expand a state to see every supported spot.</p>
             <div class="browse-search-row">
                 <input id="browse-filter" type="search" class="browse-filter-input"
                        placeholder="Filter by name or state&hellip;" autocomplete="off"
@@ -145,8 +162,8 @@
                         {% set ns.current_state = loc.state %}
                         {% set ns.state_count = all_locations|selectattr('state', 'equalto', loc.state)|list|length %}
                         <details class="state-group" data-state-group data-state="{{ loc.state|lower }}">
-                            <summary class="state-label" aria-label="Toggle {{ loc.state }} locations">
-                                <span>{{ loc.state }}</span>
+                            <summary class="state-label" aria-label="Toggle {{ state_names.get(loc.state, loc.state) }} locations">
+                                <span>{{ state_names.get(loc.state, loc.state) }}</span>
                                 <span class="state-count">{{ ns.state_count }}</span>
                             </summary>
                             <div class="state-items">
@@ -165,12 +182,6 @@
         <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
 
-    <!-- Geolocation loading overlay (position:fixed, shown while auto-detecting) -->
-    <div class="geo-detect-overlay" id="geo-detect-overlay" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
-        <div class="geo-detect-spinner" aria-hidden="true"></div>
-        <p style="margin:0">Finding your nearest spot&hellip;</p>
-    </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
     <script src="{{ url_for('static', filename='js/setup_map.js') }}"></script>
     <script>
@@ -181,7 +192,9 @@
             var hasCurrentLocation = {{ 'true' if current_location else 'false' }};
             var allLocations = {{ all_locations|tojson }};
 
-            /* HTML-escape helper — must be in outer scope so all functions can use it */
+            /* Geo suggestion saved so it can be restored if user clears the search field */
+            var geoSuggestion = null;
+
             function esc2(s) {
                 return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             }
@@ -208,9 +221,7 @@
             function saveJSON(key, value) {
                 try {
                     window.localStorage.setItem(key, JSON.stringify(value));
-                } catch (err) {
-                    // no-op
-                }
+                } catch (err) {}
             }
 
             function updateRecent(locationId) {
@@ -313,7 +324,7 @@
                 autoRequestGeolocation();
             });
 
-            /* Haversine distance in miles between two lat/lon pairs */
+            /* Haversine distance in miles */
             function haversineMiles(lat1, lon1, lat2, lon2) {
                 var R = 3958.8;
                 var φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
@@ -324,7 +335,6 @@
                 return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             }
 
-            /* Return the location object from allLocations closest to (lat, lon) */
             function findNearestLocation(lat, lon) {
                 var best = null, bestDist = Infinity;
                 allLocations.forEach(function (loc) {
@@ -335,58 +345,53 @@
                 return best;
             }
 
+            /* Render the geo suggestion card in the results area */
+            function showGeoSuggestion(loc) {
+                var subtitle = document.getElementById('geo-subtitle');
+                if (subtitle) subtitle.textContent = 'Nearest supported location to you:';
+                var resultsEl = document.getElementById('loc-search-results');
+                if (!resultsEl) return;
+                var html = '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
+                html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
+                html += '<button type="submit" class="location-search-result-item location-search-result-item--suggested">';
+                html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span>';
+                html += '<span class="location-search-result-geo-label"> &mdash; near you</span></div>';
+                html += '<span class="location-search-result-state">' + esc2(loc.state) + '</span>';
+                html += '</button></form>';
+                resultsEl.innerHTML = html;
+            }
+
             function autoRequestGeolocation() {
                 if (!navigator.geolocation) return;
-                // Don't auto-detect if the user already has a location set;
-                // they came here to *change* it, so let them browse normally.
                 if (hasCurrentLocation) return;
 
                 var useBtn = document.getElementById('geo-use-btn');
 
-                /* Core detect-and-suggest logic, called either automatically (when
-                   permission is already granted) or when the user taps "Use My Location". */
                 function _runGeoDetect() {
                     var subtitle = document.getElementById('geo-subtitle');
-                    var overlay  = document.getElementById('geo-detect-overlay');
+                    var resultsEl = document.getElementById('loc-search-results');
 
                     if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
-                    if (useBtn)   useBtn.style.display = 'none';
-                    if (overlay) {
-                        overlay.removeAttribute('aria-hidden');
-                        overlay.classList.add('geo-detect-overlay--visible');
+                    if (useBtn) useBtn.style.display = 'none';
+                    /* Inline spinner — no full-screen overlay needed since we no longer auto-submit */
+                    if (resultsEl) {
+                        resultsEl.innerHTML = '<div class="setup-geo-loading" role="status">' +
+                            '<span class="geo-spinner-sm" aria-hidden="true"></span>Finding your nearest spot\u2026</div>';
                     }
 
                     navigator.geolocation.getCurrentPosition(
                         function (pos) {
-                            if (overlay) {
-                                overlay.classList.remove('geo-detect-overlay--visible');
-                                overlay.setAttribute('aria-hidden', 'true');
-                            }
                             var nearest = findNearestLocation(pos.coords.latitude, pos.coords.longitude);
                             if (nearest) {
-                                // Show nearest location as a suggestion — don't auto-submit.
-                                // The user must click to confirm their location.
-                                var subtitle = document.getElementById('geo-subtitle');
-                                if (subtitle) subtitle.textContent = 'Nearest supported location to you:';
-                                if (useBtn) useBtn.style.display = 'none';
-                                var resultsEl = document.getElementById('loc-search-results');
-                                if (resultsEl) {
-                                    var html = '<form method="post" action="/setup/select/' + encodeURIComponent(nearest.id) + '" style="margin:0">';
-                                    html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
-                                    html += '<button type="submit" class="location-search-result-item location-search-result-item--suggested">';
-                                    html += '<div><span class="location-search-result-name">' + esc2(nearest.name) + '</span><span class="location-search-result-geo-label"> &mdash; near you</span></div>';
-                                    html += '<span class="location-search-result-state">' + esc2(nearest.state) + '</span>';
-                                    html += '</button></form>';
-                                    resultsEl.innerHTML = html;
-                                }
+                                geoSuggestion = nearest;
+                                showGeoSuggestion(nearest);
+                            } else {
+                                if (resultsEl) resultsEl.innerHTML = '';
+                                if (subtitle) subtitle.textContent = 'Search by city, beach name, or zip code';
                             }
                         },
                         function () {
-                            // Permission denied or hardware unavailable — restore UI.
-                            if (overlay) {
-                                overlay.classList.remove('geo-detect-overlay--visible');
-                                overlay.setAttribute('aria-hidden', 'true');
-                            }
+                            if (resultsEl) resultsEl.innerHTML = '';
                             var subtitle2 = document.getElementById('geo-subtitle');
                             if (subtitle2) subtitle2.textContent = 'Search by city, beach name, or zip code';
                         },
@@ -394,30 +399,21 @@
                     );
                 }
 
-                // Wire up the "Use My Location" button so it's accessible inside the IIFE.
                 if (useBtn) useBtn.addEventListener('click', _runGeoDetect);
 
-                // Use the Permissions API (where available) to decide whether to
-                // auto-request silently or ask the user to tap "Use My Location" first.
                 if (navigator.permissions && navigator.permissions.query) {
                     navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
                         if (result.state === 'granted') {
-                            // Browser already has permission — detect immediately.
                             _runGeoDetect();
                         } else if (result.state === 'prompt') {
-                            // Prompting without a gesture may be blocked on mobile Safari.
-                            // Surface the button so the user can trigger it deliberately.
                             var subtitle = document.getElementById('geo-subtitle');
                             if (subtitle) subtitle.textContent = 'Use your device location to find your nearest spot';
                             if (useBtn) useBtn.style.display = '';
                         }
-                        // 'denied': skip silently, let the user find their location manually.
                     }).catch(function () {
-                        // Permissions API unavailable or threw — just try anyway.
                         _runGeoDetect();
                     });
                 } else {
-                    // No Permissions API (older browsers) — fire the request directly.
                     _runGeoDetect();
                 }
             }
@@ -431,13 +427,19 @@
 
                 function doSearch() {
                     var q = input.value.trim().toLowerCase();
-                    if (!q) { resultsEl.innerHTML = ''; return; }
+                    if (!q) {
+                        /* Restore geo suggestion if the user clears the field */
+                        if (geoSuggestion) {
+                            showGeoSuggestion(geoSuggestion);
+                        } else {
+                            resultsEl.innerHTML = '';
+                        }
+                        return;
+                    }
 
-                    /* Check if it looks like a zip code */
-                    var isZip = /^\d{3,5}$/.test(q.replace(/\s/g,''));
+                    var isZip = /^\d{3,5}$/.test(q.replace(/\s/g, ''));
 
-                    /* Filter allLocations by name, state, or id */
-                    var matches = allLocations.filter(function(loc) {
+                    var matches = allLocations.filter(function (loc) {
                         var name = (loc.name || '').toLowerCase();
                         var state = (loc.state || '').toLowerCase();
                         var id = (loc.id || '').toLowerCase();
@@ -446,19 +448,15 @@
 
                     if (matches.length === 0) {
                         if (isZip) {
-                            /* Submit directly to the zip search endpoint */
-                            resultsEl.innerHTML = '<p class="setup-help">Searching by zip code&hellip;</p>';
+                            resultsEl.innerHTML = '<div class="setup-geo-loading"><span class="geo-spinner-sm" aria-hidden="true"></span>Searching by zip code\u2026</div>';
                             var zipSearchForm = document.createElement('form');
                             zipSearchForm.method = 'post';
                             zipSearchForm.action = '{{ url_for("views.setup_search") }}';
                             var csrfField = document.createElement('input');
-                            csrfField.type = 'hidden';
-                            csrfField.name = 'csrf_token';
+                            csrfField.type = 'hidden'; csrfField.name = 'csrf_token';
                             csrfField.value = '{{ csrf_token }}';
                             var zipField = document.createElement('input');
-                            zipField.type = 'hidden';
-                            zipField.name = 'zipcode';
-                            zipField.value = q;
+                            zipField.type = 'hidden'; zipField.name = 'zipcode'; zipField.value = q;
                             zipSearchForm.appendChild(csrfField);
                             zipSearchForm.appendChild(zipField);
                             document.body.appendChild(zipSearchForm);
@@ -470,10 +468,10 @@
                     }
 
                     var html = '';
-                    matches.forEach(function(loc) {
+                    matches.forEach(function (loc) {
                         html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
                         html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
-                        html += '<button type="submit" class="location-search-result-item">';
+                        html += '<button type="submit" class="location-search-result-item" role="option">';
                         html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span></div>';
                         html += '<span class="location-search-result-state">' + esc2(loc.state) + '</span>';
                         html += '</button></form>';
@@ -481,15 +479,54 @@
                     resultsEl.innerHTML = html;
                 }
 
+                /* Keyboard navigation: ArrowDown from input enters result list */
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'ArrowDown') {
+                        var items = resultsEl.querySelectorAll('.location-search-result-item');
+                        if (items.length) { e.preventDefault(); items[0].focus(); }
+                    } else if (e.key === 'Escape') {
+                        input.value = '';
+                        if (geoSuggestion) { showGeoSuggestion(geoSuggestion); } else { resultsEl.innerHTML = ''; }
+                    } else if (e.key === 'Enter') {
+                        clearTimeout(debounceTimer);
+                        doSearch();
+                    }
+                });
+
+                /* Arrow key navigation within results; Escape returns to input */
+                resultsEl.addEventListener('keydown', function (e) {
+                    var items = Array.prototype.slice.call(resultsEl.querySelectorAll('.location-search-result-item'));
+                    var idx = items.indexOf(document.activeElement);
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        items[(idx + 1) % items.length].focus();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (idx <= 0) { input.focus(); } else { items[idx - 1].focus(); }
+                    } else if (e.key === 'Escape') {
+                        input.value = '';
+                        if (geoSuggestion) { showGeoSuggestion(geoSuggestion); } else { resultsEl.innerHTML = ''; }
+                        input.focus();
+                    }
+                });
+
+                /* "/" shortcut focuses the search input from anywhere on the page */
+                document.addEventListener('keydown', function (e) {
+                    if (e.key !== '/') return;
+                    var tag = (document.activeElement || {}).tagName || '';
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                    e.preventDefault();
+                    input.focus();
+                    input.select();
+                });
+
                 var debounceTimer;
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     clearTimeout(debounceTimer);
                     debounceTimer = setTimeout(doSearch, 200);
                 });
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') { clearTimeout(debounceTimer); doSearch(); }
-                });
-                if (btn) btn.addEventListener('click', function() { clearTimeout(debounceTimer); doSearch(); });
+
+                if (btn) btn.addEventListener('click', function () { clearTimeout(debounceTimer); doSearch(); });
             }
         })();
     </script>

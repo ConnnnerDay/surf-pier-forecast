@@ -189,6 +189,17 @@
             map.fitBounds(bounds, { padding: [20, 20] });
         }
 
+        /* If geolocation is already permitted, silently center the map near the user
+           so nearby markers are immediately visible without needing to pan */
+        if (navigator.permissions) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
+                if (result.state !== 'granted') return;
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 8);
+                }, null, { timeout: 5000, maximumAge: 300000 });
+            }).catch(function () {});
+        }
+
         /* Clicking open ocean (not a marker) — find nearest and show a confirm step */
         map.on('click', function (e) {
             var nearest = findNearest(locations, e.latlng.lat, e.latlng.lng);
