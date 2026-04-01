@@ -4272,6 +4272,58 @@ h2 {
   pointer-events: none;
   animation: fmap-spin 0.8s linear infinite;
 }
+.fmap-ctrl-btn--active {
+  background: rgba(14,95,120,0.75);
+  color: #1fa8c9;
+  border-color: rgba(31,168,201,0.55);
+}
+.fmap-ctrl-btn--active:hover {
+  background: rgba(14,95,120,0.9);
+}
+
+/* ── Structure markers ── */
+.fmap-struct-wrap { background: none; border: none; }
+.fmap-struct-dot {
+  display: block;
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid rgba(0,0,0,0.5);
+}
+.fmap-struct-dot--wreck {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245,158,11,0.5);
+}
+.fmap-struct-dot--reef {
+  background: #a78bfa;
+  box-shadow: 0 0 6px rgba(167,139,250,0.5);
+}
+.fmap-struct-type {
+  font-size: 0.72rem;
+  color: #f59e0b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.fmap-struct-depth {
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a9ba8);
+}
+.fmap-struct-hint {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 450;
+  background: rgba(10,19,29,0.88);
+  color: var(--text-secondary, #b0c4ce);
+  font-size: 0.78rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
 
 /* ── Hotspot header ── */
 .fmap-hotspots-header {

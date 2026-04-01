@@ -563,6 +563,9 @@
                     <svg class="fmap-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                     Loading map&hellip;
                 </div>
+                <div id="fmap-struct-hint" class="fmap-struct-hint" hidden aria-live="polite">
+                    Zoom in to see wreck &amp; structure spots
+                </div>
 
                 <!-- Map overlay controls -->
                 <div class="fmap-map-controls" aria-label="Map controls">
@@ -575,6 +578,10 @@
                     <div class="fmap-ctrl-divider"></div>
                     <button type="button" id="fmap-map-fullscreen" class="fmap-ctrl-btn" title="Toggle fullscreen map" aria-label="Toggle fullscreen map">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </button>
+                    <div class="fmap-ctrl-divider"></div>
+                    <button type="button" id="fmap-structure-btn" class="fmap-ctrl-btn" title="Show underwater structures: wrecks, reefs, rocky areas" aria-label="Toggle underwater structure spots" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     </button>
                 </div>
             </div>

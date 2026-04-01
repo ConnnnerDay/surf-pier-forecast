@@ -330,7 +330,7 @@ def create_app() -> Flask:
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: blob: https://lh3.googleusercontent.com "
                 "https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com "
-                "https://server.arcgisonline.com; "
+                "https://server.arcgisonline.com https://tiles.openseamap.org; "
                 "connect-src 'self'; "
                 "worker-src 'self'; "
                 "frame-ancestors 'none';"

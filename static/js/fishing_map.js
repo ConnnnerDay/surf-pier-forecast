@@ -67,6 +67,12 @@
     var userCoords    = null;        // {lat, lng} set after Near Me fires
     var sortByDist    = false;       // hotspot sort mode
 
+    // ─── Structure-mode state ─────────────────────────────────────────────────
+    var structureMode       = false;
+    var structureMarkers    = [];    // [{leaflet, data}]
+    var structureFetchTimer = null;
+    var lastStructureBbox   = null;  // last fetched {sw_lat,sw_lng,ne_lat,ne_lng}
+
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
 
@@ -162,6 +168,10 @@
         }(0));
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
+
+        map.on('moveend zoomend', function () {
+            if (structureMode) scheduleStructureFetch();
+        });
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
@@ -230,6 +240,11 @@
                 sortBtn.classList.toggle('fmap-sort-dist-btn--active', sortByDist);
                 renderHotspots(currentData);
             });
+        }
+
+        var structureBtn = document.getElementById('fmap-structure-btn');
+        if (structureBtn) {
+            structureBtn.addEventListener('click', toggleStructureMode);
         }
     }
 
@@ -771,6 +786,148 @@
         // Detail drawer close button
         var closeBtn = document.getElementById('fmap-detail-close');
         if (closeBtn) closeBtn.addEventListener('click', closeDetail);
+    }
+
+    // ─── Structure mode ───────────────────────────────────────────────────────
+
+    function toggleStructureMode() {
+        structureMode = !structureMode;
+        var btn = document.getElementById('fmap-structure-btn');
+        if (btn) btn.classList.toggle('fmap-ctrl-btn--active', structureMode);
+
+        // Remove all current tile layers then rebuild for the new mode
+        if (map) {
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.TileLayer) map.removeLayer(layer);
+            });
+        }
+
+        if (structureMode) {
+            if (map) {
+                // Esri Ocean Base shows bathymetry and depth gradients
+                L.tileLayer(
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
+                    { attribution: 'Tiles &copy; Esri', maxZoom: 16 }
+                ).addTo(map);
+
+                // OpenSeaMap overlay: wrecks, rocks, reefs, buoys as nautical chart symbols
+                L.tileLayer(
+                    'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+                    {
+                        attribution: '&copy; <a href="https://www.openseamap.org/">OpenSeaMap</a> contributors',
+                        maxZoom: 18,
+                        opacity: 0.9
+                    }
+                ).addTo(map);
+            }
+            scheduleStructureFetch();
+        } else {
+            // Restore dark CARTO base
+            if (map) {
+                L.tileLayer(
+                    'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
+                    { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
+                ).addTo(map);
+            }
+            clearStructureMarkers();
+            setStructureHint(false);
+            lastStructureBbox = null;
+        }
+    }
+
+    function makeStructureIcon(type) {
+        return L.divIcon({
+            className: 'fmap-struct-wrap',
+            html: '<span class="fmap-struct-dot fmap-struct-dot--' + type + '"></span>',
+            iconSize:    [16, 16],
+            iconAnchor:  [8, 8],
+            popupAnchor: [0, -10]
+        });
+    }
+
+    function clearStructureMarkers() {
+        structureMarkers.forEach(function (m) { if (map) map.removeLayer(m.leaflet); });
+        structureMarkers = [];
+    }
+
+    function drawStructureMarkers(features) {
+        if (!map) return;
+        clearStructureMarkers();
+        features.forEach(function (feat) {
+            var m = L.marker([feat.lat, feat.lng], {
+                icon: makeStructureIcon(feat.type),
+                title: feat.name,
+                zIndexOffset: -100
+            }).addTo(map);
+
+            var depthStr = feat.depth_m != null
+                ? '<br><span class="fmap-struct-depth">' + Number(feat.depth_m).toFixed(1) + ' m depth</span>'
+                : '';
+            m.bindTooltip(
+                '<strong>' + esc(feat.name) + '</strong>' +
+                '<br><span class="fmap-struct-type">' +
+                (feat.type === 'wreck' ? 'Wreck' : 'Reef / Rock') +
+                '</span>' + depthStr,
+                { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
+            );
+            structureMarkers.push({ leaflet: m, data: feat });
+        });
+    }
+
+    function setStructureHint(visible) {
+        var hint = document.getElementById('fmap-struct-hint');
+        if (hint) hint.hidden = !visible;
+    }
+
+    function scheduleStructureFetch() {
+        clearTimeout(structureFetchTimer);
+        structureFetchTimer = setTimeout(doFetchStructureSpots, 500);
+    }
+
+    function doFetchStructureSpots() {
+        if (!structureMode || !map) return;
+
+        if (map.getZoom() < 8) {
+            setStructureHint(true);
+            clearStructureMarkers();
+            return;
+        }
+        setStructureHint(false);
+
+        var bounds = map.getBounds();
+        var sw = bounds.getSouthWest();
+        var ne = bounds.getNorthEast();
+
+        var bbox = {
+            sw_lat: Math.round(sw.lat * 100) / 100,
+            sw_lng: Math.round(sw.lng * 100) / 100,
+            ne_lat: Math.round(ne.lat * 100) / 100,
+            ne_lng: Math.round(ne.lng * 100) / 100
+        };
+
+        // Skip if viewport hasn't shifted much since last fetch
+        if (lastStructureBbox &&
+            Math.abs(bbox.sw_lat - lastStructureBbox.sw_lat) < 0.25 &&
+            Math.abs(bbox.sw_lng - lastStructureBbox.sw_lng) < 0.25) {
+            return;
+        }
+        lastStructureBbox = bbox;
+
+        var url = '/api/structure-spots' +
+            '?sw_lat=' + bbox.sw_lat + '&sw_lng=' + bbox.sw_lng +
+            '&ne_lat=' + bbox.ne_lat + '&ne_lng=' + bbox.ne_lng;
+
+        fetch(url)
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (data) {
+                if (!structureMode) return;
+                if (data.zoom_required) { setStructureHint(true); return; }
+                setStructureHint(false);
+                drawStructureMarkers(data.features || []);
+            })
+            .catch(function (err) {
+                console.error('[fishing-map] structure fetch error:', err);
+            });
     }
 
     // ─── Boot ─────────────────────────────────────────────────────────────────

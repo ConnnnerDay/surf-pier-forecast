@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json_mod
 import logging
 import os
 import threading
@@ -1098,3 +1099,95 @@ def fishing_map_data() -> Any:
         "monthly_summary": monthly_summary,
         "trending_species": trending_species,
     })
+
+
+# ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
+
+_STRUCTURE_CACHE: dict = {}    # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE_TTL = 3600    # 1 hour — wrecks don't move
+
+_NOAA_ENC_BASE = (
+    "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
+)
+
+
+def _fetch_noaa_structures(
+    sw_lat: float, sw_lng: float, ne_lat: float, ne_lng: float
+) -> list:
+    """Fetch wrecks from NOAA ENC Direct within bbox. Results are cached for 1 h."""
+    import requests as _req
+
+    cache_key = f"{round(sw_lat,2)},{round(sw_lng,2)},{round(ne_lat,2)},{round(ne_lng,2)}"
+    cached = _STRUCTURE_CACHE.get(cache_key)
+    if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
+        return cached["data"]
+
+    geometry_json = _json_mod.dumps({
+        "xmin": sw_lng, "ymin": sw_lat,
+        "xmax": ne_lng, "ymax": ne_lat,
+        "spatialReference": {"wkid": 4326},
+    })
+
+    base_params = {
+        "f": "json",
+        "geometry": geometry_json,
+        "geometryType": "esriGeometryEnvelope",
+        "spatialRel": "esriSpatialRelIntersects",
+        "returnGeometry": "true",
+        "resultRecordCount": "200",
+    }
+
+    features: list = []
+
+    # Wrecks
+    try:
+        resp = _req.get(
+            f"{_NOAA_ENC_BASE}/enc_wrecks/MapServer/0/query",
+            params=dict(base_params, outFields="WRECKNM,VALSOU,CAUTION"),
+            timeout=(3.05, 10),
+            headers={"User-Agent": "SurfPierForecast/1.0"},
+        )
+        if resp.ok:
+            for feat in resp.json().get("features", []):
+                geom = feat.get("geometry") or {}
+                attrs = feat.get("attributes") or {}
+                if geom.get("x") is None or geom.get("y") is None:
+                    continue
+                name = (attrs.get("WRECKNM") or "").strip() or "Unknown Wreck"
+                features.append({
+                    "type": "wreck",
+                    "name": name,
+                    "lat": geom["y"],
+                    "lng": geom["x"],
+                    "depth_m": attrs.get("VALSOU"),
+                })
+    except Exception:
+        pass
+
+    _STRUCTURE_CACHE[cache_key] = {"ts": time.time(), "data": features}
+    return features
+
+
+@bp.route("/api/structure-spots")
+def structure_spots() -> Any:
+    """Return wrecks/obstructions from NOAA ENC within a map viewport bounding box.
+
+    Query params: sw_lat, sw_lng, ne_lat, ne_lng  (decimal degrees)
+    """
+    try:
+        sw_lat = float(request.args["sw_lat"])
+        sw_lng = float(request.args["sw_lng"])
+        ne_lat = float(request.args["ne_lat"])
+        ne_lng = float(request.args["ne_lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify({"error": "sw_lat, sw_lng, ne_lat, ne_lng required"}), 400
+
+    if not (-90 <= sw_lat < ne_lat <= 90) or not (-180 <= sw_lng < ne_lng <= 180):
+        return jsonify({"error": "Invalid bbox range"}), 400
+
+    # Block oversized viewports — too many results and NOAA rate limits
+    if (ne_lat - sw_lat) > 8 or (ne_lng - sw_lng) > 12:
+        return jsonify({"features": [], "zoom_required": True})
+
+    features = _fetch_noaa_structures(sw_lat, sw_lng, ne_lat, ne_lng)
+    return jsonify({"features": features})
