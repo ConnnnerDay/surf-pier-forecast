@@ -490,29 +490,6 @@
         });
     }
 
-    // ─── Activity stats strip ─────────────────────────────────────────────────
-    function updateStats(locations) {
-        var peak  = 0, good = 0, fair = 0;
-        locations.forEach(function (l) {
-            if (l.activity === 'peak') peak++;
-            else if (l.activity === 'good') good++;
-            else if (l.activity === 'fair') fair++;
-        });
-        var total = locations.length;
-
-        function setEl(id, val) {
-            var el = document.getElementById(id);
-            if (el) el.textContent = val;
-        }
-        setEl('fmap-count-peak',  peak);
-        setEl('fmap-count-good',  good);
-        setEl('fmap-count-fair',  fair);
-        setEl('fmap-count-total', total);
-
-        // Show the strip
-        if (els.statsStrip) els.statsStrip.style.opacity = '1';
-    }
-
     // ─── AI Insight text ──────────────────────────────────────────────────────
     function updateInsight(data) {
         if (!els.insight || !els.insightText) return;
@@ -693,6 +670,19 @@
         } catch (e) {}
     }
 
+    // ─── Auto-center on saved location ───────────────────────────────────────
+    var hasAutoZoomed = false;
+    function autoZoomToSavedLocation(locations) {
+        if (hasAutoZoomed) return;
+        var locId = (typeof CURRENT_LOC_ID !== 'undefined') ? CURRENT_LOC_ID : '';
+        if (!locId || !map) return;
+        var match = locations.find(function (l) { return l.id === locId; });
+        if (match) {
+            hasAutoZoomed = true;
+            map.setView([match.lat, match.lng], 9, { animate: false });
+        }
+    }
+
     // ─── Fetch & render ───────────────────────────────────────────────────────
     function fetchAndRender() {
         if (!map) return;
@@ -724,21 +714,11 @@
 
                 monthlySummary = data.monthly_summary || [];
                 drawMarkers(currentData);
+                autoZoomToSavedLocation(currentData);
                 renderHotspots(currentData);
-                updateStats(currentData);
-                updateInsight(data);
                 renderMonthPlanner(monthlySummary, data.month);
                 renderTrendingChips(data.trending_species || []);
-
-                // AI summary subtitle
-                var active = currentData.filter(function (l) {
-                    return l.activity === 'peak' || l.activity === 'good';
-                }).length;
-                if (els.aiSummary) {
-                    els.aiSummary.textContent = activeSpecies
-                        ? active + ' locations showing active fishing for \u201c' + activeSpecies + '\u201d \u2014 tap a pin to explore.'
-                        : 'Tap a location to see what\u2019s biting \u2014 filter by species to highlight the best spots.';
-                }
+                updateInsight(data);
             })
             .catch(function (err) {
                 if (els.loading) {
@@ -788,41 +768,12 @@
             });
         }
 
-        document.querySelectorAll('.fmap-pill--coast').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
-                    b.classList.remove('fmap-pill--active');
-                });
-                btn.classList.add('fmap-pill--active');
-                activeCoast = btn.getAttribute('data-coast');
-                renderQuickChips();
-                scheduleFetch();
-                // Auto-zoom to coast bounding box
-                if (map && COAST_BOUNDS[activeCoast]) {
-                    map.flyToBounds(COAST_BOUNDS[activeCoast], { padding: [30, 30], duration: 1 });
-                } else if (map && activeCoast === 'all') {
-                    map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 1 });
-                }
-            });
-        });
-
-        document.querySelectorAll('.fmap-pill--cat').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
-                    b.classList.remove('fmap-pill--active');
-                });
-                btn.classList.add('fmap-pill--active');
-                activeCat = btn.getAttribute('data-cat');
-                scheduleFetch();
-            });
-        });
-
         // Detail drawer close button
         var closeBtn = document.getElementById('fmap-detail-close');
         if (closeBtn) closeBtn.addEventListener('click', closeDetail);
     }
 
-    // ─── Boot (lazy via IntersectionObserver) ─────────────────────────────────
+    // ─── Boot ─────────────────────────────────────────────────────────────────
     function boot() {
         ensureLeaflet()
             .then(function () {
@@ -997,14 +948,6 @@
         });
     }
 
-    function observeSection(section) {
-        if (!('IntersectionObserver' in window)) { boot(); return; }
-        var obs = new IntersectionObserver(function (entries) {
-            if (entries[0].isIntersecting) { obs.disconnect(); boot(); }
-        }, { threshold: 0.04 });
-        obs.observe(section);
-    }
-
     // ─── Init ─────────────────────────────────────────────────────────────────
     function init() {
         var root = document.getElementById('fmap-root');
@@ -1026,11 +969,9 @@
         els.suggestions   = document.getElementById('fmap-suggestions');
         els.insight       = document.getElementById('fmap-insight');
         els.insightText   = document.getElementById('fmap-insight-text');
-        els.aiSummary     = document.getElementById('fmap-ai-summary');
-        els.statsStrip    = document.getElementById('fmap-stats-strip');
 
         if (!els.mapEl) return;
-        observeSection(root);
+        boot();
     }
 
     if (document.readyState === 'loading') {
