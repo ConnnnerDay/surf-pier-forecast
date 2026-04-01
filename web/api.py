@@ -950,6 +950,52 @@ def _month_score(species: Dict[str, Any], month: int) -> int:
     return 20
 
 
+_AI_MONTH_NAMES = [
+    "", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+
+def _build_ai_reasoning(loc_result: dict, month: int) -> str:
+    """Return 1-3 sentence plain-text AI recommendation for a fishing location."""
+    mname = _AI_MONTH_NAMES[month] if 1 <= month <= 12 else "this month"
+    species = loc_result.get("top_species", [])
+    if not species:
+        return f"Conditions are quiet at this location in {mname}."
+
+    top = species[0]
+    sp_name = top.get("name", "Fish")
+    activity = top.get("activity", "fair")
+    bait = top.get("bait", "")
+    rig = top.get("rig", "")
+    lures = top.get("lures", "")
+
+    parts: list[str] = []
+
+    if activity == "peak":
+        parts.append(f"{sp_name} are at peak seasonal activity for {mname}.")
+    elif activity == "good":
+        parts.append(f"{sp_name} showing strong activity through {mname}.")
+    else:
+        parts.append(f"{sp_name} are active with fair conditions in {mname}.")
+
+    others = [s["name"] for s in species[1:3]]
+    if others:
+        parts.append(f'Also expect {" and ".join(others)}.')
+
+    tackle: list[str] = []
+    if bait:
+        tackle.append(f"bait: {bait}")
+    elif lures:
+        tackle.append(f"try {lures}")
+    if rig:
+        tackle.append(f"rig: {rig}")
+    if tackle:
+        parts.append(f'Recommended — {", ".join(tackle)}.')
+
+    return " ".join(parts)
+
+
 @bp.route("/api/fishing-map")
 def fishing_map_data() -> Any:
     """Return location suitability data for the AI Fishing Map.
@@ -1050,6 +1096,15 @@ def fishing_map_data() -> Any:
             "activity": activity,
             "top_species": top_species,
         })
+
+    # Mark top 5 locations as AI picks with generated reasoning text
+    _ai_ranked = sorted(
+        (r for r in results if r["activity"] != "none"),
+        key=lambda r: -r["score"],
+    )[:5]
+    for _rank, _pick in enumerate(_ai_ranked, 1):
+        _pick["ai_pick_rank"] = _rank
+        _pick["ai_reasoning"] = _build_ai_reasoning(_pick, month)
 
     # Collect unique species names for the autocomplete dropdown
     species_names = sorted({s["name"] for s in SPECIES_DB})

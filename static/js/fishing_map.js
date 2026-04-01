@@ -73,6 +73,11 @@
     var structureFetchTimer = null;
     var lastStructureBbox   = null;  // last fetched {sw_lat,sw_lng,ne_lat,ne_lng}
 
+    // ─── AI-overlay state ─────────────────────────────────────────────────────
+    var aiMode        = false;
+    var heatLayer     = null;
+    var aiPickMarkers = [];          // [{leaflet, data}]
+
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
 
@@ -245,6 +250,11 @@
         var structureBtn = document.getElementById('fmap-structure-btn');
         if (structureBtn) {
             structureBtn.addEventListener('click', toggleStructureMode);
+        }
+
+        var aiBtn = document.getElementById('fmap-ai-btn');
+        if (aiBtn) {
+            aiBtn.addEventListener('click', toggleAiMode);
         }
     }
 
@@ -734,6 +744,17 @@
                 renderMonthPlanner(monthlySummary, data.month);
                 renderTrendingChips(data.trending_species || []);
                 updateInsight(data);
+
+                if (aiMode) {
+                    markers.forEach(function (m) { m.leaflet.setOpacity(0); });
+                    if (window.L && window.L.heatLayer) {
+                        renderAiOverlay(currentData);
+                    } else {
+                        ensureLeafletHeat().then(function () {
+                            if (aiMode) renderAiOverlay(currentData);
+                        }).catch(function () {});
+                    }
+                }
             })
             .catch(function (err) {
                 if (els.loading) {
@@ -786,6 +807,114 @@
         // Detail drawer close button
         var closeBtn = document.getElementById('fmap-detail-close');
         if (closeBtn) closeBtn.addEventListener('click', closeDetail);
+    }
+
+    // ─── AI overlay ───────────────────────────────────────────────────────────
+
+    function ensureLeafletHeat() {
+        if (window.L && window.L.heatLayer) return Promise.resolve();
+        return new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    function makeAiPickIcon(rank) {
+        return L.divIcon({
+            className: 'fmap-ai-pick-wrap',
+            html: '<span class="fmap-ai-pick-dot"><span class="fmap-ai-pick-rank">' + rank + '</span></span>',
+            iconSize:    [34, 34],
+            iconAnchor:  [17, 17],
+            popupAnchor: [0, -20]
+        });
+    }
+
+    function clearAiOverlay() {
+        if (heatLayer && map) { map.removeLayer(heatLayer); heatLayer = null; }
+        aiPickMarkers.forEach(function (m) { if (map) map.removeLayer(m.leaflet); });
+        aiPickMarkers = [];
+    }
+
+    function renderAiOverlay(locations) {
+        clearAiOverlay();
+        if (!map || !window.L || !window.L.heatLayer) return;
+
+        // Heat map — intensity proportional to score (0-100 → 0-1)
+        var points = locations
+            .filter(function (loc) { return loc.score > 0; })
+            .map(function (loc) { return [loc.lat, loc.lng, loc.score / 100]; });
+
+        if (points.length) {
+            heatLayer = L.heatLayer(points, {
+                radius:  55,
+                blur:    40,
+                maxZoom: 12,
+                max:     1.0,
+                gradient: { 0.15: '#164e63', 0.45: '#0e7490', 0.70: '#16a34a', 0.88: '#ca8a04', 1.0: '#dc2626' }
+            }).addTo(map);
+        }
+
+        // AI pick markers for top 5 locations
+        var picks = locations.filter(function (loc) { return loc.ai_pick_rank; });
+        picks.sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
+
+        picks.forEach(function (loc) {
+            var m = L.marker([loc.lat, loc.lng], {
+                icon: makeAiPickIcon(loc.ai_pick_rank),
+                zIndexOffset: 1000
+            }).addTo(map);
+
+            m.bindTooltip(
+                '<strong>#' + loc.ai_pick_rank + ' AI Pick &mdash; ' + esc(loc.name) + ', ' + esc(loc.state) + '</strong>',
+                { direction: 'top', offset: [0, -10], className: 'fmap-tooltip' }
+            );
+
+            m.on('click', function () { showAiPickPopup(loc); });
+            aiPickMarkers.push({ leaflet: m, data: loc });
+        });
+    }
+
+    function showAiPickPopup(loc) {
+        if (!map) return;
+        var badge = ACTIVITY[loc.activity] || ACTIVITY.none;
+        L.popup({ className: 'fmap-ai-popup', maxWidth: 290, minWidth: 220 })
+            .setLatLng([loc.lat, loc.lng])
+            .setContent(
+                '<div class="fmap-ai-popup-inner">' +
+                '<div class="fmap-ai-popup-header">' +
+                '<span class="fmap-ai-popup-pick-badge">#' + loc.ai_pick_rank + ' AI Pick</span>' +
+                '<span class="fmap-ai-popup-act-badge fmap-ai-popup-act-badge--' + loc.activity + '">' + badge.label + '</span>' +
+                '</div>' +
+                '<div class="fmap-ai-popup-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</div>' +
+                '<p class="fmap-ai-popup-reasoning">' + esc(loc.ai_reasoning || '') + '</p>' +
+                '<a href="/f/' + esc(loc.id) + '" class="fmap-ai-popup-link">View Full Forecast &rarr;</a>' +
+                '</div>'
+            )
+            .openOn(map);
+    }
+
+    function toggleAiMode() {
+        aiMode = !aiMode;
+        var btn = document.getElementById('fmap-ai-btn');
+        if (btn) {
+            btn.classList.toggle('fmap-ctrl-btn--active', aiMode);
+            btn.setAttribute('aria-pressed', aiMode ? 'true' : 'false');
+        }
+
+        if (aiMode) {
+            // Hide regular forecast markers
+            markers.forEach(function (m) { m.leaflet.setOpacity(0); });
+            // Load heat plugin then render current data
+            ensureLeafletHeat()
+                .then(function () { if (aiMode) renderAiOverlay(currentData); })
+                .catch(function (e) { console.error('[fishing-map] leaflet-heat load failed', e); });
+        } else {
+            clearAiOverlay();
+            markers.forEach(function (m) { m.leaflet.setOpacity(1); });
+        }
     }
 
     // ─── Structure mode ───────────────────────────────────────────────────────
