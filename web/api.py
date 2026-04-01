@@ -24,7 +24,7 @@ from flask import (
 
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
-from locations import get_location
+from locations import get_location, get_water_temp
 from regulations import lookup_regulation
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -912,6 +912,28 @@ _SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
 }
 
 
+def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
+    """Return 0.3–1.0 temperature suitability multiplier for a species.
+
+    1.0 = water is inside the ideal temperature window.
+    Tapers to 0.5 at the survivable edges, 0.3 outside survivable range.
+    """
+    t_min  = float(species.get("temp_min",       32))
+    t_max  = float(species.get("temp_max",       95))
+    t_low  = float(species.get("temp_ideal_low",  t_min))
+    t_high = float(species.get("temp_ideal_high", t_max))
+
+    if water_temp_f < t_min or water_temp_f > t_max:
+        return 0.3
+    if t_low <= water_temp_f <= t_high:
+        return 1.0
+    if water_temp_f < t_low:
+        span = t_low - t_min
+        return 1.0 if span <= 0 else 0.5 + 0.5 * (water_temp_f - t_min) / span
+    span = t_max - t_high
+    return 1.0 if span <= 0 else 0.5 + 0.5 * (t_max - water_temp_f) / span
+
+
 def _location_coast(loc: Dict[str, Any]) -> str:
     """Return 'west', 'hawaii', or 'east' for a location."""
     region = loc.get("temp_region", "")
@@ -957,21 +979,32 @@ _AI_MONTH_NAMES = [
 
 
 def _build_ai_reasoning(loc_result: dict, month: int) -> str:
-    """Return 1-3 sentence plain-text AI recommendation for a fishing location."""
+    """Return plain-text AI recommendation for a fishing location.
+
+    Incorporates water temperature vs species ideal range, species-specific
+    behavioral notes (cold/warm), secondary species, and tackle tips.
+    """
     mname = _AI_MONTH_NAMES[month] if 1 <= month <= 12 else "this month"
-    species = loc_result.get("top_species", [])
+    species    = loc_result.get("top_species", [])
+    water_temp = loc_result.get("water_temp")  # °F or None
+
     if not species:
         return f"Conditions are quiet at this location in {mname}."
 
-    top = species[0]
-    sp_name = top.get("name", "Fish")
-    activity = top.get("activity", "fair")
-    bait = top.get("bait", "")
-    rig = top.get("rig", "")
-    lures = top.get("lures", "")
+    top         = species[0]
+    sp_name     = top.get("name", "Fish")
+    activity    = top.get("activity", "fair")
+    bait        = top.get("bait", "")
+    rig         = top.get("rig", "")
+    lures       = top.get("lures", "")
+    t_low       = top.get("temp_ideal_low")
+    t_high      = top.get("temp_ideal_high")
+    expl_cold   = top.get("explanation_cold", "")
+    expl_warm   = top.get("explanation_warm", "")
 
     parts: list[str] = []
 
+    # 1. Activity opener
     if activity == "peak":
         parts.append(f"{sp_name} are at peak seasonal activity for {mname}.")
     elif activity == "good":
@@ -979,19 +1012,56 @@ def _build_ai_reasoning(loc_result: dict, month: int) -> str:
     else:
         parts.append(f"{sp_name} are active with fair conditions in {mname}.")
 
-    others = [s["name"] for s in species[1:3]]
-    if others:
-        parts.append(f'Also expect {" and ".join(others)}.')
+    # 2. Water temperature context
+    if water_temp is not None and t_low is not None and t_high is not None:
+        wt = round(water_temp)
+        if water_temp < t_low:
+            gap = round(t_low - water_temp)
+            parts.append(
+                f"Water is {wt}\u00b0F — {gap}\u00b0 below the ideal "
+                f"{round(t_low)}\u2013{round(t_high)}\u00b0F window; "
+                f"fish are present but slower."
+            )
+        elif water_temp > t_high:
+            gap = round(water_temp - t_high)
+            parts.append(
+                f"Water is warm at {wt}\u00b0F — {gap}\u00b0 above ideal; "
+                f"target early morning or deeper structure."
+            )
+        else:
+            parts.append(
+                f"Water at {wt}\u00b0F is squarely in the sweet spot "
+                f"({round(t_low)}\u2013{round(t_high)}\u00b0F) — prime feeding conditions."
+            )
 
+    # 3. Behavioral explanation (cold vs warm)
+    if water_temp is not None and t_low is not None and t_high is not None:
+        midpoint = (t_low + t_high) / 2.0
+        expl = expl_cold if water_temp < midpoint else expl_warm
+        if expl:
+            # Truncate to first sentence
+            sentence = expl.split(".")[0].strip()
+            if sentence:
+                parts.append(sentence + ".")
+
+    # 4. Secondary species
+    secondary = [s["name"] for s in species[1:2]]
+    if secondary:
+        parts.append(f"Also watch for {secondary[0]}.")
+
+    # 5. Tackle
     tackle: list[str] = []
     if bait:
-        tackle.append(f"bait: {bait}")
+        # Bait strings can be long — take the first item before "or" / ";"
+        short_bait = bait.split(";")[0].split(" or ")[0].strip()
+        tackle.append(f"bait: {short_bait}")
     elif lures:
-        tackle.append(f"try {lures}")
+        short_lure = lures.split(",")[0].strip()
+        tackle.append(f"try {short_lure}")
     if rig:
         tackle.append(f"rig: {rig}")
     if tackle:
-        parts.append(f'Recommended — {", ".join(tackle)}.')
+        parts.append(f"Recommended \u2014 {', '.join(tackle)}.")
 
     return " ".join(parts)
 
@@ -1075,32 +1145,51 @@ def fishing_map_data() -> Any:
                 if sp_score < 30 and len(rich) >= 3:
                     break
                 rich.append({
-                    "name":        sp["name"],
-                    "bait":        sp.get("bait", ""),
-                    "rig":         sp.get("rig", ""),
-                    "lures":       sp.get("lures", ""),
-                    "activity":    _activity_label(sp_score),
-                    "peak_months": sp.get("peak_months", []),
-                    "good_months": sp.get("good_months", []),
+                    "name":             sp["name"],
+                    "bait":             sp.get("bait", ""),
+                    "rig":              sp.get("rig", ""),
+                    "lures":            sp.get("lures", ""),
+                    "activity":         _activity_label(sp_score),
+                    "peak_months":      sp.get("peak_months", []),
+                    "good_months":      sp.get("good_months", []),
+                    # Extra fields used by AI reasoning
+                    "temp_ideal_low":   sp.get("temp_ideal_low"),
+                    "temp_ideal_high":  sp.get("temp_ideal_high"),
+                    "explanation_cold": sp.get("explanation_cold", "")[:160],
+                    "explanation_warm": sp.get("explanation_warm", "")[:160],
                 })
             top_species = rich[:6]
 
+        # Water temperature and temperature-weighted AI score
+        water_temp = get_water_temp(
+            loc.get("temp_region", ""),
+            month,
+            loc.get("temp_offset", 0),
+        )
+        if water_temp is not None and loc_species and score > 0:
+            best_sp = sorted(loc_species, key=lambda s: -_month_score(s, month))[0]
+            ai_score: float = _month_score(best_sp, month) * _temp_factor(best_sp, water_temp)
+        else:
+            ai_score = float(score)
+
         results.append({
-            "id": loc["id"],
-            "name": loc["name"],
-            "state": loc["state"],
-            "lat": loc["lat"],
-            "lng": loc["lng"],
-            "coast": loc_coast,
-            "score": score,
-            "activity": activity,
+            "id":         loc["id"],
+            "name":       loc["name"],
+            "state":      loc["state"],
+            "lat":        loc["lat"],
+            "lng":        loc["lng"],
+            "coast":      loc_coast,
+            "score":      score,
+            "ai_score":   round(ai_score, 1),
+            "water_temp": water_temp,
+            "activity":   activity,
             "top_species": top_species,
         })
 
     # Mark top 5 locations as AI picks with generated reasoning text
     _ai_ranked = sorted(
         (r for r in results if r["activity"] != "none"),
-        key=lambda r: -r["score"],
+        key=lambda r: -(r.get("ai_score") or r["score"]),
     )[:5]
     for _rank, _pick in enumerate(_ai_ranked, 1):
         _pick["ai_pick_rank"] = _rank

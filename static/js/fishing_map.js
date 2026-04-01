@@ -416,7 +416,80 @@
     }
 
     // ─── Hotspots list ────────────────────────────────────────────────────────
+
+    function updateHotspotHeader(isAiMode) {
+        var headerLeft = document.querySelector('.fmap-hotspots-header-left');
+        if (!headerLeft) return;
+        if (isAiMode) {
+            headerLeft.innerHTML =
+                '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fbbf24" stroke-width="2.5" aria-hidden="true">' +
+                '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+                '<span class="fmap-ai-panel-label">AI Picks</span>';
+        } else {
+            headerLeft.innerHTML =
+                '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+                '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+                ' Top Spots';
+        }
+    }
+
+    function renderAiHotspots(locations) {
+        if (!els.hotspotsList) return;
+
+        var picks = locations
+            .filter(function (l) { return l.ai_pick_rank; })
+            .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
+
+        if (els.hotspotCount) {
+            els.hotspotCount.textContent = picks.length ? picks.length : '';
+            els.hotspotCount.style.display = picks.length ? '' : 'none';
+        }
+
+        if (!picks.length) {
+            els.hotspotsList.innerHTML = '<li class="fmap-hotspot-empty">No AI picks available</li>';
+            return;
+        }
+
+        var html = '';
+        picks.forEach(function (loc) {
+            var sp     = loc.top_species && loc.top_species[0];
+            var spName = sp ? (sp.name || '') : '';
+            var reasoning = loc.ai_reasoning || '';
+            // First sentence only for the snippet
+            var snippet = reasoning.split('.')[0];
+            if (snippet && snippet.length < reasoning.length) snippet += '.';
+            var act = loc.activity || 'none';
+            var cfg = ACTIVITY[act] || ACTIVITY.none;
+            var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
+
+            html +=
+                '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
+                (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
+                '" data-loc-id="' + esc(loc.id) + '">' +
+                '<span class="fmap-ai-hotspot-rank">' + loc.ai_pick_rank + '</span>' +
+                '<span class="fmap-hotspot-info">' +
+                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
+                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + (wt ? ' &bull; ' + wt : '') + '</span>' : '') +
+                  (snippet ? '<span class="fmap-ai-hotspot-snippet">' + esc(snippet) + '</span>' : '') +
+                '</span>' +
+                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
+                '</li>';
+        });
+        els.hotspotsList.innerHTML = html;
+
+        els.hotspotsList.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
+            li.addEventListener('click', function () {
+                var id  = li.getAttribute('data-loc-id');
+                var loc = currentData.find(function (l) { return l.id === id; });
+                if (!loc) return;
+                map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
+                setTimeout(function () { showAiPickPopup(loc); }, 600);
+            });
+        });
+    }
+
     function renderHotspots(locations) {
+        if (aiMode) { renderAiHotspots(locations); return; }
         if (!els.hotspotsList) return;
 
         var active = locations.filter(function (l) { return l.activity !== 'none'; });
@@ -880,17 +953,21 @@
     function showAiPickPopup(loc) {
         if (!map) return;
         var badge = ACTIVITY[loc.activity] || ACTIVITY.none;
-        L.popup({ className: 'fmap-ai-popup', maxWidth: 290, minWidth: 220 })
+        var wtHtml = loc.water_temp != null
+            ? '<span class="fmap-ai-popup-wt">\uD83C\uDF21\uFE0F ' + Math.round(loc.water_temp) + '\u00b0F water</span>'
+            : '';
+        L.popup({ className: 'fmap-ai-popup', maxWidth: 295, minWidth: 230 })
             .setLatLng([loc.lat, loc.lng])
             .setContent(
                 '<div class="fmap-ai-popup-inner">' +
                 '<div class="fmap-ai-popup-header">' +
                 '<span class="fmap-ai-popup-pick-badge">#' + loc.ai_pick_rank + ' AI Pick</span>' +
                 '<span class="fmap-ai-popup-act-badge fmap-ai-popup-act-badge--' + loc.activity + '">' + badge.label + '</span>' +
+                wtHtml +
                 '</div>' +
                 '<div class="fmap-ai-popup-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</div>' +
                 '<p class="fmap-ai-popup-reasoning">' + esc(loc.ai_reasoning || '') + '</p>' +
-                '<a href="/f/' + esc(loc.id) + '" class="fmap-ai-popup-link">View Full Forecast &rarr;</a>' +
+                '<a href="/f/' + esc(loc.id) + '" class="fmap-ai-popup-link">View Full Forecast \u2192</a>' +
                 '</div>'
             )
             .openOn(map);
@@ -904,16 +981,18 @@
             btn.setAttribute('aria-pressed', aiMode ? 'true' : 'false');
         }
 
+        updateHotspotHeader(aiMode);
+
         if (aiMode) {
-            // Hide regular forecast markers
             markers.forEach(function (m) { m.leaflet.setOpacity(0); });
-            // Load heat plugin then render current data
+            renderAiHotspots(currentData);
             ensureLeafletHeat()
                 .then(function () { if (aiMode) renderAiOverlay(currentData); })
                 .catch(function (e) { console.error('[fishing-map] leaflet-heat load failed', e); });
         } else {
             clearAiOverlay();
             markers.forEach(function (m) { m.leaflet.setOpacity(1); });
+            renderHotspots(currentData);
         }
     }
 

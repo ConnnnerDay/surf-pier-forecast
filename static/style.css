@@ -4371,6 +4371,44 @@ h2 {
   text-decoration: none;
 }
 .fmap-ai-popup-link:hover { color: #38bdf8; text-decoration: underline; }
+.fmap-ai-popup-wt {
+  font-size: 0.68rem;
+  color: var(--text-muted, #8a9ba8);
+  margin-left: auto;
+}
+
+/* ── AI panel label in hotspot header ── */
+.fmap-ai-panel-label {
+  background: linear-gradient(90deg, #fbbf24, #f87171);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+/* ── AI hotspot items ── */
+.fmap-ai-hotspot-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  box-shadow: 0 0 6px rgba(245,158,11,0.4);
+}
+.fmap-ai-hotspot-snippet {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted, #8a9ba8);
+  line-height: 1.4;
+  margin-top: 0.15rem;
+  white-space: normal;
+}
 
 /* ── Structure markers ── */
 .fmap-struct-wrap { background: none; border: none; }
