@@ -517,7 +517,6 @@
                     </span>
                     AI Fishing Map
                 </h2>
-                <p class="fmap-subtitle" id="fmap-ai-summary">Tap a location to see what&rsquo;s biting &mdash; filter by species to highlight the best spots.</p>
             </div>
             <div class="fmap-legend" aria-label="Activity legend">
                 <span class="fmap-legend-dot fmap-legend-dot--peak"></span><span class="fmap-legend-text">Peak</span>
@@ -527,9 +526,8 @@
             </div>
         </div>
 
-        <!-- Filter bar -->
+        <!-- Filter bar: species search only -->
         <div class="fmap-filterbar" role="group" aria-label="Map filters">
-
             <!-- Species search -->
             <div class="fmap-search-wrap">
                 <svg class="fmap-search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -540,35 +538,6 @@
                 <button type="button" id="fmap-search-clear" class="fmap-search-clear" hidden aria-label="Clear species search">&times;</button>
                 <ul id="fmap-suggestions" class="fmap-suggestions" role="listbox" hidden></ul>
             </div>
-
-            <!-- Coast pills -->
-            <div class="fmap-coast-pills" role="group" aria-label="Filter by coast">
-                <button type="button" class="fmap-pill fmap-pill--coast fmap-pill--active" data-coast="all">All Coasts</button>
-                <button type="button" class="fmap-pill fmap-pill--coast" data-coast="east">East &amp; Gulf</button>
-                <button type="button" class="fmap-pill fmap-pill--coast" data-coast="west">West Coast</button>
-                <button type="button" class="fmap-pill fmap-pill--coast" data-coast="hawaii">Hawaii</button>
-            </div>
-
-            <!-- Category pills -->
-            <div class="fmap-cat-pills" role="group" aria-label="Filter by category" id="fmap-cat-pills">
-                <button type="button" class="fmap-pill fmap-pill--cat fmap-pill--active" data-cat="">All Types</button>
-                <button type="button" class="fmap-pill fmap-pill--cat" data-cat="game_fish">Game Fish</button>
-                <button type="button" class="fmap-pill fmap-pill--cat" data-cat="shark">Shark</button>
-                <button type="button" class="fmap-pill fmap-pill--cat" data-cat="reef_fish">Reef Fish</button>
-                <button type="button" class="fmap-pill fmap-pill--cat" data-cat="pelagic">Pelagic</button>
-                <button type="button" class="fmap-pill fmap-pill--cat" data-cat="flatfish">Flatfish</button>
-            </div>
-        </div>
-
-        <!-- Live activity stats strip -->
-        <div class="fmap-stats-strip" id="fmap-stats-strip" aria-live="polite">
-            <span class="fmap-stat fmap-stat--peak"><span class="fmap-stat-dot"></span><span id="fmap-count-peak">—</span> Peak</span>
-            <span class="fmap-stat-divider" aria-hidden="true"></span>
-            <span class="fmap-stat fmap-stat--good"><span class="fmap-stat-dot"></span><span id="fmap-count-good">—</span> Good</span>
-            <span class="fmap-stat-divider" aria-hidden="true"></span>
-            <span class="fmap-stat fmap-stat--fair"><span class="fmap-stat-dot"></span><span id="fmap-count-fair">—</span> Fair</span>
-            <span class="fmap-stat-divider" aria-hidden="true"></span>
-            <span class="fmap-stat fmap-stat--total"><span id="fmap-count-total">—</span> locations</span>
         </div>
 
         <!-- Trending Now strip (populated by JS from API) -->
