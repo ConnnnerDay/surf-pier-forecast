@@ -325,10 +325,12 @@ def create_app() -> Flask:
             "Content-Security-Policy",
             (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://unpkg.com; "
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
                 "font-src 'self' https://fonts.gstatic.com; "
-                "img-src 'self' data: blob: https://lh3.googleusercontent.com; "
+                "img-src 'self' data: blob: https://lh3.googleusercontent.com "
+                "https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com "
+                "https://server.arcgisonline.com; "
                 "connect-src 'self'; "
                 "worker-src 'self'; "
                 "frame-ancestors 'none';"
