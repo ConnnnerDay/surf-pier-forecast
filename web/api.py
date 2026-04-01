@@ -1055,13 +1055,14 @@ def fishing_map_data() -> Any:
 
     # Monthly activity summary across all matched locations (for the month planner)
     # For each month, count how many locations are peak/good/fair/slow
+    # Build a location-id → COASTAL_LOCATIONS entry lookup to avoid O(n²) scans
+    _loc_by_id = {l["id"]: l for l in COASTAL_LOCATIONS}
     monthly_summary = []
     for m in range(1, 13):
         peak_c = good_c = fair_c = 0
         for loc in results:
-            loc_sp = [s for s in filtered_species if _species_present_at(s, next(
-                (l for l in COASTAL_LOCATIONS if l["id"] == loc["id"]), {}
-            ))]
+            raw_loc = _loc_by_id.get(loc["id"], {})
+            loc_sp = [s for s in filtered_species if _species_present_at(s, raw_loc)]
             if not loc_sp:
                 continue
             best = max(_month_score(s, m) for s in loc_sp)
@@ -1070,10 +1071,30 @@ def fishing_map_data() -> Any:
             elif best >= 30:  fair_c += 1
         monthly_summary.append({"month": m, "peak": peak_c, "good": good_c, "fair": fair_c})
 
+    # Trending species: in peak season this month, ranked by number of active locations.
+    # When the user has already filtered to a specific species we skip this (one species
+    # can't really "trend" against itself).
+    trending_species: list = []
+    if not species_q:
+        peak_sp_counts: dict = {}
+        for sp in filtered_species:
+            if month not in sp.get("peak_months", []):
+                continue
+            # Count how many results locations have this species present
+            cnt = sum(
+                1 for loc in results
+                if loc["activity"] != "none" and _species_present_at(sp, _loc_by_id.get(loc["id"], {}))
+            )
+            if cnt > 0:
+                peak_sp_counts[sp["name"]] = cnt
+        # Return top 10 by number of active locations
+        trending_species = sorted(peak_sp_counts, key=lambda n: -peak_sp_counts[n])[:10]
+
     return jsonify({
         "locations": results,
         "month": month,
         "species_filter": species_q,
         "species_names": species_names,
         "monthly_summary": monthly_summary,
+        "trending_species": trending_species,
     })

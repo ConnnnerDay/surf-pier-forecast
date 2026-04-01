@@ -4305,6 +4305,101 @@ h2 {
   text-align: center;
 }
 
+/* ── Sort by distance button (hotspot header) ── */
+.fmap-sort-dist-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31,168,201,0.25);
+  background: transparent;
+  color: var(--text-muted, #8a9ba8);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fmap-sort-dist-btn:hover {
+  background: rgba(31,168,201,0.1);
+  color: #1fa8c9;
+  border-color: rgba(31,168,201,0.4);
+}
+.fmap-sort-dist-btn--active {
+  background: rgba(31,168,201,0.18);
+  color: #1fa8c9;
+  border-color: rgba(31,168,201,0.55);
+}
+
+/* ── Distance badge in hotspot rows ── */
+.fmap-hotspot-dist {
+  font-size: 0.62rem;
+  color: var(--text-muted, #8a9ba8);
+  white-space: nowrap;
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* ── Empty state: "Did you mean?" ── */
+.fmap-did-you-mean {
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  font-style: normal;
+  color: var(--text-muted, #8a9ba8);
+}
+.fmap-dym-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0.1rem;
+  color: #1fa8c9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.fmap-dym-btn:hover { color: #4dc9e6; }
+
+/* ── Trending Now strip ── */
+.fmap-trending {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.1rem 0.3rem;
+  margin-bottom: 0.1rem;
+}
+.fmap-trending-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+.fmap-trending-label svg { stroke: #22c55e; }
+.fmap-chip--trending {
+  border-color: rgba(34,197,94,0.3);
+  color: #22c55e;
+}
+.fmap-chip--trending:hover {
+  background: rgba(34,197,94,0.12);
+  color: #22c55e;
+  border-color: rgba(34,197,94,0.5);
+}
+.fmap-chip--trending.fmap-chip--active {
+  background: rgba(34,197,94,0.18);
+  border-color: rgba(34,197,94,0.6);
+  color: #22c55e;
+  font-weight: 700;
+}
+
 /* ── Detail drawer top ── */
 .fmap-detail-topleft  { flex: 1; min-width: 0; }
 .fmap-detail-topright {

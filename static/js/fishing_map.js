@@ -64,6 +64,8 @@
     var activeMonth   = 0;           // 0 = current month (server default)
     var isFullscreen  = false;
     var monthlySummary = [];         // from last API response
+    var userCoords    = null;        // {lat, lng} set after Near Me fires
+    var sortByDist    = false;       // hotspot sort mode
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -73,6 +75,31 @@
         return String(s || '')
             .replace(/&/g,'&amp;').replace(/</g,'&lt;')
             .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function haversineMi(lat1, lng1, lat2, lng2) {
+        var R = 3958.8; // Earth radius in miles
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLng = (lng2 - lng1) * Math.PI / 180;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // Simple Levenshtein distance for "Did you mean?" fuzzy matching
+    function levenshtein(a, b) {
+        var m = a.length, n = b.length;
+        var dp = [];
+        for (var i = 0; i <= m; i++) {
+            dp[i] = [i];
+            for (var j = 1; j <= n; j++) {
+                dp[i][j] = i === 0 ? j :
+                    a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] :
+                    1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+            }
+        }
+        return dp[m][n];
     }
 
     // ─── Leaflet loader ───────────────────────────────────────────────────────
@@ -152,14 +179,21 @@
                     function (pos) {
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');
                         if (!map) return;
-                        map.flyTo([pos.coords.latitude, pos.coords.longitude], 7, { duration: 1 });
+                        userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        map.flyTo([userCoords.lat, userCoords.lng], 7, { duration: 1 });
 
-                        // Find closest location to user
+                        // Show sort-by-distance button now that we have coords
+                        var sortBtn = document.getElementById('fmap-sort-dist');
+                        if (sortBtn) { sortBtn.hidden = false; }
+
+                        // Re-render hotspot panel with distances
+                        renderHotspots(currentData);
+
+                        // Find closest active location to user
                         var best = null, bestDist = Infinity;
                         currentData.forEach(function (loc) {
-                            var dLat = loc.lat - pos.coords.latitude;
-                            var dLng = loc.lng - pos.coords.longitude;
-                            var d = dLat * dLat + dLng * dLng;
+                            if (loc.activity === 'none') return;
+                            var d = haversineMi(userCoords.lat, userCoords.lng, loc.lat, loc.lng);
                             if (d < bestDist) { bestDist = d; best = loc; }
                         });
                         if (best) {
@@ -185,6 +219,16 @@
                 } else {
                     map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
                 }
+            });
+        }
+
+        // Sort by distance toggle (visible after Near Me fires)
+        var sortBtn = document.getElementById('fmap-sort-dist');
+        if (sortBtn) {
+            sortBtn.addEventListener('click', function () {
+                sortByDist = !sortByDist;
+                sortBtn.classList.toggle('fmap-sort-dist-btn--active', sortByDist);
+                renderHotspots(currentData);
             });
         }
     }
@@ -350,10 +394,19 @@
     function renderHotspots(locations) {
         if (!els.hotspotsList) return;
 
-        var top = locations
-            .filter(function (l) { return l.activity !== 'none'; })
-            .sort(function (a, b) { return b.score - a.score; })
-            .slice(0, 8);
+        var active = locations.filter(function (l) { return l.activity !== 'none'; });
+
+        if (sortByDist && userCoords) {
+            active.sort(function (a, b) {
+                var da = haversineMi(userCoords.lat, userCoords.lng, a.lat, a.lng);
+                var db = haversineMi(userCoords.lat, userCoords.lng, b.lat, b.lng);
+                return da - db;
+            });
+        } else {
+            active.sort(function (a, b) { return b.score - a.score; });
+        }
+
+        var top = active.slice(0, 8);
 
         // Update count badge
         if (els.hotspotCount) {
@@ -362,7 +415,43 @@
         }
 
         if (!top.length) {
-            els.hotspotsList.innerHTML = '<li class="fmap-hotspot-empty">No active spots for this filter</li>';
+            // Empty state: show fuzzy "did you mean?" when a species is searched
+            var emptyHtml = '<li class="fmap-hotspot-empty">';
+            if (activeSpecies && allSpecies.length) {
+                var lower = activeSpecies.toLowerCase();
+                var suggestions = allSpecies
+                    .map(function (n) { return { name: n, dist: levenshtein(lower, n.toLowerCase().slice(0, lower.length + 3)) }; })
+                    .filter(function (x) { return x.dist <= 3; })
+                    .sort(function (a, b) { return a.dist - b.dist; })
+                    .slice(0, 3)
+                    .map(function (x) { return x.name; });
+                if (suggestions.length) {
+                    emptyHtml += 'No spots for \u201c' + esc(activeSpecies) + '\u201d';
+                    emptyHtml += '<div class="fmap-did-you-mean">Did you mean: ';
+                    emptyHtml += suggestions.map(function (s) {
+                        return '<button type="button" class="fmap-dym-btn" data-sp="' + esc(s) + '">' + esc(s) + '</button>';
+                    }).join(', ');
+                    emptyHtml += '</div>';
+                } else {
+                    emptyHtml += 'No active spots for \u201c' + esc(activeSpecies) + '\u201d';
+                }
+            } else {
+                emptyHtml += 'No active spots for this filter';
+            }
+            emptyHtml += '</li>';
+            els.hotspotsList.innerHTML = emptyHtml;
+
+            // Wire "did you mean" buttons
+            els.hotspotsList.querySelectorAll('.fmap-dym-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var sp = btn.getAttribute('data-sp');
+                    activeSpecies = sp;
+                    if (els.speciesInput) els.speciesInput.value = sp;
+                    if (els.searchClear) els.searchClear.hidden = false;
+                    renderQuickChips();
+                    scheduleFetch();
+                });
+            });
             return;
         }
 
@@ -371,6 +460,12 @@
             var cfg   = ACTIVITY[loc.activity] || ACTIVITY.none;
             var sp    = loc.top_species && loc.top_species[0];
             var spName = sp ? (typeof sp === 'string' ? sp : sp.name || '') : '';
+            var distHtml = '';
+            if (userCoords) {
+                var mi = haversineMi(userCoords.lat, userCoords.lng, loc.lat, loc.lng);
+                distHtml = '<span class="fmap-hotspot-dist">' +
+                    (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + ' mi</span>';
+            }
             html +=
                 '<li class="fmap-hotspot-item' + (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
                 '" data-loc-id="' + esc(loc.id) + '">' +
@@ -380,6 +475,7 @@
                   '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
                   (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + '</span>' : '') +
                 '</span>' +
+                distHtml +
                 '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + loc.activity + '">' + cfg.label + '</span>' +
                 '</li>';
         });
@@ -452,6 +548,46 @@
 
         els.insightText.textContent = text;
         els.insight.hidden = false;
+    }
+
+    // ─── Trending Now chips ───────────────────────────────────────────────────
+    function renderTrendingChips(names) {
+        var wrap  = document.getElementById('fmap-trending');
+        var chips = document.getElementById('fmap-trending-chips');
+        if (!wrap || !chips) return;
+
+        // Hide when user has already set a species filter (trending is irrelevant)
+        if (!names || !names.length || activeSpecies) {
+            wrap.hidden = true;
+            return;
+        }
+
+        var html = '';
+        names.forEach(function (sp) {
+            var active = activeSpecies && activeSpecies.toLowerCase() === sp.toLowerCase();
+            html += '<button type="button" class="fmap-chip fmap-chip--trending' +
+                    (active ? ' fmap-chip--active' : '') +
+                    '" data-sp="' + esc(sp) + '">' + esc(sp) + '</button>';
+        });
+        chips.innerHTML = html;
+        wrap.hidden = false;
+
+        chips.querySelectorAll('.fmap-chip').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var sp = btn.getAttribute('data-sp');
+                if (activeSpecies && activeSpecies.toLowerCase() === sp.toLowerCase()) {
+                    activeSpecies = '';
+                    if (els.speciesInput) els.speciesInput.value = '';
+                    if (els.searchClear) els.searchClear.hidden = true;
+                } else {
+                    activeSpecies = sp;
+                    if (els.speciesInput) els.speciesInput.value = sp;
+                    if (els.searchClear) els.searchClear.hidden = false;
+                }
+                renderQuickChips();
+                scheduleFetch();
+            });
+        });
     }
 
     // ─── Quick species chips ──────────────────────────────────────────────────
@@ -592,6 +728,7 @@
                 updateStats(currentData);
                 updateInsight(data);
                 renderMonthPlanner(monthlySummary, data.month);
+                renderTrendingChips(data.trending_species || []);
 
                 // AI summary subtitle
                 var active = currentData.filter(function (l) {

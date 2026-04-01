@@ -571,6 +571,15 @@
             <span class="fmap-stat fmap-stat--total"><span id="fmap-count-total">—</span> locations</span>
         </div>
 
+        <!-- Trending Now strip (populated by JS from API) -->
+        <div class="fmap-trending" id="fmap-trending" hidden aria-label="Trending species this month">
+            <span class="fmap-trending-label">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                Trending Now:
+            </span>
+            <div class="fmap-chips fmap-trending-chips" id="fmap-trending-chips" role="group" aria-label="Trending species"></div>
+        </div>
+
         <!-- Quick species chips -->
         <div class="fmap-quick-species" id="fmap-quick-species" aria-label="Popular target species">
             <span class="fmap-quick-label">Popular:</span>
@@ -609,6 +618,10 @@
                         Top Spots
                     </span>
                     <span class="fmap-hotspot-count-badge" id="fmap-hotspot-count"></span>
+                    <button type="button" id="fmap-sort-dist" class="fmap-sort-dist-btn" hidden title="Sort by distance from your location" aria-label="Sort hotspots by distance">
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="17 7 12 2 7 7"/><polyline points="7 17 12 22 17 17"/></svg>
+                        Near Me
+                    </button>
                 </div>
                 <ol class="fmap-hotspots-list" id="fmap-hotspots-list">
                     <li class="fmap-hotspot-skeleton"></li>
