@@ -61,6 +61,9 @@
     var activeCoast   = 'all';
     var activeCat     = '';
     var activeSpecies = '';
+    var activeMonth   = 0;           // 0 = current month (server default)
+    var isFullscreen  = false;
+    var monthlySummary = [];         // from last API response
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -285,12 +288,14 @@
         if (species.length) {
             species.forEach(function (sp) {
                 var spName = typeof sp === 'string' ? sp : (sp.name || '');
-                var spBait = typeof sp === 'object' ? (sp.bait || '') : '';
-                var spRig  = typeof sp === 'object' ? (sp.rig  || '') : '';
-                var spLure = typeof sp === 'object' ? (sp.lures || '') : '';
-                var spAct  = typeof sp === 'object' ? (sp.activity || loc.activity) : loc.activity;
-                var spCfg  = ACTIVITY[spAct] || ACTIVITY.none;
-                var hasInfo = spBait || spRig || spLure;
+                var spBait  = typeof sp === 'object' ? (sp.bait || '') : '';
+                var spRig   = typeof sp === 'object' ? (sp.rig  || '') : '';
+                var spLure  = typeof sp === 'object' ? (sp.lures || '') : '';
+                var spAct   = typeof sp === 'object' ? (sp.activity || loc.activity) : loc.activity;
+                var spPeak  = typeof sp === 'object' ? (sp.peak_months || []) : [];
+                var spGood  = typeof sp === 'object' ? (sp.good_months || []) : [];
+                var spCfg   = ACTIVITY[spAct] || ACTIVITY.none;
+                var hasInfo = spBait || spRig || spLure || spPeak.length;
                 var uid = 'fmap-sp-' + spName.replace(/\W/g, '_');
 
                 speciesHtml +=
@@ -301,6 +306,7 @@
                     (hasInfo ? '<svg class="fmap-sp-chevron" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' : '') +
                     (hasInfo ?
                         '<div class="fmap-sp-info">' +
+                        (spPeak.length ? '<div class="fmap-sp-info-row fmap-sp-info-row--spark"><span class="fmap-sp-info-lbl">Season</span><span class="fmap-sp-info-val">' + buildSparkline(spPeak, spGood) + '</span></div>' : '') +
                         (spBait ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Bait</span><span class="fmap-sp-info-val">' + esc(spBait) + '</span></div>' : '') +
                         (spRig  ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Rig</span><span class="fmap-sp-info-val">'  + esc(spRig)  + '</span></div>' : '') +
                         (spLure ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Lures</span><span class="fmap-sp-info-val">' + esc(spLure) + '</span></div>' : '') +
@@ -560,6 +566,7 @@
         if (activeSpecies) params.set('species', activeSpecies);
         if (activeCoast && activeCoast !== 'all') params.set('coast', activeCoast);
         if (activeCat) params.set('category', activeCat);
+        if (activeMonth) params.set('month', String(activeMonth));
 
         var url = API_URL + (params.toString() ? '?' + params.toString() : '');
 
@@ -579,10 +586,12 @@
                     allSpecies = data.species_names;
                 }
 
+                monthlySummary = data.monthly_summary || [];
                 drawMarkers(currentData);
                 renderHotspots(currentData);
                 updateStats(currentData);
                 updateInsight(data);
+                renderMonthPlanner(monthlySummary, data.month);
 
                 // AI summary subtitle
                 var active = currentData.filter(function (l) {
@@ -682,16 +691,173 @@
             .then(function () {
                 if (!window.L) throw new Error('Leaflet unavailable');
                 initMap();
+                restoreFromHash();
                 loadFilters();
                 renderQuickChips();
                 wireFilters();
                 wireMapControls();
+                wireFullscreen();
+                wireShareBtn();
                 fetchAndRender();
             })
             .catch(function (err) {
                 console.error('[fishing-map] boot error:', err);
                 if (els.loading) els.loading.textContent = 'Map could not be loaded.';
             });
+    }
+
+    // ─── Month Planner ────────────────────────────────────────────────────────
+    var MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function renderMonthPlanner(summary, currentM) {
+        var planner = document.getElementById('fmap-planner');
+        var container = document.getElementById('fmap-planner-months');
+        if (!planner || !container || !summary || !summary.length) return;
+
+        // Find max combined active count for normalising bar heights
+        var maxActive = 1;
+        summary.forEach(function (m) {
+            var total = m.peak + m.good + m.fair;
+            if (total > maxActive) maxActive = total;
+        });
+
+        var html = '';
+        summary.forEach(function (m) {
+            var isCurrent = m.month === currentM;
+            var isSelected = m.month === activeMonth;
+            var total = m.peak + m.good + m.fair;
+            var heightPct = Math.round((total / maxActive) * 100);
+            var actClass = m.peak > 0 ? 'peak' : m.good > 0 ? 'good' : m.fair > 0 ? 'fair' : 'slow';
+
+            html +=
+                '<button type="button" class="fmap-month-cell' +
+                (isCurrent  ? ' fmap-month-cell--current'  : '') +
+                (isSelected ? ' fmap-month-cell--selected' : '') +
+                '" data-month="' + m.month + '" title="' + MONTH_NAMES[m.month] +
+                ': ' + m.peak + ' peak, ' + m.good + ' good, ' + m.fair + ' fair">' +
+                '<div class="fmap-month-bar-wrap">' +
+                  '<div class="fmap-month-bar fmap-month-bar--' + actClass +
+                  '" style="height:' + Math.max(4, heightPct) + '%"></div>' +
+                '</div>' +
+                '<span class="fmap-month-label">' + MONTH_SHORT[m.month] + '</span>' +
+                (isCurrent ? '<span class="fmap-month-now-dot"></span>' : '') +
+                '</button>';
+        });
+
+        container.innerHTML = html;
+        planner.hidden = false;
+
+        container.querySelectorAll('.fmap-month-cell').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var m = parseInt(btn.getAttribute('data-month'), 10);
+                activeMonth = (activeMonth === m) ? 0 : m;  // toggle off if same
+                renderMonthPlanner(monthlySummary, currentM);
+                fetchAndRender();
+            });
+        });
+    }
+
+    // ─── Sparkline helper (12-bar mini chart for species rows) ────────────────
+    // Returns an SVG string showing peak months (dark), good (medium), other (faint)
+    function buildSparkline(peakMonths, goodMonths) {
+        var bars = '';
+        for (var m = 1; m <= 12; m++) {
+            var isPeak = peakMonths.indexOf(m) !== -1;
+            var isGood = goodMonths.indexOf(m) !== -1;
+            var fill = isPeak ? '#22c55e' : isGood ? '#3b82f6' : 'rgba(255,255,255,0.1)';
+            var h    = isPeak ? 10 : isGood ? 7 : 3;
+            var x    = (m - 1) * 5;
+            var y    = 10 - h;
+            bars += '<rect x="' + x + '" y="' + y + '" width="3.5" height="' + h + '" rx="1" fill="' + fill + '"/>';
+        }
+        return '<svg class="fmap-sparkline" viewBox="0 0 60 10" width="60" height="10" aria-hidden="true">' + bars + '</svg>';
+    }
+
+    // ─── Fullscreen map toggle ─────────────────────────────────────────────────
+    function wireFullscreen() {
+        var mapWrap = document.querySelector('.fmap-map-wrap');
+        var fsMapBtn = document.getElementById('fmap-map-fullscreen');
+        var fsToolbarBtn = document.getElementById('fmap-fullscreen-btn');
+        var fsLabel = document.getElementById('fmap-fs-label');
+        var fsIconExpand = document.getElementById('fmap-fs-icon-expand');
+        var fsIconShrink = document.getElementById('fmap-fs-icon-shrink');
+
+        function toggle() {
+            isFullscreen = !isFullscreen;
+            if (mapWrap) mapWrap.classList.toggle('fmap-map-wrap--fullscreen', isFullscreen);
+            if (fsLabel) fsLabel.textContent = isFullscreen ? 'Shrink Map' : 'Expand Map';
+            if (fsIconExpand) fsIconExpand.style.display = isFullscreen ? 'none' : '';
+            if (fsIconShrink) fsIconShrink.style.display = isFullscreen ? '' : 'none';
+            // Lock/unlock body scroll and update map size
+            document.body.style.overflow = isFullscreen ? 'hidden' : '';
+            setTimeout(function () { if (map) map.invalidateSize(); }, 300);
+        }
+
+        if (fsMapBtn) fsMapBtn.addEventListener('click', toggle);
+        if (fsToolbarBtn) fsToolbarBtn.addEventListener('click', toggle);
+
+        // Escape key exits fullscreen
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && isFullscreen) toggle();
+        });
+    }
+
+    // ─── Share filter URL ─────────────────────────────────────────────────────
+    function wireShareBtn() {
+        var btn = document.getElementById('fmap-share-btn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            var base = window.location.origin + window.location.pathname;
+            var params = new URLSearchParams(window.location.search);
+            // Encode current fishing map state into URL hash
+            var hashParts = [];
+            if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
+            if (activeCoast && activeCoast !== 'all') hashParts.push('coast=' + activeCoast);
+            if (activeCat)   hashParts.push('cat=' + activeCat);
+            if (activeMonth) hashParts.push('month=' + activeMonth);
+            var url = base + (params.toString() ? '?' + params.toString() : '') +
+                      (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url)
+                    .then(function () { showToast('Map link copied!'); })
+                    .catch(function () { showToast('Could not copy: ' + url); });
+            } else {
+                showToast('Link: ' + url);
+            }
+        });
+    }
+
+    // ─── Restore state from URL hash (#fmap=...) ──────────────────────────────
+    function restoreFromHash() {
+        var hash = window.location.hash;
+        if (!hash || hash.indexOf('#fmap=') !== 0) return;
+        var raw = hash.slice(6); // strip '#fmap='
+        raw.split('&').forEach(function (part) {
+            var eq = part.indexOf('=');
+            if (eq === -1) return;
+            var k = part.slice(0, eq);
+            var v = decodeURIComponent(part.slice(eq + 1));
+            if (k === 'species' && v) {
+                activeSpecies = v;
+                if (els.speciesInput) els.speciesInput.value = v;
+                if (els.searchClear) els.searchClear.hidden = false;
+            }
+            if (k === 'coast' && v) {
+                activeCoast = v;
+                document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-coast') === v);
+                });
+            }
+            if (k === 'cat' && v) {
+                activeCat = v;
+                document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === v);
+                });
+            }
+            if (k === 'month' && v) {
+                activeMonth = parseInt(v, 10) || 0;
+            }
+        });
     }
 
     function observeSection(section) {

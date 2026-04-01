@@ -1028,11 +1028,13 @@ def fishing_map_data() -> Any:
                 if sp_score < 30 and len(rich) >= 3:
                     break
                 rich.append({
-                    "name": sp["name"],
-                    "bait": sp.get("bait", ""),
-                    "rig":  sp.get("rig", ""),
-                    "lures": sp.get("lures", ""),
-                    "activity": _activity_label(sp_score),
+                    "name":        sp["name"],
+                    "bait":        sp.get("bait", ""),
+                    "rig":         sp.get("rig", ""),
+                    "lures":       sp.get("lures", ""),
+                    "activity":    _activity_label(sp_score),
+                    "peak_months": sp.get("peak_months", []),
+                    "good_months": sp.get("good_months", []),
                 })
             top_species = rich[:6]
 
@@ -1051,9 +1053,27 @@ def fishing_map_data() -> Any:
     # Collect unique species names for the autocomplete dropdown
     species_names = sorted({s["name"] for s in SPECIES_DB})
 
+    # Monthly activity summary across all matched locations (for the month planner)
+    # For each month, count how many locations are peak/good/fair/slow
+    monthly_summary = []
+    for m in range(1, 13):
+        peak_c = good_c = fair_c = 0
+        for loc in results:
+            loc_sp = [s for s in filtered_species if _species_present_at(s, next(
+                (l for l in COASTAL_LOCATIONS if l["id"] == loc["id"]), {}
+            ))]
+            if not loc_sp:
+                continue
+            best = max(_month_score(s, m) for s in loc_sp)
+            if best >= 100:   peak_c += 1
+            elif best >= 65:  good_c += 1
+            elif best >= 30:  fair_c += 1
+        monthly_summary.append({"month": m, "peak": peak_c, "good": good_c, "fair": fair_c})
+
     return jsonify({
         "locations": results,
         "month": month,
         "species_filter": species_q,
         "species_names": species_names,
+        "monthly_summary": monthly_summary,
     })

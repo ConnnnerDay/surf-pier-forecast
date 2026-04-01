@@ -4463,6 +4463,187 @@ h2 {
   box-shadow: 0 2px 12px rgba(0,0,0,0.12);
 }
 
+/* ── Month Planner ── */
+.fmap-planner {
+  margin-bottom: 0.65rem;
+}
+
+.fmap-planner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #8a9ba8);
+  margin-bottom: 0.55rem;
+}
+
+.fmap-planner-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--text-muted, #8a9ba8);
+  opacity: 0.7;
+}
+
+.fmap-planner-months {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+}
+
+.fmap-month-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0.35rem 0 0.3rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  position: relative;
+}
+.fmap-month-cell:hover {
+  background: rgba(14,95,120,0.18);
+  border-color: rgba(31,168,201,0.25);
+}
+.fmap-month-cell--current {
+  border-color: rgba(31,168,201,0.35);
+  background: rgba(31,168,201,0.08);
+}
+.fmap-month-cell--selected {
+  background: rgba(14,95,120,0.3);
+  border-color: rgba(31,168,201,0.6);
+  box-shadow: inset 0 0 0 1px rgba(31,168,201,0.3);
+}
+
+.fmap-month-bar-wrap {
+  width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.fmap-month-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: height 0.3s ease;
+}
+.fmap-month-bar--peak { background: #22c55e; }
+.fmap-month-bar--good { background: #3b82f6; }
+.fmap-month-bar--fair { background: #f59e0b; }
+.fmap-month-bar--slow { background: rgba(255,255,255,0.12); }
+
+.fmap-month-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a9ba8);
+  letter-spacing: -0.01em;
+}
+.fmap-month-cell--current  .fmap-month-label { color: #1fa8c9; }
+.fmap-month-cell--selected .fmap-month-label { color: #fff; font-weight: 700; }
+
+.fmap-month-now-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #1fa8c9;
+}
+
+/* ── Seasonal sparkline ── */
+.fmap-sparkline {
+  display: block;
+  vertical-align: middle;
+}
+.fmap-sp-info-row--spark .fmap-sp-info-val {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Fullscreen map ── */
+.fmap-map-wrap--fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9900 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  min-height: 100dvh !important;
+}
+.fmap-map-wrap--fullscreen .fmap-map-el {
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+}
+
+/* Overlay controls shift up in fullscreen */
+.fmap-map-wrap--fullscreen .fmap-map-controls {
+  top: 1rem;
+  right: 1rem;
+}
+
+/* ── Map ctrl divider ── */
+.fmap-ctrl-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 2px 4px;
+}
+
+/* ── Bottom toolbar ── */
+.fmap-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fmap-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light, #2a3f4d);
+  background: transparent;
+  color: var(--text-muted, #8a9ba8);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+}
+.fmap-toolbar-btn:hover {
+  background: rgba(14,95,120,0.18);
+  color: var(--text-primary, #e8f0f5);
+  border-color: rgba(31,168,201,0.35);
+}
+
+/* ── Light theme extras ── */
+[data-theme="light"] .fmap-month-cell { background: #f7fafc; border-color: #e2e8ee; }
+[data-theme="light"] .fmap-month-cell:hover { background: #e8f4f8; border-color: #0e5f78; }
+[data-theme="light"] .fmap-month-cell--current { background: #e8f4f8; border-color: #0e5f78; }
+[data-theme="light"] .fmap-month-cell--selected { background: #d0eaf3; border-color: #0e5f78; }
+[data-theme="light"] .fmap-month-bar--slow { background: #e2e8ee; }
+[data-theme="light"] .fmap-toolbar-btn { border-color: #c9d8e0; color: #5a7080; }
+[data-theme="light"] .fmap-toolbar-btn:hover { background: #e8f4f8; color: #0e5f78; }
+
+/* ── Responsive extras ── */
+@media (max-width: 500px) {
+  .fmap-planner-months { gap: 2px; }
+  .fmap-month-label { font-size: 0.52rem; }
+  .fmap-month-bar-wrap { height: 20px; }
+  .fmap-planner-hint { display: none; }
+}
+
 /* ── END AI FISHING MAP v2 ── */
 
 .share-section h2 {
