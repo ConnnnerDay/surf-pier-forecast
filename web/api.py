@@ -1002,6 +1002,12 @@ def fishing_map_data() -> Any:
         loc_species = [s for s in filtered_species
                        if _species_present_at(s, loc)]
 
+        def _activity_label(sc: int) -> str:
+            if sc >= 100: return "peak"
+            if sc >= 65:  return "good"
+            if sc >= 30:  return "fair"
+            return "slow"
+
         if not loc_species:
             score = 0
             activity = "none"
@@ -1011,19 +1017,24 @@ def fishing_map_data() -> Any:
                             key=lambda s: -_month_score(s, month))
             best_score = _month_score(scored[0], month)
             score = best_score
-            if score >= 100:
-                activity = "peak"
-            elif score >= 65:
-                activity = "good"
-            elif score >= 30:
-                activity = "fair"
-            else:
-                activity = "slow"
-            # Top species that are at least "good" for the tooltip
-            top_species = [s["name"] for s in scored[:8]
-                           if _month_score(s, month) >= 65][:5]
-            if not top_species:
-                top_species = [scored[0]["name"]]
+            activity = _activity_label(score)
+
+            # Build rich species objects for the detail drawer.
+            # Include up to 6 species that are at least "fair" (score >= 30),
+            # each carrying bait, rig, and their own activity label.
+            rich: list = []
+            for sp in scored[:10]:
+                sp_score = _month_score(sp, month)
+                if sp_score < 30 and len(rich) >= 3:
+                    break
+                rich.append({
+                    "name": sp["name"],
+                    "bait": sp.get("bait", ""),
+                    "rig":  sp.get("rig", ""),
+                    "lures": sp.get("lures", ""),
+                    "activity": _activity_label(sp_score),
+                })
+            top_species = rich[:6]
 
         results.append({
             "id": loc["id"],
