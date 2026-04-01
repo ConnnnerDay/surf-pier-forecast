@@ -4198,6 +4198,547 @@ h2 {
   .fmap-search-wrap { max-width: 100%; }
 }
 
+/* ── Stats strip ── */
+.fmap-stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  opacity: 0;
+  transition: opacity 0.4s;
+  flex-wrap: wrap;
+}
+
+.fmap-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted, #8a9ba8);
+}
+
+.fmap-stat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fmap-stat--peak .fmap-stat-dot { background: #22c55e; box-shadow: 0 0 4px rgba(34,197,94,0.55); }
+.fmap-stat--good .fmap-stat-dot { background: #3b82f6; box-shadow: 0 0 4px rgba(59,130,246,0.45); }
+.fmap-stat--fair .fmap-stat-dot { background: #f59e0b; }
+
+.fmap-stat--peak { color: #22c55e; }
+.fmap-stat--good { color: #60a5fa; }
+.fmap-stat--fair { color: #fbbf24; }
+.fmap-stat--total { color: var(--text-muted, #8a9ba8); margin-left: 0.1rem; }
+
+.fmap-stat-divider {
+  width: 1px; height: 12px;
+  background: var(--border-light, #2a3f4d);
+  flex-shrink: 0;
+}
+
+/* ── Map overlay controls ── */
+.fmap-map-controls {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 450;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fmap-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(10,19,29,0.82);
+  backdrop-filter: blur(6px);
+  color: var(--text-secondary, #b0c4ce);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fmap-ctrl-btn:hover {
+  background: rgba(14,95,120,0.6);
+  color: #fff;
+  border-color: rgba(31,168,201,0.4);
+}
+.fmap-ctrl-btn--loading {
+  opacity: 0.6;
+  pointer-events: none;
+  animation: fmap-spin 0.8s linear infinite;
+}
+
+/* ── Hotspot header ── */
+.fmap-hotspots-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem 0.5rem;
+  border-bottom: 1px solid var(--border-light, #1e3547);
+}
+
+.fmap-hotspots-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted, #8a9ba8);
+}
+
+.fmap-hotspot-count-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(31,168,201,0.15);
+  color: #1fa8c9;
+  border: 1px solid rgba(31,168,201,0.3);
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ── Sort by distance button (hotspot header) ── */
+.fmap-sort-dist-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31,168,201,0.25);
+  background: transparent;
+  color: var(--text-muted, #8a9ba8);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fmap-sort-dist-btn:hover {
+  background: rgba(31,168,201,0.1);
+  color: #1fa8c9;
+  border-color: rgba(31,168,201,0.4);
+}
+.fmap-sort-dist-btn--active {
+  background: rgba(31,168,201,0.18);
+  color: #1fa8c9;
+  border-color: rgba(31,168,201,0.55);
+}
+
+/* ── Distance badge in hotspot rows ── */
+.fmap-hotspot-dist {
+  font-size: 0.62rem;
+  color: var(--text-muted, #8a9ba8);
+  white-space: nowrap;
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* ── Empty state: "Did you mean?" ── */
+.fmap-did-you-mean {
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  font-style: normal;
+  color: var(--text-muted, #8a9ba8);
+}
+.fmap-dym-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0.1rem;
+  color: #1fa8c9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.fmap-dym-btn:hover { color: #4dc9e6; }
+
+/* ── Trending Now strip ── */
+.fmap-trending {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.1rem 0.3rem;
+  margin-bottom: 0.1rem;
+}
+.fmap-trending-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+.fmap-trending-label svg { stroke: #22c55e; }
+.fmap-chip--trending {
+  border-color: rgba(34,197,94,0.3);
+  color: #22c55e;
+}
+.fmap-chip--trending:hover {
+  background: rgba(34,197,94,0.12);
+  color: #22c55e;
+  border-color: rgba(34,197,94,0.5);
+}
+.fmap-chip--trending.fmap-chip--active {
+  background: rgba(34,197,94,0.18);
+  border-color: rgba(34,197,94,0.6);
+  color: #22c55e;
+  font-weight: 700;
+}
+
+/* ── Detail drawer top ── */
+.fmap-detail-topleft  { flex: 1; min-width: 0; }
+.fmap-detail-topright {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.fmap-detail-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light, #2a3f4d);
+  background: transparent;
+  color: var(--text-muted, #8a9ba8);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+.fmap-detail-close:hover {
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.4);
+}
+
+/* ── Species rows with expandable bait/rig info ── */
+.fmap-sp-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  grid-template-areas: "dot name chevron" ". info info";
+  align-items: center;
+  gap: 0 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  position: relative;
+}
+.fmap-sp-row:last-child { border-bottom: none; }
+.fmap-sp-row--expand { cursor: pointer; }
+.fmap-sp-row--expand:hover .fmap-sp-name { color: #1fa8c9; }
+
+.fmap-sp-act {
+  grid-area: dot;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: center;
+}
+.fmap-sp-act--peak { background: #22c55e; box-shadow: 0 0 4px rgba(34,197,94,0.5); }
+.fmap-sp-act--good { background: #3b82f6; box-shadow: 0 0 4px rgba(59,130,246,0.4); }
+.fmap-sp-act--fair { background: #f59e0b; }
+.fmap-sp-act--slow { background: #ef4444; }
+.fmap-sp-act--none { background: #4b5563; }
+
+.fmap-sp-name {
+  grid-area: name;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-primary, #e8f0f5);
+  transition: color 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fmap-sp-chevron {
+  grid-area: chevron;
+  color: var(--text-muted, #8a9ba8);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.fmap-sp-row.open .fmap-sp-chevron { transform: rotate(180deg); }
+
+.fmap-sp-info {
+  grid-area: info;
+  display: none;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem 0 0.25rem;
+}
+.fmap-sp-row.open .fmap-sp-info { display: flex; }
+
+.fmap-sp-info-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.fmap-sp-info-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #8a9ba8);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 34px;
+  padding-top: 0.1rem;
+}
+
+.fmap-sp-info-val {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #b0c4ce);
+  line-height: 1.5;
+}
+
+/* ── Toast notification ── */
+.fmap-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(1rem);
+  opacity: 0;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(10,19,29,0.92);
+  border: 1px solid rgba(31,168,201,0.25);
+  color: var(--text-primary, #e8f0f5);
+  font-size: 0.82rem;
+  pointer-events: none;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.25s, transform 0.25s;
+  white-space: nowrap;
+}
+.fmap-toast--in {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Light theme additions ── */
+[data-theme="light"] .fmap-stats-strip .fmap-stat { color: inherit; }
+[data-theme="light"] .fmap-stat--total { color: #6b7b8d; }
+[data-theme="light"] .fmap-stat-divider { background: #c9d8e0; }
+[data-theme="light"] .fmap-ctrl-btn {
+  background: rgba(255,255,255,0.88);
+  border-color: rgba(0,0,0,0.12);
+  color: #3d5a6a;
+}
+[data-theme="light"] .fmap-ctrl-btn:hover {
+  background: #e8f4f8;
+  color: #0e5f78;
+}
+[data-theme="light"] .fmap-sp-row { border-color: rgba(0,0,0,0.05); }
+[data-theme="light"] .fmap-sp-name { color: #1a2f3d; }
+[data-theme="light"] .fmap-sp-info-val { color: #3d5a6a; }
+[data-theme="light"] .fmap-detail-close { border-color: #c9d8e0; color: #6b7b8d; }
+[data-theme="light"] .fmap-toast {
+  background: rgba(255,255,255,0.95);
+  color: #1a2f3d;
+  border-color: rgba(14,95,120,0.2);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+}
+
+/* ── Month Planner ── */
+.fmap-planner {
+  margin-bottom: 0.65rem;
+}
+
+.fmap-planner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #8a9ba8);
+  margin-bottom: 0.55rem;
+}
+
+.fmap-planner-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--text-muted, #8a9ba8);
+  opacity: 0.7;
+}
+
+.fmap-planner-months {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+}
+
+.fmap-month-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0.35rem 0 0.3rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  position: relative;
+}
+.fmap-month-cell:hover {
+  background: rgba(14,95,120,0.18);
+  border-color: rgba(31,168,201,0.25);
+}
+.fmap-month-cell--current {
+  border-color: rgba(31,168,201,0.35);
+  background: rgba(31,168,201,0.08);
+}
+.fmap-month-cell--selected {
+  background: rgba(14,95,120,0.3);
+  border-color: rgba(31,168,201,0.6);
+  box-shadow: inset 0 0 0 1px rgba(31,168,201,0.3);
+}
+
+.fmap-month-bar-wrap {
+  width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.fmap-month-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: height 0.3s ease;
+}
+.fmap-month-bar--peak { background: #22c55e; }
+.fmap-month-bar--good { background: #3b82f6; }
+.fmap-month-bar--fair { background: #f59e0b; }
+.fmap-month-bar--slow { background: rgba(255,255,255,0.12); }
+
+.fmap-month-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a9ba8);
+  letter-spacing: -0.01em;
+}
+.fmap-month-cell--current  .fmap-month-label { color: #1fa8c9; }
+.fmap-month-cell--selected .fmap-month-label { color: #fff; font-weight: 700; }
+
+.fmap-month-now-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #1fa8c9;
+}
+
+/* ── Seasonal sparkline ── */
+.fmap-sparkline {
+  display: block;
+  vertical-align: middle;
+}
+.fmap-sp-info-row--spark .fmap-sp-info-val {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Fullscreen map ── */
+.fmap-map-wrap--fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9900 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  min-height: 100dvh !important;
+}
+.fmap-map-wrap--fullscreen .fmap-map-el {
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+}
+
+/* Overlay controls shift up in fullscreen */
+.fmap-map-wrap--fullscreen .fmap-map-controls {
+  top: 1rem;
+  right: 1rem;
+}
+
+/* ── Map ctrl divider ── */
+.fmap-ctrl-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 2px 4px;
+}
+
+/* ── Bottom toolbar ── */
+.fmap-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fmap-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light, #2a3f4d);
+  background: transparent;
+  color: var(--text-muted, #8a9ba8);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+}
+.fmap-toolbar-btn:hover {
+  background: rgba(14,95,120,0.18);
+  color: var(--text-primary, #e8f0f5);
+  border-color: rgba(31,168,201,0.35);
+}
+
+/* ── Light theme extras ── */
+[data-theme="light"] .fmap-month-cell { background: #f7fafc; border-color: #e2e8ee; }
+[data-theme="light"] .fmap-month-cell:hover { background: #e8f4f8; border-color: #0e5f78; }
+[data-theme="light"] .fmap-month-cell--current { background: #e8f4f8; border-color: #0e5f78; }
+[data-theme="light"] .fmap-month-cell--selected { background: #d0eaf3; border-color: #0e5f78; }
+[data-theme="light"] .fmap-month-bar--slow { background: #e2e8ee; }
+[data-theme="light"] .fmap-toolbar-btn { border-color: #c9d8e0; color: #5a7080; }
+[data-theme="light"] .fmap-toolbar-btn:hover { background: #e8f4f8; color: #0e5f78; }
+
+/* ── Responsive extras ── */
+@media (max-width: 500px) {
+  .fmap-planner-months { gap: 2px; }
+  .fmap-month-label { font-size: 0.52rem; }
+  .fmap-month-bar-wrap { height: 20px; }
+  .fmap-planner-hint { display: none; }
+}
+
 /* ── END AI FISHING MAP v2 ── */
 
 .share-section h2 {

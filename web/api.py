@@ -1002,6 +1002,12 @@ def fishing_map_data() -> Any:
         loc_species = [s for s in filtered_species
                        if _species_present_at(s, loc)]
 
+        def _activity_label(sc: int) -> str:
+            if sc >= 100: return "peak"
+            if sc >= 65:  return "good"
+            if sc >= 30:  return "fair"
+            return "slow"
+
         if not loc_species:
             score = 0
             activity = "none"
@@ -1011,19 +1017,26 @@ def fishing_map_data() -> Any:
                             key=lambda s: -_month_score(s, month))
             best_score = _month_score(scored[0], month)
             score = best_score
-            if score >= 100:
-                activity = "peak"
-            elif score >= 65:
-                activity = "good"
-            elif score >= 30:
-                activity = "fair"
-            else:
-                activity = "slow"
-            # Top species that are at least "good" for the tooltip
-            top_species = [s["name"] for s in scored[:8]
-                           if _month_score(s, month) >= 65][:5]
-            if not top_species:
-                top_species = [scored[0]["name"]]
+            activity = _activity_label(score)
+
+            # Build rich species objects for the detail drawer.
+            # Include up to 6 species that are at least "fair" (score >= 30),
+            # each carrying bait, rig, and their own activity label.
+            rich: list = []
+            for sp in scored[:10]:
+                sp_score = _month_score(sp, month)
+                if sp_score < 30 and len(rich) >= 3:
+                    break
+                rich.append({
+                    "name":        sp["name"],
+                    "bait":        sp.get("bait", ""),
+                    "rig":         sp.get("rig", ""),
+                    "lures":       sp.get("lures", ""),
+                    "activity":    _activity_label(sp_score),
+                    "peak_months": sp.get("peak_months", []),
+                    "good_months": sp.get("good_months", []),
+                })
+            top_species = rich[:6]
 
         results.append({
             "id": loc["id"],
@@ -1040,9 +1053,48 @@ def fishing_map_data() -> Any:
     # Collect unique species names for the autocomplete dropdown
     species_names = sorted({s["name"] for s in SPECIES_DB})
 
+    # Monthly activity summary across all matched locations (for the month planner)
+    # For each month, count how many locations are peak/good/fair/slow
+    # Build a location-id → COASTAL_LOCATIONS entry lookup to avoid O(n²) scans
+    _loc_by_id = {l["id"]: l for l in COASTAL_LOCATIONS}
+    monthly_summary = []
+    for m in range(1, 13):
+        peak_c = good_c = fair_c = 0
+        for loc in results:
+            raw_loc = _loc_by_id.get(loc["id"], {})
+            loc_sp = [s for s in filtered_species if _species_present_at(s, raw_loc)]
+            if not loc_sp:
+                continue
+            best = max(_month_score(s, m) for s in loc_sp)
+            if best >= 100:   peak_c += 1
+            elif best >= 65:  good_c += 1
+            elif best >= 30:  fair_c += 1
+        monthly_summary.append({"month": m, "peak": peak_c, "good": good_c, "fair": fair_c})
+
+    # Trending species: in peak season this month, ranked by number of active locations.
+    # When the user has already filtered to a specific species we skip this (one species
+    # can't really "trend" against itself).
+    trending_species: list = []
+    if not species_q:
+        peak_sp_counts: dict = {}
+        for sp in filtered_species:
+            if month not in sp.get("peak_months", []):
+                continue
+            # Count how many results locations have this species present
+            cnt = sum(
+                1 for loc in results
+                if loc["activity"] != "none" and _species_present_at(sp, _loc_by_id.get(loc["id"], {}))
+            )
+            if cnt > 0:
+                peak_sp_counts[sp["name"]] = cnt
+        # Return top 10 by number of active locations
+        trending_species = sorted(peak_sp_counts, key=lambda n: -peak_sp_counts[n])[:10]
+
     return jsonify({
         "locations": results,
         "month": month,
         "species_filter": species_q,
         "species_names": species_names,
+        "monthly_summary": monthly_summary,
+        "trending_species": trending_species,
     })
