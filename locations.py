@@ -506,6 +506,18 @@ _FALLBACK_WIND_DIR: Dict[str, Dict[int, str]] = {
 }
 
 
+def get_water_temp(temp_region: str, month: int, offset: float = 0.0) -> Optional[float]:
+    """Return estimated surface water temperature in °F for a region/month combo.
+
+    Returns ``None`` when the region is unknown or month is out of range.
+    """
+    temps = _WATER_TEMPS.get(temp_region, {})
+    base = temps.get(month)
+    if base is None:
+        return None
+    return float(base + offset)
+
+
 # ---------------------------------------------------------------------------
 # Coastal location database
 # ---------------------------------------------------------------------------

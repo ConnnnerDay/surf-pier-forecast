@@ -67,6 +67,17 @@
     var userCoords    = null;        // {lat, lng} set after Near Me fires
     var sortByDist    = false;       // hotspot sort mode
 
+    // ─── Structure-mode state ─────────────────────────────────────────────────
+    var structureMode       = false;
+    var structureMarkers    = [];    // [{leaflet, data}]
+    var structureFetchTimer = null;
+    var lastStructureBbox   = null;  // last fetched {sw_lat,sw_lng,ne_lat,ne_lng}
+
+    // ─── AI-overlay state ─────────────────────────────────────────────────────
+    var aiMode        = false;
+    var heatLayer     = null;
+    var aiPickMarkers = [];          // [{leaflet, data}]
+
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
 
@@ -162,6 +173,10 @@
         }(0));
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
+
+        map.on('moveend zoomend', function () {
+            if (structureMode) scheduleStructureFetch();
+        });
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
@@ -230,6 +245,16 @@
                 sortBtn.classList.toggle('fmap-sort-dist-btn--active', sortByDist);
                 renderHotspots(currentData);
             });
+        }
+
+        var structureBtn = document.getElementById('fmap-structure-btn');
+        if (structureBtn) {
+            structureBtn.addEventListener('click', toggleStructureMode);
+        }
+
+        var aiBtn = document.getElementById('fmap-ai-btn');
+        if (aiBtn) {
+            aiBtn.addEventListener('click', toggleAiMode);
         }
     }
 
@@ -391,7 +416,80 @@
     }
 
     // ─── Hotspots list ────────────────────────────────────────────────────────
+
+    function updateHotspotHeader(isAiMode) {
+        var headerLeft = document.querySelector('.fmap-hotspots-header-left');
+        if (!headerLeft) return;
+        if (isAiMode) {
+            headerLeft.innerHTML =
+                '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fbbf24" stroke-width="2.5" aria-hidden="true">' +
+                '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+                '<span class="fmap-ai-panel-label">AI Picks</span>';
+        } else {
+            headerLeft.innerHTML =
+                '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+                '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+                ' Top Spots';
+        }
+    }
+
+    function renderAiHotspots(locations) {
+        if (!els.hotspotsList) return;
+
+        var picks = locations
+            .filter(function (l) { return l.ai_pick_rank; })
+            .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
+
+        if (els.hotspotCount) {
+            els.hotspotCount.textContent = picks.length ? picks.length : '';
+            els.hotspotCount.style.display = picks.length ? '' : 'none';
+        }
+
+        if (!picks.length) {
+            els.hotspotsList.innerHTML = '<li class="fmap-hotspot-empty">No AI picks available</li>';
+            return;
+        }
+
+        var html = '';
+        picks.forEach(function (loc) {
+            var sp     = loc.top_species && loc.top_species[0];
+            var spName = sp ? (sp.name || '') : '';
+            var reasoning = loc.ai_reasoning || '';
+            // First sentence only for the snippet
+            var snippet = reasoning.split('.')[0];
+            if (snippet && snippet.length < reasoning.length) snippet += '.';
+            var act = loc.activity || 'none';
+            var cfg = ACTIVITY[act] || ACTIVITY.none;
+            var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
+
+            html +=
+                '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
+                (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
+                '" data-loc-id="' + esc(loc.id) + '">' +
+                '<span class="fmap-ai-hotspot-rank">' + loc.ai_pick_rank + '</span>' +
+                '<span class="fmap-hotspot-info">' +
+                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
+                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + (wt ? ' &bull; ' + wt : '') + '</span>' : '') +
+                  (snippet ? '<span class="fmap-ai-hotspot-snippet">' + esc(snippet) + '</span>' : '') +
+                '</span>' +
+                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
+                '</li>';
+        });
+        els.hotspotsList.innerHTML = html;
+
+        els.hotspotsList.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
+            li.addEventListener('click', function () {
+                var id  = li.getAttribute('data-loc-id');
+                var loc = currentData.find(function (l) { return l.id === id; });
+                if (!loc) return;
+                map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
+                setTimeout(function () { showAiPickPopup(loc); }, 600);
+            });
+        });
+    }
+
     function renderHotspots(locations) {
+        if (aiMode) { renderAiHotspots(locations); return; }
         if (!els.hotspotsList) return;
 
         var active = locations.filter(function (l) { return l.activity !== 'none'; });
@@ -719,6 +817,17 @@
                 renderMonthPlanner(monthlySummary, data.month);
                 renderTrendingChips(data.trending_species || []);
                 updateInsight(data);
+
+                if (aiMode) {
+                    markers.forEach(function (m) { m.leaflet.setOpacity(0); });
+                    if (window.L && window.L.heatLayer) {
+                        renderAiOverlay(currentData);
+                    } else {
+                        ensureLeafletHeat().then(function () {
+                            if (aiMode) renderAiOverlay(currentData);
+                        }).catch(function () {});
+                    }
+                }
             })
             .catch(function (err) {
                 if (els.loading) {
@@ -771,6 +880,262 @@
         // Detail drawer close button
         var closeBtn = document.getElementById('fmap-detail-close');
         if (closeBtn) closeBtn.addEventListener('click', closeDetail);
+    }
+
+    // ─── AI overlay ───────────────────────────────────────────────────────────
+
+    function ensureLeafletHeat() {
+        if (window.L && window.L.heatLayer) return Promise.resolve();
+        return new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    function makeAiPickIcon(rank) {
+        return L.divIcon({
+            className: 'fmap-ai-pick-wrap',
+            html: '<span class="fmap-ai-pick-dot"><span class="fmap-ai-pick-rank">' + rank + '</span></span>',
+            iconSize:    [34, 34],
+            iconAnchor:  [17, 17],
+            popupAnchor: [0, -20]
+        });
+    }
+
+    function clearAiOverlay() {
+        if (heatLayer && map) { map.removeLayer(heatLayer); heatLayer = null; }
+        aiPickMarkers.forEach(function (m) { if (map) map.removeLayer(m.leaflet); });
+        aiPickMarkers = [];
+    }
+
+    function renderAiOverlay(locations) {
+        clearAiOverlay();
+        if (!map || !window.L || !window.L.heatLayer) return;
+
+        // Heat map — intensity proportional to score (0-100 → 0-1)
+        var points = locations
+            .filter(function (loc) { return loc.score > 0; })
+            .map(function (loc) { return [loc.lat, loc.lng, loc.score / 100]; });
+
+        if (points.length) {
+            heatLayer = L.heatLayer(points, {
+                radius:  55,
+                blur:    40,
+                maxZoom: 12,
+                max:     1.0,
+                gradient: { 0.15: '#164e63', 0.45: '#0e7490', 0.70: '#16a34a', 0.88: '#ca8a04', 1.0: '#dc2626' }
+            }).addTo(map);
+        }
+
+        // AI pick markers for top 5 locations
+        var picks = locations.filter(function (loc) { return loc.ai_pick_rank; });
+        picks.sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
+
+        picks.forEach(function (loc) {
+            var m = L.marker([loc.lat, loc.lng], {
+                icon: makeAiPickIcon(loc.ai_pick_rank),
+                zIndexOffset: 1000
+            }).addTo(map);
+
+            m.bindTooltip(
+                '<strong>#' + loc.ai_pick_rank + ' AI Pick &mdash; ' + esc(loc.name) + ', ' + esc(loc.state) + '</strong>',
+                { direction: 'top', offset: [0, -10], className: 'fmap-tooltip' }
+            );
+
+            m.on('click', function () { showAiPickPopup(loc); });
+            aiPickMarkers.push({ leaflet: m, data: loc });
+        });
+    }
+
+    function showAiPickPopup(loc) {
+        if (!map) return;
+        var badge = ACTIVITY[loc.activity] || ACTIVITY.none;
+        var wtHtml = loc.water_temp != null
+            ? '<span class="fmap-ai-popup-wt">\uD83C\uDF21\uFE0F ' + Math.round(loc.water_temp) + '\u00b0F water</span>'
+            : '';
+        L.popup({ className: 'fmap-ai-popup', maxWidth: 295, minWidth: 230 })
+            .setLatLng([loc.lat, loc.lng])
+            .setContent(
+                '<div class="fmap-ai-popup-inner">' +
+                '<div class="fmap-ai-popup-header">' +
+                '<span class="fmap-ai-popup-pick-badge">#' + loc.ai_pick_rank + ' AI Pick</span>' +
+                '<span class="fmap-ai-popup-act-badge fmap-ai-popup-act-badge--' + loc.activity + '">' + badge.label + '</span>' +
+                wtHtml +
+                '</div>' +
+                '<div class="fmap-ai-popup-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</div>' +
+                '<p class="fmap-ai-popup-reasoning">' + esc(loc.ai_reasoning || '') + '</p>' +
+                '<a href="/f/' + esc(loc.id) + '" class="fmap-ai-popup-link">View Full Forecast \u2192</a>' +
+                '</div>'
+            )
+            .openOn(map);
+    }
+
+    function toggleAiMode() {
+        aiMode = !aiMode;
+        var btn = document.getElementById('fmap-ai-btn');
+        if (btn) {
+            btn.classList.toggle('fmap-ctrl-btn--active', aiMode);
+            btn.setAttribute('aria-pressed', aiMode ? 'true' : 'false');
+        }
+
+        updateHotspotHeader(aiMode);
+
+        if (aiMode) {
+            markers.forEach(function (m) { m.leaflet.setOpacity(0); });
+            renderAiHotspots(currentData);
+            ensureLeafletHeat()
+                .then(function () { if (aiMode) renderAiOverlay(currentData); })
+                .catch(function (e) { console.error('[fishing-map] leaflet-heat load failed', e); });
+        } else {
+            clearAiOverlay();
+            markers.forEach(function (m) { m.leaflet.setOpacity(1); });
+            renderHotspots(currentData);
+        }
+    }
+
+    // ─── Structure mode ───────────────────────────────────────────────────────
+
+    function toggleStructureMode() {
+        structureMode = !structureMode;
+        var btn = document.getElementById('fmap-structure-btn');
+        if (btn) btn.classList.toggle('fmap-ctrl-btn--active', structureMode);
+
+        // Remove all current tile layers then rebuild for the new mode
+        if (map) {
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.TileLayer) map.removeLayer(layer);
+            });
+        }
+
+        if (structureMode) {
+            if (map) {
+                // Esri Ocean Base shows bathymetry and depth gradients
+                L.tileLayer(
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
+                    { attribution: 'Tiles &copy; Esri', maxZoom: 16 }
+                ).addTo(map);
+
+                // OpenSeaMap overlay: wrecks, rocks, reefs, buoys as nautical chart symbols
+                L.tileLayer(
+                    'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+                    {
+                        attribution: '&copy; <a href="https://www.openseamap.org/">OpenSeaMap</a> contributors',
+                        maxZoom: 18,
+                        opacity: 0.9
+                    }
+                ).addTo(map);
+            }
+            scheduleStructureFetch();
+        } else {
+            // Restore dark CARTO base
+            if (map) {
+                L.tileLayer(
+                    'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
+                    { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
+                ).addTo(map);
+            }
+            clearStructureMarkers();
+            setStructureHint(false);
+            lastStructureBbox = null;
+        }
+    }
+
+    function makeStructureIcon(type) {
+        return L.divIcon({
+            className: 'fmap-struct-wrap',
+            html: '<span class="fmap-struct-dot fmap-struct-dot--' + type + '"></span>',
+            iconSize:    [16, 16],
+            iconAnchor:  [8, 8],
+            popupAnchor: [0, -10]
+        });
+    }
+
+    function clearStructureMarkers() {
+        structureMarkers.forEach(function (m) { if (map) map.removeLayer(m.leaflet); });
+        structureMarkers = [];
+    }
+
+    function drawStructureMarkers(features) {
+        if (!map) return;
+        clearStructureMarkers();
+        features.forEach(function (feat) {
+            var m = L.marker([feat.lat, feat.lng], {
+                icon: makeStructureIcon(feat.type),
+                title: feat.name,
+                zIndexOffset: -100
+            }).addTo(map);
+
+            var depthStr = feat.depth_m != null
+                ? '<br><span class="fmap-struct-depth">' + Number(feat.depth_m).toFixed(1) + ' m depth</span>'
+                : '';
+            m.bindTooltip(
+                '<strong>' + esc(feat.name) + '</strong>' +
+                '<br><span class="fmap-struct-type">' +
+                (feat.type === 'wreck' ? 'Wreck' : 'Reef / Rock') +
+                '</span>' + depthStr,
+                { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
+            );
+            structureMarkers.push({ leaflet: m, data: feat });
+        });
+    }
+
+    function setStructureHint(visible) {
+        var hint = document.getElementById('fmap-struct-hint');
+        if (hint) hint.hidden = !visible;
+    }
+
+    function scheduleStructureFetch() {
+        clearTimeout(structureFetchTimer);
+        structureFetchTimer = setTimeout(doFetchStructureSpots, 500);
+    }
+
+    function doFetchStructureSpots() {
+        if (!structureMode || !map) return;
+
+        if (map.getZoom() < 8) {
+            setStructureHint(true);
+            clearStructureMarkers();
+            return;
+        }
+        setStructureHint(false);
+
+        var bounds = map.getBounds();
+        var sw = bounds.getSouthWest();
+        var ne = bounds.getNorthEast();
+
+        var bbox = {
+            sw_lat: Math.round(sw.lat * 100) / 100,
+            sw_lng: Math.round(sw.lng * 100) / 100,
+            ne_lat: Math.round(ne.lat * 100) / 100,
+            ne_lng: Math.round(ne.lng * 100) / 100
+        };
+
+        // Skip if viewport hasn't shifted much since last fetch
+        if (lastStructureBbox &&
+            Math.abs(bbox.sw_lat - lastStructureBbox.sw_lat) < 0.25 &&
+            Math.abs(bbox.sw_lng - lastStructureBbox.sw_lng) < 0.25) {
+            return;
+        }
+        lastStructureBbox = bbox;
+
+        var url = '/api/structure-spots' +
+            '?sw_lat=' + bbox.sw_lat + '&sw_lng=' + bbox.sw_lng +
+            '&ne_lat=' + bbox.ne_lat + '&ne_lng=' + bbox.ne_lng;
+
+        fetch(url)
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (data) {
+                if (!structureMode) return;
+                if (data.zoom_required) { setStructureHint(true); return; }
+                setStructureHint(false);
+                drawStructureMarkers(data.features || []);
+            })
+            .catch(function (err) {
+                console.error('[fishing-map] structure fetch error:', err);
+            });
     }
 
     // ─── Boot ─────────────────────────────────────────────────────────────────

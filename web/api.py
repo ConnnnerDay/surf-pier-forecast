@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json_mod
 import logging
 import os
 import threading
@@ -23,7 +24,7 @@ from flask import (
 
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
-from locations import get_location
+from locations import get_location, get_water_temp
 from regulations import lookup_regulation
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -911,6 +912,28 @@ _SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
 }
 
 
+def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
+    """Return 0.3–1.0 temperature suitability multiplier for a species.
+
+    1.0 = water is inside the ideal temperature window.
+    Tapers to 0.5 at the survivable edges, 0.3 outside survivable range.
+    """
+    t_min  = float(species.get("temp_min",       32))
+    t_max  = float(species.get("temp_max",       95))
+    t_low  = float(species.get("temp_ideal_low",  t_min))
+    t_high = float(species.get("temp_ideal_high", t_max))
+
+    if water_temp_f < t_min or water_temp_f > t_max:
+        return 0.3
+    if t_low <= water_temp_f <= t_high:
+        return 1.0
+    if water_temp_f < t_low:
+        span = t_low - t_min
+        return 1.0 if span <= 0 else 0.5 + 0.5 * (water_temp_f - t_min) / span
+    span = t_max - t_high
+    return 1.0 if span <= 0 else 0.5 + 0.5 * (t_max - water_temp_f) / span
+
+
 def _location_coast(loc: Dict[str, Any]) -> str:
     """Return 'west', 'hawaii', or 'east' for a location."""
     region = loc.get("temp_region", "")
@@ -947,6 +970,100 @@ def _month_score(species: Dict[str, Any], month: int) -> int:
     if month in species.get("good_months", []):
         return 65
     return 20
+
+
+_AI_MONTH_NAMES = [
+    "", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+
+def _build_ai_reasoning(loc_result: dict, month: int) -> str:
+    """Return plain-text AI recommendation for a fishing location.
+
+    Incorporates water temperature vs species ideal range, species-specific
+    behavioral notes (cold/warm), secondary species, and tackle tips.
+    """
+    mname = _AI_MONTH_NAMES[month] if 1 <= month <= 12 else "this month"
+    species    = loc_result.get("top_species", [])
+    water_temp = loc_result.get("water_temp")  # °F or None
+
+    if not species:
+        return f"Conditions are quiet at this location in {mname}."
+
+    top         = species[0]
+    sp_name     = top.get("name", "Fish")
+    activity    = top.get("activity", "fair")
+    bait        = top.get("bait", "")
+    rig         = top.get("rig", "")
+    lures       = top.get("lures", "")
+    t_low       = top.get("temp_ideal_low")
+    t_high      = top.get("temp_ideal_high")
+    expl_cold   = top.get("explanation_cold", "")
+    expl_warm   = top.get("explanation_warm", "")
+
+    parts: list[str] = []
+
+    # 1. Activity opener
+    if activity == "peak":
+        parts.append(f"{sp_name} are at peak seasonal activity for {mname}.")
+    elif activity == "good":
+        parts.append(f"{sp_name} showing strong activity through {mname}.")
+    else:
+        parts.append(f"{sp_name} are active with fair conditions in {mname}.")
+
+    # 2. Water temperature context
+    if water_temp is not None and t_low is not None and t_high is not None:
+        wt = round(water_temp)
+        if water_temp < t_low:
+            gap = round(t_low - water_temp)
+            parts.append(
+                f"Water is {wt}\u00b0F — {gap}\u00b0 below the ideal "
+                f"{round(t_low)}\u2013{round(t_high)}\u00b0F window; "
+                f"fish are present but slower."
+            )
+        elif water_temp > t_high:
+            gap = round(water_temp - t_high)
+            parts.append(
+                f"Water is warm at {wt}\u00b0F — {gap}\u00b0 above ideal; "
+                f"target early morning or deeper structure."
+            )
+        else:
+            parts.append(
+                f"Water at {wt}\u00b0F is squarely in the sweet spot "
+                f"({round(t_low)}\u2013{round(t_high)}\u00b0F) — prime feeding conditions."
+            )
+
+    # 3. Behavioral explanation (cold vs warm)
+    if water_temp is not None and t_low is not None and t_high is not None:
+        midpoint = (t_low + t_high) / 2.0
+        expl = expl_cold if water_temp < midpoint else expl_warm
+        if expl:
+            # Truncate to first sentence
+            sentence = expl.split(".")[0].strip()
+            if sentence:
+                parts.append(sentence + ".")
+
+    # 4. Secondary species
+    secondary = [s["name"] for s in species[1:2]]
+    if secondary:
+        parts.append(f"Also watch for {secondary[0]}.")
+
+    # 5. Tackle
+    tackle: list[str] = []
+    if bait:
+        # Bait strings can be long — take the first item before "or" / ";"
+        short_bait = bait.split(";")[0].split(" or ")[0].strip()
+        tackle.append(f"bait: {short_bait}")
+    elif lures:
+        short_lure = lures.split(",")[0].strip()
+        tackle.append(f"try {short_lure}")
+    if rig:
+        tackle.append(f"rig: {rig}")
+    if tackle:
+        parts.append(f"Recommended \u2014 {', '.join(tackle)}.")
+
+    return " ".join(parts)
 
 
 @bp.route("/api/fishing-map")
@@ -1028,27 +1145,55 @@ def fishing_map_data() -> Any:
                 if sp_score < 30 and len(rich) >= 3:
                     break
                 rich.append({
-                    "name":        sp["name"],
-                    "bait":        sp.get("bait", ""),
-                    "rig":         sp.get("rig", ""),
-                    "lures":       sp.get("lures", ""),
-                    "activity":    _activity_label(sp_score),
-                    "peak_months": sp.get("peak_months", []),
-                    "good_months": sp.get("good_months", []),
+                    "name":             sp["name"],
+                    "bait":             sp.get("bait", ""),
+                    "rig":              sp.get("rig", ""),
+                    "lures":            sp.get("lures", ""),
+                    "activity":         _activity_label(sp_score),
+                    "peak_months":      sp.get("peak_months", []),
+                    "good_months":      sp.get("good_months", []),
+                    # Extra fields used by AI reasoning
+                    "temp_ideal_low":   sp.get("temp_ideal_low"),
+                    "temp_ideal_high":  sp.get("temp_ideal_high"),
+                    "explanation_cold": sp.get("explanation_cold", "")[:160],
+                    "explanation_warm": sp.get("explanation_warm", "")[:160],
                 })
             top_species = rich[:6]
 
+        # Water temperature and temperature-weighted AI score
+        water_temp = get_water_temp(
+            loc.get("temp_region", ""),
+            month,
+            loc.get("temp_offset", 0),
+        )
+        if water_temp is not None and loc_species and score > 0:
+            best_sp = sorted(loc_species, key=lambda s: -_month_score(s, month))[0]
+            ai_score: float = _month_score(best_sp, month) * _temp_factor(best_sp, water_temp)
+        else:
+            ai_score = float(score)
+
         results.append({
-            "id": loc["id"],
-            "name": loc["name"],
-            "state": loc["state"],
-            "lat": loc["lat"],
-            "lng": loc["lng"],
-            "coast": loc_coast,
-            "score": score,
-            "activity": activity,
+            "id":         loc["id"],
+            "name":       loc["name"],
+            "state":      loc["state"],
+            "lat":        loc["lat"],
+            "lng":        loc["lng"],
+            "coast":      loc_coast,
+            "score":      score,
+            "ai_score":   round(ai_score, 1),
+            "water_temp": water_temp,
+            "activity":   activity,
             "top_species": top_species,
         })
+
+    # Mark top 5 locations as AI picks with generated reasoning text
+    _ai_ranked = sorted(
+        (r for r in results if r["activity"] != "none"),
+        key=lambda r: -(r.get("ai_score") or r["score"]),
+    )[:5]
+    for _rank, _pick in enumerate(_ai_ranked, 1):
+        _pick["ai_pick_rank"] = _rank
+        _pick["ai_reasoning"] = _build_ai_reasoning(_pick, month)
 
     # Collect unique species names for the autocomplete dropdown
     species_names = sorted({s["name"] for s in SPECIES_DB})
@@ -1098,3 +1243,95 @@ def fishing_map_data() -> Any:
         "monthly_summary": monthly_summary,
         "trending_species": trending_species,
     })
+
+
+# ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
+
+_STRUCTURE_CACHE: dict = {}    # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE_TTL = 3600    # 1 hour — wrecks don't move
+
+_NOAA_ENC_BASE = (
+    "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
+)
+
+
+def _fetch_noaa_structures(
+    sw_lat: float, sw_lng: float, ne_lat: float, ne_lng: float
+) -> list:
+    """Fetch wrecks from NOAA ENC Direct within bbox. Results are cached for 1 h."""
+    import requests as _req
+
+    cache_key = f"{round(sw_lat,2)},{round(sw_lng,2)},{round(ne_lat,2)},{round(ne_lng,2)}"
+    cached = _STRUCTURE_CACHE.get(cache_key)
+    if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
+        return cached["data"]
+
+    geometry_json = _json_mod.dumps({
+        "xmin": sw_lng, "ymin": sw_lat,
+        "xmax": ne_lng, "ymax": ne_lat,
+        "spatialReference": {"wkid": 4326},
+    })
+
+    base_params = {
+        "f": "json",
+        "geometry": geometry_json,
+        "geometryType": "esriGeometryEnvelope",
+        "spatialRel": "esriSpatialRelIntersects",
+        "returnGeometry": "true",
+        "resultRecordCount": "200",
+    }
+
+    features: list = []
+
+    # Wrecks
+    try:
+        resp = _req.get(
+            f"{_NOAA_ENC_BASE}/enc_wrecks/MapServer/0/query",
+            params=dict(base_params, outFields="WRECKNM,VALSOU,CAUTION"),
+            timeout=(3.05, 10),
+            headers={"User-Agent": "SurfPierForecast/1.0"},
+        )
+        if resp.ok:
+            for feat in resp.json().get("features", []):
+                geom = feat.get("geometry") or {}
+                attrs = feat.get("attributes") or {}
+                if geom.get("x") is None or geom.get("y") is None:
+                    continue
+                name = (attrs.get("WRECKNM") or "").strip() or "Unknown Wreck"
+                features.append({
+                    "type": "wreck",
+                    "name": name,
+                    "lat": geom["y"],
+                    "lng": geom["x"],
+                    "depth_m": attrs.get("VALSOU"),
+                })
+    except Exception:
+        pass
+
+    _STRUCTURE_CACHE[cache_key] = {"ts": time.time(), "data": features}
+    return features
+
+
+@bp.route("/api/structure-spots")
+def structure_spots() -> Any:
+    """Return wrecks/obstructions from NOAA ENC within a map viewport bounding box.
+
+    Query params: sw_lat, sw_lng, ne_lat, ne_lng  (decimal degrees)
+    """
+    try:
+        sw_lat = float(request.args["sw_lat"])
+        sw_lng = float(request.args["sw_lng"])
+        ne_lat = float(request.args["ne_lat"])
+        ne_lng = float(request.args["ne_lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify({"error": "sw_lat, sw_lng, ne_lat, ne_lng required"}), 400
+
+    if not (-90 <= sw_lat < ne_lat <= 90) or not (-180 <= sw_lng < ne_lng <= 180):
+        return jsonify({"error": "Invalid bbox range"}), 400
+
+    # Block oversized viewports — too many results and NOAA rate limits
+    if (ne_lat - sw_lat) > 8 or (ne_lng - sw_lng) > 12:
+        return jsonify({"features": [], "zoom_required": True})
+
+    features = _fetch_noaa_structures(sw_lat, sw_lng, ne_lat, ne_lng)
+    return jsonify({"features": features})
