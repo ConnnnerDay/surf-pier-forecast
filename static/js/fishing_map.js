@@ -64,8 +64,14 @@
     var activeMonth   = 0;           // 0 = current month (server default)
     var isFullscreen  = false;
     var monthlySummary = [];         // from last API response
-    var userCoords    = null;        // {lat, lng} set after Near Me fires
-    var sortByDist    = false;       // hotspot sort mode
+    var userCoords       = null;      // {lat, lng} set after Near Me fires
+    var sortByDist       = false;    // legacy (kept for localStorage compat)
+    var fishingSpotLayer = null;     // L.layerGroup for OSM piers/jetties/spots
+    var spotQueryTimer   = null;     // debounce timer for Overpass queries
+    var spotCache        = {};       // bbox-key → array of spot objects
+    var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
+    var aiQueryTimer     = null;     // debounce timer for AI habitat queries
+    var aiCache          = {};       // bbox-key+species → array of habitat features
 
     // ─── Structure-mode state ─────────────────────────────────────────────────
     var structureMode       = false;
@@ -143,34 +149,42 @@
     }
 
     // ─── Map init ─────────────────────────────────────────────────────────────
+    var TILE_SATELLITE = {
+        url:  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        opts: { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA', maxZoom: 19 }
+    };
+    var TILE_STREET = {
+        url:  'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
+        opts: { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
+    };
+    var activeTileLayer = null;
+    var isSatellite = true;
+
     function initMap() {
         if (mapReady) return;
         mapReady = true;
 
         map = L.map(els.mapEl, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-        var tiles = [
-            {
-                url: 'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
-                opts: { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
-            },
-            {
-                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
-                opts: { attribution: 'Tiles &copy; Esri', maxZoom: 16 }
-            },
-            {
-                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                opts: { attribution: '&copy; OpenStreetMap contributors', maxZoom: 18 }
-            }
-        ];
-        (function tryTile(i) {
-            if (i >= tiles.length) return;
-            var t = tiles[i];
-            var layer = L.tileLayer(t.url, t.opts);
-            layer.once('tileerror', function () { map.removeLayer(layer); tryTile(i + 1); });
-            layer.once('load', function () { layer.off('tileerror'); });
-            layer.addTo(map);
-        }(0));
+        // Default: satellite so users can visually see coastline, piers, structure
+        activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
+        activeTileLayer.once('tileerror', function () {
+            // Fall back to street tiles if ESRI is unavailable
+            map.removeLayer(activeTileLayer);
+            activeTileLayer = L.tileLayer(TILE_STREET.url, TILE_STREET.opts).addTo(map);
+        });
+        activeTileLayer.addTo(map);
+
+        // Layer groups — AI habitat picks render below OSM spots
+        aiPickLayer      = L.layerGroup().addTo(map);
+        fishingSpotLayer = L.layerGroup().addTo(map);
+
+        // Wire zoom/pan → refresh both layers
+        map.on('moveend zoomend', function () {
+            updateZoomHint();
+            scheduleFishingSpotQuery();
+            scheduleAIQuery();
+        });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
 
@@ -181,7 +195,7 @@
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
     function wireMapControls() {
-        // Near Me
+        // Near Me — fly to user location, select nearest active forecast loc
         var nearMeBtn = document.getElementById('fmap-near-me');
         if (nearMeBtn) {
             nearMeBtn.addEventListener('click', function () {
@@ -195,25 +209,7 @@
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');
                         if (!map) return;
                         userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                        map.flyTo([userCoords.lat, userCoords.lng], 7, { duration: 1 });
-
-                        // Show sort-by-distance button now that we have coords
-                        var sortBtn = document.getElementById('fmap-sort-dist');
-                        if (sortBtn) { sortBtn.hidden = false; }
-
-                        // Re-render hotspot panel with distances
-                        renderHotspots(currentData);
-
-                        // Find closest active location to user
-                        var best = null, bestDist = Infinity;
-                        currentData.forEach(function (loc) {
-                            if (loc.activity === 'none') return;
-                            var d = haversineMi(userCoords.lat, userCoords.lng, loc.lat, loc.lng);
-                            if (d < bestDist) { bestDist = d; best = loc; }
-                        });
-                        if (best) {
-                            setTimeout(function () { selectLocation(best); }, 900);
-                        }
+                        map.flyTo([userCoords.lat, userCoords.lng], 12, { duration: 1 });
                     },
                     function () {
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');
@@ -229,21 +225,23 @@
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
                 if (!map) return;
-                if (activeCoast !== 'all' && COAST_BOUNDS[activeCoast]) {
-                    map.flyToBounds(COAST_BOUNDS[activeCoast], { padding: [30, 30], duration: 0.8 });
-                } else {
-                    map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
-                }
+                hasAutoZoomed = false; // allow re-centering on saved location
+                map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+                autoZoomToSavedLocation(currentData);
             });
         }
 
-        // Sort by distance toggle (visible after Near Me fires)
-        var sortBtn = document.getElementById('fmap-sort-dist');
-        if (sortBtn) {
-            sortBtn.addEventListener('click', function () {
-                sortByDist = !sortByDist;
-                sortBtn.classList.toggle('fmap-sort-dist-btn--active', sortByDist);
-                renderHotspots(currentData);
+        // Satellite / street tile toggle
+        var tileBtn = document.getElementById('fmap-tile-toggle');
+        if (tileBtn) {
+            tileBtn.addEventListener('click', function () {
+                if (!map) return;
+                isSatellite = !isSatellite;
+                map.removeLayer(activeTileLayer);
+                var t = isSatellite ? TILE_SATELLITE : TILE_STREET;
+                activeTileLayer = L.tileLayer(t.url, t.opts).addTo(map);
+                tileBtn.classList.toggle('fmap-ctrl-btn--active', isSatellite);
+                tileBtn.title = isSatellite ? 'Switch to street view' : 'Switch to satellite view';
             });
         }
 
@@ -271,6 +269,346 @@
             t.classList.remove('fmap-toast--in');
             setTimeout(function () { t.parentNode && t.parentNode.removeChild(t); }, 400);
         }, 3000);
+    }
+
+    // ─── Zoom hint ────────────────────────────────────────────────────────────
+    function updateZoomHint() {
+        var hint = document.getElementById('fmap-zoom-hint');
+        if (!hint || !map) return;
+        hint.classList.toggle('fmap-zoom-hint--hidden', map.getZoom() >= 11);
+    }
+
+
+    // ─── AI Habitat Spot Finder ───────────────────────────────────────────────
+    //
+    // Habitat type is inferred from the bait/rig/lures text returned by the API
+    // for the matched species — covers all 851 species without name hardcoding.
+    //
+    var HABITAT_DEFS = {
+        pelagic: {
+            tags:    [],   // open-ocean species — no fixed OSM features
+            color:   '#60a5fa',
+            insight: 'This is an offshore, open-water species. Fish concentrate along temperature breaks, current edges, floating weedlines, and bait schools — none of which are fixed map features. Head offshore and watch for birds, bait activity, and blue/green water color changes.'
+        },
+        surf: {
+            tags: [
+                'way["natural"="beach"]',
+                'node["natural"="shoal"]'
+            ],
+            color:   '#fde68a',
+            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough.'
+        },
+        mangrove: {
+            tags: [
+                'way["natural"="wetland"]["wetland"="mangrove"]',
+                'way["waterway"="tidal_channel"]'
+            ],
+            color:   '#22c55e',
+            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out.'
+        },
+        grassflat: {
+            tags: [
+                'way["natural"="wetland"]["wetland"="seagrass"]',
+                'way["natural"="wetland"]["wetland"="saltmarsh"]',
+                'way["waterway"="tidal_channel"]'
+            ],
+            color:   '#34d399',
+            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points.'
+        },
+        estuary: {
+            tags: [
+                'way["natural"="wetland"]["wetland"="saltmarsh"]',
+                'way["waterway"="tidal_channel"]',
+                'node["natural"="shoal"]',
+                'way["natural"="wetland"]["wetland"="tidalflat"]'
+            ],
+            color:   '#2dd4bf',
+            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits.'
+        },
+        reef: {
+            tags: [
+                'way["natural"="reef"]',
+                'node["natural"="shoal"]',
+                'node["seamark:type"="wreck"]',
+                'node["historic"="wreck"]'
+            ],
+            color:   '#f59e0b',
+            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, and wrecks. Fish the upcurrent edge where bait gets swept against structure. Work the base of rock walls and depth transitions.'
+        },
+        bottom: {
+            tags: [
+                'node["natural"="shoal"]',
+                'way["waterway"="tidal_channel"]',
+                'way["natural"="wetland"]["wetland"="tidalflat"]'
+            ],
+            color:   '#fb923c',
+            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation.'
+        },
+        general: {
+            tags: [
+                'way["natural"="reef"]',
+                'node["natural"="shoal"]',
+                'way["natural"="wetland"]["wetland"="saltmarsh"]',
+                'way["waterway"="tidal_channel"]'
+            ],
+            color:   '#a78bfa',
+            insight: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, and marsh creek mouths. These highlighted areas offer the best natural ambush opportunities in the current view.'
+        }
+    };
+
+    // Infer habitat type from bait + rig + lures text.
+    // Automatically covers all 851 species without any name hardcoding.
+    function inferHabitatType(meta) {
+        var text = [meta.bait || '', meta.rig || '', meta.lures || ''].join(' ').toLowerCase();
+
+        if (/troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|marlin|sailfish|wahoo|yellowfin|blackfin\s*tuna|mahi/.test(text)) {
+            return 'pelagic';
+        }
+        if (/sand\s*(crab|flea|flee)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
+            return 'surf';
+        }
+        if (/mangrove/.test(text)) {
+            return 'mangrove';
+        }
+        if (/popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
+            return 'grassflat';
+        }
+        if (/marsh|tidal\s*(creek|channel)|inlet|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
+            return 'estuary';
+        }
+        if (/reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef/.test(text)) {
+            return 'reef';
+        }
+        if (/bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
+            return 'bottom';
+        }
+        return 'general';
+    }
+
+    var HABITAT_TYPE_LABELS = {
+        reef:      { tip: 'Rocky reef or wreck' },
+        saltmarsh: { tip: 'Salt marsh edge' },
+        seagrass:  { tip: 'Seagrass flat' },
+        mangrove:  { tip: 'Mangrove shoreline' },
+        channel:   { tip: 'Tidal creek / channel' },
+        shoal:     { tip: 'Shallow shoal / sandbar' },
+        tidalflat: { tip: 'Tidal flat' },
+        beach:     { tip: 'Sandy beach trough' },
+        wreck:     { tip: 'Submerged wreck' },
+        bay:       { tip: 'Bay / cove' }
+    };
+
+    function osmTagsToType(tags) {
+        if (!tags) return 'general';
+        if (tags.wetland === 'saltmarsh')  return 'saltmarsh';
+        if (tags.wetland === 'seagrass')   return 'seagrass';
+        if (tags.wetland === 'mangrove')   return 'mangrove';
+        if (tags.wetland === 'tidalflat')  return 'tidalflat';
+        if (tags.natural === 'reef')       return 'reef';
+        if (tags.natural === 'shoal')      return 'shoal';
+        if (tags.natural === 'beach')      return 'beach';
+        if (tags.natural === 'bay')        return 'bay';
+        if (tags.waterway)                 return 'channel';
+        if (tags['seamark:type'] === 'wreck' || tags.historic === 'wreck') return 'wreck';
+        return 'general';
+    }
+
+    function makeAIPickIcon(osmType, habitatType) {
+        var def   = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
+        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + def.color + '"></span>';
+        return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [14, 14], iconAnchor: [7, 7] });
+    }
+
+    var currentSpeciesMeta = null;
+
+    function renderAIHabitatSpots(features, habitatType) {
+        if (!aiPickLayer) return;
+        aiPickLayer.clearLayers();
+
+        var def     = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
+        var bar     = document.getElementById('fmap-ai-bar');
+        var barText = document.getElementById('fmap-ai-bar-text');
+
+        if (bar && barText && activeSpecies) {
+            barText.textContent = def.insight;
+            bar.hidden = false;
+        } else if (bar) {
+            bar.hidden = true;
+        }
+
+        features.forEach(function (f) {
+            if (!f.lat || !f.lng) return;
+            var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
+            var m      = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(f.osmType, habitatType) });
+            var name   = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            m.bindTooltip(
+                '<span class="fmap-ai-tip-label">AI Pick</span>' + name +
+                '<span style="opacity:.8">' + esc(tipCfg.tip) + '</span>',
+                { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
+            );
+            aiPickLayer.addLayer(m);
+        });
+    }
+
+    function queryAIHabitatSpots() {
+        if (!map || !aiPickLayer) return;
+        var bar = document.getElementById('fmap-ai-bar');
+
+        if (!activeSpecies || !currentSpeciesMeta) {
+            aiPickLayer.clearLayers();
+            if (bar) bar.hidden = true;
+            return;
+        }
+
+        var habitatType = inferHabitatType(currentSpeciesMeta);
+        var def         = HABITAT_DEFS[habitatType];
+
+        // Pelagic / open-water: show insight bar only, no OSM markers to place
+        if (!def || !def.tags.length) {
+            aiPickLayer.clearLayers();
+            var barText = document.getElementById('fmap-ai-bar-text');
+            if (bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
+            return;
+        }
+
+        if (map.getZoom() < 10) {
+            aiPickLayer.clearLayers();
+            if (bar) bar.hidden = true;
+            return;
+        }
+
+        var b   = map.getBounds();
+        var s   = Math.floor(b.getSouth() * 4) / 4;
+        var w   = Math.floor(b.getWest()  * 4) / 4;
+        var n   = Math.ceil(b.getNorth()  * 4) / 4;
+        var e   = Math.ceil(b.getEast()   * 4) / 4;
+        var key = habitatType + '|' + s + ',' + w + ',' + n + ',' + e;
+
+        if (aiCache[key]) { renderAIHabitatSpots(aiCache[key], habitatType); return; }
+
+        var bbox  = s + ',' + w + ',' + n + ',' + e;
+        var tags  = def.tags.map(function (t) { return t + '(' + bbox + ');'; }).join('');
+        var query = '[out:json][timeout:20];(' + tags + ');out center;';
+
+        fetch(OVERPASS_URL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body:    'data=' + encodeURIComponent(query)
+        })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (data) {
+            var features = (data.elements || []).map(function (el) {
+                return {
+                    lat:     el.lat  || (el.center && el.center.lat),
+                    lng:     el.lon  || (el.center && el.center.lon),
+                    name:    (el.tags || {}).name || '',
+                    osmType: osmTagsToType(el.tags || {})
+                };
+            }).filter(function (f) { return f.lat && f.lng; });
+            aiCache[key] = features;
+            renderAIHabitatSpots(features, habitatType);
+        })
+        .catch(function () {});
+    }
+
+    function scheduleAIQuery() {
+        clearTimeout(aiQueryTimer);
+        aiQueryTimer = setTimeout(queryAIHabitatSpots, 600);
+    }
+
+    // ─── OSM Fishing Spots (Overpass API) ─────────────────────────────────────
+    var OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+
+    var SPOT_TYPES = {
+        pier:    { label: 'Fishing Pier',    color: '#a78bfa' },
+        jetty:   { label: 'Jetty',           color: '#818cf8' },
+        fishing: { label: 'Fishing Spot',    color: '#2dd4bf' },
+        'fishing_shop': { label: 'Bait & Tackle', color: '#fb923c' }
+    };
+
+    function spotTypeLabel(type) {
+        return (SPOT_TYPES[type] || {}).label || 'Fishing Spot';
+    }
+    function spotTypeColor(type) {
+        return (SPOT_TYPES[type] || {}).color || '#2dd4bf';
+    }
+
+    function makeFishingSpotIcon(type) {
+        var color = spotTypeColor(type);
+        var html = '<span class="fmap-spot-dot" style="background:' + color +
+                   ';box-shadow:0 0 6px ' + color + '55"></span>';
+        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [10, 10], iconAnchor: [5, 5] });
+    }
+
+    function renderFishingSpots(spots) {
+        if (!fishingSpotLayer) return;
+        fishingSpotLayer.clearLayers();
+        spots.forEach(function (f) {
+            if (!f.lat || !f.lng) return;
+            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
+            var name = f.name || spotTypeLabel(f.type);
+            m.bindTooltip(
+                '<strong>' + esc(name) + '</strong>' +
+                '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>',
+                { className: 'fmap-tooltip', direction: 'top', offset: [0, -5] }
+            );
+            fishingSpotLayer.addLayer(m);
+        });
+    }
+
+    function queryFishingSpots() {
+        if (!map || !fishingSpotLayer) return;
+        var zoom = map.getZoom();
+        if (zoom < 11) {
+            fishingSpotLayer.clearLayers();
+            return;
+        }
+        var b   = map.getBounds();
+        // Round to 0.2° grid for cache hits when panning slightly
+        var s = Math.floor(b.getSouth() * 5) / 5;
+        var w = Math.floor(b.getWest()  * 5) / 5;
+        var n = Math.ceil(b.getNorth()  * 5) / 5;
+        var e = Math.ceil(b.getEast()   * 5) / 5;
+        var key = s + ',' + w + ',' + n + ',' + e;
+
+        if (spotCache[key]) {
+            renderFishingSpots(spotCache[key]);
+            return;
+        }
+
+        var bbox = s + ',' + w + ',' + n + ',' + e;
+        var q = '[out:json][timeout:20];(' +
+            'node["leisure"="fishing"](' + bbox + ');' +
+            'node["man_made"="pier"](' + bbox + ');' +
+            'node["man_made"="jetty"](' + bbox + ');' +
+            'way["man_made"="pier"](' + bbox + ');' +
+            'way["man_made"="jetty"](' + bbox + ');' +
+            'node["shop"="fishing"](' + bbox + ');' +
+            ');out center;';
+
+        fetch(OVERPASS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'data=' + encodeURIComponent(q)
+        })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (data) {
+            var spots = (data.elements || []).map(function (el) {
+                var lat = el.lat || (el.center && el.center.lat);
+                var lng = el.lon || (el.center && el.center.lon);
+                var tags = el.tags || {};
+                var type = tags.man_made || tags.leisure || tags.shop || tags.amenity || 'fishing';
+                return { lat: lat, lng: lng, name: tags.name || '', type: type };
+            }).filter(function (f) { return f.lat && f.lng; });
+            spotCache[key] = spots;
+            renderFishingSpots(spots);
+        })
+        .catch(function () {}); // silently fail — not critical
+    }
+
+    function scheduleFishingSpotQuery() {
+        clearTimeout(spotQueryTimer);
+        spotQueryTimer = setTimeout(queryFishingSpots, 800);
     }
 
     // ─── Custom marker icon ───────────────────────────────────────────────────
@@ -810,10 +1148,16 @@
                     allSpecies = data.species_names;
                 }
 
+                // Update species meta for AI habitat inference (works for all 851 species)
+                currentSpeciesMeta = (data.species_meta && data.species_meta.name)
+                    ? data.species_meta : null;
+
                 monthlySummary = data.monthly_summary || [];
                 drawMarkers(currentData);
                 autoZoomToSavedLocation(currentData);
-                renderHotspots(currentData);
+                updateZoomHint();
+                scheduleFishingSpotQuery();
+                scheduleAIQuery();
                 renderMonthPlanner(monthlySummary, data.month);
                 renderTrendingChips(data.trending_species || []);
                 updateInsight(data);
