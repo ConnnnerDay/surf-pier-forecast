@@ -252,10 +252,9 @@
     var OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
     var SPOT_TYPES = {
-        pier:        { label: 'Fishing Pier',   color: '#a78bfa' },
-        jetty:       { label: 'Jetty',          color: '#818cf8' },
-        fishing:     { label: 'Fishing Spot',   color: '#2dd4bf' },
-        boat_rental: { label: 'Boat Rental',    color: '#38bdf8' },
+        pier:    { label: 'Fishing Pier',    color: '#a78bfa' },
+        jetty:   { label: 'Jetty',           color: '#818cf8' },
+        fishing: { label: 'Fishing Spot',    color: '#2dd4bf' },
         'fishing_shop': { label: 'Bait & Tackle', color: '#fb923c' }
     };
 
@@ -317,7 +316,6 @@
             'way["man_made"="pier"](' + bbox + ');' +
             'way["man_made"="jetty"](' + bbox + ');' +
             'node["shop"="fishing"](' + bbox + ');' +
-            'node["amenity"="boat_rental"](' + bbox + ');' +
             ');out center;';
 
         fetch(OVERPASS_URL, {
