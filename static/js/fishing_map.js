@@ -253,198 +253,172 @@
         hint.classList.toggle('fmap-zoom-hint--hidden', map.getZoom() >= 11);
     }
 
+
     // ─── AI Habitat Spot Finder ───────────────────────────────────────────────
     //
-    // Maps species name keywords → Overpass tags, habitat label, and reasoning.
-    // Used to show WHERE in the water fish are likely to be, not just which
-    // NOAA station area is active.
+    // Habitat type is inferred from the bait/rig/lures text returned by the API
+    // for the matched species — covers all 851 species without name hardcoding.
     //
-    var HABITAT_PROFILES = [
-        // ── Grass flat / estuary species ─────────────────────────────────────
-        {
-            match: /red drum|redfish|puppy drum/i,
-            habitats: [
-                { tag: 'way["natural"="wetland"]["wetland"="saltmarsh"]', type: 'saltmarsh' },
-                { tag: 'way["natural"="wetland"]["wetland"="tidalflat"]',  type: 'tidalflat' },
-                { tag: 'way["waterway"="tidal_channel"]',                  type: 'channel' },
-                { tag: 'node["natural"="shoal"]',                          type: 'shoal' }
-            ],
-            insight: 'Red drum hunt marsh grass edges and tidal creeks, especially on a flooding tide. Focus on channel mouths, oyster bars, and shallow flat edges where bait is pushed in.'
+    var HABITAT_DEFS = {
+        pelagic: {
+            tags:    [],   // open-ocean species — no fixed OSM features
+            color:   '#60a5fa',
+            insight: 'This is an offshore, open-water species. Fish concentrate along temperature breaks, current edges, floating weedlines, and bait schools — none of which are fixed map features. Head offshore and watch for birds, bait activity, and blue/green water color changes.'
         },
-        {
-            match: /speckled trout|spotted sea trout|seatrout/i,
-            habitats: [
-                { tag: 'way["natural"="wetland"]["wetland"="seagrass"]',  type: 'seagrass' },
-                { tag: 'way["natural"="wetland"]["wetland"="saltmarsh"]', type: 'saltmarsh' },
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' }
+        surf: {
+            tags: [
+                'way["natural"="beach"]',
+                'node["natural"="shoal"]'
             ],
-            insight: 'Speckled trout suspend over seagrass flats and patrol the edges of marsh creeks. Morning topwater bites happen in shallow grass; mid-day fish drop to channel edges.'
+            color:   '#fde68a',
+            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough.'
         },
-        {
-            match: /snook/i,
-            habitats: [
-                { tag: 'way["natural"="wetland"]["wetland"="mangrove"]',  type: 'mangrove' },
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' },
-                { tag: 'way["waterway"="canal"]',                         type: 'channel' }
+        mangrove: {
+            tags: [
+                'way["natural"="wetland"]["wetland"="mangrove"]',
+                'way["waterway"="tidal_channel"]'
             ],
-            insight: 'Snook ambush prey along mangrove shorelines and in tidal creek mouths. Outgoing tides concentrate fish at pinch points — bridges, culverts, and channel bends.'
+            color:   '#22c55e',
+            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out.'
         },
-        {
-            match: /tarpon/i,
-            habitats: [
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' },
-                { tag: 'way["natural"="wetland"]["wetland"="mangrove"]',  type: 'mangrove' },
-                { tag: 'node["natural"="bay"]',                           type: 'bay' }
+        grassflat: {
+            tags: [
+                'way["natural"="wetland"]["wetland"="seagrass"]',
+                'way["natural"="wetland"]["wetland"="saltmarsh"]',
+                'way["waterway"="tidal_channel"]'
             ],
-            insight: 'Tarpon migrate along coastlines and stack in passes, channels, and bays. Look for rolling fish near deep channel edges at dawn and dusk.'
+            color:   '#34d399',
+            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points.'
         },
-        {
-            match: /flounder|fluke/i,
-            habitats: [
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' },
-                { tag: 'node["natural"="shoal"]',                         type: 'shoal' },
-                { tag: 'way["natural"="wetland"]["wetland"="tidalflat"]', type: 'tidalflat' }
+        estuary: {
+            tags: [
+                'way["natural"="wetland"]["wetland"="saltmarsh"]',
+                'way["waterway"="tidal_channel"]',
+                'node["natural"="shoal"]',
+                'way["natural"="wetland"]["wetland"="tidalflat"]'
             ],
-            insight: 'Flounder bury in sandy or muddy bottom near structure. Channel edges, inlet mouths, and drop-offs adjacent to flats are key ambush spots.'
+            color:   '#2dd4bf',
+            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits.'
         },
-        // ── Surf / beach species ──────────────────────────────────────────────
-        {
-            match: /pompano/i,
-            habitats: [
-                { tag: 'way["natural"="beach"]',  type: 'beach' },
-                { tag: 'node["natural"="shoal"]', type: 'shoal' }
+        reef: {
+            tags: [
+                'way["natural"="reef"]',
+                'node["natural"="shoal"]',
+                'node["seamark:type"="wreck"]',
+                'node["historic"="wreck"]'
             ],
-            insight: 'Pompano run the beach in the wash zone, feeding on sand fleas in the troughs. Focus on cuts and sloughs in the sandbar — where the water digs deeper.'
+            color:   '#f59e0b',
+            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, and wrecks. Fish the upcurrent edge where bait gets swept against structure. Work the base of rock walls and depth transitions.'
         },
-        {
-            match: /surfperch|surf perch/i,
-            habitats: [
-                { tag: 'way["natural"="beach"]', type: 'beach' },
-                { tag: 'node["natural"="shoal"]', type: 'shoal' }
+        bottom: {
+            tags: [
+                'node["natural"="shoal"]',
+                'way["waterway"="tidal_channel"]',
+                'way["natural"="wetland"]["wetland"="tidalflat"]'
             ],
-            insight: 'Surfperch work the inner trough along sandy beaches. High surf pushes them into the wash zone — fish sand crabs in the white water.'
+            color:   '#fb923c',
+            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation.'
         },
-        // ── Structure / reef species ──────────────────────────────────────────
-        {
-            match: /striped bass|striper/i,
-            habitats: [
-                { tag: 'way["natural"="reef"]',                           type: 'reef' },
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' },
-                { tag: 'node["seamark:type"="wreck"]',                    type: 'wreck' },
-                { tag: 'node["historic"="wreck"]',                        type: 'wreck' }
+        general: {
+            tags: [
+                'way["natural"="reef"]',
+                'node["natural"="shoal"]',
+                'way["natural"="wetland"]["wetland"="saltmarsh"]',
+                'way["waterway"="tidal_channel"]'
             ],
-            insight: 'Striped bass stack behind rocky points, in rip lines, and along current seams. Channel edges and inlet mouths concentrate bait — fish the moving current transitions.'
-        },
-        {
-            match: /rockfish|rock cod/i,
-            habitats: [
-                { tag: 'way["natural"="reef"]',            type: 'reef' },
-                { tag: 'node["natural"="shoal"]',          type: 'shoal' },
-                { tag: 'node["seamark:type"="wreck"]',     type: 'wreck' }
-            ],
-            insight: 'Rockfish hold tight to rocky reef and structure from 20–300ft. Find pronounced depth breaks and underwater relief — they stack on the upcurrent side of pinnacles.'
-        },
-        {
-            match: /lingcod/i,
-            habitats: [
-                { tag: 'way["natural"="reef"]',   type: 'reef' },
-                { tag: 'node["natural"="shoal"]', type: 'shoal' }
-            ],
-            insight: 'Lingcod are ambush predators on hard rocky bottom. Target the base of reef walls and rocky ledges — they sit motionless and wait for bait to pass overhead.'
-        },
-        {
-            match: /halibut/i,
-            habitats: [
-                { tag: 'node["natural"="shoal"]',                         type: 'shoal' },
-                { tag: 'way["natural"="wetland"]["wetland"="tidalflat"]', type: 'tidalflat' },
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' }
-            ],
-            insight: 'Halibut bury in sandy or muddy bottom near drop-offs and current edges. Fish sandy flats adjacent to deep channels — they chase bait that gets swept over the shelf.'
-        },
-        {
-            match: /bluefish/i,
-            habitats: [
-                { tag: 'way["natural"="reef"]',           type: 'reef' },
-                { tag: 'way["waterway"="tidal_channel"]', type: 'channel' },
-                { tag: 'way["natural"="beach"]',          type: 'beach' }
-            ],
-            insight: 'Bluefish are nomadic but get pinned against structure and beaches when chasing bait schools. Watch for birds diving — that\'s where the action is.'
-        },
-        {
-            match: /black drum/i,
-            habitats: [
-                { tag: 'way["natural"="wetland"]["wetland"="saltmarsh"]', type: 'saltmarsh' },
-                { tag: 'node["natural"="shoal"]',                         type: 'shoal' },
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' }
-            ],
-            insight: 'Black drum root for crabs and mollusks in oyster beds and tidal flats. Mudding fish leave visible plume clouds on shallow flats — a sure giveaway.'
-        },
-        // ── Default fallback (generic good habitat) ───────────────────────────
-        {
-            match: /.*/,
-            habitats: [
-                { tag: 'way["natural"="reef"]',                           type: 'reef' },
-                { tag: 'node["natural"="shoal"]',                         type: 'shoal' },
-                { tag: 'way["natural"="wetland"]["wetland"="saltmarsh"]', type: 'saltmarsh' },
-                { tag: 'way["waterway"="tidal_channel"]',                 type: 'channel' }
-            ],
-            insight: 'Fish concentrate where structure meets current — reef edges, channel bends, and marsh creek mouths. These areas are highlighted based on local geography.'
+            color:   '#a78bfa',
+            insight: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, and marsh creek mouths. These highlighted areas offer the best natural ambush opportunities in the current view.'
         }
-    ];
-
-    var HABITAT_LABELS = {
-        reef:      { label: 'Reef / Structure',  color: '#f59e0b', tip: 'Rocky bottom & reef' },
-        saltmarsh: { label: 'Salt Marsh',        color: '#10b981', tip: 'Marsh grass edges' },
-        seagrass:  { label: 'Seagrass Bed',      color: '#34d399', tip: 'Seagrass flat' },
-        mangrove:  { label: 'Mangrove Edge',     color: '#22c55e', tip: 'Mangrove shoreline' },
-        channel:   { label: 'Tidal Channel',     color: '#38bdf8', tip: 'Tidal creek / channel' },
-        shoal:     { label: 'Shoal / Flat',      color: '#fbbf24', tip: 'Shallow shoal / sandbar' },
-        tidalflat: { label: 'Tidal Flat',        color: '#fb923c', tip: 'Exposed tidal flat' },
-        beach:     { label: 'Sandy Beach',       color: '#fde68a', tip: 'Sandy beach trough' },
-        wreck:     { label: 'Wreck / Structure', color: '#a78bfa', tip: 'Submerged wreck' },
-        bay:       { label: 'Bay / Cove',        color: '#60a5fa', tip: 'Protected bay' }
     };
 
-    function getHabitatProfile(speciesName) {
-        var name = speciesName || '';
-        for (var i = 0; i < HABITAT_PROFILES.length; i++) {
-            if (HABITAT_PROFILES[i].match.test(name)) return HABITAT_PROFILES[i];
+    // Infer habitat type from bait + rig + lures text.
+    // Automatically covers all 851 species without any name hardcoding.
+    function inferHabitatType(meta) {
+        var text = [meta.bait || '', meta.rig || '', meta.lures || ''].join(' ').toLowerCase();
+
+        if (/troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|marlin|sailfish|wahoo|yellowfin|blackfin\s*tuna|mahi/.test(text)) {
+            return 'pelagic';
         }
-        return HABITAT_PROFILES[HABITAT_PROFILES.length - 1];
+        if (/sand\s*(crab|flea|flee)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
+            return 'surf';
+        }
+        if (/mangrove/.test(text)) {
+            return 'mangrove';
+        }
+        if (/popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
+            return 'grassflat';
+        }
+        if (/marsh|tidal\s*(creek|channel)|inlet|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
+            return 'estuary';
+        }
+        if (/reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef/.test(text)) {
+            return 'reef';
+        }
+        if (/bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
+            return 'bottom';
+        }
+        return 'general';
     }
 
-    function makeAIPickIcon(type) {
-        var cfg   = HABITAT_LABELS[type] || HABITAT_LABELS.reef;
-        var color = cfg.color;
-        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + color + '"></span>';
+    var HABITAT_TYPE_LABELS = {
+        reef:      { tip: 'Rocky reef or wreck' },
+        saltmarsh: { tip: 'Salt marsh edge' },
+        seagrass:  { tip: 'Seagrass flat' },
+        mangrove:  { tip: 'Mangrove shoreline' },
+        channel:   { tip: 'Tidal creek / channel' },
+        shoal:     { tip: 'Shallow shoal / sandbar' },
+        tidalflat: { tip: 'Tidal flat' },
+        beach:     { tip: 'Sandy beach trough' },
+        wreck:     { tip: 'Submerged wreck' },
+        bay:       { tip: 'Bay / cove' }
+    };
+
+    function osmTagsToType(tags) {
+        if (!tags) return 'general';
+        if (tags.wetland === 'saltmarsh')  return 'saltmarsh';
+        if (tags.wetland === 'seagrass')   return 'seagrass';
+        if (tags.wetland === 'mangrove')   return 'mangrove';
+        if (tags.wetland === 'tidalflat')  return 'tidalflat';
+        if (tags.natural === 'reef')       return 'reef';
+        if (tags.natural === 'shoal')      return 'shoal';
+        if (tags.natural === 'beach')      return 'beach';
+        if (tags.natural === 'bay')        return 'bay';
+        if (tags.waterway)                 return 'channel';
+        if (tags['seamark:type'] === 'wreck' || tags.historic === 'wreck') return 'wreck';
+        return 'general';
+    }
+
+    function makeAIPickIcon(osmType, habitatType) {
+        var def   = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
+        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + def.color + '"></span>';
         return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [14, 14], iconAnchor: [7, 7] });
     }
 
-    function renderAIHabitatSpots(features, profile) {
+    var currentSpeciesMeta = null;
+
+    function renderAIHabitatSpots(features, habitatType) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
 
-        // Update the AI bar
-        var bar = document.getElementById('fmap-ai-bar');
+        var def     = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
+        var bar     = document.getElementById('fmap-ai-bar');
         var barText = document.getElementById('fmap-ai-bar-text');
-        if (bar && barText) {
-            if (features.length && activeSpecies) {
-                barText.textContent = profile.insight;
-                bar.hidden = false;
-            } else {
-                bar.hidden = true;
-            }
+
+        if (bar && barText && activeSpecies) {
+            barText.textContent = def.insight;
+            bar.hidden = false;
+        } else if (bar) {
+            bar.hidden = true;
         }
 
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
-            var cfg   = HABITAT_LABELS[f.type] || HABITAT_LABELS.reef;
-            var m     = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(f.type) });
-            var name  = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
+            var m      = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(f.osmType, habitatType) });
+            var name   = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             m.bindTooltip(
-                '<span class="fmap-ai-tip-label">AI Pick</span>' +
-                name +
-                '<span style="opacity:.8">' + esc(cfg.tip) + '</span>',
+                '<span class="fmap-ai-tip-label">AI Pick</span>' + name +
+                '<span style="opacity:.8">' + esc(tipCfg.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
@@ -453,70 +427,61 @@
 
     function queryAIHabitatSpots() {
         if (!map || !aiPickLayer) return;
-        if (!activeSpecies || map.getZoom() < 10) {
-            if (aiPickLayer) aiPickLayer.clearLayers();
-            var bar = document.getElementById('fmap-ai-bar');
+        var bar = document.getElementById('fmap-ai-bar');
+
+        if (!activeSpecies || !currentSpeciesMeta) {
+            aiPickLayer.clearLayers();
             if (bar) bar.hidden = true;
             return;
         }
 
-        var profile = getHabitatProfile(activeSpecies);
-        var b = map.getBounds();
-        var s = Math.floor(b.getSouth() * 4) / 4;
-        var w = Math.floor(b.getWest()  * 4) / 4;
-        var n = Math.ceil(b.getNorth()  * 4) / 4;
-        var e = Math.ceil(b.getEast()   * 4) / 4;
-        var key = activeSpecies.toLowerCase() + '|' + s + ',' + w + ',' + n + ',' + e;
+        var habitatType = inferHabitatType(currentSpeciesMeta);
+        var def         = HABITAT_DEFS[habitatType];
 
-        if (aiCache[key]) {
-            renderAIHabitatSpots(aiCache[key], profile);
+        // Pelagic / open-water: show insight bar only, no OSM markers to place
+        if (!def || !def.tags.length) {
+            aiPickLayer.clearLayers();
+            var barText = document.getElementById('fmap-ai-bar-text');
+            if (bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
             return;
         }
 
-        var bbox = s + ',' + w + ',' + n + ',' + e;
-        var tags = profile.habitats.map(function (h) { return h.tag + '(' + bbox + ');'; }).join('');
-        var q    = '[out:json][timeout:20];(' + tags + ');out center;';
+        if (map.getZoom() < 10) {
+            aiPickLayer.clearLayers();
+            if (bar) bar.hidden = true;
+            return;
+        }
+
+        var b   = map.getBounds();
+        var s   = Math.floor(b.getSouth() * 4) / 4;
+        var w   = Math.floor(b.getWest()  * 4) / 4;
+        var n   = Math.ceil(b.getNorth()  * 4) / 4;
+        var e   = Math.ceil(b.getEast()   * 4) / 4;
+        var key = habitatType + '|' + s + ',' + w + ',' + n + ',' + e;
+
+        if (aiCache[key]) { renderAIHabitatSpots(aiCache[key], habitatType); return; }
+
+        var bbox  = s + ',' + w + ',' + n + ',' + e;
+        var tags  = def.tags.map(function (t) { return t + '(' + bbox + ');'; }).join('');
+        var query = '[out:json][timeout:20];(' + tags + ');out center;';
 
         fetch(OVERPASS_URL, {
-            method: 'POST',
+            method:  'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(q)
+            body:    'data=' + encodeURIComponent(query)
         })
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (data) {
-            var typeMap = {};
-            profile.habitats.forEach(function (h) {
-                // map OSM tag values back to our type keys
-                var m = h.tag.match(/"([^"]+)"\]$/);
-                if (m) typeMap[m[1]] = h.type;
-                // also match the tag key for man_made/waterway patterns
-                var m2 = h.tag.match(/"([^"=]+)"="([^"]+)"/g);
-                if (m2 && m2.length) typeMap[h.type] = h.type;
-            });
-
             var features = (data.elements || []).map(function (el) {
-                var lat  = el.lat || (el.center && el.center.lat);
-                var lng  = el.lon || (el.center && el.center.lon);
-                var tags = el.tags || {};
-                // Determine habitat type from tags
-                var type = 'reef';
-                if (tags.wetland) {
-                    type = tags.wetland === 'saltmarsh' ? 'saltmarsh'
-                         : tags.wetland === 'seagrass'  ? 'seagrass'
-                         : tags.wetland === 'mangrove'  ? 'mangrove'
-                         : tags.wetland === 'tidalflat' ? 'tidalflat'
-                         : 'saltmarsh';
-                } else if (tags.natural === 'reef')  { type = 'reef'; }
-                  else if (tags.natural === 'shoal') { type = 'shoal'; }
-                  else if (tags.natural === 'beach') { type = 'beach'; }
-                  else if (tags.natural === 'bay')   { type = 'bay'; }
-                  else if (tags.waterway)             { type = 'channel'; }
-                  else if (tags['seamark:type'] === 'wreck' || tags.historic === 'wreck') { type = 'wreck'; }
-                return { lat: lat, lng: lng, name: tags.name || '', type: type };
+                return {
+                    lat:     el.lat  || (el.center && el.center.lat),
+                    lng:     el.lon  || (el.center && el.center.lon),
+                    name:    (el.tags || {}).name || '',
+                    osmType: osmTagsToType(el.tags || {})
+                };
             }).filter(function (f) { return f.lat && f.lng; });
-
             aiCache[key] = features;
-            renderAIHabitatSpots(features, profile);
+            renderAIHabitatSpots(features, habitatType);
         })
         .catch(function () {});
     }
@@ -1084,6 +1049,10 @@
                 if (allSpecies.length === 0 && data.species_names) {
                     allSpecies = data.species_names;
                 }
+
+                // Update species meta for AI habitat inference (works for all 851 species)
+                currentSpeciesMeta = (data.species_meta && data.species_meta.name)
+                    ? data.species_meta : null;
 
                 monthlySummary = data.monthly_summary || [];
                 drawMarkers(currentData);

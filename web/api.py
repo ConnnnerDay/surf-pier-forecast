@@ -1090,6 +1090,19 @@ def fishing_map_data() -> Any:
         # Return top 10 by number of active locations
         trending_species = sorted(peak_sp_counts, key=lambda n: -peak_sp_counts[n])[:10]
 
+    # When a species filter is active, return enough metadata for the JS to infer
+    # habitat type and build a relevant Overpass query — without hardcoding species names.
+    species_meta: dict = {}
+    if species_q and filtered_species:
+        sp0 = filtered_species[0]
+        species_meta = {
+            "name":   sp0["name"],
+            "bait":   sp0.get("bait",  ""),
+            "rig":    sp0.get("rig",   ""),
+            "lures":  sp0.get("lures", ""),
+            "coast":  sp0.get("coast", ""),
+        }
+
     return jsonify({
         "locations": results,
         "month": month,
@@ -1097,4 +1110,5 @@ def fishing_map_data() -> Any:
         "species_names": species_names,
         "monthly_summary": monthly_summary,
         "trending_species": trending_species,
+        "species_meta": species_meta,
     })
