@@ -6,7 +6,7 @@
     <title>Surf &amp; Pier Fishing Forecast &mdash; Real-time Coastal Forecasts</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#0e5f78">
@@ -64,17 +64,23 @@
         <section class="landing-features-section">
             <div class="landing-features">
                 <div class="landing-feature">
-                    <div class="landing-feature-icon" aria-hidden="true">&#127754;</div>
+                    <span class="landing-feature-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                    </span>
                     <strong>Live Conditions</strong>
                     <p>Wind, swell, tides, and water temp refreshed hourly from NOAA and NWS.</p>
                 </div>
                 <div class="landing-feature">
-                    <div class="landing-feature-icon" aria-hidden="true">&#127907;</div>
+                    <span class="landing-feature-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M5 12H3"/><path d="M21 12h-2"/><path d="M12 5V3"/><path d="M12 21v-2"/><path d="M7.05 7.05 5.64 5.64"/><path d="M18.36 18.36l-1.41-1.41"/><path d="M7.05 16.95l-1.41 1.41"/><path d="M18.36 5.64l-1.41 1.41"/></svg>
+                    </span>
                     <strong>Species Outlook</strong>
                     <p>See which fish are biting based on conditions and solunar timing.</p>
                 </div>
                 <div class="landing-feature">
-                    <div class="landing-feature-icon" aria-hidden="true">&#128221;</div>
+                    <span class="landing-feature-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                    </span>
                     <strong>Regulations</strong>
                     <p>Size and bag limits pulled live from state agencies so you always know the rules.</p>
                 </div>
