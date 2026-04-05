@@ -246,14 +246,16 @@ header .subtitle {
 }
 
 .banner {
-  display: inline-block;
-  margin-top: 0.4rem;
-  background-color: rgba(255, 217, 102, 0.9);
-  color: #5a3802;
-  padding: 0.35rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  display: block;
+  margin: 0;
+  background: linear-gradient(to right, #FFFBEB, #FFF8DC);
+  color: #78350F;
+  padding: 0.45rem 1rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #FDE68A;
+  border-top: 1px solid #FEF3C7;
 }
 
 /* ---------- Main ---------- */
@@ -903,6 +905,7 @@ h2::before {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 0.85rem 1rem;
+  border: 1px solid var(--border-light);
 }
 
 .tide-timeline {
@@ -914,13 +917,18 @@ h2::before {
 .tide-point {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.75rem;
+  gap: 0.55rem;
+  padding: 0.55rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
   background: var(--card-bg);
-  flex: 1 1 150px;
-  min-width: 150px;
+  flex: 1 1 155px;
+  min-width: 155px;
+  transition: box-shadow 0.15s ease;
+}
+
+.tide-point:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .tide-point.tide-high {
@@ -933,8 +941,8 @@ h2::before {
 
 .tide-type-icon {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -947,7 +955,7 @@ h2::before {
 }
 
 .tide-low .tide-type-icon {
-  background: #fef5e0;
+  background: #FEF3C7;
   color: var(--amber);
 }
 
@@ -958,10 +966,10 @@ h2::before {
 }
 
 .tide-type {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 .tide-high .tide-type {
@@ -973,16 +981,25 @@ h2::before {
 }
 
 .tide-time {
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 
 .tide-height {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
   white-space: nowrap;
+}
+
+.tide-high .tide-height {
+  color: var(--ocean);
+}
+
+.tide-low .tide-height {
+  color: var(--amber);
 }
 
 .tide-chart-wrap {
@@ -1027,6 +1044,7 @@ h2::before {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 0.85rem 1rem;
+  border: 1px solid var(--border-light);
 }
 
 .solunar-header {
@@ -1051,19 +1069,25 @@ h2::before {
   align-items: center;
   gap: 0.2rem;
   flex-shrink: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
 }
 
 .moon-icon {
   display: block;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 .moon-label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
   color: var(--text-muted);
   text-align: center;
   white-space: nowrap;
+  max-width: 90px;
+  line-height: 1.2;
 }
 
 .solunar-grid {
@@ -1075,15 +1099,21 @@ h2::before {
 .solunar-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
   background: var(--card-bg);
+  transition: box-shadow 0.15s ease;
+}
+
+.solunar-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .solunar-major {
-  border-left: 3px solid var(--coral);
+  border-left: 3px solid #D97706;
+  background: linear-gradient(to right, rgba(253,230,138,0.12) 0%, transparent 55%);
 }
 
 .solunar-minor {
@@ -1092,8 +1122,8 @@ h2::before {
 
 .solunar-icon {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1101,8 +1131,8 @@ h2::before {
 }
 
 .solunar-major .solunar-icon {
-  background: #fef0ec;
-  color: var(--coral);
+  background: #FEF3C7;
+  color: #D97706;
 }
 
 .solunar-minor .solunar-icon {
@@ -1113,17 +1143,18 @@ h2::before {
 .solunar-info {
   display: flex;
   flex-direction: column;
+  gap: 0.05rem;
 }
 
 .solunar-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 .solunar-major .solunar-label {
-  color: var(--coral);
+  color: #D97706;
 }
 
 .solunar-minor .solunar-label {
@@ -1131,9 +1162,10 @@ h2::before {
 }
 
 .solunar-times {
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 /* ---------- Species cards ---------- */
@@ -2609,21 +2641,23 @@ h2::before {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 0.85rem 1rem;
+  border: 1px solid var(--border-light);
 }
 
 .best-day-callout {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: var(--ocean-light);
-  border: 1.5px solid var(--ocean);
-  border-radius: 8px;
-  padding: 0.45rem 0.75rem;
-  margin-bottom: 0.65rem;
+  gap: 0.65rem;
+  background: linear-gradient(to right, #FFFBEB, #FFF8E1);
+  border: 1.5px solid #F59E0B;
+  border-left: 4px solid #D97706;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 0.7rem;
 }
 
 .best-day-icon {
-  color: var(--ocean);
+  color: #D97706;
   flex-shrink: 0;
 }
 
@@ -2633,13 +2667,15 @@ h2::before {
 
 .best-day-label {
   display: block;
-  font-size: 0.82rem;
-  color: var(--ocean);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400E;
 }
 
 .best-day-rec {
-  font-size: 0.78rem;
-  color: var(--text-muted);
+  font-size: 0.76rem;
+  color: #78350F;
+  opacity: 0.85;
 }
 
 .outlook-grid {
@@ -2651,13 +2687,20 @@ h2::before {
 .outlook-card {
   background: var(--card-bg);
   border: 1px solid var(--border-light);
+  border-top: 3px solid var(--border-light);
   border-radius: var(--radius-sm);
-  padding: 0.6rem;
+  padding: 0.7rem 0.65rem;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.outlook-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .outlook-header {
@@ -2667,14 +2710,16 @@ h2::before {
 }
 
 .outlook-day {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .outlook-date {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .outlook-card .outlook-verdict {
@@ -7660,23 +7705,27 @@ footer p {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 0.8rem;
   border-radius: var(--radius-sm);
-  margin-bottom: 0.5rem;
-  font-size: 0.75rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.76rem;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .tide-state-banner--rising {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #1e40af;
-  border-left: 4px solid #3b82f6;
+  background: linear-gradient(to right, #EFF6FF, #F8FAFF);
+  color: #1E3A8A;
+  border-left: 4px solid #0077B6;
+  border: 1px solid #BFDBFE;
+  border-left: 4px solid #0077B6;
 }
 
 .tide-state-banner--falling {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  border-left: 4px solid #f59e0b;
+  background: linear-gradient(to right, #FFFBEB, #FFFDF5);
+  color: #78350F;
+  border: 1px solid #FDE68A;
+  border-left: 4px solid #D97706;
 }
 
 [data-theme="dark"] .tide-state-banner--rising {
@@ -7877,28 +7926,36 @@ footer p {
 
 .section-header-row h2 {
   margin-bottom: 0;
+  font-size: 1.05rem;
+}
+
+.solunar-header h2::before {
+  background: #D97706;
 }
 
 .section-context-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.7rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .section-context-badge--incoming-tide {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #DBEAFE;
+  color: #1E3A8A;
+  border: 1px solid #BFDBFE;
 }
 
 .section-context-badge--outgoing-tide {
-  background: #fef3c7;
-  color: #92400e;
+  background: #FEF3C7;
+  color: #78350F;
+  border: 1px solid #FDE68A;
 }
 
 [data-theme="dark"] .section-context-badge--incoming-tide {
@@ -9806,9 +9863,10 @@ body.has-app-header main {
 /* ---- LOCATION INFO BAR (below app header on dashboard) ---- */
 
 .location-bar {
-  background: var(--bg-subtle);
-  border-bottom: 1px solid var(--border-light);
-  padding: 0.4rem 1rem;
+  background: var(--white);
+  border-bottom: 2px solid var(--border-light);
+  padding: 0.45rem 1rem;
+  box-shadow: 0 1px 3px rgba(0,60,120,0.05);
 }
 
 .location-bar-inner {
@@ -9822,12 +9880,13 @@ body.has-app-header main {
 }
 
 .location-bar-name {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--text);
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  letter-spacing: -0.01em;
 }
 
 .location-bar-actions {
@@ -10186,25 +10245,27 @@ details[open] .collapsible-module-body {
 .sol-countdown-chip {
   display: inline-block;
   margin-top: 0.35rem;
-  padding: 0.22rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  background: rgba(14,95,120,0.1);
+  padding: 0.2rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--ocean-light);
   color: var(--ocean);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .sol-countdown-chip--active {
-  background: rgba(39,174,96,0.15);
-  color: #1a7a42;
+  background: #D1FAE5;
+  color: #065F46;
   animation: sol-pulse 2s ease-in-out infinite;
+  border: 1px solid #6EE7B7;
 }
 .sol-countdown-chip--minor-active {
-  background: rgba(39,174,96,0.09);
-  color: #2a8a50;
+  background: #ECFDF5;
+  color: #065F46;
 }
 .sol-countdown-chip--minor {
-  background: rgba(14,95,120,0.07);
+  background: var(--bg-subtle);
   color: var(--text-muted);
 }
 @keyframes sol-pulse {
