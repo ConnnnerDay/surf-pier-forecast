@@ -9667,6 +9667,15 @@ body.has-app-header main {
 
 .top-species-section {
   margin: 0.65rem;
+  background: #FFFBF0;
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  border: 1px solid #E8D9B8;
+}
+
+[data-theme="dark"] .top-species-section {
+  background: rgba(217,119,6,0.06);
+  border-color: rgba(217,119,6,0.18);
 }
 
 .top-species-header {
@@ -9687,14 +9696,16 @@ body.has-app-header main {
 }
 
 .top-species-viewall {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--ocean);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #D97706;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.2rem;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .top-species-viewall:hover {
@@ -9711,10 +9722,15 @@ body.has-app-header main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--card-bg);
+  background: rgba(255,255,255,0.7);
   border-radius: var(--radius-sm);
   padding: 0.5rem 0.75rem;
-  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(232,217,184,0.7);
+}
+
+[data-theme="dark"] .top-species-row {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(217,119,6,0.1);
 }
 
 .tsr-rank {
