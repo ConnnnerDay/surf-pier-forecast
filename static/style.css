@@ -880,11 +880,16 @@ h2::before {
 /* ---------- Tide section ---------- */
 
 .tide-section {
-  background: var(--white);
+  background: #F0F6FB;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid #C8DFF0;
+}
+
+[data-theme="dark"] .tide-section {
+  background: rgba(0,119,182,0.08);
+  border-color: rgba(0,119,182,0.2);
 }
 
 .tide-timeline {
@@ -1019,11 +1024,41 @@ h2::before {
 /* ---------- Solunar section ---------- */
 
 .solunar-section {
-  background: var(--white);
+  background: #0D2240;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.28);
   padding: 0.85rem 1rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.9);
+}
+
+/* Invert text colors inside the dark solunar section */
+.solunar-section h2,
+.solunar-section .solunar-label { color: rgba(255,255,255,0.5); }
+.solunar-section .section-sub { color: rgba(255,255,255,0.45); }
+.solunar-section .solunar-times { color: rgba(255,255,255,0.92); }
+.solunar-section .solunar-card {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+}
+.solunar-section .solunar-major {
+  border-left-color: #F59E0B;
+  background: linear-gradient(to right, rgba(245,158,11,0.12) 0%, transparent 55%);
+}
+.solunar-section .solunar-minor {
+  border-left-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.04);
+}
+.solunar-section .moon-label { color: rgba(255,255,255,0.6); }
+.solunar-section .sol-countdown-chip {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.solunar-section .sol-countdown-chip--active {
+  background: rgba(39,174,96,0.25);
+  color: #6EE7B7;
+  border-color: rgba(110,231,183,0.3);
 }
 
 .solunar-header {
@@ -1150,11 +1185,16 @@ h2::before {
 /* ---------- Species cards ---------- */
 
 .species-section {
-  background: var(--white);
+  background: #FFFBF0;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid #E8D9B8;
+}
+
+[data-theme="dark"] .species-section {
+  background: rgba(217,119,6,0.06);
+  border-color: rgba(217,119,6,0.18);
 }
 
 .species-section h2 {
@@ -1310,13 +1350,15 @@ h2::before {
   align-items: flex-start;
   gap: 0.15rem;
   margin: 0 0 0.25rem;
-  padding: 0.2rem 0.4rem;
+  padding: 0.15rem 0 0.15rem 0.6rem;
   font-size: 0.68rem;
-  color: var(--ocean);
-  background: var(--ocean-light);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--ocean);
-  line-height: 1.3;
+  color: #78350F;
+  background: none;
+  border-radius: 0;
+  border-left: 2px solid #D97706;
+  line-height: 1.35;
+  font-style: italic;
+  font-family: 'Instrument Serif', Georgia, serif;
 }
 
 .species-meta {
@@ -1338,10 +1380,10 @@ h2::before {
 
 .meta-label {
   font-size: 0.6rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ocean);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 0.25rem;
