@@ -1086,8 +1086,8 @@ h2::before {
   align-items: center;
   gap: 0.2rem;
   flex-shrink: 0;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-light);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px;
   padding: 0.4rem 0.6rem;
 }
@@ -1100,7 +1100,7 @@ h2::before {
 .moon-label {
   font-size: 0.62rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.55);
   text-align: center;
   white-space: nowrap;
   max-width: 90px;
