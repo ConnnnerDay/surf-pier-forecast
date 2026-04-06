@@ -1145,13 +1145,24 @@ h2::before {
 }
 
 .solunar-major .solunar-icon {
-  background: #FEF3C7;
-  color: #D97706;
+  background: rgba(245,158,11,0.15);
+  color: #F59E0B;
 }
 
 .solunar-minor .solunar-icon {
-  background: var(--ocean-light);
-  color: var(--ocean);
+  background: rgba(0,119,182,0.12);
+  color: #38BDF8;
+}
+
+/* On the dark solunar section, adjust icon backgrounds */
+.solunar-section .solunar-major .solunar-icon {
+  background: rgba(245,158,11,0.2);
+  color: #F59E0B;
+}
+
+.solunar-section .solunar-minor .solunar-icon {
+  background: rgba(56,189,248,0.15);
+  color: #38BDF8;
 }
 
 .solunar-info {
@@ -7748,30 +7759,34 @@ footer p {
 }
 
 .tide-state-banner--rising {
-  background: linear-gradient(to right, #EFF6FF, #F8FAFF);
-  color: #1E3A8A;
-  border-left: 4px solid #0077B6;
-  border: 1px solid #BFDBFE;
-  border-left: 4px solid #0077B6;
+  background: rgba(0,119,182,0.1);
+  color: #023E8A;
+  border: none;
+  border-left: 3px solid #0077B6;
 }
 
 .tide-state-banner--falling {
-  background: linear-gradient(to right, #FFFBEB, #FFFDF5);
+  background: rgba(217,119,6,0.1);
   color: #78350F;
-  border: 1px solid #FDE68A;
-  border-left: 4px solid #D97706;
+  border: none;
+  border-left: 3px solid #D97706;
+}
+
+.tide-state-banner--slack {
+  background: rgba(100,116,139,0.1);
+  color: var(--text-muted);
+  border: none;
+  border-left: 3px solid #64748B;
 }
 
 [data-theme="dark"] .tide-state-banner--rising {
-  background: linear-gradient(135deg, #1a2d48, #1e3a5f);
+  background: rgba(0,119,182,0.15);
   color: #93c5fd;
-  border-left-color: #3b82f6;
 }
 
 [data-theme="dark"] .tide-state-banner--falling {
-  background: linear-gradient(135deg, #2d2010, #3d2c18);
+  background: rgba(217,119,6,0.15);
   color: #fcd34d;
-  border-left-color: #f59e0b;
 }
 
 /* ---------- Wind Quality Row (in conditions section) ---------- */
