@@ -856,8 +856,8 @@ h2::before {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--ocean-light);
-  color: var(--ocean);
+  background: rgba(0,119,182,0.1);
+  color: #0077B6;
 }
 
 .spot-tip-body {
@@ -1186,7 +1186,7 @@ h2::before {
 }
 
 .solunar-minor .solunar-label {
-  color: var(--ocean);
+  color: #38BDF8;
 }
 
 .solunar-times {
@@ -7663,7 +7663,7 @@ footer p {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ocean);
+  color: var(--text-muted);
 }
 
 .hero-stat-value {
@@ -9827,20 +9827,22 @@ body.has-app-header main {
   justify-content: center;
   gap: 0.4rem;
   width: 100%;
-  padding: 0.65rem;
-  background: var(--bg-subtle);
-  border: none;
+  padding: 0.6rem;
+  background: rgba(217,119,6,0.08);
+  border: 1px solid rgba(217,119,6,0.25);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ocean);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #D97706;
   cursor: pointer;
   margin-top: 0.5rem;
   transition: background 0.15s;
 }
 
 .top-species-expand-btn:hover {
-  background: var(--border-light);
+  background: rgba(217,119,6,0.14);
 }
 
 /* ---- 24H ACTIVITY TIMELINE IMPROVEMENTS ---- */
