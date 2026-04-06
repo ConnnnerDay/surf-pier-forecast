@@ -2675,9 +2675,15 @@ h2::before {
 .outlook-section {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid #DDD6FE;
+  border-top: 3px solid #7C3AED;
+}
+
+[data-theme="dark"] .outlook-section {
+  border-color: rgba(124,58,237,0.2);
+  border-top-color: #7C3AED;
 }
 
 .best-day-callout {
@@ -7845,8 +7851,10 @@ footer p {
 .hourly-timeline-section {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   padding: 0.85rem 1rem;
+  border: 1px solid var(--border-light);
+  border-top: 3px solid var(--coral);
 }
 
 .hourly-timeline-section h2 {
