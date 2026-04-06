@@ -20,9 +20,9 @@
   --bg-body: #EDE8DF;
   --border-light: #D8E3EC;
   --card-bg: #FAFAF8;
-  --shadow-sm: 0 1px 3px rgba(0,60,120,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,60,120,0.11);
-  --shadow-lg: 0 8px 28px rgba(0,60,120,0.15);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 28px rgba(0,0,0,0.14);
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -5830,11 +5830,11 @@ footer p {
 
 .auth-field label {
   display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ocean);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
   margin-bottom: 0.3rem;
 }
 
