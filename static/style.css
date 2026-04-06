@@ -549,7 +549,7 @@ h2::before {
 }
 
 .best-time--prime {
-  border-top-color: var(--ocean);
+  border-top-color: var(--coral);
 }
 
 .best-time--good {
@@ -569,7 +569,7 @@ h2::before {
 }
 
 .best-time--prime .bt-quality {
-  color: var(--ocean);
+  color: var(--coral);
 }
 
 .best-time--good .bt-quality {
@@ -589,9 +589,11 @@ h2::before {
 }
 
 .bt-reason {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   line-height: 1.3;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 /* ---------- Conditions stat grid ---------- */
@@ -1560,8 +1562,9 @@ h2::before {
 .rig-card h3 {
   margin: 0 0 0.5rem;
   font-size: 1rem;
-  font-weight: 600;
-  color: var(--ocean);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .rig-diagram {
@@ -10980,7 +10983,7 @@ details[open] .collapsible-module-body {
 
 /* ── Collapsible summary sub-label (e.g. Pack for Today headline) ──────── */
 .collapsible-module-sub {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 400;
   color: var(--text-muted, #6b7b8d);
   margin-left: 0.5rem;
@@ -10988,6 +10991,8 @@ details[open] .collapsible-module-body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 /* ================================================================
