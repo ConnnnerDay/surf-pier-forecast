@@ -597,9 +597,10 @@ h2::before {
 .conditions-section {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 12px rgba(13,34,64,0.12), 0 1px 3px rgba(0,0,0,0.08);
   padding: 0.85rem 1rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(13,34,64,0.18);
+  overflow: hidden;
 }
 
 .stat-grid {
@@ -617,12 +618,25 @@ h2::before {
   align-items: flex-start;
   text-align: left;
   border: 1px solid var(--border-light);
-  border-left: 3px solid var(--ocean);
   transition: box-shadow 0.15s ease;
 }
 
 .stat-card:hover {
   box-shadow: var(--shadow-md);
+}
+
+/* Water temp: hero stat — spans 2 columns, bigger number */
+.stat-grid .stat-card:first-child {
+  grid-column: 1 / span 2;
+  border-top: 3px solid #0EA5E9;
+  background: linear-gradient(135deg, rgba(14,165,233,0.06) 0%, transparent 60%);
+}
+.stat-grid .stat-card:first-child .stat-value {
+  font-size: 1.8rem;
+  letter-spacing: -0.03em;
+}
+.stat-grid .stat-card:first-child .stat-label {
+  color: #0EA5E9;
 }
 
 /* Semantic icon above the stat label */
@@ -645,6 +659,7 @@ h2::before {
   color: var(--text);
   line-height: 1.15;
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-detail {
@@ -654,14 +669,13 @@ h2::before {
   line-height: 1.3;
 }
 
-/* Per-stat type accent colors */
-.stat-card:has(.stat-label:contains("Water Temp")) { border-left-color: #0EA5E9; }
-.stat-card:has(.stat-label:contains("Wind")) { border-left-color: #64748B; }
-.stat-card:has(.stat-label:contains("Waves")) { border-left-color: #0077B6; }
-.stat-card:has(.stat-label:contains("Tide")) { border-left-color: #059669; }
-.stat-card:has(.stat-label:contains("Pressure")) { border-left-color: #7C3AED; }
-.stat-card:has(.stat-label:contains("Air Temp")) { border-left-color: #F97316; }
-.stat-card:has(.stat-label:contains("UV")) { border-left-color: #FBBF24; }
+/* Subtle top-border accent per stat type — no uniform left-border treatment */
+.stat-card[data-stat="wind"] { border-top: 2px solid #64748B; }
+.stat-card[data-stat="waves"] { border-top: 2px solid #0077B6; }
+.stat-card[data-stat="tide"] { border-top: 2px solid #059669; }
+.stat-card[data-stat="pressure"] { border-top: 2px solid #7C3AED; }
+.stat-card[data-stat="air-temp"] { border-top: 2px solid #F97316; }
+.stat-card[data-stat="uv"] { border-top: 2px solid #FBBF24; }
 
 .temp-trend-icon {
   vertical-align: -1px;
@@ -2646,80 +2660,93 @@ h2::before {
 .outlook-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .outlook-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-light);
-  border-top: 3px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  padding: 0.7rem 0.65rem;
-  text-align: center;
+  padding: 0.75rem 0.7rem;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.45rem;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  gap: 0.3rem;
+  border-right: 1px solid var(--border-light);
+  background: var(--card-bg);
 }
 
-.outlook-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.outlook-card:last-child {
+  border-right: none;
 }
 
 .outlook-header {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 .outlook-day {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 800;
   color: var(--text);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .outlook-date {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   font-weight: 500;
 }
 
-.outlook-card .outlook-verdict {
-  font-size: 0.75rem;
-  padding: 0.3rem 1rem;
+/* Verdict as large type, no pill */
+.outlook-card .outlook-verdict.verdict-badge {
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
+
+.outlook-card .outlook-verdict.verdict-good { color: #059669; }
+.outlook-card .outlook-verdict.verdict-fair { color: #D97706; }
+.outlook-card .outlook-verdict.verdict-excellent { color: #059669; }
+.outlook-card .outlook-verdict.verdict-challenging { color: #EA580C; }
+.outlook-card .outlook-verdict.verdict-poor,
+.outlook-card .outlook-verdict.verdict-not-worth-it { color: #DC2626; }
 
 .outlook-details {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  width: 100%;
+  gap: 0.18rem;
+  margin-top: auto;
 }
 
 .outlook-detail {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8rem;
+  flex-direction: column;
+  font-size: 0.72rem;
 }
 
 .outlook-detail-label {
-  font-weight: 600;
-  color: var(--ocean);
-  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 0.58rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .outlook-detail-value {
   color: var(--text);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.75rem;
 }
 
 .outlook-species {
@@ -9428,25 +9455,31 @@ body.has-app-header main {
 }
 
 .csc-verdict-bar {
-  padding: 0.85rem 1rem 0.65rem;
-  border-bottom: 1px solid var(--border-light);
+  padding: 0.85rem 1rem 0.75rem;
+  margin: -0.85rem -1rem 0.65rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
+  background: linear-gradient(145deg, #0D2240 0%, #102A45 100%);
 }
 
 [data-theme="dark"] .csc-verdict-bar {
-  border-bottom-color: var(--border-light);
+  background: linear-gradient(145deg, #07131F 0%, #0A1A2B 100%);
+  border-bottom-color: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .conditions-section {
+  border-color: rgba(255,255,255,0.08);
 }
 
 .csc-location {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.45);
   margin: 0 0 0.1rem;
 }
 
@@ -9481,7 +9514,7 @@ body.has-app-header main {
 
 .csc-verdict-summary {
   font-size: 0.76rem;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.58);
   margin: 0.2rem 0 0;
   line-height: 1.45;
   font-weight: 500;
@@ -9498,18 +9531,17 @@ body.has-app-header main {
   border: none;
   padding: 0.4rem;
   cursor: pointer;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.38);
   border-radius: var(--radius, 8px);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* pull flush to top-right edge of the verdict bar */
   margin-top: -0.15rem;
   margin-right: -0.15rem;
   transition: color 0.15s, background 0.15s, transform 0.1s;
 }
-.csc-share-btn:hover { color: var(--ocean, #0e5f78); background: var(--bg-subtle); }
+.csc-share-btn:hover { color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.08); }
 .csc-share-btn:active { transform: scale(0.88); }
 
 .csc-stats-grid {
@@ -9822,6 +9854,14 @@ body.has-app-header main {
 .landing-feature h2::before {
   display: none;
 }
+
+/* Section-specific h2 bar colors — each section has its own identity */
+.species-section h2::before,
+.top-species-section h2::before { background: var(--coral); }
+.outlook-section h2::before { background: #7C3AED; }
+.solunar-section h2::before { background: #D97706; }
+.regulations-section h2::before,
+.regs-section h2::before { background: #059669; }
 
 /* ---- BEST FISHING WINDOWS ---- */
 
@@ -10925,7 +10965,7 @@ details[open] .collapsible-module-body {
   position: relative;
 }
 
-/* Wave divider at the bottom of the hero */
+/* Wave divider at the bottom of the hero — matches dark features strip */
 .landing-hero-section::after {
   content: '';
   position: absolute;
@@ -10933,7 +10973,7 @@ details[open] .collapsible-module-body {
   left: 0;
   right: 0;
   height: 60px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 60' preserveAspectRatio='none'%3E%3Cpath fill='%23DBF0FF' d='M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z'/%3E%3C/svg%3E") no-repeat bottom/100% 100%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 60' preserveAspectRatio='none'%3E%3Cpath fill='%230D2240' d='M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z'/%3E%3C/svg%3E") no-repeat bottom/100% 100%;
 }
 
 .landing-hero-inner {
@@ -11091,26 +11131,39 @@ details[open] .collapsible-module-body {
   margin: 0;
 }
 
-/* Features section on landing */
+/* Features section on landing — editorial strip, not generic cards */
 .landing-features-section {
-  background: #DBF0FF;
-  padding: 2rem 1.25rem 2.5rem;
+  background: #0D2240;
+  padding: 1.5rem 1.25rem;
+  border-top: none;
 }
 
 .landing-features {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.85rem;
-  max-width: 480px;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  max-width: 860px;
   margin: 0 auto;
+  align-items: stretch;
 }
 
 @media (min-width: 500px) {
-  .landing-features {
-    grid-template-columns: repeat(3, 1fr);
-  }
   .landing-title {
     font-size: 3rem;
+  }
+}
+
+@media (max-width: 499px) {
+  .landing-features {
+    flex-direction: column;
+    gap: 0;
+  }
+  .landing-feature {
+    border-left: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .landing-feature:first-child {
+    border-top: none;
   }
 }
 
@@ -11122,12 +11175,7 @@ details[open] .collapsible-module-body {
     font-size: 3.8rem;
   }
   .landing-features-section {
-    padding: 2.5rem 2rem 3.5rem;
-  }
-  .landing-features {
-    max-width: 860px;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    padding: 1.25rem 2rem;
   }
   .landing-social-btns {
     flex-direction: row;
@@ -11138,50 +11186,45 @@ details[open] .collapsible-module-body {
 }
 
 .landing-feature {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0,60,120,0.1);
-  padding: 1.35rem 1.1rem 1.1rem;
-  text-align: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border-top: 3px solid transparent;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.9rem 1.25rem;
+  text-align: left;
+  background: none;
+  border-left: 1px solid rgba(255,255,255,0.1);
 }
 
-.landing-feature:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,60,120,0.18);
-}
+.landing-feature:first-child { border-left: none; }
 
-.landing-feature:nth-child(1) { border-top-color: #0077B6; }
-.landing-feature:nth-child(2) { border-top-color: #F4543B; }
-.landing-feature:nth-child(3) { border-top-color: #059669; }
-
-.landing-feature:nth-child(1) .landing-feature-icon { color: #0077B6; }
+.landing-feature:nth-child(1) .landing-feature-icon { color: #38BDF8; }
 .landing-feature:nth-child(2) .landing-feature-icon { color: #F4543B; }
-.landing-feature:nth-child(3) .landing-feature-icon { color: #059669; }
+.landing-feature:nth-child(3) .landing-feature-icon { color: #34D399; }
 
 .landing-feature-icon {
-  font-size: 1.9rem;
-  margin-bottom: 0.65rem;
-  display: block;
-  line-height: 1;
+  color: #38BDF8;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  opacity: 0.9;
 }
 
 .landing-feature strong {
   display: block;
   font-size: 0.72rem;
   font-weight: 800;
-  color: #1C3245;
-  margin-bottom: 0.4rem;
-  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .landing-feature p {
-  font-size: 0.82rem;
-  color: #5B7285;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.48);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .landing-footer {
