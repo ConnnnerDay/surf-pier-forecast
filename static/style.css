@@ -300,10 +300,12 @@ h2::before {
 }
 
 .section-sub {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   margin: -0.2rem 0 0.55rem;
-  font-weight: 500;
+  font-weight: 400;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 /* ---------- Card base ---------- */
@@ -871,10 +873,12 @@ h2::before {
 }
 
 .spot-tip-detail {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   line-height: 1.4;
   margin: 0;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 /* ---------- Tide section ---------- */
@@ -1355,9 +1359,11 @@ h2::before {
 
 .species-why {
   margin: 0.1rem 0 0.2rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   line-height: 1.4;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 .species-tip {
@@ -2715,9 +2721,11 @@ h2::before {
 }
 
 .best-day-rec {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: #78350F;
-  opacity: 0.85;
+  opacity: 0.9;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 .outlook-grid {
@@ -9565,11 +9573,13 @@ body.has-app-header main {
 .verdict-unknown.csc-verdict-badge { color: var(--text-muted); font-size: 1.8rem; }
 
 .csc-verdict-summary {
-  font-size: 0.76rem;
-  color: rgba(255,255,255,0.58);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
   margin: 0.2rem 0 0;
   line-height: 1.45;
-  font-weight: 500;
+  font-weight: 400;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
 }
 
 /* Wrapper so share btn can sit flush top-right without disrupting badge/summary flow */
