@@ -7797,36 +7797,23 @@ footer p {
 
 .wind-quality-indicator--calm,
 .wind-quality-indicator--light {
-  background: #d1fae5;
-  color: #065f46;
+  background: #059669;
+  color: #fff;
 }
 
 .wind-quality-indicator--moderate {
-  background: #fef3c7;
-  color: #92400e;
+  background: #D97706;
+  color: #fff;
 }
 
-.wind-quality-indicator--strong,
+.wind-quality-indicator--strong {
+  background: #EA580C;
+  color: #fff;
+}
+
 .wind-quality-indicator--gale {
-  background: #fee2e2;
-  color: #7f1d1d;
-}
-
-[data-theme="dark"] .wind-quality-indicator--calm,
-[data-theme="dark"] .wind-quality-indicator--light {
-  background: #064e3b;
-  color: #6ee7b7;
-}
-
-[data-theme="dark"] .wind-quality-indicator--moderate {
-  background: #451a03;
-  color: #fcd34d;
-}
-
-[data-theme="dark"] .wind-quality-indicator--strong,
-[data-theme="dark"] .wind-quality-indicator--gale {
-  background: #450a0a;
-  color: #fca5a5;
+  background: #DC2626;
+  color: #fff;
 }
 
 .wind-direction-context {
@@ -7981,25 +7968,21 @@ footer p {
 }
 
 .section-context-badge--incoming-tide {
-  background: #DBEAFE;
-  color: #1E3A8A;
-  border: 1px solid #BFDBFE;
+  background: #0077B6;
+  color: #fff;
+  border: none;
 }
 
 .section-context-badge--outgoing-tide {
-  background: #FEF3C7;
-  color: #78350F;
-  border: 1px solid #FDE68A;
+  background: #D97706;
+  color: #fff;
+  border: none;
 }
 
-[data-theme="dark"] .section-context-badge--incoming-tide {
-  background: #1e2d4e;
-  color: #93c5fd;
-}
-
-[data-theme="dark"] .section-context-badge--outgoing-tide {
-  background: #2d2010;
-  color: #fcd34d;
+.section-context-badge--slack-tide {
+  background: #64748B;
+  color: #fff;
+  border: none;
 }
 
 /* ---------- Best Bite Marker ---------- */
@@ -10262,11 +10245,7 @@ details[open] .collapsible-module-body {
 /* For the new refactored pages, the old header is replaced by page-hero or removed */
 
 /* ---- Slack tide badge/banner ---- */
-.section-context-badge--slack-tide {
-  background: rgba(107, 123, 141, 0.15);
-  color: var(--text-muted);
-  border: 1px solid rgba(107, 123, 141, 0.3);
-}
+/* (Slack tide badge defined above in tide badge block) */
 
 .tide-state-banner--slack {
   background: rgba(107, 123, 141, 0.1);
