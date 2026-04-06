@@ -11127,20 +11127,19 @@ details[open] .collapsible-module-body {
   justify-content: center;
   gap: 0.6rem;
   padding: 0.85rem 1.25rem;
-  border-radius: 12px;
-  font-size: 0.95rem;
+  border-radius: var(--radius, 10px);
+  font-size: 0.9rem;
   font-weight: 600;
   font-family: inherit;
   text-decoration: none;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: filter 0.15s ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .landing-social-btn:hover,
 .landing-social-btn:active {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  filter: brightness(1.08);
 }
 
 .landing-social-btn--google {
@@ -11179,23 +11178,23 @@ details[open] .collapsible-module-body {
 .landing-btn {
   display: block;
   padding: 0.85rem 1.25rem;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   font-family: inherit;
-  border-radius: 12px;
+  border-radius: var(--radius, 10px);
   text-decoration: none;
   text-align: center;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
   width: 100%;
   box-sizing: border-box;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .landing-btn:hover,
 .landing-btn:active {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-  filter: brightness(1.06);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 
 .landing-btn--primary {
