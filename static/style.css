@@ -5865,22 +5865,23 @@ footer p {
 
 .auth-btn {
   width: 100%;
-  padding: 0.55rem 1.25rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.88rem;
+  font-weight: 700;
   font-family: inherit;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: #fff;
-  background: linear-gradient(135deg, var(--ocean), #14738c);
+  background: #0D2240;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease;
   margin-top: 0.25rem;
 }
 
 .auth-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  background: #1a3560;
 }
 
 .pw-reqs {
