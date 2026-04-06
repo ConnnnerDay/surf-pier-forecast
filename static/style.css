@@ -9162,11 +9162,11 @@ body:not(.forecast-page) main {
 /* ---- App Header (replaces old <header>) ---- */
 
 .app-header {
-  background: linear-gradient(90deg, #023E8A 0%, #0077B6 100%);
+  background: #0D2240;
   position: sticky;
   top: 0;
   z-index: 200;
-  box-shadow: 0 2px 8px rgba(0,60,120,0.25);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.07), 0 4px 12px rgba(0,0,0,0.35);
   padding: 0;
   text-align: left;
   overflow: visible;
@@ -9177,13 +9177,13 @@ body:not(.forecast-page) main {
 }
 
 [data-theme="dark"] .app-header {
-  background: linear-gradient(90deg, #060D18 0%, #0A1520 100%);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  background: #07131F;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.5);
 }
 
 [data-theme="light"] .app-header,
 :root:not([data-theme="dark"]) .app-header {
-  background: linear-gradient(90deg, #023E8A 0%, #0077B6 100%);
+  background: #0D2240;
 }
 
 .app-header-inner {
@@ -9935,10 +9935,13 @@ body.has-app-header main {
 /* ---- LOCATION INFO BAR (below app header on dashboard) ---- */
 
 .location-bar {
-  background: var(--white);
-  border-bottom: 2px solid var(--border-light);
-  padding: 0.45rem 1rem;
-  box-shadow: 0 1px 3px rgba(0,60,120,0.05);
+  background: #152B48;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 0.4rem 1rem;
+}
+
+[data-theme="dark"] .location-bar {
+  background: #0A1A2B;
 }
 
 .location-bar-inner {
@@ -9952,9 +9955,9 @@ body.has-app-header main {
 }
 
 .location-bar-name {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--text);
+  color: rgba(255,255,255,0.88);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -9968,47 +9971,48 @@ body.has-app-header main {
 }
 
 .location-bar-change {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: var(--ocean);
+  color: rgba(255,255,255,0.55);
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 20px;
-  border: 1px solid var(--ocean);
-  transition: background 0.12s;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: color 0.12s, border-color 0.12s;
 }
 
 .location-bar-change:hover {
-  background: var(--ocean-light);
+  color: rgba(255,255,255,0.88);
+  border-color: rgba(255,255,255,0.4);
 }
 
 .location-bar-fav {
   background: transparent;
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 20px;
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.55rem;
   cursor: pointer;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.5);
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   transition: border-color 0.12s, color 0.12s;
 }
 
 .location-bar-fav:hover,
 .location-bar-fav.fav-toggle--active {
-  color: var(--coral);
-  border-color: var(--coral);
+  color: #F4543B;
+  border-color: rgba(244,84,59,0.5);
 }
 
 .location-bar-cached {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
   display: flex;
   align-items: center;
   gap: 0.3rem;
