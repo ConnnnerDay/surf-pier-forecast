@@ -100,6 +100,43 @@ CREATE TABLE IF NOT EXISTS reg_scrape_cache (
     PRIMARY KEY (species_key, state)
 );
 
+CREATE TABLE IF NOT EXISTS map_catches (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lat         REAL NOT NULL,
+    lng         REAL NOT NULL,
+    species     TEXT NOT NULL,
+    bait        TEXT,
+    weight_lb   REAL,
+    length_in   REAL,
+    notes       TEXT,
+    caught_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    is_public   INTEGER NOT NULL DEFAULT 1,
+    likes_count INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_map_catches_user
+ON map_catches(user_id, caught_at DESC);
+CREATE INDEX IF NOT EXISTS idx_map_catches_public_time
+ON map_catches(is_public, caught_at DESC);
+CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
+ON map_catches(lat, lng);
+
+CREATE TABLE IF NOT EXISTS map_catch_comments (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    catch_id  INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
+    user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body      TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_map_catch_comments_catch
+ON map_catch_comments(catch_id, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS map_catch_likes (
+    catch_id INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
+    user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (catch_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS webauthn_credentials (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -151,7 +188,7 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
 _KNOWN_TABLES = frozenset({
     "users", "profiles", "locations", "forecasts",
     "forecast_cache", "catch_log", "reg_scrape_cache", "webauthn_credentials",
-    "social_accounts",
+    "social_accounts", "map_catches", "map_catch_comments", "map_catch_likes",
 })
 
 
@@ -296,6 +333,49 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             );
             CREATE INDEX IF NOT EXISTS idx_social_accounts_user
             ON social_accounts(user_id);
+            """
+        )
+
+    # map_catches + social tables (community catch logging on the map)
+    if not _table_exists(conn, "map_catches"):
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS map_catches (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                lat         REAL NOT NULL,
+                lng         REAL NOT NULL,
+                species     TEXT NOT NULL,
+                bait        TEXT,
+                weight_lb   REAL,
+                length_in   REAL,
+                notes       TEXT,
+                caught_at   TEXT NOT NULL DEFAULT (datetime('now')),
+                is_public   INTEGER NOT NULL DEFAULT 1,
+                likes_count INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_map_catches_user
+            ON map_catches(user_id, caught_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_map_catches_public_time
+            ON map_catches(is_public, caught_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
+            ON map_catches(lat, lng);
+
+            CREATE TABLE IF NOT EXISTS map_catch_comments (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                catch_id   INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                body       TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_map_catch_comments_catch
+            ON map_catch_comments(catch_id, created_at ASC);
+
+            CREATE TABLE IF NOT EXISTS map_catch_likes (
+                catch_id INTEGER NOT NULL REFERENCES map_catches(id) ON DELETE CASCADE,
+                user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                PRIMARY KEY (catch_id, user_id)
+            );
             """
         )
 
@@ -1205,3 +1285,371 @@ def get_social_accounts_for_user(user_id: int) -> List[Dict[str, Any]]:
     finally:
         conn.close()
     return [{"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]} for r in rows]
+
+
+# ── Map catch log (community pins) ──────────────────────────────────────────
+
+_MAP_CATCH_NOTES_MAX = 500
+_MAP_CATCH_SPECIES_MAX = 100
+_MAP_CATCH_BAIT_MAX = 80
+
+
+def add_map_catch(
+    user_id: int,
+    lat: float,
+    lng: float,
+    species: str,
+    *,
+    bait: str = "",
+    weight_lb: Optional[float] = None,
+    length_in: Optional[float] = None,
+    notes: str = "",
+    is_public: bool = True,
+    caught_at: Optional[str] = None,
+) -> int:
+    """Insert a map catch pin and return its new id."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO map_catches
+              (user_id, lat, lng, species, bait, weight_lb, length_in, notes, is_public, caught_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+            """,
+            (
+                user_id,
+                round(lat, 6),
+                round(lng, 6),
+                species.strip()[:_MAP_CATCH_SPECIES_MAX],
+                bait.strip()[:_MAP_CATCH_BAIT_MAX] if bait else "",
+                weight_lb,
+                length_in,
+                notes.strip()[:_MAP_CATCH_NOTES_MAX],
+                1 if is_public else 0,
+                caught_at,
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid or 0
+    finally:
+        conn.close()
+
+
+def get_map_catches_in_bbox(
+    sw_lat: float,
+    sw_lng: float,
+    ne_lat: float,
+    ne_lng: float,
+    *,
+    viewer_user_id: Optional[int] = None,
+    limit: int = 200,
+    species_filter: str = "",
+    days_back: int = 90,
+) -> List[Dict[str, Any]]:
+    """Return public catch pins in a bounding box, plus the viewer's own private ones."""
+    conn = get_db()
+    try:
+        # days_back is a positive integer; negate it for the SQLite date modifier
+        lookback = f"-{abs(days_back)} days"
+        params: List[Any] = [sw_lat, ne_lat, sw_lng, ne_lng, lookback]
+        sql = """
+            SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.bait,
+                   mc.weight_lb, mc.length_in, mc.notes, mc.caught_at,
+                   mc.is_public, mc.likes_count,
+                   COALESCE(u.display_name, u.username) AS angler_name
+            FROM map_catches mc
+            JOIN users u ON u.id = mc.user_id
+            WHERE mc.lat BETWEEN ? AND ?
+              AND mc.lng BETWEEN ? AND ?
+              AND mc.caught_at >= datetime('now', ?)
+              AND (mc.is_public = 1
+        """
+        if viewer_user_id is not None:
+            sql += " OR mc.user_id = ?"
+            params.append(viewer_user_id)
+        sql += ")"
+
+        if species_filter:
+            sql += " AND LOWER(mc.species) LIKE ?"
+            params.append(f"%{species_filter.lower()}%")
+
+        sql += " ORDER BY mc.caught_at DESC LIMIT ?"
+        params.append(limit)
+
+        rows = conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+    return [
+        {
+            "id": r["id"],
+            "user_id": r["user_id"],
+            "lat": r["lat"],
+            "lng": r["lng"],
+            "species": r["species"],
+            "bait": r["bait"],
+            "weight_lb": r["weight_lb"],
+            "length_in": r["length_in"],
+            "notes": r["notes"],
+            "caught_at": r["caught_at"],
+            "is_public": bool(r["is_public"]),
+            "likes_count": r["likes_count"],
+            "angler_name": r["angler_name"],
+            "mine": viewer_user_id is not None and r["user_id"] == viewer_user_id,
+        }
+        for r in rows
+    ]
+
+
+def get_map_catch(catch_id: int) -> Optional[Dict[str, Any]]:
+    """Return a single catch record by id, or None."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            """
+            SELECT mc.*, COALESCE(u.display_name, u.username) AS angler_name
+            FROM map_catches mc JOIN users u ON u.id = mc.user_id
+            WHERE mc.id = ?
+            """,
+            (catch_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    return dict(row) if row else None
+
+
+def delete_map_catch(catch_id: int, user_id: int) -> bool:
+    """Delete a catch pin owned by user_id. Returns True if a row was removed."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "DELETE FROM map_catches WHERE id = ? AND user_id = ?",
+            (catch_id, user_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def toggle_map_catch_like(catch_id: int, user_id: int) -> Tuple[bool, int]:
+    """Toggle a like on a catch.  Returns (liked: bool, new_likes_count: int)."""
+    conn = get_db()
+    try:
+        existing = conn.execute(
+            "SELECT 1 FROM map_catch_likes WHERE catch_id = ? AND user_id = ?",
+            (catch_id, user_id),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "DELETE FROM map_catch_likes WHERE catch_id = ? AND user_id = ?",
+                (catch_id, user_id),
+            )
+            conn.execute(
+                "UPDATE map_catches SET likes_count = MAX(0, likes_count - 1) WHERE id = ?",
+                (catch_id,),
+            )
+            liked = False
+        else:
+            conn.execute(
+                "INSERT OR IGNORE INTO map_catch_likes (catch_id, user_id) VALUES (?, ?)",
+                (catch_id, user_id),
+            )
+            conn.execute(
+                "UPDATE map_catches SET likes_count = likes_count + 1 WHERE id = ?",
+                (catch_id,),
+            )
+            liked = True
+        conn.commit()
+        row = conn.execute(
+            "SELECT likes_count FROM map_catches WHERE id = ?", (catch_id,)
+        ).fetchone()
+        count = row["likes_count"] if row else 0
+    finally:
+        conn.close()
+    return liked, count
+
+
+def get_map_catch_comments(catch_id: int) -> List[Dict[str, Any]]:
+    """Return all comments on a catch pin, oldest first."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT mcc.id, mcc.catch_id, mcc.user_id, mcc.body, mcc.created_at,
+                   COALESCE(u.display_name, u.username) AS angler_name
+            FROM map_catch_comments mcc
+            JOIN users u ON u.id = mcc.user_id
+            WHERE mcc.catch_id = ?
+            ORDER BY mcc.created_at ASC
+            """,
+            (catch_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "id": r["id"],
+            "catch_id": r["catch_id"],
+            "user_id": r["user_id"],
+            "body": r["body"],
+            "created_at": r["created_at"],
+            "angler_name": r["angler_name"],
+        }
+        for r in rows
+    ]
+
+
+def add_map_catch_comment(catch_id: int, user_id: int, body: str) -> int:
+    """Insert a comment on a catch pin and return its id."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "INSERT INTO map_catch_comments (catch_id, user_id, body) VALUES (?, ?, ?)",
+            (catch_id, user_id, body.strip()[:500]),
+        )
+        conn.commit()
+        return cur.lastrowid or 0
+    finally:
+        conn.close()
+
+
+def get_community_hotspots(
+    days_back: int = 30,
+    limit: int = 10,
+    coast: str = "",
+) -> List[Dict[str, Any]]:
+    """Return top catch locations aggregated over the last N days.
+
+    Groups catch pins by rounded lat/lng (0.1° grid ~ 6 mi) so nearby catches
+    cluster into a single hotspot rather than showing individual pins.
+    """
+    conn = get_db()
+    try:
+        lookback = f"-{abs(days_back)} days"
+        params: List[Any] = [lookback]
+        sql = """
+            SELECT
+                ROUND(lat, 1) AS grid_lat,
+                ROUND(lng, 1) AS grid_lng,
+                COUNT(*) AS catch_count,
+                SUM(likes_count) AS total_likes,
+                GROUP_CONCAT(DISTINCT species) AS species_list,
+                MAX(caught_at) AS last_catch_at,
+                AVG(weight_lb) AS avg_weight
+            FROM map_catches
+            WHERE is_public = 1
+              AND caught_at >= datetime('now', ?)
+            GROUP BY grid_lat, grid_lng
+            ORDER BY catch_count DESC, total_likes DESC
+            LIMIT ?
+        """
+        params.append(limit)
+        rows = conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+    return [
+        {
+            "lat": r["grid_lat"],
+            "lng": r["grid_lng"],
+            "catch_count": r["catch_count"],
+            "total_likes": r["total_likes"] or 0,
+            "species": (r["species_list"] or "").split(",")[:5],
+            "last_catch_at": r["last_catch_at"],
+            "avg_weight": round(r["avg_weight"], 1) if r["avg_weight"] else None,
+        }
+        for r in rows
+    ]
+
+
+def get_recent_public_catches(
+    limit: int = 20,
+    species_filter: str = "",
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
+    radius_deg: float = 3.0,
+) -> List[Dict[str, Any]]:
+    """Return the most recent public catch pins, optionally near a point."""
+    conn = get_db()
+    try:
+        params: List[Any] = []
+        sql = """
+            SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.bait,
+                   mc.weight_lb, mc.length_in, mc.notes, mc.caught_at,
+                   mc.likes_count,
+                   COALESCE(u.display_name, u.username) AS angler_name
+            FROM map_catches mc
+            JOIN users u ON u.id = mc.user_id
+            WHERE mc.is_public = 1
+        """
+        if lat is not None and lng is not None:
+            sql += " AND mc.lat BETWEEN ? AND ? AND mc.lng BETWEEN ? AND ?"
+            params += [lat - radius_deg, lat + radius_deg,
+                       lng - radius_deg, lng + radius_deg]
+        if species_filter:
+            sql += " AND LOWER(mc.species) LIKE ?"
+            params.append(f"%{species_filter.lower()}%")
+        sql += " ORDER BY mc.caught_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+    return [
+        {
+            "id": r["id"],
+            "user_id": r["user_id"],
+            "lat": r["lat"],
+            "lng": r["lng"],
+            "species": r["species"],
+            "bait": r["bait"],
+            "weight_lb": r["weight_lb"],
+            "length_in": r["length_in"],
+            "notes": r["notes"],
+            "caught_at": r["caught_at"],
+            "likes_count": r["likes_count"],
+            "angler_name": r["angler_name"],
+        }
+        for r in rows
+    ]
+
+
+def get_catch_counts_near_locations(
+    locations: List[Dict[str, Any]],
+    days_back: int = 30,
+    radius_deg: float = 0.3,
+) -> Dict[str, int]:
+    """Return a dict mapping location_id → recent community catch count.
+
+    Counts public map catches within *radius_deg* of each NOAA location.
+    Uses a single DB query and O(n) matching to avoid per-location queries.
+    """
+    if not locations:
+        return {}
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT lat, lng
+            FROM map_catches
+            WHERE is_public = 1
+              AND caught_at >= datetime('now', ?)
+            """,
+            (f"-{abs(days_back)} days",),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    counts: Dict[str, int] = {}
+    for loc in locations:
+        loc_lat = loc["lat"]
+        loc_lng = loc["lng"]
+        cnt = sum(
+            1
+            for r in rows
+            if abs(r["lat"] - loc_lat) <= radius_deg
+            and abs(r["lng"] - loc_lng) <= radius_deg
+        )
+        counts[loc["id"]] = cnt
+    return counts

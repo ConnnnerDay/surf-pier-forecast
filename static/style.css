@@ -5250,6 +5250,616 @@ h2::before {
   .fmap-planner-hint { display: none; }
 }
 
+/* ── Advanced filter panel ── */
+.fmap-filterbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.fmap-adv-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.fmap-adv-toggle-btn:hover,
+.fmap-adv-toggle-btn[aria-expanded="true"] {
+  background: rgba(14,95,120,0.25);
+  border-color: #1fa8c9;
+  color: #6dd8f0;
+}
+.fmap-adv-badge {
+  display: inline-block;
+  background: #1fa8c9;
+  color: #fff;
+  border-radius: 50%;
+  width: 16px; height: 16px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 16px;
+  margin-left: 2px;
+}
+.fmap-adv-filters {
+  background: rgba(11,40,54,0.95);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.fmap-adv-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.fmap-adv-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 180px;
+}
+.fmap-adv-group--temp { flex: 0 1 160px; }
+.fmap-adv-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.5);
+}
+.fmap-adv-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.fmap-adv-temp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.fmap-temp-input {
+  width: 60px;
+  padding: 0.3rem 0.4rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: inherit;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.fmap-temp-input:focus {
+  outline: none;
+  border-color: #1fa8c9;
+  background: rgba(14,95,120,0.15);
+}
+.fmap-temp-sep {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.85rem;
+}
+.fmap-adv-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.fmap-adv-reset-btn {
+  background: none;
+  border: none;
+  color: #1fa8c9;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.fmap-adv-reset-btn:hover { color: #6dd8f0; }
+
+/* Shared pill styles (season/time/tide pills reuse fmap-pill base) */
+.fmap-pill--season, .fmap-pill--time, .fmap-pill--tide {
+  padding: 0.25rem 0.6rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.fmap-pill--season:hover, .fmap-pill--time:hover, .fmap-pill--tide:hover {
+  background: rgba(14,95,120,0.25);
+  border-color: #1fa8c9;
+  color: #fff;
+}
+.fmap-pill--season.fmap-pill--active,
+.fmap-pill--time.fmap-pill--active,
+.fmap-pill--tide.fmap-pill--active {
+  background: #0e5f78;
+  border-color: #1fa8c9;
+  color: #fff;
+}
+
+/* ── Side panel tabs ── */
+.fmap-body {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  min-height: 380px;
+}
+.fmap-side-panel {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(7,28,40,0.97);
+  border-left: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.fmap-side-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+  background: rgba(0,0,0,0.25);
+}
+.fmap-side-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0.3rem;
+  border: none;
+  background: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.fmap-side-tab:hover { color: rgba(255,255,255,0.8); }
+.fmap-side-tab--active {
+  color: #fff;
+  border-bottom-color: #1fa8c9;
+}
+.fmap-tab-badge {
+  background: #1fa8c9;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0 5px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+  line-height: 16px;
+  display: inline-block;
+}
+.fmap-side-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.4rem 0;
+}
+.fmap-side-pane:not(.fmap-side-pane--active) { display: none; }
+
+/* ── Community layer toggle button ── */
+.fmap-ctrl-btn--log {
+  background: rgba(34,197,94,0.15) !important;
+  border-color: rgba(34,197,94,0.4) !important;
+}
+.fmap-ctrl-btn--log.fmap-ctrl-btn--active {
+  background: rgba(34,197,94,0.35) !important;
+  border-color: #22c55e !important;
+}
+
+/* ── Community catch pin markers ── */
+.fmap-community-pin-wrap { background: transparent; border: none; }
+.fmap-community-pin {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.7);
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.fmap-community-pin:hover { transform: scale(1.3); }
+.fmap-community-pin--public { background: #2dd4bf; box-shadow: 0 0 8px rgba(45,212,191,0.5); }
+.fmap-community-pin--mine   { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.6); }
+
+/* ── Community list ── */
+.fmap-community-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 0.5rem;
+}
+.fmap-community-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.7rem;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.fmap-community-refresh-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.fmap-community-hint, .fmap-community-login-hint {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
+  text-align: right;
+}
+.fmap-community-login-hint { color: #1fa8c9; text-decoration: none; }
+.fmap-community-login-hint:hover { color: #6dd8f0; text-decoration: underline; }
+.fmap-community-list {
+  list-style: none;
+  margin: 0; padding: 0;
+}
+.fmap-community-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.12s;
+  gap: 0.15rem;
+}
+.fmap-community-item:hover { background: rgba(255,255,255,0.04); }
+.fmap-community-species {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #e2f4fb;
+}
+.fmap-community-meta {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.fmap-community-angler {
+  color: #1fa8c9;
+  font-weight: 600;
+}
+.fmap-community-weight { color: #6dd8f0; }
+.fmap-community-time  { color: rgba(255,255,255,0.4); margin-left: auto; }
+
+/* ── Community fire badge on hotspot items ── */
+.fmap-hotspot-community-badge {
+  font-size: 0.62rem;
+  color: #fb923c;
+  white-space: nowrap;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ── Log Catch modal ── */
+.fmap-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.fmap-modal-inner {
+  background: #0b2836;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.fmap-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.fmap-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+}
+.fmap-modal-coords {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0.35rem 1rem 0;
+  font-family: monospace;
+}
+.fmap-log-form {
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.fmap-log-row { display: flex; flex-direction: column; gap: 0.25rem; }
+.fmap-log-row--2col { flex-direction: row; gap: 0.75rem; }
+.fmap-log-row--2col > div { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+.fmap-log-row--check { flex-direction: row; align-items: center; }
+.fmap-log-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.6);
+}
+.fmap-req { color: #f87171; }
+.fmap-log-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 7px;
+  color: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.fmap-log-input:focus { border-color: #1fa8c9; background: rgba(14,95,120,0.12); }
+.fmap-log-textarea { resize: vertical; min-height: 56px; }
+.fmap-log-check-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+}
+.fmap-log-error {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.6rem;
+}
+.fmap-modal-footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+.fmap-modal-cancel-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.65);
+  border-radius: 7px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.fmap-modal-cancel-btn:hover { background: rgba(255,255,255,0.07); }
+.fmap-modal-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #0e5f78;
+  border: none;
+  color: #fff;
+  border-radius: 7px;
+  padding: 0.45rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.fmap-modal-submit-btn:hover { background: #1fa8c9; }
+.fmap-modal-submit-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* ── Community catch detail drawer extra styles ── */
+.fmap-catch-detail { border-top-color: #2dd4bf; }
+.fmap-catch-detail-body {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.fmap-catch-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.fmap-catch-stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.45);
+  width: 52px;
+  flex-shrink: 0;
+}
+.fmap-catch-notes {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.65);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+.fmap-catch-comments {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 0.5rem;
+  margin-top: 0.4rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.fmap-catch-comment {
+  padding: 0.35rem 0;
+  font-size: 0.77rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.fmap-catch-comment-author {
+  font-weight: 700;
+  color: #1fa8c9;
+  margin-right: 0.35rem;
+}
+.fmap-catch-detail-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  flex-wrap: wrap;
+}
+.fmap-catch-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.75);
+  border-radius: 7px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.fmap-catch-action-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.fmap-catch-action-btn--liked { color: #f87171; border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.1); }
+.fmap-catch-action-btn--delete { color: #f87171; }
+.fmap-catch-action-btn--delete:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
+.fmap-catch-comment-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.fmap-catch-comment-input {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 6px;
+  color: inherit;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.5rem;
+  outline: none;
+  font-family: inherit;
+}
+.fmap-catch-comment-input:focus { border-color: #1fa8c9; }
+.fmap-catch-comment-post {
+  background: #0e5f78;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fmap-catch-comment-post:hover { background: #1fa8c9; }
+
+/* ── Log mode crosshair cursor ── */
+.fmap-log-mode-active .fmap-map-el { cursor: crosshair !important; }
+.fmap-log-mode-active .fmap-map-el * { cursor: crosshair !important; }
+
+/* Logging mode banner */
+.fmap-log-mode-banner {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(34,197,94,0.9);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  z-index: 1200;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ── Light mode overrides for new elements ── */
+[data-theme="light"] .fmap-adv-filters {
+  background: #f0f8fc;
+  border-color: #c9d8e0;
+}
+[data-theme="light"] .fmap-adv-label { color: #5a7080; }
+[data-theme="light"] .fmap-pill--season,
+[data-theme="light"] .fmap-pill--time,
+[data-theme="light"] .fmap-pill--tide {
+  background: #e8f4f8;
+  border-color: #b3cfd9;
+  color: #2d6070;
+}
+[data-theme="light"] .fmap-pill--season.fmap-pill--active,
+[data-theme="light"] .fmap-pill--time.fmap-pill--active,
+[data-theme="light"] .fmap-pill--tide.fmap-pill--active {
+  background: #0e5f78;
+  border-color: #0e5f78;
+  color: #fff;
+}
+[data-theme="light"] .fmap-side-panel {
+  background: #f7fafc;
+  border-color: #dde9ef;
+}
+[data-theme="light"] .fmap-side-tab { color: #7090a0; }
+[data-theme="light"] .fmap-side-tab--active { color: #0e5f78; }
+[data-theme="light"] .fmap-modal-inner {
+  background: #f0f8fc;
+  border-color: #c9d8e0;
+}
+[data-theme="light"] .fmap-log-input {
+  background: #fff;
+  border-color: #c9d8e0;
+  color: #1a2e38;
+}
+[data-theme="light"] .fmap-log-input:focus { border-color: #0e5f78; }
+[data-theme="light"] .fmap-community-item:hover { background: rgba(0,0,0,0.03); }
+[data-theme="light"] .fmap-temp-input {
+  background: #fff;
+  border-color: #c9d8e0;
+  color: #1a2e38;
+}
+[data-theme="light"] .fmap-adv-toggle-btn {
+  background: #e8f4f8;
+  border-color: #b3cfd9;
+  color: #2d6070;
+}
+[data-theme="light"] .fmap-adv-toggle-btn:hover,
+[data-theme="light"] .fmap-adv-toggle-btn[aria-expanded="true"] {
+  background: #d0eaf3;
+  border-color: #0e5f78;
+  color: #0e5f78;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .fmap-body { flex-direction: column; }
+  .fmap-side-panel { width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.08); max-height: 260px; }
+  .fmap-adv-row { flex-direction: column; gap: 0.6rem; }
+  .fmap-modal-inner { max-width: 100%; margin: 0 0.5rem; }
+}
+
 /* ── END AI FISHING MAP v2 ── */
 
 .share-section h2 {

@@ -84,6 +84,24 @@
     var heatLayer     = null;
     var aiPickMarkers = [];          // [{leaflet, data}]
 
+    // ─── Advanced filter state ────────────────────────────────────────────────
+    var activeSeason  = '';          // spring|summer|fall|winter|''
+    var activeTime    = '';          // dawn|morning|midday|evening|night|''
+    var activeTide    = '';          // incoming|outgoing|high|low|''
+    var activeMinTemp = '';          // numeric string or ''
+    var activeMaxTemp = '';          // numeric string or ''
+
+    // ─── Community / social state ─────────────────────────────────────────────
+    var communityLayerOn  = false;   // whether community pins are visible
+    var communityLayer    = null;    // L.layerGroup for community catch pins
+    var communityData     = [];      // [{id,lat,lng,species,…}]
+    var communityTimer    = null;    // debounce for community fetch on move
+    var catchLogMode      = false;   // user is placing a catch pin
+    var pendingCatchLatLng = null;   // {lat,lng} for the log modal
+    var pendingCatchMarker = null;   // temporary L.marker shown before submit
+    var activeTab         = 'spots'; // 'spots' | 'ai' | 'community'
+    var IS_LOGGED_IN      = !!(window.IS_LOGGED_IN || false);
+
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
 
@@ -827,7 +845,11 @@
     }
 
     function renderHotspots(locations) {
-        if (aiMode) { renderAiHotspots(locations); return; }
+        // Always refresh AI picks list in its own panel
+        var aiList = document.getElementById('fmap-ai-picks-list');
+        if (aiList) renderAiPicksList(locations, aiList);
+
+        if (activeTab === 'ai') { return; }
         if (!els.hotspotsList) return;
 
         var active = locations.filter(function (l) { return l.activity !== 'none'; });
@@ -902,6 +924,11 @@
                 distHtml = '<span class="fmap-hotspot-dist">' +
                     (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + ' mi</span>';
             }
+            var commCount = loc.community_catches || 0;
+            var commBadge = commCount > 0
+                ? '<span class="fmap-hotspot-community-badge" title="' + commCount + ' recent community catch' + (commCount !== 1 ? 'es' : '') + '">' +
+                  '\uD83D\uDD25 ' + commCount + '</span>'
+                : '';
             html +=
                 '<li class="fmap-hotspot-item' + (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
                 '" data-loc-id="' + esc(loc.id) + '">' +
@@ -911,6 +938,7 @@
                   '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
                   (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + '</span>' : '') +
                 '</span>' +
+                commBadge +
                 distHtml +
                 '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + loc.activity + '">' + cfg.label + '</span>' +
                 '</li>';
@@ -1071,12 +1099,19 @@
     }
 
     // ─── localStorage persistence ─────────────────────────────────────────────
+    var LS_KEY = 'fmap_filters_v3';  // bumped for new filter fields
+
     function saveFilters() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
-                species: activeSpecies,
-                coast:   activeCoast,
-                cat:     activeCat
+                species:  activeSpecies,
+                coast:    activeCoast,
+                cat:      activeCat,
+                season:   activeSeason,
+                time:     activeTime,
+                tide:     activeTide,
+                minTemp:  activeMinTemp,
+                maxTemp:  activeMaxTemp
             }));
         } catch (e) {}
     }
@@ -1103,6 +1138,35 @@
                     b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === f.cat);
                 });
             }
+            if (f.season) {
+                activeSeason = f.season;
+                document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-season') === f.season);
+                });
+            }
+            if (f.time) {
+                activeTime = f.time;
+                document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-time') === f.time);
+                });
+            }
+            if (f.tide) {
+                activeTide = f.tide;
+                document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-tide') === f.tide);
+                });
+            }
+            if (f.minTemp) {
+                activeMinTemp = f.minTemp;
+                var minInput = document.getElementById('fmap-min-temp');
+                if (minInput) minInput.value = f.minTemp;
+            }
+            if (f.maxTemp) {
+                activeMaxTemp = f.maxTemp;
+                var maxInput = document.getElementById('fmap-max-temp');
+                if (maxInput) maxInput.value = f.maxTemp;
+            }
+            updateAdvBadge();
         } catch (e) {}
     }
 
@@ -1129,6 +1193,12 @@
         if (activeCoast && activeCoast !== 'all') params.set('coast', activeCoast);
         if (activeCat) params.set('category', activeCat);
         if (activeMonth) params.set('month', String(activeMonth));
+        // Advanced filters
+        if (activeSeason) params.set('season', activeSeason);
+        if (activeTime)   params.set('time_of_day', activeTime);
+        if (activeTide)   params.set('tide_phase', activeTide);
+        if (activeMinTemp) params.set('min_water_temp', activeMinTemp);
+        if (activeMaxTemp) params.set('max_water_temp', activeMaxTemp);
 
         var url = API_URL + (params.toString() ? '?' + params.toString() : '');
 
@@ -1482,6 +1552,607 @@
             });
     }
 
+    // ─── Utilities ────────────────────────────────────────────────────────────
+
+    function getCsrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content') || '';
+        return window.CSRF_TOKEN || '';
+    }
+
+    function timeAgo(dateStr) {
+        if (!dateStr) return '';
+        var then = new Date(dateStr.indexOf('Z') === -1 ? dateStr + 'Z' : dateStr);
+        var now  = new Date();
+        var secs = Math.floor((now - then) / 1000);
+        if (secs < 60)   return 'just now';
+        if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+        if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+        return Math.floor(secs / 86400) + 'd ago';
+    }
+
+    // ─── Advanced filters ─────────────────────────────────────────────────────
+
+    function updateAdvBadge() {
+        var n = (activeSeason ? 1 : 0) + (activeTime ? 1 : 0) +
+                (activeTide ? 1 : 0) +
+                ((activeMinTemp || activeMaxTemp) ? 1 : 0);
+        var badge  = document.getElementById('fmap-adv-badge');
+        var toggle = document.getElementById('fmap-adv-toggle');
+        if (badge) {
+            badge.textContent = n;
+            badge.hidden = n === 0;
+        }
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', toggle.getAttribute('aria-expanded'));
+        }
+    }
+
+    function setPillActive(selector, attrName, value) {
+        document.querySelectorAll(selector).forEach(function (b) {
+            b.classList.toggle('fmap-pill--active', b.getAttribute(attrName) === value);
+        });
+    }
+
+    function wireAdvancedFilters() {
+        var toggle  = document.getElementById('fmap-adv-toggle');
+        var panel   = document.getElementById('fmap-adv-filters');
+        var resetBtn = document.getElementById('fmap-adv-reset');
+
+        if (toggle && panel) {
+            toggle.addEventListener('click', function () {
+                var open = panel.hidden;
+                panel.hidden = !open;
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+
+        document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.getAttribute('data-season');
+                activeSeason = (activeSeason === v) ? '' : v;
+                setPillActive('.fmap-pill--season', 'data-season', activeSeason);
+                updateAdvBadge();
+                scheduleFetch();
+            });
+        });
+
+        document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.getAttribute('data-time');
+                activeTime = (activeTime === v) ? '' : v;
+                setPillActive('.fmap-pill--time', 'data-time', activeTime);
+                updateAdvBadge();
+                scheduleFetch();
+            });
+        });
+
+        document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.getAttribute('data-tide');
+                activeTide = (activeTide === v) ? '' : v;
+                setPillActive('.fmap-pill--tide', 'data-tide', activeTide);
+                updateAdvBadge();
+                scheduleFetch();
+            });
+        });
+
+        document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.getAttribute('data-coast') || 'all';
+                activeCoast = v;
+                setPillActive('.fmap-pill--coast', 'data-coast', v);
+                renderQuickChips();
+                scheduleFetch();
+            });
+        });
+
+        document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var v = b.getAttribute('data-cat');
+                activeCat = (activeCat === v) ? '' : v;
+                setPillActive('.fmap-pill--cat', 'data-cat', activeCat);
+                scheduleFetch();
+            });
+        });
+
+        var minTempEl = document.getElementById('fmap-min-temp');
+        var maxTempEl = document.getElementById('fmap-max-temp');
+        var tempTimer = null;
+        function onTempChange() {
+            clearTimeout(tempTimer);
+            tempTimer = setTimeout(function () {
+                activeMinTemp = (minTempEl && minTempEl.value) ? minTempEl.value : '';
+                activeMaxTemp = (maxTempEl && maxTempEl.value) ? maxTempEl.value : '';
+                updateAdvBadge();
+                scheduleFetch();
+            }, 600);
+        }
+        if (minTempEl) minTempEl.addEventListener('input', onTempChange);
+        if (maxTempEl) maxTempEl.addEventListener('input', onTempChange);
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                activeSeason = activeTime = activeTide = activeMinTemp = activeMaxTemp = '';
+                setPillActive('.fmap-pill--season', 'data-season', '');
+                setPillActive('.fmap-pill--time', 'data-time', '');
+                setPillActive('.fmap-pill--tide', 'data-tide', '');
+                if (minTempEl) minTempEl.value = '';
+                if (maxTempEl) maxTempEl.value = '';
+                updateAdvBadge();
+                scheduleFetch();
+            });
+        }
+    }
+
+    // ─── Tabbed side panel ────────────────────────────────────────────────────
+
+    function switchTab(tab) {
+        activeTab = tab;
+        ['spots', 'ai', 'community'].forEach(function (t) {
+            var btn   = document.getElementById('fmap-tab-' + t);
+            var panel = document.getElementById('fmap-panel-' + t);
+            var active = (t === tab);
+            if (btn) {
+                btn.classList.toggle('fmap-side-tab--active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            }
+            if (panel) {
+                panel.classList.toggle('fmap-side-pane--active', active);
+                panel.hidden = !active;
+            }
+        });
+        if (tab === 'community') {
+            loadCommunityFeed();
+        }
+    }
+
+    function wireTabs() {
+        ['spots', 'ai', 'community'].forEach(function (t) {
+            var btn = document.getElementById('fmap-tab-' + t);
+            if (btn) btn.addEventListener('click', function () { switchTab(t); });
+        });
+        var refreshBtn = document.getElementById('fmap-community-refresh');
+        if (refreshBtn) refreshBtn.addEventListener('click', loadCommunityFeed);
+    }
+
+    // ─── AI picks list (rendered into dedicated AI tab panel) ─────────────────
+
+    function renderAiPicksList(locations, container) {
+        var picks = locations
+            .filter(function (l) { return l.ai_pick_rank; })
+            .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
+
+        if (!picks.length) {
+            container.innerHTML = '<li class="fmap-hotspot-empty">No AI picks for current filters</li>';
+            return;
+        }
+        var html = '';
+        picks.forEach(function (loc) {
+            var sp     = loc.top_species && loc.top_species[0];
+            var spName = sp ? (sp.name || '') : '';
+            var snippet = (loc.ai_reasoning || '').split('.')[0];
+            if (snippet && snippet.length < (loc.ai_reasoning || '').length) snippet += '.';
+            var act = loc.activity || 'none';
+            var cfg = ACTIVITY[act] || ACTIVITY.none;
+            var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
+            html +=
+                '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
+                (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
+                '" data-loc-id="' + esc(loc.id) + '">' +
+                '<span class="fmap-ai-hotspot-rank">' + loc.ai_pick_rank + '</span>' +
+                '<span class="fmap-hotspot-info">' +
+                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
+                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + (wt ? ' &bull; ' + wt : '') + '</span>' : '') +
+                  (snippet ? '<span class="fmap-ai-hotspot-snippet">' + esc(snippet) + '</span>' : '') +
+                '</span>' +
+                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
+                '</li>';
+        });
+        container.innerHTML = html;
+        container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
+            li.addEventListener('click', function () {
+                var id  = li.getAttribute('data-loc-id');
+                var loc = currentData.find(function (l) { return l.id === id; });
+                if (!loc) return;
+                map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
+                setTimeout(function () { showAiPickPopup(loc); }, 600);
+            });
+        });
+    }
+
+    // ─── Community layer ──────────────────────────────────────────────────────
+
+    function makeCommunityPin(isMine) {
+        var cls = isMine ? 'fmap-community-pin--mine' : 'fmap-community-pin--public';
+        return L.divIcon({
+            className: 'fmap-community-pin-wrap',
+            html: '<span class="fmap-community-pin ' + cls + '"></span>',
+            iconSize:    [12, 12],
+            iconAnchor:  [6, 6],
+            popupAnchor: [0, -8]
+        });
+    }
+
+    function loadCommunityPins() {
+        if (!communityLayerOn || !map || !communityLayer) return;
+        var b    = map.getBounds();
+        var sw   = b.getSouthWest();
+        var ne   = b.getNorthEast();
+        var url  = '/api/map/catches?sw_lat=' + Math.round(sw.lat * 100) / 100 +
+                   '&sw_lng=' + Math.round(sw.lng * 100) / 100 +
+                   '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
+                   '&ne_lng=' + Math.round(ne.lng * 100) / 100;
+
+        fetch(url)
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function (data) {
+                communityData = data.catches || [];
+                communityLayer.clearLayers();
+                communityData.forEach(function (c) {
+                    if (!c.lat || !c.lng) return;
+                    var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
+                    m.bindTooltip(
+                        '<strong>' + esc(c.species) + '</strong><br>' +
+                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>',
+                        { className: 'fmap-tooltip', direction: 'top', offset: [0, -6] }
+                    );
+                    m.on('click', function () { openCatchDetail(c); });
+                    communityLayer.addLayer(m);
+                });
+                // Update community tab badge
+                var badge = document.getElementById('fmap-community-badge');
+                if (badge) {
+                    badge.textContent = communityData.length;
+                    badge.style.display = communityData.length ? '' : 'none';
+                }
+            })
+            .catch(function () {});
+    }
+
+    function scheduleCommunityLoad() {
+        if (!communityLayerOn) return;
+        clearTimeout(communityTimer);
+        communityTimer = setTimeout(loadCommunityPins, 700);
+    }
+
+    function wireCommunityLayer() {
+        if (!map) return;
+        communityLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-community-layer-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                communityLayerOn = !communityLayerOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', communityLayerOn);
+                btn.setAttribute('aria-pressed', communityLayerOn ? 'true' : 'false');
+                if (communityLayerOn) {
+                    communityLayer.addTo(map);
+                    loadCommunityPins();
+                } else {
+                    map.removeLayer(communityLayer);
+                    communityLayer.clearLayers();
+                }
+            });
+        }
+
+        // Reload community pins on map move
+        map.on('moveend zoomend', scheduleCommunityLoad);
+    }
+
+    // ─── Community catch detail drawer ────────────────────────────────────────
+
+    function openCatchDetail(c) {
+        if (!els.catchDetail) return;
+
+        els.catchDetailTitle.textContent = c.species;
+        var dateStr = c.caught_at ? new Date(c.caught_at.indexOf('Z') === -1
+            ? c.caught_at + 'Z' : c.caught_at).toLocaleDateString() : '';
+        els.catchDetailMeta.textContent = esc(c.angler_name) + (dateStr ? ' \u2022 ' + dateStr : '');
+
+        var bodyHtml = '';
+        if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + c.weight_lb.toFixed(1) + ' lb</div>';
+        if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + c.length_in + ' in</div>';
+        if (c.bait)      bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Bait</span>' + esc(c.bait) + '</div>';
+        if (c.notes)     bodyHtml += '<div class="fmap-catch-notes">' + esc(c.notes) + '</div>';
+        els.catchDetailBody.innerHTML = bodyHtml;
+
+        // Load comments
+        els.catchDetailComments.innerHTML = '<div style="opacity:.5;font-size:.75rem;padding:.4rem 0">Loading comments…</div>';
+        fetch('/api/map/catches/' + c.id + '/comments')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var comments = data.comments || [];
+                var html = '';
+                comments.forEach(function (cm) {
+                    html += '<div class="fmap-catch-comment"><span class="fmap-catch-comment-author">' +
+                        esc(cm.angler_name) + '</span>' + esc(cm.body) +
+                        '<span style="float:right;opacity:.4;font-size:.65rem">' + timeAgo(cm.created_at) + '</span></div>';
+                });
+                if (!html) html = '<div style="opacity:.4;font-size:.75rem;padding:.4rem 0">No comments yet</div>';
+                // Add comment form if logged in
+                var commentForm = IS_LOGGED_IN
+                    ? '<div class="fmap-catch-comment-form">' +
+                      '<input type="text" class="fmap-catch-comment-input" placeholder="Add a comment…" maxlength="500">' +
+                      '<button class="fmap-catch-comment-post" data-catch-id="' + c.id + '">Post</button></div>'
+                    : '';
+                els.catchDetailComments.innerHTML = html + commentForm;
+
+                var postBtn = els.catchDetailComments.querySelector('.fmap-catch-comment-post');
+                var commentInput = els.catchDetailComments.querySelector('.fmap-catch-comment-input');
+                if (postBtn && commentInput) {
+                    postBtn.addEventListener('click', function () {
+                        var body = commentInput.value.trim();
+                        if (!body) return;
+                        fetch('/api/map/catches/' + c.id + '/comments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ body: body })
+                        })
+                        .then(function (r) { return r.json(); })
+                        .then(function () { openCatchDetail(c); })
+                        .catch(function () { showToast('Could not post comment.'); });
+                    });
+                }
+            })
+            .catch(function () {
+                els.catchDetailComments.innerHTML = '';
+            });
+
+        // Action buttons: like + delete (own catches)
+        var actionsHtml = '';
+        actionsHtml += '<button class="fmap-catch-action-btn fmap-like-btn" data-catch-id="' + c.id + '">' +
+            '\u2764\uFE0F ' + (c.likes_count || 0) + ' likes</button>';
+        if (c.mine) {
+            actionsHtml += '<button class="fmap-catch-action-btn fmap-catch-action-btn--delete fmap-delete-btn" data-catch-id="' + c.id + '">' +
+                '\uD83D\uDDD1 Delete</button>';
+        }
+        els.catchDetailActions.innerHTML = actionsHtml;
+
+        var likeBtn = els.catchDetailActions.querySelector('.fmap-like-btn');
+        if (likeBtn) {
+            likeBtn.addEventListener('click', function () {
+                if (!IS_LOGGED_IN) { showToast('Sign in to like catches'); return; }
+                fetch('/api/map/catches/' + c.id + '/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    likeBtn.textContent = '\u2764\uFE0F ' + d.likes_count + ' likes';
+                    likeBtn.classList.toggle('fmap-catch-action-btn--liked', d.liked);
+                    c.likes_count = d.likes_count;
+                })
+                .catch(function () { showToast('Could not update like.'); });
+            });
+        }
+
+        var deleteBtn = els.catchDetailActions.querySelector('.fmap-delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                if (!confirm('Delete this catch?')) return;
+                fetch('/api/map/catches/' + c.id, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(function () {
+                    showToast('Catch deleted.');
+                    closeCatchDetail();
+                    loadCommunityPins();
+                })
+                .catch(function () { showToast('Could not delete catch.'); });
+            });
+        }
+
+        els.catchDetail.hidden = false;
+
+        var closeBtn = document.getElementById('fmap-catch-detail-close');
+        if (closeBtn) {
+            closeBtn.onclick = closeCatchDetail;
+        }
+    }
+
+    function closeCatchDetail() {
+        if (els.catchDetail) els.catchDetail.hidden = true;
+    }
+
+    // ─── Community feed ───────────────────────────────────────────────────────
+
+    function loadCommunityFeed() {
+        if (!els.communityList) return;
+        els.communityList.innerHTML = '<li class="fmap-hotspot-empty">Loading…</li>';
+
+        var url = '/api/map/feed?limit=20';
+        if (userCoords) url += '&lat=' + userCoords.lat + '&lng=' + userCoords.lng;
+
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var catches = data.catches || [];
+                if (!catches.length) {
+                    els.communityList.innerHTML = '<li class="fmap-hotspot-empty">No recent catches logged nearby.</li>';
+                    return;
+                }
+                var html = '';
+                catches.forEach(function (c) {
+                    var weightStr = c.weight_lb ? ' \u2022 ' + c.weight_lb.toFixed(1) + ' lb' : '';
+                    html += '<li class="fmap-community-item" data-lat="' + c.lat + '" data-lng="' + c.lng + '" data-id="' + c.id + '">' +
+                        '<span class="fmap-community-species">' + esc(c.species) + weightStr + '</span>' +
+                        '<div class="fmap-community-meta">' +
+                          '<span class="fmap-community-angler">' + esc(c.angler_name) + '</span>' +
+                          (c.bait ? '<span>' + esc(c.bait) + '</span>' : '') +
+                          '<span class="fmap-community-time">' + timeAgo(c.caught_at) + '</span>' +
+                        '</div>' +
+                        '</li>';
+                });
+                els.communityList.innerHTML = html;
+
+                // Wire click to fly-to + open detail
+                els.communityList.querySelectorAll('.fmap-community-item').forEach(function (li) {
+                    li.addEventListener('click', function () {
+                        var lat  = parseFloat(li.getAttribute('data-lat'));
+                        var lng  = parseFloat(li.getAttribute('data-lng'));
+                        var id   = parseInt(li.getAttribute('data-id'), 10);
+                        var c    = catches.find(function (x) { return x.id === id; }) || {};
+                        if (map && lat && lng) {
+                            map.flyTo([lat, lng], Math.max(map.getZoom(), 12), { duration: 0.7 });
+                        }
+                        if (c.id) setTimeout(function () { openCatchDetail(c); }, 750);
+                    });
+                });
+
+                // Update badge
+                var badge = document.getElementById('fmap-community-badge');
+                if (badge) {
+                    badge.textContent = catches.length;
+                    badge.style.display = catches.length ? '' : 'none';
+                }
+            })
+            .catch(function () {
+                if (els.communityList) els.communityList.innerHTML = '<li class="fmap-hotspot-empty">Could not load community catches.</li>';
+            });
+    }
+
+    // ─── Log Catch mode ───────────────────────────────────────────────────────
+
+    function enterLogMode() {
+        if (!IS_LOGGED_IN) {
+            showToast('Sign in to log catches on the map');
+            return;
+        }
+        catchLogMode = true;
+        var btn = document.getElementById('fmap-log-catch-btn');
+        if (btn) btn.classList.add('fmap-ctrl-btn--active');
+        var wrap = document.querySelector('.fmap-map-wrap');
+        if (wrap) wrap.classList.add('fmap-log-mode-active');
+        // Show banner on map
+        var existingBanner = document.getElementById('fmap-log-banner');
+        if (!existingBanner) {
+            var banner = document.createElement('div');
+            banner.id = 'fmap-log-banner';
+            banner.className = 'fmap-log-mode-banner';
+            banner.textContent = 'Tap the map to place your catch pin';
+            var mapWrap = document.querySelector('.fmap-map-wrap');
+            if (mapWrap) mapWrap.appendChild(banner);
+        }
+        showToast('Tap the map to pin your catch location');
+    }
+
+    function exitLogMode() {
+        catchLogMode = false;
+        var btn = document.getElementById('fmap-log-catch-btn');
+        if (btn) btn.classList.remove('fmap-ctrl-btn--active');
+        var wrap = document.querySelector('.fmap-map-wrap');
+        if (wrap) wrap.classList.remove('fmap-log-mode-active');
+        var banner = document.getElementById('fmap-log-banner');
+        if (banner) banner.parentNode && banner.parentNode.removeChild(banner);
+        if (pendingCatchMarker && map) {
+            map.removeLayer(pendingCatchMarker);
+            pendingCatchMarker = null;
+        }
+        pendingCatchLatLng = null;
+    }
+
+    function openLogModal(lat, lng) {
+        pendingCatchLatLng = { lat: lat, lng: lng };
+        if (els.logCoords) {
+            els.logCoords.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+        }
+        if (els.logModal) els.logModal.hidden = false;
+        if (els.logSpecies) els.logSpecies.focus();
+        if (els.logError) els.logError.hidden = true;
+        if (els.logForm) els.logForm.reset();
+        if (els.logPublic) els.logPublic.checked = true;
+    }
+
+    function closeLogModal() {
+        if (els.logModal) els.logModal.hidden = true;
+        exitLogMode();
+    }
+
+    function wireLogCatch() {
+        var logBtn = document.getElementById('fmap-log-catch-btn');
+        if (logBtn) logBtn.addEventListener('click', function () {
+            if (catchLogMode) { exitLogMode(); return; }
+            enterLogMode();
+        });
+
+        var closeBtn = document.getElementById('fmap-log-modal-close');
+        if (closeBtn) closeBtn.addEventListener('click', closeLogModal);
+        var cancelBtn = document.getElementById('fmap-log-cancel');
+        if (cancelBtn) cancelBtn.addEventListener('click', closeLogModal);
+
+        // Map click in log mode — place pin
+        if (map) {
+            map.on('click', function (e) {
+                if (!catchLogMode) return;
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+
+                // Remove previous temp marker
+                if (pendingCatchMarker) map.removeLayer(pendingCatchMarker);
+                pendingCatchMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'fmap-community-pin-wrap',
+                        html: '<span class="fmap-community-pin fmap-community-pin--mine" style="width:16px;height:16px;border-width:2.5px"></span>',
+                        iconSize: [16, 16], iconAnchor: [8, 8]
+                    })
+                }).addTo(map);
+
+                openLogModal(lat, lng);
+            });
+        }
+
+        // Form submit
+        if (els.logForm) {
+            els.logForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (!pendingCatchLatLng) { closeLogModal(); return; }
+
+                var species = els.logSpecies ? els.logSpecies.value.trim() : '';
+                if (!species) {
+                    if (els.logError) { els.logError.textContent = 'Species is required.'; els.logError.hidden = false; }
+                    return;
+                }
+
+                var payload = {
+                    lat:       pendingCatchLatLng.lat,
+                    lng:       pendingCatchLatLng.lng,
+                    species:   species,
+                    bait:      els.logBait   ? els.logBait.value.trim()   : '',
+                    notes:     els.logNotes  ? els.logNotes.value.trim()  : '',
+                    is_public: els.logPublic ? els.logPublic.checked       : true
+                };
+                if (els.logWeight && els.logWeight.value) payload.weight_lb = parseFloat(els.logWeight.value);
+                if (els.logLength && els.logLength.value) payload.length_in = parseFloat(els.logLength.value);
+
+                if (els.logSubmit) els.logSubmit.disabled = true;
+
+                fetch('/api/map/catches', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.error) {
+                        if (els.logError) { els.logError.textContent = data.error; els.logError.hidden = false; }
+                        if (els.logSubmit) els.logSubmit.disabled = false;
+                        return;
+                    }
+                    showToast('Catch logged! \uD83C\uDFAF');
+                    closeLogModal();
+                    if (communityLayerOn) loadCommunityPins();
+                    if (activeTab === 'community') loadCommunityFeed();
+                })
+                .catch(function () {
+                    if (els.logError) { els.logError.textContent = 'Could not save catch. Please try again.'; els.logError.hidden = false; }
+                    if (els.logSubmit) els.logSubmit.disabled = false;
+                });
+            });
+        }
+    }
+
     // ─── Boot ─────────────────────────────────────────────────────────────────
     function boot() {
         ensureLeaflet()
@@ -1493,6 +2164,10 @@
                 renderQuickChips();
                 wireFilters();
                 wireMapControls();
+                wireAdvancedFilters();
+                wireTabs();
+                wireCommunityLayer();
+                wireLogCatch();
                 wireFullscreen();
                 wireShareBtn();
                 fetchAndRender();
@@ -1610,8 +2285,11 @@
             var hashParts = [];
             if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
             if (activeCoast && activeCoast !== 'all') hashParts.push('coast=' + activeCoast);
-            if (activeCat)   hashParts.push('cat=' + activeCat);
-            if (activeMonth) hashParts.push('month=' + activeMonth);
+            if (activeCat)    hashParts.push('cat=' + activeCat);
+            if (activeMonth)  hashParts.push('month=' + activeMonth);
+            if (activeSeason) hashParts.push('season=' + activeSeason);
+            if (activeTime)   hashParts.push('time=' + activeTime);
+            if (activeTide)   hashParts.push('tide=' + activeTide);
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1654,6 +2332,24 @@
             if (k === 'month' && v) {
                 activeMonth = parseInt(v, 10) || 0;
             }
+            if (k === 'season' && v) {
+                activeSeason = v;
+                document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-season') === v);
+                });
+            }
+            if (k === 'time' && v) {
+                activeTime = v;
+                document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-time') === v);
+                });
+            }
+            if (k === 'tide' && v) {
+                activeTide = v;
+                document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
+                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-tide') === v);
+                });
+            }
         });
     }
 
@@ -1670,14 +2366,35 @@
         els.detailBadge   = document.getElementById('fmap-detail-badge');
         els.detailSpecies = document.getElementById('fmap-detail-species');
         els.detailActions = document.getElementById('fmap-detail-actions');
-        els.hotspotsList  = document.getElementById('fmap-hotspots-list');
-        els.hotspotCount  = document.getElementById('fmap-hotspot-count');
-        els.chips         = document.getElementById('fmap-chips');
-        els.speciesInput  = document.getElementById('fmap-species-input');
-        els.searchClear   = document.getElementById('fmap-search-clear');
-        els.suggestions   = document.getElementById('fmap-suggestions');
-        els.insight       = document.getElementById('fmap-insight');
-        els.insightText   = document.getElementById('fmap-insight-text');
+        els.hotspotsList   = document.getElementById('fmap-hotspots-list');
+        els.hotspotCount   = document.getElementById('fmap-hotspot-count');
+        els.chips          = document.getElementById('fmap-chips');
+        els.speciesInput   = document.getElementById('fmap-species-input');
+        els.searchClear    = document.getElementById('fmap-search-clear');
+        els.suggestions    = document.getElementById('fmap-suggestions');
+        els.insight        = document.getElementById('fmap-insight');
+        els.insightText    = document.getElementById('fmap-insight-text');
+        // Community / social elements
+        els.catchDetail    = document.getElementById('fmap-catch-detail');
+        els.catchDetailTitle = document.getElementById('fmap-catch-detail-title');
+        els.catchDetailMeta  = document.getElementById('fmap-catch-detail-meta');
+        els.catchDetailBody  = document.getElementById('fmap-catch-detail-body');
+        els.catchDetailComments = document.getElementById('fmap-catch-detail-comments');
+        els.catchDetailActions  = document.getElementById('fmap-catch-detail-actions');
+        // Log modal
+        els.logModal       = document.getElementById('fmap-log-modal');
+        els.logForm        = document.getElementById('fmap-log-form');
+        els.logCoords      = document.getElementById('fmap-log-modal-coords');
+        els.logSpecies     = document.getElementById('fmap-log-species');
+        els.logWeight      = document.getElementById('fmap-log-weight');
+        els.logLength      = document.getElementById('fmap-log-length');
+        els.logBait        = document.getElementById('fmap-log-bait');
+        els.logNotes       = document.getElementById('fmap-log-notes');
+        els.logPublic      = document.getElementById('fmap-log-public');
+        els.logError       = document.getElementById('fmap-log-error');
+        els.logSubmit      = document.getElementById('fmap-log-submit');
+        // Community feed
+        els.communityList  = document.getElementById('fmap-community-list');
 
         if (!els.mapEl) return;
         boot();
