@@ -2160,7 +2160,7 @@ h2::before {
   padding: 0.25rem 0.65rem;
   background: var(--card-bg);
   border: 1.5px solid var(--border-light);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   font-size: 0.74rem;
   font-weight: 500;
   color: var(--text-muted);
@@ -2613,7 +2613,7 @@ h2::before {
 .live-cam-status {
   font-size: 0.72rem;
   font-weight: 700;
-  border-radius: 999px;
+  border-radius: 3px;
   padding: 0.15rem 0.5rem;
 }
 
@@ -2943,7 +2943,7 @@ h2::before {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   padding: 0.2rem 0.5rem;
-  border-radius: 99px;
+  border-radius: 3px;
   white-space: nowrap;
 }
 
@@ -5494,7 +5494,7 @@ footer p {
   color: rgba(255,255,255,0.75);
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -6210,7 +6210,7 @@ footer p {
   white-space: nowrap;
   padding: 0.3rem 0.7rem;
   background: var(--ocean-light);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
 }
 
 /* -- Browse all locations -- */
@@ -7052,7 +7052,7 @@ footer p {
   letter-spacing: 0.04em;
   color: #1a6b36;
   background: #d4edda;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 1.4;
@@ -7369,7 +7369,7 @@ footer p {
 .lazy-section {
   background: var(--card-bg, #fff);
   border: 1px solid var(--line, #dfe6ee);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 0.65rem;
   margin-bottom: 0.65rem;
 }
@@ -7857,7 +7857,7 @@ footer p {
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.55rem;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   font-size: 0.68rem;
   font-weight: 700;
   white-space: nowrap;
@@ -7919,8 +7919,8 @@ footer p {
 .bite-windows-section {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
   padding: 0.75rem 1rem;
+  border: 1px solid var(--border-light);
 }
 
 .bite-windows-section h2 {
@@ -8436,7 +8436,7 @@ footer p {
 
 .cust-tab-btn {
   padding: 0.3rem 0.75rem;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
   background: transparent;
   font-size: 0.72rem;
@@ -8585,7 +8585,7 @@ footer p {
   color: var(--text-muted);
   background: none;
   border: 1px solid var(--border-light);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 0.85rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -9465,7 +9465,7 @@ body:not(.forecast-page) main {
   gap: 0.4rem;
   background: var(--bg-subtle);
   border: 1px solid var(--border-light);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.75rem;
   cursor: pointer;
   font-size: 0.83rem;
@@ -9768,48 +9768,48 @@ body.has-app-header main {
   gap: 0.5rem;
 }
 
+.top-species-grid {
+  border-top: 1px solid rgba(232,217,184,0.8);
+}
+
 .top-species-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,255,255,0.7);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem 0.75rem;
-  border: 1px solid rgba(232,217,184,0.7);
+  background: transparent;
+  border-radius: 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(232,217,184,0.6);
 }
 
 [data-theme="dark"] .top-species-row {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(217,119,6,0.1);
+  border-color: rgba(217,119,6,0.12);
+}
+
+.top-species-row:last-child {
+  border-bottom: none;
 }
 
 .tsr-rank {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--bg-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  font-weight: 700;
+  width: 20px;
+  font-size: 0.62rem;
+  font-weight: 800;
   color: var(--text-muted);
   flex-shrink: 0;
+  font-family: 'Manrope', sans-serif;
+  letter-spacing: 0.04em;
 }
 
 .tsr-rank--1 {
-  background: #D97706;
-  color: #fff;
+  color: #D97706;
 }
 
 .tsr-rank--2 {
-  background: #64748B;
-  color: #fff;
+  color: var(--text-muted);
 }
 
 .tsr-rank--3 {
-  background: #92400E;
-  color: #fff;
+  color: #92400E;
 }
 
 .tsr-info {
@@ -9837,12 +9837,14 @@ body.has-app-header main {
 }
 
 .tsr-badge {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.2rem 0.55rem;
-  border-radius: 12px;
+  padding: 0.18rem 0.5rem;
+  border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .tsr-badge--hot {
@@ -10061,7 +10063,7 @@ body.has-app-header main {
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.55rem;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255,255,255,0.2);
   transition: color 0.12s, border-color 0.12s;
 }
@@ -10074,7 +10076,7 @@ body.has-app-header main {
 .location-bar-fav {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   padding: 0.2rem 0.55rem;
   cursor: pointer;
   color: rgba(255,255,255,0.5);
@@ -10445,7 +10447,7 @@ details[open] .collapsible-module-body {
   max-width: 520px;
   background: var(--card-bg, #fff);
   border: 1px solid var(--border-light, rgba(0,0,0,0.1));
-  border-radius: 14px;
+  border-radius: var(--radius);
   box-shadow: 0 4px 24px rgba(0,0,0,0.14);
   padding: 0.75rem 1rem;
   display: flex;
@@ -10470,7 +10472,7 @@ details[open] .collapsible-module-body {
   background: var(--ocean, #0e5f78);
   color: #fff;
   border: none;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 700;
@@ -10495,8 +10497,8 @@ details[open] .collapsible-module-body {
 /* ── Pack for Today card ───────────────────────────────────────────────── */
 .trip-setup-section {
   background: var(--card-bg, #fff);
-  border-radius: 16px;
-  box-shadow: var(--card-shadow, 0 2px 12px rgba(0,0,0,0.07));
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
   padding: 1.1rem 1.25rem 1rem;
   margin: 0 0 0.75rem;
 }
@@ -10691,7 +10693,7 @@ details[open] .collapsible-module-body {
   flex-shrink: 0;
   background: none;
   border: 1px solid currentColor;
-  border-radius: 20px;
+  border-radius: var(--radius-sm);
   padding: 0.18rem 0.6rem;
   font-size: 0.72rem;
   font-weight: 700;
