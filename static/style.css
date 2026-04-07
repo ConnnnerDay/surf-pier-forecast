@@ -331,7 +331,6 @@ h2::before {
 .card {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
   padding: 0.85rem 1rem;
   border: 1px solid var(--border-light);
 }
@@ -401,7 +400,6 @@ h2::before {
   text-align: center;
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
   padding: 0.75rem;
   border: 1px solid var(--border-light);
 }
@@ -471,7 +469,7 @@ h2::before {
 
 .bite-alert--hot {
   border-left-color: #DC2626;
-  background: linear-gradient(to right, rgba(254,226,226,0.4) 0%, var(--white) 55%);
+  background: rgba(220,38,38,0.04);
 }
 
 [data-theme="dark"] .bite-alert--hot {
@@ -548,21 +546,18 @@ h2::before {
 
 .best-time-card {
   background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  border-radius: 0;
   padding: 0.65rem 0.75rem 0.55rem;
   min-width: 130px;
   max-width: 180px;
   flex: 1 1 130px;
-  border-top: 4px solid var(--text-muted);
   border: 1px solid var(--border-light);
-  border-top: 4px solid var(--text-muted);
+  border-top: 3px solid var(--text-muted);
   text-align: center;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .best-time-card:hover {
-  box-shadow: var(--shadow-md);
+  opacity: 0.9;
 }
 
 .best-time--prime {
@@ -618,45 +613,51 @@ h2::before {
 .conditions-section {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: 0 2px 12px rgba(13,34,64,0.12), 0 1px 3px rgba(0,0,0,0.08);
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(13,34,64,0.18);
+  border: 1px solid var(--border-light);
   overflow: hidden;
 }
 
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-  gap: 0.55rem;
+  gap: 0;
+  border-top: 1px solid var(--border-light);
 }
 
 .stat-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 0.65rem 0.55rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 0.65rem 0.55rem 0.6rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  border: 1px solid var(--border-light);
-  transition: box-shadow 0.15s ease;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
 }
 
-.stat-card:hover {
-  box-shadow: var(--shadow-md);
+.stat-card:last-child {
+  border-right: none;
 }
 
 /* Water temp: hero stat — spans 2 columns, bigger number */
 .stat-grid .stat-card:first-child {
   grid-column: 1 / span 2;
-  border-top: 3px solid #0EA5E9;
+  border-right: none;
+  padding-left: 0;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-light);
 }
 .stat-grid .stat-card:first-child .stat-value {
-  font-size: 1.8rem;
-  letter-spacing: -0.03em;
+  font-size: 2.4rem;
+  letter-spacing: -0.04em;
+  font-weight: 800;
 }
 .stat-grid .stat-card:first-child .stat-label {
-  color: #0EA5E9;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
 }
 
 /* Semantic icon above the stat label */
@@ -902,11 +903,12 @@ h2::before {
 /* ---------- Tide section ---------- */
 
 .tide-section {
-  background: #F0F6FB;
+  background: var(--white);
   border-radius: var(--radius);
   box-shadow: none;
   padding: 0.85rem 1rem;
-  border: 1px solid #C8DFF0;
+  border: 1px solid var(--border-light);
+  border-top: 2px solid #0077B6;
 }
 
 [data-theme="dark"] .tide-section {
@@ -1047,10 +1049,11 @@ h2::before {
 .solunar-section {
   background: #0D2240;
   border-radius: var(--radius);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.28);
+  box-shadow: none;
   padding: 0.85rem 1rem;
   border: 1px solid rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.9);
+  margin-top: 1.25rem;
 }
 
 /* Invert text colors inside the dark solunar section */
@@ -1064,7 +1067,7 @@ h2::before {
 }
 .solunar-section .solunar-major {
   border-left-color: #F59E0B;
-  background: linear-gradient(to right, rgba(245,158,11,0.12) 0%, transparent 55%);
+  background: rgba(245,158,11,0.07);
 }
 .solunar-section .solunar-minor {
   border-left-color: rgba(255,255,255,0.25);
@@ -1143,12 +1146,12 @@ h2::before {
 }
 
 .solunar-card:hover {
-  box-shadow: var(--shadow-md);
+  border-color: var(--text-muted);
 }
 
 .solunar-major {
   border-left: 3px solid #D97706;
-  background: linear-gradient(to right, rgba(253,230,138,0.12) 0%, transparent 55%);
+  background: rgba(217,119,6,0.06);
 }
 
 .solunar-minor {
@@ -1275,7 +1278,7 @@ h2::before {
 }
 
 .species-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-left-width: 4px;
 }
 
 .species-card:nth-child(1) {
@@ -1543,8 +1546,8 @@ h2::before {
 .rig-section {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
   padding: 0.85rem 1rem;
+  border: 1px solid var(--border-light);
 }
 
 .rig-cards {
@@ -1562,8 +1565,7 @@ h2::before {
 }
 
 .rig-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: #c8d6e5;
+  border-color: var(--text-muted);
 }
 
 .rig-card h3 {
@@ -1738,8 +1740,7 @@ h2::before {
 }
 
 .bait-item:hover {
-  box-shadow: var(--shadow-sm);
-  border-color: #c8d6e5;
+  border-color: var(--text-muted);
 }
 
 .bait-num {
@@ -1796,8 +1797,7 @@ h2::before {
 }
 
 .lure-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: #c8d6e5;
+  border-color: var(--text-muted);
 }
 
 .lure-card-header {
@@ -2712,10 +2712,10 @@ h2::before {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  background: linear-gradient(to right, #FFFBEB, #FFF8E1);
-  border: 1.5px solid #F59E0B;
-  border-left: 4px solid #D97706;
-  border-radius: 10px;
+  background: rgba(245,158,11,0.07);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-left: 3px solid #D97706;
+  border-radius: var(--radius-sm);
   padding: 0.55rem 0.85rem;
   margin-bottom: 0.7rem;
 }
@@ -3778,7 +3778,7 @@ h2::before {
   justify-content: center;
   width: 28px; height: 28px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(14,95,120,0.5), rgba(31,168,201,0.3));
+  background: rgba(14,95,120,0.4);
   border: 1px solid rgba(31,168,201,0.25);
   flex-shrink: 0;
   color: #1fa8c9;
@@ -4109,9 +4109,9 @@ h2::before {
   gap: 0.5rem;
   padding: 0.6rem 0.9rem;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.06));
-  border: 1px solid rgba(245,158,11,0.28);
-  border-radius: 8px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.22);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   color: var(--text, #e0e6ed);
   line-height: 1.45;
@@ -4326,8 +4326,8 @@ h2::before {
 
 /* ── Location detail drawer ── */
 .fmap-detail {
-  background: linear-gradient(135deg, rgba(14,95,120,0.12), rgba(31,168,201,0.05));
-  border: 1px solid rgba(31,168,201,0.2);
+  background: rgba(14,95,120,0.08);
+  border: 1px solid rgba(31,168,201,0.18);
   border-radius: 10px;
   margin-bottom: 0.65rem;
   overflow: hidden;
@@ -8062,9 +8062,9 @@ footer p {
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.6rem;
-  background: linear-gradient(135deg, #064e3b, #065f46);
+  background: #064e3b;
   color: #6ee7b7;
-  border-radius: 12px;
+  border-radius: 3px;
   font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -8073,7 +8073,7 @@ footer p {
 }
 
 [data-theme="dark"] .best-bite-marker {
-  background: linear-gradient(135deg, #052e16, #064e3b);
+  background: #052e16;
   color: #6ee7b7;
 }
 
@@ -9549,7 +9549,7 @@ body.has-app-header main {
 .conditions-summary-card {
   background: var(--card-bg);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
   margin: 0.65rem;
   overflow: hidden;
 }
@@ -9563,11 +9563,11 @@ body.has-app-header main {
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
-  background: linear-gradient(145deg, #0D2240 0%, #102A45 100%);
+  background: #0D2240;
 }
 
 [data-theme="dark"] .csc-verdict-bar {
-  background: linear-gradient(145deg, #07131F 0%, #0A1A2B 100%);
+  background: #07131F;
   border-bottom-color: rgba(255,255,255,0.06);
 }
 [data-theme="dark"] .conditions-section {
@@ -9798,18 +9798,18 @@ body.has-app-header main {
 }
 
 .tsr-rank--1 {
-  background: linear-gradient(135deg, #d4a017, #f0c040);
-  color: #5a3a00;
+  background: #D97706;
+  color: #fff;
 }
 
 .tsr-rank--2 {
-  background: linear-gradient(135deg, #8a9ba8, #b0c0ca);
-  color: #1a2a35;
+  background: #64748B;
+  color: #fff;
 }
 
 .tsr-rank--3 {
-  background: linear-gradient(135deg, #c47a4a, #e09a6a);
-  color: #3a1500;
+  background: #92400E;
+  color: #fff;
 }
 
 .tsr-info {
@@ -9904,25 +9904,28 @@ body.has-app-header main {
 
 .collapsible-module {
   margin: 0.5rem 0.65rem;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  background: var(--card-bg);
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  background: transparent;
+  border-top: 1px solid var(--border-light);
 }
 
 .collapsible-module summary {
   list-style: none;
-  padding: 0.65rem 0.85rem;
+  padding: 0.6rem 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-muted);
   user-select: none;
-  transition: background 0.12s;
-  letter-spacing: 0.01em;
+  transition: color 0.12s;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
 }
 
 .collapsible-module summary::-webkit-details-marker {
@@ -9930,7 +9933,8 @@ body.has-app-header main {
 }
 
 .collapsible-module summary:hover {
-  background: var(--bg-subtle);
+  color: var(--text);
+  background: transparent;
 }
 
 .collapsible-module-title {
@@ -9950,8 +9954,8 @@ body.has-app-header main {
 }
 
 .collapsible-module-body {
-  padding: 0 0.75rem 0.75rem;
-  border-top: 1px solid var(--border-light);
+  padding: 0 0 0.75rem;
+  border-top: none;
 }
 
 /* ---- DASHBOARD SECTION HEADERS (inside collapsibles) ---- */
@@ -11400,7 +11404,7 @@ details[open] .collapsible-module-body {
 
 /* Biometric button styling */
 .auth-btn--biometric {
-  background: linear-gradient(135deg, #2a7d6e, #1a5c50);
+  background: #2a7d6e;
   display: flex;
   align-items: center;
   justify-content: center;
