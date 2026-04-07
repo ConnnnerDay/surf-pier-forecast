@@ -34,15 +34,25 @@ from storage.cache import (
 )
 from storage.sqlite import (
     add_log_entry,
+    add_map_catch,
+    add_map_catch_comment,
     attach_photos_to_entry,
     delete_log_entry,
+    delete_map_catch,
+    get_catch_counts_near_locations,
+    get_community_hotspots,
     get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
+    get_map_catch,
+    get_map_catch_comments,
+    get_map_catches_in_bbox,
     get_page_layout,
     get_preferences,
+    get_recent_public_catches,
     save_page_layout,
     save_preferences,
+    toggle_map_catch_like,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
 from web.helpers import get_session_location
@@ -1086,9 +1096,29 @@ def fishing_map_data() -> Any:
     from locations import COASTAL_LOCATIONS
 
     # -- parse & sanitise params -----------------------------------------------
-    species_q = request.args.get("species", "").strip()[:100].lower()
-    coast_q = request.args.get("coast", "").strip()[:20].lower()
+    species_q  = request.args.get("species", "").strip()[:100].lower()
+    coast_q    = request.args.get("coast", "").strip()[:20].lower()
     category_q = request.args.get("category", "").strip()[:50].lower()
+
+    # New extended filters
+    season_q    = request.args.get("season", "").strip()[:20].lower()
+    # valid values: spring | summer | fall | winter | ""
+    time_q      = request.args.get("time_of_day", "").strip()[:20].lower()
+    # valid values: dawn | morning | midday | evening | night | ""
+    tide_q      = request.args.get("tide_phase", "").strip()[:20].lower()
+    # valid values: incoming | outgoing | high | low | ""
+    min_temp_q  = request.args.get("min_water_temp")
+    max_temp_q  = request.args.get("max_water_temp")
+
+    _min_temp: Optional[float] = None
+    _max_temp: Optional[float] = None
+    try:
+        if min_temp_q is not None:
+            _min_temp = float(min_temp_q)
+        if max_temp_q is not None:
+            _max_temp = float(max_temp_q)
+    except (ValueError, TypeError):
+        pass
 
     try:
         month = int(request.args.get("month", "0"))
@@ -1096,6 +1126,29 @@ def fishing_map_data() -> Any:
             raise ValueError
     except (ValueError, TypeError):
         month = datetime.date.today().month
+
+    # Map season → months
+    _SEASON_MONTHS = {
+        "spring": [3, 4, 5],
+        "summer": [6, 7, 8],
+        "fall":   [9, 10, 11],
+        "winter": [12, 1, 2],
+    }
+    # When a season is supplied force the month selection to that season's
+    # representative middle month (used for scoring), unless month was
+    # explicitly provided by the caller.
+    if season_q in _SEASON_MONTHS and not request.args.get("month"):
+        season_months = _SEASON_MONTHS[season_q]
+        month = season_months[1]  # middle of the season
+
+    # Map time-of-day → preferred fishing "bonus" (used for scoring later)
+    # Dawn/dusk/night species get a mild boost when those times are selected.
+    _DAWN_DUSK_TIMES = {"dawn", "morning", "evening", "night"}
+    prefer_dawn_dusk = time_q in _DAWN_DUSK_TIMES
+
+    # Tide phase is informational metadata returned in the response for the
+    # frontend to display; the backend scores don't change by tide currently.
+    include_tide_hint = tide_q in {"incoming", "outgoing", "high", "low"}
 
     # -- filter the species DB once -------------------------------------------
     filtered_species = SPECIES_DB
@@ -1172,18 +1225,27 @@ def fishing_map_data() -> Any:
         else:
             ai_score = float(score)
 
+        # Water-temp range filter — skip locations outside requested range
+        if _min_temp is not None and water_temp is not None and water_temp < _min_temp:
+            continue
+        if _max_temp is not None and water_temp is not None and water_temp > _max_temp:
+            continue
+
         results.append({
-            "id":         loc["id"],
-            "name":       loc["name"],
-            "state":      loc["state"],
-            "lat":        loc["lat"],
-            "lng":        loc["lng"],
-            "coast":      loc_coast,
-            "score":      score,
-            "ai_score":   round(ai_score, 1),
-            "water_temp": water_temp,
-            "activity":   activity,
-            "top_species": top_species,
+            "id":           loc["id"],
+            "name":         loc["name"],
+            "state":        loc["state"],
+            "lat":          loc["lat"],
+            "lng":          loc["lng"],
+            "coast":        loc_coast,
+            "score":        score,
+            "ai_score":     round(ai_score, 1),
+            "water_temp":   water_temp,
+            "activity":     activity,
+            "top_species":  top_species,
+            # extended filter metadata echoed back
+            "tide_hint":    tide_q if include_tide_hint else None,
+            "time_hint":    time_q or None,
         })
 
     # Mark top 5 locations as AI picks with generated reasoning text
@@ -1248,9 +1310,18 @@ def fishing_map_data() -> Any:
             "coast":  sp0.get("coast", ""),
         }
 
+    # Community catch counts — overlay how many recent community pins are near
+    # each NOAA location so the front-end can show a "hot community" badge.
+    community_counts = get_catch_counts_near_locations(results, days_back=30)
+    for r in results:
+        r["community_catches"] = community_counts.get(r["id"], 0)
+
     return jsonify({
         "locations": results,
         "month": month,
+        "season": season_q or None,
+        "time_of_day": time_q or None,
+        "tide_phase": tide_q or None,
         "species_filter": species_q,
         "species_names": species_names,
         "monthly_summary": monthly_summary,
@@ -1349,3 +1420,212 @@ def structure_spots() -> Any:
 
     features = _fetch_noaa_structures(sw_lat, sw_lng, ne_lat, ne_lng)
     return jsonify({"features": features})
+
+
+# ── Community map catch endpoints ─────────────────────────────────────────────
+
+@bp.route("/api/map/catches", methods=["GET"])
+def map_catches_list() -> Any:
+    """Return public catch pins in a bounding box (+ viewer's own private ones).
+
+    Query params
+    ------------
+    sw_lat, sw_lng, ne_lat, ne_lng : float  – viewport bounding box (required)
+    species   : str  – optional case-insensitive species filter
+    days_back : int  – how many days of history to include (default 90, max 365)
+    """
+    try:
+        sw_lat = float(request.args["sw_lat"])
+        sw_lng = float(request.args["sw_lng"])
+        ne_lat = float(request.args["ne_lat"])
+        ne_lng = float(request.args["ne_lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify({"error": "sw_lat, sw_lng, ne_lat, ne_lng required"}), 400
+
+    if not (-90 <= sw_lat < ne_lat <= 90) or not (-180 <= sw_lng < ne_lng <= 180):
+        return jsonify({"error": "Invalid bbox"}), 400
+
+    try:
+        days_back = min(int(request.args.get("days_back", 90)), 365)
+    except (ValueError, TypeError):
+        days_back = 90
+
+    species_filter = request.args.get("species", "").strip()[:80]
+    viewer_user_id = g.user["id"] if g.get("user") else None
+
+    catches = get_map_catches_in_bbox(
+        sw_lat, sw_lng, ne_lat, ne_lng,
+        viewer_user_id=viewer_user_id,
+        species_filter=species_filter,
+        days_back=days_back,
+    )
+    return jsonify({"catches": catches})
+
+
+@bp.route("/api/map/catches", methods=["POST"])
+def map_catches_create() -> Any:
+    """Log a new catch pin on the map.  Requires authentication.
+
+    JSON body
+    ---------
+    lat       : float   (required)
+    lng       : float   (required)
+    species   : str     (required)
+    bait      : str
+    weight_lb : float
+    length_in : float
+    notes     : str
+    is_public : bool    (default true)
+    caught_at : str     ISO datetime, defaults to now
+    """
+    if not g.get("user"):
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        lat = float(data["lat"])
+        lng = float(data["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify({"error": "lat and lng are required numbers"}), 400
+
+    if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+        return jsonify({"error": "lat/lng out of range"}), 400
+
+    species = str(data.get("species", "")).strip()[:100]
+    if not species:
+        return jsonify({"error": "species is required"}), 400
+
+    bait      = str(data.get("bait", "")).strip()[:80]
+    notes     = str(data.get("notes", "")).strip()[:500]
+    is_public = bool(data.get("is_public", True))
+    caught_at = str(data.get("caught_at", "")).strip()[:30] or None
+
+    weight_lb = data.get("weight_lb")
+    length_in = data.get("length_in")
+    try:
+        weight_lb = float(weight_lb) if weight_lb is not None else None
+        length_in = float(length_in) if length_in is not None else None
+    except (ValueError, TypeError):
+        weight_lb = length_in = None
+
+    catch_id = add_map_catch(
+        g.user["id"], lat, lng, species,
+        bait=bait, weight_lb=weight_lb, length_in=length_in,
+        notes=notes, is_public=is_public, caught_at=caught_at,
+    )
+    return jsonify({"id": catch_id}), 201
+
+
+@bp.route("/api/map/catches/<int:catch_id>", methods=["DELETE"])
+def map_catches_delete(catch_id: int) -> Any:
+    """Delete the caller's own catch pin."""
+    if not g.get("user"):
+        return jsonify({"error": "Authentication required"}), 401
+
+    deleted = delete_map_catch(catch_id, g.user["id"])
+    if not deleted:
+        return jsonify({"error": "Not found or not your catch"}), 404
+    return jsonify({"ok": True})
+
+
+@bp.route("/api/map/catches/<int:catch_id>/like", methods=["POST"])
+def map_catch_like(catch_id: int) -> Any:
+    """Toggle a like on a community catch pin.  Requires auth."""
+    if not g.get("user"):
+        return jsonify({"error": "Authentication required"}), 401
+
+    catch = get_map_catch(catch_id)
+    if not catch or not catch["is_public"]:
+        return jsonify({"error": "Catch not found"}), 404
+
+    liked, likes_count = toggle_map_catch_like(catch_id, g.user["id"])
+    return jsonify({"liked": liked, "likes_count": likes_count})
+
+
+@bp.route("/api/map/catches/<int:catch_id>/comments", methods=["GET"])
+def map_catch_comments_list(catch_id: int) -> Any:
+    """Return all comments on a catch pin."""
+    catch = get_map_catch(catch_id)
+    if not catch:
+        return jsonify({"error": "Catch not found"}), 404
+    if not catch["is_public"]:
+        if not g.get("user") or g.user["id"] != catch["user_id"]:
+            return jsonify({"error": "Catch not found"}), 404
+
+    comments = get_map_catch_comments(catch_id)
+    return jsonify({"comments": comments})
+
+
+@bp.route("/api/map/catches/<int:catch_id>/comments", methods=["POST"])
+def map_catch_comments_create(catch_id: int) -> Any:
+    """Add a comment to a catch pin.  Requires auth."""
+    if not g.get("user"):
+        return jsonify({"error": "Authentication required"}), 401
+
+    catch = get_map_catch(catch_id)
+    if not catch or not catch["is_public"]:
+        return jsonify({"error": "Catch not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    body = str(data.get("body", "")).strip()[:500]
+    if not body:
+        return jsonify({"error": "body is required"}), 400
+
+    comment_id = add_map_catch_comment(catch_id, g.user["id"], body)
+    return jsonify({"id": comment_id}), 201
+
+
+@bp.route("/api/map/feed", methods=["GET"])
+def map_catch_feed() -> Any:
+    """Recent public catches, optionally near a point.
+
+    Query params
+    ------------
+    lat, lng : float  – anchor point for distance filter (optional)
+    species  : str    – filter by species (optional)
+    limit    : int    – max results (default 20, max 50)
+    """
+    lat = lng = None
+    try:
+        if "lat" in request.args and "lng" in request.args:
+            lat = float(request.args["lat"])
+            lng = float(request.args["lng"])
+    except (ValueError, TypeError):
+        lat = lng = None
+
+    species_filter = request.args.get("species", "").strip()[:80]
+    try:
+        limit = min(int(request.args.get("limit", 20)), 50)
+    except (ValueError, TypeError):
+        limit = 20
+
+    catches = get_recent_public_catches(
+        limit=limit,
+        species_filter=species_filter,
+        lat=lat,
+        lng=lng,
+    )
+    return jsonify({"catches": catches})
+
+
+@bp.route("/api/map/hotspots", methods=["GET"])
+def map_community_hotspots() -> Any:
+    """Return community hotspot rankings based on recent catch activity.
+
+    Query params
+    ------------
+    days_back : int  – look-back window (default 30, max 90)
+    limit     : int  – max hotspots (default 10, max 25)
+    """
+    try:
+        days_back = min(int(request.args.get("days_back", 30)), 90)
+    except (ValueError, TypeError):
+        days_back = 30
+    try:
+        limit = min(int(request.args.get("limit", 10)), 25)
+    except (ValueError, TypeError):
+        limit = 10
+
+    hotspots = get_community_hotspots(days_back=days_back, limit=limit)
+    return jsonify({"hotspots": hotspots, "days_back": days_back})
