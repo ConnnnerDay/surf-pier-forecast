@@ -137,6 +137,25 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   transition: background 0.3s ease, color 0.3s ease;
+  position: relative;
+}
+
+/* Subtle grain texture over the sandy body background (light mode only) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.22;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] body::before {
+  opacity: 0.12;
+  mix-blend-mode: overlay;
 }
 
 /* ---------- Header ---------- */
@@ -277,14 +296,14 @@ main > div {
 
 h2 {
   font-family: 'Manrope', sans-serif;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--text);
+  font-weight: 800;
+  font-size: 0.68rem;
+  color: var(--text-muted);
   margin: 0 0 0.55rem;
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -11019,8 +11038,8 @@ details[open] .collapsible-module-body {
    ================================================================ */
 
 @keyframes gentle-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.88; }
+  50% { transform: translateY(-3px) scale(1.02); opacity: 1; }
 }
 
 @keyframes shimmer-in {
@@ -11032,7 +11051,7 @@ details[open] .collapsible-module-body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, #01295F 0%, #0077B6 42%, #0096C7 72%, #00B4D8 100%);
+  background: linear-gradient(175deg, #030D1B 0%, #082040 45%, #0D3055 100%);
   position: relative;
 }
 
@@ -11119,11 +11138,14 @@ details[open] .collapsible-module-body {
 }
 
 .landing-tagline {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.78);
-  line-height: 1.6;
+  font-size: 1.05rem;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  color: rgba(255,255,255,0.68);
+  line-height: 1.55;
   margin: 0 0 2rem;
-  font-weight: 500;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 /* CTA stack */
@@ -11146,31 +11168,29 @@ details[open] .collapsible-module-body {
   justify-content: center;
   gap: 0.6rem;
   padding: 0.85rem 1.25rem;
-  border-radius: var(--radius, 10px);
-  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   text-decoration: none;
-  transition: filter 0.15s ease;
+  transition: opacity 0.15s ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .landing-social-btn:hover,
 .landing-social-btn:active {
-  filter: brightness(1.08);
+  opacity: 0.88;
 }
 
 .landing-social-btn--google {
   background: #fff;
   color: #3c4043;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .landing-social-btn--apple {
-  background: #0A0A0A;
+  background: #111;
   color: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 [data-theme="dark"] .landing-social-btn--google {
@@ -11197,36 +11217,37 @@ details[open] .collapsible-module-body {
 .landing-btn {
   display: block;
   padding: 0.85rem 1.25rem;
-  font-size: 0.92rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 800;
   font-family: inherit;
-  border-radius: var(--radius, 10px);
+  border-radius: var(--radius-sm);
   text-decoration: none;
   text-align: center;
-  transition: filter 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease;
   width: 100%;
   box-sizing: border-box;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.landing-btn:hover,
-.landing-btn:active {
-  filter: brightness(1.1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+.landing-btn--primary {
+  background: #F4543B;
+  color: #fff;
 }
 
-.landing-btn--primary {
-  background: linear-gradient(135deg, #F4543B 0%, #E03020 100%);
-  color: #fff;
-  box-shadow: 0 3px 12px rgba(244,84,59,0.45);
+.landing-btn--primary:hover {
+  background: #E03020;
 }
 
 .landing-btn--ghost {
-  background: rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.92);
-  border: 1.5px solid rgba(255,255,255,0.35);
-  backdrop-filter: blur(4px);
+  background: rgba(255,255,255,0.09);
+  color: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.landing-btn--ghost:hover {
+  background: rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.95);
 }
 
 .landing-location-count {
@@ -11332,11 +11353,12 @@ details[open] .collapsible-module-body {
 }
 
 .landing-footer {
-  background: #01295F;
-  color: rgba(255,255,255,0.45);
+  background: #020D1B;
+  color: rgba(255,255,255,0.35);
   text-align: center;
   padding: 1rem 1rem;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
 }
 
 .landing-footer p {
