@@ -1561,7 +1561,9 @@
                 var maxInput = document.getElementById('fmap-max-temp');
                 if (maxInput) maxInput.value = f.maxTemp;
             }
-            if (Array.isArray(f.spotTypes) && f.spotTypes.length) {
+            // Only restore from storage when restoreFromHash() hasn't already
+            // applied types from the URL — the hash (shared link) wins.
+            if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
             }
