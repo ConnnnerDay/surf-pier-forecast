@@ -5302,6 +5302,7 @@ h2::before {
   flex-direction: column;
   gap: 0.75rem;
 }
+.fmap-adv-filters[hidden] { display: none !important; }
 .fmap-adv-row {
   display: flex;
   flex-wrap: wrap;
@@ -5590,6 +5591,7 @@ h2::before {
   justify-content: center;
   padding: 1rem;
 }
+.fmap-modal[hidden] { display: none !important; }
 .fmap-modal-inner {
   background: #0b2836;
   border: 1px solid rgba(255,255,255,0.12);
