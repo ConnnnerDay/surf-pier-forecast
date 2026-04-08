@@ -3,7 +3,6 @@
 
     // ─── Config ───────────────────────────────────────────────────────────────
     var API_URL = '/api/fishing-map';
-    var LS_KEY  = 'fmap_filters_v2';   // localStorage persistence key
 
     var DEFAULT_CENTER = [37.5, -96.0];
     var DEFAULT_ZOOM   = 4;
@@ -69,7 +68,8 @@
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox+types key → array of spot objects
-    var activeSpotTypes  = [];       // [] = all types; populated by type-filter pills
+    var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
+    var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -1387,19 +1387,20 @@
     }
 
     // ─── localStorage persistence ─────────────────────────────────────────────
-    var LS_KEY = 'fmap_filters_v3';  // bumped for new filter fields
+    var LS_KEY = 'fmap_filters_v4';  // bumped for spotTypes field
 
     function saveFilters() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
-                species:  activeSpecies,
-                coast:    activeCoast,
-                cat:      activeCat,
-                season:   activeSeason,
-                time:     activeTime,
-                tide:     activeTide,
-                minTemp:  activeMinTemp,
-                maxTemp:  activeMaxTemp
+                species:    activeSpecies,
+                coast:      activeCoast,
+                cat:        activeCat,
+                season:     activeSeason,
+                time:       activeTime,
+                tide:       activeTide,
+                minTemp:    activeMinTemp,
+                maxTemp:    activeMaxTemp,
+                spotTypes:  activeSpotTypes.slice()
             }));
         } catch (e) {}
     }
@@ -1453,6 +1454,10 @@
                 activeMaxTemp = f.maxTemp;
                 var maxInput = document.getElementById('fmap-max-temp');
                 if (maxInput) maxInput.value = f.maxTemp;
+            }
+            if (Array.isArray(f.spotTypes) && f.spotTypes.length) {
+                var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
+                if (valid.length) _applySpotTypeUI(valid);
             }
             updateAdvBadge();
         } catch (e) {}
@@ -1968,6 +1973,28 @@
     // The spot cache is fully invalidated on every change so stale data from a
     // different filter selection never leaks through.
 
+    // Apply an array of type strings to activeSpotTypes and sync pill UI.
+    // Passes an empty array to reset to "show all".
+    function _applySpotTypeUI(types) {
+        activeSpotTypes = types.slice();
+        document.querySelectorAll('.fmap-pill--spot-type').forEach(function (btn) {
+            var t      = btn.getAttribute('data-type');
+            var active = activeSpotTypes.indexOf(t) !== -1;
+            btn.classList.toggle('fmap-pill--active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        _updateSpotTypeHint();
+    }
+
+    // Debounced save so rapid toggles don't spam localStorage.
+    function _scheduleSpotTypeSave() {
+        if (_spotTypeSaveTimer) clearTimeout(_spotTypeSaveTimer);
+        _spotTypeSaveTimer = setTimeout(function () {
+            _spotTypeSaveTimer = null;
+            saveFilters();
+        }, 400);
+    }
+
     // Update the hint text and clear-button visibility to reflect the current
     // activeSpotTypes selection.  Called after every toggle and on clear.
     function _updateSpotTypeHint() {
@@ -2004,6 +2031,7 @@
                 btn.setAttribute('aria-pressed', active ? 'true' : 'false');
 
                 _updateSpotTypeHint();
+                _scheduleSpotTypeSave();
 
                 // Invalidate cache — old entries used a different types key
                 spotCache = {};
@@ -2021,6 +2049,7 @@
                     btn.setAttribute('aria-pressed', 'false');
                 });
                 _updateSpotTypeHint();
+                _scheduleSpotTypeSave();
                 spotCache = {};
                 scheduleFishingSpotQuery();
             });
@@ -2687,6 +2716,7 @@
             if (activeTide)     hashParts.push('tide=' + activeTide);
             if (activeMinTemp)  hashParts.push('min_temp=' + activeMinTemp);
             if (activeMaxTemp)  hashParts.push('max_temp=' + activeMaxTemp);
+            if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2756,6 +2786,11 @@
                 activeMaxTemp = v;
                 var maxEl = document.getElementById('fmap-max-temp');
                 if (maxEl) maxEl.value = v;
+            }
+            if (k === 'types' && v) {
+                var requested = v.split(',').map(function (t) { return t.trim(); })
+                                 .filter(function (t) { return t && SPOT_TYPES[t]; });
+                if (requested.length) _applySpotTypeUI(requested);
             }
         });
         updateAdvBadge();
