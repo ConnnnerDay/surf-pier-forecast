@@ -1535,7 +1535,9 @@
                 maxTemp:    activeMaxTemp,
                 spotTypes:  activeSpotTypes.slice()
             }));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[fishing-map] saveFilters failed:', e);
+        }
     }
 
     function loadFilters() {
@@ -1550,33 +1552,23 @@
             }
             if (f.coast && f.coast !== 'all') {
                 activeCoast = f.coast;
-                document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-coast') === f.coast);
-                });
+                setPillActive('.fmap-pill--coast', 'data-coast', f.coast);
             }
             if (f.cat) {
                 activeCat = f.cat;
-                document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === f.cat);
-                });
+                setPillActive('.fmap-pill--cat', 'data-cat', f.cat);
             }
             if (f.season) {
                 activeSeason = f.season;
-                document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-season') === f.season);
-                });
+                setPillActive('.fmap-pill--season', 'data-season', f.season);
             }
             if (f.time) {
                 activeTime = f.time;
-                document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-time') === f.time);
-                });
+                setPillActive('.fmap-pill--time', 'data-time', f.time);
             }
             if (f.tide) {
                 activeTide = f.tide;
-                document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-tide') === f.tide);
-                });
+                setPillActive('.fmap-pill--tide', 'data-tide', f.tide);
             }
             if (f.minTemp) {
                 activeMinTemp = f.minTemp;
@@ -1595,7 +1587,9 @@
                 if (valid.length) _applySpotTypeUI(valid);
             }
             updateAdvBadge();
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[fishing-map] loadFilters failed:', e);
+        }
     }
 
     // ─── Auto-center on saved location ───────────────────────────────────────
@@ -1616,6 +1610,12 @@
     }
 
     // ─── Fetch & render ───────────────────────────────────────────────────────
+    function _hideMainLoading() {
+        if (!els.loading) return;
+        els.loading.style.opacity = '0';
+        setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
+    }
+
     function fetchAndRender() {
         if (!map) return;
         saveFilters();
@@ -1639,10 +1639,7 @@
         fetch(url)
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
-                if (els.loading) {
-                    els.loading.style.opacity = '0';
-                    setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
-                }
+                _hideMainLoading();
 
                 currentData = data.locations || [];
 
@@ -1665,10 +1662,7 @@
                 setTimeout(function () { loadCommunityFeed(); }, 900);
             })
             .catch(function (err) {
-                if (els.loading) {
-                    els.loading.style.opacity = '0';
-                    setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
-                }
+                _hideMainLoading();
                 console.error('[fishing-map] fetch error:', err);
             });
     }
@@ -2290,7 +2284,9 @@
                     badge.style.display = communityData.length ? '' : 'none';
                 }
             })
-            .catch(function () {});
+            .catch(function (err) {
+                console.warn('[fishing-map] loadCommunityPins failed:', err);
+            });
     }
 
     function scheduleCommunityLoad() {
