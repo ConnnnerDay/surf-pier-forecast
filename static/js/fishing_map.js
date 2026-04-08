@@ -222,6 +222,10 @@
         map.on('moveend zoomend', function () {
             if (structureMode) scheduleStructureFetch();
         });
+
+        // Update the zoom hint immediately so it reflects the starting zoom level
+        // (hidden at zoom ≥ 9, i.e. when server coords are used)
+        updateZoomHint();
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
@@ -529,7 +533,11 @@
     }
 
     // ─── OSM Fishing Spots (Overpass API) ─────────────────────────────────────
-    var OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+    var OVERPASS_URLS = [
+        'https://overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+    ];
+    var OVERPASS_URL = OVERPASS_URLS[0];  // kept for AI query compat
 
     var SPOT_TYPES = {
         pier:         { label: 'Pier',              color: '#a78bfa', habitat: false },
@@ -678,12 +686,27 @@
             'node["shop"="fishing"](' + bbox + ');' +
             ');out center;';
 
-        fetch(OVERPASS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(q)
-        })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        // Try primary Overpass endpoint, fall back to mirror on failure
+        var overpassBody = 'data=' + encodeURIComponent(q);
+        function tryOverpass(urlIndex) {
+            var url = OVERPASS_URLS[urlIndex] || OVERPASS_URLS[0];
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: overpassBody
+            }).then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).catch(function (err) {
+                if (urlIndex + 1 < OVERPASS_URLS.length) {
+                    console.warn('[fishing-map] Overpass mirror ' + url + ' failed, trying fallback…');
+                    return tryOverpass(urlIndex + 1);
+                }
+                throw err;
+            });
+        }
+
+        tryOverpass(0)
         .then(function (data) {
             var spots = (data.elements || []).map(function (el) {
                 var lat  = el.lat  || (el.center && el.center.lat);
@@ -2315,6 +2338,12 @@
                 wireLogCatch();
                 wireFullscreen();
                 wireShareBtn();
+                // Kick off the Overpass spot query immediately if we already have
+                // server-provided coordinates — don't wait for the NOAA API round-trip.
+                if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
+                    typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
+                    scheduleFishingSpotQuery();
+                }
                 fetchAndRender();
             })
             .catch(function (err) {
