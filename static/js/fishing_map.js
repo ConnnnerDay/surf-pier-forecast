@@ -1961,33 +1961,70 @@
     }
 
     // ─── Structure type-filter pills ─────────────────────────────────────────
-    // Looks for buttons carrying class "fmap-pill--spot-type" and a "data-type"
-    // attribute matching one of the SPOT_TYPES keys.  Toggling a pill adds or
-    // removes that type from activeSpotTypes; an empty array means "show all".
-    // The spot cache is cleared on every change so the new filter takes effect
-    // immediately without stale data from a previous selection bleeding through.
+    // Wires .fmap-pill--spot-type[data-type] toggle buttons so that anglers can
+    // restrict which structure types appear on the map.  Empty activeSpotTypes
+    // means "show all" (the default state).
+    //
+    // The spot cache is fully invalidated on every change so stale data from a
+    // different filter selection never leaks through.
+
+    // Update the hint text and clear-button visibility to reflect the current
+    // activeSpotTypes selection.  Called after every toggle and on clear.
+    function _updateSpotTypeHint() {
+        var hint      = document.getElementById('fmap-struct-filters-hint');
+        var clearBtn  = document.getElementById('fmap-spot-types-clear');
+        var n         = activeSpotTypes.length;
+        var total     = Object.keys(SPOT_TYPES).length;  // 18
+        if (hint) {
+            hint.textContent = n === 0
+                ? 'All types visible \u2014 tap to filter'
+                : 'Showing ' + n + ' of ' + total + ' types \u2014 tap to adjust';
+        }
+        if (clearBtn) clearBtn.hidden = n === 0;
+    }
+
     function wireSpotTypeFilters() {
-        document.querySelectorAll('.fmap-pill--spot-type').forEach(function (btn) {
+        var pills = document.querySelectorAll('.fmap-pill--spot-type');
+
+        pills.forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var type = btn.getAttribute('data-type');
                 if (!type) return;
 
-                var idx = activeSpotTypes.indexOf(type);
-                if (idx === -1) {
+                var idx     = activeSpotTypes.indexOf(type);
+                var active  = idx === -1;   // will become active after this click
+                if (active) {
                     activeSpotTypes.push(type);
                 } else {
                     activeSpotTypes.splice(idx, 1);
                 }
 
-                // Reflect active state in the UI
-                btn.classList.toggle('fmap-pill--active', activeSpotTypes.indexOf(type) !== -1);
+                // Visual + ARIA toggle state
+                btn.classList.toggle('fmap-pill--active', active);
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
 
-                // Invalidate the entire spot cache — old entries used a different
-                // types filter and must not be served to the updated selection.
+                _updateSpotTypeHint();
+
+                // Invalidate cache — old entries used a different types key
                 spotCache = {};
                 scheduleFishingSpotQuery();
             });
         });
+
+        // "Clear filter" button — resets all pills to inactive / show-all
+        var clearBtn = document.getElementById('fmap-spot-types-clear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                activeSpotTypes = [];
+                pills.forEach(function (btn) {
+                    btn.classList.remove('fmap-pill--active');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                _updateSpotTypeHint();
+                spotCache = {};
+                scheduleFishingSpotQuery();
+            });
+        }
     }
 
     // ─── Tabbed side panel ────────────────────────────────────────────────────
