@@ -529,17 +529,6 @@
 
         <!-- ── Primary filter bar ── -->
         <div class="fmap-filterbar" role="group" aria-label="Map filters">
-            <!-- Species search -->
-            <div class="fmap-search-wrap">
-                <svg class="fmap-search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="fmap-species-input" class="fmap-search-input"
-                       placeholder="Search species&hellip;" autocomplete="off"
-                       aria-autocomplete="list" aria-controls="fmap-suggestions" aria-expanded="false"
-                       aria-label="Filter by species">
-                <button type="button" id="fmap-search-clear" class="fmap-search-clear" hidden aria-label="Clear species search">&times;</button>
-                <ul id="fmap-suggestions" class="fmap-suggestions" role="listbox" hidden></ul>
-            </div>
-
             <!-- Advanced filters toggle -->
             <button type="button" id="fmap-adv-toggle" class="fmap-adv-toggle-btn" aria-expanded="false" aria-controls="fmap-adv-filters" title="More filters">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
@@ -626,21 +615,6 @@
             <svg class="fmap-ai-bar-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             <span class="fmap-ai-bar-label">AI Pick</span>
             <span id="fmap-ai-bar-text"></span>
-        </div>
-
-        <!-- ── Trending Now strip ── -->
-        <div class="fmap-trending" id="fmap-trending" hidden aria-label="Trending species this month">
-            <span class="fmap-trending-label">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                Trending:
-            </span>
-            <div class="fmap-chips fmap-trending-chips" id="fmap-trending-chips" role="group" aria-label="Trending species"></div>
-        </div>
-
-        <!-- ── Quick species chips ── -->
-        <div class="fmap-quick-species" id="fmap-quick-species" aria-label="Popular target species">
-            <span class="fmap-quick-label">Popular:</span>
-            <div class="fmap-chips" id="fmap-chips" role="group" aria-label="Quick species select"></div>
         </div>
 
         <!-- ── Map + side panel layout ── -->
