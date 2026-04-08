@@ -648,10 +648,13 @@
             // Tidal flats / mudflats (feeding zone on rising tide)
             'way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');' +
             'way["natural"="mud"](' + bbox + ');' +
-            // Tidal channels and creek mouths (bait funnels)
+            // Tidal channels, rivers, canals — bait funnels and ICW
             'way["waterway"="tidal_channel"](' + bbox + ');' +
+            'way["waterway"="river"](' + bbox + ');' +
+            'way["waterway"="canal"](' + bbox + ');' +
             // Inlets, harbors, and bays
             'node["harbour"="yes"](' + bbox + ');' +
+            'way["harbour"="yes"](' + bbox + ');' +
             'node["natural"="bay"](' + bbox + ');' +
             'way["natural"="bay"](' + bbox + ');' +
             // ── Hard structure ─────────────────────────────────────────────
@@ -670,13 +673,26 @@
             'node["natural"="shoal"](' + bbox + ');' +
             'way["natural"="shoal"](' + bbox + ');' +
             'node["natural"="rock"](' + bbox + ');' +
-            // Piers and jetties
+            // Piers and jetties (both man_made and leisure tags used in OSM)
             'node["man_made"="pier"](' + bbox + ');' +
             'way["man_made"="pier"](' + bbox + ');' +
+            'node["leisure"="pier"](' + bbox + ');' +
+            'way["leisure"="pier"](' + bbox + ');' +
             'node["man_made"="jetty"](' + bbox + ');' +
             'way["man_made"="jetty"](' + bbox + ');' +
-            // Bridges over water
-            'way["man_made"="bridge"](' + bbox + ');' +
+            // Groynes and breakwaters — create eddies and structure fish hold near
+            'node["man_made"="groyne"](' + bbox + ');' +
+            'way["man_made"="groyne"](' + bbox + ');' +
+            'node["man_made"="breakwater"](' + bbox + ');' +
+            'way["man_made"="breakwater"](' + bbox + ');' +
+            // Bridges over water — OSM uses bridge=yes on highway ways, not man_made=bridge
+            'way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');' +
+            // Boat ramps — fish hold around dock pilings and the ramp structure
+            'node["amenity"="boat_ramp"](' + bbox + ');' +
+            'way["amenity"="boat_ramp"](' + bbox + ');' +
+            // Explicitly tagged fishing spots
+            'node["leisure"="fishing"](' + bbox + ');' +
+            'way["leisure"="fishing"](' + bbox + ');' +
             // Navigation buoys — mark channels, shoals, and inlet edges
             'node["seamark:type"="buoy_lateral"](' + bbox + ');' +
             'node["seamark:type"="buoy_cardinal"](' + bbox + ');' +
@@ -724,25 +740,32 @@
                     type = 'tidal_flat';
                 } else if (tags.natural === 'mud') {
                     type = 'tidal_flat';
-                } else if (tags.waterway === 'tidal_channel') {
+                } else if (tags.waterway === 'tidal_channel' || tags.waterway === 'river' || tags.waterway === 'canal') {
                     type = 'inlet';
-                } else if (tags.natural === 'bay' || tags.harbour) {
+                } else if (tags.natural === 'bay' || tags.harbour === 'yes') {
                     type = 'inlet';
                 // Hard structure
                 } else if (tags.landuse === 'aquaculture' && (tags.produce === 'oyster' || tags.product === 'oysters')) {
                     type = 'oyster_reef';
                 } else if (tags.natural === 'reef') {
-                    type = 'oyster_reef';  // treat all coastal reefs as oyster_reef for tip accuracy
+                    type = 'oyster_reef';
                 } else if (tags.historic === 'wreck' || tags['seamark:type'] === 'wreck') {
                     type = 'wreck';
                 } else if (tags.natural === 'shoal' || tags.natural === 'rock') {
                     type = 'shoal';
-                } else if (tags.man_made === 'pier') {
+                } else if (tags.man_made === 'pier' || tags.leisure === 'pier') {
                     type = 'pier';
                 } else if (tags.man_made === 'jetty') {
                     type = 'jetty';
-                } else if (tags.man_made === 'bridge') {
+                } else if (tags.man_made === 'groyne' || tags.man_made === 'breakwater') {
+                    type = 'jetty';  // same fishing context — current eddies and bait concentration
+                // bridge=yes on a highway way is the real OSM bridge tag
+                } else if (tags.bridge === 'yes' && tags.highway) {
                     type = 'bridge';
+                } else if (tags.amenity === 'boat_ramp') {
+                    type = 'pier';  // pilings and dock edge structure
+                } else if (tags.leisure === 'fishing') {
+                    type = 'fishing';
                 } else if (tags['seamark:type'] && tags['seamark:type'].indexOf('buoy') === 0) {
                     type = 'buoy';
                 } else if (tags.man_made === 'buoy') {
@@ -752,8 +775,15 @@
                 } else {
                     type = 'fishing';
                 }
-                return { lat: lat, lng: lng, name: tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] || '', type: type };
-            }).filter(function (f) { return f.lat && f.lng; });
+                var displayName = tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] ||
+                                  tags['addr:housename'] || '';
+                return { lat: lat, lng: lng, name: displayName, type: type };
+            }).filter(function (f) {
+                // Drop elements with no coords, and drop way-centers that fell outside
+                // the current viewport (can happen with long river/canal ways)
+                if (!f.lat || !f.lng) return false;
+                return b.contains ? b.contains([f.lat, f.lng]) : true;
+            });
             spotCache[key] = spots;
             renderFishingSpots(spots);
         })
