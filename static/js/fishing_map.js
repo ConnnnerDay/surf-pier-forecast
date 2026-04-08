@@ -550,6 +550,7 @@
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false },
         shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false },
         point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false },
+        beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true  },
         tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
@@ -557,6 +558,14 @@
         buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
+    };
+
+    // Single-character labels rendered inside circle markers for at-a-glance identification
+    var SPOT_LABELS = {
+        pier:         'P',  jetty:  'J',  bridge: 'B',  reef:  'R',
+        oyster_reef:  'O',  wreck:  'W',  inlet:  'C',  marina:'M',
+        shoal:        'S',  point:  '^',  beach:  '~',  buoy:  '·',
+        fishing:      'F',  fishing_shop: '$'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -571,6 +580,7 @@
         marina:       'Marinas concentrate bait around dock pilings and channel edges. Work the shadow lines early morning and at last light.',
         shoal:        'Work the drop from shallow to deep — fish hold on the seam waiting for bait washing off the flat.',
         point:        'Current eddies form on the downcurrent side of headlands and points — predators stack here to ambush bait swept past the tip.',
+        beach:        'Work the gutters, rip cuts, and troughs running parallel to shore. Cast beyond the first sandbar — pompano, drum, and stripers feed along the break.',
         grass_flat:   'Seagrass holds shrimp and baitfish. Redfish, speckled trout, and flounder push shallow on rising tides and drop to the flat edges at low.',
         tidal_flat:   'Fish move onto tidal flats as the tide floods, chasing crabs and shrimp into the shallows. Work the edges as the water begins falling.',
         saltmarsh:    'Marsh creek mouths and grass edges are ambush points — redfish and snook use incoming current to pick off bait washing out of the marsh.',
@@ -588,17 +598,25 @@
     }
 
     function makeFishingSpotIcon(type) {
-        var def   = SPOT_TYPES[type] || SPOT_TYPES.fishing;
-        var color = def.color;
-        // Habitat features: larger diamond-ish square; hard structure: circle
+        var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
+        var color     = def.color;
         var isHabitat = def.habitat;
-        var sz   = isHabitat ? 14 : 11;
-        var br   = isHabitat ? '3px' : '50%';
-        var rot  = isHabitat ? 'transform:rotate(45deg)' : '';
-        var html = '<span class="fmap-spot-dot" style="background:' + color +
-                   ';box-shadow:0 0 8px ' + color + '77;width:' + sz + 'px;height:' + sz + 'px' +
-                   ';border-radius:' + br + ';flex-shrink:0;' + rot + '"></span>';
-        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [sz + 4, sz + 4], iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        // Habitat = rotating diamond (no letter); Structure = circle with type letter
+        var sz    = isHabitat ? 14 : 18;
+        var br    = isHabitat ? '3px' : '50%';
+        var rot   = isHabitat ? 'transform:rotate(45deg)' : '';
+        var lbl   = isHabitat ? '' : (SPOT_LABELS[type] || '');
+        var inner = lbl
+            ? '<span style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.95);' +
+              'font-family:system-ui,sans-serif;line-height:1;pointer-events:none;' +
+              'letter-spacing:-0.5px">' + lbl + '</span>'
+            : '';
+        var html  = '<span class="fmap-spot-dot" style="background:' + color +
+                    ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
+                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
+        return L.divIcon({ className: 'fmap-spot-wrap', html: html,
+                           iconSize:   [sz + 4, sz + 4],
+                           iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
     }
 
     function renderFishingSpots(spots) {
@@ -652,10 +670,16 @@
             // Tidal flats / mudflats (feeding zone on rising tide)
             'way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');' +
             'way["natural"="mud"](' + bbox + ');' +
-            // Tidal channels, rivers, canals — bait funnels and ICW
+            // Tidal channels, rivers, canals, and creek mouths — bait funnels and ICW
             'way["waterway"="tidal_channel"](' + bbox + ');' +
             'way["waterway"="river"](' + bbox + ');' +
             'way["waterway"="canal"](' + bbox + ');' +
+            'node["waterway"="stream"](' + bbox + ');' +
+            'way["waterway"="stream"](' + bbox + ');' +
+            // Weirs and small dams — turbulent oxygenated water concentrates feeding fish
+            'node["waterway"="weir"](' + bbox + ');' +
+            'way["waterway"="weir"](' + bbox + ');' +
+            'node["waterway"="dam"](' + bbox + ');' +
             // Inlets, harbors, and bays
             'node["harbour"="yes"](' + bbox + ');' +
             'way["harbour"="yes"](' + bbox + ');' +
@@ -714,6 +738,8 @@
             'node["man_made"="lighthouse"](' + bbox + ');' +
             // Offshore platforms — fish aggregate around any isolated structure
             'node["man_made"="offshore_platform"](' + bbox + ');' +
+            // Beach and surf zones — gutters, sandbars, rip cuts
+            'way["natural"="beach"](' + bbox + ');' +
             // Explicitly tagged fishing spots
             'node["leisure"="fishing"](' + bbox + ');' +
             'way["leisure"="fishing"](' + bbox + ');' +
@@ -764,8 +790,13 @@
                     type = 'tidal_flat';
                 } else if (tags.natural === 'mud') {
                     type = 'tidal_flat';
-                } else if (tags.waterway === 'tidal_channel' || tags.waterway === 'river' || tags.waterway === 'canal') {
+                } else if (tags.waterway === 'tidal_channel' || tags.waterway === 'river' ||
+                           tags.waterway === 'canal' || tags.waterway === 'stream') {
                     type = 'inlet';
+                } else if (tags.waterway === 'weir' || tags.waterway === 'dam') {
+                    type = 'jetty';  // turbulent water = feeding zone, same tip applies
+                } else if (tags.natural === 'beach') {
+                    type = 'beach';
                 } else if (tags.natural === 'bay' || tags.harbour === 'yes') {
                     type = 'inlet';
                 // Hard structure
@@ -826,7 +857,8 @@
     // Collapse duplicate markers: same name → one, or same type within proximity threshold
     function deduplicateSpots(spots) {
         // Proximity threshold in degrees (~180m for structure, ~450m for wide features)
-        var PROX = { inlet: 0.005, marina: 0.004, grass_flat: 0.004, saltmarsh: 0.004,
+        var PROX = { inlet: 0.005, marina: 0.004, beach: 0.006,
+                     grass_flat: 0.004, saltmarsh: 0.004,
                      tidal_flat: 0.004, mangrove: 0.004, _default: 0.002 };
         var namedSeen = {};  // "type|lowercaseName" → true
         var out = [];

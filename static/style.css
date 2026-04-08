@@ -4187,11 +4187,13 @@ h2::before {
   justify-content: center;
 }
 .fmap-spot-dot {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 10px;
   height: 10px;
   border-radius: 3px;
-  border: 1.5px solid rgba(255,255,255,0.5);
+  border: 1.5px solid rgba(255,255,255,0.45);
 }
 
 /* ── Zoom-in hint overlay ── */
