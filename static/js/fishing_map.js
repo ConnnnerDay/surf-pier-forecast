@@ -715,8 +715,12 @@
                 return r.json();
             })
             .then(function (data) {
-                // Success path: spinner off, render results.
                 hideStructLoading();
+                // Server signals the viewport is too large — clear layers and stop.
+                if (data.zoom_required) {
+                    fishingSpotLayer.clearLayers();
+                    return;
+                }
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;

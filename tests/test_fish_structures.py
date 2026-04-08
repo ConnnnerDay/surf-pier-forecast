@@ -8,27 +8,41 @@ Coverage
 - fetch_osm_structures: Overpass response parsing, bbox filtering, type filter
 - fetch_noaa_structures: NOAA ENC layer routing, polygon centroid, soft failure
 - find_fish_structures: merge + dedup + tip attachment, type subset filtering
-- GET /api/map/structures: happy path, missing params, bad bbox, bad types
+- find_fish_structures cache: hit/miss/ttl/key-isolation/eviction
+- GET /api/map/structures: happy path, missing params, bad bbox, bad types,
+                           oversized viewport, zoom_required flag
 """
 
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+import services.fish_structures as _fs_mod
 from services.fish_structures import (
     STRUCTURE_TIPS,
     VALID_TYPES,
     _build_overpass_query,
     _classify_osm_tags,
     _deduplicate,
+    cache_clear,
     fetch_noaa_structures,
     fetch_osm_structures,
     find_fish_structures,
 )
+
+
+# Clear the module-level cache before every test so cached results from one
+# test don't bleed into another when the same bbox is reused.
+@pytest.fixture(autouse=True)
+def _clear_structure_cache():
+    cache_clear()
+    yield
+    cache_clear()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -660,3 +674,117 @@ class TestMapStructuresEndpoint:
             r = client.get(_structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0))
         s = r.get_json()["structures"][0]
         assert {"lat", "lng", "type", "name", "tip"} <= s.keys()
+
+    def test_oversized_lat_span_returns_zoom_required(self, client):
+        # 9-degree lat span > _STRUCT_MAX_LAT_SPAN (8); no service call expected
+        with patch("services.fish_structures.find_fish_structures") as mock_fn:
+            r = client.get(_structures_url(south=20.0, west=-80.5, north=29.0, east=-80.0))
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["zoom_required"] is True
+        assert data["structures"] == []
+        mock_fn.assert_not_called()
+
+    def test_oversized_lng_span_returns_zoom_required(self, client):
+        # 13-degree lng span > _STRUCT_MAX_LNG_SPAN (12)
+        with patch("services.fish_structures.find_fish_structures") as mock_fn:
+            r = client.get(_structures_url(south=25.0, west=-93.0, north=25.5, east=-80.0))
+        assert r.status_code == 200
+        assert r.get_json()["zoom_required"] is True
+        mock_fn.assert_not_called()
+
+    def test_valid_viewport_does_not_set_zoom_required(self, client):
+        with patch("services.fish_structures.find_fish_structures", return_value=[]):
+            r = client.get(_structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0))
+        data = r.get_json()
+        assert "zoom_required" not in data
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# find_fish_structures — result cache
+# ─────────────────────────────────────────────────────────────────────────────
+
+_BBOX = (25.0, -80.5, 25.5, -80.0)
+_SPOT = {"lat": 25.1, "lng": -80.2, "type": "pier", "name": "City Pier"}
+
+
+class TestFindFishStructuresCache:
+    def _call(self, types=None):
+        return find_fish_structures(*_BBOX, types)
+
+    def test_cache_hit_skips_network_on_second_call(self):
+        with patch("services.fish_structures.fetch_osm_structures",
+                   return_value=[_SPOT]) as m_osm, \
+             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            first  = self._call({"pier"})
+            second = self._call({"pier"})
+
+        assert first == second
+        # fetch functions called only once despite two find_fish_structures calls
+        assert m_osm.call_count == 1
+
+    def test_different_types_are_cached_independently(self):
+        pier_spot   = {**_SPOT, "type": "pier"}
+        wreck_spot  = {**_SPOT, "type": "wreck", "name": "SS Tarpon"}
+
+        def osm_side_effect(s, w, n, e, types):
+            if "pier" in types:
+                return [pier_spot]
+            if "wreck" in types:
+                return [wreck_spot]
+            return []
+
+        with patch("services.fish_structures.fetch_osm_structures",
+                   side_effect=osm_side_effect), \
+             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            piers  = self._call({"pier"})
+            wrecks = self._call({"wreck"})
+            # Re-fetch from cache — must not mix results
+            piers2 = self._call({"pier"})
+
+        assert all(s["type"] == "pier"  for s in piers)
+        assert all(s["type"] == "wreck" for s in wrecks)
+        assert piers == piers2
+
+    def test_cache_miss_after_ttl_expired(self):
+        with patch("services.fish_structures.fetch_osm_structures",
+                   return_value=[_SPOT]) as m_osm, \
+             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            self._call({"pier"})
+
+        # Expire the cache entry by backdating its timestamp
+        for entry in _fs_mod._CACHE.values():
+            entry["ts"] -= _fs_mod._CACHE_TTL + 1
+
+        with patch("services.fish_structures.fetch_osm_structures",
+                   return_value=[_SPOT]) as m_osm2, \
+             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            self._call({"pier"})
+
+        assert m_osm2.call_count == 1  # network hit again after TTL
+
+    def test_cache_eviction_at_max_capacity(self):
+        """Adding more than _CACHE_MAX entries should not raise and should cap size."""
+        original_max = _fs_mod._CACHE_MAX
+        _fs_mod._CACHE_MAX = 4
+        try:
+            with patch("services.fish_structures.fetch_osm_structures", return_value=[]), \
+                 patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+                # Each call uses a unique bbox so each gets its own cache key
+                for i in range(6):
+                    find_fish_structures(
+                        float(i), -80.5, float(i) + 0.5, -80.0, {"pier"}
+                    )
+        finally:
+            _fs_mod._CACHE_MAX = original_max
+
+        assert len(_fs_mod._CACHE) <= 4
+
+    def test_cache_clear_removes_all_entries(self):
+        with patch("services.fish_structures.fetch_osm_structures", return_value=[_SPOT]), \
+             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            self._call({"pier"})
+
+        assert len(_fs_mod._CACHE) >= 1
+        cache_clear()
+        assert len(_fs_mod._CACHE) == 0
