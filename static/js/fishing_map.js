@@ -2036,37 +2036,44 @@
 
     // ─── Log Catch mode ───────────────────────────────────────────────────────
 
+    function _updateLogFab(active) {
+        var btn   = document.getElementById('fmap-log-catch-btn');
+        if (!btn) return;
+        var plus  = btn.querySelector('.fmap-log-fab-plus');
+        var x     = btn.querySelector('.fmap-log-fab-x');
+        var label = btn.querySelector('.fmap-log-fab-label');
+        btn.classList.toggle('fmap-log-fab--active', active);
+        if (plus)  plus.hidden  = active;
+        if (x)     x.hidden     = !active;
+        if (label) label.textContent = active ? 'Cancel' : 'Log Catch';
+    }
+
     function enterLogMode() {
         if (!IS_LOGGED_IN) {
             showToast('Sign in to log catches on the map');
             return;
         }
         catchLogMode = true;
-        var btn = document.getElementById('fmap-log-catch-btn');
-        if (btn) btn.classList.add('fmap-ctrl-btn--active');
+        _updateLogFab(true);
         var wrap = document.querySelector('.fmap-map-wrap');
         if (wrap) wrap.classList.add('fmap-log-mode-active');
-        // Show banner on map
-        var existingBanner = document.getElementById('fmap-log-banner');
-        if (!existingBanner) {
+        // Banner on map
+        if (!document.getElementById('fmap-log-banner')) {
             var banner = document.createElement('div');
             banner.id = 'fmap-log-banner';
             banner.className = 'fmap-log-mode-banner';
-            banner.textContent = 'Tap the map to place your catch pin';
-            var mapWrap = document.querySelector('.fmap-map-wrap');
-            if (mapWrap) mapWrap.appendChild(banner);
+            banner.textContent = 'Tap the map to place your catch pin \u2014 tap again to cancel';
+            if (wrap) wrap.appendChild(banner);
         }
-        showToast('Tap the map to pin your catch location');
     }
 
     function exitLogMode() {
         catchLogMode = false;
-        var btn = document.getElementById('fmap-log-catch-btn');
-        if (btn) btn.classList.remove('fmap-ctrl-btn--active');
+        _updateLogFab(false);
         var wrap = document.querySelector('.fmap-map-wrap');
         if (wrap) wrap.classList.remove('fmap-log-mode-active');
         var banner = document.getElementById('fmap-log-banner');
-        if (banner) banner.parentNode && banner.parentNode.removeChild(banner);
+        if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
         if (pendingCatchMarker && map) {
             map.removeLayer(pendingCatchMarker);
             pendingCatchMarker = null;
