@@ -71,6 +71,7 @@
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
+    var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -698,6 +699,7 @@
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key]);
+            _updateSpotTypeHint();
             return;
         }
 
@@ -705,7 +707,11 @@
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
         if (typesStr) url += '&types=' + encodeURIComponent(typesStr);
 
-        // Show spinner for this request; hide error banner from any previous failure.
+        // Stamp this request with the current generation so that if the user
+        // pans again before this resolves, the late-arriving response is
+        // silently discarded rather than overwriting fresher results.
+        var thisGen = ++_structReqGen;
+
         showStructLoading();
         hideStructError();
 
@@ -715,23 +721,34 @@
                 return r.json();
             })
             .then(function (data) {
+                // A newer request has already started — drop this stale result.
+                if (thisGen !== _structReqGen) { hideStructLoading(); return; }
+
                 hideStructLoading();
-                // Server signals the viewport is too large — clear layers and stop.
+
+                // Server signals the viewport is too large — show hint, clear layers.
                 if (data.zoom_required) {
                     fishingSpotLayer.clearLayers();
+                    var hint = document.getElementById('fmap-struct-filters-hint');
+                    if (hint) hint.textContent = 'Zoom in further to see structure markers';
                     return;
                 }
+
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;
                 renderFishingSpots(spots);
+                // Restore normal hint text (may have been set to zoom-in message)
+                _updateSpotTypeHint();
             })
             .catch(function (err) {
+                // Drop response if superseded by a newer request.
+                if (thisGen !== _structReqGen) { hideStructLoading(); return; }
                 // Keep spinner visible while Overpass fallback runs;
                 // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
                 showStructError("Couldn't load structure data; showing basic map markers.");
-                _queryFishingSpotsFallback(s, w, n, e, key);
+                _queryFishingSpotsFallback(s, w, n, e, key, thisGen);
             });
     }
 
@@ -907,7 +924,10 @@
         return '[out:json][timeout:30];(' + p.join('') + ');out center;';
     }
 
-    function _queryFishingSpotsFallback(s, w, n, e, key) {
+    // gen: the _structReqGen value captured when the parent queryStructures() call
+    // started.  If a newer call has since fired, we discard results rather than
+    // rendering stale data over fresh markers.
+    function _queryFishingSpotsFallback(s, w, n, e, key, gen) {
         var bbox = s + ',' + w + ',' + n + ',' + e;
         // Build a query scoped to active types; empty activeSpotTypes = all types.
         var q = _buildFallbackQuery(bbox, activeSpotTypes);
@@ -938,6 +958,9 @@
 
         tryOverpass(0)
         .then(function (data) {
+            // Discard if a newer queryStructures() call has already fired.
+            if (gen !== _structReqGen) { hideStructLoading(); return; }
+
             var spots = (data.elements || []).map(function (el) {
                 var lat  = el.lat  || (el.center && el.center.lat);
                 var lng  = el.lon  || (el.center && el.center.lon);
@@ -960,6 +983,7 @@
             spotCache[key] = deduped;
             hideStructLoading(); // request chain complete; drop spinner
             renderFishingSpots(deduped);
+            _updateSpotTypeHint();
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
