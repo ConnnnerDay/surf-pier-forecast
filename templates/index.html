@@ -1387,6 +1387,144 @@ if ('serviceWorker' in navigator) {
         return mn > 0 ? h + 'h ' + mn + 'm' : h + 'h';
     }
 
+    function timeToMinuteOfDay(str) {
+        var d = parseLocalTime(str);
+        if (!d) return null;
+        return (d.getHours() * 60) + d.getMinutes();
+    }
+
+    function normalizePeriods(periods) {
+        var out = [];
+        periods.forEach(function (p) {
+            var start = timeToMinuteOfDay(p.start);
+            var end = timeToMinuteOfDay(p.end);
+            if (start == null || end == null) return;
+            if (end <= start) end += 1440;
+            if (end > 1440) {
+                out.push({ start: start, end: 1440 });
+                out.push({ start: 0, end: end - 1440 });
+            } else {
+                out.push({ start: start, end: end });
+            }
+        });
+        return out;
+    }
+
+    function overlapMinutes(aStart, aEnd, bStart, bEnd) {
+        var s = Math.max(aStart, bStart);
+        var e = Math.min(aEnd, bEnd);
+        return Math.max(0, e - s);
+    }
+
+    function drawSolunarChart() {
+        var canvas = document.getElementById('solunar-chart-canvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        var rect = canvas.getBoundingClientRect();
+        var width = Math.max(320, Math.floor(rect.width || 0));
+        var height = Math.max(120, Math.floor(rect.height || 0));
+        var dpr = window.devicePixelRatio || 1;
+        if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+
+        var left = 14, right = width - 14, top = 14, bottom = height - 24;
+        var usableW = Math.max(1, right - left);
+        var barAreaH = Math.max(28, bottom - top);
+        var bins = 12;
+        var binMinutes = 120;
+        var gap = 3;
+        var slotW = usableW / bins;
+        var barW = Math.max(4, slotW - gap);
+        var major = normalizePeriods(SOL_MAJOR);
+        var minor = normalizePeriods(SOL_MINOR);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(left, top, usableW, barAreaH);
+
+        // Horizontal guide lines.
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.lineWidth = 1;
+        for (var yStep = 1; yStep <= 4; yStep++) {
+            var gy = top + (barAreaH * (yStep / 4));
+            ctx.beginPath();
+            ctx.moveTo(left, gy);
+            ctx.lineTo(right, gy);
+            ctx.stroke();
+        }
+
+        // 12 bars, each bar = 2 hours.
+        for (var i = 0; i < bins; i++) {
+            var binStart = i * binMinutes;
+            var binEnd = binStart + binMinutes;
+            var majorMins = 0;
+            var minorMins = 0;
+
+            for (var j = 0; j < major.length; j++) {
+                majorMins += overlapMinutes(binStart, binEnd, major[j].start, major[j].end);
+            }
+            for (var k = 0; k < minor.length; k++) {
+                minorMins += overlapMinutes(binStart, binEnd, minor[k].start, minor[k].end);
+            }
+
+            var majorFrac = Math.min(1, majorMins / binMinutes);
+            var minorFrac = Math.min(1, minorMins / binMinutes);
+            var activity = 0.18 + (majorFrac * 0.82) + (minorFrac * 0.46);
+            activity = Math.max(0.1, Math.min(1, activity));
+
+            var barH = Math.round(activity * barAreaH);
+            var x = left + (i * slotW) + (gap / 2);
+            var y = bottom - barH;
+            var gradient = ctx.createLinearGradient(0, y, 0, bottom);
+            gradient.addColorStop(0, activity > 0.7 ? '#F59E0B' : '#38BDF8');
+            gradient.addColorStop(1, '#1D4ED8');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, y, barW, barH);
+        }
+
+        // Vertical tick marks for every 2 hours.
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        for (var t = 0; t <= bins; t++) {
+            var tx = left + (t * slotW);
+            ctx.beginPath();
+            ctx.moveTo(tx, bottom);
+            ctx.lineTo(tx, bottom + 4);
+            ctx.stroke();
+        }
+
+        // Current time marker.
+        var now = new Date();
+        var nowMin = now.getHours() * 60 + now.getMinutes();
+        var nx = left + (usableW * (nowMin / 1440));
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(nx, top - 2);
+        ctx.lineTo(nx, bottom + 5);
+        ctx.stroke();
+
+        // Labels for every 2 hours.
+        function labelForHour(h) {
+            var suffix = h >= 12 ? 'P' : 'A';
+            var hour12 = h % 12;
+            if (hour12 === 0) hour12 = 12;
+            return hour12 + suffix;
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '10px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        for (var hour = 0; hour < 24; hour += 2) {
+            var lx = left + (usableW * (hour / 24));
+            ctx.fillText(labelForHour(hour), lx, height - 7);
+        }
+        ctx.textAlign = 'start';
+    }
+
     // ── Solunar countdown ─────────────────────────────────────────────────
     var solChip = document.getElementById('sol-countdown');
     function updateSolunar() {
@@ -1447,7 +1585,9 @@ if ('serviceWorker' in navigator) {
 
     updateSolunar();
     updateTide();
-    setInterval(function () { updateSolunar(); updateTide(); }, 30000);
+    drawSolunarChart();
+    setInterval(function () { updateSolunar(); updateTide(); drawSolunarChart(); }, 30000);
+    window.addEventListener('resize', drawSolunarChart);
 })();
 
 // ── Install-to-homescreen prompt ─────────────────────────────────────────
