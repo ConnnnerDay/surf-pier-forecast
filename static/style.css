@@ -5427,6 +5427,48 @@ h2::before {
   margin-left: auto;
   flex-shrink: 0;
 }
+
+/* Inline loading spinner shown while /api/map/structures is in-flight */
+.fmap-struct-spinner {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 0.35rem;
+  color: rgba(255,255,255,0.42);
+}
+.fmap-struct-spinner svg {
+  animation: fmap-spin 0.9s linear infinite;
+}
+
+/* Error banner shown when the backend call fails (before Overpass fallback) */
+.fmap-struct-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 0.4rem;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.28);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  color: #fca5a5;
+}
+.fmap-struct-error-msg { flex: 1; }
+.fmap-struct-error-dismiss {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  padding: 0 0.1rem;
+  line-height: 1;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.fmap-struct-error-dismiss:hover,
+.fmap-struct-error-dismiss:focus-visible { opacity: 1; outline: none; }
+.fmap-struct-error-dismiss:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
+
 .fmap-struct-filters-pills {
   display: flex;
   flex-wrap: wrap;
@@ -5918,6 +5960,13 @@ h2::before {
   border-bottom-color: #c9d8e0;
 }
 [data-theme="light"] .fmap-struct-filters-hint { color: #7a9aaa; }
+[data-theme="light"] .fmap-struct-spinner { color: #7a9aaa; }
+[data-theme="light"] .fmap-struct-error {
+  background: rgba(220,38,38,0.07);
+  border-color: rgba(220,38,38,0.22);
+  color: #b91c1c;
+}
+[data-theme="light"] .fmap-struct-error-dismiss { color: #b91c1c; }
 [data-theme="light"] .fmap-adv-filters {
   background: #f0f8fc;
   border-color: #c9d8e0;

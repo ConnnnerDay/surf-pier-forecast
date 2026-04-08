@@ -70,6 +70,7 @@
     var spotCache        = {};       // bbox+types key → array of spot objects
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
+    var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -639,6 +640,40 @@
         });
     }
 
+    // ── Structure-query loading / error UI helpers ────────────────────────────
+    // Use a ref-count so overlapping requests (e.g. rapid pan + type toggle)
+    // don't hide the spinner prematurely when the first of two requests lands.
+
+    // Show the inline spinner in the filter bar header.
+    function showStructLoading() {
+        _structLoadCount++;
+        var el = document.getElementById('fmap-struct-spinner');
+        if (el) el.hidden = false;
+    }
+
+    // Decrement the ref-count; hide the spinner only when all requests finish.
+    function hideStructLoading() {
+        _structLoadCount = Math.max(0, _structLoadCount - 1);
+        if (_structLoadCount > 0) return;
+        var el = document.getElementById('fmap-struct-spinner');
+        if (el) el.hidden = true;
+    }
+
+    // Show the dismissible error banner with a custom message.
+    function showStructError(msg) {
+        var banner = document.getElementById('fmap-struct-error');
+        var txt    = document.getElementById('fmap-struct-error-msg');
+        if (!banner) return;
+        if (txt) txt.textContent = msg;
+        banner.hidden = false;
+    }
+
+    // Programmatically hide the error banner (called on next successful load).
+    function hideStructError() {
+        var banner = document.getElementById('fmap-struct-error');
+        if (banner) banner.hidden = true;
+    }
+
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
     // Builds a cache key that includes the type filter so different selections
     // are cached independently.  Falls back to Overpass if the server fails.
@@ -670,16 +705,28 @@
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
         if (typesStr) url += '&types=' + encodeURIComponent(typesStr);
 
+        // Show spinner for this request; hide error banner from any previous failure.
+        showStructLoading();
+        hideStructError();
+
         fetch(url)
-            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
+                // Success path: spinner off, render results.
+                hideStructLoading();
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;
                 renderFishingSpots(spots);
             })
             .catch(function (err) {
+                // Keep spinner visible while Overpass fallback runs;
+                // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
+                showStructError("Couldn't load structure data; showing basic map markers.");
                 _queryFishingSpotsFallback(s, w, n, e, key);
             });
     }
@@ -880,9 +927,13 @@
             var deduped = deduplicateSpots(spots);
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
             spotCache[key] = deduped;
+            hideStructLoading(); // request chain complete; drop spinner
             renderFishingSpots(deduped);
         })
-        .catch(function (err) { console.error('[fishing-map] Overpass fallback error:', err); });
+        .catch(function (err) {
+            hideStructLoading(); // both paths must release the spinner
+            console.error('[fishing-map] Overpass fallback error:', err);
+        });
     }
 
     // Collapse duplicate markers: same name → one, or same type within proximity threshold
@@ -2053,6 +2104,12 @@
                 spotCache = {};
                 scheduleFishingSpotQuery();
             });
+        }
+
+        // Wire the error banner dismiss button so users can manually clear it.
+        var dismissBtn = document.getElementById('fmap-struct-error-dismiss');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', hideStructError);
         }
     }
 
