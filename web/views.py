@@ -498,6 +498,8 @@ def _render_forecast(
         trip_setup=trip_setup,
         favorite_locations=favorite_locations,
         caught_species=caught_species,
+        location_lat=location.get('lat', 0),
+        location_lng=location.get('lng', 0),
     )
 
 

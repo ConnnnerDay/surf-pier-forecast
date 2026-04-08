@@ -182,7 +182,20 @@
         if (mapReady) return;
         mapReady = true;
 
-        map = L.map(els.mapEl, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        // If the server provided the saved location's coordinates, use them as the
+        // starting view and seed savedLocationLatLng immediately — no need to wait
+        // for the NOAA API to confirm the ID match before showing overlays.
+        var serverLat = (typeof CURRENT_LOC_LAT !== 'undefined') ? CURRENT_LOC_LAT : 0;
+        var serverLng = (typeof CURRENT_LOC_LNG !== 'undefined') ? CURRENT_LOC_LNG : 0;
+        var startCenter = (serverLat && serverLng) ? [serverLat, serverLng] : DEFAULT_CENTER;
+        var startZoom   = (serverLat && serverLng) ? 12 : DEFAULT_ZOOM;
+
+        if (serverLat && serverLng) {
+            savedLocationLatLng = { lat: serverLat, lng: serverLng };
+            hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
+        }
+
+        map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
 
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
@@ -209,6 +222,10 @@
         map.on('moveend zoomend', function () {
             if (structureMode) scheduleStructureFetch();
         });
+
+        // Update the zoom hint immediately so it reflects the starting zoom level
+        // (hidden at zoom ≥ 9, i.e. when server coords are used)
+        updateZoomHint();
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
@@ -516,7 +533,11 @@
     }
 
     // ─── OSM Fishing Spots (Overpass API) ─────────────────────────────────────
-    var OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+    var OVERPASS_URLS = [
+        'https://overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+    ];
+    var OVERPASS_URL = OVERPASS_URLS[0];  // kept for AI query compat
 
     var SPOT_TYPES = {
         pier:         { label: 'Pier',              color: '#a78bfa', habitat: false },
@@ -526,7 +547,10 @@
         oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true  },
         wreck:        { label: 'Wreck',             color: '#d97706', habitat: false },
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true  },
+        marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false },
         shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false },
+        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false },
+        beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true  },
         tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
@@ -534,6 +558,14 @@
         buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
+    };
+
+    // Single-character labels rendered inside circle markers for at-a-glance identification
+    var SPOT_LABELS = {
+        pier:         'P',  jetty:  'J',  bridge: 'B',  reef:  'R',
+        oyster_reef:  'O',  wreck:  'W',  inlet:  'C',  marina:'M',
+        shoal:        'S',  point:  '^',  beach:  '~',  buoy:  '·',
+        fishing:      'F',  fishing_shop: '$'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -545,7 +577,10 @@
         oyster_reef:  'Oyster reefs are magnets. Shrimp and crabs hide in the shell; redfish, flounder, and drum patrol the edges on every tide change.',
         wreck:        'Wrecks act as artificial reefs — they concentrate ambush predators. Cast up-current and let bait drift past the structure.',
         inlet:        'Tidal inlets and channels funnel bait on every tide change — one of the most consistent year-round spots. Fish the current seam at the channel edge.',
+        marina:       'Marinas concentrate bait around dock pilings and channel edges. Work the shadow lines early morning and at last light.',
         shoal:        'Work the drop from shallow to deep — fish hold on the seam waiting for bait washing off the flat.',
+        point:        'Current eddies form on the downcurrent side of headlands and points — predators stack here to ambush bait swept past the tip.',
+        beach:        'Work the gutters, rip cuts, and troughs running parallel to shore. Cast beyond the first sandbar — pompano, drum, and stripers feed along the break.',
         grass_flat:   'Seagrass holds shrimp and baitfish. Redfish, speckled trout, and flounder push shallow on rising tides and drop to the flat edges at low.',
         tidal_flat:   'Fish move onto tidal flats as the tide floods, chasing crabs and shrimp into the shallows. Work the edges as the water begins falling.',
         saltmarsh:    'Marsh creek mouths and grass edges are ambush points — redfish and snook use incoming current to pick off bait washing out of the marsh.',
@@ -563,17 +598,25 @@
     }
 
     function makeFishingSpotIcon(type) {
-        var def   = SPOT_TYPES[type] || SPOT_TYPES.fishing;
-        var color = def.color;
-        // Habitat features: larger diamond-ish square; hard structure: circle
+        var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
+        var color     = def.color;
         var isHabitat = def.habitat;
-        var sz   = isHabitat ? 14 : 11;
-        var br   = isHabitat ? '3px' : '50%';
-        var rot  = isHabitat ? 'transform:rotate(45deg)' : '';
-        var html = '<span class="fmap-spot-dot" style="background:' + color +
-                   ';box-shadow:0 0 8px ' + color + '77;width:' + sz + 'px;height:' + sz + 'px' +
-                   ';border-radius:' + br + ';flex-shrink:0;' + rot + '"></span>';
-        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [sz + 4, sz + 4], iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        // Habitat = rotating diamond (no letter); Structure = circle with type letter
+        var sz    = isHabitat ? 14 : 18;
+        var br    = isHabitat ? '3px' : '50%';
+        var rot   = isHabitat ? 'transform:rotate(45deg)' : '';
+        var lbl   = isHabitat ? '' : (SPOT_LABELS[type] || '');
+        var inner = lbl
+            ? '<span style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.95);' +
+              'font-family:system-ui,sans-serif;line-height:1;pointer-events:none;' +
+              'letter-spacing:-0.5px">' + lbl + '</span>'
+            : '';
+        var html  = '<span class="fmap-spot-dot" style="background:' + color +
+                    ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
+                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
+        return L.divIcon({ className: 'fmap-spot-wrap', html: html,
+                           iconSize:   [sz + 4, sz + 4],
+                           iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
     }
 
     function renderFishingSpots(spots) {
@@ -627,10 +670,19 @@
             // Tidal flats / mudflats (feeding zone on rising tide)
             'way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');' +
             'way["natural"="mud"](' + bbox + ');' +
-            // Tidal channels and creek mouths (bait funnels)
+            // Tidal channels, rivers, canals, and creek mouths — bait funnels and ICW
             'way["waterway"="tidal_channel"](' + bbox + ');' +
+            'way["waterway"="river"](' + bbox + ');' +
+            'way["waterway"="canal"](' + bbox + ');' +
+            'node["waterway"="stream"](' + bbox + ');' +
+            'way["waterway"="stream"](' + bbox + ');' +
+            // Weirs and small dams — turbulent oxygenated water concentrates feeding fish
+            'node["waterway"="weir"](' + bbox + ');' +
+            'way["waterway"="weir"](' + bbox + ');' +
+            'node["waterway"="dam"](' + bbox + ');' +
             // Inlets, harbors, and bays
             'node["harbour"="yes"](' + bbox + ');' +
+            'way["harbour"="yes"](' + bbox + ');' +
             'node["natural"="bay"](' + bbox + ');' +
             'way["natural"="bay"](' + bbox + ');' +
             // ── Hard structure ─────────────────────────────────────────────
@@ -649,13 +701,48 @@
             'node["natural"="shoal"](' + bbox + ');' +
             'way["natural"="shoal"](' + bbox + ');' +
             'node["natural"="rock"](' + bbox + ');' +
-            // Piers and jetties
+            // Piers and jetties (both man_made and leisure tags used in OSM)
             'node["man_made"="pier"](' + bbox + ');' +
             'way["man_made"="pier"](' + bbox + ');' +
+            'node["leisure"="pier"](' + bbox + ');' +
+            'way["leisure"="pier"](' + bbox + ');' +
             'node["man_made"="jetty"](' + bbox + ');' +
             'way["man_made"="jetty"](' + bbox + ');' +
-            // Bridges over water
-            'way["man_made"="bridge"](' + bbox + ');' +
+            // Groynes and breakwaters — create eddies and structure fish hold near
+            'node["man_made"="groyne"](' + bbox + ');' +
+            'way["man_made"="groyne"](' + bbox + ');' +
+            'node["man_made"="breakwater"](' + bbox + ');' +
+            'way["man_made"="breakwater"](' + bbox + ');' +
+            // Bridges over water — OSM uses bridge=yes on highway ways, not man_made=bridge
+            'way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');' +
+            // Docks and wharfs — pilings hold fish year-round
+            'node["waterway"="dock"](' + bbox + ');' +
+            'way["waterway"="dock"](' + bbox + ');' +
+            'node["man_made"="wharf"](' + bbox + ');' +
+            'way["man_made"="wharf"](' + bbox + ');' +
+            // Marinas and harbors — concentrated dock structure and channel edges
+            'node["amenity"="marina"](' + bbox + ');' +
+            'way["amenity"="marina"](' + bbox + ');' +
+            'node["leisure"="marina"](' + bbox + ');' +
+            'way["leisure"="marina"](' + bbox + ');' +
+            'relation["leisure"="marina"](' + bbox + ');' +
+            // Boat ramps — fish hold around dock pilings and the ramp structure
+            'node["amenity"="boat_ramp"](' + bbox + ');' +
+            'way["amenity"="boat_ramp"](' + bbox + ');' +
+            // Headlands, capes, and points — current eddies form on the downcurrent side
+            'node["natural"="cape"](' + bbox + ');' +
+            'node["natural"="headland"](' + bbox + ');' +
+            'way["natural"="headland"](' + bbox + ');' +
+            'node["natural"="peninsula"](' + bbox + ');' +
+            // Lighthouses mark rocky hazards and headlands — prime structure fishing
+            'node["man_made"="lighthouse"](' + bbox + ');' +
+            // Offshore platforms — fish aggregate around any isolated structure
+            'node["man_made"="offshore_platform"](' + bbox + ');' +
+            // Beach and surf zones — gutters, sandbars, rip cuts
+            'way["natural"="beach"](' + bbox + ');' +
+            // Explicitly tagged fishing spots
+            'node["leisure"="fishing"](' + bbox + ');' +
+            'way["leisure"="fishing"](' + bbox + ');' +
             // Navigation buoys — mark channels, shoals, and inlet edges
             'node["seamark:type"="buoy_lateral"](' + bbox + ');' +
             'node["seamark:type"="buoy_cardinal"](' + bbox + ');' +
@@ -665,12 +752,27 @@
             'node["shop"="fishing"](' + bbox + ');' +
             ');out center;';
 
-        fetch(OVERPASS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(q)
-        })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        // Try primary Overpass endpoint, fall back to mirror on failure
+        var overpassBody = 'data=' + encodeURIComponent(q);
+        function tryOverpass(urlIndex) {
+            var url = OVERPASS_URLS[urlIndex] || OVERPASS_URLS[0];
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: overpassBody
+            }).then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).catch(function (err) {
+                if (urlIndex + 1 < OVERPASS_URLS.length) {
+                    console.warn('[fishing-map] Overpass mirror ' + url + ' failed, trying fallback…');
+                    return tryOverpass(urlIndex + 1);
+                }
+                throw err;
+            });
+        }
+
+        tryOverpass(0)
         .then(function (data) {
             var spots = (data.elements || []).map(function (el) {
                 var lat  = el.lat  || (el.center && el.center.lat);
@@ -688,25 +790,45 @@
                     type = 'tidal_flat';
                 } else if (tags.natural === 'mud') {
                     type = 'tidal_flat';
-                } else if (tags.waterway === 'tidal_channel') {
+                } else if (tags.waterway === 'tidal_channel' || tags.waterway === 'river' ||
+                           tags.waterway === 'canal' || tags.waterway === 'stream') {
                     type = 'inlet';
-                } else if (tags.natural === 'bay' || tags.harbour) {
+                } else if (tags.waterway === 'weir' || tags.waterway === 'dam') {
+                    type = 'jetty';  // turbulent water = feeding zone, same tip applies
+                } else if (tags.natural === 'beach') {
+                    type = 'beach';
+                } else if (tags.natural === 'bay' || tags.harbour === 'yes') {
                     type = 'inlet';
                 // Hard structure
                 } else if (tags.landuse === 'aquaculture' && (tags.produce === 'oyster' || tags.product === 'oysters')) {
                     type = 'oyster_reef';
                 } else if (tags.natural === 'reef') {
-                    type = 'oyster_reef';  // treat all coastal reefs as oyster_reef for tip accuracy
+                    type = 'oyster_reef';
                 } else if (tags.historic === 'wreck' || tags['seamark:type'] === 'wreck') {
                     type = 'wreck';
                 } else if (tags.natural === 'shoal' || tags.natural === 'rock') {
                     type = 'shoal';
-                } else if (tags.man_made === 'pier') {
+                } else if (tags.man_made === 'pier' || tags.leisure === 'pier') {
                     type = 'pier';
                 } else if (tags.man_made === 'jetty') {
                     type = 'jetty';
-                } else if (tags.man_made === 'bridge') {
+                } else if (tags.man_made === 'groyne' || tags.man_made === 'breakwater') {
+                    type = 'jetty';
+                // bridge=yes on a highway way is the real OSM bridge tag
+                } else if (tags.bridge === 'yes' && tags.highway) {
                     type = 'bridge';
+                } else if (tags.waterway === 'dock' || tags.man_made === 'wharf') {
+                    type = 'pier';
+                } else if (tags.amenity === 'marina' || tags.leisure === 'marina') {
+                    type = 'marina';
+                } else if (tags.amenity === 'boat_ramp') {
+                    type = 'pier';
+                } else if (tags.natural === 'cape' || tags.natural === 'headland' || tags.natural === 'peninsula') {
+                    type = 'point';
+                } else if (tags.man_made === 'lighthouse' || tags.man_made === 'offshore_platform') {
+                    type = 'point';
+                } else if (tags.leisure === 'fishing') {
+                    type = 'fishing';
                 } else if (tags['seamark:type'] && tags['seamark:type'].indexOf('buoy') === 0) {
                     type = 'buoy';
                 } else if (tags.man_made === 'buoy') {
@@ -716,12 +838,48 @@
                 } else {
                     type = 'fishing';
                 }
-                return { lat: lat, lng: lng, name: tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] || '', type: type };
-            }).filter(function (f) { return f.lat && f.lng; });
-            spotCache[key] = spots;
-            renderFishingSpots(spots);
+                var displayName = tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] ||
+                                  tags['addr:housename'] || '';
+                return { lat: lat, lng: lng, name: displayName, type: type };
+            }).filter(function (f) {
+                if (!f.lat || !f.lng) return false;
+                // Drop way-centers that fell outside the viewport (long river/canal ways)
+                return b.contains ? b.contains([f.lat, f.lng]) : true;
+            });
+            var deduped = deduplicateSpots(spots);
+            console.log('[fishing-map] Overpass returned ' + spots.length + ' features → ' + deduped.length + ' after dedup');
+            spotCache[key] = deduped;
+            renderFishingSpots(deduped);
         })
-        .catch(function () {}); // silently fail — not critical
+        .catch(function (err) { console.error('[fishing-map] Overpass error:', err); });
+    }
+
+    // Collapse duplicate markers: same name → one, or same type within proximity threshold
+    function deduplicateSpots(spots) {
+        // Proximity threshold in degrees (~180m for structure, ~450m for wide features)
+        var PROX = { inlet: 0.005, marina: 0.004, beach: 0.006,
+                     grass_flat: 0.004, saltmarsh: 0.004,
+                     tidal_flat: 0.004, mangrove: 0.004, _default: 0.002 };
+        var namedSeen = {};  // "type|lowercaseName" → true
+        var out = [];
+
+        spots.forEach(function (spot) {
+            // Deduplicate by name within type — e.g. multiple segments of the same bridge
+            if (spot.name) {
+                var nameKey = spot.type + '|' + spot.name.toLowerCase().trim();
+                if (namedSeen[nameKey]) return;
+                namedSeen[nameKey] = true;
+            }
+            // Proximity deduplication — avoid stacking markers for the same physical feature
+            var thresh = PROX[spot.type] || PROX._default;
+            var tooClose = out.some(function (k) {
+                return k.type === spot.type &&
+                       Math.abs(k.lat - spot.lat) < thresh &&
+                       Math.abs(k.lng - spot.lng) < thresh;
+            });
+            if (!tooClose) out.push(spot);
+        });
+        return out;
     }
 
     function scheduleFishingSpotQuery() {
@@ -2302,6 +2460,12 @@
                 wireLogCatch();
                 wireFullscreen();
                 wireShareBtn();
+                // Kick off the Overpass spot query immediately if we already have
+                // server-provided coordinates — don't wait for the NOAA API round-trip.
+                if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
+                    typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
+                    scheduleFishingSpotQuery();
+                }
                 fetchAndRender();
             })
             .catch(function (err) {
