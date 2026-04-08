@@ -1637,3 +1637,72 @@ def map_community_hotspots() -> Any:
 
     hotspots = get_community_hotspots(days_back=days_back, limit=limit)
     return jsonify({"hotspots": hotspots, "days_back": days_back})
+
+
+@bp.route("/api/map/structures", methods=["GET"])
+def map_structures() -> Any:
+    """Return fish-holding structures within a bounding box.
+
+    Queries OpenStreetMap (via Overpass API) and the NOAA ENC chart service,
+    then returns a deduplicated list of structures with fishing tips.
+
+    Query params
+    ------------
+    south : float  – southern latitude of the map view  (required)
+    west  : float  – western longitude of the map view  (required)
+    north : float  – northern latitude of the map view  (required)
+    east  : float  – eastern longitude of the map view  (required)
+    types : str    – comma-separated structure types to include (optional).
+                     Defaults to all types.  See VALID_TYPES in
+                     services/fish_structures.py for the complete list.
+
+    Returns
+    -------
+    JSON: { "structures": [...], "count": <int> }
+
+    Each structure object has: lat, lng, type, name, tip.
+    """
+    from services.fish_structures import VALID_TYPES, find_fish_structures
+
+    # ── Parse & validate bbox ─────────────────────────────────────────────────
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope(
+            "invalid_params",
+            "south, west, north, east query parameters are required floats",
+        )), 400
+
+    if not (-90.0 <= south <= 90.0 and -90.0 <= north <= 90.0):
+        return jsonify(error_envelope(
+            "invalid_params",
+            "Latitude values must be between -90 and 90",
+        )), 400
+    if not (-180.0 <= west <= 180.0 and -180.0 <= east <= 180.0):
+        return jsonify(error_envelope(
+            "invalid_params",
+            "Longitude values must be between -180 and 180",
+        )), 400
+    if south >= north:
+        return jsonify(error_envelope(
+            "invalid_params",
+            "south must be less than north",
+        )), 400
+
+    # ── Parse optional types filter ───────────────────────────────────────────
+    active_types = None
+    types_param  = request.args.get("types", "").strip()
+    if types_param:
+        requested = {t.strip() for t in types_param.split(",") if t.strip()}
+        active_types = requested & VALID_TYPES
+        if not active_types:
+            return jsonify(error_envelope(
+                "invalid_params",
+                f"No valid types supplied. Valid types: {sorted(VALID_TYPES)}",
+            )), 400
+
+    structures = find_fish_structures(south, west, north, east, active_types)
+    return jsonify({"structures": structures, "count": len(structures)})
