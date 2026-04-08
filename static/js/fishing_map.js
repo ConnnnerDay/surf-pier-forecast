@@ -538,28 +538,38 @@
     var OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
     var SPOT_TYPES = {
-        pier:          { label: 'Fishing Pier',       color: '#a78bfa' },
-        jetty:         { label: 'Jetty',               color: '#818cf8' },
-        fishing:       { label: 'Fishing Spot',        color: '#2dd4bf' },
-        'fishing_shop': { label: 'Bait & Tackle',     color: '#fb923c' },
-        bridge:        { label: 'Bridge',              color: '#f97316' },
-        reef:          { label: 'Reef',                color: '#f59e0b' },
-        wreck:         { label: 'Wreck',               color: '#d97706' },
-        inlet:         { label: 'Inlet / Harbor',      color: '#38bdf8' },
-        shoal:         { label: 'Shoal / Rock',        color: '#94a3b8' }
+        pier:         { label: 'Pier',              color: '#a78bfa', habitat: false },
+        jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false },
+        bridge:       { label: 'Bridge',            color: '#f97316', habitat: false },
+        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false },
+        oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true  },
+        wreck:        { label: 'Wreck',             color: '#d97706', habitat: false },
+        inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true  },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false },
+        grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true  },
+        tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
+        saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
+        mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true  },
+        fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
+        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
     };
 
-    // Brief AI fishing tips per structure type shown in map tooltips
+    // Fishing context tip shown in each structure's tooltip
     var STRUCTURE_TIPS = {
-        pier:          'Work the pilings and shadow lines — baitfish stack in current breaks.',
-        jetty:         'Fish the tip on outgoing tides; predators ambush bait funneled through the gap.',
-        bridge:        'Bridge pilings create eddies and current seams — prime ambush structure.',
-        reef:          'Reef edges concentrate baitfish; work the upcurrent face.',
-        wreck:         'Artificial reef — game fish shelter wrecks. Drop vertically on the structure.',
-        inlet:         'Inlet mouths funnel bait on every tide change — a year-round feeding choke point.',
-        shoal:         'Shallow structure edges hold fish; work the transition into deeper water.',
-        fishing:       'Local fishing access point.',
-        'fishing_shop': 'Bait & tackle — ask for recent local bite reports.'
+        pier:         'Work the pilings and shadow lines — baitfish stack against current breaks at dawn and dusk.',
+        jetty:        'Fish the tip on falling tides; predators ambush bait funneled through the gap. Work the rocks for sheepshead and black drum.',
+        bridge:       'Bridge pilings concentrate bait and create current seams. Night fishing under bridge lights is especially productive.',
+        reef:         'Hard bottom holds structure species — grouper, snapper, sheepshead. Work the upcurrent edge.',
+        oyster_reef:  'Oyster reefs are magnets. Shrimp and crabs hide in the shell; redfish, flounder, and drum patrol the edges on every tide change.',
+        wreck:        'Wrecks act as artificial reefs — they concentrate ambush predators. Cast up-current and let bait drift past the structure.',
+        inlet:        'Tidal inlets and channels funnel bait on every tide change — one of the most consistent year-round spots. Fish the current seam at the channel edge.',
+        shoal:        'Work the drop from shallow to deep — fish hold on the seam waiting for bait washing off the flat.',
+        grass_flat:   'Seagrass holds shrimp and baitfish. Redfish, speckled trout, and flounder push shallow on rising tides and drop to the flat edges at low.',
+        tidal_flat:   'Fish move onto tidal flats as the tide floods, chasing crabs and shrimp into the shallows. Work the edges as the water begins falling.',
+        saltmarsh:    'Marsh creek mouths and grass edges are ambush points — redfish and snook use incoming current to pick off bait washing out of the marsh.',
+        mangrove:     'Work the mangrove root edges on rising tides; snook, redfish, and tarpon ambush prey along the shadow line.',
+        fishing:      'Local fishing access point.',
+        fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.'
     };
 
     function spotTypeLabel(type) {
@@ -570,12 +580,17 @@
     }
 
     function makeFishingSpotIcon(type) {
-        var color = spotTypeColor(type);
-        // Significant structures get a larger marker; common spots stay small
-        var sz = (type === 'wreck' || type === 'reef' || type === 'inlet') ? 13 : 10;
+        var def   = SPOT_TYPES[type] || SPOT_TYPES.fishing;
+        var color = def.color;
+        // Habitat features: larger diamond-ish square; hard structure: circle
+        var isHabitat = def.habitat;
+        var sz   = isHabitat ? 14 : 11;
+        var br   = isHabitat ? '3px' : '50%';
+        var rot  = isHabitat ? 'transform:rotate(45deg)' : '';
         var html = '<span class="fmap-spot-dot" style="background:' + color +
-                   ';box-shadow:0 0 7px ' + color + '66;width:' + sz + 'px;height:' + sz + 'px"></span>';
-        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [sz, sz], iconAnchor: [Math.ceil(sz / 2), Math.ceil(sz / 2)] });
+                   ';box-shadow:0 0 8px ' + color + '77;width:' + sz + 'px;height:' + sz + 'px' +
+                   ';border-radius:' + br + ';flex-shrink:0;' + rot + '"></span>';
+        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [sz + 4, sz + 4], iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
     }
 
     function renderFishingSpots(spots) {
@@ -617,30 +632,48 @@
         }
 
         var bbox = s + ',' + w + ',' + n + ',' + e;
-        var q = '[out:json][timeout:25];(' +
+        var q = '[out:json][timeout:30];(' +
+            // ── Habitat features fish use ──────────────────────────────────
+            // Seagrass / grass flats (redfish, trout, flounder, snook)
+            'way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');' +
+            'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');' +
+            // Saltmarsh edges (redfish, snook, drum along creek mouths)
+            'way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');' +
+            // Mangroves (snook, tarpon, redfish)
+            'way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');' +
+            // Tidal flats / mudflats (feeding zone on rising tide)
+            'way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');' +
+            'way["natural"="mud"](' + bbox + ');' +
+            // Tidal channels and creek mouths (bait funnels)
+            'way["waterway"="tidal_channel"](' + bbox + ');' +
+            // Inlets, harbors, and bays
+            'node["harbour"="yes"](' + bbox + ');' +
+            'node["natural"="bay"](' + bbox + ');' +
+            'way["natural"="bay"](' + bbox + ');' +
+            // ── Hard structure ─────────────────────────────────────────────
+            // Oyster reefs and natural reefs
+            'node["natural"="reef"](' + bbox + ');' +
+            'way["natural"="reef"](' + bbox + ');' +
+            // Oyster aquaculture beds
+            'node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');' +
+            'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');' +
+            'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');' +
+            // Wrecks / sunken ships
+            'node["historic"="wreck"](' + bbox + ');' +
+            'way["historic"="wreck"](' + bbox + ');' +
+            'node["seamark:type"="wreck"](' + bbox + ');' +
+            // Shoals and rocky outcrops
+            'node["natural"="shoal"](' + bbox + ');' +
+            'way["natural"="shoal"](' + bbox + ');' +
+            'node["natural"="rock"](' + bbox + ');' +
             // Piers and jetties
             'node["man_made"="pier"](' + bbox + ');' +
             'way["man_made"="pier"](' + bbox + ');' +
             'node["man_made"="jetty"](' + bbox + ');' +
             'way["man_made"="jetty"](' + bbox + ');' +
-            // Bridges over water (standalone bridge structures)
+            // Bridges over water
             'way["man_made"="bridge"](' + bbox + ');' +
-            // Reefs
-            'node["natural"="reef"](' + bbox + ');' +
-            'way["natural"="reef"](' + bbox + ');' +
-            // Wrecks / sunken ships
-            'node["historic"="wreck"](' + bbox + ');' +
-            'way["historic"="wreck"](' + bbox + ');' +
-            'node["seamark:type"="wreck"](' + bbox + ');' +
-            // Inlets, harbors, and bays
-            'node["harbour"="yes"](' + bbox + ');' +
-            'node["natural"="bay"](' + bbox + ');' +
-            'way["natural"="bay"](' + bbox + ');' +
-            // Shoals and rocks
-            'node["natural"="shoal"](' + bbox + ');' +
-            'node["natural"="rock"](' + bbox + ');' +
-            // Fishing access points and bait shops
-            'node["leisure"="fishing"](' + bbox + ');' +
+            // Bait shops
             'node["shop"="fishing"](' + bbox + ');' +
             ');out center;';
 
@@ -656,20 +689,36 @@
                 var lng  = el.lon  || (el.center && el.center.lon);
                 var tags = el.tags || {};
                 var type;
-                if (tags.historic === 'wreck' || tags['seamark:type'] === 'wreck') {
-                    type = 'wreck';
-                } else if (tags.natural === 'reef') {
-                    type = 'reef';
-                } else if (tags.natural === 'shoal' || tags.natural === 'rock') {
-                    type = 'shoal';
+                // Habitat features
+                if (tags.natural === 'wetland' && tags.wetland === 'seagrass') {
+                    type = 'grass_flat';
+                } else if (tags.natural === 'wetland' && tags.wetland === 'saltmarsh') {
+                    type = 'saltmarsh';
+                } else if (tags.natural === 'wetland' && tags.wetland === 'mangrove') {
+                    type = 'mangrove';
+                } else if (tags.natural === 'wetland' && tags.wetland === 'tidalflat') {
+                    type = 'tidal_flat';
+                } else if (tags.natural === 'mud') {
+                    type = 'tidal_flat';
+                } else if (tags.waterway === 'tidal_channel') {
+                    type = 'inlet';
                 } else if (tags.natural === 'bay' || tags.harbour) {
                     type = 'inlet';
-                } else if (tags.man_made === 'bridge') {
-                    type = 'bridge';
+                // Hard structure
+                } else if (tags.landuse === 'aquaculture' && (tags.produce === 'oyster' || tags.product === 'oysters')) {
+                    type = 'oyster_reef';
+                } else if (tags.natural === 'reef') {
+                    type = 'oyster_reef';  // treat all coastal reefs as oyster_reef for tip accuracy
+                } else if (tags.historic === 'wreck' || tags['seamark:type'] === 'wreck') {
+                    type = 'wreck';
+                } else if (tags.natural === 'shoal' || tags.natural === 'rock') {
+                    type = 'shoal';
                 } else if (tags.man_made === 'pier') {
                     type = 'pier';
                 } else if (tags.man_made === 'jetty') {
                     type = 'jetty';
+                } else if (tags.man_made === 'bridge') {
+                    type = 'bridge';
                 } else if (tags.shop === 'fishing') {
                     type = 'fishing_shop';
                 } else {
