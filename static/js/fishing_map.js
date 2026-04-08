@@ -182,7 +182,20 @@
         if (mapReady) return;
         mapReady = true;
 
-        map = L.map(els.mapEl, { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        // If the server provided the saved location's coordinates, use them as the
+        // starting view and seed savedLocationLatLng immediately — no need to wait
+        // for the NOAA API to confirm the ID match before showing overlays.
+        var serverLat = (typeof CURRENT_LOC_LAT !== 'undefined') ? CURRENT_LOC_LAT : 0;
+        var serverLng = (typeof CURRENT_LOC_LNG !== 'undefined') ? CURRENT_LOC_LNG : 0;
+        var startCenter = (serverLat && serverLng) ? [serverLat, serverLng] : DEFAULT_CENTER;
+        var startZoom   = (serverLat && serverLng) ? 12 : DEFAULT_ZOOM;
+
+        if (serverLat && serverLng) {
+            savedLocationLatLng = { lat: serverLat, lng: serverLng };
+            hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
+        }
+
+        map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
 
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
@@ -721,7 +734,7 @@
             spotCache[key] = spots;
             renderFishingSpots(spots);
         })
-        .catch(function () {}); // silently fail — not critical
+        .catch(function (err) { console.error('[fishing-map] Overpass error:', err); });
     }
 
     function scheduleFishingSpotQuery() {

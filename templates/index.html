@@ -783,6 +783,8 @@ var FAV_KEY = 'favorite_locations';
 var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
 var CURRENT_LOC_STATE = {{ (forecast.location_state or ((forecast.location_name.split(',')[-1].strip()) if forecast.location_name and ',' in forecast.location_name else ''))|tojson }};
 var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
+var CURRENT_LOC_LAT = {{ location_lat|tojson }};
+var CURRENT_LOC_LNG = {{ location_lng|tojson }};
 var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
 
 function getFavorites() {
