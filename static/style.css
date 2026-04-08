@@ -3994,6 +3994,8 @@ h2::before {
 
 .fmap-map-wrap {
   position: relative;
+  flex: 1;          /* fill remaining width next to the side panel */
+  min-width: 0;     /* prevent flex blowout */
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border-light, #1e3547);
@@ -5452,15 +5454,42 @@ h2::before {
 }
 .fmap-side-pane:not(.fmap-side-pane--active) { display: none; }
 
-/* ── Community layer toggle button ── */
-.fmap-ctrl-btn--log {
-  background: rgba(34,197,94,0.15) !important;
-  border-color: rgba(34,197,94,0.4) !important;
+/* ── Log Catch floating action button ── */
+.fmap-log-fab {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 420;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 0 12px;
+  height: 42px;
+  border-radius: 21px;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.6);
+  transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+  user-select: none;
+  white-space: nowrap;
 }
-.fmap-ctrl-btn--log.fmap-ctrl-btn--active {
-  background: rgba(34,197,94,0.35) !important;
-  border-color: #22c55e !important;
+.fmap-log-fab:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.7);
 }
+.fmap-log-fab:active { transform: translateY(0); }
+.fmap-log-fab--active {
+  background: #dc2626;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.45), 0 0 0 1px rgba(220,38,38,0.6);
+}
+.fmap-log-fab--active:hover { background: #b91c1c; }
+.fmap-log-fab-label { line-height: 1; }
 
 /* ── Community catch pin markers ── */
 .fmap-community-pin-wrap { background: transparent; border: none; }
@@ -5858,6 +5887,9 @@ h2::before {
   .fmap-side-panel { width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.08); max-height: 260px; }
   .fmap-adv-row { flex-direction: column; gap: 0.6rem; }
   .fmap-modal-inner { max-width: 100%; margin: 0 0.5rem; }
+  /* On mobile the FAB shows icon only to save space */
+  .fmap-log-fab { padding: 0; width: 42px; border-radius: 50%; justify-content: center; }
+  .fmap-log-fab-label { display: none; }
 }
 
 /* ── Catch photo in detail drawer ── */
