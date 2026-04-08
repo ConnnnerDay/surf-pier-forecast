@@ -106,10 +106,12 @@ CREATE TABLE IF NOT EXISTS map_catches (
     lat         REAL NOT NULL,
     lng         REAL NOT NULL,
     species     TEXT NOT NULL,
+    title       TEXT,
     bait        TEXT,
     weight_lb   REAL,
     length_in   REAL,
     notes       TEXT,
+    image_url   TEXT,
     caught_at   TEXT NOT NULL DEFAULT (datetime('now')),
     is_public   INTEGER NOT NULL DEFAULT 1,
     likes_count INTEGER NOT NULL DEFAULT 0
@@ -346,10 +348,12 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
                 lat         REAL NOT NULL,
                 lng         REAL NOT NULL,
                 species     TEXT NOT NULL,
+                title       TEXT,
                 bait        TEXT,
                 weight_lb   REAL,
                 length_in   REAL,
                 notes       TEXT,
+                image_url   TEXT,
                 caught_at   TEXT NOT NULL DEFAULT (datetime('now')),
                 is_public   INTEGER NOT NULL DEFAULT 1,
                 likes_count INTEGER NOT NULL DEFAULT 0
@@ -378,6 +382,18 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             );
             """
         )
+    else:
+        # map_catches already existed — add new columns if they were introduced
+        # after the initial schema migration (idempotent: ignore if already present).
+        existing_cols = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(map_catches)").fetchall()
+        }
+        if "title" not in existing_cols:
+            conn.execute("ALTER TABLE map_catches ADD COLUMN title TEXT")
+        if "image_url" not in existing_cols:
+            conn.execute("ALTER TABLE map_catches ADD COLUMN image_url TEXT")
+        conn.commit()
 
 
 def _prune_old_forecasts(conn: sqlite3.Connection) -> None:
@@ -1292,6 +1308,8 @@ def get_social_accounts_for_user(user_id: int) -> List[Dict[str, Any]]:
 _MAP_CATCH_NOTES_MAX = 500
 _MAP_CATCH_SPECIES_MAX = 100
 _MAP_CATCH_BAIT_MAX = 80
+_MAP_CATCH_TITLE_MAX = 120
+_MAP_CATCH_IMAGE_URL_MAX = 500
 
 
 def add_map_catch(
@@ -1300,10 +1318,12 @@ def add_map_catch(
     lng: float,
     species: str,
     *,
+    title: str = "",
     bait: str = "",
     weight_lb: Optional[float] = None,
     length_in: Optional[float] = None,
     notes: str = "",
+    image_url: str = "",
     is_public: bool = True,
     caught_at: Optional[str] = None,
 ) -> int:
@@ -1313,18 +1333,21 @@ def add_map_catch(
         cur = conn.execute(
             """
             INSERT INTO map_catches
-              (user_id, lat, lng, species, bait, weight_lb, length_in, notes, is_public, caught_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+              (user_id, lat, lng, species, title, bait, weight_lb, length_in,
+               notes, image_url, is_public, caught_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
             """,
             (
                 user_id,
                 round(lat, 6),
                 round(lng, 6),
                 species.strip()[:_MAP_CATCH_SPECIES_MAX],
-                bait.strip()[:_MAP_CATCH_BAIT_MAX] if bait else "",
+                title.strip()[:_MAP_CATCH_TITLE_MAX] if title else None,
+                bait.strip()[:_MAP_CATCH_BAIT_MAX] if bait else None,
                 weight_lb,
                 length_in,
-                notes.strip()[:_MAP_CATCH_NOTES_MAX],
+                notes.strip()[:_MAP_CATCH_NOTES_MAX] if notes else None,
+                image_url.strip()[:_MAP_CATCH_IMAGE_URL_MAX] if image_url else None,
                 1 if is_public else 0,
                 caught_at,
             ),
@@ -1353,9 +1376,9 @@ def get_map_catches_in_bbox(
         lookback = f"-{abs(days_back)} days"
         params: List[Any] = [sw_lat, ne_lat, sw_lng, ne_lng, lookback]
         sql = """
-            SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.bait,
-                   mc.weight_lb, mc.length_in, mc.notes, mc.caught_at,
-                   mc.is_public, mc.likes_count,
+            SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.title,
+                   mc.bait, mc.weight_lb, mc.length_in, mc.notes, mc.image_url,
+                   mc.caught_at, mc.is_public, mc.likes_count,
                    COALESCE(u.display_name, u.username) AS angler_name
             FROM map_catches mc
             JOIN users u ON u.id = mc.user_id
@@ -1387,10 +1410,12 @@ def get_map_catches_in_bbox(
             "lat": r["lat"],
             "lng": r["lng"],
             "species": r["species"],
+            "title": r["title"],
             "bait": r["bait"],
             "weight_lb": r["weight_lb"],
             "length_in": r["length_in"],
             "notes": r["notes"],
+            "image_url": r["image_url"],
             "caught_at": r["caught_at"],
             "is_public": bool(r["is_public"]),
             "likes_count": r["likes_count"],
@@ -1575,9 +1600,9 @@ def get_recent_public_catches(
     try:
         params: List[Any] = []
         sql = """
-            SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.bait,
-                   mc.weight_lb, mc.length_in, mc.notes, mc.caught_at,
-                   mc.likes_count,
+            SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.title,
+                   mc.bait, mc.weight_lb, mc.length_in, mc.notes, mc.image_url,
+                   mc.caught_at, mc.likes_count,
                    COALESCE(u.display_name, u.username) AS angler_name
             FROM map_catches mc
             JOIN users u ON u.id = mc.user_id
@@ -1603,10 +1628,12 @@ def get_recent_public_catches(
             "lat": r["lat"],
             "lng": r["lng"],
             "species": r["species"],
+            "title": r["title"],
             "bait": r["bait"],
             "weight_lb": r["weight_lb"],
             "length_in": r["length_in"],
             "notes": r["notes"],
+            "image_url": r["image_url"],
             "caught_at": r["caught_at"],
             "likes_count": r["likes_count"],
             "angler_name": r["angler_name"],

@@ -600,3 +600,211 @@ class TestStructureSpotsAPI:
         assert rv.status_code == 200
         data = json.loads(rv.data)
         assert data.get("zoom_required") is True
+
+
+# ── New-field tests: title, image_url, caught_at ──────────────────────────────
+
+
+class TestMapCatchTitleAndImage:
+    """DAL-level tests for title and image_url fields."""
+
+    def test_title_stored_and_retrieved(self, app):
+        with app.app_context():
+            uid = _make_user("title_user")
+            cid = add_map_catch(uid, 40.0, -74.0, "Striped bass",
+                                title="Monster striper at dawn")
+            row = get_map_catch(cid)
+            assert row is not None
+            assert row["title"] == "Monster striper at dawn"
+
+    def test_title_truncated_at_120_chars(self, app):
+        with app.app_context():
+            uid = _make_user("title_trunc")
+            long_title = "X" * 200
+            cid = add_map_catch(uid, 40.0, -74.0, "Bluefish", title=long_title)
+            row = get_map_catch(cid)
+            assert len(row["title"]) == 120
+
+    def test_image_url_stored(self, app):
+        with app.app_context():
+            uid = _make_user("img_user")
+            cid = add_map_catch(uid, 40.0, -74.0, "Flounder",
+                                image_url="https://example.com/fish.jpg")
+            row = get_map_catch(cid)
+            assert row["image_url"] == "https://example.com/fish.jpg"
+
+    def test_image_url_defaults_to_none(self, app):
+        with app.app_context():
+            uid = _make_user("no_img_user")
+            cid = add_map_catch(uid, 40.0, -74.0, "Pompano")
+            row = get_map_catch(cid)
+            assert row["image_url"] is None
+
+    def test_title_defaults_to_none(self, app):
+        with app.app_context():
+            uid = _make_user("no_title_user")
+            cid = add_map_catch(uid, 40.0, -74.0, "Red drum")
+            row = get_map_catch(cid)
+            assert row["title"] is None
+
+    def test_bbox_query_returns_title_and_image(self, app):
+        with app.app_context():
+            uid = _make_user("bbox_title")
+            add_map_catch(uid, 40.0, -74.0, "Bluefish",
+                          title="Nice bluefish", image_url="https://cdn.example.com/a.jpg",
+                          is_public=True)
+            catches = get_map_catches_in_bbox(39.0, -75.0, 41.0, -73.0)
+            assert catches
+            c = catches[0]
+            assert c["title"] == "Nice bluefish"
+            assert c["image_url"] == "https://cdn.example.com/a.jpg"
+
+    def test_feed_returns_title_and_image(self, app):
+        with app.app_context():
+            uid = _make_user("feed_title")
+            add_map_catch(uid, 40.0, -74.0, "Bluefish",
+                          title="Bluefish blitz", image_url="https://img.example.com/b.jpg",
+                          is_public=True)
+            from storage.sqlite import get_recent_public_catches
+            catches = get_recent_public_catches()
+            assert catches
+            c = catches[0]
+            assert c["title"] == "Bluefish blitz"
+            assert c["image_url"] == "https://img.example.com/b.jpg"
+
+
+class TestMapCatchCaughtAt:
+    """Custom caught_at timestamp tests."""
+
+    def test_custom_caught_at_stored(self, app):
+        with app.app_context():
+            uid = _make_user("time_user")
+            cid = add_map_catch(uid, 40.0, -74.0, "Striper",
+                                caught_at="2024-06-15 07:30:00")
+            row = get_map_catch(cid)
+            assert "2024-06-15" in row["caught_at"]
+
+    def test_default_caught_at_is_recent(self, app):
+        import datetime
+        with app.app_context():
+            uid = _make_user("time_default")
+            cid = add_map_catch(uid, 40.0, -74.0, "Flounder")
+            row = get_map_catch(cid)
+            ts = datetime.datetime.fromisoformat(row["caught_at"])
+            diff = datetime.datetime.utcnow() - ts
+            assert abs(diff.total_seconds()) < 10
+
+
+class TestCatchCreateAPINewFields:
+    """API-level tests for title / image_url / caught_at in POST /api/map/catches."""
+
+    def test_create_with_title_returns_201(self, client, app):
+        with app.app_context():
+            _make_user()
+        _login(client)
+        rv = client.post(
+            "/api/map/catches",
+            data=json.dumps({
+                "lat": 40.0, "lng": -74.0,
+                "species": "Striped bass",
+                "title": "Awesome striper session",
+            }),
+            content_type="application/json",
+        )
+        assert rv.status_code == 201
+        data = json.loads(rv.data)
+        assert "id" in data
+
+    def test_title_and_image_persisted_via_api(self, client, app):
+        with app.app_context():
+            _make_user()
+        _login(client)
+        rv = client.post(
+            "/api/map/catches",
+            data=json.dumps({
+                "lat": 40.0, "lng": -74.0,
+                "species": "Bluefish",
+                "title": "Bluefish blitz",
+                "image_url": "https://photos.example.com/catch1.jpg",
+            }),
+            content_type="application/json",
+        )
+        assert rv.status_code == 201
+        catch_id = json.loads(rv.data)["id"]
+
+        with app.app_context():
+            row = get_map_catch(catch_id)
+        assert row["title"] == "Bluefish blitz"
+        assert row["image_url"] == "https://photos.example.com/catch1.jpg"
+
+    def test_http_image_url_rejected(self, client, app):
+        """Non-https image URLs must be silently discarded for security."""
+        with app.app_context():
+            _make_user()
+        _login(client)
+        rv = client.post(
+            "/api/map/catches",
+            data=json.dumps({
+                "lat": 40.0, "lng": -74.0,
+                "species": "Flounder",
+                "image_url": "http://insecure.example.com/img.jpg",
+            }),
+            content_type="application/json",
+        )
+        assert rv.status_code == 201
+        catch_id = json.loads(rv.data)["id"]
+
+        with app.app_context():
+            row = get_map_catch(catch_id)
+        # http:// URL must NOT be stored
+        assert not row["image_url"]
+
+    def test_custom_caught_at_via_api(self, client, app):
+        with app.app_context():
+            _make_user()
+        _login(client)
+        rv = client.post(
+            "/api/map/catches",
+            data=json.dumps({
+                "lat": 40.0, "lng": -74.0,
+                "species": "Pompano",
+                "caught_at": "2024-03-10 06:45:00",
+            }),
+            content_type="application/json",
+        )
+        assert rv.status_code == 201
+        catch_id = json.loads(rv.data)["id"]
+
+        with app.app_context():
+            row = get_map_catch(catch_id)
+        assert "2024-03-10" in row["caught_at"]
+
+    def test_bbox_api_returns_new_fields(self, client, app):
+        with app.app_context():
+            uid = _make_user()
+            add_map_catch(uid, 40.0, -74.0, "Snook",
+                          title="Big snook", image_url="https://example.com/snook.jpg",
+                          is_public=True)
+
+        rv = client.get(
+            "/api/map/catches?sw_lat=39&sw_lng=-75&ne_lat=41&ne_lng=-73",
+        )
+        assert rv.status_code == 200
+        catches = json.loads(rv.data)["catches"]
+        assert catches
+        assert catches[0]["title"] == "Big snook"
+        assert catches[0]["image_url"] == "https://example.com/snook.jpg"
+
+    def test_feed_api_returns_new_fields(self, client, app):
+        with app.app_context():
+            uid = _make_user()
+            add_map_catch(uid, 40.0, -74.0, "Tarpon",
+                          title="Silver king", image_url="https://cdn.example.com/t.jpg",
+                          is_public=True)
+
+        rv = client.get("/api/map/feed?lat=40&lng=-74")
+        assert rv.status_code == 200
+        catches = json.loads(rv.data)["catches"]
+        assert catches
+        assert catches[0]["title"] == "Silver king"
+        assert catches[0]["image_url"] == "https://cdn.example.com/t.jpg"
