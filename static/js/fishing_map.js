@@ -75,6 +75,7 @@
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
+    var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
 
     // ─── Structure-mode state ─────────────────────────────────────────────────
     var structureMode       = false;
@@ -508,14 +509,31 @@
         var bbox  = s + ',' + w + ',' + n + ',' + e;
         var tags  = def.tags.map(function (t) { return t + '(' + bbox + ');'; }).join('');
         var query = '[out:json][timeout:20];(' + tags + ');out center;';
+        var body  = 'data=' + encodeURIComponent(query);
 
-        fetch(OVERPASS_URL, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body:    'data=' + encodeURIComponent(query)
-        })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        // Stamp this request so late responses from a previous species/pan are discarded.
+        var thisAiGen = ++_aiReqGen;
+
+        function tryAIOverpass(urlIdx) {
+            return fetch(OVERPASS_URLS[urlIdx], {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body:    body,
+            }).then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).catch(function (err) {
+                if (urlIdx + 1 < OVERPASS_URLS.length) {
+                    console.warn('[fishing-map] AI habitat: mirror ' + OVERPASS_URLS[urlIdx] + ' failed, trying next…');
+                    return tryAIOverpass(urlIdx + 1);
+                }
+                throw err;
+            });
+        }
+
+        tryAIOverpass(0)
         .then(function (data) {
+            if (thisAiGen !== _aiReqGen) return; // superseded by newer species/pan
             var features = (data.elements || []).map(function (el) {
                 return {
                     lat:     el.lat  || (el.center && el.center.lat),
@@ -527,7 +545,9 @@
             aiCache[key] = features;
             renderAIHabitatSpots(features, habitatType);
         })
-        .catch(function () {});
+        .catch(function (err) {
+            console.warn('[fishing-map] AI habitat query failed:', err);
+        });
     }
 
     function scheduleAIQuery() {
@@ -1184,35 +1204,28 @@
         }
     }
 
-    function renderAiHotspots(locations) {
-        if (!els.hotspotsList) return;
+    // ── Shared AI-picks rendering helpers ────────────────────────────────────
+    // Both the Spots-tab hotspot list (aiMode=true) and the dedicated AI tab
+    // panel render the same data; these two helpers keep the HTML in one place.
 
+    // Return the <li> markup for the ranked AI picks in `locations`.
+    function _aiPickItemsHtml(locations) {
         var picks = locations
             .filter(function (l) { return l.ai_pick_rank; })
             .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
-
-        if (els.hotspotCount) {
-            els.hotspotCount.textContent = picks.length ? picks.length : '';
-            els.hotspotCount.style.display = picks.length ? '' : 'none';
-        }
-
         if (!picks.length) {
-            els.hotspotsList.innerHTML = '<li class="fmap-hotspot-empty">No AI picks available</li>';
-            return;
+            return '<li class="fmap-hotspot-empty">No AI picks for current filters</li>';
         }
-
         var html = '';
         picks.forEach(function (loc) {
-            var sp     = loc.top_species && loc.top_species[0];
-            var spName = sp ? (sp.name || '') : '';
-            var reasoning = loc.ai_reasoning || '';
-            // First sentence only for the snippet
-            var snippet = reasoning.split('.')[0];
-            if (snippet && snippet.length < reasoning.length) snippet += '.';
+            var sp      = loc.top_species && loc.top_species[0];
+            var spName  = sp ? (sp.name || '') : '';
+            var reason  = loc.ai_reasoning || '';
+            var snippet = reason.split('.')[0];
+            if (snippet && snippet.length < reason.length) snippet += '.';
             var act = loc.activity || 'none';
             var cfg = ACTIVITY[act] || ACTIVITY.none;
             var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
-
             html +=
                 '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
                 (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
@@ -1226,9 +1239,12 @@
                 '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
                 '</li>';
         });
-        els.hotspotsList.innerHTML = html;
+        return html;
+    }
 
-        els.hotspotsList.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
+    // Wire fly-to + popup on each rendered AI pick <li> within `container`.
+    function _wireAiPickClicks(container) {
+        container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
             li.addEventListener('click', function () {
                 var id  = li.getAttribute('data-loc-id');
                 var loc = currentData.find(function (l) { return l.id === id; });
@@ -1237,6 +1253,17 @@
                 setTimeout(function () { showAiPickPopup(loc); }, 600);
             });
         });
+    }
+
+    function renderAiHotspots(locations) {
+        if (!els.hotspotsList) return;
+        var picks = locations.filter(function (l) { return l.ai_pick_rank; });
+        if (els.hotspotCount) {
+            els.hotspotCount.textContent = picks.length ? picks.length : '';
+            els.hotspotCount.style.display = picks.length ? '' : 'none';
+        }
+        els.hotspotsList.innerHTML = _aiPickItemsHtml(locations);
+        _wireAiPickClicks(els.hotspotsList);
     }
 
     function renderHotspots(locations) {
@@ -1631,6 +1658,9 @@
                 autoZoomToSavedLocation(currentData);
                 updateZoomHint();
                 scheduleFishingSpotQuery();
+                // Reload community map pins with the updated species filter, so pins
+                // reflect the same species the user has selected in the main search.
+                if (communityLayerOn) scheduleCommunityLoad();
                 // Load community catches once map is centred on saved location
                 setTimeout(function () { loadCommunityFeed(); }, 900);
             })
@@ -2203,49 +2233,13 @@
         if (refreshBtn) refreshBtn.addEventListener('click', loadCommunityFeed);
     }
 
-    // ─── AI picks list (rendered into dedicated AI tab panel) ─────────────────
+    // ─── AI picks list (dedicated AI tab panel) ─────────────────────────────
+    // Delegates to the shared helpers extracted near renderAiHotspots above.
 
     function renderAiPicksList(locations, container) {
-        var picks = locations
-            .filter(function (l) { return l.ai_pick_rank; })
-            .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
-
-        if (!picks.length) {
-            container.innerHTML = '<li class="fmap-hotspot-empty">No AI picks for current filters</li>';
-            return;
-        }
-        var html = '';
-        picks.forEach(function (loc) {
-            var sp     = loc.top_species && loc.top_species[0];
-            var spName = sp ? (sp.name || '') : '';
-            var snippet = (loc.ai_reasoning || '').split('.')[0];
-            if (snippet && snippet.length < (loc.ai_reasoning || '').length) snippet += '.';
-            var act = loc.activity || 'none';
-            var cfg = ACTIVITY[act] || ACTIVITY.none;
-            var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
-            html +=
-                '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
-                (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
-                '" data-loc-id="' + esc(loc.id) + '">' +
-                '<span class="fmap-ai-hotspot-rank">' + loc.ai_pick_rank + '</span>' +
-                '<span class="fmap-hotspot-info">' +
-                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
-                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + (wt ? ' &bull; ' + wt : '') + '</span>' : '') +
-                  (snippet ? '<span class="fmap-ai-hotspot-snippet">' + esc(snippet) + '</span>' : '') +
-                '</span>' +
-                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
-                '</li>';
-        });
-        container.innerHTML = html;
-        container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
-            li.addEventListener('click', function () {
-                var id  = li.getAttribute('data-loc-id');
-                var loc = currentData.find(function (l) { return l.id === id; });
-                if (!loc) return;
-                map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
-                setTimeout(function () { showAiPickPopup(loc); }, 600);
-            });
-        });
+        if (!container) return;
+        container.innerHTML = _aiPickItemsHtml(locations);
+        _wireAiPickClicks(container);
     }
 
     // ─── Community layer ──────────────────────────────────────────────────────
@@ -2270,6 +2264,8 @@
                    '&sw_lng=' + Math.round(sw.lng * 100) / 100 +
                    '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
                    '&ne_lng=' + Math.round(ne.lng * 100) / 100;
+        // When the user has filtered by species, show only matching catches on the map.
+        if (activeSpecies) url += '&species=' + encodeURIComponent(activeSpecies);
 
         fetch(url)
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
