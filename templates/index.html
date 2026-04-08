@@ -627,21 +627,6 @@
             <span id="fmap-ai-bar-text"></span>
         </div>
 
-        <!-- ── Trending Now strip ── -->
-        <div class="fmap-trending" id="fmap-trending" hidden aria-label="Trending species this month">
-            <span class="fmap-trending-label">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                Trending:
-            </span>
-            <div class="fmap-chips fmap-trending-chips" id="fmap-trending-chips" role="group" aria-label="Trending species"></div>
-        </div>
-
-        <!-- ── Quick species chips ── -->
-        <div class="fmap-quick-species" id="fmap-quick-species" aria-label="Popular target species">
-            <span class="fmap-quick-label">Popular:</span>
-            <div class="fmap-chips" id="fmap-chips" role="group" aria-label="Quick species select"></div>
-        </div>
-
         <!-- ── Map + side panel layout ── -->
         <div class="fmap-body">
 
@@ -830,8 +815,9 @@
                         <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2"></textarea>
                     </div>
                     <div class="fmap-log-row">
-                        <label class="fmap-log-label" for="fmap-log-image-url">Photo URL <span class="fmap-log-hint">(https://)</span></label>
-                        <input type="url" id="fmap-log-image-url" class="fmap-log-input" placeholder="https://…" maxlength="500">
+                        <label class="fmap-log-label" for="fmap-log-photo">Photo</label>
+                        <input type="file" id="fmap-log-photo" class="fmap-log-input fmap-log-file-input" accept="image/jpeg,image/png,image/webp">
+                        <div id="fmap-log-photo-preview" class="fmap-log-photo-preview" hidden></div>
                     </div>
                     <div class="fmap-log-row fmap-log-row--check">
                         <label class="fmap-log-check-label">

@@ -15,28 +15,6 @@
         hawaii: [[18.5, -161.0], [22.5, -154.0]]
     };
 
-    // Quick-pick species chips per coast
-    var QUICK_SPECIES = {
-        all: [
-            'Striped bass', 'Red drum', 'Flounder', 'Bluefish',
-            'Pompano', 'Speckled trout', 'Snook', 'Tarpon',
-            'Pacific halibut', 'Rockfish'
-        ],
-        east: [
-            'Striped bass', 'Red drum', 'Flounder', 'Bluefish',
-            'Pompano', 'Speckled trout', 'Snook', 'Tarpon',
-            'Spanish mackerel', 'Black drum'
-        ],
-        west: [
-            'Pacific halibut', 'Lingcod', 'Rockfish', 'Surfperch',
-            'Yellowtail', 'White seabass', 'Salmon', 'Cabezon'
-        ],
-        hawaii: [
-            'Bonefish', 'Bluefin trevally', 'Papio (jack crevalle)',
-            'Mahi-mahi', 'Ahi (yellowfin tuna)', 'Wahoo'
-        ]
-    };
-
     var MONTH_NAMES = [
         '', 'January','February','March','April','May','June',
         'July','August','September','October','November','December'
@@ -905,7 +883,6 @@
                     activeSpecies = sp;
                     if (els.speciesInput) els.speciesInput.value = sp;
                     if (els.searchClear) els.searchClear.hidden = false;
-                    renderQuickChips();
                     scheduleFetch();
                 });
             });
@@ -928,6 +905,10 @@
                 ? '<span class="fmap-hotspot-community-badge" title="' + commCount + ' recent community catch' + (commCount !== 1 ? 'es' : '') + '">' +
                   '\uD83D\uDD25 ' + commCount + '</span>'
                 : '';
+            var aiPickBadge = loc.ai_pick_rank
+                ? '<span class="fmap-hotspot-ai-badge" title="AI pick #' + loc.ai_pick_rank + '">' +
+                  '\u2728 AI #' + loc.ai_pick_rank + '</span>'
+                : '';
             html +=
                 '<li class="fmap-hotspot-item' + (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
                 '" data-loc-id="' + esc(loc.id) + '">' +
@@ -937,6 +918,7 @@
                   '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
                   (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + '</span>' : '') +
                 '</span>' +
+                aiPickBadge +
                 commBadge +
                 distHtml +
                 '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + loc.activity + '">' + cfg.label + '</span>' +
@@ -990,75 +972,6 @@
         els.insight.hidden = false;
     }
 
-    // ─── Trending Now chips ───────────────────────────────────────────────────
-    function renderTrendingChips(names) {
-        var wrap  = document.getElementById('fmap-trending');
-        var chips = document.getElementById('fmap-trending-chips');
-        if (!wrap || !chips) return;
-
-        // Hide when user has already set a species filter (trending is irrelevant)
-        if (!names || !names.length || activeSpecies) {
-            wrap.hidden = true;
-            return;
-        }
-
-        var html = '';
-        names.forEach(function (sp) {
-            var active = activeSpecies && activeSpecies.toLowerCase() === sp.toLowerCase();
-            html += '<button type="button" class="fmap-chip fmap-chip--trending' +
-                    (active ? ' fmap-chip--active' : '') +
-                    '" data-sp="' + esc(sp) + '">' + esc(sp) + '</button>';
-        });
-        chips.innerHTML = html;
-        wrap.hidden = false;
-
-        chips.querySelectorAll('.fmap-chip').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var sp = btn.getAttribute('data-sp');
-                if (activeSpecies && activeSpecies.toLowerCase() === sp.toLowerCase()) {
-                    activeSpecies = '';
-                    if (els.speciesInput) els.speciesInput.value = '';
-                    if (els.searchClear) els.searchClear.hidden = true;
-                } else {
-                    activeSpecies = sp;
-                    if (els.speciesInput) els.speciesInput.value = sp;
-                    if (els.searchClear) els.searchClear.hidden = false;
-                }
-                renderQuickChips();
-                scheduleFetch();
-            });
-        });
-    }
-
-    // ─── Quick species chips ──────────────────────────────────────────────────
-    function renderQuickChips() {
-        if (!els.chips) return;
-        var list = QUICK_SPECIES[activeCoast] || QUICK_SPECIES.all;
-        var html = '';
-        list.forEach(function (sp) {
-            var active = activeSpecies && activeSpecies.toLowerCase() === sp.toLowerCase();
-            html += '<button type="button" class="fmap-chip' + (active ? ' fmap-chip--active' : '') +
-                    '" data-sp="' + esc(sp) + '">' + esc(sp) + '</button>';
-        });
-        els.chips.innerHTML = html;
-        els.chips.querySelectorAll('.fmap-chip').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var sp = btn.getAttribute('data-sp');
-                if (activeSpecies && activeSpecies.toLowerCase() === sp.toLowerCase()) {
-                    activeSpecies = '';
-                    if (els.speciesInput)  { els.speciesInput.value = ''; }
-                    if (els.searchClear) els.searchClear.hidden = true;
-                } else {
-                    activeSpecies = sp;
-                    if (els.speciesInput)  { els.speciesInput.value = sp; }
-                    if (els.searchClear) els.searchClear.hidden = false;
-                }
-                renderQuickChips();
-                scheduleFetch();
-            });
-        });
-    }
-
     // ─── Autocomplete ─────────────────────────────────────────────────────────
     function showSuggestions(q) {
         if (!els.suggestions || !q || q.length < 2) { hideSuggestions(); return; }
@@ -1086,7 +999,6 @@
                 activeSpecies = text;
                 if (els.speciesInput) els.speciesInput.value = text;
                 if (els.searchClear) els.searchClear.hidden = false;
-                renderQuickChips();
                 hideSuggestions();
                 scheduleFetch();
             });
@@ -1228,7 +1140,6 @@
                 scheduleFishingSpotQuery();
                 scheduleAIQuery();
                 renderMonthPlanner(monthlySummary, data.month);
-                renderTrendingChips(data.trending_species || []);
                 updateInsight(data);
 
                 if (aiMode) {
@@ -1263,12 +1174,10 @@
                 activeSpecies = els.speciesInput.value.trim();
                 if (els.searchClear) els.searchClear.hidden = !activeSpecies;
                 showSuggestions(activeSpecies);
-                renderQuickChips();
                 scheduleFetch();
             });
             els.speciesInput.addEventListener('change', function () {
                 activeSpecies = els.speciesInput.value.trim();
-                renderQuickChips();
                 scheduleFetch();
             });
             els.speciesInput.addEventListener('keydown', function (e) {
@@ -1285,7 +1194,6 @@
                 activeSpecies = '';
                 if (els.speciesInput) els.speciesInput.value = '';
                 els.searchClear.hidden = true;
-                renderQuickChips();
                 scheduleFetch();
             });
         }
@@ -1638,7 +1546,6 @@
                 var v = b.getAttribute('data-coast') || 'all';
                 activeCoast = v;
                 setPillActive('.fmap-pill--coast', 'data-coast', v);
-                renderQuickChips();
                 scheduleFetch();
             });
         });
@@ -2087,6 +1994,7 @@
             els.logCoords.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
         }
         if (els.logForm) els.logForm.reset();
+        if (els.logPhotoPreview) { els.logPhotoPreview.innerHTML = ''; els.logPhotoPreview.hidden = true; }
         if (els.logPublic) els.logPublic.checked = true;
         // Pre-fill caught_at with current local datetime
         if (els.logCaughtAt) {
@@ -2139,6 +2047,25 @@
             });
         }
 
+        // Photo file preview
+        if (els.logPhotoInput) {
+            els.logPhotoInput.addEventListener('change', function () {
+                var file = els.logPhotoInput.files && els.logPhotoInput.files[0];
+                if (file && els.logPhotoPreview) {
+                    var reader = new FileReader();
+                    reader.onload = function (ev) {
+                        els.logPhotoPreview.innerHTML =
+                            '<img src="' + ev.target.result + '" alt="Preview" style="max-width:100%;border-radius:6px;margin-top:6px">';
+                        els.logPhotoPreview.hidden = false;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (els.logPhotoPreview) {
+                    els.logPhotoPreview.innerHTML = '';
+                    els.logPhotoPreview.hidden = true;
+                }
+            });
+        }
+
         // Form submit
         if (els.logForm) {
             els.logForm.addEventListener('submit', function (e) {
@@ -2151,41 +2078,56 @@
                     return;
                 }
 
-                var payload = {
-                    lat:       pendingCatchLatLng.lat,
-                    lng:       pendingCatchLatLng.lng,
-                    species:   species,
-                    title:     els.logTitle    ? els.logTitle.value.trim()    : '',
-                    bait:      els.logBait     ? els.logBait.value.trim()     : '',
-                    notes:     els.logNotes    ? els.logNotes.value.trim()    : '',
-                    image_url: els.logImageUrl ? els.logImageUrl.value.trim() : '',
-                    is_public: els.logPublic   ? els.logPublic.checked        : true
-                };
-                if (els.logWeight && els.logWeight.value) payload.weight_lb = parseFloat(els.logWeight.value);
-                if (els.logLength && els.logLength.value) payload.length_in = parseFloat(els.logLength.value);
-                // caught_at: convert datetime-local value ("YYYY-MM-DDTHH:MM") to ISO string
-                if (els.logCaughtAt && els.logCaughtAt.value) {
-                    payload.caught_at = els.logCaughtAt.value + ':00';
-                }
-
                 if (els.logSubmit) els.logSubmit.disabled = true;
 
-                fetch('/api/map/catches', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.error) {
-                        if (els.logError) { els.logError.textContent = data.error; els.logError.hidden = false; }
-                        if (els.logSubmit) els.logSubmit.disabled = false;
-                        return;
+                var photoFile = els.logPhotoInput && els.logPhotoInput.files && els.logPhotoInput.files[0];
+
+                // If a photo was chosen, upload it first then submit the catch.
+                // Otherwise submit directly.
+                var photoUploadPromise = photoFile
+                    ? (function () {
+                        var fd = new FormData();
+                        fd.append('photo', photoFile);
+                        return fetch('/api/map/catch-photo', { method: 'POST', body: fd })
+                            .then(function (r) { return r.json(); })
+                            .then(function (d) { return d.url || ''; });
+                    })()
+                    : Promise.resolve('');
+
+                photoUploadPromise.then(function (imageUrl) {
+                    var payload = {
+                        lat:       pendingCatchLatLng.lat,
+                        lng:       pendingCatchLatLng.lng,
+                        species:   species,
+                        title:     els.logTitle  ? els.logTitle.value.trim()  : '',
+                        bait:      els.logBait   ? els.logBait.value.trim()   : '',
+                        notes:     els.logNotes  ? els.logNotes.value.trim()  : '',
+                        image_url: imageUrl,
+                        is_public: els.logPublic ? els.logPublic.checked      : true
+                    };
+                    if (els.logWeight && els.logWeight.value) payload.weight_lb = parseFloat(els.logWeight.value);
+                    if (els.logLength && els.logLength.value) payload.length_in = parseFloat(els.logLength.value);
+                    if (els.logCaughtAt && els.logCaughtAt.value) {
+                        payload.caught_at = els.logCaughtAt.value + ':00';
                     }
-                    showToast('Catch logged! \uD83C\uDFAF');
-                    closeLogModal();
-                    if (communityLayerOn) loadCommunityPins();
-                    if (activeTab === 'community') loadCommunityFeed();
+
+                    return fetch('/api/map/catches', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.error) {
+                            if (els.logError) { els.logError.textContent = data.error; els.logError.hidden = false; }
+                            if (els.logSubmit) els.logSubmit.disabled = false;
+                            return;
+                        }
+                        showToast('Catch logged! \uD83C\uDFAF');
+                        closeLogModal();
+                        if (communityLayerOn) loadCommunityPins();
+                        if (activeTab === 'community') loadCommunityFeed();
+                    });
                 })
                 .catch(function () {
                     if (els.logError) { els.logError.textContent = 'Could not save catch. Please try again.'; els.logError.hidden = false; }
@@ -2203,7 +2145,6 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                renderQuickChips();
                 wireFilters();
                 wireMapControls();
                 wireAdvancedFilters();
@@ -2423,7 +2364,6 @@
         els.detailActions = document.getElementById('fmap-detail-actions');
         els.hotspotsList   = document.getElementById('fmap-hotspots-list');
         els.hotspotCount   = document.getElementById('fmap-hotspot-count');
-        els.chips          = document.getElementById('fmap-chips');
         els.speciesInput   = document.getElementById('fmap-species-input');
         els.searchClear    = document.getElementById('fmap-search-clear');
         els.suggestions    = document.getElementById('fmap-suggestions');
@@ -2447,7 +2387,8 @@
         els.logNotes       = document.getElementById('fmap-log-notes');
         els.logTitle       = document.getElementById('fmap-log-title');
         els.logCaughtAt    = document.getElementById('fmap-log-caught-at');
-        els.logImageUrl    = document.getElementById('fmap-log-image-url');
+        els.logPhotoInput  = document.getElementById('fmap-log-photo');
+        els.logPhotoPreview = document.getElementById('fmap-log-photo-preview');
         els.logPublic      = document.getElementById('fmap-log-public');
         els.logError       = document.getElementById('fmap-log-error');
         els.logSubmit      = document.getElementById('fmap-log-submit');

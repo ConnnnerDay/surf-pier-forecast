@@ -724,3 +724,33 @@ def serve_upload(user_id: int, filename: str) -> Any:
     upload_root = current_app.config["UPLOAD_FOLDER"]
     user_dir = os.path.join(upload_root, str(user_id))
     return send_from_directory(user_dir, filename)
+
+
+@bp.route("/catch-photo/<path:rel_path>")
+def serve_catch_photo(rel_path: str) -> Any:
+    """Serve a community map-catch photo without ownership check.
+
+    ``rel_path`` is ``uploads/<user_id>/<filename>`` as returned by
+    ``/api/map/catch-photo``.  Community catch photos are intentionally
+    public (they appear in the shared map feed for all visitors).
+
+    Path-traversal is prevented by resolving rel_path against the upload
+    root and verifying it stays within that directory.
+    """
+    upload_root = current_app.config["UPLOAD_FOLDER"]
+    upload_root_real = os.path.realpath(upload_root)
+
+    # rel_path starts with "uploads/<user_id>/"; strip the "uploads/" prefix
+    if rel_path.startswith("uploads/"):
+        sub = rel_path[len("uploads/"):]
+    else:
+        abort(404)
+
+    # Resolve symlinks to block path traversal
+    abs_path = os.path.realpath(os.path.join(upload_root, sub))
+    if not abs_path.startswith(upload_root_real + os.sep):
+        abort(404)
+
+    user_dir = os.path.dirname(abs_path)
+    filename  = os.path.basename(abs_path)
+    return send_from_directory(user_dir, filename)

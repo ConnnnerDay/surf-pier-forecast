@@ -5569,6 +5569,19 @@ h2::before {
 .fmap-community-weight { color: #6dd8f0; }
 .fmap-community-time  { color: rgba(255,255,255,0.4); margin-left: auto; }
 
+/* ── AI pick badge on hotspot items ── */
+.fmap-hotspot-ai-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #a78bfa;
+  background: rgba(167,139,250,0.15);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* ── Community fire badge on hotspot items ── */
 .fmap-hotspot-community-badge {
   font-size: 0.62rem;
@@ -5655,6 +5668,22 @@ h2::before {
 }
 .fmap-log-input:focus { border-color: #1fa8c9; background: rgba(14,95,120,0.12); }
 .fmap-log-textarea { resize: vertical; min-height: 56px; }
+.fmap-log-file-input {
+  padding: 6px 10px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.7);
+}
+.fmap-log-file-input::file-selector-button {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 5px;
+  color: rgba(255,255,255,0.8);
+  padding: 3px 10px;
+  margin-right: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+.fmap-log-photo-preview img { max-height: 160px; width: 100%; object-fit: cover; border-radius: 6px; margin-top: 6px; }
 .fmap-log-check-label {
   display: flex;
   align-items: center;

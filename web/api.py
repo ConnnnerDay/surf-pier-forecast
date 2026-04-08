@@ -1173,8 +1173,8 @@ def fishing_map_data() -> Any:
                        if _species_present_at(s, loc)]
 
         def _activity_label(sc: int) -> str:
-            if sc >= 100: return "peak"
-            if sc >= 65:  return "good"
+            if sc >= 85: return "peak"
+            if sc >= 55:  return "good"
             if sc >= 30:  return "fair"
             return "slow"
 
@@ -1185,8 +1185,12 @@ def fishing_map_data() -> Any:
         else:
             scored = sorted(loc_species,
                             key=lambda s: -_month_score(s, month))
-            best_score = _month_score(scored[0], month)
-            score = best_score
+            # Weighted average of top 3 species so a single peak-season fish
+            # doesn't make every location appear "on fire".
+            top3 = scored[:3]
+            weights = [3, 2, 1][: len(top3)]
+            top3_scores = [_month_score(s, month) for s in top3]
+            score = sum(s * w for s, w in zip(top3_scores, weights)) // sum(weights)
             activity = _activity_label(score)
 
             # Build rich species objects for the detail drawer.
@@ -1423,6 +1427,39 @@ def structure_spots() -> Any:
 
 
 # ── Community map catch endpoints ─────────────────────────────────────────────
+
+@bp.route("/api/map/catch-photo", methods=["POST"])
+def map_catch_photo_upload() -> Any:
+    """Upload a photo for a map catch.
+
+    Accepts ``multipart/form-data`` with a single ``photo`` field.
+    Returns ``{"ok": true, "url": "<public-url>"}`` on success.
+    The returned URL can be passed as ``image_url`` when creating a catch.
+    """
+    if g.user is None:
+        return jsonify(error_envelope("unauthorized", "Not logged in")), 401
+
+    if _upload_is_rate_limited():
+        logger.warning(
+            "security.upload_rate_limit user_id=%s ip=%s", g.user["id"], _client_ip()
+        )
+        return _json_error(ApiError("rate_limited", "Too many uploads. Please slow down.", status=429))
+    _upload_record_attempt()
+
+    photo_file = request.files.get("photo")
+    if not photo_file or not photo_file.filename:
+        return _json_error(ApiError("missing_param", "photo file is required", status=400))
+
+    try:
+        rel_path, _ = _save_upload(photo_file, g.user["id"])
+    except ApiError as exc:
+        return _json_error(exc)
+
+    # rel_path = "uploads/<user_id>/<filename>"
+    # Serve via the public catch-photo route (no ownership check needed for community photos)
+    url = url_for("views.serve_catch_photo", rel_path=rel_path, _external=False)
+    return jsonify({"ok": True, "url": url}), 200
+
 
 @bp.route("/api/map/catches", methods=["GET"])
 def map_catches_list() -> Any:
