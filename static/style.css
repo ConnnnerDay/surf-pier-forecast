@@ -5542,6 +5542,14 @@ h2::before {
 .fmap-community-pin--mine   { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.6); }
 
 /* ── Community list ── */
+.fmap-side-panel-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #b0c4ce);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex: 1;
+}
 .fmap-community-toolbar {
   display: flex;
   align-items: center;

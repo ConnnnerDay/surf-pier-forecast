@@ -213,12 +213,19 @@
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
     function wireMapControls() {
-        // Near Me — fly to user location, select nearest active forecast loc
+        // Near Me — snap to saved forecast location; GPS as fallback
         var nearMeBtn = document.getElementById('fmap-near-me');
         if (nearMeBtn) {
             nearMeBtn.addEventListener('click', function () {
+                if (!map) return;
+                // First choice: user's saved location from the current forecast
+                if (savedLocationLatLng) {
+                    map.flyTo([savedLocationLatLng.lat, savedLocationLatLng.lng], 12, { duration: 0.9 });
+                    return;
+                }
+                // Fallback: device GPS
                 if (!navigator.geolocation) {
-                    showToast('Geolocation not supported by your browser.');
+                    showToast('No saved location — set one via the location bar.');
                     return;
                 }
                 nearMeBtn.classList.add('fmap-ctrl-btn--loading');
@@ -227,7 +234,7 @@
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');
                         if (!map) return;
                         userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                        map.flyTo([userCoords.lat, userCoords.lng], 12, { duration: 1 });
+                        map.flyTo([userCoords.lat, userCoords.lng], 12, { duration: 0.9 });
                     },
                     function () {
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');
@@ -238,39 +245,13 @@
             });
         }
 
-        // Reset view
+        // Reset view — return to full US overview
         var resetBtn = document.getElementById('fmap-reset-view');
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
                 if (!map) return;
-                hasAutoZoomed = false; // allow re-centering on saved location
                 map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
-                autoZoomToSavedLocation(currentData);
             });
-        }
-
-        // Satellite / street tile toggle
-        var tileBtn = document.getElementById('fmap-tile-toggle');
-        if (tileBtn) {
-            tileBtn.addEventListener('click', function () {
-                if (!map) return;
-                isSatellite = !isSatellite;
-                map.removeLayer(activeTileLayer);
-                var t = isSatellite ? TILE_SATELLITE : TILE_STREET;
-                activeTileLayer = L.tileLayer(t.url, t.opts).addTo(map);
-                tileBtn.classList.toggle('fmap-ctrl-btn--active', isSatellite);
-                tileBtn.title = isSatellite ? 'Switch to street view' : 'Switch to satellite view';
-            });
-        }
-
-        var structureBtn = document.getElementById('fmap-structure-btn');
-        if (structureBtn) {
-            structureBtn.addEventListener('click', toggleStructureMode);
-        }
-
-        var aiBtn = document.getElementById('fmap-ai-btn');
-        if (aiBtn) {
-            aiBtn.addEventListener('click', toggleAiMode);
         }
     }
 
@@ -293,7 +274,7 @@
     function updateZoomHint() {
         var hint = document.getElementById('fmap-zoom-hint');
         if (!hint || !map) return;
-        hint.classList.toggle('fmap-zoom-hint--hidden', map.getZoom() >= 11);
+        hint.classList.toggle('fmap-zoom-hint--hidden', map.getZoom() >= 9);
     }
 
 
@@ -550,6 +531,7 @@
         tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
         mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true  },
+        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
     };
@@ -568,6 +550,7 @@
         tidal_flat:   'Fish move onto tidal flats as the tide floods, chasing crabs and shrimp into the shallows. Work the edges as the water begins falling.',
         saltmarsh:    'Marsh creek mouths and grass edges are ambush points — redfish and snook use incoming current to pick off bait washing out of the marsh.',
         mangrove:     'Work the mangrove root edges on rising tides; snook, redfish, and tarpon ambush prey along the shadow line.',
+        buoy:         'Channel markers and buoys identify edges where deep water meets shallow structure — fish the up-current side.',
         fishing:      'Local fishing access point.',
         fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.'
     };
@@ -673,6 +656,11 @@
             'way["man_made"="jetty"](' + bbox + ');' +
             // Bridges over water
             'way["man_made"="bridge"](' + bbox + ');' +
+            // Navigation buoys — mark channels, shoals, and inlet edges
+            'node["seamark:type"="buoy_lateral"](' + bbox + ');' +
+            'node["seamark:type"="buoy_cardinal"](' + bbox + ');' +
+            'node["seamark:type"="buoy_safe_water"](' + bbox + ');' +
+            'node["man_made"="buoy"](' + bbox + ');' +
             // Bait shops
             'node["shop"="fishing"](' + bbox + ');' +
             ');out center;';
@@ -719,12 +707,16 @@
                     type = 'jetty';
                 } else if (tags.man_made === 'bridge') {
                     type = 'bridge';
+                } else if (tags['seamark:type'] && tags['seamark:type'].indexOf('buoy') === 0) {
+                    type = 'buoy';
+                } else if (tags.man_made === 'buoy') {
+                    type = 'buoy';
                 } else if (tags.shop === 'fishing') {
                     type = 'fishing_shop';
                 } else {
                     type = 'fishing';
                 }
-                return { lat: lat, lng: lng, name: tags.name || tags['seamark:name'] || '', type: type };
+                return { lat: lat, lng: lng, name: tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] || '', type: type };
             }).filter(function (f) { return f.lat && f.lng; });
             spotCache[key] = spots;
             renderFishingSpots(spots);
@@ -1279,6 +1271,8 @@
 
     // ─── Auto-center on saved location ───────────────────────────────────────
     var hasAutoZoomed = false;
+    var savedLocationLatLng = null; // lat/lng of user's saved forecast location
+
     function autoZoomToSavedLocation(locations) {
         if (hasAutoZoomed) return;
         var locId = (typeof CURRENT_LOC_ID !== 'undefined') ? CURRENT_LOC_ID : '';
@@ -1286,7 +1280,9 @@
         var match = locations.find(function (l) { return l.id === locId; });
         if (match) {
             hasAutoZoomed = true;
-            map.setView([match.lat, match.lng], 9, { animate: false });
+            savedLocationLatLng = { lat: match.lat, lng: match.lng };
+            // Zoom to 12 so habitat/structure overlays are visible immediately
+            map.setView([match.lat, match.lng], 12, { animate: false });
         }
     }
 
@@ -1329,26 +1325,12 @@
                 currentSpeciesMeta = (data.species_meta && data.species_meta.name)
                     ? data.species_meta : null;
 
-                monthlySummary = data.monthly_summary || [];
-                // Populate the sidebar spots list — no colored dots on the map canvas
-                renderHotspots(currentData);
+                // Zoom to saved location then load structure overlays and community feed
                 autoZoomToSavedLocation(currentData);
                 updateZoomHint();
                 scheduleFishingSpotQuery();
-                scheduleAIQuery();
-                renderMonthPlanner(monthlySummary, data.month);
-                renderTrendingChips(data.trending_species || []);
-
-                if (aiMode) {
-                    markers.forEach(function (m) { m.leaflet.setOpacity(0); });
-                    if (window.L && window.L.heatLayer) {
-                        renderAiOverlay(currentData);
-                    } else {
-                        ensureLeafletHeat().then(function () {
-                            if (aiMode) renderAiOverlay(currentData);
-                        }).catch(function () {});
-                    }
-                }
+                // Load community catches once map is centred on saved location
+                setTimeout(function () { loadCommunityFeed(); }, 900);
             })
             .catch(function (err) {
                 if (els.loading) {
