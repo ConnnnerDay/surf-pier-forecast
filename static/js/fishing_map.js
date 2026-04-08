@@ -538,10 +538,28 @@
     var OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
     var SPOT_TYPES = {
-        pier:    { label: 'Fishing Pier',    color: '#a78bfa' },
-        jetty:   { label: 'Jetty',           color: '#818cf8' },
-        fishing: { label: 'Fishing Spot',    color: '#2dd4bf' },
-        'fishing_shop': { label: 'Bait & Tackle', color: '#fb923c' }
+        pier:          { label: 'Fishing Pier',       color: '#a78bfa' },
+        jetty:         { label: 'Jetty',               color: '#818cf8' },
+        fishing:       { label: 'Fishing Spot',        color: '#2dd4bf' },
+        'fishing_shop': { label: 'Bait & Tackle',     color: '#fb923c' },
+        bridge:        { label: 'Bridge',              color: '#f97316' },
+        reef:          { label: 'Reef',                color: '#f59e0b' },
+        wreck:         { label: 'Wreck',               color: '#d97706' },
+        inlet:         { label: 'Inlet / Harbor',      color: '#38bdf8' },
+        shoal:         { label: 'Shoal / Rock',        color: '#94a3b8' }
+    };
+
+    // Brief AI fishing tips per structure type shown in map tooltips
+    var STRUCTURE_TIPS = {
+        pier:          'Work the pilings and shadow lines — baitfish stack in current breaks.',
+        jetty:         'Fish the tip on outgoing tides; predators ambush bait funneled through the gap.',
+        bridge:        'Bridge pilings create eddies and current seams — prime ambush structure.',
+        reef:          'Reef edges concentrate baitfish; work the upcurrent face.',
+        wreck:         'Artificial reef — game fish shelter wrecks. Drop vertically on the structure.',
+        inlet:         'Inlet mouths funnel bait on every tide change — a year-round feeding choke point.',
+        shoal:         'Shallow structure edges hold fish; work the transition into deeper water.',
+        fishing:       'Local fishing access point.',
+        'fishing_shop': 'Bait & tackle — ask for recent local bite reports.'
     };
 
     function spotTypeLabel(type) {
@@ -553,9 +571,11 @@
 
     function makeFishingSpotIcon(type) {
         var color = spotTypeColor(type);
+        // Significant structures get a larger marker; common spots stay small
+        var sz = (type === 'wreck' || type === 'reef' || type === 'inlet') ? 13 : 10;
         var html = '<span class="fmap-spot-dot" style="background:' + color +
-                   ';box-shadow:0 0 6px ' + color + '55"></span>';
-        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [10, 10], iconAnchor: [5, 5] });
+                   ';box-shadow:0 0 7px ' + color + '66;width:' + sz + 'px;height:' + sz + 'px"></span>';
+        return L.divIcon({ className: 'fmap-spot-wrap', html: html, iconSize: [sz, sz], iconAnchor: [Math.ceil(sz / 2), Math.ceil(sz / 2)] });
     }
 
     function renderFishingSpots(spots) {
@@ -565,10 +585,12 @@
             if (!f.lat || !f.lng) return;
             var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
             var name = f.name || spotTypeLabel(f.type);
+            var tip  = STRUCTURE_TIPS[f.type] || '';
             m.bindTooltip(
                 '<strong>' + esc(name) + '</strong>' +
-                '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>',
-                { className: 'fmap-tooltip', direction: 'top', offset: [0, -5] }
+                '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
+                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : ''),
+                { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
             fishingSpotLayer.addLayer(m);
         });
@@ -577,7 +599,7 @@
     function queryFishingSpots() {
         if (!map || !fishingSpotLayer) return;
         var zoom = map.getZoom();
-        if (zoom < 11) {
+        if (zoom < 9) {
             fishingSpotLayer.clearLayers();
             return;
         }
@@ -595,12 +617,30 @@
         }
 
         var bbox = s + ',' + w + ',' + n + ',' + e;
-        var q = '[out:json][timeout:20];(' +
-            'node["leisure"="fishing"](' + bbox + ');' +
+        var q = '[out:json][timeout:25];(' +
+            // Piers and jetties
             'node["man_made"="pier"](' + bbox + ');' +
-            'node["man_made"="jetty"](' + bbox + ');' +
             'way["man_made"="pier"](' + bbox + ');' +
+            'node["man_made"="jetty"](' + bbox + ');' +
             'way["man_made"="jetty"](' + bbox + ');' +
+            // Bridges over water (standalone bridge structures)
+            'way["man_made"="bridge"](' + bbox + ');' +
+            // Reefs
+            'node["natural"="reef"](' + bbox + ');' +
+            'way["natural"="reef"](' + bbox + ');' +
+            // Wrecks / sunken ships
+            'node["historic"="wreck"](' + bbox + ');' +
+            'way["historic"="wreck"](' + bbox + ');' +
+            'node["seamark:type"="wreck"](' + bbox + ');' +
+            // Inlets, harbors, and bays
+            'node["harbour"="yes"](' + bbox + ');' +
+            'node["natural"="bay"](' + bbox + ');' +
+            'way["natural"="bay"](' + bbox + ');' +
+            // Shoals and rocks
+            'node["natural"="shoal"](' + bbox + ');' +
+            'node["natural"="rock"](' + bbox + ');' +
+            // Fishing access points and bait shops
+            'node["leisure"="fishing"](' + bbox + ');' +
             'node["shop"="fishing"](' + bbox + ');' +
             ');out center;';
 
@@ -612,11 +652,30 @@
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (data) {
             var spots = (data.elements || []).map(function (el) {
-                var lat = el.lat || (el.center && el.center.lat);
-                var lng = el.lon || (el.center && el.center.lon);
+                var lat  = el.lat  || (el.center && el.center.lat);
+                var lng  = el.lon  || (el.center && el.center.lon);
                 var tags = el.tags || {};
-                var type = tags.man_made || tags.leisure || tags.shop || tags.amenity || 'fishing';
-                return { lat: lat, lng: lng, name: tags.name || '', type: type };
+                var type;
+                if (tags.historic === 'wreck' || tags['seamark:type'] === 'wreck') {
+                    type = 'wreck';
+                } else if (tags.natural === 'reef') {
+                    type = 'reef';
+                } else if (tags.natural === 'shoal' || tags.natural === 'rock') {
+                    type = 'shoal';
+                } else if (tags.natural === 'bay' || tags.harbour) {
+                    type = 'inlet';
+                } else if (tags.man_made === 'bridge') {
+                    type = 'bridge';
+                } else if (tags.man_made === 'pier') {
+                    type = 'pier';
+                } else if (tags.man_made === 'jetty') {
+                    type = 'jetty';
+                } else if (tags.shop === 'fishing') {
+                    type = 'fishing_shop';
+                } else {
+                    type = 'fishing';
+                }
+                return { lat: lat, lng: lng, name: tags.name || tags['seamark:name'] || '', type: type };
             }).filter(function (f) { return f.lat && f.lng; });
             spotCache[key] = spots;
             renderFishingSpots(spots);
@@ -1222,14 +1281,14 @@
                     ? data.species_meta : null;
 
                 monthlySummary = data.monthly_summary || [];
-                drawMarkers(currentData);
+                // Populate the sidebar spots list — no colored dots on the map canvas
+                renderHotspots(currentData);
                 autoZoomToSavedLocation(currentData);
                 updateZoomHint();
                 scheduleFishingSpotQuery();
                 scheduleAIQuery();
                 renderMonthPlanner(monthlySummary, data.month);
                 renderTrendingChips(data.trending_species || []);
-                updateInsight(data);
 
                 if (aiMode) {
                     markers.forEach(function (m) { m.leaflet.setOpacity(0); });
