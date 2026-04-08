@@ -49,13 +49,20 @@ def _cache_key(
 
 
 def _cache_evict() -> None:
-    """Purge entries older than TTL; if still over cap, drop oldest by insertion."""
+    """Purge entries older than TTL; if still over cap, drop oldest by insertion.
+
+    Uses .pop() and try/except to handle concurrent deletes from multiple
+    Flask worker threads without raising KeyError.
+    """
     now = _time.time()
-    stale = [k for k, v in _CACHE.items() if now - v["ts"] >= _CACHE_TTL]
+    stale = [k for k, v in list(_CACHE.items()) if now - v["ts"] >= _CACHE_TTL]
     for k in stale:
-        del _CACHE[k]
+        _CACHE.pop(k, None)          # safe if another thread already removed it
     while len(_CACHE) >= _CACHE_MAX:
-        del _CACHE[next(iter(_CACHE))]
+        try:
+            del _CACHE[next(iter(_CACHE))]
+        except (KeyError, StopIteration):
+            break                    # another thread cleared it first
 
 
 def cache_clear() -> None:
