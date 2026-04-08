@@ -849,7 +849,6 @@
         var aiList = document.getElementById('fmap-ai-picks-list');
         if (aiList) renderAiPicksList(locations, aiList);
 
-        if (activeTab === 'ai') { return; }
         if (!els.hotspotsList) return;
 
         var active = locations.filter(function (l) { return l.activity !== 'none'; });
@@ -1583,9 +1582,6 @@
             badge.textContent = n;
             badge.hidden = n === 0;
         }
-        if (toggle) {
-            toggle.setAttribute('aria-expanded', toggle.getAttribute('aria-expanded'));
-        }
     }
 
     function setPillActive(selector, attrName, value) {
@@ -1704,6 +1700,8 @@
         });
         if (tab === 'community') {
             loadCommunityFeed();
+        } else if (tab === 'spots' && currentData.length) {
+            renderHotspots(currentData);
         }
     }
 
@@ -2287,9 +2285,11 @@
             if (activeCoast && activeCoast !== 'all') hashParts.push('coast=' + activeCoast);
             if (activeCat)    hashParts.push('cat=' + activeCat);
             if (activeMonth)  hashParts.push('month=' + activeMonth);
-            if (activeSeason) hashParts.push('season=' + activeSeason);
-            if (activeTime)   hashParts.push('time=' + activeTime);
-            if (activeTide)   hashParts.push('tide=' + activeTide);
+            if (activeSeason)   hashParts.push('season=' + activeSeason);
+            if (activeTime)     hashParts.push('time=' + activeTime);
+            if (activeTide)     hashParts.push('tide=' + activeTide);
+            if (activeMinTemp)  hashParts.push('min_temp=' + activeMinTemp);
+            if (activeMaxTemp)  hashParts.push('max_temp=' + activeMaxTemp);
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2350,7 +2350,18 @@
                     b.classList.toggle('fmap-pill--active', b.getAttribute('data-tide') === v);
                 });
             }
+            if (k === 'min_temp' && v) {
+                activeMinTemp = v;
+                var minEl = document.getElementById('fmap-min-temp');
+                if (minEl) minEl.value = v;
+            }
+            if (k === 'max_temp' && v) {
+                activeMaxTemp = v;
+                var maxEl = document.getElementById('fmap-max-temp');
+                if (maxEl) maxEl.value = v;
+            }
         });
+        updateAdvBadge();
     }
 
     // ─── Init ─────────────────────────────────────────────────────────────────

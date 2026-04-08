@@ -733,7 +733,7 @@
                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                             Refresh
                         </button>
-                        {% if current_user is defined and current_user %}
+                        {% if g.user %}
                         <span class="fmap-community-hint">Tap the map to log a catch</span>
                         {% else %}
                         <a href="/login" class="fmap-community-login-hint">Sign in to log catches</a>
@@ -1660,6 +1660,7 @@ if ('serviceWorker' in navigator) {
 </script>
 <script src="{{ url_for('static', filename='js/collapsibles.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
+<script>window.IS_LOGGED_IN = {{ 'true' if g.user else 'false' }};</script>
 <script src="{{ url_for('static', filename='js/fishing_map.js') }}" defer></script>
 
 <script>
