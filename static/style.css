@@ -3810,12 +3810,14 @@ h2::before {
 .fmap-legend-dot--good  { background: #3b82f6; box-shadow: 0 0 5px rgba(59,130,246,0.5); }
 .fmap-legend-dot--fair  { background: #f59e0b; }
 .fmap-legend-dot--slow  { background: #ef4444; }
-/* Structure overlay legend dots */
-.fmap-legend-dot--pier   { background: #a78bfa; box-shadow: 0 0 5px rgba(167,139,250,0.5); }
-.fmap-legend-dot--bridge { background: #f97316; box-shadow: 0 0 5px rgba(249,115,22,0.5); }
-.fmap-legend-dot--reef   { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.4); }
-.fmap-legend-dot--wreck  { background: #d97706; box-shadow: 0 0 5px rgba(217,119,6,0.4); }
-.fmap-legend-dot--inlet  { background: #38bdf8; box-shadow: 0 0 5px rgba(56,189,248,0.5); }
+/* Fishing structure / habitat legend dots */
+.fmap-legend-dot--pier       { background: #a78bfa; box-shadow: 0 0 5px rgba(167,139,250,0.5); border-radius: 50%; }
+.fmap-legend-dot--bridge     { background: #f97316; box-shadow: 0 0 5px rgba(249,115,22,0.5);  border-radius: 50%; }
+.fmap-legend-dot--reef       { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.4);  border-radius: 50%; }
+.fmap-legend-dot--wreck      { background: #d97706; box-shadow: 0 0 5px rgba(217,119,6,0.4);   border-radius: 50%; }
+.fmap-legend-dot--inlet      { background: #38bdf8; box-shadow: 0 0 5px rgba(56,189,248,0.5);  border-radius: 3px; transform: rotate(45deg); }
+.fmap-legend-dot--oyster     { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.5);  border-radius: 3px; transform: rotate(45deg); }
+.fmap-legend-dot--grass-flat { background: #22c55e; box-shadow: 0 0 5px rgba(34,197,94,0.5);   border-radius: 3px; transform: rotate(45deg); }
 
 .fmap-legend-text {
   font-size: 0.72rem;
