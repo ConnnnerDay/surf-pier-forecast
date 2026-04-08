@@ -799,6 +799,10 @@
                         <label class="fmap-log-label" for="fmap-log-species">Species <span class="fmap-req">*</span></label>
                         <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100">
                     </div>
+                    <div class="fmap-log-row">
+                        <label class="fmap-log-label" for="fmap-log-title">Title / headline</label>
+                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120">
+                    </div>
                     <div class="fmap-log-row fmap-log-row--2col">
                         <div>
                             <label class="fmap-log-label" for="fmap-log-weight">Weight (lb)</label>
@@ -810,12 +814,20 @@
                         </div>
                     </div>
                     <div class="fmap-log-row">
+                        <label class="fmap-log-label" for="fmap-log-caught-at">Date &amp; time caught</label>
+                        <input type="datetime-local" id="fmap-log-caught-at" class="fmap-log-input">
+                    </div>
+                    <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-bait">Bait / Lure</label>
                         <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-notes">Notes</label>
                         <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2"></textarea>
+                    </div>
+                    <div class="fmap-log-row">
+                        <label class="fmap-log-label" for="fmap-log-image-url">Photo URL <span class="fmap-log-hint">(https://)</span></label>
+                        <input type="url" id="fmap-log-image-url" class="fmap-log-input" placeholder="https://…" maxlength="500">
                     </div>
                     <div class="fmap-log-row fmap-log-row--check">
                         <label class="fmap-log-check-label">

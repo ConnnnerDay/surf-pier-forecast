@@ -1471,12 +1471,14 @@ def map_catches_create() -> Any:
     lat       : float   (required)
     lng       : float   (required)
     species   : str     (required)
-    bait      : str
+    title     : str     optional catch title / headline
+    bait      : str     bait or lure used
     weight_lb : float
     length_in : float
     notes     : str
+    image_url : str     public https:// URL of a catch photo
     is_public : bool    (default true)
-    caught_at : str     ISO datetime, defaults to now
+    caught_at : str     ISO-8601 datetime, defaults to server time
     """
     if not g.get("user"):
         return jsonify({"error": "Authentication required"}), 401
@@ -1496,10 +1498,15 @@ def map_catches_create() -> Any:
     if not species:
         return jsonify({"error": "species is required"}), 400
 
+    title     = str(data.get("title", "")).strip()[:120]
     bait      = str(data.get("bait", "")).strip()[:80]
     notes     = str(data.get("notes", "")).strip()[:500]
     is_public = bool(data.get("is_public", True))
     caught_at = str(data.get("caught_at", "")).strip()[:30] or None
+
+    # Only accept https:// image URLs to prevent mixed-content and SSRF vectors
+    raw_image_url = str(data.get("image_url", "")).strip()[:500]
+    image_url = raw_image_url if raw_image_url.startswith("https://") else ""
 
     weight_lb = data.get("weight_lb")
     length_in = data.get("length_in")
@@ -1511,8 +1518,9 @@ def map_catches_create() -> Any:
 
     catch_id = add_map_catch(
         g.user["id"], lat, lng, species,
-        bait=bait, weight_lb=weight_lb, length_in=length_in,
-        notes=notes, is_public=is_public, caught_at=caught_at,
+        title=title, bait=bait, weight_lb=weight_lb, length_in=length_in,
+        notes=notes, image_url=image_url, is_public=is_public,
+        caught_at=caught_at,
     )
     return jsonify({"id": catch_id}), 201
 

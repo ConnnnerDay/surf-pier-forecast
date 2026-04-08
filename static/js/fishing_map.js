@@ -1843,12 +1843,24 @@
     function openCatchDetail(c) {
         if (!els.catchDetail) return;
 
-        els.catchDetailTitle.textContent = c.species;
+        // Title: use explicit title if set, otherwise fall back to species name
+        els.catchDetailTitle.textContent = c.title ? c.title : c.species;
         var dateStr = c.caught_at ? new Date(c.caught_at.indexOf('Z') === -1
             ? c.caught_at + 'Z' : c.caught_at).toLocaleDateString() : '';
-        els.catchDetailMeta.textContent = esc(c.angler_name) + (dateStr ? ' \u2022 ' + dateStr : '');
+        // Show species below the title when a custom title is present
+        var speciesTag = (c.title && c.title !== c.species)
+            ? ' \u2022 ' + esc(c.species) : '';
+        els.catchDetailMeta.innerHTML = esc(c.angler_name) +
+            (dateStr ? ' \u2022 ' + dateStr : '') + speciesTag;
 
         var bodyHtml = '';
+        // Catch photo
+        if (c.image_url) {
+            bodyHtml += '<div class="fmap-catch-photo-wrap">' +
+                '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="Catch photo" ' +
+                'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+                '</div>';
+        }
         if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + c.weight_lb.toFixed(1) + ' lb</div>';
         if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + c.length_in + ' in</div>';
         if (c.bait)      bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Bait</span>' + esc(c.bait) + '</div>';
@@ -1974,12 +1986,23 @@
                 var html = '';
                 catches.forEach(function (c) {
                     var weightStr = c.weight_lb ? ' \u2022 ' + c.weight_lb.toFixed(1) + ' lb' : '';
-                    html += '<li class="fmap-community-item" data-lat="' + c.lat + '" data-lng="' + c.lng + '" data-id="' + c.id + '">' +
-                        '<span class="fmap-community-species">' + esc(c.species) + weightStr + '</span>' +
-                        '<div class="fmap-community-meta">' +
-                          '<span class="fmap-community-angler">' + esc(c.angler_name) + '</span>' +
-                          (c.bait ? '<span>' + esc(c.bait) + '</span>' : '') +
-                          '<span class="fmap-community-time">' + timeAgo(c.caught_at) + '</span>' +
+                    var headline  = c.title ? esc(c.title) : esc(c.species) + weightStr;
+                    var subline   = c.title ? '<span class="fmap-community-species">' + esc(c.species) + weightStr + '</span>' : '';
+                    var imgTag    = c.image_url
+                        ? '<img class="fmap-community-thumb" src="' + esc(c.image_url) +
+                          '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+                        : '';
+                    html += '<li class="fmap-community-item' + (c.image_url ? ' fmap-community-item--has-img' : '') +
+                        '" data-lat="' + c.lat + '" data-lng="' + c.lng + '" data-id="' + c.id + '">' +
+                        imgTag +
+                        '<div class="fmap-community-content">' +
+                          '<span class="fmap-community-headline">' + headline + '</span>' +
+                          subline +
+                          '<div class="fmap-community-meta">' +
+                            '<span class="fmap-community-angler">' + esc(c.angler_name) + '</span>' +
+                            (c.bait ? '<span>' + esc(c.bait) + '</span>' : '') +
+                            '<span class="fmap-community-time">' + timeAgo(c.caught_at) + '</span>' +
+                          '</div>' +
                         '</div>' +
                         '</li>';
                 });
@@ -2056,11 +2079,19 @@
         if (els.logCoords) {
             els.logCoords.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
         }
+        if (els.logForm) els.logForm.reset();
+        if (els.logPublic) els.logPublic.checked = true;
+        // Pre-fill caught_at with current local datetime
+        if (els.logCaughtAt) {
+            var now = new Date();
+            var pad = function (n) { return String(n).padStart(2, '0'); };
+            els.logCaughtAt.value =
+                now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+                'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+        }
         if (els.logModal) els.logModal.hidden = false;
         if (els.logSpecies) els.logSpecies.focus();
         if (els.logError) els.logError.hidden = true;
-        if (els.logForm) els.logForm.reset();
-        if (els.logPublic) els.logPublic.checked = true;
     }
 
     function closeLogModal() {
@@ -2117,12 +2148,18 @@
                     lat:       pendingCatchLatLng.lat,
                     lng:       pendingCatchLatLng.lng,
                     species:   species,
-                    bait:      els.logBait   ? els.logBait.value.trim()   : '',
-                    notes:     els.logNotes  ? els.logNotes.value.trim()  : '',
-                    is_public: els.logPublic ? els.logPublic.checked       : true
+                    title:     els.logTitle    ? els.logTitle.value.trim()    : '',
+                    bait:      els.logBait     ? els.logBait.value.trim()     : '',
+                    notes:     els.logNotes    ? els.logNotes.value.trim()    : '',
+                    image_url: els.logImageUrl ? els.logImageUrl.value.trim() : '',
+                    is_public: els.logPublic   ? els.logPublic.checked        : true
                 };
                 if (els.logWeight && els.logWeight.value) payload.weight_lb = parseFloat(els.logWeight.value);
                 if (els.logLength && els.logLength.value) payload.length_in = parseFloat(els.logLength.value);
+                // caught_at: convert datetime-local value ("YYYY-MM-DDTHH:MM") to ISO string
+                if (els.logCaughtAt && els.logCaughtAt.value) {
+                    payload.caught_at = els.logCaughtAt.value + ':00';
+                }
 
                 if (els.logSubmit) els.logSubmit.disabled = true;
 
@@ -2401,6 +2438,9 @@
         els.logLength      = document.getElementById('fmap-log-length');
         els.logBait        = document.getElementById('fmap-log-bait');
         els.logNotes       = document.getElementById('fmap-log-notes');
+        els.logTitle       = document.getElementById('fmap-log-title');
+        els.logCaughtAt    = document.getElementById('fmap-log-caught-at');
+        els.logImageUrl    = document.getElementById('fmap-log-image-url');
         els.logPublic      = document.getElementById('fmap-log-public');
         els.logError       = document.getElementById('fmap-log-error');
         els.logSubmit      = document.getElementById('fmap-log-submit');
