@@ -2642,7 +2642,7 @@ def generate_forecast(
     forecast["best_times"] = build_best_times(forecast)
 
     # 24-hour activity timeline
-    forecast["activity_timeline"] = build_activity_timeline(forecast)
+    forecast["activity_timeline"] = build_activity_timeline(forecast, now_hour=now.hour)
 
     # Add technique tips to each species
     t_state = forecast.get("tide_state", "")
@@ -3082,14 +3082,19 @@ def build_best_times(
     return selected
 
 
-def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
+def build_activity_timeline(
+    forecast: Dict[str, Any], now_hour: int = -1
+) -> List[Dict[str, Any]]:
     """Build a 24-hour fish activity timeline (one value per hour).
 
-    Each entry: {"hour": 0-23, "label": "12 AM", "level": 0-100, "tag": "low/med/high/prime"}
+    Each entry: {"hour": 0-23, "label": "12 AM", "level": 0-100,
+                  "tag": "low/med/high/prime", "is_now": bool,
+                  "peak": bool, "reason": str}
     Combines solunar periods, tide changes, and dawn/dusk to estimate activity.
+    Dampens bars when wind conditions are rough.
     """
-    # Start with a flat baseline
-    activity = [15.0] * 24  # baseline activity
+    activity = [15.0] * 24
+    reason_parts: List[List[str]] = [[] for _ in range(24)]
 
     # Dawn/dusk boost
     sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
@@ -3098,14 +3103,19 @@ def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
         sr_h = _parse_time_str(parts[0].strip())
         ss_h = _parse_time_str(parts[1].strip())
 
-        # Dawn: 1h before to 1.5h after sunrise
         for h in range(24):
             dist = abs(h - sr_h)
             if dist < 1.5:
-                activity[h] += 30 * max(0, 1 - dist / 1.5)
+                boost = 30 * max(0, 1 - dist / 1.5)
+                activity[h] += boost
+                if boost > 8:
+                    reason_parts[h].append("Dawn")
             dist = abs(h - ss_h)
             if dist < 1.5:
-                activity[h] += 30 * max(0, 1 - dist / 1.5)
+                boost = 30 * max(0, 1 - dist / 1.5)
+                activity[h] += boost
+                if boost > 8:
+                    reason_parts[h].append("Dusk")
 
     # Solunar periods
     solunar = forecast.get("solunar", {})
@@ -3115,6 +3125,7 @@ def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
         for h in range(24):
             if s_h <= h <= e_h:
                 activity[h] += 35
+                reason_parts[h].append("Major solunar")
             elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
                 activity[h] += 15
 
@@ -3124,6 +3135,7 @@ def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
         for h in range(24):
             if s_h <= h <= e_h:
                 activity[h] += 20
+                reason_parts[h].append("Minor solunar")
             elif abs(h - s_h) < 1 or abs(h - e_h) < 1:
                 activity[h] += 8
 
@@ -3131,48 +3143,55 @@ def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
     tides = forecast.get("tides", [])
     for t in tides:
         t_h = t.get("hour", _parse_time_str(t.get("time", "12:00 PM")))
+        t_type = t.get("type", "")
         for h in range(24):
             dist = abs(h - t_h)
             if dist < 2:
-                boost = 20 if t.get("type") == "High" else 12
+                boost = 20 if t_type == "High" else 12
                 activity[h] += boost * max(0, 1 - dist / 2)
+                if dist < 1:
+                    reason_parts[h].append(
+                        "High tide" if t_type == "High" else "Low tide"
+                    )
 
-    # Night penalty (subtle — fish are less active 11 PM to 4 AM)
+    # Night penalty (fish less active 11 PM – 4 AM)
     for h in [23, 0, 1, 2, 3, 4]:
         activity[h] *= 0.7
 
-    # Normalize to 0-100
+    # Normalize relative to today's peak
     max_val = max(activity) if max(activity) > 0 else 1
+    normalized = [min(100, int(activity[h] / max_val * 100)) for h in range(24)]
+
+    # Wind condition multiplier: rough conditions reduce the activity ceiling
+    wind_str = forecast.get("conditions", {}).get("wind", "")
+    wind_speed = 0
+    for tok in wind_str.split():
+        if tok and tok[0].isdigit():
+            try:
+                wind_speed = int(tok.split("-")[0])
+                break
+            except ValueError:
+                pass
+    if wind_speed >= 25:
+        condition_mult = 0.65
+    elif wind_speed >= 15:
+        condition_mult = 0.82
+    else:
+        condition_mult = 1.0
+
+    levels = [int(v * condition_mult) for v in normalized]
+    peak_level = max(levels) if levels else 0
+
     labels_12h = [
-        "12 AM",
-        "1 AM",
-        "2 AM",
-        "3 AM",
-        "4 AM",
-        "5 AM",
-        "6 AM",
-        "7 AM",
-        "8 AM",
-        "9 AM",
-        "10 AM",
-        "11 AM",
-        "12 PM",
-        "1 PM",
-        "2 PM",
-        "3 PM",
-        "4 PM",
-        "5 PM",
-        "6 PM",
-        "7 PM",
-        "8 PM",
-        "9 PM",
-        "10 PM",
-        "11 PM",
+        "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM",
+        "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
+        "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
+        "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
     ]
 
     timeline = []
     for h in range(24):
-        level = min(100, int(activity[h] / max_val * 100))
+        level = levels[h]
         if level >= 75:
             tag = "prime"
         elif level >= 50:
@@ -3181,12 +3200,24 @@ def build_activity_timeline(forecast: Dict[str, Any]) -> List[Dict[str, Any]]:
             tag = "med"
         else:
             tag = "low"
+
+        seen: set = set()
+        deduped = []
+        for p in reason_parts[h]:
+            if p not in seen:
+                seen.add(p)
+                deduped.append(p)
+        reason = " · ".join(deduped)
+
         timeline.append(
             {
                 "hour": h,
                 "label": labels_12h[h],
                 "level": level,
                 "tag": tag,
+                "is_now": h == now_hour,
+                "peak": level == peak_level and level >= 50,
+                "reason": reason,
             }
         )
 

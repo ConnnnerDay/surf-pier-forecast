@@ -792,6 +792,30 @@ h2::before {
 .tl-key--med { background: var(--amber); }
 .tl-key--low { background: var(--border-light, #d1d9e0); }
 
+/* "Now" column indicator */
+.timeline-bar-col--now .timeline-bar {
+  border-top: 2px solid var(--coral);
+}
+.timeline-bar-col--now .timeline-hour {
+  color: var(--coral);
+  font-weight: 700;
+}
+
+/* Peak bar subtle shimmer */
+.timeline-bar--peak {
+  filter: brightness(1.15);
+}
+
+/* Grow-in animation */
+@keyframes timeline-bar-in {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.hourly-timeline-section .timeline-bar {
+  transform-origin: bottom center;
+  animation: timeline-bar-in 0.45s ease-out both;
+}
+
 /* ---------- Conditions explainer ---------- */
 
 .conditions-explainer {
