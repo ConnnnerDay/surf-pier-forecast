@@ -519,11 +519,20 @@
                 </h2>
             </div>
             <div class="fmap-legend" aria-label="Fishing structure legend">
+                <!-- Habitat area overlays (filled polygon / coloured line) -->
+                <span class="fmap-legend-dot fmap-legend-dot--saltmarsh"></span><span class="fmap-legend-text">Saltmarsh</span>
+                <span class="fmap-legend-dot fmap-legend-dot--mangrove"></span><span class="fmap-legend-text">Mangrove</span>
                 <span class="fmap-legend-dot fmap-legend-dot--grass-flat"></span><span class="fmap-legend-text">Grass Flat</span>
-                <span class="fmap-legend-dot fmap-legend-dot--oyster"></span><span class="fmap-legend-text">Oyster/Reef</span>
-                <span class="fmap-legend-dot fmap-legend-dot--inlet"></span><span class="fmap-legend-text">Inlet</span>
+                <span class="fmap-legend-dot fmap-legend-dot--tidal-flat"></span><span class="fmap-legend-text">Tidal Flat</span>
+                <span class="fmap-legend-dot fmap-legend-dot--beach"></span><span class="fmap-legend-text">Beach</span>
+                <span class="fmap-legend-dot fmap-legend-dot--oyster"></span><span class="fmap-legend-text">Oyster Reef</span>
+                <span class="fmap-legend-dot fmap-legend-dot--inlet"></span><span class="fmap-legend-text">Inlet/Channel</span>
+                <!-- Point / structure icons -->
+                <span class="fmap-legend-sep" aria-hidden="true"></span>
                 <span class="fmap-legend-dot fmap-legend-dot--wreck"></span><span class="fmap-legend-text">Wreck</span>
                 <span class="fmap-legend-dot fmap-legend-dot--pier"></span><span class="fmap-legend-text">Pier/Jetty</span>
+                <span class="fmap-legend-dot fmap-legend-dot--buoy"></span><span class="fmap-legend-text">Buoy</span>
+                <span class="fmap-legend-dot fmap-legend-dot--tackle"></span><span class="fmap-legend-text">Bait &amp; Tackle</span>
             </div>
         </div>
 
@@ -594,39 +603,39 @@
                         class="fmap-pill fmap-pill--spot-type" data-type="reef"
                         aria-pressed="false" aria-label="Toggle Reef markers on map">Reef</button>
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="oyster_reef"
-                        aria-pressed="false" aria-label="Toggle Oyster Reef markers on map">Oyster Reef</button>
-                <button type="button" role="listitem"
                         class="fmap-pill fmap-pill--spot-type" data-type="wreck"
                         aria-pressed="false" aria-label="Toggle Wreck markers on map">Wreck</button>
                 <button type="button" role="listitem"
                         class="fmap-pill fmap-pill--spot-type" data-type="shoal"
                         aria-pressed="false" aria-label="Toggle Shoal markers on map">Shoal</button>
 
-                <!-- ── Habitats ── -->
+                <!-- ── Habitats (area overlays) ── -->
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="grass_flat"
-                        aria-pressed="false" aria-label="Toggle Grass Flat markers on map">Grass Flat</button>
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="grass_flat"
+                        aria-pressed="false" aria-label="Toggle Grass Flat area overlay on map">Grass Flat</button>
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="tidal_flat"
-                        aria-pressed="false" aria-label="Toggle Tidal Flat markers on map">Tidal Flat</button>
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="tidal_flat"
+                        aria-pressed="false" aria-label="Toggle Tidal Flat area overlay on map">Tidal Flat</button>
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="saltmarsh"
-                        aria-pressed="false" aria-label="Toggle Saltmarsh markers on map">Saltmarsh</button>
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="saltmarsh"
+                        aria-pressed="false" aria-label="Toggle Saltmarsh area overlay on map">Saltmarsh</button>
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="mangrove"
-                        aria-pressed="false" aria-label="Toggle Mangrove markers on map">Mangrove</button>
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="mangrove"
+                        aria-pressed="false" aria-label="Toggle Mangrove area overlay on map">Mangrove</button>
+                <button type="button" role="listitem"
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="oyster_reef"
+                        aria-pressed="false" aria-label="Toggle Oyster Reef area overlay on map">Oyster Reef</button>
 
-                <!-- ── Water features ── -->
+                <!-- ── Water features (mix of area overlay and point markers) ── -->
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="inlet"
-                        aria-pressed="false" aria-label="Toggle Inlet / Channel markers on map">Inlet</button>
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="inlet"
+                        aria-pressed="false" aria-label="Toggle Inlet / Channel overlay on map">Inlet</button>
                 <button type="button" role="listitem"
                         class="fmap-pill fmap-pill--spot-type" data-type="point"
                         aria-pressed="false" aria-label="Toggle Point / Headland markers on map">Point</button>
                 <button type="button" role="listitem"
-                        class="fmap-pill fmap-pill--spot-type" data-type="beach"
-                        aria-pressed="false" aria-label="Toggle Beach markers on map">Beach</button>
+                        class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="beach"
+                        aria-pressed="false" aria-label="Toggle Beach area overlay on map">Beach</button>
 
                 <!-- ── Navigation &amp; services ── -->
                 <button type="button" role="listitem"

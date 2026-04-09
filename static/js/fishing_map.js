@@ -672,20 +672,41 @@
                 '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
                 (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '');
 
-            // Habitat area features with polygon geometry → filled outline overlay
+            // Habitat area features with geometry → area overlay
             if (f.geometry && f.geometry.length >= 3 && POLYGON_HABITAT_TYPES[f.type]) {
                 var color = spotTypeColor(f.type);
-                var poly = L.polygon(f.geometry, {
-                    color:       color,
-                    weight:      2,
-                    opacity:     0.85,
-                    fillColor:   color,
-                    fillOpacity: 0.30,
-                    className:   'fmap-habitat-poly'
-                });
-                poly.bindTooltip(tooltipHtml,
+                var geom  = f.geometry;
+                var layer;
+
+                // Closed ring (OSM closed way): first ≈ last coord → filled polygon
+                // Open linestring (river, canal, tidal channel): coloured stroke only
+                var first = geom[0], last = geom[geom.length - 1];
+                var isClosed = Math.abs(first[0] - last[0]) < 0.00002 &&
+                               Math.abs(first[1] - last[1]) < 0.00002;
+
+                if (isClosed) {
+                    layer = L.polygon(geom, {
+                        color:       color,
+                        weight:      2,
+                        opacity:     0.85,
+                        fillColor:   color,
+                        fillOpacity: 0.30,
+                        className:   'fmap-habitat-poly'
+                    });
+                } else {
+                    // Open waterway (tidal channel, river, canal, stream) —
+                    // draw as a coloured stroke so it traces the channel path
+                    // without incorrectly closing the ring into a filled area.
+                    layer = L.polyline(geom, {
+                        color:     color,
+                        weight:    3,
+                        opacity:   0.75,
+                        className: 'fmap-habitat-poly'
+                    });
+                }
+                layer.bindTooltip(tooltipHtml,
                     { className: 'fmap-tooltip fmap-tooltip--struct', sticky: true });
-                fishingSpotLayer.addLayer(poly);
+                fishingSpotLayer.addLayer(layer);
                 return;
             }
 
