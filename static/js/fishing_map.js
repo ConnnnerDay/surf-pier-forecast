@@ -72,10 +72,12 @@
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
+    var _structAbort         = null; // AbortController for the live structure fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
+    var _aiAbort         = null;     // AbortController for the live AI habitat fetch
 
     // ─── Structure-mode state ─────────────────────────────────────────────────
     var structureMode       = false;
@@ -511,18 +513,23 @@
         var query = '[out:json][timeout:20];(' + tags + ');out center;';
         var body  = 'data=' + encodeURIComponent(query);
 
-        // Stamp this request so late responses from a previous species/pan are discarded.
+        // Abort any in-flight AI habitat fetch before starting the new one.
+        if (_aiAbort) _aiAbort.abort();
+        _aiAbort = new AbortController();
         var thisAiGen = ++_aiReqGen;
+        var aiSignal  = _aiAbort.signal;
 
         function tryAIOverpass(urlIdx) {
             return fetch(OVERPASS_URLS[urlIdx], {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body:    body,
+                signal:  aiSignal,
             }).then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
             }).catch(function (err) {
+                if (err.name === 'AbortError') throw err;  // don't retry aborted requests
                 if (urlIdx + 1 < OVERPASS_URLS.length) {
                     console.warn('[fishing-map] AI habitat: mirror ' + OVERPASS_URLS[urlIdx] + ' failed, trying next…');
                     return tryAIOverpass(urlIdx + 1);
@@ -546,7 +553,9 @@
             renderAIHabitatSpots(features, habitatType);
         })
         .catch(function (err) {
-            console.warn('[fishing-map] AI habitat query failed:', err);
+            if (err.name !== 'AbortError') {
+                console.warn('[fishing-map] AI habitat query failed:', err);
+            }
         });
     }
 
@@ -727,15 +736,16 @@
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
         if (typesStr) url += '&types=' + encodeURIComponent(typesStr);
 
-        // Stamp this request with the current generation so that if the user
-        // pans again before this resolves, the late-arriving response is
-        // silently discarded rather than overwriting fresher results.
+        // Abort any in-flight structure fetch so the previous stale request
+        // stops consuming network / server resources immediately.
+        if (_structAbort) _structAbort.abort();
+        _structAbort = new AbortController();
         var thisGen = ++_structReqGen;
 
         showStructLoading();
         hideStructError();
 
-        fetch(url)
+        fetch(url, { signal: _structAbort.signal })
             .then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
@@ -762,13 +772,14 @@
                 _updateSpotTypeHint();
             })
             .catch(function (err) {
+                if (err.name === 'AbortError') { hideStructLoading(); return; }
                 // Drop response if superseded by a newer request.
                 if (thisGen !== _structReqGen) { hideStructLoading(); return; }
                 // Keep spinner visible while Overpass fallback runs;
                 // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
                 showStructError("Couldn't load structure data; showing basic map markers.");
-                _queryFishingSpotsFallback(s, w, n, e, key, thisGen);
+                _queryFishingSpotsFallback(s, w, n, e, key, thisGen, _structAbort ? _structAbort.signal : null);
             });
     }
 
@@ -947,7 +958,9 @@
     // gen: the _structReqGen value captured when the parent queryStructures() call
     // started.  If a newer call has since fired, we discard results rather than
     // rendering stale data over fresh markers.
-    function _queryFishingSpotsFallback(s, w, n, e, key, gen) {
+    // signal: AbortSignal from the same AbortController as the parent fetch so
+    // cancelling the structure request also cancels the Overpass fallback chain.
+    function _queryFishingSpotsFallback(s, w, n, e, key, gen, signal) {
         var bbox = s + ',' + w + ',' + n + ',' + e;
         // Build a query scoped to active types; empty activeSpotTypes = all types.
         var q = _buildFallbackQuery(bbox, activeSpotTypes);
@@ -960,14 +973,17 @@
         var overpassBody = 'data=' + encodeURIComponent(q);
         function tryOverpass(urlIndex) {
             var url = OVERPASS_URLS[urlIndex] || OVERPASS_URLS[0];
-            return fetch(url, {
+            var opts = {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body:    overpassBody,
-            }).then(function (r) {
+            };
+            if (signal) opts.signal = signal;
+            return fetch(url, opts).then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
             }).catch(function (err) {
+                if (err.name === 'AbortError') throw err;  // propagate abort, don't retry
                 if (urlIndex + 1 < OVERPASS_URLS.length) {
                     console.warn('[fishing-map] Overpass mirror ' + url + ' failed, trying next…');
                     return tryOverpass(urlIndex + 1);
@@ -1007,7 +1023,9 @@
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
-            console.error('[fishing-map] Overpass fallback error:', err);
+            if (err.name !== 'AbortError') {
+                console.error('[fishing-map] Overpass fallback error:', err);
+            }
         });
     }
 
