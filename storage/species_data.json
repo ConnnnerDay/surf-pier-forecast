@@ -25299,5 +25299,420 @@
       "norcal"
     ],
     "tip": "Broadnose sevengill sharks are strong fighters on heavy tackle. They are a prehistoric-looking species with seven gill slits instead of five. Use a strong rod, heavy mono or wire leader, and large circle hooks. Practice careful catch-and-release."
+  },
+  {
+    "name": "Ta'ape (blueline snapper)",
+    "coast": "hawaii",
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 75,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ],
+    "bait": "Small pieces of squid, shrimp, fish chunks, or cut bait on light tackle",
+    "rig": "Simple bottom rig or small sabiki rig from piers and rocky shorelines",
+    "hook_size": "#4-#2 small baitfisher hook",
+    "sinker": "1/4-1/2 oz",
+    "lures": "Small jigs (1/4 oz) and tiny soft plastics",
+    "explanation_cold": "Ta'ape (blueline snapper, Lutjanus kasmira) are present year-round in Hawaiian waters. Although not native, they form dense schools around reefs and piers.",
+    "explanation_warm": "Ta'ape are one of the most common catches from Hawaii piers year-round. They are an introduced species from the Indo-Pacific, now abundant around nearshore reefs. No bag limit — they are encouraged to harvest to reduce ecological impact. Good eating but small (6–12 inches typical). Schools respond readily to small pieces of squid or shrimp near the bottom.",
+    "tip": "Ta'ape school densely around piers and jetties. Use a sabiki rig to catch multiple at once or small baited hooks near structure. They are excellent bait for larger ulua."
+  },
+  {
+    "name": "Kawakawa (mackerel tuna)",
+    "coast": "hawaii",
+    "temp_min": 72,
+    "temp_max": 88,
+    "temp_ideal_low": 76,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      4,
+      11,
+      12
+    ],
+    "bait": "Live nehu (Hawaiian anchovy), small goggle-eye or akule, cut bait; responds to chum",
+    "rig": "Casting from shore with live bait under a float, or light surface iron; sabiki rigs for baitfish first",
+    "hook_size": "1/0-2/0 long shank",
+    "sinker": "None or very light (surface/midwater target)",
+    "lures": "Small metal jigs (1/2-1 oz), spoons, hard topwater poppers, and small plugs in the 3-4 in range",
+    "explanation_cold": "Kawakawa (Euthynnus affinis) are a tropical tuna found year-round in Hawaiian nearshore waters. Numbers are highest spring through fall when baitfish are abundant.",
+    "explanation_warm": "Kawakawa are a prized shore-casting target in Hawaii, often found crashing baitfish near points, jetties, and piers. They fight hard for their size (1–5 lbs typical). Cast small jigs or poppers into surface activity. Live nehu (Hawaiian anchovy) is the top bait — catch them on a sabiki first. Excellent sashimi-quality flesh. Hawaii: no minimum size, no bag limit.",
+    "tip": "Watch for birds diving and surface splashes — kawakawa push baitfish to the surface. Fast retrieves work best with jigs."
+  },
+  {
+    "name": "Gindai (pink snapper, Hawaii)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      1,
+      2,
+      12
+    ],
+    "bait": "Whole squid, fish chunks, shrimp; fished deep (50-200 ft) over reefs",
+    "rig": "Deep bottom rig with heavy sinker (4-12 oz); 30-80 lb leader near structure",
+    "hook_size": "2/0-4/0 circle hook",
+    "sinker": "4-12 oz egg or bank sinker",
+    "lures": "Slow-pitch jigs (3-6 oz) at deep reef structures",
+    "explanation_cold": "Gindai (Pristipomoides zonatus) are a deeper-water Hawaiian snapper found around rocky reefs and ledges at 50-200 ft depth. Available year-round.",
+    "explanation_warm": "Gindai are a delicious mid-depth Hawaiian snapper, related to the highly prized opakapaka. They school around structure at 50-200 ft. Use deep bottom rigs or slow-pitch jigs. Excellent table fare — firm, white meat. Often caught alongside kalekale and other snappers. Hawaii has no specific bag limit on gindai.",
+    "tip": "Fish dawn and dusk near steep drop-offs at 80-150 ft for best gindai action. Fresh squid on circle hooks is reliable."
+  },
+  {
+    "name": "Kalekale (sunset snapper, Hawaii)",
+    "coast": "hawaii",
+    "temp_min": 68,
+    "temp_max": 82,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      1,
+      2,
+      12
+    ],
+    "bait": "Squid strips, cut fish, shrimp; deep reef structures",
+    "rig": "Heavy bottom rig, 40-80 lb fluorocarbon leader, deep-drop style",
+    "hook_size": "2/0-4/0 circle hook",
+    "sinker": "4-12 oz",
+    "lures": "Slow-pitch jigs (3-5 oz) in pink, red, or white",
+    "explanation_cold": "Kalekale (Pristipomoides sieboldii) are a small but highly sought Hawaiian snapper found at 100-300 ft over reef. Present year-round.",
+    "explanation_warm": "Kalekale are a prized bottom-fishing target for Hawaii shore and boat anglers. They are smaller than opakapaka (typically 1–3 lbs) but equally excellent table fare with delicate, sweet flesh. Fish them on deep-drop rigs with fresh squid over rocky reef at 100-300 ft. Slow-pitch jigs work well too.",
+    "tip": "Kalekale are more abundant in the 150-250 ft range. Use lighter jigs (3-4 oz) and work them slowly near the bottom."
+  },
+  {
+    "name": "Nenue (Hawaiian rudderfish / sea chub)",
+    "coast": "hawaii",
+    "temp_min": 70,
+    "temp_max": 86,
+    "temp_ideal_low": 74,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ],
+    "bait": "Bread balls, algae, small pieces of squid or fish; herbivore so plant-based bait works well",
+    "rig": "Very light tackle, no sinker or micro split-shot, float rig near the surface",
+    "hook_size": "#8-#4",
+    "sinker": "None or micro split-shot",
+    "lures": "Very small poppers or flies",
+    "explanation_cold": "Nenue (Kyphosus spp.) are Hawaii's sea chubs — schooling reef fish that feed on algae near rocky shorelines and piers. Present year-round.",
+    "explanation_warm": "Nenue school around rocky points, jetties, and pier pilings in Hawaii. They can be challenging to hook because of their small mouths but will eagerly take small balls of bread or algae. Use ultra-light tackle and a tiny hook. Their flesh is considered good eating when bled immediately. Nenue can be caught in large numbers near kelp mats and seaweed accumulations.",
+    "tip": "Chum with crumbled bread to bring nenue schools near the surface. Use the lightest tackle possible — they are easily spooked."
+  },
+  {
+    "name": "Tilapia (invasive, Florida)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 60,
+    "temp_max": 95,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 86,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Bread, corn, small pieces of worm, dough bait; vegetarian",
+    "rig": "Ultra-light to light tackle; float rig or very light bottom rig near vegetation",
+    "hook_size": "#6-#2",
+    "sinker": "1/4-1/2 oz or no sinker with float",
+    "lures": "Tiny jigs, small spinners, and ultralight soft plastics near vegetation",
+    "explanation_cold": "Tilapia are an invasive species in Florida and Gulf Coast estuaries/canals. They are cold-sensitive and avoid temperatures below 60°F. In FL they remain active most of the year in warmer canals and ponds adjacent to tidal waters.",
+    "explanation_warm": "Tilapia (primarily Nile tilapia and blue tilapia) have established large populations in Florida's canals, rivers, and coastal ponds. They are aggressive nest defenders and readily take bait near vegetation. No bag limit in Florida — they are invasive and encouraged to harvest. Light tackle makes them a fun target from canal banks, bridges, and piers. Excellent eating when properly prepared.",
+    "tip": "Tilapia are easiest to catch when nesting (spring/summer). Look for circular nests in sandy shallow areas. Bread balls on a tiny hook produce consistently."
+  },
+  {
+    "name": "Hardhead catfish (pier)",
+    "coast": "east",
+    "regions": [
+      "gulf",
+      "southeast"
+    ],
+    "temp_min": 60,
+    "temp_max": 90,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Dead shrimp, cut fish, squid, worms; very opportunistic feeder",
+    "rig": "Simple bottom rig, hi-lo rig, or Carolina rig on the bottom near structure",
+    "hook_size": "#2-2/0",
+    "sinker": "1-3 oz egg or pyramid sinker",
+    "lures": "Occasionally hit shrimp-tipped jigs",
+    "explanation_cold": "Hardhead catfish (Ariopsis felis) are a prolific Gulf and South Atlantic species found in bays, estuaries, and near piers. They are year-round residents in southern waters.",
+    "explanation_warm": "Hardhead catfish are an extremely common pier catch throughout the Gulf and Southeast. While not preferred table fare (unlike gafftopsail catfish), they bite readily on almost any bait. Beware the three venomous spines — use pliers or a rag to handle safely. Considered a nuisance by many anglers but can be good eating when cleaned properly. Abundant around pier pilings at night.",
+    "tip": "Handle with extreme care — hardhead dorsal and pectoral spines are sharp and venomous. Use a lip gripper or wrap the fish in a towel to remove the hook."
+  },
+  {
+    "name": "Striped bonito (Pacific)",
+    "coast": "west",
+    "regions": [
+      "southern_california"
+    ],
+    "temp_min": 60,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Live sardines, anchovies, or small mackerel; responds well to chum",
+    "rig": "Free-line live bait under minimal weight; fast trolling rig for cast-and-retrieve",
+    "hook_size": "1/0-2/0",
+    "sinker": "None or split shot",
+    "lures": "Fast-retrieve metal jigs (Krocodile, stingsilver 1-2 oz), surface irons, high-speed trolling lures",
+    "explanation_cold": "Striped bonito (Sarda orientalis) are a fast-moving Pacific predator that appears seasonally off Southern California. They prefer cooler upwelling water (60-74°F).",
+    "explanation_warm": "Striped bonito are a prized SoCal game fish known for blistering speed and powerful runs. They often forage at the surface, making them targets for cast-and-retrieve from piers and jetties in Southern California during summer. Metal jigs retrieved very fast are the go-to lure. They are good eating when bled immediately — otherwise the flesh darkens quickly.",
+    "tip": "Striped bonito are speed demons — retrieve lures as fast as possible. They often ignore slow presentations. Best from piers during active bait schools."
+  },
+  {
+    "name": "Pacific jack mackerel (shore)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific_northwest"
+    ],
+    "temp_min": 54,
+    "temp_max": 72,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small anchovies or sardines (live or cut), squid strips",
+    "rig": "Sabiki rig from pier; light spinning gear with small jigs; float rig with small bait",
+    "hook_size": "#4-#2",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small metal jigs (1/4-1/2 oz), mini swimbaits, sabiki rigs",
+    "explanation_cold": "Pacific jack mackerel (Trachurus symmetricus) school in large numbers along the California coast, particularly in spring and fall when water temps are ideal (54-68°F).",
+    "explanation_warm": "Pacific jack mackerel are a year-round CA pier staple, forming massive schools that can be seen from the surface. They're excellent on sabiki rigs or tiny jigs. Schools often fill under pier lights at night. Great live bait for yellowtail and halibut — many pier anglers catch mackerel first then use them as bait. Good eating when smoked or marinated.",
+    "tip": "Night fishing under pier lights produces huge numbers of jack mackerel. Use a sabiki rig with small gold hooks and keep it moving slowly."
+  },
+  {
+    "name": "Spotfin croaker (shore)",
+    "coast": "west",
+    "regions": [
+      "southern_california"
+    ],
+    "temp_min": 58,
+    "temp_max": 78,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Fresh clams (especially soft-shell clam, pismo), blood worms, pile worms, mussels, ghost shrimp",
+    "rig": "Carolina rig or hi-lo rig, bait on the bottom in the surf zone",
+    "hook_size": "#4-1/0 live bait or baitfisher hook",
+    "sinker": "1-3 oz pyramid sinker in the surf",
+    "lures": "Occasionally take small swimbaits and jigs near the surf zone",
+    "explanation_cold": "Spotfin croaker (Roncador stearnsii) are a Southern California surf and pier target, most active when water temps climb above 64°F. They retreat to deeper water in winter.",
+    "explanation_warm": "Spotfin croaker are a beloved SoCal surf and pier fish known for the soft 'clicking' sound they make with their air bladder. They favor sandy bottom near rocky structure or pier pilings. Fresh soft-shelled clam siphons or pile worms are the gold standard bait. Good eating — firm, white, mild flesh. CA minimum 9 inches, 10 per day.",
+    "tip": "Spotfin produce an audible clicking sound when stressed — a sign you're in a school. Fresh clam or pile worm on the bottom within 20 feet of pier pilings is the classic setup."
+  },
+  {
+    "name": "White croaker (pier)",
+    "coast": "west",
+    "regions": [
+      "california"
+    ],
+    "temp_min": 54,
+    "temp_max": 74,
+    "temp_ideal_low": 58,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      1,
+      2,
+      12
+    ],
+    "bait": "Small pieces of squid, anchovies, worms, shrimp; very opportunistic",
+    "rig": "Light hi-lo rig or Carolina rig, very light (1/2-1 oz) sinker near the bottom from piers",
+    "hook_size": "#6-#2",
+    "sinker": "1/2-1 oz egg or bank sinker",
+    "lures": "Sabiki rigs, small jigs tipped with squid",
+    "explanation_cold": "White croaker (Genyonemus lineatus), also called tomcod or kingfish, are a year-round CA pier staple. They're most numerous from late fall through spring when larger game fish are scarce.",
+    "explanation_warm": "White croaker are arguably the most commonly caught fish from California piers. They're small (6-12 inches) but abundant, always hungry, and will take almost any small bait. They're often considered a 'trash fish' by some but are decent eating when very fresh, especially fried. Important: In some Southern CA bays, white croaker have elevated PCBs — check local consumption advisories. Great fun for new anglers.",
+    "tip": "White croaker school in large numbers under pier lights at night. Any tiny piece of squid or cut anchovy will catch them. Use the lightest tackle possible for the most fun."
+  },
+  {
+    "name": "Queenfish (Pacific)",
+    "coast": "west",
+    "regions": [
+      "southern_california"
+    ],
+    "temp_min": 58,
+    "temp_max": 76,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 72,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Live or fresh anchovies, ghost shrimp, pile worms near the surface or midwater",
+    "rig": "Light tackle, float rig or free-lined bait; pier sabiki rig",
+    "hook_size": "#4-1/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Small metal jigs and soft plastics at mid-depth",
+    "explanation_cold": "Queenfish (Seriphus politus) are a schooling croaker family member found along the California coast. They're most active in warmer summer months but present year-round in SoCal.",
+    "explanation_warm": "Queenfish are common pier catches in Southern and Central California. They school at mid-depth and near the surface, often visible as a boiling mass of fish near pier pilings. Light tackle and small baits work best. They're strong fighters for their size (10-15 inches typical) and are decent eating when very fresh. Often caught on sabiki rigs.",
+    "tip": "Queenfish school near the surface at night under lights. A sabiki rig drifted through the school will produce multiple fish on one cast."
+  },
+  {
+    "name": "Pacific electric ray (torpedo ray)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 74,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Occasionally takes cut fish or squid",
+    "rig": "Heavy bottom rig if targeting; more often incidental catch",
+    "hook_size": "3/0-5/0",
+    "sinker": "3-8 oz",
+    "lures": "Not targeted with lures",
+    "explanation_cold": "Pacific electric ray (Tetronarce californica) is found along the entire California and Pacific Northwest coast. They are bottom-dwelling predators that use electric organs to stun prey.",
+    "explanation_warm": "Pacific electric rays are an incidental catch from piers and shore. They deliver a powerful electric shock (up to 45 volts) — DO NOT touch or attempt to remove the hook by hand. Use pliers, step back, and allow the ray to shake itself free or cut the line. They are fully protected in some areas and should be released carefully. Not a food fish.",
+    "tip": "If you hook a Pacific electric ray, NEVER touch it. Use long pliers to cut the line near the hook. Educate others nearby — the electric shock is dangerous."
   }
 ]

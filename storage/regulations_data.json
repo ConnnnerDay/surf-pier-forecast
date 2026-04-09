@@ -89,7 +89,73 @@
     "Speckled trout (Gulf)": "spotted_seatrout",
     "Gray trout (weakfish)": "weakfish",
     "Tautog (Mid-Atlantic)": "tautog",
-    "California sheephead": "california_sheephead"
+    "California sheephead": "california_sheephead",
+    "Ta'ape (blueline snapper)": "taape",
+    "Kawakawa (mackerel tuna)": "kawakawa",
+    "Gindai (pink snapper, Hawaii)": "gindai",
+    "Kalekale (sunset snapper, Hawaii)": "kalekale",
+    "Nenue (Hawaiian rudderfish / sea chub)": "nenue",
+    "Tilapia (invasive, Florida)": "tilapia",
+    "Hardhead catfish (pier)": "hardhead_catfish",
+    "Hardhead catfish (sea catfish)": "hardhead_catfish",
+    "Striped bonito (Pacific)": "striped_bonito",
+    "Pacific jack mackerel (shore)": "pacific_jack_mackerel",
+    "Spotfin croaker (shore)": "spotfin_croaker",
+    "White croaker (pier)": "white_croaker",
+    "White croaker (tomcod)": "white_croaker",
+    "White croaker (tomcod, kingfish)": "white_croaker",
+    "Queenfish (Pacific)": "queenfish",
+    "Pacific electric ray (torpedo ray)": "pacific_electric_ray",
+    "California sheephead (wrasse)": "california_sheephead",
+    "Omilu (bluefin trevally)": "omilu",
+    "Bluefin trevally (omilu)": "omilu",
+    "Papio (young ulua)": "papio",
+    "Papio (juvenile jack)": "papio",
+    "Akule (bigeye scad)": "akule",
+    "Nenue (Hawaiian chub)": "nenue",
+    "Gafftopsail catfish": "gafftopsail_catfish",
+    "Gafftopsail catfish (sailcat)": "gafftopsail_catfish",
+    "American eel": "american_eel",
+    "Striped mullet": "striped_mullet",
+    "Red lionfish (invasive)": "red_lionfish",
+    "Mako shark (shortfin)": "shortfin_mako",
+    "Shortfin mako shark": "shortfin_mako",
+    "Thresher shark": "thresher_shark",
+    "Common thresher shark": "thresher_shark",
+    "Sand tiger shark": "sand_tiger_shark",
+    "Sandbar shark": "sandbar_shark",
+    "Bull shark": "bull_shark",
+    "Tiger shark": "tiger_shark",
+    "Nurse shark": "nurse_shark",
+    "Lemon shark": "lemon_shark",
+    "Blacktip shark": "blacktip_shark",
+    "Atlantic sharpnose shark": "atlantic_sharpnose_shark",
+    "Bonnethead shark": "bonnethead_shark",
+    "Scalloped hammerhead shark": "scalloped_hammerhead",
+    "Great barracuda": "great_barracuda",
+    "Kaku (barracuda, Hawaii)": "great_barracuda",
+    "Wahoo": "wahoo",
+    "Wahoo (Atlantic)": "wahoo",
+    "Wahoo (Pacific)": "wahoo",
+    "Wahoo (ono)": "wahoo",
+    "Permit": "permit",
+    "Permit (Atlantic)": "permit",
+    "Bonefish (flats)": "bonefish",
+    "Bonefish (oio)": "bonefish",
+    "Oio (bonefish, Hawaii)": "bonefish",
+    "Ladyfish": "ladyfish",
+    "Tripletail (Gulf)": "tripletail",
+    "Atlantic tripletail": "tripletail",
+    "Sailfish (Atlantic)": "sailfish",
+    "Yellowfin tuna": "yellowfin_tuna",
+    "Bigeye tuna": "bigeye_tuna",
+    "Blackfin tuna": "blackfin_tuna",
+    "Skipjack tuna": "skipjack_tuna",
+    "Goliath grouper": "goliath_grouper",
+    "Nassau grouper": "nassau_grouper",
+    "Black grouper": "black_grouper",
+    "Warsaw grouper": "warsaw_grouper",
+    "Snowy grouper": "snowy_grouper"
   },
   "states": {
     "AL": {
@@ -943,6 +1009,13 @@
         "season": "Open year-round",
         "notes": "Yellowjack found around AL offshore structures.",
         "source": "AL DCNR Marine Resources"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia occur in AL warmwater areas. No specific regulation.",
+        "source": "AL DCNR"
       }
     },
     "CA": {
@@ -2014,6 +2087,27 @@
         "bag_limit": "5 per day",
         "season": "Open year-round",
         "notes": "California sheephead caught from kelp beds and rocky reefs. Verify CDFW rules.",
+        "source": "CDFW"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia occur in some CA southern river systems. Check CDFW rules for specific waters.",
+        "source": "CDFW"
+      },
+      "spotfin_croaker": {
+        "min_size": "9 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Spotfin croaker are a popular SoCal surf and pier target. Fresh clam siphons or ghost shrimp are top baits.",
+        "source": "CDFW"
+      },
+      "striped_bonito": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (seasonal, warm months)",
+        "notes": "Striped bonito are a seasonal SoCal game fish; no specific bag limit. Fast metal jigs work best.",
         "source": "CDFW"
       }
     },
@@ -4621,6 +4715,13 @@
         "season": "Open year-round (rare)",
         "notes": "Scup are rare in FL waters; mostly offshore in winter. Federal rules apply.",
         "source": "FL FWC; NOAA Fisheries"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia are invasive in FL. No bag limit — harvest encouraged. No saltwater license required for freshwater-connected canals.",
+        "source": "FL FWC"
       }
     },
     "GA": {
@@ -5823,6 +5924,13 @@
         "season": "Open year-round (winter months)",
         "notes": "Scup (porgy) are occasional winter visitors to GA offshore reefs. Federal rules apply.",
         "source": "GA DNR CRD; NOAA Fisheries"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia are invasive in GA warmwater canals. No bag limit.",
+        "source": "GA DNR"
       }
     },
     "LA": {
@@ -6808,6 +6916,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Yellowjack found around offshore structures in LA.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia have established in LA coastal canals. No specific bag limit — harvest encouraged.",
         "source": "LA Wildlife & Fisheries"
       }
     },
@@ -9377,6 +9492,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Yellowjack occasionally caught in MS Gulf waters.",
+        "source": "MS DMR"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia are present in MS warmwater canals and ponds. No bag limit.",
         "source": "MS DMR"
       }
     },
@@ -15009,6 +15131,13 @@
         "season": "Open year-round in South Atlantic federal waters",
         "notes": "South Carolina: 20-inch TL minimum, 3/day aggregate grouper. Verify with SC DNR and NOAA/SAFMC.",
         "source": "https://www.dnr.sc.gov/marine/recreationalfishing.html"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia occur in SC warmer inland waters. No specific bag limit.",
+        "source": "SC DNR"
       }
     },
     "TX": {
@@ -16002,6 +16131,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Yellowjack occur around offshore platforms in TX. No specific state bag limit.",
+        "source": "TX TPWD"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia are invasive in TX warm waters. No bag limit. Check TPWD regulations for specific water bodies.",
         "source": "TX TPWD"
       }
     },
@@ -17979,6 +18115,48 @@
         "season": "Open year-round",
         "notes": "Awa (milkfish) are targeted from shore in Hawaii using specialized dough or bread-bait rigs. No minimum size or bag limit. Verify with HI DLNR.",
         "source": "https://dlnr.hawaii.gov/dar/fishing/fishing-regulations/"
+      },
+      "kawakawa": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Kawakawa (mackerel tuna) have no size or bag limit in Hawaii. Excellent eating.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "gindai": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Gindai (pink snapper) are a deepwater Hawaiian snapper; no specific bag limit.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "kalekale": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Kalekale (sunset snapper) are a deepwater snapper with no specific bag limit in Hawaii.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "omilu": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Omilu (bluefin trevally) have no specific bag or size limit in Hawaii. Excellent eating.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "papio": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Papio (juvenile ulua/GT) have no bag limit in Hawaii. Strong fighters on light tackle.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia are invasive in HI. No bag limit — harvest encouraged.",
+        "source": "DLNR"
       }
     },
     "NH": {
@@ -18494,6 +18672,15 @@
         "season": "Not present",
         "notes": "Black sea bass do not occur in AK waters.",
         "source": "ADF&G"
+      }
+    },
+    "AZ": {
+      "tilapia": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Tilapia are invasive in AZ. No bag limit in open waters.",
+        "source": "AZ Game & Fish"
       }
     }
   }
