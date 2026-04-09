@@ -345,6 +345,7 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
         "closed year-round",
         "federally protected",
         "endangered species",
+        "prohibited year-round",
     )
     if any(phrase in combined for phrase in _TRULY_CLOSED):
         return "prohibited"
@@ -362,21 +363,40 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
     # ── Step 2: Catch-and-release — fishery is open for targeting, retention
     #    is not permitted.  Show with a C&R badge; do NOT hide. ──────────────
 
-    _CATCH_AND_RELEASE = (
+    # Phrases that unambiguously mean "the whole fishery is C&R" — checked
+    # against combined (bag + season + notes) because they are unambiguous
+    # even in note text (e.g. "catch and release only; no harvest").
+    _CATCH_AND_RELEASE_STRONG = (
         "catch and release only",
         "catch-and-release only",
-        "no harvest",
         "harvest prohibited",
         "retention prohibited",
         "possession prohibited",
-        "must be released",
         "cannot be retained",
     )
-    if any(phrase in combined for phrase in _CATCH_AND_RELEASE):
+    if any(phrase in combined for phrase in _CATCH_AND_RELEASE_STRONG):
+        return "catch_and_release"
+
+    # "must be released" and "no harvest" are ambiguous in the notes field:
+    # slot-limit and size-limit rules frequently say things like
+    # "fish outside the slot must be released" or "juveniles must be released",
+    # which describe *partial* restrictions on one size class — not a whole-
+    # fishery closure.  Only treat these phrases as C&R signals when they
+    # appear in the bag_limit or season fields, where they are unambiguous.
+    _CATCH_AND_RELEASE_BAG_OR_SEASON = (
+        "must be released",
+        "no harvest",
+    )
+    bag_season = " ".join(p for p in (bag_limit, season) if p)
+    if any(phrase in bag_season for phrase in _CATCH_AND_RELEASE_BAG_OR_SEASON):
         return "catch_and_release"
 
     # bag_limit of zero means no retention allowed — effectively C&R
     if bag_limit in {"0", "0/day", "0 per day", "0 fish"}:
+        return "catch_and_release"
+
+    # Explicit zero in bag_limit text (e.g. "0 — prohibited")
+    if bag_limit.startswith("0 ") or bag_limit.startswith("0—") or bag_limit.startswith("0 —"):
         return "catch_and_release"
 
     # ── Step 3: Restricted — conditional rules that require angler verification ─
