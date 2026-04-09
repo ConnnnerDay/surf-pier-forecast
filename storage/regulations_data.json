@@ -65,7 +65,15 @@
     "Sockeye salmon (red salmon)": "sockeye_salmon",
     "Chum salmon (dog salmon)": "chum_salmon",
     "Dungeness crab (shore)": "dungeness_crab",
-    "Black rockfish": "black_rockfish"
+    "Black rockfish": "black_rockfish",
+    "Atlantic cod": "atlantic_cod",
+    "Haddock": "haddock",
+    "Winter flounder": "winter_flounder",
+    "Atlantic pollock": "atlantic_pollock",
+    "Pollock (Atlantic)": "atlantic_pollock",
+    "American lobster (recreational)": "american_lobster",
+    "Mahi-mahi (Pacific)": "mahi_mahi",
+    "Dorado (Pacific mahi)": "mahi_mahi"
   },
   "states": {
     "AL": {
@@ -905,6 +913,13 @@
         "season": "Seasonal — Gulf season set annually by NOAA/GMFMC",
         "notes": "Alabama: 20-inch TL minimum, 3/day aggregate grouper. Gulf season varies annually — verify 2026 open dates with Outdoor Alabama before fishing.",
         "source": "https://www.outdooralabama.com/saltwater-fishing"
+      },
+      "snook": {
+        "min_size": "No minimum",
+        "bag_limit": "catch and release only",
+        "season": "Catch-and-release only (rare stray)",
+        "notes": "Common snook may stray into AL waters. Release all — no established harvest season.",
+        "source": "AL DCNR Marine Resources"
       }
     },
     "CA": {
@@ -1935,6 +1950,34 @@
         "season": "Seasonal — typically November 15 through June 30 (north of Pt. Conception); check CDFW",
         "notes": "California Dungeness crab: 5.75-inch carapace minimum, 10/day. Season north of Pt. Conception typically November 15 – June 30 but varies by year due to domoic acid testing delays. Soft-shell crab must be released. Verify 2026 season opening with CDFW.",
         "source": "https://wildlife.ca.gov/Fishing/Ocean/Regulations"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "2 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Blue sharks are common offshore in CA. CDFW recreational bag limit applies.",
+        "source": "CDFW"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; seasonal availability (warm-water months)",
+        "notes": "Mahi-mahi (dorado) available in CA during warm-water years, typically Aug–Nov offshore.",
+        "source": "CDFW"
+      },
+      "great_hammerhead_shark": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Prohibited year-round",
+        "notes": "All hammerhead sharks are prohibited from take in CA state waters. Federally prohibited offshore.",
+        "source": "CDFW; NOAA Fisheries"
+      },
+      "black_sea_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per year",
+        "season": "Apr 16 – Dec 31",
+        "notes": "Giant (Pacific) black sea bass are a severely depleted species in CA. Extremely strict 1/year limit. Verify CDFW rules.",
+        "source": "CDFW"
       }
     },
     "CT": {
@@ -2390,6 +2433,27 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Varies; federal closures may apply",
+        "notes": "Cod stocks heavily depleted; verify federal and state closures before fishing.",
+        "source": "CT DEEP; NOAA Fisheries"
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round; rarely encountered inshore",
+        "notes": "Haddock are uncommon in CT waters; mostly an offshore deep-water species.",
+        "source": "CT DEEP; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "CT recreational lobster limit: 6 per person per day. License required.",
+        "source": "CT DEEP"
       }
     },
     "DE": {
@@ -2816,6 +2880,27 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round offshore; inshore very limited",
+        "notes": "Cod rare inshore in DE; typically offshore only. Federal rules apply.",
+        "source": "DE DNREC; NOAA Fisheries"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (offshore)",
+        "notes": "Blue sharks encountered on offshore trips from DE. NOAA Atlantic shark rules apply.",
+        "source": "DE DNREC; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "DE follows ASMFC recreational lobster rules: 6 per day.",
+        "source": "DE DNREC"
       }
     },
     "FL": {
@@ -4443,6 +4528,27 @@
         "season": "Seasonal — check FWC for closed gigging season",
         "notes": "Southern flounder in Florida panhandle: 12-inch minimum, 10/day. Some areas have gigging season closures. Verify current rules with FWC.",
         "source": "https://myfwc.com/fishing/saltwater/recreational/"
+      },
+      "striped_bass": {
+        "min_size": "18 in TL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round in Panhandle rivers; check FWC regulations",
+        "notes": "Striped bass present in FL panhandle rivers. No saltwater pier fishery. Verify FWC rules.",
+        "source": "FL FWC"
+      },
+      "tautog": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present in FL",
+        "notes": "Tautog do not occur in FL waters. Northern species.",
+        "source": "FL FWC"
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round (rare)",
+        "notes": "Scup are rare in FL waters; mostly offshore in winter. Federal rules apply.",
+        "source": "FL FWC; NOAA Fisheries"
       }
     },
     "GA": {
@@ -5638,6 +5744,13 @@
         "season": "Open year-round in South Atlantic federal waters",
         "notes": "Georgia offshore: 20-inch TL minimum, 3/day aggregate grouper. Verify with Georgia Wildlife.",
         "source": "https://georgiawildlife.com/fishing/regulations"
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round (winter months)",
+        "notes": "Scup (porgy) are occasional winter visitors to GA offshore reefs. Federal rules apply.",
+        "source": "GA DNR CRD; NOAA Fisheries"
       }
     },
     "LA": {
@@ -6610,6 +6723,13 @@
         "season": "Seasonal — Gulf season set annually",
         "notes": "Louisiana: 20-inch TL minimum, 3/day aggregate grouper. Gulf red grouper season dates vary — verify 2026 with LDWF.",
         "source": "https://www.wlf.louisiana.gov/page/recreational-fishing-regulations"
+      },
+      "snook": {
+        "min_size": "No minimum",
+        "bag_limit": "catch and release only",
+        "season": "Catch-and-release only (rare stray)",
+        "notes": "Common snook are rare in LA but do occasionally appear. Release all.",
+        "source": "LA Wildlife & Fisheries"
       }
     },
     "MA": {
@@ -7123,6 +7243,13 @@
         "season": "Open year-round offshore",
         "notes": "Mahi-mahi in Massachusetts offshore canyon waters (July–September). No state bag limit. Verify with MA DMF.",
         "source": "https://www.mass.gov/saltwater-fishing-regulations"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "15 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "Lobster recreational limit 15/day; minimum carapace length 3.25 in. No oversized (max carapace) retained.",
+        "source": "MA DMF"
       }
     },
     "MD": {
@@ -7978,6 +8105,20 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Offshore winter fishery only",
+        "notes": "Cod occur seasonally offshore of MD. Verify federal groundfish rules.",
+        "source": "MD DNR; NOAA Fisheries"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (offshore)",
+        "notes": "Blue sharks encountered offshore. NOAA Atlantic shark rules apply.",
+        "source": "MD DNR; NOAA Fisheries"
       }
     },
     "ME": {
@@ -8261,6 +8402,13 @@
         "season": "Open year-round (rare)",
         "notes": "Weakfish very rarely reach Maine coastal waters. No specific state regulations. Populations are severely depleted — catch and release strongly recommended. Verify with ME DMR.",
         "source": "https://www.maine.gov/dmr/fisheries/recreational"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "12 per day (recreational)",
+        "season": "Open year-round (area-specific seasons apply)",
+        "notes": "American lobster recreational limit: 12 per day in ME coastal waters. Trap gear requires a license. Verify current ME DMR rules.",
+        "source": "ME DMR"
       }
     },
     "MS": {
@@ -9081,6 +9229,27 @@
         "season": "Seasonal — Gulf season set annually",
         "notes": "Mississippi: 20-inch TL minimum, 3/day aggregate grouper. Verify 2026 season with MDWFP and NOAA.",
         "source": "https://www.mdwfp.com/fishing-boating/saltwater-fishing/"
+      },
+      "pompano": {
+        "min_size": "10 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Florida pompano caught from piers and surf in MS. No specific bag limit; general finfish rules apply.",
+        "source": "MS DMR"
+      },
+      "tarpon": {
+        "min_size": "No minimum",
+        "bag_limit": "catch and release only",
+        "season": "Catch-and-release only",
+        "notes": "Tarpon are a catch-and-release species in MS. A tarpon tag is required to possess one.",
+        "source": "MS DMR"
+      },
+      "snook": {
+        "min_size": "No minimum",
+        "bag_limit": "catch and release only",
+        "season": "Catch-and-release only (extremely rare)",
+        "notes": "Common snook are extremely rare in MS waters. Release all — no harvest authorized.",
+        "source": "MS DMR"
       }
     },
     "NC": {
@@ -11346,6 +11515,20 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round; federal closures may apply",
+        "notes": "Offshore species in NJ. Federal rules apply.",
+        "source": "NJ DEP Marine Fisheries; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "NJ recreational lobster: 6 per day, minimum 3.25 in carapace length.",
+        "source": "NJ DEP Marine Fisheries"
       }
     },
     "NY": {
@@ -12038,6 +12221,20 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round; federal closures may apply",
+        "notes": "Offshore species in NY. Federal groundfish rules apply.",
+        "source": "NY DEC; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "NY recreational bag limit: 6 lobsters per person per day.",
+        "source": "NY DEC"
       }
     },
     "OR": {
@@ -12829,6 +13026,34 @@
         "season": "Open year-round",
         "notes": "Oregon 15-fish/day aggregate limit for surfperch; no minimum size. Verify current rules with ODFW.",
         "source": "https://myodfw.com/recreation-report/fishing-report/marine-zone"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blue sharks are common offshore in OR. No specific state bag limit; NOAA rules apply.",
+        "source": "ODFW; NOAA Fisheries"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Warm-water years only (Jul–Oct)",
+        "notes": "Mahi-mahi occasionally appear in OR offshore waters during El Niño/warm-water years.",
+        "source": "ODFW"
+      },
+      "great_hammerhead_shark": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Prohibited year-round",
+        "notes": "Great hammerhead are federally prohibited from harvest. Release immediately if caught.",
+        "source": "ODFW; NOAA Fisheries"
+      },
+      "black_sea_bass": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present (rare stray)",
+        "notes": "Pacific black sea bass are very rare in OR. Release if encountered.",
+        "source": "ODFW"
       }
     },
     "RI": {
@@ -13282,6 +13507,27 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Primarily an offshore species in RI. Federal rules apply.",
+        "source": "RI DEM; NOAA Fisheries"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Blue sharks common in RI offshore waters. NOAA Atlantic pelagic shark rules apply.",
+        "source": "RI DEM; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "6 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "RI recreational bag limit is 6 lobsters per person per day. Carapace minimum 3.25 in.",
+        "source": "RI DEM"
       }
     },
     "SC": {
@@ -16456,6 +16702,13 @@
         "season": "Open year-round",
         "notes": "Southern flounder in Virginia: 12-inch minimum, 10/day. Found in lower Chesapeake Bay and tidal rivers. Verify current rules with VA MRC.",
         "source": "https://webapps.mrc.virginia.gov/public/reports/swrecfishingrules.php"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Rare; offshore winter only",
+        "notes": "Cod are at the southern edge of range in VA. Federal regulations apply.",
+        "source": "VA DGIF; NOAA Fisheries"
       }
     },
     "WA": {
@@ -17217,6 +17470,34 @@
         "season": "Open year-round",
         "notes": "Washington 15-fish/day aggregate limit for surfperch; no minimum size. Verify current rules with WDFW.",
         "source": "https://wdfw.wa.gov/fishing/regulations"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blue sharks occur offshore in WA. No specific state bag limit; NOAA rules apply.",
+        "source": "WDFW; NOAA Fisheries"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Rare; warm-water years only",
+        "notes": "Mahi-mahi are rare in WA waters, occurring only during warm-water events.",
+        "source": "WDFW"
+      },
+      "great_hammerhead_shark": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Prohibited year-round",
+        "notes": "Great hammerhead are federally prohibited from harvest. Release immediately if caught.",
+        "source": "WDFW; NOAA Fisheries"
+      },
+      "black_sea_bass": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Pacific black sea bass do not occur in WA waters.",
+        "source": "WDFW"
       }
     },
     "HI": {
@@ -17605,6 +17886,83 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; federal groundfish closures apply",
+        "notes": "Gulf of Maine cod. Follow NOAA sector allocations and state rules.",
+        "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Gulf of Maine haddock. Federal groundfish rules apply offshore.",
+        "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "2 per day",
+        "season": "Apr 1 – Jun 30 (spring season); check NH Fish & Game",
+        "notes": "Winter flounder stocks are depleted; confirm current season and bag limits with NH Fish & Game.",
+        "source": "NH Fish & Game"
+      },
+      "black_sea_bass": {
+        "min_size": "13 in TL",
+        "bag_limit": "3 per day",
+        "season": "Jun 1 – Feb 28",
+        "notes": "Black sea bass at the northern edge of their range in NH. Follow ASMFC/NOAA regulations.",
+        "source": "NH Fish & Game; ASMFC"
+      },
+      "weakfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "1 per day",
+        "season": "Open year-round",
+        "notes": "Weakfish occasionally appear in NH estuaries. Stocks are severely depleted; 1/day limit applies.",
+        "source": "NH Fish & Game; ASMFC"
+      },
+      "spotted_seatrout": {
+        "min_size": "",
+        "bag_limit": "catch and release only",
+        "season": "Closed to retention",
+        "notes": "Spotted seatrout are rare strays in NH. Stocks are not managed here — release all.",
+        "source": "NH Fish & Game"
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Jun – Oct (occasional)",
+        "notes": "Spanish mackerel are rare strays in NH waters. Primarily encountered during warm water years.",
+        "source": "NH Fish & Game"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Blue sharks common offshore in NH. NH has no specific state regulations; NOAA rules apply.",
+        "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "cobia": {
+        "min_size": "36 in TL",
+        "bag_limit": "1 per day",
+        "season": "Rare stray — Jun–Sep",
+        "notes": "Cobia are occasional warm-water strays in NH. Follow ASMFC regulations.",
+        "source": "NH Fish & Game; ASMFC"
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per day",
+        "season": "Rare offshore",
+        "notes": "Greater amberjack are rare in NH but may appear at offshore wrecks in summer.",
+        "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "15 per day (recreational)",
+        "season": "Open year-round",
+        "notes": "NH follows regional ASMFC lobster recreational rules. No trap gear without a license.",
+        "source": "NH Fish & Game"
       }
     },
     "PA": {
@@ -17626,6 +17984,83 @@
         "season": "Seasonal",
         "notes": "Pennsylvania anglers fishing Delaware River/Bay estuary may encounter tautog. 16-inch minimum, 3/day. Verify with PA Fish & Boat Commission and DE DNREC for tidal water rules.",
         "source": "https://www.fishandboat.com/Fishing/Pages/TidalWaterRegulations.aspx"
+      },
+      "winter_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "2 per day",
+        "season": "Seasonal — verify with PA Fish & Boat Commission",
+        "notes": "Winter flounder occasionally enter Delaware Bay from NJ/DE. Very rare in PA waters.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "striped_bass": {
+        "min_size": "28 in TL",
+        "bag_limit": "1 per day",
+        "season": "Seasonal (typically spring/fall); check PA Fish & Boat Commission",
+        "notes": "Striped bass in Delaware River/Bay. PA follows Delaware River Basin Commission (DRBC) and PRFC rules.",
+        "source": "PA Fish & Boat Commission; DRBC"
+      },
+      "bluefish": {
+        "min_size": "10 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round",
+        "notes": "Bluefish in lower Delaware River/Bay. Follow ASMFC federal bag limits.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "summer_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "4 per day",
+        "season": "Apr 1 – Oct 31",
+        "notes": "Summer flounder in lower Delaware River. PA follows ASMFC regulations; verify current size limit.",
+        "source": "PA Fish & Boat Commission; ASMFC"
+      },
+      "scup": {
+        "min_size": "9 in TL",
+        "bag_limit": "30 per day",
+        "season": "Open year-round",
+        "notes": "Scup present in Delaware Bay/River in warmer months. Federal bag limit applies.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "black_sea_bass": {
+        "min_size": "13 in TL",
+        "bag_limit": "15 per day",
+        "season": "May 19 – Feb 28",
+        "notes": "Black sea bass at southern Delaware Bay nearshore reefs. Verify current regulations with PA Fish & Boat Commission.",
+        "source": "PA Fish & Boat Commission; ASMFC"
+      },
+      "red_drum": {
+        "min_size": "18 in TL",
+        "bag_limit": "3 per day",
+        "season": "Open year-round (rare)",
+        "notes": "Red drum are rare in PA waters; primarily a lower Delaware Bay species.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "spotted_seatrout": {
+        "min_size": "12 in TL",
+        "bag_limit": "4 per day",
+        "season": "Open year-round (uncommon in PA)",
+        "notes": "Spotted seatrout occasionally enter Delaware Bay. Very rare north of Delaware.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "cobia": {
+        "min_size": "36 in TL",
+        "bag_limit": "1 per day",
+        "season": "Apr 1 – Dec 31 (rare stray)",
+        "notes": "Cobia are occasional strays in Delaware Bay. Very uncommon in PA waters.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "spanish_mackerel": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "May – Oct (occasional stray)",
+        "notes": "Spanish mackerel are rare but possible in lower Delaware Bay during summer.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "sheepshead": {
+        "min_size": "12 in TL",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Sheepshead found around structure in Delaware River/Bay.",
+        "source": "PA Fish & Boat Commission"
       }
     },
     "AK": {
@@ -17756,6 +18191,41 @@
         "season": "Open year-round",
         "notes": "Alaska nearshore rockfish (including black rockfish): 5-fish aggregate daily limit. Found around kelp beds, rocky reefs, and piers. Some deep-water species (yelloweye, canary) have much lower limits. Verify area-specific rules with AK F&G.",
         "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blue sharks occur offshore in AK waters. Follow ADF&G and federal regulations.",
+        "source": "ADF&G; NOAA Fisheries"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Extremely rare",
+        "notes": "Mahi-mahi are very rare in AK waters; no specific state regulation. Follow federal guidelines.",
+        "source": "ADF&G; NOAA Fisheries"
+      },
+      "cabezon": {
+        "min_size": "16 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Cabezon present in Southeast AK. Follow ADF&G saltwater regulations.",
+        "source": "ADF&G"
+      },
+      "kelp_greenling": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Kelp greenling common throughout AK nearshore waters. Follow ADF&G regulations.",
+        "source": "ADF&G"
+      },
+      "black_sea_bass": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Black sea bass do not occur in AK waters.",
+        "source": "ADF&G"
       }
     }
   }
