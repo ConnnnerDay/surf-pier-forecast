@@ -179,18 +179,47 @@ STRUCTURE_TIPS: Dict[str, str] = {
 }
 
 # ── Proximity deduplication thresholds (decimal degrees) ─────────────────────
-# ~0.001° ≈ 111 m.  Wider thresholds for broad habitats, tighter for
-# individual structures such as jetties or buoys.
+# ~0.001° ≈ 111 m.  Polygon habitat types use a sentinel value of 0 to
+# *skip* centroid-proximity dedup entirely — adjacent wetland/beach patches
+# are distinct features and must not be collapsed just because their
+# computed centroids happen to be close.  Only name-based dedup applies to
+# those types.  Tight thresholds remain for point structures.
 _PROX: Dict[str, float] = {
-    "inlet":      0.005,   # ~550 m — long tidal channels appear many times
+    "inlet":      0.005,   # ~550 m — tidal channel nodes cluster heavily
     "marina":     0.004,   # ~440 m
-    "beach":      0.006,   # ~660 m — wide beach way segments
-    "grass_flat": 0.004,
-    "saltmarsh":  0.004,
-    "tidal_flat": 0.004,
-    "mangrove":   0.004,
+    "beach":      0.0,     # polygon area — skip centroid proximity dedup
+    "grass_flat": 0.0,     # polygon area
+    "saltmarsh":  0.0,     # polygon area
+    "tidal_flat": 0.0,     # polygon area
+    "mangrove":   0.0,     # polygon area
+    "oyster_reef":0.0,     # polygon area
     "_default":   0.002,   # ~220 m — piers, jetties, buoys, etc.
 }
+
+# ── Polygon coordinate decimation ─────────────────────────────────────────────
+# Keep at most this many vertices per polygon ring.  Leaflet renders at most
+# ~150 screen-space segments at typical zoom levels; the remainder are clipped
+# or simplified in the browser anyway.  Capping here shrinks the JSON payload
+# for dense coastal features that OSM often encodes with 300–1 000 nodes.
+_MAX_POLYGON_COORDS: int = 200
+
+
+def _decimate_ring(coords: List[List[float]]) -> List[List[float]]:
+    """Thin a coordinate ring to at most ``_MAX_POLYGON_COORDS`` points.
+
+    Uses uniform Nth-point selection so the ring shape is preserved evenly.
+    The first and last points are always kept so closed rings stay closed.
+    """
+    n = len(coords)
+    if n <= _MAX_POLYGON_COORDS:
+        return coords
+    # Pick evenly-spaced indices; always include 0 and n-1
+    step = (n - 1) / (_MAX_POLYGON_COORDS - 1)
+    indices = {0, n - 1}
+    for i in range(1, _MAX_POLYGON_COORDS - 1):
+        indices.add(round(i * step))
+    return [coords[i] for i in sorted(indices)]
+
 
 # ── Overpass API endpoints (primary + mirror fallback) ────────────────────────
 _OVERPASS_URLS = [
@@ -440,14 +469,18 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             named_seen[key] = True
 
         thresh = _PROX.get(spot["type"], _PROX["_default"])
-        too_close = any(
-            k["type"] == spot["type"]
-            and abs(k["lat"] - spot["lat"]) < thresh
-            and abs(k["lng"] - spot["lng"]) < thresh
-            for k in out
-        )
-        if not too_close:
-            out.append(spot)
+        # thresh == 0 → polygon habitat type; skip centroid-proximity dedup
+        # so adjacent polygon patches are not erroneously collapsed.
+        if thresh > 0:
+            too_close = any(
+                k["type"] == spot["type"]
+                and abs(k["lat"] - spot["lat"]) < thresh
+                and abs(k["lng"] - spot["lng"]) < thresh
+                for k in out
+            )
+            if too_close:
+                continue
+        out.append(spot)
 
     return out
 
@@ -617,7 +650,7 @@ def fetch_osm_structures(
                 if "lat" in g and "lon" in g
             ]
             if len(coords) >= 3:
-                spot["geometry"] = coords
+                spot["geometry"] = _decimate_ring(coords)
 
         spots.append(spot)
 

@@ -599,6 +599,27 @@
         grass_flat: true, beach: true, oyster_reef: true, inlet: true
     };
 
+    var _MAX_POLYGON_COORDS = 200;
+    // Thin a coordinate ring to at most _MAX_POLYGON_COORDS points using
+    // uniform Nth-point selection.  Always keeps first and last so closed
+    // rings remain closed.  Mirrors _decimate_ring() in fish_structures.py.
+    function _decimateRing(coords) {
+        var n = coords.length;
+        if (n <= _MAX_POLYGON_COORDS) return coords;
+        var step = (n - 1) / (_MAX_POLYGON_COORDS - 1);
+        var seen = {};
+        var out = [];
+        for (var i = 0; i < _MAX_POLYGON_COORDS; i++) {
+            var idx = Math.round(i * step);
+            if (!seen[idx]) { seen[idx] = true; out.push(coords[idx]); }
+        }
+        // Ensure last point is always included
+        var last = coords[n - 1];
+        var outLast = out[out.length - 1];
+        if (outLast[0] !== last[0] || outLast[1] !== last[1]) out.push(last);
+        return out;
+    }
+
     // Single-character labels rendered inside circle markers for at-a-glance identification
     var SPOT_LABELS = {
         pier:         'P',  jetty:  'J',  bridge: 'B',  reef:  'R',
@@ -1075,7 +1096,7 @@
                     var coords = el.geometry
                         .filter(function (g) { return g && g.lat != null && g.lon != null; })
                         .map(function (g) { return [g.lat, g.lon]; });
-                    if (coords.length >= 3) spot.geometry = coords;
+                    if (coords.length >= 3) spot.geometry = _decimateRing(coords);
                 }
                 return spot;
             }).filter(function (f) {
@@ -1101,12 +1122,15 @@
         });
     }
 
-    // Collapse duplicate markers: same name → one, or same type within proximity threshold
+    // Collapse duplicate markers: same name → one, or same type within proximity threshold.
+    // Polygon habitat types (beach, saltmarsh, mangrove, etc.) skip centroid-proximity
+    // dedup entirely — adjacent polygon patches are distinct features.
     function deduplicateSpots(spots) {
-        // Proximity threshold in degrees (~180m for structure, ~450m for wide features)
-        var PROX = { inlet: 0.005, marina: 0.004, beach: 0.006,
-                     grass_flat: 0.004, saltmarsh: 0.004,
-                     tidal_flat: 0.004, mangrove: 0.004, _default: 0.002 };
+        // 0 = skip proximity dedup for polygon habitat types
+        var PROX = { inlet: 0.005, marina: 0.004,
+                     beach: 0, grass_flat: 0, saltmarsh: 0,
+                     tidal_flat: 0, mangrove: 0, oyster_reef: 0,
+                     _default: 0.002 };
         var namedSeen = {};  // "type|lowercaseName" → true
         var out = [];
 
@@ -1117,14 +1141,17 @@
                 if (namedSeen[nameKey]) return;
                 namedSeen[nameKey] = true;
             }
-            // Proximity deduplication — avoid stacking markers for the same physical feature
-            var thresh = PROX[spot.type] || PROX._default;
-            var tooClose = out.some(function (k) {
-                return k.type === spot.type &&
-                       Math.abs(k.lat - spot.lat) < thresh &&
-                       Math.abs(k.lng - spot.lng) < thresh;
-            });
-            if (!tooClose) out.push(spot);
+            // Proximity dedup — skip for polygon area types (thresh === 0)
+            var thresh = PROX.hasOwnProperty(spot.type) ? PROX[spot.type] : PROX._default;
+            if (thresh > 0) {
+                var tooClose = out.some(function (k) {
+                    return k.type === spot.type &&
+                           Math.abs(k.lat - spot.lat) < thresh &&
+                           Math.abs(k.lng - spot.lng) < thresh;
+                });
+                if (tooClose) return;
+            }
+            out.push(spot);
         });
         return out;
     }
