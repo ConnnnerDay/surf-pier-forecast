@@ -791,11 +791,32 @@
         }
 
         var b = map.getBounds();
-        // Round to 0.2° grid so panning slightly still hits the cache
-        var s = Math.floor(b.getSouth() * 5) / 5;
-        var w = Math.floor(b.getWest()  * 5) / 5;
-        var n = Math.ceil(b.getNorth()  * 5) / 5;
-        var e = Math.ceil(b.getEast()   * 5) / 5;
+
+        // Expand the query bbox well beyond the visible viewport so structures
+        // in a broad coastal corridor are always loaded — e.g. zoomed into
+        // Wrightsville Beach will still show piers and inlets from Jacksonville
+        // NC all the way down to the SC state line (~80 km in each direction).
+        var EXPAND = 0.75; // degrees (~80 km at US latitudes)
+
+        // Cap total span so we never exceed the backend Overpass limits
+        // (8° lat / 12° lng).  This matters at low zoom where the viewport
+        // itself is already several degrees wide.
+        var rawS = b.getSouth() - EXPAND,  rawN = b.getNorth() + EXPAND;
+        var rawW = b.getWest()  - EXPAND,  rawE = b.getEast()  + EXPAND;
+        if (rawN - rawS > 6) {
+            var midLat = (rawS + rawN) / 2;
+            rawS = midLat - 3;  rawN = midLat + 3;
+        }
+        if (rawE - rawW > 9) {
+            var midLng = (rawW + rawE) / 2;
+            rawW = midLng - 4.5; rawE = midLng + 4.5;
+        }
+
+        // Round to 0.5° grid so small pans still hit the cache
+        var s = Math.floor(rawS * 2) / 2;
+        var w = Math.floor(rawW * 2) / 2;
+        var n = Math.ceil (rawN * 2) / 2;
+        var e = Math.ceil (rawE * 2) / 2;
 
         // Include active type filter in the cache key
         var typesStr = activeSpotTypes.length ? activeSpotTypes.slice().sort().join(',') : '';
