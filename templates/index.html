@@ -64,9 +64,9 @@
 </div>
 
 {% if cached == "refreshing" %}
-<div class="banner" id="refresh-banner">Refreshing forecast&hellip; showing cached data from <span id="refresh-banner-time" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
+<div class="banner" id="refresh-banner">Refreshing forecast&hellip; showing cached data from <span id="refresh-banner-time" class="iso-timestamp" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
 {% elif cached %}
-<div class="banner">Cached forecast from {{ forecast.generated_at }}</div>
+<div class="banner">Cached forecast from <span class="iso-timestamp" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
 {% endif %}
 
 <main id="main-content" role="main">
@@ -1257,7 +1257,7 @@ function shareConditions(btn) {
     var verdictEl = document.querySelector('.csc-verdict-badge');
     var verdict = verdictEl ? verdictEl.textContent.trim() : '';
 
-    var windEl = document.querySelector('.wind-quality-indicator');
+    var windEl = document.querySelector('.wind-direction-context') || document.querySelector('.wind-quality-indicator');
     var wind = windEl ? windEl.textContent.trim() : '';
 
     var tempEl = document.querySelector('.unit-temp');
@@ -1351,14 +1351,13 @@ function handleRefreshSubmit(form) {
 }
 
 (function() {
-    var el = document.getElementById('refresh-banner-time');
-    if (!el) return;
-    try {
-        var d = new Date(el.dataset.iso);
-        if (!isNaN(d.getTime())) {
-            el.textContent = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        }
-    } catch(e) {}
+    var fmt = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+    document.querySelectorAll('.iso-timestamp').forEach(function(el) {
+        try {
+            var d = new Date(el.dataset.iso);
+            if (!isNaN(d.getTime())) el.textContent = d.toLocaleString(undefined, fmt);
+        } catch(e) {}
+    });
 })();
 
 if (IS_REFRESHING && CURRENT_LOC_ID) {

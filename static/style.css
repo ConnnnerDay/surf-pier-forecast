@@ -75,6 +75,10 @@
   background: #2A1520;
 }
 
+[data-theme="dark"] .alert-item.alert-moderate {
+  background: #2A1E0A;
+}
+
 *,
 *::before,
 *::after {
@@ -1513,16 +1517,6 @@ h2::before {
   font-weight: 700;
   color: var(--text-muted);
   letter-spacing: 0.02em;
-}
-
-.score-fill--possible {
-  background: #D97706;
-}
-
-.score-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -1531,7 +1525,7 @@ h2::before {
 .species-regs {
   margin-top: 0.35rem;
   padding: 0.4rem 0.6rem;
-  background: #fafbfc;
+  background: var(--bg-subtle);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--sea-green);
@@ -1622,7 +1616,7 @@ h2::before {
   margin: 0.5rem 0 0.75rem;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
-  background: #fafbfc;
+  background: var(--bg-subtle);
   padding: 0.5rem;
   overflow: hidden;
 }
@@ -2056,6 +2050,10 @@ h2::before {
   background: #eff6ff;
 }
 
+[data-theme="dark"] .lure-bag-btn:hover {
+  background: var(--bg-subtle);
+}
+
 .lure-pick-card.in-bag .lure-bag-btn {
   background: #0D2240;
   color: white;
@@ -2351,6 +2349,12 @@ h2::before {
   background: #fee2e2;
   color: var(--red);
   border-color: #fca5a5;
+}
+
+[data-theme="dark"] .lure-result-add-btn.in-bag:hover {
+  background: rgba(220, 38, 38, 0.15);
+  color: var(--red);
+  border-color: rgba(220, 38, 38, 0.35);
 }
 
 /* ── Your Bag section ── */
@@ -2920,13 +2924,14 @@ h2::before {
 
   .outlook-header {
     align-items: flex-start;
-    min-width: 80px;
+    min-width: 64px;
+    flex-shrink: 0;
   }
 
   .outlook-details {
     flex-direction: row;
     gap: 1rem;
-    width: auto;
+    flex: 1;
   }
 
   .outlook-detail {
@@ -7836,6 +7841,11 @@ footer p {
   padding: 0.5rem;
   overflow: hidden;
 }
+/* Tide chart SVG — use CSS fill/stroke so dark mode vars apply */
+.tide-chart-label   { fill: var(--text); }
+.tide-chart-sublabel { fill: var(--text-muted); }
+.tide-chart-line    { stroke: var(--ocean); }
+
 .tide-svg-wrap svg {
   display: block;
   width: 100%;
@@ -10485,19 +10495,31 @@ body.has-app-header main {
   font-family: 'Manrope', sans-serif;
 }
 
-/* Color-only treatment — no pills for the big verdict */
+/* Color-only treatment — no pills for the big verdict.
+   These sit on the always-dark navy header so colors must be bright enough to pop.
+   Must reset background/border here (higher specificity than .csc-verdict-badge alone). */
 .verdict-excellent.csc-verdict-badge,
 .verdict-good.csc-verdict-badge,
-.verdict-fishable.csc-verdict-badge { color: #059669; }
+.verdict-fishable.csc-verdict-badge {
+  color: #34D399; background: none; border: none; padding: 0; border-radius: 0;
+}
 
-.verdict-fair.csc-verdict-badge { color: #D97706; }
+.verdict-fair.csc-verdict-badge {
+  color: #FBBF24; background: none; border: none; padding: 0; border-radius: 0;
+}
 
-.verdict-challenging.csc-verdict-badge { color: #EA580C; }
+.verdict-challenging.csc-verdict-badge {
+  color: #FB923C; background: none; border: none; padding: 0; border-radius: 0;
+}
 
 .verdict-poor.csc-verdict-badge,
-.verdict-not-worth-it.csc-verdict-badge { color: #DC2626; }
+.verdict-not-worth-it.csc-verdict-badge {
+  color: #F87171; background: none; border: none; padding: 0; border-radius: 0;
+}
 
-.verdict-unknown.csc-verdict-badge { color: var(--text-muted); font-size: 1.8rem; }
+.verdict-unknown.csc-verdict-badge {
+  color: rgba(255,255,255,0.45); font-size: 1.8rem; background: none; border: none; padding: 0; border-radius: 0;
+}
 
 .csc-verdict-summary {
   font-size: 0.82rem;
