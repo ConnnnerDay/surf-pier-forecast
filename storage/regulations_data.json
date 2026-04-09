@@ -18157,6 +18157,69 @@
         "season": "Open year-round",
         "notes": "Tilapia are invasive in HI. No bag limit — harvest encouraged.",
         "source": "DLNR"
+      },
+      "great_barracuda": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Great barracuda (kaku) are common in Hawaii. No bag limit. Use caution with large fish (ciguatera risk in some areas).",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit are found in Hawaiian flats. No specific bag limit.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "bigeye_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Bigeye tuna (ahi) caught on deep-drop and offshore in Hawaii. No bag limit.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna (aku) caught from shore and offshore in Hawaii. No bag limit. Excellent eating.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blue sharks occur in Hawaiian offshore waters. No specific state regulation.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "great_hammerhead_shark": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Prohibited",
+        "notes": "All hammerhead sharks are protected in Hawaii state waters. Release immediately.",
+        "source": "DLNR Division of Aquatic Resources; NOAA Fisheries"
+      },
+      "sailfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific sailfish caught from Hawaii offshore. No bag limit. Excellent fighters.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet (amaama) are a traditional Hawaiian food fish. No bag limit.",
+        "source": "DLNR Division of Aquatic Resources"
+      },
+      "goliath_grouper": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Prohibited from take",
+        "notes": "Goliath grouper do not occur in Hawaii waters. Hawaii's deep-water groupers (hapu'upu'u) are managed separately.",
+        "source": "DLNR Division of Aquatic Resources"
       }
     },
     "NH": {
@@ -18507,6 +18570,104 @@
         "season": "Open year-round",
         "notes": "Sheepshead found around structure in Delaware River/Bay.",
         "source": "PA Fish & Boat Commission"
+      },
+      "atlantic_cod": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Offshore winter only (rare)",
+        "notes": "Cod are very rare in PA waters; possible on offshore trips from NJ/DE. Follow NOAA rules.",
+        "source": "PA Fish & Boat Commission; NOAA Fisheries"
+      },
+      "haddock": {
+        "min_size": "17 in TL",
+        "bag_limit": "20 per day",
+        "season": "Offshore only (extremely rare)",
+        "notes": "Haddock extremely rare near PA; would require offshore charter trips.",
+        "source": "PA Fish & Boat Commission; NOAA Fisheries"
+      },
+      "atlantic_pollock": {
+        "min_size": "19 in TL",
+        "bag_limit": "10 per day",
+        "season": "Winter offshore",
+        "notes": "Atlantic pollock very rare in PA; offshore charter territory only.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "atlantic_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day",
+        "season": "Apr – Oct (rare)",
+        "notes": "Atlantic mackerel may be caught in lower Delaware Bay during their migrations.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "false_albacore": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Aug – Nov (rare)",
+        "notes": "False albacore (little tunny) occasionally enter Delaware Bay in fall.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "greater_amberjack": {
+        "min_size": "28 in FL",
+        "bag_limit": "1 per day",
+        "season": "Summer offshore (very rare)",
+        "notes": "Greater amberjack extremely rare in PA waters; offshore territory.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish in Delaware Bay and offshore PA waters. Follow NOAA regulations.",
+        "source": "PA Fish & Boat Commission; NOAA Fisheries"
+      },
+      "american_lobster": {
+        "min_size": "3.25 in CL",
+        "bag_limit": "6 per day",
+        "season": "Open year-round",
+        "notes": "American lobster in Delaware Bay. PA follows ASMFC recreational rules.",
+        "source": "PA Fish & Boat Commission; ASMFC"
+      },
+      "longfin_squid": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "May – Nov",
+        "notes": "Longfin squid jigged from Delaware River piers and bridges.",
+        "source": "PA Fish & Boat Commission; NOAA Fisheries"
+      },
+      "atlantic_menhaden": {
+        "min_size": "No minimum",
+        "bag_limit": "5 quarts per vessel",
+        "season": "Open year-round",
+        "notes": "Menhaden used as bait in Delaware Bay fishing for striped bass and bluefish.",
+        "source": "PA Fish & Boat Commission; ASMFC"
+      },
+      "blue_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (offshore)",
+        "notes": "Blue sharks on offshore charter trips from PA/NJ area. NOAA Atlantic shark rules apply.",
+        "source": "PA Fish & Boat Commission; NOAA Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab in Delaware Bay from PA. Follow ASMFC recreational limits.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "king_mackerel": {
+        "min_size": "24 in FL",
+        "bag_limit": "3 per day",
+        "season": "Summer offshore (extremely rare)",
+        "notes": "King mackerel extremely rare in PA — far out of normal range.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Summer offshore (very rare)",
+        "notes": "Mahi-mahi very rare near PA; offshore Gulf Stream territory.",
+        "source": "PA Fish & Boat Commission"
       }
     },
     "AK": {
@@ -18671,6 +18832,181 @@
         "bag_limit": "0",
         "season": "Not present",
         "notes": "Black sea bass do not occur in AK waters.",
+        "source": "ADF&G"
+      },
+      "pacific_cod": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific cod are abundant in AK waters. Federally managed. No recreational bag limit.",
+        "source": "ADF&G; NOAA Fisheries"
+      },
+      "pacific_spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific spiny dogfish are common in AK. No specific bag limit. Verify ADF&G rules.",
+        "source": "ADF&G"
+      },
+      "pacific_hake": {
+        "min_size": "No minimum",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Pacific hake (whiting) present in AK offshore waters. Federally managed.",
+        "source": "ADF&G; NOAA Fisheries"
+      },
+      "rockfish_black_blue": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round; area closures apply",
+        "notes": "Black and blue rockfish aggregate limit. Verify ADF&G rockfish regulations by area.",
+        "source": "ADF&G"
+      },
+      "walleye_pollock": {
+        "min_size": "No minimum",
+        "bag_limit": "No recreational limit",
+        "season": "Open year-round",
+        "notes": "Walleye pollock are extremely abundant in AK. Federally managed; no recreational bag limit.",
+        "source": "ADF&G; NOAA Fisheries"
+      },
+      "steelhead": {
+        "min_size": "No minimum",
+        "bag_limit": "2 hatchery fish per day",
+        "season": "Varies by river; check ADF&G",
+        "notes": "Wild steelhead must be released in most AK systems. Only marked (hatchery) fish may be retained.",
+        "source": "ADF&G"
+      },
+      "dolly_varden": {
+        "min_size": "No minimum",
+        "bag_limit": "5 per day",
+        "season": "Open in most streams; check for closures",
+        "notes": "Dolly Varden regulations vary by river and watershed in AK. Verify current ADF&G rules.",
+        "source": "ADF&G"
+      },
+      "sablefish_pacific": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Sablefish (black cod) are common in AK deep water. Recreational bag limit 10/day.",
+        "source": "ADF&G; NOAA Fisheries"
+      },
+      "pacific_ocean_perch": {
+        "min_size": "No minimum",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Pacific ocean perch are an important AK species, included in general rockfish bag limits.",
+        "source": "ADF&G"
+      },
+      "surf_smelt": {
+        "min_size": "No minimum",
+        "bag_limit": "10 lbs per person",
+        "season": "During run seasons",
+        "notes": "Surf smelt dip-netting in AK varies by beach and run. Verify current ADF&G rules.",
+        "source": "ADF&G"
+      },
+      "eulachon": {
+        "min_size": "No minimum",
+        "bag_limit": "No recreational limit",
+        "season": "Spring run (Mar-May); check for closures",
+        "notes": "Eulachon (hooligan) are an important traditional AK fishery. Check ADF&G for closures.",
+        "source": "ADF&G"
+      },
+      "broadnose_sevengill_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Broadnose sevengill sharks found in SE AK nearshore. No specific bag limit.",
+        "source": "ADF&G"
+      },
+      "pacific_electric_ray": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Protected — no take",
+        "notes": "Pacific electric rays are protected in AK. Do not touch — dangerous electric shock hazard.",
+        "source": "ADF&G"
+      },
+      "petrale_sole": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Petrale sole present in AK offshore. Included in general flatfish regulations.",
+        "source": "ADF&G"
+      },
+      "rock_sole": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Rock sole are common in AK. Included in general flatfish bag limits.",
+        "source": "ADF&G"
+      },
+      "dover_sole": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Dover sole present in AK deep water. General flatfish regulations apply.",
+        "source": "ADF&G"
+      },
+      "rex_sole": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Rex sole found in AK offshore waters. General flatfish regulations apply.",
+        "source": "ADF&G"
+      },
+      "flathead_sole": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Flathead sole common in AK. General flatfish regulations apply.",
+        "source": "ADF&G"
+      },
+      "yellowfin_sole": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Yellowfin sole abundant in AK offshore. General flatfish bag limits apply.",
+        "source": "ADF&G"
+      },
+      "longnose_skate": {
+        "min_size": "No minimum",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Longnose skate common in AK waters. No specific bag limit; general saltwater rules apply.",
+        "source": "ADF&G"
+      },
+      "wolf_eel": {
+        "min_size": "No minimum",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Wolf eel are present in AK rocky areas. Verify ADF&G bag limit.",
+        "source": "ADF&G"
+      },
+      "widow_rockfish": {
+        "min_size": "No minimum",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round; depth restrictions apply",
+        "notes": "Widow rockfish included in AK rockfish aggregate bag limit.",
+        "source": "ADF&G"
+      },
+      "yellowtail_rockfish": {
+        "min_size": "No minimum",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Yellowtail rockfish included in AK rockfish aggregate.",
+        "source": "ADF&G"
+      },
+      "quillback_rockfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Quillback rockfish present in SE AK. Included in rockfish aggregate.",
+        "source": "ADF&G"
+      },
+      "copper_rockfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Copper rockfish in SE AK. Included in rockfish aggregate bag limit.",
         "source": "ADF&G"
       }
     },
