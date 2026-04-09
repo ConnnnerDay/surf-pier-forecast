@@ -22,12 +22,52 @@ from __future__ import annotations
 
 import json as _json
 import logging
+import time as _time
 import urllib.parse
 from typing import Any, Dict, List, Optional, Set
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+# ── Result cache  ─────────────────────────────────────────────────────────────
+# Keyed on (south2dp, west2dp, north2dp, east2dp, frozenset(active_types)).
+# Entries expire after _CACHE_TTL seconds; the dict is capped at _CACHE_MAX
+# entries — oldest insertion is dropped first once the cap is hit.
+
+_CACHE: Dict[tuple, Dict[str, Any]] = {}   # {key: {"ts": float, "data": list}}
+_CACHE_TTL: int  = 1800   # 30 minutes — piers and reefs don't move
+_CACHE_MAX: int  = 256    # max bbox+types combinations kept in memory
+
+
+def _cache_key(
+    south: float, west: float, north: float, east: float, types: Set[str]
+) -> tuple:
+    """Stable, hashable cache key rounded to 2 decimal places (~1 km grid)."""
+    return (round(south, 2), round(west, 2), round(north, 2), round(east, 2),
+            frozenset(types))
+
+
+def _cache_evict() -> None:
+    """Purge entries older than TTL; if still over cap, drop oldest by insertion.
+
+    Uses .pop() and try/except to handle concurrent deletes from multiple
+    Flask worker threads without raising KeyError.
+    """
+    now = _time.time()
+    stale = [k for k, v in list(_CACHE.items()) if now - v["ts"] >= _CACHE_TTL]
+    for k in stale:
+        _CACHE.pop(k, None)          # safe if another thread already removed it
+    while len(_CACHE) >= _CACHE_MAX:
+        try:
+            del _CACHE[next(iter(_CACHE))]
+        except (KeyError, StopIteration):
+            break                    # another thread cleared it first
+
+
+def cache_clear() -> None:
+    """Remove all cached results.  Intended for tests and cache-invalidation hooks."""
+    _CACHE.clear()
 
 # ── Recognised structure types  ───────────────────────────────────────────────
 # Matches SPOT_TYPES in static/js/fishing_map.js
@@ -627,6 +667,14 @@ def find_fish_structures(
     if not active_types:
         return []
 
+    # ── Cache check  ─────────────────────────────────────────────────────────
+    key    = _cache_key(south, west, north, east, active_types)
+    cached = _CACHE.get(key)
+    if cached and (_time.time() - cached["ts"]) < _CACHE_TTL:
+        logger.debug("find_fish_structures cache hit key=%s", key)
+        return cached["data"]
+
+    # ── Fetch from sources  ───────────────────────────────────────────────────
     osm_spots  = fetch_osm_structures(south, west, north, east, active_types)
     noaa_spots = fetch_noaa_structures(south, west, north, east, active_types)
 
@@ -649,4 +697,10 @@ def find_fish_structures(
         len(all_spots),
         len(deduped),
     )
+
+    # ── Cache store  ──────────────────────────────────────────────────────────
+    if len(_CACHE) >= _CACHE_MAX:
+        _cache_evict()
+    _CACHE[key] = {"ts": _time.time(), "data": deduped}
+
     return deduped

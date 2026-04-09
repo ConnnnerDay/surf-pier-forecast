@@ -70,9 +70,12 @@
     var spotCache        = {};       // bbox+types key → array of spot objects
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
+    var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
+    var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
+    var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
 
     // ─── Structure-mode state ─────────────────────────────────────────────────
     var structureMode       = false;
@@ -506,14 +509,31 @@
         var bbox  = s + ',' + w + ',' + n + ',' + e;
         var tags  = def.tags.map(function (t) { return t + '(' + bbox + ');'; }).join('');
         var query = '[out:json][timeout:20];(' + tags + ');out center;';
+        var body  = 'data=' + encodeURIComponent(query);
 
-        fetch(OVERPASS_URL, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body:    'data=' + encodeURIComponent(query)
-        })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        // Stamp this request so late responses from a previous species/pan are discarded.
+        var thisAiGen = ++_aiReqGen;
+
+        function tryAIOverpass(urlIdx) {
+            return fetch(OVERPASS_URLS[urlIdx], {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body:    body,
+            }).then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).catch(function (err) {
+                if (urlIdx + 1 < OVERPASS_URLS.length) {
+                    console.warn('[fishing-map] AI habitat: mirror ' + OVERPASS_URLS[urlIdx] + ' failed, trying next…');
+                    return tryAIOverpass(urlIdx + 1);
+                }
+                throw err;
+            });
+        }
+
+        tryAIOverpass(0)
         .then(function (data) {
+            if (thisAiGen !== _aiReqGen) return; // superseded by newer species/pan
             var features = (data.elements || []).map(function (el) {
                 return {
                     lat:     el.lat  || (el.center && el.center.lat),
@@ -525,7 +545,9 @@
             aiCache[key] = features;
             renderAIHabitatSpots(features, habitatType);
         })
-        .catch(function () {});
+        .catch(function (err) {
+            console.warn('[fishing-map] AI habitat query failed:', err);
+        });
     }
 
     function scheduleAIQuery() {
@@ -639,6 +661,40 @@
         });
     }
 
+    // ── Structure-query loading / error UI helpers ────────────────────────────
+    // Use a ref-count so overlapping requests (e.g. rapid pan + type toggle)
+    // don't hide the spinner prematurely when the first of two requests lands.
+
+    // Show the inline spinner in the filter bar header.
+    function showStructLoading() {
+        _structLoadCount++;
+        var el = document.getElementById('fmap-struct-spinner');
+        if (el) el.hidden = false;
+    }
+
+    // Decrement the ref-count; hide the spinner only when all requests finish.
+    function hideStructLoading() {
+        _structLoadCount = Math.max(0, _structLoadCount - 1);
+        if (_structLoadCount > 0) return;
+        var el = document.getElementById('fmap-struct-spinner');
+        if (el) el.hidden = true;
+    }
+
+    // Show the dismissible error banner with a custom message.
+    function showStructError(msg) {
+        var banner = document.getElementById('fmap-struct-error');
+        var txt    = document.getElementById('fmap-struct-error-msg');
+        if (!banner) return;
+        if (txt) txt.textContent = msg;
+        banner.hidden = false;
+    }
+
+    // Programmatically hide the error banner (called on next successful load).
+    function hideStructError() {
+        var banner = document.getElementById('fmap-struct-error');
+        if (banner) banner.hidden = true;
+    }
+
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
     // Builds a cache key that includes the type filter so different selections
     // are cached independently.  Falls back to Overpass if the server fails.
@@ -663,6 +719,7 @@
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key]);
+            _updateSpotTypeHint();
             return;
         }
 
@@ -670,128 +727,249 @@
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
         if (typesStr) url += '&types=' + encodeURIComponent(typesStr);
 
+        // Stamp this request with the current generation so that if the user
+        // pans again before this resolves, the late-arriving response is
+        // silently discarded rather than overwriting fresher results.
+        var thisGen = ++_structReqGen;
+
+        showStructLoading();
+        hideStructError();
+
         fetch(url)
-            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
+                // A newer request has already started — drop this stale result.
+                if (thisGen !== _structReqGen) { hideStructLoading(); return; }
+
+                hideStructLoading();
+
+                // Server signals the viewport is too large — show hint, clear layers.
+                if (data.zoom_required) {
+                    fishingSpotLayer.clearLayers();
+                    var hint = document.getElementById('fmap-struct-filters-hint');
+                    if (hint) hint.textContent = 'Zoom in further to see structure markers';
+                    return;
+                }
+
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;
                 renderFishingSpots(spots);
+                // Restore normal hint text (may have been set to zoom-in message)
+                _updateSpotTypeHint();
             })
             .catch(function (err) {
+                // Drop response if superseded by a newer request.
+                if (thisGen !== _structReqGen) { hideStructLoading(); return; }
+                // Keep spinner visible while Overpass fallback runs;
+                // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
-                _queryFishingSpotsFallback(s, w, n, e, key);
+                showStructError("Couldn't load structure data; showing basic map markers.");
+                _queryFishingSpotsFallback(s, w, n, e, key, thisGen);
             });
     }
 
     // ── Overpass fallback (used when /api/map/structures is unreachable) ───────
     // Preserves the full tag-matching and dedup logic so the map stays useful
     // even if the server is temporarily down.
-    function _queryFishingSpotsFallback(s, w, n, e, key) {
+
+    // Map an OSM element's tag dict to a SPOT_TYPES key, or null to discard.
+    // Mirrors _classify_osm_tags() in services/fish_structures.py — keep in sync.
+    function _classifyOsmTags(tags) {
+        var natural  = tags.natural  || '';
+        var wetland  = tags.wetland  || '';
+        var waterway = tags.waterway || '';
+        var manMade  = tags.man_made || '';
+        var seamark  = tags['seamark:type'] || '';
+
+        if (natural === 'wetland') {
+            if (wetland === 'seagrass')  return 'grass_flat';
+            if (wetland === 'saltmarsh') return 'saltmarsh';
+            if (wetland === 'mangrove')  return 'mangrove';
+            if (wetland === 'tidalflat') return 'tidal_flat';
+            return null;
+        }
+        if (natural === 'mud')       return 'tidal_flat';
+        if (natural === 'beach')     return 'beach';
+        if (natural === 'bay')       return 'inlet';
+        if (natural === 'reef')      return 'reef';
+        if (natural === 'shoal' || natural === 'rock') return 'shoal';
+        if (natural === 'cape' || natural === 'headland' || natural === 'peninsula') return 'point';
+
+        if (tags.harbour === 'yes') return 'inlet';
+
+        if (tags.landuse === 'aquaculture' &&
+            (tags.produce === 'oyster' || tags.product === 'oysters')) {
+            return 'oyster_reef';
+        }
+
+        if (tags.historic === 'wreck' || seamark === 'wreck') return 'wreck';
+
+        if (waterway === 'tidal_channel' || waterway === 'river' ||
+            waterway === 'canal'         || waterway === 'stream') return 'inlet';
+        if (waterway === 'weir' || waterway === 'dam') return 'jetty';
+        if (waterway === 'dock')                       return 'pier';
+
+        if (manMade === 'pier'  || tags.leisure === 'pier')   return 'pier';
+        if (manMade === 'jetty')                              return 'jetty';
+        if (manMade === 'groyne' || manMade === 'breakwater') return 'jetty';
+        if (manMade === 'wharf')                              return 'pier';
+        if (manMade === 'lighthouse' || manMade === 'offshore_platform') return 'point';
+        if (manMade === 'buoy')                               return 'buoy';
+
+        if (tags.bridge === 'yes' && tags.highway) return 'bridge';
+
+        if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
+        if (tags.amenity === 'boat_ramp') return 'pier';
+        if (tags.leisure === 'fishing')   return 'fishing';
+
+        if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
+        if (tags.shop === 'fishing') return 'fishing_shop';
+
+        return null;
+    }
+
+    // Build a type-scoped Overpass QL query.
+    // Pass an empty array for `types` to include all structure types.
+    // Mirrors _build_overpass_query() in services/fish_structures.py — keep in sync.
+    function _buildFallbackQuery(bbox, types) {
+        var all  = !types.length;
+        var has  = function (t) { return all || types.indexOf(t) !== -1; };
+        var p    = [];  // query statement parts
+
+        if (has('grass_flat')) {
+            p.push('way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
+                   'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');');
+        }
+        if (has('saltmarsh')) {
+            p.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');');
+        }
+        if (has('mangrove')) {
+            p.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');');
+        }
+        if (has('tidal_flat')) {
+            p.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
+                   'way["natural"="mud"](' + bbox + ');');
+        }
+        if (has('inlet')) {
+            p.push('way["waterway"="tidal_channel"](' + bbox + ');',
+                   'way["waterway"="river"](' + bbox + ');',
+                   'way["waterway"="canal"](' + bbox + ');',
+                   'node["waterway"="stream"](' + bbox + ');',
+                   'way["waterway"="stream"](' + bbox + ');',
+                   'node["harbour"="yes"](' + bbox + ');',
+                   'way["harbour"="yes"](' + bbox + ');',
+                   'node["natural"="bay"](' + bbox + ');',
+                   'way["natural"="bay"](' + bbox + ');');
+        }
+        if (has('oyster_reef') || has('reef')) {
+            p.push('node["natural"="reef"](' + bbox + ');',
+                   'way["natural"="reef"](' + bbox + ');',
+                   'node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+        }
+        if (has('wreck')) {
+            p.push('node["historic"="wreck"](' + bbox + ');',
+                   'way["historic"="wreck"](' + bbox + ');',
+                   'node["seamark:type"="wreck"](' + bbox + ');');
+        }
+        if (has('shoal')) {
+            p.push('node["natural"="shoal"](' + bbox + ');',
+                   'way["natural"="shoal"](' + bbox + ');',
+                   'node["natural"="rock"](' + bbox + ');');
+        }
+        if (has('pier')) {
+            p.push('node["man_made"="pier"](' + bbox + ');',
+                   'way["man_made"="pier"](' + bbox + ');',
+                   'node["leisure"="pier"](' + bbox + ');',
+                   'way["leisure"="pier"](' + bbox + ');',
+                   'node["waterway"="dock"](' + bbox + ');',
+                   'way["waterway"="dock"](' + bbox + ');',
+                   'node["man_made"="wharf"](' + bbox + ');',
+                   'way["man_made"="wharf"](' + bbox + ');',
+                   'node["amenity"="boat_ramp"](' + bbox + ');',
+                   'way["amenity"="boat_ramp"](' + bbox + ');');
+        }
+        if (has('jetty')) {
+            p.push('node["man_made"="jetty"](' + bbox + ');',
+                   'way["man_made"="jetty"](' + bbox + ');',
+                   'node["man_made"="groyne"](' + bbox + ');',
+                   'way["man_made"="groyne"](' + bbox + ');',
+                   'node["man_made"="breakwater"](' + bbox + ');',
+                   'way["man_made"="breakwater"](' + bbox + ');',
+                   'node["waterway"="weir"](' + bbox + ');',
+                   'way["waterway"="weir"](' + bbox + ');',
+                   'node["waterway"="dam"](' + bbox + ');');
+        }
+        if (has('bridge')) {
+            p.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
+        }
+        if (has('marina')) {
+            p.push('node["amenity"="marina"](' + bbox + ');',
+                   'way["amenity"="marina"](' + bbox + ');',
+                   'node["leisure"="marina"](' + bbox + ');',
+                   'way["leisure"="marina"](' + bbox + ');',
+                   'relation["leisure"="marina"](' + bbox + ');');
+        }
+        if (has('point')) {
+            p.push('node["natural"="cape"](' + bbox + ');',
+                   'node["natural"="headland"](' + bbox + ');',
+                   'way["natural"="headland"](' + bbox + ');',
+                   'node["natural"="peninsula"](' + bbox + ');',
+                   'node["man_made"="lighthouse"](' + bbox + ');',
+                   'node["man_made"="offshore_platform"](' + bbox + ');');
+        }
+        if (has('beach')) {
+            p.push('way["natural"="beach"](' + bbox + ');');
+        }
+        if (has('fishing')) {
+            p.push('node["leisure"="fishing"](' + bbox + ');',
+                   'way["leisure"="fishing"](' + bbox + ');');
+        }
+        if (has('buoy')) {
+            p.push('node["seamark:type"="buoy_lateral"](' + bbox + ');',
+                   'node["seamark:type"="buoy_cardinal"](' + bbox + ');',
+                   'node["seamark:type"="buoy_safe_water"](' + bbox + ');',
+                   'node["man_made"="buoy"](' + bbox + ');');
+        }
+        if (has('fishing_shop')) {
+            p.push('node["shop"="fishing"](' + bbox + ');');
+        }
+
+        if (!p.length) return '';
+        return '[out:json][timeout:30];(' + p.join('') + ');out center;';
+    }
+
+    // gen: the _structReqGen value captured when the parent queryStructures() call
+    // started.  If a newer call has since fired, we discard results rather than
+    // rendering stale data over fresh markers.
+    function _queryFishingSpotsFallback(s, w, n, e, key, gen) {
         var bbox = s + ',' + w + ',' + n + ',' + e;
-        var q = '[out:json][timeout:30];(' +
-            // Seagrass / grass flats
-            'way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');' +
-            'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');' +
-            // Saltmarsh edges
-            'way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');' +
-            // Mangroves
-            'way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');' +
-            // Tidal flats / mudflats
-            'way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');' +
-            'way["natural"="mud"](' + bbox + ');' +
-            // Tidal channels, rivers, canals, creek mouths
-            'way["waterway"="tidal_channel"](' + bbox + ');' +
-            'way["waterway"="river"](' + bbox + ');' +
-            'way["waterway"="canal"](' + bbox + ');' +
-            'node["waterway"="stream"](' + bbox + ');' +
-            'way["waterway"="stream"](' + bbox + ');' +
-            // Weirs and dams
-            'node["waterway"="weir"](' + bbox + ');' +
-            'way["waterway"="weir"](' + bbox + ');' +
-            'node["waterway"="dam"](' + bbox + ');' +
-            // Inlets, harbors, bays
-            'node["harbour"="yes"](' + bbox + ');' +
-            'way["harbour"="yes"](' + bbox + ');' +
-            'node["natural"="bay"](' + bbox + ');' +
-            'way["natural"="bay"](' + bbox + ');' +
-            // Oyster reefs and natural reefs
-            'node["natural"="reef"](' + bbox + ');' +
-            'way["natural"="reef"](' + bbox + ');' +
-            'node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');' +
-            'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');' +
-            'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');' +
-            // Wrecks
-            'node["historic"="wreck"](' + bbox + ');' +
-            'way["historic"="wreck"](' + bbox + ');' +
-            'node["seamark:type"="wreck"](' + bbox + ');' +
-            // Shoals and rocky outcrops
-            'node["natural"="shoal"](' + bbox + ');' +
-            'way["natural"="shoal"](' + bbox + ');' +
-            'node["natural"="rock"](' + bbox + ');' +
-            // Piers and jetties
-            'node["man_made"="pier"](' + bbox + ');' +
-            'way["man_made"="pier"](' + bbox + ');' +
-            'node["leisure"="pier"](' + bbox + ');' +
-            'way["leisure"="pier"](' + bbox + ');' +
-            'node["man_made"="jetty"](' + bbox + ');' +
-            'way["man_made"="jetty"](' + bbox + ');' +
-            // Groynes and breakwaters
-            'node["man_made"="groyne"](' + bbox + ');' +
-            'way["man_made"="groyne"](' + bbox + ');' +
-            'node["man_made"="breakwater"](' + bbox + ');' +
-            'way["man_made"="breakwater"](' + bbox + ');' +
-            // Bridges (bridge=yes on highway ways)
-            'way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');' +
-            // Docks and wharfs
-            'node["waterway"="dock"](' + bbox + ');' +
-            'way["waterway"="dock"](' + bbox + ');' +
-            'node["man_made"="wharf"](' + bbox + ');' +
-            'way["man_made"="wharf"](' + bbox + ');' +
-            // Marinas
-            'node["amenity"="marina"](' + bbox + ');' +
-            'way["amenity"="marina"](' + bbox + ');' +
-            'node["leisure"="marina"](' + bbox + ');' +
-            'way["leisure"="marina"](' + bbox + ');' +
-            'relation["leisure"="marina"](' + bbox + ');' +
-            // Boat ramps
-            'node["amenity"="boat_ramp"](' + bbox + ');' +
-            'way["amenity"="boat_ramp"](' + bbox + ');' +
-            // Headlands, capes, points
-            'node["natural"="cape"](' + bbox + ');' +
-            'node["natural"="headland"](' + bbox + ');' +
-            'way["natural"="headland"](' + bbox + ');' +
-            'node["natural"="peninsula"](' + bbox + ');' +
-            // Lighthouses and offshore platforms
-            'node["man_made"="lighthouse"](' + bbox + ');' +
-            'node["man_made"="offshore_platform"](' + bbox + ');' +
-            // Beaches
-            'way["natural"="beach"](' + bbox + ');' +
-            // Fishing spots
-            'node["leisure"="fishing"](' + bbox + ');' +
-            'way["leisure"="fishing"](' + bbox + ');' +
-            // Navigation buoys
-            'node["seamark:type"="buoy_lateral"](' + bbox + ');' +
-            'node["seamark:type"="buoy_cardinal"](' + bbox + ');' +
-            'node["seamark:type"="buoy_safe_water"](' + bbox + ');' +
-            'node["man_made"="buoy"](' + bbox + ');' +
-            // Bait shops
-            'node["shop"="fishing"](' + bbox + ');' +
-            ');out center;';
+        // Build a query scoped to active types; empty activeSpotTypes = all types.
+        var q = _buildFallbackQuery(bbox, activeSpotTypes);
+        if (!q) {
+            hideStructLoading();
+            renderFishingSpots([]);
+            return;
+        }
 
         var overpassBody = 'data=' + encodeURIComponent(q);
         function tryOverpass(urlIndex) {
             var url = OVERPASS_URLS[urlIndex] || OVERPASS_URLS[0];
             return fetch(url, {
-                method: 'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: overpassBody
+                body:    overpassBody,
             }).then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
             }).catch(function (err) {
                 if (urlIndex + 1 < OVERPASS_URLS.length) {
-                    console.warn('[fishing-map] Overpass mirror ' + url + ' failed, trying fallback…');
+                    console.warn('[fishing-map] Overpass mirror ' + url + ' failed, trying next…');
                     return tryOverpass(urlIndex + 1);
                 }
                 throw err;
@@ -800,89 +978,37 @@
 
         tryOverpass(0)
         .then(function (data) {
+            // Discard if a newer queryStructures() call has already fired.
+            if (gen !== _structReqGen) { hideStructLoading(); return; }
+
             var spots = (data.elements || []).map(function (el) {
                 var lat  = el.lat  || (el.center && el.center.lat);
                 var lng  = el.lon  || (el.center && el.center.lon);
                 var tags = el.tags || {};
-                var type;
-                if (tags.natural === 'wetland' && tags.wetland === 'seagrass') {
-                    type = 'grass_flat';
-                } else if (tags.natural === 'wetland' && tags.wetland === 'saltmarsh') {
-                    type = 'saltmarsh';
-                } else if (tags.natural === 'wetland' && tags.wetland === 'mangrove') {
-                    type = 'mangrove';
-                } else if (tags.natural === 'wetland' && tags.wetland === 'tidalflat') {
-                    type = 'tidal_flat';
-                } else if (tags.natural === 'mud') {
-                    type = 'tidal_flat';
-                } else if (tags.waterway === 'tidal_channel' || tags.waterway === 'river' ||
-                           tags.waterway === 'canal' || tags.waterway === 'stream') {
-                    type = 'inlet';
-                } else if (tags.waterway === 'weir' || tags.waterway === 'dam') {
-                    type = 'jetty';
-                } else if (tags.natural === 'beach') {
-                    type = 'beach';
-                } else if (tags.natural === 'bay' || tags.harbour === 'yes') {
-                    type = 'inlet';
-                } else if (tags.landuse === 'aquaculture' && (tags.produce === 'oyster' || tags.product === 'oysters')) {
-                    type = 'oyster_reef';
-                } else if (tags.natural === 'reef') {
-                    type = 'oyster_reef';
-                } else if (tags.historic === 'wreck' || tags['seamark:type'] === 'wreck') {
-                    type = 'wreck';
-                } else if (tags.natural === 'shoal' || tags.natural === 'rock') {
-                    type = 'shoal';
-                } else if (tags.man_made === 'pier' || tags.leisure === 'pier') {
-                    type = 'pier';
-                } else if (tags.man_made === 'jetty') {
-                    type = 'jetty';
-                } else if (tags.man_made === 'groyne' || tags.man_made === 'breakwater') {
-                    type = 'jetty';
-                } else if (tags.bridge === 'yes' && tags.highway) {
-                    type = 'bridge';
-                } else if (tags.waterway === 'dock' || tags.man_made === 'wharf') {
-                    type = 'pier';
-                } else if (tags.amenity === 'marina' || tags.leisure === 'marina') {
-                    type = 'marina';
-                } else if (tags.amenity === 'boat_ramp') {
-                    type = 'pier';
-                } else if (tags.natural === 'cape' || tags.natural === 'headland' || tags.natural === 'peninsula') {
-                    type = 'point';
-                } else if (tags.man_made === 'lighthouse' || tags.man_made === 'offshore_platform') {
-                    type = 'point';
-                } else if (tags.leisure === 'fishing') {
-                    type = 'fishing';
-                } else if (tags['seamark:type'] && tags['seamark:type'].indexOf('buoy') === 0) {
-                    type = 'buoy';
-                } else if (tags.man_made === 'buoy') {
-                    type = 'buoy';
-                } else if (tags.shop === 'fishing') {
-                    type = 'fishing_shop';
-                } else {
-                    type = 'fishing';
-                }
-                var displayName = tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] ||
-                                  tags['addr:housename'] || '';
-                return { lat: lat, lng: lng, name: displayName, type: type };
+                var type = _classifyOsmTags(tags);
+                if (!type) return null;
+                var name = tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] ||
+                           tags['addr:housename'] || '';
+                return { lat: lat, lng: lng, name: name, type: type };
             }).filter(function (f) {
-                if (!f.lat || !f.lng) return false;
-                // Drop way-centers outside the rounded viewport
-                return s <= f.lat && f.lat <= n && w <= f.lng && f.lng <= e;
+                if (!f || !f.lat || !f.lng) return false;
+                if (f.lat < s || f.lat > n || f.lng < w || f.lng > e) return false;
+                // Belt-and-suspenders type filter; the query is already scoped
+                if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
+                return true;
             });
-
-            // Apply type filter when user has narrowed the selection
-            if (activeSpotTypes.length) {
-                spots = spots.filter(function (f) {
-                    return activeSpotTypes.indexOf(f.type) !== -1;
-                });
-            }
 
             var deduped = deduplicateSpots(spots);
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
             spotCache[key] = deduped;
+            hideStructLoading(); // request chain complete; drop spinner
             renderFishingSpots(deduped);
+            _updateSpotTypeHint();
         })
-        .catch(function (err) { console.error('[fishing-map] Overpass fallback error:', err); });
+        .catch(function (err) {
+            hideStructLoading(); // both paths must release the spinner
+            console.error('[fishing-map] Overpass fallback error:', err);
+        });
     }
 
     // Collapse duplicate markers: same name → one, or same type within proximity threshold
@@ -1078,35 +1204,28 @@
         }
     }
 
-    function renderAiHotspots(locations) {
-        if (!els.hotspotsList) return;
+    // ── Shared AI-picks rendering helpers ────────────────────────────────────
+    // Both the Spots-tab hotspot list (aiMode=true) and the dedicated AI tab
+    // panel render the same data; these two helpers keep the HTML in one place.
 
+    // Return the <li> markup for the ranked AI picks in `locations`.
+    function _aiPickItemsHtml(locations) {
         var picks = locations
             .filter(function (l) { return l.ai_pick_rank; })
             .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
-
-        if (els.hotspotCount) {
-            els.hotspotCount.textContent = picks.length ? picks.length : '';
-            els.hotspotCount.style.display = picks.length ? '' : 'none';
-        }
-
         if (!picks.length) {
-            els.hotspotsList.innerHTML = '<li class="fmap-hotspot-empty">No AI picks available</li>';
-            return;
+            return '<li class="fmap-hotspot-empty">No AI picks for current filters</li>';
         }
-
         var html = '';
         picks.forEach(function (loc) {
-            var sp     = loc.top_species && loc.top_species[0];
-            var spName = sp ? (sp.name || '') : '';
-            var reasoning = loc.ai_reasoning || '';
-            // First sentence only for the snippet
-            var snippet = reasoning.split('.')[0];
-            if (snippet && snippet.length < reasoning.length) snippet += '.';
+            var sp      = loc.top_species && loc.top_species[0];
+            var spName  = sp ? (sp.name || '') : '';
+            var reason  = loc.ai_reasoning || '';
+            var snippet = reason.split('.')[0];
+            if (snippet && snippet.length < reason.length) snippet += '.';
             var act = loc.activity || 'none';
             var cfg = ACTIVITY[act] || ACTIVITY.none;
             var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
-
             html +=
                 '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
                 (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
@@ -1120,9 +1239,12 @@
                 '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
                 '</li>';
         });
-        els.hotspotsList.innerHTML = html;
+        return html;
+    }
 
-        els.hotspotsList.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
+    // Wire fly-to + popup on each rendered AI pick <li> within `container`.
+    function _wireAiPickClicks(container) {
+        container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
             li.addEventListener('click', function () {
                 var id  = li.getAttribute('data-loc-id');
                 var loc = currentData.find(function (l) { return l.id === id; });
@@ -1131,6 +1253,17 @@
                 setTimeout(function () { showAiPickPopup(loc); }, 600);
             });
         });
+    }
+
+    function renderAiHotspots(locations) {
+        if (!els.hotspotsList) return;
+        var picks = locations.filter(function (l) { return l.ai_pick_rank; });
+        if (els.hotspotCount) {
+            els.hotspotCount.textContent = picks.length ? picks.length : '';
+            els.hotspotCount.style.display = picks.length ? '' : 'none';
+        }
+        els.hotspotsList.innerHTML = _aiPickItemsHtml(locations);
+        _wireAiPickClicks(els.hotspotsList);
     }
 
     function renderHotspots(locations) {
@@ -1402,7 +1535,9 @@
                 maxTemp:    activeMaxTemp,
                 spotTypes:  activeSpotTypes.slice()
             }));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[fishing-map] saveFilters failed:', e);
+        }
     }
 
     function loadFilters() {
@@ -1417,33 +1552,23 @@
             }
             if (f.coast && f.coast !== 'all') {
                 activeCoast = f.coast;
-                document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-coast') === f.coast);
-                });
+                setPillActive('.fmap-pill--coast', 'data-coast', f.coast);
             }
             if (f.cat) {
                 activeCat = f.cat;
-                document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === f.cat);
-                });
+                setPillActive('.fmap-pill--cat', 'data-cat', f.cat);
             }
             if (f.season) {
                 activeSeason = f.season;
-                document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-season') === f.season);
-                });
+                setPillActive('.fmap-pill--season', 'data-season', f.season);
             }
             if (f.time) {
                 activeTime = f.time;
-                document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-time') === f.time);
-                });
+                setPillActive('.fmap-pill--time', 'data-time', f.time);
             }
             if (f.tide) {
                 activeTide = f.tide;
-                document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-tide') === f.tide);
-                });
+                setPillActive('.fmap-pill--tide', 'data-tide', f.tide);
             }
             if (f.minTemp) {
                 activeMinTemp = f.minTemp;
@@ -1455,12 +1580,16 @@
                 var maxInput = document.getElementById('fmap-max-temp');
                 if (maxInput) maxInput.value = f.maxTemp;
             }
-            if (Array.isArray(f.spotTypes) && f.spotTypes.length) {
+            // Only restore from storage when restoreFromHash() hasn't already
+            // applied types from the URL — the hash (shared link) wins.
+            if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
             }
             updateAdvBadge();
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[fishing-map] loadFilters failed:', e);
+        }
     }
 
     // ─── Auto-center on saved location ───────────────────────────────────────
@@ -1481,6 +1610,12 @@
     }
 
     // ─── Fetch & render ───────────────────────────────────────────────────────
+    function _hideMainLoading() {
+        if (!els.loading) return;
+        els.loading.style.opacity = '0';
+        setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
+    }
+
     function fetchAndRender() {
         if (!map) return;
         saveFilters();
@@ -1504,10 +1639,7 @@
         fetch(url)
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
-                if (els.loading) {
-                    els.loading.style.opacity = '0';
-                    setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
-                }
+                _hideMainLoading();
 
                 currentData = data.locations || [];
 
@@ -1523,14 +1655,14 @@
                 autoZoomToSavedLocation(currentData);
                 updateZoomHint();
                 scheduleFishingSpotQuery();
+                // Reload community map pins with the updated species filter, so pins
+                // reflect the same species the user has selected in the main search.
+                if (communityLayerOn) scheduleCommunityLoad();
                 // Load community catches once map is centred on saved location
                 setTimeout(function () { loadCommunityFeed(); }, 900);
             })
             .catch(function (err) {
-                if (els.loading) {
-                    els.loading.style.opacity = '0';
-                    setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
-                }
+                _hideMainLoading();
                 console.error('[fishing-map] fetch error:', err);
             });
     }
@@ -2054,6 +2186,12 @@
                 scheduleFishingSpotQuery();
             });
         }
+
+        // Wire the error banner dismiss button so users can manually clear it.
+        var dismissBtn = document.getElementById('fmap-struct-error-dismiss');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', hideStructError);
+        }
     }
 
     // ─── Tabbed side panel ────────────────────────────────────────────────────
@@ -2089,49 +2227,13 @@
         if (refreshBtn) refreshBtn.addEventListener('click', loadCommunityFeed);
     }
 
-    // ─── AI picks list (rendered into dedicated AI tab panel) ─────────────────
+    // ─── AI picks list (dedicated AI tab panel) ─────────────────────────────
+    // Delegates to the shared helpers extracted near renderAiHotspots above.
 
     function renderAiPicksList(locations, container) {
-        var picks = locations
-            .filter(function (l) { return l.ai_pick_rank; })
-            .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
-
-        if (!picks.length) {
-            container.innerHTML = '<li class="fmap-hotspot-empty">No AI picks for current filters</li>';
-            return;
-        }
-        var html = '';
-        picks.forEach(function (loc) {
-            var sp     = loc.top_species && loc.top_species[0];
-            var spName = sp ? (sp.name || '') : '';
-            var snippet = (loc.ai_reasoning || '').split('.')[0];
-            if (snippet && snippet.length < (loc.ai_reasoning || '').length) snippet += '.';
-            var act = loc.activity || 'none';
-            var cfg = ACTIVITY[act] || ACTIVITY.none;
-            var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
-            html +=
-                '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
-                (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
-                '" data-loc-id="' + esc(loc.id) + '">' +
-                '<span class="fmap-ai-hotspot-rank">' + loc.ai_pick_rank + '</span>' +
-                '<span class="fmap-hotspot-info">' +
-                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
-                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + (wt ? ' &bull; ' + wt : '') + '</span>' : '') +
-                  (snippet ? '<span class="fmap-ai-hotspot-snippet">' + esc(snippet) + '</span>' : '') +
-                '</span>' +
-                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
-                '</li>';
-        });
-        container.innerHTML = html;
-        container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
-            li.addEventListener('click', function () {
-                var id  = li.getAttribute('data-loc-id');
-                var loc = currentData.find(function (l) { return l.id === id; });
-                if (!loc) return;
-                map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
-                setTimeout(function () { showAiPickPopup(loc); }, 600);
-            });
-        });
+        if (!container) return;
+        container.innerHTML = _aiPickItemsHtml(locations);
+        _wireAiPickClicks(container);
     }
 
     // ─── Community layer ──────────────────────────────────────────────────────
@@ -2156,6 +2258,8 @@
                    '&sw_lng=' + Math.round(sw.lng * 100) / 100 +
                    '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
                    '&ne_lng=' + Math.round(ne.lng * 100) / 100;
+        // When the user has filtered by species, show only matching catches on the map.
+        if (activeSpecies) url += '&species=' + encodeURIComponent(activeSpecies);
 
         fetch(url)
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -2180,7 +2284,9 @@
                     badge.style.display = communityData.length ? '' : 'none';
                 }
             })
-            .catch(function () {});
+            .catch(function (err) {
+                console.warn('[fishing-map] loadCommunityPins failed:', err);
+            });
     }
 
     function scheduleCommunityLoad() {

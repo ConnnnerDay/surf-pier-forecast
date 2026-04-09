@@ -1639,6 +1639,10 @@ def map_community_hotspots() -> Any:
     return jsonify({"hotspots": hotspots, "days_back": days_back})
 
 
+_STRUCT_MAX_LAT_SPAN = 8.0   # degrees — wider than this and Overpass times out
+_STRUCT_MAX_LNG_SPAN = 12.0  # degrees — matches /api/structure-spots guard
+
+
 @bp.route("/api/map/structures", methods=["GET"])
 def map_structures() -> Any:
     """Return fish-holding structures within a bounding box.
@@ -1691,6 +1695,13 @@ def map_structures() -> Any:
             "invalid_params",
             "south must be less than north",
         )), 400
+
+    # ── Viewport size guard ───────────────────────────────────────────────────
+    # Very large bboxes cause Overpass to time out and return too many features
+    # to be useful.  Signal the client to zoom in rather than issuing the query.
+    lng_span = east - west if east >= west else (east + 360 - west)
+    if (north - south) > _STRUCT_MAX_LAT_SPAN or lng_span > _STRUCT_MAX_LNG_SPAN:
+        return jsonify({"structures": [], "count": 0, "zoom_required": True})
 
     # ── Parse optional types filter ───────────────────────────────────────────
     active_types = None
