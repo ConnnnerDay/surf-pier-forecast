@@ -193,7 +193,116 @@
     "Spiny dogfish (Pacific)": "pacific_spiny_dogfish",
     "Goliath grouper (jewfish)": "goliath_grouper",
     "Striped bass (Sacramento)": "striped_bass",
-    "Wahoo (ono, Hawaii)": "wahoo"
+    "Wahoo (ono, Hawaii)": "wahoo",
+    "Whiting (sea mullet, kingfish)": "northern_kingfish",
+    "Northern puffer (blowfish)": "northern_puffer",
+    "Spot": "spot_croaker",
+    "Spot (Atlantic)": "spot_croaker",
+    "Triggerfish (gray)": "gray_triggerfish",
+    "Spadefish (Atlantic)": "atlantic_spadefish",
+    "Dusky shark": "dusky_shark",
+    "Southern stingray": "southern_stingray",
+    "Jack crevalle": "crevalle_jack",
+    "Jack crevalle (adult)": "crevalle_jack",
+    "Blue runner (hardtail)": "blue_runner",
+    "Blue runner": "blue_runner",
+    "Lookdown": "lookdown",
+    "Vermilion snapper (beeliner)": "vermilion_snapper",
+    "Vermilion snapper (beeliners)": "vermilion_snapper",
+    "Mangrove snapper (gray snapper)": "gray_snapper",
+    "Gray snapper (juvenile)": "gray_snapper",
+    "Blue marlin": "blue_marlin",
+    "Atlantic blue marlin": "blue_marlin",
+    "Blue marlin (Gulf)": "blue_marlin",
+    "White grunt": "white_grunt",
+    "Sea robin": "sea_robin",
+    "Sea robin (Northern)": "sea_robin",
+    "Northern sea robin": "sea_robin",
+    "Oyster toadfish": "oyster_toadfish",
+    "Hogfish": "hogfish",
+    "Hogfish (Atlantic)": "hogfish",
+    "Planehead filefish": "planehead_filefish",
+    "Hickory shad": "hickory_shad",
+    "American shad": "american_shad",
+    "Northern kingfish": "northern_kingfish",
+    "Gulf kingfish (sea mullet)": "southern_kingfish",
+    "Gulf kingfish (gulf whiting)": "southern_kingfish",
+    "Gulf kingfish": "southern_kingfish",
+    "Southern kingfish (sea mullet)": "southern_kingfish",
+    "Southern kingfish (ground mullet)": "southern_kingfish",
+    "Kingfish (Northern/Southern)": "northern_kingfish",
+    "Spotted seatrout (Gulf)": "spotted_seatrout",
+    "Redfish (slot size)": "red_drum",
+    "Redfish (surf)": "red_drum",
+    "Redfish (flats)": "red_drum",
+    "Redfish (red drum) juvenile": "red_drum",
+    "Redfish (Gulf red drum)": "red_drum",
+    "Red drum (adult)": "red_drum",
+    "Black drum (large bull)": "black_drum",
+    "Blue catfish (invasive tidal)": "blue_catfish",
+    "Blue catfish (tidal)": "blue_catfish",
+    "Blue catfish": "blue_catfish",
+    "Channel catfish (tidal)": "channel_catfish",
+    "Sheepshead (Atlantic)": "sheepshead",
+    "Sheepshead (Gulf)": "sheepshead",
+    "Sheepshead porgy": "sheepshead",
+    "Black sea bass (Atlantic)": "black_sea_bass",
+    "Black sea bass (NE pier)": "black_sea_bass",
+    "Black sea bass (Pacific)": "black_sea_bass",
+    "Spanish mackerel (Atlantic)": "spanish_mackerel",
+    "Atlantic Spanish mackerel": "spanish_mackerel",
+    "Atlantic mackerel (shore)": "atlantic_mackerel",
+    "Flounder (Gulf)": "gulf_flounder",
+    "Gulf flounder": "gulf_flounder",
+    "Southern flounder (gigging)": "southern_flounder",
+    "Flounder (winter)": "winter_flounder",
+    "Barred surfperch": "barred_surfperch",
+    "Barred sand bass": "sand_bass",
+    "Calico surfperch": "calico_surfperch",
+    "Rubberlip seaperch": "rubberlip_surfperch",
+    "Rubberlip perch": "rubberlip_surfperch",
+    "Starry flounder": "starry_flounder",
+    "Vermilion rockfish": "vermilion_rockfish",
+    "Blue rockfish": "blue_rockfish",
+    "Grass rockfish": "grass_rockfish",
+    "Pacific mackerel (chub mackerel)": "pacific_mackerel",
+    "Pacific mackerel": "pacific_mackerel",
+    "Jack mackerel (Spanish jack)": "pacific_jack_mackerel",
+    "Jack mackerel (Pacific)": "pacific_jack_mackerel",
+    "Yellowfin croaker": "yellowfin_croaker",
+    "Shovelnose guitarfish": "shovelnose_guitarfish",
+    "Bat ray": "bat_ray",
+    "Bat ray (Pacific)": "bat_ray",
+    "Thornback ray": "thornback_ray",
+    "Rock greenling": "rock_greenling",
+    "Pacific staghorn sculpin": "pacific_staghorn_sculpin",
+    "Pacific herring": "pacific_herring",
+    "Walleye surfperch": "walleye_surfperch",
+    "Opaleye": "opaleye",
+    "Halfmoon (Catalina perch)": "halfmoon",
+    "Halfmoon perch": "halfmoon",
+    "Pacific sardine": "pacific_sardine",
+    "White seaperch": "white_seaperch",
+    "Pink seaperch": "pink_seaperch",
+    "Sharpnose surfperch": "sharpnose_surfperch",
+    "Silver surfperch": "silver_surfperch",
+    "Mu (bigeye emperor)": "mu_bigeye_emperor",
+    "Kaku (barracuda)": "great_barracuda",
+    "Aholehole (Hawaiian flagtail)": "aholehole",
+    "Opakapaka (pink snapper)": "opakapaka",
+    "Onaga (long-tail red snapper)": "onaga",
+    "Onaga (longtail snapper)": "onaga",
+    "Hapu'upu'u (Hawaiian grouper)": "hapuupuu",
+    "Lehi (amberjack / silvermouth jack)": "lehi",
+    "Kumu (whitesaddle goatfish)": "kumu",
+    "Kumu (squirrelfish, Hawaii)": "kumu",
+    "Manini (convict tang)": "manini",
+    "Uku (gray snapper / jobfish)": "uku",
+    "Nairagi (striped marlin, Hawaii)": "striped_marlin",
+    "Striped marlin": "striped_marlin",
+    "Kahala (amberjack, Hawaii)": "greater_amberjack",
+    "Amaama (striped mullet, Hawaii)": "striped_mullet",
+    "Weke ula (goatfish)": "weke_goatfish"
   },
   "states": {
     "AL": {
@@ -1137,6 +1246,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Atlantic sharpnose in AL coastal waters. No bag limit.",
+        "source": "AL DCNR"
+      },
+      "gulf_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gulf flounder in AL coastal bays.",
         "source": "AL DCNR"
       }
     },
@@ -2265,6 +2381,104 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Striped mullet in CA coastal bays and estuaries. 10 per day limit. Verify CDFW rules.",
+        "source": "CDFW"
+      },
+      "barred_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Barred surfperch are the most popular CA surf fish. 20 per day (surfperch aggregate). Live sand crabs are the top bait.",
+        "source": "CDFW"
+      },
+      "starry_flounder": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Starry flounder in nearshore and estuary areas. Check current CDFW/ODFW/WDFW rules. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "vermilion_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round; check depth restrictions",
+        "notes": "Vermilion rockfish included in overall rockfish bag limit. Descender device required. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "blue_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Blue rockfish are among the most common nearshore rockfish. Part of aggregate bag limit. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "grass_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Grass rockfish found in kelp beds and rocky areas. Part of aggregate bag limit. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "yellowfin_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Yellowfin croaker are caught from CA surf and piers in summer. No minimum size. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "shovelnose_guitarfish": {
+        "min_size": "No minimum",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Shovelnose guitarfish are common in CA bays and surf. State-specific bag limits may apply. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "bat_ray": {
+        "min_size": "No minimum",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Bat rays are powerful California ray species. 2 per day limit. Venomous tail spine — handle carefully. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "pacific_herring": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Seasonal (varies by spawning location)",
+        "notes": "Pacific herring spawning events allow recreational dip-netting in some areas. Check CDFW/ODFW rules. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "opaleye": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Opaleye (blue-eyed perch) are caught from Southern California piers on algae or dough bait. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "pacific_sardine": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Open year-round (when stock is available)",
+        "notes": "Pacific sardine have a complex stock status — verify current PFMC rules before fishing. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "walleye_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Walleye surfperch common near jetties and piers. Part of surfperch aggregate bag limit. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "rock_greenling": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Rock greenling present in rocky nearshore habitat. No minimum size. Verify current CDFW regulations.",
+        "source": "CDFW"
+      },
+      "pacific_staghorn_sculpin": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific staghorn sculpin are common pier catch throughout the Pacific Coast. Excellent bait for halibut. Verify current CDFW regulations.",
         "source": "CDFW"
       }
     },
@@ -5082,6 +5296,27 @@
         "season": "Protected during spawning (May-Jun)",
         "notes": "FL prohibits harvest of horseshoe crabs except for licensed biomedical use. Release all if encountered.",
         "source": "FL FWC"
+      },
+      "gulf_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gulf flounder are common in FL Gulf Coast waters. No specific bag limit; general flounder rules apply.",
+        "source": "FL FWC"
+      },
+      "hogfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Hogfish: 12 in FL min; 5 per day. Very popular reef target in FL.",
+        "source": "FL FWC"
+      },
+      "white_grunt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "White grunt are very common in FL inshore and nearshore reefs. No bag limit.",
+        "source": "FL FWC"
       }
     },
     "GA": {
@@ -6417,6 +6652,20 @@
         "season": "Open year-round",
         "notes": "Blackfin tuna in GA offshore/Gulf Stream. No bag limit.",
         "source": "GA DNR"
+      },
+      "hogfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Hogfish in GA offshore reefs.",
+        "source": "GA DNR; NOAA SAFMC"
+      },
+      "white_grunt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "White grunt in GA nearshore and offshore. No bag limit.",
+        "source": "GA DNR"
       }
     },
     "LA": {
@@ -7521,6 +7770,27 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Atlantic sharpnose in LA coastal waters. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "gulf_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gulf flounder in LA. General flounder regulations apply.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "hogfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Hogfish rare in LA offshore.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "white_grunt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "White grunt in LA offshore reefs. No bag limit.",
         "source": "LA Wildlife & Fisheries"
       }
     },
@@ -10427,6 +10697,13 @@
         "season": "Open year-round",
         "notes": "Atlantic sharpnose shark in MS coastal waters. No bag limit.",
         "source": "MS DMR"
+      },
+      "gulf_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gulf flounder in MS coastal waters.",
+        "source": "MS DMR"
       }
     },
     "NC": {
@@ -12045,6 +12322,20 @@
         "season": "Open year-round",
         "notes": "Smooth dogfish in NC coastal waters. No bag limit.",
         "source": "NC DMF"
+      },
+      "hogfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Hogfish in NC offshore reefs. SAFMC manages.",
+        "source": "NC DMF; NOAA SAFMC"
+      },
+      "white_grunt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "White grunt in NC nearshore reefs. No bag limit.",
+        "source": "NC DMF"
       }
     },
     "NJ": {
@@ -13007,6 +13298,13 @@
         "season": "Open year-round",
         "notes": "Smooth dogfish abundant in NJ waters, especially bays. No bag limit.",
         "source": "NJ DEP"
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; quotas may apply",
+        "notes": "Vermilion snapper very rare in NJ; offshore only.",
+        "source": "NJ DEP; NOAA Fisheries"
       }
     },
     "NY": {
@@ -14720,6 +15018,83 @@
         "bag_limit": "0",
         "season": "Not present",
         "notes": "Corbina are a Southern California species and do not occur in OR waters.",
+        "source": "ODFW"
+      },
+      "barred_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day (surfperch aggregate)",
+        "season": "Open year-round",
+        "notes": "Barred surfperch at the southern edge of range in OR surf. Part of surfperch aggregate.",
+        "source": "ODFW"
+      },
+      "starry_flounder": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Starry flounder in nearshore and estuary areas. Check current CDFW/ODFW/WDFW rules. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "vermilion_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round; check depth restrictions",
+        "notes": "Vermilion rockfish included in overall rockfish bag limit. Descender device required. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "blue_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Blue rockfish are among the most common nearshore rockfish. Part of aggregate bag limit. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "grass_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Grass rockfish found in kelp beds and rocky areas. Part of aggregate bag limit. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "bat_ray": {
+        "min_size": "No minimum",
+        "bag_limit": "2 per day",
+        "season": "Open year-round",
+        "notes": "Bat rays are powerful California ray species. 2 per day limit. Venomous tail spine — handle carefully. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "pacific_herring": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Seasonal (varies by spawning location)",
+        "notes": "Pacific herring spawning events allow recreational dip-netting in some areas. Check CDFW/ODFW rules. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "pacific_sardine": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Open year-round (when stock is available)",
+        "notes": "Pacific sardine have a complex stock status — verify current PFMC rules before fishing. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "walleye_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Walleye surfperch common near jetties and piers. Part of surfperch aggregate bag limit. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "rock_greenling": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Rock greenling present in rocky nearshore habitat. No minimum size. Verify current ODFW regulations.",
+        "source": "ODFW"
+      },
+      "pacific_staghorn_sculpin": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific staghorn sculpin are common pier catch throughout the Pacific Coast. Excellent bait for halibut. Verify current ODFW regulations.",
         "source": "ODFW"
       }
     },
@@ -16681,6 +17056,20 @@
         "season": "Open year-round (summer/fall)",
         "notes": "Atlantic bonito occasional in SC offshore. No bag limit.",
         "source": "SC DNR"
+      },
+      "hogfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Hogfish in SC offshore reefs.",
+        "source": "SC DNR; NOAA SAFMC"
+      },
+      "white_grunt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "White grunt in SC nearshore reefs. No bag limit.",
+        "source": "SC DNR"
       }
     },
     "TX": {
@@ -17801,6 +18190,27 @@
         "season": "Open year-round",
         "notes": "Atlantic sharpnose shark very common in TX surf and bays. No bag limit.",
         "source": "TX TPWD"
+      },
+      "gulf_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Gulf flounder are common in TX bays. TX has a 14 in minimum, 10 per day for all flounder.",
+        "source": "TX TPWD"
+      },
+      "hogfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "Hogfish rare in TX.",
+        "source": "TX TPWD"
+      },
+      "white_grunt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "White grunt in TX offshore reefs. No bag limit.",
+        "source": "TX TPWD"
       }
     },
     "VA": {
@@ -18894,6 +19304,13 @@
         "season": "Open year-round",
         "notes": "Smooth dogfish in VA Chesapeake Bay and coastal waters. No bag limit.",
         "source": "VA DGIF"
+      },
+      "vermilion_snapper": {
+        "min_size": "10 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round; quotas may apply",
+        "notes": "Vermilion snapper rare in VA; offshore only.",
+        "source": "VA DGIF; NOAA SAFMC"
       }
     },
     "WA": {
@@ -19732,6 +20149,62 @@
         "season": "Not present",
         "notes": "Pacific barracuda are a Southern California species and do not occur in WA waters.",
         "source": "WDFW"
+      },
+      "starry_flounder": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Starry flounder in nearshore and estuary areas. Check current CDFW/ODFW/WDFW rules. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "vermilion_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round; check depth restrictions",
+        "notes": "Vermilion rockfish included in overall rockfish bag limit. Descender device required. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "blue_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Blue rockfish are among the most common nearshore rockfish. Part of aggregate bag limit. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "pacific_herring": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Seasonal (varies by spawning location)",
+        "notes": "Pacific herring spawning events allow recreational dip-netting in some areas. Check CDFW/ODFW rules. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "pacific_sardine": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Open year-round (when stock is available)",
+        "notes": "Pacific sardine have a complex stock status — verify current PFMC rules before fishing. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "walleye_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Walleye surfperch common near jetties and piers. Part of surfperch aggregate bag limit. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "rock_greenling": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Rock greenling present in rocky nearshore habitat. No minimum size. Verify current WDFW regulations.",
+        "source": "WDFW"
+      },
+      "pacific_staghorn_sculpin": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific staghorn sculpin are common pier catch throughout the Pacific Coast. Excellent bait for halibut. Verify current WDFW regulations.",
+        "source": "WDFW"
       }
     },
     "HI": {
@@ -20078,6 +20551,48 @@
         "season": "Prohibited from take",
         "notes": "Goliath grouper do not occur in Hawaii waters. Hawaii's deep-water groupers (hapu'upu'u) are managed separately.",
         "source": "DLNR Division of Aquatic Resources"
+      },
+      "hapuupuu": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Hapu'upu'u (Hawaiian grouper) are deepwater grouper caught at 100-300 ft. No bag limit. Top-quality eating.",
+        "source": "DLNR"
+      },
+      "lehi": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Lehi (silvermouth jack/amberjack) are a powerful Hawaiian game fish. No bag limit.",
+        "source": "DLNR"
+      },
+      "kumu": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Kumu (whitesaddle goatfish) are a Hawaiian bottom fish. No bag limit. Good eating.",
+        "source": "DLNR"
+      },
+      "aholehole": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Aholehole (Hawaiian flagtail) are small but numerous shore fish. No bag limit. Good bait fish.",
+        "source": "DLNR"
+      },
+      "mu_bigeye_emperor": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Mu (bigeye emperor) are found on shallow Hawaiian reefs. No bag limit.",
+        "source": "DLNR"
+      },
+      "blue_marlin": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blue marlin (kajiki) are the flagship Hawaiian offshore game fish. No bag limit. Primarily catch-and-release.",
+        "source": "DLNR; NOAA Fisheries"
       }
     },
     "NH": {
@@ -20956,6 +21471,41 @@
         "bag_limit": "0",
         "season": "Not present",
         "notes": "Pacific barracuda are a Southern California species and do not occur in AK waters.",
+        "source": "ADF&G"
+      },
+      "starry_flounder": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Starry flounder in nearshore and estuary areas. Check current CDFW/ODFW/WDFW rules. Verify current ADF&G regulations.",
+        "source": "ADF&G"
+      },
+      "blue_rockfish": {
+        "min_size": "10 in TL",
+        "bag_limit": "Included in rockfish aggregate",
+        "season": "Open year-round",
+        "notes": "Blue rockfish are among the most common nearshore rockfish. Part of aggregate bag limit. Verify current ADF&G regulations.",
+        "source": "ADF&G"
+      },
+      "pacific_herring": {
+        "min_size": "No minimum",
+        "bag_limit": "25 lbs per person",
+        "season": "Seasonal (varies by spawning location)",
+        "notes": "Pacific herring spawning events allow recreational dip-netting in some areas. Check CDFW/ODFW rules. Verify current ADF&G regulations.",
+        "source": "ADF&G"
+      },
+      "rock_greenling": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Rock greenling present in rocky nearshore habitat. No minimum size. Verify current ADF&G regulations.",
+        "source": "ADF&G"
+      },
+      "pacific_staghorn_sculpin": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pacific staghorn sculpin are common pier catch throughout the Pacific Coast. Excellent bait for halibut. Verify current ADF&G regulations.",
         "source": "ADF&G"
       }
     },
