@@ -1716,4 +1716,86 @@ def map_structures() -> Any:
             )), 400
 
     structures = find_fish_structures(south, west, north, east, active_types)
-    return jsonify({"structures": structures, "count": len(structures)})
+
+    # Merge in admin-created custom markers that fall within the bbox.
+    from storage.sqlite import get_custom_markers
+    custom = [
+        m for m in get_custom_markers()
+        if south <= m["lat"] <= north and west <= m["lng"] <= east
+        and (active_types is None or m["type"] in active_types)
+    ]
+    all_structures = structures + custom
+
+    return jsonify({"structures": all_structures, "count": len(all_structures)})
+
+
+# ── Admin: custom map marker CRUD ─────────────────────────────────────────────
+
+def _require_map_admin():
+    """Return a 403 response if the current user is not an admin, else None."""
+    if not g.user or not g.user.get("is_admin"):
+        return jsonify({"error": "Forbidden"}), 403
+    return None
+
+
+@bp.route("/api/map/custom-markers", methods=["GET"])
+def custom_markers_list() -> Any:
+    """Return all non-deleted custom map markers (public read)."""
+    from storage.sqlite import get_custom_markers
+    markers = get_custom_markers()
+    return jsonify({"markers": markers, "count": len(markers)})
+
+
+@bp.route("/api/map/custom-markers", methods=["POST"])
+def custom_markers_create() -> Any:
+    """Create a new custom marker (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    from storage.sqlite import create_custom_marker
+    data = request.get_json(silent=True) or {}
+    try:
+        lat  = float(data["lat"])
+        lng  = float(data["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"error": "lat and lng are required floats"}), 400
+    if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+        return jsonify({"error": "lat/lng out of range"}), 400
+    name        = str(data.get("name", ""))[:120]
+    type_       = str(data.get("type", "fishing"))
+    description = str(data.get("description", ""))[:500]
+    marker = create_custom_marker(lat, lng, name, type_, description, g.user["id"])
+    return jsonify(marker), 201
+
+
+@bp.route("/api/map/custom-markers/<int:marker_id>", methods=["PUT"])
+def custom_markers_update(marker_id: int) -> Any:
+    """Update position, name, type, or description of a custom marker (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    from storage.sqlite import update_custom_marker
+    data = request.get_json(silent=True) or {}
+    lat  = float(data["lat"])  if "lat"  in data else None
+    lng  = float(data["lng"])  if "lng"  in data else None
+    name = str(data["name"])[:120] if "name" in data else None
+    type_ = str(data.get("type")) if "type" in data else None
+    description = str(data["description"])[:500] if "description" in data else None
+    updated = update_custom_marker(marker_id, lat=lat, lng=lng, name=name,
+                                   type_=type_, description=description)
+    if updated is None:
+        return jsonify({"error": "Marker not found"}), 404
+    return jsonify(updated)
+
+
+@bp.route("/api/map/custom-markers/<int:marker_id>", methods=["DELETE"])
+def custom_markers_delete(marker_id: int) -> Any:
+    """Soft-delete a custom marker (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    from storage.sqlite import delete_custom_marker
+    ok = delete_custom_marker(marker_id)
+    if not ok:
+        return jsonify({"error": "Marker not found"}), 404
+    return jsonify({"deleted": marker_id})
