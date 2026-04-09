@@ -53,6 +53,9 @@ _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
 _VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night"})
 _VALID_PRIMARY_GOAL = frozenset({"action", "trophy", "relaxing", "exploring"})
 _VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})
+_VALID_TIDE_PREFERENCE = frozenset({"incoming", "outgoing", "high", "low", "any"})
+_VALID_SESSION_FREQUENCY = frozenset({"weekly", "monthly", "occasional"})
+_VALID_CATCH_RELEASE = frozenset({"always", "sometimes", "keep"})
 
 
 def parse_bool(value: Any, default: bool = False) -> bool:
@@ -189,6 +192,27 @@ class ProfilePayload:
                 raise ApiError(
                     "invalid_condition_tolerance",
                     f"condition_tolerance must be one of: {sorted(_VALID_CONDITION_TOLERANCE)}",
+                    status=400,
+                )
+            fp_tide_preference = fishing_profile.get("tide_preference")
+            if fp_tide_preference is not None and fp_tide_preference not in _VALID_TIDE_PREFERENCE:
+                raise ApiError(
+                    "invalid_tide_preference",
+                    f"tide_preference must be one of: {sorted(_VALID_TIDE_PREFERENCE)}",
+                    status=400,
+                )
+            fp_session_frequency = fishing_profile.get("session_frequency")
+            if fp_session_frequency is not None and fp_session_frequency not in _VALID_SESSION_FREQUENCY:
+                raise ApiError(
+                    "invalid_session_frequency",
+                    f"session_frequency must be one of: {sorted(_VALID_SESSION_FREQUENCY)}",
+                    status=400,
+                )
+            fp_catch_release = fishing_profile.get("catch_release")
+            if fp_catch_release is not None and fp_catch_release not in _VALID_CATCH_RELEASE:
+                raise ApiError(
+                    "invalid_catch_release",
+                    f"catch_release must be one of: {sorted(_VALID_CATCH_RELEASE)}",
                     status=400,
                 )
 

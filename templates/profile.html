@@ -27,7 +27,7 @@
             <div class="profile-wizard-head">
                 <div style="display:flex;align-items:center;justify-content:space-between">
                     <strong>Profile completion</strong>
-                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/9 complete</span>
+                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/10 complete</span>
                 </div>
                 <div class="profile-wizard-track" style="margin-top:0.5rem">
                     <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
@@ -151,96 +151,68 @@
             </section>
 
             <p class="profile-group-label">Bait &amp; Tackle</p>
-            <!-- Bait Preferences -->
+            <!-- Bait & Tackle — all three in one compact matrix -->
             <section class="profile-section profile-section--step" data-step="2">
-                <h3 class="profile-question">Do you use live bait?</h3>
-                <p class="profile-hint">Live shrimp, finger mullet, menhaden, etc.</p>
-                <div class="profile-options">
-                    <label class="profile-chip">
-                        <input type="radio" name="live_bait" value="yes">
-                        <span class="chip-body">
-                            <strong>Yes</strong>
-                            <span class="chip-desc">I use live bait regularly</span>
-                        </span>
-                    </label>
-                    <label class="profile-chip">
-                        <input type="radio" name="live_bait" value="sometimes">
-                        <span class="chip-body">
-                            <strong>Sometimes</strong>
-                            <span class="chip-desc">I use it when it's available</span>
-                        </span>
-                    </label>
-                    <label class="profile-chip">
-                        <input type="radio" name="live_bait" value="no">
-                        <span class="chip-body">
-                            <strong>No</strong>
-                            <span class="chip-desc">I stick to cut bait or frozen</span>
-                        </span>
-                    </label>
-                </div>
-            </section>
-
-            <!-- Cut/Natural Bait -->
-            <section class="profile-section profile-section--step" data-step="3">
-                <h3 class="profile-question">Do you use cut or natural bait?</h3>
-                <p class="profile-hint">Cut shrimp, bloodworms, sand fleas, squid, Fishbites, etc.</p>
-                <div class="profile-options">
-                    <label class="profile-chip">
-                        <input type="radio" name="cut_bait" value="yes">
-                        <span class="chip-body">
-                            <strong>Yes</strong>
-                            <span class="chip-desc">Cut/natural bait is my go-to</span>
-                        </span>
-                    </label>
-                    <label class="profile-chip">
-                        <input type="radio" name="cut_bait" value="sometimes">
-                        <span class="chip-body">
-                            <strong>Sometimes</strong>
-                            <span class="chip-desc">I use it alongside other methods</span>
-                        </span>
-                    </label>
-                    <label class="profile-chip">
-                        <input type="radio" name="cut_bait" value="no">
-                        <span class="chip-body">
-                            <strong>No</strong>
-                            <span class="chip-desc">I don't use natural bait</span>
-                        </span>
-                    </label>
-                </div>
-            </section>
-
-            <!-- Lures/Artificial -->
-            <section class="profile-section profile-section--step" data-step="4">
-                <h3 class="profile-question">Do you use lures or artificial baits?</h3>
-                <p class="profile-hint">Spoons, jigs, plugs, soft plastics, topwater, etc.</p>
-                <div class="profile-options">
-                    <label class="profile-chip">
-                        <input type="radio" name="lures" value="yes">
-                        <span class="chip-body">
-                            <strong>Yes</strong>
-                            <span class="chip-desc">Lures are my primary method</span>
-                        </span>
-                    </label>
-                    <label class="profile-chip">
-                        <input type="radio" name="lures" value="sometimes">
-                        <span class="chip-body">
-                            <strong>Sometimes</strong>
-                            <span class="chip-desc">I throw lures when conditions are right</span>
-                        </span>
-                    </label>
-                    <label class="profile-chip">
-                        <input type="radio" name="lures" value="no">
-                        <span class="chip-body">
-                            <strong>No</strong>
-                            <span class="chip-desc">I only use real bait</span>
-                        </span>
-                    </label>
+                <h3 class="profile-question">What do you fish with?</h3>
+                <p class="profile-hint">Tell us how often you use each — shapes bait and rig recommendations</p>
+                <div style="display:flex;flex-direction:column;gap:1rem">
+                    <div>
+                        <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Live bait <span style="font-weight:400;color:var(--text-muted)">— shrimp, mullet, menhaden</span></p>
+                        <div style="display:flex;gap:0.5rem">
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="live_bait" value="yes">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="live_bait" value="sometimes">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Sometimes</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="live_bait" value="no">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Cut / natural bait <span style="font-weight:400;color:var(--text-muted)">— shrimp, squid, sand fleas, Fishbites</span></p>
+                        <div style="display:flex;gap:0.5rem">
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="cut_bait" value="yes">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="cut_bait" value="sometimes">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Sometimes</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="cut_bait" value="no">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Lures &amp; artificials <span style="font-weight:400;color:var(--text-muted)">— jigs, plugs, soft plastics, topwater</span></p>
+                        <div style="display:flex;gap:0.5rem">
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="lures" value="yes">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="lures" value="sometimes">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Sometimes</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="lures" value="no">
+                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <p class="profile-group-label">About You</p>
             <!-- Experience Level -->
-            <section class="profile-section profile-section--step" data-step="5">
+            <section class="profile-section profile-section--step" data-step="3">
                 <h3 class="profile-question">How would you describe your experience?</h3>
                 <div class="profile-options">
                     <label class="profile-chip">
@@ -269,7 +241,7 @@
 
             <p class="profile-group-label">Target Species</p>
             <!-- Target Interest -->
-            <section class="profile-section profile-section--step" data-step="6">
+            <section class="profile-section profile-section--step" data-step="4">
                 <h3 class="profile-question">What are you mostly fishing for?</h3>
                 <p class="profile-hint">Select all that apply</p>
                 <div class="profile-options profile-options--multi profile-options--wrap">
@@ -303,7 +275,7 @@
 
             <p class="profile-group-label">Your Fishing Style</p>
             <!-- When do you fish -->
-            <section class="profile-section profile-section--step" data-step="7">
+            <section class="profile-section profile-section--step" data-step="5">
                 <h3 class="profile-question">When do you typically go fishing?</h3>
                 <p class="profile-hint">Select all that apply — helps us highlight the right time windows</p>
                 <div class="profile-options profile-options--multi profile-options--grid2">
@@ -351,7 +323,7 @@
             </section>
 
             <!-- Primary goal -->
-            <section class="profile-section profile-section--step" data-step="8">
+            <section class="profile-section profile-section--step" data-step="6">
                 <h3 class="profile-question">What's your main goal when you head out?</h3>
                 <div class="profile-options">
                     <label class="profile-chip">
@@ -386,7 +358,7 @@
             </section>
 
             <!-- Condition tolerance -->
-            <section class="profile-section profile-section--step" data-step="9">
+            <section class="profile-section profile-section--step" data-step="7">
                 <h3 class="profile-question">What conditions will you fish in?</h3>
                 <p class="profile-hint">Helps us flag when conditions match your comfort zone</p>
                 <div class="profile-options">
@@ -409,6 +381,109 @@
                         <span class="chip-body">
                             <strong>Whatever it takes</strong>
                             <span class="chip-desc">Rough conditions don't stop me</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Tide preference -->
+            <section class="profile-section profile-section--step" data-step="8">
+                <h3 class="profile-question">Do you have a preferred tide?</h3>
+                <p class="profile-hint">We'll surface best-times windows that match your preferred tide phase</p>
+                <div class="profile-options">
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="incoming">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M7 10l5-6 5 6"/><path d="M12 4v12"/></svg>
+                            <strong>Incoming / Rising</strong>
+                            <span class="chip-desc">I fish the rising tide</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="outgoing">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h20M7 14l5 6 5-6"/><path d="M12 20V8"/></svg>
+                            <strong>Outgoing / Falling</strong>
+                            <span class="chip-desc">I prefer the outgoing tide</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="high">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 7c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                            <strong>High water</strong>
+                            <span class="chip-desc">I like fishing at or near high tide</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="low">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                            <strong>Low water</strong>
+                            <span class="chip-desc">I prefer low tide — exposed structure</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="any">
+                        <span class="chip-body">
+                            <strong>No preference</strong>
+                            <span class="chip-desc">Tides don't dictate my schedule</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- How often do you fish -->
+            <section class="profile-section profile-section--step" data-step="9">
+                <h3 class="profile-question">How often do you typically fish?</h3>
+                <div class="profile-options">
+                    <label class="profile-chip">
+                        <input type="radio" name="session_frequency" value="weekly">
+                        <span class="chip-body">
+                            <strong>Weekly or more</strong>
+                            <span class="chip-desc">Fishing is a regular part of my life</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="session_frequency" value="monthly">
+                        <span class="chip-body">
+                            <strong>A few times a month</strong>
+                            <span class="chip-desc">I get out when I can</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="session_frequency" value="occasional">
+                        <span class="chip-body">
+                            <strong>Occasionally</strong>
+                            <span class="chip-desc">Seasonal or a handful of trips a year</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Catch and release -->
+            <section class="profile-section profile-section--step" data-step="10">
+                <h3 class="profile-question">Do you practice catch &amp; release?</h3>
+                <div class="profile-options">
+                    <label class="profile-chip">
+                        <input type="radio" name="catch_release" value="always">
+                        <span class="chip-body">
+                            <strong>Always</strong>
+                            <span class="chip-desc">I release everything I catch</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="catch_release" value="sometimes">
+                        <span class="chip-body">
+                            <strong>Sometimes</strong>
+                            <span class="chip-desc">I keep legal fish when conditions are right</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="catch_release" value="keep">
+                        <span class="chip-body">
+                            <strong>I keep what I catch</strong>
+                            <span class="chip-desc">Fresh fish for the table is the goal</span>
                         </span>
                     </label>
                 </div>
@@ -440,6 +515,9 @@
             preferred_times: ['dawn', 'morning', 'evening'],
             primary_goal: 'action',
             condition_tolerance: 'moderate',
+            tide_preference: 'incoming',
+            session_frequency: 'weekly',
+            catch_release: 'sometimes',
         },
         pier_regular: {
             fishing_types: ['pier', 'jetty'],
@@ -451,6 +529,9 @@
             preferred_times: ['morning', 'afternoon'],
             primary_goal: 'relaxing',
             condition_tolerance: 'moderate',
+            tide_preference: 'any',
+            session_frequency: 'monthly',
+            catch_release: 'sometimes',
         },
         inshore_hunter: {
             fishing_types: ['inshore', 'wade', 'kayak'],
@@ -462,6 +543,9 @@
             preferred_times: ['dawn', 'morning'],
             primary_goal: 'trophy',
             condition_tolerance: 'moderate',
+            tide_preference: 'incoming',
+            session_frequency: 'weekly',
+            catch_release: 'always',
         },
         kayak_angler: {
             fishing_types: ['kayak', 'inshore'],
@@ -473,6 +557,9 @@
             preferred_times: ['morning', 'afternoon'],
             primary_goal: 'exploring',
             condition_tolerance: 'calm',
+            tide_preference: 'any',
+            session_frequency: 'monthly',
+            catch_release: 'always',
         },
         fly_fisherman: {
             fishing_types: ['fly'],
@@ -484,6 +571,9 @@
             preferred_times: ['dawn', 'morning', 'evening'],
             primary_goal: 'trophy',
             condition_tolerance: 'calm',
+            tide_preference: 'outgoing',
+            session_frequency: 'weekly',
+            catch_release: 'always',
         },
         offshore_charter: {
             fishing_types: ['offshore', 'charter'],
@@ -495,6 +585,9 @@
             preferred_times: ['morning', 'afternoon'],
             primary_goal: 'action',
             condition_tolerance: 'rough',
+            tide_preference: 'any',
+            session_frequency: 'occasional',
+            catch_release: 'sometimes',
         },
     };
 
@@ -547,7 +640,7 @@
             });
 
             // Apply radio fields only if not yet selected (first-preset wins)
-            ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance'].forEach(function(name) {
+            ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'tide_preference', 'session_frequency', 'catch_release'].forEach(function(name) {
                 if (preset[name] && !document.querySelector('input[name="' + name + '"]:checked')) {
                     var el = document.querySelector('input[name="' + name + '"][value="' + preset[name] + '"]');
                     if (el) el.checked = true;
@@ -589,7 +682,7 @@
             if (el) el.checked = true;
         });
         // Radio fields — including new ones
-        ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance'].forEach(function(name) {
+        ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'tide_preference', 'session_frequency', 'catch_release'].forEach(function(name) {
             if (existing[name]) {
                 var el = document.querySelector('input[name="' + name + '"][value="' + existing[name] + '"]');
                 if (el) el.checked = true;
@@ -608,17 +701,22 @@
     })();
 
     function updateProfileProgress() {
-        var total = 9;
+        var total = 10;
         var complete = 0;
         if (document.querySelectorAll('input[name="fishing_type"]:checked').length) complete += 1;
-        if (document.querySelector('input[name="live_bait"]:checked')) complete += 1;
-        if (document.querySelector('input[name="cut_bait"]:checked')) complete += 1;
-        if (document.querySelector('input[name="lures"]:checked')) complete += 1;
+        // Bait section counts as 1 step when all 3 are answered
+        var baitAnswered = (document.querySelector('input[name="live_bait"]:checked') ? 1 : 0)
+                         + (document.querySelector('input[name="cut_bait"]:checked') ? 1 : 0)
+                         + (document.querySelector('input[name="lures"]:checked') ? 1 : 0);
+        if (baitAnswered === 3) complete += 1;
         if (document.querySelector('input[name="experience"]:checked')) complete += 1;
         if (document.querySelectorAll('input[name="targets"]:checked').length) complete += 1;
         if (document.querySelectorAll('input[name="preferred_times"]:checked').length) complete += 1;
         if (document.querySelector('input[name="primary_goal"]:checked')) complete += 1;
         if (document.querySelector('input[name="condition_tolerance"]:checked')) complete += 1;
+        if (document.querySelector('input[name="tide_preference"]:checked')) complete += 1;
+        if (document.querySelector('input[name="session_frequency"]:checked')) complete += 1;
+        if (document.querySelector('input[name="catch_release"]:checked')) complete += 1;
 
         var pct = Math.round((complete / total) * 100);
         var label = document.getElementById('profile-progress-label');
@@ -646,6 +744,7 @@
             completed: true,
             created_at: new Date().toISOString()
         };
+
 
         // Fishing type checkboxes
         document.querySelectorAll('input[name="fishing_type"]:checked').forEach(function(el) {
@@ -688,6 +787,18 @@
         // Condition tolerance
         var condTol = document.querySelector('input[name="condition_tolerance"]:checked');
         if (condTol) profile.condition_tolerance = condTol.value;
+
+        // Tide preference
+        var tidePref = document.querySelector('input[name="tide_preference"]:checked');
+        if (tidePref) profile.tide_preference = tidePref.value;
+
+        // Session frequency
+        var sessionFreq = document.querySelector('input[name="session_frequency"]:checked');
+        if (sessionFreq) profile.session_frequency = sessionFreq.value;
+
+        // Catch & release
+        var catchRelease = document.querySelector('input[name="catch_release"]:checked');
+        if (catchRelease) profile.catch_release = catchRelease.value;
 
         // Persist to server, then redirect with key profile fields in URL
         // so personalization applies immediately on first load.

@@ -2677,6 +2677,65 @@ def generate_forecast(
     return forecast
 
 
+# ---------------------------------------------------------------------------
+# Profile personalization helpers
+# ---------------------------------------------------------------------------
+
+# Species name keywords → score boost per primary fishing goal.
+# Uses lowercase substring matching so partial names work across regions.
+_TROPHY_BOOSTS: Dict[str, int] = {
+    "tarpon": 14, "cobia": 12, "mahi-mahi": 12, "king mackerel": 10,
+    "striped bass": 10, "greater amberjack": 10, "shark": 10,
+    "black drum": 8, "red drum": 8, "red grouper": 8, "gag grouper": 8,
+    "red snapper": 8, "snook": 8, "tripletail": 8, "wahoo": 10,
+    "blackfin tuna": 10, "permit": 8,
+}
+_ACTION_BOOSTS: Dict[str, int] = {
+    "bluefish": 10, "spanish mackerel": 8, "jack crevalle": 8,
+    "atlantic bonito": 8, "ladyfish": 8, "pompano": 7,
+    "whiting": 6, "spot": 5, "atlantic croaker": 5,
+    "barred surfperch": 6, "corbina": 6, "blue runner": 6,
+}
+_RELAXING_BOOSTS: Dict[str, int] = {
+    "whiting": 8, "spot": 8, "atlantic croaker": 8, "sheepshead": 7,
+    "flounder": 6, "scup": 6, "pompano": 6, "speckled trout": 6,
+    "sheephead": 7, "white croaker": 7, "surfperch": 6,
+}
+_GOAL_BOOST_MAP: Dict[str, Dict[str, int]] = {
+    "trophy": _TROPHY_BOOSTS,
+    "action": _ACTION_BOOSTS,
+    "relaxing": _RELAXING_BOOSTS,
+    # "exploring" — no boost, keep the natural species mix
+}
+
+# Condition tolerance verdict shifts.
+# rough = willing to fish hard conditions → upgrade marginal verdicts
+# calm  = prefers flat water → downgrade marginal verdicts
+_TOLERANCE_SHIFT: Dict[str, Dict[str, str]] = {
+    "rough": {"Poor": "Challenging", "Challenging": "Fair"},
+    "calm":  {"Fair": "Challenging", "Challenging": "Poor"},
+}
+
+
+def _apply_primary_goal_boost(
+    species: List[Dict[str, Any]], primary_goal: str
+) -> List[Dict[str, Any]]:
+    """Re-rank species list based on the angler's primary fishing goal."""
+    boosts = _GOAL_BOOST_MAP.get(primary_goal)
+    if not boosts:
+        return species
+    for sp in species:
+        name_lc = sp.get("name", "").lower()
+        for keyword, pts in boosts.items():
+            if keyword in name_lc:
+                sp["score"] = min(100, sp.get("score", 0) + pts)
+                break
+    species.sort(key=lambda x: -x.get("score", 0))
+    for i, sp in enumerate(species):
+        sp["rank"] = i + 1
+    return species
+
+
 def personalize_forecast(
     forecast: Dict[str, Any],
     profile: Dict[str, Any],
@@ -2694,6 +2753,11 @@ def personalize_forecast(
     live_bait = profile.get("live_bait") or ""
     cut_bait = profile.get("cut_bait") or ""
     lures = profile.get("lures") or ""
+    preferred_times = profile.get("preferred_times") or []
+    primary_goal = profile.get("primary_goal") or ""
+    condition_tolerance = profile.get("condition_tolerance") or ""
+    tide_preference = profile.get("tide_preference") or ""
+    catch_release = profile.get("catch_release") or ""
 
     has_type_prefs = bool(fishing_types or targets)
     has_gear_prefs = bool(experience or live_bait or cut_bait or lures)
@@ -2785,6 +2849,12 @@ def personalize_forecast(
             wind_strength=wind_strength,
         )
 
+    # Apply primary-goal score adjustments so trophy hunters see big gamefish
+    # first, action anglers see prolific biters, and relaxing anglers see
+    # abundant easy-to-catch species ranked higher.
+    if primary_goal:
+        species = _apply_primary_goal_boost(species, primary_goal)
+
     # Rebuild species-dependent sections
     forecast = dict(forecast)  # shallow copy to avoid mutating cache
     forecast["species"] = species
@@ -2796,6 +2866,13 @@ def personalize_forecast(
         cut_bait=cut_bait,
         lures=lures,
     )
+    # Annotate rigs with a circle-hook tip for catch-and-release anglers.
+    # Only fires when the rig doesn't already specify a circle hook.
+    if catch_release in ("always", "sometimes"):
+        for rig in forecast["rig_recommendations"]:
+            hook = rig.get("hook", "").lower()
+            if "circle" not in hook and "barbless" not in hook:
+                rig["cr_tip"] = "Circle hook recommended — easier releases with less injury"
     forecast["bait_rankings"] = build_bait_ranking(species, month)
     forecast["lure_recommendations"] = build_lure_recommendations(species, month)
     forecast["calendar"] = build_species_calendar(
@@ -2858,8 +2935,15 @@ def personalize_forecast(
         experience=experience,
     )
 
-    # Rebuild best fishing times with type-specific windows
-    forecast["best_times"] = build_best_times(forecast, fishing_types=fishing_types)
+    # Rebuild best fishing times with type-specific windows, boosting
+    # windows that fall in the angler's preferred fishing time slots and
+    # preferred tide phase.
+    forecast["best_times"] = build_best_times(
+        forecast,
+        fishing_types=fishing_types,
+        preferred_times=preferred_times,
+        tide_preference=tide_preference,
+    )
 
     # Recalculate the conditions verdict with fishing-type adjustments so
     # the dashboard shows an accurate rating for this angler's method.
@@ -2881,6 +2965,23 @@ def personalize_forecast(
         updated_conditions = dict(forecast.get("conditions", {}))
         updated_conditions["verdict_for_type"] = adjusted_verdict
         forecast["conditions"] = updated_conditions
+
+    # Condition tolerance: shift the effective verdict for this angler's
+    # comfort zone. "rough" anglers see a one-step upgrade on marginal days;
+    # "calm" anglers see a one-step downgrade so they know today may be above
+    # their threshold even if conditions are technically "Fair".
+    if condition_tolerance:
+        ref_verdict = (
+            forecast.get("conditions", {}).get("verdict_for_type")
+            or forecast.get("conditions", {}).get("verdict", "")
+        )
+        angler_verdict = _TOLERANCE_SHIFT.get(condition_tolerance, {}).get(
+            ref_verdict, ref_verdict
+        )
+        if angler_verdict and angler_verdict != ref_verdict:
+            cond_copy = dict(forecast.get("conditions", {}))
+            cond_copy["verdict_for_angler"] = angler_verdict
+            forecast["conditions"] = cond_copy
 
     return forecast
 
@@ -2905,6 +3006,8 @@ def _parse_time_str(s: str) -> float:
 def build_best_times(
     forecast: Dict[str, Any],
     fishing_types: Optional[List[str]] = None,
+    preferred_times: Optional[List[str]] = None,
+    tide_preference: str = "",
 ) -> List[Dict[str, str]]:
     """Build a list of recommended fishing windows.
 
@@ -2914,6 +3017,13 @@ def build_best_times(
 
     When *fishing_types* includes bridge or jetty, low-tide current-change
     windows are added as prime current-reversal opportunities.
+
+    When *preferred_times* is provided, windows that fall in the angler's
+    available time slots receive a score boost so they rank higher.
+
+    When *tide_preference* is provided, windows near the preferred tide event
+    (high/low) or during the preferred tidal phase (incoming/outgoing) are
+    boosted so the user sees the windows that match their preferred conditions.
     """
     ft = set(fishing_types or [])
     windows: List[Dict[str, Any]] = []
@@ -3031,6 +3141,66 @@ def build_best_times(
 
     if not windows:
         return []
+
+    # Boost windows that fall within the angler's preferred fishing time slots.
+    # This surfaces windows the angler can actually attend rather than windows
+    # they'd have to skip (e.g. a 3 AM solunar major for a morning-only angler).
+    if preferred_times:
+        _PREF_HOUR_RANGES = {
+            "dawn":      (3.5, 7.0),
+            "morning":   (7.0, 12.0),
+            "afternoon": (12.0, 17.0),
+            "evening":   (17.0, 21.0),
+            "night":     (21.0, 27.5),  # spans midnight; check mid >= 21 or mid < 3.5
+        }
+        for w in windows:
+            mid = (w["start_h"] + w["end_h"]) / 2.0
+            for pt in preferred_times:
+                lo, hi = _PREF_HOUR_RANGES.get(pt, (0.0, 0.0))
+                in_range = lo <= mid < hi
+                if pt == "night" and not in_range:
+                    in_range = mid >= 21.0 or mid < 3.5
+                if in_range:
+                    w["score"] += 2
+                    break
+
+    # Boost windows that match the angler's preferred tide phase or event.
+    # "high"/"low" boost windows within 1.5 hrs of the corresponding tide event.
+    # "incoming"/"outgoing" boost windows that occur during the appropriate
+    # phase (between Low→High or High→Low respectively) based on tide schedule.
+    if tide_preference and tide_preference != "any":
+        tides_for_pref = forecast.get("tides", [])
+        sorted_tides = sorted(tides_for_pref, key=lambda t: t.get("hour", _parse_time_str(t.get("time", "0:00"))))
+        for w in windows:
+            mid = (w["start_h"] + w["end_h"]) / 2.0
+            if tide_preference == "high":
+                for t in sorted_tides:
+                    if t.get("type") == "High":
+                        t_h = t.get("hour", _parse_time_str(t.get("time", "0:00")))
+                        if abs(mid - t_h) <= 1.5:
+                            w["score"] += 2
+                            break
+            elif tide_preference == "low":
+                for t in sorted_tides:
+                    if t.get("type") == "Low":
+                        t_h = t.get("hour", _parse_time_str(t.get("time", "0:00")))
+                        if abs(mid - t_h) <= 1.5:
+                            w["score"] += 2
+                            break
+            elif tide_preference in ("incoming", "outgoing"):
+                # Determine phase: find the most recent tide event before mid
+                prev_type = None
+                for t in sorted_tides:
+                    t_h = t.get("hour", _parse_time_str(t.get("time", "0:00")))
+                    if t_h <= mid:
+                        prev_type = t.get("type")
+                    else:
+                        break
+                # incoming = rising (after Low), outgoing = falling (after High)
+                if tide_preference == "incoming" and prev_type == "Low":
+                    w["score"] += 2
+                elif tide_preference == "outgoing" and prev_type == "High":
+                    w["score"] += 2
 
     # Score each window: boost when multiple factors overlap
     # Check for overlaps between windows
