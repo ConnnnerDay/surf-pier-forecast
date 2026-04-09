@@ -10485,19 +10485,30 @@ body.has-app-header main {
   font-family: 'Manrope', sans-serif;
 }
 
-/* Color-only treatment — no pills for the big verdict */
+/* Color-only treatment — no pills for the big verdict.
+   Must reset background/border here (higher specificity than .csc-verdict-badge alone). */
 .verdict-excellent.csc-verdict-badge,
 .verdict-good.csc-verdict-badge,
-.verdict-fishable.csc-verdict-badge { color: #059669; }
+.verdict-fishable.csc-verdict-badge {
+  color: #059669; background: none; border: none; padding: 0; border-radius: 0;
+}
 
-.verdict-fair.csc-verdict-badge { color: #D97706; }
+.verdict-fair.csc-verdict-badge {
+  color: #D97706; background: none; border: none; padding: 0; border-radius: 0;
+}
 
-.verdict-challenging.csc-verdict-badge { color: #EA580C; }
+.verdict-challenging.csc-verdict-badge {
+  color: #EA580C; background: none; border: none; padding: 0; border-radius: 0;
+}
 
 .verdict-poor.csc-verdict-badge,
-.verdict-not-worth-it.csc-verdict-badge { color: #DC2626; }
+.verdict-not-worth-it.csc-verdict-badge {
+  color: #DC2626; background: none; border: none; padding: 0; border-radius: 0;
+}
 
-.verdict-unknown.csc-verdict-badge { color: var(--text-muted); font-size: 1.8rem; }
+.verdict-unknown.csc-verdict-badge {
+  color: var(--text-muted); font-size: 1.8rem; background: none; border: none; padding: 0; border-radius: 0;
+}
 
 .csc-verdict-summary {
   font-size: 0.82rem;
