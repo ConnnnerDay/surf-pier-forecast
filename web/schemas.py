@@ -50,6 +50,9 @@ _VALID_FISHING_TYPES = frozenset({
 _VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "anything"})
 _VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
 _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
+_VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night"})
+_VALID_PRIMARY_GOAL = frozenset({"action", "trophy", "relaxing", "exploring"})
+_VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})
 
 
 def parse_bool(value: Any, default: bool = False) -> bool:
@@ -164,6 +167,30 @@ class ProfilePayload:
                         f"{bait_field} must be one of: {sorted(_VALID_BAIT_PREF)}",
                         status=400,
                     )
+            fp_preferred_times = fishing_profile.get("preferred_times")
+            if fp_preferred_times is not None:
+                if not isinstance(fp_preferred_times, list) or not all(
+                    isinstance(x, str) and x in _VALID_PREFERRED_TIMES for x in fp_preferred_times
+                ):
+                    raise ApiError(
+                        "invalid_preferred_times",
+                        f"preferred_times must be a list of: {sorted(_VALID_PREFERRED_TIMES)}",
+                        status=400,
+                    )
+            fp_primary_goal = fishing_profile.get("primary_goal")
+            if fp_primary_goal is not None and fp_primary_goal not in _VALID_PRIMARY_GOAL:
+                raise ApiError(
+                    "invalid_primary_goal",
+                    f"primary_goal must be one of: {sorted(_VALID_PRIMARY_GOAL)}",
+                    status=400,
+                )
+            fp_condition_tolerance = fishing_profile.get("condition_tolerance")
+            if fp_condition_tolerance is not None and fp_condition_tolerance not in _VALID_CONDITION_TOLERANCE:
+                raise ApiError(
+                    "invalid_condition_tolerance",
+                    f"condition_tolerance must be one of: {sorted(_VALID_CONDITION_TOLERANCE)}",
+                    status=400,
+                )
 
         location_id = data.get("location_id")
         if location_id is not None:

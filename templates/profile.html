@@ -27,7 +27,7 @@
             <div class="profile-wizard-head">
                 <div style="display:flex;align-items:center;justify-content:space-between">
                     <strong>Profile completion</strong>
-                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/6 complete</span>
+                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/9 complete</span>
                 </div>
                 <div class="profile-wizard-track" style="margin-top:0.5rem">
                     <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
@@ -47,14 +47,15 @@
         <!-- Quick-start presets -->
         <section class="profile-wizard-card" style="margin:1rem">
             <h3 style="margin:0 0 0.5rem;font-size:1rem">Quick-start presets</h3>
-            <p style="margin:0 0 0.75rem;font-size:0.85rem;color:var(--text-muted)">Choose a profile that matches your style — you can fine-tune below.</p>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                <button type="button" class="profile-preset-btn" onclick="applyPreset('surf_angler')">Surf Angler</button>
-                <button type="button" class="profile-preset-btn" onclick="applyPreset('pier_regular')">Pier Regular</button>
-                <button type="button" class="profile-preset-btn" onclick="applyPreset('inshore_hunter')">Inshore Slam Hunter</button>
-                <button type="button" class="profile-preset-btn" onclick="applyPreset('kayak_angler')">Kayak Angler</button>
-                <button type="button" class="profile-preset-btn" onclick="applyPreset('fly_fisherman')">Saltwater Fly Fisher</button>
-                <button type="button" class="profile-preset-btn" onclick="applyPreset('offshore_charter')">Offshore / Charter</button>
+            <p style="margin:0 0 0.75rem;font-size:0.85rem;color:var(--text-muted)">Select one or more that match your style — they combine. Fine-tune everything below.</p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+                <button type="button" class="profile-preset-btn" data-preset="surf_angler" onclick="togglePreset('surf_angler')">Surf Angler</button>
+                <button type="button" class="profile-preset-btn" data-preset="pier_regular" onclick="togglePreset('pier_regular')">Pier Regular</button>
+                <button type="button" class="profile-preset-btn" data-preset="inshore_hunter" onclick="togglePreset('inshore_hunter')">Inshore Slam Hunter</button>
+                <button type="button" class="profile-preset-btn" data-preset="kayak_angler" onclick="togglePreset('kayak_angler')">Kayak Angler</button>
+                <button type="button" class="profile-preset-btn" data-preset="fly_fisherman" onclick="togglePreset('fly_fisherman')">Saltwater Fly Fisher</button>
+                <button type="button" class="profile-preset-btn" data-preset="offshore_charter" onclick="togglePreset('offshore_charter')">Offshore / Charter</button>
+                <button type="button" onclick="clearPresets()" style="background:none;border:none;font-size:0.8rem;color:var(--text-muted);cursor:pointer;padding:0.25rem 0.5rem;text-decoration:underline;">Clear all</button>
             </div>
         </section>
 
@@ -300,6 +301,119 @@
                 </div>
             </section>
 
+            <p class="profile-group-label">Your Fishing Style</p>
+            <!-- When do you fish -->
+            <section class="profile-section profile-section--step" data-step="7">
+                <h3 class="profile-question">When do you typically go fishing?</h3>
+                <p class="profile-hint">Select all that apply — helps us highlight the right time windows</p>
+                <div class="profile-options profile-options--multi profile-options--grid2">
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="dawn">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h20M7 18a5 5 0 0 1 10 0"/><path d="M12 2v3M4.2 5.2l2.1 2.1M19.8 5.2l-2.1 2.1"/></svg>
+                            <strong>Dawn / Sunrise</strong>
+                            <span class="chip-desc">Before 7am — first light</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="morning">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                            <strong>Morning</strong>
+                            <span class="chip-desc">7am – noon</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="afternoon">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <strong>Afternoon</strong>
+                            <span class="chip-desc">Noon – 5pm</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="evening">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 9V2M4.22 10.22l1.42 1.42M1 18h2M21 18h2M18.36 10.22l-1.42 1.42"/></svg>
+                            <strong>Evening / Sunset</strong>
+                            <span class="chip-desc">5pm – dark</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="night">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                            <strong>Night</strong>
+                            <span class="chip-desc">After dark</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Primary goal -->
+            <section class="profile-section profile-section--step" data-step="8">
+                <h3 class="profile-question">What's your main goal when you head out?</h3>
+                <div class="profile-options">
+                    <label class="profile-chip">
+                        <input type="radio" name="primary_goal" value="action">
+                        <span class="chip-body">
+                            <strong>Fill the cooler</strong>
+                            <span class="chip-desc">I want maximum bites and action</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="primary_goal" value="trophy">
+                        <span class="chip-body">
+                            <strong>Trophy hunting</strong>
+                            <span class="chip-desc">Quality over quantity — I'm after the big ones</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="primary_goal" value="relaxing">
+                        <span class="chip-body">
+                            <strong>Just relaxing</strong>
+                            <span class="chip-desc">Low pressure, casual fishing</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="primary_goal" value="exploring">
+                        <span class="chip-body">
+                            <strong>Exploring &amp; variety</strong>
+                            <span class="chip-desc">I like trying new spots and species</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Condition tolerance -->
+            <section class="profile-section profile-section--step" data-step="9">
+                <h3 class="profile-question">What conditions will you fish in?</h3>
+                <p class="profile-hint">Helps us flag when conditions match your comfort zone</p>
+                <div class="profile-options">
+                    <label class="profile-chip">
+                        <input type="radio" name="condition_tolerance" value="calm">
+                        <span class="chip-body">
+                            <strong>Calm only</strong>
+                            <span class="chip-desc">Flat water, winds under 10 mph</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="condition_tolerance" value="moderate">
+                        <span class="chip-body">
+                            <strong>Moderate</strong>
+                            <span class="chip-desc">Some wind and chop is fine (10–20 mph)</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="condition_tolerance" value="rough">
+                        <span class="chip-body">
+                            <strong>Whatever it takes</strong>
+                            <span class="chip-desc">Rough conditions don't stop me</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
             <div class="profile-actions profile-actions--sticky">
                 <button type="submit" class="profile-save-btn">Save &amp; View Forecast</button>
                 <a href="{{ url_for('views.index') }}" class="profile-skip">Skip for now</a>
@@ -313,7 +427,7 @@
 
     <script>
     // ---------------------------------------------------------------------------
-    // Fisherman presets — quick-start profile templates
+    // Fisherman presets — multi-select quick-start templates
     // ---------------------------------------------------------------------------
     var _PRESETS = {
         surf_angler: {
@@ -323,6 +437,9 @@
             lures: 'sometimes',
             experience: 'intermediate',
             targets: ['bottom', 'pelagic'],
+            preferred_times: ['dawn', 'morning', 'evening'],
+            primary_goal: 'action',
+            condition_tolerance: 'moderate',
         },
         pier_regular: {
             fishing_types: ['pier', 'jetty'],
@@ -331,6 +448,9 @@
             lures: 'sometimes',
             experience: 'intermediate',
             targets: ['bottom', 'structure'],
+            preferred_times: ['morning', 'afternoon'],
+            primary_goal: 'relaxing',
+            condition_tolerance: 'moderate',
         },
         inshore_hunter: {
             fishing_types: ['inshore', 'wade', 'kayak'],
@@ -339,6 +459,9 @@
             lures: 'yes',
             experience: 'experienced',
             targets: ['inshore_slam'],
+            preferred_times: ['dawn', 'morning'],
+            primary_goal: 'trophy',
+            condition_tolerance: 'moderate',
         },
         kayak_angler: {
             fishing_types: ['kayak', 'inshore'],
@@ -347,6 +470,9 @@
             lures: 'yes',
             experience: 'intermediate',
             targets: ['inshore_slam', 'pelagic'],
+            preferred_times: ['morning', 'afternoon'],
+            primary_goal: 'exploring',
+            condition_tolerance: 'calm',
         },
         fly_fisherman: {
             fishing_types: ['fly'],
@@ -355,6 +481,9 @@
             lures: 'yes',
             experience: 'experienced',
             targets: ['inshore_slam', 'gamefish'],
+            preferred_times: ['dawn', 'morning', 'evening'],
+            primary_goal: 'trophy',
+            condition_tolerance: 'calm',
         },
         offshore_charter: {
             fishing_types: ['offshore', 'charter'],
@@ -363,49 +492,86 @@
             lures: 'sometimes',
             experience: 'intermediate',
             targets: ['pelagic', 'gamefish'],
+            preferred_times: ['morning', 'afternoon'],
+            primary_goal: 'action',
+            condition_tolerance: 'rough',
         },
     };
 
-    function applyPreset(key) {
+    // Track active presets — supports clicking multiple (they merge)
+    var _activePresets = {};
+
+    function togglePreset(key) {
         var preset = _PRESETS[key];
         if (!preset) return;
 
-        // Clear all checkboxes/radios first
+        var btn = document.querySelector('[data-preset="' + key + '"]');
+
+        if (_activePresets[key]) {
+            // Deactivate: remove this preset's fishing_types if no other active preset also uses them
+            var myTypes = _activePresets[key].fishing_types;
+            delete _activePresets[key];
+
+            myTypes.forEach(function(t) {
+                var stillNeeded = Object.keys(_activePresets).some(function(k) {
+                    return (_activePresets[k].fishing_types || []).indexOf(t) !== -1;
+                });
+                if (!stillNeeded) {
+                    var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
+                    if (el) el.checked = false;
+                }
+            });
+
+            if (btn) btn.classList.remove('profile-preset-btn--active');
+        } else {
+            // Activate: merge this preset into current form state
+            var types = preset.fishing_types || [];
+            _activePresets[key] = { fishing_types: types };
+
+            // Add fishing types (additive)
+            types.forEach(function(t) {
+                var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
+                if (el) el.checked = true;
+            });
+
+            // Add targets (additive)
+            (preset.targets || []).forEach(function(t) {
+                var el = document.querySelector('input[name="targets"][value="' + t + '"]');
+                if (el) el.checked = true;
+            });
+
+            // Add preferred times (additive)
+            (preset.preferred_times || []).forEach(function(t) {
+                var el = document.querySelector('input[name="preferred_times"][value="' + t + '"]');
+                if (el) el.checked = true;
+            });
+
+            // Apply radio fields only if not yet selected (first-preset wins)
+            ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance'].forEach(function(name) {
+                if (preset[name] && !document.querySelector('input[name="' + name + '"]:checked')) {
+                    var el = document.querySelector('input[name="' + name + '"][value="' + preset[name] + '"]');
+                    if (el) el.checked = true;
+                }
+            });
+
+            if (btn) btn.classList.add('profile-preset-btn--active');
+        }
+
+        updateProfileProgress();
+    }
+
+    function clearPresets() {
+        _activePresets = {};
+        document.querySelectorAll('.profile-preset-btn').forEach(function(btn) {
+            btn.classList.remove('profile-preset-btn--active');
+        });
         document.querySelectorAll('#profile-form input[type="checkbox"]').forEach(function(el) {
             el.checked = false;
         });
         document.querySelectorAll('#profile-form input[type="radio"]').forEach(function(el) {
             el.checked = false;
         });
-
-        // Apply fishing types
-        (preset.fishing_types || []).forEach(function(t) {
-            var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
-            if (el) el.checked = true;
-        });
-
-        // Apply radio fields
-        ['live_bait', 'cut_bait', 'lures', 'experience'].forEach(function(name) {
-            if (preset[name]) {
-                var el = document.querySelector('input[name="' + name + '"][value="' + preset[name] + '"]');
-                if (el) el.checked = true;
-            }
-        });
-
-        // Apply targets
-        (preset.targets || []).forEach(function(t) {
-            var el = document.querySelector('input[name="targets"][value="' + t + '"]');
-            if (el) el.checked = true;
-        });
-
         updateProfileProgress();
-
-        // Highlight active preset button
-        document.querySelectorAll('.profile-preset-btn').forEach(function(btn) {
-            btn.classList.remove('profile-preset-btn--active');
-        });
-        var activeBtn = document.querySelector('.profile-preset-btn[onclick="applyPreset(\'' + key + '\')"]');
-        if (activeBtn) activeBtn.classList.add('profile-preset-btn--active');
     }
 
     // Server-side profile (authoritative, account-backed)
@@ -422,23 +588,27 @@
             var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
             if (el) el.checked = true;
         });
-        // Check radio buttons
-        ['live_bait', 'cut_bait', 'lures', 'experience'].forEach(function(name) {
+        // Radio fields — including new ones
+        ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance'].forEach(function(name) {
             if (existing[name]) {
                 var el = document.querySelector('input[name="' + name + '"][value="' + existing[name] + '"]');
                 if (el) el.checked = true;
             }
         });
-        // Check target boxes
-        var targets = existing.targets || [];
-        targets.forEach(function(t) {
+        // Target checkboxes
+        (existing.targets || []).forEach(function(t) {
             var el = document.querySelector('input[name="targets"][value="' + t + '"]');
+            if (el) el.checked = true;
+        });
+        // Preferred times checkboxes
+        (existing.preferred_times || []).forEach(function(t) {
+            var el = document.querySelector('input[name="preferred_times"][value="' + t + '"]');
             if (el) el.checked = true;
         });
     })();
 
     function updateProfileProgress() {
-        var total = 6;
+        var total = 9;
         var complete = 0;
         if (document.querySelectorAll('input[name="fishing_type"]:checked').length) complete += 1;
         if (document.querySelector('input[name="live_bait"]:checked')) complete += 1;
@@ -446,6 +616,9 @@
         if (document.querySelector('input[name="lures"]:checked')) complete += 1;
         if (document.querySelector('input[name="experience"]:checked')) complete += 1;
         if (document.querySelectorAll('input[name="targets"]:checked').length) complete += 1;
+        if (document.querySelectorAll('input[name="preferred_times"]:checked').length) complete += 1;
+        if (document.querySelector('input[name="primary_goal"]:checked')) complete += 1;
+        if (document.querySelector('input[name="condition_tolerance"]:checked')) complete += 1;
 
         var pct = Math.round((complete / total) * 100);
         var label = document.getElementById('profile-progress-label');
@@ -469,6 +642,7 @@
             lures: 'sometimes',
             experience: 'intermediate',
             targets: [],
+            preferred_times: [],
             completed: true,
             created_at: new Date().toISOString()
         };
@@ -502,9 +676,21 @@
             profile.targets = ['anything'];
         }
 
-        // Persist to server for the signed-in account, then redirect.
-        // Include all profile fields in the URL so personalization applies
-        // immediately on the first load without waiting for a second page visit.
+        // Preferred times checkboxes
+        document.querySelectorAll('input[name="preferred_times"]:checked').forEach(function(el) {
+            profile.preferred_times.push(el.value);
+        });
+
+        // Primary goal
+        var primaryGoal = document.querySelector('input[name="primary_goal"]:checked');
+        if (primaryGoal) profile.primary_goal = primaryGoal.value;
+
+        // Condition tolerance
+        var condTol = document.querySelector('input[name="condition_tolerance"]:checked');
+        if (condTol) profile.condition_tolerance = condTol.value;
+
+        // Persist to server, then redirect with key profile fields in URL
+        // so personalization applies immediately on first load.
         var params = new URLSearchParams();
         var ft = profile.fishing_types.join(',');
         var tg = profile.targets.join(',');
