@@ -27,7 +27,7 @@
             <div class="profile-wizard-head">
                 <div style="display:flex;align-items:center;justify-content:space-between">
                     <strong>Profile completion</strong>
-                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/9 complete</span>
+                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/10 complete</span>
                 </div>
                 <div class="profile-wizard-track" style="margin-top:0.5rem">
                     <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
@@ -386,8 +386,55 @@
                 </div>
             </section>
 
-            <!-- How often do you fish -->
+            <!-- Tide preference -->
             <section class="profile-section profile-section--step" data-step="8">
+                <h3 class="profile-question">Do you have a preferred tide?</h3>
+                <p class="profile-hint">We'll surface best-times windows that match your preferred tide phase</p>
+                <div class="profile-options">
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="incoming">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M7 10l5-6 5 6"/><path d="M12 4v12"/></svg>
+                            <strong>Incoming / Rising</strong>
+                            <span class="chip-desc">I fish the rising tide</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="outgoing">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h20M7 14l5 6 5-6"/><path d="M12 20V8"/></svg>
+                            <strong>Outgoing / Falling</strong>
+                            <span class="chip-desc">I prefer the outgoing tide</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="high">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 7c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                            <strong>High water</strong>
+                            <span class="chip-desc">I like fishing at or near high tide</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="low">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
+                            <strong>Low water</strong>
+                            <span class="chip-desc">I prefer low tide — exposed structure</span>
+                        </span>
+                    </label>
+                    <label class="profile-chip">
+                        <input type="radio" name="tide_preference" value="any">
+                        <span class="chip-body">
+                            <strong>No preference</strong>
+                            <span class="chip-desc">Tides don't dictate my schedule</span>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- How often do you fish -->
+            <section class="profile-section profile-section--step" data-step="9">
                 <h3 class="profile-question">How often do you typically fish?</h3>
                 <div class="profile-options">
                     <label class="profile-chip">
@@ -415,7 +462,7 @@
             </section>
 
             <!-- Catch and release -->
-            <section class="profile-section profile-section--step" data-step="9">
+            <section class="profile-section profile-section--step" data-step="10">
                 <h3 class="profile-question">Do you practice catch &amp; release?</h3>
                 <div class="profile-options">
                     <label class="profile-chip">
@@ -468,6 +515,7 @@
             preferred_times: ['dawn', 'morning', 'evening'],
             primary_goal: 'action',
             condition_tolerance: 'moderate',
+            tide_preference: 'incoming',
             session_frequency: 'weekly',
             catch_release: 'sometimes',
         },
@@ -481,6 +529,7 @@
             preferred_times: ['morning', 'afternoon'],
             primary_goal: 'relaxing',
             condition_tolerance: 'moderate',
+            tide_preference: 'any',
             session_frequency: 'monthly',
             catch_release: 'sometimes',
         },
@@ -494,6 +543,7 @@
             preferred_times: ['dawn', 'morning'],
             primary_goal: 'trophy',
             condition_tolerance: 'moderate',
+            tide_preference: 'incoming',
             session_frequency: 'weekly',
             catch_release: 'always',
         },
@@ -507,6 +557,7 @@
             preferred_times: ['morning', 'afternoon'],
             primary_goal: 'exploring',
             condition_tolerance: 'calm',
+            tide_preference: 'any',
             session_frequency: 'monthly',
             catch_release: 'always',
         },
@@ -520,6 +571,7 @@
             preferred_times: ['dawn', 'morning', 'evening'],
             primary_goal: 'trophy',
             condition_tolerance: 'calm',
+            tide_preference: 'outgoing',
             session_frequency: 'weekly',
             catch_release: 'always',
         },
@@ -533,6 +585,7 @@
             preferred_times: ['morning', 'afternoon'],
             primary_goal: 'action',
             condition_tolerance: 'rough',
+            tide_preference: 'any',
             session_frequency: 'occasional',
             catch_release: 'sometimes',
         },
@@ -587,7 +640,7 @@
             });
 
             // Apply radio fields only if not yet selected (first-preset wins)
-            ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'session_frequency', 'catch_release'].forEach(function(name) {
+            ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'tide_preference', 'session_frequency', 'catch_release'].forEach(function(name) {
                 if (preset[name] && !document.querySelector('input[name="' + name + '"]:checked')) {
                     var el = document.querySelector('input[name="' + name + '"][value="' + preset[name] + '"]');
                     if (el) el.checked = true;
@@ -629,7 +682,7 @@
             if (el) el.checked = true;
         });
         // Radio fields — including new ones
-        ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'session_frequency', 'catch_release'].forEach(function(name) {
+        ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'tide_preference', 'session_frequency', 'catch_release'].forEach(function(name) {
             if (existing[name]) {
                 var el = document.querySelector('input[name="' + name + '"][value="' + existing[name] + '"]');
                 if (el) el.checked = true;
@@ -648,7 +701,7 @@
     })();
 
     function updateProfileProgress() {
-        var total = 9;
+        var total = 10;
         var complete = 0;
         if (document.querySelectorAll('input[name="fishing_type"]:checked').length) complete += 1;
         // Bait section counts as 1 step when all 3 are answered
@@ -661,6 +714,7 @@
         if (document.querySelectorAll('input[name="preferred_times"]:checked').length) complete += 1;
         if (document.querySelector('input[name="primary_goal"]:checked')) complete += 1;
         if (document.querySelector('input[name="condition_tolerance"]:checked')) complete += 1;
+        if (document.querySelector('input[name="tide_preference"]:checked')) complete += 1;
         if (document.querySelector('input[name="session_frequency"]:checked')) complete += 1;
         if (document.querySelector('input[name="catch_release"]:checked')) complete += 1;
 
@@ -733,6 +787,10 @@
         // Condition tolerance
         var condTol = document.querySelector('input[name="condition_tolerance"]:checked');
         if (condTol) profile.condition_tolerance = condTol.value;
+
+        // Tide preference
+        var tidePref = document.querySelector('input[name="tide_preference"]:checked');
+        if (tidePref) profile.tide_preference = tidePref.value;
 
         // Session frequency
         var sessionFreq = document.querySelector('input[name="session_frequency"]:checked');

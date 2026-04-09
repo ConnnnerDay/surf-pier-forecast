@@ -53,6 +53,7 @@ _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
 _VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night"})
 _VALID_PRIMARY_GOAL = frozenset({"action", "trophy", "relaxing", "exploring"})
 _VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})
+_VALID_TIDE_PREFERENCE = frozenset({"incoming", "outgoing", "high", "low", "any"})
 _VALID_SESSION_FREQUENCY = frozenset({"weekly", "monthly", "occasional"})
 _VALID_CATCH_RELEASE = frozenset({"always", "sometimes", "keep"})
 
@@ -191,6 +192,13 @@ class ProfilePayload:
                 raise ApiError(
                     "invalid_condition_tolerance",
                     f"condition_tolerance must be one of: {sorted(_VALID_CONDITION_TOLERANCE)}",
+                    status=400,
+                )
+            fp_tide_preference = fishing_profile.get("tide_preference")
+            if fp_tide_preference is not None and fp_tide_preference not in _VALID_TIDE_PREFERENCE:
+                raise ApiError(
+                    "invalid_tide_preference",
+                    f"tide_preference must be one of: {sorted(_VALID_TIDE_PREFERENCE)}",
                     status=400,
                 )
             fp_session_frequency = fishing_profile.get("session_frequency")
