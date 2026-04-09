@@ -3188,6 +3188,12 @@ def build_activity_timeline(
         "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
         "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
     ]
+    short_labels = [
+        "12a", "1a", "2a", "3a", "4a", "5a",
+        "6a", "7a", "8a", "9a", "10a", "11a",
+        "12p", "1p", "2p", "3p", "4p", "5p",
+        "6p", "7p", "8p", "9p", "10p", "11p",
+    ]
 
     timeline = []
     for h in range(24):
@@ -3213,6 +3219,7 @@ def build_activity_timeline(
             {
                 "hour": h,
                 "label": labels_12h[h],
+                "short_label": short_labels[h],
                 "level": level,
                 "tag": tag,
                 "is_now": h == now_hour,

@@ -165,7 +165,7 @@
                              style="height: {{ [((entry.level * 0.58) | round | int), 2] | max }}px;"
                              title="{{ entry.label }}{% if entry.reason %} — {{ entry.reason }}{% endif %} ({{ entry.level }}%)"></div>
                         <div class="timeline-hour">
-                            {%- if entry.is_now -%}Now{%- elif entry.hour % 6 == 0 -%}{{ entry.label }}{%- endif -%}
+                            {%- if entry.is_now -%}Now{%- elif entry.hour % 6 == 0 -%}{{ entry.short_label }}{%- endif -%}
                         </div>
                     </div>
                     {% endfor %}
