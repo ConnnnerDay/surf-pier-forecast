@@ -2708,15 +2708,16 @@
     var adminEditMode    = false;
     var _customMarkers   = [];  // [{id, leaflet, data}] — live custom marker state
 
-    function _customMarkerIcon(type) {
+    function _customMarkerIcon(type, editMode) {
+        if (!editMode) return makeFishingSpotIcon(type);
         var color = (SPOT_TYPES[type] || SPOT_TYPES.fishing).color;
         return L.divIcon({
             className: 'fmap-spot-wrap',
             html: '<span style="display:flex;align-items:center;justify-content:center;' +
                   'width:22px;height:22px;border-radius:50%;background:' + color + ';' +
-                  'border:2.5px solid #fff;box-shadow:0 0 8px ' + color + '88;' +
+                  'border:2.5px dashed #fff;box-shadow:0 0 8px ' + color + '88;' +
                   'font-size:9px;font-weight:800;color:rgba(255,255,255,0.95);' +
-                  'font-family:system-ui,sans-serif">✎</span>',
+                  'font-family:system-ui,sans-serif;cursor:pointer">✎</span>',
             iconSize:   [22, 22],
             iconAnchor: [11, 11],
         });
@@ -2736,7 +2737,7 @@
 
         spots.filter(function (s) { return s.custom; }).forEach(function (spot) {
             var m = L.marker([spot.lat, spot.lng], {
-                icon:      _customMarkerIcon(spot.type),
+                icon:      _customMarkerIcon(spot.type, adminEditMode),
                 draggable: adminEditMode,
                 title:     spot.name || spotTypeLabel(spot.type),
             });
@@ -2835,8 +2836,9 @@
                 btn.setAttribute('aria-pressed', adminEditMode ? 'true' : 'false');
                 btn.title = adminEditMode ? 'Exit edit mode' : 'Edit markers (admin)';
 
-                // Swap draggability on live custom markers
+                // Swap icon style and draggability on live custom markers
                 _customMarkers.forEach(function (cm) {
+                    cm.leaflet.setIcon(_customMarkerIcon(cm.data.type, adminEditMode));
                     if (adminEditMode) {
                         cm.leaflet.dragging.enable();
                     } else {
