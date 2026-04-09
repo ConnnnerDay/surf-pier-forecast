@@ -1046,6 +1046,62 @@
         "season": "Open year-round",
         "notes": "Pigfish common in AL coastal waters. No bag limit.",
         "source": "AL DCNR"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and AL state rules.",
+        "source": "NOAA Fisheries HMS; AL state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and AL state rules.",
+        "source": "NOAA Fisheries HMS; AL state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and AL state rules.",
+        "source": "NOAA Fisheries HMS; AL state agency"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper off the AL coast. NOAA GMFMC grouper regulations. 3 per day aggregate.",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in AL — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "AL DCNR"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in AL deepwater Gulf. No bag limit.",
+        "source": "AL DCNR"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish in AL coastal bays. No bag limit.",
+        "source": "AL DCNR"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet common in AL bays. No bag limit.",
+        "source": "AL DCNR"
       }
     },
     "CA": {
@@ -2153,6 +2209,27 @@
         "season": "Seasonal (spring–fall; varies by area)",
         "notes": "Spot prawn season and area highly regulated in CA. Verify current CDFW season dates and pot limits.",
         "source": "CDFW"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna in CA offshore, often near the Channel Islands. No bag limit. PFMC manages.",
+        "source": "CDFW"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in CA offshore, especially late summer/fall near warm water. No bag limit.",
+        "source": "CDFW"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Striped mullet in CA coastal bays and estuaries. 10 per day limit. Verify CDFW rules.",
+        "source": "CDFW"
       }
     },
     "CT": {
@@ -2657,6 +2734,48 @@
         "season": "Open year-round",
         "notes": "Atlantic croaker occasional in CT Sound in fall. No specific bag limit.",
         "source": "CT DEEP"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and CT state rules.",
+        "source": "NOAA Fisheries HMS; CT state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and CT state rules.",
+        "source": "NOAA Fisheries HMS; CT state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and CT state rules.",
+        "source": "NOAA Fisheries HMS; CT state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and CT state rules.",
+        "source": "NOAA Fisheries HMS; CT state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and CT state rules.",
+        "source": "NOAA Fisheries HMS; CT state agency"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey in CT rivers. Native species, not targeted.",
+        "source": "CT DEEP"
       }
     },
     "DE": {
@@ -3118,6 +3237,20 @@
         "season": "Open year-round",
         "notes": "Spiny dogfish present in DE offshore waters. Follow NOAA regulations.",
         "source": "DE DNREC; NOAA Fisheries"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and DE state rules.",
+        "source": "NOAA Fisheries HMS; DE state agency"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in DE — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "DE DNREC"
       }
     },
     "FL": {
@@ -4787,6 +4920,97 @@
         "season": "Open year-round",
         "notes": "Pigfish are common in FL coastal waters and excellent live bait. No bag limit.",
         "source": "FL FWC"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and FL state rules.",
+        "source": "NOAA Fisheries HMS; FL state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and FL rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and FL rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in FL — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "FL FWC"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna (oceanic bonito) common in FL offshore. No federal bag limit; general finfish rules apply.",
+        "source": "FL FWC; NOAA Fisheries"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna are a top target in FL offshore. No federal bag limit from US recreational boats.",
+        "source": "FL FWC; NOAA Fisheries"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet are extremely common in FL coastal waters. Commercial season Sept 1-Jan 31. Recreational: generally open year-round.",
+        "source": "FL FWC"
       }
     },
     "GA": {
@@ -6010,6 +6234,104 @@
         "season": "Open year-round",
         "notes": "Pigfish in GA coastal areas and nearshore. No bag limit.",
         "source": "GA DNR"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and GA state rules.",
+        "source": "NOAA Fisheries HMS; GA state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and GA state rules.",
+        "source": "NOAA Fisheries HMS; GA state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and GA state rules.",
+        "source": "NOAA Fisheries HMS; GA state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and GA state rules.",
+        "source": "NOAA Fisheries HMS; GA state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and GA state rules.",
+        "source": "NOAA Fisheries HMS; GA state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and GA rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and GA rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper in GA offshore reefs. Atlantic grouper regulations (SAFMC). 3 per day.",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in GA — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "GA DNR"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in GA offshore Gulf Stream. No bag limit.",
+        "source": "GA DNR"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish in GA coastal estuaries. No bag limit.",
+        "source": "GA DNR"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in GA estuaries. No recreational bag limit.",
+        "source": "GA DNR"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish are occasional strays in GA. No bag limit but best to release.",
+        "source": "GA DNR"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit are occasional in GA nearshore. No bag limit.",
+        "source": "GA DNR"
       }
     },
     "LA": {
@@ -7017,6 +7339,90 @@
         "season": "Open year-round",
         "notes": "Pigfish common in LA coastal and estuarine waters. No bag limit.",
         "source": "LA Wildlife & Fisheries"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and LA state rules.",
+        "source": "NOAA Fisheries HMS; LA state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and LA state rules.",
+        "source": "NOAA Fisheries HMS; LA state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and LA state rules.",
+        "source": "NOAA Fisheries HMS; LA state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and LA state rules.",
+        "source": "NOAA Fisheries HMS; LA state agency"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper in LA offshore waters. NOAA Gulf grouper regulations apply. 3 per day (aggregate).",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in LA — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna in LA offshore Gulf. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in LA offshore Gulf. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish common in LA coastal bays and passes. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet abundant in LA. No recreational bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish are not a target species in LA. Extremely rare.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit rare in LA. No specific regulation.",
+        "source": "LA Wildlife & Fisheries"
       }
     },
     "MA": {
@@ -7557,6 +7963,76 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Atlantic croaker occasionally caught in MA waters in late summer/fall.",
+        "source": "MA DMF"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and MA state rules.",
+        "source": "NOAA Fisheries HMS; MA state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and MA state rules.",
+        "source": "NOAA Fisheries HMS; MA state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and MA state rules.",
+        "source": "NOAA Fisheries HMS; MA state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and MA state rules.",
+        "source": "NOAA Fisheries HMS; MA state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and MA state rules.",
+        "source": "NOAA Fisheries HMS; MA state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and MA rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and MA rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna occasional in MA offshore in summer. No bag limit.",
+        "source": "MA DMF"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in MA offshore, especially near the canyons. No bag limit.",
+        "source": "MA DMF"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey migrate through MA rivers in spring. Native species; not targeted.",
         "source": "MA DMF"
       }
     },
@@ -8441,6 +8917,83 @@
         "season": "Open year-round",
         "notes": "Pinfish at southern edge of range in MD. No bag limit.",
         "source": "MD DNR"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and MD state rules.",
+        "source": "NOAA Fisheries HMS; MD state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and MD state rules.",
+        "source": "NOAA Fisheries HMS; MD state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and MD state rules.",
+        "source": "NOAA Fisheries HMS; MD state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and MD state rules.",
+        "source": "NOAA Fisheries HMS; MD state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and MD state rules.",
+        "source": "NOAA Fisheries HMS; MD state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and MD rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and MD rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in MD — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "MD DNR"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna in MD offshore waters in warmer months. No bag limit.",
+        "source": "MD DNR"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in MD Chesapeake waters. No bag limit.",
+        "source": "MD DNR"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish do not occur in MD. Would be a rare stray.",
+        "source": "MD DNR"
       }
     },
     "ME": {
@@ -8758,6 +9311,27 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Atlantic croaker are very rare in ME — far north of normal range. Release if caught.",
+        "source": "ME DMRE"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and ME state rules.",
+        "source": "NOAA Fisheries HMS; ME state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and ME state rules.",
+        "source": "NOAA Fisheries HMS; ME state agency"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey are native in ME and not specifically protected. Incidental catch only.",
         "source": "ME DMRE"
       }
     },
@@ -9627,6 +10201,62 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Pigfish in MS coastal areas. No bag limit.",
+        "source": "MS DMR"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and MS state rules.",
+        "source": "NOAA Fisheries HMS; MS state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and MS state rules.",
+        "source": "NOAA Fisheries HMS; MS state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and MS state rules.",
+        "source": "NOAA Fisheries HMS; MS state agency"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper in MS Gulf offshore. NOAA GMFMC regulations. 3 per day aggregate.",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in MS — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "MS DMR"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in MS deepwater Gulf. No bag limit.",
+        "source": "MS DMR"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish in MS coastal bays. No bag limit.",
+        "source": "MS DMR"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in MS coastal waters. No bag limit.",
         "source": "MS DMR"
       }
     },
@@ -11099,6 +11729,132 @@
         "season": "Open year-round",
         "notes": "Pigfish common in NC sounds. No bag limit.",
         "source": "NC DMF"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and NC state rules.",
+        "source": "NOAA Fisheries HMS; NC state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and NC rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and NC rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper in NC offshore reefs. SAFMC regulations. 3 per day aggregate.",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in NC — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "NC DMF"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna in NC offshore and nearshore in summer. No specific bag limit.",
+        "source": "NC DMF"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in NC Gulf Stream. No bag limit for recreational anglers.",
+        "source": "NC DMF"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish present in NC coastal waters in summer. No bag limit.",
+        "source": "NC DMF"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in NC sounds and piers. No recreational bag limit.",
+        "source": "NC DMF"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish are occasional strays in NC coastal waters. No specific regulation.",
+        "source": "NC DMF"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit occasional in NC. No specific bag limit.",
+        "source": "NC DMF"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey in NC coastal rivers. Native species.",
+        "source": "NC Wildlife Resources Commission"
       }
     },
     "NJ": {
@@ -11942,6 +12698,104 @@
         "season": "Open year-round",
         "notes": "Jonah crab present in NJ offshore areas and rocky structure.",
         "source": "NJ DEP Marine Fisheries"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and NJ state rules.",
+        "source": "NOAA Fisheries HMS; NJ state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and NJ state rules.",
+        "source": "NOAA Fisheries HMS; NJ state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and NJ state rules.",
+        "source": "NOAA Fisheries HMS; NJ state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and NJ state rules.",
+        "source": "NOAA Fisheries HMS; NJ state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and NJ state rules.",
+        "source": "NOAA Fisheries HMS; NJ state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and NJ state rules.",
+        "source": "NOAA Fisheries HMS; NJ state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and NJ rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and NJ rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in NJ — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "NJ DEP Marine Fisheries"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna on NJ offshore trips. No federal bag limit.",
+        "source": "NJ DEP Marine Fisheries"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna on NJ offshore party boats. No federal bag limit.",
+        "source": "NJ DEP Marine Fisheries"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet occasional in NJ waters in summer. No bag limit.",
+        "source": "NJ DEP"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish extremely rare in NJ. Release if encountered.",
+        "source": "NJ DEP"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey occasional in NJ rivers. No specific regulation.",
+        "source": "NJ DEP"
       }
     },
     "NY": {
@@ -12668,6 +13522,90 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Atlantic croaker caught from NY piers and surf in summer/fall.",
+        "source": "NY DEC"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and NY state rules.",
+        "source": "NOAA Fisheries HMS; NY state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and NY state rules.",
+        "source": "NOAA Fisheries HMS; NY state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and NY state rules.",
+        "source": "NOAA Fisheries HMS; NY state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and NY state rules.",
+        "source": "NOAA Fisheries HMS; NY state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and NY state rules.",
+        "source": "NOAA Fisheries HMS; NY state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and NY state rules.",
+        "source": "NOAA Fisheries HMS; NY state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and NY rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and NY rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in NY — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "NY DEC"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna in NY offshore. No bag limit.",
+        "source": "NY DEC"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in NY offshore. No bag limit.",
+        "source": "NY DEC"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey in NY coastal rivers. Native along coast; invasive in Great Lakes.",
         "source": "NY DEC"
       }
     },
@@ -13537,6 +14475,27 @@
         "season": "Seasonal (spring–fall; varies by area)",
         "notes": "Spot prawn: check ODFW for current season. Typically open summer months with pot gear.",
         "source": "ODFW"
+      },
+      "pacific_jack_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Rare; warm-water years",
+        "notes": "Pacific jack mackerel occasional in OR during warm-water years. No specific bag limit.",
+        "source": "ODFW"
+      },
+      "california_sheephead": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "California sheephead are CA-endemic and do not occur in OR waters.",
+        "source": "ODFW"
+      },
+      "corbina": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Corbina are a Southern California species and do not occur in OR waters.",
+        "source": "ODFW"
       }
     },
     "RI": {
@@ -14038,6 +14997,48 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Atlantic croaker occasional in RI in fall. No specific bag limit.",
+        "source": "RI DEM"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and RI state rules.",
+        "source": "NOAA Fisheries HMS; RI state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and RI state rules.",
+        "source": "NOAA Fisheries HMS; RI state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and RI state rules.",
+        "source": "NOAA Fisheries HMS; RI state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and RI state rules.",
+        "source": "NOAA Fisheries HMS; RI state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and RI state rules.",
+        "source": "NOAA Fisheries HMS; RI state agency"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey in RI rivers during spring migration. Incidental only.",
         "source": "RI DEM"
       }
     },
@@ -15322,6 +16323,104 @@
         "season": "Open year-round",
         "notes": "Pigfish abundant in SC coastal sounds and piers. No bag limit.",
         "source": "SC DNR"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and SC state rules.",
+        "source": "NOAA Fisheries HMS; SC state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and SC state rules.",
+        "source": "NOAA Fisheries HMS; SC state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and SC state rules.",
+        "source": "NOAA Fisheries HMS; SC state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and SC state rules.",
+        "source": "NOAA Fisheries HMS; SC state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and SC state rules.",
+        "source": "NOAA Fisheries HMS; SC state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and SC rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and SC rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper in SC offshore. SAFMC Atlantic grouper complex. 3 per day aggregate.",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in SC — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "SC DNR"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in SC offshore Gulf Stream. No bag limit.",
+        "source": "SC DNR"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish in SC coastal waters. No bag limit.",
+        "source": "SC DNR"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in SC coastal waters. No bag limit.",
+        "source": "SC DNR"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish rare in SC. Catch-and-release is recommended.",
+        "source": "SC DNR"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit occasional in SC waters. No specific bag limit.",
+        "source": "SC DNR"
       }
     },
     "TX": {
@@ -16337,6 +17436,90 @@
         "season": "Open year-round",
         "notes": "Pigfish present in TX bays and nearshore. No bag limit.",
         "source": "TX TPWD"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and TX state rules.",
+        "source": "NOAA Fisheries HMS; TX state agency"
+      },
+      "nurse_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Nurse shark is a Large Coastal Shark per NOAA HMS. 1 per vessel per day with permit. Non-aggressive; often encountered near structure. Verify with NOAA HMS and TX state rules.",
+        "source": "NOAA Fisheries HMS; TX state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and TX state rules.",
+        "source": "NOAA Fisheries HMS; TX state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and TX state rules.",
+        "source": "NOAA Fisheries HMS; TX state agency"
+      },
+      "black_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "3 per day (grouper aggregate)",
+        "season": "Open year-round; seasonal quotas may apply",
+        "notes": "Black grouper in TX Gulf waters. Part of the Gulf grouper complex managed by NOAA/GMFMC. 3 per day (grouper aggregate).",
+        "source": "NOAA Fisheries GMFMC/SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in TX — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "TX TPWD"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna in TX offshore Gulf. No bag limit.",
+        "source": "TX TPWD"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna (ahi) in TX deepwater Gulf. No federal bag limit.",
+        "source": "TX TPWD"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish are extremely common in TX bays. No bag limit. Fun on ultra-light tackle.",
+        "source": "TX TPWD"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in TX bays. No recreational bag limit; commonly used as bait.",
+        "source": "TX TPWD"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish are extremely rare in TX. Catch-and-release only if encountered.",
+        "source": "TX TPWD"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit in TX Gulf flats. No bag limit; mostly catch-and-release.",
+        "source": "TX TPWD"
       }
     },
     "VA": {
@@ -17290,6 +18473,118 @@
         "season": "Open year-round",
         "notes": "Pigfish present in lower Chesapeake in summer. No bag limit.",
         "source": "VA DGIF"
+      },
+      "bull_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Bull shark is a Large Coastal Shark. NOAA permit required to fish for them recreationally. 1 per vessel per day. No minimum size. Verify with NOAA HMS and VA state rules.",
+        "source": "NOAA Fisheries HMS; VA state agency"
+      },
+      "sandbar_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Sandbar shark is a Large Coastal Shark. NOAA recreational permit required. 1 per vessel per day. Sandbar sharks are an important coastal species; handle carefully. Verify with NOAA HMS and VA state rules.",
+        "source": "NOAA Fisheries HMS; VA state agency"
+      },
+      "tiger_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round (NOAA HMS rules)",
+        "notes": "Tiger shark is a Large Coastal Shark under NOAA HMS rules. Recreational permit required. 1 per vessel per day. Large, powerful shark — handle with extreme care. Verify with NOAA HMS and VA state rules.",
+        "source": "NOAA Fisheries HMS; VA state agency"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and VA state rules.",
+        "source": "NOAA Fisheries HMS; VA state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and VA state rules.",
+        "source": "NOAA Fisheries HMS; VA state agency"
+      },
+      "scalloped_hammerhead": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from retention",
+        "notes": "Scalloped hammerhead is federally prohibited from retention. Release immediately — protected under federal law. Verify with NOAA HMS and VA state rules.",
+        "source": "NOAA Fisheries HMS; VA state agency"
+      },
+      "snowy_grouper": {
+        "min_size": "20 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Snowy grouper are a deep-water grouper (100-400 ft). Part of the deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and VA rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "warsaw_grouper": {
+        "min_size": "24 in TL",
+        "bag_limit": "5 grouper aggregate",
+        "season": "Open year-round; quotas may close season",
+        "notes": "Warsaw grouper are one of the largest grouper species, caught deep (100-500 ft). Deep-water grouper complex managed by NOAA/SAFMC. Verify current SAFMC/NOAA and VA rules.",
+        "source": "NOAA Fisheries SAFMC"
+      },
+      "red_lionfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round — invasive species, harvest encouraged",
+        "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in VA — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "VA DGIF"
+      },
+      "skipjack_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Skipjack tuna occasional in VA offshore. No specific bag limit.",
+        "source": "VA DGIF"
+      },
+      "yellowfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowfin tuna in VA offshore Gulf Stream. No bag limit.",
+        "source": "VA DGIF"
+      },
+      "ladyfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Ladyfish occasional in VA lower Chesapeake in summer. No bag limit.",
+        "source": "VA DGIF"
+      },
+      "striped_mullet": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Striped mullet in VA Chesapeake Bay area. No bag limit.",
+        "source": "VA DGIF"
+      },
+      "bonefish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (rare in this area)",
+        "season": "Open year-round",
+        "notes": "Bonefish are very rare in VA. Release if caught.",
+        "source": "VA DGIF"
+      },
+      "permit": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Permit very rare in VA waters. No specific regulation.",
+        "source": "VA DGIF"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey in VA rivers during spring. Not a targeted sport fish.",
+        "source": "VA DGIF"
       }
     },
     "WA": {
@@ -18093,6 +19388,41 @@
         "season": "Seasonal (spring–fall; varies by area)",
         "notes": "Spot prawn recreational season in WA typically May-September; check WDFW for area-specific rules.",
         "source": "WDFW"
+      },
+      "pacific_jack_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Rare; warm-water years",
+        "notes": "Pacific jack mackerel rare in WA; possible during El Niño. No specific regulation.",
+        "source": "WDFW"
+      },
+      "california_sheephead": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "California sheephead do not occur in WA waters — CA-endemic species.",
+        "source": "WDFW"
+      },
+      "corbina": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Corbina are a Southern California species and do not occur in WA waters.",
+        "source": "WDFW"
+      },
+      "white_seabass": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "White seabass are a CA/Baja species and do not occur in WA waters.",
+        "source": "WDFW"
+      },
+      "pacific_barracuda": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Pacific barracuda are a Southern California species and do not occur in WA waters.",
+        "source": "WDFW"
       }
     },
     "HI": {
@@ -18698,6 +20028,27 @@
         "season": "Open year-round",
         "notes": "Atlantic croaker extremely rare in NH. May stray in warm years.",
         "source": "NH Fish & Game"
+      },
+      "thresher_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "1 per vessel per day",
+        "season": "Open year-round",
+        "notes": "Thresher shark is a Pelagic Shark. No federal recreational bag limit. No permit required. Often targeted on party boats and offshore. Verify with NOAA HMS and NH state rules.",
+        "source": "NOAA Fisheries HMS; NH state agency"
+      },
+      "shortfin_mako": {
+        "min_size": "",
+        "bag_limit": "0 — prohibited",
+        "season": "Prohibited from harvest (NOAA, effective 2022-2023)",
+        "notes": "Shortfin mako are federally prohibited from harvest as of 2023 due to stock depletion. Release all mako sharks immediately. Use circle hooks. Verify with NOAA HMS and NH state rules.",
+        "source": "NOAA Fisheries HMS; NH state agency"
+      },
+      "sea_lamprey": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific limit",
+        "season": "Spring river migration",
+        "notes": "Sea lamprey present in NH rivers during spawning run. Not a sport fishing target.",
+        "source": "NH Fish & Game"
       }
     },
     "PA": {
@@ -19254,6 +20605,27 @@
         "bag_limit": "100 per day (check current limits)",
         "season": "Seasonal (spring–fall; varies by area)",
         "notes": "Spot prawn recreational fishing in AK requires pot gear license. Generous limits but verify ADF&G current rules.",
+        "source": "ADF&G"
+      },
+      "corbina": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Corbina are a Southern California species and do not occur in AK waters.",
+        "source": "ADF&G"
+      },
+      "white_seabass": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "White seabass are a CA/Baja species and do not occur in AK waters.",
+        "source": "ADF&G"
+      },
+      "pacific_barracuda": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present",
+        "notes": "Pacific barracuda are a Southern California species and do not occur in AK waters.",
         "source": "ADF&G"
       }
     },
