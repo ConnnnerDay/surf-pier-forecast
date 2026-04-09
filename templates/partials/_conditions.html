@@ -160,9 +160,13 @@
             <div class="activity-timeline">
                 <div class="timeline-bars">
                     {% for entry in forecast.activity_timeline %}
-                    <div class="timeline-bar-col">
-                        <div class="timeline-bar timeline-bar--{{ entry.tag }}" style="height: {{ [((entry.level * 0.58) | round | int), 2] | max }}px;"></div>
-                        <div class="timeline-hour">{% if entry.hour % 6 == 0 %}{{ entry.label }}{% endif %}</div>
+                    <div class="timeline-bar-col{% if entry.is_now %} timeline-bar-col--now{% endif %}">
+                        <div class="timeline-bar timeline-bar--{{ entry.tag }}{% if entry.peak %} timeline-bar--peak{% endif %}"
+                             style="height: {{ [((entry.level * 0.58) | round | int), 2] | max }}px;"
+                             title="{{ entry.label }}{% if entry.reason %} — {{ entry.reason }}{% endif %} ({{ entry.level }}%)"></div>
+                        <div class="timeline-hour">
+                            {%- if entry.is_now -%}Now{%- elif entry.hour % 6 == 0 -%}{{ entry.label }}{%- endif -%}
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
