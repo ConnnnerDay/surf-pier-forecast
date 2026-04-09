@@ -58,7 +58,14 @@
     "Crevalle jack (adult)": "crevalle_jack",
     "Red grouper": "red_grouper",
     "Tripletail": "tripletail",
-    "Broadnose sevengill shark": "broadnose_sevengill_shark"
+    "Broadnose sevengill shark": "broadnose_sevengill_shark",
+    "Chinook salmon (king salmon)": "chinook_salmon",
+    "Coho salmon (silver salmon)": "coho_salmon",
+    "Pink salmon (humpy)": "pink_salmon",
+    "Sockeye salmon (red salmon)": "sockeye_salmon",
+    "Chum salmon (dog salmon)": "chum_salmon",
+    "Dungeness crab (shore)": "dungeness_crab",
+    "Black rockfish": "black_rockfish"
   },
   "states": {
     "AL": {
@@ -1920,6 +1927,13 @@
         "bag_limit": "No bag limit",
         "season": "Open year-round",
         "notes": "Broadnose sevengill sharks have no specific size or bag limit in California. They are frequently caught incidentally from piers and docks in San Francisco Bay and along the coast. Catch and release is recommended — use barbless hooks where possible and limit handling time. Verify current rules with CDFW.",
+        "source": "https://wildlife.ca.gov/Fishing/Ocean/Regulations"
+      },
+      "dungeness_crab": {
+        "min_size": "5.75 in carapace width",
+        "bag_limit": "10 per day",
+        "season": "Seasonal — typically November 15 through June 30 (north of Pt. Conception); check CDFW",
+        "notes": "California Dungeness crab: 5.75-inch carapace minimum, 10/day. Season north of Pt. Conception typically November 15 – June 30 but varies by year due to domoic acid testing delays. Soft-shell crab must be released. Verify 2026 season opening with CDFW.",
         "source": "https://wildlife.ca.gov/Fishing/Ocean/Regulations"
       }
     },
@@ -4421,6 +4435,13 @@
         "bag_limit": "3 per day (aggregate grouper limit)",
         "season": "Gulf: seasonal; Atlantic: open year-round — verify season",
         "notes": "Florida red grouper: 20-inch TL minimum, 3/day aggregate grouper limit. Gulf season is set annually and may include closures — verify 2026 Gulf season dates with FWC and NOAA/GMFMC. Atlantic rules may differ.",
+        "source": "https://myfwc.com/fishing/saltwater/recreational/"
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Seasonal — check FWC for closed gigging season",
+        "notes": "Southern flounder in Florida panhandle: 12-inch minimum, 10/day. Some areas have gigging season closures. Verify current rules with FWC.",
         "source": "https://myfwc.com/fishing/saltwater/recreational/"
       }
     },
@@ -8233,6 +8254,13 @@
         "season": "Prohibited year-round",
         "notes": "Great hammerhead sharks are a prohibited species under NOAA federal shark regulations — they may NOT be harvested or possessed. If caught, they must be released immediately with minimal harm. All anglers fishing for sharks in Atlantic/Gulf federal waters must have a valid NOAA HMS Angling permit. Verify current prohibited species list with NOAA.",
         "source": "https://www.fisheries.noaa.gov/recreational-fishing-rules"
+      },
+      "weakfish": {
+        "min_size": "12 in TL",
+        "bag_limit": "No bag limit",
+        "season": "Open year-round (rare)",
+        "notes": "Weakfish very rarely reach Maine coastal waters. No specific state regulations. Populations are severely depleted — catch and release strongly recommended. Verify with ME DMR.",
+        "source": "https://www.maine.gov/dmr/fisheries/recreational"
       }
     },
     "MS": {
@@ -16421,6 +16449,13 @@
         "season": "Open year-round",
         "notes": "Crevalle jack in Virginia: no minimum size or bag limit. Summer visitor in coastal waters. Verify with VA MRC.",
         "source": "https://webapps.mrc.virginia.gov/public/reports/swrecfishingrules.php"
+      },
+      "southern_flounder": {
+        "min_size": "12 in TL",
+        "bag_limit": "10 per day",
+        "season": "Open year-round",
+        "notes": "Southern flounder in Virginia: 12-inch minimum, 10/day. Found in lower Chesapeake Bay and tidal rivers. Verify current rules with VA MRC.",
+        "source": "https://webapps.mrc.virginia.gov/public/reports/swrecfishingrules.php"
       }
     },
     "WA": {
@@ -17671,6 +17706,55 @@
         "bag_limit": "2 per day (IPHC limit)",
         "season": "Seasonal — IPHC sets annual season dates",
         "notes": "Alaska Pacific halibut: 32-inch minimum, 2 fish/day. Season dates and area-specific limits set annually by the International Pacific Halibut Commission (IPHC). Verify 2026 season, area, and limits with AK F&G and the IPHC before fishing — regulations are complex.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "chinook_salmon": {
+        "min_size": "20 in FL minimum in most areas",
+        "bag_limit": "1 per day (most areas); 0 in some closed systems",
+        "season": "Seasonal — varies significantly by area; check AK F&G Sport Fishing Regulations",
+        "notes": "Alaska king (chinook) salmon regulations are among the most complex in the world. Limits, minimum sizes, and seasons vary dramatically by drainage, area, and even specific sections of river. Some systems are closed entirely to king salmon fishing to protect wild stocks. Always check AK F&G current emergency order closures and area-specific rules before targeting king salmon. 20-in FL general minimum in saltwater; many freshwater systems differ.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "coho_salmon": {
+        "min_size": "No minimum",
+        "bag_limit": "6 per day (most areas)",
+        "season": "Seasonal — August through November in most areas; check AK F&G",
+        "notes": "Alaska coho (silver) salmon: generally 6/day in most saltwater and freshwater areas. Season typically August–November. Some systems restrict to hatchery-marked fish only. Check AK F&G for area-specific rules and emergency orders — regulations change annually.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "pink_salmon": {
+        "min_size": "No minimum",
+        "bag_limit": "6 per day (most areas)",
+        "season": "Seasonal — odd/even year runs peak July–August; check AK F&G",
+        "notes": "Alaska pink (humpy) salmon are abundant in odd-numbered years in many drainages. Generally 6/day in most areas. Runs peak July–August. Check AK F&G for current-year area-specific limits, which can be very generous in high-abundance years.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "sockeye_salmon": {
+        "min_size": "No minimum",
+        "bag_limit": "6 per day (most areas)",
+        "season": "Seasonal — June through August in most systems; check AK F&G",
+        "notes": "Alaska sockeye (red) salmon: typically 6/day in most areas. Popular in Bristol Bay, Kenai River, and Southeast Alaska. Season generally June–August. Daily limits may be higher in some areas during peak runs. Check AK F&G for current emergency orders and area-specific rules.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "dungeness_crab": {
+        "min_size": "6.5 in carapace width",
+        "bag_limit": "6 per day (male only)",
+        "season": "Seasonal — varies by area; check AK F&G",
+        "notes": "Alaska Dungeness crab: 6.5-inch carapace minimum, 6 male crab/day. Female crabs must be returned. Season varies by area and management zone. Check AK F&G for current area-specific rules.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "lingcod": {
+        "min_size": "35 in TL",
+        "bag_limit": "2 per day",
+        "season": "Open year-round (check for area closures)",
+        "notes": "Alaska lingcod: 35-inch TL minimum (stricter than most lower-48 states), 2/day bag limit. Found in shallow rocky reefs and kelp in Southeast and Southcentral Alaska. Check AK F&G for any area-specific closures.",
+        "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
+      },
+      "black_rockfish": {
+        "min_size": "No minimum",
+        "bag_limit": "5 per day (aggregate nearshore)",
+        "season": "Open year-round",
+        "notes": "Alaska nearshore rockfish (including black rockfish): 5-fish aggregate daily limit. Found around kelp beds, rocky reefs, and piers. Some deep-water species (yelloweye, canary) have much lower limits. Verify area-specific rules with AK F&G.",
         "source": "https://www.adfg.alaska.gov/index.cfm?adfg=fishing.main"
       }
     }
