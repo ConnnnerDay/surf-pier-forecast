@@ -2934,13 +2934,14 @@ h2::before {
 
   .outlook-header {
     align-items: flex-start;
-    min-width: 80px;
+    min-width: 64px;
+    flex-shrink: 0;
   }
 
   .outlook-details {
     flex-direction: row;
     gap: 1rem;
-    width: auto;
+    flex: 1;
   }
 
   .outlook-detail {

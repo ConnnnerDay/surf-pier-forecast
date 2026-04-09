@@ -1257,7 +1257,7 @@ function shareConditions(btn) {
     var verdictEl = document.querySelector('.csc-verdict-badge');
     var verdict = verdictEl ? verdictEl.textContent.trim() : '';
 
-    var windEl = document.querySelector('.wind-quality-indicator');
+    var windEl = document.querySelector('.wind-direction-context') || document.querySelector('.wind-quality-indicator');
     var wind = windEl ? windEl.textContent.trim() : '';
 
     var tempEl = document.querySelector('.unit-temp');

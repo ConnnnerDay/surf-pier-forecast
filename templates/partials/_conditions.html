@@ -65,14 +65,14 @@
                     <span class="stat-detail" title="{{ forecast.conditions.water_temp_trend_detail }}">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}{% if forecast.conditions.water_temp_trend %} &middot; {{ forecast.conditions.water_temp_trend }}{% endif %}</span>
                 </div>
 
-                <div class="stat-card">
+                <div class="stat-card" data-stat="wind">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg></span>
                     <span class="stat-label">Wind</span>
                     <span class="stat-value">{{ forecast.conditions.wind }}</span>
                     <span class="stat-detail">next 24 h</span>
                 </div>
 
-                <div class="stat-card">
+                <div class="stat-card" data-stat="waves">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2"/></svg></span>
                     <span class="stat-label">Waves</span>
                     <span class="stat-value">{{ forecast.conditions.waves }}</span>
@@ -80,7 +80,7 @@
                 </div>
 
                 {% if forecast.tide_state %}
-                <div class="stat-card">
+                <div class="stat-card" data-stat="tide">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 15H2a10 10 0 0 0 20 0h-3"/></svg></span>
                     <span class="stat-label">Tide</span>
                     {% set _ts = (forecast.tide_state or '')|lower|trim %}
@@ -101,7 +101,7 @@
                 {% set pressure_mb = (forecast.pressure.pressure_mb if forecast.pressure and forecast.pressure.pressure_mb is defined else (forecast.environment.air_pressure_mb if forecast.environment and forecast.environment.air_pressure_mb is defined else none)) %}
                 {% if pressure_mb is not none %}
                 {% set _ptrd = ((forecast.pressure.trend if forecast.pressure and forecast.pressure.trend else '') or '')|lower|trim %}
-                <div class="stat-card">
+                <div class="stat-card" data-stat="pressure">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 12l3.5-3.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>
                     <span class="stat-label">Pressure</span>
                     <span class="stat-value">
@@ -123,7 +123,7 @@
 
                 {% set _air_temp_f = (forecast.conditions.air_temp_f if forecast.conditions and forecast.conditions.air_temp_f is defined else (forecast.environment.air_temp_f if forecast.environment and forecast.environment.air_temp_f is defined else none)) %}
                 {% if _air_temp_f is not none %}
-                <div class="stat-card">
+                <div class="stat-card" data-stat="air-temp">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span>
                     <span class="stat-label">Air Temp</span>
                     <span class="stat-value">
@@ -134,7 +134,7 @@
                 {% endif %}
 
                 {% if forecast.uv and forecast.uv.index is defined %}
-                <div class="stat-card">
+                <div class="stat-card" data-stat="uv">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
                     <span class="stat-label">UV Index</span>
                     <span class="stat-value">{{ forecast.uv.index }}</span>
