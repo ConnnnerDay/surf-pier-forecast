@@ -26007,5 +26007,288 @@
     "explanation_cold": "Gulf menhaden (Brevoortia patronus) are schooling filter-feeders that are one of the most important baitfish in the Gulf of Mexico. They form massive schools visible as nervous water near the surface.",
     "explanation_warm": "Gulf menhaden are the essential baitfish of the Gulf Coast — used live or as fresh cut bait for nearly every Gulf predator. They school in enormous numbers and are easily captured with a cast net where legal. Smaller than Atlantic menhaden, they're perfect for live-lining to redfish, trout, and kingfish. Every Gulf Coast pier angler should master the cast net for menhaden.",
     "tip": "Look for nervous water, birds diving, or silver flashes near the surface to locate menhaden schools. A 7-10 ft cast net thrown into the center of a school can net dozens at once."
+  },
+  {
+    "name": "Jonah crab",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic"
+    ],
+    "temp_min": 40,
+    "temp_max": 70,
+    "temp_ideal_low": 46,
+    "temp_ideal_high": 62,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Fish frames, squid, oily bait in hoop nets or crab traps; not a rod-and-reel target",
+    "rig": "Hoop net or wire crab trap, typically in 10-60 ft of water over rocky bottom",
+    "hook_size": "Not applicable",
+    "sinker": "Not applicable (trap-based fishery)",
+    "lures": "Not applicable",
+    "explanation_cold": "Jonah crabs (Cancer borealis) are a cold-water species abundant throughout the Northeast from Maine to North Carolina. They prefer cold water (40-62°F) and rocky substrate.",
+    "explanation_warm": "Jonah crabs are a prized Northeast seafood increasingly popular as a crab cake and claw alternative to blue crab and Dungeness. They're caught with hoop nets and crab traps from docks, piers, and boats. Large recreational bag limits (100/day in most NE states) make them a productive catch. Excellent eating — claws and legs are the main target. Found from rocks and jetties to offshore lobster grounds.",
+    "tip": "Jonah crabs aggregate under large rocks and in crevices. Hoop nets baited with fish scraps and left for 20-30 minutes in rocky areas produce the best results."
+  },
+  {
+    "name": "Horseshoe crab (encounter)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 50,
+    "temp_max": 80,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      5,
+      6
+    ],
+    "good_months": [
+      4,
+      7
+    ],
+    "bait": "Not targeted by anglers",
+    "rig": "Encountered while fishing piers and beaches, especially during spawning",
+    "hook_size": "Not applicable",
+    "sinker": "Not applicable",
+    "lures": "Not applicable",
+    "explanation_cold": "Atlantic horseshoe crabs (Limulus polyphemus) are ancient arthropods (not true crabs) that spawn on beaches from late May through June during high tides. They are encountered by shore and pier anglers during this period.",
+    "explanation_warm": "Horseshoe crabs mass on beaches at high tide in May–June to spawn, especially on full and new moon high tides. They are federally protected in many states and should never be harmed or harvested. Their blue blood has extraordinary biomedical value. Pier anglers often see them in shallow water. Handle with care if one becomes entangled — flip them upright and release immediately.",
+    "tip": "If you encounter a horseshoe crab flipped on its back near shore, gently flip it right-side-up using its shell (never the tail) and return it to water. They are harmless and ecologically critical."
+  },
+  {
+    "name": "California sheephead (Pacific)",
+    "coast": "west",
+    "regions": [
+      "southern_california"
+    ],
+    "temp_min": 58,
+    "temp_max": 74,
+    "temp_ideal_low": 62,
+    "temp_ideal_high": 70,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Mussels, sea urchin, crabs, lobster; they use powerful teeth to crush shellfish",
+    "rig": "Medium tackle bottom rig near kelp, rocky reefs, or pier pilings; tough fighters need stout leader",
+    "hook_size": "2/0-4/0 circle or j-hook",
+    "sinker": "2-4 oz bank or egg sinker",
+    "lures": "Occasionally take swimbaits and jigs near structure",
+    "explanation_cold": "California sheephead (Semicossyphus pulcher) are a wrasse family member found along the California coast from Point Conception south. They are sexually dichromatic — males have a distinctive black and red pattern with a white chin.",
+    "explanation_warm": "California sheephead are iconic SoCal game fish found in kelp forests and rocky reefs. They grow to 30+ lbs in deeper water. Excellent eating — firm, mild white flesh. They use powerful crushing teeth to eat mussels, urchins, and crabs. CA minimum 12 inches, 5 per day. Often caught from piers near rocky outcrops. A favorite on party boats in Southern California.",
+    "tip": "Mussels broken from the pier pilings are excellent bait for sheephead. They're attracted to shellfish scent — use the freshest bait possible."
+  },
+  {
+    "name": "Albacore (Pacific shore)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific_northwest"
+    ],
+    "temp_min": 58,
+    "temp_max": 70,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Live anchovies or sardines (chumming essential); cedar plugs trolling",
+    "rig": "Kite fishing with live bait; fast trolling with cedar plugs or feather jigs; casting jigs into marked schools",
+    "hook_size": "1/0-3/0",
+    "sinker": "None (fast-trolling or free-line target)",
+    "lures": "Cedar plugs (4-6 in), feather jigs, surface irons (1-2 oz) at very high speed",
+    "explanation_cold": "Pacific albacore tuna (Thunnus alalunga) are a highly migratory species that appears off the Pacific Coast in summer/fall when warm water moves inshore. They prefer 60-66°F water.",
+    "explanation_warm": "Albacore tuna make an annual migration from Hawaii-area waters to the California Current in summer, often coming within range of party boats and private vessels. When they push close to shore (rare but thrilling), they can be targeted from jetties and piers. Fast retrieves with surface irons or casting jigs into marked boils is the approach. Excellent eating — albacore is the prized 'white meat' tuna. PFMC manages the North Pacific albacore stock.",
+    "tip": "Albacore are rarely inshore; they typically require a 30-50 mile offshore run. When they come close in El Niño years, dawn and dusk produce the best action on fast-retrieved surface irons."
+  },
+  {
+    "name": "Bigeye tuna (Atlantic)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 62,
+    "temp_max": 84,
+    "temp_ideal_low": 65,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      6,
+      12
+    ],
+    "bait": "Live or dead bait at depth (100-400 ft); ballyhoo, squid, mackerel for trolling",
+    "rig": "Deep-drop trolling with rigged ballyhoo; also kite fishing; FAD (fish attracting device) fishing",
+    "hook_size": "6/0-9/0 for trolling; 4/0-6/0 for deep jigging",
+    "sinker": "None for trolling; 6-16 oz for deep jigging",
+    "lures": "Large skirted trolling lures, rigged ballyhoo, deep-drop jigs (4-8 oz)",
+    "explanation_cold": "Bigeye tuna (Thunnus obesus) are a large, deep-ranging tuna found in the Atlantic, caught primarily on offshore trips. They dive to depth during the day, making them a target for deep-drop fishing.",
+    "explanation_warm": "Atlantic bigeye tuna are among the most prized offshore catches for their exceptional quality sashimi-grade flesh. They're larger and fattier than yellowfin. Found along the Gulf Stream and Atlantic canyons. ICCAT-managed; no federal bag limit for recreational anglers from US boats, but Atlantic Tunas General Category permit required for sale. Popular on party boat overnight canyon trips.",
+    "tip": "Bigeye tuna come shallower at night — overnight trips with live bait near the surface can be very productive. During the day, deep jigging at 200-400 ft over structure is the key approach."
+  },
+  {
+    "name": "Wahoo (Gulf coast)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 68,
+    "temp_max": 88,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 84,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "good_months": [
+      5,
+      6
+    ],
+    "bait": "Live or rigged dead bait (bonito, barracuda strips, mackerel); high-speed trolling lures",
+    "rig": "High-speed trolling (8-15 knots) with skirted lures or rigged dead baits; also yo-yo jigging near structure",
+    "hook_size": "7/0-10/0 for trolling",
+    "sinker": "None or trolling weight",
+    "lures": "High-speed skirted trolling lures, Ilander lures, rapala minnow-style at speed",
+    "explanation_cold": "Wahoo (Acanthocybium solandri) are a top-tier Gulf Coast game fish, known for explosive strikes and blazing speed (up to 60 mph). They prefer offshore blue water around structure in warm months.",
+    "explanation_warm": "Gulf Coast wahoo fishing peaks in fall (Oct-Dec) around oil platforms and offshore reefs, where large concentrations gather. High-speed trolling at 10-15 knots with skirted lures is the primary method. They have razor-sharp teeth — always use a wire leader. Exceptional table fare — firm, mild white flesh with no 'fishy' taste. No federal bag limit from US recreational boats.",
+    "tip": "Wahoo strike best at speed (10-15 knots). Slow down and you'll miss them. A short wire leader (12-18 in) prevents their razor teeth from cutting the line."
+  },
+  {
+    "name": "Atlantic bonito (shore)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic"
+    ],
+    "temp_min": 62,
+    "temp_max": 80,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 76,
+    "peak_months": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      6,
+      11
+    ],
+    "bait": "Live or cut bait (silversides, sandeels, small mackerel); responds to chum slicks",
+    "rig": "Light to medium spinning or casting from piers; fast-retrieve iron jigs; float rig with live bait",
+    "hook_size": "1/0-3/0",
+    "sinker": "None to 1/2 oz",
+    "lures": "Metal jigs (1-2 oz) in silver or white retrieved very fast; small poppers; spoons",
+    "explanation_cold": "Atlantic bonito (Sarda sarda) are a fast, hard-fighting schooling fish that appear along the Atlantic Coast in summer and early fall. They prefer water from 66-76°F.",
+    "explanation_warm": "Atlantic bonito are one of the premier inshore/nearshore game fish in the Northeast — fast, aggressive, and accessible from piers and jetties when they're chasing bait. They school tightly around bait balls and respond well to fast-retrieved metal jigs or surface lures. Good eating when bled immediately and kept cold — their dark meat is strong flavored but excellent smoked or in a Niçoise salad.",
+    "tip": "Bonito hit best at dawn on fast metal jigs — the faster the better. Match the silver flash of silversides or sandeels for best results."
+  },
+  {
+    "name": "Bluefish (Gulf coast stray)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 58,
+    "temp_max": 84,
+    "temp_ideal_low": 64,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Cut fish, squid, shrimp; very aggressive feeder",
+    "rig": "Wire leader essential (sharp teeth); spinning or conventional with metal jigs or cut bait",
+    "hook_size": "2/0-4/0",
+    "sinker": "1-3 oz",
+    "lures": "Metal jigs, poppers, and any fast-moving lure; no braid trace needed — wire only",
+    "explanation_cold": "Bluefish occasionally venture into Gulf Coast and far southeast Atlantic states in winter, following warm water and baitfish. They are primarily an East Coast species.",
+    "explanation_warm": "Bluefish are aggressive, sharp-toothed predators that run in large schools and can be encountered from piers in winter months along the deep South Atlantic and rarely in Gulf areas. Always use a wire trace — their teeth are razor-sharp. Excellent eating when cleaned immediately (bleeding is essential — the flesh turns soft and fishy if not bled quickly).",
+    "tip": "Always carry wire leaders when bluefish are around. They bite through monofilament instantly. 6-9 inch wire traces prevent cutoffs."
+  },
+  {
+    "name": "Blackfin tuna (shore)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 66,
+    "temp_max": 86,
+    "temp_ideal_low": 72,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      2,
+      12
+    ],
+    "bait": "Live pilchards (scaled sardines), threadfin herring, cut squid; responds to chum",
+    "rig": "Light to medium spinning gear; free-line live bait; kite fishing from boats",
+    "hook_size": "1/0-3/0",
+    "sinker": "None or very light",
+    "lures": "Small metal jigs (1/2-1 oz), small Rapalas, and spoons retrieved at speed",
+    "explanation_cold": "Blackfin tuna (Thunnus atlanticus) are the smallest and southernmost Atlantic tuna species, found year-round in Florida waters and along the SE coast and Gulf.",
+    "explanation_warm": "Blackfin tuna are among the most accessible tuna for pier anglers in Florida, particularly near the Gulf Stream where they come within range from bridge and pier fishing. Live pilchards are the top bait. They school aggressively and provide spectacular surface action when on a chum line. Excellent eating — full-flavored tuna flesh. No federal bag limit from US recreational boats.",
+    "tip": "Blackfin regularly feed near the surface early morning and evening. A chum line of ground pilchards behind a pier or bridge creates great action when they're in the area."
   }
 ]

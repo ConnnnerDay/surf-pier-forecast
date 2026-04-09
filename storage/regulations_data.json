@@ -171,7 +171,29 @@
     "Pinfish": "pinfish",
     "Pigfish (grunt)": "pigfish",
     "Pigfish": "pigfish",
-    "Gulf menhaden (baitfish)": "gulf_menhaden"
+    "Gulf menhaden (baitfish)": "gulf_menhaden",
+    "Horseshoe crab (encounter)": "horseshoe_crab",
+    "California sheephead (Pacific)": "california_sheephead",
+    "Albacore (Pacific shore)": "albacore_pacific",
+    "Bigeye tuna (Atlantic)": "bigeye_tuna",
+    "Wahoo (Gulf coast)": "wahoo",
+    "Atlantic bonito (shore)": "atlantic_bonito",
+    "Atlantic bonito": "atlantic_bonito",
+    "Bonito (Atlantic)": "atlantic_bonito",
+    "Bluefish (Gulf coast stray)": "bluefish",
+    "Blackfin tuna (shore)": "blackfin_tuna",
+    "Albacore (Pacific)": "albacore_pacific",
+    "Albacore tuna": "albacore_pacific",
+    "Atlantic bonito (pier)": "atlantic_bonito",
+    "Sandbar shark (brown)": "sandbar_shark",
+    "Atlantic blacktip shark": "blacktip_shark",
+    "Smooth dogfish (Atlantic)": "smooth_dogfish",
+    "Smooth dogfish": "smooth_dogfish",
+    "Spiny dogfish (Atlantic)": "spiny_dogfish",
+    "Spiny dogfish (Pacific)": "pacific_spiny_dogfish",
+    "Goliath grouper (jewfish)": "goliath_grouper",
+    "Striped bass (Sacramento)": "striped_bass",
+    "Wahoo (ono, Hawaii)": "wahoo"
   },
   "states": {
     "AL": {
@@ -1101,6 +1123,20 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Striped mullet common in AL bays. No bag limit.",
+        "source": "AL DCNR"
+      },
+      "blacktip_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (Small Coastal Shark)",
+        "season": "Open year-round",
+        "notes": "Blacktip shark in AL Gulf. No specific bag limit.",
+        "source": "AL DCNR"
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic sharpnose in AL coastal waters. No bag limit.",
         "source": "AL DCNR"
       }
     },
@@ -2776,6 +2812,20 @@
         "season": "Spring river migration",
         "notes": "Sea lamprey in CT rivers. Native species, not targeted.",
         "source": "CT DEEP"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No harvest without permit",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Horseshoe crab harvest regulated in CT; permit required. Do not remove spawning crabs from the beach.",
+        "source": "CT DEEP"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish in CT coastal waters. No bag limit.",
+        "source": "CT DEEP"
       }
     },
     "DE": {
@@ -3250,6 +3300,20 @@
         "bag_limit": "No limit",
         "season": "Open year-round — invasive species, harvest encouraged",
         "notes": "Red lionfish are an invasive species causing significant ecological damage. No bag limit in DE — harvest is encouraged. Venomous spines on dorsal, pelvic, and anal fins — handle with extreme care using thick gloves or tongs.",
+        "source": "DE DNREC"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No harvest (protected spawning grounds)",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Delaware Bay is a critical horseshoe crab spawning ground. No recreational harvest. Protected by DNREC.",
+        "source": "DE DNREC"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish in DE coastal and bay waters. No specific bag limit.",
         "source": "DE DNREC"
       }
     },
@@ -5011,6 +5075,13 @@
         "season": "Open year-round",
         "notes": "Striped mullet are extremely common in FL coastal waters. Commercial season Sept 1-Jan 31. Recreational: generally open year-round.",
         "source": "FL FWC"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No take of horseshoe crabs",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "FL prohibits harvest of horseshoe crabs except for licensed biomedical use. Release all if encountered.",
+        "source": "FL FWC"
       }
     },
     "GA": {
@@ -6332,6 +6403,20 @@
         "season": "Open year-round",
         "notes": "Permit are occasional in GA nearshore. No bag limit.",
         "source": "GA DNR"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific bag limit",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Horseshoe crabs in GA — handle with care and release spawning individuals.",
+        "source": "GA DNR"
+      },
+      "blackfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna in GA offshore/Gulf Stream. No bag limit.",
+        "source": "GA DNR"
       }
     },
     "LA": {
@@ -7423,6 +7508,20 @@
         "season": "Open year-round",
         "notes": "Permit rare in LA. No specific regulation.",
         "source": "LA Wildlife & Fisheries"
+      },
+      "blacktip_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (Small Coastal Shark)",
+        "season": "Open year-round",
+        "notes": "Blacktip shark in LA Gulf. No specific bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic sharpnose in LA coastal waters. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
       }
     },
     "MA": {
@@ -8033,6 +8132,27 @@
         "bag_limit": "No specific limit",
         "season": "Spring river migration",
         "notes": "Sea lamprey migrate through MA rivers in spring. Native species; not targeted.",
+        "source": "MA DMF"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No harvest of horseshoe crabs without a license",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "MA prohibits recreational harvest of horseshoe crabs without a permit. A licensed bait permit is required. Do not disturb spawning aggregations.",
+        "source": "MA DMF"
+      },
+      "atlantic_bonito": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Atlantic bonito are a premier summer/fall pier target from MA. No bag limit.",
+        "source": "MA DMF"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish extremely common in MA bays and nearshore. No bag limit; popular catch-and-release.",
         "source": "MA DMF"
       }
     },
@@ -8994,6 +9114,20 @@
         "season": "Open year-round",
         "notes": "Bonefish do not occur in MD. Would be a rare stray.",
         "source": "MD DNR"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No harvest without permit",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "MD regulates horseshoe crab harvest strictly. Critical spawning habitat in Chesapeake Bay.",
+        "source": "MD DNR"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish in MD coastal waters and Chesapeake Bay. No bag limit.",
+        "source": "MD DNR"
       }
     },
     "ME": {
@@ -9332,6 +9466,27 @@
         "bag_limit": "No specific limit",
         "season": "Spring river migration",
         "notes": "Sea lamprey are native in ME and not specifically protected. Incidental catch only.",
+        "source": "ME DMRE"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No take of egg-laying females",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Horseshoe crabs are a protected species during spawning season (May-Jun). No harvest of females during spawning.",
+        "source": "ME DMRE"
+      },
+      "atlantic_bonito": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Atlantic bonito appear in ME in summer. No bag limit; fast jigs from piers work well.",
+        "source": "ME DMRE"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish (mustelus canis) are common in ME coastal waters. No specific bag limit.",
         "source": "ME DMRE"
       }
     },
@@ -10257,6 +10412,20 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Striped mullet in MS coastal waters. No bag limit.",
+        "source": "MS DMR"
+      },
+      "blacktip_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (Small Coastal Shark)",
+        "season": "Open year-round",
+        "notes": "Blacktip shark in MS Gulf coastal waters. No specific bag limit.",
+        "source": "MS DMR"
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic sharpnose shark in MS coastal waters. No bag limit.",
         "source": "MS DMR"
       }
     },
@@ -11855,6 +12024,27 @@
         "season": "Spring river migration",
         "notes": "Sea lamprey in NC coastal rivers. Native species.",
         "source": "NC Wildlife Resources Commission"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab in NC offshore waters. Recreational bag limit is generous.",
+        "source": "NC state agency"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No specific bag limit; no disturbance of spawning",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "NC allows limited horseshoe crab collection; do not disturb spawning aggregations.",
+        "source": "NC DMF"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish in NC coastal waters. No bag limit.",
+        "source": "NC DMF"
       }
     },
     "NJ": {
@@ -12796,6 +12986,27 @@
         "season": "Spring river migration",
         "notes": "Sea lamprey occasional in NJ rivers. No specific regulation.",
         "source": "NJ DEP"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No take in spawning season (May-Jun)",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "NJ strictly regulates horseshoe crab harvest. No take during May-June spawning season at protected beaches.",
+        "source": "NJ DEP"
+      },
+      "blackfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna occasional in NJ offshore; mainly south of Cape Hatteras. No bag limit.",
+        "source": "NJ DEP"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish abundant in NJ waters, especially bays. No bag limit.",
+        "source": "NJ DEP"
       }
     },
     "NY": {
@@ -13606,6 +13817,20 @@
         "bag_limit": "No specific limit",
         "season": "Spring river migration",
         "notes": "Sea lamprey in NY coastal rivers. Native along coast; invasive in Great Lakes.",
+        "source": "NY DEC"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No take of females during spawning",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "NY protects spawning female horseshoe crabs May-Jun. 1 per person per day for males only is the general rule — verify NY DEC.",
+        "source": "NY DEC"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish very common in NY nearshore. No bag limit.",
         "source": "NY DEC"
       }
     },
@@ -15040,6 +15265,27 @@
         "season": "Spring river migration",
         "notes": "Sea lamprey in RI rivers during spring migration. Incidental only.",
         "source": "RI DEM"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No harvest without permit",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Horseshoe crabs require a permit to harvest in RI. Do not disturb spawning crabs.",
+        "source": "RI DEM"
+      },
+      "atlantic_bonito": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Atlantic bonito excellent from RI piers in summer/fall. No bag limit.",
+        "source": "RI DEM"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish abundant in RI coastal waters. No bag limit.",
+        "source": "RI DEM"
       }
     },
     "SC": {
@@ -16421,6 +16667,20 @@
         "season": "Open year-round",
         "notes": "Permit occasional in SC waters. No specific bag limit.",
         "source": "SC DNR"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "Protected during spawning",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "SC horseshoe crabs are protected during May-June spawning. Release if encountered.",
+        "source": "SC DNR"
+      },
+      "atlantic_bonito": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Atlantic bonito occasional in SC offshore. No bag limit.",
+        "source": "SC DNR"
       }
     },
     "TX": {
@@ -17520,6 +17780,27 @@
         "season": "Open year-round",
         "notes": "Permit in TX Gulf flats. No bag limit; mostly catch-and-release.",
         "source": "TX TPWD"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "Limited harvest allowed",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "TX permits limited horseshoe crab collection. Verify current TPWD rules.",
+        "source": "TX TPWD"
+      },
+      "blacktip_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit (Small Coastal Shark)",
+        "season": "Open year-round",
+        "notes": "Blacktip shark in TX Gulf. No bag limit. Commonly encountered in shallow Gulf waters.",
+        "source": "TX TPWD; NOAA HMS"
+      },
+      "atlantic_sharpnose_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic sharpnose shark very common in TX surf and bays. No bag limit.",
+        "source": "TX TPWD"
       }
     },
     "VA": {
@@ -18584,6 +18865,34 @@
         "bag_limit": "No specific limit",
         "season": "Spring river migration",
         "notes": "Sea lamprey in VA rivers during spring. Not a targeted sport fish.",
+        "source": "VA DGIF"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab in VA offshore waters. Recreational bag limit is generous.",
+        "source": "VA state agency"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "Regulated — verify with VDGIF",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Horseshoe crab harvest regulated in VA. Check current rules.",
+        "source": "VA DGIF"
+      },
+      "blackfin_tuna": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Blackfin tuna occasional in VA offshore Gulf Stream. No bag limit.",
+        "source": "VA DGIF"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish in VA Chesapeake Bay and coastal waters. No bag limit.",
         "source": "VA DGIF"
       }
     },
@@ -20048,6 +20357,27 @@
         "bag_limit": "No specific limit",
         "season": "Spring river migration",
         "notes": "Sea lamprey present in NH rivers during spawning run. Not a sport fishing target.",
+        "source": "NH Fish & Game"
+      },
+      "horseshoe_crab": {
+        "min_size": "No minimum",
+        "bag_limit": "No take of egg-laying females",
+        "season": "Protected during spawning (May-Jun)",
+        "notes": "Horseshoe crabs are protected during May-June spawning. Handle carefully and return to water.",
+        "source": "NH Fish & Game"
+      },
+      "atlantic_bonito": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Atlantic bonito in NH offshore and nearshore in summer. No bag limit.",
+        "source": "NH Fish & Game"
+      },
+      "smooth_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Smooth dogfish in NH coastal waters. No specific bag limit.",
         "source": "NH Fish & Game"
       }
     },
