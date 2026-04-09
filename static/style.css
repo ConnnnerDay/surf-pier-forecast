@@ -1517,16 +1517,6 @@ h2::before {
   font-weight: 700;
   color: var(--text-muted);
   letter-spacing: 0.02em;
-}
-
-.score-fill--possible {
-  background: #D97706;
-}
-
-.score-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -7851,6 +7841,11 @@ footer p {
   padding: 0.5rem;
   overflow: hidden;
 }
+/* Tide chart SVG — use CSS fill/stroke so dark mode vars apply */
+.tide-chart-label   { fill: var(--text); }
+.tide-chart-sublabel { fill: var(--text-muted); }
+.tide-chart-line    { stroke: var(--ocean); }
+
 .tide-svg-wrap svg {
   display: block;
   width: 100%;
