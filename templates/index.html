@@ -673,7 +673,75 @@
                     <button type="button" id="fmap-community-layer-btn" class="fmap-ctrl-btn" title="Show community catch pins" aria-label="Toggle community catch pins" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </button>
+                    <div class="fmap-ctrl-divider"></div>
+                    {# Admin-only edit markers button — hidden for everyone else via JS #}
+                    <button type="button" id="fmap-admin-edit-btn" class="fmap-ctrl-btn" title="Edit markers (admin)" aria-label="Toggle admin marker edit mode" aria-pressed="false" hidden>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
                 </div>
+
+                {# Admin marker edit modal — only rendered to admins #}
+                {% if g.user and g.user.get('is_admin') %}
+                <div id="fmap-admin-backdrop" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.45)" hidden></div>
+                <div id="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-admin-modal-title"
+                     style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3001;
+                            background:var(--surface,#1e293b);border:1px solid var(--border,#334155);
+                            border-radius:12px;padding:20px 24px 18px;min-width:300px;max-width:90vw;
+                            box-shadow:0 8px 32px rgba(0,0,0,.55);color:var(--text,#e2e8f0)" hidden>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                        <strong id="fmap-admin-modal-title" style="font-size:1rem">Edit Marker</strong>
+                        <button id="fmap-admin-modal-close" type="button" aria-label="Close"
+                                style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:inherit;line-height:1;padding:0 2px">✕</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                        <label style="font-size:.8rem;opacity:.7">Lat
+                            <input id="fmap-admin-lat" type="number" step="any"
+                                   style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                        </label>
+                        <label style="font-size:.8rem;opacity:.7">Lng
+                            <input id="fmap-admin-lng" type="number" step="any"
+                                   style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                        </label>
+                    </div>
+                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:10px">Name
+                        <input id="fmap-admin-name" type="text" maxlength="120" placeholder="Optional"
+                               style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit;box-sizing:border-box">
+                    </label>
+                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:10px">Type
+                        <select id="fmap-admin-type"
+                                style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                            <option value="pier">Pier</option>
+                            <option value="jetty">Jetty</option>
+                            <option value="bridge">Bridge</option>
+                            <option value="reef">Reef</option>
+                            <option value="oyster_reef">Oyster Reef</option>
+                            <option value="wreck">Wreck</option>
+                            <option value="inlet">Inlet / Channel</option>
+                            <option value="marina">Marina / Harbor</option>
+                            <option value="shoal">Shoal</option>
+                            <option value="point">Point / Headland</option>
+                            <option value="beach">Beach / Surf Zone</option>
+                            <option value="grass_flat">Grass Flat</option>
+                            <option value="tidal_flat">Tidal Flat</option>
+                            <option value="saltmarsh">Saltmarsh Edge</option>
+                            <option value="mangrove">Mangrove</option>
+                            <option value="buoy">Navigation Buoy</option>
+                            <option value="fishing" selected>Fishing Spot</option>
+                            <option value="fishing_shop">Bait &amp; Tackle</option>
+                        </select>
+                    </label>
+                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:14px">Description / tip
+                        <textarea id="fmap-admin-desc" rows="3" maxlength="500" placeholder="Fishing tip shown in tooltip"
+                                  style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit;resize:vertical;box-sizing:border-box"></textarea>
+                    </label>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+                        <button id="fmap-admin-delete" type="button" hidden
+                                style="background:#dc2626;color:#fff;border:none;border-radius:7px;padding:7px 14px;cursor:pointer;font-size:.85rem">Delete</button>
+                        <button id="fmap-admin-save" type="button"
+                                style="background:#2563eb;color:#fff;border:none;border-radius:7px;padding:7px 18px;cursor:pointer;font-size:.85rem;font-weight:600">Save</button>
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Floating action button: Log a catch -->
                 <button type="button" id="fmap-log-catch-btn" class="fmap-log-fab" aria-label="Log a catch on the map">
@@ -901,6 +969,7 @@ var CURRENT_LOC_NAME = {{ (forecast.location_name or '')|tojson }};
 var CURRENT_LOC_LAT = {{ location_lat|tojson }};
 var CURRENT_LOC_LNG = {{ location_lng|tojson }};
 var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
+var MAP_IS_ADMIN  = {{ ('true' if g.user and g.user.get('is_admin') else 'false') }};
 
 function getFavorites() {
     try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }

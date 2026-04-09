@@ -321,7 +321,7 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
 
     if not parts:
         return ""
-    return "[out:json][timeout:30];(" + "".join(parts) + ");out center;"
+    return "[out:json][timeout:40];(" + "".join(parts) + ");out center;"
 
 
 def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
@@ -445,7 +445,7 @@ def _post_overpass(query: str) -> List[Dict[str, Any]]:
 
     for url in _OVERPASS_URLS:
         try:
-            resp = requests.post(url, data=body, headers=headers, timeout=(5, 30))
+            resp = requests.post(url, data=body, headers=headers, timeout=(8, 45))
             resp.raise_for_status()
             return resp.json().get("elements", [])
         except Exception as exc:
@@ -675,7 +675,14 @@ def find_fish_structures(
         return cached["data"]
 
     # ── Fetch from sources  ───────────────────────────────────────────────────
-    osm_spots  = fetch_osm_structures(south, west, north, east, active_types)
+    # OSM via Overpass — catch any network/timeout errors so a slow or
+    # temporarily unavailable Overpass server never bubbles up as a 500.
+    try:
+        osm_spots = fetch_osm_structures(south, west, north, east, active_types)
+    except Exception as exc:
+        logger.warning("fetch_osm_structures failed, continuing with NOAA only: %s", exc)
+        osm_spots = []
+
     noaa_spots = fetch_noaa_structures(south, west, north, east, active_types)
 
     # OSM first — it generally has richer names; NOAA supplements with

@@ -162,6 +162,19 @@ CREATE TABLE IF NOT EXISTS social_accounts (
 );
 CREATE INDEX IF NOT EXISTS idx_social_accounts_user
 ON social_accounts(user_id);
+
+CREATE TABLE IF NOT EXISTS custom_map_markers (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    lat         REAL    NOT NULL,
+    lng         REAL    NOT NULL,
+    name        TEXT    NOT NULL DEFAULT '',
+    type        TEXT    NOT NULL DEFAULT 'fishing',
+    description TEXT    NOT NULL DEFAULT '',
+    created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    is_deleted  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -191,6 +204,7 @@ _KNOWN_TABLES = frozenset({
     "users", "profiles", "locations", "forecasts",
     "forecast_cache", "catch_log", "reg_scrape_cache", "webauthn_credentials",
     "social_accounts", "map_catches", "map_catch_comments", "map_catch_likes",
+    "custom_map_markers",
 })
 
 
@@ -241,6 +255,32 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE users ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0"
         )
+    if "is_admin" not in user_cols:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0"
+        )
+        # Grant admin to the account named 'Conner' (case-insensitive).
+        conn.execute(
+            "UPDATE users SET is_admin = 1 WHERE username = 'Conner' COLLATE NOCASE"
+        )
+
+    # Create custom_map_markers if it didn't exist before the SCHEMA ran it.
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS custom_map_markers (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            lat         REAL    NOT NULL,
+            lng         REAL    NOT NULL,
+            name        TEXT    NOT NULL DEFAULT '',
+            type        TEXT    NOT NULL DEFAULT 'fishing',
+            description TEXT    NOT NULL DEFAULT '',
+            created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            is_deleted  INTEGER NOT NULL DEFAULT 0,
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+            updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+        """
+    )
 
     profile_cols = set(_column_names(conn, "profiles"))
     if "wind_units" not in profile_cols:
@@ -475,7 +515,7 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     try:
         row = conn.execute(
             "SELECT id, username, email, email_confirmed, default_location_id, "
-            "session_version, display_name, avatar_url "
+            "session_version, display_name, avatar_url, is_admin "
             "FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
@@ -492,6 +532,7 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
         "session_version": row["session_version"],
         "display_name": row["display_name"],
         "avatar_url": row["avatar_url"],
+        "is_admin": bool(row["is_admin"]),
     }
 
 
@@ -1680,3 +1721,125 @@ def get_catch_counts_near_locations(
         )
         counts[loc["id"]] = cnt
     return counts
+
+
+# Custom map markers (admin-editable) ----------------------------------------
+
+_VALID_MARKER_TYPES = frozenset({
+    "pier", "jetty", "bridge", "reef", "oyster_reef", "wreck", "inlet",
+    "marina", "shoal", "point", "beach", "grass_flat", "tidal_flat",
+    "saltmarsh", "mangrove", "buoy", "fishing", "fishing_shop",
+})
+
+
+def _marker_row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
+    return {
+        "id":          row["id"],
+        "lat":         row["lat"],
+        "lng":         row["lng"],
+        "name":        row["name"],
+        "type":        row["type"],
+        "description": row["description"],
+        "created_by":  row["created_by"],
+        "created_at":  row["created_at"],
+        "updated_at":  row["updated_at"],
+        "custom":      True,
+    }
+
+
+def get_custom_markers() -> List[Dict[str, Any]]:
+    """Return all non-deleted custom map markers."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, lat, lng, name, type, description, created_by, created_at, updated_at "
+            "FROM custom_map_markers WHERE is_deleted = 0 ORDER BY id"
+        ).fetchall()
+    finally:
+        conn.close()
+    return [_marker_row_to_dict(r) for r in rows]
+
+
+def create_custom_marker(
+    lat: float, lng: float, name: str, type_: str, description: str, user_id: int
+) -> Dict[str, Any]:
+    """Insert a new custom marker and return it."""
+    if type_ not in _VALID_MARKER_TYPES:
+        type_ = "fishing"
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "INSERT INTO custom_map_markers (lat, lng, name, type, description, created_by) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (lat, lng, name.strip(), type_, description.strip(), user_id),
+        )
+        row = conn.execute(
+            "SELECT id, lat, lng, name, type, description, created_by, created_at, updated_at "
+            "FROM custom_map_markers WHERE id = ?",
+            (cur.lastrowid,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    return _marker_row_to_dict(row)
+
+
+def update_custom_marker(
+    marker_id: int,
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
+    name: Optional[str] = None,
+    type_: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """Update fields on an existing custom marker; returns the updated dict or None."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id FROM custom_map_markers WHERE id = ? AND is_deleted = 0",
+            (marker_id,),
+        ).fetchone()
+        if not row:
+            return None
+        updates: list = []
+        params: list = []
+        if lat is not None:
+            updates.append("lat = ?");         params.append(lat)
+        if lng is not None:
+            updates.append("lng = ?");         params.append(lng)
+        if name is not None:
+            updates.append("name = ?");        params.append(name.strip())
+        if type_ is not None and type_ in _VALID_MARKER_TYPES:
+            updates.append("type = ?");        params.append(type_)
+        if description is not None:
+            updates.append("description = ?"); params.append(description.strip())
+        updates.append("updated_at = datetime('now')")
+        params.append(marker_id)
+        conn.execute(
+            f"UPDATE custom_map_markers SET {', '.join(updates)} WHERE id = ?",
+            params,
+        )
+        updated = conn.execute(
+            "SELECT id, lat, lng, name, type, description, created_by, created_at, updated_at "
+            "FROM custom_map_markers WHERE id = ?",
+            (marker_id,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    return _marker_row_to_dict(updated)
+
+
+def delete_custom_marker(marker_id: int) -> bool:
+    """Soft-delete a custom marker; returns True if a row was affected."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "UPDATE custom_map_markers SET is_deleted = 1, updated_at = datetime('now') "
+            "WHERE id = ? AND is_deleted = 0",
+            (marker_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return cur.rowcount > 0

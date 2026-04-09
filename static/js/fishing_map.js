@@ -654,7 +654,10 @@
     function renderFishingSpots(spots) {
         if (!fishingSpotLayer) return;
         fishingSpotLayer.clearLayers();
-        spots.forEach(function (f) {
+        _customMarkers = [];  // will be repopulated by renderCustomMarkers below
+
+        // Render OSM / NOAA spots first
+        spots.filter(function (f) { return !f.custom; }).forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
             var name = f.name || spotTypeLabel(f.type);
@@ -668,6 +671,9 @@
             );
             fishingSpotLayer.addLayer(m);
         });
+
+        // Render admin-created custom markers with edit affordances
+        renderCustomMarkers(spots);
     }
 
     // ── Structure-query loading / error UI helpers ────────────────────────────
@@ -2694,6 +2700,222 @@
         }
     }
 
+    // ─── Admin marker editing ─────────────────────────────────────────────────
+    // Only active when MAP_IS_ADMIN is true (the 'Conner' account).
+    // Renders custom markers returned by /api/map/structures as draggable,
+    // and wires a toolbar button + modal for add / edit / delete.
+
+    var adminEditMode    = false;
+    var _customMarkers   = [];  // [{id, leaflet, data}] — live custom marker state
+
+    function _customMarkerIcon(type) {
+        var color = (SPOT_TYPES[type] || SPOT_TYPES.fishing).color;
+        return L.divIcon({
+            className: 'fmap-spot-wrap',
+            html: '<span style="display:flex;align-items:center;justify-content:center;' +
+                  'width:22px;height:22px;border-radius:50%;background:' + color + ';' +
+                  'border:2.5px solid #fff;box-shadow:0 0 8px ' + color + '88;' +
+                  'font-size:9px;font-weight:800;color:rgba(255,255,255,0.95);' +
+                  'font-family:system-ui,sans-serif">✎</span>',
+            iconSize:   [22, 22],
+            iconAnchor: [11, 11],
+        });
+    }
+
+    // Render (or re-render) custom markers on the fishing spot layer.
+    // Called after queryStructures() resolves — spots with custom:true get
+    // draggable markers when adminEditMode is on.
+    function renderCustomMarkers(spots) {
+        // Remove existing custom markers
+        _customMarkers.forEach(function (cm) {
+            if (fishingSpotLayer) fishingSpotLayer.removeLayer(cm.leaflet);
+        });
+        _customMarkers = [];
+
+        if (!map || !fishingSpotLayer) return;
+
+        spots.filter(function (s) { return s.custom; }).forEach(function (spot) {
+            var m = L.marker([spot.lat, spot.lng], {
+                icon:      _customMarkerIcon(spot.type),
+                draggable: adminEditMode,
+                title:     spot.name || spotTypeLabel(spot.type),
+            });
+
+            m.on('dragend', function () {
+                var ll = m.getLatLng();
+                fetch('/api/map/custom-markers/' + spot.id, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ lat: ll.lat, lng: ll.lng }),
+                }).catch(function (e) {
+                    console.warn('[admin] drag-save failed:', e);
+                });
+                spot.lat = ll.lat;
+                spot.lng = ll.lng;
+            });
+
+            m.on('click', function () {
+                if (adminEditMode) {
+                    _openAdminEditPanel(spot);
+                } else {
+                    var tip = spot.description || STRUCTURE_TIPS[spot.type] || '';
+                    m.bindPopup(
+                        '<strong>' + esc(spot.name || spotTypeLabel(spot.type)) + '</strong>' +
+                        (tip ? '<br><span style="opacity:.8">' + esc(tip) + '</span>' : '')
+                    ).openPopup();
+                }
+            });
+
+            m.bindTooltip(
+                '<strong>' + esc(spot.name || spotTypeLabel(spot.type)) + '</strong>' +
+                '<br><span style="opacity:.7">' + esc(spotTypeLabel(spot.type)) + '</span>' +
+                (adminEditMode ? '<br><em style="opacity:.6">click to edit</em>' : ''),
+                { direction: 'top', offset: [0, -8], className: 'fmap-tooltip' }
+            );
+
+            fishingSpotLayer.addLayer(m);
+            _customMarkers.push({ id: spot.id, leaflet: m, data: spot });
+        });
+    }
+
+    // ── Admin modal ──────────────────────────────────────────────────────────
+
+    function _openAdminAddPanel(lat, lng) {
+        if (!document.getElementById('fmap-admin-modal')) return;
+        document.getElementById('fmap-admin-modal-title').textContent = 'Add Marker';
+        document.getElementById('fmap-admin-lat').value  = lat.toFixed(6);
+        document.getElementById('fmap-admin-lng').value  = lng.toFixed(6);
+        document.getElementById('fmap-admin-name').value = '';
+        document.getElementById('fmap-admin-type').value = 'fishing';
+        document.getElementById('fmap-admin-desc').value = '';
+        document.getElementById('fmap-admin-delete').hidden = true;
+        document.getElementById('fmap-admin-save').dataset.markerId = '';
+        _openAdminModal();
+    }
+
+    function _openAdminEditPanel(spot) {
+        if (!document.getElementById('fmap-admin-modal')) return;
+        document.getElementById('fmap-admin-modal-title').textContent = 'Edit Marker';
+        document.getElementById('fmap-admin-lat').value  = spot.lat.toFixed(6);
+        document.getElementById('fmap-admin-lng').value  = spot.lng.toFixed(6);
+        document.getElementById('fmap-admin-name').value = spot.name || '';
+        document.getElementById('fmap-admin-type').value = spot.type || 'fishing';
+        document.getElementById('fmap-admin-desc').value = spot.description || '';
+        document.getElementById('fmap-admin-save').dataset.markerId = spot.id;
+        var delBtn = document.getElementById('fmap-admin-delete');
+        delBtn.hidden = false;
+        delBtn.dataset.markerId = spot.id;
+        _openAdminModal();
+    }
+
+    function _openAdminModal() {
+        var modal    = document.getElementById('fmap-admin-modal');
+        var backdrop = document.getElementById('fmap-admin-backdrop');
+        if (modal)    { modal.hidden    = false; }
+        if (backdrop) { backdrop.hidden = false; backdrop.style.display = ''; }
+    }
+
+    function _closeAdminModal() {
+        var modal    = document.getElementById('fmap-admin-modal');
+        var backdrop = document.getElementById('fmap-admin-backdrop');
+        if (modal)    modal.hidden    = true;
+        if (backdrop) { backdrop.hidden = true; backdrop.style.display = 'none'; }
+    }
+
+    function wireAdminMode() {
+        if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
+
+        // ── Toggle button ────────────────────────────────────────────────────
+        var btn = document.getElementById('fmap-admin-edit-btn');
+        if (btn) {
+            btn.hidden = false;
+            btn.addEventListener('click', function () {
+                adminEditMode = !adminEditMode;
+                btn.classList.toggle('fmap-ctrl-btn--active', adminEditMode);
+                btn.setAttribute('aria-pressed', adminEditMode ? 'true' : 'false');
+                btn.title = adminEditMode ? 'Exit edit mode' : 'Edit markers (admin)';
+
+                // Swap draggability on live custom markers
+                _customMarkers.forEach(function (cm) {
+                    if (adminEditMode) {
+                        cm.leaflet.dragging.enable();
+                    } else {
+                        cm.leaflet.dragging.disable();
+                    }
+                });
+
+                // Click-to-add on map
+                if (adminEditMode) {
+                    map.on('click', _onAdminMapClick);
+                    map.getContainer().style.cursor = 'crosshair';
+                } else {
+                    map.off('click', _onAdminMapClick);
+                    map.getContainer().style.cursor = '';
+                    _closeAdminModal();
+                }
+            });
+        }
+
+        // ── Map click → add new marker ────────────────────────────────────────
+        function _onAdminMapClick(e) {
+            _openAdminAddPanel(e.latlng.lat, e.latlng.lng);
+        }
+
+        // ── Modal save ────────────────────────────────────────────────────────
+        var saveBtn = document.getElementById('fmap-admin-save');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function () {
+                var markerId = saveBtn.dataset.markerId;
+                var payload = {
+                    lat:         parseFloat(document.getElementById('fmap-admin-lat').value),
+                    lng:         parseFloat(document.getElementById('fmap-admin-lng').value),
+                    name:        document.getElementById('fmap-admin-name').value.trim(),
+                    type:        document.getElementById('fmap-admin-type').value,
+                    description: document.getElementById('fmap-admin-desc').value.trim(),
+                };
+                var url    = markerId ? '/api/map/custom-markers/' + markerId : '/api/map/custom-markers';
+                var method = markerId ? 'PUT' : 'POST';
+                fetch(url, {
+                    method:  method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload),
+                })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function () {
+                    _closeAdminModal();
+                    spotCache = {};  // invalidate so structures reload with new marker
+                    scheduleFishingSpotQuery();
+                })
+                .catch(function (e) { console.error('[admin] save marker failed:', e); });
+            });
+        }
+
+        // ── Modal delete ──────────────────────────────────────────────────────
+        var delBtn = document.getElementById('fmap-admin-delete');
+        if (delBtn) {
+            delBtn.addEventListener('click', function () {
+                var markerId = delBtn.dataset.markerId;
+                if (!markerId) return;
+                if (!confirm('Delete this marker?')) return;
+                fetch('/api/map/custom-markers/' + markerId, { method: 'DELETE' })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function () {
+                    _closeAdminModal();
+                    spotCache = {};
+                    scheduleFishingSpotQuery();
+                })
+                .catch(function (e) { console.error('[admin] delete marker failed:', e); });
+            });
+        }
+
+        // ── Modal close / backdrop ────────────────────────────────────────────
+        var closeBtn = document.getElementById('fmap-admin-modal-close');
+        if (closeBtn) closeBtn.addEventListener('click', _closeAdminModal);
+
+        var backdrop = document.getElementById('fmap-admin-backdrop');
+        if (backdrop) backdrop.addEventListener('click', _closeAdminModal);
+    }
+
     // ─── Boot ─────────────────────────────────────────────────────────────────
     function boot() {
         ensureLeaflet()
@@ -2712,6 +2934,7 @@
                 wireLogCatch();
                 wireFullscreen();
                 wireShareBtn();
+                wireAdminMode();
                 // Kick off the structure query immediately when server-provided
                 // coordinates are available — don't wait for the NOAA API round-trip.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
