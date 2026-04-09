@@ -791,11 +791,32 @@
         }
 
         var b = map.getBounds();
-        // Round to 0.2° grid so panning slightly still hits the cache
-        var s = Math.floor(b.getSouth() * 5) / 5;
-        var w = Math.floor(b.getWest()  * 5) / 5;
-        var n = Math.ceil(b.getNorth()  * 5) / 5;
-        var e = Math.ceil(b.getEast()   * 5) / 5;
+
+        // Expand the query bbox well beyond the visible viewport so structures
+        // in a broad coastal corridor are always loaded — e.g. zoomed into
+        // Wrightsville Beach will still show piers and inlets from Jacksonville
+        // NC all the way down to the SC state line (~80 km in each direction).
+        var EXPAND = 0.75; // degrees (~80 km at US latitudes)
+
+        // Cap total span so we never exceed the backend Overpass limits
+        // (8° lat / 12° lng).  This matters at low zoom where the viewport
+        // itself is already several degrees wide.
+        var rawS = b.getSouth() - EXPAND,  rawN = b.getNorth() + EXPAND;
+        var rawW = b.getWest()  - EXPAND,  rawE = b.getEast()  + EXPAND;
+        if (rawN - rawS > 6) {
+            var midLat = (rawS + rawN) / 2;
+            rawS = midLat - 3;  rawN = midLat + 3;
+        }
+        if (rawE - rawW > 9) {
+            var midLng = (rawW + rawE) / 2;
+            rawW = midLng - 4.5; rawE = midLng + 4.5;
+        }
+
+        // Round to 0.5° grid so small pans still hit the cache
+        var s = Math.floor(rawS * 2) / 2;
+        var w = Math.floor(rawW * 2) / 2;
+        var n = Math.ceil (rawN * 2) / 2;
+        var e = Math.ceil (rawE * 2) / 2;
 
         // Include active type filter in the cache key
         var typesStr = activeSpotTypes.length ? activeSpotTypes.slice().sort().join(',') : '';
@@ -921,27 +942,39 @@
     // Build a type-scoped Overpass QL query.
     // Pass an empty array for `types` to include all structure types.
     // Mirrors _build_overpass_query() in services/fish_structures.py — keep in sync.
+    // Uses two named sets: .h (habitats) with `out geom;` for polygon rendering,
+    // and .s (structures) with `out center;` to keep the response payload small.
     function _buildFallbackQuery(bbox, types) {
         var all  = !types.length;
         var has  = function (t) { return all || types.indexOf(t) !== -1; };
-        var p    = [];  // query statement parts
+        var h    = [];   // habitat area statements  → out geom;
+        var s    = [];   // structure point statements → out center;
 
+        // ── Habitat area types (need full ring geometry) ──────────────────
         if (has('grass_flat')) {
-            p.push('way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
+            h.push('way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
                    'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');');
         }
         if (has('saltmarsh')) {
-            p.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');');
+            h.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');');
         }
         if (has('mangrove')) {
-            p.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');');
+            h.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');');
         }
         if (has('tidal_flat')) {
-            p.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
+            h.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
                    'way["natural"="mud"](' + bbox + ');');
         }
+        if (has('beach')) {
+            h.push('way["natural"="beach"](' + bbox + ');');
+        }
+        if (has('oyster_reef')) {
+            h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+        }
         if (has('inlet')) {
-            p.push('way["waterway"="tidal_channel"](' + bbox + ');',
+            h.push('way["waterway"="tidal_channel"](' + bbox + ');',
                    'way["waterway"="river"](' + bbox + ');',
                    'way["waterway"="canal"](' + bbox + ');',
                    'node["waterway"="stream"](' + bbox + ');',
@@ -951,25 +984,24 @@
                    'node["natural"="bay"](' + bbox + ');',
                    'way["natural"="bay"](' + bbox + ');');
         }
-        if (has('oyster_reef') || has('reef')) {
-            p.push('node["natural"="reef"](' + bbox + ');',
-                   'way["natural"="reef"](' + bbox + ');',
-                   'node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
-                   'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
-                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+
+        // ── Structure point/linear types (centroid only) ──────────────────
+        if (has('reef')) {
+            s.push('node["natural"="reef"](' + bbox + ');',
+                   'way["natural"="reef"](' + bbox + ');');
         }
         if (has('wreck')) {
-            p.push('node["historic"="wreck"](' + bbox + ');',
+            s.push('node["historic"="wreck"](' + bbox + ');',
                    'way["historic"="wreck"](' + bbox + ');',
                    'node["seamark:type"="wreck"](' + bbox + ');');
         }
         if (has('shoal')) {
-            p.push('node["natural"="shoal"](' + bbox + ');',
+            s.push('node["natural"="shoal"](' + bbox + ');',
                    'way["natural"="shoal"](' + bbox + ');',
                    'node["natural"="rock"](' + bbox + ');');
         }
         if (has('pier')) {
-            p.push('node["man_made"="pier"](' + bbox + ');',
+            s.push('node["man_made"="pier"](' + bbox + ');',
                    'way["man_made"="pier"](' + bbox + ');',
                    'node["leisure"="pier"](' + bbox + ');',
                    'way["leisure"="pier"](' + bbox + ');',
@@ -981,7 +1013,7 @@
                    'way["amenity"="boat_ramp"](' + bbox + ');');
         }
         if (has('jetty')) {
-            p.push('node["man_made"="jetty"](' + bbox + ');',
+            s.push('node["man_made"="jetty"](' + bbox + ');',
                    'way["man_made"="jetty"](' + bbox + ');',
                    'node["man_made"="groyne"](' + bbox + ');',
                    'way["man_made"="groyne"](' + bbox + ');',
@@ -992,44 +1024,44 @@
                    'node["waterway"="dam"](' + bbox + ');');
         }
         if (has('bridge')) {
-            p.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
+            s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
         }
         if (has('marina')) {
-            p.push('node["amenity"="marina"](' + bbox + ');',
+            s.push('node["amenity"="marina"](' + bbox + ');',
                    'way["amenity"="marina"](' + bbox + ');',
                    'node["leisure"="marina"](' + bbox + ');',
                    'way["leisure"="marina"](' + bbox + ');',
                    'relation["leisure"="marina"](' + bbox + ');');
         }
         if (has('point')) {
-            p.push('node["natural"="cape"](' + bbox + ');',
+            s.push('node["natural"="cape"](' + bbox + ');',
                    'node["natural"="headland"](' + bbox + ');',
                    'way["natural"="headland"](' + bbox + ');',
                    'node["natural"="peninsula"](' + bbox + ');',
                    'node["man_made"="lighthouse"](' + bbox + ');',
                    'node["man_made"="offshore_platform"](' + bbox + ');');
         }
-        if (has('beach')) {
-            p.push('way["natural"="beach"](' + bbox + ');');
-        }
         if (has('fishing')) {
-            p.push('node["leisure"="fishing"](' + bbox + ');',
+            s.push('node["leisure"="fishing"](' + bbox + ');',
                    'way["leisure"="fishing"](' + bbox + ');');
         }
         if (has('buoy')) {
-            p.push('node["seamark:type"="buoy_lateral"](' + bbox + ');',
+            s.push('node["seamark:type"="buoy_lateral"](' + bbox + ');',
                    'node["seamark:type"="buoy_cardinal"](' + bbox + ');',
                    'node["seamark:type"="buoy_safe_water"](' + bbox + ');',
                    'node["man_made"="buoy"](' + bbox + ');');
         }
         if (has('fishing_shop')) {
-            p.push('node["shop"="fishing"](' + bbox + ');');
+            s.push('node["shop"="fishing"](' + bbox + ');');
         }
 
-        if (!p.length) return '';
-        // Use `out geom;` so way elements include full polygon geometry, enabling
-        // habitat area types to be rendered as filled outlines on the client.
-        return '[out:json][timeout:30];(' + p.join('') + ');out geom;';
+        if (!h.length && !s.length) return '';
+        var q = '[out:json][timeout:30];';
+        if (h.length) q += '(' + h.join('') + ')->.h;';
+        if (s.length) q += '(' + s.join('') + ')->.s;';
+        if (h.length) q += '.h out geom;';
+        if (s.length) q += '.s out center;';
+        return q;
     }
 
     // gen: the _structReqGen value captured when the parent queryStructures() call
@@ -1111,6 +1143,7 @@
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
             spotCache[key] = deduped;
             hideStructLoading(); // request chain complete; drop spinner
+            hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped);
             _updateSpotTypeHint();
         })

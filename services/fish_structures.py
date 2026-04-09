@@ -246,28 +246,46 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
     ``bbox`` must be the Overpass format string ``"south,west,north,east"``.
     Returns an empty string when no tags match the requested types so the
     caller can skip the network request.
+
+    The query is split into two named sets so that each set can use the most
+    efficient output mode:
+
+    * ``.h`` (habitat area types) → ``out geom;``  — full ring coordinates
+      are needed so the client can render filled polygon overlays.
+    * ``.s`` (structure point types) → ``out center;``  — centroid only;
+      these are rendered as small icon markers so full geometry would just
+      inflate the payload for no benefit.
     """
-    parts: List[str] = []
+    habitat: List[str] = []   # will use `out geom;`
+    struct:  List[str] = []   # will use `out center;`
 
-    def add(*stmts: str) -> None:
-        parts.extend(stmts)
-
+    # ── Habitat area types (polygon rendering) ──────────────────────────────
     if "grass_flat" in types:
-        add(
+        habitat += [
             f'way["natural"="wetland"]["wetland"="seagrass"]({bbox});',
             f'node["natural"="wetland"]["wetland"="seagrass"]({bbox});',
-        )
+        ]
     if "saltmarsh" in types:
-        add(f'way["natural"="wetland"]["wetland"="saltmarsh"]({bbox});')
+        habitat += [f'way["natural"="wetland"]["wetland"="saltmarsh"]({bbox});']
     if "mangrove" in types:
-        add(f'way["natural"="wetland"]["wetland"="mangrove"]({bbox});')
+        habitat += [f'way["natural"="wetland"]["wetland"="mangrove"]({bbox});']
     if "tidal_flat" in types:
-        add(
+        habitat += [
             f'way["natural"="wetland"]["wetland"="tidalflat"]({bbox});',
             f'way["natural"="mud"]({bbox});',
-        )
+        ]
+    if "beach" in types:
+        habitat += [f'way["natural"="beach"]({bbox});']
+    if "oyster_reef" in types:
+        habitat += [
+            f'node["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
+            f'way["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
+            f'way["landuse"="aquaculture"]["product"="oysters"]({bbox});',
+        ]
     if "inlet" in types:
-        add(
+        # Waterways (linestrings) and bay polygons both go into habitat so
+        # the client can decide: closed ring → filled polygon, open → polyline.
+        habitat += [
             f'way["waterway"="tidal_channel"]({bbox});',
             f'way["waterway"="river"]({bbox});',
             f'way["waterway"="canal"]({bbox});',
@@ -277,29 +295,28 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
             f'way["harbour"="yes"]({bbox});',
             f'node["natural"="bay"]({bbox});',
             f'way["natural"="bay"]({bbox});',
-        )
-    if types & {"oyster_reef", "reef"}:
-        add(
+        ]
+
+    # ── Structure point / linear types (centroid only) ───────────────────────
+    if "reef" in types:
+        struct += [
             f'node["natural"="reef"]({bbox});',
             f'way["natural"="reef"]({bbox});',
-            f'node["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
-            f'way["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
-            f'way["landuse"="aquaculture"]["product"="oysters"]({bbox});',
-        )
+        ]
     if "wreck" in types:
-        add(
+        struct += [
             f'node["historic"="wreck"]({bbox});',
             f'way["historic"="wreck"]({bbox});',
             f'node["seamark:type"="wreck"]({bbox});',
-        )
+        ]
     if "shoal" in types:
-        add(
+        struct += [
             f'node["natural"="shoal"]({bbox});',
             f'way["natural"="shoal"]({bbox});',
             f'node["natural"="rock"]({bbox});',
-        )
+        ]
     if "pier" in types:
-        add(
+        struct += [
             f'node["man_made"="pier"]({bbox});',
             f'way["man_made"="pier"]({bbox});',
             f'node["leisure"="pier"]({bbox});',
@@ -310,9 +327,9 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
             f'way["man_made"="wharf"]({bbox});',
             f'node["amenity"="boat_ramp"]({bbox});',
             f'way["amenity"="boat_ramp"]({bbox});',
-        )
+        ]
     if "jetty" in types:
-        add(
+        struct += [
             f'node["man_made"="jetty"]({bbox});',
             f'way["man_made"="jetty"]({bbox});',
             f'node["man_made"="groyne"]({bbox});',
@@ -322,54 +339,61 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
             f'node["waterway"="weir"]({bbox});',
             f'way["waterway"="weir"]({bbox});',
             f'node["waterway"="dam"]({bbox});',
-        )
+        ]
     if "bridge" in types:
-        add(
+        struct += [
             'way["bridge"="yes"]'
             '["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"]'
             f"({bbox});"
-        )
+        ]
     if "marina" in types:
-        add(
+        struct += [
             f'node["amenity"="marina"]({bbox});',
             f'way["amenity"="marina"]({bbox});',
             f'node["leisure"="marina"]({bbox});',
             f'way["leisure"="marina"]({bbox});',
             f'relation["leisure"="marina"]({bbox});',
-        )
+        ]
     if "point" in types:
-        add(
+        struct += [
             f'node["natural"="cape"]({bbox});',
             f'node["natural"="headland"]({bbox});',
             f'way["natural"="headland"]({bbox});',
             f'node["natural"="peninsula"]({bbox});',
             f'node["man_made"="lighthouse"]({bbox});',
             f'node["man_made"="offshore_platform"]({bbox});',
-        )
-    if "beach" in types:
-        add(f'way["natural"="beach"]({bbox});')
+        ]
     if "fishing" in types:
-        add(
+        struct += [
             f'node["leisure"="fishing"]({bbox});',
             f'way["leisure"="fishing"]({bbox});',
-        )
+        ]
     if "buoy" in types:
-        add(
+        struct += [
             f'node["seamark:type"="buoy_lateral"]({bbox});',
             f'node["seamark:type"="buoy_cardinal"]({bbox});',
             f'node["seamark:type"="buoy_safe_water"]({bbox});',
             f'node["man_made"="buoy"]({bbox});',
-        )
+        ]
     if "fishing_shop" in types:
-        add(f'node["shop"="fishing"]({bbox});')
+        struct += [f'node["shop"="fishing"]({bbox});']
 
-    if not parts:
+    if not habitat and not struct:
         return ""
-    # Use `out geom;` so that way elements include their full polygon geometry.
-    # This allows the client to render habitat areas as filled outlines rather
-    # than single-point markers.  Node elements always carry lat/lon directly
-    # regardless of the output mode, so this is safe for all element types.
-    return "[out:json][timeout:40];(" + "".join(parts) + ");out geom;"
+
+    # Build the combined query using named sets so each half can use the
+    # correct output mode.  Both sets' results land in the same `elements`
+    # array in the Overpass JSON response.
+    parts: List[str] = ["[out:json][timeout:40];"]
+    if habitat:
+        parts.append("(" + "".join(habitat) + ")->.h;")
+    if struct:
+        parts.append("(" + "".join(struct) + ")->.s;")
+    if habitat:
+        parts.append(".h out geom;")
+    if struct:
+        parts.append(".s out center;")
+    return "".join(parts)
 
 
 def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
