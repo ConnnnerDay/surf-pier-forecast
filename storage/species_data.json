@@ -26290,5 +26290,168 @@
     "explanation_cold": "Blackfin tuna (Thunnus atlanticus) are the smallest and southernmost Atlantic tuna species, found year-round in Florida waters and along the SE coast and Gulf.",
     "explanation_warm": "Blackfin tuna are among the most accessible tuna for pier anglers in Florida, particularly near the Gulf Stream where they come within range from bridge and pier fishing. Live pilchards are the top bait. They school aggressively and provide spectacular surface action when on a chum line. Excellent eating — full-flavored tuna flesh. No federal bag limit from US recreational boats.",
     "tip": "Blackfin regularly feed near the surface early morning and evening. A chum line of ground pilchards behind a pier or bridge creates great action when they're in the area."
+  },
+  {
+    "name": "Sheepshead (Atlantic pier)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 58,
+    "temp_max": 82,
+    "temp_ideal_low": 65,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      2,
+      3,
+      4,
+      5,
+      10,
+      11,
+      12,
+      1
+    ],
+    "good_months": [
+      6,
+      9
+    ],
+    "bait": "Fiddler crabs (the classic), barnacles scraped from pilings, mussels, oysters, sand fleas, shrimp",
+    "rig": "Simple knocker rig or drop shot with 15-20 lb fluorocarbon leader right at the pilings",
+    "hook_size": "#1-2/0 Aberdeen or circle hook (must penetrate the hard mouth)",
+    "sinker": "1/4-1 oz near the piling",
+    "lures": "Small jigs and soft plastics tipped with shrimp or fiddler crab occasionally work",
+    "explanation_cold": "Sheepshead (Archosargus probatocephalus) are a cold-water-tolerant species that spawn and feed heavily near piers and bridge pilings in late winter and early spring. They're also called 'convict fish' for their black-and-white striped pattern.",
+    "explanation_warm": "Sheepshead are expert bait thieves — their name comes from their sheep-like human teeth used to crush shellfish. They congregate around pier pilings, barnacle-encrusted structures, and rocky areas year-round. The classic bait is a live fiddler crab on a light rig set right at the base of a piling. Learn the subtle 'tap-tap' bite. Sheepshead are excellent eating with firm, white flesh.",
+    "tip": "Sheepshead are notoriously difficult to hook — they tap the bait and spit it quickly. Use a light jig head (1/4 oz) with a live fiddler crab and set the hook at the first 'tick.' Fish right against the piling."
+  },
+  {
+    "name": "American eel (pier)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "southeast"
+    ],
+    "temp_min": 50,
+    "temp_max": 80,
+    "temp_ideal_low": 60,
+    "temp_ideal_high": 74,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Night crawlers, clams, squid strips, cut fish; nocturnal bottom feeder",
+    "rig": "Simple bottom rig or Carolina rig; use a wire leader to prevent breakoffs (slippery and strong)",
+    "hook_size": "#2-1/0 long shank",
+    "sinker": "1-2 oz egg or pyramid sinker",
+    "lures": "Occasionally take small soft plastics or jigs at night",
+    "explanation_cold": "American eels (Anguilla rostrata) are catadromous fish — they spawn in the ocean (Sargasso Sea) and migrate upstream to live in rivers and estuaries for 10-25 years. They're common in coastal waters from spring to fall.",
+    "explanation_warm": "American eels are a prized table fish in many cultures, particularly in New England, Maryland (where they're used in eel pots), and among Asian-American communities. They're excellent on the table but handling can be challenging — they're incredibly slippery. Eels are active at night, and piers over tidal rivers produce the best action. They'll aggressively hit almost any bottom bait at night.",
+    "tip": "Wrap a cloth or burlap around the eel before removing the hook — they're impossibly slippery otherwise. A clip-on hook remover helps too. Eels bite best on new and full moon nights."
+  },
+  {
+    "name": "Atlantic croaker (Chesapeake)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "chesapeake"
+    ],
+    "temp_min": 62,
+    "temp_max": 84,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      6,
+      7,
+      12
+    ],
+    "bait": "Bloodworms, fresh shrimp, squid strips, cut spot; bottom feeder in the bay",
+    "rig": "Hi-lo rig or Carolina rig on sandy or muddy bottom in the bay channel",
+    "hook_size": "#1-1/0 baitfisher",
+    "sinker": "1-2 oz egg sinker",
+    "lures": "Occasionally take small shrimp-tipped jigs in channels",
+    "explanation_cold": "Atlantic croaker are one of the most important recreational species in the Chesapeake Bay, migrating in from offshore each spring and remaining until the fall exodus back to the ocean. Peak action is in late summer and fall.",
+    "explanation_warm": "Croaker are the bread-and-butter fish of Chesapeake Bay pier and bridge fishing. They're so named for the croaking sound they make with their air bladder. In the Bay they school in huge numbers and will eagerly take bloodworms, shrimp, or squid from a bottom rig. Excellent eating — sweet, delicate white flesh. Often the first fish caught by young anglers in the Bay.",
+    "tip": "Croaker bite best in moving tide around structures (piers, bridge pilings, channel edges). Two hi-lo rigs in the water at once doubles your chances during a hot bite."
+  },
+  {
+    "name": "Spiny lobster (Florida)",
+    "coast": "east",
+    "regions": [
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 72,
+    "temp_max": 86,
+    "temp_ideal_low": 75,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      6,
+      7,
+      12
+    ],
+    "bait": "Not targeted by rod-and-reel; caught by hand/snare/net while diving or snorkeling",
+    "rig": "Snorkel or scuba gear; landing net or tickle stick; not a fishing rod target",
+    "hook_size": "Not applicable",
+    "sinker": "Not applicable",
+    "lures": "Not applicable",
+    "explanation_cold": "Florida spiny lobster (Panulirus argus) are the most sought-after invertebrate in Florida waters. Regular season opens first day in August; there's a 2-day sport season in late July for divers.",
+    "explanation_warm": "Spiny lobster mini-season in late July draws thousands of divers to Florida reefs. Regular season runs August 6 through March 31. Minimum 3-inch carapace. Bag limit: 6 per day during regular season, 12 per day during mini-season. Always measure before taking — carapace must be 3 inches from the point between the rostral horns to the rear edge. Catching from shore via snorkeling is popular in the Keys.",
+    "tip": "During the 2-day sport mini-season, even shallow water lobsters are completely cleaned out. For regular season, focus on coral heads, ledges, and holes at 15-40 ft depth. Use a tickle stick to move them toward the net."
+  },
+  {
+    "name": "Blue crab (Atlantic pier)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "southeast",
+      "chesapeake"
+    ],
+    "temp_min": 55,
+    "temp_max": 86,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      5,
+      11
+    ],
+    "bait": "Chicken necks (the classic), fish heads/frames, menhaden (bunker), bull lips; any smelly bait",
+    "rig": "Crab trap, crab pot, or hand line with bait tied on the end and a dip net; not a rod-and-reel fishery",
+    "hook_size": "Not applicable (hand line or trap fishery)",
+    "sinker": "Small weight on a hand line; traps sink on their own",
+    "lures": "Not applicable",
+    "explanation_cold": "Blue crabs (Callinectes sapidus) are the premier edible crab of the Atlantic Coast and Gulf Coast, supporting massive commercial and recreational fisheries from New England to Texas. They're most active in warm months.",
+    "explanation_warm": "Blue crabs are one of the most iconic pier fishing targets, especially in the Chesapeake Bay and Gulf Coast. The classic 'crabbing' setup is a chicken neck tied to a string lowered to the bottom, then slowly lifted with a dip net when a crab grabs it. Folding wire crab traps produce the best results. Soft-shell crabs are a seasonal delicacy when crabs molt. Check state-specific size limits (typically 5-inch point-to-point minimum) and closures.",
+    "tip": "Crabbing is best at slack tide or slow-moving water. A chicken neck tied 2 feet below a float and checked every 10-15 minutes is the classic 'recreational crabber' setup."
   }
 ]

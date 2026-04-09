@@ -550,7 +550,15 @@
     "Bigeye (Priacanthus arenatus)": "bigeye_tuna",
     "Opah (moonfish)": "opah",
     "Opah (Atlantic)": "opah",
-    "Ehu (squirrelfish snapper)": "ehu"
+    "Ehu (squirrelfish snapper)": "ehu",
+    "Sheepshead (Atlantic pier)": "sheepshead",
+    "Northern puffer": "northern_puffer",
+    "American eel (pier)": "american_eel",
+    "Atlantic croaker (Chesapeake)": "atlantic_croaker",
+    "Spiny lobster (Florida)": "spiny_lobster_atlantic",
+    "Spiny lobster (Caribbean)": "spiny_lobster_atlantic",
+    "Blue crab (Atlantic pier)": "blue_crab",
+    "Blue crab (Atlantic)": "blue_crab"
   },
   "states": {
     "AL": {
@@ -1501,6 +1509,13 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Gulf flounder in AL coastal bays.",
+        "source": "AL DCNR"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "24 per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in AL coastal waters. 5-inch minimum; 24 per day.",
         "source": "AL DCNR"
       }
     },
@@ -3288,6 +3303,20 @@
         "season": "Open year-round",
         "notes": "Smooth dogfish in CT coastal waters. No bag limit.",
         "source": "CT DEEP"
+      },
+      "blue_crab": {
+        "min_size": "4.5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in CT coastal waters. 4.5-inch minimum; 1 bushel per day.",
+        "source": "CT DEEP"
+      },
+      "northern_puffer": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Northern puffer in CT Sound in summer. No bag limit.",
+        "source": "CT DEEP"
       }
     },
     "DE": {
@@ -3776,6 +3805,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Smooth dogfish in DE coastal and bay waters. No specific bag limit.",
+        "source": "DE DNREC"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in DE Bay. 5-inch minimum; 1 bushel per day recreational.",
         "source": "DE DNREC"
       }
     },
@@ -5565,6 +5601,27 @@
         "season": "Open year-round",
         "notes": "White grunt are very common in FL inshore and nearshore reefs. No bag limit.",
         "source": "FL FWC"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in FL. 5-inch minimum (point-to-point); 10 per day recreational. Season generally open year-round.",
+        "source": "FL FWC"
+      },
+      "spiny_lobster_atlantic": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "6 per day (regular season)",
+        "season": "Aug 6 – Mar 31 (regular season)",
+        "notes": "Spiny lobster: 3-inch carapace minimum. Mini-season (2 days late July): 12/day. Regular season Aug 6–Mar 31: 6/day. Many special zone closures in FL Keys.",
+        "source": "FL FWC"
+      },
+      "american_eel": {
+        "min_size": "9 in",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "American eel in FL coastal rivers.",
+        "source": "FL FWC"
       }
     },
     "GA": {
@@ -6914,6 +6971,27 @@
         "season": "Open year-round",
         "notes": "White grunt in GA nearshore and offshore. No bag limit.",
         "source": "GA DNR"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "2 dozen per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in GA estuaries. 5-inch minimum; 2 dozen per day recreational.",
+        "source": "GA DNR"
+      },
+      "spiny_lobster_atlantic": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "6 per day",
+        "season": "Aug 6 – Mar 31 (regular season)",
+        "notes": "Spiny lobster are very rare in GA. If encountered, FL-style regulations provide guidance.",
+        "source": "GA DNR"
+      },
+      "american_eel": {
+        "min_size": "9 in",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "American eel in GA coastal rivers.",
+        "source": "GA DNR"
       }
     },
     "LA": {
@@ -8040,6 +8118,20 @@
         "season": "Open year-round",
         "notes": "White grunt in LA offshore reefs. No bag limit.",
         "source": "LA Wildlife & Fisheries"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "24 per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in LA coastal waters. 5-inch minimum; 24 per day recreational bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "spiny_lobster_atlantic": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "0 (not established)",
+        "season": "Aug 6 – Mar 31 (regular season)",
+        "notes": "Spiny lobster are not a recreational target in LA. Extremely rare.",
+        "source": "LA Wildlife & Fisheries"
       }
     },
     "MA": {
@@ -8671,6 +8763,20 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Smooth dogfish extremely common in MA bays and nearshore. No bag limit; popular catch-and-release.",
+        "source": "MA DMF"
+      },
+      "blue_crab": {
+        "min_size": "4.5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab rare in MA; occasional in warm years. 4.5-inch minimum.",
+        "source": "MA DMF"
+      },
+      "northern_puffer": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Northern puffer in MA waters in summer. No bag limit.",
         "source": "MA DMF"
       }
     },
@@ -9646,6 +9752,13 @@
         "season": "Open year-round",
         "notes": "Smooth dogfish in MD coastal waters and Chesapeake Bay. No bag limit.",
         "source": "MD DNR"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "2 dozen per day by hand; 2 pots per person (license)",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in Chesapeake Bay. 5-inch hard crab minimum.",
+        "source": "MD DNR"
       }
     },
     "ME": {
@@ -10005,6 +10118,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Smooth dogfish (mustelus canis) are common in ME coastal waters. No specific bag limit.",
+        "source": "ME DMRE"
+      },
+      "american_eel": {
+        "min_size": "6 in",
+        "bag_limit": "No limit (no commercial license for recreational)",
+        "season": "Open year-round",
+        "notes": "American eel in ME rivers and coastal waters. Primarily a commercial and estuarine species.",
         "source": "ME DMRE"
       }
     },
@@ -10951,6 +11071,13 @@
         "bag_limit": "10 per day",
         "season": "Open year-round",
         "notes": "Gulf flounder in MS coastal waters.",
+        "source": "MS DMR"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "24 per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in MS coastal waters. 5-inch minimum; 24 per day recreational.",
         "source": "MS DMR"
       }
     },
@@ -12584,6 +12711,20 @@
         "season": "Open year-round",
         "notes": "White grunt in NC nearshore reefs. No bag limit.",
         "source": "NC DMF"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in NC sounds and coastal waters. 5-inch minimum; 1 bushel per day recreational.",
+        "source": "NC DMF"
+      },
+      "spiny_lobster_atlantic": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "6 per day",
+        "season": "Aug 6 – Mar 31 (regular season)",
+        "notes": "Spiny lobster occasional in NC. 3-inch carapace minimum; 6 per day.",
+        "source": "NC DMF"
       }
     },
     "NJ": {
@@ -13553,6 +13694,13 @@
         "season": "Open year-round; quotas may apply",
         "notes": "Vermilion snapper very rare in NJ; offshore only.",
         "source": "NJ DEP; NOAA Fisheries"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in NJ coastal waters and bays. 5-inch minimum; 1 bushel per day.",
+        "source": "NJ DEP Marine Fisheries"
       }
     },
     "NY": {
@@ -14377,6 +14525,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Smooth dogfish very common in NY nearshore. No bag limit.",
+        "source": "NY DEC"
+      },
+      "blue_crab": {
+        "min_size": "4.5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in NY bays and Great South Bay. 4.5-inch minimum; 1 bushel per day.",
         "source": "NY DEC"
       }
     },
@@ -15909,6 +16064,20 @@
         "season": "Open year-round",
         "notes": "Smooth dogfish abundant in RI coastal waters. No bag limit.",
         "source": "RI DEM"
+      },
+      "blue_crab": {
+        "min_size": "4.5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in RI occasional. 4.5-inch minimum.",
+        "source": "RI DEM"
+      },
+      "northern_puffer": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (summer/fall)",
+        "notes": "Northern puffer in RI coastal waters. No bag limit.",
+        "source": "RI DEM"
       }
     },
     "SC": {
@@ -17318,6 +17487,27 @@
         "season": "Open year-round",
         "notes": "White grunt in SC nearshore reefs. No bag limit.",
         "source": "SC DNR"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in SC coastal waters. 5-inch minimum; 1 bushel per day recreational.",
+        "source": "SC DNR"
+      },
+      "spiny_lobster_atlantic": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "6 per day",
+        "season": "Aug 6 – Mar 31 (regular season)",
+        "notes": "Spiny lobster rare in SC waters. Follow SAFMC and state regulations.",
+        "source": "SC DNR"
+      },
+      "american_eel": {
+        "min_size": "9 in",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "American eel in SC coastal rivers.",
+        "source": "SC DNR"
       }
     },
     "TX": {
@@ -18459,6 +18649,20 @@
         "season": "Open year-round",
         "notes": "White grunt in TX offshore reefs. No bag limit.",
         "source": "TX TPWD"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "24 per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in TX bays. 5-inch minimum; 24 per day. No egg-bearing females.",
+        "source": "TX TPWD"
+      },
+      "spiny_lobster_atlantic": {
+        "min_size": "3 in carapace length",
+        "bag_limit": "0 (not established)",
+        "season": "Aug 6 – Mar 31 (regular season)",
+        "notes": "Caribbean spiny lobster do not have an established recreational fishery in TX. Not targeted.",
+        "source": "TX TPWD"
       }
     },
     "VA": {
@@ -19559,6 +19763,13 @@
         "season": "Open year-round; quotas may apply",
         "notes": "Vermilion snapper rare in VA; offshore only.",
         "source": "VA DGIF; NOAA SAFMC"
+      },
+      "blue_crab": {
+        "min_size": "5 in point-to-point",
+        "bag_limit": "1 bushel per day",
+        "season": "Open year-round (check seasonal closures)",
+        "notes": "Blue crab in VA Chesapeake Bay. 5-inch minimum; 1 bushel per day recreational.",
+        "source": "VA DGIF"
       }
     },
     "WA": {
@@ -21141,6 +21352,13 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Smooth dogfish in NH coastal waters. No specific bag limit.",
+        "source": "NH Fish & Game"
+      },
+      "american_eel": {
+        "min_size": "6 in",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "American eel in NH estuaries. Recreational fishing for personal use.",
         "source": "NH Fish & Game"
       }
     },
