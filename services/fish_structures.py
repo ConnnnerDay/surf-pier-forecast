@@ -69,6 +69,21 @@ def cache_clear() -> None:
     """Remove all cached results.  Intended for tests and cache-invalidation hooks."""
     _CACHE.clear()
 
+# ── Habitat types rendered as filled polygon overlays ─────────────────────────
+# These are area features (wetlands, beaches, …) whose OSM ways carry closed
+# ring geometry.  When a way element in this set has ≥3 geometry points the
+# backend includes a ``geometry`` list so the client can draw a filled outline
+# instead of placing a single-point marker.
+POLYGON_HABITAT_TYPES: frozenset[str] = frozenset({
+    "saltmarsh",
+    "mangrove",
+    "tidal_flat",
+    "grass_flat",
+    "beach",
+    "oyster_reef",
+    "inlet",
+})
+
 # ── Recognised structure types  ───────────────────────────────────────────────
 # Matches SPOT_TYPES in static/js/fishing_map.js
 VALID_TYPES: frozenset[str] = frozenset({
@@ -321,7 +336,11 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
 
     if not parts:
         return ""
-    return "[out:json][timeout:40];(" + "".join(parts) + ");out center;"
+    # Use `out geom;` so that way elements include their full polygon geometry.
+    # This allows the client to render habitat areas as filled outlines rather
+    # than single-point markers.  Node elements always carry lat/lon directly
+    # regardless of the output mode, so this is safe for all element types.
+    return "[out:json][timeout:40];(" + "".join(parts) + ");out geom;"
 
 
 def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
@@ -560,6 +579,14 @@ def fetch_osm_structures(
     for el in elements:
         lat = el.get("lat") or (el.get("center") or {}).get("lat")
         lng = el.get("lon") or (el.get("center") or {}).get("lon")
+        # ``out geom;`` omits the ``center`` key for ways — fall back to the
+        # mean of the geometry coordinates so we always have a valid centroid.
+        if lat is None or lng is None:
+            raw = el.get("geometry") or []
+            pts = [(g["lat"], g["lon"]) for g in raw if "lat" in g and "lon" in g]
+            if pts:
+                lat = sum(p[0] for p in pts) / len(pts)
+                lng = sum(p[1] for p in pts) / len(pts)
         if not lat or not lng:
             continue
         # Drop way-centroids that Overpass computed outside the user's viewport
@@ -578,7 +605,21 @@ def fetch_osm_structures(
             or tags.get("addr:housename")
             or ""
         )
-        spots.append({"lat": lat, "lng": lng, "type": spot_type, "name": name})
+        spot: Dict[str, Any] = {"lat": lat, "lng": lng, "type": spot_type, "name": name}
+
+        # Attach polygon geometry for habitat area types so the client can
+        # draw a filled outline instead of a single-point marker.
+        if el.get("type") == "way" and spot_type in POLYGON_HABITAT_TYPES:
+            raw_geom = el.get("geometry", [])
+            coords = [
+                [g["lat"], g["lon"]]
+                for g in raw_geom
+                if "lat" in g and "lon" in g
+            ]
+            if len(coords) >= 3:
+                spot["geometry"] = coords
+
+        spots.append(spot)
 
     return spots
 

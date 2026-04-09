@@ -592,6 +592,13 @@
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
     };
 
+    // Habitat area types rendered as filled polygon overlays instead of point markers.
+    // Must match POLYGON_HABITAT_TYPES in services/fish_structures.py.
+    var POLYGON_HABITAT_TYPES = {
+        saltmarsh: true, mangrove: true, tidal_flat: true,
+        grass_flat: true, beach: true, oyster_reef: true, inlet: true
+    };
+
     // Single-character labels rendered inside circle markers for at-a-glance identification
     var SPOT_LABELS = {
         pier:         'P',  jetty:  'J',  bridge: 'B',  reef:  'R',
@@ -658,15 +665,35 @@
 
         // Render OSM / NOAA spots first
         spots.filter(function (f) { return !f.custom; }).forEach(function (f) {
-            if (!f.lat || !f.lng) return;
-            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
             var name = f.name || spotTypeLabel(f.type);
-            // Prefer the tip that came from the server; local table is the fallback
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || '';
-            m.bindTooltip(
+            var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
                 '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
-                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : ''),
+                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '');
+
+            // Habitat area features with polygon geometry → filled outline overlay
+            if (f.geometry && f.geometry.length >= 3 && POLYGON_HABITAT_TYPES[f.type]) {
+                var color = spotTypeColor(f.type);
+                var poly = L.polygon(f.geometry, {
+                    color:       color,
+                    weight:      2,
+                    opacity:     0.85,
+                    fillColor:   color,
+                    fillOpacity: 0.30,
+                    className:   'fmap-habitat-poly'
+                });
+                poly.bindTooltip(tooltipHtml,
+                    { className: 'fmap-tooltip fmap-tooltip--struct', sticky: true });
+                fishingSpotLayer.addLayer(poly);
+                return;
+            }
+
+            // Point / structure features → icon marker (pier, buoy, wreck, etc.)
+            if (!f.lat || !f.lng) return;
+            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
+            // Prefer the tip that came from the server; local table is the fallback
+            m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
             fishingSpotLayer.addLayer(m);
@@ -958,7 +985,9 @@
         }
 
         if (!p.length) return '';
-        return '[out:json][timeout:30];(' + p.join('') + ');out center;';
+        // Use `out geom;` so way elements include full polygon geometry, enabling
+        // habitat area types to be rendered as filled outlines on the client.
+        return '[out:json][timeout:30];(' + p.join('') + ');out geom;';
     }
 
     // gen: the _structReqGen value captured when the parent queryStructures() call
@@ -1006,12 +1035,28 @@
             var spots = (data.elements || []).map(function (el) {
                 var lat  = el.lat  || (el.center && el.center.lat);
                 var lng  = el.lon  || (el.center && el.center.lon);
+                // `out geom;` omits `center` for ways — compute centroid from geometry
+                if (!lat && el.geometry && el.geometry.length) {
+                    var sumLat = 0, sumLon = 0, cnt = 0;
+                    el.geometry.forEach(function (g) {
+                        if (g && g.lat != null && g.lon != null) { sumLat += g.lat; sumLon += g.lon; cnt++; }
+                    });
+                    if (cnt) { lat = sumLat / cnt; lng = sumLon / cnt; }
+                }
                 var tags = el.tags || {};
                 var type = _classifyOsmTags(tags);
                 if (!type) return null;
                 var name = tags.name || tags['seamark:name'] || tags['seamark:buoy:colour'] ||
                            tags['addr:housename'] || '';
-                return { lat: lat, lng: lng, name: name, type: type };
+                var spot = { lat: lat, lng: lng, name: name, type: type };
+                // Attach polygon geometry for habitat area types (out geom; response)
+                if (el.type === 'way' && POLYGON_HABITAT_TYPES[type] && el.geometry) {
+                    var coords = el.geometry
+                        .filter(function (g) { return g && g.lat != null && g.lon != null; })
+                        .map(function (g) { return [g.lat, g.lon]; });
+                    if (coords.length >= 3) spot.geometry = coords;
+                }
+                return spot;
             }).filter(function (f) {
                 if (!f || !f.lat || !f.lng) return false;
                 if (f.lat < s || f.lat > n || f.lng < w || f.lng > e) return false;
