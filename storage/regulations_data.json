@@ -73,7 +73,23 @@
     "Pollock (Atlantic)": "atlantic_pollock",
     "American lobster (recreational)": "american_lobster",
     "Mahi-mahi (Pacific)": "mahi_mahi",
-    "Dorado (Pacific mahi)": "mahi_mahi"
+    "Dorado (Pacific mahi)": "mahi_mahi",
+    "Jonah crab": "jonah_crab",
+    "Atlantic mackerel": "atlantic_mackerel",
+    "Spiny dogfish": "spiny_dogfish",
+    "Atlantic menhaden": "atlantic_menhaden",
+    "Bluefish (snapper blues)": "bluefish",
+    "Bluefish (large)": "bluefish",
+    "Summer flounder (fluke)": "summer_flounder",
+    "Flounder (summer)": "summer_flounder",
+    "Redfish (red drum)": "red_drum",
+    "Striped bass (adult)": "striped_bass",
+    "Striped bass (Chesapeake)": "striped_bass",
+    "Striped bass (Hudson River)": "striped_bass",
+    "Speckled trout (Gulf)": "spotted_seatrout",
+    "Gray trout (weakfish)": "weakfish",
+    "Tautog (Mid-Atlantic)": "tautog",
+    "California sheephead": "california_sheephead"
   },
   "states": {
     "AL": {
@@ -919,6 +935,13 @@
         "bag_limit": "catch and release only",
         "season": "Catch-and-release only (rare stray)",
         "notes": "Common snook may stray into AL waters. Release all — no established harvest season.",
+        "source": "AL DCNR Marine Resources"
+      },
+      "yellowjack": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowjack found around AL offshore structures.",
         "source": "AL DCNR Marine Resources"
       }
     },
@@ -1978,6 +2001,20 @@
         "season": "Apr 16 – Dec 31",
         "notes": "Giant (Pacific) black sea bass are a severely depleted species in CA. Extremely strict 1/year limit. Verify CDFW rules.",
         "source": "CDFW"
+      },
+      "redtail_surfperch": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day",
+        "season": "Open year-round",
+        "notes": "Redtail surfperch present in northern CA surf and piers. Combined perch bag limit may apply.",
+        "source": "CDFW"
+      },
+      "california_sheephead": {
+        "min_size": "12 in TL",
+        "bag_limit": "5 per day",
+        "season": "Open year-round",
+        "notes": "California sheephead caught from kelp beds and rocky reefs. Verify CDFW rules.",
+        "source": "CDFW"
       }
     },
     "CT": {
@@ -2454,6 +2491,27 @@
         "season": "Open year-round",
         "notes": "CT recreational lobster limit: 6 per person per day. License required.",
         "source": "CT DEEP"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (offshore, warm months)",
+        "notes": "Mahi-mahi available on offshore trips from CT, typically Aug–Oct.",
+        "source": "CT DEEP"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish present in CT waters in cooler months.",
+        "source": "CT DEEP"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab in CT Sound and offshore areas.",
+        "source": "CT DEEP"
       }
     },
     "DE": {
@@ -2901,6 +2959,20 @@
         "season": "Open year-round",
         "notes": "DE follows ASMFC recreational lobster rules: 6 per day.",
         "source": "DE DNREC"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (offshore, Jun–Oct)",
+        "notes": "Mahi-mahi caught on offshore trips from DE Indian River Inlet, typically summer.",
+        "source": "DE DNREC"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish present in DE offshore waters. Follow NOAA regulations.",
+        "source": "DE DNREC; NOAA Fisheries"
       }
     },
     "FL": {
@@ -6730,6 +6802,13 @@
         "season": "Catch-and-release only (rare stray)",
         "notes": "Common snook are rare in LA but do occasionally appear. Release all.",
         "source": "LA Wildlife & Fisheries"
+      },
+      "yellowjack": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowjack found around offshore structures in LA.",
+        "source": "LA Wildlife & Fisheries"
       }
     },
     "MA": {
@@ -7249,6 +7328,20 @@
         "bag_limit": "15 per day (recreational)",
         "season": "Open year-round",
         "notes": "Lobster recreational limit 15/day; minimum carapace length 3.25 in. No oversized (max carapace) retained.",
+        "source": "MA DMF"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish abundant in MA waters. Federal regulations apply for commercial; recreational largely open.",
+        "source": "MA DMF; NOAA Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab popular from piers and boats in MA. Large bag limit for recreational fishers.",
         "source": "MA DMF"
       }
     },
@@ -8119,6 +8212,13 @@
         "season": "Open year-round (offshore)",
         "notes": "Blue sharks encountered offshore. NOAA Atlantic shark rules apply.",
         "source": "MD DNR; NOAA Fisheries"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish in MD offshore and bay waters.",
+        "source": "MD DNR; NOAA Fisheries"
       }
     },
     "ME": {
@@ -8409,6 +8509,27 @@
         "season": "Open year-round (area-specific seasons apply)",
         "notes": "American lobster recreational limit: 12 per day in ME coastal waters. Trap gear requires a license. Verify current ME DMR rules.",
         "source": "ME DMR"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish very common in ME waters. Federally managed. Minimal state regulation.",
+        "source": "ME DMRE; NOAA Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab recreational limit 100/day in ME. Minimum carapace width 4.75 in.",
+        "source": "ME DMR"
+      },
+      "longfin_squid": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "May – Oct",
+        "notes": "Longfin inshore squid jigged from piers and boats in ME spring/summer. No bag limit.",
+        "source": "ME DMRE; NOAA Fisheries"
       }
     },
     "MS": {
@@ -9249,6 +9370,13 @@
         "bag_limit": "catch and release only",
         "season": "Catch-and-release only (extremely rare)",
         "notes": "Common snook are extremely rare in MS waters. Release all — no harvest authorized.",
+        "source": "MS DMR"
+      },
+      "yellowjack": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowjack occasionally caught in MS Gulf waters.",
         "source": "MS DMR"
       }
     },
@@ -10700,6 +10828,13 @@
         "season": "Open year-round in South Atlantic federal waters",
         "notes": "North Carolina red grouper: 20-inch TL minimum, 3/day aggregate grouper (South Atlantic rules). Verify with NC DMF and NOAA/SAFMC.",
         "source": "https://www.deq.nc.gov/about/divisions/marine-fisheries/recreational-fishing"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish present in NC offshore waters. Federally managed.",
+        "source": "NC DMF; NOAA Fisheries"
       }
     },
     "NJ": {
@@ -11529,6 +11664,20 @@
         "season": "Open year-round",
         "notes": "NJ recreational lobster: 6 per day, minimum 3.25 in carapace length.",
         "source": "NJ DEP Marine Fisheries"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish very common in NJ offshore waters. Federal regulations apply.",
+        "source": "NJ DEP Marine Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab present in NJ offshore areas and rocky structure.",
+        "source": "NJ DEP Marine Fisheries"
       }
     },
     "NY": {
@@ -12234,6 +12383,20 @@
         "bag_limit": "6 per day",
         "season": "Open year-round",
         "notes": "NY recreational bag limit: 6 lobsters per person per day.",
+        "source": "NY DEC"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish common in NY offshore and near wrecks.",
+        "source": "NY DEC; NOAA Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab caught in NY offshore waters.",
         "source": "NY DEC"
       }
     },
@@ -13054,6 +13217,41 @@
         "season": "Not present (rare stray)",
         "notes": "Pacific black sea bass are very rare in OR. Release if encountered.",
         "source": "ODFW"
+      },
+      "broadnose_sevengill_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Broadnose sevengill sharks found in OR bays and nearshore. No specific state bag limit.",
+        "source": "ODFW"
+      },
+      "california_halibut": {
+        "min_size": "",
+        "bag_limit": "0",
+        "season": "Not present in OR (rare stray possible)",
+        "notes": "California halibut do not occur in OR waters; species is CA-endemic. Release if encountered.",
+        "source": "ODFW"
+      },
+      "white_seabass": {
+        "min_size": "No minimum",
+        "bag_limit": "3 per day",
+        "season": "Rare stray (warm-water years)",
+        "notes": "White seabass occasionally stray into southern OR waters during warm-water events.",
+        "source": "ODFW"
+      },
+      "yellowtail": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Rare stray (warm-water years)",
+        "notes": "Pacific yellowtail occasionally stray north to OR during El Niño. No specific bag limit.",
+        "source": "ODFW"
+      },
+      "pacific_barracuda": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Rare; warm-water years only",
+        "notes": "Pacific barracuda occasionally stray to OR during El Niño years.",
+        "source": "ODFW"
       }
     },
     "RI": {
@@ -13527,6 +13725,27 @@
         "bag_limit": "6 per day (recreational)",
         "season": "Open year-round",
         "notes": "RI recreational bag limit is 6 lobsters per person per day. Carapace minimum 3.25 in.",
+        "source": "RI DEM"
+      },
+      "mahi_mahi": {
+        "min_size": "No minimum",
+        "bag_limit": "10 per day",
+        "season": "Open year-round (offshore, warm months)",
+        "notes": "Mahi-mahi caught on offshore trips from RI, typically Jul–Oct.",
+        "source": "RI DEM"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish abundant in RI waters, especially fall. Federally managed.",
+        "source": "RI DEM; NOAA Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab abundant in RI offshore rocky areas.",
         "source": "RI DEM"
       }
     },
@@ -15777,6 +15996,13 @@
         "season": "Seasonal — Gulf season set annually",
         "notes": "Texas: 20-inch TL minimum, 3/day aggregate grouper. Verify 2026 Gulf season dates with TPWD and NOAA.",
         "source": "https://tpwd.texas.gov/regulations/outdoor-annual/fishing/saltwater-fishing-limits"
+      },
+      "yellowjack": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Yellowjack occur around offshore platforms in TX. No specific state bag limit.",
+        "source": "TX TPWD"
       }
     },
     "VA": {
@@ -16709,6 +16935,13 @@
         "season": "Rare; offshore winter only",
         "notes": "Cod are at the southern edge of range in VA. Federal regulations apply.",
         "source": "VA DGIF; NOAA Fisheries"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish common in VA nearshore waters in fall and winter.",
+        "source": "VA DGIF; NOAA Fisheries"
       }
     },
     "WA": {
@@ -17498,6 +17731,13 @@
         "season": "Not present",
         "notes": "Pacific black sea bass do not occur in WA waters.",
         "source": "WDFW"
+      },
+      "broadnose_sevengill_shark": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Broadnose sevengill sharks found in Puget Sound and nearshore WA waters.",
+        "source": "WDFW"
       }
     },
     "HI": {
@@ -17963,6 +18203,34 @@
         "season": "Open year-round",
         "notes": "NH follows regional ASMFC lobster recreational rules. No trap gear without a license.",
         "source": "NH Fish & Game"
+      },
+      "atlantic_mackerel": {
+        "min_size": "No minimum",
+        "bag_limit": "20 per day",
+        "season": "May – Nov",
+        "notes": "Atlantic mackerel caught from piers and boats in NH summer.",
+        "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "spiny_dogfish": {
+        "min_size": "No minimum",
+        "bag_limit": "15 per day",
+        "season": "Open year-round",
+        "notes": "Spiny dogfish common in NH offshore and nearshore waters.",
+        "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "jonah_crab": {
+        "min_size": "4.75 in carapace width",
+        "bag_limit": "100 per day",
+        "season": "Open year-round",
+        "notes": "Jonah crab present in NH coastal waters. Recreational bag limit is generous.",
+        "source": "NH Fish & Game"
+      },
+      "longfin_squid": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "May – Oct",
+        "notes": "Longfin squid jigged from NH piers. Federally managed; recreational largely unregulated.",
+        "source": "NH Fish & Game; NOAA Fisheries"
       }
     },
     "PA": {
