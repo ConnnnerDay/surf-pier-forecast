@@ -154,6 +154,28 @@
 
         </section>
 
+        {% if forecast.activity_timeline %}
+        <section class="hourly-timeline-section" style="margin-top: 0.75rem;">
+            <h2 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.1rem;">Fishing Activity &mdash; Today</h2>
+            <div class="activity-timeline">
+                <div class="timeline-bars">
+                    {% for entry in forecast.activity_timeline %}
+                    <div class="timeline-bar-col">
+                        <div class="timeline-bar timeline-bar--{{ entry.tag }}" style="height: {{ [((entry.level * 0.58) | round | int), 2] | max }}px;"></div>
+                        <div class="timeline-hour">{% if entry.hour % 6 == 0 %}{{ entry.label }}{% endif %}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="timeline-legend">
+                    <span><span class="tl-key tl-key--prime"></span>Prime</span>
+                    <span><span class="tl-key tl-key--high"></span>High</span>
+                    <span><span class="tl-key tl-key--med"></span>Good</span>
+                    <span><span class="tl-key tl-key--low"></span>Low</span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         {% if forecast.currents %}
         <details class="collapsible-module">
             <summary>
