@@ -25268,5 +25268,36 @@
       "gulf"
     ],
     "tip": "Yellowjack are often found in the company of greater amberjack near reefs and offshore structure. They are fast, aggressive predators — use 20-30 lb fluorocarbon leader and check for bite-offs."
+  },
+  {
+    "name": "Broadnose sevengill shark",
+    "temp_min": 48,
+    "temp_max": 70,
+    "temp_ideal_low": 54,
+    "temp_ideal_high": 65,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Mackerel, sardines, squid, cut fish; whole or large cut bait on strong tackle",
+    "rig": "Sliding sinker rig or fish finder with heavy leader (60-80 lb wire or heavy mono); strong circle hooks",
+    "hook_size": "5/0-8/0 circle hook on wire or heavy fluorocarbon leader",
+    "sinker": "3-6 oz pyramid or pyramid-style sinker",
+    "lures": null,
+    "explanation_cold": "Broadnose sevengill sharks move to deeper bay and channel areas in cooler months, less active below 50°F.",
+    "explanation_warm": "Broadnose sevengill sharks are common in San Francisco Bay and coastal California from spring through fall; they frequent harbor areas, piers, and kelp zones. Frequently caught from piers by anglers targeting other fish.",
+    "coast": "west",
+    "regions": [
+      "norcal"
+    ],
+    "tip": "Broadnose sevengill sharks are strong fighters on heavy tackle. They are a prehistoric-looking species with seven gill slits instead of five. Use a strong rod, heavy mono or wire leader, and large circle hooks. Practice careful catch-and-release."
   }
 ]
