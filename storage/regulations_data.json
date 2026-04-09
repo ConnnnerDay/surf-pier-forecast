@@ -155,7 +155,23 @@
     "Nassau grouper": "nassau_grouper",
     "Black grouper": "black_grouper",
     "Warsaw grouper": "warsaw_grouper",
-    "Snowy grouper": "snowy_grouper"
+    "Snowy grouper": "snowy_grouper",
+    "Jacksmelt (pier)": "jacksmelt",
+    "Jacksmelt": "jacksmelt",
+    "Pacific tomcod (pier)": "pacific_tomcod",
+    "Pacific tomcod": "pacific_tomcod",
+    "Black perch (Pacific)": "black_perch",
+    "Black perch": "black_perch",
+    "Shrimp (spot prawn, Pacific)": "spot_prawn",
+    "Spot prawn": "spot_prawn",
+    "Sea lamprey (anadromous)": "sea_lamprey",
+    "Atlantic croaker (shore)": "atlantic_croaker",
+    "Atlantic croaker (large)": "atlantic_croaker",
+    "Pinfish (pier)": "pinfish",
+    "Pinfish": "pinfish",
+    "Pigfish (grunt)": "pigfish",
+    "Pigfish": "pigfish",
+    "Gulf menhaden (baitfish)": "gulf_menhaden"
   },
   "states": {
     "AL": {
@@ -1015,6 +1031,20 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Tilapia occur in AL warmwater areas. No specific regulation.",
+        "source": "AL DCNR"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish common in AL coastal waters. No bag limit.",
+        "source": "AL DCNR"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish common in AL coastal waters. No bag limit.",
         "source": "AL DCNR"
       }
     },
@@ -2109,6 +2139,20 @@
         "season": "Open year-round (seasonal, warm months)",
         "notes": "Striped bonito are a seasonal SoCal game fish; no specific bag limit. Fast metal jigs work best.",
         "source": "CDFW"
+      },
+      "jacksmelt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Jacksmelt have no bag limit in CA. A popular and easy pier catch year-round, especially fall/winter.",
+        "source": "CDFW"
+      },
+      "spot_prawn": {
+        "min_size": "3.5 in body length",
+        "bag_limit": "100 per day (check current limits)",
+        "season": "Seasonal (spring–fall; varies by area)",
+        "notes": "Spot prawn season and area highly regulated in CA. Verify current CDFW season dates and pot limits.",
+        "source": "CDFW"
       }
     },
     "CT": {
@@ -2605,6 +2649,13 @@
         "bag_limit": "100 per day",
         "season": "Open year-round",
         "notes": "Jonah crab in CT Sound and offshore areas.",
+        "source": "CT DEEP"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker occasional in CT Sound in fall. No specific bag limit.",
         "source": "CT DEEP"
       }
     },
@@ -4722,6 +4773,20 @@
         "season": "Open year-round",
         "notes": "Tilapia are invasive in FL. No bag limit — harvest encouraged. No saltwater license required for freshwater-connected canals.",
         "source": "FL FWC"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish are extremely common throughout FL. No bag limit — important live bait fish.",
+        "source": "FL FWC"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish are common in FL coastal waters and excellent live bait. No bag limit.",
+        "source": "FL FWC"
       }
     },
     "GA": {
@@ -5931,6 +5996,20 @@
         "season": "Open year-round",
         "notes": "Tilapia are invasive in GA warmwater canals. No bag limit.",
         "source": "GA DNR"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish common in GA coastal areas. No bag limit.",
+        "source": "GA DNR"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish in GA coastal areas and nearshore. No bag limit.",
+        "source": "GA DNR"
       }
     },
     "LA": {
@@ -6924,6 +7003,20 @@
         "season": "Open year-round",
         "notes": "Tilapia have established in LA coastal canals. No specific bag limit — harvest encouraged.",
         "source": "LA Wildlife & Fisheries"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish common in LA coastal bays. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish common in LA coastal and estuarine waters. No bag limit.",
+        "source": "LA Wildlife & Fisheries"
       }
     },
     "MA": {
@@ -7457,6 +7550,13 @@
         "bag_limit": "100 per day",
         "season": "Open year-round",
         "notes": "Jonah crab popular from piers and boats in MA. Large bag limit for recreational fishers.",
+        "source": "MA DMF"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker occasionally caught in MA waters in late summer/fall.",
         "source": "MA DMF"
       }
     },
@@ -8334,6 +8434,13 @@
         "season": "Open year-round",
         "notes": "Spiny dogfish in MD offshore and bay waters.",
         "source": "MD DNR; NOAA Fisheries"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish at southern edge of range in MD. No bag limit.",
+        "source": "MD DNR"
       }
     },
     "ME": {
@@ -8645,6 +8752,13 @@
         "season": "May – Oct",
         "notes": "Longfin inshore squid jigged from piers and boats in ME spring/summer. No bag limit.",
         "source": "ME DMRE; NOAA Fisheries"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker are very rare in ME — far north of normal range. Release if caught.",
+        "source": "ME DMRE"
       }
     },
     "MS": {
@@ -9499,6 +9613,20 @@
         "bag_limit": "No limit",
         "season": "Open year-round",
         "notes": "Tilapia are present in MS warmwater canals and ponds. No bag limit.",
+        "source": "MS DMR"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish present in MS coastal areas. No bag limit.",
+        "source": "MS DMR"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish in MS coastal areas. No bag limit.",
         "source": "MS DMR"
       }
     },
@@ -10957,6 +11085,20 @@
         "season": "Open year-round",
         "notes": "Spiny dogfish present in NC offshore waters. Federally managed.",
         "source": "NC DMF; NOAA Fisheries"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish common in NC sounds and nearshore. No bag limit.",
+        "source": "NC DMF"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish common in NC sounds. No bag limit.",
+        "source": "NC DMF"
       }
     },
     "NJ": {
@@ -12520,6 +12662,13 @@
         "season": "Open year-round",
         "notes": "Jonah crab caught in NY offshore waters.",
         "source": "NY DEC"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker caught from NY piers and surf in summer/fall.",
+        "source": "NY DEC"
       }
     },
     "OR": {
@@ -13374,6 +13523,20 @@
         "season": "Rare; warm-water years only",
         "notes": "Pacific barracuda occasionally stray to OR during El Niño years.",
         "source": "ODFW"
+      },
+      "jacksmelt": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Jacksmelt are present in OR bays and piers. No specific bag limit.",
+        "source": "ODFW"
+      },
+      "spot_prawn": {
+        "min_size": "3.5 in body length",
+        "bag_limit": "100 per day (check current limits)",
+        "season": "Seasonal (spring–fall; varies by area)",
+        "notes": "Spot prawn: check ODFW for current season. Typically open summer months with pot gear.",
+        "source": "ODFW"
       }
     },
     "RI": {
@@ -13868,6 +14031,13 @@
         "bag_limit": "100 per day",
         "season": "Open year-round",
         "notes": "Jonah crab abundant in RI offshore rocky areas.",
+        "source": "RI DEM"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker occasional in RI in fall. No specific bag limit.",
         "source": "RI DEM"
       }
     },
@@ -15138,6 +15308,20 @@
         "season": "Open year-round",
         "notes": "Tilapia occur in SC warmer inland waters. No specific bag limit.",
         "source": "SC DNR"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish abundant in SC coastal waters and piers. No bag limit.",
+        "source": "SC DNR"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish abundant in SC coastal sounds and piers. No bag limit.",
+        "source": "SC DNR"
       }
     },
     "TX": {
@@ -16139,6 +16323,20 @@
         "season": "Open year-round",
         "notes": "Tilapia are invasive in TX warm waters. No bag limit. Check TPWD regulations for specific water bodies.",
         "source": "TX TPWD"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish abundant in TX coastal bays and piers. No bag limit.",
+        "source": "TX TPWD"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish present in TX bays and nearshore. No bag limit.",
+        "source": "TX TPWD"
       }
     },
     "VA": {
@@ -17078,6 +17276,20 @@
         "season": "Open year-round",
         "notes": "Spiny dogfish common in VA nearshore waters in fall and winter.",
         "source": "VA DGIF; NOAA Fisheries"
+      },
+      "pinfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pinfish present in VA lower Chesapeake Bay in summer. No bag limit.",
+        "source": "VA DGIF"
+      },
+      "pigfish": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Pigfish present in lower Chesapeake in summer. No bag limit.",
+        "source": "VA DGIF"
       }
     },
     "WA": {
@@ -17874,6 +18086,13 @@
         "season": "Open year-round",
         "notes": "Broadnose sevengill sharks found in Puget Sound and nearshore WA waters.",
         "source": "WDFW"
+      },
+      "spot_prawn": {
+        "min_size": "3.5 in body length",
+        "bag_limit": "100 per day (check current limits)",
+        "season": "Seasonal (spring–fall; varies by area)",
+        "notes": "Spot prawn recreational season in WA typically May-September; check WDFW for area-specific rules.",
+        "source": "WDFW"
       }
     },
     "HI": {
@@ -18472,6 +18691,13 @@
         "season": "May – Oct",
         "notes": "Longfin squid jigged from NH piers. Federally managed; recreational largely unregulated.",
         "source": "NH Fish & Game; NOAA Fisheries"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker extremely rare in NH. May stray in warm years.",
+        "source": "NH Fish & Game"
       }
     },
     "PA": {
@@ -18667,6 +18893,13 @@
         "bag_limit": "10 per day",
         "season": "Summer offshore (very rare)",
         "notes": "Mahi-mahi very rare near PA; offshore Gulf Stream territory.",
+        "source": "PA Fish & Boat Commission"
+      },
+      "atlantic_croaker": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round",
+        "notes": "Atlantic croaker reach lower Delaware Bay in fall.",
         "source": "PA Fish & Boat Commission"
       }
     },
@@ -19007,6 +19240,20 @@
         "bag_limit": "Included in rockfish aggregate",
         "season": "Open year-round",
         "notes": "Copper rockfish in SE AK. Included in rockfish aggregate bag limit.",
+        "source": "ADF&G"
+      },
+      "pacific_tomcod": {
+        "min_size": "No minimum",
+        "bag_limit": "No limit",
+        "season": "Open year-round (cooler months)",
+        "notes": "Pacific tomcod common in AK coastal and estuarine waters. No specific bag limit. Good eating.",
+        "source": "ADF&G"
+      },
+      "spot_prawn": {
+        "min_size": "3.5 in body length",
+        "bag_limit": "100 per day (check current limits)",
+        "season": "Seasonal (spring–fall; varies by area)",
+        "notes": "Spot prawn recreational fishing in AK requires pot gear license. Generous limits but verify ADF&G current rules.",
         "source": "ADF&G"
       }
     },

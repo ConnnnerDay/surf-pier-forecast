@@ -25714,5 +25714,298 @@
     "explanation_cold": "Pacific electric ray (Tetronarce californica) is found along the entire California and Pacific Northwest coast. They are bottom-dwelling predators that use electric organs to stun prey.",
     "explanation_warm": "Pacific electric rays are an incidental catch from piers and shore. They deliver a powerful electric shock (up to 45 volts) — DO NOT touch or attempt to remove the hook by hand. Use pliers, step back, and allow the ray to shake itself free or cut the line. They are fully protected in some areas and should be released carefully. Not a food fish.",
     "tip": "If you hook a Pacific electric ray, NEVER touch it. Use long pliers to cut the line near the hook. Educate others nearby — the electric shock is dangerous."
+  },
+  {
+    "name": "Jacksmelt (pier)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 70,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 65,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "good_months": [
+      5,
+      9
+    ],
+    "bait": "Tiny pieces of squid, pile worms, or small shrimp; very small hooks required",
+    "rig": "Ultra-light float rig or a tiny Sabiki rig near the surface",
+    "hook_size": "#8-#6 (very small)",
+    "sinker": "None to 1/4 oz split shot",
+    "lures": "Tiny 1/16 oz jigs, small chrome spoons",
+    "explanation_cold": "Jacksmelt (Atherinopsis californiensis) are a year-round CA pier staple, especially abundant in fall through spring when water is cooler. They school near the surface.",
+    "explanation_warm": "Jacksmelt can reach 18 inches and are one of the larger smelt species in CA. They school in huge numbers near the surface around pier pilings, especially in fall. Use a float with tiny baits at a very shallow depth. They also take tiny Sabiki rigs. Excellent eating — mild flavor, small bones. CA pier license not always required; check CDFW rules.",
+    "tip": "Jacksmelt bite best at first light and dusk. Try a float rig set to 2-3 feet depth with tiny bits of squid or worm."
+  },
+  {
+    "name": "Pacific tomcod (pier)",
+    "coast": "west",
+    "regions": [
+      "pacific_northwest",
+      "alaska"
+    ],
+    "temp_min": 40,
+    "temp_max": 62,
+    "temp_ideal_low": 45,
+    "temp_ideal_high": 58,
+    "peak_months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
+    "good_months": [
+      4,
+      9
+    ],
+    "bait": "Small pieces of squid, shrimp, worms; bottom feeder",
+    "rig": "Light hi-lo or dropper rig near the bottom; very light (1/2-1 oz) sinker",
+    "hook_size": "#4-#2",
+    "sinker": "1/2-1 oz",
+    "lures": "Small jigs tipped with squid or worm",
+    "explanation_cold": "Pacific tomcod (Microgadus proximus) are a cold-water species abundant in the Pacific Northwest and Alaska estuaries, bays, and nearshore in fall through spring. They prefer cold water (40-58°F).",
+    "explanation_warm": "Pacific tomcod are a common pier and dock catch in OR, WA, and AK in cooler months. They're small (6-12 inches) but abundant and will take almost any small bait near the bottom. They are good eating — similar to Atlantic cod but smaller. Look for them around piers, docks, and breakwaters in estuaries and bays.",
+    "tip": "Pacific tomcod school near the bottom in estuaries. A hi-lo rig with two small hooks baited with squid strips is the classic setup."
+  },
+  {
+    "name": "Black perch (Pacific)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific_northwest"
+    ],
+    "temp_min": 52,
+    "temp_max": 72,
+    "temp_ideal_low": 56,
+    "temp_ideal_high": 66,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      3,
+      11
+    ],
+    "bait": "Pile worms, blood worms, small shrimp, mussels near pilings and structure",
+    "rig": "Light bottom rig or float rig near pier pilings; medium-light spinning gear",
+    "hook_size": "#6-#2",
+    "sinker": "1/4-1 oz",
+    "lures": "Small jigs, mini swimbaits, tiny soft plastics",
+    "explanation_cold": "Black perch (Embiotoca jacksoni) are a common surfperch found around kelp beds, rocky areas, and pier pilings along the California and southern Oregon coast.",
+    "explanation_warm": "Black perch are excellent pier targets in Central and Southern California. They're found year-round but most active spring through fall. They favor structure — look near pilings, rocky reefs, and kelp. Pile worms and mussels are top baits. Good eating when properly prepared. Part of the surfperch group with a combined aggregate bag limit in CA.",
+    "tip": "Work bait very slowly near the base of pier pilings or rocky structure. Black perch are structure-oriented and will hit bait presented right at the edge of kelp or rocks."
+  },
+  {
+    "name": "Shrimp (spot prawn, Pacific)",
+    "coast": "west",
+    "regions": [
+      "california",
+      "pacific_northwest",
+      "alaska"
+    ],
+    "temp_min": 40,
+    "temp_max": 58,
+    "temp_ideal_low": 44,
+    "temp_ideal_high": 54,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "good_months": [
+      3,
+      10
+    ],
+    "bait": "Spot prawns are targeted with traps (hoop nets or shrimp pots) — not typical rod-and-reel fishing",
+    "rig": "Hoop net or shrimp pot, typically fished at 200-600 ft depth over sandy bottom",
+    "hook_size": "Not applicable",
+    "sinker": "Heavy (2-8 lbs) to hold traps at depth",
+    "lures": "Trap bait: canned cat food, raw fish, or commercial shrimp attractant",
+    "explanation_cold": "Spot prawns (Pandalus platyceros) are the largest North American shrimp species, found along the Pacific Coast from Alaska to Southern California. They prefer deep, cold water (200-600 ft).",
+    "explanation_warm": "Spot prawns are a premium delicacy — large, sweet, and highly sought. They are fished primarily with hoop nets or shrimp pots from boats, though occasionally caught from piers in deep areas. In CA, seasons and areas are closely regulated. In AK, recreational spot prawns require a pot gear license. Best known in BC, SE AK, and OR coastal communities.",
+    "tip": "Spot prawns must be immediately put on ice or they autodigest (enzymes break down the meat). Keep alive or freeze immediately after catching."
+  },
+  {
+    "name": "Sea lamprey (anadromous)",
+    "coast": "east",
+    "regions": [
+      "northeast",
+      "midatlantic",
+      "great_lakes"
+    ],
+    "temp_min": 42,
+    "temp_max": 72,
+    "temp_ideal_low": 55,
+    "temp_ideal_high": 68,
+    "peak_months": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "good_months": [
+      3,
+      8
+    ],
+    "bait": "Sea lamprey are not typically targeted in sport fishing",
+    "rig": "Incidental catch in rivers during spawning migrations",
+    "hook_size": "Not typically targeted",
+    "sinker": "Not typically targeted",
+    "lures": "Not typically targeted",
+    "explanation_cold": "Sea lamprey (Petromyzon marinus) are an ancient jawless fish that migrate from the ocean into rivers to spawn. They are considered invasive in the Great Lakes. Atlantic sea-run lampreys are native.",
+    "explanation_warm": "Sea lamprey are primarily encountered as incidental catches in rivers during their spring spawning migration. They are not a traditional sport fish target. In the Great Lakes, sea lamprey are an invasive species subject to control programs. Atlantic coast lamprey are native. Check local regulations before keeping — some states protect them, others consider them invasive.",
+    "tip": "Sea lamprey attach to other fish with suction cup mouths. If you find one on a caught fish, carefully remove it. They are sensitive to handling — release quickly if you choose to let them go."
+  },
+  {
+    "name": "Atlantic croaker (shore)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 60,
+    "temp_max": 84,
+    "temp_ideal_low": 66,
+    "temp_ideal_high": 78,
+    "peak_months": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "good_months": [
+      6,
+      7,
+      12
+    ],
+    "bait": "Bloodworms, fresh shrimp, squid strips, cut spot; bottom feeder",
+    "rig": "Hi-lo rig or Carolina rig on the bottom; light to medium tackle",
+    "hook_size": "#1-2/0 long shank",
+    "sinker": "1-3 oz pyramid or egg sinker",
+    "lures": "Occasionally take small shrimp-tipped jigs",
+    "explanation_cold": "Atlantic croaker (Micropogonias undulatus) are a migratory croaker family fish that move inshore in summer/fall and offshore in winter. They produce a distinctive croaking sound.",
+    "explanation_warm": "Atlantic croaker are one of the most popular pier fishing targets along the Mid-Atlantic and Southeast coasts. They school in large numbers in fall and are known for their croaking sound when caught. Excellent eating — firm, mild white flesh. They bite readily on any fresh cut bait. Named for the croaking sound made by the muscles vibrating against their air bladder.",
+    "tip": "Croaker fishing peaks in fall when fish school up before moving offshore. A hi-lo rig baited with small pieces of fresh shrimp or bloodworm is the standard approach."
+  },
+  {
+    "name": "Pinfish (pier)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 58,
+    "temp_max": 86,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Small pieces of shrimp, squid, worms; will eat almost anything",
+    "rig": "Ultra-light float rig or light bottom rig near grass beds and pier pilings",
+    "hook_size": "#8-#4 (small hooks essential — small mouth)",
+    "sinker": "None to 1/2 oz",
+    "lures": "Tiny jigs tipped with shrimp; tiny soft plastics",
+    "explanation_cold": "Pinfish (Lagodon rhomboides) are a small but extremely common species found around seagrass beds, pier pilings, and shallow rocky areas along the Southeast and Gulf coasts.",
+    "explanation_warm": "Pinfish are the quintessential 'live bait fish' along the Southeast and Gulf coasts — they're used to catch snook, flounder, redfish, and many other species. They're easily caught in cast nets or on tiny hooks. Though small (typically 4-8 inches), they're fantastic live baits because they swim actively and are extremely hardy. They also make good eating when pan-fried.",
+    "tip": "Pinfish are among the best live baits for snook and flounder. Use a small cast net near seagrass beds to catch dozens quickly. If rod-fishing for them, use the smallest hooks available."
+  },
+  {
+    "name": "Pigfish (grunt)",
+    "coast": "east",
+    "regions": [
+      "midatlantic",
+      "southeast",
+      "gulf"
+    ],
+    "temp_min": 62,
+    "temp_max": 84,
+    "temp_ideal_low": 68,
+    "temp_ideal_high": 80,
+    "peak_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      4,
+      11
+    ],
+    "bait": "Shrimp, squid, worms; bottom feeder near structure",
+    "rig": "Light bottom rig or hi-lo rig near structure, grass beds, or pier pilings",
+    "hook_size": "#2-1/0",
+    "sinker": "1-2 oz",
+    "lures": "Small jigs tipped with shrimp or squid",
+    "explanation_cold": "Pigfish (Orthopristis chrysoptera) are a grunt species found along the Southeast and Gulf coasts. They make a grunting sound when caught (hence the family name).",
+    "explanation_warm": "Pigfish are commonly caught from piers and nearshore structures along the Southeast and Gulf coasts. They grunt loudly when caught or handled. Medium-sized (typically 8-12 inches) and excellent eating — firm, white, flavorful flesh. They school near structure and are eager biters on fresh shrimp or squid. Also valuable as live bait for larger species like flounder and speckled trout.",
+    "tip": "Pigfish are the preferred live bait for large flounder in many Southeast ports. Hook them lightly through the back just behind the dorsal fin."
+  },
+  {
+    "name": "Gulf menhaden (baitfish)",
+    "coast": "east",
+    "regions": [
+      "gulf"
+    ],
+    "temp_min": 62,
+    "temp_max": 86,
+    "temp_ideal_low": 70,
+    "temp_ideal_high": 82,
+    "peak_months": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "good_months": [
+      2,
+      11
+    ],
+    "bait": "Filter feeder — cannot be caught on hook; collected by cast net",
+    "rig": "Cast net (1/4-3/8 inch mesh) in schools near the surface",
+    "hook_size": "Not applicable (cast net target)",
+    "sinker": "Not applicable",
+    "lures": "Not applicable",
+    "explanation_cold": "Gulf menhaden (Brevoortia patronus) are schooling filter-feeders that are one of the most important baitfish in the Gulf of Mexico. They form massive schools visible as nervous water near the surface.",
+    "explanation_warm": "Gulf menhaden are the essential baitfish of the Gulf Coast — used live or as fresh cut bait for nearly every Gulf predator. They school in enormous numbers and are easily captured with a cast net where legal. Smaller than Atlantic menhaden, they're perfect for live-lining to redfish, trout, and kingfish. Every Gulf Coast pier angler should master the cast net for menhaden.",
+    "tip": "Look for nervous water, birds diving, or silver flashes near the surface to locate menhaden schools. A 7-10 ft cast net thrown into the center of a school can net dozens at once."
   }
 ]
