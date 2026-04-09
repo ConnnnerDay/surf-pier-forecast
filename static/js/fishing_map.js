@@ -199,6 +199,10 @@
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
+            // Pre-warm the structure cache for the full home corridor so
+            // nearby icons appear immediately and pan/zoom is instant.
+            // 2 s delay so the initial tile + moveend query fires first.
+            setTimeout(prefetchHomeCorridorStructures, 2000);
         }
 
         map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
@@ -230,7 +234,7 @@
         });
 
         // Update the zoom hint immediately so it reflects the starting zoom level
-        // (hidden at zoom ≥ 9, i.e. when server coords are used)
+        // (hidden at zoom ≥ 8, i.e. when server coords are used)
         updateZoomHint();
     }
 
@@ -297,7 +301,7 @@
     function updateZoomHint() {
         var hint = document.getElementById('fmap-zoom-hint');
         if (!hint || !map) return;
-        hint.classList.toggle('fmap-zoom-hint--hidden', map.getZoom() >= 9);
+        hint.classList.toggle('fmap-zoom-hint--hidden', map.getZoom() >= 8);
     }
 
 
@@ -779,24 +783,91 @@
         if (banner) banner.hidden = true;
     }
 
+    // ── Structure cache helpers ───────────────────────────────────────────────
+
+    // Return a cached spot list whose bbox fully contains [s, w, n, e] and
+    // whose type string matches, or null if none found.  Used to serve
+    // viewport queries from a wider pre-fetched corridor without a new request.
+    function _cachedSupersetOf(s, w, n, e, typesStr) {
+        var suffix = typesStr ? '|' + typesStr : '';
+        for (var k in spotCache) {
+            // Keys have the form "s,w,n,e" or "s,w,n,e|types"
+            var pipe  = k.indexOf('|');
+            var ktype = pipe >= 0 ? k.slice(pipe + 1) : '';
+            if (ktype !== (typesStr || '')) continue;
+            var coords = (pipe >= 0 ? k.slice(0, pipe) : k).split(',');
+            if (coords.length < 4) continue;
+            var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
+            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
+        }
+        return null;
+    }
+
+    // Pre-fetch structures for a ±1° corridor around the user's saved home
+    // location so the cache is warm when they first load the map.  Fires
+    // once in the background — results land in spotCache and are served to
+    // subsequent viewport queries via _cachedSupersetOf().
+    function prefetchHomeCorridorStructures() {
+        if (!savedLocationLatLng || !map) return;
+        var lat = savedLocationLatLng.lat, lng = savedLocationLatLng.lng;
+        var R   = 1.0;  // degrees ≈ 110 km each direction
+        var s   = Math.floor((lat - R) * 2) / 2;
+        var w   = Math.floor((lng - R) * 2) / 2;
+        var n   = Math.ceil ((lat + R) * 2) / 2;
+        var e   = Math.ceil ((lng + R) * 2) / 2;
+        var key = s + ',' + w + ',' + n + ',' + e;
+        if (spotCache[key]) return;  // already warm
+
+        var url = '/api/map/structures?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (data && data.structures && !data.zoom_required) {
+                    spotCache[key] = data.structures;
+                    console.log('[fishing-map] home corridor pre-fetch → ' + data.structures.length + ' features cached');
+                    // If the current viewport is already within this corridor,
+                    // render immediately (avoids waiting for the next moveend).
+                    if (map && map.getZoom() >= 8 && fishingSpotLayer) {
+                        var b   = map.getBounds();
+                        var vz  = map.getZoom();
+                        var exp = Math.min(0.75, Math.max(0, (vz - 8) * 0.19));
+                        var vs  = Math.floor((b.getSouth() - exp) * 2) / 2;
+                        var vw  = Math.floor((b.getWest()  - exp) * 2) / 2;
+                        var vn  = Math.ceil ((b.getNorth() + exp) * 2) / 2;
+                        var ve  = Math.ceil ((b.getEast()  + exp) * 2) / 2;
+                        // s/w/n/e here are the pre-fetch corridor bounds (closure)
+                        if (s <= vs && w <= vw && n >= vn && e >= ve) {
+                            spotCache[vs + ',' + vw + ',' + vn + ',' + ve] = data.structures;
+                            renderFishingSpots(data.structures);
+                            _updateSpotTypeHint();
+                        }
+                    }
+                }
+            })
+            .catch(function () {});  // silent — regular queryStructures() will still run
+    }
+
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
     // Builds a cache key that includes the type filter so different selections
     // are cached independently.  Falls back to Overpass if the server fails.
     function queryStructures() {
         if (!map || !fishingSpotLayer) return;
         var zoom = map.getZoom();
-        if (zoom < 9) {
+        if (zoom < 8) {
             fishingSpotLayer.clearLayers();
             return;
         }
 
         var b = map.getBounds();
 
-        // Expand the query bbox well beyond the visible viewport so structures
-        // in a broad coastal corridor are always loaded — e.g. zoomed into
-        // Wrightsville Beach will still show piers and inlets from Jacksonville
-        // NC all the way down to the SC state line (~80 km in each direction).
-        var EXPAND = 0.75; // degrees (~80 km at US latitudes)
+        // ── Zoom-adaptive expansion ───────────────────────────────────────────
+        // Scale the look-ahead buffer with zoom level so zoomed-in views get
+        // a wide coastal corridor pre-loaded while zoomed-out views (whose
+        // viewport already spans a large area) aren't padded unnecessarily.
+        //   zoom 12+ → 0.75° (~80 km, covers e.g. Jacksonville NC ↔ SC line)
+        //   zoom 10  → 0.38° (~42 km)
+        //   zoom 8   → 0°    (5° viewport already covers the region)
+        var EXPAND = Math.min(0.75, Math.max(0, (zoom - 8) * 0.19));
 
         // Cap total span so we never exceed the backend Overpass limits
         // (8° lat / 12° lng).  This matters at low zoom where the viewport
@@ -824,6 +895,17 @@
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key]);
+            _updateSpotTypeHint();
+            return;
+        }
+
+        // Check whether a previously fetched (wider) bbox already contains
+        // this viewport — e.g. the home-corridor pre-fetch covers zoom-12
+        // viewport queries without a second Overpass trip.
+        var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
+        if (superResult) {
+            spotCache[key] = superResult;  // alias so next pan hits directly
+            renderFishingSpots(superResult);
             _updateSpotTypeHint();
             return;
         }
