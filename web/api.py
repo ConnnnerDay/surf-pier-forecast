@@ -1729,6 +1729,469 @@ def map_structures() -> Any:
     return jsonify({"structures": all_structures, "count": len(all_structures)})
 
 
+@bp.route("/api/map/marine-warnings", methods=["GET"])
+def map_marine_warnings() -> Any:
+    """Return active NWS watches/warnings intersecting the bounding box.
+
+    Proxies the ArcGIS Living Atlas NWS_Watches_Warnings_v1 live feed so the
+    frontend never needs to contact arcgis.com directly.
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "warnings": [...], "count": <int> }
+
+    Each warning has: event, severity, summary, description, instruction,
+    affected, expires (ISO-8601), color (hex), marine (bool), rings ([[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_marine_warnings
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope(
+            "invalid_params",
+            "south, west, north, east query parameters are required floats",
+        )), 400
+
+    warnings = fetch_marine_warnings(south, west, north, east)
+    return jsonify({"warnings": warnings, "count": len(warnings)})
+
+
+@bp.route("/api/map/active-storms", methods=["GET"])
+def map_active_storms() -> Any:
+    """Return active tropical storms with forecast track and uncertainty cone.
+
+    Proxies the ArcGIS Living Atlas Active_Hurricanes_v1 live feed.
+    Returns an empty list when no storms are active.
+
+    Returns
+    -------
+    JSON: { "storms": [...], "count": <int> }
+
+    Each storm has: name, category, lat, lng, wind_mph, pressure_mb,
+    track ([[lat,lng]]), cone (list of rings [[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_active_storms
+
+    storms = fetch_active_storms()
+    return jsonify({"storms": storms, "count": len(storms)})
+
+
+@bp.route("/api/map/recent-storms", methods=["GET"])
+def map_recent_storms() -> Any:
+    """Return observed storm tracks for recent hurricane seasons.
+
+    Proxies the ArcGIS Living Atlas Recent_Hurricanes_v1 live feed (NHC/JTWC).
+
+    Query params
+    ------------
+    basin : str  – optional basin filter: AL, EP, CP, WP, …
+
+    Returns
+    -------
+    JSON: { "tracks": [...], "count": <int> }
+
+    Each track has: storm_id, name, basin, start_dtg, end_dtg, ss_max,
+    category, color, path ([[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_recent_storm_tracks
+
+    basin  = request.args.get("basin", "").strip().upper() or None
+    tracks = fetch_recent_storm_tracks(basin=basin)
+    return jsonify({"tracks": tracks, "count": len(tracks)})
+
+
+@bp.route("/api/weather/air-quality", methods=["GET"])
+def weather_air_quality() -> Any:
+    """Return the nearest OpenAQ PM2.5 reading to the given coordinates.
+
+    Proxies the ArcGIS Living Atlas Air_Quality_PM25_Latest_Results live feed.
+
+    Query params
+    ------------
+    lat : float  – latitude  (required)
+    lng : float  – longitude (required)
+
+    Returns
+    -------
+    JSON: { "aqi": { location, city, value, unit, updated, category, color,
+                     distance_km } | null }
+    """
+    from services.arcgis_live_feeds import fetch_air_quality
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+
+    result = fetch_air_quality(lat, lng)
+    return jsonify({"aqi": result})
+
+
+@bp.route("/api/weather/wind-forecast", methods=["GET"])
+def weather_wind_forecast() -> Any:
+    """Return NDFD wind forecast (speed/direction/gust) for a location.
+
+    Proxies the ArcGIS Living Atlas NDFD_WindForecast_v1 live feed
+    (NOAA National Digital Forecast Database, city-level, 3-h intervals).
+
+    Query params
+    ------------
+    lat : float  – latitude  (required)
+    lng : float  – longitude (required)
+
+    Returns
+    -------
+    JSON: { "periods": [...], "count": <int> }
+
+    Each period has: interval_start (ISO-8601), wind_dir_deg, wind_dir,
+    wind_speed (knots), wind_gust (knots)
+    """
+    from services.arcgis_live_feeds import fetch_wind_forecast
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+
+    periods = fetch_wind_forecast(lat, lng)
+    return jsonify({"periods": periods, "count": len(periods)})
+
+
+@bp.route("/api/map/sst-stations", methods=["GET"])
+def map_sst_stations() -> Any:
+    """Return NOAA coral reef / SST monitoring stations in the bounding box.
+
+    Proxies the ArcGIS Living Atlas Coral_Reef_Stations live feed (NOAA CoRIS).
+    Includes live sea-surface temperature, temperature anomaly, and bleaching alerts.
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "stations": [...], "count": <int> }
+
+    Each station has: name, lat, lng, sst_c, sst_f, ssta, dhw,
+    alert, alert_label, alert_color, updated
+    """
+    from services.arcgis_live_feeds import fetch_sst_stations
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    stations = fetch_sst_stations(south, west, north, east)
+    return jsonify({"stations": stations, "count": len(stations)})
+
+
+@bp.route("/api/map/wildfires", methods=["GET"])
+def map_wildfires() -> Any:
+    """Return active wildfire incidents intersecting the bounding box.
+
+    Proxies the ArcGIS Living Atlas USA_Wildfires_v1 live feed (NIFC/IRWIN data).
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "fires": [...], "count": <int> }
+
+    Each fire has: name, state, county, acres, contained_pct, cause,
+    discovered, age_days, lat, lng
+    """
+    from services.arcgis_live_feeds import fetch_wildfire_incidents
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    fires = fetch_wildfire_incidents(south, west, north, east)
+    return jsonify({"fires": fires, "count": len(fires)})
+
+
+@bp.route("/api/map/smoke", methods=["GET"])
+def map_smoke() -> Any:
+    """Return current smoke forecast polygons for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NDGD_SmokeForecast_v1 live feed (NOAA NDGD).
+    Returns only the most recent hour's polygons to avoid stacking.
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "polygons": [...], "count": <int> }
+
+    Each polygon has: class_desc, label, fill (hex), opacity, valid_from,
+    valid_to, rings ([[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_smoke_forecast
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    polygons = fetch_smoke_forecast(south, west, north, east)
+    return jsonify({"polygons": polygons, "count": len(polygons)})
+
+
+@bp.route("/api/weather/precip-forecast", methods=["GET"])
+def weather_precip_forecast() -> Any:
+    """Return NDFD precipitation forecast for a location (6-h intervals, ~24 h).
+
+    Proxies the ArcGIS Living Atlas NDFD_Precipitation_v1 live feed.
+
+    Query params
+    ------------
+    lat : float  – latitude  (required)
+    lng : float  – longitude (required)
+
+    Returns
+    -------
+    JSON: { "periods": [...], "count": <int> }
+
+    Each period has: from_time, to_time, category (0–19), label, rain (bool)
+    """
+    from services.arcgis_live_feeds import fetch_precip_forecast
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+
+    periods = fetch_precip_forecast(lat, lng)
+    return jsonify({"periods": periods, "count": len(periods)})
+
+
+@bp.route("/api/map/sea-ice", methods=["GET"])
+def map_sea_ice() -> Any:
+    """Return the most recent Arctic sea ice extent polygon and statistics.
+
+    Proxies the ArcGIS Living Atlas seaice_extent_N_v1 live feed (NSIDC data).
+    Returns the latest monthly record (typically the previous calendar month).
+
+    Returns
+    -------
+    JSON: { "sea_ice": { year, month, area_mkm2, extent_mkm2, rings } | null }
+    """
+    from services.arcgis_live_feeds import fetch_sea_ice_extent
+
+    result = fetch_sea_ice_extent()
+    return jsonify({"sea_ice": result})
+
+
+@bp.route("/api/weather/temp-forecast", methods=["GET"])
+def weather_temp_forecast() -> Any:
+    """Return NDFD 5-7 day daily high/low temperature forecast for a location.
+
+    Proxies the ArcGIS Living Atlas NDFD_DailyTemperature_v1 live feed (NOAA NDFD).
+    Queries layer 0 (Minimum) and layer 1 (Maximum) with a ±0.5° bbox.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "days": [ { date, min_f, max_f }, … ] }
+    """
+    from services.arcgis_live_feeds import fetch_temp_forecast
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+
+    days = fetch_temp_forecast(lat, lng)
+    return jsonify({"days": days})
+
+
+@bp.route("/api/map/seismic", methods=["GET"])
+def map_seismic() -> Any:
+    """Return USGS earthquake events (M ≥ 2.5) intersecting the bounding box.
+
+    Proxies the ArcGIS Living Atlas USGS_Seismic_Data_v1 live feed (USGS ANSS).
+    Filters to earthquakes only (excludes other event types when possible).
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "events": [ { lat, lng, mag, depth_km, place, time, hours_old,
+                           tsunami, alert, alert_color, sig, event_type } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_seismic_events
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    events = fetch_seismic_events(south, west, north, east)
+    return jsonify({"events": events, "count": len(events)})
+
+
+@bp.route("/api/weather/drought", methods=["GET"])
+def weather_drought() -> Any:
+    """Return US Drought Monitor intensity at a location.
+
+    Proxies the ArcGIS Living Atlas US_Drought_Intensity_v1 live feed (NDMC/USDA).
+    Only covers CONUS; returns null outside coverage area.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "drought": { dm, code, label, color, date, d0, d1, d2, d3, d4 } | null }
+    """
+    from services.arcgis_live_feeds import fetch_drought
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+
+    result = fetch_drought(lat, lng)
+    return jsonify({"drought": result})
+
+
+@bp.route("/api/map/metar", methods=["GET"])
+def map_metar() -> Any:
+    """Return current NOAA METAR surface observations for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NOAA_METAR_current_wind_speed_direction_v1
+    live feed. Wind speed is converted from km/h to knots server-side.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "stations": [ { icao, name, lat, lng, observed, temp_f, dew_f,
+                             humidity, wind_deg, wind_dir, wind_kt, gust_kt,
+                             wind_chill_f, heat_index_f, visibility_m, pressure_mb,
+                             sky, weather, flight_cat, cat_color } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_metar_stations
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    stations = fetch_metar_stations(south, west, north, east)
+    return jsonify({"stations": stations, "count": len(stations)})
+
+
+@bp.route("/api/map/terminator", methods=["GET"])
+def map_terminator() -> Any:
+    """Return the current day/night terminator shadow polygon.
+
+    Proxies the ArcGIS Living Atlas Day_Night_Terminator live feed (layer 2 —
+    the night-shadow polygon that rotates as the Earth turns).  Updates every
+    ~5 minutes on the server.
+
+    Returns
+    -------
+    JSON: { "terminator": { rings ([[lat,lng]]), timestamp (ISO) } | null }
+    """
+    from services.arcgis_live_feeds import fetch_terminator
+
+    result = fetch_terminator()
+    return jsonify({"terminator": result})
+
+
+@bp.route("/api/map/stream-gauges", methods=["GET"])
+def map_stream_gauges() -> Any:
+    """Return live stream gauge readings for the bounding box.
+
+    Proxies the ArcGIS Living Atlas Live_Stream_Gauges_v1 live feed
+    (USGS/NWS water level / flood stage monitoring stations).
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "gauges": [ { id, name, lat, lng, stage_ft, flow_cfs, status,
+                          status_class (0-4), status_color, status_24h,
+                          status_48h, status_72h, updated, station_url,
+                          graph_url } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_stream_gauges
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    gauges = fetch_stream_gauges(south, west, north, east)
+    return jsonify({"gauges": gauges, "count": len(gauges)})
+
+
+@bp.route("/api/map/storm-reports", methods=["GET"])
+def map_storm_reports() -> Any:
+    """Return NOAA severe weather reports (past 24 h) for the bounding box.
+
+    Proxies hail, tornado, and wind-damage layers from the ArcGIS Living Atlas
+    NOAA_storm_reports_v1 live feed and combines them into a single list.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "reports": [ { type, lat, lng, time (ISO), location, state,
+                            comments, magnitude, color } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_storm_reports
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    reports = fetch_storm_reports(south, west, north, east)
+    return jsonify({"reports": reports, "count": len(reports)})
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():

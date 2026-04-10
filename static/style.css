@@ -4884,6 +4884,374 @@ h2::before {
   backdrop-filter: blur(6px);
 }
 
+/* ── ArcGIS Live Feeds: badge on map control buttons ── */
+.fmap-layer-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ── Marine warnings popup ── */
+.fmap-warn-popup {
+  font-size: 0.82rem;
+  color: var(--text, #e2e8f0);
+  max-width: 290px;
+}
+.fmap-warn-popup strong {
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 2px;
+}
+.fmap-warn-popup em {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.fmap-warn-expires {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  display: block;
+  margin-top: 2px;
+}
+.fmap-warn-marine-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #0ea5e9;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.fmap-warn-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin: 0.4rem 0 0;
+  opacity: 0.85;
+}
+.fmap-warn-instruction {
+  font-size: 0.73rem;
+  line-height: 1.4;
+  margin: 0.3rem 0 0;
+  padding: 0.3rem 0.5rem;
+  border-left: 2px solid #f97316;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* ── Storm tracker: position dot ── */
+.fmap-storm-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 10px rgba(0,0,0,0.6), 0 0 18px currentColor;
+  animation: fmap-storm-pulse 2s ease-in-out infinite;
+}
+@keyframes fmap-storm-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* ── Storm tracker popup ── */
+.fmap-storm-popup {
+  font-size: 0.82rem;
+  color: var(--text, #e2e8f0);
+}
+.fmap-storm-popup strong {
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 2px;
+}
+.fmap-storm-popup em {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  font-style: normal;
+}
+
+/* ── Recent storm track labels ── */
+.fmap-track-label {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: rgba(0,0,0,0.55);
+  border-radius: 3px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+/* ── AQI badge in stat card ── */
+.aqi-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* ── NDFD Wind Forecast grid ── */
+.wind-outlook-source {
+  font-size: 0.7rem;
+  opacity: 0.55;
+  margin: 0 0 0.75rem;
+}
+.wind-outlook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.45rem;
+}
+.wind-fc-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.5rem 0.3rem;
+  border-radius: 8px;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-light, #1e3547);
+}
+.wind-fc-time {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+.wind-fc-arrow {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.wind-fc-dir {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.wind-fc-speed {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.wind-fc-gust {
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+.wind-fc-cell.wind-fc--gale    { border-color: #ef4444; }
+.wind-fc-cell.wind-fc--strong  { border-color: #f97316; }
+.wind-fc-cell.wind-fc--moderate { border-color: #eab308; }
+.wind-fc-cell.wind-fc--light   { border-color: var(--border-light, #1e3547); }
+.wind-fc-cell.wind-fc--gale   .wind-fc-speed { color: #ef4444; }
+.wind-fc-cell.wind-fc--strong .wind-fc-speed { color: #f97316; }
+.wind-fc-rain { font-size: 0.85rem; line-height: 1; }
+
+/* ── SST Station markers + popup ── */
+.fmap-sst-dot {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+  cursor: pointer;
+}
+.fmap-sst-popup { font-size: 0.82rem; }
+.fmap-sst-popup strong { font-size: 0.92rem; display: block; margin-bottom: 2px; }
+.fmap-sst-temp  { font-weight: 700; font-size: 0.9rem; }
+.fmap-sst-anomaly { opacity: 0.75; }
+.fmap-sst-alert {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-top: 3px;
+}
+
+/* ── Wildfire markers + popup ── */
+.fmap-fire-dot {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(239,68,68,0.15);
+  border: 1.5px solid rgba(239,68,68,0.5);
+}
+.fmap-fire-dot--sm { width: 22px; height: 22px; font-size: 0.9rem; }
+.fmap-fire-dot--md { width: 26px; height: 26px; font-size: 1.0rem; }
+.fmap-fire-dot--lg { width: 30px; height: 30px; font-size: 1.2rem; }
+.fmap-fire-dot--xl { width: 36px; height: 36px; font-size: 1.4rem; }
+.fmap-fire-popup { font-size: 0.82rem; }
+.fmap-fire-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
+.fmap-fire-contain {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #22c55e;
+  margin-top: 2px;
+}
+.fmap-fire-contain--0 { color: #ef4444; }
+
+/* ── Sea ice popup ── */
+.fmap-ice-popup { font-size: 0.82rem; }
+.fmap-ice-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
+.fmap-ice-popup em { font-size: 0.75rem; font-style: normal; opacity: 0.8; }
+
+/* ── Seismic overlay ── */
+.fmap-seismic-dot { cursor: pointer; transition: opacity 0.15s; }
+.fmap-seismic-dot:hover { opacity: 0.85; }
+.fmap-seismic-popup { font-size: 0.82rem; min-width: 160px; }
+.fmap-seismic-popup strong { display: block; margin-bottom: 3px; font-size: 0.9rem; }
+.fmap-seismic-place { opacity: 0.9; margin-bottom: 2px; font-size: 0.78rem; }
+.fmap-seismic-time  { opacity: 0.65; font-size: 0.74rem; margin-bottom: 4px; }
+.fmap-seismic-meta  { font-size: 0.77rem; opacity: 0.75; }
+.fmap-seismic-sig   { font-size: 0.74rem; opacity: 0.6; margin-top: 2px; }
+.fmap-seismic-source { font-size: 0.7rem; opacity: 0.45; margin-top: 5px; }
+.fmap-seismic-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.fmap-seismic-tag--tsunami {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+/* ── 5-Day Temperature forecast strip ── */
+.temp-forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+.temp-fc-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  border: 1px solid var(--border-light, #1e3547);
+  border-radius: 8px;
+  background: var(--surface-alt, #0f1e2d);
+  font-size: 0.78rem;
+  text-align: center;
+}
+.temp-fc-day  { font-size: 0.72rem; opacity: 0.7; line-height: 1.3; }
+.temp-fc-hi   { font-size: 1rem; font-weight: 700; line-height: 1; }
+.temp-fc-lo   { font-size: 0.78rem; opacity: 0.55; }
+
+/* ── Drought badge + stat card ── */
+.drought-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ── METAR surface obs overlay ── */
+.fmap-metar-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid #9ca3af;
+  background: rgba(15,30,47,0.88);
+  cursor: pointer;
+}
+.fmap-metar-temp {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+.fmap-metar-popup { font-size: 0.82rem; min-width: 180px; }
+.fmap-metar-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
+.fmap-metar-name  { font-size: 0.74rem; opacity: 0.7; margin-bottom: 2px; }
+.fmap-metar-time  { font-size: 0.72rem; opacity: 0.55; margin-bottom: 6px; }
+.fmap-metar-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 4px; }
+.fmap-metar-table td { padding: 1px 4px 1px 0; }
+.fmap-metar-table td:first-child { opacity: 0.65; white-space: nowrap; width: 76px; }
+.fmap-metar-source { font-size: 0.7rem; opacity: 0.4; margin-top: 4px; }
+
+/* ── Day/Night Terminator overlay ── */
+.fmap-terminator-popup { font-size: 0.82rem; }
+.fmap-terminator-popup strong { display: block; margin-bottom: 2px; }
+
+/* ── Stream Gauge overlay ── */
+.fmap-gauge-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+}
+.fmap-gauge-popup { font-size: 0.82rem; min-width: 180px; }
+.fmap-gauge-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
+.fmap-gauge-status { font-weight: 700; font-size: 0.82rem; margin-bottom: 5px; }
+.fmap-gauge-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 4px; }
+.fmap-gauge-table td { padding: 1px 4px 1px 0; }
+.fmap-gauge-table td:first-child { opacity: 0.65; width: 70px; }
+.fmap-gauge-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #60a5fa;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+.fmap-gauge-source { font-size: 0.7rem; opacity: 0.4; }
+
+/* ── Storm Reports overlay ── */
+.fmap-storm-rpt-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.9;
+  border: 1.5px solid rgba(255,255,255,0.2);
+}
+.fmap-storm-rpt-popup { font-size: 0.82rem; min-width: 160px; }
+.fmap-storm-rpt-popup strong { display: block; margin-bottom: 3px; font-size: 0.88rem; }
+.fmap-storm-rpt-time     { font-size: 0.74rem; opacity: 0.6; margin-top: 2px; }
+.fmap-storm-rpt-comments { font-size: 0.76rem; opacity: 0.8; margin-top: 4px; font-style: italic; }
+.fmap-storm-rpt-source   { font-size: 0.7rem; opacity: 0.4; margin-top: 5px; }
+
 /* ── Hotspot header ── */
 .fmap-hotspots-header {
   display: flex;

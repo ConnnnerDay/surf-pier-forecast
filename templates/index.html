@@ -241,6 +241,42 @@
     </details>
     </div><!-- /.section-block next-3-days -->
 
+    <!-- NDFD Wind Forecast (ArcGIS Live Feed) — populated client-side -->
+    <div class="section-block" data-section-id="wind-outlook" data-section-label="Wind Outlook" id="wind-outlook-block" style="display:none">
+    <details class="collapsible-module" id="wind-outlook-details">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                Wind Outlook
+            </span>
+            <span class="collapsible-module-sub" id="wind-outlook-sub">NDFD forecast</span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; 3-hour intervals</p>
+            <div id="wind-outlook-grid" class="wind-outlook-grid"></div>
+        </div>
+    </details>
+    </div><!-- /.section-block wind-outlook -->
+
+    <!-- NDFD Daily Temperature 5-day strip (ArcGIS Live Feed) — populated client-side -->
+    <div class="section-block" data-section-id="temp-forecast" data-section-label="5-Day Temperatures" id="temp-forecast-block" style="display:none">
+    <details class="collapsible-module" id="temp-forecast-details">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                5-Day Temperatures
+            </span>
+            <span class="collapsible-module-sub" id="temp-forecast-sub">NDFD forecast</span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; Daily high/low</p>
+            <div id="temp-forecast-grid" class="temp-forecast-grid"></div>
+        </div>
+    </details>
+    </div><!-- /.section-block temp-forecast -->
+
     <!-- Tides -->
     <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
     <details class="collapsible-module">
@@ -681,6 +717,53 @@
                     <div class="fmap-ctrl-divider"></div>
                     <button type="button" id="fmap-community-layer-btn" class="fmap-ctrl-btn" title="Show community catch pins" aria-label="Toggle community catch pins" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </button>
+                    <div class="fmap-ctrl-divider"></div>
+                    {# Marine warnings overlay — NWS live feed via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-marine-warn-btn" class="fmap-ctrl-btn" title="Show active NWS marine warnings &amp; advisories" aria-label="Toggle marine warnings overlay" aria-pressed="false" style="position:relative">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span id="fmap-marine-warn-badge" class="fmap-layer-badge" style="display:none"></span>
+                    </button>
+                    {# Storm tracker overlay — NHC/JTWC live feed via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-storm-tracker-btn" class="fmap-ctrl-btn" title="Show active tropical storm tracks" aria-label="Toggle storm tracker overlay" aria-pressed="false" style="position:relative">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M12 12h.01"/></svg>
+                        <span id="fmap-storm-badge" class="fmap-layer-badge" style="display:none"></span>
+                    </button>
+                    {# Recent hurricane seasons track overlay — via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-recent-storms-btn" class="fmap-ctrl-btn" title="Show recent season hurricane tracks" aria-label="Toggle recent storm tracks overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    </button>
+                    {# SST / Coral Reef stations — NOAA CoRIS live temperatures via ArcGIS #}
+                    <button type="button" id="fmap-sst-btn" class="fmap-ctrl-btn" title="Show live sea-surface temperatures (NOAA CoRIS)" aria-label="Toggle SST station overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+                    </button>
+                    {# Wildfire + smoke overlay — NIFC fires + NOAA smoke forecast via ArcGIS #}
+                    <button type="button" id="fmap-wildfire-btn" class="fmap-ctrl-btn" title="Show active wildfires &amp; smoke forecast" aria-label="Toggle wildfire and smoke overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/><path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" fill="currentColor" stroke="none" opacity=".4"/></svg>
+                    </button>
+                    {# Arctic sea ice extent — NSIDC monthly boundary via ArcGIS #}
+                    <button type="button" id="fmap-sea-ice-btn" class="fmap-ctrl-btn" title="Show Arctic sea ice extent (NSIDC)" aria-label="Toggle sea ice overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </button>
+                    {# USGS Seismic overlay — earthquake events via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-seismic-btn" class="fmap-ctrl-btn" title="Show USGS earthquake events (M2.5+)" aria-label="Toggle seismic overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="2 12 5 12 7 6 9 18 11 10 13 14 15 12 22 12"/></svg>
+                    </button>
+                    {# NOAA METAR surface obs — real-time weather stations via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-metar-btn" class="fmap-ctrl-btn" title="Show NOAA METAR surface observations" aria-label="Toggle METAR station overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    </button>
+                    {# Day/Night Terminator — live shadow polygon via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-terminator-btn" class="fmap-ctrl-btn" title="Show day/night terminator" aria-label="Toggle day/night terminator overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                    {# Live Stream Gauges — USGS/NWS water levels via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-gauge-btn" class="fmap-ctrl-btn" title="Show live stream gauges (USGS/NWS)" aria-label="Toggle stream gauge overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16c2-4 4-4 6-8s4-4 6-8"/></svg>
+                    </button>
+                    {# NOAA Storm Reports — 24h severe weather via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-storm-rpt-btn" class="fmap-ctrl-btn" title="Show NOAA storm reports (hail, tornado, wind — past 24h)" aria-label="Toggle storm reports overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><polyline points="13 11 9 17 15 17 11 23"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
@@ -1812,6 +1895,193 @@ if ('serviceWorker' in navigator) {
             }, 300);
         }, 5000);
     } catch (e) {}
+})();
+</script>
+
+<script>
+/* ── ArcGIS Live Feeds: Air Quality, NDFD Wind/Temp, Drought ────────────── */
+(function () {
+    var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : 0;
+    var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : 0;
+    if (!lat || !lng) return;
+
+    // ── Air Quality stat card ─────────────────────────────────────────────────
+    fetch('/api/weather/air-quality?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || !data.aqi) return;
+            var aqi = data.aqi;
+            var card   = document.getElementById('aqi-stat-card');
+            var valEl  = document.getElementById('aqi-stat-value');
+            var detEl  = document.getElementById('aqi-stat-detail');
+            if (!card || !valEl || !detEl) return;
+
+            valEl.innerHTML =
+                '<span class="aqi-badge" style="background:' + aqi.color + '">' +
+                aqi.category + '</span>';
+            var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
+            detEl.innerHTML =
+                aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
+            card.hidden = false;
+        })
+        .catch(function () {});
+
+    // ── NDFD Wind + Precipitation Forecast collapsible section ───────────────
+    Promise.all([
+        fetch('/api/weather/wind-forecast?lat='   + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch('/api/weather/precip-forecast?lat=' + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
+    ])
+    .then(function (results) {
+        var windData   = results[0];
+        var precipData = results[1];
+        if (!windData || !windData.periods || !windData.periods.length) return;
+
+        var block = document.getElementById('wind-outlook-block');
+        var grid  = document.getElementById('wind-outlook-grid');
+        if (!block || !grid) return;
+
+        var COMPASS_ARROWS = {
+            N:'↓', NE:'↙', E:'←', SE:'↖', S:'↑', SW:'↗', W:'→', NW:'↘'
+        };
+
+        // Build a lookup of precipitation by approximate start hour
+        var precipByHour = {};
+        if (precipData && precipData.periods) {
+            precipData.periods.forEach(function (pp) {
+                if (pp.from_time) {
+                    try {
+                        var h = new Date(pp.from_time).getTime();
+                        precipByHour[h] = pp;
+                    } catch (e) {}
+                }
+            });
+        }
+
+        // Find the closest precip period (6-h) for each wind period (3-h)
+        function nearestPrecip(isoTime) {
+            if (!isoTime || !Object.keys(precipByHour).length) return null;
+            try {
+                var t   = new Date(isoTime).getTime();
+                var best = null, bestDiff = Infinity;
+                Object.keys(precipByHour).forEach(function (h) {
+                    var diff = Math.abs(t - Number(h));
+                    if (diff < bestDiff) { bestDiff = diff; best = precipByHour[h]; }
+                });
+                // Only associate if within 6 hours
+                return bestDiff <= 6 * 3600 * 1000 ? best : null;
+            } catch (e) { return null; }
+        }
+
+        var html = '';
+        windData.periods.forEach(function (p) {
+            var arrow = COMPASS_ARROWS[p.wind_dir] || '·';
+            var timeStr = '';
+            if (p.interval_start) {
+                try {
+                    var d = new Date(p.interval_start);
+                    timeStr = d.toLocaleString([], { weekday:'short', hour:'numeric' });
+                } catch (e) {}
+            }
+            var speedClass = p.wind_speed >= 25 ? 'wind-fc--gale'
+                           : p.wind_speed >= 15 ? 'wind-fc--strong'
+                           : p.wind_speed >= 8  ? 'wind-fc--moderate'
+                           : 'wind-fc--light';
+            var pp = nearestPrecip(p.interval_start);
+            var rainHtml = pp && pp.rain
+                ? '<span class="wind-fc-rain" title="' + (pp.label || '') + '">🌧</span>'
+                : '';
+            html +=
+                '<div class="wind-fc-cell ' + speedClass + '">' +
+                '<span class="wind-fc-time">' + timeStr + '</span>' +
+                '<span class="wind-fc-arrow" title="' + (p.wind_dir || '') + '">' + arrow + '</span>' +
+                '<span class="wind-fc-dir">' + (p.wind_dir || '–') + '</span>' +
+                '<span class="wind-fc-speed">' + p.wind_speed + ' kt</span>' +
+                (p.wind_gust ? '<span class="wind-fc-gust">G ' + p.wind_gust + '</span>' : '') +
+                rainHtml +
+                '</div>';
+        });
+        grid.innerHTML = html;
+
+        // Update subtitle with first period summary
+        var sub = document.getElementById('wind-outlook-sub');
+        if (sub && windData.periods[0]) {
+            var p0 = windData.periods[0];
+            sub.textContent = (p0.wind_dir || '') + ' ' + p0.wind_speed + ' kt'
+                + (p0.wind_gust ? ' G' + p0.wind_gust : '');
+        }
+
+        block.style.display = '';
+    })
+    .catch(function () {});
+
+    // ── NDFD Daily Temperature 5-day strip ───────────────────────────────────
+    fetch('/api/weather/temp-forecast?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || !data.days || !data.days.length) return;
+            var block = document.getElementById('temp-forecast-block');
+            var grid  = document.getElementById('temp-forecast-grid');
+            var sub   = document.getElementById('temp-forecast-sub');
+            if (!block || !grid) return;
+
+            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            var html = '';
+            data.days.forEach(function (d) {
+                var dayLabel = '';
+                if (d.date) {
+                    try {
+                        // Parse as UTC date to avoid timezone shift on date-only strings
+                        var parts = d.date.split('-');
+                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
+                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
+                    } catch(e) { dayLabel = d.date; }
+                }
+                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
+                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
+                // Color-code high temp
+                var hiColor = d.max_f >= 90 ? '#ef4444'
+                            : d.max_f >= 80 ? '#f97316'
+                            : d.max_f >= 70 ? '#eab308'
+                            : d.max_f >= 55 ? '#22c55e'
+                            : d.max_f >= 40 ? '#38bdf8'
+                            : '#818cf8';
+                html +=
+                    '<div class="temp-fc-cell">' +
+                    '<span class="temp-fc-day">' + dayLabel + '</span>' +
+                    '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>' +
+                    '<span class="temp-fc-lo">' + loStr + '</span>' +
+                    '</div>';
+            });
+            grid.innerHTML = html;
+
+            if (sub && data.days[0]) {
+                var d0 = data.days[0];
+                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '') +
+                                  (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
+            }
+            block.style.display = '';
+        })
+        .catch(function () {});
+
+    // ── US Drought Monitor stat card ─────────────────────────────────────────
+    fetch('/api/weather/drought?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || data.drought === null || data.drought === undefined) return;
+            var d = data.drought;
+            if (!d || d.dm === -1) return;  // no drought — skip card
+            var card  = document.getElementById('drought-stat-card');
+            var valEl = document.getElementById('drought-stat-value');
+            var detEl = document.getElementById('drought-stat-detail');
+            if (!card || !valEl || !detEl) return;
+
+            valEl.innerHTML =
+                '<span class="drought-badge" style="background:' + d.color + ';color:' +
+                (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
+            detEl.textContent = d.label + (d.date ? ' · ' + d.date : '');
+            card.hidden = false;
+        })
+        .catch(function () {});
 })();
 </script>
 </html>
