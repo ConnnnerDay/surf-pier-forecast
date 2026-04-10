@@ -3205,7 +3205,8 @@
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function () {
                     _closeAdminModal();
-                    spotCache = {};  // invalidate so structures reload with new marker
+                    spotCache = {};
+                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) { console.error('[admin] save marker failed:', e); });
@@ -3224,6 +3225,7 @@
                 .then(function () {
                     _closeAdminModal();
                     spotCache = {};
+                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) { console.error('[admin] delete marker failed:', e); });
