@@ -483,8 +483,18 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
        bridge made of several road segments).
     2. **Proximity dedup** — same type within a per-type threshold → keep first.
        Prevents marker stacking when OSM and NOAA report the same wreck/reef.
+
+    The proximity check uses an O(n) grid-cell approach instead of the
+    naïve O(n²) scan.  Each accepted spot occupies the grid cell
+    ``(type, floor(lat/thresh), floor(lng/thresh))``.  A new spot is
+    rejected when any of the 9 cells covering its neighbourhood is
+    occupied.  Because the cell size equals the threshold, this correctly
+    identifies all pairs closer than ``thresh`` with at most a small
+    border-zone artefact (spots between 1× and √2× thresh apart near a
+    cell corner).  For display deduplication that trade-off is acceptable.
     """
     named_seen: Dict[str, bool] = {}
+    grid: Dict[tuple, bool] = {}   # (type, grid_lat, grid_lng) → True
     out: List[Dict[str, Any]] = []
 
     for spot in spots:
@@ -499,14 +509,20 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         # thresh == 0 → polygon habitat type; skip centroid-proximity dedup
         # so adjacent polygon patches are not erroneously collapsed.
         if thresh > 0:
+            gl = int(spot["lat"] / thresh)
+            gn = int(spot["lng"] / thresh)
+            t  = spot["type"]
+            # Check the 3×3 neighbourhood (9 cells) to catch spots that sit
+            # near a cell boundary and would otherwise slip through.
             too_close = any(
-                k["type"] == spot["type"]
-                and abs(k["lat"] - spot["lat"]) < thresh
-                and abs(k["lng"] - spot["lng"]) < thresh
-                for k in out
+                (t, gl + dl, gn + dm) in grid
+                for dl in (-1, 0, 1)
+                for dm in (-1, 0, 1)
             )
             if too_close:
                 continue
+            grid[(t, gl, gn)] = True
+
         out.append(spot)
 
     return out

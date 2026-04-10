@@ -68,6 +68,7 @@
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox+types key → array of spot objects
+    var _ssSaveTimer     = null;     // debounce timer for sessionStorage writes
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
@@ -241,10 +242,11 @@
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
-            // Pre-warm the structure cache for the full home corridor so
-            // nearby icons appear immediately and pan/zoom is instant.
-            // 2 s delay so the initial tile + moveend query fires first.
-            setTimeout(prefetchHomeCorridorStructures, 2000);
+            // Pre-warm the structure cache for the full home corridor so nearby
+            // icons appear immediately and pan/zoom serve from cache.
+            // 500 ms lets the tile request and first moveend query fire first,
+            // while still dispatching while Overpass is busy on the initial fetch.
+            setTimeout(prefetchHomeCorridorStructures, 500);
         }
 
         map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
@@ -883,6 +885,7 @@
             .then(function (data) {
                 if (data && data.structures && !data.zoom_required) {
                     spotCache[key] = data.structures;
+                    _ssSave();
                     console.log('[fishing-map] home corridor pre-fetch → ' + data.structures.length + ' features cached');
                     // If the current viewport is already within this corridor,
                     // render immediately (avoids waiting for the next moveend).
@@ -1004,6 +1007,7 @@
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;
+                _ssSave();
                 renderFishingSpots(spots);
                 // Restore normal hint text (may have been set to zoom-in message)
                 _updateSpotTypeHint();
@@ -1283,6 +1287,7 @@
             var deduped = deduplicateSpots(spots);
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
             spotCache[key] = deduped;
+            _ssSave();
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped);
@@ -1333,6 +1338,48 @@
     function scheduleFishingSpotQuery() {
         clearTimeout(spotQueryTimer);
         spotQueryTimer = setTimeout(queryStructures, 800);
+    }
+
+    // ─── sessionStorage persistence for spotCache ─────────────────────────────
+    // Persists the in-memory spotCache across page refreshes within the same
+    // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
+    // so a 30-minute TTL per entry is safe.  Quota errors are silently ignored.
+    var _SS_KEY = 'fmap_spot_cache_v2';
+    var _SS_TTL = 1800000; // 30 minutes in ms
+
+    function _ssLoad() {
+        try {
+            var raw = sessionStorage.getItem(_SS_KEY);
+            if (!raw) return;
+            var obj = JSON.parse(raw);
+            var now = Date.now();
+            var loaded = 0;
+            Object.keys(obj).forEach(function (k) {
+                var e = obj[k];
+                if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
+                    spotCache[k] = e.data;
+                    loaded++;
+                }
+            });
+            if (loaded) console.log('[fishing-map] sessionStorage → ' + loaded + ' bbox entries restored');
+        } catch (e) { /* quota or parse error — start cold */ }
+    }
+
+    function _ssSaveNow() {
+        try {
+            var now = Date.now();
+            var obj = {};
+            Object.keys(spotCache).forEach(function (k) {
+                obj[k] = { ts: now, data: spotCache[k] };
+            });
+            sessionStorage.setItem(_SS_KEY, JSON.stringify(obj));
+        } catch (e) { /* quota exceeded — silently skip */ }
+    }
+
+    // Debounced save — coalesce rapid sequential fetches into one write.
+    function _ssSave() {
+        clearTimeout(_ssSaveTimer);
+        _ssSaveTimer = setTimeout(_ssSaveNow, 1500);
     }
 
     // ─── Custom marker icon ───────────────────────────────────────────────────
@@ -4542,11 +4589,16 @@
                 wireMarineWarnings();
                 wireStormTracker();
                 restoreLayerState();
+                // Restore cached structure data from the previous page view so
+                // markers appear instantly on refresh instead of waiting for Overpass.
+                _ssLoad();
                 // Kick off the structure query immediately when server-provided
                 // coordinates are available — don't wait for the NOAA API round-trip.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                     typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
-                    scheduleFishingSpotQuery();
+                    // Fire immediately (no debounce) — _ssLoad may have already
+                    // populated spotCache, so queryStructures() can render at once.
+                    queryStructures();
                 }
                 fetchAndRender();
             })
