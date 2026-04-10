@@ -5122,6 +5122,63 @@ h2::before {
 .fmap-ice-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
 .fmap-ice-popup em { font-size: 0.75rem; font-style: normal; opacity: 0.8; }
 
+/* ── Seismic overlay ── */
+.fmap-seismic-dot { cursor: pointer; transition: opacity 0.15s; }
+.fmap-seismic-dot:hover { opacity: 0.85; }
+.fmap-seismic-popup { font-size: 0.82rem; min-width: 160px; }
+.fmap-seismic-popup strong { display: block; margin-bottom: 3px; font-size: 0.9rem; }
+.fmap-seismic-place { opacity: 0.9; margin-bottom: 2px; font-size: 0.78rem; }
+.fmap-seismic-time  { opacity: 0.65; font-size: 0.74rem; margin-bottom: 4px; }
+.fmap-seismic-meta  { font-size: 0.77rem; opacity: 0.75; }
+.fmap-seismic-sig   { font-size: 0.74rem; opacity: 0.6; margin-top: 2px; }
+.fmap-seismic-source { font-size: 0.7rem; opacity: 0.45; margin-top: 5px; }
+.fmap-seismic-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.fmap-seismic-tag--tsunami {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+/* ── 5-Day Temperature forecast strip ── */
+.temp-forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+.temp-fc-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  border: 1px solid var(--border-light, #1e3547);
+  border-radius: 8px;
+  background: var(--surface-alt, #0f1e2d);
+  font-size: 0.78rem;
+  text-align: center;
+}
+.temp-fc-day  { font-size: 0.72rem; opacity: 0.7; line-height: 1.3; }
+.temp-fc-hi   { font-size: 1rem; font-weight: 700; line-height: 1; }
+.temp-fc-lo   { font-size: 0.78rem; opacity: 0.55; }
+
+/* ── Drought badge + stat card ── */
+.drought-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* ── Hotspot header ── */
 .fmap-hotspots-header {
   display: flex;

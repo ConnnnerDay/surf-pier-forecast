@@ -70,6 +70,16 @@ _PRECIP_URL      = f"{_BASE}/NDFD_Precipitation_v1/FeatureServer/0/query"
 # Arctic sea ice extent – monthly polygon boundary
 _SEA_ICE_N_URL   = f"{_BASE}/seaice_extent_N_v1/FeatureServer/0/query"
 
+# NDFD Daily Temperature – layer 0=Minimum, layer 1=Maximum (polygon, daily intervals)
+_NDFD_TMIN_URL   = f"{_BASE}/NDFD_DailyTemperature_v1/FeatureServer/0/query"
+_NDFD_TMAX_URL   = f"{_BASE}/NDFD_DailyTemperature_v1/FeatureServer/1/query"
+
+# USGS Seismic Data – layer 0 = earthquake events (point, real-time)
+_SEISMIC_URL     = f"{_BASE}/USGS_Seismic_Data_v1/FeatureServer/0/query"
+
+# US Drought Intensity – layer 3 = current CONUS drought (DM 0-4 polygons)
+_DROUGHT_URL     = f"{_BASE}/US_Drought_Intensity_v1/FeatureServer/3/query"
+
 # Keywords that make a warning relevant to coastal/marine fishing
 _MARINE_KEYWORDS = frozenset({
     "marine", "gale", "storm warning", "hurricane force", "small craft",
@@ -1103,6 +1113,271 @@ def fetch_sea_ice_extent() -> Optional[Dict[str, Any]]:
     return result
 
 
+# ── NDFD Daily Temperature ─────────────────────────────────────────────────────
+
+_TEMP_FC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_TEMP_FC_TTL   = 3600   # 1 hour
+_TEMP_FC_MAX   = 32
+
+
+def _temp_key(lat: float, lng: float) -> tuple:
+    return (round(lat, 2), round(lng, 2))
+
+
+def fetch_temp_forecast(lat: float, lng: float) -> List[Dict]:
+    """Return NDFD 5-7 day daily high/low temperature forecast for (lat, lng).
+
+    Each item: { date (YYYY-MM-DD), min_f (int|None), max_f (int|None) }
+    Layers 0 (Minimum) and 1 (Maximum) of NDFD_DailyTemperature_v1 are queried
+    in parallel using a ±0.5° bounding box around the point.
+    """
+    k   = _temp_key(lat, lng)
+    now = time.time()
+    if k in _TEMP_FC_CACHE and now - _TEMP_FC_CACHE[k]["ts"] < _TEMP_FC_TTL:
+        return _TEMP_FC_CACHE[k]["data"]
+
+    pad   = 0.5
+    geom  = f"{lng - pad},{lat - pad},{lng + pad},{lat + pad}"
+    base  = {
+        "geometry":           geom,
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "where":              "1=1",
+        "outFields":          "Temp,Period",
+        "returnGeometry":     "false",
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    results: Dict[str, Dict[str, Any]] = {}
+
+    for url, field in [(_NDFD_TMIN_URL, "min_f"), (_NDFD_TMAX_URL, "max_f")]:
+        try:
+            resp = requests.get(url, params=base, timeout=(3.05, 20))
+            resp.raise_for_status()
+            feats = resp.json().get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS NDFD temp fetch failed (%s): %s", url, exc)
+            continue
+
+        for feat in feats:
+            attrs  = feat.get("attributes", {})
+            period = attrs.get("Period")
+            temp   = attrs.get("Temp")
+            if period is None or temp is None:
+                continue
+            try:
+                date_str = datetime.fromtimestamp(int(period) / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
+            except Exception:
+                continue
+            val = int(temp)
+            if date_str not in results:
+                results[date_str] = {"min_f": None, "max_f": None}
+            cur = results[date_str][field]
+            # Aggregate: keep coldest min, warmest max across overlapping polygons
+            if cur is None:
+                results[date_str][field] = val
+            elif field == "min_f":
+                results[date_str][field] = min(cur, val)
+            else:
+                results[date_str][field] = max(cur, val)
+
+    data = [
+        {"date": d, "min_f": v["min_f"], "max_f": v["max_f"]}
+        for d, v in sorted(results.items())[:7]
+    ]
+
+    if len(_TEMP_FC_CACHE) >= _TEMP_FC_MAX:
+        oldest = min(_TEMP_FC_CACHE, key=lambda x: _TEMP_FC_CACHE[x]["ts"])
+        _TEMP_FC_CACHE.pop(oldest, None)
+    _TEMP_FC_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── USGS Seismic Events ────────────────────────────────────────────────────────
+
+_SEISMIC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_SEISMIC_TTL   = 900   # 15 minutes
+_SEISMIC_MAX   = 32
+
+_ALERT_COLORS: Dict[str, str] = {
+    "green":  "#4CAF50",
+    "yellow": "#FFC107",
+    "orange": "#FF9800",
+    "red":    "#F44336",
+}
+
+
+def _seismic_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def fetch_seismic_events(south: float, west: float, north: float, east: float) -> List[Dict]:
+    """Return USGS earthquake events (M ≥ 2.5) intersecting the bounding box.
+
+    Each item: { lat, lng, mag, depth_km, place, time (ISO), hours_old,
+                 tsunami (bool), alert, alert_color, sig, event_type }
+    """
+    k   = _seismic_key(south, west, north, east)
+    now = time.time()
+    if k in _SEISMIC_CACHE and now - _SEISMIC_CACHE[k]["ts"] < _SEISMIC_TTL:
+        return _SEISMIC_CACHE[k]["data"]
+
+    if len(_SEISMIC_CACHE) >= _SEISMIC_MAX:
+        oldest = min(_SEISMIC_CACHE, key=lambda x: _SEISMIC_CACHE[x]["ts"])
+        _SEISMIC_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":           f"{west},{south},{east},{north}",
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "where":              "mag >= 2.5",
+        "outFields":          "mag,depth,eventTime,place,latitude,longitude,tsunami,alert,hoursOld,sig,eventType",
+        "returnGeometry":     "false",
+        "orderByFields":      "eventTime DESC",
+        "resultRecordCount":  200,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_SEISMIC_URL, params=params, timeout=(3.05, 20))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS seismic fetch failed: %s", exc)
+        _SEISMIC_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        lat   = attrs.get("latitude")
+        lng   = attrs.get("longitude")
+        if lat is None or lng is None:
+            continue
+        alert = str(attrs.get("alert") or "").lower()
+        data.append({
+            "lat":         float(lat),
+            "lng":         float(lng),
+            "mag":         round(float(attrs.get("mag") or 0), 1),
+            "depth_km":    round(float(attrs.get("depth") or 0), 1),
+            "place":       str(attrs.get("place") or ""),
+            "time":        _ms_to_iso(attrs["eventTime"]) if attrs.get("eventTime") is not None else None,
+            "hours_old":   int(attrs.get("hoursOld") or 0),
+            "tsunami":     bool(attrs.get("tsunami")),
+            "sig":         int(attrs.get("sig") or 0),
+            "alert":       alert or None,
+            "alert_color": _ALERT_COLORS.get(alert, "#9E9E9E"),
+            "event_type":  str(attrs.get("eventType") or "earthquake"),
+        })
+
+    _SEISMIC_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── US Drought Intensity ───────────────────────────────────────────────────────
+
+_DROUGHT_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_DROUGHT_TTL   = 21600  # 6 hours — drought data updates weekly
+_DROUGHT_MAX   = 64
+
+_DROUGHT_LABELS: Dict[int, tuple] = {
+    0: ("D0", "Abnormally Dry"),
+    1: ("D1", "Moderate Drought"),
+    2: ("D2", "Severe Drought"),
+    3: ("D3", "Extreme Drought"),
+    4: ("D4", "Exceptional Drought"),
+}
+_DROUGHT_COLORS: Dict[int, str] = {
+    0: "#FFFF00",   # yellow
+    1: "#FCD37F",   # tan/buff
+    2: "#FFAA00",   # orange
+    3: "#E60000",   # red
+    4: "#730000",   # dark maroon
+}
+
+
+def _drought_key(lat: float, lng: float) -> tuple:
+    return (round(lat, 1), round(lng, 1))
+
+
+def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
+    """Return current US Drought Monitor intensity at (lat, lng), or None outside CONUS.
+
+    Returns { dm (-1=none, 0-4), code, label, color, date (YYYY-MM-DD),
+              d0, d1, d2, d3, d4 (% area in each category) }
+    When no drought polygon covers the point, dm=-1 and label='No Drought'.
+    Outside the CONUS coverage area returns None.
+    """
+    k   = _drought_key(lat, lng)
+    now = time.time()
+    if k in _DROUGHT_CACHE and now - _DROUGHT_CACHE[k]["ts"] < _DROUGHT_TTL:
+        return _DROUGHT_CACHE[k]["data"]
+
+    if len(_DROUGHT_CACHE) >= _DROUGHT_MAX:
+        oldest = min(_DROUGHT_CACHE, key=lambda x: _DROUGHT_CACHE[x]["ts"])
+        _DROUGHT_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":           f"{lng},{lat}",
+        "geometryType":       "esriGeometryPoint",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "inSR":               "4326",
+        "where":              "1=1",
+        "outFields":          "dm,d0,d1,d2,d3,d4,ddate",
+        "returnGeometry":     "false",
+        "resultRecordCount":  1,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_DROUGHT_URL, params=params, timeout=(3.05, 20))
+        resp.raise_for_status()
+        body  = resp.json()
+        feats = body.get("features", [])
+        # Detect service error (e.g. layer not found)
+        if body.get("error"):
+            raise ValueError(body["error"].get("message", "service error"))
+    except Exception as exc:
+        logger.warning("ArcGIS drought fetch failed: %s", exc)
+        _DROUGHT_CACHE[k] = {"ts": now, "data": None}
+        return None
+
+    if not feats:
+        # Point is covered by CONUS extent but no active drought polygon
+        result: Optional[Dict[str, Any]] = {
+            "dm": -1, "code": "None", "label": "No Drought", "color": "#FFFFFF",
+            "date": None, "d0": 0.0, "d1": 0.0, "d2": 0.0, "d3": 0.0, "d4": 0.0,
+        }
+        _DROUGHT_CACHE[k] = {"ts": now, "data": result}
+        return result
+
+    attrs = feats[0].get("attributes", {})
+    dm    = int(attrs["dm"]) if attrs.get("dm") is not None else -1
+    code, label = _DROUGHT_LABELS.get(dm, ("D?", "Unknown"))
+    color        = _DROUGHT_COLORS.get(dm, "#9E9E9E")
+    ddate        = attrs.get("ddate")
+    date_str     = _ms_to_iso(ddate).split("T")[0] if ddate is not None else None
+
+    result = {
+        "dm":    dm,
+        "code":  code,
+        "label": label,
+        "color": color,
+        "date":  date_str,
+        "d0":    round(float(attrs.get("d0") or 0), 1),
+        "d1":    round(float(attrs.get("d1") or 0), 1),
+        "d2":    round(float(attrs.get("d2") or 0), 1),
+        "d3":    round(float(attrs.get("d3") or 0), 1),
+        "d4":    round(float(attrs.get("d4") or 0), 1),
+    }
+
+    _DROUGHT_CACHE[k] = {"ts": now, "data": result}
+    return result
+
+
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""
     global _STORM_CACHE, _STORM_TS, _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
@@ -1120,3 +1395,6 @@ def cache_clear() -> None:
     _PRECIP_CACHE.clear()
     _SEA_ICE_CACHE = None
     _SEA_ICE_TS    = 0.0
+    _TEMP_FC_CACHE.clear()
+    _SEISMIC_CACHE.clear()
+    _DROUGHT_CACHE.clear()

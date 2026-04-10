@@ -2008,6 +2008,84 @@ def map_sea_ice() -> Any:
     return jsonify({"sea_ice": result})
 
 
+@bp.route("/api/weather/temp-forecast", methods=["GET"])
+def weather_temp_forecast() -> Any:
+    """Return NDFD 5-7 day daily high/low temperature forecast for a location.
+
+    Proxies the ArcGIS Living Atlas NDFD_DailyTemperature_v1 live feed (NOAA NDFD).
+    Queries layer 0 (Minimum) and layer 1 (Maximum) with a ±0.5° bbox.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "days": [ { date, min_f, max_f }, … ] }
+    """
+    from services.arcgis_live_feeds import fetch_temp_forecast
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+
+    days = fetch_temp_forecast(lat, lng)
+    return jsonify({"days": days})
+
+
+@bp.route("/api/map/seismic", methods=["GET"])
+def map_seismic() -> Any:
+    """Return USGS earthquake events (M ≥ 2.5) intersecting the bounding box.
+
+    Proxies the ArcGIS Living Atlas USGS_Seismic_Data_v1 live feed (USGS ANSS).
+    Filters to earthquakes only (excludes other event types when possible).
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "events": [ { lat, lng, mag, depth_km, place, time, hours_old,
+                           tsunami, alert, alert_color, sig, event_type } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_seismic_events
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    events = fetch_seismic_events(south, west, north, east)
+    return jsonify({"events": events, "count": len(events)})
+
+
+@bp.route("/api/weather/drought", methods=["GET"])
+def weather_drought() -> Any:
+    """Return US Drought Monitor intensity at a location.
+
+    Proxies the ArcGIS Living Atlas US_Drought_Intensity_v1 live feed (NDMC/USDA).
+    Only covers CONUS; returns null outside coverage area.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "drought": { dm, code, label, color, date, d0, d1, d2, d3, d4 } | null }
+    """
+    from services.arcgis_live_feeds import fetch_drought
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+
+    result = fetch_drought(lat, lng)
+    return jsonify({"drought": result})
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():

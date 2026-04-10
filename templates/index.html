@@ -259,6 +259,24 @@
     </details>
     </div><!-- /.section-block wind-outlook -->
 
+    <!-- NDFD Daily Temperature 5-day strip (ArcGIS Live Feed) — populated client-side -->
+    <div class="section-block" data-section-id="temp-forecast" data-section-label="5-Day Temperatures" id="temp-forecast-block" style="display:none">
+    <details class="collapsible-module" id="temp-forecast-details">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                5-Day Temperatures
+            </span>
+            <span class="collapsible-module-sub" id="temp-forecast-sub">NDFD forecast</span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; Daily high/low</p>
+            <div id="temp-forecast-grid" class="temp-forecast-grid"></div>
+        </div>
+    </details>
+    </div><!-- /.section-block temp-forecast -->
+
     <!-- Tides -->
     <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
     <details class="collapsible-module">
@@ -726,6 +744,10 @@
                     {# Arctic sea ice extent — NSIDC monthly boundary via ArcGIS #}
                     <button type="button" id="fmap-sea-ice-btn" class="fmap-ctrl-btn" title="Show Arctic sea ice extent (NSIDC)" aria-label="Toggle sea ice overlay" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </button>
+                    {# USGS Seismic overlay — earthquake events via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-seismic-btn" class="fmap-ctrl-btn" title="Show USGS earthquake events (M2.5+)" aria-label="Toggle seismic overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="2 12 5 12 7 6 9 18 11 10 13 14 15 12 22 12"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
@@ -1861,7 +1883,7 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* ── ArcGIS Live Feeds: Air Quality + NDFD Wind Forecast ─────────────────── */
+/* ── ArcGIS Live Feeds: Air Quality, NDFD Wind/Temp, Drought ────────────── */
 (function () {
     var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : 0;
     var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : 0;
@@ -1975,6 +1997,75 @@ if ('serviceWorker' in navigator) {
         block.style.display = '';
     })
     .catch(function () {});
+
+    // ── NDFD Daily Temperature 5-day strip ───────────────────────────────────
+    fetch('/api/weather/temp-forecast?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || !data.days || !data.days.length) return;
+            var block = document.getElementById('temp-forecast-block');
+            var grid  = document.getElementById('temp-forecast-grid');
+            var sub   = document.getElementById('temp-forecast-sub');
+            if (!block || !grid) return;
+
+            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            var html = '';
+            data.days.forEach(function (d) {
+                var dayLabel = '';
+                if (d.date) {
+                    try {
+                        // Parse as UTC date to avoid timezone shift on date-only strings
+                        var parts = d.date.split('-');
+                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
+                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
+                    } catch(e) { dayLabel = d.date; }
+                }
+                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
+                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
+                // Color-code high temp
+                var hiColor = d.max_f >= 90 ? '#ef4444'
+                            : d.max_f >= 80 ? '#f97316'
+                            : d.max_f >= 70 ? '#eab308'
+                            : d.max_f >= 55 ? '#22c55e'
+                            : d.max_f >= 40 ? '#38bdf8'
+                            : '#818cf8';
+                html +=
+                    '<div class="temp-fc-cell">' +
+                    '<span class="temp-fc-day">' + dayLabel + '</span>' +
+                    '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>' +
+                    '<span class="temp-fc-lo">' + loStr + '</span>' +
+                    '</div>';
+            });
+            grid.innerHTML = html;
+
+            if (sub && data.days[0]) {
+                var d0 = data.days[0];
+                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '') +
+                                  (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
+            }
+            block.style.display = '';
+        })
+        .catch(function () {});
+
+    // ── US Drought Monitor stat card ─────────────────────────────────────────
+    fetch('/api/weather/drought?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || data.drought === null || data.drought === undefined) return;
+            var d = data.drought;
+            if (!d || d.dm === -1) return;  // no drought — skip card
+            var card  = document.getElementById('drought-stat-card');
+            var valEl = document.getElementById('drought-stat-value');
+            var detEl = document.getElementById('drought-stat-detail');
+            if (!card || !valEl || !detEl) return;
+
+            valEl.innerHTML =
+                '<span class="drought-badge" style="background:' + d.color + ';color:' +
+                (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
+            detEl.textContent = d.label + (d.date ? ' · ' + d.date : '');
+            card.hidden = false;
+        })
+        .catch(function () {});
 })();
 </script>
 </html>

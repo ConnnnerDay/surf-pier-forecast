@@ -124,6 +124,9 @@
     var wildfireTimer     = null;    // debounce for viewport reload
     var seaIceOn          = false;   // sea ice extent overlay active
     var seaIceLayer       = null;    // L.layerGroup for ice boundary
+    var seismicOn         = false;   // USGS seismic overlay active
+    var seismicLayer      = null;    // L.layerGroup for quake markers
+    var seismicTimer      = null;    // debounce for viewport reload
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -3435,6 +3438,111 @@
             });
     }
 
+    // ─── USGS Seismic overlay (ArcGIS Live Feeds) ────────────────────────────
+
+    function wireSeismicLayer() {
+        if (!map) return;
+        seismicLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-seismic-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                seismicOn = !seismicOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', seismicOn);
+                btn.setAttribute('aria-pressed', seismicOn ? 'true' : 'false');
+                if (seismicOn) {
+                    seismicLayer.addTo(map);
+                    doFetchSeismic();
+                    map.on('moveend zoomend', onSeismicViewport);
+                } else {
+                    map.removeLayer(seismicLayer);
+                    seismicLayer.clearLayers();
+                    map.off('moveend zoomend', onSeismicViewport);
+                }
+            });
+        }
+    }
+
+    function onSeismicViewport() {
+        clearTimeout(seismicTimer);
+        seismicTimer = setTimeout(doFetchSeismic, 600);
+    }
+
+    function doFetchSeismic() {
+        if (!seismicOn || !map) return;
+        var b = map.getBounds();
+        var url = '/api/map/seismic?south=' + b.getSouth().toFixed(4) +
+                  '&west='  + b.getWest().toFixed(4)  +
+                  '&north=' + b.getNorth().toFixed(4) +
+                  '&east='  + b.getEast().toFixed(4);
+
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!seismicOn || !map || !data) return;
+                seismicLayer.clearLayers();
+
+                var events = data.events || [];
+                if (!events.length) {
+                    showToast('No M2.5+ earthquakes in this area');
+                    return;
+                }
+
+                events.forEach(function (ev) {
+                    // Scale radius by magnitude: M2.5→5px, M5→12px, M7→22px
+                    var r = Math.max(5, Math.min(28, Math.pow(ev.mag, 2.2)));
+                    var color = ev.alert_color || (ev.tsunami ? '#E53E3E' : '#E97316');
+                    var circle = L.circleMarker([ev.lat, ev.lng], {
+                        radius:      r,
+                        color:       color,
+                        fillColor:   color,
+                        fillOpacity: ev.mag >= 5 ? 0.75 : 0.55,
+                        weight:      ev.mag >= 5 ? 2 : 1,
+                        className:   'fmap-seismic-dot',
+                    });
+
+                    var timeStr = '';
+                    if (ev.time) {
+                        try {
+                            var d = new Date(ev.time);
+                            timeStr = d.toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+                        } catch (e) {}
+                    }
+                    var tsTag = ev.tsunami
+                        ? '<span class="fmap-seismic-tag fmap-seismic-tag--tsunami">TSUNAMI ALERT</span>'
+                        : '';
+                    var alertTag = ev.alert
+                        ? '<span class="fmap-seismic-tag" style="background:' + color + '20;color:' + color + '">' + ev.alert.toUpperCase() + '</span>'
+                        : '';
+
+                    circle.bindPopup(
+                        '<div class="fmap-seismic-popup">' +
+                        tsTag + alertTag +
+                        '<strong>M' + ev.mag.toFixed(1) + ' — ' + (ev.event_type || 'earthquake') + '</strong>' +
+                        '<div class="fmap-seismic-place">' + (ev.place || '') + '</div>' +
+                        (timeStr ? '<div class="fmap-seismic-time">' + timeStr + '</div>' : '') +
+                        '<div class="fmap-seismic-meta">' +
+                        'Depth: ' + ev.depth_km.toFixed(1) + ' km' +
+                        (ev.hours_old ? ' · ' + ev.hours_old + 'h ago' : '') +
+                        '</div>' +
+                        (ev.sig ? '<div class="fmap-seismic-sig">Significance: ' + ev.sig + '</div>' : '') +
+                        '<div class="fmap-seismic-source">USGS via ArcGIS Live Feeds</div>' +
+                        '</div>',
+                        { maxWidth: 260 }
+                    );
+
+                    circle.addTo(seismicLayer);
+                });
+
+                var bigOnes = events.filter(function (e) { return e.mag >= 5; }).length;
+                showToast(events.length + ' earthquake' + (events.length !== 1 ? 's' : '') +
+                          (bigOnes ? ' · ' + bigOnes + ' M5+' : ''));
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] seismic fetch failed:', err);
+            });
+    }
+
     // ─── Recent Hurricane Tracks overlay (ArcGIS Live Feeds) ─────────────────
 
     function wireRecentStorms() {
@@ -3786,6 +3894,7 @@
                 wireSstLayer();
                 wireWildfireLayer();
                 wireSeaIceLayer();
+                wireSeismicLayer();
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();
