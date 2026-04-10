@@ -80,6 +80,20 @@ _SEISMIC_URL     = f"{_BASE}/USGS_Seismic_Data_v1/FeatureServer/0/query"
 # US Drought Intensity – layer 3 = current CONUS drought (DM 0-4 polygons)
 _DROUGHT_URL     = f"{_BASE}/US_Drought_Intensity_v1/FeatureServer/3/query"
 
+# NOAA METAR surface observations – layer 0 = current station readings
+_METAR_URL       = f"{_BASE}/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query"
+
+# Day/Night Terminator – layer 2 = night shadow polygon (updates every ~5 min)
+_TERMINATOR_URL  = f"{_BASE}/Day_Night_Terminator/FeatureServer/2/query"
+
+# Live Stream Gauges – layer 0 = current water level / flood stage at gauges
+_GAUGE_URL       = f"{_BASE}/Live_Stream_Gauges_v1/FeatureServer/0/query"
+
+# NOAA Storm Reports – layers 0=Hail, 1=Tornado, 2=Wind (past 24 hours)
+_STORM_RPT_HAIL_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/0/query"
+_STORM_RPT_TORN_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/1/query"
+_STORM_RPT_WIND_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/2/query"
+
 # Keywords that make a warning relevant to coastal/marine fishing
 _MARINE_KEYWORDS = frozenset({
     "marine", "gale", "storm warning", "hurricane force", "small craft",
@@ -1378,10 +1392,380 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
     return result
 
 
+# ── NOAA METAR Surface Observations ───────────────────────────────────────────
+
+_METAR_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_METAR_TTL   = 1800   # 30 minutes — METAR updates hourly
+_METAR_MAX   = 32
+
+_FLT_CAT_COLORS: Dict[str, str] = {
+    "VFR":  "#22c55e",   # green  — clear flying conditions
+    "MVFR": "#60a5fa",   # blue   — marginal VFR
+    "IFR":  "#f87171",   # red    — instrument conditions / low visibility
+    "LIFR": "#c084fc",   # purple — low instrument conditions / fog
+}
+
+
+def _metar_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def fetch_metar_stations(south: float, west: float, north: float, east: float) -> List[Dict]:
+    """Return current NOAA METAR surface observations intersecting the bounding box.
+
+    Each item: { icao, name, lat, lng, observed (ISO), temp_f, dew_f, humidity,
+                 wind_deg, wind_kt, gust_kt, wind_dir, visibility_m, pressure_mb,
+                 sky, weather, heat_index_f, wind_chill_f, flight_cat, cat_color }
+    Wind speed is converted from km/h → knots (÷ 1.852).
+    """
+    k   = _metar_key(south, west, north, east)
+    now = time.time()
+    if k in _METAR_CACHE and now - _METAR_CACHE[k]["ts"] < _METAR_TTL:
+        return _METAR_CACHE[k]["data"]
+
+    if len(_METAR_CACHE) >= _METAR_MAX:
+        oldest = min(_METAR_CACHE, key=lambda x: _METAR_CACHE[x]["ts"])
+        _METAR_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":          f"{west},{south},{east},{north}",
+        "geometryType":      "esriGeometryEnvelope",
+        "spatialRel":        "esriSpatialRelIntersects",
+        "where":             "1=1",
+        "outFields":         ("ICAO,STATION_NAME,OBS_DATETIME,TEMP,DEW_POINT,R_HUMIDITY,"
+                              "WIND_DIRECT,WIND_SPEED,WIND_GUST,WIND_CHILL,VISIBILITY,"
+                              "PRESSURE,SKY_CONDTN,WEATHER,HEAT_INDEX,LATITUDE,LONGITUDE,"
+                              "FLT_CATEGORY"),
+        "returnGeometry":    "false",
+        "resultRecordCount": 300,
+        "outSR":             "4326",
+        "f":                 "json",
+    }
+
+    try:
+        resp  = requests.get(_METAR_URL, params=params, timeout=(3.05, 20))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS METAR fetch failed: %s", exc)
+        _METAR_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        a   = feat.get("attributes", {})
+        lat = a.get("LATITUDE")
+        lng = a.get("LONGITUDE")
+        if lat is None or lng is None:
+            continue
+        # km/h → knots
+        spd_kmh  = a.get("WIND_SPEED")
+        gust_kmh = a.get("WIND_GUST")
+        spd_kt   = round(float(spd_kmh)  / 1.852, 1) if spd_kmh  is not None else None
+        gust_kt  = round(float(gust_kmh) / 1.852, 1) if gust_kmh is not None else None
+        wind_deg = a.get("WIND_DIRECT")
+        cat      = str(a.get("FLT_CATEGORY") or "").strip().upper()
+        data.append({
+            "icao":          str(a.get("ICAO") or ""),
+            "name":          str(a.get("STATION_NAME") or ""),
+            "lat":           float(lat),
+            "lng":           float(lng),
+            "observed":      _ms_to_iso(a["OBS_DATETIME"]) if a.get("OBS_DATETIME") is not None else None,
+            "temp_f":        round(float(a["TEMP"]), 1)        if a.get("TEMP")        is not None else None,
+            "dew_f":         round(float(a["DEW_POINT"]), 1)   if a.get("DEW_POINT")   is not None else None,
+            "humidity":      int(a["R_HUMIDITY"])               if a.get("R_HUMIDITY")  is not None else None,
+            "wind_deg":      int(wind_deg)                      if wind_deg             is not None else None,
+            "wind_dir":      _deg_to_compass(wind_deg)         if wind_deg             is not None else None,
+            "wind_kt":       spd_kt,
+            "gust_kt":       gust_kt,
+            "wind_chill_f":  round(float(a["WIND_CHILL"]), 1)  if a.get("WIND_CHILL")  is not None else None,
+            "heat_index_f":  round(float(a["HEAT_INDEX"]), 1)  if a.get("HEAT_INDEX")  is not None else None,
+            "visibility_m":  int(a["VISIBILITY"])               if a.get("VISIBILITY")  is not None else None,
+            "pressure_mb":   round(float(a["PRESSURE"]), 1)    if a.get("PRESSURE")    is not None else None,
+            "sky":           str(a.get("SKY_CONDTN") or ""),
+            "weather":       str(a.get("WEATHER") or ""),
+            "flight_cat":    cat or None,
+            "cat_color":     _FLT_CAT_COLORS.get(cat, "#9ca3af"),
+        })
+
+    _METAR_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── Day/Night Terminator ───────────────────────────────────────────────────────
+
+_TERM_CACHE: Optional[Dict[str, Any]] = None
+_TERM_TS    = 0.0
+_TERM_TTL   = 300   # 5 minutes — the subsolar point moves ~0.07°/min
+
+
+def fetch_terminator() -> Optional[Dict]:
+    """Return the current night-shadow polygon (Day/Night Terminator).
+
+    Returns { rings ([[lat,lng]]), timestamp (ISO) } or None on error.
+    The polygon covers the dark (night) half of the Earth.
+    """
+    global _TERM_CACHE, _TERM_TS
+    now = time.time()
+    if _TERM_CACHE is not None and now - _TERM_TS < _TERM_TTL:
+        return _TERM_CACHE
+
+    params = {
+        "where":          "1=1",
+        "outFields":      "timestamp",
+        "returnGeometry": "true",
+        "outSR":          "4326",
+        "f":              "json",
+    }
+
+    try:
+        resp  = requests.get(_TERMINATOR_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS terminator fetch failed: %s", exc)
+        _TERM_CACHE = None
+        _TERM_TS    = now
+        return None
+
+    if not feats:
+        _TERM_CACHE = None
+        _TERM_TS    = now
+        return None
+
+    feat  = feats[0]
+    attrs = feat.get("attributes", {})
+    geom  = feat.get("geometry") or {}
+    rings = geom.get("rings") or []
+
+    ts_ms = attrs.get("timestamp")
+    _TERM_CACHE = {
+        "rings":     [_ring_to_latlng(r) for r in rings],
+        "timestamp": _ms_to_iso(ts_ms) if ts_ms is not None else None,
+    }
+    _TERM_TS = now
+    return _TERM_CACHE
+
+
+# ── Live Stream Gauges ─────────────────────────────────────────────────────────
+
+_GAUGE_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_GAUGE_TTL   = 900    # 15 minutes
+_GAUGE_MAX   = 32
+
+# Map statusClass integer to a human label and colour
+_GAUGE_STATUS: Dict[int, tuple] = {
+    0: ("Normal",          "#22c55e"),
+    1: ("Action Stage",    "#facc15"),
+    2: ("Minor Flood",     "#f97316"),
+    3: ("Moderate Flood",  "#ef4444"),
+    4: ("Major Flood",     "#9f1239"),
+}
+
+
+def _gauge_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def fetch_stream_gauges(south: float, west: float, north: float, east: float) -> List[Dict]:
+    """Return live USGS/NWS stream gauge readings intersecting the bounding box.
+
+    Each item: { id, name, lat, lng, stage_ft, flow_cfs, status, status_class,
+                 status_color, status_24h, status_48h, status_72h,
+                 updated (ISO), station_url, graph_url }
+    """
+    k   = _gauge_key(south, west, north, east)
+    now = time.time()
+    if k in _GAUGE_CACHE and now - _GAUGE_CACHE[k]["ts"] < _GAUGE_TTL:
+        return _GAUGE_CACHE[k]["data"]
+
+    if len(_GAUGE_CACHE) >= _GAUGE_MAX:
+        oldest = min(_GAUGE_CACHE, key=lambda x: _GAUGE_CACHE[x]["ts"])
+        _GAUGE_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":          f"{west},{south},{east},{north}",
+        "geometryType":      "esriGeometryEnvelope",
+        "spatialRel":        "esriSpatialRelIntersects",
+        "where":             "1=1",
+        "outFields":         ("stationid,name,stage_ft,flow_cfs,status,statusClass,"
+                              "status_full,status_24h,status_48h,status_72h,"
+                              "lastupdate,stationurl,graphurl,LATITUDE,LONGITUDE"),
+        "returnGeometry":    "true",
+        "resultRecordCount": 200,
+        "outSR":             "4326",
+        "f":                 "json",
+    }
+
+    try:
+        resp  = requests.get(_GAUGE_URL, params=params, timeout=(3.05, 20))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS stream gauge fetch failed: %s", exc)
+        _GAUGE_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        a    = feat.get("attributes", {})
+        geom = feat.get("geometry") or {}
+        lat  = a.get("LATITUDE") or geom.get("y")
+        lng  = a.get("LONGITUDE") or geom.get("x")
+        if lat is None or lng is None:
+            continue
+        sc          = int(a.get("statusClass") or 0)
+        status_lbl, color = _GAUGE_STATUS.get(sc, ("Unknown", "#9ca3af"))
+        data.append({
+            "id":           str(a.get("stationid") or ""),
+            "name":         str(a.get("name") or ""),
+            "lat":          float(lat),
+            "lng":          float(lng),
+            "stage_ft":     round(float(a["stage_ft"]), 2)    if a.get("stage_ft")  is not None else None,
+            "flow_cfs":     round(float(a["flow_cfs"]), 1)    if a.get("flow_cfs")  is not None else None,
+            "status":       str(a.get("status") or status_lbl),
+            "status_class": sc,
+            "status_color": color,
+            "status_full":  str(a.get("status_full") or ""),
+            "status_24h":   str(a.get("status_24h")  or ""),
+            "status_48h":   str(a.get("status_48h")  or ""),
+            "status_72h":   str(a.get("status_72h")  or ""),
+            "updated":      _ms_to_iso(a["lastupdate"]) if a.get("lastupdate") is not None else None,
+            "station_url":  str(a.get("stationurl") or ""),
+            "graph_url":    str(a.get("graphurl")   or ""),
+        })
+
+    _GAUGE_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── NOAA Storm Reports (past 24 h) ────────────────────────────────────────────
+
+_STORM_RPT_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_STORM_RPT_TTL   = 1800   # 30 minutes
+_STORM_RPT_MAX   = 32
+
+_STORM_RPT_COLORS: Dict[str, str] = {
+    "hail":    "#facc15",   # yellow
+    "tornado": "#ef4444",   # red
+    "wind":    "#60a5fa",   # blue
+}
+
+
+def _storm_rpt_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def fetch_storm_reports(south: float, west: float, north: float, east: float) -> List[Dict]:
+    """Return NOAA severe weather reports (past 24 h) intersecting the bounding box.
+
+    Queries hail, tornado, and wind-damage layers and combines them.
+    Each item: { type, lat, lng, time (ISO), location, state, comments,
+                 magnitude, color }
+    """
+    k   = _storm_rpt_key(south, west, north, east)
+    now = time.time()
+    if k in _STORM_RPT_CACHE and now - _STORM_RPT_CACHE[k]["ts"] < _STORM_RPT_TTL:
+        return _STORM_RPT_CACHE[k]["data"]
+
+    if len(_STORM_RPT_CACHE) >= _STORM_RPT_MAX:
+        oldest = min(_STORM_RPT_CACHE, key=lambda x: _STORM_RPT_CACHE[x]["ts"])
+        _STORM_RPT_CACHE.pop(oldest, None)
+
+    bbox  = f"{west},{south},{east},{north}"
+    base  = {
+        "geometryType":      "esriGeometryEnvelope",
+        "spatialRel":        "esriSpatialRelIntersects",
+        "where":             "1=1",
+        "returnGeometry":    "false",
+        "resultRecordCount": 200,
+        "outSR":             "4326",
+        "f":                 "json",
+    }
+
+    combined: List[Dict[str, Any]] = []
+
+    # Hail layer
+    try:
+        p = dict(base, geometry=bbox,
+                 outFields="UTC_DATETIME,HAIL_SIZE,LOCATION,STATE,LATITUDE,LONGITUDE,COMMENTS")
+        r = requests.get(_STORM_RPT_HAIL_URL, params=p, timeout=(3.05, 15))
+        r.raise_for_status()
+        for feat in r.json().get("features", []):
+            a = feat.get("attributes", {})
+            if a.get("LATITUDE") is None: continue
+            combined.append({
+                "type":      "hail",
+                "lat":       float(a["LATITUDE"]),
+                "lng":       float(a["LONGITUDE"]),
+                "time":      _ms_to_iso(a["UTC_DATETIME"]) if a.get("UTC_DATETIME") is not None else None,
+                "location":  str(a.get("LOCATION") or ""),
+                "state":     str(a.get("STATE") or ""),
+                "comments":  str(a.get("COMMENTS") or ""),
+                "magnitude": str(a.get("HAIL_SIZE") or ""),
+                "color":     _STORM_RPT_COLORS["hail"],
+            })
+    except Exception as exc:
+        logger.warning("Storm report hail fetch failed: %s", exc)
+
+    # Tornado layer
+    try:
+        p = dict(base, geometry=bbox,
+                 outFields="UTC_DATETIME,F_SCALE,LOCATION,STATE,LATITUDE,LONGITUDE,COMMENTS")
+        r = requests.get(_STORM_RPT_TORN_URL, params=p, timeout=(3.05, 15))
+        r.raise_for_status()
+        for feat in r.json().get("features", []):
+            a = feat.get("attributes", {})
+            if a.get("LATITUDE") is None: continue
+            ef = a.get("F_SCALE")
+            combined.append({
+                "type":      "tornado",
+                "lat":       float(a["LATITUDE"]),
+                "lng":       float(a["LONGITUDE"]),
+                "time":      _ms_to_iso(a["UTC_DATETIME"]) if a.get("UTC_DATETIME") is not None else None,
+                "location":  str(a.get("LOCATION") or ""),
+                "state":     str(a.get("STATE") or ""),
+                "comments":  str(a.get("COMMENTS") or ""),
+                "magnitude": ("EF" + str(ef)) if ef is not None else "",
+                "color":     _STORM_RPT_COLORS["tornado"],
+            })
+    except Exception as exc:
+        logger.warning("Storm report tornado fetch failed: %s", exc)
+
+    # Wind damage layer
+    try:
+        p = dict(base, geometry=bbox,
+                 outFields="UTC_DATETIME,LOCATION,STATE,LATITUDE,LONGITUDE,COMMENTS")
+        r = requests.get(_STORM_RPT_WIND_URL, params=p, timeout=(3.05, 15))
+        r.raise_for_status()
+        for feat in r.json().get("features", []):
+            a = feat.get("attributes", {})
+            if a.get("LATITUDE") is None: continue
+            combined.append({
+                "type":      "wind",
+                "lat":       float(a["LATITUDE"]),
+                "lng":       float(a["LONGITUDE"]),
+                "time":      _ms_to_iso(a["UTC_DATETIME"]) if a.get("UTC_DATETIME") is not None else None,
+                "location":  str(a.get("LOCATION") or ""),
+                "state":     str(a.get("STATE") or ""),
+                "comments":  str(a.get("COMMENTS") or ""),
+                "magnitude": "",
+                "color":     _STORM_RPT_COLORS["wind"],
+            })
+    except Exception as exc:
+        logger.warning("Storm report wind fetch failed: %s", exc)
+
+    # Sort chronologically (most recent first)
+    combined.sort(key=lambda x: x.get("time") or "", reverse=True)
+
+    _STORM_RPT_CACHE[k] = {"ts": now, "data": combined}
+    return combined
+
+
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""
     global _STORM_CACHE, _STORM_TS, _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
-    global _SEA_ICE_CACHE, _SEA_ICE_TS
+    global _SEA_ICE_CACHE, _SEA_ICE_TS, _TERM_CACHE, _TERM_TS
     _WARN_CACHE.clear()
     _STORM_CACHE = None
     _STORM_TS    = 0.0
@@ -1398,3 +1782,8 @@ def cache_clear() -> None:
     _TEMP_FC_CACHE.clear()
     _SEISMIC_CACHE.clear()
     _DROUGHT_CACHE.clear()
+    _METAR_CACHE.clear()
+    _TERM_CACHE = None
+    _TERM_TS    = 0.0
+    _GAUGE_CACHE.clear()
+    _STORM_RPT_CACHE.clear()

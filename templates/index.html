@@ -749,6 +749,22 @@
                     <button type="button" id="fmap-seismic-btn" class="fmap-ctrl-btn" title="Show USGS earthquake events (M2.5+)" aria-label="Toggle seismic overlay" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="2 12 5 12 7 6 9 18 11 10 13 14 15 12 22 12"/></svg>
                     </button>
+                    {# NOAA METAR surface obs — real-time weather stations via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-metar-btn" class="fmap-ctrl-btn" title="Show NOAA METAR surface observations" aria-label="Toggle METAR station overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    </button>
+                    {# Day/Night Terminator — live shadow polygon via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-terminator-btn" class="fmap-ctrl-btn" title="Show day/night terminator" aria-label="Toggle day/night terminator overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                    {# Live Stream Gauges — USGS/NWS water levels via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-gauge-btn" class="fmap-ctrl-btn" title="Show live stream gauges (USGS/NWS)" aria-label="Toggle stream gauge overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16c2-4 4-4 6-8s4-4 6-8"/></svg>
+                    </button>
+                    {# NOAA Storm Reports — 24h severe weather via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-storm-rpt-btn" class="fmap-ctrl-btn" title="Show NOAA storm reports (hail, tornado, wind — past 24h)" aria-label="Toggle storm reports overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><polyline points="13 11 9 17 15 17 11 23"/></svg>
+                    </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
                     <button type="button" id="fmap-admin-edit-btn" class="fmap-ctrl-btn" title="Edit markers (admin)" aria-label="Toggle admin marker edit mode" aria-pressed="false" hidden>

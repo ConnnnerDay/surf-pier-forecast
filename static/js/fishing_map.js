@@ -127,6 +127,18 @@
     var seismicOn         = false;   // USGS seismic overlay active
     var seismicLayer      = null;    // L.layerGroup for quake markers
     var seismicTimer      = null;    // debounce for viewport reload
+    var metarOn           = false;   // METAR surface obs overlay active
+    var metarLayer        = null;    // L.layerGroup for METAR stations
+    var metarTimer        = null;    // debounce for viewport reload
+    var terminatorOn      = false;   // Day/Night terminator overlay active
+    var terminatorLayer   = null;    // L.layerGroup for shadow polygon
+    var terminatorInterval = null;   // setInterval for auto-refresh
+    var gaugeOn           = false;   // Stream gauge overlay active
+    var gaugeLayer        = null;    // L.layerGroup for gauge markers
+    var gaugeTimer        = null;    // debounce for viewport reload
+    var stormRptOn        = false;   // Storm reports overlay active
+    var stormRptLayer     = null;    // L.layerGroup for storm report markers
+    var stormRptTimer     = null;    // debounce for viewport reload
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -3543,6 +3555,367 @@
             });
     }
 
+    // ─── NOAA METAR Surface Observations overlay (ArcGIS Live Feeds) ─────────
+
+    function wireMetarLayer() {
+        if (!map) return;
+        metarLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-metar-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                metarOn = !metarOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', metarOn);
+                btn.setAttribute('aria-pressed', metarOn ? 'true' : 'false');
+                if (metarOn) {
+                    metarLayer.addTo(map);
+                    doFetchMetar();
+                    map.on('moveend zoomend', onMetarViewport);
+                } else {
+                    map.removeLayer(metarLayer);
+                    metarLayer.clearLayers();
+                    map.off('moveend zoomend', onMetarViewport);
+                }
+            });
+        }
+    }
+
+    function onMetarViewport() {
+        clearTimeout(metarTimer);
+        metarTimer = setTimeout(doFetchMetar, 700);
+    }
+
+    function doFetchMetar() {
+        if (!metarOn || !map) return;
+        var b   = map.getBounds();
+        var url = '/api/map/metar?south=' + b.getSouth().toFixed(4) +
+                  '&west='  + b.getWest().toFixed(4) +
+                  '&north=' + b.getNorth().toFixed(4) +
+                  '&east='  + b.getEast().toFixed(4);
+
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!metarOn || !map || !data) return;
+                metarLayer.clearLayers();
+                var stations = data.stations || [];
+
+                stations.forEach(function (st) {
+                    var catColor = st.cat_color || '#9ca3af';
+                    var windStr  = st.wind_kt != null
+                        ? (st.wind_dir || '?') + ' ' + st.wind_kt + ' kt'
+                          + (st.gust_kt ? ' G' + st.gust_kt : '')
+                        : 'Calm';
+                    var tempStr  = st.temp_f != null ? st.temp_f + '°F' : '–';
+
+                    // Small circle with flight-category color + temp label
+                    var icon = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-metar-dot" style="border-color:' + catColor + '">' +
+                              '<span class="fmap-metar-temp">' + tempStr + '</span>' +
+                              '</div>',
+                        iconSize:   [46, 24],
+                        iconAnchor: [23, 12],
+                    });
+
+                    var timeStr = '';
+                    if (st.observed) {
+                        try {
+                            timeStr = new Date(st.observed).toLocaleTimeString([], {hour:'numeric', minute:'2-digit', timeZoneName:'short'});
+                        } catch(e) {}
+                    }
+                    var visStr = st.visibility_m != null
+                        ? (st.visibility_m >= 9000 ? '10+ km' : (st.visibility_m / 1000).toFixed(1) + ' km')
+                        : '–';
+
+                    var marker = L.marker([st.lat, st.lng], { icon: icon });
+                    marker.bindPopup(
+                        '<div class="fmap-metar-popup">' +
+                        '<strong>' + (st.icao || st.name) + '</strong>' +
+                        (st.name && st.icao ? '<div class="fmap-metar-name">' + st.name + '</div>' : '') +
+                        (timeStr ? '<div class="fmap-metar-time">' + timeStr + '</div>' : '') +
+                        '<table class="fmap-metar-table">' +
+                        '<tr><td>Temp</td><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
+                        '<tr><td>Wind</td><td>' + windStr + '</td></tr>' +
+                        (st.humidity != null ? '<tr><td>Humidity</td><td>' + st.humidity + '%</td></tr>' : '') +
+                        (st.pressure_mb != null ? '<tr><td>Pressure</td><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
+                        '<tr><td>Visibility</td><td>' + visStr + '</td></tr>' +
+                        (st.sky ? '<tr><td>Sky</td><td>' + st.sky + '</td></tr>' : '') +
+                        (st.weather ? '<tr><td>Wx</td><td>' + st.weather + '</td></tr>' : '') +
+                        (st.flight_cat ? '<tr><td>Flight cat</td><td><span style="color:' + catColor + ';font-weight:700">' + st.flight_cat + '</span></td></tr>' : '') +
+                        '</table>' +
+                        '<div class="fmap-metar-source">NOAA METAR via ArcGIS Live Feeds</div>' +
+                        '</div>',
+                        { maxWidth: 260 }
+                    );
+                    marker.addTo(metarLayer);
+                });
+
+                if (stations.length) {
+                    showToast(stations.length + ' METAR station' + (stations.length !== 1 ? 's' : ''));
+                } else {
+                    showToast('No METAR stations in view');
+                }
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] METAR fetch failed:', err);
+            });
+    }
+
+    // ─── Day/Night Terminator overlay (ArcGIS Live Feeds) ────────────────────
+
+    function wireTerminatorLayer() {
+        if (!map) return;
+        terminatorLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-terminator-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                terminatorOn = !terminatorOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', terminatorOn);
+                btn.setAttribute('aria-pressed', terminatorOn ? 'true' : 'false');
+                if (terminatorOn) {
+                    terminatorLayer.addTo(map);
+                    doFetchTerminator();
+                    // Refresh every 5 minutes while active
+                    terminatorInterval = setInterval(doFetchTerminator, 5 * 60 * 1000);
+                } else {
+                    map.removeLayer(terminatorLayer);
+                    terminatorLayer.clearLayers();
+                    clearInterval(terminatorInterval);
+                    terminatorInterval = null;
+                }
+            });
+        }
+    }
+
+    function doFetchTerminator() {
+        if (!terminatorOn || !map) return;
+        fetch('/api/map/terminator')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!terminatorOn || !map || !data || !data.terminator) return;
+                var t = data.terminator;
+                terminatorLayer.clearLayers();
+
+                var timeStr = '';
+                if (t.timestamp) {
+                    try { timeStr = new Date(t.timestamp).toLocaleTimeString([], {hour:'numeric', minute:'2-digit', timeZoneName:'short'}); }
+                    catch(e) {}
+                }
+
+                (t.rings || []).forEach(function (ring) {
+                    L.polygon(ring, {
+                        color:       '#1e3a5f',
+                        fillColor:   '#0f172a',
+                        fillOpacity: 0.38,
+                        weight:      1,
+                        opacity:     0.6,
+                        interactive: false,
+                    }).addTo(terminatorLayer);
+                });
+
+                // Invisible clickable line along the boundary for a popup
+                if (t.rings && t.rings[0] && t.rings[0].length) {
+                    L.polyline(t.rings[0], { weight: 0, opacity: 0 })
+                      .bindPopup(
+                        '<div class="fmap-terminator-popup"><strong>Day / Night Boundary</strong>' +
+                        (timeStr ? '<br><small>As of ' + timeStr + '</small>' : '') +
+                        '<br><small style="opacity:.5">Source: ArcGIS Live Feeds</small></div>',
+                        { maxWidth: 200 }
+                      )
+                      .addTo(terminatorLayer);
+                }
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] terminator fetch failed:', err);
+            });
+    }
+
+    // ─── Live Stream Gauges overlay (ArcGIS Live Feeds / USGS-NWS) ───────────
+
+    function wireGaugeLayer() {
+        if (!map) return;
+        gaugeLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-gauge-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                gaugeOn = !gaugeOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', gaugeOn);
+                btn.setAttribute('aria-pressed', gaugeOn ? 'true' : 'false');
+                if (gaugeOn) {
+                    gaugeLayer.addTo(map);
+                    doFetchGauges();
+                    map.on('moveend zoomend', onGaugeViewport);
+                } else {
+                    map.removeLayer(gaugeLayer);
+                    gaugeLayer.clearLayers();
+                    map.off('moveend zoomend', onGaugeViewport);
+                }
+            });
+        }
+    }
+
+    function onGaugeViewport() {
+        clearTimeout(gaugeTimer);
+        gaugeTimer = setTimeout(doFetchGauges, 600);
+    }
+
+    function doFetchGauges() {
+        if (!gaugeOn || !map) return;
+        var b   = map.getBounds();
+        var url = '/api/map/stream-gauges?south=' + b.getSouth().toFixed(4) +
+                  '&west='  + b.getWest().toFixed(4) +
+                  '&north=' + b.getNorth().toFixed(4) +
+                  '&east='  + b.getEast().toFixed(4);
+
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!gaugeOn || !map || !data) return;
+                gaugeLayer.clearLayers();
+                var gauges = data.gauges || [];
+
+                gauges.forEach(function (g) {
+                    var color = g.status_color || '#22c55e';
+                    var icon  = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-gauge-dot" style="background:' + color + '"></div>',
+                        iconSize:   [14, 14],
+                        iconAnchor: [7, 7],
+                    });
+
+                    var stageStr = g.stage_ft != null ? g.stage_ft.toFixed(2) + ' ft' : '–';
+                    var flowStr  = g.flow_cfs  != null ? g.flow_cfs.toFixed(0)  + ' cfs' : '–';
+                    var updStr   = '';
+                    if (g.updated) {
+                        try { updStr = new Date(g.updated).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}); }
+                        catch(e) {}
+                    }
+
+                    var marker = L.marker([g.lat, g.lng], { icon: icon });
+                    marker.bindPopup(
+                        '<div class="fmap-gauge-popup">' +
+                        '<strong>' + (g.name || g.id) + '</strong>' +
+                        '<div class="fmap-gauge-status" style="color:' + color + '">' + g.status + '</div>' +
+                        '<table class="fmap-gauge-table">' +
+                        '<tr><td>Stage</td><td>' + stageStr + '</td></tr>' +
+                        '<tr><td>Flow</td><td>'  + flowStr  + '</td></tr>' +
+                        (g.status_24h ? '<tr><td>24 h</td><td>' + g.status_24h + '</td></tr>' : '') +
+                        (g.status_48h ? '<tr><td>48 h</td><td>' + g.status_48h + '</td></tr>' : '') +
+                        (g.status_72h ? '<tr><td>72 h</td><td>' + g.status_72h + '</td></tr>' : '') +
+                        (updStr ? '<tr><td>Updated</td><td>' + updStr + '</td></tr>' : '') +
+                        '</table>' +
+                        (g.graph_url ? '<a href="' + g.graph_url + '" target="_blank" rel="noopener" class="fmap-gauge-link">View hydrograph ↗</a>' : '') +
+                        '<div class="fmap-gauge-source">USGS/NWS via ArcGIS Live Feeds</div>' +
+                        '</div>',
+                        { maxWidth: 260 }
+                    );
+                    marker.addTo(gaugeLayer);
+                });
+
+                var flooding = gauges.filter(function (g) { return g.status_class >= 2; }).length;
+                showToast(gauges.length + ' gauge' + (gauges.length !== 1 ? 's' : '') +
+                          (flooding ? ' · ' + flooding + ' flooding' : ''));
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] gauge fetch failed:', err);
+            });
+    }
+
+    // ─── NOAA Storm Reports overlay (ArcGIS Live Feeds) ──────────────────────
+
+    function wireStormReportsLayer() {
+        if (!map) return;
+        stormRptLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-storm-rpt-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                stormRptOn = !stormRptOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', stormRptOn);
+                btn.setAttribute('aria-pressed', stormRptOn ? 'true' : 'false');
+                if (stormRptOn) {
+                    stormRptLayer.addTo(map);
+                    doFetchStormReports();
+                    map.on('moveend zoomend', onStormRptViewport);
+                } else {
+                    map.removeLayer(stormRptLayer);
+                    stormRptLayer.clearLayers();
+                    map.off('moveend zoomend', onStormRptViewport);
+                }
+            });
+        }
+    }
+
+    function onStormRptViewport() {
+        clearTimeout(stormRptTimer);
+        stormRptTimer = setTimeout(doFetchStormReports, 700);
+    }
+
+    function doFetchStormReports() {
+        if (!stormRptOn || !map) return;
+        var b   = map.getBounds();
+        var url = '/api/map/storm-reports?south=' + b.getSouth().toFixed(4) +
+                  '&west='  + b.getWest().toFixed(4) +
+                  '&north=' + b.getNorth().toFixed(4) +
+                  '&east='  + b.getEast().toFixed(4);
+
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!stormRptOn || !map || !data) return;
+                stormRptLayer.clearLayers();
+                var reports = data.reports || [];
+
+                var ICONS = { hail: '🌨', tornado: '🌪', wind: '💨' };
+                reports.forEach(function (rpt) {
+                    var color = rpt.color || '#facc15';
+                    var icon  = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-storm-rpt-dot" style="background:' + color + '">' +
+                              (ICONS[rpt.type] || '⚡') + '</div>',
+                        iconSize:   [22, 22],
+                        iconAnchor: [11, 11],
+                    });
+
+                    var timeStr = '';
+                    if (rpt.time) {
+                        try { timeStr = new Date(rpt.time).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short'}); }
+                        catch(e) {}
+                    }
+
+                    var marker = L.marker([rpt.lat, rpt.lng], { icon: icon });
+                    marker.bindPopup(
+                        '<div class="fmap-storm-rpt-popup">' +
+                        '<strong>' + (ICONS[rpt.type] || '') + ' ' +
+                        rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1) +
+                        (rpt.magnitude ? ' · ' + rpt.magnitude : '') + '</strong>' +
+                        (rpt.location ? '<div>' + rpt.location + (rpt.state ? ', ' + rpt.state : '') + '</div>' : '') +
+                        (timeStr ? '<div class="fmap-storm-rpt-time">' + timeStr + '</div>' : '') +
+                        (rpt.comments ? '<div class="fmap-storm-rpt-comments">' + rpt.comments + '</div>' : '') +
+                        '<div class="fmap-storm-rpt-source">NOAA via ArcGIS Live Feeds · 24h</div>' +
+                        '</div>',
+                        { maxWidth: 260 }
+                    );
+                    marker.addTo(stormRptLayer);
+                });
+
+                var types = {};
+                reports.forEach(function (r) { types[r.type] = (types[r.type] || 0) + 1; });
+                var summary = Object.keys(types).map(function (t) {
+                    return types[t] + ' ' + t;
+                }).join(', ');
+                showToast(reports.length
+                    ? 'Storm reports: ' + summary
+                    : 'No storm reports in past 24 h');
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] storm reports fetch failed:', err);
+            });
+    }
+
     // ─── Recent Hurricane Tracks overlay (ArcGIS Live Feeds) ─────────────────
 
     function wireRecentStorms() {
@@ -3895,6 +4268,10 @@
                 wireWildfireLayer();
                 wireSeaIceLayer();
                 wireSeismicLayer();
+                wireMetarLayer();
+                wireTerminatorLayer();
+                wireGaugeLayer();
+                wireStormReportsLayer();
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();

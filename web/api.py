@@ -2086,6 +2086,112 @@ def weather_drought() -> Any:
     return jsonify({"drought": result})
 
 
+@bp.route("/api/map/metar", methods=["GET"])
+def map_metar() -> Any:
+    """Return current NOAA METAR surface observations for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NOAA_METAR_current_wind_speed_direction_v1
+    live feed. Wind speed is converted from km/h to knots server-side.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "stations": [ { icao, name, lat, lng, observed, temp_f, dew_f,
+                             humidity, wind_deg, wind_dir, wind_kt, gust_kt,
+                             wind_chill_f, heat_index_f, visibility_m, pressure_mb,
+                             sky, weather, flight_cat, cat_color } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_metar_stations
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    stations = fetch_metar_stations(south, west, north, east)
+    return jsonify({"stations": stations, "count": len(stations)})
+
+
+@bp.route("/api/map/terminator", methods=["GET"])
+def map_terminator() -> Any:
+    """Return the current day/night terminator shadow polygon.
+
+    Proxies the ArcGIS Living Atlas Day_Night_Terminator live feed (layer 2 —
+    the night-shadow polygon that rotates as the Earth turns).  Updates every
+    ~5 minutes on the server.
+
+    Returns
+    -------
+    JSON: { "terminator": { rings ([[lat,lng]]), timestamp (ISO) } | null }
+    """
+    from services.arcgis_live_feeds import fetch_terminator
+
+    result = fetch_terminator()
+    return jsonify({"terminator": result})
+
+
+@bp.route("/api/map/stream-gauges", methods=["GET"])
+def map_stream_gauges() -> Any:
+    """Return live stream gauge readings for the bounding box.
+
+    Proxies the ArcGIS Living Atlas Live_Stream_Gauges_v1 live feed
+    (USGS/NWS water level / flood stage monitoring stations).
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "gauges": [ { id, name, lat, lng, stage_ft, flow_cfs, status,
+                          status_class (0-4), status_color, status_24h,
+                          status_48h, status_72h, updated, station_url,
+                          graph_url } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_stream_gauges
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    gauges = fetch_stream_gauges(south, west, north, east)
+    return jsonify({"gauges": gauges, "count": len(gauges)})
+
+
+@bp.route("/api/map/storm-reports", methods=["GET"])
+def map_storm_reports() -> Any:
+    """Return NOAA severe weather reports (past 24 h) for the bounding box.
+
+    Proxies hail, tornado, and wind-damage layers from the ArcGIS Living Atlas
+    NOAA_storm_reports_v1 live feed and combines them into a single list.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "reports": [ { type, lat, lng, time (ISO), location, state,
+                            comments, magnitude, color } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_storm_reports
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    reports = fetch_storm_reports(south, west, north, east)
+    return jsonify({"reports": reports, "count": len(reports)})
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():
