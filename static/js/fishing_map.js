@@ -4253,7 +4253,17 @@
         'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
         'fmap-gauge-btn', 'fmap-terminator-btn'
     ];
-    var LS_LAYERS_KEY = 'fmap_layers_v1';
+    var LS_LAYERS_KEY   = 'fmap_layers_v1';
+    var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
+
+    // Map from section data-section value → layer button IDs it contains
+    var SECTION_LAYER_MAP = {
+        weather: ['fmap-marine-warn-btn', 'fmap-storm-tracker-btn',
+                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn'],
+        ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
+                  'fmap-wildfire-btn', 'fmap-seismic-btn'],
+        obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn']
+    };
 
     function _saveLayerState() {
         try {
@@ -4268,16 +4278,28 @@
     function _updateLayersBadge() {
         var badge    = document.getElementById('fmap-layers-active-badge');
         var clearBtn = document.getElementById('fmap-layers-clear-btn');
-        var count = 0;
+        var total = 0;
         LAYER_BTN_IDS.forEach(function (id) {
             var b = document.getElementById(id);
-            if (b && b.getAttribute('aria-pressed') === 'true') count++;
+            if (b && b.getAttribute('aria-pressed') === 'true') total++;
         });
         if (badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? '' : 'none';
+            badge.textContent = total;
+            badge.style.display = total > 0 ? '' : 'none';
         }
-        if (clearBtn) clearBtn.hidden = count === 0;
+        if (clearBtn) clearBtn.hidden = total === 0;
+
+        // Update per-section active count badges
+        Object.keys(SECTION_LAYER_MAP).forEach(function (sec) {
+            var countEl = document.getElementById('fmap-sec-count-' + sec);
+            if (!countEl) return;
+            var n = SECTION_LAYER_MAP[sec].filter(function (id) {
+                var b = document.getElementById(id);
+                return b && b.getAttribute('aria-pressed') === 'true';
+            }).length;
+            countEl.textContent = n + ' on';
+            countEl.style.display = n > 0 ? '' : 'none';
+        });
     }
 
     function wireLayersPopup() {
@@ -4287,20 +4309,37 @@
         var clearBtn   = document.getElementById('fmap-layers-clear-btn');
         if (!triggerBtn || !popup) return;
 
+        var _closeTimer = null;
+
         function openPopup() {
+            clearTimeout(_closeTimer);
+            popup.classList.remove('fmap-layers-popup--closing');
             popup.hidden = false;
             triggerBtn.classList.add('fmap-ctrl-btn--active');
             triggerBtn.setAttribute('aria-pressed', 'true');
+            // Move focus to first layer row for keyboard users
+            var firstRow = popup.querySelector('.fmap-layer-row, .fmap-layers-section-hdr');
+            if (firstRow) firstRow.focus();
         }
+
         function closePopup() {
-            popup.hidden = true;
+            popup.classList.add('fmap-layers-popup--closing');
+            _closeTimer = setTimeout(function () {
+                popup.hidden = true;
+                popup.classList.remove('fmap-layers-popup--closing');
+            }, 140); // matches fmap-layers-out duration
             triggerBtn.classList.remove('fmap-ctrl-btn--active');
             triggerBtn.setAttribute('aria-pressed', 'false');
+            triggerBtn.focus(); // return focus to trigger
         }
 
         triggerBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (popup.hidden) { openPopup(); } else { closePopup(); }
+            if (popup.hidden || popup.classList.contains('fmap-layers-popup--closing')) {
+                openPopup();
+            } else {
+                closePopup();
+            }
         });
 
         if (closeBtn) {
@@ -4335,7 +4374,42 @@
             closePopup();
         });
 
-        // After every layer-row click: show brief loading state, update badge, persist
+        // ── Collapsible section headers ─────────────────────────────────────
+        var collapsedSections = [];
+        try {
+            var raw = localStorage.getItem(LS_SECTIONS_KEY);
+            if (raw) collapsedSections = JSON.parse(raw) || [];
+        } catch (e) { /* ignore */ }
+
+        popup.querySelectorAll('.fmap-layers-section').forEach(function (section) {
+            var sec   = section.getAttribute('data-section');
+            var hdr   = section.querySelector('.fmap-layers-section-hdr');
+            if (!hdr) return;
+
+            // Restore collapsed state from previous session
+            if (collapsedSections.indexOf(sec) !== -1) {
+                section.classList.add('fmap-layers-section--collapsed');
+                hdr.setAttribute('aria-expanded', 'false');
+            }
+
+            hdr.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var isCollapsed = section.classList.toggle('fmap-layers-section--collapsed');
+                hdr.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+
+                // Persist collapsed state
+                try {
+                    if (isCollapsed) {
+                        if (collapsedSections.indexOf(sec) === -1) collapsedSections.push(sec);
+                    } else {
+                        collapsedSections = collapsedSections.filter(function (s) { return s !== sec; });
+                    }
+                    localStorage.setItem(LS_SECTIONS_KEY, JSON.stringify(collapsedSections));
+                } catch (e) { /* ignore */ }
+            });
+        });
+
+        // ── Per-row: loading shimmer, badge refresh, state persistence ───────
         LAYER_BTN_IDS.forEach(function (id) {
             var btn = document.getElementById(id);
             if (!btn) return;
@@ -4346,8 +4420,7 @@
                     _saveLayerState();
                 }, 0);
 
-                // Show loading shimmer on the toggle track while data is fetching
-                // (only when turning ON — aria-pressed is still false at this point)
+                // Loading shimmer on toggle track while data fetches (turning ON only)
                 if (btn.getAttribute('aria-pressed') !== 'true') {
                     btn.classList.add('fmap-layer-row--loading');
                     setTimeout(function () {
@@ -4368,9 +4441,7 @@
             if (!Array.isArray(active)) return;
             active.forEach(function (id) {
                 var btn = document.getElementById(id);
-                if (btn && btn.getAttribute('aria-pressed') !== 'true') {
-                    btn.click();
-                }
+                if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
             });
         } catch (e) { /* malformed storage */ }
     }

@@ -4734,6 +4734,14 @@ h2::before {
   from { opacity: 0; transform: scale(0.93) translateY(-6px); }
   to   { opacity: 1; transform: scale(1)   translateY(0);     }
 }
+@keyframes fmap-layers-out {
+  from { opacity: 1; transform: scale(1)    translateY(0);     }
+  to   { opacity: 0; transform: scale(0.93) translateY(-6px);  }
+}
+.fmap-layers-popup--closing {
+  animation: fmap-layers-out 0.14s ease forwards;
+  pointer-events: none;
+}
 
 .fmap-layers-popup-header {
   display: flex;
@@ -4782,13 +4790,74 @@ h2::before {
   overflow-y: auto;
 }
 
-.fmap-layers-section-label {
-  padding: 8px 14px 4px;
+/* Collapsible section wrapper */
+.fmap-layers-section {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.fmap-layers-section:last-child { border-bottom: none; }
+
+/* Clickable section header */
+.fmap-layers-section-hdr {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 12px 6px 14px;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.fmap-layers-section-hdr:hover {
+  background: rgba(255,255,255,0.04);
+}
+.fmap-layers-section-hdr-label {
+  flex: 1;
   font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: rgba(176,196,206,0.5);
+  color: rgba(176,196,206,0.55);
+}
+/* Active-layer count badge in the section header */
+.fmap-layers-section-hdr-count {
+  font-size: 0.63rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(31,168,201,0.2);
+  color: #1fa8c9;
+  display: none; /* shown by JS when count > 0 */
+}
+/* Chevron rotates when collapsed */
+.fmap-layers-section-hdr-chevron {
+  color: rgba(176,196,206,0.4);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.fmap-layers-section--collapsed .fmap-layers-section-hdr-chevron {
+  transform: rotate(-90deg);
+}
+
+/* Rows container — animated collapse */
+.fmap-layers-section-rows {
+  overflow: hidden;
+  max-height: 600px; /* large enough for any section */
+  transition: max-height 0.22s ease, opacity 0.18s ease;
+  opacity: 1;
+}
+.fmap-layers-section--collapsed .fmap-layers-section-rows {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Light theme overrides for section headers */
+[data-theme="light"] .fmap-layers-section-hdr-label {
+  color: rgba(71,85,105,0.6);
+}
+[data-theme="light"] .fmap-layers-section {
+  border-color: rgba(0,0,0,0.05);
 }
 
 /* Each layer row — the actual toggle button */
