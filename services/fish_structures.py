@@ -775,8 +775,11 @@ def find_fish_structures(
     lng        float    WGS-84 longitude
     type       str      One of ``VALID_TYPES``
     name       str      Feature name, or empty string
-    tip        str      Habitat / angling tip, or empty string
     =========  =======  ================================================
+
+    Fishing tips (``tip``) are intentionally omitted — the JS client owns
+    ``STRUCTURE_TIPS`` locally and looks them up as
+    ``f.tip || STRUCTURE_TIPS[f.type]``, halving the wire payload.
     """
     active_types: Set[str] = (
         set(VALID_TYPES) if types is None else (set(types) & VALID_TYPES)
@@ -825,9 +828,10 @@ def find_fish_structures(
     # Post-filter by type to guard against any source returning extras.
     all_spots = [s for s in osm_spots + noaa_spots if s["type"] in active_types]
     deduped   = _deduplicate(all_spots)
-
-    for spot in deduped:
-        spot["tip"] = STRUCTURE_TIPS.get(spot["type"], "")
+    # Tips are not attached server-side — the JS client owns STRUCTURE_TIPS and
+    # looks them up locally via ``f.tip || STRUCTURE_TIPS[f.type]``.  Omitting
+    # them here shrinks the wire payload and the in-memory cache by ~50 % for
+    # point markers and keeps the two tables in sync without duplication.
 
     logger.info(
         "find_fish_structures bbox=(%.4f,%.4f,%.4f,%.4f) types=%s "
