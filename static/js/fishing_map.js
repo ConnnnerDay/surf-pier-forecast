@@ -829,17 +829,34 @@
     // Return a cached spot list whose bbox fully contains [s, w, n, e] and
     // whose type string matches, or null if none found.  Used to serve
     // viewport queries from a wider pre-fetched corridor without a new request.
+    // Find a cached result whose bbox covers s/w/n/e AND whose type set is a
+    // superset of the requested types.  Keys have the form "s,w,n,e" (all
+    // types) or "s,w,n,e|type1,type2,…" (filtered).
+    //
+    // When the cached entry has ALL types but the caller wants a subset, we
+    // filter the array in JS so the caller never has to hit the server.
     function _cachedSupersetOf(s, w, n, e, typesStr) {
-        var suffix = typesStr ? '|' + typesStr : '';
+        var requestedTypes = typesStr ? typesStr.split(',') : null; // null = all
         for (var k in spotCache) {
-            // Keys have the form "s,w,n,e" or "s,w,n,e|types"
-            var pipe  = k.indexOf('|');
-            var ktype = pipe >= 0 ? k.slice(pipe + 1) : '';
-            if (ktype !== (typesStr || '')) continue;
-            var coords = (pipe >= 0 ? k.slice(0, pipe) : k).split(',');
+            var pipe      = k.indexOf('|');
+            var coordsStr = pipe >= 0 ? k.slice(0, pipe) : k;
+            var ktype     = pipe >= 0 ? k.slice(pipe + 1) : ''; // '' = all types
+            var coords    = coordsStr.split(',');
             if (coords.length < 4) continue;
             var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
-            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
+            if (!(cs <= s && cw <= w && cn >= n && ce >= e)) continue; // bbox too small
+
+            if (ktype === (typesStr || '')) {
+                // Exact match — return directly
+                return spotCache[k];
+            }
+            if (!ktype && requestedTypes) {
+                // Cached all-types entry; filter client-side — zero server round-trip
+                return spotCache[k].filter(function (sp) {
+                    return requestedTypes.indexOf(sp.type) !== -1;
+                });
+            }
+            // ktype is a different subset; skip (we can't expand a subset to all types)
         }
         return null;
     }
@@ -2438,9 +2455,10 @@
                 _updateSpotTypeHint();
                 _scheduleSpotTypeSave();
 
-                // Invalidate cache — old entries used a different types key
-                spotCache = {};
-                scheduleFishingSpotQuery();
+                // Re-query immediately — _cachedSupersetOf will serve from the
+                // all-types cache when available, so no server round-trip needed.
+                clearTimeout(spotQueryTimer);
+                queryStructures();
             });
         });
 
@@ -2455,8 +2473,8 @@
                 });
                 _updateSpotTypeHint();
                 _scheduleSpotTypeSave();
-                spotCache = {};
-                scheduleFishingSpotQuery();
+                clearTimeout(spotQueryTimer);
+                queryStructures();
             });
         }
 

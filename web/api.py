@@ -1726,7 +1726,13 @@ def map_structures() -> Any:
     ]
     all_structures = structures + custom
 
-    return jsonify({"structures": all_structures, "count": len(all_structures)})
+    resp = jsonify({"structures": all_structures, "count": len(all_structures)})
+    # Structure data (OSM/NOAA) and admin custom markers are user-agnostic, so
+    # shared/browser caching is safe.  30-minute TTL matches the server-side
+    # in-memory cache; stale-while-revalidate lets the browser serve a cached
+    # response while a background refresh happens, keeping the UI snappy.
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/marine-warnings", methods=["GET"])
