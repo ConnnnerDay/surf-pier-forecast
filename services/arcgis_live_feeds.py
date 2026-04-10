@@ -53,7 +53,22 @@ _RECENT_TRACK_URL = f"{_BASE}/Recent_Hurricanes_v1/FeatureServer/1/query"
 _AQI_URL = f"{_BASE}/Air_Quality_PM25_Latest_Results/FeatureServer/0/query"
 
 # NDFD Wind Forecast – layer 6 = City Level (multipoint, 3-h intervals)
-_NDFD_WIND_URL = f"{_BASE}/NDFD_WindForecast_v1/FeatureServer/6/query"
+_NDFD_WIND_URL   = f"{_BASE}/NDFD_WindForecast_v1/FeatureServer/6/query"
+
+# Coral Reef / SST stations – layer 0 = station points with live SST
+_SST_URL         = f"{_BASE}/Coral_Reef_Stations/FeatureServer/0/query"
+
+# Active wildfires – layer 0 = incident points
+_FIRE_URL        = f"{_BASE}/USA_Wildfires_v1/FeatureServer/0/query"
+
+# Smoke forecast – layer 0 = hourly smoke-density polygons (CONUS, 48 h)
+_SMOKE_URL       = f"{_BASE}/NDGD_SmokeForecast_v1/FeatureServer/0/query"
+
+# NDFD Precipitation – layer 0 = amount polygons per 6-h interval
+_PRECIP_URL      = f"{_BASE}/NDFD_Precipitation_v1/FeatureServer/0/query"
+
+# Arctic sea ice extent – monthly polygon boundary
+_SEA_ICE_N_URL   = f"{_BASE}/seaice_extent_N_v1/FeatureServer/0/query"
 
 # Keywords that make a warning relevant to coastal/marine fishing
 _MARINE_KEYWORDS = frozenset({
@@ -642,9 +657,456 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     return results
 
 
+# ── SST / Coral Reef Stations ─────────────────────────────────────────────────
+
+_SST_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_SST_CACHE_TTL = 1800   # 30 minutes
+
+# Alert level → label + colour
+_SST_ALERT = {
+    0: ("No Stress",          "#22c55e"),
+    1: ("Bleaching Watch",    "#eab308"),
+    2: ("Bleaching Warning",  "#f97316"),
+    3: ("Bleaching Alert 1",  "#ef4444"),
+    4: ("Bleaching Alert 2",  "#7c3aed"),
+}
+
+
+def _sst_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 2), round(w, 2), round(n, 2), round(e, 2))
+
+
+def fetch_sst_stations(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return NOAA coral reef / SST monitoring stations in the bounding box.
+
+    Each returned dict has:
+        name        str    station name
+        lat         float
+        lng         float
+        sst_c       float  sea-surface temperature in °C (None if unavailable)
+        sst_f       float  sea-surface temperature in °F (None if unavailable)
+        ssta        float  temperature anomaly in °C (+warming / −cooling)
+        dhw         float  degree heating weeks (thermal stress accumulation)
+        alert       int    bleaching alert level (0–4)
+        alert_label str    human-readable alert description
+        alert_color str    hex colour for the alert badge
+        updated     str    ISO-8601 last-updated timestamp
+    """
+    key = _sst_key(south, west, north, east)
+    cached = _SST_CACHE.get(key)
+    if cached and time.time() - cached["ts"] < _SST_CACHE_TTL:
+        return cached["data"]
+
+    params = {
+        "where":          "1=1",
+        "geometry":       f"{west},{south},{east},{north}",
+        "geometryType":   "esriGeometryEnvelope",
+        "spatialRel":     "esriSpatialRelIntersects",
+        "inSR":           "4326",
+        "outSR":          "4326",
+        "outFields":      "name,date,sst,ssta,hs,dhw,alert",
+        "returnGeometry": "true",
+        "resultRecordCount": 200,
+        "f":              "json",
+    }
+
+    try:
+        resp = requests.get(_SST_URL, params=params, timeout=(3.05, 12))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS SST stations fetch failed: %s", exc)
+        return []
+
+    results: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs  = feat.get("attributes", {})
+        geom   = feat.get("geometry") or {}
+        lat    = geom.get("y")
+        lng    = geom.get("x")
+        if lat is None or lng is None:
+            continue
+
+        try:
+            sst_c = float(attrs.get("sst") or 0) or None
+        except (ValueError, TypeError):
+            sst_c = None
+        sst_f = round(sst_c * 9 / 5 + 32, 1) if sst_c is not None else None
+
+        try:
+            ssta = float(attrs.get("ssta") or 0)
+        except (ValueError, TypeError):
+            ssta = 0.0
+
+        try:
+            dhw = float(attrs.get("dhw") or 0)
+        except (ValueError, TypeError):
+            dhw = 0.0
+
+        alert = int(attrs.get("alert") or 0)
+        label, color = _SST_ALERT.get(alert, ("Unknown", "#94a3b8"))
+
+        results.append({
+            "name":        (attrs.get("name") or "").strip(),
+            "lat":         lat,
+            "lng":         lng,
+            "sst_c":       round(sst_c, 1) if sst_c is not None else None,
+            "sst_f":       sst_f,
+            "ssta":        round(ssta, 2),
+            "dhw":         round(dhw, 1),
+            "alert":       alert,
+            "alert_label": label,
+            "alert_color": color,
+            "updated":     _ms_to_iso(attrs.get("date")),
+        })
+
+    _SST_CACHE[key] = {"ts": time.time(), "data": results}
+    return results
+
+
+# ── Active Wildfires ───────────────────────────────────────────────────────────
+
+_FIRE_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_FIRE_CACHE_TTL = 900   # 15 minutes
+
+
+def _fire_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def fetch_wildfire_incidents(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return active wildfire incidents intersecting the bounding box.
+
+    Each dict has:
+        name         str    fire name
+        state        str    state abbreviation
+        county       str    county name
+        acres        float  current acreage
+        contained_pct float  percent contained (0–100)
+        cause        str    fire cause (if known)
+        discovered   str    ISO-8601 discovery date/time
+        lat          float
+        lng          float
+        age_days     int    days since discovery
+    """
+    key = _fire_key(south, west, north, east)
+    cached = _FIRE_CACHE.get(key)
+    if cached and time.time() - cached["ts"] < _FIRE_CACHE_TTL:
+        return cached["data"]
+
+    params = {
+        "where":          "IncidentTypeCategory='WF'",  # wildfire only (exclude Rx burns)
+        "geometry":       f"{west},{south},{east},{north}",
+        "geometryType":   "esriGeometryEnvelope",
+        "spatialRel":     "esriSpatialRelIntersects",
+        "inSR":           "4326",
+        "outSR":          "4326",
+        "outFields": (
+            "IncidentName,POOState,POOCounty,DailyAcres,PercentContained,"
+            "FireCauseGeneral,FireDiscoveryDateTime,FireDiscoveryAge"
+        ),
+        "returnGeometry": "true",
+        "resultRecordCount": 300,
+        "f":              "json",
+    }
+
+    try:
+        resp = requests.get(_FIRE_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS wildfire fetch failed: %s", exc)
+        return []
+
+    results: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        geom  = feat.get("geometry") or {}
+        lat   = geom.get("y")
+        lng   = geom.get("x")
+        if lat is None or lng is None:
+            continue
+
+        results.append({
+            "name":          (attrs.get("IncidentName") or "Unknown Fire").strip().title(),
+            "state":         (attrs.get("POOState") or "").strip(),
+            "county":        (attrs.get("POOCounty") or "").strip(),
+            "acres":         float(attrs.get("DailyAcres") or 0),
+            "contained_pct": float(attrs.get("PercentContained") or 0),
+            "cause":         (attrs.get("FireCauseGeneral") or "").strip(),
+            "discovered":    _ms_to_iso(attrs.get("FireDiscoveryDateTime")),
+            "age_days":      int(attrs.get("FireDiscoveryAge") or 0),
+            "lat":           lat,
+            "lng":           lng,
+        })
+
+    # Sort by size descending so the biggest fires are most prominent
+    results.sort(key=lambda f: f["acres"], reverse=True)
+    _FIRE_CACHE[key] = {"ts": time.time(), "data": results}
+    return results
+
+
+# ── Smoke Forecast ─────────────────────────────────────────────────────────────
+
+_SMOKE_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_SMOKE_CACHE_TTL = 3600   # 1 hour — hourly forecast product
+
+# Smoke class description → opacity and fill colour
+_SMOKE_CLASSES = {
+    "0-3":      {"fill": "#fef9c3", "opacity": 0.25, "label": "Light (0–3 µg/m³)"},
+    "3-25":     {"fill": "#fde047", "opacity": 0.35, "label": "Moderate (3–25 µg/m³)"},
+    "25-63":    {"fill": "#f97316", "opacity": 0.45, "label": "Heavy (25–63 µg/m³)"},
+    "63-158":   {"fill": "#b45309", "opacity": 0.55, "label": "Dense (63–158 µg/m³)"},
+    "158-1000": {"fill": "#7f1d1d", "opacity": 0.65, "label": "Extreme (>158 µg/m³)"},
+}
+
+
+def _smoke_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def _smoke_style(class_desc: str) -> Dict[str, Any]:
+    """Map NDGD smoke class description to fill/opacity/label."""
+    for key_frag, style in _SMOKE_CLASSES.items():
+        if key_frag in (class_desc or ""):
+            return style
+    return {"fill": "#fef9c3", "opacity": 0.20, "label": class_desc or "Unknown"}
+
+
+def fetch_smoke_forecast(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return the current smoke forecast polygons intersecting the bounding box.
+
+    Returns only the most recent hour's forecast polygons (lowest
+    ``referencedate`` value in the result set).
+
+    Each dict has:
+        class_desc  str    smoke concentration class (e.g. "3-25")
+        label       str    human-readable description
+        fill        str    suggested polygon fill colour (hex)
+        opacity     float  suggested polygon fill opacity (0–1)
+        valid_from  str    ISO-8601 forecast reference time
+        valid_to    str    ISO-8601 forecast end time
+        rings       list   [[lat, lng], ...] polygon ring(s)
+    """
+    key = _smoke_key(south, west, north, east)
+    cached = _SMOKE_CACHE.get(key)
+    if cached and time.time() - cached["ts"] < _SMOKE_CACHE_TTL:
+        return cached["data"]
+
+    params = {
+        "where":          "1=1",
+        "geometry":       f"{west},{south},{east},{north}",
+        "geometryType":   "esriGeometryEnvelope",
+        "spatialRel":     "esriSpatialRelIntersects",
+        "inSR":           "4326",
+        "outSR":          "4326",
+        "outFields":      "smoke_classdesc,referencedate,todate",
+        "returnGeometry": "true",
+        "resultRecordCount": 500,
+        "f":              "json",
+    }
+
+    try:
+        resp = requests.get(_SMOKE_URL, params=params, timeout=(3.05, 18))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS smoke forecast fetch failed: %s", exc)
+        return []
+
+    if not feats:
+        _SMOKE_CACHE[key] = {"ts": time.time(), "data": []}
+        return []
+
+    # Find the most recent reference date
+    ref_dates = [f["attributes"].get("referencedate") for f in feats if f.get("attributes")]
+    ref_dates_valid = [d for d in ref_dates if d is not None]
+    latest_ref = max(ref_dates_valid) if ref_dates_valid else None
+
+    results: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        # Only include the current hour's polygons to avoid stacking
+        if latest_ref is not None and attrs.get("referencedate") != latest_ref:
+            continue
+        geom  = feat.get("geometry") or {}
+        rings = geom.get("rings") or []
+        if not rings:
+            continue
+        cld   = (attrs.get("smoke_classdesc") or "").strip()
+        style = _smoke_style(cld)
+        results.append({
+            "class_desc": cld,
+            "label":      style["label"],
+            "fill":       style["fill"],
+            "opacity":    style["opacity"],
+            "valid_from": _ms_to_iso(attrs.get("referencedate")),
+            "valid_to":   _ms_to_iso(attrs.get("todate")),
+            "rings":      [_ring_to_latlng(r) for r in rings],
+        })
+
+    _SMOKE_CACHE[key] = {"ts": time.time(), "data": results}
+    return results
+
+
+# ── Precipitation Forecast ─────────────────────────────────────────────────────
+
+_PRECIP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_PRECIP_CACHE_TTL = 3600   # 1 hour
+
+# NDFD category integer (0–19) → approximate label when service label is missing
+_PRECIP_CAT_LABEL = {
+    0: "0.01–0.10\"", 1: "0.10–0.25\"", 2: "0.25–0.50\"", 3: "0.50–0.75\"",
+    4: "0.75–1.00\"", 5: "1.00–1.25\"", 6: "1.25–1.50\"", 7: "1.50–2.00\"",
+    8: "2.00–2.50\"", 9: "2.50–3.00\"", 10:"3.00–4.00\"", 11:"4.00–5.00\"",
+    12:"5.00–6.00\"", 13:"6.00–8.00\"", 14:"8.00–10.0\"", 15:"10.0–15.0\"",
+    16:"15.0–20.0\"", 17:"20.0–30.0\"", 18:"30.0–40.0\"", 19:">40.0\"",
+}
+
+
+def _precip_key(lat: float, lng: float) -> tuple:
+    return (round(lat, 1), round(lng, 1))
+
+
+def fetch_precip_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
+    """Return NDFD precipitation forecast for the nearest area around lat/lng.
+
+    Returns up to 4 periods (≈ 24 hours at 6-h intervals).
+
+    Each dict has:
+        from_time   str   ISO-8601 period start
+        to_time     str   ISO-8601 period end
+        category    int   NDFD rainfall category integer (0–19)
+        label       str   rainfall amount range (e.g. "0.25–0.50\"")
+        rain        bool  True if any precipitation expected this period
+    """
+    key = _precip_key(lat, lng)
+    cached = _PRECIP_CACHE.get(key)
+    if cached and time.time() - cached["ts"] < _PRECIP_CACHE_TTL:
+        return cached["data"]
+
+    pad = 0.5
+    params = {
+        "where":          "1=1",
+        "geometry":       f"{lng - pad},{lat - pad},{lng + pad},{lat + pad}",
+        "geometryType":   "esriGeometryEnvelope",
+        "spatialRel":     "esriSpatialRelIntersects",
+        "inSR":           "4326",
+        "outSR":          "4326",
+        "outFields":      "category,fromdate,todate,label",
+        "returnGeometry": "false",
+        "orderByFields":  "fromdate ASC",
+        "resultRecordCount": 200,
+        "f":              "json",
+    }
+
+    try:
+        resp = requests.get(_PRECIP_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS precip forecast fetch failed: %s", exc)
+        _PRECIP_CACHE[key] = {"ts": time.time(), "data": []}
+        return []
+
+    # Deduplicate by fromdate (multiple polygons may cover the area; take first hit)
+    seen: set = set()
+    results: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        fd    = attrs.get("fromdate")
+        if fd in seen:
+            continue
+        seen.add(fd)
+        cat   = int(attrs.get("category") or 0)
+        lbl   = (attrs.get("label") or "").strip() or _PRECIP_CAT_LABEL.get(cat, "")
+        results.append({
+            "from_time": _ms_to_iso(fd),
+            "to_time":   _ms_to_iso(attrs.get("todate")),
+            "category":  cat,
+            "label":     lbl,
+            "rain":      cat > 0,
+        })
+        if len(results) >= 4:
+            break
+
+    _PRECIP_CACHE[key] = {"ts": time.time(), "data": results}
+    return results
+
+
+# ── Arctic Sea Ice Extent ─────────────────────────────────────────────────────
+
+_SEA_ICE_CACHE: Optional[Dict[str, Any]] = None
+_SEA_ICE_TS    = 0.0
+_SEA_ICE_TTL   = 86400  # 24 hours — monthly product
+
+
+def fetch_sea_ice_extent() -> Optional[Dict[str, Any]]:
+    """Return the most recent Arctic sea ice extent polygon and statistics.
+
+    Returns a dict or None:
+        year        int    record year
+        month       int    record month (1–12)
+        area_mkm2   float  sea ice area in millions of km²
+        extent_mkm2 float  sea ice extent in millions of km²
+        rings       list   list of rings [[lat, lng], ...] for the boundary
+    """
+    global _SEA_ICE_CACHE, _SEA_ICE_TS
+    if _SEA_ICE_CACHE is not None and time.time() - _SEA_ICE_TS < _SEA_ICE_TTL:
+        return _SEA_ICE_CACHE
+
+    params = {
+        "where":          "1=1",
+        "outFields":      "Rec_Year,Rec_Month,Rec_Area,Rec_Extent,Rec_Date",
+        "returnGeometry": "true",
+        "orderByFields":  "Rec_Date DESC",
+        "resultRecordCount": 1,
+        "outSR":          "4326",
+        "f":              "json",
+    }
+
+    try:
+        resp = requests.get(_SEA_ICE_N_URL, params=params, timeout=(3.05, 20))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS sea ice fetch failed: %s", exc)
+        _SEA_ICE_CACHE = None
+        _SEA_ICE_TS    = time.time()
+        return None
+
+    if not feats:
+        _SEA_ICE_CACHE = None
+        _SEA_ICE_TS    = time.time()
+        return None
+
+    attrs = feats[0].get("attributes", {})
+    geom  = feats[0].get("geometry") or {}
+    rings = geom.get("rings") or []
+
+    result: Dict[str, Any] = {
+        "year":        int(attrs.get("Rec_Year") or 0),
+        "month":       int(attrs.get("Rec_Month") or 0),
+        "area_mkm2":   round(float(attrs.get("Rec_Area") or 0), 2),
+        "extent_mkm2": round(float(attrs.get("Rec_Extent") or 0), 2),
+        "rings":       [_ring_to_latlng(r) for r in rings],
+    }
+
+    _SEA_ICE_CACHE = result
+    _SEA_ICE_TS    = time.time()
+    return result
+
+
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""
     global _STORM_CACHE, _STORM_TS, _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
+    global _SEA_ICE_CACHE, _SEA_ICE_TS
     _WARN_CACHE.clear()
     _STORM_CACHE = None
     _STORM_TS    = 0.0
@@ -652,3 +1114,9 @@ def cache_clear() -> None:
     _RECENT_TRACK_TS    = 0.0
     _AQI_CACHE.clear()
     _WIND_FC_CACHE.clear()
+    _SST_CACHE.clear()
+    _FIRE_CACHE.clear()
+    _SMOKE_CACHE.clear()
+    _PRECIP_CACHE.clear()
+    _SEA_ICE_CACHE = None
+    _SEA_ICE_TS    = 0.0

@@ -1867,6 +1867,147 @@ def weather_wind_forecast() -> Any:
     return jsonify({"periods": periods, "count": len(periods)})
 
 
+@bp.route("/api/map/sst-stations", methods=["GET"])
+def map_sst_stations() -> Any:
+    """Return NOAA coral reef / SST monitoring stations in the bounding box.
+
+    Proxies the ArcGIS Living Atlas Coral_Reef_Stations live feed (NOAA CoRIS).
+    Includes live sea-surface temperature, temperature anomaly, and bleaching alerts.
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "stations": [...], "count": <int> }
+
+    Each station has: name, lat, lng, sst_c, sst_f, ssta, dhw,
+    alert, alert_label, alert_color, updated
+    """
+    from services.arcgis_live_feeds import fetch_sst_stations
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    stations = fetch_sst_stations(south, west, north, east)
+    return jsonify({"stations": stations, "count": len(stations)})
+
+
+@bp.route("/api/map/wildfires", methods=["GET"])
+def map_wildfires() -> Any:
+    """Return active wildfire incidents intersecting the bounding box.
+
+    Proxies the ArcGIS Living Atlas USA_Wildfires_v1 live feed (NIFC/IRWIN data).
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "fires": [...], "count": <int> }
+
+    Each fire has: name, state, county, acres, contained_pct, cause,
+    discovered, age_days, lat, lng
+    """
+    from services.arcgis_live_feeds import fetch_wildfire_incidents
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    fires = fetch_wildfire_incidents(south, west, north, east)
+    return jsonify({"fires": fires, "count": len(fires)})
+
+
+@bp.route("/api/map/smoke", methods=["GET"])
+def map_smoke() -> Any:
+    """Return current smoke forecast polygons for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NDGD_SmokeForecast_v1 live feed (NOAA NDGD).
+    Returns only the most recent hour's polygons to avoid stacking.
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "polygons": [...], "count": <int> }
+
+    Each polygon has: class_desc, label, fill (hex), opacity, valid_from,
+    valid_to, rings ([[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_smoke_forecast
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    polygons = fetch_smoke_forecast(south, west, north, east)
+    return jsonify({"polygons": polygons, "count": len(polygons)})
+
+
+@bp.route("/api/weather/precip-forecast", methods=["GET"])
+def weather_precip_forecast() -> Any:
+    """Return NDFD precipitation forecast for a location (6-h intervals, ~24 h).
+
+    Proxies the ArcGIS Living Atlas NDFD_Precipitation_v1 live feed.
+
+    Query params
+    ------------
+    lat : float  – latitude  (required)
+    lng : float  – longitude (required)
+
+    Returns
+    -------
+    JSON: { "periods": [...], "count": <int> }
+
+    Each period has: from_time, to_time, category (0–19), label, rain (bool)
+    """
+    from services.arcgis_live_feeds import fetch_precip_forecast
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+
+    periods = fetch_precip_forecast(lat, lng)
+    return jsonify({"periods": periods, "count": len(periods)})
+
+
+@bp.route("/api/map/sea-ice", methods=["GET"])
+def map_sea_ice() -> Any:
+    """Return the most recent Arctic sea ice extent polygon and statistics.
+
+    Proxies the ArcGIS Living Atlas seaice_extent_N_v1 live feed (NSIDC data).
+    Returns the latest monthly record (typically the previous calendar month).
+
+    Returns
+    -------
+    JSON: { "sea_ice": { year, month, area_mkm2, extent_mkm2, rings } | null }
+    """
+    from services.arcgis_live_feeds import fetch_sea_ice_extent
+
+    result = fetch_sea_ice_extent()
+    return jsonify({"sea_ice": result})
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():

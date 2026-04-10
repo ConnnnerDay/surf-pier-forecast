@@ -116,6 +116,14 @@
     var stormTrackerLayer = null;    // L.layerGroup for storm graphics
     var recentStormsOn    = false;   // recent hurricane tracks overlay active
     var recentStormsLayer = null;    // L.layerGroup for seasonal storm tracks
+    var sstLayerOn        = false;   // SST station overlay active
+    var sstLayer          = null;    // L.layerGroup for SST markers
+    var sstQueryTimer     = null;    // debounce for viewport reload
+    var wildfireOn        = false;   // wildfire + smoke overlay active
+    var wildfireLayer     = null;    // L.layerGroup for fire + smoke
+    var wildfireTimer     = null;    // debounce for viewport reload
+    var seaIceOn          = false;   // sea ice extent overlay active
+    var seaIceLayer       = null;    // L.layerGroup for ice boundary
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -3135,6 +3143,298 @@
         if (backdrop) backdrop.addEventListener('click', _closeAdminModal);
     }
 
+    // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
+
+    function wireSstLayer() {
+        if (!map) return;
+        sstLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-sst-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                sstLayerOn = !sstLayerOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', sstLayerOn);
+                btn.setAttribute('aria-pressed', sstLayerOn ? 'true' : 'false');
+                if (sstLayerOn) {
+                    sstLayer.addTo(map);
+                    scheduleSstQuery();
+                } else {
+                    map.removeLayer(sstLayer);
+                    sstLayer.clearLayers();
+                }
+            });
+        }
+
+        map.on('moveend zoomend', function () {
+            if (sstLayerOn) scheduleSstQuery();
+        });
+    }
+
+    function scheduleSstQuery() {
+        clearTimeout(sstQueryTimer);
+        sstQueryTimer = setTimeout(doFetchSstStations, 700);
+    }
+
+    function doFetchSstStations() {
+        if (!sstLayerOn || !map) return;
+        var b  = map.getBounds();
+        var sw = b.getSouthWest();
+        var ne = b.getNorthEast();
+        var url = '/api/map/sst-stations?south=' + sw.lat.toFixed(3) +
+                  '&west='  + sw.lng.toFixed(3) +
+                  '&north=' + ne.lat.toFixed(3) +
+                  '&east='  + ne.lng.toFixed(3);
+
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                if (!sstLayerOn || !map) return;
+                sstLayer.clearLayers();
+                (data.stations || []).forEach(function (s) {
+                    var color = _sstColor(s.sst_f);
+                    var icon = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-sst-dot" style="background:' + color + '">' +
+                              (s.sst_f != null ? Math.round(s.sst_f) + '°' : '?') +
+                              '</div>',
+                        iconSize:    [34, 34],
+                        iconAnchor:  [17, 17],
+                        popupAnchor: [0, -18],
+                    });
+                    L.marker([s.lat, s.lng], { icon: icon })
+                        .bindPopup(_sstPopup(s), { maxWidth: 260 })
+                        .addTo(sstLayer);
+                });
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] SST stations fetch failed:', err);
+            });
+    }
+
+    function _sstColor(f) {
+        if (f == null) return '#94a3b8';
+        if (f >= 86) return '#ef4444';   // very warm ≥30°C
+        if (f >= 80) return '#f97316';   // warm 27–30°C
+        if (f >= 74) return '#eab308';   // comfortable 23–27°C
+        if (f >= 65) return '#22c55e';   // cool 18–23°C
+        if (f >= 55) return '#3b82f6';   // cold 13–18°C
+        return '#a5b4fc';                // very cold <13°C
+    }
+
+    function _sstPopup(s) {
+        var temp = s.sst_f != null
+            ? s.sst_f + '°F (' + s.sst_c + '°C)'
+            : 'N/A';
+        var anomaly = s.ssta != null
+            ? (s.ssta >= 0 ? '+' : '') + s.ssta + '°C vs. normal'
+            : '';
+        var dhw = s.dhw ? 'DHW: ' + s.dhw + ' °C-weeks' : '';
+        return (
+            '<div class="fmap-sst-popup">' +
+            '<strong>' + esc(s.name || 'SST Station') + '</strong>' +
+            '<br><span class="fmap-sst-temp">' + temp + '</span>' +
+            (anomaly ? '<br><small class="fmap-sst-anomaly">' + esc(anomaly) + '</small>' : '') +
+            (dhw     ? '<br><small style="opacity:.65">' + esc(dhw) + '</small>' : '') +
+            (s.alert > 0
+                ? '<br><span class="fmap-sst-alert" style="background:' + s.alert_color + '">' +
+                  esc(s.alert_label) + '</span>'
+                : '') +
+            (s.updated ? '<br><small style="opacity:.45">Updated: ' +
+                _sstFmtDate(s.updated) + '</small>' : '') +
+            '<br><small style="opacity:.4">Source: NOAA CoRIS via ArcGIS Live Feeds</small>' +
+            '</div>'
+        );
+    }
+
+    function _sstFmtDate(iso) {
+        try {
+            return new Date(iso).toLocaleDateString([], { month:'short', day:'numeric' });
+        } catch (e) { return iso; }
+    }
+
+    // ─── Wildfire + Smoke overlay (ArcGIS Live Feeds) ─────────────────────────
+
+    function wireWildfireLayer() {
+        if (!map) return;
+        wildfireLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-wildfire-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                wildfireOn = !wildfireOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', wildfireOn);
+                btn.setAttribute('aria-pressed', wildfireOn ? 'true' : 'false');
+                if (wildfireOn) {
+                    wildfireLayer.addTo(map);
+                    scheduleWildfireQuery();
+                } else {
+                    map.removeLayer(wildfireLayer);
+                    wildfireLayer.clearLayers();
+                }
+            });
+        }
+
+        map.on('moveend zoomend', function () {
+            if (wildfireOn) scheduleWildfireQuery();
+        });
+    }
+
+    function scheduleWildfireQuery() {
+        clearTimeout(wildfireTimer);
+        wildfireTimer = setTimeout(doFetchWildfires, 700);
+    }
+
+    function doFetchWildfires() {
+        if (!wildfireOn || !map) return;
+        var b  = map.getBounds();
+        var sw = b.getSouthWest();
+        var ne = b.getNorthEast();
+        var bbox = 'south=' + sw.lat.toFixed(3) +
+                   '&west='  + sw.lng.toFixed(3) +
+                   '&north=' + ne.lat.toFixed(3) +
+                   '&east='  + ne.lng.toFixed(3);
+
+        Promise.all([
+            fetch('/api/map/wildfires?' + bbox).then(function (r) { return r.ok ? r.json() : {fires:[], count:0}; }),
+            fetch('/api/map/smoke?'     + bbox).then(function (r) { return r.ok ? r.json() : {polygons:[], count:0}; }),
+        ])
+        .then(function (results) {
+            if (!wildfireOn || !map) return;
+            wildfireLayer.clearLayers();
+            var fires   = results[0].fires    || [];
+            var polys   = results[1].polygons || [];
+
+            // Smoke polygons (rendered first, below fire markers)
+            polys.forEach(function (p) {
+                if (!p.rings || !p.rings.length) return;
+                p.rings.forEach(function (ring) {
+                    L.polygon(ring, {
+                        color:       p.fill,
+                        fillColor:   p.fill,
+                        fillOpacity: p.opacity,
+                        weight:      0,
+                    })
+                    .bindTooltip('<strong>Smoke:</strong> ' + esc(p.label) +
+                        (p.valid_from ? '<br><small>' + _sstFmtDate(p.valid_from) + '</small>' : ''),
+                        { direction: 'top', className: 'fmap-tooltip' })
+                    .addTo(wildfireLayer);
+                });
+            });
+
+            // Fire incident markers
+            fires.forEach(function (f) {
+                var sizeClass = f.acres > 50000 ? 'fmap-fire-dot--xl'
+                              : f.acres > 10000 ? 'fmap-fire-dot--lg'
+                              : f.acres > 1000  ? 'fmap-fire-dot--md'
+                              : 'fmap-fire-dot--sm';
+                var icon = L.divIcon({
+                    className: '',
+                    html: '<div class="fmap-fire-dot ' + sizeClass + '" title="' + esc(f.name) + '">🔥</div>',
+                    iconSize:    [24, 24],
+                    iconAnchor:  [12, 12],
+                    popupAnchor: [0, -14],
+                });
+                L.marker([f.lat, f.lng], { icon: icon })
+                    .bindPopup(_firePopup(f), { maxWidth: 280 })
+                    .addTo(wildfireLayer);
+            });
+        })
+        .catch(function (err) {
+            console.warn('[fishing-map] wildfire/smoke fetch failed:', err);
+        });
+    }
+
+    function _firePopup(f) {
+        var containment = f.contained_pct > 0
+            ? '<br><span class="fmap-fire-contain">' + Math.round(f.contained_pct) + '% contained</span>'
+            : '<br><span class="fmap-fire-contain fmap-fire-contain--0">Uncontained</span>';
+        var acres = f.acres > 0
+            ? '<br><small>' + f.acres.toLocaleString() + ' acres</small>'
+            : '';
+        var cause = f.cause ? '<br><small>Cause: ' + esc(f.cause) + '</small>' : '';
+        var loc   = [f.county, f.state].filter(Boolean).join(', ');
+        return (
+            '<div class="fmap-fire-popup">' +
+            '<strong>🔥 ' + esc(f.name) + '</strong>' +
+            (loc ? '<br><small style="opacity:.7">' + esc(loc) + '</small>' : '') +
+            acres + containment + cause +
+            (f.age_days ? '<br><small style="opacity:.55">Day ' + f.age_days + '</small>' : '') +
+            '</div>'
+        );
+    }
+
+    // ─── Sea Ice Extent overlay (ArcGIS Live Feeds / NSIDC) ──────────────────
+
+    function wireSeaIceLayer() {
+        if (!map) return;
+        seaIceLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-sea-ice-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                seaIceOn = !seaIceOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', seaIceOn);
+                btn.setAttribute('aria-pressed', seaIceOn ? 'true' : 'false');
+                if (seaIceOn) {
+                    seaIceLayer.addTo(map);
+                    doFetchSeaIce();
+                } else {
+                    map.removeLayer(seaIceLayer);
+                    seaIceLayer.clearLayers();
+                }
+            });
+        }
+    }
+
+    function doFetchSeaIce() {
+        if (!seaIceOn || !map) return;
+        fetch('/api/map/sea-ice')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!seaIceOn || !map || !data || !data.sea_ice) {
+                    showToast('Sea ice data unavailable');
+                    return;
+                }
+                var ice = data.sea_ice;
+                seaIceLayer.clearLayers();
+
+                var MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var label = MONTH_SHORT[ice.month] + ' ' + ice.year;
+
+                (ice.rings || []).forEach(function (ring) {
+                    L.polygon(ring, {
+                        color:       '#bfdbfe',
+                        fillColor:   '#bfdbfe',
+                        fillOpacity: 0.30,
+                        weight:      1.5,
+                        opacity:     0.7,
+                    })
+                    .bindPopup(
+                        '<div class="fmap-ice-popup"><strong>Arctic Sea Ice</strong>' +
+                        '<br><em>' + label + '</em>' +
+                        '<br><small>Extent: ' + ice.extent_mkm2 + ' M km²</small>' +
+                        '<br><small>Area: ' + ice.area_mkm2 + ' M km²</small>' +
+                        '<br><small style="opacity:.5">Source: NSIDC via ArcGIS Live Feeds</small>' +
+                        '</div>',
+                        { maxWidth: 220 }
+                    )
+                    .addTo(seaIceLayer);
+                });
+
+                if (ice.rings && ice.rings.length) {
+                    showToast('Arctic sea ice: ' + label + ' — ' + ice.extent_mkm2 + ' M km²');
+                    // Fly to Arctic region
+                    if (map.getZoom() < 4) map.setView([75, 0], 3);
+                } else {
+                    showToast('No sea ice data for current period');
+                }
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] sea ice fetch failed:', err);
+                showToast('Sea ice data unavailable');
+            });
+    }
+
     // ─── Recent Hurricane Tracks overlay (ArcGIS Live Feeds) ─────────────────
 
     function wireRecentStorms() {
@@ -3483,6 +3783,9 @@
                 wireFullscreen();
                 wireShareBtn();
                 wireAdminMode();
+                wireSstLayer();
+                wireWildfireLayer();
+                wireSeaIceLayer();
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();

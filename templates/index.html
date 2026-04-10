@@ -715,6 +715,18 @@
                     <button type="button" id="fmap-recent-storms-btn" class="fmap-ctrl-btn" title="Show recent season hurricane tracks" aria-label="Toggle recent storm tracks overlay" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                     </button>
+                    {# SST / Coral Reef stations — NOAA CoRIS live temperatures via ArcGIS #}
+                    <button type="button" id="fmap-sst-btn" class="fmap-ctrl-btn" title="Show live sea-surface temperatures (NOAA CoRIS)" aria-label="Toggle SST station overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+                    </button>
+                    {# Wildfire + smoke overlay — NIFC fires + NOAA smoke forecast via ArcGIS #}
+                    <button type="button" id="fmap-wildfire-btn" class="fmap-ctrl-btn" title="Show active wildfires &amp; smoke forecast" aria-label="Toggle wildfire and smoke overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/><path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" fill="currentColor" stroke="none" opacity=".4"/></svg>
+                    </button>
+                    {# Arctic sea ice extent — NSIDC monthly boundary via ArcGIS #}
+                    <button type="button" id="fmap-sea-ice-btn" class="fmap-ctrl-btn" title="Show Arctic sea ice extent (NSIDC)" aria-label="Toggle sea ice overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
                     <button type="button" id="fmap-admin-edit-btn" class="fmap-ctrl-btn" title="Edit markers (admin)" aria-label="Toggle admin marker edit mode" aria-pressed="false" hidden>
@@ -1876,55 +1888,93 @@ if ('serviceWorker' in navigator) {
         })
         .catch(function () {});
 
-    // ── NDFD Wind Forecast collapsible section ────────────────────────────────
-    fetch('/api/weather/wind-forecast?lat=' + lat + '&lng=' + lng)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-            if (!data || !data.periods || !data.periods.length) return;
-            var block = document.getElementById('wind-outlook-block');
-            var grid  = document.getElementById('wind-outlook-grid');
-            if (!block || !grid) return;
+    // ── NDFD Wind + Precipitation Forecast collapsible section ───────────────
+    Promise.all([
+        fetch('/api/weather/wind-forecast?lat='   + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch('/api/weather/precip-forecast?lat=' + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
+    ])
+    .then(function (results) {
+        var windData   = results[0];
+        var precipData = results[1];
+        if (!windData || !windData.periods || !windData.periods.length) return;
 
-            var COMPASS_ARROWS = {
-                N:'↓', NE:'↙', E:'←', SE:'↖', S:'↑', SW:'↗', W:'→', NW:'↘'
-            };
+        var block = document.getElementById('wind-outlook-block');
+        var grid  = document.getElementById('wind-outlook-grid');
+        if (!block || !grid) return;
 
-            var html = '';
-            data.periods.forEach(function (p) {
-                var arrow = COMPASS_ARROWS[p.wind_dir] || '·';
-                var timeStr = '';
-                if (p.interval_start) {
+        var COMPASS_ARROWS = {
+            N:'↓', NE:'↙', E:'←', SE:'↖', S:'↑', SW:'↗', W:'→', NW:'↘'
+        };
+
+        // Build a lookup of precipitation by approximate start hour
+        var precipByHour = {};
+        if (precipData && precipData.periods) {
+            precipData.periods.forEach(function (pp) {
+                if (pp.from_time) {
                     try {
-                        var d = new Date(p.interval_start);
-                        timeStr = d.toLocaleString([], { weekday:'short', hour:'numeric' });
+                        var h = new Date(pp.from_time).getTime();
+                        precipByHour[h] = pp;
                     } catch (e) {}
                 }
-                var speedClass = p.wind_speed >= 25 ? 'wind-fc--gale'
-                               : p.wind_speed >= 15 ? 'wind-fc--strong'
-                               : p.wind_speed >= 8  ? 'wind-fc--moderate'
-                               : 'wind-fc--light';
-                html +=
-                    '<div class="wind-fc-cell ' + speedClass + '">' +
-                    '<span class="wind-fc-time">' + timeStr + '</span>' +
-                    '<span class="wind-fc-arrow" title="' + (p.wind_dir || '') + '">' + arrow + '</span>' +
-                    '<span class="wind-fc-dir">' + (p.wind_dir || '–') + '</span>' +
-                    '<span class="wind-fc-speed">' + p.wind_speed + ' kt</span>' +
-                    (p.wind_gust ? '<span class="wind-fc-gust">G ' + p.wind_gust + '</span>' : '') +
-                    '</div>';
             });
-            grid.innerHTML = html;
+        }
 
-            // Update subtitle with first period summary
-            var sub = document.getElementById('wind-outlook-sub');
-            if (sub && data.periods[0]) {
-                var p0 = data.periods[0];
-                sub.textContent = (p0.wind_dir || '') + ' ' + p0.wind_speed + ' kt'
-                    + (p0.wind_gust ? ' G' + p0.wind_gust : '');
+        // Find the closest precip period (6-h) for each wind period (3-h)
+        function nearestPrecip(isoTime) {
+            if (!isoTime || !Object.keys(precipByHour).length) return null;
+            try {
+                var t   = new Date(isoTime).getTime();
+                var best = null, bestDiff = Infinity;
+                Object.keys(precipByHour).forEach(function (h) {
+                    var diff = Math.abs(t - Number(h));
+                    if (diff < bestDiff) { bestDiff = diff; best = precipByHour[h]; }
+                });
+                // Only associate if within 6 hours
+                return bestDiff <= 6 * 3600 * 1000 ? best : null;
+            } catch (e) { return null; }
+        }
+
+        var html = '';
+        windData.periods.forEach(function (p) {
+            var arrow = COMPASS_ARROWS[p.wind_dir] || '·';
+            var timeStr = '';
+            if (p.interval_start) {
+                try {
+                    var d = new Date(p.interval_start);
+                    timeStr = d.toLocaleString([], { weekday:'short', hour:'numeric' });
+                } catch (e) {}
             }
+            var speedClass = p.wind_speed >= 25 ? 'wind-fc--gale'
+                           : p.wind_speed >= 15 ? 'wind-fc--strong'
+                           : p.wind_speed >= 8  ? 'wind-fc--moderate'
+                           : 'wind-fc--light';
+            var pp = nearestPrecip(p.interval_start);
+            var rainHtml = pp && pp.rain
+                ? '<span class="wind-fc-rain" title="' + (pp.label || '') + '">🌧</span>'
+                : '';
+            html +=
+                '<div class="wind-fc-cell ' + speedClass + '">' +
+                '<span class="wind-fc-time">' + timeStr + '</span>' +
+                '<span class="wind-fc-arrow" title="' + (p.wind_dir || '') + '">' + arrow + '</span>' +
+                '<span class="wind-fc-dir">' + (p.wind_dir || '–') + '</span>' +
+                '<span class="wind-fc-speed">' + p.wind_speed + ' kt</span>' +
+                (p.wind_gust ? '<span class="wind-fc-gust">G ' + p.wind_gust + '</span>' : '') +
+                rainHtml +
+                '</div>';
+        });
+        grid.innerHTML = html;
 
-            block.style.display = '';
-        })
-        .catch(function () {});
+        // Update subtitle with first period summary
+        var sub = document.getElementById('wind-outlook-sub');
+        if (sub && windData.periods[0]) {
+            var p0 = windData.periods[0];
+            sub.textContent = (p0.wind_dir || '') + ' ' + p0.wind_speed + ' kt'
+                + (p0.wind_gust ? ' G' + p0.wind_gust : '');
+        }
+
+        block.style.display = '';
+    })
+    .catch(function () {});
 })();
 </script>
 </html>
