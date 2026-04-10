@@ -21,6 +21,7 @@ No API keys required.  Data cached per-location to ``data/``.
 
 from __future__ import annotations
 
+import gzip as _gzip
 import hmac
 import logging
 import os
@@ -354,6 +355,35 @@ def create_app() -> Flask:
             )
         return response
 
+    @app.after_request
+    def _gzip_response(response: Any) -> Any:
+        """Compress JSON API responses when the client supports gzip.
+
+        Structure and fishing-map payloads are repetitive JSON that typically
+        compresses 85-90 %, cutting 80-200 KB responses down to 10-25 KB.
+        Uses Python's built-in gzip (compresslevel=6) — no extra dependencies.
+        Skips already-encoded, non-JSON, small (<500 B), or streaming responses.
+        """
+        if (
+            response.direct_passthrough
+            or response.status_code != 200
+            or "Content-Encoding" in response.headers
+            or "gzip" not in request.headers.get("Accept-Encoding", "")
+            or not (response.content_type or "").startswith("application/json")
+        ):
+            return response
+        data = response.get_data()
+        if len(data) < 500:
+            return response
+        compressed = _gzip.compress(data, compresslevel=6)
+        if len(compressed) >= len(data):
+            return response
+        response.set_data(compressed)
+        response.headers["Content-Encoding"] = "gzip"
+        response.headers["Content-Length"] = len(compressed)
+        response.headers.pop("Content-MD5", None)
+        return response
+
     # -- Error handlers ----------------------------------------------------
     # Explicit handlers prevent Flask from falling back to its built-in error
     # pages, which include the Werkzeug version string and (in debug mode) full
@@ -425,6 +455,26 @@ def create_app() -> Flask:
     app.register_blueprint(api_bp)
     app.register_blueprint(views_bp)
 
+    # Pre-warm the fishing-map response cache so the first real user after a
+    # server restart gets a cache hit instead of waiting for the full scoring
+    # loop.  Uses the test client (provides a proper request/g context) and
+    # runs in a daemon thread so startup is not delayed.
+    import threading as _threading
+
+    def _prewarm_fishing_map_cache() -> None:
+        import time as _time
+        _time.sleep(2)  # let gunicorn workers and DB fully initialise first
+        try:
+            with app.test_client() as _c:
+                _c.get("/api/fishing-map")
+            logging.getLogger(__name__).info("fishing-map cache pre-warmed")
+        except Exception as _exc:
+            logging.getLogger(__name__).debug(
+                "fishing-map pre-warm failed (non-fatal): %s", _exc
+            )
+
+    _threading.Thread(target=_prewarm_fishing_map_cache, daemon=True).start()
+
     return app
 
 
@@ -435,4 +485,6 @@ app = create_app()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5757))
-    app.run(host="0.0.0.0", port=port)
+    # threaded=True allows Flask's dev server to handle concurrent requests so
+    # a slow Overpass / NOAA fetch on one thread never blocks filter API calls.
+    app.run(host="0.0.0.0", port=port, threaded=True)

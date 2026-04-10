@@ -68,11 +68,14 @@
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox+types key → array of spot objects
+    var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
+    var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
+    var _mainAbort           = null; // AbortController for the in-flight /api/fishing-map fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -240,10 +243,11 @@
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
-            // Pre-warm the structure cache for the full home corridor so
-            // nearby icons appear immediately and pan/zoom is instant.
-            // 2 s delay so the initial tile + moveend query fires first.
-            setTimeout(prefetchHomeCorridorStructures, 2000);
+            // Pre-warm the structure cache for the full home corridor so nearby
+            // icons appear immediately and pan/zoom serve from cache.
+            // 500 ms lets the tile request and first moveend query fire first,
+            // while still dispatching while Overpass is busy on the initial fetch.
+            setTimeout(prefetchHomeCorridorStructures, 500);
         }
 
         map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
@@ -724,8 +728,15 @@
                            iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
     }
 
-    function renderFishingSpots(spots) {
+    function renderFishingSpots(spots, cacheKey) {
         if (!fishingSpotLayer) return;
+        // Skip rebuilding all Leaflet markers when the same data is already
+        // displayed — common when the user pans within the same 0.5° grid cell.
+        if (cacheKey && cacheKey === _lastRenderedSpotKey &&
+                fishingSpotLayer.getLayers().length) {
+            return;
+        }
+        _lastRenderedSpotKey = cacheKey || null;
         fishingSpotLayer.clearLayers();
         _customMarkers = [];  // will be repopulated by renderCustomMarkers below
 
@@ -829,17 +840,34 @@
     // Return a cached spot list whose bbox fully contains [s, w, n, e] and
     // whose type string matches, or null if none found.  Used to serve
     // viewport queries from a wider pre-fetched corridor without a new request.
+    // Find a cached result whose bbox covers s/w/n/e AND whose type set is a
+    // superset of the requested types.  Keys have the form "s,w,n,e" (all
+    // types) or "s,w,n,e|type1,type2,…" (filtered).
+    //
+    // When the cached entry has ALL types but the caller wants a subset, we
+    // filter the array in JS so the caller never has to hit the server.
     function _cachedSupersetOf(s, w, n, e, typesStr) {
-        var suffix = typesStr ? '|' + typesStr : '';
+        var requestedTypes = typesStr ? typesStr.split(',') : null; // null = all
         for (var k in spotCache) {
-            // Keys have the form "s,w,n,e" or "s,w,n,e|types"
-            var pipe  = k.indexOf('|');
-            var ktype = pipe >= 0 ? k.slice(pipe + 1) : '';
-            if (ktype !== (typesStr || '')) continue;
-            var coords = (pipe >= 0 ? k.slice(0, pipe) : k).split(',');
+            var pipe      = k.indexOf('|');
+            var coordsStr = pipe >= 0 ? k.slice(0, pipe) : k;
+            var ktype     = pipe >= 0 ? k.slice(pipe + 1) : ''; // '' = all types
+            var coords    = coordsStr.split(',');
             if (coords.length < 4) continue;
             var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
-            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
+            if (!(cs <= s && cw <= w && cn >= n && ce >= e)) continue; // bbox too small
+
+            if (ktype === (typesStr || '')) {
+                // Exact match — return directly
+                return spotCache[k];
+            }
+            if (!ktype && requestedTypes) {
+                // Cached all-types entry; filter client-side — zero server round-trip
+                return spotCache[k].filter(function (sp) {
+                    return requestedTypes.indexOf(sp.type) !== -1;
+                });
+            }
+            // ktype is a different subset; skip (we can't expand a subset to all types)
         }
         return null;
     }
@@ -865,6 +893,7 @@
             .then(function (data) {
                 if (data && data.structures && !data.zoom_required) {
                     spotCache[key] = data.structures;
+                    _ssSave();
                     console.log('[fishing-map] home corridor pre-fetch → ' + data.structures.length + ' features cached');
                     // If the current viewport is already within this corridor,
                     // render immediately (avoids waiting for the next moveend).
@@ -878,8 +907,9 @@
                         var ve  = Math.ceil ((b.getEast()  + exp) * 2) / 2;
                         // s/w/n/e here are the pre-fetch corridor bounds (closure)
                         if (s <= vs && w <= vw && n >= vn && e >= ve) {
-                            spotCache[vs + ',' + vw + ',' + vn + ',' + ve] = data.structures;
-                            renderFishingSpots(data.structures);
+                            var _vkey = vs + ',' + vw + ',' + vn + ',' + ve;
+                            spotCache[_vkey] = data.structures;
+                            renderFishingSpots(data.structures, _vkey);
                             _updateSpotTypeHint();
                         }
                     }
@@ -895,6 +925,7 @@
         if (!map || !fishingSpotLayer) return;
         var zoom = map.getZoom();
         if (zoom < 8) {
+            _lastRenderedSpotKey = null;
             fishingSpotLayer.clearLayers();
             return;
         }
@@ -935,7 +966,7 @@
         var key = s + ',' + w + ',' + n + ',' + e + (typesStr ? '|' + typesStr : '');
 
         if (spotCache[key]) {
-            renderFishingSpots(spotCache[key]);
+            renderFishingSpots(spotCache[key], key);
             _updateSpotTypeHint();
             return;
         }
@@ -946,7 +977,7 @@
         var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
         if (superResult) {
             spotCache[key] = superResult;  // alias so next pan hits directly
-            renderFishingSpots(superResult);
+            renderFishingSpots(superResult, key);
             _updateSpotTypeHint();
             return;
         }
@@ -977,6 +1008,7 @@
 
                 // Server signals the viewport is too large — show hint, clear layers.
                 if (data.zoom_required) {
+                    _lastRenderedSpotKey = null;
                     fishingSpotLayer.clearLayers();
                     var hint = document.getElementById('fmap-struct-filters-hint');
                     if (hint) hint.textContent = 'Zoom in further to see structure markers';
@@ -986,7 +1018,8 @@
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;
-                renderFishingSpots(spots);
+                _ssSave();
+                renderFishingSpots(spots, key);
                 // Restore normal hint text (may have been set to zoom-in message)
                 _updateSpotTypeHint();
             })
@@ -997,7 +1030,7 @@
                 // Keep spinner visible while Overpass fallback runs;
                 // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
-                showStructError("Couldn't load structure data; showing basic map markers.");
+                showStructError("Loading structure data from backup source\u2026");
                 _queryFishingSpotsFallback(s, w, n, e, key, thisGen, _structAbort ? _structAbort.signal : null);
             });
     }
@@ -1265,16 +1298,17 @@
             var deduped = deduplicateSpots(spots);
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
             spotCache[key] = deduped;
+            _ssSave();
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
-            renderFishingSpots(deduped);
+            renderFishingSpots(deduped, key);
             _updateSpotTypeHint();
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
-            if (err.name !== 'AbortError') {
-                console.error('[fishing-map] Overpass fallback error:', err);
-            }
+            if (err && err.name === 'AbortError') return;
+            console.error('[fishing-map] Overpass fallback error:', err);
+            showStructError("Couldn\u2019t load structure data; showing basic map markers.");
         });
     }
 
@@ -1315,6 +1349,48 @@
     function scheduleFishingSpotQuery() {
         clearTimeout(spotQueryTimer);
         spotQueryTimer = setTimeout(queryStructures, 800);
+    }
+
+    // ─── sessionStorage persistence for spotCache ─────────────────────────────
+    // Persists the in-memory spotCache across page refreshes within the same
+    // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
+    // so a 30-minute TTL per entry is safe.  Quota errors are silently ignored.
+    var _SS_KEY = 'fmap_spot_cache_v2';
+    var _SS_TTL = 1800000; // 30 minutes in ms
+
+    function _ssLoad() {
+        try {
+            var raw = sessionStorage.getItem(_SS_KEY);
+            if (!raw) return;
+            var obj = JSON.parse(raw);
+            var now = Date.now();
+            var loaded = 0;
+            Object.keys(obj).forEach(function (k) {
+                var e = obj[k];
+                if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
+                    spotCache[k] = e.data;
+                    loaded++;
+                }
+            });
+            if (loaded) console.log('[fishing-map] sessionStorage → ' + loaded + ' bbox entries restored');
+        } catch (e) { /* quota or parse error — start cold */ }
+    }
+
+    function _ssSaveNow() {
+        try {
+            var now = Date.now();
+            var obj = {};
+            Object.keys(spotCache).forEach(function (k) {
+                obj[k] = { ts: now, data: spotCache[k] };
+            });
+            sessionStorage.setItem(_SS_KEY, JSON.stringify(obj));
+        } catch (e) { /* quota exceeded — silently skip */ }
+    }
+
+    // Debounced save — coalesce rapid sequential fetches into one write.
+    function _ssSave() {
+        clearTimeout(_ssSaveTimer);
+        _ssSaveTimer = setTimeout(_ssSaveNow, 1500);
     }
 
     // ─── Custom marker icon ───────────────────────────────────────────────────
@@ -1909,7 +1985,11 @@
 
         if (els.loading) { els.loading.style.opacity = '1'; els.loading.style.pointerEvents = 'auto'; }
 
-        fetch(url)
+        // Cancel any in-flight request so stale filter responses never overwrite fresh ones.
+        if (_mainAbort) { try { _mainAbort.abort(); } catch (e) {} }
+        _mainAbort = new AbortController();
+
+        fetch(url, { signal: _mainAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 _hideMainLoading();
@@ -1935,6 +2015,7 @@
                 setTimeout(function () { loadCommunityFeed(); }, 900);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return; // superseded by newer request
                 _hideMainLoading();
                 console.error('[fishing-map] fetch error:', err);
             });
@@ -2438,9 +2519,10 @@
                 _updateSpotTypeHint();
                 _scheduleSpotTypeSave();
 
-                // Invalidate cache — old entries used a different types key
-                spotCache = {};
-                scheduleFishingSpotQuery();
+                // Re-query immediately — _cachedSupersetOf will serve from the
+                // all-types cache when available, so no server round-trip needed.
+                clearTimeout(spotQueryTimer);
+                queryStructures();
             });
         });
 
@@ -2455,8 +2537,8 @@
                 });
                 _updateSpotTypeHint();
                 _scheduleSpotTypeSave();
-                spotCache = {};
-                scheduleFishingSpotQuery();
+                clearTimeout(spotQueryTimer);
+                queryStructures();
             });
         }
 
@@ -3134,7 +3216,8 @@
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function () {
                     _closeAdminModal();
-                    spotCache = {};  // invalidate so structures reload with new marker
+                    spotCache = {};
+                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) { console.error('[admin] save marker failed:', e); });
@@ -3153,6 +3236,7 @@
                 .then(function () {
                     _closeAdminModal();
                     spotCache = {};
+                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) { console.error('[admin] delete marker failed:', e); });
@@ -4518,11 +4602,16 @@
                 wireMarineWarnings();
                 wireStormTracker();
                 restoreLayerState();
+                // Restore cached structure data from the previous page view so
+                // markers appear instantly on refresh instead of waiting for Overpass.
+                _ssLoad();
                 // Kick off the structure query immediately when server-provided
                 // coordinates are available — don't wait for the NOAA API round-trip.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                     typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
-                    scheduleFishingSpotQuery();
+                    // Fire immediately (no debounce) — _ssLoad may have already
+                    // populated spotCache, so queryStructures() can render at once.
+                    queryStructures();
                 }
                 fetchAndRender();
             })

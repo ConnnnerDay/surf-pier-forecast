@@ -1076,6 +1076,48 @@ def _build_ai_reasoning(loc_result: dict, month: int) -> str:
     return " ".join(parts)
 
 
+# ── Species-names list (autocomplete) — pre-computed once ─────────────────────
+# sorted({s["name"] for s in SPECIES_DB}) iterates 800+ species every cold
+# request.  The list never changes at runtime so we compute it once and reuse.
+_SPECIES_NAMES_CACHE: Optional[list] = None
+
+
+def _get_all_species_names() -> list:
+    global _SPECIES_NAMES_CACHE
+    if _SPECIES_NAMES_CACHE is None:
+        from storage.species_loader import SPECIES_DB
+        _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
+    return _SPECIES_NAMES_CACHE
+
+
+# ── Fishing-map response cache ─────────────────────────────────────────────────
+# The scoring loop iterates 100+ locations × 800+ species every request.  Cache
+# the fully-built response dict for 5 minutes so rapid filter changes (species,
+# coast, season…) that repeat a previous combination return instantly.
+# Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
+#        min_temp, max_temp)  — the complete set of params that affect output.
+_FMAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_FMAP_CACHE_TTL: int = 300   # 5 minutes — scores only change when the month rolls over
+_FMAP_CACHE_MAX: int = 128   # cap entries; each is ~50 KB serialised
+
+
+def _fmap_cache_get(key: tuple) -> Optional[Dict[str, Any]]:
+    entry = _FMAP_CACHE.get(key)
+    if entry and (time.time() - entry["ts"]) < _FMAP_CACHE_TTL:
+        return entry["data"]
+    return None
+
+
+def _fmap_cache_set(key: tuple, data: Dict[str, Any]) -> None:
+    if len(_FMAP_CACHE) >= _FMAP_CACHE_MAX:
+        # Drop the oldest insertion
+        try:
+            del _FMAP_CACHE[next(iter(_FMAP_CACHE))]
+        except (KeyError, StopIteration):
+            pass
+    _FMAP_CACHE[key] = {"ts": time.time(), "data": data}
+
+
 @bp.route("/api/fishing-map")
 def fishing_map_data() -> Any:
     """Return location suitability data for the AI Fishing Map.
@@ -1150,6 +1192,16 @@ def fishing_map_data() -> Any:
     # frontend to display; the backend scores don't change by tide currently.
     include_tide_hint = tide_q in {"incoming", "outgoing", "high", "low"}
 
+    # ── Cache check — return pre-built response dict if still fresh ───────────
+    _fmap_key = (species_q, coast_q, category_q, month, season_q,
+                 time_q, tide_q, _min_temp, _max_temp)
+    _cached_response = _fmap_cache_get(_fmap_key)
+    if _cached_response is not None:
+        resp = jsonify(_cached_response)
+        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=30"
+        resp.headers["X-Cache"] = "HIT"
+        return resp
+
     # -- filter the species DB once -------------------------------------------
     filtered_species = SPECIES_DB
     if species_q:
@@ -1161,16 +1213,21 @@ def fishing_map_data() -> Any:
                                               for c in s.get("categories", [])]]
 
     # -- score every location -------------------------------------------------
+    # _loc_sp_map stores the per-location species list so the monthly summary
+    # and trending sections can reuse it instead of re-calling _species_present_at
+    # 12× per location (960 000 calls → 80 000, a 12× speedup on cold requests).
     results = []
+    _loc_sp_map: Dict[str, list] = {}  # loc_id → [species_dict, ...]
     for loc in COASTAL_LOCATIONS:
         loc_coast = _location_coast(loc)
 
         if coast_q and coast_q not in ("all", "") and loc_coast != coast_q:
             continue
 
-        # Species relevant to this exact location
+        # Species relevant to this exact location — saved for reuse below
         loc_species = [s for s in filtered_species
                        if _species_present_at(s, loc)]
+        _loc_sp_map[loc["id"]] = loc_species
 
         def _activity_label(sc: int) -> str:
             if sc >= 100: return "peak"
@@ -1257,19 +1314,17 @@ def fishing_map_data() -> Any:
         _pick["ai_pick_rank"] = _rank
         _pick["ai_reasoning"] = _build_ai_reasoning(_pick, month)
 
-    # Collect unique species names for the autocomplete dropdown
-    species_names = sorted({s["name"] for s in SPECIES_DB})
+    # Autocomplete dropdown names — served from pre-computed cache
+    species_names = _get_all_species_names()
 
-    # Monthly activity summary across all matched locations (for the month planner)
-    # For each month, count how many locations are peak/good/fair/slow
-    # Build a location-id → COASTAL_LOCATIONS entry lookup to avoid O(n²) scans
-    _loc_by_id = {l["id"]: l for l in COASTAL_LOCATIONS}
+    # Monthly activity summary — reuse _loc_sp_map so we never call
+    # _species_present_at again (it was already called for every loc in the
+    # main loop above).  12 × locations × max() is now the only cost.
     monthly_summary = []
     for m in range(1, 13):
         peak_c = good_c = fair_c = 0
         for loc in results:
-            raw_loc = _loc_by_id.get(loc["id"], {})
-            loc_sp = [s for s in filtered_species if _species_present_at(s, raw_loc)]
+            loc_sp = _loc_sp_map.get(loc["id"], [])
             if not loc_sp:
                 continue
             best = max(_month_score(s, m) for s in loc_sp)
@@ -1279,22 +1334,24 @@ def fishing_map_data() -> Any:
         monthly_summary.append({"month": m, "peak": peak_c, "good": good_c, "fair": fair_c})
 
     # Trending species: in peak season this month, ranked by number of active locations.
-    # When the user has already filtered to a specific species we skip this (one species
-    # can't really "trend" against itself).
+    # frozenset lookup is O(1) vs re-calling _species_present_at O(n) per check.
     trending_species: list = []
     if not species_q:
+        _loc_sp_names = {
+            lid: frozenset(s["name"] for s in sp_list)
+            for lid, sp_list in _loc_sp_map.items()
+        }
         peak_sp_counts: dict = {}
         for sp in filtered_species:
             if month not in sp.get("peak_months", []):
                 continue
-            # Count how many results locations have this species present
             cnt = sum(
                 1 for loc in results
-                if loc["activity"] != "none" and _species_present_at(sp, _loc_by_id.get(loc["id"], {}))
+                if loc["activity"] != "none"
+                and sp["name"] in _loc_sp_names.get(loc["id"], frozenset())
             )
             if cnt > 0:
                 peak_sp_counts[sp["name"]] = cnt
-        # Return top 10 by number of active locations
         trending_species = sorted(peak_sp_counts, key=lambda n: -peak_sp_counts[n])[:10]
 
     # When a species filter is active, return enough metadata for the JS to infer
@@ -1316,7 +1373,7 @@ def fishing_map_data() -> Any:
     for r in results:
         r["community_catches"] = community_counts.get(r["id"], 0)
 
-    return jsonify({
+    _response_data = {
         "locations": results,
         "month": month,
         "season": season_q or None,
@@ -1327,7 +1384,13 @@ def fishing_map_data() -> Any:
         "monthly_summary": monthly_summary,
         "trending_species": trending_species,
         "species_meta": species_meta,
-    })
+    }
+    _fmap_cache_set(_fmap_key, _response_data)
+
+    resp = jsonify(_response_data)
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=30"
+    resp.headers["X-Cache"] = "MISS"
+    return resp
 
 
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
@@ -1726,7 +1789,13 @@ def map_structures() -> Any:
     ]
     all_structures = structures + custom
 
-    return jsonify({"structures": all_structures, "count": len(all_structures)})
+    resp = jsonify({"structures": all_structures, "count": len(all_structures)})
+    # Structure data (OSM/NOAA) and admin custom markers are user-agnostic, so
+    # shared/browser caching is safe.  30-minute TTL matches the server-side
+    # in-memory cache; stale-while-revalidate lets the browser serve a cached
+    # response while a background refresh happens, keeping the UI snappy.
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/marine-warnings", methods=["GET"])

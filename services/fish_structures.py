@@ -24,6 +24,7 @@ import json as _json
 import logging
 import time as _time
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from typing import Any, Dict, List, Optional, Set
 
 import requests
@@ -35,9 +36,10 @@ logger = logging.getLogger(__name__)
 # Entries expire after _CACHE_TTL seconds; the dict is capped at _CACHE_MAX
 # entries — oldest insertion is dropped first once the cap is hit.
 
-_CACHE: Dict[tuple, Dict[str, Any]] = {}   # {key: {"ts": float, "data": list}}
-_CACHE_TTL: int  = 1800   # 30 minutes — piers and reefs don't move
-_CACHE_MAX: int  = 256    # max bbox+types combinations kept in memory
+_CACHE: Dict[tuple, Dict[str, Any]] = {}   # {key: {"ts": float, "data": list, "failed": bool}}
+_CACHE_TTL: int       = 1800   # 30 minutes — piers and reefs don't move
+_CACHE_TTL_FAILED: int = 90    # 90 seconds — retry failed bboxes less aggressively
+_CACHE_MAX: int       = 256    # max bbox+types combinations kept in memory
 
 
 def _cache_key(
@@ -55,7 +57,8 @@ def _cache_evict() -> None:
     Flask worker threads without raising KeyError.
     """
     now = _time.time()
-    stale = [k for k, v in list(_CACHE.items()) if now - v["ts"] >= _CACHE_TTL]
+    stale = [k for k, v in list(_CACHE.items())
+             if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)]
     for k in stale:
         _CACHE.pop(k, None)          # safe if another thread already removed it
     while len(_CACHE) >= _CACHE_MAX:
@@ -384,7 +387,7 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
     # Build the combined query using named sets so each half can use the
     # correct output mode.  Both sets' results land in the same `elements`
     # array in the Overpass JSON response.
-    parts: List[str] = ["[out:json][timeout:40];"]
+    parts: List[str] = ["[out:json][timeout:20];"]
     if habitat:
         parts.append("(" + "".join(habitat) + ")->.h;")
     if struct:
@@ -480,8 +483,18 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
        bridge made of several road segments).
     2. **Proximity dedup** — same type within a per-type threshold → keep first.
        Prevents marker stacking when OSM and NOAA report the same wreck/reef.
+
+    The proximity check uses an O(n) grid-cell approach instead of the
+    naïve O(n²) scan.  Each accepted spot occupies the grid cell
+    ``(type, floor(lat/thresh), floor(lng/thresh))``.  A new spot is
+    rejected when any of the 9 cells covering its neighbourhood is
+    occupied.  Because the cell size equals the threshold, this correctly
+    identifies all pairs closer than ``thresh`` with at most a small
+    border-zone artefact (spots between 1× and √2× thresh apart near a
+    cell corner).  For display deduplication that trade-off is acceptable.
     """
     named_seen: Dict[str, bool] = {}
+    grid: Dict[tuple, bool] = {}   # (type, grid_lat, grid_lng) → True
     out: List[Dict[str, Any]] = []
 
     for spot in spots:
@@ -496,14 +509,20 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         # thresh == 0 → polygon habitat type; skip centroid-proximity dedup
         # so adjacent polygon patches are not erroneously collapsed.
         if thresh > 0:
+            gl = int(spot["lat"] / thresh)
+            gn = int(spot["lng"] / thresh)
+            t  = spot["type"]
+            # Check the 3×3 neighbourhood (9 cells) to catch spots that sit
+            # near a cell boundary and would otherwise slip through.
             too_close = any(
-                k["type"] == spot["type"]
-                and abs(k["lat"] - spot["lat"]) < thresh
-                and abs(k["lng"] - spot["lng"]) < thresh
-                for k in out
+                (t, gl + dl, gn + dm) in grid
+                for dl in (-1, 0, 1)
+                for dm in (-1, 0, 1)
             )
             if too_close:
                 continue
+            grid[(t, gl, gn)] = True
+
         out.append(spot)
 
     return out
@@ -521,7 +540,7 @@ def _post_overpass(query: str) -> List[Dict[str, Any]]:
 
     for url in _OVERPASS_URLS:
         try:
-            resp = requests.post(url, data=body, headers=headers, timeout=(8, 45))
+            resp = requests.post(url, data=body, headers=headers, timeout=(6, 22))
             resp.raise_for_status()
             return resp.json().get("elements", [])
         except Exception as exc:
@@ -560,7 +579,7 @@ def _get_noaa_enc_layer(
     }
     url = f"{_NOAA_ENC_BASE}/{layer}/query"
     try:
-        resp = requests.get(url, params=params, timeout=(5, 20))
+        resp = requests.get(url, params=params, timeout=(4, 12))
         resp.raise_for_status()
         return resp.json().get("features", [])
     except Exception as exc:
@@ -756,8 +775,11 @@ def find_fish_structures(
     lng        float    WGS-84 longitude
     type       str      One of ``VALID_TYPES``
     name       str      Feature name, or empty string
-    tip        str      Habitat / angling tip, or empty string
     =========  =======  ================================================
+
+    Fishing tips (``tip``) are intentionally omitted — the JS client owns
+    ``STRUCTURE_TIPS`` locally and looks them up as
+    ``f.tip || STRUCTURE_TIPS[f.type]``, halving the wire payload.
     """
     active_types: Set[str] = (
         set(VALID_TYPES) if types is None else (set(types) & VALID_TYPES)
@@ -768,29 +790,48 @@ def find_fish_structures(
     # ── Cache check  ─────────────────────────────────────────────────────────
     key    = _cache_key(south, west, north, east, active_types)
     cached = _CACHE.get(key)
-    if cached and (_time.time() - cached["ts"]) < _CACHE_TTL:
-        logger.debug("find_fish_structures cache hit key=%s", key)
-        return cached["data"]
+    if cached:
+        ttl = _CACHE_TTL_FAILED if cached.get("failed") else _CACHE_TTL
+        if (_time.time() - cached["ts"]) < ttl:
+            logger.debug("find_fish_structures cache hit key=%s failed=%s", key, cached.get("failed"))
+            return cached["data"]
 
-    # ── Fetch from sources  ───────────────────────────────────────────────────
-    # OSM via Overpass — catch any network/timeout errors so a slow or
-    # temporarily unavailable Overpass server never bubbles up as a 500.
-    try:
-        osm_spots = fetch_osm_structures(south, west, north, east, active_types)
-    except Exception as exc:
-        logger.warning("fetch_osm_structures failed, continuing with NOAA only: %s", exc)
-        osm_spots = []
+    # ── Fetch from sources in parallel  ──────────────────────────────────────
+    # OSM (Overpass) and NOAA ENC run concurrently so neither blocks the other.
+    # Each is caught individually so a NOAA outage never drops the OSM results.
+    osm_spots: List[Dict[str, Any]]  = []
+    noaa_spots: List[Dict[str, Any]] = []
+    fetch_failed = False
 
-    noaa_spots = fetch_noaa_structures(south, west, north, east, active_types)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        osm_fut  = pool.submit(fetch_osm_structures,  south, west, north, east, active_types)
+        noaa_fut = pool.submit(fetch_noaa_structures, south, west, north, east, active_types)
+
+        try:
+            osm_spots = osm_fut.result(timeout=28)
+        except FutureTimeoutError:
+            logger.warning("fetch_osm_structures timed out (parallel executor)")
+            fetch_failed = True
+        except Exception as exc:
+            logger.warning("fetch_osm_structures failed, continuing with NOAA only: %s", exc)
+            fetch_failed = True
+
+        try:
+            noaa_spots = noaa_fut.result(timeout=14)
+        except FutureTimeoutError:
+            logger.warning("fetch_noaa_structures timed out (parallel executor)")
+        except Exception as exc:
+            logger.warning("fetch_noaa_structures failed: %s", exc)
 
     # OSM first — it generally has richer names; NOAA supplements with
     # authoritative wreck/obstruction records not always in OSM.
     # Post-filter by type to guard against any source returning extras.
     all_spots = [s for s in osm_spots + noaa_spots if s["type"] in active_types]
     deduped   = _deduplicate(all_spots)
-
-    for spot in deduped:
-        spot["tip"] = STRUCTURE_TIPS.get(spot["type"], "")
+    # Tips are not attached server-side — the JS client owns STRUCTURE_TIPS and
+    # looks them up locally via ``f.tip || STRUCTURE_TIPS[f.type]``.  Omitting
+    # them here shrinks the wire payload and the in-memory cache by ~50 % for
+    # point markers and keeps the two tables in sync without duplication.
 
     logger.info(
         "find_fish_structures bbox=(%.4f,%.4f,%.4f,%.4f) types=%s "
@@ -806,6 +847,6 @@ def find_fish_structures(
     # ── Cache store  ──────────────────────────────────────────────────────────
     if len(_CACHE) >= _CACHE_MAX:
         _cache_evict()
-    _CACHE[key] = {"ts": _time.time(), "data": deduped}
+    _CACHE[key] = {"ts": _time.time(), "data": deduped, "failed": fetch_failed}
 
     return deduped
