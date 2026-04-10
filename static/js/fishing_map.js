@@ -997,7 +997,7 @@
                 // Keep spinner visible while Overpass fallback runs;
                 // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
-                showStructError("Couldn't load structure data; showing basic map markers.");
+                showStructError("Loading structure data from backup source\u2026");
                 _queryFishingSpotsFallback(s, w, n, e, key, thisGen, _structAbort ? _structAbort.signal : null);
             });
     }
@@ -1272,9 +1272,9 @@
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
-            if (err.name !== 'AbortError') {
-                console.error('[fishing-map] Overpass fallback error:', err);
-            }
+            if (err && err.name === 'AbortError') return;
+            console.error('[fishing-map] Overpass fallback error:', err);
+            showStructError("Couldn\u2019t load structure data; showing basic map markers.");
         });
     }
 

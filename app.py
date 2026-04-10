@@ -435,4 +435,6 @@ app = create_app()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5757))
-    app.run(host="0.0.0.0", port=port)
+    # threaded=True allows Flask's dev server to handle concurrent requests so
+    # a slow Overpass / NOAA fetch on one thread never blocks filter API calls.
+    app.run(host="0.0.0.0", port=port, threaded=True)
