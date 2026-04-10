@@ -140,6 +140,15 @@
     var stormRptLayer     = null;    // L.layerGroup for storm report markers
     var stormRptTimer     = null;    // debounce for viewport reload
 
+    // Per-layer AbortControllers — cancel in-flight requests when viewport changes
+    var sstAbort        = null;
+    var wildfireAbort   = null;
+    var seismicAbort    = null;
+    var metarAbort      = null;
+    var gaugeAbort      = null;
+    var stormRptAbort   = null;
+    var marineWarnAbort = null;
+
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
 
@@ -3192,6 +3201,8 @@
 
     function doFetchSstStations() {
         if (!sstLayerOn || !map) return;
+        if (sstAbort) { try { sstAbort.abort(); } catch (e) {} }
+        sstAbort = new AbortController();
         var b  = map.getBounds();
         var sw = b.getSouthWest();
         var ne = b.getNorthEast();
@@ -3200,7 +3211,7 @@
                   '&north=' + ne.lat.toFixed(3) +
                   '&east='  + ne.lng.toFixed(3);
 
-        fetch(url)
+        fetch(url, { signal: sstAbort.signal })
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 if (!sstLayerOn || !map) return;
@@ -3222,6 +3233,7 @@
                 });
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] SST stations fetch failed:', err);
             });
     }
@@ -3301,6 +3313,9 @@
 
     function doFetchWildfires() {
         if (!wildfireOn || !map) return;
+        if (wildfireAbort) { try { wildfireAbort.abort(); } catch (e) {} }
+        wildfireAbort = new AbortController();
+        var sig = wildfireAbort.signal;
         var b  = map.getBounds();
         var sw = b.getSouthWest();
         var ne = b.getNorthEast();
@@ -3310,8 +3325,8 @@
                    '&east='  + ne.lng.toFixed(3);
 
         Promise.all([
-            fetch('/api/map/wildfires?' + bbox).then(function (r) { return r.ok ? r.json() : {fires:[], count:0}; }),
-            fetch('/api/map/smoke?'     + bbox).then(function (r) { return r.ok ? r.json() : {polygons:[], count:0}; }),
+            fetch('/api/map/wildfires?' + bbox, { signal: sig }).then(function (r) { return r.ok ? r.json() : {fires:[], count:0}; }),
+            fetch('/api/map/smoke?'     + bbox, { signal: sig }).then(function (r) { return r.ok ? r.json() : {polygons:[], count:0}; }),
         ])
         .then(function (results) {
             if (!wildfireOn || !map) return;
@@ -3355,6 +3370,7 @@
             });
         })
         .catch(function (err) {
+            if (err && err.name === 'AbortError') return;
             console.warn('[fishing-map] wildfire/smoke fetch failed:', err);
         });
     }
@@ -3482,13 +3498,15 @@
 
     function doFetchSeismic() {
         if (!seismicOn || !map) return;
+        if (seismicAbort) { try { seismicAbort.abort(); } catch (e) {} }
+        seismicAbort = new AbortController();
         var b = map.getBounds();
         var url = '/api/map/seismic?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4)  +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: seismicAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!seismicOn || !map || !data) return;
@@ -3551,6 +3569,7 @@
                           (bigOnes ? ' · ' + bigOnes + ' M5+' : ''));
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] seismic fetch failed:', err);
             });
     }
@@ -3587,13 +3606,15 @@
 
     function doFetchMetar() {
         if (!metarOn || !map) return;
+        if (metarAbort) { try { metarAbort.abort(); } catch (e) {} }
+        metarAbort = new AbortController();
         var b   = map.getBounds();
         var url = '/api/map/metar?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4) +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: metarAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!metarOn || !map || !data) return;
@@ -3658,6 +3679,7 @@
                 }
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] METAR fetch failed:', err);
             });
     }
@@ -3764,13 +3786,15 @@
 
     function doFetchGauges() {
         if (!gaugeOn || !map) return;
+        if (gaugeAbort) { try { gaugeAbort.abort(); } catch (e) {} }
+        gaugeAbort = new AbortController();
         var b   = map.getBounds();
         var url = '/api/map/stream-gauges?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4) +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: gaugeAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!gaugeOn || !map || !data) return;
@@ -3820,6 +3844,7 @@
                           (flooding ? ' · ' + flooding + ' flooding' : ''));
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] gauge fetch failed:', err);
             });
     }
@@ -3856,13 +3881,15 @@
 
     function doFetchStormReports() {
         if (!stormRptOn || !map) return;
+        if (stormRptAbort) { try { stormRptAbort.abort(); } catch (e) {} }
+        stormRptAbort = new AbortController();
         var b   = map.getBounds();
         var url = '/api/map/storm-reports?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4) +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: stormRptAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!stormRptOn || !map || !data) return;
@@ -3912,6 +3939,7 @@
                     : 'No storm reports in past 24 h');
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] storm reports fetch failed:', err);
             });
     }
@@ -4053,6 +4081,8 @@
 
     function doFetchMarineWarnings() {
         if (!marineWarnOn || !map) return;
+        if (marineWarnAbort) { try { marineWarnAbort.abort(); } catch (e) {} }
+        marineWarnAbort = new AbortController();
         var b  = map.getBounds();
         var sw = b.getSouthWest();
         var ne = b.getNorthEast();
@@ -4061,7 +4091,7 @@
                   '&north=' + ne.lat.toFixed(4) +
                   '&east='  + ne.lng.toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: marineWarnAbort.signal })
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 if (!marineWarnOn || !map) return;
@@ -4085,6 +4115,7 @@
                 _updateMarineWarnBadge(data.count || 0);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] marine warnings fetch failed:', err);
             });
     }
@@ -4433,15 +4464,24 @@
 
     // Restore which layers were active in the previous session.
     // Must be called AFTER all wire*Layer() functions have attached their handlers.
+    //
+    // Layers are staggered 350 ms apart (starting 700 ms after boot) so the
+    // main fetchAndRender() and tile loads get network priority first.
     function restoreLayerState() {
         try {
             var raw = localStorage.getItem(LS_LAYERS_KEY);
             if (!raw) return;
             var active = JSON.parse(raw);
-            if (!Array.isArray(active)) return;
-            active.forEach(function (id) {
-                var btn = document.getElementById(id);
-                if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
+            if (!Array.isArray(active) || !active.length) return;
+            // Filter to valid IDs only
+            var valid = active.filter(function (id) {
+                return LAYER_BTN_IDS.indexOf(id) !== -1;
+            });
+            valid.forEach(function (id, i) {
+                setTimeout(function () {
+                    var btn = document.getElementById(id);
+                    if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
+                }, 700 + i * 350);
             });
         } catch (e) { /* malformed storage */ }
     }
