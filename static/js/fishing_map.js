@@ -4253,23 +4253,38 @@
         'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
         'fmap-gauge-btn', 'fmap-terminator-btn'
     ];
+    var LS_LAYERS_KEY = 'fmap_layers_v1';
+
+    function _saveLayerState() {
+        try {
+            var active = LAYER_BTN_IDS.filter(function (id) {
+                var b = document.getElementById(id);
+                return b && b.getAttribute('aria-pressed') === 'true';
+            });
+            localStorage.setItem(LS_LAYERS_KEY, JSON.stringify(active));
+        } catch (e) { /* storage unavailable */ }
+    }
 
     function _updateLayersBadge() {
-        var badge = document.getElementById('fmap-layers-active-badge');
-        if (!badge) return;
+        var badge    = document.getElementById('fmap-layers-active-badge');
+        var clearBtn = document.getElementById('fmap-layers-clear-btn');
         var count = 0;
         LAYER_BTN_IDS.forEach(function (id) {
             var b = document.getElementById(id);
             if (b && b.getAttribute('aria-pressed') === 'true') count++;
         });
-        badge.textContent = count;
-        badge.style.display = count > 0 ? '' : 'none';
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? '' : 'none';
+        }
+        if (clearBtn) clearBtn.hidden = count === 0;
     }
 
     function wireLayersPopup() {
         var triggerBtn = document.getElementById('fmap-layers-popup-btn');
         var popup      = document.getElementById('fmap-layers-popup');
         var closeBtn   = document.getElementById('fmap-layers-popup-close');
+        var clearBtn   = document.getElementById('fmap-layers-clear-btn');
         if (!triggerBtn || !popup) return;
 
         function openPopup() {
@@ -4295,6 +4310,24 @@
             });
         }
 
+        // "Clear all" turns off every active layer
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                LAYER_BTN_IDS.forEach(function (id) {
+                    var b = document.getElementById(id);
+                    if (b && b.getAttribute('aria-pressed') === 'true') b.click();
+                });
+            });
+        }
+
+        // Escape key closes popup
+        document.addEventListener('keydown', function (e) {
+            if (!popup.hidden && (e.key === 'Escape' || e.keyCode === 27)) {
+                closePopup();
+            }
+        });
+
         // Close when clicking outside the popup or trigger button
         document.addEventListener('click', function (e) {
             if (popup.hidden) return;
@@ -4302,16 +4335,44 @@
             closePopup();
         });
 
-        // After every layer-row click, refresh the active-count badge on the trigger
+        // After every layer-row click: show brief loading state, update badge, persist
         LAYER_BTN_IDS.forEach(function (id) {
             var btn = document.getElementById(id);
-            if (btn) {
-                btn.addEventListener('click', function () {
-                    // badge update runs after the wire*Layer handler has flipped aria-pressed
-                    setTimeout(_updateLayersBadge, 0);
-                });
-            }
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                // Run after the wire*Layer handler has flipped aria-pressed
+                setTimeout(function () {
+                    _updateLayersBadge();
+                    _saveLayerState();
+                }, 0);
+
+                // Show loading shimmer on the toggle track while data is fetching
+                // (only when turning ON — aria-pressed is still false at this point)
+                if (btn.getAttribute('aria-pressed') !== 'true') {
+                    btn.classList.add('fmap-layer-row--loading');
+                    setTimeout(function () {
+                        btn.classList.remove('fmap-layer-row--loading');
+                    }, 2200);
+                }
+            });
         });
+    }
+
+    // Restore which layers were active in the previous session.
+    // Must be called AFTER all wire*Layer() functions have attached their handlers.
+    function restoreLayerState() {
+        try {
+            var raw = localStorage.getItem(LS_LAYERS_KEY);
+            if (!raw) return;
+            var active = JSON.parse(raw);
+            if (!Array.isArray(active)) return;
+            active.forEach(function (id) {
+                var btn = document.getElementById(id);
+                if (btn && btn.getAttribute('aria-pressed') !== 'true') {
+                    btn.click();
+                }
+            });
+        } catch (e) { /* malformed storage */ }
     }
 
     // ─── Boot ─────────────────────────────────────────────────────────────────
@@ -4345,6 +4406,7 @@
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();
+                restoreLayerState();
                 // Kick off the structure query immediately when server-provided
                 // coordinates are available — don't wait for the NOAA API round-trip.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&

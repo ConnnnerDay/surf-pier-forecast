@@ -4741,6 +4741,13 @@ h2::before {
   justify-content: space-between;
   padding: 10px 12px 9px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  gap: 6px;
+}
+.fmap-layers-popup-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 .fmap-layers-popup-title {
   display: flex;
@@ -4925,6 +4932,65 @@ h2::before {
 }
 [data-theme="light"] .fmap-layer-row-toggle-knob {
   background: rgba(0,0,0,0.35);
+}
+
+/* Clear-all button */
+.fmap-layers-clear-btn {
+  font-size: 0.67rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.12);
+  color: #f87171;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.fmap-layers-clear-btn:hover {
+  background: rgba(239,68,68,0.25);
+  color: #fca5a5;
+}
+[data-theme="light"] .fmap-layers-clear-btn {
+  border-color: rgba(220,38,38,0.3);
+  background: rgba(220,38,38,0.06);
+  color: #dc2626;
+}
+
+/* Loading shimmer on the toggle track while fetching */
+@keyframes fmap-toggle-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+.fmap-layer-row--loading .fmap-layer-row-toggle {
+  animation: fmap-toggle-pulse 0.7s ease-in-out infinite;
+}
+.fmap-layer-row--loading .fmap-layer-row-toggle-knob {
+  background: rgba(255,255,255,0.7);
+}
+
+/* Mobile: anchor popup to bottom of map on narrow screens */
+@media (max-width: 480px) {
+  .fmap-layers-popup {
+    position: absolute;
+    top: auto;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    max-height: 65vh;
+    border-radius: 12px 12px 10px 10px;
+  }
+  .fmap-layers-popup-body {
+    max-height: calc(65vh - 44px);
+  }
+  .fmap-map-wrap--fullscreen .fmap-layers-popup {
+    top: auto;
+    right: 0.5rem;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    width: auto;
+  }
 }
 
 /* ── AI overlay markers ── */
