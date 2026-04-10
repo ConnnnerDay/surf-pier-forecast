@@ -455,6 +455,26 @@ def create_app() -> Flask:
     app.register_blueprint(api_bp)
     app.register_blueprint(views_bp)
 
+    # Pre-warm the fishing-map response cache so the first real user after a
+    # server restart gets a cache hit instead of waiting for the full scoring
+    # loop.  Uses the test client (provides a proper request/g context) and
+    # runs in a daemon thread so startup is not delayed.
+    import threading as _threading
+
+    def _prewarm_fishing_map_cache() -> None:
+        import time as _time
+        _time.sleep(2)  # let gunicorn workers and DB fully initialise first
+        try:
+            with app.test_client() as _c:
+                _c.get("/api/fishing-map")
+            logging.getLogger(__name__).info("fishing-map cache pre-warmed")
+        except Exception as _exc:
+            logging.getLogger(__name__).debug(
+                "fishing-map pre-warm failed (non-fatal): %s", _exc
+            )
+
+    _threading.Thread(target=_prewarm_fishing_map_cache, daemon=True).start()
+
     return app
 
 

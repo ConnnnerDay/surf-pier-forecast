@@ -1076,6 +1076,20 @@ def _build_ai_reasoning(loc_result: dict, month: int) -> str:
     return " ".join(parts)
 
 
+# ── Species-names list (autocomplete) — pre-computed once ─────────────────────
+# sorted({s["name"] for s in SPECIES_DB}) iterates 800+ species every cold
+# request.  The list never changes at runtime so we compute it once and reuse.
+_SPECIES_NAMES_CACHE: Optional[list] = None
+
+
+def _get_all_species_names() -> list:
+    global _SPECIES_NAMES_CACHE
+    if _SPECIES_NAMES_CACHE is None:
+        from storage.species_loader import SPECIES_DB
+        _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
+    return _SPECIES_NAMES_CACHE
+
+
 # ── Fishing-map response cache ─────────────────────────────────────────────────
 # The scoring loop iterates 100+ locations × 800+ species every request.  Cache
 # the fully-built response dict for 5 minutes so rapid filter changes (species,
@@ -1300,8 +1314,8 @@ def fishing_map_data() -> Any:
         _pick["ai_pick_rank"] = _rank
         _pick["ai_reasoning"] = _build_ai_reasoning(_pick, month)
 
-    # Collect unique species names for the autocomplete dropdown
-    species_names = sorted({s["name"] for s in SPECIES_DB})
+    # Autocomplete dropdown names — served from pre-computed cache
+    species_names = _get_all_species_names()
 
     # Monthly activity summary — reuse _loc_sp_map so we never call
     # _species_present_at again (it was already called for every loc in the

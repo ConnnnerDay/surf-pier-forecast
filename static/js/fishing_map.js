@@ -68,7 +68,8 @@
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox+types key → array of spot objects
-    var _ssSaveTimer     = null;     // debounce timer for sessionStorage writes
+    var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
+    var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
@@ -727,8 +728,15 @@
                            iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
     }
 
-    function renderFishingSpots(spots) {
+    function renderFishingSpots(spots, cacheKey) {
         if (!fishingSpotLayer) return;
+        // Skip rebuilding all Leaflet markers when the same data is already
+        // displayed — common when the user pans within the same 0.5° grid cell.
+        if (cacheKey && cacheKey === _lastRenderedSpotKey &&
+                fishingSpotLayer.getLayers().length) {
+            return;
+        }
+        _lastRenderedSpotKey = cacheKey || null;
         fishingSpotLayer.clearLayers();
         _customMarkers = [];  // will be repopulated by renderCustomMarkers below
 
@@ -899,8 +907,9 @@
                         var ve  = Math.ceil ((b.getEast()  + exp) * 2) / 2;
                         // s/w/n/e here are the pre-fetch corridor bounds (closure)
                         if (s <= vs && w <= vw && n >= vn && e >= ve) {
-                            spotCache[vs + ',' + vw + ',' + vn + ',' + ve] = data.structures;
-                            renderFishingSpots(data.structures);
+                            var _vkey = vs + ',' + vw + ',' + vn + ',' + ve;
+                            spotCache[_vkey] = data.structures;
+                            renderFishingSpots(data.structures, _vkey);
                             _updateSpotTypeHint();
                         }
                     }
@@ -916,6 +925,7 @@
         if (!map || !fishingSpotLayer) return;
         var zoom = map.getZoom();
         if (zoom < 8) {
+            _lastRenderedSpotKey = null;
             fishingSpotLayer.clearLayers();
             return;
         }
@@ -956,7 +966,7 @@
         var key = s + ',' + w + ',' + n + ',' + e + (typesStr ? '|' + typesStr : '');
 
         if (spotCache[key]) {
-            renderFishingSpots(spotCache[key]);
+            renderFishingSpots(spotCache[key], key);
             _updateSpotTypeHint();
             return;
         }
@@ -967,7 +977,7 @@
         var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
         if (superResult) {
             spotCache[key] = superResult;  // alias so next pan hits directly
-            renderFishingSpots(superResult);
+            renderFishingSpots(superResult, key);
             _updateSpotTypeHint();
             return;
         }
@@ -998,6 +1008,7 @@
 
                 // Server signals the viewport is too large — show hint, clear layers.
                 if (data.zoom_required) {
+                    _lastRenderedSpotKey = null;
                     fishingSpotLayer.clearLayers();
                     var hint = document.getElementById('fmap-struct-filters-hint');
                     if (hint) hint.textContent = 'Zoom in further to see structure markers';
@@ -1008,7 +1019,7 @@
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 spotCache[key] = spots;
                 _ssSave();
-                renderFishingSpots(spots);
+                renderFishingSpots(spots, key);
                 // Restore normal hint text (may have been set to zoom-in message)
                 _updateSpotTypeHint();
             })
@@ -1290,7 +1301,7 @@
             _ssSave();
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
-            renderFishingSpots(deduped);
+            renderFishingSpots(deduped, key);
             _updateSpotTypeHint();
         })
         .catch(function (err) {
