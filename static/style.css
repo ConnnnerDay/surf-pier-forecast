@@ -4884,6 +4884,107 @@ h2::before {
   backdrop-filter: blur(6px);
 }
 
+/* ── ArcGIS Live Feeds: badge on map control buttons ── */
+.fmap-layer-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ── Marine warnings popup ── */
+.fmap-warn-popup {
+  font-size: 0.82rem;
+  color: var(--text, #e2e8f0);
+  max-width: 290px;
+}
+.fmap-warn-popup strong {
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 2px;
+}
+.fmap-warn-popup em {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.fmap-warn-expires {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  display: block;
+  margin-top: 2px;
+}
+.fmap-warn-marine-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #0ea5e9;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.fmap-warn-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin: 0.4rem 0 0;
+  opacity: 0.85;
+}
+.fmap-warn-instruction {
+  font-size: 0.73rem;
+  line-height: 1.4;
+  margin: 0.3rem 0 0;
+  padding: 0.3rem 0.5rem;
+  border-left: 2px solid #f97316;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* ── Storm tracker: position dot ── */
+.fmap-storm-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 10px rgba(0,0,0,0.6), 0 0 18px currentColor;
+  animation: fmap-storm-pulse 2s ease-in-out infinite;
+}
+@keyframes fmap-storm-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* ── Storm tracker popup ── */
+.fmap-storm-popup {
+  font-size: 0.82rem;
+  color: var(--text, #e2e8f0);
+}
+.fmap-storm-popup strong {
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 2px;
+}
+.fmap-storm-popup em {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  font-style: normal;
+}
+
 /* ── Hotspot header ── */
 .fmap-hotspots-header {
   display: flex;

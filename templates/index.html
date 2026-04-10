@@ -683,6 +683,17 @@
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
+                    {# Marine warnings overlay — NWS live feed via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-marine-warn-btn" class="fmap-ctrl-btn" title="Show active NWS marine warnings &amp; advisories" aria-label="Toggle marine warnings overlay" aria-pressed="false" style="position:relative">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span id="fmap-marine-warn-badge" class="fmap-layer-badge" style="display:none"></span>
+                    </button>
+                    {# Storm tracker overlay — NHC/JTWC live feed via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-storm-tracker-btn" class="fmap-ctrl-btn" title="Show active tropical storm tracks" aria-label="Toggle storm tracker overlay" aria-pressed="false" style="position:relative">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M12 12h.01"/></svg>
+                        <span id="fmap-storm-badge" class="fmap-layer-badge" style="display:none"></span>
+                    </button>
+                    <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
                     <button type="button" id="fmap-admin-edit-btn" class="fmap-ctrl-btn" title="Edit markers (admin)" aria-label="Toggle admin marker edit mode" aria-pressed="false" hidden>
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

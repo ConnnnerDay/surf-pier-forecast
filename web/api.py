@@ -1729,6 +1729,61 @@ def map_structures() -> Any:
     return jsonify({"structures": all_structures, "count": len(all_structures)})
 
 
+@bp.route("/api/map/marine-warnings", methods=["GET"])
+def map_marine_warnings() -> Any:
+    """Return active NWS watches/warnings intersecting the bounding box.
+
+    Proxies the ArcGIS Living Atlas NWS_Watches_Warnings_v1 live feed so the
+    frontend never needs to contact arcgis.com directly.
+
+    Query params
+    ------------
+    south, west, north, east : float  – viewport bounding box (required)
+
+    Returns
+    -------
+    JSON: { "warnings": [...], "count": <int> }
+
+    Each warning has: event, severity, summary, description, instruction,
+    affected, expires (ISO-8601), color (hex), marine (bool), rings ([[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_marine_warnings
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope(
+            "invalid_params",
+            "south, west, north, east query parameters are required floats",
+        )), 400
+
+    warnings = fetch_marine_warnings(south, west, north, east)
+    return jsonify({"warnings": warnings, "count": len(warnings)})
+
+
+@bp.route("/api/map/active-storms", methods=["GET"])
+def map_active_storms() -> Any:
+    """Return active tropical storms with forecast track and uncertainty cone.
+
+    Proxies the ArcGIS Living Atlas Active_Hurricanes_v1 live feed.
+    Returns an empty list when no storms are active.
+
+    Returns
+    -------
+    JSON: { "storms": [...], "count": <int> }
+
+    Each storm has: name, category, lat, lng, wind_mph, pressure_mb,
+    track ([[lat,lng]]), cone (list of rings [[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_active_storms
+
+    storms = fetch_active_storms()
+    return jsonify({"storms": storms, "count": len(storms)})
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():
