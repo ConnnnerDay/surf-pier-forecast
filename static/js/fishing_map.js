@@ -4245,6 +4245,75 @@
         badge.style.display = count > 0 ? '' : 'none';
     }
 
+    // ─── Layers popup panel ───────────────────────────────────────────────────
+    // IDs of all layer-row buttons inside the popup (must match the HTML ids).
+    var LAYER_BTN_IDS = [
+        'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
+        'fmap-storm-rpt-btn', 'fmap-sst-btn', 'fmap-sea-ice-btn',
+        'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
+        'fmap-gauge-btn', 'fmap-terminator-btn'
+    ];
+
+    function _updateLayersBadge() {
+        var badge = document.getElementById('fmap-layers-active-badge');
+        if (!badge) return;
+        var count = 0;
+        LAYER_BTN_IDS.forEach(function (id) {
+            var b = document.getElementById(id);
+            if (b && b.getAttribute('aria-pressed') === 'true') count++;
+        });
+        badge.textContent = count;
+        badge.style.display = count > 0 ? '' : 'none';
+    }
+
+    function wireLayersPopup() {
+        var triggerBtn = document.getElementById('fmap-layers-popup-btn');
+        var popup      = document.getElementById('fmap-layers-popup');
+        var closeBtn   = document.getElementById('fmap-layers-popup-close');
+        if (!triggerBtn || !popup) return;
+
+        function openPopup() {
+            popup.hidden = false;
+            triggerBtn.classList.add('fmap-ctrl-btn--active');
+            triggerBtn.setAttribute('aria-pressed', 'true');
+        }
+        function closePopup() {
+            popup.hidden = true;
+            triggerBtn.classList.remove('fmap-ctrl-btn--active');
+            triggerBtn.setAttribute('aria-pressed', 'false');
+        }
+
+        triggerBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (popup.hidden) { openPopup(); } else { closePopup(); }
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closePopup();
+            });
+        }
+
+        // Close when clicking outside the popup or trigger button
+        document.addEventListener('click', function (e) {
+            if (popup.hidden) return;
+            if (popup.contains(e.target) || triggerBtn.contains(e.target)) return;
+            closePopup();
+        });
+
+        // After every layer-row click, refresh the active-count badge on the trigger
+        LAYER_BTN_IDS.forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    // badge update runs after the wire*Layer handler has flipped aria-pressed
+                    setTimeout(_updateLayersBadge, 0);
+                });
+            }
+        });
+    }
+
     // ─── Boot ─────────────────────────────────────────────────────────────────
     function boot() {
         ensureLeaflet()
@@ -4264,6 +4333,7 @@
                 wireFullscreen();
                 wireShareBtn();
                 wireAdminMode();
+                wireLayersPopup();
                 wireSstLayer();
                 wireWildfireLayer();
                 wireSeaIceLayer();
