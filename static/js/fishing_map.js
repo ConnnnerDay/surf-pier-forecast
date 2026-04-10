@@ -73,6 +73,7 @@
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
+    var _mainAbort           = null; // AbortController for the in-flight /api/fishing-map fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -1926,7 +1927,11 @@
 
         if (els.loading) { els.loading.style.opacity = '1'; els.loading.style.pointerEvents = 'auto'; }
 
-        fetch(url)
+        // Cancel any in-flight request so stale filter responses never overwrite fresh ones.
+        if (_mainAbort) { try { _mainAbort.abort(); } catch (e) {} }
+        _mainAbort = new AbortController();
+
+        fetch(url, { signal: _mainAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 _hideMainLoading();
@@ -1952,6 +1957,7 @@
                 setTimeout(function () { loadCommunityFeed(); }, 900);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return; // superseded by newer request
                 _hideMainLoading();
                 console.error('[fishing-map] fetch error:', err);
             });

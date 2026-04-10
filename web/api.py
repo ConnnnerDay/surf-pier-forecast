@@ -1076,6 +1076,34 @@ def _build_ai_reasoning(loc_result: dict, month: int) -> str:
     return " ".join(parts)
 
 
+# ── Fishing-map response cache ─────────────────────────────────────────────────
+# The scoring loop iterates 100+ locations × 800+ species every request.  Cache
+# the fully-built response dict for 5 minutes so rapid filter changes (species,
+# coast, season…) that repeat a previous combination return instantly.
+# Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
+#        min_temp, max_temp)  — the complete set of params that affect output.
+_FMAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_FMAP_CACHE_TTL: int = 300   # 5 minutes — scores only change when the month rolls over
+_FMAP_CACHE_MAX: int = 128   # cap entries; each is ~50 KB serialised
+
+
+def _fmap_cache_get(key: tuple) -> Optional[Dict[str, Any]]:
+    entry = _FMAP_CACHE.get(key)
+    if entry and (time.time() - entry["ts"]) < _FMAP_CACHE_TTL:
+        return entry["data"]
+    return None
+
+
+def _fmap_cache_set(key: tuple, data: Dict[str, Any]) -> None:
+    if len(_FMAP_CACHE) >= _FMAP_CACHE_MAX:
+        # Drop the oldest insertion
+        try:
+            del _FMAP_CACHE[next(iter(_FMAP_CACHE))]
+        except (KeyError, StopIteration):
+            pass
+    _FMAP_CACHE[key] = {"ts": time.time(), "data": data}
+
+
 @bp.route("/api/fishing-map")
 def fishing_map_data() -> Any:
     """Return location suitability data for the AI Fishing Map.
@@ -1149,6 +1177,16 @@ def fishing_map_data() -> Any:
     # Tide phase is informational metadata returned in the response for the
     # frontend to display; the backend scores don't change by tide currently.
     include_tide_hint = tide_q in {"incoming", "outgoing", "high", "low"}
+
+    # ── Cache check — return pre-built response dict if still fresh ───────────
+    _fmap_key = (species_q, coast_q, category_q, month, season_q,
+                 time_q, tide_q, _min_temp, _max_temp)
+    _cached_response = _fmap_cache_get(_fmap_key)
+    if _cached_response is not None:
+        resp = jsonify(_cached_response)
+        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=30"
+        resp.headers["X-Cache"] = "HIT"
+        return resp
 
     # -- filter the species DB once -------------------------------------------
     filtered_species = SPECIES_DB
@@ -1316,7 +1354,7 @@ def fishing_map_data() -> Any:
     for r in results:
         r["community_catches"] = community_counts.get(r["id"], 0)
 
-    return jsonify({
+    _response_data = {
         "locations": results,
         "month": month,
         "season": season_q or None,
@@ -1327,7 +1365,13 @@ def fishing_map_data() -> Any:
         "monthly_summary": monthly_summary,
         "trending_species": trending_species,
         "species_meta": species_meta,
-    })
+    }
+    _fmap_cache_set(_fmap_key, _response_data)
+
+    resp = jsonify(_response_data)
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=30"
+    resp.headers["X-Cache"] = "MISS"
+    return resp
 
 
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
