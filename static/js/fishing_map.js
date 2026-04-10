@@ -140,6 +140,15 @@
     var stormRptLayer     = null;    // L.layerGroup for storm report markers
     var stormRptTimer     = null;    // debounce for viewport reload
 
+    // Per-layer AbortControllers — cancel in-flight requests when viewport changes
+    var sstAbort        = null;
+    var wildfireAbort   = null;
+    var seismicAbort    = null;
+    var metarAbort      = null;
+    var gaugeAbort      = null;
+    var stormRptAbort   = null;
+    var marineWarnAbort = null;
+
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
 
@@ -3192,6 +3201,8 @@
 
     function doFetchSstStations() {
         if (!sstLayerOn || !map) return;
+        if (sstAbort) { try { sstAbort.abort(); } catch (e) {} }
+        sstAbort = new AbortController();
         var b  = map.getBounds();
         var sw = b.getSouthWest();
         var ne = b.getNorthEast();
@@ -3200,7 +3211,7 @@
                   '&north=' + ne.lat.toFixed(3) +
                   '&east='  + ne.lng.toFixed(3);
 
-        fetch(url)
+        fetch(url, { signal: sstAbort.signal })
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 if (!sstLayerOn || !map) return;
@@ -3222,6 +3233,7 @@
                 });
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] SST stations fetch failed:', err);
             });
     }
@@ -3301,6 +3313,9 @@
 
     function doFetchWildfires() {
         if (!wildfireOn || !map) return;
+        if (wildfireAbort) { try { wildfireAbort.abort(); } catch (e) {} }
+        wildfireAbort = new AbortController();
+        var sig = wildfireAbort.signal;
         var b  = map.getBounds();
         var sw = b.getSouthWest();
         var ne = b.getNorthEast();
@@ -3310,8 +3325,8 @@
                    '&east='  + ne.lng.toFixed(3);
 
         Promise.all([
-            fetch('/api/map/wildfires?' + bbox).then(function (r) { return r.ok ? r.json() : {fires:[], count:0}; }),
-            fetch('/api/map/smoke?'     + bbox).then(function (r) { return r.ok ? r.json() : {polygons:[], count:0}; }),
+            fetch('/api/map/wildfires?' + bbox, { signal: sig }).then(function (r) { return r.ok ? r.json() : {fires:[], count:0}; }),
+            fetch('/api/map/smoke?'     + bbox, { signal: sig }).then(function (r) { return r.ok ? r.json() : {polygons:[], count:0}; }),
         ])
         .then(function (results) {
             if (!wildfireOn || !map) return;
@@ -3355,6 +3370,7 @@
             });
         })
         .catch(function (err) {
+            if (err && err.name === 'AbortError') return;
             console.warn('[fishing-map] wildfire/smoke fetch failed:', err);
         });
     }
@@ -3482,13 +3498,15 @@
 
     function doFetchSeismic() {
         if (!seismicOn || !map) return;
+        if (seismicAbort) { try { seismicAbort.abort(); } catch (e) {} }
+        seismicAbort = new AbortController();
         var b = map.getBounds();
         var url = '/api/map/seismic?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4)  +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: seismicAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!seismicOn || !map || !data) return;
@@ -3551,6 +3569,7 @@
                           (bigOnes ? ' · ' + bigOnes + ' M5+' : ''));
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] seismic fetch failed:', err);
             });
     }
@@ -3587,13 +3606,15 @@
 
     function doFetchMetar() {
         if (!metarOn || !map) return;
+        if (metarAbort) { try { metarAbort.abort(); } catch (e) {} }
+        metarAbort = new AbortController();
         var b   = map.getBounds();
         var url = '/api/map/metar?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4) +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: metarAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!metarOn || !map || !data) return;
@@ -3658,6 +3679,7 @@
                 }
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] METAR fetch failed:', err);
             });
     }
@@ -3764,13 +3786,15 @@
 
     function doFetchGauges() {
         if (!gaugeOn || !map) return;
+        if (gaugeAbort) { try { gaugeAbort.abort(); } catch (e) {} }
+        gaugeAbort = new AbortController();
         var b   = map.getBounds();
         var url = '/api/map/stream-gauges?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4) +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: gaugeAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!gaugeOn || !map || !data) return;
@@ -3820,6 +3844,7 @@
                           (flooding ? ' · ' + flooding + ' flooding' : ''));
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] gauge fetch failed:', err);
             });
     }
@@ -3856,13 +3881,15 @@
 
     function doFetchStormReports() {
         if (!stormRptOn || !map) return;
+        if (stormRptAbort) { try { stormRptAbort.abort(); } catch (e) {} }
+        stormRptAbort = new AbortController();
         var b   = map.getBounds();
         var url = '/api/map/storm-reports?south=' + b.getSouth().toFixed(4) +
                   '&west='  + b.getWest().toFixed(4) +
                   '&north=' + b.getNorth().toFixed(4) +
                   '&east='  + b.getEast().toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: stormRptAbort.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!stormRptOn || !map || !data) return;
@@ -3912,6 +3939,7 @@
                     : 'No storm reports in past 24 h');
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] storm reports fetch failed:', err);
             });
     }
@@ -4053,6 +4081,8 @@
 
     function doFetchMarineWarnings() {
         if (!marineWarnOn || !map) return;
+        if (marineWarnAbort) { try { marineWarnAbort.abort(); } catch (e) {} }
+        marineWarnAbort = new AbortController();
         var b  = map.getBounds();
         var sw = b.getSouthWest();
         var ne = b.getNorthEast();
@@ -4061,7 +4091,7 @@
                   '&north=' + ne.lat.toFixed(4) +
                   '&east='  + ne.lng.toFixed(4);
 
-        fetch(url)
+        fetch(url, { signal: marineWarnAbort.signal })
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 if (!marineWarnOn || !map) return;
@@ -4085,6 +4115,7 @@
                 _updateMarineWarnBadge(data.count || 0);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[fishing-map] marine warnings fetch failed:', err);
             });
     }
@@ -4245,6 +4276,216 @@
         badge.style.display = count > 0 ? '' : 'none';
     }
 
+    // ─── Layers popup panel ───────────────────────────────────────────────────
+    // IDs of all layer-row buttons inside the popup (must match the HTML ids).
+    var LAYER_BTN_IDS = [
+        'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
+        'fmap-storm-rpt-btn', 'fmap-sst-btn', 'fmap-sea-ice-btn',
+        'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
+        'fmap-gauge-btn', 'fmap-terminator-btn'
+    ];
+    var LS_LAYERS_KEY   = 'fmap_layers_v1';
+    var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
+
+    // Map from section data-section value → layer button IDs it contains
+    var SECTION_LAYER_MAP = {
+        weather: ['fmap-marine-warn-btn', 'fmap-storm-tracker-btn',
+                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn'],
+        ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
+                  'fmap-wildfire-btn', 'fmap-seismic-btn'],
+        obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn']
+    };
+
+    function _saveLayerState() {
+        try {
+            var active = LAYER_BTN_IDS.filter(function (id) {
+                var b = document.getElementById(id);
+                return b && b.getAttribute('aria-pressed') === 'true';
+            });
+            localStorage.setItem(LS_LAYERS_KEY, JSON.stringify(active));
+        } catch (e) { /* storage unavailable */ }
+    }
+
+    function _updateLayersBadge() {
+        var badge    = document.getElementById('fmap-layers-active-badge');
+        var clearBtn = document.getElementById('fmap-layers-clear-btn');
+        var total = 0;
+        LAYER_BTN_IDS.forEach(function (id) {
+            var b = document.getElementById(id);
+            if (b && b.getAttribute('aria-pressed') === 'true') total++;
+        });
+        if (badge) {
+            badge.textContent = total;
+            badge.style.display = total > 0 ? '' : 'none';
+        }
+        if (clearBtn) clearBtn.hidden = total === 0;
+
+        // Update per-section active count badges
+        Object.keys(SECTION_LAYER_MAP).forEach(function (sec) {
+            var countEl = document.getElementById('fmap-sec-count-' + sec);
+            if (!countEl) return;
+            var n = SECTION_LAYER_MAP[sec].filter(function (id) {
+                var b = document.getElementById(id);
+                return b && b.getAttribute('aria-pressed') === 'true';
+            }).length;
+            countEl.textContent = n + ' on';
+            countEl.style.display = n > 0 ? '' : 'none';
+        });
+    }
+
+    function wireLayersPopup() {
+        var triggerBtn = document.getElementById('fmap-layers-popup-btn');
+        var popup      = document.getElementById('fmap-layers-popup');
+        var closeBtn   = document.getElementById('fmap-layers-popup-close');
+        var clearBtn   = document.getElementById('fmap-layers-clear-btn');
+        if (!triggerBtn || !popup) return;
+
+        var _closeTimer = null;
+
+        function openPopup() {
+            clearTimeout(_closeTimer);
+            popup.classList.remove('fmap-layers-popup--closing');
+            popup.hidden = false;
+            triggerBtn.classList.add('fmap-ctrl-btn--active');
+            triggerBtn.setAttribute('aria-pressed', 'true');
+            // Move focus to first layer row for keyboard users
+            var firstRow = popup.querySelector('.fmap-layer-row, .fmap-layers-section-hdr');
+            if (firstRow) firstRow.focus();
+        }
+
+        function closePopup() {
+            popup.classList.add('fmap-layers-popup--closing');
+            _closeTimer = setTimeout(function () {
+                popup.hidden = true;
+                popup.classList.remove('fmap-layers-popup--closing');
+            }, 140); // matches fmap-layers-out duration
+            triggerBtn.classList.remove('fmap-ctrl-btn--active');
+            triggerBtn.setAttribute('aria-pressed', 'false');
+            triggerBtn.focus(); // return focus to trigger
+        }
+
+        triggerBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (popup.hidden || popup.classList.contains('fmap-layers-popup--closing')) {
+                openPopup();
+            } else {
+                closePopup();
+            }
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closePopup();
+            });
+        }
+
+        // "Clear all" turns off every active layer
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                LAYER_BTN_IDS.forEach(function (id) {
+                    var b = document.getElementById(id);
+                    if (b && b.getAttribute('aria-pressed') === 'true') b.click();
+                });
+            });
+        }
+
+        // Escape key closes popup
+        document.addEventListener('keydown', function (e) {
+            if (!popup.hidden && (e.key === 'Escape' || e.keyCode === 27)) {
+                closePopup();
+            }
+        });
+
+        // Close when clicking outside the popup or trigger button
+        document.addEventListener('click', function (e) {
+            if (popup.hidden) return;
+            if (popup.contains(e.target) || triggerBtn.contains(e.target)) return;
+            closePopup();
+        });
+
+        // ── Collapsible section headers ─────────────────────────────────────
+        var collapsedSections = [];
+        try {
+            var raw = localStorage.getItem(LS_SECTIONS_KEY);
+            if (raw) collapsedSections = JSON.parse(raw) || [];
+        } catch (e) { /* ignore */ }
+
+        popup.querySelectorAll('.fmap-layers-section').forEach(function (section) {
+            var sec   = section.getAttribute('data-section');
+            var hdr   = section.querySelector('.fmap-layers-section-hdr');
+            if (!hdr) return;
+
+            // Restore collapsed state from previous session
+            if (collapsedSections.indexOf(sec) !== -1) {
+                section.classList.add('fmap-layers-section--collapsed');
+                hdr.setAttribute('aria-expanded', 'false');
+            }
+
+            hdr.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var isCollapsed = section.classList.toggle('fmap-layers-section--collapsed');
+                hdr.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+
+                // Persist collapsed state
+                try {
+                    if (isCollapsed) {
+                        if (collapsedSections.indexOf(sec) === -1) collapsedSections.push(sec);
+                    } else {
+                        collapsedSections = collapsedSections.filter(function (s) { return s !== sec; });
+                    }
+                    localStorage.setItem(LS_SECTIONS_KEY, JSON.stringify(collapsedSections));
+                } catch (e) { /* ignore */ }
+            });
+        });
+
+        // ── Per-row: loading shimmer, badge refresh, state persistence ───────
+        LAYER_BTN_IDS.forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                // Run after the wire*Layer handler has flipped aria-pressed
+                setTimeout(function () {
+                    _updateLayersBadge();
+                    _saveLayerState();
+                }, 0);
+
+                // Loading shimmer on toggle track while data fetches (turning ON only)
+                if (btn.getAttribute('aria-pressed') !== 'true') {
+                    btn.classList.add('fmap-layer-row--loading');
+                    setTimeout(function () {
+                        btn.classList.remove('fmap-layer-row--loading');
+                    }, 2200);
+                }
+            });
+        });
+    }
+
+    // Restore which layers were active in the previous session.
+    // Must be called AFTER all wire*Layer() functions have attached their handlers.
+    //
+    // Layers are staggered 350 ms apart (starting 700 ms after boot) so the
+    // main fetchAndRender() and tile loads get network priority first.
+    function restoreLayerState() {
+        try {
+            var raw = localStorage.getItem(LS_LAYERS_KEY);
+            if (!raw) return;
+            var active = JSON.parse(raw);
+            if (!Array.isArray(active) || !active.length) return;
+            // Filter to valid IDs only
+            var valid = active.filter(function (id) {
+                return LAYER_BTN_IDS.indexOf(id) !== -1;
+            });
+            valid.forEach(function (id, i) {
+                setTimeout(function () {
+                    var btn = document.getElementById(id);
+                    if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
+                }, 700 + i * 350);
+            });
+        } catch (e) { /* malformed storage */ }
+    }
+
     // ─── Boot ─────────────────────────────────────────────────────────────────
     function boot() {
         ensureLeaflet()
@@ -4264,6 +4505,7 @@
                 wireFullscreen();
                 wireShareBtn();
                 wireAdminMode();
+                wireLayersPopup();
                 wireSstLayer();
                 wireWildfireLayer();
                 wireSeaIceLayer();
@@ -4275,6 +4517,7 @@
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();
+                restoreLayerState();
                 // Kick off the structure query immediately when server-provided
                 // coordinates are available — don't wait for the NOAA API round-trip.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&

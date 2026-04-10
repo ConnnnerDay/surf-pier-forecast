@@ -4711,6 +4711,357 @@ h2::before {
   background: rgba(14,95,120,0.9);
 }
 
+/* ── Layers popup panel ── */
+.fmap-layers-popup {
+  position: absolute;
+  top: 0.6rem;
+  right: 3rem; /* sits just left of the toolbar */
+  z-index: 460;
+  width: 270px;
+  background: rgba(10,19,29,0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  color: var(--text, #e2e8f0);
+  overflow: hidden;
+  /* slide-in animation */
+  transform-origin: top right;
+  animation: fmap-layers-in 0.18s ease;
+}
+@keyframes fmap-layers-in {
+  from { opacity: 0; transform: scale(0.93) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0);     }
+}
+@keyframes fmap-layers-out {
+  from { opacity: 1; transform: scale(1)    translateY(0);     }
+  to   { opacity: 0; transform: scale(0.93) translateY(-6px);  }
+}
+.fmap-layers-popup--closing {
+  animation: fmap-layers-out 0.14s ease forwards;
+  pointer-events: none;
+}
+
+.fmap-layers-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 9px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  gap: 6px;
+}
+.fmap-layers-popup-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.fmap-layers-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #b0c4ce);
+}
+.fmap-layers-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #8fa8b8);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.fmap-layers-popup-close:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.fmap-layers-popup-body {
+  padding: 6px 0 8px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+/* Collapsible section wrapper */
+.fmap-layers-section {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.fmap-layers-section:last-child { border-bottom: none; }
+
+/* Clickable section header */
+.fmap-layers-section-hdr {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 12px 6px 14px;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.fmap-layers-section-hdr:hover {
+  background: rgba(255,255,255,0.04);
+}
+.fmap-layers-section-hdr-label {
+  flex: 1;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(176,196,206,0.55);
+}
+/* Active-layer count badge in the section header */
+.fmap-layers-section-hdr-count {
+  font-size: 0.63rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(31,168,201,0.2);
+  color: #1fa8c9;
+  display: none; /* shown by JS when count > 0 */
+}
+/* Chevron rotates when collapsed */
+.fmap-layers-section-hdr-chevron {
+  color: rgba(176,196,206,0.4);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.fmap-layers-section--collapsed .fmap-layers-section-hdr-chevron {
+  transform: rotate(-90deg);
+}
+
+/* Rows container — animated collapse */
+.fmap-layers-section-rows {
+  overflow: hidden;
+  max-height: 600px; /* large enough for any section */
+  transition: max-height 0.22s ease, opacity 0.18s ease;
+  opacity: 1;
+}
+.fmap-layers-section--collapsed .fmap-layers-section-rows {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Light theme overrides for section headers */
+[data-theme="light"] .fmap-layers-section-hdr-label {
+  color: rgba(71,85,105,0.6);
+}
+[data-theme="light"] .fmap-layers-section {
+  border-color: rgba(0,0,0,0.05);
+}
+
+/* Each layer row — the actual toggle button */
+.fmap-layer-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 14px 7px 10px;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text, #e2e8f0);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.fmap-layer-row:hover {
+  background: rgba(255,255,255,0.06);
+}
+/* Active state — row is ON */
+.fmap-layer-row.fmap-ctrl-btn--active {
+  background: rgba(14,95,120,0.18);
+}
+.fmap-layer-row.fmap-ctrl-btn--active .fmap-layer-row-toggle {
+  background: rgba(31,168,201,0.85);
+  border-color: rgba(31,168,201,0.9);
+}
+.fmap-layer-row.fmap-ctrl-btn--active .fmap-layer-row-toggle-knob {
+  transform: translateX(14px);
+}
+.fmap-layer-row.fmap-ctrl-btn--active .fmap-layer-row-name {
+  color: #1fa8c9;
+}
+
+/* Icon bubble */
+.fmap-layer-row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.07);
+}
+.fmap-layer-row-icon--warn   { background: rgba(239,68,68,0.18);  color: #f87171; }
+.fmap-layer-row-icon--storm  { background: rgba(251,191,36,0.18); color: #fbbf24; }
+.fmap-layer-row-icon--ocean  { background: rgba(56,189,248,0.18); color: #38bdf8; }
+.fmap-layer-row-icon--fire   { background: rgba(249,115,22,0.18); color: #fb923c; }
+.fmap-layer-row-icon--seismic{ background: rgba(168,85,247,0.18); color: #c084fc; }
+.fmap-layer-row-icon--obs    { background: rgba(52,211,153,0.18); color: #34d399; }
+.fmap-layer-row-icon--astro  { background: rgba(148,163,184,0.18);color: #94a3b8; }
+
+/* Label + description */
+.fmap-layer-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fmap-layer-row-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text, #e2e8f0);
+  transition: color 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.fmap-layer-row-desc {
+  font-size: 0.7rem;
+  color: rgba(176,196,206,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toggle switch track */
+.fmap-layer-row-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  width: 30px; height: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.1);
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+.fmap-layer-row-toggle-knob {
+  position: absolute;
+  left: 1px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  transition: transform 0.15s, background 0.15s;
+}
+.fmap-layer-row.fmap-ctrl-btn--active .fmap-layer-row-toggle-knob {
+  background: #fff;
+}
+
+/* Inline badge (count) inside the name */
+.fmap-layer-badge--inline {
+  position: static;
+  display: inline-flex;
+  transform: none;
+  top: auto; right: auto;
+  font-size: 0.62rem;
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .fmap-layers-popup {
+  background: rgba(255,255,255,0.97);
+  border-color: rgba(0,0,0,0.1);
+  color: #1e293b;
+}
+[data-theme="light"] .fmap-layers-popup-close {
+  color: #64748b;
+}
+[data-theme="light"] .fmap-layers-popup-close:hover {
+  background: rgba(0,0,0,0.06);
+  color: #1e293b;
+}
+[data-theme="light"] .fmap-layer-row {
+  color: #1e293b;
+}
+[data-theme="light"] .fmap-layer-row:hover {
+  background: rgba(0,0,0,0.04);
+}
+[data-theme="light"] .fmap-layer-row.fmap-ctrl-btn--active {
+  background: rgba(14,95,120,0.08);
+}
+[data-theme="light"] .fmap-layer-row-desc {
+  color: rgba(71,85,105,0.7);
+}
+[data-theme="light"] .fmap-layer-row-toggle {
+  border-color: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .fmap-layer-row-toggle-knob {
+  background: rgba(0,0,0,0.35);
+}
+
+/* Clear-all button */
+.fmap-layers-clear-btn {
+  font-size: 0.67rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.12);
+  color: #f87171;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.fmap-layers-clear-btn:hover {
+  background: rgba(239,68,68,0.25);
+  color: #fca5a5;
+}
+[data-theme="light"] .fmap-layers-clear-btn {
+  border-color: rgba(220,38,38,0.3);
+  background: rgba(220,38,38,0.06);
+  color: #dc2626;
+}
+
+/* Loading shimmer on the toggle track while fetching */
+@keyframes fmap-toggle-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+.fmap-layer-row--loading .fmap-layer-row-toggle {
+  animation: fmap-toggle-pulse 0.7s ease-in-out infinite;
+}
+.fmap-layer-row--loading .fmap-layer-row-toggle-knob {
+  background: rgba(255,255,255,0.7);
+}
+
+/* Mobile: anchor popup to bottom of map on narrow screens */
+@media (max-width: 480px) {
+  .fmap-layers-popup {
+    position: absolute;
+    top: auto;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    max-height: 65vh;
+    border-radius: 12px 12px 10px 10px;
+  }
+  .fmap-layers-popup-body {
+    max-height: calc(65vh - 44px);
+  }
+  .fmap-map-wrap--fullscreen .fmap-layers-popup {
+    top: auto;
+    right: 0.5rem;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    width: auto;
+  }
+}
+
 /* ── AI overlay markers ── */
 .fmap-ai-pick-wrap { background: none; border: none; }
 .fmap-ai-pick-dot {
@@ -5664,6 +6015,10 @@ h2::before {
 .fmap-map-wrap--fullscreen .fmap-map-controls {
   top: 1rem;
   right: 1rem;
+}
+.fmap-map-wrap--fullscreen .fmap-layers-popup {
+  top: 1rem;
+  right: 3.4rem;
 }
 
 /* ── Map ctrl divider ── */

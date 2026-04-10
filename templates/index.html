@@ -719,51 +719,10 @@
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
-                    {# Marine warnings overlay — NWS live feed via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-marine-warn-btn" class="fmap-ctrl-btn" title="Show active NWS marine warnings &amp; advisories" aria-label="Toggle marine warnings overlay" aria-pressed="false" style="position:relative">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <span id="fmap-marine-warn-badge" class="fmap-layer-badge" style="display:none"></span>
-                    </button>
-                    {# Storm tracker overlay — NHC/JTWC live feed via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-storm-tracker-btn" class="fmap-ctrl-btn" title="Show active tropical storm tracks" aria-label="Toggle storm tracker overlay" aria-pressed="false" style="position:relative">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M12 12h.01"/></svg>
-                        <span id="fmap-storm-badge" class="fmap-layer-badge" style="display:none"></span>
-                    </button>
-                    {# Recent hurricane seasons track overlay — via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-recent-storms-btn" class="fmap-ctrl-btn" title="Show recent season hurricane tracks" aria-label="Toggle recent storm tracks overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    </button>
-                    {# SST / Coral Reef stations — NOAA CoRIS live temperatures via ArcGIS #}
-                    <button type="button" id="fmap-sst-btn" class="fmap-ctrl-btn" title="Show live sea-surface temperatures (NOAA CoRIS)" aria-label="Toggle SST station overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
-                    </button>
-                    {# Wildfire + smoke overlay — NIFC fires + NOAA smoke forecast via ArcGIS #}
-                    <button type="button" id="fmap-wildfire-btn" class="fmap-ctrl-btn" title="Show active wildfires &amp; smoke forecast" aria-label="Toggle wildfire and smoke overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/><path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" fill="currentColor" stroke="none" opacity=".4"/></svg>
-                    </button>
-                    {# Arctic sea ice extent — NSIDC monthly boundary via ArcGIS #}
-                    <button type="button" id="fmap-sea-ice-btn" class="fmap-ctrl-btn" title="Show Arctic sea ice extent (NSIDC)" aria-label="Toggle sea ice overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                    </button>
-                    {# USGS Seismic overlay — earthquake events via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-seismic-btn" class="fmap-ctrl-btn" title="Show USGS earthquake events (M2.5+)" aria-label="Toggle seismic overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="2 12 5 12 7 6 9 18 11 10 13 14 15 12 22 12"/></svg>
-                    </button>
-                    {# NOAA METAR surface obs — real-time weather stations via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-metar-btn" class="fmap-ctrl-btn" title="Show NOAA METAR surface observations" aria-label="Toggle METAR station overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-                    </button>
-                    {# Day/Night Terminator — live shadow polygon via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-terminator-btn" class="fmap-ctrl-btn" title="Show day/night terminator" aria-label="Toggle day/night terminator overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                    </button>
-                    {# Live Stream Gauges — USGS/NWS water levels via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-gauge-btn" class="fmap-ctrl-btn" title="Show live stream gauges (USGS/NWS)" aria-label="Toggle stream gauge overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16c2-4 4-4 6-8s4-4 6-8"/></svg>
-                    </button>
-                    {# NOAA Storm Reports — 24h severe weather via ArcGIS Living Atlas #}
-                    <button type="button" id="fmap-storm-rpt-btn" class="fmap-ctrl-btn" title="Show NOAA storm reports (hail, tornado, wind — past 24h)" aria-label="Toggle storm reports overlay" aria-pressed="false">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><polyline points="13 11 9 17 15 17 11 23"/></svg>
+                    {# Layers popup trigger — opens the live data layer selector panel #}
+                    <button type="button" id="fmap-layers-popup-btn" class="fmap-ctrl-btn" title="Toggle map data layers" aria-label="Open map layers panel" aria-pressed="false" style="position:relative">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                        <span id="fmap-layers-active-badge" class="fmap-layer-badge" style="display:none"></span>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
@@ -771,6 +730,207 @@
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                 </div>
+
+                {# ── Layers popup panel — toggle live data overlays ─────────────────── #}
+                <div id="fmap-layers-popup" class="fmap-layers-popup" role="dialog" aria-label="Map data layers" aria-modal="false" hidden>
+                    <div class="fmap-layers-popup-header">
+                        <span class="fmap-layers-popup-title">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            Map Layers
+                        </span>
+                        <div class="fmap-layers-popup-header-actions">
+                            <button type="button" id="fmap-layers-clear-btn" class="fmap-layers-clear-btn" aria-label="Turn off all layers" hidden>
+                                Clear all
+                            </button>
+                            <button type="button" id="fmap-layers-popup-close" class="fmap-layers-popup-close" aria-label="Close layers panel">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="fmap-layers-popup-body">
+
+                        {# ── Section: Weather & Marine Safety ── #}
+                        <div class="fmap-layers-section" data-section="weather">
+                            <button type="button" class="fmap-layers-section-hdr" aria-expanded="true">
+                                <span class="fmap-layers-section-hdr-label">Weather &amp; Marine Safety</span>
+                                <span class="fmap-layers-section-hdr-count" id="fmap-sec-count-weather"></span>
+                                <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="fmap-layers-section-rows">
+
+                                <button type="button" id="fmap-marine-warn-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NWS active marine warnings &amp; advisories">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--warn">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Marine Warnings <span id="fmap-marine-warn-badge" class="fmap-layer-badge fmap-layer-badge--inline" style="display:none"></span></span>
+                                        <span class="fmap-layer-row-desc">NWS watches, warnings &amp; advisories</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-storm-tracker-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Active NHC/JTWC tropical storm tracks">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--storm">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M12 12h.01"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Storm Tracker <span id="fmap-storm-badge" class="fmap-layer-badge fmap-layer-badge--inline" style="display:none"></span></span>
+                                        <span class="fmap-layer-row-desc">Active tropical cyclone tracks · NHC/JTWC</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-recent-storms-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Recent season hurricane track history">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--storm">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Hurricane History</span>
+                                        <span class="fmap-layer-row-desc">Recent season storm tracks · ArcGIS Living Atlas</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-storm-rpt-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NOAA storm reports — hail, tornado, wind (past 24 h)">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--warn">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><polyline points="13 11 9 17 15 17 11 23"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Storm Reports</span>
+                                        <span class="fmap-layer-row-desc">Hail, tornado &amp; wind reports · past 24 h</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                            </div>
+                        </div>{# /section weather #}
+
+                        {# ── Section: Ocean & Environment ── #}
+                        <div class="fmap-layers-section" data-section="ocean">
+                            <button type="button" class="fmap-layers-section-hdr" aria-expanded="true">
+                                <span class="fmap-layers-section-hdr-label">Ocean &amp; Environment</span>
+                                <span class="fmap-layers-section-hdr-count" id="fmap-sec-count-ocean"></span>
+                                <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="fmap-layers-section-rows">
+
+                                <button type="button" id="fmap-sst-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Live sea-surface temperatures from NOAA CoRIS">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--ocean">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Sea Surface Temp</span>
+                                        <span class="fmap-layer-row-desc">Live SST readings · NOAA CoRIS stations</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-sea-ice-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Arctic sea ice extent — NSIDC monthly boundary">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--ocean">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Arctic Sea Ice</span>
+                                        <span class="fmap-layer-row-desc">Monthly extent boundary · NSIDC</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-wildfire-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Active wildfires and smoke forecast">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--fire">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/><path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" fill="currentColor" stroke="none" opacity=".4"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Wildfires &amp; Smoke</span>
+                                        <span class="fmap-layer-row-desc">Active fires + smoke forecast · NIFC/NOAA</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-seismic-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="USGS earthquake events M2.5 and above">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--seismic">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="2 12 5 12 7 6 9 18 11 10 13 14 15 12 22 12"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Earthquakes</span>
+                                        <span class="fmap-layer-row-desc">M2.5+ seismic events · USGS</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                            </div>
+                        </div>{# /section ocean #}
+
+                        {# ── Section: Observations ── #}
+                        <div class="fmap-layers-section" data-section="obs">
+                            <button type="button" class="fmap-layers-section-hdr" aria-expanded="true">
+                                <span class="fmap-layers-section-hdr-label">Observations</span>
+                                <span class="fmap-layers-section-hdr-count" id="fmap-sec-count-obs"></span>
+                                <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="fmap-layers-section-rows">
+
+                                <button type="button" id="fmap-metar-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NOAA METAR real-time surface weather stations">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--obs">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">METAR Stations</span>
+                                        <span class="fmap-layer-row-desc">Real-time surface obs · NOAA</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-gauge-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Live stream gauge water levels from USGS and NWS">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--obs">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16c2-4 4-4 6-8s4-4 6-8"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Stream Gauges</span>
+                                        <span class="fmap-layer-row-desc">Live water levels · USGS/NWS</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-terminator-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="Live day/night shadow boundary">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--astro">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Day / Night</span>
+                                        <span class="fmap-layer-row-desc">Live shadow terminator line</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                            </div>
+                        </div>{# /section obs #}
+
+                    </div>
+                </div>
+                {# /layers popup #}
 
                 {# Admin marker edit modal — only rendered to admins #}
                 {% if g.user and g.user.get('is_admin') %}
