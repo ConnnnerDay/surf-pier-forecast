@@ -114,6 +114,8 @@
     var marineWarnTimer   = null;    // debounce for viewport-based reload
     var stormTrackerOn    = false;   // storm tracker overlay active
     var stormTrackerLayer = null;    // L.layerGroup for storm graphics
+    var recentStormsOn    = false;   // recent hurricane tracks overlay active
+    var recentStormsLayer = null;    // L.layerGroup for seasonal storm tracks
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -3133,6 +3135,109 @@
         if (backdrop) backdrop.addEventListener('click', _closeAdminModal);
     }
 
+    // ─── Recent Hurricane Tracks overlay (ArcGIS Live Feeds) ─────────────────
+
+    function wireRecentStorms() {
+        if (!map) return;
+        recentStormsLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-recent-storms-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                recentStormsOn = !recentStormsOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', recentStormsOn);
+                btn.setAttribute('aria-pressed', recentStormsOn ? 'true' : 'false');
+                if (recentStormsOn) {
+                    recentStormsLayer.addTo(map);
+                    doFetchRecentStorms();
+                } else {
+                    map.removeLayer(recentStormsLayer);
+                    recentStormsLayer.clearLayers();
+                }
+            });
+        }
+    }
+
+    function doFetchRecentStorms() {
+        if (!recentStormsOn || !map) return;
+
+        fetch('/api/map/recent-storms')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                if (!recentStormsOn || !map) return;
+                recentStormsLayer.clearLayers();
+                var tracks = data.tracks || [];
+
+                tracks.forEach(function (t) {
+                    if (!t.path || t.path.length < 2) return;
+
+                    var line = L.polyline(t.path, {
+                        color:   t.color || '#94a3b8',
+                        weight:  2,
+                        opacity: 0.65,
+                        smoothFactor: 1,
+                    });
+
+                    // Label marker at the start of each track
+                    var firstPt = t.path[0];
+                    var nameIcon = L.divIcon({
+                        className: '',
+                        html: '<span class="fmap-track-label">' + esc(t.name) + '</span>',
+                        iconAnchor: [0, 0],
+                    });
+                    var labelMarker = L.marker(firstPt, {
+                        icon:             nameIcon,
+                        keyboard:         false,
+                        interactive:      true,
+                        zIndexOffset:     -200,
+                    });
+
+                    var popup = _recentStormPopup(t);
+                    line.bindPopup(popup, { maxWidth: 260 });
+                    labelMarker.bindPopup(popup, { maxWidth: 260 });
+
+                    line.addTo(recentStormsLayer);
+                    labelMarker.addTo(recentStormsLayer);
+                });
+
+                // Fit map to all tracks on first load if we're at default zoom
+                if (tracks.length > 0 && map.getZoom() <= 5) {
+                    var allPts = [];
+                    tracks.forEach(function (t) { allPts = allPts.concat(t.path); });
+                    if (allPts.length) {
+                        try { map.fitBounds(L.latLngBounds(allPts), { padding: [30, 30], maxZoom: 6 }); }
+                        catch (e) { /* ignore */ }
+                    }
+                }
+
+                showToast(tracks.length + ' storm track' + (tracks.length !== 1 ? 's' : '') + ' loaded');
+            })
+            .catch(function (err) {
+                console.warn('[fishing-map] recent storm tracks fetch failed:', err);
+                showToast('Storm track data unavailable');
+            });
+    }
+
+    function _recentStormPopup(t) {
+        var dates = '';
+        if (t.start_dtg) {
+            try {
+                var s = new Date(t.start_dtg).toLocaleDateString([], { month:'short', day:'numeric' });
+                var e = t.end_dtg ? new Date(t.end_dtg).toLocaleDateString([], { month:'short', day:'numeric' }) : '';
+                dates = s + (e ? ' – ' + e : '');
+            } catch (ex) { /* ignore */ }
+        }
+        return (
+            '<div class="fmap-storm-popup">' +
+            '<strong>' + esc(t.name) + '</strong>' +
+            (t.basin ? ' <small style="opacity:.6">(' + esc(t.basin) + ')</small>' : '') +
+            '<br><em>' + esc(t.category) + '</em>' +
+            (dates ? '<br><small>' + dates + '</small>' : '') +
+            '<br><small style="opacity:.5">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
+            '</div>'
+        );
+    }
+
     // ─── Marine Warnings overlay (ArcGIS Live Feeds) ─────────────────────────
 
     function wireMarineWarnings() {
@@ -3378,6 +3483,7 @@
                 wireFullscreen();
                 wireShareBtn();
                 wireAdminMode();
+                wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();
                 // Kick off the structure query immediately when server-provided

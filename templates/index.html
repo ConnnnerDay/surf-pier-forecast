@@ -241,6 +241,24 @@
     </details>
     </div><!-- /.section-block next-3-days -->
 
+    <!-- NDFD Wind Forecast (ArcGIS Live Feed) — populated client-side -->
+    <div class="section-block" data-section-id="wind-outlook" data-section-label="Wind Outlook" id="wind-outlook-block" style="display:none">
+    <details class="collapsible-module" id="wind-outlook-details">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                Wind Outlook
+            </span>
+            <span class="collapsible-module-sub" id="wind-outlook-sub">NDFD forecast</span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; 3-hour intervals</p>
+            <div id="wind-outlook-grid" class="wind-outlook-grid"></div>
+        </div>
+    </details>
+    </div><!-- /.section-block wind-outlook -->
+
     <!-- Tides -->
     <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
     <details class="collapsible-module">
@@ -692,6 +710,10 @@
                     <button type="button" id="fmap-storm-tracker-btn" class="fmap-ctrl-btn" title="Show active tropical storm tracks" aria-label="Toggle storm tracker overlay" aria-pressed="false" style="position:relative">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M12 12h.01"/></svg>
                         <span id="fmap-storm-badge" class="fmap-layer-badge" style="display:none"></span>
+                    </button>
+                    {# Recent hurricane seasons track overlay — via ArcGIS Living Atlas #}
+                    <button type="button" id="fmap-recent-storms-btn" class="fmap-ctrl-btn" title="Show recent season hurricane tracks" aria-label="Toggle recent storm tracks overlay" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
@@ -1823,6 +1845,86 @@ if ('serviceWorker' in navigator) {
             }, 300);
         }, 5000);
     } catch (e) {}
+})();
+</script>
+
+<script>
+/* ── ArcGIS Live Feeds: Air Quality + NDFD Wind Forecast ─────────────────── */
+(function () {
+    var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : 0;
+    var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : 0;
+    if (!lat || !lng) return;
+
+    // ── Air Quality stat card ─────────────────────────────────────────────────
+    fetch('/api/weather/air-quality?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || !data.aqi) return;
+            var aqi = data.aqi;
+            var card   = document.getElementById('aqi-stat-card');
+            var valEl  = document.getElementById('aqi-stat-value');
+            var detEl  = document.getElementById('aqi-stat-detail');
+            if (!card || !valEl || !detEl) return;
+
+            valEl.innerHTML =
+                '<span class="aqi-badge" style="background:' + aqi.color + '">' +
+                aqi.category + '</span>';
+            var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
+            detEl.innerHTML =
+                aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
+            card.hidden = false;
+        })
+        .catch(function () {});
+
+    // ── NDFD Wind Forecast collapsible section ────────────────────────────────
+    fetch('/api/weather/wind-forecast?lat=' + lat + '&lng=' + lng)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data || !data.periods || !data.periods.length) return;
+            var block = document.getElementById('wind-outlook-block');
+            var grid  = document.getElementById('wind-outlook-grid');
+            if (!block || !grid) return;
+
+            var COMPASS_ARROWS = {
+                N:'↓', NE:'↙', E:'←', SE:'↖', S:'↑', SW:'↗', W:'→', NW:'↘'
+            };
+
+            var html = '';
+            data.periods.forEach(function (p) {
+                var arrow = COMPASS_ARROWS[p.wind_dir] || '·';
+                var timeStr = '';
+                if (p.interval_start) {
+                    try {
+                        var d = new Date(p.interval_start);
+                        timeStr = d.toLocaleString([], { weekday:'short', hour:'numeric' });
+                    } catch (e) {}
+                }
+                var speedClass = p.wind_speed >= 25 ? 'wind-fc--gale'
+                               : p.wind_speed >= 15 ? 'wind-fc--strong'
+                               : p.wind_speed >= 8  ? 'wind-fc--moderate'
+                               : 'wind-fc--light';
+                html +=
+                    '<div class="wind-fc-cell ' + speedClass + '">' +
+                    '<span class="wind-fc-time">' + timeStr + '</span>' +
+                    '<span class="wind-fc-arrow" title="' + (p.wind_dir || '') + '">' + arrow + '</span>' +
+                    '<span class="wind-fc-dir">' + (p.wind_dir || '–') + '</span>' +
+                    '<span class="wind-fc-speed">' + p.wind_speed + ' kt</span>' +
+                    (p.wind_gust ? '<span class="wind-fc-gust">G ' + p.wind_gust + '</span>' : '') +
+                    '</div>';
+            });
+            grid.innerHTML = html;
+
+            // Update subtitle with first period summary
+            var sub = document.getElementById('wind-outlook-sub');
+            if (sub && data.periods[0]) {
+                var p0 = data.periods[0];
+                sub.textContent = (p0.wind_dir || '') + ' ' + p0.wind_speed + ' kt'
+                    + (p0.wind_gust ? ' G' + p0.wind_gust : '');
+            }
+
+            block.style.display = '';
+        })
+        .catch(function () {});
 })();
 </script>
 </html>

@@ -4985,6 +4985,83 @@ h2::before {
   font-style: normal;
 }
 
+/* ── Recent storm track labels ── */
+.fmap-track-label {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: rgba(0,0,0,0.55);
+  border-radius: 3px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+/* ── AQI badge in stat card ── */
+.aqi-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* ── NDFD Wind Forecast grid ── */
+.wind-outlook-source {
+  font-size: 0.7rem;
+  opacity: 0.55;
+  margin: 0 0 0.75rem;
+}
+.wind-outlook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.45rem;
+}
+.wind-fc-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.5rem 0.3rem;
+  border-radius: 8px;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-light, #1e3547);
+}
+.wind-fc-time {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+.wind-fc-arrow {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.wind-fc-dir {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.wind-fc-speed {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.wind-fc-gust {
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+.wind-fc-cell.wind-fc--gale    { border-color: #ef4444; }
+.wind-fc-cell.wind-fc--strong  { border-color: #f97316; }
+.wind-fc-cell.wind-fc--moderate { border-color: #eab308; }
+.wind-fc-cell.wind-fc--light   { border-color: var(--border-light, #1e3547); }
+.wind-fc-cell.wind-fc--gale   .wind-fc-speed { color: #ef4444; }
+.wind-fc-cell.wind-fc--strong .wind-fc-speed { color: #f97316; }
+
 /* ── Hotspot header ── */
 .fmap-hotspots-header {
   display: flex;

@@ -1784,6 +1784,89 @@ def map_active_storms() -> Any:
     return jsonify({"storms": storms, "count": len(storms)})
 
 
+@bp.route("/api/map/recent-storms", methods=["GET"])
+def map_recent_storms() -> Any:
+    """Return observed storm tracks for recent hurricane seasons.
+
+    Proxies the ArcGIS Living Atlas Recent_Hurricanes_v1 live feed (NHC/JTWC).
+
+    Query params
+    ------------
+    basin : str  – optional basin filter: AL, EP, CP, WP, …
+
+    Returns
+    -------
+    JSON: { "tracks": [...], "count": <int> }
+
+    Each track has: storm_id, name, basin, start_dtg, end_dtg, ss_max,
+    category, color, path ([[lat,lng]])
+    """
+    from services.arcgis_live_feeds import fetch_recent_storm_tracks
+
+    basin  = request.args.get("basin", "").strip().upper() or None
+    tracks = fetch_recent_storm_tracks(basin=basin)
+    return jsonify({"tracks": tracks, "count": len(tracks)})
+
+
+@bp.route("/api/weather/air-quality", methods=["GET"])
+def weather_air_quality() -> Any:
+    """Return the nearest OpenAQ PM2.5 reading to the given coordinates.
+
+    Proxies the ArcGIS Living Atlas Air_Quality_PM25_Latest_Results live feed.
+
+    Query params
+    ------------
+    lat : float  – latitude  (required)
+    lng : float  – longitude (required)
+
+    Returns
+    -------
+    JSON: { "aqi": { location, city, value, unit, updated, category, color,
+                     distance_km } | null }
+    """
+    from services.arcgis_live_feeds import fetch_air_quality
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+
+    result = fetch_air_quality(lat, lng)
+    return jsonify({"aqi": result})
+
+
+@bp.route("/api/weather/wind-forecast", methods=["GET"])
+def weather_wind_forecast() -> Any:
+    """Return NDFD wind forecast (speed/direction/gust) for a location.
+
+    Proxies the ArcGIS Living Atlas NDFD_WindForecast_v1 live feed
+    (NOAA National Digital Forecast Database, city-level, 3-h intervals).
+
+    Query params
+    ------------
+    lat : float  – latitude  (required)
+    lng : float  – longitude (required)
+
+    Returns
+    -------
+    JSON: { "periods": [...], "count": <int> }
+
+    Each period has: interval_start (ISO-8601), wind_dir_deg, wind_dir,
+    wind_speed (knots), wind_gust (knots)
+    """
+    from services.arcgis_live_feeds import fetch_wind_forecast
+
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+
+    periods = fetch_wind_forecast(lat, lng)
+    return jsonify({"periods": periods, "count": len(periods)})
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():
