@@ -465,6 +465,11 @@ def create_app() -> Flask:
         import time as _time
         _time.sleep(2)  # let gunicorn workers and DB fully initialise first
         try:
+            # Build the location→species index before the first real request
+            # so _species_present_at is never called at request time.
+            from web.api import _get_loc_species_all
+            _get_loc_species_all()
+            # Then warm the full response cache via a real request context
             with app.test_client() as _c:
                 _c.get("/api/fishing-map")
             logging.getLogger(__name__).info("fishing-map cache pre-warmed")

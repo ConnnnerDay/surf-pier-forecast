@@ -61,17 +61,25 @@ def _cache_key(
             frozenset(types))
 
 
+_CACHE_EVICT_INTERVAL: float = 60.0   # seconds between full TTL scans
+_cache_last_evict: float = 0.0
+
+
 def _cache_evict() -> None:
     """Purge entries older than TTL; if still over cap, drop oldest by insertion.
 
-    Uses .pop() and try/except to handle concurrent deletes from multiple
-    Flask worker threads without raising KeyError.
+    Full TTL scan is throttled to once per _CACHE_EVICT_INTERVAL so that
+    high-traffic periods don't run O(n) list comprehension on every miss.
+    Uses .pop() and try/except to handle concurrent deletes safely.
     """
+    global _cache_last_evict
     now = _time.time()
-    stale = [k for k, v in list(_CACHE.items())
-             if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)]
-    for k in stale:
-        _CACHE.pop(k, None)          # safe if another thread already removed it
+    if now - _cache_last_evict >= _CACHE_EVICT_INTERVAL:
+        _cache_last_evict = now
+        stale = [k for k, v in list(_CACHE.items())
+                 if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)]
+        for k in stale:
+            _CACHE.pop(k, None)      # safe if another thread already removed it
     while len(_CACHE) >= _CACHE_MAX:
         try:
             del _CACHE[next(iter(_CACHE))]
@@ -737,18 +745,32 @@ def fetch_noaa_structures(
     List of ``{lat, lng, type, name}`` dicts.  Returns an empty list (rather
     than raising) if the NOAA service is unavailable.
     """
-    spots: List[Dict[str, Any]] = []
-
+    # Determine which layers to fetch, then request them all in parallel.
+    # Previously the 3 NOAA layers were sequential; each _get_noaa_enc_layer()
+    # call takes up to 4+12 s on a cold connection.  Running them concurrently
+    # halves the worst-case NOAA latency when both wrecks and shoals are active.
+    layer_jobs: List[tuple] = []  # [(layer_id, spot_type), ...]
     if "wreck" in types:
-        feats = _get_noaa_enc_layer(_NOAA_LAYER_WRECKS, south, west, north, east)
-        spots.extend(_noaa_features_to_spots(feats, "wreck"))
-
+        layer_jobs.append((_NOAA_LAYER_WRECKS, "wreck"))
     if types & {"shoal", "reef"}:
-        feats = _get_noaa_enc_layer(_NOAA_LAYER_OBSTRUCTIONS, south, west, north, east)
-        spots.extend(_noaa_features_to_spots(feats, "shoal"))
+        layer_jobs.append((_NOAA_LAYER_OBSTRUCTIONS, "shoal"))
+        layer_jobs.append((_NOAA_LAYER_ROCKS,        "shoal"))
 
-        feats = _get_noaa_enc_layer(_NOAA_LAYER_ROCKS, south, west, north, east)
-        spots.extend(_noaa_features_to_spots(feats, "shoal"))
+    if not layer_jobs:
+        return []
+
+    spots: List[Dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=len(layer_jobs)) as pool:
+        futs = {
+            pool.submit(_get_noaa_enc_layer, lid, south, west, north, east): stype
+            for lid, stype in layer_jobs
+        }
+        for fut, stype in futs.items():
+            try:
+                feats = fut.result(timeout=14)
+                spots.extend(_noaa_features_to_spots(feats, stype))
+            except Exception as exc:
+                logger.warning("NOAA layer fetch failed (type=%s): %s", stype, exc)
 
     return spots
 

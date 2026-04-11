@@ -32,6 +32,7 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
+from services.fish_structures import VALID_TYPES, find_fish_structures
 from storage.sqlite import (
     add_log_entry,
     add_map_catch,
@@ -41,6 +42,7 @@ from storage.sqlite import (
     delete_map_catch,
     get_catch_counts_near_locations,
     get_community_hotspots,
+    get_custom_markers,
     get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
@@ -1086,6 +1088,28 @@ _SPECIES_NAMES_CACHE: Optional[list] = None
 # every request.
 _SPECIES_LOWER_INDEX: Optional[List[Tuple[str, Any]]] = None
 
+# ── Location → species index — pre-computed once at first warm request ─────────
+# _species_present_at(sp, loc) is O(1) per call but it is called
+# len(SPECIES_DB) × len(COASTAL_LOCATIONS) ≈ 895 × 117 ≈ 104,000 times on
+# every cold cache miss with the default (no-filter) query.  Building this
+# mapping once reduces the per-request cost to a single dict lookup for the
+# unfiltered case, and to iterating a much smaller per-location list for
+# filtered queries.
+_LOC_SPECIES_ALL: Optional[Dict[str, List]] = None  # loc_id → [species, ...]
+
+
+def _get_loc_species_all() -> Dict[str, List]:
+    """Return {loc_id: [species_dict, ...]} for every location using all species."""
+    global _LOC_SPECIES_ALL
+    if _LOC_SPECIES_ALL is None:
+        from storage.species_loader import SPECIES_DB
+        from locations import COASTAL_LOCATIONS
+        _LOC_SPECIES_ALL = {
+            loc["id"]: [s for s in SPECIES_DB if _species_present_at(s, loc)]
+            for loc in COASTAL_LOCATIONS
+        }
+    return _LOC_SPECIES_ALL
+
 
 def _get_all_species_names() -> list:
     global _SPECIES_NAMES_CACHE
@@ -1252,14 +1276,23 @@ def fishing_map_data() -> Any:
         _all_scores[_sn] = [0] + [_month_score(_sp, _m) for _m in range(1, 13)]
 
     # -- score every location -------------------------------------------------
-    # _loc_sp_map stores the per-location species list so the monthly summary
-    # and trending sections can reuse it instead of re-calling _species_present_at
-    # 12× per location (960 000 calls → 80 000, a 12× speedup on cold requests).
+    # Use _get_loc_species_all() to eliminate _species_present_at() calls at
+    # request time.  The full loc→species map is built once at first warm
+    # request (pre-warm thread covers this) and reused for every subsequent
+    # request:
+    #   • No filter  → use pre-built list directly (zero _species_present_at calls)
+    #   • Filtered   → intersect pre-built list with filtered_names frozenset
+    #                  (O(loc × species_at_loc) instead of O(loc × all_species))
     def _activity_label(sc: int) -> str:
         if sc >= 100: return "peak"
         if sc >= 65:  return "good"
         if sc >= 30:  return "fair"
         return "slow"
+
+    _all_loc_sp = _get_loc_species_all()          # pre-built; O(1)
+    _is_filtered = bool(species_q or category_q)
+    if _is_filtered:
+        _filtered_names: frozenset = frozenset(s["name"] for s in filtered_species)
 
     results = []
     _loc_sp_map: Dict[str, list] = {}  # loc_id → [species_dict, ...]
@@ -1269,9 +1302,13 @@ def fishing_map_data() -> Any:
         if coast_q and coast_q not in ("all", "") and loc_coast != coast_q:
             continue
 
-        # Species relevant to this exact location — saved for reuse below
-        loc_species = [s for s in filtered_species
-                       if _species_present_at(s, loc)]
+        # Species for this location — resolved from pre-built index; no
+        # _species_present_at() calls at request time.
+        _pre = _all_loc_sp.get(loc["id"], [])
+        loc_species = (
+            [s for s in _pre if s["name"] in _filtered_names]
+            if _is_filtered else _pre
+        )
         _loc_sp_map[loc["id"]] = loc_species
 
         if not loc_species:
@@ -1768,8 +1805,6 @@ def map_structures() -> Any:
 
     Each structure object has: lat, lng, type, name, tip.
     """
-    from services.fish_structures import VALID_TYPES, find_fish_structures
-
     # ── Parse & validate bbox ─────────────────────────────────────────────────
     try:
         south = float(request.args["south"])
@@ -1820,7 +1855,6 @@ def map_structures() -> Any:
     structures = find_fish_structures(south, west, north, east, active_types)
 
     # Merge in admin-created custom markers that fall within the bbox.
-    from storage.sqlite import get_custom_markers
     custom = [
         m for m in get_custom_markers()
         if south <= m["lat"] <= north and west <= m["lng"] <= east
@@ -2312,7 +2346,6 @@ def _require_map_admin():
 @bp.route("/api/map/custom-markers", methods=["GET"])
 def custom_markers_list() -> Any:
     """Return all non-deleted custom map markers (public read)."""
-    from storage.sqlite import get_custom_markers
     markers = get_custom_markers()
     return jsonify({"markers": markers, "count": len(markers)})
 

@@ -53,6 +53,10 @@
     var map           = null;
     var mapReady      = false;
     var markers       = [];          // [{id, leaflet, data}]
+    var _markerIndex         = {};    // loc.id → marker entry — O(1) icon-swap on select
+    var _lastHotspotsData    = null;  // locations ref from last full renderHotspots rebuild
+    var _lastAiHotspotsData  = null;  // locations ref from last full renderAiHotspots rebuild
+    var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
     var currentData   = [];          // last API response locations
     var selectedId    = null;
@@ -68,11 +72,14 @@
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox+types key → array of spot objects
+    var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
+    var _SPOT_CACHE_MAX  = 48;       // cap to prevent unbounded sessionStorage growth
     var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    var _markerIconCache      = {};   // "activity|0/1" → L.divIcon (10 combinations max)
     var _elStructSpinner      = null; // cached DOM ref — fmap-struct-spinner
     var _elStructError        = null; // cached DOM ref — fmap-struct-error
     var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
@@ -267,8 +274,9 @@
         });
         activeTileLayer.addTo(map);
 
-        // Layer groups — AI habitat picks render below OSM spots
+        // Layer groups — render order: AI picks → location markers → OSM structures
         aiPickLayer      = L.layerGroup().addTo(map);
+        locationLayer    = L.layerGroup().addTo(map);
         fishingSpotLayer = L.layerGroup().addTo(map);
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
@@ -858,6 +866,12 @@
     // filter the array in JS so the caller never has to hit the server.
     function _cachedSupersetOf(s, w, n, e, typesStr) {
         var requestedTypes = typesStr ? typesStr.split(',') : null; // null = all
+        // Build an O(1) lookup object once so the filter below doesn't use indexOf
+        var requestedSet = null;
+        if (requestedTypes) {
+            requestedSet = {};
+            for (var i = 0; i < requestedTypes.length; i++) requestedSet[requestedTypes[i]] = true;
+        }
         for (var k in spotCache) {
             var pipe      = k.indexOf('|');
             var coordsStr = pipe >= 0 ? k.slice(0, pipe) : k;
@@ -871,10 +885,10 @@
                 // Exact match — return directly
                 return spotCache[k];
             }
-            if (!ktype && requestedTypes) {
+            if (!ktype && requestedSet) {
                 // Cached all-types entry; filter client-side — zero server round-trip
                 return spotCache[k].filter(function (sp) {
-                    return requestedTypes.indexOf(sp.type) !== -1;
+                    return requestedSet[sp.type] === true;
                 });
             }
             // ktype is a different subset; skip (we can't expand a subset to all types)
@@ -902,7 +916,7 @@
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (data && data.structures && !data.zoom_required) {
-                    spotCache[key] = data.structures;
+                    _spotCachePut(key, data.structures);
                     _ssSave();
                     console.log('[fishing-map] home corridor pre-fetch → ' + data.structures.length + ' features cached');
                     // If the current viewport is already within this corridor,
@@ -918,7 +932,7 @@
                         // s/w/n/e here are the pre-fetch corridor bounds (closure)
                         if (s <= vs && w <= vw && n >= vn && e >= ve) {
                             var _vkey = vs + ',' + vw + ',' + vn + ',' + ve;
-                            spotCache[_vkey] = data.structures;
+                            _spotCachePut(_vkey, data.structures);
                             renderFishingSpots(data.structures, _vkey);
                             _updateSpotTypeHint();
                         }
@@ -986,7 +1000,7 @@
         // viewport queries without a second Overpass trip.
         var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
         if (superResult) {
-            spotCache[key] = superResult;  // alias so next pan hits directly
+            _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
             _updateSpotTypeHint();
             return;
@@ -1027,7 +1041,7 @@
 
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
-                spotCache[key] = spots;
+                _spotCachePut(key, spots);
                 _ssSave();
                 renderFishingSpots(spots, key);
                 // Restore normal hint text (may have been set to zoom-in message)
@@ -1307,7 +1321,7 @@
 
             var deduped = deduplicateSpots(spots);
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
-            spotCache[key] = deduped;
+            _spotCachePut(key, deduped);
             _ssSave();
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
@@ -1392,10 +1406,17 @@
             Object.keys(obj).forEach(function (k) {
                 var e = obj[k];
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
+                    // Bypass _spotCachePut to avoid eviction during bulk restore;
+                    // rebuild _spotCacheKeys so future puts evict correctly.
                     spotCache[k] = e.data;
+                    _spotCacheKeys.push(k);
                     loaded++;
                 }
             });
+            // Enforce cap after restore in case stored data exceeded the limit
+            while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
+                delete spotCache[_spotCacheKeys.shift()];
+            }
             if (loaded) console.log('[fishing-map] sessionStorage → ' + loaded + ' bbox entries restored');
         } catch (e) { /* quota or parse error — start cold */ }
     }
@@ -1417,8 +1438,24 @@
         _ssSaveTimer = setTimeout(_ssSaveNow, 1500);
     }
 
+    // Write a new entry into spotCache with LRU eviction.
+    // Keeps spotCache at most _SPOT_CACHE_MAX entries so sessionStorage
+    // serialization stays bounded regardless of how much the user pans.
+    function _spotCachePut(key, data) {
+        if (!Object.prototype.hasOwnProperty.call(spotCache, key)) {
+            if (_spotCacheKeys.length >= _SPOT_CACHE_MAX) {
+                var evict = _spotCacheKeys.shift();
+                delete spotCache[evict];
+            }
+            _spotCacheKeys.push(key);
+        }
+        spotCache[key] = data;
+    }
+
     // ─── Custom marker icon ───────────────────────────────────────────────────
     function makeIcon(activity, isSelected) {
+        var _mk = activity + (isSelected ? '|1' : '|0');
+        if (_markerIconCache[_mk]) return _markerIconCache[_mk];
         var cfg  = ACTIVITY[activity] || ACTIVITY.none;
         var size = cfg.size + (isSelected ? 3 : 0);
         var pulse = (activity === 'peak' || activity === 'good') && !isSelected;
@@ -1434,23 +1471,28 @@
         var html = ring +
             '<span class="fmap-dot" style="width:' + (size * 2) + 'px;height:' + (size * 2) +
             'px;background:' + cfg.color + ';border:' + border + ';box-shadow:' + shadow + '"></span>';
-        return L.divIcon({
+        var icon = L.divIcon({
             className: 'fmap-marker-wrap',
             html: html,
             iconSize:    [size * 2, size * 2],
             iconAnchor:  [size, size],
             popupAnchor: [0, -size - 2]
         });
+        _markerIconCache[_mk] = icon;
+        return icon;
     }
 
     // ─── Render markers ───────────────────────────────────────────────────────
     function clearMarkers() {
-        markers.forEach(function (m) { map.removeLayer(m.leaflet); });
+        // clearLayers() removes all children in one operation instead of
+        // calling map.removeLayer() individually for each marker.
+        if (locationLayer) locationLayer.clearLayers();
         markers = [];
+        _markerIndex = {};
     }
 
     function drawMarkers(locations) {
-        if (!map) return;
+        if (!map || !locationLayer) return;
         clearMarkers();
 
         locations.forEach(function (loc) {
@@ -1458,7 +1500,8 @@
             var m = L.marker([loc.lat, loc.lng], {
                 icon:  makeIcon(loc.activity, isSel),
                 title: loc.name + ', ' + loc.state
-            }).addTo(map);
+            });
+            locationLayer.addLayer(m);
 
             m.on('click', function () { selectLocation(loc); });
 
@@ -1469,18 +1512,26 @@
                 { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
             );
 
-            markers.push({ id: loc.id, leaflet: m, data: loc });
+            var entry = { id: loc.id, leaflet: m, data: loc };
+            markers.push(entry);
+            _markerIndex[loc.id] = entry;
         });
     }
 
     // ─── Location selection ───────────────────────────────────────────────────
     function selectLocation(loc) {
+        var prevId = selectedId;
         selectedId = loc.id;
 
-        // Re-render markers — selected one gets highlighted icon
-        markers.forEach(function (m) {
-            m.leaflet.setIcon(makeIcon(m.data.activity, m.id === loc.id));
-        });
+        // Swap icons only on the two affected markers (O(1) via _markerIndex)
+        // instead of iterating the full markers array and calling setIcon on all.
+        if (prevId && prevId !== selectedId && _markerIndex[prevId]) {
+            _markerIndex[prevId].leaflet.setIcon(
+                makeIcon(_markerIndex[prevId].data.activity, false));
+        }
+        if (_markerIndex[selectedId]) {
+            _markerIndex[selectedId].leaflet.setIcon(makeIcon(loc.activity, true));
+        }
 
         map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.55 });
 
@@ -1551,11 +1602,14 @@
     }
 
     function closeDetail() {
+        var prevId = selectedId;
         selectedId = null;
         els.detail.hidden = true;
-        markers.forEach(function (m) {
-            m.leaflet.setIcon(makeIcon(m.data.activity, false));
-        });
+        // Only the previously-selected marker needs an icon update (O(1))
+        if (prevId && _markerIndex[prevId]) {
+            _markerIndex[prevId].leaflet.setIcon(
+                makeIcon(_markerIndex[prevId].data.activity, false));
+        }
         renderHotspots(currentData);
     }
 
@@ -1630,6 +1684,20 @@
 
     function renderAiHotspots(locations) {
         if (!els.hotspotsList) return;
+
+        // Fast path: only the selected item changed — toggle CSS class, skip full rebuild.
+        if (locations === _lastAiHotspotsData && els.hotspotsList.children.length) {
+            els.hotspotsList.querySelectorAll('.fmap-hotspot-item--sel').forEach(function (li) {
+                li.classList.remove('fmap-hotspot-item--sel');
+            });
+            if (selectedId) {
+                var sel = els.hotspotsList.querySelector('[data-loc-id="' + selectedId + '"]');
+                if (sel) sel.classList.add('fmap-hotspot-item--sel');
+            }
+            return;
+        }
+        _lastAiHotspotsData = locations;
+
         var picks = locations.filter(function (l) { return l.ai_pick_rank; });
         if (els.hotspotCount) {
             els.hotspotCount.textContent = picks.length ? picks.length : '';
@@ -1645,6 +1713,21 @@
         if (aiList) renderAiPicksList(locations, aiList);
 
         if (!els.hotspotsList) return;
+
+        // Fast path: the underlying data is the same — only selectedId changed.
+        // Toggle the --sel CSS class on the two affected <li>s instead of
+        // blowing away and rebuilding the entire list + rebinding click handlers.
+        if (locations === _lastHotspotsData && els.hotspotsList.children.length) {
+            els.hotspotsList.querySelectorAll('.fmap-hotspot-item--sel').forEach(function (li) {
+                li.classList.remove('fmap-hotspot-item--sel');
+            });
+            if (selectedId) {
+                var sel = els.hotspotsList.querySelector('[data-loc-id="' + selectedId + '"]');
+                if (sel) sel.classList.add('fmap-hotspot-item--sel');
+            }
+            return;
+        }
+        _lastHotspotsData = locations;
 
         var active = locations.filter(function (l) { return l.activity !== 'none'; });
 
@@ -3240,7 +3323,7 @@
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function () {
                     _closeAdminModal();
-                    spotCache = {};
+                    spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
@@ -3259,7 +3342,7 @@
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function () {
                     _closeAdminModal();
-                    spotCache = {};
+                    spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
