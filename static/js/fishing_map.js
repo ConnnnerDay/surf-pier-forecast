@@ -53,6 +53,7 @@
     var map           = null;
     var mapReady      = false;
     var markers       = [];          // [{id, leaflet, data}]
+    var _markerIndex  = {};          // loc.id → marker entry — O(1) icon-swap on select
     var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
     var currentData   = [];          // last API response locations
@@ -1485,6 +1486,7 @@
         // calling map.removeLayer() individually for each marker.
         if (locationLayer) locationLayer.clearLayers();
         markers = [];
+        _markerIndex = {};
     }
 
     function drawMarkers(locations) {
@@ -1508,18 +1510,26 @@
                 { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
             );
 
-            markers.push({ id: loc.id, leaflet: m, data: loc });
+            var entry = { id: loc.id, leaflet: m, data: loc };
+            markers.push(entry);
+            _markerIndex[loc.id] = entry;
         });
     }
 
     // ─── Location selection ───────────────────────────────────────────────────
     function selectLocation(loc) {
+        var prevId = selectedId;
         selectedId = loc.id;
 
-        // Re-render markers — selected one gets highlighted icon
-        markers.forEach(function (m) {
-            m.leaflet.setIcon(makeIcon(m.data.activity, m.id === loc.id));
-        });
+        // Swap icons only on the two affected markers (O(1) via _markerIndex)
+        // instead of iterating the full markers array and calling setIcon on all.
+        if (prevId && prevId !== selectedId && _markerIndex[prevId]) {
+            _markerIndex[prevId].leaflet.setIcon(
+                makeIcon(_markerIndex[prevId].data.activity, false));
+        }
+        if (_markerIndex[selectedId]) {
+            _markerIndex[selectedId].leaflet.setIcon(makeIcon(loc.activity, true));
+        }
 
         map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.55 });
 
@@ -1590,11 +1600,14 @@
     }
 
     function closeDetail() {
+        var prevId = selectedId;
         selectedId = null;
         els.detail.hidden = true;
-        markers.forEach(function (m) {
-            m.leaflet.setIcon(makeIcon(m.data.activity, false));
-        });
+        // Only the previously-selected marker needs an icon update (O(1))
+        if (prevId && _markerIndex[prevId]) {
+            _markerIndex[prevId].leaflet.setIcon(
+                makeIcon(_markerIndex[prevId].data.activity, false));
+        }
         renderHotspots(currentData);
     }
 

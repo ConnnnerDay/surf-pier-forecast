@@ -32,6 +32,7 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
+from services.fish_structures import VALID_TYPES, find_fish_structures
 from storage.sqlite import (
     add_log_entry,
     add_map_catch,
@@ -41,6 +42,7 @@ from storage.sqlite import (
     delete_map_catch,
     get_catch_counts_near_locations,
     get_community_hotspots,
+    get_custom_markers,
     get_entry_photo_paths,
     get_log_entries,
     get_log_stats,
@@ -1803,8 +1805,6 @@ def map_structures() -> Any:
 
     Each structure object has: lat, lng, type, name, tip.
     """
-    from services.fish_structures import VALID_TYPES, find_fish_structures
-
     # ── Parse & validate bbox ─────────────────────────────────────────────────
     try:
         south = float(request.args["south"])
@@ -1855,7 +1855,6 @@ def map_structures() -> Any:
     structures = find_fish_structures(south, west, north, east, active_types)
 
     # Merge in admin-created custom markers that fall within the bbox.
-    from storage.sqlite import get_custom_markers
     custom = [
         m for m in get_custom_markers()
         if south <= m["lat"] <= north and west <= m["lng"] <= east
@@ -2347,7 +2346,6 @@ def _require_map_admin():
 @bp.route("/api/map/custom-markers", methods=["GET"])
 def custom_markers_list() -> Any:
     """Return all non-deleted custom map markers (public read)."""
-    from storage.sqlite import get_custom_markers
     markers = get_custom_markers()
     return jsonify({"markers": markers, "count": len(markers)})
 
