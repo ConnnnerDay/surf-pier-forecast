@@ -70,6 +70,8 @@
     var spotCache        = {};       // bbox+types key → array of spot objects
     var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
+    var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
+    var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
@@ -1010,8 +1012,8 @@
                 if (data.zoom_required) {
                     _lastRenderedSpotKey = null;
                     fishingSpotLayer.clearLayers();
-                    var hint = document.getElementById('fmap-struct-filters-hint');
-                    if (hint) hint.textContent = 'Zoom in further to see structure markers';
+                    if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
+                    if (_elStructFiltersHint) _elStructFiltersHint.textContent = 'Zoom in further to see structure markers';
                     return;
                 }
 
@@ -1348,7 +1350,7 @@
 
     function scheduleFishingSpotQuery() {
         clearTimeout(spotQueryTimer);
-        spotQueryTimer = setTimeout(queryStructures, 800);
+        spotQueryTimer = setTimeout(queryStructures, 300);
     }
 
     // ─── sessionStorage persistence for spotCache ─────────────────────────────
@@ -2484,16 +2486,16 @@
     // Update the hint text and clear-button visibility to reflect the current
     // activeSpotTypes selection.  Called after every toggle and on clear.
     function _updateSpotTypeHint() {
-        var hint      = document.getElementById('fmap-struct-filters-hint');
-        var clearBtn  = document.getElementById('fmap-spot-types-clear');
-        var n         = activeSpotTypes.length;
-        var total     = Object.keys(SPOT_TYPES).length;  // 18
-        if (hint) {
-            hint.textContent = n === 0
+        if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
+        if (!_elSpotTypesClear)    _elSpotTypesClear    = document.getElementById('fmap-spot-types-clear');
+        var n     = activeSpotTypes.length;
+        var total = Object.keys(SPOT_TYPES).length;  // 18
+        if (_elStructFiltersHint) {
+            _elStructFiltersHint.textContent = n === 0
                 ? 'All types visible \u2014 tap to filter'
                 : 'Showing ' + n + ' of ' + total + ' types \u2014 tap to adjust';
         }
-        if (clearBtn) clearBtn.hidden = n === 0;
+        if (_elSpotTypesClear) _elSpotTypesClear.hidden = n === 0;
     }
 
     function wireSpotTypeFilters() {
