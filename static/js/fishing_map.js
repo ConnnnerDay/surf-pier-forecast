@@ -53,6 +53,7 @@
     var map           = null;
     var mapReady      = false;
     var markers       = [];          // [{id, leaflet, data}]
+    var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
     var currentData   = [];          // last API response locations
     var selectedId    = null;
@@ -68,6 +69,8 @@
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox+types key → array of spot objects
+    var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
+    var _SPOT_CACHE_MAX  = 48;       // cap to prevent unbounded sessionStorage growth
     var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
@@ -268,8 +271,9 @@
         });
         activeTileLayer.addTo(map);
 
-        // Layer groups — AI habitat picks render below OSM spots
+        // Layer groups — render order: AI picks → location markers → OSM structures
         aiPickLayer      = L.layerGroup().addTo(map);
+        locationLayer    = L.layerGroup().addTo(map);
         fishingSpotLayer = L.layerGroup().addTo(map);
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
@@ -859,6 +863,12 @@
     // filter the array in JS so the caller never has to hit the server.
     function _cachedSupersetOf(s, w, n, e, typesStr) {
         var requestedTypes = typesStr ? typesStr.split(',') : null; // null = all
+        // Build an O(1) lookup object once so the filter below doesn't use indexOf
+        var requestedSet = null;
+        if (requestedTypes) {
+            requestedSet = {};
+            for (var i = 0; i < requestedTypes.length; i++) requestedSet[requestedTypes[i]] = true;
+        }
         for (var k in spotCache) {
             var pipe      = k.indexOf('|');
             var coordsStr = pipe >= 0 ? k.slice(0, pipe) : k;
@@ -872,10 +882,10 @@
                 // Exact match — return directly
                 return spotCache[k];
             }
-            if (!ktype && requestedTypes) {
+            if (!ktype && requestedSet) {
                 // Cached all-types entry; filter client-side — zero server round-trip
                 return spotCache[k].filter(function (sp) {
-                    return requestedTypes.indexOf(sp.type) !== -1;
+                    return requestedSet[sp.type] === true;
                 });
             }
             // ktype is a different subset; skip (we can't expand a subset to all types)
@@ -903,7 +913,7 @@
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (data && data.structures && !data.zoom_required) {
-                    spotCache[key] = data.structures;
+                    _spotCachePut(key, data.structures);
                     _ssSave();
                     console.log('[fishing-map] home corridor pre-fetch → ' + data.structures.length + ' features cached');
                     // If the current viewport is already within this corridor,
@@ -919,7 +929,7 @@
                         // s/w/n/e here are the pre-fetch corridor bounds (closure)
                         if (s <= vs && w <= vw && n >= vn && e >= ve) {
                             var _vkey = vs + ',' + vw + ',' + vn + ',' + ve;
-                            spotCache[_vkey] = data.structures;
+                            _spotCachePut(_vkey, data.structures);
                             renderFishingSpots(data.structures, _vkey);
                             _updateSpotTypeHint();
                         }
@@ -987,7 +997,7 @@
         // viewport queries without a second Overpass trip.
         var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
         if (superResult) {
-            spotCache[key] = superResult;  // alias so next pan hits directly
+            _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
             _updateSpotTypeHint();
             return;
@@ -1028,7 +1038,7 @@
 
                 var spots = data.structures || [];
                 console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
-                spotCache[key] = spots;
+                _spotCachePut(key, spots);
                 _ssSave();
                 renderFishingSpots(spots, key);
                 // Restore normal hint text (may have been set to zoom-in message)
@@ -1308,7 +1318,7 @@
 
             var deduped = deduplicateSpots(spots);
             console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
-            spotCache[key] = deduped;
+            _spotCachePut(key, deduped);
             _ssSave();
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
@@ -1393,10 +1403,17 @@
             Object.keys(obj).forEach(function (k) {
                 var e = obj[k];
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
+                    // Bypass _spotCachePut to avoid eviction during bulk restore;
+                    // rebuild _spotCacheKeys so future puts evict correctly.
                     spotCache[k] = e.data;
+                    _spotCacheKeys.push(k);
                     loaded++;
                 }
             });
+            // Enforce cap after restore in case stored data exceeded the limit
+            while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
+                delete spotCache[_spotCacheKeys.shift()];
+            }
             if (loaded) console.log('[fishing-map] sessionStorage → ' + loaded + ' bbox entries restored');
         } catch (e) { /* quota or parse error — start cold */ }
     }
@@ -1416,6 +1433,20 @@
     function _ssSave() {
         clearTimeout(_ssSaveTimer);
         _ssSaveTimer = setTimeout(_ssSaveNow, 1500);
+    }
+
+    // Write a new entry into spotCache with LRU eviction.
+    // Keeps spotCache at most _SPOT_CACHE_MAX entries so sessionStorage
+    // serialization stays bounded regardless of how much the user pans.
+    function _spotCachePut(key, data) {
+        if (!Object.prototype.hasOwnProperty.call(spotCache, key)) {
+            if (_spotCacheKeys.length >= _SPOT_CACHE_MAX) {
+                var evict = _spotCacheKeys.shift();
+                delete spotCache[evict];
+            }
+            _spotCacheKeys.push(key);
+        }
+        spotCache[key] = data;
     }
 
     // ─── Custom marker icon ───────────────────────────────────────────────────
@@ -1450,12 +1481,14 @@
 
     // ─── Render markers ───────────────────────────────────────────────────────
     function clearMarkers() {
-        markers.forEach(function (m) { map.removeLayer(m.leaflet); });
+        // clearLayers() removes all children in one operation instead of
+        // calling map.removeLayer() individually for each marker.
+        if (locationLayer) locationLayer.clearLayers();
         markers = [];
     }
 
     function drawMarkers(locations) {
-        if (!map) return;
+        if (!map || !locationLayer) return;
         clearMarkers();
 
         locations.forEach(function (loc) {
@@ -1463,7 +1496,8 @@
             var m = L.marker([loc.lat, loc.lng], {
                 icon:  makeIcon(loc.activity, isSel),
                 title: loc.name + ', ' + loc.state
-            }).addTo(map);
+            });
+            locationLayer.addLayer(m);
 
             m.on('click', function () { selectLocation(loc); });
 
@@ -3245,7 +3279,7 @@
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function () {
                     _closeAdminModal();
-                    spotCache = {};
+                    spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
@@ -3264,7 +3298,7 @@
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function () {
                     _closeAdminModal();
-                    spotCache = {};
+                    spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
