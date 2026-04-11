@@ -1095,11 +1095,21 @@ def _get_all_species_names() -> list:
     return _SPECIES_NAMES_CACHE
 
 
-def _get_species_lower_index() -> "List[Tuple[str, Any]]":
+def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
+    """Return list of (lowercase_name, lowercase_category_frozenset, species_dict).
+
+    Built once at first call so neither .lower() nor list-comp over categories
+    runs at filter time.
+    """
     global _SPECIES_LOWER_INDEX
     if _SPECIES_LOWER_INDEX is None:
         from storage.species_loader import SPECIES_DB
-        _SPECIES_LOWER_INDEX = [(s["name"].lower(), s) for s in SPECIES_DB]
+        _SPECIES_LOWER_INDEX = [
+            (s["name"].lower(),
+             frozenset(c.lower() for c in s.get("categories", [])),
+             s)
+            for s in SPECIES_DB
+        ]
     return _SPECIES_LOWER_INDEX
 
 
@@ -1219,11 +1229,10 @@ def fishing_map_data() -> Any:
     # Use _get_species_lower_index() so .lower() is never called at filter time;
     # the lowercase name strings are pre-built once at first request.
     if species_q or category_q:
-        _idx = _get_species_lower_index()
         filtered_species = [
-            s for (lname, s) in _idx
+            s for (lname, lcats, s) in _get_species_lower_index()
             if (not species_q or species_q in lname)
-            and (not category_q or category_q in [c.lower() for c in s.get("categories", [])])
+            and (not category_q or category_q in lcats)
         ]
     else:
         filtered_species = SPECIES_DB

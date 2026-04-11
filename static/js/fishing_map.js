@@ -267,18 +267,16 @@
         aiPickLayer      = L.layerGroup().addTo(map);
         fishingSpotLayer = L.layerGroup().addTo(map);
 
-        // Wire zoom/pan → refresh both layers
+        // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
+        // caused every event to fire twice, queuing double the debounced requests).
         map.on('moveend zoomend', function () {
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
+            if (structureMode) scheduleStructureFetch();
         });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
-
-        map.on('moveend zoomend', function () {
-            if (structureMode) scheduleStructureFetch();
-        });
 
         // Update the zoom hint immediately so it reflects the starting zoom level
         // (hidden at zoom ≥ 8, i.e. when server coords are used)
@@ -1317,6 +1315,11 @@
     // Collapse duplicate markers: same name → one, or same type within proximity threshold.
     // Polygon habitat types (beach, saltmarsh, mangrove, etc.) skip centroid-proximity
     // dedup entirely — adjacent polygon patches are distinct features.
+    //
+    // Uses an O(n) grid-cell approach (matching the backend): each spot is assigned to a
+    // cell of size `thresh` and a 3×3 neighbourhood check replaces the previous O(n²)
+    // `out.some(...)` scan.  For 200-500 spots per viewport this cuts ~40k-250k comparisons
+    // down to ~1800-4500 hash lookups.
     function deduplicateSpots(spots) {
         // 0 = skip proximity dedup for polygon habitat types
         var PROX = { inlet: 0.005, marina: 0.004,
@@ -1324,6 +1327,7 @@
                      tidal_flat: 0, mangrove: 0, oyster_reef: 0,
                      _default: 0.002 };
         var namedSeen = {};  // "type|lowercaseName" → true
+        var grid      = {};  // "type|gridLat|gridLng" → true
         var out = [];
 
         spots.forEach(function (spot) {
@@ -1333,15 +1337,23 @@
                 if (namedSeen[nameKey]) return;
                 namedSeen[nameKey] = true;
             }
-            // Proximity dedup — skip for polygon area types (thresh === 0)
+            // Proximity dedup via O(n) grid — skip for polygon area types (thresh === 0)
             var thresh = PROX.hasOwnProperty(spot.type) ? PROX[spot.type] : PROX._default;
             if (thresh > 0) {
-                var tooClose = out.some(function (k) {
-                    return k.type === spot.type &&
-                           Math.abs(k.lat - spot.lat) < thresh &&
-                           Math.abs(k.lng - spot.lng) < thresh;
-                });
+                var gl = Math.floor(spot.lat / thresh);
+                var gn = Math.floor(spot.lng / thresh);
+                var t  = spot.type;
+                var tooClose = false;
+                outer: for (var dl = -1; dl <= 1; dl++) {
+                    for (var dm = -1; dm <= 1; dm++) {
+                        if (grid[t + '|' + (gl + dl) + '|' + (gn + dm)]) {
+                            tooClose = true;
+                            break outer;
+                        }
+                    }
+                }
                 if (tooClose) return;
+                grid[t + '|' + gl + '|' + gn] = true;
             }
             out.push(spot);
         });
