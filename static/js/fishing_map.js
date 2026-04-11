@@ -70,6 +70,12 @@
     var spotCache        = {};       // bbox+types key → array of spot objects
     var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
+    var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
+    var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
+    var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    var _elStructSpinner      = null; // cached DOM ref — fmap-struct-spinner
+    var _elStructError        = null; // cached DOM ref — fmap-struct-error
+    var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
@@ -265,18 +271,16 @@
         aiPickLayer      = L.layerGroup().addTo(map);
         fishingSpotLayer = L.layerGroup().addTo(map);
 
-        // Wire zoom/pan → refresh both layers
+        // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
+        // caused every event to fire twice, queuing double the debounced requests).
         map.on('moveend zoomend', function () {
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
+            if (structureMode) scheduleStructureFetch();
         });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
-
-        map.on('moveend zoomend', function () {
-            if (structureMode) scheduleStructureFetch();
-        });
 
         // Update the zoom hint immediately so it reflects the starting zoom level
         // (hidden at zoom ≥ 8, i.e. when server coords are used)
@@ -707,6 +711,10 @@
     }
 
     function makeFishingSpotIcon(type) {
+        // Icons are immutable — cache one L.divIcon per type so re-renders of
+        // the same viewport (100–300 markers) skip the HTML string build and
+        // L.divIcon() object creation entirely after the first render.
+        if (_spotIconCache[type]) return _spotIconCache[type];
         var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
         var color     = def.color;
         var isHabitat = def.habitat;
@@ -723,9 +731,11 @@
         var html  = '<span class="fmap-spot-dot" style="background:' + color +
                     ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
                     ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
-        return L.divIcon({ className: 'fmap-spot-wrap', html: html,
-                           iconSize:   [sz + 4, sz + 4],
-                           iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
+                               iconSize:   [sz + 4, sz + 4],
+                               iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        _spotIconCache[type] = icon;
+        return icon;
     }
 
     function renderFishingSpots(spots, cacheKey) {
@@ -808,31 +818,31 @@
     // Show the inline spinner in the filter bar header.
     function showStructLoading() {
         _structLoadCount++;
-        var el = document.getElementById('fmap-struct-spinner');
-        if (el) el.hidden = false;
+        if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
+        if (_elStructSpinner) _elStructSpinner.hidden = false;
     }
 
     // Decrement the ref-count; hide the spinner only when all requests finish.
     function hideStructLoading() {
         _structLoadCount = Math.max(0, _structLoadCount - 1);
         if (_structLoadCount > 0) return;
-        var el = document.getElementById('fmap-struct-spinner');
-        if (el) el.hidden = true;
+        if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
+        if (_elStructSpinner) _elStructSpinner.hidden = true;
     }
 
     // Show the dismissible error banner with a custom message.
     function showStructError(msg) {
-        var banner = document.getElementById('fmap-struct-error');
-        var txt    = document.getElementById('fmap-struct-error-msg');
-        if (!banner) return;
-        if (txt) txt.textContent = msg;
-        banner.hidden = false;
+        if (!_elStructError)    _elStructError    = document.getElementById('fmap-struct-error');
+        if (!_elStructErrorMsg) _elStructErrorMsg = document.getElementById('fmap-struct-error-msg');
+        if (!_elStructError) return;
+        if (_elStructErrorMsg) _elStructErrorMsg.textContent = msg;
+        _elStructError.hidden = false;
     }
 
     // Programmatically hide the error banner (called on next successful load).
     function hideStructError() {
-        var banner = document.getElementById('fmap-struct-error');
-        if (banner) banner.hidden = true;
+        if (!_elStructError) _elStructError = document.getElementById('fmap-struct-error');
+        if (_elStructError) _elStructError.hidden = true;
     }
 
     // ── Structure cache helpers ───────────────────────────────────────────────
@@ -1010,8 +1020,8 @@
                 if (data.zoom_required) {
                     _lastRenderedSpotKey = null;
                     fishingSpotLayer.clearLayers();
-                    var hint = document.getElementById('fmap-struct-filters-hint');
-                    if (hint) hint.textContent = 'Zoom in further to see structure markers';
+                    if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
+                    if (_elStructFiltersHint) _elStructFiltersHint.textContent = 'Zoom in further to see structure markers';
                     return;
                 }
 
@@ -1315,6 +1325,11 @@
     // Collapse duplicate markers: same name → one, or same type within proximity threshold.
     // Polygon habitat types (beach, saltmarsh, mangrove, etc.) skip centroid-proximity
     // dedup entirely — adjacent polygon patches are distinct features.
+    //
+    // Uses an O(n) grid-cell approach (matching the backend): each spot is assigned to a
+    // cell of size `thresh` and a 3×3 neighbourhood check replaces the previous O(n²)
+    // `out.some(...)` scan.  For 200-500 spots per viewport this cuts ~40k-250k comparisons
+    // down to ~1800-4500 hash lookups.
     function deduplicateSpots(spots) {
         // 0 = skip proximity dedup for polygon habitat types
         var PROX = { inlet: 0.005, marina: 0.004,
@@ -1322,6 +1337,7 @@
                      tidal_flat: 0, mangrove: 0, oyster_reef: 0,
                      _default: 0.002 };
         var namedSeen = {};  // "type|lowercaseName" → true
+        var grid      = {};  // "type|gridLat|gridLng" → true
         var out = [];
 
         spots.forEach(function (spot) {
@@ -1331,15 +1347,23 @@
                 if (namedSeen[nameKey]) return;
                 namedSeen[nameKey] = true;
             }
-            // Proximity dedup — skip for polygon area types (thresh === 0)
+            // Proximity dedup via O(n) grid — skip for polygon area types (thresh === 0)
             var thresh = PROX.hasOwnProperty(spot.type) ? PROX[spot.type] : PROX._default;
             if (thresh > 0) {
-                var tooClose = out.some(function (k) {
-                    return k.type === spot.type &&
-                           Math.abs(k.lat - spot.lat) < thresh &&
-                           Math.abs(k.lng - spot.lng) < thresh;
-                });
+                var gl = Math.floor(spot.lat / thresh);
+                var gn = Math.floor(spot.lng / thresh);
+                var t  = spot.type;
+                var tooClose = false;
+                outer: for (var dl = -1; dl <= 1; dl++) {
+                    for (var dm = -1; dm <= 1; dm++) {
+                        if (grid[t + '|' + (gl + dl) + '|' + (gn + dm)]) {
+                            tooClose = true;
+                            break outer;
+                        }
+                    }
+                }
                 if (tooClose) return;
+                grid[t + '|' + gl + '|' + gn] = true;
             }
             out.push(spot);
         });
@@ -1348,7 +1372,7 @@
 
     function scheduleFishingSpotQuery() {
         clearTimeout(spotQueryTimer);
-        spotQueryTimer = setTimeout(queryStructures, 800);
+        spotQueryTimer = setTimeout(queryStructures, 300);
     }
 
     // ─── sessionStorage persistence for spotCache ─────────────────────────────
@@ -2484,16 +2508,16 @@
     // Update the hint text and clear-button visibility to reflect the current
     // activeSpotTypes selection.  Called after every toggle and on clear.
     function _updateSpotTypeHint() {
-        var hint      = document.getElementById('fmap-struct-filters-hint');
-        var clearBtn  = document.getElementById('fmap-spot-types-clear');
-        var n         = activeSpotTypes.length;
-        var total     = Object.keys(SPOT_TYPES).length;  // 18
-        if (hint) {
-            hint.textContent = n === 0
+        if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
+        if (!_elSpotTypesClear)    _elSpotTypesClear    = document.getElementById('fmap-spot-types-clear');
+        var n     = activeSpotTypes.length;
+        var total = Object.keys(SPOT_TYPES).length;  // 18
+        if (_elStructFiltersHint) {
+            _elStructFiltersHint.textContent = n === 0
                 ? 'All types visible \u2014 tap to filter'
                 : 'Showing ' + n + ' of ' + total + ' types \u2014 tap to adjust';
         }
-        if (clearBtn) clearBtn.hidden = n === 0;
+        if (_elSpotTypesClear) _elSpotTypesClear.hidden = n === 0;
     }
 
     function wireSpotTypeFilters() {

@@ -9,7 +9,7 @@ import threading
 import time
 import uuid
 from zoneinfo import available_timezones
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from flask import (
     Blueprint,
@@ -1081,6 +1081,11 @@ def _build_ai_reasoning(loc_result: dict, month: int) -> str:
 # request.  The list never changes at runtime so we compute it once and reuse.
 _SPECIES_NAMES_CACHE: Optional[list] = None
 
+# Pre-built lowercase name index: list of (lowercase_name, species_dict) pairs
+# so species_q filtering avoids calling s["name"].lower() on every species on
+# every request.
+_SPECIES_LOWER_INDEX: Optional[List[Tuple[str, Any]]] = None
+
 
 def _get_all_species_names() -> list:
     global _SPECIES_NAMES_CACHE
@@ -1088,6 +1093,24 @@ def _get_all_species_names() -> list:
         from storage.species_loader import SPECIES_DB
         _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
     return _SPECIES_NAMES_CACHE
+
+
+def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
+    """Return list of (lowercase_name, lowercase_category_frozenset, species_dict).
+
+    Built once at first call so neither .lower() nor list-comp over categories
+    runs at filter time.
+    """
+    global _SPECIES_LOWER_INDEX
+    if _SPECIES_LOWER_INDEX is None:
+        from storage.species_loader import SPECIES_DB
+        _SPECIES_LOWER_INDEX = [
+            (s["name"].lower(),
+             frozenset(c.lower() for c in s.get("categories", [])),
+             s)
+            for s in SPECIES_DB
+        ]
+    return _SPECIES_LOWER_INDEX
 
 
 # ── Fishing-map response cache ─────────────────────────────────────────────────
@@ -1203,19 +1226,41 @@ def fishing_map_data() -> Any:
         return resp
 
     # -- filter the species DB once -------------------------------------------
-    filtered_species = SPECIES_DB
-    if species_q:
-        filtered_species = [s for s in filtered_species
-                            if species_q in s["name"].lower()]
-    if category_q:
-        filtered_species = [s for s in filtered_species
-                            if category_q in [c.lower()
-                                              for c in s.get("categories", [])]]
+    # Use _get_species_lower_index() so .lower() is never called at filter time;
+    # the lowercase name strings are pre-built once at first request.
+    if species_q or category_q:
+        filtered_species = [
+            s for (lname, lcats, s) in _get_species_lower_index()
+            if (not species_q or species_q in lname)
+            and (not category_q or category_q in lcats)
+        ]
+    else:
+        filtered_species = SPECIES_DB
+
+    # -- pre-compute _month_score for the current month once per species -------
+    # _month_score(sp, month) is a pure function of two values; calling it
+    # repeatedly in the scoring loop and then again in the monthly summary adds
+    # up to millions of redundant calls on cold requests.  Build two lookup
+    # structures once:
+    #   _cur_score[name]       → score for the current month (used in main loop)
+    #   _all_scores[name][m]   → score for month m, 1-indexed (monthly summary)
+    _cur_score:  Dict[str, int]       = {}
+    _all_scores: Dict[str, List[int]] = {}
+    for _sp in filtered_species:
+        _sn = _sp["name"]
+        _cur_score[_sn] = _month_score(_sp, month)
+        _all_scores[_sn] = [0] + [_month_score(_sp, _m) for _m in range(1, 13)]
 
     # -- score every location -------------------------------------------------
     # _loc_sp_map stores the per-location species list so the monthly summary
     # and trending sections can reuse it instead of re-calling _species_present_at
     # 12× per location (960 000 calls → 80 000, a 12× speedup on cold requests).
+    def _activity_label(sc: int) -> str:
+        if sc >= 100: return "peak"
+        if sc >= 65:  return "good"
+        if sc >= 30:  return "fair"
+        return "slow"
+
     results = []
     _loc_sp_map: Dict[str, list] = {}  # loc_id → [species_dict, ...]
     for loc in COASTAL_LOCATIONS:
@@ -1229,20 +1274,14 @@ def fishing_map_data() -> Any:
                        if _species_present_at(s, loc)]
         _loc_sp_map[loc["id"]] = loc_species
 
-        def _activity_label(sc: int) -> str:
-            if sc >= 100: return "peak"
-            if sc >= 65:  return "good"
-            if sc >= 30:  return "fair"
-            return "slow"
-
         if not loc_species:
             score = 0
             activity = "none"
             top_species: list = []
         else:
             scored = sorted(loc_species,
-                            key=lambda s: -_month_score(s, month))
-            best_score = _month_score(scored[0], month)
+                            key=lambda s: -_cur_score[s["name"]])
+            best_score = _cur_score[scored[0]["name"]]
             score = best_score
             activity = _activity_label(score)
 
@@ -1251,7 +1290,7 @@ def fishing_map_data() -> Any:
             # each carrying bait, rig, and their own activity label.
             rich: list = []
             for sp in scored[:10]:
-                sp_score = _month_score(sp, month)
+                sp_score = _cur_score[sp["name"]]
                 if sp_score < 30 and len(rich) >= 3:
                     break
                 rich.append({
@@ -1277,8 +1316,8 @@ def fishing_map_data() -> Any:
             loc.get("temp_offset", 0),
         )
         if water_temp is not None and loc_species and score > 0:
-            best_sp = sorted(loc_species, key=lambda s: -_month_score(s, month))[0]
-            ai_score: float = _month_score(best_sp, month) * _temp_factor(best_sp, water_temp)
+            best_sp = scored[0]  # already sorted by _cur_score above
+            ai_score: float = _cur_score[best_sp["name"]] * _temp_factor(best_sp, water_temp)
         else:
             ai_score = float(score)
 
@@ -1317,9 +1356,9 @@ def fishing_map_data() -> Any:
     # Autocomplete dropdown names — served from pre-computed cache
     species_names = _get_all_species_names()
 
-    # Monthly activity summary — reuse _loc_sp_map so we never call
-    # _species_present_at again (it was already called for every loc in the
-    # main loop above).  12 × locations × max() is now the only cost.
+    # Monthly activity summary — use pre-computed _all_scores[name][m] so
+    # _month_score is never called here at all (it was already called once
+    # per species above when building _all_scores).
     monthly_summary = []
     for m in range(1, 13):
         peak_c = good_c = fair_c = 0
@@ -1327,7 +1366,7 @@ def fishing_map_data() -> Any:
             loc_sp = _loc_sp_map.get(loc["id"], [])
             if not loc_sp:
                 continue
-            best = max(_month_score(s, m) for s in loc_sp)
+            best = max(_all_scores[s["name"]][m] for s in loc_sp)
             if best >= 100:   peak_c += 1
             elif best >= 65:  good_c += 1
             elif best >= 30:  fair_c += 1
