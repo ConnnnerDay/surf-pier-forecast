@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sqlite3
+import time as _time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -1684,18 +1685,18 @@ def get_recent_public_catches(
     ]
 
 
-def get_catch_counts_near_locations(
-    locations: List[Dict[str, Any]],
-    days_back: int = 30,
-    radius_deg: float = 0.3,
-) -> Dict[str, int]:
-    """Return a dict mapping location_id → recent community catch count.
+# ── Community catch rows — short-lived cache ──────────────────────────────────
+# The raw lat/lng rows from map_catches don't change between requests; caching
+# them for 5 minutes avoids re-querying the DB on every fishing-map cache miss.
+_CATCH_ROWS_CACHE: Optional[tuple] = None   # (expiry_ts, rows_list)
+_CATCH_ROWS_TTL: int = 300                  # 5 minutes
 
-    Counts public map catches within *radius_deg* of each NOAA location.
-    Uses a single DB query and O(n) matching to avoid per-location queries.
-    """
-    if not locations:
-        return {}
+
+def _get_public_catch_rows(days_back: int) -> list:
+    global _CATCH_ROWS_CACHE
+    now = _time.time()
+    if _CATCH_ROWS_CACHE and now < _CATCH_ROWS_CACHE[0]:
+        return _CATCH_ROWS_CACHE[1]
     conn = get_db()
     try:
         rows = conn.execute(
@@ -1709,7 +1710,23 @@ def get_catch_counts_near_locations(
         ).fetchall()
     finally:
         conn.close()
+    _CATCH_ROWS_CACHE = (now + _CATCH_ROWS_TTL, list(rows))
+    return _CATCH_ROWS_CACHE[1]
 
+
+def get_catch_counts_near_locations(
+    locations: List[Dict[str, Any]],
+    days_back: int = 30,
+    radius_deg: float = 0.3,
+) -> Dict[str, int]:
+    """Return a dict mapping location_id → recent community catch count.
+
+    Counts public map catches within *radius_deg* of each NOAA location.
+    Uses a single DB query (cached 5 min) and O(n×m) matching.
+    """
+    if not locations:
+        return {}
+    rows = _get_public_catch_rows(days_back)
     counts: Dict[str, int] = {}
     for loc in locations:
         loc_lat = loc["lat"]

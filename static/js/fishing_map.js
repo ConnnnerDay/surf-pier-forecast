@@ -73,6 +73,7 @@
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    var _markerIconCache      = {};   // "activity|0/1" → L.divIcon (10 combinations max)
     var _elStructSpinner      = null; // cached DOM ref — fmap-struct-spinner
     var _elStructError        = null; // cached DOM ref — fmap-struct-error
     var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
@@ -1419,6 +1420,8 @@
 
     // ─── Custom marker icon ───────────────────────────────────────────────────
     function makeIcon(activity, isSelected) {
+        var _mk = activity + (isSelected ? '|1' : '|0');
+        if (_markerIconCache[_mk]) return _markerIconCache[_mk];
         var cfg  = ACTIVITY[activity] || ACTIVITY.none;
         var size = cfg.size + (isSelected ? 3 : 0);
         var pulse = (activity === 'peak' || activity === 'good') && !isSelected;
@@ -1434,13 +1437,15 @@
         var html = ring +
             '<span class="fmap-dot" style="width:' + (size * 2) + 'px;height:' + (size * 2) +
             'px;background:' + cfg.color + ';border:' + border + ';box-shadow:' + shadow + '"></span>';
-        return L.divIcon({
+        var icon = L.divIcon({
             className: 'fmap-marker-wrap',
             html: html,
             iconSize:    [size * 2, size * 2],
             iconAnchor:  [size, size],
             popupAnchor: [0, -size - 2]
         });
+        _markerIconCache[_mk] = icon;
+        return icon;
     }
 
     // ─── Render markers ───────────────────────────────────────────────────────
