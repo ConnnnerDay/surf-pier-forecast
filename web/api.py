@@ -1255,6 +1255,12 @@ def fishing_map_data() -> Any:
     # _loc_sp_map stores the per-location species list so the monthly summary
     # and trending sections can reuse it instead of re-calling _species_present_at
     # 12× per location (960 000 calls → 80 000, a 12× speedup on cold requests).
+    def _activity_label(sc: int) -> str:
+        if sc >= 100: return "peak"
+        if sc >= 65:  return "good"
+        if sc >= 30:  return "fair"
+        return "slow"
+
     results = []
     _loc_sp_map: Dict[str, list] = {}  # loc_id → [species_dict, ...]
     for loc in COASTAL_LOCATIONS:
@@ -1267,12 +1273,6 @@ def fishing_map_data() -> Any:
         loc_species = [s for s in filtered_species
                        if _species_present_at(s, loc)]
         _loc_sp_map[loc["id"]] = loc_species
-
-        def _activity_label(sc: int) -> str:
-            if sc >= 100: return "peak"
-            if sc >= 65:  return "good"
-            if sc >= 30:  return "fair"
-            return "slow"
 
         if not loc_species:
             score = 0

@@ -28,8 +28,19 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from typing import Any, Dict, List, Optional, Set
 
 import requests
+from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger(__name__)
+
+# ── Persistent HTTP session with connection pooling ────────────────────────────
+# A module-level Session re-uses TCP connections and SSL sessions across calls
+# to both the Overpass API and the NOAA ENC ArcGIS service.  Without it, every
+# fetch_structures() call pays DNS lookup + TCP handshake + TLS negotiation for
+# each of the ~3-5 outgoing requests (Overpass + up to 3 NOAA layers).
+# pool_connections=4 covers the Overpass mirrors + NOAA host pair.
+_HTTP: requests.Session = requests.Session()
+_HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=8))
+_HTTP.mount("http://",  HTTPAdapter(pool_connections=4, pool_maxsize=8))
 
 # ── Result cache  ─────────────────────────────────────────────────────────────
 # Keyed on (south2dp, west2dp, north2dp, east2dp, frozenset(active_types)).
@@ -540,7 +551,7 @@ def _post_overpass(query: str) -> List[Dict[str, Any]]:
 
     for url in _OVERPASS_URLS:
         try:
-            resp = requests.post(url, data=body, headers=headers, timeout=(6, 22))
+            resp = _HTTP.post(url, data=body, headers=headers, timeout=(6, 22))
             resp.raise_for_status()
             return resp.json().get("elements", [])
         except Exception as exc:
@@ -579,7 +590,7 @@ def _get_noaa_enc_layer(
     }
     url = f"{_NOAA_ENC_BASE}/{layer}/query"
     try:
-        resp = requests.get(url, params=params, timeout=(4, 12))
+        resp = _HTTP.get(url, params=params, timeout=(4, 12))
         resp.raise_for_status()
         return resp.json().get("features", [])
     except Exception as exc:

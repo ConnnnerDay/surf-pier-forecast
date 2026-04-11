@@ -72,6 +72,10 @@
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
+    var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    var _elStructSpinner      = null; // cached DOM ref — fmap-struct-spinner
+    var _elStructError        = null; // cached DOM ref — fmap-struct-error
+    var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
@@ -707,6 +711,10 @@
     }
 
     function makeFishingSpotIcon(type) {
+        // Icons are immutable — cache one L.divIcon per type so re-renders of
+        // the same viewport (100–300 markers) skip the HTML string build and
+        // L.divIcon() object creation entirely after the first render.
+        if (_spotIconCache[type]) return _spotIconCache[type];
         var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
         var color     = def.color;
         var isHabitat = def.habitat;
@@ -723,9 +731,11 @@
         var html  = '<span class="fmap-spot-dot" style="background:' + color +
                     ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
                     ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
-        return L.divIcon({ className: 'fmap-spot-wrap', html: html,
-                           iconSize:   [sz + 4, sz + 4],
-                           iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
+                               iconSize:   [sz + 4, sz + 4],
+                               iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        _spotIconCache[type] = icon;
+        return icon;
     }
 
     function renderFishingSpots(spots, cacheKey) {
@@ -808,31 +818,31 @@
     // Show the inline spinner in the filter bar header.
     function showStructLoading() {
         _structLoadCount++;
-        var el = document.getElementById('fmap-struct-spinner');
-        if (el) el.hidden = false;
+        if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
+        if (_elStructSpinner) _elStructSpinner.hidden = false;
     }
 
     // Decrement the ref-count; hide the spinner only when all requests finish.
     function hideStructLoading() {
         _structLoadCount = Math.max(0, _structLoadCount - 1);
         if (_structLoadCount > 0) return;
-        var el = document.getElementById('fmap-struct-spinner');
-        if (el) el.hidden = true;
+        if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
+        if (_elStructSpinner) _elStructSpinner.hidden = true;
     }
 
     // Show the dismissible error banner with a custom message.
     function showStructError(msg) {
-        var banner = document.getElementById('fmap-struct-error');
-        var txt    = document.getElementById('fmap-struct-error-msg');
-        if (!banner) return;
-        if (txt) txt.textContent = msg;
-        banner.hidden = false;
+        if (!_elStructError)    _elStructError    = document.getElementById('fmap-struct-error');
+        if (!_elStructErrorMsg) _elStructErrorMsg = document.getElementById('fmap-struct-error-msg');
+        if (!_elStructError) return;
+        if (_elStructErrorMsg) _elStructErrorMsg.textContent = msg;
+        _elStructError.hidden = false;
     }
 
     // Programmatically hide the error banner (called on next successful load).
     function hideStructError() {
-        var banner = document.getElementById('fmap-struct-error');
-        if (banner) banner.hidden = true;
+        if (!_elStructError) _elStructError = document.getElementById('fmap-struct-error');
+        if (_elStructError) _elStructError.hidden = true;
     }
 
     // ── Structure cache helpers ───────────────────────────────────────────────
