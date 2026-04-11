@@ -61,17 +61,25 @@ def _cache_key(
             frozenset(types))
 
 
+_CACHE_EVICT_INTERVAL: float = 60.0   # seconds between full TTL scans
+_cache_last_evict: float = 0.0
+
+
 def _cache_evict() -> None:
     """Purge entries older than TTL; if still over cap, drop oldest by insertion.
 
-    Uses .pop() and try/except to handle concurrent deletes from multiple
-    Flask worker threads without raising KeyError.
+    Full TTL scan is throttled to once per _CACHE_EVICT_INTERVAL so that
+    high-traffic periods don't run O(n) list comprehension on every miss.
+    Uses .pop() and try/except to handle concurrent deletes safely.
     """
+    global _cache_last_evict
     now = _time.time()
-    stale = [k for k, v in list(_CACHE.items())
-             if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)]
-    for k in stale:
-        _CACHE.pop(k, None)          # safe if another thread already removed it
+    if now - _cache_last_evict >= _CACHE_EVICT_INTERVAL:
+        _cache_last_evict = now
+        stale = [k for k, v in list(_CACHE.items())
+                 if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)]
+        for k in stale:
+            _CACHE.pop(k, None)      # safe if another thread already removed it
     while len(_CACHE) >= _CACHE_MAX:
         try:
             del _CACHE[next(iter(_CACHE))]

@@ -53,7 +53,9 @@
     var map           = null;
     var mapReady      = false;
     var markers       = [];          // [{id, leaflet, data}]
-    var _markerIndex  = {};          // loc.id → marker entry — O(1) icon-swap on select
+    var _markerIndex         = {};    // loc.id → marker entry — O(1) icon-swap on select
+    var _lastHotspotsData    = null;  // locations ref from last full renderHotspots rebuild
+    var _lastAiHotspotsData  = null;  // locations ref from last full renderAiHotspots rebuild
     var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
     var currentData   = [];          // last API response locations
@@ -1682,6 +1684,20 @@
 
     function renderAiHotspots(locations) {
         if (!els.hotspotsList) return;
+
+        // Fast path: only the selected item changed — toggle CSS class, skip full rebuild.
+        if (locations === _lastAiHotspotsData && els.hotspotsList.children.length) {
+            els.hotspotsList.querySelectorAll('.fmap-hotspot-item--sel').forEach(function (li) {
+                li.classList.remove('fmap-hotspot-item--sel');
+            });
+            if (selectedId) {
+                var sel = els.hotspotsList.querySelector('[data-loc-id="' + selectedId + '"]');
+                if (sel) sel.classList.add('fmap-hotspot-item--sel');
+            }
+            return;
+        }
+        _lastAiHotspotsData = locations;
+
         var picks = locations.filter(function (l) { return l.ai_pick_rank; });
         if (els.hotspotCount) {
             els.hotspotCount.textContent = picks.length ? picks.length : '';
@@ -1697,6 +1713,21 @@
         if (aiList) renderAiPicksList(locations, aiList);
 
         if (!els.hotspotsList) return;
+
+        // Fast path: the underlying data is the same — only selectedId changed.
+        // Toggle the --sel CSS class on the two affected <li>s instead of
+        // blowing away and rebuilding the entire list + rebinding click handlers.
+        if (locations === _lastHotspotsData && els.hotspotsList.children.length) {
+            els.hotspotsList.querySelectorAll('.fmap-hotspot-item--sel').forEach(function (li) {
+                li.classList.remove('fmap-hotspot-item--sel');
+            });
+            if (selectedId) {
+                var sel = els.hotspotsList.querySelector('[data-loc-id="' + selectedId + '"]');
+                if (sel) sel.classList.add('fmap-hotspot-item--sel');
+            }
+            return;
+        }
+        _lastHotspotsData = locations;
 
         var active = locations.filter(function (l) { return l.activity !== 'none'; });
 
