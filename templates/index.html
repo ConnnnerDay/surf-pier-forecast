@@ -739,8 +739,12 @@
                             Live Feeds
                         </span>
                         <div class="fmap-layers-popup-header-actions">
+                            <span class="fmap-layers-kbd-hint" title="Press L to toggle this panel">L</span>
                             <button type="button" id="fmap-layers-clear-btn" class="fmap-layers-clear-btn" aria-label="Turn off all layers" hidden>
                                 All off
+                            </button>
+                            <button type="button" id="fmap-layers-pin-btn" class="fmap-layers-pin-btn" aria-label="Pin panel open" aria-pressed="false" title="Pin panel open">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
                             </button>
                             <button type="button" id="fmap-layers-popup-close" class="fmap-layers-popup-close" aria-label="Close layers panel">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -811,6 +815,19 @@
                                     <span class="fmap-layer-row-text">
                                         <span class="fmap-layer-row-name">Storm Reports</span>
                                         <span class="fmap-layer-row-desc">Hail, tornado &amp; wind reports · past 24 h</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-tropical-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NHC tropical weather outlook — active disturbances &amp; development areas">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--tropical">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8c-2.5 0-4 2-4 4s1.5 4 4 4 4-2 4-4-1.5-4-4-4z"/><path d="M12 2C6.48 2 2 6.48 2 12"/><path d="M12 2c2 4 2 8 0 12"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Tropical Outlook</span>
+                                        <span class="fmap-layer-row-desc">Active disturbances &amp; areas · NHC</span>
                                     </span>
                                     <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
                                 </button>
@@ -914,6 +931,19 @@
                                     <span class="fmap-layer-row-text">
                                         <span class="fmap-layer-row-name">NDBC Buoys</span>
                                         <span class="fmap-layer-row-desc">Wave height, SST &amp; wind · NOAA</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-hfradar-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="HF Radar surface current vectors — East, Gulf &amp; West coasts">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--hfradar">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">HF Radar Currents</span>
+                                        <span class="fmap-layer-row-desc">Surface current vectors · NOAA HFRNet</span>
                                     </span>
                                     <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
                                 </button>

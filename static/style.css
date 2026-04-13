@@ -13326,3 +13326,101 @@ details[open] .collapsible-module-body {
   .fmap-layers-popup { width: auto; }
   .fmap-layers-search { font-size: 0.82rem; }
 }
+
+/* ── Layer icon colours: HF Radar & Tropical ─────────────────────────────── */
+.fmap-layer-row-icon--hfradar { color: #06b6d4; }
+.fmap-layer-row-icon--tropical { color: #a855f7; }
+
+/* ── HF Radar current arrow markers ─────────────────────────────────────── */
+.fmap-hfradar-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px; height: 16px;
+  transform-origin: center center;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+  transition: filter 0.1s;
+}
+.fmap-hfradar-arrow:hover {
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.6));
+}
+.fmap-hfradar-popup { font-size: 0.82rem; min-width: 160px; }
+
+/* ── Tropical Outlook polygon popups ─────────────────────────────────────── */
+.fmap-tropical-popup { font-size: 0.84rem; min-width: 180px; }
+.fmap-tropical-prob {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ── Layers panel keyboard hint badge ────────────────────────────────────── */
+.fmap-layers-kbd-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px; height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.55);
+  cursor: default;
+  user-select: none;
+  line-height: 1;
+}
+[data-theme="light"] .fmap-layers-kbd-hint,
+body:not([data-theme="dark"]) .fmap-layers-kbd-hint {
+  border-color: rgba(0,0,0,0.18);
+  background: rgba(0,0,0,0.05);
+  color: rgba(0,0,0,0.4);
+}
+
+/* ── Layers panel pin button ─────────────────────────────────────────────── */
+.fmap-layers-pin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.fmap-layers-pin-btn:hover {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.85);
+}
+.fmap-layers-pin-btn--active,
+.fmap-layers-pin-btn[aria-pressed="true"] {
+  color: var(--ocean, #38C0FF);
+  background: rgba(56,192,255,0.12);
+}
+[data-theme="light"] .fmap-layers-pin-btn,
+body:not([data-theme="dark"]) .fmap-layers-pin-btn {
+  color: rgba(0,0,0,0.38);
+}
+[data-theme="light"] .fmap-layers-pin-btn:hover,
+body:not([data-theme="dark"]) .fmap-layers-pin-btn:hover {
+  background: rgba(0,0,0,0.07);
+  color: rgba(0,0,0,0.7);
+}
+[data-theme="light"] .fmap-layers-pin-btn--active,
+body:not([data-theme="dark"]) .fmap-layers-pin-btn[aria-pressed="true"] {
+  color: var(--ocean, #0077B6);
+  background: rgba(0,119,182,0.10);
+}

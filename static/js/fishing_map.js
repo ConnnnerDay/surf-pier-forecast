@@ -282,7 +282,11 @@
             setTimeout(prefetchHomeCorridorStructures, 500);
         }
 
-        map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
+        // preferCanvas: use the <canvas> renderer for vector layers by default.
+        // This is ~3-5x faster than SVG for dense overlays (METAR, AQI, buoys,
+        // gauges, HF Radar) because the GPU composites a single bitmap instead of
+        // layout/paint for thousands of individual SVG DOM nodes.
+        map = L.map(els.mapEl, { zoomControl: true, preferCanvas: true }).setView(startCenter, startZoom);
 
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
@@ -4808,14 +4812,157 @@
             .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] buoy fetch failed:', err); });
     }
 
+    // ─── HF Radar Ocean Currents overlay (NOAA HFRNet via ArcGIS) ────────────
+
+    var hfradarOn     = false;
+    var hfradarLayer  = null;
+    var hfradarTimer  = null;
+    var hfradarAbort  = null;
+
+    function wireHfradarLayer() {
+        if (!map) return;
+        hfradarLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-hfradar-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                hfradarOn = !hfradarOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', hfradarOn);
+                btn.setAttribute('aria-pressed', hfradarOn ? 'true' : 'false');
+                if (hfradarOn) { hfradarLayer.addTo(map); doFetchHfradar(); }
+                else { map.removeLayer(hfradarLayer); hfradarLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () {
+            if (hfradarOn) { clearTimeout(hfradarTimer); hfradarTimer = setTimeout(doFetchHfradar, 700); }
+        });
+    }
+
+    function doFetchHfradar() {
+        if (!hfradarOn || !map) return;
+        if (hfradarAbort) { try { hfradarAbort.abort(); } catch (e) {} }
+        hfradarAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/hfradar?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: hfradarAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!hfradarOn || !map || !data) return;
+                hfradarLayer.clearLayers();
+                var vectors = data.vectors || [];
+
+                // Subsample if too dense (>600 pts) to keep FPS up
+                if (vectors.length > 600) {
+                    var step = Math.ceil(vectors.length / 600);
+                    vectors = vectors.filter(function (_, i) { return i % step === 0; });
+                }
+
+                vectors.forEach(function (v) {
+                    // Draw an arrow rotated to the current direction
+                    var rot = v.dir_deg != null ? v.dir_deg : 0;
+                    var kts = v.speed_kts != null ? v.speed_kts.toFixed(1) + ' kt' : '';
+                    var icon = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-hfradar-arrow" style="color:' + v.color +
+                              ';transform:rotate(' + rot + 'deg)" title="' + kts + '">' +
+                              '<svg viewBox="0 0 10 16" width="10" height="16" fill="currentColor" aria-hidden="true">' +
+                              '<polygon points="5,0 10,16 5,12 0,16"/></svg></div>',
+                        iconSize:   [10, 16],
+                        iconAnchor: [5, 8],
+                    });
+                    var updStr = '';
+                    if (v.updated) { try { updStr = new Date(v.updated).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',timeZoneName:'short'}); } catch(e) {} }
+                    L.marker([v.lat, v.lng], { icon: icon })
+                     .bindTooltip(
+                        '<strong>Ocean Current</strong>' +
+                        (kts ? '<br>' + kts + (v.dir_deg != null ? ' from ' + v.dir_deg + '°' : '') : '') +
+                        (updStr ? '<br><small style="opacity:.6">' + updStr + '</small>' : '') +
+                        '<br><small style="opacity:.5">NOAA HF Radar</small>',
+                        { sticky: true, opacity: 0.93, direction: 'top' }
+                     )
+                     .addTo(hfradarLayer);
+                });
+                if (!vectors.length) showToast('No HF Radar data in view (US coasts only)');
+                else showToast(vectors.length + ' current vector' + (vectors.length !== 1 ? 's' : ''));
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] HF Radar fetch failed:', err); });
+    }
+
+    // ─── NHC Tropical Weather Outlook overlay (ArcGIS Live Feeds) ────────────
+
+    var tropicalOn     = false;
+    var tropicalLayer  = null;
+    var tropicalAbort  = null;
+
+    function wireTropicalOutlook() {
+        if (!map) return;
+        tropicalLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-tropical-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                tropicalOn = !tropicalOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', tropicalOn);
+                btn.setAttribute('aria-pressed', tropicalOn ? 'true' : 'false');
+                if (tropicalOn) { tropicalLayer.addTo(map); doFetchTropicalOutlook(); }
+                else { map.removeLayer(tropicalLayer); tropicalLayer.clearLayers(); }
+            });
+        }
+    }
+
+    function doFetchTropicalOutlook() {
+        if (!tropicalOn || !map) return;
+        if (tropicalAbort) { try { tropicalAbort.abort(); } catch (e) {} }
+        tropicalAbort = new AbortController();
+
+        fetch('/api/map/tropical-outlook', { signal: tropicalAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!tropicalOn || !map || !data) return;
+                tropicalLayer.clearLayers();
+                var areas = data.areas || [];
+
+                areas.forEach(function (a) {
+                    a.rings.forEach(function (ring) {
+                        L.polygon(ring, {
+                            color:       a.color,
+                            fillColor:   a.color,
+                            fillOpacity: 0.22,
+                            weight:      2,
+                            opacity:     0.75,
+                            dashArray:   '6 4',
+                        }).bindPopup(
+                            '<div class="fmap-tropical-popup">' +
+                            '<strong>Tropical Development Area</strong>' +
+                            '<div class="fmap-tropical-prob" style="color:' + a.color + '">' +
+                            esc(a.prob_label || a.probability) + ' probability</div>' +
+                            '<div style="font-size:.75rem;opacity:.7;margin-top:2px">Basin: ' + esc(a.basin) + '</div>' +
+                            (a.discussion ? '<p style="font-size:.74rem;margin:6px 0 2px;opacity:.85">' + esc(a.discussion) + '</p>' : '') +
+                            '<div style="font-size:.68rem;opacity:.45;margin-top:4px">NHC Tropical Weather Outlook · ArcGIS Live Feeds</div>' +
+                            '</div>',
+                            { maxWidth: 280 }
+                        ).addTo(tropicalLayer);
+                    });
+                });
+
+                if (!areas.length) showToast('No tropical development areas active');
+                else showToast(areas.length + ' tropical area' + (areas.length !== 1 ? 's' : '') + ' in outlook');
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] tropical outlook fetch failed:', err); });
+    }
+
     // ─── Layers popup panel ───────────────────────────────────────────────────
     // IDs of all layer-row buttons inside the popup (must match the HTML ids).
     var LAYER_BTN_IDS = [
         'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
-        'fmap-storm-rpt-btn', 'fmap-sst-btn', 'fmap-sea-ice-btn',
-        'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
-        'fmap-gauge-btn', 'fmap-terminator-btn',
-        'fmap-aqi-btn', 'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn'
+        'fmap-storm-rpt-btn', 'fmap-tropical-btn',
+        'fmap-sst-btn', 'fmap-sea-ice-btn', 'fmap-wildfire-btn', 'fmap-seismic-btn',
+        'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn', 'fmap-hfradar-btn',
+        'fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn'
     ];
     var LS_LAYERS_KEY   = 'fmap_layers_v2';   // bumped to clear old saved state
     var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
@@ -4823,10 +4970,10 @@
     // Map from section data-section value → layer button IDs it contains
     var SECTION_LAYER_MAP = {
         weather: ['fmap-marine-warn-btn', 'fmap-storm-tracker-btn',
-                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn'],
+                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn', 'fmap-tropical-btn'],
         ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
                   'fmap-wildfire-btn', 'fmap-seismic-btn',
-                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn'],
+                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn', 'fmap-hfradar-btn'],
         obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn']
     };
 
@@ -4872,10 +5019,28 @@
         var popup       = document.getElementById('fmap-layers-popup');
         var closeBtn    = document.getElementById('fmap-layers-popup-close');
         var clearBtn    = document.getElementById('fmap-layers-clear-btn');
+        var pinBtn      = document.getElementById('fmap-layers-pin-btn');
         var searchInput = document.getElementById('fmap-layers-search');
         if (!triggerBtn || !popup) return;
 
         var _closeTimer = null;
+        var _pinned     = false;   // when true, outside-click and Escape don't close
+
+        // ── Pin toggle (keep panel open while switching layers) ───────────────
+        function _updatePinAppearance() {
+            if (!pinBtn) return;
+            pinBtn.classList.toggle('fmap-layers-pin-btn--active', _pinned);
+            pinBtn.setAttribute('aria-pressed', _pinned ? 'true' : 'false');
+            pinBtn.title = _pinned ? 'Unpin panel (allow auto-close)' : 'Pin panel open';
+        }
+
+        if (pinBtn) {
+            pinBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                _pinned = !_pinned;
+                _updatePinAppearance();
+            });
+        }
 
         // ── Layer search filter ───────────────────────────────────────────────
         // Filters visible layer rows by the text inside .fmap-layer-row-name
@@ -4967,16 +5132,30 @@
             });
         }
 
-        // Escape key closes popup
+        // Escape closes popup (unless pinned)
+        // 'L' key (no modifiers, not in a text field) toggles panel
         document.addEventListener('keydown', function (e) {
-            if (!popup.hidden && (e.key === 'Escape' || e.keyCode === 27)) {
+            var tag = (e.target || {}).tagName || '';
+            var inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+                          (e.target || {}).isContentEditable;
+
+            if (!popup.hidden && (e.key === 'Escape' || e.keyCode === 27) && !_pinned) {
                 closePopup();
+                return;
+            }
+            if (!inInput && (e.key === 'l' || e.key === 'L') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                if (popup.hidden || popup.classList.contains('fmap-layers-popup--closing')) {
+                    openPopup();
+                } else if (!_pinned) {
+                    closePopup();
+                }
             }
         });
 
-        // Close when clicking outside the popup or trigger button
+        // Close when clicking outside (unless pinned)
         document.addEventListener('click', function (e) {
-            if (popup.hidden) return;
+            if (popup.hidden || _pinned) return;
             if (popup.contains(e.target) || triggerBtn.contains(e.target)) return;
             closePopup();
         });
@@ -5097,6 +5276,8 @@
                 wireDroughtLayer();
                 wirePrecipLayer();
                 wireBuoyLayer();
+                wireHfradarLayer();
+                wireTropicalOutlook();
                 restoreLayerState();
                 // Restore cached structure data from the previous page view so
                 // markers appear instantly on refresh instead of waiting for Overpass.

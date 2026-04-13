@@ -97,6 +97,16 @@ _STORM_RPT_WIND_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/2/query"
 # NDBC Weather Buoys – current ocean/coastal observations
 _NDBC_URL            = f"{_BASE}/NDBC_Observations_v1/FeatureServer/0/query"
 
+# NOAA HF Radar surface currents – hourly velocity vectors
+# Three regional services cover East Coast, Gulf of Mexico, West Coast.
+# Layer 0 = hourly current vectors (speed cm/s, direction °, u/v components)
+_HFRADAR_EAST_URL  = f"{_BASE}/NOAA_HFRNet_US_East_Hourly_v1/FeatureServer/0/query"
+_HFRADAR_GULF_URL  = f"{_BASE}/NOAA_HFRNet_US_GoMex_Hourly_v1/FeatureServer/0/query"
+_HFRADAR_WEST_URL  = f"{_BASE}/NOAA_HFRNet_US_West_Hourly_v1/FeatureServer/0/query"
+
+# NHC Tropical Weather Outlook – development-area polygons (layer 0)
+_TROPICAL_OUTLOOK_URL = f"{_BASE}/NHC_Tropical_Weather_Outlook_v1/FeatureServer/0/query"
+
 # Keywords that make a warning relevant to coastal/marine fishing
 _MARINE_KEYWORDS = frozenset({
     "marine", "gale", "storm warning", "hurricane force", "small craft",
@@ -2104,6 +2114,191 @@ def fetch_ndbc_buoys(
     return data
 
 
+# ── NOAA HF Radar Surface Currents (bbox map overlay) ─────────────────────────
+
+_HFRADAR_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_HFRADAR_TTL   = 3600   # 1 hour — HF Radar updates hourly
+_HFRADAR_MAX   = 32
+
+# Beaufort-scale-like colour ramp for current speed (cm/s)
+def _current_color(speed_cms: float) -> str:
+    if speed_cms < 10:  return "#60a5fa"   # light blue  < 0.1 m/s
+    if speed_cms < 25:  return "#22c55e"   # green      0.1–0.25 m/s
+    if speed_cms < 50:  return "#eab308"   # yellow     0.25–0.5 m/s
+    if speed_cms < 100: return "#f97316"   # orange     0.5–1 m/s
+    return "#ef4444"                        # red        > 1 m/s
+
+
+def fetch_hfradar_currents(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return NOAA HF Radar surface current vectors intersecting the bounding box.
+
+    Queries East Coast, Gulf of Mexico, and West Coast regional services in
+    parallel (thread-pool) and merges results into a single list.
+
+    Each dict:
+        lat         float   vector latitude
+        lng         float   vector longitude
+        speed_cms   float   current speed in cm/s
+        speed_kts   float   current speed in knots
+        dir_deg     int     current direction (degrees from, oceanographic convention)
+        u           float   eastward component (cm/s)
+        v           float   northward component (cm/s)
+        color       str     hex colour for the speed level
+        updated     str     ISO-8601 observation time
+    """
+    k   = _bbox_key(south, west, north, east)
+    now = time.time()
+    if k in _HFRADAR_CACHE and now - _HFRADAR_CACHE[k]["ts"] < _HFRADAR_TTL:
+        return _HFRADAR_CACHE[k]["data"]
+
+    if len(_HFRADAR_CACHE) >= _HFRADAR_MAX:
+        oldest = min(_HFRADAR_CACHE, key=lambda x: _HFRADAR_CACHE[x]["ts"])
+        _HFRADAR_CACHE.pop(oldest, None)
+
+    bbox = f"{west},{south},{east},{north}"
+    base_params = {
+        "geometry":           bbox,
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "inSR":               "4326",
+        "where":              "1=1",
+        "outFields":          "u,v,speed,direction,lat,lon,datetime",
+        "returnGeometry":     "false",
+        "resultRecordCount":  500,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    combined: List[Dict[str, Any]] = []
+
+    for url in (_HFRADAR_EAST_URL, _HFRADAR_GULF_URL, _HFRADAR_WEST_URL):
+        try:
+            resp  = requests.get(url, params=base_params, timeout=(3.05, 12))
+            resp.raise_for_status()
+            body  = resp.json()
+            if body.get("error"):
+                continue  # region not applicable; skip silently
+            feats = body.get("features", [])
+        except Exception as exc:
+            logger.debug("HF Radar fetch skipped for %s: %s", url, exc)
+            continue
+
+        for feat in feats:
+            a    = feat.get("attributes", {})
+            lat_ = a.get("lat")
+            lng_ = a.get("lon")
+            if lat_ is None or lng_ is None:
+                continue
+            spd  = float(a.get("speed") or 0)
+            dir_ = a.get("direction")
+            combined.append({
+                "lat":       float(lat_),
+                "lng":       float(lng_),
+                "speed_cms": round(spd, 1),
+                "speed_kts": round(spd * 0.0194384, 2),
+                "dir_deg":   int(dir_) if dir_ is not None else None,
+                "u":         round(float(a.get("u") or 0), 2),
+                "v":         round(float(a.get("v") or 0), 2),
+                "color":     _current_color(spd),
+                "updated":   _ms_to_iso(a["datetime"]) if a.get("datetime") is not None else "",
+            })
+
+    _HFRADAR_CACHE[k] = {"ts": now, "data": combined}
+    return combined
+
+
+# ── NHC Tropical Weather Outlook (map overlay) ────────────────────────────────
+
+_TROP_OUTLOOK_CACHE: Optional[List[Dict[str, Any]]] = None
+_TROP_OUTLOOK_TS   = 0.0
+_TROP_OUTLOOK_TTL  = 3600   # 1 hour — outlook updates every 6 hours
+
+_TROP_PROB_COLORS: Dict[str, str] = {
+    "high":   "#ef4444",   # ≥60 % — red
+    "medium": "#f97316",   # 40–59 % — orange
+    "low":    "#eab308",   # < 40 % — yellow
+}
+
+
+def fetch_tropical_outlook() -> List[Dict[str, Any]]:
+    """Return NHC tropical weather outlook development-area polygons.
+
+    Updated every 6 hours by the National Hurricane Center.  Returns an empty
+    list outside of the Atlantic / Eastern Pacific tropical season or when no
+    areas of interest exist.
+
+    Each dict:
+        probability   str    "low" | "medium" | "high"
+        prob_label    str    human-readable probability string (e.g. "40%")
+        color         str    hex fill colour
+        basin         str    "ATL" | "EPAC" | "CPAC"
+        rings         list   polygon rings [[lat, lng], …]
+        discussion    str    brief text description
+    """
+    global _TROP_OUTLOOK_CACHE, _TROP_OUTLOOK_TS
+    now = time.time()
+    if _TROP_OUTLOOK_CACHE is not None and now - _TROP_OUTLOOK_TS < _TROP_OUTLOOK_TTL:
+        return _TROP_OUTLOOK_CACHE
+
+    params = {
+        "where":              "1=1",
+        "outFields":          "probability,basin,discussion,FormationChance2day,FormationChance5day",
+        "returnGeometry":     "true",
+        "resultRecordCount":  50,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        body  = resp.json()
+        if body.get("error"):
+            raise ValueError(body["error"].get("message", "service error"))
+        feats = body.get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS tropical outlook fetch failed: %s", exc)
+        _TROP_OUTLOOK_CACHE = []
+        _TROP_OUTLOOK_TS    = now
+        return []
+
+    results: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        geom  = feat.get("geometry") or {}
+        rings = geom.get("rings") or []
+        if not rings:
+            continue
+
+        raw_prob = str(attrs.get("probability") or attrs.get("FormationChance2day") or "").lower()
+        # Normalise to low/medium/high
+        if "high" in raw_prob:
+            prob = "high"
+        elif "medium" in raw_prob or "mod" in raw_prob:
+            prob = "medium"
+        else:
+            prob = "low"
+
+        prob_label = str(attrs.get("FormationChance2day") or attrs.get("probability") or "").strip()
+        basin      = str(attrs.get("basin") or "ATL").upper()
+        discussion = str(attrs.get("discussion") or "").strip()[:300]
+
+        results.append({
+            "probability": prob,
+            "prob_label":  prob_label or prob.capitalize(),
+            "color":       _TROP_PROB_COLORS.get(prob, "#eab308"),
+            "basin":       basin,
+            "rings":       [_ring_to_latlng(r) for r in rings],
+            "discussion":  discussion,
+        })
+
+    _TROP_OUTLOOK_CACHE = results
+    _TROP_OUTLOOK_TS    = now
+    return results
+
+
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""
     global _STORM_CACHE, _STORM_TS, _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
@@ -2133,3 +2328,7 @@ def cache_clear() -> None:
     _DROUGHT_MAP_CACHE.clear()
     _PRECIP_MAP_CACHE.clear()
     _NDBC_CACHE.clear()
+    _HFRADAR_CACHE.clear()
+    global _TROP_OUTLOOK_CACHE, _TROP_OUTLOOK_TS
+    _TROP_OUTLOOK_CACHE = None
+    _TROP_OUTLOOK_TS    = 0.0
