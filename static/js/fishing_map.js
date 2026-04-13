@@ -1755,8 +1755,12 @@
             var emptyHtml = '<li class="fmap-hotspot-empty">';
             if (activeSpecies && allSpecies.length) {
                 var lower = activeSpecies.toLowerCase();
+                var _lsrc = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
                 var suggestions = allSpecies
-                    .map(function (n) { return { name: n, dist: levenshtein(lower, n.toLowerCase().slice(0, lower.length + 3)) }; })
+                    .map(function (n, i) {
+                        var nl = _lsrc ? _lsrc[i] : n.toLowerCase();
+                        return { name: n, dist: levenshtein(lower, nl.slice(0, lower.length + 3)) };
+                    })
                     .filter(function (x) { return x.dist <= 3; })
                     .sort(function (a, b) { return a.dist - b.dist; })
                     .slice(0, 3)
@@ -2147,7 +2151,7 @@
                 // reflect the same species the user has selected in the main search.
                 if (communityLayerOn) scheduleCommunityLoad();
                 // Load community catches once map is centred on saved location
-                setTimeout(function () { loadCommunityFeed(); }, 900);
+                setTimeout(function () { loadCommunityFeed(); }, 400);
             })
             .catch(function (err) {
                 if (err && err.name === 'AbortError') return; // superseded by newer request
@@ -4759,10 +4763,27 @@
     // ─── Month Planner ────────────────────────────────────────────────────────
     var MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+    // Refs to last-rendered planner state for fast-path optimization
+    var _plannerSummary  = null;  // last summary array passed to renderMonthPlanner
+    var _plannerCurrentM = 0;     // last currentM passed to renderMonthPlanner
+
     function renderMonthPlanner(summary, currentM) {
         var planner = document.getElementById('fmap-planner');
         var container = document.getElementById('fmap-planner-months');
         if (!planner || !container || !summary || !summary.length) return;
+
+        // Fast path: bar data hasn't changed, only the selected month changed.
+        // Toggle CSS on the two affected cells instead of rebuilding all 12.
+        if (summary === _plannerSummary && currentM === _plannerCurrentM && container.children.length === 12) {
+            container.querySelectorAll('.fmap-month-cell').forEach(function (btn) {
+                var m = parseInt(btn.getAttribute('data-month'), 10);
+                btn.classList.toggle('fmap-month-cell--selected', m === activeMonth);
+            });
+            return;
+        }
+
+        _plannerSummary  = summary;
+        _plannerCurrentM = currentM;
 
         // Find max combined active count for normalising bar heights
         var maxActive = 1;

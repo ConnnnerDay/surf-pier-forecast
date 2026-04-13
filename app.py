@@ -465,10 +465,19 @@ def create_app() -> Flask:
         import time as _time
         _time.sleep(2)  # let gunicorn workers and DB fully initialise first
         try:
-            # Build the location→species index before the first real request
-            # so _species_present_at is never called at request time.
-            from web.api import _get_loc_species_all
+            # Build all lazy indices before the first real request so none of
+            # the O(n) setup work happens inside a user-facing request:
+            #   _get_loc_species_all     → 101-location × 895-species presence map
+            #   _get_species_lower_index → pre-lowercased names + category frozensets
+            #   _get_all_species_names   → sorted name list for autocomplete
+            from web.api import (
+                _get_loc_species_all,
+                _get_species_lower_index,
+                _get_all_species_names,
+            )
             _get_loc_species_all()
+            _get_species_lower_index()
+            _get_all_species_names()
             # Then warm the full response cache via a real request context
             with app.test_client() as _c:
                 _c.get("/api/fishing-map")
