@@ -1494,17 +1494,65 @@
 
     function drawMarkers(locations) {
         if (!map || !locationLayer) return;
-        clearMarkers();
 
+        // ── Incremental update — avoids the clear→recreate cycle that causes
+        // a visible flicker on every filter change.
+        //
+        // Strategy:
+        //  1. Build a fast lookup of incoming location ids.
+        //  2. Remove markers for locations that no longer appear (coast filter
+        //     toggled, etc.) — rare, so the O(n) sweep is acceptable.
+        //  3. For locations that already have a marker, update the icon and
+        //     stored data reference in-place.  Click handlers read from
+        //     currentData at click-time so they always use the freshest data.
+        //  4. For brand-new locations, create and add a marker.
+
+        var incoming = {};
+        locations.forEach(function (loc) { incoming[loc.id] = loc; });
+
+        // Step 2 — remove stale markers
+        var stalIds = Object.keys(_markerIndex).filter(function (id) { return !incoming[id]; });
+        stalIds.forEach(function (id) {
+            locationLayer.removeLayer(_markerIndex[id].leaflet);
+            delete _markerIndex[id];
+        });
+        markers = markers.filter(function (e) { return _markerIndex[e.id]; });
+
+        // Steps 3 & 4
         locations.forEach(function (loc) {
             var isSel = loc.id === selectedId;
+
+            if (_markerIndex[loc.id]) {
+                // Update icon and tooltip in-place — no DOM insert/remove
+                var entry = _markerIndex[loc.id];
+                var prevActivity = entry.data.activity;
+                entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
+                entry.data = loc;          // refresh data so click handler gets new species/scores
+                // Resync tooltip text if activity label changed
+                if (loc.activity !== prevActivity) {
+                    var tLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
+                    entry.leaflet.unbindTooltip();
+                    entry.leaflet.bindTooltip(
+                        '<strong>' + esc(loc.name) + '</strong>, ' + esc(loc.state) +
+                        '<br><span class="fmap-tip-badge fmap-tip-' + esc(loc.activity) + '">' + tLabel + '</span>',
+                        { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
+                    );
+                }
+                return;
+            }
+
+            // New marker — created once per location per session (coast changes are rare)
             var m = L.marker([loc.lat, loc.lng], {
                 icon:  makeIcon(loc.activity, isSel),
                 title: loc.name + ', ' + loc.state
             });
             locationLayer.addLayer(m);
 
-            m.on('click', function () { selectLocation(loc); });
+            // Always read the live entry so the handler uses the latest scored data
+            m.on('click', function () {
+                var live = _markerIndex[loc.id];
+                if (live) selectLocation(live.data);
+            });
 
             var tipLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
             m.bindTooltip(
