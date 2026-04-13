@@ -4717,7 +4717,7 @@ h2::before {
   top: 0.6rem;
   right: 3rem; /* sits just left of the toolbar */
   z-index: 460;
-  width: 270px;
+  width: 300px;
   background: rgba(10,19,29,0.96);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -13196,4 +13196,133 @@ details[open] .collapsible-module-body {
   .summary-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* ── New layer icon colours ───────────────────────────────────────────────── */
+.fmap-layer-row-icon--drought { background: rgba(234,179,8,0.18);   color: #fbbf24; }
+.fmap-layer-row-icon--rain    { background: rgba(59,130,246,0.18);  color: #60a5fa; }
+.fmap-layer-row-icon--buoy    { background: rgba(16,185,129,0.18);  color: #34d399; }
+.fmap-layer-row-icon--aqi     { background: rgba(168,85,247,0.18);  color: #c084fc; }
+
+[data-theme="light"] .fmap-layer-row-icon--drought { background: rgba(234,179,8,0.12); }
+[data-theme="light"] .fmap-layer-row-icon--rain    { background: rgba(59,130,246,0.10); }
+[data-theme="light"] .fmap-layer-row-icon--buoy    { background: rgba(16,185,129,0.10); }
+[data-theme="light"] .fmap-layer-row-icon--aqi     { background: rgba(168,85,247,0.10); }
+
+/* ── Filter search bar inside layers panel ───────────────────────────────── */
+.fmap-layers-search-wrap {
+  position: relative;
+  padding: 6px 10px 5px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.18);
+}
+.fmap-layers-search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.fmap-layers-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px 5px 28px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px;
+  color: var(--text, #e2e8f0);
+  font-size: 0.78rem;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.fmap-layers-search::placeholder { opacity: 0.45; }
+.fmap-layers-search:focus {
+  border-color: rgba(56,189,248,0.5);
+  background: rgba(255,255,255,0.09);
+}
+/* hide the native clear X in search inputs */
+.fmap-layers-search::-webkit-search-cancel-button { display: none; }
+
+[data-theme="light"] .fmap-layers-search-wrap {
+  background: rgba(0,0,0,0.04);
+  border-bottom-color: rgba(0,0,0,0.07);
+}
+[data-theme="light"] .fmap-layers-search {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.12);
+  color: var(--text, #1e293b);
+}
+[data-theme="light"] .fmap-layers-search:focus {
+  border-color: rgba(14,95,120,0.5);
+  background: rgba(0,0,0,0.07);
+}
+[data-theme="light"] .fmap-layers-search-icon { opacity: 0.4; }
+
+/* ── AQI map markers ─────────────────────────────────────────────────────── */
+.fmap-aqi-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.6);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.fmap-aqi-dot:hover { transform: scale(1.35); }
+.fmap-aqi-popup { font-size: 0.82rem; min-width: 150px; }
+.fmap-aqi-val   { font-size: 1.1rem; font-weight: 700; margin: 3px 0; }
+.fmap-aqi-cat   {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 3px;
+}
+
+/* ── NDBC Buoy markers ───────────────────────────────────────────────────── */
+.fmap-buoy-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 22px;
+  border-radius: 5px;
+  border: 2px solid;
+  background: rgba(10,19,29,0.82);
+  cursor: pointer;
+  font-size: 0.72rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  transition: transform 0.12s;
+  white-space: nowrap;
+}
+.fmap-buoy-dot:hover { transform: scale(1.1); }
+.fmap-buoy-wave {
+  font-weight: 700;
+  color: #e2e8f0;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+.fmap-buoy-popup { font-size: 0.82rem; min-width: 170px; }
+
+/* ── Improved panel animation for tar1090-style slide ────────────────────── */
+@keyframes fmap-layers-in {
+  from { opacity: 0; transform: translateX(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+@keyframes fmap-layers-out {
+  from { opacity: 1; transform: translateX(0)    scale(1);    }
+  to   { opacity: 0; transform: translateX(12px) scale(0.97); }
+}
+
+/* Panel now slides from the right — keep existing positioning but use slide anim */
+.fmap-layers-popup {
+  /* override animation origin to right edge */
+  transform-origin: top right;
+}
+
+/* ── Mobile: stack above panel body search bar ───────────────────────────── */
+@media (max-width: 480px) {
+  .fmap-layers-popup { width: auto; }
+  .fmap-layers-search { font-size: 0.82rem; }
 }

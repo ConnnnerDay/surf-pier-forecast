@@ -2344,6 +2344,129 @@ def map_storm_reports() -> Any:
     return jsonify({"reports": reports, "count": len(reports)})
 
 
+@bp.route("/api/map/air-quality", methods=["GET"])
+def map_air_quality() -> Any:
+    """Return PM2.5 AQI monitoring stations for the bounding box.
+
+    Proxies the ArcGIS Living Atlas Air_Quality_PM25_Latest_Results live feed
+    (OpenAQ global network). Returns one dot per station coloured by AQI level.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "stations": [ { lat, lng, name, pm25, category, color, updated } ],
+            "count" }
+    """
+    from services.arcgis_live_feeds import fetch_aqi_map
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    stations = fetch_aqi_map(south, west, north, east)
+    resp = jsonify({"stations": stations, "count": len(stations)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/map/drought", methods=["GET"])
+def map_drought() -> Any:
+    """Return US Drought Monitor intensity polygons for the bounding box.
+
+    Proxies the ArcGIS Living Atlas US_Drought_Intensity_v1 live feed
+    (National Drought Mitigation Center / USDA). CONUS coverage only.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "polygons": [ { dm, code, label, color, rings [[lat,lng]] } ],
+            "count" }
+    """
+    from services.arcgis_live_feeds import fetch_drought_map
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    polygons = fetch_drought_map(south, west, north, east)
+    resp = jsonify({"polygons": polygons, "count": len(polygons)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
+
+
+@bp.route("/api/map/precipitation", methods=["GET"])
+def map_precipitation() -> Any:
+    """Return NDFD precipitation forecast polygons for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NDFD_Precipitation_v1 live feed
+    (NOAA National Digital Forecast Database). Each polygon covers a 6-hour
+    forecast period with a rainfall amount category.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "polygons": [ { from_time, to_time, category, label, color,
+                             rings [[lat,lng]] } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_precipitation_map
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    polygons = fetch_precipitation_map(south, west, north, east)
+    resp = jsonify({"polygons": polygons, "count": len(polygons)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/map/buoys", methods=["GET"])
+def map_buoys() -> Any:
+    """Return NDBC weather buoy observations for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NDBC_Observations_v1 live feed.
+    Buoys report wave height, sea surface temperature, wind speed/direction,
+    and pressure updated approximately every hour.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "buoys": [ { lat, lng, id, name, water_temp_f, wave_ht_ft,
+                          wind_kt, wind_dir, period_s, pressure_mb, updated } ],
+            "count" }
+    """
+    from services.arcgis_live_feeds import fetch_ndbc_buoys
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    buoys = fetch_ndbc_buoys(south, west, north, east)
+    resp = jsonify({"buoys": buoys, "count": len(buoys)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
+
+
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
 def _require_map_admin():

@@ -94,6 +94,9 @@ _STORM_RPT_HAIL_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/0/query"
 _STORM_RPT_TORN_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/1/query"
 _STORM_RPT_WIND_URL  = f"{_BASE}/NOAA_storm_reports_v1/FeatureServer/2/query"
 
+# NDBC Weather Buoys – current ocean/coastal observations
+_NDBC_URL            = f"{_BASE}/NDBC_Observations_v1/FeatureServer/0/query"
+
 # Keywords that make a warning relevant to coastal/marine fishing
 _MARINE_KEYWORDS = frozenset({
     "marine", "gale", "storm warning", "hurricane force", "small craft",
@@ -1762,6 +1765,345 @@ def fetch_storm_reports(south: float, west: float, north: float, east: float) ->
     return combined
 
 
+# ── AQI Stations (bbox map overlay) ───────────────────────────────────────────
+
+_AQI_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_AQI_MAP_TTL  = 1800   # 30 minutes
+_AQI_MAP_MAX  = 32
+
+
+def _bbox_key(s: float, w: float, n: float, e: float) -> tuple:
+    return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
+
+
+def fetch_aqi_map(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return PM2.5 AQI monitoring stations within the bounding box.
+
+    Each dict:
+        lat         float  station latitude
+        lng         float  station longitude
+        name        str    station / location name
+        pm25        float  PM2.5 concentration in µg/m³
+        category    str    "Good" | "Moderate" | "Unhealthy" …
+        color       str    hex colour matching the AQI category
+        updated     str    last-updated timestamp string
+    """
+    k   = _bbox_key(south, west, north, east)
+    now = time.time()
+    if k in _AQI_MAP_CACHE and now - _AQI_MAP_CACHE[k]["ts"] < _AQI_MAP_TTL:
+        return _AQI_MAP_CACHE[k]["data"]
+
+    if len(_AQI_MAP_CACHE) >= _AQI_MAP_MAX:
+        oldest = min(_AQI_MAP_CACHE, key=lambda x: _AQI_MAP_CACHE[x]["ts"])
+        _AQI_MAP_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":           f"{west},{south},{east},{north}",
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "inSR":               "4326",
+        "where":              "value > 0",
+        "outFields":          "location,city,value,unit,lastUpdated",
+        "returnGeometry":     "true",
+        "resultRecordCount":  300,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_AQI_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS AQI map fetch failed: %s", exc)
+        _AQI_MAP_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        geom = feat.get("geometry") or {}
+        lng_ = geom.get("x")
+        lat_ = geom.get("y")
+        if lat_ is None or lng_ is None:
+            continue
+        attrs = feat.get("attributes", {})
+        raw   = float(attrs.get("value") or 0)
+        cat, color = _pm25_category(raw)
+        data.append({
+            "lat":      float(lat_),
+            "lng":      float(lng_),
+            "name":     str(attrs.get("location") or attrs.get("city") or ""),
+            "pm25":     round(raw, 1),
+            "category": cat,
+            "color":    color,
+            "updated":  str(attrs.get("lastUpdated") or ""),
+        })
+
+    _AQI_MAP_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── Drought Polygons (bbox map overlay) ───────────────────────────────────────
+
+_DROUGHT_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_DROUGHT_MAP_TTL   = 21600  # 6 hours — drought updates weekly
+_DROUGHT_MAP_MAX   = 32
+
+
+def fetch_drought_map(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return US Drought Monitor intensity polygons intersecting the bounding box.
+
+    Each dict:
+        dm      int    drought category 0–4
+        code    str    "D0" … "D4"
+        label   str    human-readable description
+        color   str    hex fill colour
+        rings   list   polygon rings as [[lat, lng], …]
+    """
+    k   = _bbox_key(south, west, north, east)
+    now = time.time()
+    if k in _DROUGHT_MAP_CACHE and now - _DROUGHT_MAP_CACHE[k]["ts"] < _DROUGHT_MAP_TTL:
+        return _DROUGHT_MAP_CACHE[k]["data"]
+
+    if len(_DROUGHT_MAP_CACHE) >= _DROUGHT_MAP_MAX:
+        oldest = min(_DROUGHT_MAP_CACHE, key=lambda x: _DROUGHT_MAP_CACHE[x]["ts"])
+        _DROUGHT_MAP_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":           f"{west},{south},{east},{north}",
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "inSR":               "4326",
+        "where":              "dm >= 0",
+        "outFields":          "dm,d0,d1,d2,d3,d4,ddate",
+        "returnGeometry":     "true",
+        "resultRecordCount":  200,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_DROUGHT_URL, params=params, timeout=(3.05, 20))
+        resp.raise_for_status()
+        body  = resp.json()
+        if body.get("error"):
+            raise ValueError(body["error"].get("message", "service error"))
+        feats = body.get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS drought map fetch failed: %s", exc)
+        _DROUGHT_MAP_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        geom  = feat.get("geometry") or {}
+        rings = geom.get("rings") or []
+        if not rings:
+            continue
+        dm = int(attrs.get("dm") or -1)
+        if dm < 0:
+            continue
+        code, label = _DROUGHT_LABELS.get(dm, ("D?", "Unknown"))
+        color       = _DROUGHT_COLORS.get(dm, "#9E9E9E")
+        # Thin very large rings for map performance
+        thinned = [r[::max(1, len(r) // 300)] for r in rings]
+        data.append({
+            "dm":    dm,
+            "code":  code,
+            "label": label,
+            "color": color,
+            "rings": [_ring_to_latlng(r) for r in thinned],
+        })
+
+    _DROUGHT_MAP_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── Precipitation Polygons (bbox map overlay) ─────────────────────────────────
+
+_PRECIP_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_PRECIP_MAP_TTL   = 3600  # 1 hour
+_PRECIP_MAP_MAX   = 32
+
+_PRECIP_POLY_COLORS = [
+    "#bfdbfe", "#93c5fd", "#60a5fa", "#3b82f6", "#2563eb",
+    "#1d4ed8", "#1e40af", "#1e3a8a", "#172554",
+]
+
+
+def _precip_color(cat: int) -> str:
+    idx = min(cat * 8 // 20, len(_PRECIP_POLY_COLORS) - 1) if cat > 0 else 0
+    return _PRECIP_POLY_COLORS[max(0, idx)]
+
+
+def fetch_precipitation_map(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return NDFD precipitation forecast polygons intersecting the bounding box.
+
+    Each dict:
+        from_time   str   ISO-8601 period start
+        to_time     str   ISO-8601 period end
+        category    int   NDFD rainfall category (0–19)
+        label       str   rainfall amount range (e.g. '0.25–0.50"')
+        color       str   hex fill colour (lighter→darker with intensity)
+        rings       list  polygon rings as [[lat, lng], …]
+    """
+    k   = _bbox_key(south, west, north, east)
+    now = time.time()
+    if k in _PRECIP_MAP_CACHE and now - _PRECIP_MAP_CACHE[k]["ts"] < _PRECIP_MAP_TTL:
+        return _PRECIP_MAP_CACHE[k]["data"]
+
+    if len(_PRECIP_MAP_CACHE) >= _PRECIP_MAP_MAX:
+        oldest = min(_PRECIP_MAP_CACHE, key=lambda x: _PRECIP_MAP_CACHE[x]["ts"])
+        _PRECIP_MAP_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":           f"{west},{south},{east},{north}",
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "inSR":               "4326",
+        "where":              "category > 0",
+        "outFields":          "category,fromdate,todate,label",
+        "returnGeometry":     "true",
+        "orderByFields":      "fromdate ASC",
+        "resultRecordCount":  200,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_PRECIP_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        feats = resp.json().get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS precip map fetch failed: %s", exc)
+        _PRECIP_MAP_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        attrs = feat.get("attributes", {})
+        geom  = feat.get("geometry") or {}
+        rings = geom.get("rings") or []
+        if not rings:
+            continue
+        cat = int(attrs.get("category") or 0)
+        if cat == 0:
+            continue
+        lbl = (attrs.get("label") or "").strip() or _PRECIP_CAT_LABEL.get(cat, "")
+        data.append({
+            "from_time": _ms_to_iso(attrs.get("fromdate")),
+            "to_time":   _ms_to_iso(attrs.get("todate")),
+            "category":  cat,
+            "label":     lbl,
+            "color":     _precip_color(cat),
+            "rings":     [_ring_to_latlng(r) for r in rings],
+        })
+
+    _PRECIP_MAP_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
+# ── NDBC Weather Buoys (bbox map overlay) ─────────────────────────────────────
+
+_NDBC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_NDBC_TTL   = 1800   # 30 minutes — NDBC updates hourly
+_NDBC_MAX   = 32
+
+
+def fetch_ndbc_buoys(
+    south: float, west: float, north: float, east: float
+) -> List[Dict[str, Any]]:
+    """Return NDBC weather buoy observations within the bounding box.
+
+    Each dict:
+        lat           float   latitude
+        lng           float   longitude
+        id            str     NDBC station ID (e.g. "44025")
+        name          str     station description
+        water_temp_f  float|None  sea surface temperature °F
+        wave_ht_ft    float|None  significant wave height in feet
+        wind_kt       float|None  wind speed in knots
+        wind_dir      int|None    wind direction in degrees
+        period_s      float|None  dominant wave period in seconds
+        pressure_mb   float|None  sea-level pressure in mb
+        updated       str         ISO-8601 observation time
+    """
+    k   = _bbox_key(south, west, north, east)
+    now = time.time()
+    if k in _NDBC_CACHE and now - _NDBC_CACHE[k]["ts"] < _NDBC_TTL:
+        return _NDBC_CACHE[k]["data"]
+
+    if len(_NDBC_CACHE) >= _NDBC_MAX:
+        oldest = min(_NDBC_CACHE, key=lambda x: _NDBC_CACHE[x]["ts"])
+        _NDBC_CACHE.pop(oldest, None)
+
+    params = {
+        "geometry":           f"{west},{south},{east},{north}",
+        "geometryType":       "esriGeometryEnvelope",
+        "spatialRel":         "esriSpatialRelIntersects",
+        "inSR":               "4326",
+        "where":              "1=1",
+        "outFields":          (
+            "STATION_ID,STATION_NAME,WATER_TEMP_F,WAVE_HT_FT,"
+            "WIND_SPEED_KT,WIND_DIR,DOMINANT_PERIOD_S,PRESSURE_MB,"
+            "LAT,LON,LAST_UPDATE"
+        ),
+        "returnGeometry":     "false",
+        "resultRecordCount":  200,
+        "outSR":              "4326",
+        "f":                  "json",
+    }
+
+    try:
+        resp  = requests.get(_NDBC_URL, params=params, timeout=(3.05, 15))
+        resp.raise_for_status()
+        body  = resp.json()
+        if body.get("error"):
+            raise ValueError(body["error"].get("message", "service error"))
+        feats = body.get("features", [])
+    except Exception as exc:
+        logger.warning("ArcGIS NDBC buoy fetch failed: %s", exc)
+        _NDBC_CACHE[k] = {"ts": now, "data": []}
+        return []
+
+    def _f(v: Any) -> Optional[float]:
+        try:
+            return round(float(v), 1) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    data: List[Dict[str, Any]] = []
+    for feat in feats:
+        a   = feat.get("attributes", {})
+        lat_ = a.get("LAT")
+        lng_ = a.get("LON")
+        if lat_ is None or lng_ is None:
+            continue
+        data.append({
+            "lat":          float(lat_),
+            "lng":          float(lng_),
+            "id":           str(a.get("STATION_ID") or ""),
+            "name":         str(a.get("STATION_NAME") or ""),
+            "water_temp_f": _f(a.get("WATER_TEMP_F")),
+            "wave_ht_ft":   _f(a.get("WAVE_HT_FT")),
+            "wind_kt":      _f(a.get("WIND_SPEED_KT")),
+            "wind_dir":     a.get("WIND_DIR"),
+            "period_s":     _f(a.get("DOMINANT_PERIOD_S")),
+            "pressure_mb":  _f(a.get("PRESSURE_MB")),
+            "updated":      _ms_to_iso(a["LAST_UPDATE"]) if a.get("LAST_UPDATE") is not None else "",
+        })
+
+    _NDBC_CACHE[k] = {"ts": now, "data": data}
+    return data
+
+
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""
     global _STORM_CACHE, _STORM_TS, _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
@@ -1787,3 +2129,7 @@ def cache_clear() -> None:
     _TERM_TS    = 0.0
     _GAUGE_CACHE.clear()
     _STORM_RPT_CACHE.clear()
+    _AQI_MAP_CACHE.clear()
+    _DROUGHT_MAP_CACHE.clear()
+    _PRECIP_MAP_CACHE.clear()
+    _NDBC_CACHE.clear()
