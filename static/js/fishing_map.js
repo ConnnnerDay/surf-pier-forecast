@@ -58,6 +58,7 @@
     var _lastAiHotspotsData  = null;  // locations ref from last full renderAiHotspots rebuild
     var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
+    var allSpeciesLower = [];        // pre-lowercased mirror of allSpecies — avoids .toLowerCase() on every keystroke
     var currentData   = [];          // last API response locations
     var selectedId    = null;
     var fetchTimer    = null;
@@ -1941,9 +1942,14 @@
     function showSuggestions(q) {
         if (!els.suggestions || !q || q.length < 2) { hideSuggestions(); return; }
         var lower = q.toLowerCase();
-        var hits  = allSpecies.filter(function (n) {
-            return n.toLowerCase().indexOf(lower) !== -1;
-        }).slice(0, 10);
+        // Use pre-built lowercase mirror so we never call .toLowerCase() on all 895 names at keystroke time
+        var src   = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
+        var hits  = [];
+        for (var _i = 0; _i < allSpecies.length && hits.length < 10; _i++) {
+            if ((src ? src[_i] : allSpecies[_i].toLowerCase()).indexOf(lower) !== -1) {
+                hits.push(allSpecies[_i]);
+            }
+        }
         if (!hits.length) { hideSuggestions(); return; }
         var html = '';
         hits.forEach(function (n) {
@@ -2087,6 +2093,8 @@
         if (activeTide)   params.set('tide_phase', activeTide);
         if (activeMinTemp) params.set('min_water_temp', activeMinTemp);
         if (activeMaxTemp) params.set('max_water_temp', activeMaxTemp);
+        // Tell server to omit the 895-name species list once the client has it
+        if (allSpecies.length > 0) params.set('has_species', '1');
 
         var url = API_URL + (params.toString() ? '?' + params.toString() : '');
 
@@ -2103,13 +2111,33 @@
 
                 currentData = data.locations || [];
 
-                if (allSpecies.length === 0 && data.species_names) {
+                if (allSpecies.length === 0 && data.species_names && data.species_names.length) {
                     allSpecies = data.species_names;
+                    // Pre-build lowercase mirror so showSuggestions never calls .toLowerCase() at keystroke time
+                    allSpeciesLower = allSpecies.map(function (n) { return n.toLowerCase(); });
                 }
 
-                // Update species meta for AI habitat inference (works for all 851 species)
+                // Update species meta for AI habitat inference (works for all 895 species)
                 currentSpeciesMeta = (data.species_meta && data.species_meta.name)
                     ? data.species_meta : null;
+
+                // Render map markers and all sidebar panels with the new data
+                monthlySummary = data.monthly_summary || [];
+                var _currentM = data.month || (new Date().getMonth() + 1);
+                drawMarkers(currentData);
+                renderHotspots(currentData);
+                renderMonthPlanner(monthlySummary, _currentM);
+                updateInsight(data);
+                renderTrendingChips(data.trending_species || []);
+
+                // If AI overlay is already on, refresh it with the new scored data
+                if (aiMode) {
+                    clearAiOverlay();
+                    ensureLeafletHeat()
+                        .then(function () { if (aiMode) renderAiOverlay(currentData); })
+                        .catch(function () {});
+                    renderAiHotspots(currentData);
+                }
 
                 // Zoom to saved location then load structure overlays and community feed
                 autoZoomToSavedLocation(currentData);

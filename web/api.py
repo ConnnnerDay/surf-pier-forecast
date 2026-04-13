@@ -1144,7 +1144,7 @@ def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
 # Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
 #        min_temp, max_temp)  — the complete set of params that affect output.
 _FMAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
-_FMAP_CACHE_TTL: int = 300   # 5 minutes — scores only change when the month rolls over
+_FMAP_CACHE_TTL: int = 900   # 15 minutes — scores only change when the month rolls over
 _FMAP_CACHE_MAX: int = 128   # cap entries; each is ~50 KB serialised
 
 
@@ -1188,6 +1188,10 @@ def fishing_map_data() -> Any:
     species_q  = request.args.get("species", "").strip()[:100].lower()
     coast_q    = request.args.get("coast", "").strip()[:20].lower()
     category_q = request.args.get("category", "").strip()[:50].lower()
+
+    # Client sends has_species=1 after the first fetch to skip the 895-name list
+    # (saves ~20 KB per response once the autocomplete is warm).
+    has_species_q = request.args.get("has_species", "0") == "1"
 
     # New extended filters
     season_q    = request.args.get("season", "").strip()[:20].lower()
@@ -1244,8 +1248,12 @@ def fishing_map_data() -> Any:
                  time_q, tide_q, _min_temp, _max_temp)
     _cached_response = _fmap_cache_get(_fmap_key)
     if _cached_response is not None:
-        resp = jsonify(_cached_response)
-        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=30"
+        if has_species_q and _cached_response.get("species_names"):
+            _hit_data = {**_cached_response, "species_names": []}
+            resp = jsonify(_hit_data)
+        else:
+            resp = jsonify(_cached_response)
+        resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
         resp.headers["X-Cache"] = "HIT"
         return resp
 
@@ -1463,8 +1471,10 @@ def fishing_map_data() -> Any:
     }
     _fmap_cache_set(_fmap_key, _response_data)
 
+    if has_species_q:
+        _response_data = {**_response_data, "species_names": []}
     resp = jsonify(_response_data)
-    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=30"
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
     resp.headers["X-Cache"] = "MISS"
     return resp
 
