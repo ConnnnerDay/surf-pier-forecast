@@ -58,6 +58,7 @@
     var _lastAiHotspotsData  = null;  // locations ref from last full renderAiHotspots rebuild
     var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
+    var allSpeciesLower = [];        // pre-lowercased mirror of allSpecies — avoids .toLowerCase() on every keystroke
     var currentData   = [];          // last API response locations
     var selectedId    = null;
     var fetchTimer    = null;
@@ -1493,17 +1494,65 @@
 
     function drawMarkers(locations) {
         if (!map || !locationLayer) return;
-        clearMarkers();
 
+        // ── Incremental update — avoids the clear→recreate cycle that causes
+        // a visible flicker on every filter change.
+        //
+        // Strategy:
+        //  1. Build a fast lookup of incoming location ids.
+        //  2. Remove markers for locations that no longer appear (coast filter
+        //     toggled, etc.) — rare, so the O(n) sweep is acceptable.
+        //  3. For locations that already have a marker, update the icon and
+        //     stored data reference in-place.  Click handlers read from
+        //     currentData at click-time so they always use the freshest data.
+        //  4. For brand-new locations, create and add a marker.
+
+        var incoming = {};
+        locations.forEach(function (loc) { incoming[loc.id] = loc; });
+
+        // Step 2 — remove stale markers
+        var stalIds = Object.keys(_markerIndex).filter(function (id) { return !incoming[id]; });
+        stalIds.forEach(function (id) {
+            locationLayer.removeLayer(_markerIndex[id].leaflet);
+            delete _markerIndex[id];
+        });
+        markers = markers.filter(function (e) { return _markerIndex[e.id]; });
+
+        // Steps 3 & 4
         locations.forEach(function (loc) {
             var isSel = loc.id === selectedId;
+
+            if (_markerIndex[loc.id]) {
+                // Update icon and tooltip in-place — no DOM insert/remove
+                var entry = _markerIndex[loc.id];
+                var prevActivity = entry.data.activity;
+                entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
+                entry.data = loc;          // refresh data so click handler gets new species/scores
+                // Resync tooltip text if activity label changed
+                if (loc.activity !== prevActivity) {
+                    var tLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
+                    entry.leaflet.unbindTooltip();
+                    entry.leaflet.bindTooltip(
+                        '<strong>' + esc(loc.name) + '</strong>, ' + esc(loc.state) +
+                        '<br><span class="fmap-tip-badge fmap-tip-' + esc(loc.activity) + '">' + tLabel + '</span>',
+                        { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
+                    );
+                }
+                return;
+            }
+
+            // New marker — created once per location per session (coast changes are rare)
             var m = L.marker([loc.lat, loc.lng], {
                 icon:  makeIcon(loc.activity, isSel),
                 title: loc.name + ', ' + loc.state
             });
             locationLayer.addLayer(m);
 
-            m.on('click', function () { selectLocation(loc); });
+            // Always read the live entry so the handler uses the latest scored data
+            m.on('click', function () {
+                var live = _markerIndex[loc.id];
+                if (live) selectLocation(live.data);
+            });
 
             var tipLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
             m.bindTooltip(
@@ -1754,8 +1803,12 @@
             var emptyHtml = '<li class="fmap-hotspot-empty">';
             if (activeSpecies && allSpecies.length) {
                 var lower = activeSpecies.toLowerCase();
+                var _lsrc = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
                 var suggestions = allSpecies
-                    .map(function (n) { return { name: n, dist: levenshtein(lower, n.toLowerCase().slice(0, lower.length + 3)) }; })
+                    .map(function (n, i) {
+                        var nl = _lsrc ? _lsrc[i] : n.toLowerCase();
+                        return { name: n, dist: levenshtein(lower, nl.slice(0, lower.length + 3)) };
+                    })
                     .filter(function (x) { return x.dist <= 3; })
                     .sort(function (a, b) { return a.dist - b.dist; })
                     .slice(0, 3)
@@ -1941,9 +1994,14 @@
     function showSuggestions(q) {
         if (!els.suggestions || !q || q.length < 2) { hideSuggestions(); return; }
         var lower = q.toLowerCase();
-        var hits  = allSpecies.filter(function (n) {
-            return n.toLowerCase().indexOf(lower) !== -1;
-        }).slice(0, 10);
+        // Use pre-built lowercase mirror so we never call .toLowerCase() on all 895 names at keystroke time
+        var src   = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
+        var hits  = [];
+        for (var _i = 0; _i < allSpecies.length && hits.length < 10; _i++) {
+            if ((src ? src[_i] : allSpecies[_i].toLowerCase()).indexOf(lower) !== -1) {
+                hits.push(allSpecies[_i]);
+            }
+        }
         if (!hits.length) { hideSuggestions(); return; }
         var html = '';
         hits.forEach(function (n) {
@@ -2087,6 +2145,8 @@
         if (activeTide)   params.set('tide_phase', activeTide);
         if (activeMinTemp) params.set('min_water_temp', activeMinTemp);
         if (activeMaxTemp) params.set('max_water_temp', activeMaxTemp);
+        // Tell server to omit the 895-name species list once the client has it
+        if (allSpecies.length > 0) params.set('has_species', '1');
 
         var url = API_URL + (params.toString() ? '?' + params.toString() : '');
 
@@ -2103,13 +2163,33 @@
 
                 currentData = data.locations || [];
 
-                if (allSpecies.length === 0 && data.species_names) {
+                if (allSpecies.length === 0 && data.species_names && data.species_names.length) {
                     allSpecies = data.species_names;
+                    // Pre-build lowercase mirror so showSuggestions never calls .toLowerCase() at keystroke time
+                    allSpeciesLower = allSpecies.map(function (n) { return n.toLowerCase(); });
                 }
 
-                // Update species meta for AI habitat inference (works for all 851 species)
+                // Update species meta for AI habitat inference (works for all 895 species)
                 currentSpeciesMeta = (data.species_meta && data.species_meta.name)
                     ? data.species_meta : null;
+
+                // Render map markers and all sidebar panels with the new data
+                monthlySummary = data.monthly_summary || [];
+                var _currentM = data.month || (new Date().getMonth() + 1);
+                drawMarkers(currentData);
+                renderHotspots(currentData);
+                renderMonthPlanner(monthlySummary, _currentM);
+                updateInsight(data);
+                renderTrendingChips(data.trending_species || []);
+
+                // If AI overlay is already on, refresh it with the new scored data
+                if (aiMode) {
+                    clearAiOverlay();
+                    ensureLeafletHeat()
+                        .then(function () { if (aiMode) renderAiOverlay(currentData); })
+                        .catch(function () {});
+                    renderAiHotspots(currentData);
+                }
 
                 // Zoom to saved location then load structure overlays and community feed
                 autoZoomToSavedLocation(currentData);
@@ -2119,7 +2199,7 @@
                 // reflect the same species the user has selected in the main search.
                 if (communityLayerOn) scheduleCommunityLoad();
                 // Load community catches once map is centred on saved location
-                setTimeout(function () { loadCommunityFeed(); }, 900);
+                setTimeout(function () { loadCommunityFeed(); }, 400);
             })
             .catch(function (err) {
                 if (err && err.name === 'AbortError') return; // superseded by newer request
@@ -4731,10 +4811,27 @@
     // ─── Month Planner ────────────────────────────────────────────────────────
     var MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+    // Refs to last-rendered planner state for fast-path optimization
+    var _plannerSummary  = null;  // last summary array passed to renderMonthPlanner
+    var _plannerCurrentM = 0;     // last currentM passed to renderMonthPlanner
+
     function renderMonthPlanner(summary, currentM) {
         var planner = document.getElementById('fmap-planner');
         var container = document.getElementById('fmap-planner-months');
         if (!planner || !container || !summary || !summary.length) return;
+
+        // Fast path: bar data hasn't changed, only the selected month changed.
+        // Toggle CSS on the two affected cells instead of rebuilding all 12.
+        if (summary === _plannerSummary && currentM === _plannerCurrentM && container.children.length === 12) {
+            container.querySelectorAll('.fmap-month-cell').forEach(function (btn) {
+                var m = parseInt(btn.getAttribute('data-month'), 10);
+                btn.classList.toggle('fmap-month-cell--selected', m === activeMonth);
+            });
+            return;
+        }
+
+        _plannerSummary  = summary;
+        _plannerCurrentM = currentM;
 
         // Find max combined active count for normalising bar heights
         var maxActive = 1;
