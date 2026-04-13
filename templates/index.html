@@ -922,6 +922,19 @@
                                     <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
                                 </button>
 
+                                <button type="button" id="fmap-ndfd-temp-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NOAA NDFD daily high/low temperature forecast zones">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--temp">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Temp Forecast</span>
+                                        <span class="fmap-layer-row-desc">Daily high/low zones · NOAA NDFD</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
                                 <button type="button" id="fmap-buoy-btn"
                                         class="fmap-layer-row" aria-pressed="false"
                                         title="NDBC weather buoys — wave height, water temp, wind">
@@ -2329,6 +2342,152 @@ if ('serviceWorker' in navigator) {
             card.hidden = false;
         })
         .catch(function () {});
+
+    // ── Nearest NDBC buoy stat card ──────────────────────────────────────────
+    (function () {
+        var pad = 3.0;  // ~330 km search radius
+        var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
+        var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
+        fetch('/api/map/buoys?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.buoys || !data.buoys.length) return;
+                // Pick the nearest buoy by Euclidean distance
+                var best = null, bestD = Infinity;
+                data.buoys.forEach(function (b) {
+                    var d = Math.pow(b.lat - lat, 2) + Math.pow(b.lng - lng, 2);
+                    if (d < bestD) { bestD = d; best = b; }
+                });
+                if (!best) return;
+                var card  = document.getElementById('ndbc-stat-card');
+                var valEl = document.getElementById('ndbc-stat-value');
+                var detEl = document.getElementById('ndbc-stat-detail');
+                if (!card || !valEl || !detEl) return;
+
+                // Primary value: wave height if available, else water temp
+                if (best.wave_ht_ft != null) {
+                    valEl.textContent = best.wave_ht_ft.toFixed(1) + ' ft waves';
+                } else if (best.water_temp_f != null) {
+                    valEl.textContent = best.water_temp_f.toFixed(1) + '\u00b0F water';
+                } else {
+                    valEl.textContent = best.name || best.id;
+                }
+
+                // Detail line
+                var parts = [];
+                if (best.wave_ht_ft != null && best.water_temp_f != null)
+                    parts.push(best.water_temp_f.toFixed(0) + '\u00b0F water');
+                if (best.wind_kt != null)
+                    parts.push((best.wind_dir || '') + ' ' + best.wind_kt.toFixed(0) + ' kt wind');
+                if (best.period_s != null)
+                    parts.push(best.period_s.toFixed(0) + 's period');
+                var dist = Math.sqrt(bestD);
+                parts.push((dist * 111).toFixed(0) + ' km away');
+                detEl.textContent = parts.join(' · ');
+                card.hidden = false;
+            })
+            .catch(function () {});
+    })();
+
+    // ── Active wildfires nearby stat card ────────────────────────────────────
+    (function () {
+        var pad = 2.5;  // ~275 km radius
+        var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
+        var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
+        fetch('/api/map/wildfires?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.fires || !data.fires.length) return;
+                var fires = data.fires;
+                var card  = document.getElementById('wildfire-stat-card');
+                var valEl = document.getElementById('wildfire-stat-value');
+                var detEl = document.getElementById('wildfire-stat-detail');
+                if (!card || !valEl || !detEl) return;
+                // Largest fire by acres
+                var largest = fires.reduce(function (a, b) {
+                    return (b.acres || 0) > (a.acres || 0) ? b : a;
+                }, fires[0]);
+                var totalAcres = fires.reduce(function (s, f) { return s + (f.acres || 0); }, 0);
+                valEl.innerHTML =
+                    '<span class="drought-badge" style="background:#f97316;color:#fff">' +
+                    fires.length + (fires.length === 1 ? ' fire' : ' fires') + '</span>';
+                var detail = '';
+                if (totalAcres > 0) {
+                    detail = (totalAcres >= 1000 ? (totalAcres / 1000).toFixed(0) + 'k' : totalAcres.toFixed(0)) + ' total acres';
+                }
+                if (largest && largest.name) detail += (detail ? ' · ' : '') + largest.name;
+                detEl.textContent = detail || 'active wildfires in area';
+                card.hidden = false;
+            })
+            .catch(function () {});
+    })();
+
+    // ── Nearest stream gauge (flood stage) stat card ─────────────────────────
+    (function () {
+        var pad = 1.5;  // ~165 km radius
+        var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
+        var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
+        fetch('/api/map/stream-gauges?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.gauges || !data.gauges.length) return;
+                // Find nearest gauge with a known status
+                var best = null, bestD = Infinity;
+                data.gauges.forEach(function (g) {
+                    if (g.status_class === undefined || g.status_class === null) return;
+                    var d = Math.pow(g.lat - lat, 2) + Math.pow(g.lng - lng, 2);
+                    if (d < bestD) { bestD = d; best = g; }
+                });
+                if (!best) return;
+                // Only show if the gauge is in a non-trivial state (not just "Unknown")
+                var card  = document.getElementById('gauge-stat-card');
+                var valEl = document.getElementById('gauge-stat-value');
+                var detEl = document.getElementById('gauge-stat-detail');
+                if (!card || !valEl || !detEl) return;
+                var sc = best.status_class || 0;
+                var color = best.status_color || '#9ca3af';
+                var label = best.status || 'Normal';
+                valEl.innerHTML =
+                    '<span class="drought-badge" style="background:' + color + ';color:' +
+                    (sc >= 2 ? '#fff' : '#1a1a1a') + '">' + label + '</span>';
+                var dist = (Math.sqrt(bestD) * 111).toFixed(0);
+                var detail = best.name ? best.name.substring(0, 28) : best.id;
+                if (best.stage_ft != null) detail += ' · ' + best.stage_ft.toFixed(1) + ' ft';
+                detail += ' · ' + dist + ' km away';
+                detEl.textContent = detail;
+                card.hidden = false;
+            })
+            .catch(function () {});
+    })();
+
+    // ── Tropical Outlook stat card ───────────────────────────────────────────
+    (function () {
+        fetch('/api/map/tropical-outlook')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.areas) return;
+                var areas = data.areas;
+                if (!areas.length) return;  // no active disturbances globally
+                // Count by probability level
+                var high = areas.filter(function (a) { return a.probability === 'high'; }).length;
+                var med  = areas.filter(function (a) { return a.probability === 'medium'; }).length;
+                var total = areas.length;
+                var card  = document.getElementById('tropical-stat-card');
+                var valEl = document.getElementById('tropical-stat-value');
+                var detEl = document.getElementById('tropical-stat-detail');
+                if (!card || !valEl || !detEl) return;
+                // Top-level label: highest probability seen
+                var topColor = high ? '#ef4444' : med ? '#f97316' : '#eab308';
+                var topLabel = high ? 'High' : med ? 'Medium' : 'Low';
+                valEl.innerHTML =
+                    '<span class="drought-badge" style="background:' + topColor + ';color:#fff">' +
+                    topLabel + '</span>';
+                detEl.textContent = total + ' active area' + (total !== 1 ? 's' : '') +
+                    (high ? ' · ' + high + ' high prob' : med ? ' · ' + med + ' medium prob' : '');
+                card.hidden = false;
+            })
+            .catch(function () {});
+    })();
 })();
 </script>
 </html>

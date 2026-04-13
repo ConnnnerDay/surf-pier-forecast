@@ -13327,9 +13327,10 @@ details[open] .collapsible-module-body {
   .fmap-layers-search { font-size: 0.82rem; }
 }
 
-/* ── Layer icon colours: HF Radar & Tropical ─────────────────────────────── */
-.fmap-layer-row-icon--hfradar { color: #06b6d4; }
+/* ── Layer icon colours: HF Radar, Tropical & Temperature ────────────────── */
+.fmap-layer-row-icon--hfradar  { color: #06b6d4; }
 .fmap-layer-row-icon--tropical { color: #a855f7; }
+.fmap-layer-row-icon--temp     { color: #f97316; }
 
 /* ── HF Radar current arrow markers ─────────────────────────────────────── */
 .fmap-hfradar-arrow {

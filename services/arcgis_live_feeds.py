@@ -2114,6 +2114,118 @@ def fetch_ndbc_buoys(
     return data
 
 
+# ── NDFD Daily Temperature polygons (bbox map overlay) ───────────────────────
+
+_NDFD_TEMP_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_NDFD_TEMP_MAP_TTL   = 3600   # 1 hour — NDFD updates infrequently
+_NDFD_TEMP_MAP_MAX   = 32
+
+
+def _temp_color(temp_f: float, layer: str) -> str:
+    """Temperature-to-colour for the map layer.
+
+    Cool blues for cold, warm reds for hot.  The palette is intentionally
+    muted so it doesn't dominate other layers.
+    """
+    if layer == "min":
+        if temp_f < 0:   return "#1e3a8a"   # deep blue  < 0°F
+        if temp_f < 20:  return "#1d4ed8"   # blue       0-20°F
+        if temp_f < 32:  return "#3b82f6"   # light blue 20-32°F
+        if temp_f < 45:  return "#06b6d4"   # cyan       32-45°F
+        if temp_f < 60:  return "#34d399"   # teal-green 45-60°F
+        if temp_f < 75:  return "#fbbf24"   # amber      60-75°F
+        return "#f97316"                     # orange     >75°F (warm night)
+    else:  # max
+        if temp_f < 32:  return "#3b82f6"   # blue       <32°F (freeze)
+        if temp_f < 50:  return "#06b6d4"   # cyan       32-50°F
+        if temp_f < 65:  return "#34d399"   # green      50-65°F
+        if temp_f < 80:  return "#fbbf24"   # amber      65-80°F
+        if temp_f < 95:  return "#f97316"   # orange     80-95°F
+        return "#ef4444"                     # red        >95°F
+
+
+def fetch_ndfd_temperature_map(
+    south: float, west: float, north: float, east: float
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Return NDFD daily high/low temperature polygons for the bounding box.
+
+    Returns a dict with two keys:
+        "min": list of min-temp polygons
+        "max": list of max-temp polygons
+
+    Each polygon dict:
+        temp_f   float   temperature in °F
+        period   str     ISO-8601 date (YYYY-MM-DD)
+        color    str     hex fill colour
+        rings    list    [[lat, lng], …]
+    """
+    k   = _bbox_key(south, west, north, east)
+    now = time.time()
+    if k in _NDFD_TEMP_MAP_CACHE and now - _NDFD_TEMP_MAP_CACHE[k]["ts"] < _NDFD_TEMP_MAP_TTL:
+        return _NDFD_TEMP_MAP_CACHE[k]["data"]
+
+    if len(_NDFD_TEMP_MAP_CACHE) >= _NDFD_TEMP_MAP_MAX:
+        oldest = min(_NDFD_TEMP_MAP_CACHE, key=lambda x: _NDFD_TEMP_MAP_CACHE[x]["ts"])
+        _NDFD_TEMP_MAP_CACHE.pop(oldest, None)
+
+    params_base = {
+        "geometry":          f"{west},{south},{east},{north}",
+        "geometryType":      "esriGeometryEnvelope",
+        "spatialRel":        "esriSpatialRelIntersects",
+        "inSR":              "4326",
+        "where":             "1=1",
+        "outFields":         "Temp,Period",
+        "returnGeometry":    "true",
+        "resultRecordCount": 150,
+        "outSR":             "4326",
+        "f":                 "json",
+    }
+
+    result: Dict[str, List[Dict[str, Any]]] = {"min": [], "max": []}
+
+    for url, layer_key in [(_NDFD_TMIN_URL, "min"), (_NDFD_TMAX_URL, "max")]:
+        try:
+            resp  = requests.get(url, params=params_base, timeout=(3.05, 15))
+            resp.raise_for_status()
+            feats = resp.json().get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS NDFD temp map fetch failed (%s): %s", url, exc)
+            continue
+
+        for feat in feats:
+            attrs = feat.get("attributes", {})
+            geom  = feat.get("geometry") or {}
+            raw   = attrs.get("Temp")
+            period = attrs.get("Period")
+            if raw is None or period is None:
+                continue
+            try:
+                temp_f = float(raw)
+                period_str = datetime.fromtimestamp(
+                    int(period) / 1000, tz=timezone.utc
+                ).strftime("%Y-%m-%d")
+            except Exception:
+                continue
+
+            rings_raw = geom.get("rings") or []
+            rings = [_ring_to_latlng(r) for r in rings_raw if r]
+            rings = [r for r in rings if len(r) >= 3]
+            # Thin rings to ≤300 pts
+            rings = [r[::max(1, len(r) // 300)] for r in rings]
+            if not rings:
+                continue
+
+            result[layer_key].append({
+                "temp_f":  round(temp_f),
+                "period":  period_str,
+                "color":   _temp_color(temp_f, layer_key),
+                "rings":   rings,
+            })
+
+    _NDFD_TEMP_MAP_CACHE[k] = {"ts": now, "data": result}
+    return result
+
+
 # ── NOAA HF Radar Surface Currents (bbox map overlay) ─────────────────────────
 
 _HFRADAR_CACHE: Dict[tuple, Dict[str, Any]] = {}
@@ -2328,6 +2440,7 @@ def cache_clear() -> None:
     _DROUGHT_MAP_CACHE.clear()
     _PRECIP_MAP_CACHE.clear()
     _NDBC_CACHE.clear()
+    _NDFD_TEMP_MAP_CACHE.clear()
     _HFRADAR_CACHE.clear()
     global _TROP_OUTLOOK_CACHE, _TROP_OUTLOOK_TS
     _TROP_OUTLOOK_CACHE = None

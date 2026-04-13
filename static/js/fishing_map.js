@@ -167,6 +167,9 @@
     var precipOn        = false;   // NDFD Precipitation overlay active
     var precipLayer     = null;    // L.layerGroup for precip polygons
     var precipTimer     = null;    // debounce for viewport reload
+    var ndfdTempOn      = false;   // NDFD Temperature overlay active
+    var ndfdTempLayer   = null;    // L.layerGroup for temperature polygons
+    var ndfdTempTimer   = null;    // debounce for viewport reload
     var buoyOn          = false;   // NDBC buoy overlay active
     var buoyLayer       = null;    // L.layerGroup for buoy markers
     var buoyTimer       = null;    // debounce for viewport reload
@@ -182,6 +185,7 @@
     var aqiAbort        = null;
     var droughtAbort    = null;
     var precipAbort     = null;
+    var ndfdTempAbort   = null;
     var buoyAbort       = null;
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
@@ -4743,6 +4747,73 @@
             .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] precip fetch failed:', err); });
     }
 
+    // ─── NDFD Temperature polygons overlay (ArcGIS Live Feeds) ──────────────
+
+    function wireNdfdTempLayer() {
+        if (!map) return;
+        ndfdTempLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-ndfd-temp-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                ndfdTempOn = !ndfdTempOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', ndfdTempOn);
+                btn.setAttribute('aria-pressed', ndfdTempOn ? 'true' : 'false');
+                if (ndfdTempOn) { ndfdTempLayer.addTo(map); doFetchNdfdTemp(); }
+                else { map.removeLayer(ndfdTempLayer); ndfdTempLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () {
+            if (ndfdTempOn) { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
+        });
+    }
+
+    function doFetchNdfdTemp() {
+        if (!ndfdTempOn || !map) return;
+        if (ndfdTempAbort) { try { ndfdTempAbort.abort(); } catch (e) {} }
+        ndfdTempAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/temperature?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: ndfdTempAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!ndfdTempOn || !map || !data) return;
+                ndfdTempLayer.clearLayers();
+                // Render max temperature polygons by default; min as dashed overlay
+                var layers = [
+                    { key: 'max', opacity: 0.30, weight: 0.5, label: 'High' },
+                    { key: 'min', opacity: 0.15, weight: 0,   label: 'Low',  dash: '4 3' },
+                ];
+                var total = 0;
+                layers.forEach(function (cfg) {
+                    (data[cfg.key] || []).forEach(function (p) {
+                        total++;
+                        var tip = '<strong>' + cfg.label + ' Temp: ' + p.temp_f + '°F</strong>' +
+                                  (p.period ? '<br><small>' + p.period + '</small>' : '') +
+                                  '<br><small style="opacity:.65">NOAA NDFD · daily forecast</small>';
+                        p.rings.forEach(function (ring) {
+                            L.polygon(ring, {
+                                color:        p.color,
+                                fillColor:    p.color,
+                                fillOpacity:  cfg.opacity,
+                                weight:       cfg.weight,
+                                dashArray:    cfg.dash || null,
+                            }).bindTooltip(tip, { sticky: true, opacity: 0.92 })
+                              .addTo(ndfdTempLayer);
+                        });
+                    });
+                });
+                if (!total) showToast('No temperature data in view');
+            })
+            .catch(function (err) {
+                if (err && err.name !== 'AbortError') console.warn('[fishing-map] ndfd-temp fetch failed:', err);
+            });
+    }
+
     // ─── NDBC Buoy overlay (ArcGIS Live Feeds) ────────────────────────────────
 
     function wireBuoyLayer() {
@@ -4961,10 +5032,11 @@
         'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
         'fmap-storm-rpt-btn', 'fmap-tropical-btn',
         'fmap-sst-btn', 'fmap-sea-ice-btn', 'fmap-wildfire-btn', 'fmap-seismic-btn',
-        'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn', 'fmap-hfradar-btn',
+        'fmap-drought-btn', 'fmap-precip-btn', 'fmap-ndfd-temp-btn',
+        'fmap-buoy-btn', 'fmap-hfradar-btn',
         'fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn'
     ];
-    var LS_LAYERS_KEY   = 'fmap_layers_v2';   // bumped to clear old saved state
+    var LS_LAYERS_KEY   = 'fmap_layers_v3';   // bumped to clear old saved state
     var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
 
     // Map from section data-section value → layer button IDs it contains
@@ -4973,7 +5045,8 @@
                   'fmap-recent-storms-btn', 'fmap-storm-rpt-btn', 'fmap-tropical-btn'],
         ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
                   'fmap-wildfire-btn', 'fmap-seismic-btn',
-                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn', 'fmap-hfradar-btn'],
+                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-ndfd-temp-btn',
+                  'fmap-buoy-btn', 'fmap-hfradar-btn'],
         obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn']
     };
 
@@ -5275,6 +5348,7 @@
                 wireAqiLayer();
                 wireDroughtLayer();
                 wirePrecipLayer();
+                wireNdfdTempLayer();
                 wireBuoyLayer();
                 wireHfradarLayer();
                 wireTropicalOutlook();
