@@ -736,16 +736,21 @@
                     <div class="fmap-layers-popup-header">
                         <span class="fmap-layers-popup-title">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                            Map Layers
+                            Live Feeds
                         </span>
                         <div class="fmap-layers-popup-header-actions">
                             <button type="button" id="fmap-layers-clear-btn" class="fmap-layers-clear-btn" aria-label="Turn off all layers" hidden>
-                                Clear all
+                                All off
                             </button>
                             <button type="button" id="fmap-layers-popup-close" class="fmap-layers-popup-close" aria-label="Close layers panel">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             </button>
                         </div>
+                    </div>
+                    {# ── Filter search bar ── #}
+                    <div class="fmap-layers-search-wrap">
+                        <svg class="fmap-layers-search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Filter layers…" autocomplete="off" aria-label="Search map layers">
                     </div>
                     <div class="fmap-layers-popup-body">
 
@@ -874,6 +879,45 @@
                                     <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
                                 </button>
 
+                                <button type="button" id="fmap-drought-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="US Drought Monitor intensity polygons (CONUS)">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--drought">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">US Drought</span>
+                                        <span class="fmap-layer-row-desc">Drought intensity polygons · NDMC/USDA</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-precip-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NOAA NDFD precipitation forecast polygons">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--rain">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="8" y1="20" x2="8.01" y2="20"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="12" y1="22" x2="12.01" y2="22"/><line x1="16" y1="16" x2="16.01" y2="16"/><line x1="16" y1="20" x2="16.01" y2="20"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Precipitation</span>
+                                        <span class="fmap-layer-row-desc">6-hr rain forecast · NOAA NDFD</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
+                                <button type="button" id="fmap-buoy-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="NDBC weather buoys — wave height, water temp, wind">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--buoy">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M5 19l2-2M17 7l2-2M5 5l2 2M17 17l2 2"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">NDBC Buoys</span>
+                                        <span class="fmap-layer-row-desc">Wave height, SST &amp; wind · NOAA</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
+
                             </div>
                         </div>{# /section ocean #}
 
@@ -885,6 +929,19 @@
                                 <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                             <div class="fmap-layers-section-rows">
+
+                                <button type="button" id="fmap-aqi-btn"
+                                        class="fmap-layer-row" aria-pressed="false"
+                                        title="OpenAQ PM2.5 air quality monitoring stations">
+                                    <span class="fmap-layer-row-icon fmap-layer-row-icon--aqi">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 2h8l4 10H4L8 2z"/><path d="M4 12c0 4.4 3.6 8 8 8s8-3.6 8-8"/><path d="M12 12v4"/></svg>
+                                    </span>
+                                    <span class="fmap-layer-row-text">
+                                        <span class="fmap-layer-row-name">Air Quality (AQI)</span>
+                                        <span class="fmap-layer-row-desc">PM2.5 stations · OpenAQ network</span>
+                                    </span>
+                                    <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
+                                </button>
 
                                 <button type="button" id="fmap-metar-btn"
                                         class="fmap-layer-row" aria-pressed="false"

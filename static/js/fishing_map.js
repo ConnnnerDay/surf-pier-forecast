@@ -157,6 +157,20 @@
     var stormRptLayer     = null;    // L.layerGroup for storm report markers
     var stormRptTimer     = null;    // debounce for viewport reload
 
+    // ─── New overlay state (AQI, Drought, Precipitation, NDBC Buoys) ────────────
+    var aqiOn           = false;   // AQI/PM2.5 stations overlay active
+    var aqiLayer        = null;    // L.layerGroup for AQI markers
+    var aqiTimer        = null;    // debounce for viewport reload
+    var droughtOn       = false;   // US Drought Monitor overlay active
+    var droughtLayer    = null;    // L.layerGroup for drought polygons
+    var droughtTimer    = null;    // debounce for viewport reload
+    var precipOn        = false;   // NDFD Precipitation overlay active
+    var precipLayer     = null;    // L.layerGroup for precip polygons
+    var precipTimer     = null;    // debounce for viewport reload
+    var buoyOn          = false;   // NDBC buoy overlay active
+    var buoyLayer       = null;    // L.layerGroup for buoy markers
+    var buoyTimer       = null;    // debounce for viewport reload
+
     // Per-layer AbortControllers — cancel in-flight requests when viewport changes
     var sstAbort        = null;
     var wildfireAbort   = null;
@@ -165,6 +179,10 @@
     var gaugeAbort      = null;
     var stormRptAbort   = null;
     var marineWarnAbort = null;
+    var aqiAbort        = null;
+    var droughtAbort    = null;
+    var precipAbort     = null;
+    var buoyAbort       = null;
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -4547,15 +4565,259 @@
         badge.style.display = count > 0 ? '' : 'none';
     }
 
+    // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
+
+    function wireAqiLayer() {
+        if (!map) return;
+        aqiLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-aqi-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                aqiOn = !aqiOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', aqiOn);
+                btn.setAttribute('aria-pressed', aqiOn ? 'true' : 'false');
+                if (aqiOn) { aqiLayer.addTo(map); doFetchAqi(); }
+                else { map.removeLayer(aqiLayer); aqiLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () { if (aqiOn) { clearTimeout(aqiTimer); aqiTimer = setTimeout(doFetchAqi, 700); } });
+    }
+
+    function doFetchAqi() {
+        if (!aqiOn || !map) return;
+        if (aqiAbort) { try { aqiAbort.abort(); } catch (e) {} }
+        aqiAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/air-quality?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: aqiAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!aqiOn || !map || !data) return;
+                aqiLayer.clearLayers();
+                (data.stations || []).forEach(function (s) {
+                    var icon = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-aqi-dot" style="background:' + s.color + '" title="' + esc(s.name) + '"></div>',
+                        iconSize: [14, 14], iconAnchor: [7, 7],
+                    });
+                    var updStr = '';
+                    if (s.updated) { try { updStr = new Date(s.updated).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); } catch(e) {} }
+                    L.marker([s.lat, s.lng], { icon: icon })
+                     .bindPopup('<div class="fmap-aqi-popup">' +
+                        '<strong>' + esc(s.name || 'AQI Station') + '</strong>' +
+                        '<div class="fmap-aqi-val" style="color:' + s.color + '">' + s.pm25 + ' µg/m³</div>' +
+                        '<div class="fmap-aqi-cat" style="background:' + s.color + '">' + esc(s.category) + '</div>' +
+                        (updStr ? '<div style="opacity:.5;font-size:.72rem;margin-top:4px">' + updStr + '</div>' : '') +
+                        '<div style="opacity:.4;font-size:.68rem;margin-top:3px">OpenAQ PM2.5 via ArcGIS Live Feeds</div>' +
+                        '</div>', { maxWidth: 220 })
+                     .addTo(aqiLayer);
+                });
+                if (!data.stations || !data.stations.length) showToast('No AQI stations in view');
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] AQI fetch failed:', err); });
+    }
+
+    // ─── US Drought Monitor overlay (ArcGIS Live Feeds) ──────────────────────
+
+    function wireDroughtLayer() {
+        if (!map) return;
+        droughtLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-drought-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                droughtOn = !droughtOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', droughtOn);
+                btn.setAttribute('aria-pressed', droughtOn ? 'true' : 'false');
+                if (droughtOn) { droughtLayer.addTo(map); doFetchDrought(); }
+                else { map.removeLayer(droughtLayer); droughtLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () { if (droughtOn) { clearTimeout(droughtTimer); droughtTimer = setTimeout(doFetchDrought, 800); } });
+    }
+
+    function doFetchDrought() {
+        if (!droughtOn || !map) return;
+        if (droughtAbort) { try { droughtAbort.abort(); } catch (e) {} }
+        droughtAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/drought?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: droughtAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!droughtOn || !map || !data) return;
+                droughtLayer.clearLayers();
+                (data.polygons || []).forEach(function (p) {
+                    p.rings.forEach(function (ring) {
+                        L.polygon(ring, {
+                            color:       p.color,
+                            fillColor:   p.color,
+                            fillOpacity: 0.30,
+                            weight:      1,
+                            opacity:     0.6,
+                            interactive: true,
+                        }).bindTooltip('<strong>' + esc(p.code) + ' – ' + esc(p.label) + '</strong>' +
+                                       '<br><small style="opacity:.65">US Drought Monitor</small>',
+                                       { sticky: true, opacity: 0.92 })
+                          .addTo(droughtLayer);
+                    });
+                });
+                if (!data.polygons || !data.polygons.length) showToast('No drought data in view (CONUS only)');
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] drought fetch failed:', err); });
+    }
+
+    // ─── NDFD Precipitation overlay (ArcGIS Live Feeds) ──────────────────────
+
+    function wirePrecipLayer() {
+        if (!map) return;
+        precipLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-precip-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                precipOn = !precipOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', precipOn);
+                btn.setAttribute('aria-pressed', precipOn ? 'true' : 'false');
+                if (precipOn) { precipLayer.addTo(map); doFetchPrecip(); }
+                else { map.removeLayer(precipLayer); precipLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () { if (precipOn) { clearTimeout(precipTimer); precipTimer = setTimeout(doFetchPrecip, 800); } });
+    }
+
+    function doFetchPrecip() {
+        if (!precipOn || !map) return;
+        if (precipAbort) { try { precipAbort.abort(); } catch (e) {} }
+        precipAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/precipitation?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: precipAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!precipOn || !map || !data) return;
+                precipLayer.clearLayers();
+                (data.polygons || []).forEach(function (p) {
+                    var label = p.label || 'Precipitation';
+                    var timeStr = '';
+                    if (p.from_time) {
+                        try {
+                            var d = new Date(p.from_time);
+                            timeStr = d.toLocaleDateString([], {month:'short',day:'numeric'}) + ' ' +
+                                      d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+                        } catch(e) {}
+                    }
+                    p.rings.forEach(function (ring) {
+                        L.polygon(ring, {
+                            color:       p.color,
+                            fillColor:   p.color,
+                            fillOpacity: 0.35,
+                            weight:      1,
+                            opacity:     0.5,
+                        }).bindTooltip('<strong>Precip: ' + esc(label) + '</strong>' +
+                                       (timeStr ? '<br><small>' + timeStr + '</small>' : '') +
+                                       '<br><small style="opacity:.65">NOAA NDFD · 6-hr forecast</small>',
+                                       { sticky: true, opacity: 0.92 })
+                          .addTo(precipLayer);
+                    });
+                });
+                if (!data.polygons || !data.polygons.length) showToast('No precipitation forecast in view');
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] precip fetch failed:', err); });
+    }
+
+    // ─── NDBC Buoy overlay (ArcGIS Live Feeds) ────────────────────────────────
+
+    function wireBuoyLayer() {
+        if (!map) return;
+        buoyLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-buoy-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                buoyOn = !buoyOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', buoyOn);
+                btn.setAttribute('aria-pressed', buoyOn ? 'true' : 'false');
+                if (buoyOn) { buoyLayer.addTo(map); doFetchBuoys(); }
+                else { map.removeLayer(buoyLayer); buoyLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () { if (buoyOn) { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); } });
+    }
+
+    function doFetchBuoys() {
+        if (!buoyOn || !map) return;
+        if (buoyAbort) { try { buoyAbort.abort(); } catch (e) {} }
+        buoyAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/buoys?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: buoyAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!buoyOn || !map || !data) return;
+                buoyLayer.clearLayers();
+                (data.buoys || []).forEach(function (b) {
+                    var wt  = b.water_temp_f != null ? b.water_temp_f + '°F' : '–';
+                    var wh  = b.wave_ht_ft   != null ? b.wave_ht_ft   + ' ft' : '–';
+                    var ws  = b.wind_kt      != null ? b.wind_kt      + ' kt' : '–';
+                    var pr  = b.period_s     != null ? b.period_s     + ' s' : '–';
+                    var clr = _sstColor(b.water_temp_f);
+                    var icon = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-buoy-dot" style="border-color:' + clr + '">' +
+                              '<span class="fmap-buoy-wave">' + (b.wave_ht_ft != null ? b.wave_ht_ft : '·') + '</span>' +
+                              '</div>',
+                        iconSize: [38, 22], iconAnchor: [19, 11],
+                    });
+                    var updStr = '';
+                    if (b.updated) { try { updStr = new Date(b.updated).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',timeZoneName:'short'}); } catch(e) {} }
+                    L.marker([b.lat, b.lng], { icon: icon })
+                     .bindPopup('<div class="fmap-buoy-popup">' +
+                        '<strong>' + esc(b.id ? b.id + (b.name ? ' – ' + b.name : '') : b.name || 'NDBC Buoy') + '</strong>' +
+                        (updStr ? '<div style="opacity:.5;font-size:.72rem">' + updStr + '</div>' : '') +
+                        '<table class="fmap-gauge-table">' +
+                        '<tr><td>Water Temp</td><td><span style="color:' + clr + '">' + wt + '</span></td></tr>' +
+                        '<tr><td>Wave Height</td><td>' + wh + '</td></tr>' +
+                        '<tr><td>Wave Period</td><td>' + pr + '</td></tr>' +
+                        '<tr><td>Wind</td><td>' + ws + (b.wind_dir != null ? ' @ ' + b.wind_dir + '°' : '') + '</td></tr>' +
+                        (b.pressure_mb != null ? '<tr><td>Pressure</td><td>' + b.pressure_mb + ' mb</td></tr>' : '') +
+                        '</table>' +
+                        '<div style="opacity:.4;font-size:.68rem;margin-top:3px">NDBC via ArcGIS Live Feeds</div>' +
+                        '</div>', { maxWidth: 260 })
+                     .addTo(buoyLayer);
+                });
+                if (!data.buoys || !data.buoys.length) showToast('No buoy data in view');
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] buoy fetch failed:', err); });
+    }
+
     // ─── Layers popup panel ───────────────────────────────────────────────────
     // IDs of all layer-row buttons inside the popup (must match the HTML ids).
     var LAYER_BTN_IDS = [
         'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
         'fmap-storm-rpt-btn', 'fmap-sst-btn', 'fmap-sea-ice-btn',
         'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
-        'fmap-gauge-btn', 'fmap-terminator-btn'
+        'fmap-gauge-btn', 'fmap-terminator-btn',
+        'fmap-aqi-btn', 'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn'
     ];
-    var LS_LAYERS_KEY   = 'fmap_layers_v1';
+    var LS_LAYERS_KEY   = 'fmap_layers_v2';   // bumped to clear old saved state
     var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
 
     // Map from section data-section value → layer button IDs it contains
@@ -4563,8 +4825,9 @@
         weather: ['fmap-marine-warn-btn', 'fmap-storm-tracker-btn',
                   'fmap-recent-storms-btn', 'fmap-storm-rpt-btn'],
         ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
-                  'fmap-wildfire-btn', 'fmap-seismic-btn'],
-        obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn']
+                  'fmap-wildfire-btn', 'fmap-seismic-btn',
+                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn'],
+        obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn']
     };
 
     function _saveLayerState() {
@@ -4605,13 +4868,50 @@
     }
 
     function wireLayersPopup() {
-        var triggerBtn = document.getElementById('fmap-layers-popup-btn');
-        var popup      = document.getElementById('fmap-layers-popup');
-        var closeBtn   = document.getElementById('fmap-layers-popup-close');
-        var clearBtn   = document.getElementById('fmap-layers-clear-btn');
+        var triggerBtn  = document.getElementById('fmap-layers-popup-btn');
+        var popup       = document.getElementById('fmap-layers-popup');
+        var closeBtn    = document.getElementById('fmap-layers-popup-close');
+        var clearBtn    = document.getElementById('fmap-layers-clear-btn');
+        var searchInput = document.getElementById('fmap-layers-search');
         if (!triggerBtn || !popup) return;
 
         var _closeTimer = null;
+
+        // ── Layer search filter ───────────────────────────────────────────────
+        // Filters visible layer rows by the text inside .fmap-layer-row-name
+        function _applyLayerSearch(q) {
+            var lq = q.toLowerCase().trim();
+            var allRows  = popup.querySelectorAll('.fmap-layer-row');
+            var sections = popup.querySelectorAll('.fmap-layers-section');
+            allRows.forEach(function (row) {
+                var nameEl = row.querySelector('.fmap-layer-row-name');
+                var descEl = row.querySelector('.fmap-layer-row-desc');
+                var text = ((nameEl ? nameEl.textContent : '') + ' ' + (descEl ? descEl.textContent : '')).toLowerCase();
+                var show = !lq || text.indexOf(lq) !== -1;
+                row.style.display = show ? '' : 'none';
+            });
+            // Hide section headers when all their rows are hidden; show otherwise
+            sections.forEach(function (sec) {
+                var visibleRows = Array.prototype.filter.call(
+                    sec.querySelectorAll('.fmap-layer-row'),
+                    function (r) { return r.style.display !== 'none'; }
+                );
+                sec.style.display = visibleRows.length ? '' : 'none';
+                // When searching, expand collapsed sections so matches are visible
+                if (lq && visibleRows.length) {
+                    sec.classList.remove('fmap-layers-section--collapsed');
+                    var hdr = sec.querySelector('.fmap-layers-section-hdr');
+                    if (hdr) hdr.setAttribute('aria-expanded', 'true');
+                }
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function () { _applyLayerSearch(searchInput.value); });
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { searchInput.value = ''; _applyLayerSearch(''); }
+            });
+        }
 
         function openPopup() {
             clearTimeout(_closeTimer);
@@ -4619,9 +4919,12 @@
             popup.hidden = false;
             triggerBtn.classList.add('fmap-ctrl-btn--active');
             triggerBtn.setAttribute('aria-pressed', 'true');
-            // Move focus to first layer row for keyboard users
-            var firstRow = popup.querySelector('.fmap-layer-row, .fmap-layers-section-hdr');
-            if (firstRow) firstRow.focus();
+            // Auto-focus the search box for quick keyboard filtering
+            if (searchInput) { setTimeout(function () { searchInput.focus(); }, 60); }
+            else {
+                var firstRow = popup.querySelector('.fmap-layer-row, .fmap-layers-section-hdr');
+                if (firstRow) firstRow.focus();
+            }
         }
 
         function closePopup() {
@@ -4629,10 +4932,12 @@
             _closeTimer = setTimeout(function () {
                 popup.hidden = true;
                 popup.classList.remove('fmap-layers-popup--closing');
-            }, 140); // matches fmap-layers-out duration
+                // Clear search so it resets for next open
+                if (searchInput) { searchInput.value = ''; _applyLayerSearch(''); }
+            }, 160);
             triggerBtn.classList.remove('fmap-ctrl-btn--active');
             triggerBtn.setAttribute('aria-pressed', 'false');
-            triggerBtn.focus(); // return focus to trigger
+            triggerBtn.focus();
         }
 
         triggerBtn.addEventListener('click', function (e) {
@@ -4788,6 +5093,10 @@
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();
+                wireAqiLayer();
+                wireDroughtLayer();
+                wirePrecipLayer();
+                wireBuoyLayer();
                 restoreLayerState();
                 // Restore cached structure data from the previous page view so
                 // markers appear instantly on refresh instead of waiting for Overpass.
