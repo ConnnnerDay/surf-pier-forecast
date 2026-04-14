@@ -13587,3 +13587,67 @@ body:not([data-theme="dark"]) .fmap-preset-pill--active {
   border-color: rgba(0,119,182,0.35);
   color: var(--ocean, #0077B6);
 }
+
+/* ── Per-layer opacity slider row ─────────────────────────────────────────── */
+.fmap-layer-opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 5px 36px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.fmap-opacity-icon {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.30);
+}
+.fmap-opacity-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.18);
+  outline: none;
+  cursor: pointer;
+}
+.fmap-opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--ocean, #38C0FF);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.fmap-opacity-slider::-moz-range-thumb {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--ocean, #38C0FF);
+  cursor: pointer;
+  border: none;
+}
+.fmap-opacity-val {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.38);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+/* Light theme */
+[data-theme="light"] .fmap-layer-opacity-row,
+body:not([data-theme="dark"]) .fmap-layer-opacity-row {
+  background: rgba(0,0,0,0.025);
+  border-bottom-color: rgba(0,0,0,0.06);
+}
+[data-theme="light"] .fmap-opacity-icon,
+body:not([data-theme="dark"]) .fmap-opacity-icon { color: rgba(0,0,0,0.25); }
+[data-theme="light"] .fmap-opacity-slider,
+body:not([data-theme="dark"]) .fmap-opacity-slider { background: rgba(0,0,0,0.15); }
+[data-theme="light"] .fmap-opacity-slider::-webkit-slider-thumb,
+body:not([data-theme="dark"]) .fmap-opacity-slider::-webkit-slider-thumb { background: var(--ocean, #0077B6); }
+[data-theme="light"] .fmap-opacity-slider::-moz-range-thumb,
+body:not([data-theme="dark"]) .fmap-opacity-slider::-moz-range-thumb { background: var(--ocean, #0077B6); }
+[data-theme="light"] .fmap-opacity-val,
+body:not([data-theme="dark"]) .fmap-opacity-val { color: rgba(0,0,0,0.38); }
