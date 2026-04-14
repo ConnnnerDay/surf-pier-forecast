@@ -2435,6 +2435,38 @@ def map_precipitation() -> Any:
     return resp
 
 
+@bp.route("/api/map/temperature", methods=["GET"])
+def map_temperature() -> Any:
+    """Return NDFD daily min/max temperature polygons for the bounding box.
+
+    Proxies the ArcGIS Living Atlas NDFD_DailyTemperature_v1 live feed
+    (layers 0 = min, 1 = max).  Each polygon covers one forecast day with a
+    temperature value colour-coded from blue (cold) to red (hot).
+
+    Query params: south, west, north, east (decimal degrees)
+    Optional:     layer = "min" | "max" | "both" (default "max")
+
+    Returns
+    -------
+    JSON: { "min": [...], "max": [...] }
+    Each entry: { temp_f, period (YYYY-MM-DD), color, rings [[lat,lng]] }
+    """
+    from services.arcgis_live_feeds import fetch_ndfd_temperature_map
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    data = fetch_ndfd_temperature_map(south, west, north, east)
+    resp = jsonify(data)
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
+
+
 @bp.route("/api/map/buoys", methods=["GET"])
 def map_buoys() -> Any:
     """Return NDBC weather buoy observations for the bounding box.
@@ -2464,6 +2496,56 @@ def map_buoys() -> Any:
     buoys = fetch_ndbc_buoys(south, west, north, east)
     resp = jsonify({"buoys": buoys, "count": len(buoys)})
     resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/map/hfradar", methods=["GET"])
+def map_hfradar() -> Any:
+    """Return NOAA HF Radar surface current vectors for the bounding box.
+
+    Merges East Coast, Gulf of Mexico, and West Coast HF Radar networks.
+    Each vector represents the hourly surface current at a grid point.
+
+    Query params: south, west, north, east (decimal degrees)
+
+    Returns
+    -------
+    JSON: { "vectors": [ { lat, lng, speed_cms, speed_kts, dir_deg,
+                            u, v, color, updated } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_hfradar_currents
+
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+
+    vectors = fetch_hfradar_currents(south, west, north, east)
+    resp = jsonify({"vectors": vectors, "count": len(vectors)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=180"
+    return resp
+
+
+@bp.route("/api/map/tropical-outlook", methods=["GET"])
+def map_tropical_outlook() -> Any:
+    """Return NHC tropical weather outlook development-area polygons.
+
+    Proxies the ArcGIS Living Atlas NHC_Tropical_Weather_Outlook_v1 live feed.
+    Returns an empty list when no areas of interest are active.
+
+    Returns
+    -------
+    JSON: { "areas": [ { probability, prob_label, color, basin,
+                          rings [[lat,lng]], discussion } ], "count" }
+    """
+    from services.arcgis_live_feeds import fetch_tropical_outlook
+
+    areas = fetch_tropical_outlook()
+    resp = jsonify({"areas": areas, "count": len(areas)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=300"
     return resp
 
 

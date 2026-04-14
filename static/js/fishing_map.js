@@ -167,6 +167,9 @@
     var precipOn        = false;   // NDFD Precipitation overlay active
     var precipLayer     = null;    // L.layerGroup for precip polygons
     var precipTimer     = null;    // debounce for viewport reload
+    var ndfdTempOn      = false;   // NDFD Temperature overlay active
+    var ndfdTempLayer   = null;    // L.layerGroup for temperature polygons
+    var ndfdTempTimer   = null;    // debounce for viewport reload
     var buoyOn          = false;   // NDBC buoy overlay active
     var buoyLayer       = null;    // L.layerGroup for buoy markers
     var buoyTimer       = null;    // debounce for viewport reload
@@ -182,6 +185,7 @@
     var aqiAbort        = null;
     var droughtAbort    = null;
     var precipAbort     = null;
+    var ndfdTempAbort   = null;
     var buoyAbort       = null;
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
@@ -282,7 +286,11 @@
             setTimeout(prefetchHomeCorridorStructures, 500);
         }
 
-        map = L.map(els.mapEl, { zoomControl: true }).setView(startCenter, startZoom);
+        // preferCanvas: use the <canvas> renderer for vector layers by default.
+        // This is ~3-5x faster than SVG for dense overlays (METAR, AQI, buoys,
+        // gauges, HF Radar) because the GPU composites a single bitmap instead of
+        // layout/paint for thousands of individual SVG DOM nodes.
+        map = L.map(els.mapEl, { zoomControl: true, preferCanvas: true }).setView(startCenter, startZoom);
 
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
@@ -312,6 +320,9 @@
         // Update the zoom hint immediately so it reflects the starting zoom level
         // (hidden at zoom ≥ 8, i.e. when server coords are used)
         updateZoomHint();
+
+        // Initialise the map legend control (shown when colour-coded layers are active)
+        _initLegend();
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
@@ -3895,6 +3906,7 @@
 
     function doFetchMetar() {
         if (!metarOn || !map) return;
+        if (map.getZoom() < 5) { metarLayer.clearLayers(); return; }
         if (metarAbort) { try { metarAbort.abort(); } catch (e) {} }
         metarAbort = new AbortController();
         var b   = map.getBounds();
@@ -4075,6 +4087,7 @@
 
     function doFetchGauges() {
         if (!gaugeOn || !map) return;
+        if (map.getZoom() < 6) { gaugeLayer.clearLayers(); return; }
         if (gaugeAbort) { try { gaugeAbort.abort(); } catch (e) {} }
         gaugeAbort = new AbortController();
         var b   = map.getBounds();
@@ -4586,6 +4599,7 @@
 
     function doFetchAqi() {
         if (!aqiOn || !map) return;
+        if (map.getZoom() < 5) { aqiLayer.clearLayers(); return; }
         if (aqiAbort) { try { aqiAbort.abort(); } catch (e) {} }
         aqiAbort = new AbortController();
         var b   = map.getBounds();
@@ -4661,7 +4675,7 @@
                         L.polygon(ring, {
                             color:       p.color,
                             fillColor:   p.color,
-                            fillOpacity: 0.30,
+                            fillOpacity: _getLayerOpacity('fmap-drought-btn') / 100,
                             weight:      1,
                             opacity:     0.6,
                             interactive: true,
@@ -4724,7 +4738,7 @@
                         L.polygon(ring, {
                             color:       p.color,
                             fillColor:   p.color,
-                            fillOpacity: 0.35,
+                            fillOpacity: _getLayerOpacity('fmap-precip-btn') / 100,
                             weight:      1,
                             opacity:     0.5,
                         }).bindTooltip('<strong>Precip: ' + esc(label) + '</strong>' +
@@ -4737,6 +4751,74 @@
                 if (!data.polygons || !data.polygons.length) showToast('No precipitation forecast in view');
             })
             .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] precip fetch failed:', err); });
+    }
+
+    // ─── NDFD Temperature polygons overlay (ArcGIS Live Feeds) ──────────────
+
+    function wireNdfdTempLayer() {
+        if (!map) return;
+        ndfdTempLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-ndfd-temp-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                ndfdTempOn = !ndfdTempOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', ndfdTempOn);
+                btn.setAttribute('aria-pressed', ndfdTempOn ? 'true' : 'false');
+                if (ndfdTempOn) { ndfdTempLayer.addTo(map); doFetchNdfdTemp(); }
+                else { map.removeLayer(ndfdTempLayer); ndfdTempLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () {
+            if (ndfdTempOn) { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
+        });
+    }
+
+    function doFetchNdfdTemp() {
+        if (!ndfdTempOn || !map) return;
+        if (ndfdTempAbort) { try { ndfdTempAbort.abort(); } catch (e) {} }
+        ndfdTempAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/temperature?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: ndfdTempAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!ndfdTempOn || !map || !data) return;
+                ndfdTempLayer.clearLayers();
+                // Render max temperature polygons by default; min as dashed overlay
+                var tempOpacity = _getLayerOpacity('fmap-ndfd-temp-btn') / 100;
+                var layers = [
+                    { key: 'max', opacity: tempOpacity,       weight: 0.5, label: 'High' },
+                    { key: 'min', opacity: tempOpacity * 0.5, weight: 0,   label: 'Low',  dash: '4 3' },
+                ];
+                var total = 0;
+                layers.forEach(function (cfg) {
+                    (data[cfg.key] || []).forEach(function (p) {
+                        total++;
+                        var tip = '<strong>' + cfg.label + ' Temp: ' + p.temp_f + '°F</strong>' +
+                                  (p.period ? '<br><small>' + p.period + '</small>' : '') +
+                                  '<br><small style="opacity:.65">NOAA NDFD · daily forecast</small>';
+                        p.rings.forEach(function (ring) {
+                            L.polygon(ring, {
+                                color:        p.color,
+                                fillColor:    p.color,
+                                fillOpacity:  cfg.opacity,
+                                weight:       cfg.weight,
+                                dashArray:    cfg.dash || null,
+                            }).bindTooltip(tip, { sticky: true, opacity: 0.92 })
+                              .addTo(ndfdTempLayer);
+                        });
+                    });
+                });
+                if (!total) showToast('No temperature data in view');
+            })
+            .catch(function (err) {
+                if (err && err.name !== 'AbortError') console.warn('[fishing-map] ndfd-temp fetch failed:', err);
+            });
     }
 
     // ─── NDBC Buoy overlay (ArcGIS Live Feeds) ────────────────────────────────
@@ -4808,25 +4890,171 @@
             .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] buoy fetch failed:', err); });
     }
 
+    // ─── HF Radar Ocean Currents overlay (NOAA HFRNet via ArcGIS) ────────────
+
+    var hfradarOn     = false;
+    var hfradarLayer  = null;
+    var hfradarTimer  = null;
+    var hfradarAbort  = null;
+
+    function wireHfradarLayer() {
+        if (!map) return;
+        hfradarLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-hfradar-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                hfradarOn = !hfradarOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', hfradarOn);
+                btn.setAttribute('aria-pressed', hfradarOn ? 'true' : 'false');
+                if (hfradarOn) { hfradarLayer.addTo(map); doFetchHfradar(); }
+                else { map.removeLayer(hfradarLayer); hfradarLayer.clearLayers(); }
+            });
+        }
+        map.on('moveend zoomend', function () {
+            if (hfradarOn) { clearTimeout(hfradarTimer); hfradarTimer = setTimeout(doFetchHfradar, 700); }
+        });
+    }
+
+    function doFetchHfradar() {
+        if (!hfradarOn || !map) return;
+        if (map.getZoom() < 5) { hfradarLayer.clearLayers(); return; }
+        if (hfradarAbort) { try { hfradarAbort.abort(); } catch (e) {} }
+        hfradarAbort = new AbortController();
+        var b   = map.getBounds();
+        var url = '/api/map/hfradar?south=' + b.getSouth().toFixed(3) +
+                  '&west='  + b.getWest().toFixed(3) +
+                  '&north=' + b.getNorth().toFixed(3) +
+                  '&east='  + b.getEast().toFixed(3);
+
+        fetch(url, { signal: hfradarAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!hfradarOn || !map || !data) return;
+                hfradarLayer.clearLayers();
+                var vectors = data.vectors || [];
+
+                // Subsample if too dense (>600 pts) to keep FPS up
+                if (vectors.length > 600) {
+                    var step = Math.ceil(vectors.length / 600);
+                    vectors = vectors.filter(function (_, i) { return i % step === 0; });
+                }
+
+                vectors.forEach(function (v) {
+                    // Draw an arrow rotated to the current direction
+                    var rot = v.dir_deg != null ? v.dir_deg : 0;
+                    var kts = v.speed_kts != null ? v.speed_kts.toFixed(1) + ' kt' : '';
+                    var icon = L.divIcon({
+                        className: '',
+                        html: '<div class="fmap-hfradar-arrow" style="color:' + v.color +
+                              ';transform:rotate(' + rot + 'deg)" title="' + kts + '">' +
+                              '<svg viewBox="0 0 10 16" width="10" height="16" fill="currentColor" aria-hidden="true">' +
+                              '<polygon points="5,0 10,16 5,12 0,16"/></svg></div>',
+                        iconSize:   [10, 16],
+                        iconAnchor: [5, 8],
+                    });
+                    var updStr = '';
+                    if (v.updated) { try { updStr = new Date(v.updated).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',timeZoneName:'short'}); } catch(e) {} }
+                    L.marker([v.lat, v.lng], { icon: icon })
+                     .bindTooltip(
+                        '<strong>Ocean Current</strong>' +
+                        (kts ? '<br>' + kts + (v.dir_deg != null ? ' from ' + v.dir_deg + '°' : '') : '') +
+                        (updStr ? '<br><small style="opacity:.6">' + updStr + '</small>' : '') +
+                        '<br><small style="opacity:.5">NOAA HF Radar</small>',
+                        { sticky: true, opacity: 0.93, direction: 'top' }
+                     )
+                     .addTo(hfradarLayer);
+                });
+                if (!vectors.length) showToast('No HF Radar data in view (US coasts only)');
+                else showToast(vectors.length + ' current vector' + (vectors.length !== 1 ? 's' : ''));
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] HF Radar fetch failed:', err); });
+    }
+
+    // ─── NHC Tropical Weather Outlook overlay (ArcGIS Live Feeds) ────────────
+
+    var tropicalOn     = false;
+    var tropicalLayer  = null;
+    var tropicalAbort  = null;
+
+    function wireTropicalOutlook() {
+        if (!map) return;
+        tropicalLayer = L.layerGroup();
+
+        var btn = document.getElementById('fmap-tropical-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                tropicalOn = !tropicalOn;
+                btn.classList.toggle('fmap-ctrl-btn--active', tropicalOn);
+                btn.setAttribute('aria-pressed', tropicalOn ? 'true' : 'false');
+                if (tropicalOn) { tropicalLayer.addTo(map); doFetchTropicalOutlook(); }
+                else { map.removeLayer(tropicalLayer); tropicalLayer.clearLayers(); }
+            });
+        }
+    }
+
+    function doFetchTropicalOutlook() {
+        if (!tropicalOn || !map) return;
+        if (tropicalAbort) { try { tropicalAbort.abort(); } catch (e) {} }
+        tropicalAbort = new AbortController();
+
+        fetch('/api/map/tropical-outlook', { signal: tropicalAbort.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!tropicalOn || !map || !data) return;
+                tropicalLayer.clearLayers();
+                var areas = data.areas || [];
+
+                areas.forEach(function (a) {
+                    a.rings.forEach(function (ring) {
+                        L.polygon(ring, {
+                            color:       a.color,
+                            fillColor:   a.color,
+                            fillOpacity: _getLayerOpacity('fmap-tropical-btn') / 100,
+                            weight:      2,
+                            opacity:     0.75,
+                            dashArray:   '6 4',
+                        }).bindPopup(
+                            '<div class="fmap-tropical-popup">' +
+                            '<strong>Tropical Development Area</strong>' +
+                            '<div class="fmap-tropical-prob" style="color:' + a.color + '">' +
+                            esc(a.prob_label || a.probability) + ' probability</div>' +
+                            '<div style="font-size:.75rem;opacity:.7;margin-top:2px">Basin: ' + esc(a.basin) + '</div>' +
+                            (a.discussion ? '<p style="font-size:.74rem;margin:6px 0 2px;opacity:.85">' + esc(a.discussion) + '</p>' : '') +
+                            '<div style="font-size:.68rem;opacity:.45;margin-top:4px">NHC Tropical Weather Outlook · ArcGIS Live Feeds</div>' +
+                            '</div>',
+                            { maxWidth: 280 }
+                        ).addTo(tropicalLayer);
+                    });
+                });
+
+                if (!areas.length) showToast('No tropical development areas active');
+                else showToast(areas.length + ' tropical area' + (areas.length !== 1 ? 's' : '') + ' in outlook');
+            })
+            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] tropical outlook fetch failed:', err); });
+    }
+
     // ─── Layers popup panel ───────────────────────────────────────────────────
     // IDs of all layer-row buttons inside the popup (must match the HTML ids).
     var LAYER_BTN_IDS = [
         'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
-        'fmap-storm-rpt-btn', 'fmap-sst-btn', 'fmap-sea-ice-btn',
-        'fmap-wildfire-btn', 'fmap-seismic-btn', 'fmap-metar-btn',
-        'fmap-gauge-btn', 'fmap-terminator-btn',
-        'fmap-aqi-btn', 'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn'
+        'fmap-storm-rpt-btn', 'fmap-tropical-btn',
+        'fmap-sst-btn', 'fmap-sea-ice-btn', 'fmap-wildfire-btn', 'fmap-seismic-btn',
+        'fmap-drought-btn', 'fmap-precip-btn', 'fmap-ndfd-temp-btn',
+        'fmap-buoy-btn', 'fmap-hfradar-btn',
+        'fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn'
     ];
-    var LS_LAYERS_KEY   = 'fmap_layers_v2';   // bumped to clear old saved state
+    var LS_LAYERS_KEY   = 'fmap_layers_v3';   // bumped to clear old saved state
     var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
 
     // Map from section data-section value → layer button IDs it contains
     var SECTION_LAYER_MAP = {
         weather: ['fmap-marine-warn-btn', 'fmap-storm-tracker-btn',
-                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn'],
+                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn', 'fmap-tropical-btn'],
         ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
                   'fmap-wildfire-btn', 'fmap-seismic-btn',
-                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-buoy-btn'],
+                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-ndfd-temp-btn',
+                  'fmap-buoy-btn', 'fmap-hfradar-btn'],
         obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn']
     };
 
@@ -4838,6 +5066,256 @@
             });
             localStorage.setItem(LS_LAYERS_KEY, JSON.stringify(active));
         } catch (e) { /* storage unavailable */ }
+    }
+
+    // ─── Per-layer opacity controls ───────────────────────────────────────────
+    var _OPACITY_DEFAULTS = {
+        'fmap-drought-btn':   30,
+        'fmap-precip-btn':    35,
+        'fmap-ndfd-temp-btn': 28,
+        'fmap-tropical-btn':  20,
+    };
+    var _layerOpacities = {};
+    try {
+        var _opRaw = localStorage.getItem('fmap_opacities_v1');
+        if (_opRaw) _layerOpacities = JSON.parse(_opRaw) || {};
+    } catch(e) {}
+
+    function _getPolygonLayers() {
+        return {
+            'fmap-drought-btn':   droughtLayer,
+            'fmap-precip-btn':    precipLayer,
+            'fmap-ndfd-temp-btn': ndfdTempLayer,
+            'fmap-tropical-btn':  tropicalLayer,
+        };
+    }
+
+    function _getLayerOpacity(btnId) {
+        return (_layerOpacities[btnId] !== undefined)
+            ? _layerOpacities[btnId]
+            : (_OPACITY_DEFAULTS[btnId] || 35);
+    }
+
+    function _saveLayerOpacity(btnId, pct) {
+        _layerOpacities[btnId] = pct;
+        try { localStorage.setItem('fmap_opacities_v1', JSON.stringify(_layerOpacities)); } catch(e) {}
+    }
+
+    function _applyLayerOpacity(btnId, pct) {
+        var layers = _getPolygonLayers();
+        var lg = layers[btnId];
+        if (!lg) return;
+        var frac = pct / 100;
+        lg.eachLayer(function(layer) {
+            if (layer.setStyle) layer.setStyle({ fillOpacity: frac });
+        });
+    }
+
+    function _showOpacityRow(btnId) {
+        if (!_OPACITY_DEFAULTS.hasOwnProperty(btnId)) return;
+        if (document.getElementById('fmap-opacity-' + btnId)) return;  // already shown
+        var btn = document.getElementById(btnId);
+        if (!btn) return;
+        var pct = _getLayerOpacity(btnId);
+        var row = document.createElement('div');
+        row.id        = 'fmap-opacity-' + btnId;
+        row.className = 'fmap-layer-opacity-row';
+        row.innerHTML =
+            '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" class="fmap-opacity-icon" aria-hidden="true">' +
+            '<circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/>' +
+            '<line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/>' +
+            '<line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/></svg>' +
+            '<input type="range" class="fmap-opacity-slider" min="5" max="80" step="5" value="' + pct + '" aria-label="Layer opacity">' +
+            '<span class="fmap-opacity-val">' + pct + '%</span>';
+        btn.insertAdjacentElement('afterend', row);
+        row.addEventListener('click', function(e) { e.stopPropagation(); });
+        var slider = row.querySelector('.fmap-opacity-slider');
+        var valEl  = row.querySelector('.fmap-opacity-val');
+        slider.addEventListener('input', function() {
+            var v = parseInt(this.value, 10);
+            valEl.textContent = v + '%';
+            _applyLayerOpacity(btnId, v);
+            _saveLayerOpacity(btnId, v);
+        });
+    }
+
+    function _hideOpacityRow(btnId) {
+        var el = document.getElementById('fmap-opacity-' + btnId);
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
+
+    // ─── Map legend (auto-shows for color-coded layers) ───────────────────────
+    var legendControl   = null;
+    var legendCollapsed = false;
+
+    var _LEGEND_SPECS = {
+        drought: {
+            label: 'Drought (NDMC)',
+            items: [
+                { color: '#FFFF00', text: 'D0 Abnormally Dry' },
+                { color: '#FCD37F', text: 'D1 Moderate' },
+                { color: '#FFAA00', text: 'D2 Severe' },
+                { color: '#E60000', text: 'D3 Extreme' },
+                { color: '#730000', text: 'D4 Exceptional', dark: true },
+            ]
+        },
+        aqi: {
+            label: 'Air Quality (PM2.5)',
+            items: [
+                { color: '#22c55e', text: 'Good',                    dark: true },
+                { color: '#eab308', text: 'Moderate' },
+                { color: '#f97316', text: 'Unhealthy · Sensitive',   dark: true },
+                { color: '#ef4444', text: 'Unhealthy',               dark: true },
+                { color: '#a855f7', text: 'Very Unhealthy',          dark: true },
+                { color: '#7c3aed', text: 'Hazardous',               dark: true },
+            ]
+        },
+        precip: {
+            label: 'Precipitation (NDFD)',
+            items: [
+                { color: '#c6e3f5', text: 'Light' },
+                { color: '#74b9e8', text: 'Moderate' },
+                { color: '#2563eb', text: 'Heavy',   dark: true },
+                { color: '#1e3a8a', text: 'Extreme', dark: true },
+            ]
+        },
+        'ndfd-temp': {
+            label: 'Temp Forecast (°F High)',
+            items: [
+                { color: '#3b82f6', text: '<32°F (freeze)', dark: true },
+                { color: '#06b6d4', text: '32–50°F',        dark: true },
+                { color: '#34d399', text: '50–65°F',        dark: true },
+                { color: '#fbbf24', text: '65–80°F' },
+                { color: '#f97316', text: '80–95°F',        dark: true },
+                { color: '#ef4444', text: '>95°F',          dark: true },
+            ]
+        },
+        hfradar: {
+            label: 'Currents (cm/s)',
+            items: [
+                { color: '#60a5fa', text: '<10',   dark: true },
+                { color: '#22c55e', text: '10–25', dark: true },
+                { color: '#eab308', text: '25–50' },
+                { color: '#f97316', text: '50–100',dark: true },
+                { color: '#ef4444', text: '>100',  dark: true },
+            ]
+        },
+        tropical: {
+            label: 'Tropical Dev.',
+            items: [
+                { color: '#eab308', text: 'Low' },
+                { color: '#f97316', text: 'Medium', dark: true },
+                { color: '#ef4444', text: 'High',   dark: true },
+            ]
+        },
+        metar: {
+            label: 'METAR (flight cat.)',
+            items: [
+                { color: '#22c55e', text: 'VFR — clear',         dark: true },
+                { color: '#60a5fa', text: 'MVFR — marginal',     dark: true },
+                { color: '#f87171', text: 'IFR — low vis',       dark: true },
+                { color: '#c084fc', text: 'LIFR — fog/obscured', dark: true },
+            ]
+        },
+        seismic: {
+            label: 'Earthquakes',
+            items: [
+                { color: '#fde68a', text: 'M 2.5–3.5' },
+                { color: '#f59e0b', text: 'M 3.5–5.0' },
+                { color: '#ef4444', text: 'M 5.0+',    dark: true },
+            ]
+        },
+    };
+
+    // Map from layer key → the boolean var that tracks "is this layer on?"
+    function _legendLayerOn(key) {
+        switch (key) {
+            case 'drought':   return droughtOn;
+            case 'aqi':       return aqiOn;
+            case 'precip':    return precipOn;
+            case 'ndfd-temp': return ndfdTempOn;
+            case 'hfradar':   return hfradarOn;
+            case 'tropical':  return tropicalOn;
+            case 'metar':     return metarOn;
+            case 'seismic':   return seismicOn;
+            default:          return false;
+        }
+    }
+
+    function _initLegend() {
+        if (!map || legendControl) return;
+        var LegendCtrl = L.Control.extend({
+            options: { position: 'bottomleft' },
+            onAdd: function () {
+                var div = L.DomUtil.create('div', 'fmap-legend');
+                div.hidden = true;
+                L.DomEvent.disableClickPropagation(div);
+                return div;
+            }
+        });
+        legendControl = new LegendCtrl();
+        legendControl.addTo(map);
+    }
+
+    function _updateLegend() {
+        if (!legendControl) return;
+        var container = legendControl.getContainer();
+        if (!container) return;
+
+        var activeSpecs = Object.keys(_LEGEND_SPECS).filter(_legendLayerOn);
+        if (!activeSpecs.length || legendCollapsed) {
+            if (!activeSpecs.length) {
+                container.hidden = true;
+                legendCollapsed  = false;
+            } else if (legendCollapsed) {
+                container.hidden = false;
+                container.innerHTML =
+                    '<div class="fmap-legend-collapsed">' +
+                    '<button class="fmap-legend-expand-btn" title="Show layer legend">' +
+                    '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">' +
+                    '<polyline points="6 9 12 15 18 9"/></svg> Legend</button></div>';
+                container.querySelector('.fmap-legend-expand-btn').addEventListener('click', function () {
+                    legendCollapsed = false;
+                    _updateLegend();
+                });
+            }
+            return;
+        }
+
+        container.hidden = false;
+        var html = '<div class="fmap-legend-inner">' +
+            '<div class="fmap-legend-header">' +
+            '<span class="fmap-legend-title-main">Legend</span>' +
+            '<button class="fmap-legend-collapse-btn" title="Collapse legend">' +
+            '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">' +
+            '<polyline points="18 15 12 9 6 15"/></svg></button></div>';
+
+        activeSpecs.forEach(function (key) {
+            var spec = _LEGEND_SPECS[key];
+            html += '<div class="fmap-legend-section">' +
+                    '<div class="fmap-legend-section-title">' + spec.label + '</div>' +
+                    '<div class="fmap-legend-items">';
+            spec.items.forEach(function (item) {
+                var txtColor = item.dark ? '#fff' : '#111';
+                html += '<span class="fmap-legend-item">' +
+                        '<span class="fmap-legend-swatch" style="background:' + item.color +
+                        ';color:' + txtColor + '"></span>' +
+                        '<span class="fmap-legend-label">' + item.text + '</span></span>';
+            });
+            html += '</div></div>';
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        // Wire collapse button
+        var colBtn = container.querySelector('.fmap-legend-collapse-btn');
+        if (colBtn) {
+            colBtn.addEventListener('click', function () {
+                legendCollapsed = true;
+                _updateLegend();
+            });
+        }
     }
 
     function _updateLayersBadge() {
@@ -4872,10 +5350,28 @@
         var popup       = document.getElementById('fmap-layers-popup');
         var closeBtn    = document.getElementById('fmap-layers-popup-close');
         var clearBtn    = document.getElementById('fmap-layers-clear-btn');
+        var pinBtn      = document.getElementById('fmap-layers-pin-btn');
         var searchInput = document.getElementById('fmap-layers-search');
         if (!triggerBtn || !popup) return;
 
         var _closeTimer = null;
+        var _pinned     = false;   // when true, outside-click and Escape don't close
+
+        // ── Pin toggle (keep panel open while switching layers) ───────────────
+        function _updatePinAppearance() {
+            if (!pinBtn) return;
+            pinBtn.classList.toggle('fmap-layers-pin-btn--active', _pinned);
+            pinBtn.setAttribute('aria-pressed', _pinned ? 'true' : 'false');
+            pinBtn.title = _pinned ? 'Unpin panel (allow auto-close)' : 'Pin panel open';
+        }
+
+        if (pinBtn) {
+            pinBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                _pinned = !_pinned;
+                _updatePinAppearance();
+            });
+        }
 
         // ── Layer search filter ───────────────────────────────────────────────
         // Filters visible layer rows by the text inside .fmap-layer-row-name
@@ -4967,16 +5463,30 @@
             });
         }
 
-        // Escape key closes popup
+        // Escape closes popup (unless pinned)
+        // 'L' key (no modifiers, not in a text field) toggles panel
         document.addEventListener('keydown', function (e) {
-            if (!popup.hidden && (e.key === 'Escape' || e.keyCode === 27)) {
+            var tag = (e.target || {}).tagName || '';
+            var inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+                          (e.target || {}).isContentEditable;
+
+            if (!popup.hidden && (e.key === 'Escape' || e.keyCode === 27) && !_pinned) {
                 closePopup();
+                return;
+            }
+            if (!inInput && (e.key === 'l' || e.key === 'L') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                if (popup.hidden || popup.classList.contains('fmap-layers-popup--closing')) {
+                    openPopup();
+                } else if (!_pinned) {
+                    closePopup();
+                }
             }
         });
 
-        // Close when clicking outside the popup or trigger button
+        // Close when clicking outside (unless pinned)
         document.addEventListener('click', function (e) {
-            if (popup.hidden) return;
+            if (popup.hidden || _pinned) return;
             if (popup.contains(e.target) || triggerBtn.contains(e.target)) return;
             closePopup();
         });
@@ -5016,6 +5526,48 @@
             });
         });
 
+        // ── Quick preset pills — toggle all layers in a section ──────────────
+        document.querySelectorAll('.fmap-preset-pill').forEach(function (pill) {
+            pill.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var sec = pill.getAttribute('data-preset');
+                var ids = SECTION_LAYER_MAP[sec];
+                if (!ids || !ids.length) return;
+
+                // Determine: are all layers in this section already on?
+                var allOn = ids.every(function (id) {
+                    var b = document.getElementById(id);
+                    return b && b.getAttribute('aria-pressed') === 'true';
+                });
+
+                // If all on → turn all off. Otherwise → turn all on.
+                ids.forEach(function (id, idx) {
+                    setTimeout(function () {
+                        var b = document.getElementById(id);
+                        if (!b) return;
+                        if (allOn && b.getAttribute('aria-pressed') === 'true') b.click();
+                        if (!allOn && b.getAttribute('aria-pressed') !== 'true') b.click();
+                    }, idx * 80);
+                });
+
+                // Mark pill as active if turning on, inactive if turning off
+                pill.classList.toggle('fmap-preset-pill--active', !allOn);
+            });
+        });
+
+        // Keep preset pill active state in sync with layer state
+        function _syncPresetPills() {
+            document.querySelectorAll('.fmap-preset-pill').forEach(function (pill) {
+                var sec = pill.getAttribute('data-preset');
+                var ids = SECTION_LAYER_MAP[sec] || [];
+                var anyOn = ids.some(function (id) {
+                    var b = document.getElementById(id);
+                    return b && b.getAttribute('aria-pressed') === 'true';
+                });
+                pill.classList.toggle('fmap-preset-pill--active', anyOn);
+            });
+        }
+
         // ── Per-row: loading shimmer, badge refresh, state persistence ───────
         LAYER_BTN_IDS.forEach(function (id) {
             var btn = document.getElementById(id);
@@ -5025,6 +5577,11 @@
                 setTimeout(function () {
                     _updateLayersBadge();
                     _saveLayerState();
+                    _updateLegend();
+                    _syncPresetPills();
+                    var isOn = btn.getAttribute('aria-pressed') === 'true';
+                    if (isOn) _showOpacityRow(id);
+                    else _hideOpacityRow(id);
                 }, 0);
 
                 // Loading shimmer on toggle track while data fetches (turning ON only)
@@ -5059,6 +5616,17 @@
                     if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
                 }, 700 + i * 350);
             });
+            // Update legend after all staggered restores have fired
+            if (valid.length) setTimeout(_updateLegend, 700 + valid.length * 350 + 50);
+            // Show opacity rows for restored polygon layers
+            if (valid.length) {
+                setTimeout(function() {
+                    valid.forEach(function(id) {
+                        var b = document.getElementById(id);
+                        if (b && b.getAttribute('aria-pressed') === 'true') _showOpacityRow(id);
+                    });
+                }, 700 + valid.length * 350 + 100);
+            }
         } catch (e) { /* malformed storage */ }
     }
 
@@ -5096,7 +5664,10 @@
                 wireAqiLayer();
                 wireDroughtLayer();
                 wirePrecipLayer();
+                wireNdfdTempLayer();
                 wireBuoyLayer();
+                wireHfradarLayer();
+                wireTropicalOutlook();
                 restoreLayerState();
                 // Restore cached structure data from the previous page view so
                 // markers appear instantly on refresh instead of waiting for Overpass.

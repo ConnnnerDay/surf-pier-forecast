@@ -169,6 +169,51 @@
                     <span class="stat-value" id="drought-stat-value"></span>
                     <span class="stat-detail" id="drought-stat-detail"></span>
                 </div>
+                {# Nearest NDBC buoy — populated client-side from ArcGIS NDBC live feed #}
+                <div class="stat-card" id="ndbc-stat-card" hidden>
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M5 19l2-2M17 7l2-2M5 5l2 2M17 17l2 2"/></svg>
+                    </span>
+                    <span class="stat-label">Nearest Buoy</span>
+                    <span class="stat-value" id="ndbc-stat-value"></span>
+                    <span class="stat-detail" id="ndbc-stat-detail"></span>
+                </div>
+                {# Tropical Outlook — populated client-side from ArcGIS NHC live feed #}
+                <div class="stat-card" id="tropical-stat-card" hidden>
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8c-2.5 0-4 2-4 4s1.5 4 4 4 4-2 4-4-1.5-4-4-4z"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>
+                    </span>
+                    <span class="stat-label">Tropics</span>
+                    <span class="stat-value" id="tropical-stat-value"></span>
+                    <span class="stat-detail" id="tropical-stat-detail"></span>
+                </div>
+                {# Flood stage — populated client-side from ArcGIS Live Stream Gauges #}
+                <div class="stat-card" id="gauge-stat-card" hidden>
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16c2-4 4-4 6-8s4-4 6-8"/></svg>
+                    </span>
+                    <span class="stat-label">Flood Stage</span>
+                    <span class="stat-value" id="gauge-stat-value"></span>
+                    <span class="stat-detail" id="gauge-stat-detail"></span>
+                </div>
+                {# Nearest METAR — visibility, flight category & conditions from ArcGIS NOAA METAR live feed #}
+                <div class="stat-card" id="metar-stat-card" hidden>
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    </span>
+                    <span class="stat-label">Nearest METAR</span>
+                    <span class="stat-value" id="metar-stat-value"></span>
+                    <span class="stat-detail" id="metar-stat-detail"></span>
+                </div>
+                {# Wildfire & Smoke — populated client-side from ArcGIS NIFC/NDGD live feeds #}
+                <div class="stat-card" id="wildfire-stat-card" hidden>
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>
+                    </span>
+                    <span class="stat-label">Wildfires</span>
+                    <span class="stat-value" id="wildfire-stat-value"></span>
+                    <span class="stat-detail" id="wildfire-stat-detail"></span>
+                </div>
             </div>
 
         </section>
