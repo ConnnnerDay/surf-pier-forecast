@@ -266,3 +266,103 @@ rm -rf "$PROJECT_DIR"
 - **No forecast data** — verify internet access; upstream NOAA/NWS/NDBC endpoints may be temporarily unavailable
 - **Auth form POST 400** — CSRF token missing/expired; refresh the page and retry
 - **Email verification not sending** — set `SMTP_*` environment variables; without them, accounts auto-confirm and no emails are sent
+
+---
+
+## Geospatial & Satellite Data Sources
+
+The application integrates eight additional free, key-free data sources that
+appear as new sections on the forecast dashboard.
+
+### Included services
+
+| Service | Module | What it provides |
+|---|---|---|
+| **OpenStreetMap** | `services/osm_tiles.py` | Base map tiles (Standard, Humanitarian) and Overpass API marine amenities (marinas, boat ramps) |
+| **Natural Earth** | `services/natural_earth.py` | Public-domain coastline and boundary GeoJSON served as a `/api/v1/geo/coastlines` overlay |
+| **Data.gov / EPA WQP** | `services/datagov.py` | Water quality metrics (DO, pH, salinity, turbidity, enterococcus) from the EPA Water Quality Portal |
+| **Esri Open Data Hub** | `services/esri_open_data.py` | Pier/marina locations (NOAA), EPA beach sites, NPS coastal park boundaries |
+| **NASA Worldview / GIBS** | `services/nasa_worldview.py` | Near-real-time satellite imagery tiles: Sea Surface Temperature, Chlorophyll-A, True Color (VIIRS/MODIS) |
+| **OpenAerialMap** | `services/aerial_imagery.py` | Open drone/aerial imagery catalog search for coastal areas |
+| **HDX** | `services/hdx_fao.py` | Humanitarian Data Exchange fisheries dataset search via CKAN API |
+| **FAO GeoNetwork** | `services/hdx_fao.py` | FAO fishing zone identification (Major Areas) and ASFIS species scientific names |
+
+All services are **read-only**, **unauthenticated**, and **require no API key**.
+The app degrades gracefully when any upstream service is unavailable.
+
+### New API endpoints
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/v1/geo/layers` | All map layer configs (OSM, GIBS, Esri, NE) |
+| `GET /api/v1/geo/environmental?lat=&lng=` | Water quality summary + SST tile config |
+| `GET /api/v1/geo/coastlines` | Natural Earth GeoJSON (optional `?south=&west=&north=&east=` bbox clip) |
+| `GET /api/v1/geo/osm/amenities?lat=&lng=` | Nearby OSM marine amenities |
+| `GET /api/v1/geo/esri/piers?south=&west=&north=&east=` | Pier/marina features |
+| `GET /api/v1/geo/esri/beaches?south=…` | EPA-monitored beach locations |
+| `GET /api/v1/geo/esri/parks?south=…` | NPS coastal park boundaries |
+| `GET /api/v1/geo/aerial/oam?south=…` | OpenAerialMap imagery catalog |
+| `GET /api/v1/geo/hdx-fao?lat=&lng=` | FAO zone + HDX dataset links |
+
+### Optional GIS dependencies
+
+The base install works without any extra packages. To enable full
+GeoDataFrame support in `services/natural_earth.py` (spatial clip, shapefile
+loading via `load_ne_shapefile()`), install the optional GIS stack:
+
+**Debian/Ubuntu:**
+```bash
+sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev
+pip install geopandas>=0.14 pandas>=2.0
+```
+
+**macOS (Homebrew):**
+```bash
+brew install gdal geos proj
+pip install geopandas>=0.14 pandas>=2.0
+```
+
+Without these packages the app uses a pure-Python bbox filter for coastline
+clipping, which works correctly for all resolutions but is slightly slower for
+large GeoJSON files.
+
+### Natural Earth data caching
+
+On first use, `services/natural_earth.py` downloads the chosen resolution
+GeoJSON from the Natural Earth GitHub CDN and caches it in `data/natural_earth/`.
+Subsequent requests are served from disk; the cache is refreshed automatically
+every 30 days in the background.
+
+Resolution options (set via `?res=` query parameter):
+- `110m` (default) — ~300 KB, suitable for country/coast overview maps
+- `10m` — ~1.5 MB, finer coastline detail for zoomed-in views
+
+### NASA GIBS imagery
+
+NASA GIBS (Global Imagery Browse Services) tiles are fetched client-side by
+the browser — the server never proxies image data. The tile URL for each
+layer is constructed by `services/nasa_worldview.py` using yesterday's date
+to account for the NRT processing latency (3–48 hours depending on the sensor).
+
+Available overlay layers (controlled by the **Satellite & Map Layers** panel):
+- **Sea Surface Temperature** (GHRSST MUR, 1 km, daily) — `GHRSST_L4_MUR_Sea_Surface_Temperature`
+- **Chlorophyll-A** (MODIS Terra, 4 km, 8-day) — `MODIS_Terra_Chlorophyll_A`
+- **True Color / VIIRS** (375 m, daily) — `VIIRS_SNPP_TrueColor_375m`
+
+Attribution required by NASA usage policy is injected automatically into the
+Leaflet attribution control.
+
+### Frontend map (geo_layers.js)
+
+`static/js/geo_layers.js` initialises a Leaflet 1.9 map inside the collapsible
+**Satellite & Map Layers** panel on the forecast dashboard. The map is only
+created when the panel is first opened, so it has zero impact on initial page
+load time.
+
+Controls provided:
+- **Base map** radio: OpenStreetMap Standard / OSM Humanitarian / Esri World Imagery
+- **Overlay** checkboxes: SST, Chlorophyll-A, True Color, Natural Earth coastlines
+- **Feature layers**: Piers & Marinas, Monitored Beaches, Coastal Parks, OAM aerial
+
+No third-party JavaScript frameworks are required. Leaflet is loaded dynamically
+from the jsdelivr CDN (with a cdnjs fallback) only when the panel is opened.

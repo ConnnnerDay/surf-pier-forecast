@@ -539,6 +539,44 @@
     </div><!-- /.section-block species-calendar -->
 
     <!-- ============================================================
+         SATELLITE & MAP LAYERS  (NASA GIBS, OSM, Natural Earth, Esri)
+         ============================================================ -->
+    <div class="section-block" data-section-id="satellite-layers" data-section-label="Satellite &amp; Map Layers">
+    <details class="collapsible-module" id="satellite-layers-details">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                Satellite &amp; Map Layers
+            </span>
+            <span class="collapsible-module-sub">OSM &middot; NASA Worldview &middot; Natural Earth &middot; Esri</span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_geo_layers.html' %}
+        </div>
+    </details>
+    </div><!-- /.section-block satellite-layers -->
+
+    <!-- ============================================================
+         WATER QUALITY & ENVIRONMENTAL DATA  (EPA WQP, FAO, HDX)
+         ============================================================ -->
+    <div class="section-block" data-section-id="water-quality" data-section-label="Water Quality">
+    <details class="collapsible-module" id="water-quality-details">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/><path d="M12 8v4l3 3"/><path d="M20 2v6h-6"/></svg>
+                Water Quality &amp; Environmental Data
+            </span>
+            <span class="collapsible-module-sub">EPA Water Quality Portal &middot; FAO Fishing Zones &middot; HDX Datasets</span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_water_quality.html' %}
+        </div>
+    </details>
+    </div><!-- /.section-block water-quality -->
+
+    <!-- ============================================================
          AI FISHING MAP  (v2 — FishAngler-style social map)
          ============================================================ -->
     <div class="section-block" data-section-id="fishing-map" data-section-label="AI Fishing Map">
@@ -2140,6 +2178,7 @@ if ('serviceWorker' in navigator) {
 <script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
 <script>window.IS_LOGGED_IN = {{ 'true' if g.user else 'false' }};</script>
 <script src="{{ url_for('static', filename='js/fishing_map.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/geo_layers.js') }}" defer></script>
 
 <script>
 /* ── Auto-detected location toast ────────────────────────────────────────── */
