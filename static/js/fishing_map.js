@@ -320,6 +320,9 @@
         // Update the zoom hint immediately so it reflects the starting zoom level
         // (hidden at zoom ≥ 8, i.e. when server coords are used)
         updateZoomHint();
+
+        // Initialise the map legend control (shown when colour-coded layers are active)
+        _initLegend();
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
@@ -5060,6 +5063,161 @@
         } catch (e) { /* storage unavailable */ }
     }
 
+    // ─── Map legend (auto-shows for color-coded layers) ───────────────────────
+    var legendControl   = null;
+    var legendCollapsed = false;
+
+    var _LEGEND_SPECS = {
+        drought: {
+            label: 'Drought (NDMC)',
+            items: [
+                { color: '#FFFF00', text: 'D0 Abnormally Dry' },
+                { color: '#FCD37F', text: 'D1 Moderate' },
+                { color: '#FFAA00', text: 'D2 Severe' },
+                { color: '#E60000', text: 'D3 Extreme' },
+                { color: '#730000', text: 'D4 Exceptional', dark: true },
+            ]
+        },
+        aqi: {
+            label: 'Air Quality (PM2.5)',
+            items: [
+                { color: '#22c55e', text: 'Good',                    dark: true },
+                { color: '#eab308', text: 'Moderate' },
+                { color: '#f97316', text: 'Unhealthy · Sensitive',   dark: true },
+                { color: '#ef4444', text: 'Unhealthy',               dark: true },
+                { color: '#a855f7', text: 'Very Unhealthy',          dark: true },
+                { color: '#7c3aed', text: 'Hazardous',               dark: true },
+            ]
+        },
+        precip: {
+            label: 'Precipitation (NDFD)',
+            items: [
+                { color: '#c6e3f5', text: 'Light' },
+                { color: '#74b9e8', text: 'Moderate' },
+                { color: '#2563eb', text: 'Heavy',   dark: true },
+                { color: '#1e3a8a', text: 'Extreme', dark: true },
+            ]
+        },
+        'ndfd-temp': {
+            label: 'Temp Forecast (°F High)',
+            items: [
+                { color: '#3b82f6', text: '<32°F (freeze)', dark: true },
+                { color: '#06b6d4', text: '32–50°F',        dark: true },
+                { color: '#34d399', text: '50–65°F',        dark: true },
+                { color: '#fbbf24', text: '65–80°F' },
+                { color: '#f97316', text: '80–95°F',        dark: true },
+                { color: '#ef4444', text: '>95°F',          dark: true },
+            ]
+        },
+        hfradar: {
+            label: 'Currents (cm/s)',
+            items: [
+                { color: '#60a5fa', text: '<10',   dark: true },
+                { color: '#22c55e', text: '10–25', dark: true },
+                { color: '#eab308', text: '25–50' },
+                { color: '#f97316', text: '50–100',dark: true },
+                { color: '#ef4444', text: '>100',  dark: true },
+            ]
+        },
+        tropical: {
+            label: 'Tropical Dev.',
+            items: [
+                { color: '#eab308', text: 'Low' },
+                { color: '#f97316', text: 'Medium', dark: true },
+                { color: '#ef4444', text: 'High',   dark: true },
+            ]
+        },
+    };
+
+    // Map from layer key → the boolean var that tracks "is this layer on?"
+    function _legendLayerOn(key) {
+        switch (key) {
+            case 'drought':   return droughtOn;
+            case 'aqi':       return aqiOn;
+            case 'precip':    return precipOn;
+            case 'ndfd-temp': return ndfdTempOn;
+            case 'hfradar':   return hfradarOn;
+            case 'tropical':  return tropicalOn;
+            default:          return false;
+        }
+    }
+
+    function _initLegend() {
+        if (!map || legendControl) return;
+        var LegendCtrl = L.Control.extend({
+            options: { position: 'bottomleft' },
+            onAdd: function () {
+                var div = L.DomUtil.create('div', 'fmap-legend');
+                div.hidden = true;
+                L.DomEvent.disableClickPropagation(div);
+                return div;
+            }
+        });
+        legendControl = new LegendCtrl();
+        legendControl.addTo(map);
+    }
+
+    function _updateLegend() {
+        if (!legendControl) return;
+        var container = legendControl.getContainer();
+        if (!container) return;
+
+        var activeSpecs = Object.keys(_LEGEND_SPECS).filter(_legendLayerOn);
+        if (!activeSpecs.length || legendCollapsed) {
+            if (!activeSpecs.length) {
+                container.hidden = true;
+                legendCollapsed  = false;
+            } else if (legendCollapsed) {
+                container.hidden = false;
+                container.innerHTML =
+                    '<div class="fmap-legend-collapsed">' +
+                    '<button class="fmap-legend-expand-btn" title="Show layer legend">' +
+                    '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">' +
+                    '<polyline points="6 9 12 15 18 9"/></svg> Legend</button></div>';
+                container.querySelector('.fmap-legend-expand-btn').addEventListener('click', function () {
+                    legendCollapsed = false;
+                    _updateLegend();
+                });
+            }
+            return;
+        }
+
+        container.hidden = false;
+        var html = '<div class="fmap-legend-inner">' +
+            '<div class="fmap-legend-header">' +
+            '<span class="fmap-legend-title-main">Legend</span>' +
+            '<button class="fmap-legend-collapse-btn" title="Collapse legend">' +
+            '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">' +
+            '<polyline points="18 15 12 9 6 15"/></svg></button></div>';
+
+        activeSpecs.forEach(function (key) {
+            var spec = _LEGEND_SPECS[key];
+            html += '<div class="fmap-legend-section">' +
+                    '<div class="fmap-legend-section-title">' + spec.label + '</div>' +
+                    '<div class="fmap-legend-items">';
+            spec.items.forEach(function (item) {
+                var txtColor = item.dark ? '#fff' : '#111';
+                html += '<span class="fmap-legend-item">' +
+                        '<span class="fmap-legend-swatch" style="background:' + item.color +
+                        ';color:' + txtColor + '"></span>' +
+                        '<span class="fmap-legend-label">' + item.text + '</span></span>';
+            });
+            html += '</div></div>';
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        // Wire collapse button
+        var colBtn = container.querySelector('.fmap-legend-collapse-btn');
+        if (colBtn) {
+            colBtn.addEventListener('click', function () {
+                legendCollapsed = true;
+                _updateLegend();
+            });
+        }
+    }
+
     function _updateLayersBadge() {
         var badge    = document.getElementById('fmap-layers-active-badge');
         var clearBtn = document.getElementById('fmap-layers-clear-btn');
@@ -5268,6 +5426,48 @@
             });
         });
 
+        // ── Quick preset pills — toggle all layers in a section ──────────────
+        document.querySelectorAll('.fmap-preset-pill').forEach(function (pill) {
+            pill.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var sec = pill.getAttribute('data-preset');
+                var ids = SECTION_LAYER_MAP[sec];
+                if (!ids || !ids.length) return;
+
+                // Determine: are all layers in this section already on?
+                var allOn = ids.every(function (id) {
+                    var b = document.getElementById(id);
+                    return b && b.getAttribute('aria-pressed') === 'true';
+                });
+
+                // If all on → turn all off. Otherwise → turn all on.
+                ids.forEach(function (id, idx) {
+                    setTimeout(function () {
+                        var b = document.getElementById(id);
+                        if (!b) return;
+                        if (allOn && b.getAttribute('aria-pressed') === 'true') b.click();
+                        if (!allOn && b.getAttribute('aria-pressed') !== 'true') b.click();
+                    }, idx * 80);
+                });
+
+                // Mark pill as active if turning on, inactive if turning off
+                pill.classList.toggle('fmap-preset-pill--active', !allOn);
+            });
+        });
+
+        // Keep preset pill active state in sync with layer state
+        function _syncPresetPills() {
+            document.querySelectorAll('.fmap-preset-pill').forEach(function (pill) {
+                var sec = pill.getAttribute('data-preset');
+                var ids = SECTION_LAYER_MAP[sec] || [];
+                var anyOn = ids.some(function (id) {
+                    var b = document.getElementById(id);
+                    return b && b.getAttribute('aria-pressed') === 'true';
+                });
+                pill.classList.toggle('fmap-preset-pill--active', anyOn);
+            });
+        }
+
         // ── Per-row: loading shimmer, badge refresh, state persistence ───────
         LAYER_BTN_IDS.forEach(function (id) {
             var btn = document.getElementById(id);
@@ -5277,6 +5477,8 @@
                 setTimeout(function () {
                     _updateLayersBadge();
                     _saveLayerState();
+                    _updateLegend();
+                    _syncPresetPills();
                 }, 0);
 
                 // Loading shimmer on toggle track while data fetches (turning ON only)
@@ -5311,6 +5513,8 @@
                     if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
                 }, 700 + i * 350);
             });
+            // Update legend after all staggered restores have fired
+            if (valid.length) setTimeout(_updateLegend, 700 + valid.length * 350 + 50);
         } catch (e) { /* malformed storage */ }
     }
 

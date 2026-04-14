@@ -13425,3 +13425,165 @@ body:not([data-theme="dark"]) .fmap-layers-pin-btn[aria-pressed="true"] {
   color: var(--ocean, #0077B6);
   background: rgba(0,119,182,0.10);
 }
+
+/* ── Map legend control ───────────────────────────────────────────────────── */
+.fmap-legend {
+  pointer-events: auto;
+  background: rgba(12, 22, 36, 0.90);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  max-width: 190px;
+  font-size: 0.72rem;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+.fmap-legend-inner {
+  padding: 6px 8px 8px;
+}
+.fmap-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.fmap-legend-title-main {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.5);
+}
+.fmap-legend-collapse-btn,
+.fmap-legend-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.4);
+  padding: 1px 2px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+.fmap-legend-collapse-btn:hover,
+.fmap-legend-expand-btn:hover { color: rgba(255,255,255,0.85); }
+.fmap-legend-collapsed {
+  padding: 5px 8px;
+}
+.fmap-legend-section {
+  margin-bottom: 6px;
+}
+.fmap-legend-section:last-child { margin-bottom: 0; }
+.fmap-legend-section-title {
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 3px;
+  font-size: 0.68rem;
+}
+.fmap-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fmap-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.2;
+}
+.fmap-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.fmap-legend-label {
+  color: rgba(255,255,255,0.78);
+  white-space: nowrap;
+}
+
+/* Light theme legend */
+[data-theme="light"] .fmap-legend,
+body:not([data-theme="dark"]) .fmap-legend {
+  background: rgba(255,255,255,0.93);
+  border-color: rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+}
+[data-theme="light"] .fmap-legend-title-main,
+body:not([data-theme="dark"]) .fmap-legend-title-main { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .fmap-legend-section-title,
+body:not([data-theme="dark"]) .fmap-legend-section-title { color: rgba(0,0,0,0.6); }
+[data-theme="light"] .fmap-legend-label,
+body:not([data-theme="dark"]) .fmap-legend-label { color: rgba(0,0,0,0.75); }
+[data-theme="light"] .fmap-legend-collapse-btn,
+body:not([data-theme="dark"]) .fmap-legend-collapse-btn,
+[data-theme="light"] .fmap-legend-expand-btn,
+body:not([data-theme="dark"]) .fmap-legend-expand-btn { color: rgba(0,0,0,0.35); }
+[data-theme="light"] .fmap-legend-collapse-btn:hover,
+body:not([data-theme="dark"]) .fmap-legend-collapse-btn:hover,
+[data-theme="light"] .fmap-legend-expand-btn:hover,
+body:not([data-theme="dark"]) .fmap-legend-expand-btn:hover { color: rgba(0,0,0,0.75); }
+[data-theme="light"] .fmap-legend-swatch,
+body:not([data-theme="dark"]) .fmap-legend-swatch { border-color: rgba(0,0,0,0.15); }
+
+/* ── Layers panel: quick preset pills ────────────────────────────────────── */
+.fmap-layers-presets {
+  display: flex;
+  gap: 5px;
+  padding: 0 10px 8px;
+  flex-wrap: wrap;
+}
+.fmap-preset-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.60);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.fmap-preset-pill:hover {
+  background: rgba(255,255,255,0.11);
+  color: rgba(255,255,255,0.90);
+  border-color: rgba(255,255,255,0.25);
+}
+.fmap-preset-pill--active {
+  background: rgba(56,192,255,0.15);
+  border-color: rgba(56,192,255,0.40);
+  color: #38C0FF;
+}
+.fmap-preset-pill--active:hover {
+  background: rgba(56,192,255,0.22);
+  border-color: rgba(56,192,255,0.55);
+}
+[data-theme="light"] .fmap-preset-pill,
+body:not([data-theme="dark"]) .fmap-preset-pill {
+  border-color: rgba(0,0,0,0.14);
+  background: rgba(0,0,0,0.04);
+  color: rgba(0,0,0,0.52);
+}
+[data-theme="light"] .fmap-preset-pill:hover,
+body:not([data-theme="dark"]) .fmap-preset-pill:hover {
+  background: rgba(0,0,0,0.08);
+  color: rgba(0,0,0,0.80);
+}
+[data-theme="light"] .fmap-preset-pill--active,
+body:not([data-theme="dark"]) .fmap-preset-pill--active {
+  background: rgba(0,119,182,0.10);
+  border-color: rgba(0,119,182,0.35);
+  color: var(--ocean, #0077B6);
+}
