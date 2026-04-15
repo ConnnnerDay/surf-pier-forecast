@@ -2076,7 +2076,9 @@
     }
 
     // ─── localStorage persistence ─────────────────────────────────────────────
-    var LS_KEY = 'fmap_filters_v4';  // bumped for spotTypes field
+    // Key is versioned — bump when adding incompatible fields so old saved data
+    // is silently ignored rather than causing unexpected UI state for users.
+    var LS_KEY = 'fmap_filters_v4';  // spotTypes field added in v4
 
     function saveFilters() {
         try {
@@ -2089,7 +2091,11 @@
                 tide:       activeTide,
                 minTemp:    activeMinTemp,
                 maxTemp:    activeMaxTemp,
-                spotTypes:  activeSpotTypes.slice()
+                spotTypes:  activeSpotTypes.slice(),
+                // Persist the active tab so the user returns to where they left off.
+                // New users get no localStorage entry at all, so they always start on
+                // the default 'spots' tab with all filters empty.
+                tab:        activeTab
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -2099,6 +2105,7 @@
     function loadFilters() {
         try {
             var raw = localStorage.getItem(LS_KEY);
+            // No saved state → new user → leave all filters at their empty defaults.
             if (!raw) return;
             var f = JSON.parse(raw);
             if (f.species) {
@@ -2142,7 +2149,21 @@
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
             }
+            // Restore last active tab (spots/ai/community).  Only switch away from
+            // the default 'spots' tab when a different tab was explicitly saved.
+            if (f.tab && f.tab !== 'spots') {
+                switchTab(f.tab);
+            }
             updateAdvBadge();
+            // If any advanced filter was restored, expand the panel so the user
+            // can see their active settings without needing to open it manually.
+            var hasAdv = activeSeason || activeTime || activeTide || activeMinTemp || activeMaxTemp;
+            if (hasAdv) {
+                var advPanel  = document.getElementById('fmap-adv-filters');
+                var advToggle = document.getElementById('fmap-adv-toggle');
+                if (advPanel)  advPanel.hidden = false;
+                if (advToggle) advToggle.setAttribute('aria-expanded', 'true');
+            }
         } catch (e) {
             console.warn('[fishing-map] loadFilters failed:', e);
         }
@@ -2803,6 +2824,8 @@
         } else if (tab === 'spots' && currentData.length) {
             renderHotspots(currentData);
         }
+        // Persist the chosen tab so the user returns to the same view on reload.
+        saveFilters();
     }
 
     function wireTabs() {
