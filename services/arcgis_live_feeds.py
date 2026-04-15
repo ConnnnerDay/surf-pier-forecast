@@ -33,8 +33,17 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import requests
+from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger(__name__)
+
+# Shared session with connection pooling so that TCP+TLS handshakes are reused
+# across the many layer fetches that hit the same services9.arcgis.com host.
+# All 27+ requests.get() calls in this module use _HTTP instead of bare
+# requests.get(), saving ~50-200 ms of handshake overhead per call.
+_HTTP: requests.Session = requests.Session()
+_HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16, max_retries=0))
+_HTTP.mount("http://",  HTTPAdapter(pool_connections=2, pool_maxsize=4,  max_retries=0))
 
 _BASE = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services"
 
@@ -216,7 +225,7 @@ def fetch_marine_warnings(
     }
 
     try:
-        resp = requests.get(_WARNINGS_URL, params=params, timeout=(3.05, 15))
+        resp = _HTTP.get(_WARNINGS_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         data = resp.json()
     except Exception as exc:
@@ -281,7 +290,7 @@ def fetch_active_storms() -> List[Dict[str, Any]]:
     # ── Step 1: Forecast positions ─────────────────────────────────────────────
     try:
         p = {**common, "outFields": "STORMNAME,STORMTYPE,INTENSITY,MSLP,ADVISNUM"}
-        resp = requests.get(_STORM_POS_URL, params=p, timeout=(3.05, 15))
+        resp = _HTTP.get(_STORM_POS_URL, params=p, timeout=(3.05, 15))
         resp.raise_for_status()
         for feat in resp.json().get("features", []):
             attrs = feat.get("attributes", {})
@@ -313,7 +322,7 @@ def fetch_active_storms() -> List[Dict[str, Any]]:
     # ── Step 2: Forecast track ─────────────────────────────────────────────────
     try:
         p = {**common, "outFields": "STORMNAME"}
-        resp = requests.get(_STORM_TRACK_URL, params=p, timeout=(3.05, 15))
+        resp = _HTTP.get(_STORM_TRACK_URL, params=p, timeout=(3.05, 15))
         resp.raise_for_status()
         for feat in resp.json().get("features", []):
             attrs = feat.get("attributes", {})
@@ -328,7 +337,7 @@ def fetch_active_storms() -> List[Dict[str, Any]]:
     # ── Step 3: Forecast uncertainty cone ─────────────────────────────────────
     try:
         p = {**common, "outFields": "STORMNAME"}
-        resp = requests.get(_STORM_CONE_URL, params=p, timeout=(3.05, 15))
+        resp = _HTTP.get(_STORM_CONE_URL, params=p, timeout=(3.05, 15))
         resp.raise_for_status()
         for feat in resp.json().get("features", []):
             attrs = feat.get("attributes", {})
@@ -439,7 +448,7 @@ def fetch_recent_storm_tracks(
     }
 
     try:
-        resp = requests.get(_RECENT_TRACK_URL, params=params, timeout=(3.05, 20))
+        resp = _HTTP.get(_RECENT_TRACK_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         data = resp.json()
     except Exception as exc:
@@ -549,7 +558,7 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
             "f":              "json",
         }
         try:
-            resp = requests.get(_AQI_URL, params=params, timeout=(3.05, 12))
+            resp = _HTTP.get(_AQI_URL, params=params, timeout=(3.05, 12))
             resp.raise_for_status()
             feats = resp.json().get("features", [])
         except Exception as exc:
@@ -657,7 +666,7 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     }
 
     try:
-        resp = requests.get(_NDFD_WIND_URL, params=params, timeout=(3.05, 15))
+        resp = _HTTP.get(_NDFD_WIND_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -765,7 +774,7 @@ def fetch_sst_stations(
     }
 
     try:
-        resp = requests.get(_SST_URL, params=params, timeout=(3.05, 12))
+        resp = _HTTP.get(_SST_URL, params=params, timeout=(3.05, 12))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -872,7 +881,7 @@ def fetch_wildfire_incidents(
     }
 
     try:
-        resp = requests.get(_FIRE_URL, params=params, timeout=(3.05, 15))
+        resp = _HTTP.get(_FIRE_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -975,7 +984,7 @@ def fetch_smoke_forecast(
     }
 
     try:
-        resp = requests.get(_SMOKE_URL, params=params, timeout=(3.05, 18))
+        resp = _HTTP.get(_SMOKE_URL, params=params, timeout=(3.05, 18))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1074,7 +1083,7 @@ def fetch_precip_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     }
 
     try:
-        resp = requests.get(_PRECIP_URL, params=params, timeout=(3.05, 15))
+        resp = _HTTP.get(_PRECIP_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1139,7 +1148,7 @@ def fetch_sea_ice_extent() -> Optional[Dict[str, Any]]:
     }
 
     try:
-        resp = requests.get(_SEA_ICE_N_URL, params=params, timeout=(3.05, 20))
+        resp = _HTTP.get(_SEA_ICE_N_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1210,7 +1219,7 @@ def fetch_temp_forecast(lat: float, lng: float) -> List[Dict]:
 
     for url, field in [(_NDFD_TMIN_URL, "min_f"), (_NDFD_TMAX_URL, "max_f")]:
         try:
-            resp = requests.get(url, params=base, timeout=(3.05, 20))
+            resp = _HTTP.get(url, params=base, timeout=(3.05, 20))
             resp.raise_for_status()
             feats = resp.json().get("features", [])
         except Exception as exc:
@@ -1298,7 +1307,7 @@ def fetch_seismic_events(south: float, west: float, north: float, east: float) -
     }
 
     try:
-        resp  = requests.get(_SEISMIC_URL, params=params, timeout=(3.05, 20))
+        resp  = _HTTP.get(_SEISMIC_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1390,7 +1399,7 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
     }
 
     try:
-        resp  = requests.get(_DROUGHT_URL, params=params, timeout=(3.05, 20))
+        resp  = _HTTP.get(_DROUGHT_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         body  = resp.json()
         feats = body.get("features", [])
@@ -1486,7 +1495,7 @@ def fetch_metar_stations(south: float, west: float, north: float, east: float) -
     }
 
     try:
-        resp  = requests.get(_METAR_URL, params=params, timeout=(3.05, 20))
+        resp  = _HTTP.get(_METAR_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1562,7 +1571,7 @@ def fetch_terminator() -> Optional[Dict]:
     }
 
     try:
-        resp  = requests.get(_TERMINATOR_URL, params=params, timeout=(3.05, 15))
+        resp  = _HTTP.get(_TERMINATOR_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1641,7 +1650,7 @@ def fetch_stream_gauges(south: float, west: float, north: float, east: float) ->
     }
 
     try:
-        resp  = requests.get(_GAUGE_URL, params=params, timeout=(3.05, 20))
+        resp  = _HTTP.get(_GAUGE_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1732,7 +1741,7 @@ def fetch_storm_reports(south: float, west: float, north: float, east: float) ->
     try:
         p = dict(base, geometry=bbox,
                  outFields="UTC_DATETIME,HAIL_SIZE,LOCATION,STATE,LATITUDE,LONGITUDE,COMMENTS")
-        r = requests.get(_STORM_RPT_HAIL_URL, params=p, timeout=(3.05, 15))
+        r = _HTTP.get(_STORM_RPT_HAIL_URL, params=p, timeout=(3.05, 15))
         r.raise_for_status()
         for feat in r.json().get("features", []):
             a = feat.get("attributes", {})
@@ -1755,7 +1764,7 @@ def fetch_storm_reports(south: float, west: float, north: float, east: float) ->
     try:
         p = dict(base, geometry=bbox,
                  outFields="UTC_DATETIME,F_SCALE,LOCATION,STATE,LATITUDE,LONGITUDE,COMMENTS")
-        r = requests.get(_STORM_RPT_TORN_URL, params=p, timeout=(3.05, 15))
+        r = _HTTP.get(_STORM_RPT_TORN_URL, params=p, timeout=(3.05, 15))
         r.raise_for_status()
         for feat in r.json().get("features", []):
             a = feat.get("attributes", {})
@@ -1779,7 +1788,7 @@ def fetch_storm_reports(south: float, west: float, north: float, east: float) ->
     try:
         p = dict(base, geometry=bbox,
                  outFields="UTC_DATETIME,LOCATION,STATE,LATITUDE,LONGITUDE,COMMENTS")
-        r = requests.get(_STORM_RPT_WIND_URL, params=p, timeout=(3.05, 15))
+        r = _HTTP.get(_STORM_RPT_WIND_URL, params=p, timeout=(3.05, 15))
         r.raise_for_status()
         for feat in r.json().get("features", []):
             a = feat.get("attributes", {})
@@ -1853,7 +1862,7 @@ def fetch_aqi_map(
     }
 
     try:
-        resp  = requests.get(_AQI_URL, params=params, timeout=(3.05, 15))
+        resp  = _HTTP.get(_AQI_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -1927,7 +1936,7 @@ def fetch_drought_map(
     }
 
     try:
-        resp  = requests.get(_DROUGHT_URL, params=params, timeout=(3.05, 20))
+        resp  = _HTTP.get(_DROUGHT_URL, params=params, timeout=(3.05, 20))
         resp.raise_for_status()
         body  = resp.json()
         if body.get("error"):
@@ -2018,7 +2027,7 @@ def fetch_precipitation_map(
     }
 
     try:
-        resp  = requests.get(_PRECIP_URL, params=params, timeout=(3.05, 15))
+        resp  = _HTTP.get(_PRECIP_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         feats = resp.json().get("features", [])
     except Exception as exc:
@@ -2102,7 +2111,7 @@ def fetch_ndbc_buoys(
     }
 
     try:
-        resp  = requests.get(_NDBC_URL, params=params, timeout=(3.05, 15))
+        resp  = _HTTP.get(_NDBC_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         body  = resp.json()
         if body.get("error"):
@@ -2215,7 +2224,7 @@ def fetch_ndfd_temperature_map(
 
     for url, layer_key in [(_NDFD_TMIN_URL, "min"), (_NDFD_TMAX_URL, "max")]:
         try:
-            resp  = requests.get(url, params=params_base, timeout=(3.05, 15))
+            resp  = _HTTP.get(url, params=params_base, timeout=(3.05, 15))
             resp.raise_for_status()
             feats = resp.json().get("features", [])
         except Exception as exc:
@@ -2317,7 +2326,7 @@ def fetch_hfradar_currents(
 
     for url in (_HFRADAR_EAST_URL, _HFRADAR_GULF_URL, _HFRADAR_WEST_URL):
         try:
-            resp  = requests.get(url, params=base_params, timeout=(3.05, 12))
+            resp  = _HTTP.get(url, params=base_params, timeout=(3.05, 12))
             resp.raise_for_status()
             body  = resp.json()
             if body.get("error"):
@@ -2394,7 +2403,7 @@ def fetch_tropical_outlook() -> List[Dict[str, Any]]:
     }
 
     try:
-        resp  = requests.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=(3.05, 15))
+        resp  = _HTTP.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=(3.05, 15))
         resp.raise_for_status()
         body  = resp.json()
         if body.get("error"):
