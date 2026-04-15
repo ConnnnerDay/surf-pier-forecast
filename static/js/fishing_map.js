@@ -2466,12 +2466,9 @@
             }
             scheduleStructureFetch();
         } else {
-            // Restore dark CARTO base
-            if (map) {
-                L.tileLayer(
-                    'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
-                    { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
-                ).addTo(map);
+            // Restore the original active tile layer (satellite by default)
+            if (map && activeTileLayer) {
+                activeTileLayer.addTo(map);
             }
             clearStructureMarkers();
             setStructureHint(false);
