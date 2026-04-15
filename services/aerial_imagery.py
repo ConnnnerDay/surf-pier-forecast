@@ -262,6 +262,18 @@ def _parse_oam_result(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if not uuid:
         return None
 
+    # Compute a centre point from the bbox [west, south, east, north] so the
+    # feature-layer renderer can place a marker.  Without lat/lng the JS code
+    # filters every OAM item out and the layer appears empty.
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    if isinstance(bbox, list) and len(bbox) == 4:
+        try:
+            lat = (float(bbox[1]) + float(bbox[3])) / 2
+            lng = (float(bbox[0]) + float(bbox[2])) / 2
+        except (TypeError, ValueError):
+            pass
+
     return {
         "id": uuid,
         "title": title,
@@ -271,6 +283,8 @@ def _parse_oam_result(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "thumbnail_url": thumbnail,
         "tile_url": tile_url,
         "bbox": bbox,
+        "lat": lat,
+        "lng": lng,
         "license": license_type,
         "sensor": sensor,
         "oam_url": f"https://openaerialmap.org/image/{uuid}",

@@ -582,7 +582,7 @@
         if (!def || !def.tags.length) {
             aiPickLayer.clearLayers();
             var barText = document.getElementById('fmap-ai-bar-text');
-            if (bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
+            if (def && bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
             return;
         }
 
