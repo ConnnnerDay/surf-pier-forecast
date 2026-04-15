@@ -45,6 +45,7 @@ from storage.sqlite import init_db, get_user
 from web.auth import bp as auth_bp
 from web.api import bp as api_bp
 from web.views import bp as views_bp
+from web.geo_api import bp as geo_api_bp
 
 # Flask<3 test client expects werkzeug.__version__; Werkzeug 3 removed it.
 if not hasattr(werkzeug, "__version__"):
@@ -454,6 +455,7 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(views_bp)
+    app.register_blueprint(geo_api_bp)  # geospatial data: OSM, GIBS, NE, Esri, HDX/FAO
 
     # Pre-warm the fishing-map response cache so the first real user after a
     # server restart gets a cache hit instead of waiting for the full scoring

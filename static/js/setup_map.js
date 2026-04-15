@@ -5,30 +5,39 @@
     var DEFAULT_LNG = -77.0;
     var DEFAULT_ZOOM = 5;
 
-    var TILE_PROVIDERS = [
-        {
+    var BASE_LAYERS = {
+        'Street': {
             url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
             options: {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 18
             }
         },
-        {
+        'Satellite': {
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            options: {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN',
+                maxZoom: 18
+            }
+        },
+        'Topo': {
             url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
             options: {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                 subdomains: 'abcd',
                 maxZoom: 20
             }
-        },
-        {
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-            options: {
-                attribution: 'Tiles &copy; Esri',
-                maxZoom: 19
-            }
         }
-    ];
+    };
+
+    var NE_COASTLINES_URL = '/api/v1/geo/coastlines?res=110m';
+
+    var NE_STYLE = {
+        color: '#1a7fbf',
+        weight: 1.2,
+        opacity: 0.7,
+        fillOpacity: 0
+    };
 
     function parseLocations(mapEl) {
         var raw = mapEl.getAttribute('data-supported-locations') || '[]';
@@ -110,23 +119,6 @@
         if (confirmEl) confirmEl.hidden = true;
     }
 
-    function addBestAvailableTileLayer(map) {
-        var idx = 0;
-        function tryProvider() {
-            if (idx >= TILE_PROVIDERS.length) return;
-            var provider = TILE_PROVIDERS[idx++];
-            var layer = L.tileLayer(provider.url, provider.options);
-            var onError = function () {
-                map.removeLayer(layer);
-                tryProvider();
-            };
-            layer.once('tileerror', onError);
-            layer.once('load', function () { layer.off('tileerror', onError); });
-            layer.addTo(map);
-        }
-        tryProvider();
-    }
-
     /* Directly POST to /setup/select/{id} — same as clicking a search result */
     function submitLocation(locationId, csrfToken) {
         var form = document.createElement('form');
@@ -143,7 +135,39 @@
 
     function buildMap(mapEl, locations, csrfToken, confirmEl) {
         var map = L.map(mapEl).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
-        addBestAvailableTileLayer(map);
+
+        // Build named base layer instances
+        var leafletBaseLayers = {};
+        var firstLayer = null;
+        Object.keys(BASE_LAYERS).forEach(function (name) {
+            var cfg = BASE_LAYERS[name];
+            var layer = L.tileLayer(cfg.url, cfg.options);
+            leafletBaseLayers[name] = layer;
+            if (!firstLayer) {
+                firstLayer = layer;
+                layer.addTo(map);
+            }
+        });
+
+        // Fetch Natural Earth coastlines overlay from local API, then wire layer control
+        fetch(NE_COASTLINES_URL)
+            .then(function (res) { return res.ok ? res.json() : null; })
+            .then(function (geojson) {
+                var overlays = {};
+                if (geojson && geojson.features) {
+                    overlays['Coastlines'] = L.geoJSON(geojson, { style: NE_STYLE });
+                }
+                L.control.layers(leafletBaseLayers, overlays, {
+                    position: 'topright',
+                    collapsed: false
+                }).addTo(map);
+            })
+            .catch(function () {
+                L.control.layers(leafletBaseLayers, {}, {
+                    position: 'topright',
+                    collapsed: false
+                }).addTo(map);
+            });
 
         var pendingLoc = null;
 

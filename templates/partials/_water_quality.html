@@ -1,0 +1,121 @@
+{#
+  _water_quality.html — Water Quality & Environmental Data card
+  =============================================================
+  Renders a data card showing EPA Water Quality Portal metrics and FAO/HDX
+  enrichment (fishing zone, species info, dataset links).
+
+  Data is fetched client-side via:
+    GET /api/v1/geo/environmental?lat=<lat>&lng=<lng>&state=<state>
+    GET /api/v1/geo/hdx-fao?lat=<lat>&lng=<lng>&species=<comma-list>
+
+  The card is populated by geo_layers.js after the page loads.
+  A skeleton loader is shown while data is in flight; an offline notice
+  is shown if all fetches fail.
+
+  Context variables (optional):
+    forecast.lat, forecast.lng, forecast.state
+#}
+
+<section class="wq-section" id="wq-section"
+         aria-label="Water quality &amp; environmental data"
+         data-lat="{{ forecast.lat if forecast and forecast.lat else '' }}"
+         data-lng="{{ forecast.lng if forecast and forecast.lng else '' }}"
+         data-state="{{ forecast.state if forecast and forecast.state else '' }}"
+         data-species="{{ (forecast.species[:3] | map(attribute='name') | join(',')) if forecast and forecast.species else '' }}">
+
+  <div class="wq-header">
+    <h2 class="wq-title">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/>
+        <path d="M12 8v4l3 3"/>
+        <path d="M20 2v6h-6"/>
+      </svg>
+      Water Quality &amp; Environmental Data
+    </h2>
+    <p class="wq-subtitle">
+      Source: <a href="https://www.waterqualitydata.us/" rel="noopener noreferrer" target="_blank">EPA Water Quality Portal</a>
+      &middot; <a href="https://www.fao.org/fishery/" rel="noopener noreferrer" target="_blank">FAO Fisheries</a>
+    </p>
+  </div>
+
+  {# ── Loading skeleton ───────────────────────────────────────────────────── #}
+  <div class="wq-loading" id="wq-loading" aria-live="polite">
+    <div class="wq-skeleton"></div>
+    <div class="wq-skeleton wq-skeleton--sm"></div>
+    <div class="wq-skeleton wq-skeleton--sm"></div>
+  </div>
+
+  {# ── Water quality metrics grid (filled by JS) ──────────────────────────── #}
+  <div class="wq-metrics-grid" id="wq-metrics-grid" hidden aria-label="Water quality measurements">
+    {# Populated by geo_layers.js — each metric becomes a .wq-metric card #}
+  </div>
+
+  {# ── Enterococcus alert (beach advisory indicator) ──────────────────────── #}
+  <div class="wq-advisory" id="wq-advisory" hidden role="alert">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span id="wq-advisory-text"></span>
+  </div>
+
+  {# ── FAO fishing zone ───────────────────────────────────────────────────── #}
+  <div class="wq-fao-zone" id="wq-fao-zone" hidden>
+    <div class="wq-fao-header">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/>
+        <path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/>
+        <path d="M6.5 12h11"/>
+        <path d="M17.5 12c1.5 1.5 3 2.5 4.5 2.5-.5-1.5-.5-3.5 0-5-1.5 0-3 1-4.5 2.5z"/>
+      </svg>
+      FAO Fishing Zone
+    </div>
+    <p class="wq-fao-name" id="wq-fao-name"></p>
+    <a class="wq-fao-link" id="wq-fao-link" href="#" target="_blank" rel="noopener noreferrer">
+      FAO fisheries data &rarr;
+    </a>
+  </div>
+
+  {# ── Species scientific names (FAO ASFIS enrichment) ──────────────────── #}
+  <div class="wq-species-enrich" id="wq-species-enrich" hidden>
+    <div class="wq-species-enrich-header">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      Species Info (FAO ASFIS)
+    </div>
+    <ul class="wq-species-list" id="wq-species-list"></ul>
+  </div>
+
+  {# ── HDX dataset links ──────────────────────────────────────────────────── #}
+  <details class="wq-hdx-details" id="wq-hdx-details" hidden>
+    <summary class="wq-hdx-summary">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Open Fisheries Datasets (HDX)
+    </summary>
+    <ul class="wq-hdx-list" id="wq-hdx-list"></ul>
+    <p class="wq-hdx-credit">
+      Data from <a href="https://data.humdata.org/" rel="noopener noreferrer" target="_blank">Humanitarian Data Exchange</a>
+      &mdash; open licenses
+    </p>
+  </details>
+
+  {# ── Offline / unavailable notice ───────────────────────────────────────── #}
+  <div class="wq-unavailable" id="wq-unavailable" hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <line x1="1" y1="1" x2="23" y2="23"/>
+      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+      <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+      <line x1="12" y1="20" x2="12.01" y2="20"/>
+    </svg>
+    Water quality data unavailable &mdash; check your connection or try again later.
+  </div>
+
+</section>

@@ -1011,14 +1011,50 @@ def build_spot_tips(
     tide_state: str = "",
     fishing_types: Optional[List[str]] = None,
     experience: str = "",
+    water_quality: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
     Each tip has an 'icon' (emoji-free label), 'title', and 'detail'.
     When *fishing_types* is supplied, type-specific tips are prepended so
     they occupy the most prominent slots.
+
+    If *water_quality* is supplied (from EPA WQP via services/datagov.py),
+    dissolved-oxygen and enterococcus warnings are injected when thresholds
+    are breached.
     """
     tips: List[Dict[str, str]] = []
+
+    # Water quality warnings — injected first so they appear prominently.
+    if water_quality and water_quality.get("available"):
+        do_val = water_quality.get("do_mg_l")
+        entero_flag = water_quality.get("enterococcus_flag", "")
+        if do_val is not None and do_val < 5.0:
+            tips.append(
+                {
+                    "icon": "warning",
+                    "title": "Low Dissolved Oxygen Warning",
+                    "detail": (
+                        f"Measured DO is {do_val:.1f} mg/L — below the 5 mg/L threshold "
+                        "where many species experience stress. Fish may be lethargic or "
+                        "schooled in oxygenated shallows near inflows and wave-broken water. "
+                        "Expect reduced feeding activity until conditions improve."
+                    ),
+                }
+            )
+        if entero_flag == "advisory":
+            tips.append(
+                {
+                    "icon": "warning",
+                    "title": "Beach Water Quality Advisory",
+                    "detail": (
+                        "Enterococcus bacteria levels exceed the EPA recreational threshold "
+                        "(>104 CFU/100 mL) at nearby monitoring stations. Check local health "
+                        "department advisories before wading or swimming. Fish consumption "
+                        "advisories may also be in effect — verify with your state agency."
+                    ),
+                }
+            )
     ft = set(fishing_types or [])
 
     # Wind-based tips
@@ -2442,6 +2478,44 @@ def generate_forecast(
     else:
         fallbacks_triggered.append("coops_environment_unavailable")
 
+    # Expose coordinates and state so templates and API consumers can use them
+    # without digging into the location dict.
+    forecast["lat"] = loc_lat
+    forecast["lng"] = loc_lng
+    forecast["state"] = loc_state
+
+    # Water quality and FAO enrichment (EPA WQP + FAO GeoNetwork / HDX).
+    # Both fetches run in a bounded thread pool so upstream latency never
+    # blocks the core forecast pipeline; each call is capped at 8 seconds.
+    try:
+        import concurrent.futures as _cf
+        from services.datagov import get_water_quality_summary as _get_wq
+        from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
+
+        _species_names = [sp["name"] for sp in species[:3]]
+        with _cf.ThreadPoolExecutor(max_workers=2) as _geo_pool:
+            _wq_fut = _geo_pool.submit(_get_wq, loc_lat, loc_lng)
+            _fao_fut = _geo_pool.submit(
+                _get_fao, loc_lat, loc_lng, _species_names
+            )
+            try:
+                _wq = _wq_fut.result(timeout=8)
+            except Exception:
+                _wq = {"available": False}
+            try:
+                _fao = _fao_fut.result(timeout=8)
+            except Exception:
+                _fao = {}
+
+        if _wq.get("available"):
+            forecast["water_quality"] = _wq
+            sources_used.append("EPA Water Quality Portal")
+        if _fao.get("fao_zone"):
+            forecast["fao_enrichment"] = _fao
+            sources_used.append("FAO GeoNetwork")
+    except Exception:
+        logger.debug("Geospatial enrichment skipped (services not available)", exc_info=True)
+
     # Propagate humidity into conditions so the template always has a single
     # reliable place to look, regardless of which data source provided it.
     _humidity = (forecast.get("environment") or {}).get("humidity_pct") or (
@@ -2598,6 +2672,7 @@ def generate_forecast(
         month=month,
         coast=coast,
         tide_state=forecast.get("tide_state", ""),
+        water_quality=forecast.get("water_quality"),
     )
 
     # Conditions explainer
