@@ -1483,6 +1483,7 @@ def fishing_map_data() -> Any:
 
 _STRUCTURE_CACHE: dict = {}    # {cache_key: {"ts": float, "data": list}}
 _STRUCTURE_CACHE_TTL = 3600    # 1 hour — wrecks don't move
+_STRUCTURE_CACHE_MAX = 128     # ~0.02° keys; cap so long-running servers don't leak
 
 _NOAA_ENC_BASE = (
     "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
@@ -1499,6 +1500,10 @@ def _fetch_noaa_structures(
     cached = _STRUCTURE_CACHE.get(cache_key)
     if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
         return cached["data"]
+
+    if len(_STRUCTURE_CACHE) >= _STRUCTURE_CACHE_MAX:
+        oldest = min(_STRUCTURE_CACHE, key=lambda k: _STRUCTURE_CACHE[k]["ts"])
+        _STRUCTURE_CACHE.pop(oldest, None)
 
     geometry_json = _json_mod.dumps({
         "xmin": sw_lng, "ymin": sw_lat,

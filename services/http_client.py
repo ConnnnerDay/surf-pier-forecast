@@ -7,11 +7,20 @@ import time
 from typing import Dict, Optional, Tuple
 
 import requests
+from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT: Tuple[float, float] = (3.05, 10.0)
 TRANSIENT_STATUS_CODES = {429, 500, 502, 503, 504}
+
+# Shared session with a connection pool so TCP+TLS handshakes are reused
+# across the 20+ external API calls made per forecast pipeline run.
+# max_retries=0: we handle retries ourselves in get() below.
+_session = requests.Session()
+_adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
+_session.mount("https://", _adapter)
+_session.mount("http://", _adapter)
 
 
 def get(
@@ -30,7 +39,7 @@ def get(
     for attempt in range(1, retries + 2):
         start = time.perf_counter()
         try:
-            response = requests.get(url, headers=headers, timeout=timeout)
+            response = _session.get(url, headers=headers, timeout=timeout)
             latency_ms = round((time.perf_counter() - start) * 1000, 1)
             status = response.status_code
 

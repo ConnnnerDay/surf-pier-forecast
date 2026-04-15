@@ -132,6 +132,16 @@
 
     function loadScript(url) {
         return new Promise(function (resolve, reject) {
+            // If an identical <script> tag is already in the DOM, attach to it
+            // instead of adding a duplicate — prevents double-loading Leaflet when
+            // both geo_layers.js and fishing_map.js race to load the same CDN URL.
+            var ex = document.querySelector('script[src="' + url + '"]');
+            if (ex) {
+                if (window.L) { resolve(); return; }
+                ex.addEventListener('load',  resolve, { once: true });
+                ex.addEventListener('error', reject,  { once: true });
+                return;
+            }
             var s = document.createElement('script');
             s.src = url;
             s.onload = resolve;
@@ -191,6 +201,7 @@
             wireBaseControls();
             wireOverlayControls();
             wireFeatureControls();
+            wireFeatureViewport();
 
             // Load Natural Earth coastlines (checked by default)
             var neCheck = document.getElementById('geo-overlay-coastlines');
@@ -289,15 +300,9 @@
             return;
         }
 
-        // Get visible bounds to request a clipped subset
-        var bounds = map.getBounds();
-        var url = NE_COASTLINES_ENDPOINT +
-            '&south=' + bounds.getSouth().toFixed(2) +
-            '&west='  + bounds.getWest().toFixed(2) +
-            '&north=' + bounds.getNorth().toFixed(2) +
-            '&east='  + bounds.getEast().toFixed(2);
-
-        fetch(url)
+        // Fetch the full global 110m dataset (no bbox) — small enough (~300 KB)
+        // that clipping by viewport would only hide coastlines after panning.
+        fetch(NE_COASTLINES_ENDPOINT)
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (geojson) {
                 if (!geojson || !mapReady || !map) return;
@@ -369,6 +374,26 @@
     function unloadFeatureLayer(layerId) {
         var layer = featureLayers[layerId];
         if (layer && map) map.removeLayer(layer);
+        featureLayers[layerId] = null;
+    }
+
+    var _featViewportTimer = null;
+
+    function wireFeatureViewport() {
+        if (!map) return;
+        map.on('moveend zoomend', function () {
+            clearTimeout(_featViewportTimer);
+            _featViewportTimer = setTimeout(function () {
+                Object.keys(featureLayers).forEach(function (layerId) {
+                    var layer = featureLayers[layerId];
+                    if (layer && map.hasLayer(layer)) {
+                        map.removeLayer(layer);
+                        featureLayers[layerId] = null;
+                        loadFeatureLayer(layerId);
+                    }
+                });
+            }, 500);
+        });
     }
 
     function _featEndpoint(layerId, bboxParams) {

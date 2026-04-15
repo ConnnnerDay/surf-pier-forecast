@@ -93,6 +93,8 @@
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
+    var _aiCacheKeys     = [];       // insertion-ordered keys for LRU eviction
+    var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
 
@@ -477,7 +479,7 @@
         if (/troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|marlin|sailfish|wahoo|yellowfin|blackfin\s*tuna|mahi/.test(text)) {
             return 'pelagic';
         }
-        if (/sand\s*(crab|flea|flee)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
+        if (/sand\s*(crab|flea)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
             return 'surf';
         }
         if (/mangrove/.test(text)) {
@@ -526,7 +528,7 @@
         return 'general';
     }
 
-    function makeAIPickIcon(osmType, habitatType) {
+    function makeAIPickIcon(habitatType) {
         var def   = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
         var html  = '<span class="fmap-ai-dot" style="--ai-c:' + def.color + '"></span>';
         return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [14, 14], iconAnchor: [7, 7] });
@@ -552,7 +554,7 @@
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
-            var m      = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(f.osmType, habitatType) });
+            var m      = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(habitatType) });
             var name   = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">AI Pick</span>' + name +
@@ -640,7 +642,7 @@
                     osmType: osmTagsToType(el.tags || {})
                 };
             }).filter(function (f) { return f.lat && f.lng; });
-            aiCache[key] = features;
+            _aiCachePut(key, features);
             renderAIHabitatSpots(features, habitatType);
         })
         .catch(function (err) {
@@ -655,13 +657,22 @@
         aiQueryTimer = setTimeout(queryAIHabitatSpots, 600);
     }
 
+    // LRU-bounded write for aiCache — mirrors _spotCachePut().
+    function _aiCachePut(key, data) {
+        if (!Object.prototype.hasOwnProperty.call(aiCache, key)) {
+            if (_aiCacheKeys.length >= _AI_CACHE_MAX) {
+                delete aiCache[_aiCacheKeys.shift()];
+            }
+            _aiCacheKeys.push(key);
+        }
+        aiCache[key] = data;
+    }
+
     // ─── OSM Fishing Spots (Overpass API) ─────────────────────────────────────
     var OVERPASS_URLS = [
         'https://overpass-api.de/api/interpreter',
         'https://overpass.kumi.systems/api/interpreter'
     ];
-    var OVERPASS_URL = OVERPASS_URLS[0];  // kept for AI query compat
-
     var SPOT_TYPES = {
         pier:         { label: 'Pier',              color: '#a78bfa', habitat: false },
         jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false },
@@ -1748,11 +1759,13 @@
     }
 
     // Wire fly-to + popup on each rendered AI pick <li> within `container`.
+    // Uses _markerIndex for O(1) location lookup instead of scanning currentData.
     function _wireAiPickClicks(container) {
         container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
             li.addEventListener('click', function () {
-                var id  = li.getAttribute('data-loc-id');
-                var loc = currentData.find(function (l) { return l.id === id; });
+                var id    = li.getAttribute('data-loc-id');
+                var entry = _markerIndex[id];
+                var loc   = entry ? entry.data : null;
                 if (!loc) return;
                 map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
                 setTimeout(function () { showAiPickPopup(loc); }, 600);
@@ -1906,9 +1919,9 @@
 
         els.hotspotsList.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
             li.addEventListener('click', function () {
-                var id  = li.getAttribute('data-loc-id');
-                var loc = currentData.find(function (l) { return l.id === id; });
-                if (loc) selectLocation(loc);
+                var id    = li.getAttribute('data-loc-id');
+                var entry = _markerIndex[id];
+                if (entry) selectLocation(entry.data);
             });
         });
     }
@@ -2227,8 +2240,11 @@
                 // Reload community map pins with the updated species filter, so pins
                 // reflect the same species the user has selected in the main search.
                 if (communityLayerOn) scheduleCommunityLoad();
-                // Load community catches once map is centred on saved location
-                setTimeout(function () { loadCommunityFeed(); }, 400);
+                // Load community catches only when the community tab is visible,
+                // avoiding a redundant feed request on every filter change.
+                if (activeTab === 'community') {
+                    setTimeout(function () { loadCommunityFeed(); }, 400);
+                }
             })
             .catch(function (err) {
                 if (err && err.name === 'AbortError') return; // superseded by newer request
@@ -3722,7 +3738,8 @@
         fetch('/api/map/sea-ice')
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (!seaIceOn || !map || !data || !data.sea_ice) {
+                if (!seaIceOn || !map) return;  // layer turned off while loading
+                if (!data || !data.sea_ice) {
                     showToast('Sea ice data unavailable');
                     return;
                 }
@@ -4219,11 +4236,11 @@
                     marker.bindPopup(
                         '<div class="fmap-storm-rpt-popup">' +
                         '<strong>' + (ICONS[rpt.type] || '') + ' ' +
-                        rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1) +
-                        (rpt.magnitude ? ' · ' + rpt.magnitude : '') + '</strong>' +
-                        (rpt.location ? '<div>' + rpt.location + (rpt.state ? ', ' + rpt.state : '') + '</div>' : '') +
+                        esc(rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1)) +
+                        (rpt.magnitude ? ' · ' + esc(String(rpt.magnitude)) : '') + '</strong>' +
+                        (rpt.location ? '<div>' + esc(rpt.location) + (rpt.state ? ', ' + esc(rpt.state) : '') + '</div>' : '') +
                         (timeStr ? '<div class="fmap-storm-rpt-time">' + timeStr + '</div>' : '') +
-                        (rpt.comments ? '<div class="fmap-storm-rpt-comments">' + rpt.comments + '</div>' : '') +
+                        (rpt.comments ? '<div class="fmap-storm-rpt-comments">' + esc(rpt.comments) + '</div>' : '') +
                         '<div class="fmap-storm-rpt-source">NOAA via ArcGIS Live Feeds · 24h</div>' +
                         '</div>',
                         { maxWidth: 260 }
@@ -4671,6 +4688,7 @@
                 if (!droughtOn || !map || !data) return;
                 droughtLayer.clearLayers();
                 (data.polygons || []).forEach(function (p) {
+                    if (!p.rings || !p.rings.length) return;
                     p.rings.forEach(function (ring) {
                         L.polygon(ring, {
                             color:       p.color,
@@ -4726,6 +4744,7 @@
                 precipLayer.clearLayers();
                 (data.polygons || []).forEach(function (p) {
                     var label = p.label || 'Precipitation';
+                    if (!p.rings || !p.rings.length) return;
                     var timeStr = '';
                     if (p.from_time) {
                         try {
@@ -4798,6 +4817,7 @@
                 var total = 0;
                 layers.forEach(function (cfg) {
                     (data[cfg.key] || []).forEach(function (p) {
+                        if (!p.rings || !p.rings.length) return;
                         total++;
                         var tip = '<strong>' + cfg.label + ' Temp: ' + p.temp_f + '°F</strong>' +
                                   (p.period ? '<br><small>' + p.period + '</small>' : '') +
