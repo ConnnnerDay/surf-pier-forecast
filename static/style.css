@@ -4064,9 +4064,9 @@ h2::before {
   font-weight: 600;
 }
 
-/* ── Map body — full width ── */
+/* ── Map body: map + side panel side by side ── */
+/* (display:flex is set by the rule near .fmap-side-panel below; keep margin here) */
 .fmap-body {
-  display: block;
   margin-bottom: 0.65rem;
 }
 
@@ -6299,7 +6299,7 @@ h2::before {
   display: flex;
   gap: 0;
   align-items: stretch;
-  min-height: 380px;
+  min-height: 520px;
 }
 .fmap-side-panel {
   width: 240px;
