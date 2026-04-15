@@ -4236,11 +4236,11 @@
                     marker.bindPopup(
                         '<div class="fmap-storm-rpt-popup">' +
                         '<strong>' + (ICONS[rpt.type] || '') + ' ' +
-                        rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1) +
-                        (rpt.magnitude ? ' · ' + rpt.magnitude : '') + '</strong>' +
-                        (rpt.location ? '<div>' + rpt.location + (rpt.state ? ', ' + rpt.state : '') + '</div>' : '') +
+                        esc(rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1)) +
+                        (rpt.magnitude ? ' · ' + esc(String(rpt.magnitude)) : '') + '</strong>' +
+                        (rpt.location ? '<div>' + esc(rpt.location) + (rpt.state ? ', ' + esc(rpt.state) : '') + '</div>' : '') +
                         (timeStr ? '<div class="fmap-storm-rpt-time">' + timeStr + '</div>' : '') +
-                        (rpt.comments ? '<div class="fmap-storm-rpt-comments">' + rpt.comments + '</div>' : '') +
+                        (rpt.comments ? '<div class="fmap-storm-rpt-comments">' + esc(rpt.comments) + '</div>' : '') +
                         '<div class="fmap-storm-rpt-source">NOAA via ArcGIS Live Feeds · 24h</div>' +
                         '</div>',
                         { maxWidth: 260 }
@@ -4688,6 +4688,7 @@
                 if (!droughtOn || !map || !data) return;
                 droughtLayer.clearLayers();
                 (data.polygons || []).forEach(function (p) {
+                    if (!p.rings || !p.rings.length) return;
                     p.rings.forEach(function (ring) {
                         L.polygon(ring, {
                             color:       p.color,
@@ -4743,6 +4744,7 @@
                 precipLayer.clearLayers();
                 (data.polygons || []).forEach(function (p) {
                     var label = p.label || 'Precipitation';
+                    if (!p.rings || !p.rings.length) return;
                     var timeStr = '';
                     if (p.from_time) {
                         try {
@@ -4815,6 +4817,7 @@
                 var total = 0;
                 layers.forEach(function (cfg) {
                     (data[cfg.key] || []).forEach(function (p) {
+                        if (!p.rings || !p.rings.length) return;
                         total++;
                         var tip = '<strong>' + cfg.label + ' Temp: ' + p.temp_f + '°F</strong>' +
                                   (p.period ? '<br><small>' + p.period + '</small>' : '') +
