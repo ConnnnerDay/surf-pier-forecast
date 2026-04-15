@@ -494,6 +494,7 @@ _PM25_BREAKPOINTS = [
 
 _AQI_CACHE: Dict[tuple, Dict[str, Any]] = {}
 _AQI_CACHE_TTL = 1800   # 30 minutes
+_AQI_CACHE_MAX = 32
 
 
 def _aqi_key(lat: float, lng: float) -> tuple:
@@ -528,6 +529,10 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
     cached = _AQI_CACHE.get(key)
     if cached and time.time() - cached["ts"] < _AQI_CACHE_TTL:
         return cached["data"]
+
+    if len(_AQI_CACHE) >= _AQI_CACHE_MAX:
+        oldest = min(_AQI_CACHE, key=lambda x: _AQI_CACHE[x]["ts"])
+        _AQI_CACHE.pop(oldest, None)
 
     for pad in (0.5, 1.0, 2.0):
         geom = f"{lng - pad},{lat - pad},{lng + pad},{lat + pad}"
@@ -596,6 +601,7 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
 
 _WIND_FC_CACHE: Dict[tuple, Dict[str, Any]] = {}
 _WIND_FC_TTL = 3600   # 1 hour — NDFD updates every 1-3 hours
+_WIND_FC_MAX = 32
 
 
 def _wind_key(lat: float, lng: float) -> tuple:
@@ -629,6 +635,10 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     cached = _WIND_FC_CACHE.get(key)
     if cached and time.time() - cached["ts"] < _WIND_FC_TTL:
         return cached["data"]
+
+    if len(_WIND_FC_CACHE) >= _WIND_FC_MAX:
+        oldest = min(_WIND_FC_CACHE, key=lambda x: _WIND_FC_CACHE[x]["ts"])
+        _WIND_FC_CACHE.pop(oldest, None)
 
     pad = 0.5   # ½ degree search radius (~55 km)
     geom = f"{lng - pad},{lat - pad},{lng + pad},{lat + pad}"
@@ -698,6 +708,7 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
 
 _SST_CACHE: Dict[tuple, Dict[str, Any]] = {}
 _SST_CACHE_TTL = 1800   # 30 minutes
+_SST_CACHE_MAX = 64
 
 # Alert level → label + colour
 _SST_ALERT = {
@@ -735,6 +746,10 @@ def fetch_sst_stations(
     cached = _SST_CACHE.get(key)
     if cached and time.time() - cached["ts"] < _SST_CACHE_TTL:
         return cached["data"]
+
+    if len(_SST_CACHE) >= _SST_CACHE_MAX:
+        oldest = min(_SST_CACHE, key=lambda x: _SST_CACHE[x]["ts"])
+        _SST_CACHE.pop(oldest, None)
 
     params = {
         "where":          "1=1",
@@ -807,6 +822,7 @@ def fetch_sst_stations(
 
 _FIRE_CACHE: Dict[tuple, Dict[str, Any]] = {}
 _FIRE_CACHE_TTL = 900   # 15 minutes
+_FIRE_CACHE_MAX = 32
 
 
 def _fire_key(s: float, w: float, n: float, e: float) -> tuple:
@@ -834,6 +850,10 @@ def fetch_wildfire_incidents(
     cached = _FIRE_CACHE.get(key)
     if cached and time.time() - cached["ts"] < _FIRE_CACHE_TTL:
         return cached["data"]
+
+    if len(_FIRE_CACHE) >= _FIRE_CACHE_MAX:
+        oldest = min(_FIRE_CACHE, key=lambda x: _FIRE_CACHE[x]["ts"])
+        _FIRE_CACHE.pop(oldest, None)
 
     params = {
         "where":          "IncidentTypeCategory='WF'",  # wildfire only (exclude Rx burns)
@@ -891,6 +911,7 @@ def fetch_wildfire_incidents(
 
 _SMOKE_CACHE: Dict[tuple, Dict[str, Any]] = {}
 _SMOKE_CACHE_TTL = 3600   # 1 hour — hourly forecast product
+_SMOKE_CACHE_MAX = 32
 
 # Smoke class description → opacity and fill colour
 _SMOKE_CLASSES = {
@@ -935,6 +956,10 @@ def fetch_smoke_forecast(
     cached = _SMOKE_CACHE.get(key)
     if cached and time.time() - cached["ts"] < _SMOKE_CACHE_TTL:
         return cached["data"]
+
+    if len(_SMOKE_CACHE) >= _SMOKE_CACHE_MAX:
+        oldest = min(_SMOKE_CACHE, key=lambda x: _SMOKE_CACHE[x]["ts"])
+        _SMOKE_CACHE.pop(oldest, None)
 
     params = {
         "where":          "1=1",
@@ -996,6 +1021,7 @@ def fetch_smoke_forecast(
 
 _PRECIP_CACHE: Dict[tuple, Dict[str, Any]] = {}
 _PRECIP_CACHE_TTL = 3600   # 1 hour
+_PRECIP_CACHE_MAX = 32
 
 # NDFD category integer (0–19) → approximate label when service label is missing
 _PRECIP_CAT_LABEL = {
@@ -1027,6 +1053,10 @@ def fetch_precip_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     cached = _PRECIP_CACHE.get(key)
     if cached and time.time() - cached["ts"] < _PRECIP_CACHE_TTL:
         return cached["data"]
+
+    if len(_PRECIP_CACHE) >= _PRECIP_CACHE_MAX:
+        oldest = min(_PRECIP_CACHE, key=lambda x: _PRECIP_CACHE[x]["ts"])
+        _PRECIP_CACHE.pop(oldest, None)
 
     pad = 0.5
     params = {
