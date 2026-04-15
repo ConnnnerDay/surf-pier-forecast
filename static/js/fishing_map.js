@@ -582,7 +582,7 @@
         if (!def || !def.tags.length) {
             aiPickLayer.clearLayers();
             var barText = document.getElementById('fmap-ai-bar-text');
-            if (bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
+            if (def && bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
             return;
         }
 
@@ -2466,12 +2466,9 @@
             }
             scheduleStructureFetch();
         } else {
-            // Restore dark CARTO base
-            if (map) {
-                L.tileLayer(
-                    'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
-                    { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
-                ).addTo(map);
+            // Restore the original active tile layer (satellite by default)
+            if (map && activeTileLayer) {
+                activeTileLayer.addTo(map);
             }
             clearStructureMarkers();
             setStructureHint(false);
@@ -5049,6 +5046,7 @@
                 var areas = data.areas || [];
 
                 areas.forEach(function (a) {
+                    if (!a.rings || !a.rings.length) return;
                     a.rings.forEach(function (ring) {
                         L.polygon(ring, {
                             color:       a.color,

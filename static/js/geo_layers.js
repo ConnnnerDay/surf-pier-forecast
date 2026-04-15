@@ -421,8 +421,8 @@
         var type = f.type || '';
         var html = '<strong>' + _esc(name) + '</strong>';
         if (type) html += '<br><small>' + _esc(type) + '</small>';
-        if (f.tile_url) {
-            html += '<br><a href="' + _esc(f.oam_url || '#') + '" target="_blank" rel="noopener">View on OAM &rarr;</a>';
+        if (f.oam_url) {
+            html += '<br><a href="' + _esc(f.oam_url) + '" target="_blank" rel="noopener">View on OAM &rarr;</a>';
         }
         return html;
     }
@@ -527,7 +527,7 @@
         // Enterococcus advisory
         var advisory = document.getElementById('wq-advisory');
         var advisoryText = document.getElementById('wq-advisory-text');
-        if (advisory && wq.enterococcus_flag === 'advisory') {
+        if (advisory && advisoryText && wq.enterococcus_flag === 'advisory') {
             advisoryText.textContent =
                 'Beach advisory: Enterococcus levels (' + wq.enterococcus_cfu_100ml +
                 ' CFU/100mL) exceed EPA threshold (104). Check local advisories.';
