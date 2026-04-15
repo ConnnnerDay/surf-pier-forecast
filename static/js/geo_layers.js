@@ -132,6 +132,16 @@
 
     function loadScript(url) {
         return new Promise(function (resolve, reject) {
+            // If an identical <script> tag is already in the DOM, attach to it
+            // instead of adding a duplicate — prevents double-loading Leaflet when
+            // both geo_layers.js and fishing_map.js race to load the same CDN URL.
+            var ex = document.querySelector('script[src="' + url + '"]');
+            if (ex) {
+                if (window.L) { resolve(); return; }
+                ex.addEventListener('load',  resolve, { once: true });
+                ex.addEventListener('error', reject,  { once: true });
+                return;
+            }
             var s = document.createElement('script');
             s.src = url;
             s.onload = resolve;
