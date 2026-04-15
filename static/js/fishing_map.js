@@ -5049,6 +5049,7 @@
                 var areas = data.areas || [];
 
                 areas.forEach(function (a) {
+                    if (!a.rings || !a.rings.length) return;
                     a.rings.forEach(function (ring) {
                         L.polygon(ring, {
                             color:       a.color,

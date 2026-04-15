@@ -398,6 +398,9 @@ class TestAerialImagery:
         assert len(results) == 1
         assert results[0]["id"] == "abc123"
         assert results[0]["resolution_m"] == 0.1
+        # lat/lng must be computed from bbox so the JS marker filter passes
+        assert results[0]["lat"] == pytest.approx(36.25)
+        assert results[0]["lng"] == pytest.approx(-75.25)
 
     def test_search_oam_imagery_returns_empty_on_error(self):
         from services.aerial_imagery import search_oam_imagery, _CACHE
