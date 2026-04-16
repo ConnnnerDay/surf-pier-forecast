@@ -71,3 +71,100 @@ def test_openapi_contains_versioned_routes():
     assert "/api/v1/forecast" in spec["paths"]
     assert "/api/v1/profile" in spec["paths"]
     assert "/api/v1/log" in spec["paths"]
+
+
+# ---------------------------------------------------------------------------
+# ProfilePayload.from_json — fishing_profile sub-field validation
+# ---------------------------------------------------------------------------
+
+
+def _raises(data, expected_code):
+    """Assert that ProfilePayload.from_json raises ApiError with expected code."""
+    try:
+        ProfilePayload.from_json(data)
+        raise AssertionError(
+            f"Expected ApiError({expected_code!r}) but no error raised"
+        )
+    except ApiError as e:
+        assert e.code == expected_code, f"expected {expected_code!r}, got {e.code!r}"
+
+
+def test_profile_payload_rejects_non_dict():
+    _raises("a string", "invalid_payload")
+
+
+def test_profile_payload_rejects_invalid_units():
+    _raises({"units": "K"}, "invalid_units")
+
+
+def test_profile_payload_rejects_non_list_favorites():
+    _raises({"favorites": "not-a-list"}, "invalid_favorites")
+
+
+def test_profile_payload_rejects_too_many_favorites():
+    _raises({"favorites": [str(i) for i in range(21)]}, "invalid_favorites")
+
+
+def test_profile_payload_rejects_non_string_favorites():
+    _raises({"favorites": [1, 2, 3]}, "invalid_favorites")
+
+
+def test_profile_payload_rejects_fishing_profile_non_dict():
+    _raises({"fishing_profile": "bad"}, "invalid_profile")
+
+
+def test_profile_payload_rejects_invalid_fishing_types():
+    _raises({"fishing_profile": {"fishing_types": ["scuba"]}}, "invalid_fishing_types")
+
+
+def test_profile_payload_rejects_invalid_targets():
+    _raises({"fishing_profile": {"targets": ["unicorn"]}}, "invalid_targets")
+
+
+def test_profile_payload_rejects_invalid_experience():
+    _raises({"fishing_profile": {"experience": "master"}}, "invalid_experience")
+
+
+def test_profile_payload_rejects_invalid_bait_pref():
+    _raises({"fishing_profile": {"live_bait": "maybe"}}, "invalid_live_bait")
+
+
+def test_profile_payload_rejects_invalid_preferred_times():
+    _raises(
+        {"fishing_profile": {"preferred_times": ["midnight"]}},
+        "invalid_preferred_times",
+    )
+
+
+def test_profile_payload_rejects_invalid_primary_goal():
+    _raises({"fishing_profile": {"primary_goal": "money"}}, "invalid_primary_goal")
+
+
+def test_profile_payload_rejects_invalid_condition_tolerance():
+    _raises(
+        {"fishing_profile": {"condition_tolerance": "hurricane"}},
+        "invalid_condition_tolerance",
+    )
+
+
+def test_profile_payload_accepts_valid_fishing_profile():
+    p = ProfilePayload.from_json(
+        {
+            "fishing_profile": {
+                "fishing_types": ["surf", "pier"],
+                "targets": ["bottom"],
+                "experience": "intermediate",
+                "live_bait": "yes",
+                "preferred_times": ["dawn", "morning"],
+                "primary_goal": "action",
+                "condition_tolerance": "moderate",
+            }
+        }
+    )
+    assert p.fishing_profile["experience"] == "intermediate"
+
+
+def test_success_envelope_meta_merge():
+    result = success_envelope({"x": 1}, meta={"total": 5})
+    assert result["meta"]["total"] == 5
+    assert result["meta"]["version"] == "v1"
