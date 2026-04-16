@@ -67,6 +67,7 @@ _setup_prune_counter = 0
 def _setup_client_ip() -> str:
     from flask import request as _req
     from web.auth import _TRUST_PROXY  # type: ignore[attr-defined]
+
     if _TRUST_PROXY:
         forwarded = _req.headers.get("X-Forwarded-For", "")
         if forwarded:
@@ -81,8 +82,11 @@ def _setup_is_rate_limited() -> bool:
     with _setup_rate_limit_lock:
         _setup_prune_counter += 1
         if _setup_prune_counter % 200 == 0:
-            expired = [k for k, (s, _) in _setup_rate_limit_store.items()
-                       if now - s > _SETUP_RATE_LIMIT_WINDOW_S]
+            expired = [
+                k
+                for k, (s, _) in _setup_rate_limit_store.items()
+                if now - s > _SETUP_RATE_LIMIT_WINDOW_S
+            ]
             for k in expired:
                 del _setup_rate_limit_store[k]
         start, count = _setup_rate_limit_store.get(ip, (now, 0))
@@ -174,8 +178,14 @@ def _fetch_cam_status(url: str) -> None:
         pass
     with _cam_status_lock:
         # Evict the oldest entry when the cache is full to prevent unbounded growth.
-        if url not in _cam_status_cache and len(_cam_status_cache) >= _CAM_STATUS_CACHE_MAX:
-            oldest = min(_cam_status_cache, key=lambda u: _cam_status_cache[u].get("checked_at_ts", 0))
+        if (
+            url not in _cam_status_cache
+            and len(_cam_status_cache) >= _CAM_STATUS_CACHE_MAX
+        ):
+            oldest = min(
+                _cam_status_cache,
+                key=lambda u: _cam_status_cache[u].get("checked_at_ts", 0),
+            )
             del _cam_status_cache[oldest]
         _cam_status_cache[url] = status
 
@@ -343,7 +353,7 @@ def _setup_context(**kwargs: Any) -> Dict[str, Any]:
     return context
 
 
-_PROFILE_PARAM_MAX_LEN = 200   # per query-string parameter (chars)
+_PROFILE_PARAM_MAX_LEN = 200  # per query-string parameter (chars)
 _PROFILE_PARAM_MAX_ITEMS = 20  # max comma-separated values per parameter
 
 
@@ -371,9 +381,13 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
 
     profile: Dict[str, Any] = {}
     if ft:
-        profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()][:_PROFILE_PARAM_MAX_ITEMS]
+        profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()][
+            :_PROFILE_PARAM_MAX_ITEMS
+        ]
     if tg:
-        profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()][:_PROFILE_PARAM_MAX_ITEMS]
+        profile["targets"] = [t.strip() for t in tg.split(",") if t.strip()][
+            :_PROFILE_PARAM_MAX_ITEMS
+        ]
     if exp in _VALID_EXPERIENCE_PARAMS:
         profile["experience"] = exp
     if live_bait in _VALID_BAIT_PARAMS:
@@ -428,7 +442,14 @@ def _render_forecast(
     profile = _extract_profile_from_request()
     if not profile and any(
         stored_profile.get(k)
-        for k in ("fishing_types", "targets", "experience", "live_bait", "cut_bait", "lures")
+        for k in (
+            "fishing_types",
+            "targets",
+            "experience",
+            "live_bait",
+            "cut_bait",
+            "lures",
+        )
     ):
         profile = stored_profile
     if profile:
@@ -498,8 +519,8 @@ def _render_forecast(
         trip_setup=trip_setup,
         favorite_locations=favorite_locations,
         caught_species=caught_species,
-        location_lat=location.get('lat', 0),
-        location_lng=location.get('lng', 0),
+        location_lat=location.get("lat", 0),
+        location_lng=location.get("lng", 0),
     )
 
 
@@ -559,7 +580,9 @@ def setup_search() -> str:
     if _setup_is_rate_limited():
         return render_template(
             "setup.html",
-            **_setup_context(error="Too many searches. Please wait a few minutes and try again."),
+            **_setup_context(
+                error="Too many searches. Please wait a few minutes and try again."
+            ),
         )
     zipcode = request.form.get("zipcode", "").strip()
     if not zipcode or not zipcode.isdigit() or len(zipcode) != 5:
@@ -603,7 +626,9 @@ def setup_coords() -> Any:
     if _setup_is_rate_limited():
         return render_template(
             "setup.html",
-            **_setup_context(error="Too many searches. Please wait a few minutes and try again."),
+            **_setup_context(
+                error="Too many searches. Please wait a few minutes and try again."
+            ),
         )
     raw_lat = request.form.get("location_lat", "").strip()
     raw_lon = request.form.get("location_lon", "").strip()
@@ -679,7 +704,12 @@ def setup_favorite(location_id: str) -> Any:
     # covers URL-encoded variants, protocol-relative URLs, and backslash
     # tricks that browsers normalise to external navigations.
     _parsed = urlparse(next_url)
-    if next_url and not _parsed.scheme and not _parsed.netloc and next_url.startswith("/"):
+    if (
+        next_url
+        and not _parsed.scheme
+        and not _parsed.netloc
+        and next_url.startswith("/")
+    ):
         return redirect(next_url)
     return redirect(url_for("views.setup"))
 

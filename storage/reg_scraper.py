@@ -66,7 +66,8 @@ def _fetch_page(url: str) -> Optional[str]:
             if total > _MAX_RESPONSE_BYTES:
                 _log.warning(
                     "reg_scraper: response for %s exceeded %d bytes; aborting",
-                    url, _MAX_RESPONSE_BYTES,
+                    url,
+                    _MAX_RESPONSE_BYTES,
                 )
                 return None
             chunks.append(chunk)
@@ -1058,6 +1059,7 @@ def _scrape_tx(species_name: str) -> Optional[Dict[str, str]]:
         return None
     try:
         from bs4 import BeautifulSoup
+
         soup = BeautifulSoup(html, "html.parser")
         return _parse_tx_page(soup.get_text("\n", strip=True), target)
     except Exception as exc:

@@ -40,28 +40,35 @@ logger = logging.getLogger(__name__)
 # pool_connections=4 covers the Overpass mirrors + NOAA host pair.
 _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=8))
-_HTTP.mount("http://",  HTTPAdapter(pool_connections=4, pool_maxsize=8))
+_HTTP.mount("http://", HTTPAdapter(pool_connections=4, pool_maxsize=8))
 
 # ── Result cache  ─────────────────────────────────────────────────────────────
 # Keyed on (south2dp, west2dp, north2dp, east2dp, frozenset(active_types)).
 # Entries expire after _CACHE_TTL seconds; the dict is capped at _CACHE_MAX
 # entries — oldest insertion is dropped first once the cap is hit.
 
-_CACHE: Dict[tuple, Dict[str, Any]] = {}   # {key: {"ts": float, "data": list, "failed": bool}}
-_CACHE_TTL: int       = 1800   # 30 minutes — piers and reefs don't move
-_CACHE_TTL_FAILED: int = 90    # 90 seconds — retry failed bboxes less aggressively
-_CACHE_MAX: int       = 256    # max bbox+types combinations kept in memory
+_CACHE: Dict[
+    tuple, Dict[str, Any]
+] = {}  # {key: {"ts": float, "data": list, "failed": bool}}
+_CACHE_TTL: int = 1800  # 30 minutes — piers and reefs don't move
+_CACHE_TTL_FAILED: int = 90  # 90 seconds — retry failed bboxes less aggressively
+_CACHE_MAX: int = 256  # max bbox+types combinations kept in memory
 
 
 def _cache_key(
     south: float, west: float, north: float, east: float, types: Set[str]
 ) -> tuple:
     """Stable, hashable cache key rounded to 2 decimal places (~1 km grid)."""
-    return (round(south, 2), round(west, 2), round(north, 2), round(east, 2),
-            frozenset(types))
+    return (
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
+        frozenset(types),
+    )
 
 
-_CACHE_EVICT_INTERVAL: float = 60.0   # seconds between full TTL scans
+_CACHE_EVICT_INTERVAL: float = 60.0  # seconds between full TTL scans
 _cache_last_evict: float = 0.0
 
 
@@ -76,58 +83,66 @@ def _cache_evict() -> None:
     now = _time.time()
     if now - _cache_last_evict >= _CACHE_EVICT_INTERVAL:
         _cache_last_evict = now
-        stale = [k for k, v in list(_CACHE.items())
-                 if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)]
+        stale = [
+            k
+            for k, v in list(_CACHE.items())
+            if now - v["ts"] >= (_CACHE_TTL_FAILED if v.get("failed") else _CACHE_TTL)
+        ]
         for k in stale:
-            _CACHE.pop(k, None)      # safe if another thread already removed it
+            _CACHE.pop(k, None)  # safe if another thread already removed it
     while len(_CACHE) >= _CACHE_MAX:
         try:
             del _CACHE[next(iter(_CACHE))]
         except (KeyError, StopIteration):
-            break                    # another thread cleared it first
+            break  # another thread cleared it first
 
 
 def cache_clear() -> None:
     """Remove all cached results.  Intended for tests and cache-invalidation hooks."""
     _CACHE.clear()
 
+
 # ── Habitat types rendered as filled polygon overlays ─────────────────────────
 # These are area features (wetlands, beaches, …) whose OSM ways carry closed
 # ring geometry.  When a way element in this set has ≥3 geometry points the
 # backend includes a ``geometry`` list so the client can draw a filled outline
 # instead of placing a single-point marker.
-POLYGON_HABITAT_TYPES: frozenset[str] = frozenset({
-    "saltmarsh",
-    "mangrove",
-    "tidal_flat",
-    "grass_flat",
-    "beach",
-    "oyster_reef",
-    "inlet",
-})
+POLYGON_HABITAT_TYPES: frozenset[str] = frozenset(
+    {
+        "saltmarsh",
+        "mangrove",
+        "tidal_flat",
+        "grass_flat",
+        "beach",
+        "oyster_reef",
+        "inlet",
+    }
+)
 
 # ── Recognised structure types  ───────────────────────────────────────────────
 # Matches SPOT_TYPES in static/js/fishing_map.js
-VALID_TYPES: frozenset[str] = frozenset({
-    "oyster_reef",
-    "reef",
-    "grass_flat",
-    "saltmarsh",
-    "mangrove",
-    "tidal_flat",
-    "shoal",
-    "pier",
-    "jetty",
-    "bridge",
-    "marina",
-    "inlet",
-    "point",
-    "beach",
-    "wreck",
-    "buoy",
-    "fishing_shop",
-    "fishing",
-})
+VALID_TYPES: frozenset[str] = frozenset(
+    {
+        "oyster_reef",
+        "reef",
+        "grass_flat",
+        "saltmarsh",
+        "mangrove",
+        "tidal_flat",
+        "shoal",
+        "pier",
+        "jetty",
+        "bridge",
+        "marina",
+        "inlet",
+        "point",
+        "beach",
+        "wreck",
+        "buoy",
+        "fishing_shop",
+        "fishing",
+    }
+)
 
 # ── Fishing context tips  ──────────────────────────────────────────────────────
 # Mirrors STRUCTURE_TIPS in static/js/fishing_map.js
@@ -207,15 +222,15 @@ STRUCTURE_TIPS: Dict[str, str] = {
 # computed centroids happen to be close.  Only name-based dedup applies to
 # those types.  Tight thresholds remain for point structures.
 _PROX: Dict[str, float] = {
-    "inlet":      0.005,   # ~550 m — tidal channel nodes cluster heavily
-    "marina":     0.004,   # ~440 m
-    "beach":      0.0,     # polygon area — skip centroid proximity dedup
-    "grass_flat": 0.0,     # polygon area
-    "saltmarsh":  0.0,     # polygon area
-    "tidal_flat": 0.0,     # polygon area
-    "mangrove":   0.0,     # polygon area
-    "oyster_reef":0.0,     # polygon area
-    "_default":   0.002,   # ~220 m — piers, jetties, buoys, etc.
+    "inlet": 0.005,  # ~550 m — tidal channel nodes cluster heavily
+    "marina": 0.004,  # ~440 m
+    "beach": 0.0,  # polygon area — skip centroid proximity dedup
+    "grass_flat": 0.0,  # polygon area
+    "saltmarsh": 0.0,  # polygon area
+    "tidal_flat": 0.0,  # polygon area
+    "mangrove": 0.0,  # polygon area
+    "oyster_reef": 0.0,  # polygon area
+    "_default": 0.002,  # ~220 m — piers, jetties, buoys, etc.
 }
 
 # ── Polygon coordinate decimation ─────────────────────────────────────────────
@@ -253,14 +268,15 @@ _OVERPASS_URLS = [
 _NOAA_ENC_BASE = (
     "https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/ENCOnline/MapServer"
 )
-_NOAA_LAYER_WRECKS        = 2
-_NOAA_LAYER_OBSTRUCTIONS  = 3
-_NOAA_LAYER_ROCKS         = 4
+_NOAA_LAYER_WRECKS = 2
+_NOAA_LAYER_OBSTRUCTIONS = 3
+_NOAA_LAYER_ROCKS = 4
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _build_overpass_query(bbox: str, types: Set[str]) -> str:
     """Return an Overpass QL query string for the requested types.
@@ -278,8 +294,8 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
       these are rendered as small icon markers so full geometry would just
       inflate the payload for no benefit.
     """
-    habitat: List[str] = []   # will use `out geom;`
-    struct:  List[str] = []   # will use `out center;`
+    habitat: List[str] = []  # will use `out geom;`
+    struct: List[str] = []  # will use `out center;`
 
     # ── Habitat area types (polygon rendering) ──────────────────────────────
     if "grass_flat" in types:
@@ -420,28 +436,39 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
 
 def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
     """Map an OSM element's tags to a VALID_TYPES string, or None to discard."""
-    natural  = tags.get("natural", "")
-    wetland  = tags.get("wetland", "")
+    natural = tags.get("natural", "")
+    wetland = tags.get("wetland", "")
     waterway = tags.get("waterway", "")
     man_made = tags.get("man_made", "")
-    seamark  = tags.get("seamark:type", "")
+    seamark = tags.get("seamark:type", "")
 
     # ── Habitats ──────────────────────────────────────────────────────────────
     if natural == "wetland":
-        if wetland == "seagrass":  return "grass_flat"
-        if wetland == "saltmarsh": return "saltmarsh"
-        if wetland == "mangrove":  return "mangrove"
-        if wetland == "tidalflat": return "tidal_flat"
+        if wetland == "seagrass":
+            return "grass_flat"
+        if wetland == "saltmarsh":
+            return "saltmarsh"
+        if wetland == "mangrove":
+            return "mangrove"
+        if wetland == "tidalflat":
+            return "tidal_flat"
         return None  # unknown wetland subtype — skip
 
-    if natural == "mud":      return "tidal_flat"
-    if natural == "beach":    return "beach"
-    if natural == "bay":      return "inlet"
-    if natural == "reef":     return "reef"
-    if natural in ("shoal", "rock"): return "shoal"
-    if natural in ("cape", "headland", "peninsula"): return "point"
+    if natural == "mud":
+        return "tidal_flat"
+    if natural == "beach":
+        return "beach"
+    if natural == "bay":
+        return "inlet"
+    if natural == "reef":
+        return "reef"
+    if natural in ("shoal", "rock"):
+        return "shoal"
+    if natural in ("cape", "headland", "peninsula"):
+        return "point"
 
-    if tags.get("harbour") == "yes": return "inlet"
+    if tags.get("harbour") == "yes":
+        return "inlet"
 
     if tags.get("landuse") == "aquaculture" and (
         tags.get("produce") == "oyster" or tags.get("product") == "oysters"
@@ -455,7 +482,7 @@ def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
     if waterway in ("tidal_channel", "river", "canal", "stream"):
         return "inlet"
     if waterway in ("weir", "dam"):
-        return "jetty"   # turbulent oxygenated water — same angling context
+        return "jetty"  # turbulent oxygenated water — same angling context
     if waterway == "dock":
         return "pier"
 
@@ -477,11 +504,15 @@ def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
         return "bridge"
 
     amenity = tags.get("amenity", "")
-    if amenity in ("marina",): return "marina"
-    if amenity == "boat_ramp": return "pier"
+    if amenity in ("marina",):
+        return "marina"
+    if amenity == "boat_ramp":
+        return "pier"
 
-    if tags.get("leisure") == "marina":  return "marina"
-    if tags.get("leisure") == "fishing": return "fishing"
+    if tags.get("leisure") == "marina":
+        return "marina"
+    if tags.get("leisure") == "fishing":
+        return "fishing"
 
     if seamark.startswith("buoy"):
         return "buoy"
@@ -513,7 +544,7 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     cell corner).  For display deduplication that trade-off is acceptable.
     """
     named_seen: Dict[str, bool] = {}
-    grid: Dict[tuple, bool] = {}   # (type, grid_lat, grid_lng) → True
+    grid: Dict[tuple, bool] = {}  # (type, grid_lat, grid_lng) → True
     out: List[Dict[str, Any]] = []
 
     for spot in spots:
@@ -530,13 +561,11 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if thresh > 0:
             gl = int(spot["lat"] / thresh)
             gn = int(spot["lng"] / thresh)
-            t  = spot["type"]
+            t = spot["type"]
             # Check the 3×3 neighbourhood (9 cells) to catch spots that sit
             # near a cell boundary and would otherwise slip through.
             too_close = any(
-                (t, gl + dl, gn + dm) in grid
-                for dl in (-1, 0, 1)
-                for dm in (-1, 0, 1)
+                (t, gl + dl, gn + dm) in grid for dl in (-1, 0, 1) for dm in (-1, 0, 1)
             )
             if too_close:
                 continue
@@ -581,20 +610,22 @@ def _get_noaa_enc_layer(
     Returns the raw ``features`` list, or an empty list on any error so that
     a NOAA outage never blocks the OSM results from being returned.
     """
-    geometry = _json.dumps({
-        "xmin": west,
-        "ymin": south,
-        "xmax": east,
-        "ymax": north,
-        "spatialReference": {"wkid": 4326},
-    })
+    geometry = _json.dumps(
+        {
+            "xmin": west,
+            "ymin": south,
+            "xmax": east,
+            "ymax": north,
+            "spatialReference": {"wkid": 4326},
+        }
+    )
     params: Dict[str, str] = {
-        "geometry":       geometry,
-        "geometryType":   "esriGeometryEnvelope",
-        "spatialRel":     "esriSpatialRelIntersects",
-        "outFields":      "OBJNAM,INFORM,CATNMK,WATLEV",
+        "geometry": geometry,
+        "geometryType": "esriGeometryEnvelope",
+        "spatialRel": "esriSpatialRelIntersects",
+        "outFields": "OBJNAM,INFORM,CATNMK,WATLEV",
         "returnGeometry": "true",
-        "f":              "json",
+        "f": "json",
     }
     url = f"{_NOAA_ENC_BASE}/{layer}/query"
     try:
@@ -617,7 +648,7 @@ def _noaa_features_to_spots(
     """
     spots: List[Dict[str, Any]] = []
     for feat in features:
-        geom  = feat.get("geometry") or {}
+        geom = feat.get("geometry") or {}
         attrs = feat.get("attributes") or {}
 
         x: Optional[float] = geom.get("x")
@@ -634,7 +665,9 @@ def _noaa_features_to_spots(
             continue
 
         name = attrs.get("OBJNAM") or attrs.get("INFORM") or ""
-        spots.append({"lat": float(y), "lng": float(x), "type": spot_type, "name": name})
+        spots.append(
+            {"lat": float(y), "lng": float(x), "type": spot_type, "name": name}
+        )
 
     return spots
 
@@ -642,6 +675,7 @@ def _noaa_features_to_spots(
 # ─────────────────────────────────────────────────────────────────────────────
 # Public functions
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def fetch_osm_structures(
     south: float,
@@ -663,7 +697,7 @@ def fetch_osm_structures(
     -------
     List of ``{lat, lng, type, name}`` dicts for elements inside the bbox.
     """
-    bbox  = f"{south},{west},{north},{east}"
+    bbox = f"{south},{west},{north},{east}"
     query = _build_overpass_query(bbox, types)
     if not query:
         return []
@@ -688,7 +722,7 @@ def fetch_osm_structures(
         if not (south <= lat <= north and west <= lng <= east):
             continue
 
-        tags      = el.get("tags") or {}
+        tags = el.get("tags") or {}
         spot_type = _classify_osm_tags(tags)
         if not spot_type or spot_type not in types:
             continue
@@ -707,9 +741,7 @@ def fetch_osm_structures(
         if el.get("type") == "way" and spot_type in POLYGON_HABITAT_TYPES:
             raw_geom = el.get("geometry", [])
             coords = [
-                [g["lat"], g["lon"]]
-                for g in raw_geom
-                if "lat" in g and "lon" in g
+                [g["lat"], g["lon"]] for g in raw_geom if "lat" in g and "lon" in g
             ]
             if len(coords) >= 3:
                 spot["geometry"] = _decimate_ring(coords)
@@ -754,7 +786,7 @@ def fetch_noaa_structures(
         layer_jobs.append((_NOAA_LAYER_WRECKS, "wreck"))
     if types & {"shoal", "reef"}:
         layer_jobs.append((_NOAA_LAYER_OBSTRUCTIONS, "shoal"))
-        layer_jobs.append((_NOAA_LAYER_ROCKS,        "shoal"))
+        layer_jobs.append((_NOAA_LAYER_ROCKS, "shoal"))
 
     if not layer_jobs:
         return []
@@ -821,24 +853,32 @@ def find_fish_structures(
         return []
 
     # ── Cache check  ─────────────────────────────────────────────────────────
-    key    = _cache_key(south, west, north, east, active_types)
+    key = _cache_key(south, west, north, east, active_types)
     cached = _CACHE.get(key)
     if cached:
         ttl = _CACHE_TTL_FAILED if cached.get("failed") else _CACHE_TTL
         if (_time.time() - cached["ts"]) < ttl:
-            logger.debug("find_fish_structures cache hit key=%s failed=%s", key, cached.get("failed"))
+            logger.debug(
+                "find_fish_structures cache hit key=%s failed=%s",
+                key,
+                cached.get("failed"),
+            )
             return cached["data"]
 
     # ── Fetch from sources in parallel  ──────────────────────────────────────
     # OSM (Overpass) and NOAA ENC run concurrently so neither blocks the other.
     # Each is caught individually so a NOAA outage never drops the OSM results.
-    osm_spots: List[Dict[str, Any]]  = []
+    osm_spots: List[Dict[str, Any]] = []
     noaa_spots: List[Dict[str, Any]] = []
     fetch_failed = False
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        osm_fut  = pool.submit(fetch_osm_structures,  south, west, north, east, active_types)
-        noaa_fut = pool.submit(fetch_noaa_structures, south, west, north, east, active_types)
+        osm_fut = pool.submit(
+            fetch_osm_structures, south, west, north, east, active_types
+        )
+        noaa_fut = pool.submit(
+            fetch_noaa_structures, south, west, north, east, active_types
+        )
 
         try:
             osm_spots = osm_fut.result(timeout=28)
@@ -846,7 +886,9 @@ def find_fish_structures(
             logger.warning("fetch_osm_structures timed out (parallel executor)")
             fetch_failed = True
         except Exception as exc:
-            logger.warning("fetch_osm_structures failed, continuing with NOAA only: %s", exc)
+            logger.warning(
+                "fetch_osm_structures failed, continuing with NOAA only: %s", exc
+            )
             fetch_failed = True
 
         try:
@@ -860,7 +902,7 @@ def find_fish_structures(
     # authoritative wreck/obstruction records not always in OSM.
     # Post-filter by type to guard against any source returning extras.
     all_spots = [s for s in osm_spots + noaa_spots if s["type"] in active_types]
-    deduped   = _deduplicate(all_spots)
+    deduped = _deduplicate(all_spots)
     # Tips are not attached server-side — the JS client owns STRUCTURE_TIPS and
     # looks them up locally via ``f.tip || STRUCTURE_TIPS[f.type]``.  Omitting
     # them here shrinks the wire payload and the in-memory cache by ~50 % for
@@ -869,7 +911,10 @@ def find_fish_structures(
     logger.info(
         "find_fish_structures bbox=(%.4f,%.4f,%.4f,%.4f) types=%s "
         "osm=%d noaa=%d merged=%d deduped=%d",
-        south, west, north, east,
+        south,
+        west,
+        north,
+        east,
         sorted(active_types),
         len(osm_spots),
         len(noaa_spots),

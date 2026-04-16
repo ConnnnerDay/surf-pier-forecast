@@ -38,7 +38,17 @@ try:
 except ImportError:
     pass
 
-from flask import Flask, abort, g, redirect, render_template, request, send_from_directory, session, url_for
+from flask import (
+    Flask,
+    abort,
+    g,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    session,
+    url_for,
+)
 import werkzeug
 
 from storage.sqlite import init_db, get_user
@@ -161,47 +171,49 @@ def create_app() -> Flask:
     # Everything else is gated so that unverified accounts cannot access the
     # application.  Using a whitelist (rather than a blacklist) is the safer
     # pattern: new routes are protected by default.
-    _VERIFICATION_EXEMPT_ENDPOINTS: frozenset[str] = frozenset({
-        # Auth flows
-        "auth.landing",
-        "auth.login",
-        "auth.register",
-        "auth.logout",
-        "auth.verify_email",
-        "auth.resend_verification",
-        "auth.verify_pending",
-        # Account management (users must be able to see/manage their account
-        # and change their password even before verifying).
-        "auth.account",
-        "auth.account_settings",
-        "auth.change_password_route",
-        "auth.delete_account_route",
-        # WebAuthn / passkey flows (biometric login, passkey registration)
-        "auth.webauthn_register_begin",
-        "auth.webauthn_register_complete",
-        "auth.webauthn_authenticate_begin",
-        "auth.webauthn_authenticate_complete",
-        "auth.webauthn_delete_credential",
-        # Social login OAuth flows (Google, Apple)
-        "auth.google_login",
-        "auth.google_callback",
-        "auth.apple_login",
-        "auth.apple_callback",
-        # Location + profile setup wizard (users need to complete onboarding).
-        "views.setup",
-        "views.setup_search",
-        "views.setup_coords",
-        "views.setup_select",
-        "views.setup_favorite",
-        "views.profile",
-        # Profile API endpoints — called by the profile setup page, which is
-        # itself exempt.  Without these, the profile save fetch fails silently
-        # for users who haven't yet confirmed their email.
-        "api.profile_v1",
-        "api.preferences",
-        # Static assets are served outside the blueprint system.
-        "static",
-    })
+    _VERIFICATION_EXEMPT_ENDPOINTS: frozenset[str] = frozenset(
+        {
+            # Auth flows
+            "auth.landing",
+            "auth.login",
+            "auth.register",
+            "auth.logout",
+            "auth.verify_email",
+            "auth.resend_verification",
+            "auth.verify_pending",
+            # Account management (users must be able to see/manage their account
+            # and change their password even before verifying).
+            "auth.account",
+            "auth.account_settings",
+            "auth.change_password_route",
+            "auth.delete_account_route",
+            # WebAuthn / passkey flows (biometric login, passkey registration)
+            "auth.webauthn_register_begin",
+            "auth.webauthn_register_complete",
+            "auth.webauthn_authenticate_begin",
+            "auth.webauthn_authenticate_complete",
+            "auth.webauthn_delete_credential",
+            # Social login OAuth flows (Google, Apple)
+            "auth.google_login",
+            "auth.google_callback",
+            "auth.apple_login",
+            "auth.apple_callback",
+            # Location + profile setup wizard (users need to complete onboarding).
+            "views.setup",
+            "views.setup_search",
+            "views.setup_coords",
+            "views.setup_select",
+            "views.setup_favorite",
+            "views.profile",
+            # Profile API endpoints — called by the profile setup page, which is
+            # itself exempt.  Without these, the profile save fetch fails silently
+            # for users who haven't yet confirmed their email.
+            "api.profile_v1",
+            "api.preferences",
+            # Static assets are served outside the blueprint system.
+            "static",
+        }
+    )
 
     @app.before_request
     def _require_email_verification() -> None:
@@ -255,11 +267,13 @@ def create_app() -> Flask:
             if origin:
                 # origin is "scheme://host[:port]" — must match our host exactly.
                 from urllib.parse import urlparse as _urlparse
+
                 parsed = _urlparse(origin)
                 if parsed.netloc != host:
                     abort(400)
             elif referer:
                 from urllib.parse import urlparse as _urlparse
+
                 parsed = _urlparse(referer)
                 if parsed.netloc != host:
                     abort(400)
@@ -397,44 +411,88 @@ def create_app() -> Flask:
     def _bad_request(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
             from flask import jsonify
-            return jsonify({"ok": False, "error": {"code": "bad_request", "message": "Bad request"}}), 400
+
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": {"code": "bad_request", "message": "Bad request"},
+                }
+            ), 400
         return render_template("error.html", message="Bad request."), 400
 
     @app.errorhandler(404)
     def _not_found(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
             from flask import jsonify
-            return jsonify({"ok": False, "error": {"code": "not_found", "message": "Not found"}}), 404
+
+            return jsonify(
+                {"ok": False, "error": {"code": "not_found", "message": "Not found"}}
+            ), 404
         return render_template("error.html", message="Page not found."), 404
 
     @app.errorhandler(405)
     def _method_not_allowed(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
             from flask import jsonify
-            return jsonify({"ok": False, "error": {"code": "method_not_allowed", "message": "Method not allowed"}}), 405
+
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": {
+                        "code": "method_not_allowed",
+                        "message": "Method not allowed",
+                    },
+                }
+            ), 405
         return render_template("error.html", message="Method not allowed."), 405
 
     @app.errorhandler(413)
     def _request_too_large(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
             from flask import jsonify
-            return jsonify({"ok": False, "error": {"code": "too_large", "message": "Request too large"}}), 413
+
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": {"code": "too_large", "message": "Request too large"},
+                }
+            ), 413
         return render_template("error.html", message="Upload is too large."), 413
 
     @app.errorhandler(429)
     def _rate_limited(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
             from flask import jsonify
-            return jsonify({"ok": False, "error": {"code": "rate_limited", "message": "Too many requests"}}), 429
-        return render_template("error.html", message="Too many requests. Please slow down and try again."), 429
+
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": {"code": "rate_limited", "message": "Too many requests"},
+                }
+            ), 429
+        return render_template(
+            "error.html", message="Too many requests. Please slow down and try again."
+        ), 429
 
     @app.errorhandler(500)
     def _internal_error(exc: Any) -> Any:
         logging.getLogger(__name__).exception("Unhandled exception")
         if request.accept_mimetypes.best == "application/json":
             from flask import jsonify
-            return jsonify({"ok": False, "error": {"code": "server_error", "message": "An unexpected error occurred"}}), 500
-        return render_template("error.html", message="An unexpected error occurred. Please try again later."), 500
+
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": {
+                        "code": "server_error",
+                        "message": "An unexpected error occurred",
+                    },
+                }
+            ), 500
+        return render_template(
+            "error.html",
+            message="An unexpected error occurred. Please try again later.",
+        ), 500
 
     # -- Service worker at root scope --------------------------------------
 
@@ -467,6 +525,7 @@ def create_app() -> Flask:
 
     def _prewarm_fishing_map_cache() -> None:
         import time as _time
+
         _time.sleep(2)  # let gunicorn workers and DB fully initialise first
         try:
             # Build all lazy indices before the first real request so none of
@@ -479,6 +538,7 @@ def create_app() -> Flask:
                 _get_species_lower_index,
                 _get_all_species_names,
             )
+
             _get_loc_species_all()
             _get_species_lower_index()
             _get_all_species_names()

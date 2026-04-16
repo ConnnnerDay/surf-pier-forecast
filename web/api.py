@@ -159,7 +159,9 @@ def _record_ip_attempt(
 
 
 def _tz_is_rate_limited() -> bool:
-    return _is_rate_limited_ip(_tz_rate_store, _tz_rate_lock, _TZ_RATE_LIMIT_MAX, _TZ_RATE_LIMIT_WINDOW_S)
+    return _is_rate_limited_ip(
+        _tz_rate_store, _tz_rate_lock, _TZ_RATE_LIMIT_MAX, _TZ_RATE_LIMIT_WINDOW_S
+    )
 
 
 def _tz_record_attempt() -> None:
@@ -177,7 +179,9 @@ _reg_rate_lock = threading.Lock()
 
 
 def _reg_is_rate_limited() -> bool:
-    return _is_rate_limited_ip(_reg_rate_store, _reg_rate_lock, _REG_RATE_LIMIT_MAX, _REG_RATE_LIMIT_WINDOW_S)
+    return _is_rate_limited_ip(
+        _reg_rate_store, _reg_rate_lock, _REG_RATE_LIMIT_MAX, _REG_RATE_LIMIT_WINDOW_S
+    )
 
 
 def _reg_record_attempt() -> None:
@@ -230,7 +234,11 @@ def _forecast_sub_is_rate_limited() -> bool:
 
 
 def _forecast_sub_record_attempt() -> None:
-    _record_ip_attempt(_forecast_sub_rate_store, _forecast_sub_rate_lock, _FORECAST_SUB_RATE_LIMIT_WINDOW_S)
+    _record_ip_attempt(
+        _forecast_sub_rate_store,
+        _forecast_sub_rate_lock,
+        _FORECAST_SUB_RATE_LIMIT_WINDOW_S,
+    )
 
 
 # ── Rate limiting for photo uploads ───────────────────────────────────────────
@@ -244,13 +252,17 @@ _upload_rate_lock = threading.Lock()
 
 def _upload_is_rate_limited() -> bool:
     return _is_rate_limited_ip(
-        _upload_rate_store, _upload_rate_lock,
-        _UPLOAD_RATE_LIMIT_MAX, _UPLOAD_RATE_LIMIT_WINDOW_S,
+        _upload_rate_store,
+        _upload_rate_lock,
+        _UPLOAD_RATE_LIMIT_MAX,
+        _UPLOAD_RATE_LIMIT_WINDOW_S,
     )
 
 
 def _upload_record_attempt() -> None:
-    _record_ip_attempt(_upload_rate_store, _upload_rate_lock, _UPLOAD_RATE_LIMIT_WINDOW_S)
+    _record_ip_attempt(
+        _upload_rate_store, _upload_rate_lock, _UPLOAD_RATE_LIMIT_WINDOW_S
+    )
 
 
 def _json_error(err: ApiError) -> Any:
@@ -275,8 +287,14 @@ def set_timezone() -> Any:
         return jsonify({"ok": True})
 
     if _tz_is_rate_limited():
-        logger.warning("security.timezone_rate_limit user_id=%s ip=%s", g.user["id"], _tz_client_ip())
-        return jsonify({"ok": True})  # silent — no need to reveal rate limiting to client
+        logger.warning(
+            "security.timezone_rate_limit user_id=%s ip=%s",
+            g.user["id"],
+            _tz_client_ip(),
+        )
+        return jsonify(
+            {"ok": True}
+        )  # silent — no need to reveal rate limiting to client
 
     _tz_record_attempt()
 
@@ -288,7 +306,9 @@ def set_timezone() -> Any:
         if tz:
             logger.warning(
                 "security.invalid_timezone user_id=%s tz=%r ip=%s",
-                g.user["id"], tz[:80], _tz_client_ip(),
+                g.user["id"],
+                tz[:80],
+                _tz_client_ip(),
             )
         return jsonify({"ok": True})  # silent rejection — no error info to caller
 
@@ -408,13 +428,17 @@ def page_layout_v1() -> Any:
     data = request.get_json(silent=True) or {}
     layout = data.get("layout")
     if not isinstance(layout, list):
-        return _json_error(ApiError("invalid_param", "layout must be an array", status=400))
+        return _json_error(
+            ApiError("invalid_param", "layout must be an array", status=400)
+        )
     if len(layout) > 25:
         return _json_error(ApiError("invalid_param", "layout too large", status=400))
     for item in layout:
         if not isinstance(item, dict) or "id" not in item:
             return _json_error(
-                ApiError("invalid_param", "each layout item must have an id", status=400)
+                ApiError(
+                    "invalid_param", "each layout item must have an id", status=400
+                )
             )
     save_page_layout(uid, layout)
     return jsonify(success_envelope({"ok": True}))
@@ -825,7 +849,9 @@ def _delete_upload_file(rel_path: Optional[str]) -> None:
     abs_path = os.path.realpath(os.path.join(upload_root, sub))
     # Only delete files that are actually inside the upload root.
     if not abs_path.startswith(upload_root_real + os.sep):
-        logger.warning("Blocked attempt to delete file outside upload root: %s", rel_path)
+        logger.warning(
+            "Blocked attempt to delete file outside upload root: %s", rel_path
+        )
         return
     try:
         os.remove(abs_path)
@@ -844,8 +870,12 @@ def log_photos_v1(entry_id: int) -> Any:
         return jsonify(error_envelope("unauthorized", "Not logged in")), 401
 
     if _upload_is_rate_limited():
-        logger.warning("security.upload_rate_limit user_id=%s ip=%s", g.user["id"], _client_ip())
-        return _json_error(ApiError("rate_limited", "Too many uploads. Please slow down.", status=429))
+        logger.warning(
+            "security.upload_rate_limit user_id=%s ip=%s", g.user["id"], _client_ip()
+        )
+        return _json_error(
+            ApiError("rate_limited", "Too many uploads. Please slow down.", status=429)
+        )
     _upload_record_attempt()
 
     uid = g.user["id"]
@@ -905,22 +935,30 @@ def share_text() -> Any:
 
 # Maps species 'regions' values → sets of location temp_region strings.
 _SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
-    "northeast":        frozenset({"northeast"}),
-    "new_england":      frozenset({"northeast"}),
-    "mid-atlantic":     frozenset({"midatlantic"}),
-    "midatlantic":      frozenset({"midatlantic"}),
-    "southeast":        frozenset({"nc_outer_banks", "nc_south", "sc_ga"}),
-    "florida":          frozenset({"fl_northeast", "fl_central_east", "fl_south",
-                                   "fl_keys", "fl_gulf_north", "fl_gulf_south"}),
-    "gulf":             frozenset({"gulf_central", "gulf_west",
-                                   "fl_gulf_north", "fl_gulf_south"}),
-    "pacific_nw":       frozenset({"pacific_nw"}),
-    "pacific northwest":frozenset({"pacific_nw"}),
-    "pacific_northwest":frozenset({"pacific_nw"}),
-    "norcal":           frozenset({"pacific_norcal"}),
-    "california":       frozenset({"pacific_norcal", "pacific_central_cal",
-                                   "pacific_socal", "pacific_san_diego"}),
-    "socal":            frozenset({"pacific_socal", "pacific_san_diego"}),
+    "northeast": frozenset({"northeast"}),
+    "new_england": frozenset({"northeast"}),
+    "mid-atlantic": frozenset({"midatlantic"}),
+    "midatlantic": frozenset({"midatlantic"}),
+    "southeast": frozenset({"nc_outer_banks", "nc_south", "sc_ga"}),
+    "florida": frozenset(
+        {
+            "fl_northeast",
+            "fl_central_east",
+            "fl_south",
+            "fl_keys",
+            "fl_gulf_north",
+            "fl_gulf_south",
+        }
+    ),
+    "gulf": frozenset({"gulf_central", "gulf_west", "fl_gulf_north", "fl_gulf_south"}),
+    "pacific_nw": frozenset({"pacific_nw"}),
+    "pacific northwest": frozenset({"pacific_nw"}),
+    "pacific_northwest": frozenset({"pacific_nw"}),
+    "norcal": frozenset({"pacific_norcal"}),
+    "california": frozenset(
+        {"pacific_norcal", "pacific_central_cal", "pacific_socal", "pacific_san_diego"}
+    ),
+    "socal": frozenset({"pacific_socal", "pacific_san_diego"}),
 }
 
 
@@ -930,9 +968,9 @@ def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
     1.0 = water is inside the ideal temperature window.
     Tapers to 0.5 at the survivable edges, 0.3 outside survivable range.
     """
-    t_min  = float(species.get("temp_min",       32))
-    t_max  = float(species.get("temp_max",       95))
-    t_low  = float(species.get("temp_ideal_low",  t_min))
+    t_min = float(species.get("temp_min", 32))
+    t_max = float(species.get("temp_max", 95))
+    t_low = float(species.get("temp_ideal_low", t_min))
     t_high = float(species.get("temp_ideal_high", t_max))
 
     if water_temp_f < t_min or water_temp_f > t_max:
@@ -985,8 +1023,19 @@ def _month_score(species: Dict[str, Any], month: int) -> int:
 
 
 _AI_MONTH_NAMES = [
-    "", "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 
 
@@ -997,22 +1046,22 @@ def _build_ai_reasoning(loc_result: dict, month: int) -> str:
     behavioral notes (cold/warm), secondary species, and tackle tips.
     """
     mname = _AI_MONTH_NAMES[month] if 1 <= month <= 12 else "this month"
-    species    = loc_result.get("top_species", [])
+    species = loc_result.get("top_species", [])
     water_temp = loc_result.get("water_temp")  # °F or None
 
     if not species:
         return f"Conditions are quiet at this location in {mname}."
 
-    top         = species[0]
-    sp_name     = top.get("name", "Fish")
-    activity    = top.get("activity", "fair")
-    bait        = top.get("bait", "")
-    rig         = top.get("rig", "")
-    lures       = top.get("lures", "")
-    t_low       = top.get("temp_ideal_low")
-    t_high      = top.get("temp_ideal_high")
-    expl_cold   = top.get("explanation_cold", "")
-    expl_warm   = top.get("explanation_warm", "")
+    top = species[0]
+    sp_name = top.get("name", "Fish")
+    activity = top.get("activity", "fair")
+    bait = top.get("bait", "")
+    rig = top.get("rig", "")
+    lures = top.get("lures", "")
+    t_low = top.get("temp_ideal_low")
+    t_high = top.get("temp_ideal_high")
+    expl_cold = top.get("explanation_cold", "")
+    expl_warm = top.get("explanation_warm", "")
 
     parts: list[str] = []
 
@@ -1086,7 +1135,7 @@ _SPECIES_NAMES_CACHE: Optional[list] = None
 # Pre-built lowercase name index: list of (lowercase_name, species_dict) pairs
 # so species_q filtering avoids calling s["name"].lower() on every species on
 # every request.
-_SPECIES_LOWER_INDEX: Optional[List[Tuple[str, Any]]] = None
+_SPECIES_LOWER_INDEX: Optional[List[Tuple[str, frozenset, Any]]] = None
 
 # ── Location → species index — pre-computed once at first warm request ─────────
 # _species_present_at(sp, loc) is O(1) per call but it is called
@@ -1104,6 +1153,7 @@ def _get_loc_species_all() -> Dict[str, List]:
     if _LOC_SPECIES_ALL is None:
         from storage.species_loader import SPECIES_DB
         from locations import COASTAL_LOCATIONS
+
         _LOC_SPECIES_ALL = {
             loc["id"]: [s for s in SPECIES_DB if _species_present_at(s, loc)]
             for loc in COASTAL_LOCATIONS
@@ -1115,6 +1165,7 @@ def _get_all_species_names() -> list:
     global _SPECIES_NAMES_CACHE
     if _SPECIES_NAMES_CACHE is None:
         from storage.species_loader import SPECIES_DB
+
         _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
     return _SPECIES_NAMES_CACHE
 
@@ -1128,10 +1179,13 @@ def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
     global _SPECIES_LOWER_INDEX
     if _SPECIES_LOWER_INDEX is None:
         from storage.species_loader import SPECIES_DB
+
         _SPECIES_LOWER_INDEX = [
-            (s["name"].lower(),
-             frozenset(c.lower() for c in s.get("categories", [])),
-             s)
+            (
+                s["name"].lower(),
+                frozenset(c.lower() for c in s.get("categories", [])),
+                s,
+            )
             for s in SPECIES_DB
         ]
     return _SPECIES_LOWER_INDEX
@@ -1144,8 +1198,8 @@ def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
 # Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
 #        min_temp, max_temp)  — the complete set of params that affect output.
 _FMAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
-_FMAP_CACHE_TTL: int = 900   # 15 minutes — scores only change when the month rolls over
-_FMAP_CACHE_MAX: int = 128   # cap entries; each is ~50 KB serialised
+_FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month rolls over
+_FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
 
 
 def _fmap_cache_get(key: tuple) -> Optional[Dict[str, Any]]:
@@ -1185,8 +1239,8 @@ def fishing_map_data() -> Any:
     from locations import COASTAL_LOCATIONS
 
     # -- parse & sanitise params -----------------------------------------------
-    species_q  = request.args.get("species", "").strip()[:100].lower()
-    coast_q    = request.args.get("coast", "").strip()[:20].lower()
+    species_q = request.args.get("species", "").strip()[:100].lower()
+    coast_q = request.args.get("coast", "").strip()[:20].lower()
     category_q = request.args.get("category", "").strip()[:50].lower()
 
     # Client sends has_species=1 after the first fetch to skip the 895-name list
@@ -1194,14 +1248,14 @@ def fishing_map_data() -> Any:
     has_species_q = request.args.get("has_species", "0") == "1"
 
     # New extended filters
-    season_q    = request.args.get("season", "").strip()[:20].lower()
+    season_q = request.args.get("season", "").strip()[:20].lower()
     # valid values: spring | summer | fall | winter | ""
-    time_q      = request.args.get("time_of_day", "").strip()[:20].lower()
+    time_q = request.args.get("time_of_day", "").strip()[:20].lower()
     # valid values: dawn | morning | midday | evening | night | ""
-    tide_q      = request.args.get("tide_phase", "").strip()[:20].lower()
+    tide_q = request.args.get("tide_phase", "").strip()[:20].lower()
     # valid values: incoming | outgoing | high | low | ""
-    min_temp_q  = request.args.get("min_water_temp")
-    max_temp_q  = request.args.get("max_water_temp")
+    min_temp_q = request.args.get("min_water_temp")
+    max_temp_q = request.args.get("max_water_temp")
 
     _min_temp: Optional[float] = None
     _max_temp: Optional[float] = None
@@ -1224,7 +1278,7 @@ def fishing_map_data() -> Any:
     _SEASON_MONTHS = {
         "spring": [3, 4, 5],
         "summer": [6, 7, 8],
-        "fall":   [9, 10, 11],
+        "fall": [9, 10, 11],
         "winter": [12, 1, 2],
     }
     # When a season is supplied force the month selection to that season's
@@ -1237,15 +1291,23 @@ def fishing_map_data() -> Any:
     # Map time-of-day → preferred fishing "bonus" (used for scoring later)
     # Dawn/dusk/night species get a mild boost when those times are selected.
     _DAWN_DUSK_TIMES = {"dawn", "morning", "evening", "night"}
-    prefer_dawn_dusk = time_q in _DAWN_DUSK_TIMES
 
     # Tide phase is informational metadata returned in the response for the
     # frontend to display; the backend scores don't change by tide currently.
     include_tide_hint = tide_q in {"incoming", "outgoing", "high", "low"}
 
     # ── Cache check — return pre-built response dict if still fresh ───────────
-    _fmap_key = (species_q, coast_q, category_q, month, season_q,
-                 time_q, tide_q, _min_temp, _max_temp)
+    _fmap_key = (
+        species_q,
+        coast_q,
+        category_q,
+        month,
+        season_q,
+        time_q,
+        tide_q,
+        _min_temp,
+        _max_temp,
+    )
     _cached_response = _fmap_cache_get(_fmap_key)
     if _cached_response is not None:
         if has_species_q and _cached_response.get("species_names"):
@@ -1262,7 +1324,8 @@ def fishing_map_data() -> Any:
     # the lowercase name strings are pre-built once at first request.
     if species_q or category_q:
         filtered_species = [
-            s for (lname, lcats, s) in _get_species_lower_index()
+            s
+            for (lname, lcats, s) in _get_species_lower_index()
             if (not species_q or species_q in lname)
             and (not category_q or category_q in lcats)
         ]
@@ -1276,7 +1339,7 @@ def fishing_map_data() -> Any:
     # structures once:
     #   _cur_score[name]       → score for the current month (used in main loop)
     #   _all_scores[name][m]   → score for month m, 1-indexed (monthly summary)
-    _cur_score:  Dict[str, int]       = {}
+    _cur_score: Dict[str, int] = {}
     _all_scores: Dict[str, List[int]] = {}
     for _sp in filtered_species:
         _sn = _sp["name"]
@@ -1292,12 +1355,15 @@ def fishing_map_data() -> Any:
     #   • Filtered   → intersect pre-built list with filtered_names frozenset
     #                  (O(loc × species_at_loc) instead of O(loc × all_species))
     def _activity_label(sc: int) -> str:
-        if sc >= 100: return "peak"
-        if sc >= 65:  return "good"
-        if sc >= 30:  return "fair"
+        if sc >= 100:
+            return "peak"
+        if sc >= 65:
+            return "good"
+        if sc >= 30:
+            return "fair"
         return "slow"
 
-    _all_loc_sp = _get_loc_species_all()          # pre-built; O(1)
+    _all_loc_sp = _get_loc_species_all()  # pre-built; O(1)
     _is_filtered = bool(species_q or category_q)
     if _is_filtered:
         _filtered_names: frozenset = frozenset(s["name"] for s in filtered_species)
@@ -1314,8 +1380,7 @@ def fishing_map_data() -> Any:
         # _species_present_at() calls at request time.
         _pre = _all_loc_sp.get(loc["id"], [])
         loc_species = (
-            [s for s in _pre if s["name"] in _filtered_names]
-            if _is_filtered else _pre
+            [s for s in _pre if s["name"] in _filtered_names] if _is_filtered else _pre
         )
         _loc_sp_map[loc["id"]] = loc_species
 
@@ -1324,8 +1389,7 @@ def fishing_map_data() -> Any:
             activity = "none"
             top_species: list = []
         else:
-            scored = sorted(loc_species,
-                            key=lambda s: -_cur_score[s["name"]])
+            scored = sorted(loc_species, key=lambda s: -_cur_score[s["name"]])
             best_score = _cur_score[scored[0]["name"]]
             score = best_score
             activity = _activity_label(score)
@@ -1338,20 +1402,22 @@ def fishing_map_data() -> Any:
                 sp_score = _cur_score[sp["name"]]
                 if sp_score < 30 and len(rich) >= 3:
                     break
-                rich.append({
-                    "name":             sp["name"],
-                    "bait":             sp.get("bait", ""),
-                    "rig":              sp.get("rig", ""),
-                    "lures":            sp.get("lures", ""),
-                    "activity":         _activity_label(sp_score),
-                    "peak_months":      sp.get("peak_months", []),
-                    "good_months":      sp.get("good_months", []),
-                    # Extra fields used by AI reasoning
-                    "temp_ideal_low":   sp.get("temp_ideal_low"),
-                    "temp_ideal_high":  sp.get("temp_ideal_high"),
-                    "explanation_cold": sp.get("explanation_cold", "")[:160],
-                    "explanation_warm": sp.get("explanation_warm", "")[:160],
-                })
+                rich.append(
+                    {
+                        "name": sp["name"],
+                        "bait": sp.get("bait", ""),
+                        "rig": sp.get("rig", ""),
+                        "lures": sp.get("lures", ""),
+                        "activity": _activity_label(sp_score),
+                        "peak_months": sp.get("peak_months", []),
+                        "good_months": sp.get("good_months", []),
+                        # Extra fields used by AI reasoning
+                        "temp_ideal_low": sp.get("temp_ideal_low"),
+                        "temp_ideal_high": sp.get("temp_ideal_high"),
+                        "explanation_cold": sp.get("explanation_cold", "")[:160],
+                        "explanation_warm": sp.get("explanation_warm", "")[:160],
+                    }
+                )
             top_species = rich[:6]
 
         # Water temperature and temperature-weighted AI score
@@ -1362,7 +1428,9 @@ def fishing_map_data() -> Any:
         )
         if water_temp is not None and loc_species and score > 0:
             best_sp = scored[0]  # already sorted by _cur_score above
-            ai_score: float = _cur_score[best_sp["name"]] * _temp_factor(best_sp, water_temp)
+            ai_score: float = _cur_score[best_sp["name"]] * _temp_factor(
+                best_sp, water_temp
+            )
         else:
             ai_score = float(score)
 
@@ -1372,22 +1440,24 @@ def fishing_map_data() -> Any:
         if _max_temp is not None and water_temp is not None and water_temp > _max_temp:
             continue
 
-        results.append({
-            "id":           loc["id"],
-            "name":         loc["name"],
-            "state":        loc["state"],
-            "lat":          loc["lat"],
-            "lng":          loc["lng"],
-            "coast":        loc_coast,
-            "score":        score,
-            "ai_score":     round(ai_score, 1),
-            "water_temp":   water_temp,
-            "activity":     activity,
-            "top_species":  top_species,
-            # extended filter metadata echoed back
-            "tide_hint":    tide_q if include_tide_hint else None,
-            "time_hint":    time_q or None,
-        })
+        results.append(
+            {
+                "id": loc["id"],
+                "name": loc["name"],
+                "state": loc["state"],
+                "lat": loc["lat"],
+                "lng": loc["lng"],
+                "coast": loc_coast,
+                "score": score,
+                "ai_score": round(ai_score, 1),
+                "water_temp": water_temp,
+                "activity": activity,
+                "top_species": top_species,
+                # extended filter metadata echoed back
+                "tide_hint": tide_q if include_tide_hint else None,
+                "time_hint": time_q or None,
+            }
+        )
 
     # Mark top 5 locations as AI picks with generated reasoning text
     _ai_ranked = sorted(
@@ -1412,10 +1482,15 @@ def fishing_map_data() -> Any:
             if not loc_sp:
                 continue
             best = max(_all_scores[s["name"]][m] for s in loc_sp)
-            if best >= 100:   peak_c += 1
-            elif best >= 65:  good_c += 1
-            elif best >= 30:  fair_c += 1
-        monthly_summary.append({"month": m, "peak": peak_c, "good": good_c, "fair": fair_c})
+            if best >= 100:
+                peak_c += 1
+            elif best >= 65:
+                good_c += 1
+            elif best >= 30:
+                fair_c += 1
+        monthly_summary.append(
+            {"month": m, "peak": peak_c, "good": good_c, "fair": fair_c}
+        )
 
     # Trending species: in peak season this month, ranked by number of active locations.
     # frozenset lookup is O(1) vs re-calling _species_present_at O(n) per check.
@@ -1430,7 +1505,8 @@ def fishing_map_data() -> Any:
             if month not in sp.get("peak_months", []):
                 continue
             cnt = sum(
-                1 for loc in results
+                1
+                for loc in results
                 if loc["activity"] != "none"
                 and sp["name"] in _loc_sp_names.get(loc["id"], frozenset())
             )
@@ -1444,11 +1520,11 @@ def fishing_map_data() -> Any:
     if species_q and filtered_species:
         sp0 = filtered_species[0]
         species_meta = {
-            "name":   sp0["name"],
-            "bait":   sp0.get("bait",  ""),
-            "rig":    sp0.get("rig",   ""),
-            "lures":  sp0.get("lures", ""),
-            "coast":  sp0.get("coast", ""),
+            "name": sp0["name"],
+            "bait": sp0.get("bait", ""),
+            "rig": sp0.get("rig", ""),
+            "lures": sp0.get("lures", ""),
+            "coast": sp0.get("coast", ""),
         }
 
     # Community catch counts — overlay how many recent community pins are near
@@ -1481,13 +1557,11 @@ def fishing_map_data() -> Any:
 
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
 
-_STRUCTURE_CACHE: dict = {}    # {cache_key: {"ts": float, "data": list}}
-_STRUCTURE_CACHE_TTL = 3600    # 1 hour — wrecks don't move
-_STRUCTURE_CACHE_MAX = 128     # ~0.02° keys; cap so long-running servers don't leak
+_STRUCTURE_CACHE: dict = {}  # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE_TTL = 3600  # 1 hour — wrecks don't move
+_STRUCTURE_CACHE_MAX = 128  # ~0.02° keys; cap so long-running servers don't leak
 
-_NOAA_ENC_BASE = (
-    "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
-)
+_NOAA_ENC_BASE = "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
 
 
 def _fetch_noaa_structures(
@@ -1496,7 +1570,9 @@ def _fetch_noaa_structures(
     """Fetch wrecks from NOAA ENC Direct within bbox. Results are cached for 1 h."""
     import requests as _req
 
-    cache_key = f"{round(sw_lat,2)},{round(sw_lng,2)},{round(ne_lat,2)},{round(ne_lng,2)}"
+    cache_key = (
+        f"{round(sw_lat, 2)},{round(sw_lng, 2)},{round(ne_lat, 2)},{round(ne_lng, 2)}"
+    )
     cached = _STRUCTURE_CACHE.get(cache_key)
     if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
         return cached["data"]
@@ -1505,11 +1581,15 @@ def _fetch_noaa_structures(
         oldest = min(_STRUCTURE_CACHE, key=lambda k: _STRUCTURE_CACHE[k]["ts"])
         _STRUCTURE_CACHE.pop(oldest, None)
 
-    geometry_json = _json_mod.dumps({
-        "xmin": sw_lng, "ymin": sw_lat,
-        "xmax": ne_lng, "ymax": ne_lat,
-        "spatialReference": {"wkid": 4326},
-    })
+    geometry_json = _json_mod.dumps(
+        {
+            "xmin": sw_lng,
+            "ymin": sw_lat,
+            "xmax": ne_lng,
+            "ymax": ne_lat,
+            "spatialReference": {"wkid": 4326},
+        }
+    )
 
     base_params = {
         "f": "json",
@@ -1537,13 +1617,15 @@ def _fetch_noaa_structures(
                 if geom.get("x") is None or geom.get("y") is None:
                     continue
                 name = (attrs.get("WRECKNM") or "").strip() or "Unknown Wreck"
-                features.append({
-                    "type": "wreck",
-                    "name": name,
-                    "lat": geom["y"],
-                    "lng": geom["x"],
-                    "depth_m": attrs.get("VALSOU"),
-                })
+                features.append(
+                    {
+                        "type": "wreck",
+                        "name": name,
+                        "lat": geom["y"],
+                        "lng": geom["x"],
+                        "depth_m": attrs.get("VALSOU"),
+                    }
+                )
     except Exception:
         pass
 
@@ -1578,6 +1660,7 @@ def structure_spots() -> Any:
 
 # ── Community map catch endpoints ─────────────────────────────────────────────
 
+
 @bp.route("/api/map/catches", methods=["GET"])
 def map_catches_list() -> Any:
     """Return public catch pins in a bounding box (+ viewer's own private ones).
@@ -1608,7 +1691,10 @@ def map_catches_list() -> Any:
     viewer_user_id = g.user["id"] if g.get("user") else None
 
     catches = get_map_catches_in_bbox(
-        sw_lat, sw_lng, ne_lat, ne_lng,
+        sw_lat,
+        sw_lng,
+        ne_lat,
+        ne_lng,
         viewer_user_id=viewer_user_id,
         species_filter=species_filter,
         days_back=days_back,
@@ -1652,9 +1738,9 @@ def map_catches_create() -> Any:
     if not species:
         return jsonify({"error": "species is required"}), 400
 
-    title     = str(data.get("title", "")).strip()[:120]
-    bait      = str(data.get("bait", "")).strip()[:80]
-    notes     = str(data.get("notes", "")).strip()[:500]
+    title = str(data.get("title", "")).strip()[:120]
+    bait = str(data.get("bait", "")).strip()[:80]
+    notes = str(data.get("notes", "")).strip()[:500]
     is_public = bool(data.get("is_public", True))
     caught_at = str(data.get("caught_at", "")).strip()[:30] or None
 
@@ -1671,9 +1757,17 @@ def map_catches_create() -> Any:
         weight_lb = length_in = None
 
     catch_id = add_map_catch(
-        g.user["id"], lat, lng, species,
-        title=title, bait=bait, weight_lb=weight_lb, length_in=length_in,
-        notes=notes, image_url=image_url, is_public=is_public,
+        g.user["id"],
+        lat,
+        lng,
+        species,
+        title=title,
+        bait=bait,
+        weight_lb=weight_lb,
+        length_in=length_in,
+        notes=notes,
+        image_url=image_url,
+        is_public=is_public,
         caught_at=caught_at,
     )
     return jsonify({"id": catch_id}), 201
@@ -1793,7 +1887,7 @@ def map_community_hotspots() -> Any:
     return jsonify({"hotspots": hotspots, "days_back": days_back})
 
 
-_STRUCT_MAX_LAT_SPAN = 8.0   # degrees — wider than this and Overpass times out
+_STRUCT_MAX_LAT_SPAN = 8.0  # degrees — wider than this and Overpass times out
 _STRUCT_MAX_LNG_SPAN = 12.0  # degrees — matches /api/structure-spots guard
 
 
@@ -1823,30 +1917,38 @@ def map_structures() -> Any:
     # ── Parse & validate bbox ─────────────────────────────────────────────────
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope(
-            "invalid_params",
-            "south, west, north, east query parameters are required floats",
-        )), 400
+        return jsonify(
+            error_envelope(
+                "invalid_params",
+                "south, west, north, east query parameters are required floats",
+            )
+        ), 400
 
     if not (-90.0 <= south <= 90.0 and -90.0 <= north <= 90.0):
-        return jsonify(error_envelope(
-            "invalid_params",
-            "Latitude values must be between -90 and 90",
-        )), 400
+        return jsonify(
+            error_envelope(
+                "invalid_params",
+                "Latitude values must be between -90 and 90",
+            )
+        ), 400
     if not (-180.0 <= west <= 180.0 and -180.0 <= east <= 180.0):
-        return jsonify(error_envelope(
-            "invalid_params",
-            "Longitude values must be between -180 and 180",
-        )), 400
+        return jsonify(
+            error_envelope(
+                "invalid_params",
+                "Longitude values must be between -180 and 180",
+            )
+        ), 400
     if south >= north:
-        return jsonify(error_envelope(
-            "invalid_params",
-            "south must be less than north",
-        )), 400
+        return jsonify(
+            error_envelope(
+                "invalid_params",
+                "south must be less than north",
+            )
+        ), 400
 
     # ── Viewport size guard ───────────────────────────────────────────────────
     # Very large bboxes cause Overpass to time out and return too many features
@@ -1857,22 +1959,26 @@ def map_structures() -> Any:
 
     # ── Parse optional types filter ───────────────────────────────────────────
     active_types = None
-    types_param  = request.args.get("types", "").strip()
+    types_param = request.args.get("types", "").strip()
     if types_param:
         requested = {t.strip() for t in types_param.split(",") if t.strip()}
         active_types = requested & VALID_TYPES
         if not active_types:
-            return jsonify(error_envelope(
-                "invalid_params",
-                f"No valid types supplied. Valid types: {sorted(VALID_TYPES)}",
-            )), 400
+            return jsonify(
+                error_envelope(
+                    "invalid_params",
+                    f"No valid types supplied. Valid types: {sorted(VALID_TYPES)}",
+                )
+            ), 400
 
     structures = find_fish_structures(south, west, north, east, active_types)
 
     # Merge in admin-created custom markers that fall within the bbox.
     custom = [
-        m for m in get_custom_markers()
-        if south <= m["lat"] <= north and west <= m["lng"] <= east
+        m
+        for m in get_custom_markers()
+        if south <= m["lat"] <= north
+        and west <= m["lng"] <= east
         and (active_types is None or m["type"] in active_types)
     ]
     all_structures = structures + custom
@@ -1908,14 +2014,16 @@ def map_marine_warnings() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope(
-            "invalid_params",
-            "south, west, north, east query parameters are required floats",
-        )), 400
+        return jsonify(
+            error_envelope(
+                "invalid_params",
+                "south, west, north, east query parameters are required floats",
+            )
+        ), 400
 
     warnings = fetch_marine_warnings(south, west, north, east)
     return jsonify({"warnings": warnings, "count": len(warnings)})
@@ -1960,7 +2068,7 @@ def map_recent_storms() -> Any:
     """
     from services.arcgis_live_feeds import fetch_recent_storm_tracks
 
-    basin  = request.args.get("basin", "").strip().upper() or None
+    basin = request.args.get("basin", "").strip().upper() or None
     tracks = fetch_recent_storm_tracks(basin=basin)
     return jsonify({"tracks": tracks, "count": len(tracks)})
 
@@ -1987,7 +2095,9 @@ def weather_air_quality() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
 
     result = fetch_air_quality(lat, lng)
     return jsonify({"aqi": result})
@@ -2018,7 +2128,9 @@ def weather_wind_forecast() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
 
     periods = fetch_wind_forecast(lat, lng)
     return jsonify({"periods": periods, "count": len(periods)})
@@ -2046,11 +2158,13 @@ def map_sst_stations() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     stations = fetch_sst_stations(south, west, north, east)
     return jsonify({"stations": stations, "count": len(stations)})
@@ -2077,11 +2191,13 @@ def map_wildfires() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     fires = fetch_wildfire_incidents(south, west, north, east)
     return jsonify({"fires": fires, "count": len(fires)})
@@ -2109,11 +2225,13 @@ def map_smoke() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     polygons = fetch_smoke_forecast(south, west, north, east)
     return jsonify({"polygons": polygons, "count": len(polygons)})
@@ -2142,7 +2260,9 @@ def weather_precip_forecast() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required floats")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
 
     periods = fetch_precip_forecast(lat, lng)
     return jsonify({"periods": periods, "count": len(periods)})
@@ -2184,7 +2304,9 @@ def weather_temp_forecast() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required")
+        ), 400
 
     days = fetch_temp_forecast(lat, lng)
     return jsonify({"days": days})
@@ -2208,11 +2330,13 @@ def map_seismic() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     events = fetch_seismic_events(south, west, north, east)
     return jsonify({"events": events, "count": len(events)})
@@ -2237,7 +2361,9 @@ def weather_drought() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required")
+        ), 400
 
     result = fetch_drought(lat, lng)
     return jsonify({"drought": result})
@@ -2263,11 +2389,13 @@ def map_metar() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     stations = fetch_metar_stations(south, west, north, east)
     return jsonify({"stations": stations, "count": len(stations)})
@@ -2311,11 +2439,13 @@ def map_stream_gauges() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     gauges = fetch_stream_gauges(south, west, north, east)
     return jsonify({"gauges": gauges, "count": len(gauges)})
@@ -2339,11 +2469,13 @@ def map_storm_reports() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     reports = fetch_storm_reports(south, west, north, east)
     return jsonify({"reports": reports, "count": len(reports)})
@@ -2367,11 +2499,13 @@ def map_air_quality() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     stations = fetch_aqi_map(south, west, north, east)
     resp = jsonify({"stations": stations, "count": len(stations)})
@@ -2397,11 +2531,13 @@ def map_drought() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     polygons = fetch_drought_map(south, west, north, east)
     resp = jsonify({"polygons": polygons, "count": len(polygons)})
@@ -2428,11 +2564,13 @@ def map_precipitation() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     polygons = fetch_precipitation_map(south, west, north, east)
     resp = jsonify({"polygons": polygons, "count": len(polygons)})
@@ -2460,11 +2598,13 @@ def map_temperature() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     data = fetch_ndfd_temperature_map(south, west, north, east)
     resp = jsonify(data)
@@ -2492,11 +2632,13 @@ def map_buoys() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     buoys = fetch_ndbc_buoys(south, west, north, east)
     resp = jsonify({"buoys": buoys, "count": len(buoys)})
@@ -2522,11 +2664,13 @@ def map_hfradar() -> Any:
 
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, TypeError, ValueError):
-        return jsonify(error_envelope("invalid_params", "south, west, north, east required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
 
     vectors = fetch_hfradar_currents(south, west, north, east)
     resp = jsonify({"vectors": vectors, "count": len(vectors)})
@@ -2556,6 +2700,7 @@ def map_tropical_outlook() -> Any:
 
 # ── Admin: custom map marker CRUD ─────────────────────────────────────────────
 
+
 def _require_map_admin():
     """Return a 403 response if the current user is not an admin, else None."""
     if not g.user or not g.user.get("is_admin"):
@@ -2577,16 +2722,17 @@ def custom_markers_create() -> Any:
     if err:
         return err
     from storage.sqlite import create_custom_marker
+
     data = request.get_json(silent=True) or {}
     try:
-        lat  = float(data["lat"])
-        lng  = float(data["lng"])
+        lat = float(data["lat"])
+        lng = float(data["lng"])
     except (KeyError, TypeError, ValueError):
         return jsonify({"error": "lat and lng are required floats"}), 400
     if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
         return jsonify({"error": "lat/lng out of range"}), 400
-    name        = str(data.get("name", ""))[:120]
-    type_       = str(data.get("type", "fishing"))
+    name = str(data.get("name", ""))[:120]
+    type_ = str(data.get("type", "fishing"))
     description = str(data.get("description", ""))[:500]
     marker = create_custom_marker(lat, lng, name, type_, description, g.user["id"])
     return jsonify(marker), 201
@@ -2599,14 +2745,16 @@ def custom_markers_update(marker_id: int) -> Any:
     if err:
         return err
     from storage.sqlite import update_custom_marker
+
     data = request.get_json(silent=True) or {}
-    lat  = float(data["lat"])  if "lat"  in data else None
-    lng  = float(data["lng"])  if "lng"  in data else None
+    lat = float(data["lat"]) if "lat" in data else None
+    lng = float(data["lng"]) if "lng" in data else None
     name = str(data["name"])[:120] if "name" in data else None
     type_ = str(data.get("type")) if "type" in data else None
     description = str(data["description"])[:500] if "description" in data else None
-    updated = update_custom_marker(marker_id, lat=lat, lng=lng, name=name,
-                                   type_=type_, description=description)
+    updated = update_custom_marker(
+        marker_id, lat=lat, lng=lng, name=name, type_=type_, description=description
+    )
     if updated is None:
         return jsonify({"error": "Marker not found"}), 404
     return jsonify(updated)
@@ -2619,6 +2767,7 @@ def custom_markers_delete(marker_id: int) -> Any:
     if err:
         return err
     from storage.sqlite import delete_custom_marker
+
     ok = delete_custom_marker(marker_id)
     if not ok:
         return jsonify({"error": "Marker not found"}), 404

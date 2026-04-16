@@ -396,7 +396,11 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
         return "catch_and_release"
 
     # Explicit zero in bag_limit text (e.g. "0 — prohibited")
-    if bag_limit.startswith("0 ") or bag_limit.startswith("0—") or bag_limit.startswith("0 —"):
+    if (
+        bag_limit.startswith("0 ")
+        or bag_limit.startswith("0—")
+        or bag_limit.startswith("0 —")
+    ):
         return "catch_and_release"
 
     # ── Step 3: Restricted — conditional rules that require angler verification ─

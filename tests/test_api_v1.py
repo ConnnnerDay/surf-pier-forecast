@@ -428,7 +428,11 @@ def test_regulations_refresh_requires_auth(client):
 def test_regulations_refresh_allowed_when_authenticated(client, monkeypatch):
     """/api/v1/regulations/refresh succeeds for a logged-in user."""
     monkeypatch.setattr(
-        "web.api.invalidate_cache" if hasattr(__import__("web.api", fromlist=["invalidate_cache"]), "invalidate_cache") else "storage.reg_scraper.invalidate_cache",
+        "web.api.invalidate_cache"
+        if hasattr(
+            __import__("web.api", fromlist=["invalidate_cache"]), "invalidate_cache"
+        )
+        else "storage.reg_scraper.invalidate_cache",
         lambda state=None: 0,
         raising=False,
     )
@@ -462,18 +466,23 @@ def test_legacy_refresh_endpoint_is_rate_limited(client, monkeypatch):
     # Get a CSRF token from any page
     page = client.get("/setup")
     import re as _re
+
     m = _re.search(r'name="csrf_token" value="([^"]+)"', page.data.decode())
     assert m is not None
     token = m.group(1)
 
-    monkeypatch.setattr("web.api.enqueue_forecast_refresh", lambda loc_id, user_id=None: None)
+    monkeypatch.setattr(
+        "web.api.enqueue_forecast_refresh", lambda loc_id, user_id=None: None
+    )
 
     # Exhaust the rate limit
     for _ in range(auth_module._REFRESH_RATE_LIMIT_MAX_ATTEMPTS):
         client.post("/api/refresh", data={"csrf_token": token})
 
     # The next call should be silently redirected back to index (not refresh)
-    resp = client.post("/api/refresh", data={"csrf_token": token}, follow_redirects=False)
+    resp = client.post(
+        "/api/refresh", data={"csrf_token": token}, follow_redirects=False
+    )
     assert resp.status_code == 302
     assert "refreshing" not in resp.headers.get("Location", "")
 
@@ -481,6 +490,7 @@ def test_legacy_refresh_endpoint_is_rate_limited(client, monkeypatch):
 def test_forecast_query_location_id_is_bounded(client, monkeypatch):
     """location_id longer than 100 chars is silently truncated to avoid oversized DB keys."""
     from web.schemas import ForecastQuery
+
     long_id = "x" * 200
     q = ForecastQuery.from_request({"location_id": long_id})
     assert len(q.location_id) <= 100

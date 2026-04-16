@@ -82,33 +82,45 @@ class TestSpeciesMatchesProfile:
     # -- inshore_slam target ---------------------------------------------------
 
     def test_inshore_slam_includes_red_drum(self):
-        assert _species_matches_profile(
-            "Red drum (puppy drum)",
-            fishing_types=["surf", "inshore"],
-            targets=["inshore_slam"],
-        ) is True
+        assert (
+            _species_matches_profile(
+                "Red drum (puppy drum)",
+                fishing_types=["surf", "inshore"],
+                targets=["inshore_slam"],
+            )
+            is True
+        )
 
     def test_inshore_slam_includes_speckled_trout(self):
-        assert _species_matches_profile(
-            "Speckled trout (spotted seatrout)",
-            fishing_types=["inshore", "wade"],
-            targets=["inshore_slam"],
-        ) is True
+        assert (
+            _species_matches_profile(
+                "Speckled trout (spotted seatrout)",
+                fishing_types=["inshore", "wade"],
+                targets=["inshore_slam"],
+            )
+            is True
+        )
 
     def test_inshore_slam_includes_snook(self):
-        assert _species_matches_profile(
-            "Snook",
-            fishing_types=["inshore", "wade"],
-            targets=["inshore_slam"],
-        ) is True
+        assert (
+            _species_matches_profile(
+                "Snook",
+                fishing_types=["inshore", "wade"],
+                targets=["inshore_slam"],
+            )
+            is True
+        )
 
     def test_inshore_slam_excludes_offshore_species(self):
         # Mahi is not an inshore slam species
-        assert _species_matches_profile(
-            "Mahi-mahi (dolphinfish)",
-            fishing_types=["offshore"],
-            targets=["inshore_slam"],
-        ) is False
+        assert (
+            _species_matches_profile(
+                "Mahi-mahi (dolphinfish)",
+                fishing_types=["offshore"],
+                targets=["inshore_slam"],
+            )
+            is False
+        )
 
     def test_inshore_slam_set_nonempty(self):
         assert len(_INSHORE_SLAM_SPECIES) >= 5
@@ -117,21 +129,27 @@ class TestSpeciesMatchesProfile:
 
     def test_anything_target_includes_all(self):
         # 'anything' should pass every species through regardless of other selections
-        assert _species_matches_profile(
-            "Mahi-mahi (dolphinfish)",
-            fishing_types=["offshore"],
-            targets=["anything"],
-        ) is True
+        assert (
+            _species_matches_profile(
+                "Mahi-mahi (dolphinfish)",
+                fishing_types=["offshore"],
+                targets=["anything"],
+            )
+            is True
+        )
 
     # -- combined targets ------------------------------------------------------
 
     def test_combined_inshore_slam_and_bottom(self):
         # Flounder is both bottom and inshore slam; should match either target
-        assert _species_matches_profile(
-            "Flounder (summer flounder)",
-            fishing_types=["inshore", "surf"],
-            targets=["inshore_slam", "bottom"],
-        ) is True
+        assert (
+            _species_matches_profile(
+                "Flounder (summer flounder)",
+                fishing_types=["inshore", "surf"],
+                targets=["inshore_slam", "bottom"],
+            )
+            is True
+        )
 
 
 class TestBuildNaturalBaitChart:

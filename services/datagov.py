@@ -44,8 +44,8 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process result cache ───────────────────────────────────────────────────
 _CACHE: Dict[tuple, Dict[str, Any]] = {}
-_CACHE_TTL: int = 7200       # 2 hours — water quality changes slowly
-_CACHE_TTL_FAIL: int = 300   # 5 min — retry failed queries sooner
+_CACHE_TTL: int = 7200  # 2 hours — water quality changes slowly
+_CACHE_TTL_FAIL: int = 300  # 5 min — retry failed queries sooner
 _CACHE_MAX: int = 256
 
 # ── Water Quality Portal base URL ─────────────────────────────────────────────
@@ -63,13 +63,14 @@ _CHARACTERISTICS = [
     "Turbidity",
     "Chlorophyll a",
     "Fecal Coliform",
-    "Enterococcus",    # beach closure indicator
+    "Enterococcus",  # beach closure indicator
 ]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def fetch_water_quality(
     lat: float,
@@ -107,7 +108,10 @@ def fetch_water_quality(
 
     # Build start date
     from datetime import datetime, timezone, timedelta
-    start_date = (datetime.now(timezone.utc) - timedelta(days=within_days)).strftime("%m-%d-%Y")
+
+    start_date = (datetime.now(timezone.utc) - timedelta(days=within_days)).strftime(
+        "%m-%d-%Y"
+    )
 
     params = {
         "bBox": bbox,
@@ -223,7 +227,9 @@ def fetch_beach_closures(state_code: str) -> List[Dict[str, Any]]:
         resp.raise_for_status()
         data = resp.json()
     except Exception as exc:  # noqa: BLE001
-        logger.warning("datagov: beach closure fetch failed for %s: %s", state_code, exc)
+        logger.warning(
+            "datagov: beach closure fetch failed for %s: %s", state_code, exc
+        )
         _cache_set(cache_key, closures, failed=True)
         return closures
 
@@ -233,13 +239,15 @@ def fetch_beach_closures(state_code: str) -> List[Dict[str, Any]]:
         name = props.get("MonitoringLocationName", "")
         if not name:
             continue
-        closures.append({
-            "beach_name": name,
-            "station_id": props.get("MonitoringLocationIdentifier", ""),
-            "county": props.get("CountyCode", ""),
-            "lat": _safe_float(props.get("LatitudeMeasure")),
-            "lng": _safe_float(props.get("LongitudeMeasure")),
-        })
+        closures.append(
+            {
+                "beach_name": name,
+                "station_id": props.get("MonitoringLocationIdentifier", ""),
+                "county": props.get("CountyCode", ""),
+                "lat": _safe_float(props.get("LatitudeMeasure")),
+                "lng": _safe_float(props.get("LongitudeMeasure")),
+            }
+        )
 
     _cache_set(cache_key, closures)
     return closures[:50]  # cap at 50
@@ -296,6 +304,7 @@ def get_water_quality_summary(lat: float, lng: float) -> Dict[str, Any]:
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _build_summary(stations: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Aggregate measurements across stations into a single summary dict."""
     accum: Dict[str, List[float]] = {}
@@ -339,6 +348,7 @@ def _c_to_f(c: Optional[float]) -> Optional[float]:
 
 def _now_iso() -> str:
     from datetime import datetime, timezone
+
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
@@ -361,14 +371,54 @@ def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
 
 # ── FIPS codes for US states (needed for WQP state queries) ──────────────────
 _STATE_FIPS: Dict[str, str] = {
-    "AL": "01", "AK": "02", "AZ": "04", "AR": "05", "CA": "06",
-    "CO": "08", "CT": "09", "DE": "10", "FL": "12", "GA": "13",
-    "HI": "15", "ID": "16", "IL": "17", "IN": "18", "IA": "19",
-    "KS": "20", "KY": "21", "LA": "22", "ME": "23", "MD": "24",
-    "MA": "25", "MI": "26", "MN": "27", "MS": "28", "MO": "29",
-    "MT": "30", "NE": "31", "NV": "32", "NH": "33", "NJ": "34",
-    "NM": "35", "NY": "36", "NC": "37", "ND": "38", "OH": "39",
-    "OK": "40", "OR": "41", "PA": "42", "RI": "44", "SC": "45",
-    "SD": "46", "TN": "47", "TX": "48", "UT": "49", "VT": "50",
-    "VA": "51", "WA": "53", "WV": "54", "WI": "55", "WY": "56",
+    "AL": "01",
+    "AK": "02",
+    "AZ": "04",
+    "AR": "05",
+    "CA": "06",
+    "CO": "08",
+    "CT": "09",
+    "DE": "10",
+    "FL": "12",
+    "GA": "13",
+    "HI": "15",
+    "ID": "16",
+    "IL": "17",
+    "IN": "18",
+    "IA": "19",
+    "KS": "20",
+    "KY": "21",
+    "LA": "22",
+    "ME": "23",
+    "MD": "24",
+    "MA": "25",
+    "MI": "26",
+    "MN": "27",
+    "MS": "28",
+    "MO": "29",
+    "MT": "30",
+    "NE": "31",
+    "NV": "32",
+    "NH": "33",
+    "NJ": "34",
+    "NM": "35",
+    "NY": "36",
+    "NC": "37",
+    "ND": "38",
+    "OH": "39",
+    "OK": "40",
+    "OR": "41",
+    "PA": "42",
+    "RI": "44",
+    "SC": "45",
+    "SD": "46",
+    "TN": "47",
+    "TX": "48",
+    "UT": "49",
+    "VT": "50",
+    "VA": "51",
+    "WA": "53",
+    "WV": "54",
+    "WI": "55",
+    "WY": "56",
 }

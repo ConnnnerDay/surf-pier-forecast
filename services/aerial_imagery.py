@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -45,7 +45,7 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: Dict[tuple, Dict[str, Any]] = {}
-_CACHE_TTL: int = 3600     # 1 hour — OAM catalog changes infrequently
+_CACHE_TTL: int = 3600  # 1 hour — OAM catalog changes infrequently
 _CACHE_TTL_FAIL: int = 300
 _CACHE_MAX: int = 128
 
@@ -75,6 +75,7 @@ _ESRI_LABELS_URL = (
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def get_aerial_tile_config() -> Dict[str, Any]:
     """Return Leaflet tile-layer configurations for aerial/satellite imagery.
@@ -122,7 +123,10 @@ def get_aerial_tile_config() -> Dict[str, Any]:
 
 
 def search_oam_imagery(
-    south: float, west: float, north: float, east: float,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
     limit: int = 10,
 ) -> List[Dict[str, Any]]:
     """Search OpenAerialMap for imagery covering a geographic bounding box.
@@ -142,8 +146,10 @@ def search_oam_imagery(
     """
     cache_key = (
         "oam",
-        round(south, 2), round(west, 2),
-        round(north, 2), round(east, 2),
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
         limit,
     )
     hit = _cache_get(cache_key)
@@ -241,6 +247,7 @@ def get_imagery_sources() -> Dict[str, Any]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _parse_oam_result(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Parse a single OAM catalog result into a simplified dict."""

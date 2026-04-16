@@ -663,7 +663,7 @@ def classify_conditions(
             elif wind_max >= 15:
                 score -= 10  # Significant: stay near shore
             elif wind_max >= 10:
-                score -= 4   # Noticeable: plan exit route
+                score -= 4  # Noticeable: plan exit route
             if wave_max >= 3:
                 score -= 10  # Rough chop for a kayak
             elif wave_max >= 2:
@@ -675,9 +675,9 @@ def classify_conditions(
             if wind_max >= 20:
                 score -= 12  # Near-impossible casting
             elif wind_max >= 15:
-                score -= 8   # Very difficult
+                score -= 8  # Very difficult
             elif wind_max >= 10:
-                score -= 3   # Challenging but manageable
+                score -= 3  # Challenging but manageable
             # Wave height at sea doesn't affect inshore flats/wade fly fishing;
             # partially cancel the generic wave penalty.
             if wave_max < 4:
@@ -687,7 +687,7 @@ def classify_conditions(
         # irrelevant.  Wind still matters for clarity and casting.
         if "wade" in ft and "surf" not in ft:
             if wave_max < 4:
-                score += 4   # Calm flats/bay conditions unaffected by offshore swell
+                score += 4  # Calm flats/bay conditions unaffected by offshore swell
             # Slight bonus for calm wind (ideal sight-fishing conditions)
             if wind_max <= 8:
                 score += 3
@@ -698,13 +698,13 @@ def classify_conditions(
             if wave_max >= 4:
                 score -= 12  # Unsafe on rocks
             elif wave_max >= 2:
-                score -= 5   # Slippery, caution required
+                score -= 5  # Slippery, caution required
 
         # Bridge / causeway — open-ocean wave height is mostly irrelevant;
         # tidal current (already captured via tide_state) is what matters.
         if "bridge" in ft:
             if wave_max < 4:
-                score += 4   # Ocean swell doesn't affect protected tidal channels
+                score += 4  # Ocean swell doesn't affect protected tidal channels
             # Extra bonus for a moving tide (current activates the bite)
             if tide_state in ("Rising", "Falling"):
                 score += 4
@@ -715,9 +715,9 @@ def classify_conditions(
             if wave_max >= 6:
                 score -= 10  # Dangerous / trip-cancellation territory
             elif wave_max >= 4:
-                score -= 5   # Rough — many passengers will struggle
+                score -= 5  # Rough — many passengers will struggle
             if wind_max >= 20:
-                score -= 6   # Gale-force additions beyond the base penalty
+                score -= 6  # Gale-force additions beyond the base penalty
 
         # Offshore (private boat, not charter) — similar to charter but anglers
         # are generally more experienced; slightly less aggressive penalty.
@@ -1518,12 +1518,20 @@ def build_gear_checklist(
         _add("Kayak", "VHF radio or waterproof phone case", "Emergency communication")
 
     if "jetty" in ft:
-        _add("Jetty", "Cleated or studded wading boots", "Grip on wet, algae-covered rocks")
+        _add(
+            "Jetty",
+            "Cleated or studded wading boots",
+            "Grip on wet, algae-covered rocks",
+        )
         _add("Jetty", "Wading staff or walking stick", "Balance on uneven rock surface")
         _add("Jetty", "Rod holder spike", "Free hands while watching the surf")
 
     if "wade" in ft:
-        _add("Wade", "Wading boots with felt or rubber soles", "Grip on slippery substrate")
+        _add(
+            "Wade",
+            "Wading boots with felt or rubber soles",
+            "Grip on slippery substrate",
+        )
         _add("Wade", "Waders or wetsuit (water temp dependent)", "")
         _add("Wade", "Wading staff", "Stability in current")
         _add("Wade", "Polarized sunglasses", "Essential for sight-fishing")
@@ -1540,13 +1548,25 @@ def build_gear_checklist(
         _add("Fly", "Line cleaner/conditioner", "Maintain floating line")
 
     if "bridge" in ft:
-        _add("Bridge", "Drop net or cast net for landing fish", "No beach to walk fish in")
+        _add(
+            "Bridge",
+            "Drop net or cast net for landing fish",
+            "No beach to walk fish in",
+        )
         _add("Bridge", "Heavy bucktail jigs or live bait rigs", "Current fishing")
         _add("Bridge", "Headlamp", "Night bridge fishing is highly productive")
-        _add("Bridge", "Reflective vest or light-colored clothing", "Visibility to vehicles")
+        _add(
+            "Bridge",
+            "Reflective vest or light-colored clothing",
+            "Visibility to vehicles",
+        )
 
     if "charter" in ft:
-        _add("Charter", "Motion sickness medication (taken night before)", "Prevention is key")
+        _add(
+            "Charter",
+            "Motion sickness medication (taken night before)",
+            "Prevention is key",
+        )
         _add("Charter", "Non-slip deck shoes", "Required on most charter boats")
         _add("Charter", "Waterproof sunscreen SPF 50+", "Offshore sun is intense")
         _add("Charter", "Polarized sunglasses", "Spot color changes and weed lines")
@@ -1800,8 +1820,12 @@ def build_safety_checklist(
         }
     )
 
-    max_wave = (wave_range[1] if isinstance(wave_range, tuple) else 3) if wave_range else 0
-    max_wind = (wind_range[1] if isinstance(wind_range, tuple) else 10) if wind_range else 0
+    max_wave = (
+        (wave_range[1] if isinstance(wave_range, tuple) else 3) if wave_range else 0
+    )
+    max_wind = (
+        (wind_range[1] if isinstance(wind_range, tuple) else 10) if wind_range else 0
+    )
 
     # --- Kayak-specific safety (highest priority) ---
     if "kayak" in ft:
@@ -2495,9 +2519,7 @@ def generate_forecast(
         _species_names = [sp["name"] for sp in species[:3]]
         with _cf.ThreadPoolExecutor(max_workers=2) as _geo_pool:
             _wq_fut = _geo_pool.submit(_get_wq, loc_lat, loc_lng)
-            _fao_fut = _geo_pool.submit(
-                _get_fao, loc_lat, loc_lng, _species_names
-            )
+            _fao_fut = _geo_pool.submit(_get_fao, loc_lat, loc_lng, _species_names)
             try:
                 _wq = _wq_fut.result(timeout=8)
             except Exception:
@@ -2514,7 +2536,9 @@ def generate_forecast(
             forecast["fao_enrichment"] = _fao
             sources_used.append("FAO GeoNetwork")
     except Exception:
-        logger.debug("Geospatial enrichment skipped (services not available)", exc_info=True)
+        logger.debug(
+            "Geospatial enrichment skipped (services not available)", exc_info=True
+        )
 
     # Propagate humidity into conditions so the template always has a single
     # reliable place to look, regardless of which data source provided it.
@@ -2759,22 +2783,50 @@ def generate_forecast(
 # Species name keywords → score boost per primary fishing goal.
 # Uses lowercase substring matching so partial names work across regions.
 _TROPHY_BOOSTS: Dict[str, int] = {
-    "tarpon": 14, "cobia": 12, "mahi-mahi": 12, "king mackerel": 10,
-    "striped bass": 10, "greater amberjack": 10, "shark": 10,
-    "black drum": 8, "red drum": 8, "red grouper": 8, "gag grouper": 8,
-    "red snapper": 8, "snook": 8, "tripletail": 8, "wahoo": 10,
-    "blackfin tuna": 10, "permit": 8,
+    "tarpon": 14,
+    "cobia": 12,
+    "mahi-mahi": 12,
+    "king mackerel": 10,
+    "striped bass": 10,
+    "greater amberjack": 10,
+    "shark": 10,
+    "black drum": 8,
+    "red drum": 8,
+    "red grouper": 8,
+    "gag grouper": 8,
+    "red snapper": 8,
+    "snook": 8,
+    "tripletail": 8,
+    "wahoo": 10,
+    "blackfin tuna": 10,
+    "permit": 8,
 }
 _ACTION_BOOSTS: Dict[str, int] = {
-    "bluefish": 10, "spanish mackerel": 8, "jack crevalle": 8,
-    "atlantic bonito": 8, "ladyfish": 8, "pompano": 7,
-    "whiting": 6, "spot": 5, "atlantic croaker": 5,
-    "barred surfperch": 6, "corbina": 6, "blue runner": 6,
+    "bluefish": 10,
+    "spanish mackerel": 8,
+    "jack crevalle": 8,
+    "atlantic bonito": 8,
+    "ladyfish": 8,
+    "pompano": 7,
+    "whiting": 6,
+    "spot": 5,
+    "atlantic croaker": 5,
+    "barred surfperch": 6,
+    "corbina": 6,
+    "blue runner": 6,
 }
 _RELAXING_BOOSTS: Dict[str, int] = {
-    "whiting": 8, "spot": 8, "atlantic croaker": 8, "sheepshead": 7,
-    "flounder": 6, "scup": 6, "pompano": 6, "speckled trout": 6,
-    "sheephead": 7, "white croaker": 7, "surfperch": 6,
+    "whiting": 8,
+    "spot": 8,
+    "atlantic croaker": 8,
+    "sheepshead": 7,
+    "flounder": 6,
+    "scup": 6,
+    "pompano": 6,
+    "speckled trout": 6,
+    "sheephead": 7,
+    "white croaker": 7,
+    "surfperch": 6,
 }
 _GOAL_BOOST_MAP: Dict[str, Dict[str, int]] = {
     "trophy": _TROPHY_BOOSTS,
@@ -2788,7 +2840,7 @@ _GOAL_BOOST_MAP: Dict[str, Dict[str, int]] = {
 # calm  = prefers flat water → downgrade marginal verdicts
 _TOLERANCE_SHIFT: Dict[str, Dict[str, str]] = {
     "rough": {"Poor": "Challenging", "Challenging": "Fair"},
-    "calm":  {"Fair": "Challenging", "Challenging": "Poor"},
+    "calm": {"Fair": "Challenging", "Challenging": "Poor"},
 }
 
 
@@ -2947,7 +2999,9 @@ def personalize_forecast(
         for rig in forecast["rig_recommendations"]:
             hook = rig.get("hook", "").lower()
             if "circle" not in hook and "barbless" not in hook:
-                rig["cr_tip"] = "Circle hook recommended — easier releases with less injury"
+                rig["cr_tip"] = (
+                    "Circle hook recommended — easier releases with less injury"
+                )
     forecast["bait_rankings"] = build_bait_ranking(species, month)
     forecast["lure_recommendations"] = build_lure_recommendations(species, month)
     forecast["calendar"] = build_species_calendar(
@@ -3046,10 +3100,9 @@ def personalize_forecast(
     # "calm" anglers see a one-step downgrade so they know today may be above
     # their threshold even if conditions are technically "Fair".
     if condition_tolerance:
-        ref_verdict = (
-            forecast.get("conditions", {}).get("verdict_for_type")
-            or forecast.get("conditions", {}).get("verdict", "")
-        )
+        ref_verdict = forecast.get("conditions", {}).get(
+            "verdict_for_type"
+        ) or forecast.get("conditions", {}).get("verdict", "")
         angler_verdict = _TOLERANCE_SHIFT.get(condition_tolerance, {}).get(
             ref_verdict, ref_verdict
         )
@@ -3222,11 +3275,11 @@ def build_best_times(
     # they'd have to skip (e.g. a 3 AM solunar major for a morning-only angler).
     if preferred_times:
         _PREF_HOUR_RANGES = {
-            "dawn":      (3.5, 7.0),
-            "morning":   (7.0, 12.0),
+            "dawn": (3.5, 7.0),
+            "morning": (7.0, 12.0),
             "afternoon": (12.0, 17.0),
-            "evening":   (17.0, 21.0),
-            "night":     (21.0, 27.5),  # spans midnight; check mid >= 21 or mid < 3.5
+            "evening": (17.0, 21.0),
+            "night": (21.0, 27.5),  # spans midnight; check mid >= 21 or mid < 3.5
         }
         for w in windows:
             mid = (w["start_h"] + w["end_h"]) / 2.0
@@ -3245,7 +3298,10 @@ def build_best_times(
     # phase (between Low→High or High→Low respectively) based on tide schedule.
     if tide_preference and tide_preference != "any":
         tides_for_pref = forecast.get("tides", [])
-        sorted_tides = sorted(tides_for_pref, key=lambda t: t.get("hour", _parse_time_str(t.get("time", "0:00"))))
+        sorted_tides = sorted(
+            tides_for_pref,
+            key=lambda t: t.get("hour", _parse_time_str(t.get("time", "0:00"))),
+        )
         for w in windows:
             mid = (w["start_h"] + w["end_h"]) / 2.0
             if tide_preference == "high":
@@ -3428,16 +3484,56 @@ def build_activity_timeline(
     peak_level = max(levels) if levels else 0
 
     labels_12h = [
-        "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM",
-        "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
-        "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
-        "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
+        "12 AM",
+        "1 AM",
+        "2 AM",
+        "3 AM",
+        "4 AM",
+        "5 AM",
+        "6 AM",
+        "7 AM",
+        "8 AM",
+        "9 AM",
+        "10 AM",
+        "11 AM",
+        "12 PM",
+        "1 PM",
+        "2 PM",
+        "3 PM",
+        "4 PM",
+        "5 PM",
+        "6 PM",
+        "7 PM",
+        "8 PM",
+        "9 PM",
+        "10 PM",
+        "11 PM",
     ]
     short_labels = [
-        "12a", "1a", "2a", "3a", "4a", "5a",
-        "6a", "7a", "8a", "9a", "10a", "11a",
-        "12p", "1p", "2p", "3p", "4p", "5p",
-        "6p", "7p", "8p", "9p", "10p", "11p",
+        "12a",
+        "1a",
+        "2a",
+        "3a",
+        "4a",
+        "5a",
+        "6a",
+        "7a",
+        "8a",
+        "9a",
+        "10a",
+        "11a",
+        "12p",
+        "1p",
+        "2p",
+        "3p",
+        "4p",
+        "5p",
+        "6p",
+        "7p",
+        "8p",
+        "9p",
+        "10p",
+        "11p",
     ]
 
     timeline = []
@@ -3542,7 +3638,9 @@ def build_trip_setup(
         wants_lures = wants_bait = True
 
     # ── Pick working species (Hot/Active, up to 3) ────────────────────────
-    working = [s for s in species_list[:6] if s.get("activity") in ("Hot", "Active")][:3]
+    working = [s for s in species_list[:6] if s.get("activity") in ("Hot", "Active")][
+        :3
+    ]
     if not working:
         working = species_list[:2]
 
@@ -3570,7 +3668,6 @@ def build_trip_setup(
     warm_water = water_temp is not None and water_temp > 72
 
     # ── Sunrise/sunset for topwater window detection ───────────────────────
-    ss_str: str = cond.get("sunrise_sunset") or ""
     now_hour = datetime.now().hour
     is_low_light = now_hour < 8 or now_hour >= 18
 
@@ -3599,21 +3696,40 @@ def build_trip_setup(
     if wants_lures and raw_lures:
         lure_picks = raw_lures[:4]
         # Prepend topwater if conditions favour it
-        if is_low_light and warm_water and not any("topwater" in l.lower() for l in lure_picks):
+        if (
+            is_low_light
+            and warm_water
+            and not any("topwater" in lure.lower() for lure in lure_picks)
+        ):
             lure_picks = ["Topwater plugs (early/late)"] + lure_picks[:3]
         rows.append({"icon": "lure", "label": "Lures", "value": ", ".join(lure_picks)})
 
     # -- Lure color / action tip --
     if wants_lures:
         if murky:
-            rows.append({"icon": "color", "label": "Color/action",
-                         "value": "Chartreuse, white, or bright orange \u2014 murky water today"})
+            rows.append(
+                {
+                    "icon": "color",
+                    "label": "Color/action",
+                    "value": "Chartreuse, white, or bright orange \u2014 murky water today",
+                }
+            )
         elif cold_water:
-            rows.append({"icon": "color", "label": "Color/action",
-                         "value": "Natural colors, slow-roll or dead-stick \u2014 cold water slows metabolism"})
+            rows.append(
+                {
+                    "icon": "color",
+                    "label": "Color/action",
+                    "value": "Natural colors, slow-roll or dead-stick \u2014 cold water slows metabolism",
+                }
+            )
         elif warm_water and is_low_light:
-            rows.append({"icon": "color", "label": "Color/action",
-                         "value": "Dark silhouettes (black/purple) for low-light topwater"})
+            rows.append(
+                {
+                    "icon": "color",
+                    "label": "Color/action",
+                    "value": "Dark silhouettes (black/purple) for low-light topwater",
+                }
+            )
 
     # -- Bait suggestions --
     if wants_bait and raw_bait:
@@ -3637,45 +3753,105 @@ def build_trip_setup(
     ft = set(profile.get("fishing_types") or [])
     if "fly" in ft:
         if murky:
-            rows.append({"icon": "tip", "label": "Fly tip",
-                         "value": "Murky water — use large, dark Clouser or Deceiver patterns with rattle beads; fish sense vibration over sight"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Fly tip",
+                    "value": "Murky water — use large, dark Clouser or Deceiver patterns with rattle beads; fish sense vibration over sight",
+                }
+            )
         elif cold_water:
-            rows.append({"icon": "tip", "label": "Fly tip",
-                         "value": "Cold water — slow down your strip retrieve; a near-dead-drift crab or shrimp pattern often outfishes a fast retrieve"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Fly tip",
+                    "value": "Cold water — slow down your strip retrieve; a near-dead-drift crab or shrimp pattern often outfishes a fast retrieve",
+                }
+            )
         else:
-            rows.append({"icon": "tip", "label": "Fly tip",
-                         "value": "Lead fish by 3–6 feet; let the fly sink to eye level before starting your strip retrieve"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Fly tip",
+                    "value": "Lead fish by 3–6 feet; let the fly sink to eye level before starting your strip retrieve",
+                }
+            )
     if "wade" in ft:
         if murky:
-            rows.append({"icon": "tip", "label": "Wade tip",
-                         "value": "Low visibility — switch to scented soft plastics or live shrimp; rely on noise (rattles, popping cork) over sight-fishing"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Wade tip",
+                    "value": "Low visibility — switch to scented soft plastics or live shrimp; rely on noise (rattles, popping cork) over sight-fishing",
+                }
+            )
         else:
-            rows.append({"icon": "tip", "label": "Wade tip",
-                         "value": "Clear water sight-fishing — crouch low on approach, cast past the fish and bring the lure through the zone"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Wade tip",
+                    "value": "Clear water sight-fishing — crouch low on approach, cast past the fish and bring the lure through the zone",
+                }
+            )
     if "kayak" in ft:
-        rows.append({"icon": "tip", "label": "Kayak tip",
-                     "value": "Anchor upcurrent of your target structure and drift baits naturally into the strike zone rather than casting into the current"})
+        rows.append(
+            {
+                "icon": "tip",
+                "label": "Kayak tip",
+                "value": "Anchor upcurrent of your target structure and drift baits naturally into the strike zone rather than casting into the current",
+            }
+        )
     if "bridge" in ft:
         if tide_state == "rising":
-            rows.append({"icon": "tip", "label": "Bridge tip",
-                         "value": "Incoming tide — position on the upcurrent side; fish sweep bait through shadow lines under the bridge"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Bridge tip",
+                    "value": "Incoming tide — position on the upcurrent side; fish sweep bait through shadow lines under the bridge",
+                }
+            )
         elif tide_state == "falling":
-            rows.append({"icon": "tip", "label": "Bridge tip",
-                         "value": "Outgoing tide — position on the downcurrent side of pilings; fish face into current waiting for bait to come to them"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Bridge tip",
+                    "value": "Outgoing tide — position on the downcurrent side of pilings; fish face into current waiting for bait to come to them",
+                }
+            )
         else:
-            rows.append({"icon": "tip", "label": "Bridge tip",
-                         "value": "Fish the shadow lines where light meets darkness; snook and tarpon ambush prey along these edges after dark"})
+            rows.append(
+                {
+                    "icon": "tip",
+                    "label": "Bridge tip",
+                    "value": "Fish the shadow lines where light meets darkness; snook and tarpon ambush prey along these edges after dark",
+                }
+            )
     if "jetty" in ft:
-        rows.append({"icon": "tip", "label": "Jetty tip",
-                     "value": "Work the tip of the jetty on an incoming tide for the best mix of species; predators stage here to intercept bait flushed out of the inlet"})
+        rows.append(
+            {
+                "icon": "tip",
+                "label": "Jetty tip",
+                "value": "Work the tip of the jetty on an incoming tide for the best mix of species; predators stage here to intercept bait flushed out of the inlet",
+            }
+        )
 
     # -- Conditions-driven tackle tip --
     if tide_state == "rising":
-        rows.append({"icon": "tip", "label": "Tide tip",
-                     "value": "Incoming tide \u2014 work bait close to the wash; predators follow the surge"})
+        rows.append(
+            {
+                "icon": "tip",
+                "label": "Tide tip",
+                "value": "Incoming tide \u2014 work bait close to the wash; predators follow the surge",
+            }
+        )
     elif tide_state == "falling":
-        rows.append({"icon": "tip", "label": "Tide tip",
-                     "value": "Falling tide \u2014 focus on deeper holes and channels as water drains"})
+        rows.append(
+            {
+                "icon": "tip",
+                "label": "Tide tip",
+                "value": "Falling tide \u2014 focus on deeper holes and channels as water drains",
+            }
+        )
 
     # -- Species tip --
     for sp in working:

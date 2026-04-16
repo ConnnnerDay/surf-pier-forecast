@@ -46,13 +46,13 @@ logger = logging.getLogger(__name__)
 # EPSG:3857 endpoint.  The TMS path pattern supports standard XYZ tile addressing.
 
 _GIBS_WMTS_BASE = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best"
-_GIBS_WMS_BASE  = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
+_GIBS_WMS_BASE = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
 
 # GIBS attribution — required by NASA usage guidelines
 _GIBS_ATTRIB = (
-    'Imagery provided by services from the Global Imagery Browse Services (GIBS), '
-    'operated by the NASA/GSFC/Earth Science Data and Information System (ESDIS) '
-    'with funding provided by NASA/HQ.'
+    "Imagery provided by services from the Global Imagery Browse Services (GIBS), "
+    "operated by the NASA/GSFC/Earth Science Data and Information System (ESDIS) "
+    "with funding provided by NASA/HQ."
 )
 
 
@@ -220,6 +220,7 @@ _LAYERS: Dict[str, Dict[str, Any]] = {
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def get_gibs_layers(date: Optional[str] = None) -> Dict[str, Any]:
     """Return all GIBS layer descriptors with Leaflet-ready tile URLs.
 
@@ -241,24 +242,26 @@ def get_gibs_layers(date: Optional[str] = None) -> Dict[str, Any]:
     layers: List[Dict[str, Any]] = []
     for layer_id, meta in _LAYERS.items():
         url = _gibs_url(layer_id, effective_date)
-        layers.append({
-            "id": layer_id,
-            "label": meta["label"],
-            "description": meta.get("description", ""),
-            "category": meta.get("category", "other"),
-            "url": url,
-            "options": {
-                "attribution": _GIBS_ATTRIB,
-                "maxZoom": meta.get("max_zoom", 9),
-                "opacity": meta.get("opacity", 1.0),
-                "tileSize": 256,
-            },
-            "update_freq": meta.get("update_freq", "unknown"),
-            "native_res_km": meta.get("native_res_km"),
-            "units": meta.get("units"),
-            "fishing_relevance": meta.get("fishing_relevance"),
-            "has_time": meta.get("has_time", True),
-        })
+        layers.append(
+            {
+                "id": layer_id,
+                "label": meta["label"],
+                "description": meta.get("description", ""),
+                "category": meta.get("category", "other"),
+                "url": url,
+                "options": {
+                    "attribution": _GIBS_ATTRIB,
+                    "maxZoom": meta.get("max_zoom", 9),
+                    "opacity": meta.get("opacity", 1.0),
+                    "tileSize": 256,
+                },
+                "update_freq": meta.get("update_freq", "unknown"),
+                "native_res_km": meta.get("native_res_km"),
+                "units": meta.get("units"),
+                "fishing_relevance": meta.get("fishing_relevance"),
+                "has_time": meta.get("has_time", True),
+            }
+        )
 
     return {
         "layers": layers,
@@ -338,4 +341,6 @@ def get_default_date_for_layer(layer_id: str) -> str:
     meta = _LAYERS.get(layer_id, {})
     latency_hours = meta.get("latency_hours", 24)
     delta_days = max(1, (latency_hours + 12) // 24)
-    return (datetime.now(timezone.utc) - timedelta(days=delta_days)).strftime("%Y-%m-%d")
+    return (datetime.now(timezone.utc) - timedelta(days=delta_days)).strftime(
+        "%Y-%m-%d"
+    )

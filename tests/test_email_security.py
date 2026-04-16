@@ -12,8 +12,14 @@ def test_sanitize_header_strips_cr_lf():
     """_sanitize_header must remove CR and LF to prevent SMTP header injection."""
     from services.email import _sanitize_header
 
-    assert _sanitize_header("user@example.com\r\nBcc: evil@example.com") == "user@example.comBcc: evil@example.com"
-    assert _sanitize_header("Subject: legit\r\nX-Injected: bad") == "Subject: legitX-Injected: bad"
+    assert (
+        _sanitize_header("user@example.com\r\nBcc: evil@example.com")
+        == "user@example.comBcc: evil@example.com"
+    )
+    assert (
+        _sanitize_header("Subject: legit\r\nX-Injected: bad")
+        == "Subject: legitX-Injected: bad"
+    )
     assert _sanitize_header("clean@example.com") == "clean@example.com"
 
 
@@ -27,16 +33,22 @@ def test_send_email_strips_header_injection_from_to(monkeypatch):
     class _FakeSMTP:
         def __init__(self, *a, **kw):
             pass
+
         def __enter__(self):
             return self
+
         def __exit__(self, *a):
             pass
+
         def ehlo(self):
             pass
+
         def starttls(self, **kw):
             pass
+
         def login(self, *a):
             pass
+
         def sendmail(self, from_addr, to_addrs, msg_str):
             captured["to"] = to_addrs
 
@@ -62,29 +74,34 @@ def test_send_email_strips_header_injection_from_to(monkeypatch):
 
 def test_send_email_strips_header_injection_from_subject(monkeypatch):
     """send_email must sanitize the subject before setting the MIME header."""
-    from email.mime.multipart import MIMEMultipart
     from services import email as email_module
 
     built_msgs: list = []
-    orig_send = email_module.send_email
 
     class _FakeSMTP:
         def __init__(self, *a, **kw):
             pass
+
         def __enter__(self):
             return self
+
         def __exit__(self, *a):
             pass
+
         def ehlo(self):
             pass
+
         def starttls(self, **kw):
             pass
+
         def login(self, *a):
             pass
+
         def sendmail(self, from_addr, to_addrs, msg_str):
             built_msgs.append(msg_str)
 
     import smtplib
+
     monkeypatch.setattr(smtplib, "SMTP", _FakeSMTP)
     monkeypatch.setattr(email_module, "_SMTP_HOST", "smtp.example.com")
     monkeypatch.setattr(email_module, "_SMTP_FROM", "noreply@example.com")

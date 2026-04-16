@@ -54,15 +54,16 @@ _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── File cache directory ──────────────────────────────────────────────────────
-_BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "natural_earth")
-_CACHE_TTL_DAYS = 30   # re-download Natural Earth data every 30 days
+_BASE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "data", "natural_earth"
+)
+_CACHE_TTL_DAYS = 30  # re-download Natural Earth data every 30 days
 
 # ── Natural Earth GeoJSON CDN (pre-built, no conversion required) ──────────────
 # These are maintained by the nvkelso/natural-earth-vector repository.
 # 110m resolution (~1:110 000 000) keeps file sizes small (< 300 KB each).
 _NE_GEOJSON_BASE = (
-    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/"
-    "master/geojson"
+    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson"
 )
 
 _NE_LAYERS: Dict[str, str] = {
@@ -87,6 +88,7 @@ _meta_lock = threading.Lock()
 # ── Optional geopandas import ─────────────────────────────────────────────────
 try:
     import geopandas as gpd  # type: ignore
+
     _HAS_GEOPANDAS = True
     logger.debug("natural_earth: geopandas %s available", gpd.__version__)
 except ImportError:
@@ -98,6 +100,7 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def get_coastlines_geojson(
     bbox: Optional[tuple[float, float, float, float]] = None,
@@ -230,6 +233,7 @@ def load_ne_shapefile(name: str, resolution: str = "10m"):
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _layer_path(layer_name: str) -> str:
     return os.path.join(_BASE_DIR, f"{layer_name}.geojson")
 
@@ -275,8 +279,11 @@ def _download_layer(layer_name: str) -> Optional[Dict[str, Any]]:
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(data, fh, separators=(",", ":"))
         os.chmod(path, 0o600)
-        logger.info("natural_earth: saved %s (%d features)", layer_name,
-                    len(data.get("features", [])))
+        logger.info(
+            "natural_earth: saved %s (%d features)",
+            layer_name,
+            len(data.get("features", [])),
+        )
     except OSError as exc:
         logger.error("natural_earth: could not save %s: %s", layer_name, exc)
 
@@ -313,20 +320,27 @@ def _clip_geojson(
         try:
             gdf = gpd.GeoDataFrame.from_features(geojson["features"])
             gdf = gdf.set_crs("EPSG:4326", allow_override=True)
-            clipped = gdf.cx[west:east, south:north]
+            clipped = gdf.cx[west:east, south:north]  # type: ignore[misc]
             return json.loads(clipped.to_json())
         except Exception as exc:  # noqa: BLE001
-            logger.debug("natural_earth: geopandas clip failed, using fallback: %s", exc)
+            logger.debug(
+                "natural_earth: geopandas clip failed, using fallback: %s", exc
+            )
 
     # Pure-Python bbox filter: include feature if any coordinate is within bbox
     features = geojson.get("features", [])
-    filtered = [f for f in features if _feature_intersects_bbox(f, south, west, north, east)]
+    filtered = [
+        f for f in features if _feature_intersects_bbox(f, south, west, north, east)
+    ]
     return {"type": "FeatureCollection", "features": filtered}
 
 
 def _feature_intersects_bbox(
     feature: Dict[str, Any],
-    south: float, west: float, north: float, east: float,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
 ) -> bool:
     """Check whether any coordinate of a GeoJSON feature falls inside bbox."""
     geom = feature.get("geometry") or {}

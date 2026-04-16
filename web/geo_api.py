@@ -63,20 +63,21 @@ logger = logging.getLogger(__name__)
 bp = Blueprint("geo_api", __name__)
 
 # ── Per-IP rate limiting (shared with existing pattern in web/api.py) ─────────
-_GEO_RATE_LIMIT_MAX = 60          # 60 requests per window
-_GEO_RATE_LIMIT_WINDOW_S = 60     # 1-minute window
+_GEO_RATE_LIMIT_MAX = 60  # 60 requests per window
+_GEO_RATE_LIMIT_WINDOW_S = 60  # 1-minute window
 _geo_rate_store: Dict[str, Tuple[float, int]] = {}
 _geo_rate_lock = threading.Lock()
 
 _TRUST_PROXY: bool = False  # set from os.environ in app.py if needed
 
 # ── bbox validation constants ─────────────────────────────────────────────────
-_BBOX_MAX_DEGREES = 10.0   # reject unreasonably large bboxes
+_BBOX_MAX_DEGREES = 10.0  # reject unreasonably large bboxes
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rate limiting helper
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _client_ip() -> str:
     if _TRUST_PROXY:
@@ -120,6 +121,7 @@ def _ok(data: Any):
 # Parameter helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _parse_latlon() -> Optional[Tuple[float, float]]:
     """Parse ?lat=&lng= from query string.  Returns None on bad input."""
     try:
@@ -139,9 +141,9 @@ def _parse_bbox() -> Optional[Tuple[float, float, float, float]]:
     """
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
         return None
 
@@ -157,6 +159,7 @@ def _parse_bbox() -> Optional[Tuple[float, float, float, float]]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Routes
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @bp.route("/api/v1/geo/layers")
 def geo_layers():
@@ -174,32 +177,34 @@ def geo_layers():
 
     date_param = request.args.get("date")
 
-    osm_config    = get_tile_config()
-    gibs_config   = get_gibs_layers(date=date_param)
+    osm_config = get_tile_config()
+    gibs_config = get_gibs_layers(date=date_param)
     aerial_config = get_aerial_tile_config()
-    esri_layers   = fetch_esri_layers_config()
+    esri_layers = fetch_esri_layers_config()
 
-    return _ok({
-        "base_layers": {
-            "osm": osm_config,
-        },
-        "overlay_layers": {
-            "nasa_gibs": gibs_config,
-            "aerial": aerial_config,
-        },
-        "data_layers": {
-            "esri": esri_layers,
-        },
-        "natural_earth": {
-            "description": "Natural Earth public-domain vector overlays",
-            "source_url": "https://www.naturalearthdata.com/",
-            "license": "Public Domain (CC0)",
-            "endpoints": {
-                "coastlines": "/api/v1/geo/coastlines",
-                "states": "/api/v1/geo/coastlines?layer=states",
+    return _ok(
+        {
+            "base_layers": {
+                "osm": osm_config,
             },
-        },
-    })
+            "overlay_layers": {
+                "nasa_gibs": gibs_config,
+                "aerial": aerial_config,
+            },
+            "data_layers": {
+                "esri": esri_layers,
+            },
+            "natural_earth": {
+                "description": "Natural Earth public-domain vector overlays",
+                "source_url": "https://www.naturalearthdata.com/",
+                "license": "Public Domain (CC0)",
+                "endpoints": {
+                    "coastlines": "/api/v1/geo/coastlines",
+                    "states": "/api/v1/geo/coastlines?layer=states",
+                },
+            },
+        }
+    )
 
 
 @bp.route("/api/v1/geo/environmental")
@@ -234,12 +239,14 @@ def geo_environmental():
     if state and len(state) == 2:
         beach_closures = fetch_beach_closures(state)[:10]
 
-    return _ok({
-        "water_quality": wq_summary,
-        "sst_tile": sst_config,
-        "beach_closures": beach_closures,
-        "location": {"lat": lat, "lng": lng},
-    })
+    return _ok(
+        {
+            "water_quality": wq_summary,
+            "sst_tile": sst_config,
+            "beach_closures": beach_closures,
+            "location": {"lat": lat, "lng": lng},
+        }
+    )
 
 
 @bp.route("/api/v1/geo/coastlines")
@@ -256,7 +263,7 @@ def geo_coastlines():
 
     bbox = _parse_bbox()  # None → return full global dataset (110m)
     layer = request.args.get("layer", "coastline")
-    res   = request.args.get("res", "110m")
+    res = request.args.get("res", "110m")
 
     if res not in ("110m", "10m"):
         return _err("res must be '110m' or '10m'")
@@ -377,7 +384,8 @@ def geo_hdx_fao():
     species_param = request.args.get("species", "")
     species_names = (
         [s.strip() for s in species_param.split(",") if s.strip()][:5]
-        if species_param else []
+        if species_param
+        else []
     )
 
     enrichment = get_hdx_fao_enrichment(lat, lng, species_names)

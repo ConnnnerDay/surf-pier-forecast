@@ -37,6 +37,7 @@ from storage.sqlite import (
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def app(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test_fmapv2.db")
@@ -88,9 +89,17 @@ class TestAddMapCatch:
     def test_catch_is_retrievable(self, app):
         with app.app_context():
             uid = _make_user("tester_get")
-            catch_id = add_map_catch(uid, 40.0, -73.0, "Bluefish", bait="live bunker",
-                                     weight_lb=4.5, length_in=22.0, notes="Good morning bite",
-                                     is_public=True)
+            catch_id = add_map_catch(
+                uid,
+                40.0,
+                -73.0,
+                "Bluefish",
+                bait="live bunker",
+                weight_lb=4.5,
+                length_in=22.0,
+                notes="Good morning bite",
+                is_public=True,
+            )
             row = get_map_catch(catch_id)
             assert row is not None
             assert row["species"] == "Bluefish"
@@ -111,8 +120,8 @@ class TestGetMapCatchesInBbox:
         with app.app_context():
             uid = _make_user("bbox_user")
             add_map_catch(uid, 40.0, -74.0, "Flounder", is_public=True)
-            add_map_catch(uid, 41.0, -74.5, "Striper",  is_public=True)
-            add_map_catch(uid, 50.0, -74.0, "Cod",      is_public=True)  # outside bbox
+            add_map_catch(uid, 41.0, -74.5, "Striper", is_public=True)
+            add_map_catch(uid, 50.0, -74.0, "Cod", is_public=True)  # outside bbox
             catches = get_map_catches_in_bbox(39.0, -75.0, 42.0, -73.0)
             species = {c["species"] for c in catches}
             assert "Flounder" in species
@@ -125,16 +134,18 @@ class TestGetMapCatchesInBbox:
             uid2 = _make_user("viewer")
             add_map_catch(uid1, 40.0, -74.0, "Tautog", is_public=False)
             # viewer_user_id = uid2 should not see uid1's private catch
-            catches = get_map_catches_in_bbox(39.0, -75.0, 42.0, -73.0,
-                                              viewer_user_id=uid2)
+            catches = get_map_catches_in_bbox(
+                39.0, -75.0, 42.0, -73.0, viewer_user_id=uid2
+            )
             assert not any(c["species"] == "Tautog" for c in catches)
 
     def test_owner_sees_own_private_catch(self, app):
         with app.app_context():
             uid = _make_user("priv_owner")
             add_map_catch(uid, 40.0, -74.0, "Weakfish", is_public=False)
-            catches = get_map_catches_in_bbox(39.0, -75.0, 42.0, -73.0,
-                                              viewer_user_id=uid)
+            catches = get_map_catches_in_bbox(
+                39.0, -75.0, 42.0, -73.0, viewer_user_id=uid
+            )
             assert any(c["species"] == "Weakfish" for c in catches)
 
     def test_species_filter(self, app):
@@ -142,8 +153,9 @@ class TestGetMapCatchesInBbox:
             uid = _make_user("sf_user")
             add_map_catch(uid, 40.0, -74.0, "Striped bass")
             add_map_catch(uid, 40.0, -74.0, "Bluefish")
-            catches = get_map_catches_in_bbox(39.0, -75.0, 42.0, -73.0,
-                                              species_filter="striped")
+            catches = get_map_catches_in_bbox(
+                39.0, -75.0, 42.0, -73.0, species_filter="striped"
+            )
             assert all("striped" in c["species"].lower() for c in catches)
 
 
@@ -276,8 +288,15 @@ class TestMapCatchesAPI:
         _login(client, "poster")
         rv = client.post(
             "/api/map/catches",
-            data=json.dumps({"lat": 40.7, "lng": -74.0, "species": "Striped bass",
-                             "bait": "bunker", "weight_lb": 12.5}),
+            data=json.dumps(
+                {
+                    "lat": 40.7,
+                    "lng": -74.0,
+                    "species": "Striped bass",
+                    "bait": "bunker",
+                    "weight_lb": 12.5,
+                }
+            ),
             content_type="application/json",
         )
         assert rv.status_code == 201
@@ -320,7 +339,7 @@ class TestMapCatchDeleteAPI:
     def test_delete_other_catch_returns_404(self, app, client):
         with app.app_context():
             uid1 = _make_user("del_owner")
-            uid2 = _make_user("del_thief")
+            _make_user("del_thief")
             cid = add_map_catch(uid1, 40.0, -74.0, "Eel")
         _login(client, "del_thief")
         rv = client.delete(f"/api/map/catches/{cid}", content_type="application/json")
@@ -336,8 +355,9 @@ class TestMapCatchLikeAPI:
         with app.app_context():
             uid = _make_user("like_setup")
             cid = add_map_catch(uid, 40.0, -74.0, "Pompano")
-        rv = client.post(f"/api/map/catches/{cid}/like",
-                         content_type="application/json")
+        rv = client.post(
+            f"/api/map/catches/{cid}/like", content_type="application/json"
+        )
         assert rv.status_code == 401
 
     def test_like_returns_count(self, app, client):
@@ -346,8 +366,9 @@ class TestMapCatchLikeAPI:
             cid = add_map_catch(uid1, 40.0, -74.0, "Jack crevalle")
             _make_user("liker")
         _login(client, "liker")
-        rv = client.post(f"/api/map/catches/{cid}/like",
-                         content_type="application/json")
+        rv = client.post(
+            f"/api/map/catches/{cid}/like", content_type="application/json"
+        )
         assert rv.status_code == 200
         data = json.loads(rv.data)
         assert "liked" in data
@@ -360,10 +381,12 @@ class TestMapCatchLikeAPI:
             cid = add_map_catch(uid, 40.0, -74.0, "Kingfish2")
             _make_user("unliker")
         _login(client, "unliker")
-        client.post(f"/api/map/catches/{cid}/like",
-                    content_type="application/json")  # like
-        rv = client.post(f"/api/map/catches/{cid}/like",
-                         content_type="application/json")  # unlike
+        client.post(
+            f"/api/map/catches/{cid}/like", content_type="application/json"
+        )  # like
+        rv = client.post(
+            f"/api/map/catches/{cid}/like", content_type="application/json"
+        )  # unlike
         data = json.loads(rv.data)
         assert data["liked"] is False
         assert data["likes_count"] == 0
@@ -562,6 +585,7 @@ class TestFishingMapExtendedFilters:
         assert rv.status_code == 200
         data = json.loads(rv.data)
         import datetime
+
         assert data["month"] == datetime.date.today().month
 
     def test_trending_species_present(self, client):
@@ -590,13 +614,17 @@ class TestStructureSpotsAPI:
         assert rv.status_code == 400
 
     def test_valid_small_bbox(self, client):
-        rv = client.get("/api/structure-spots?sw_lat=40.0&sw_lng=-74.2&ne_lat=40.5&ne_lng=-73.7")
+        rv = client.get(
+            "/api/structure-spots?sw_lat=40.0&sw_lng=-74.2&ne_lat=40.5&ne_lng=-73.7"
+        )
         assert rv.status_code == 200
         data = json.loads(rv.data)
         assert "features" in data
 
     def test_oversized_bbox_returns_zoom_required(self, client):
-        rv = client.get("/api/structure-spots?sw_lat=20&sw_lng=-100&ne_lat=45&ne_lng=-60")
+        rv = client.get(
+            "/api/structure-spots?sw_lat=20&sw_lng=-100&ne_lat=45&ne_lng=-60"
+        )
         assert rv.status_code == 200
         data = json.loads(rv.data)
         assert data.get("zoom_required") is True
@@ -611,8 +639,9 @@ class TestMapCatchTitleAndImage:
     def test_title_stored_and_retrieved(self, app):
         with app.app_context():
             uid = _make_user("title_user")
-            cid = add_map_catch(uid, 40.0, -74.0, "Striped bass",
-                                title="Monster striper at dawn")
+            cid = add_map_catch(
+                uid, 40.0, -74.0, "Striped bass", title="Monster striper at dawn"
+            )
             row = get_map_catch(cid)
             assert row is not None
             assert row["title"] == "Monster striper at dawn"
@@ -628,8 +657,9 @@ class TestMapCatchTitleAndImage:
     def test_image_url_stored(self, app):
         with app.app_context():
             uid = _make_user("img_user")
-            cid = add_map_catch(uid, 40.0, -74.0, "Flounder",
-                                image_url="https://example.com/fish.jpg")
+            cid = add_map_catch(
+                uid, 40.0, -74.0, "Flounder", image_url="https://example.com/fish.jpg"
+            )
             row = get_map_catch(cid)
             assert row["image_url"] == "https://example.com/fish.jpg"
 
@@ -650,9 +680,15 @@ class TestMapCatchTitleAndImage:
     def test_bbox_query_returns_title_and_image(self, app):
         with app.app_context():
             uid = _make_user("bbox_title")
-            add_map_catch(uid, 40.0, -74.0, "Bluefish",
-                          title="Nice bluefish", image_url="https://cdn.example.com/a.jpg",
-                          is_public=True)
+            add_map_catch(
+                uid,
+                40.0,
+                -74.0,
+                "Bluefish",
+                title="Nice bluefish",
+                image_url="https://cdn.example.com/a.jpg",
+                is_public=True,
+            )
             catches = get_map_catches_in_bbox(39.0, -75.0, 41.0, -73.0)
             assert catches
             c = catches[0]
@@ -662,10 +698,17 @@ class TestMapCatchTitleAndImage:
     def test_feed_returns_title_and_image(self, app):
         with app.app_context():
             uid = _make_user("feed_title")
-            add_map_catch(uid, 40.0, -74.0, "Bluefish",
-                          title="Bluefish blitz", image_url="https://img.example.com/b.jpg",
-                          is_public=True)
+            add_map_catch(
+                uid,
+                40.0,
+                -74.0,
+                "Bluefish",
+                title="Bluefish blitz",
+                image_url="https://img.example.com/b.jpg",
+                is_public=True,
+            )
             from storage.sqlite import get_recent_public_catches
+
             catches = get_recent_public_catches()
             assert catches
             c = catches[0]
@@ -679,13 +722,15 @@ class TestMapCatchCaughtAt:
     def test_custom_caught_at_stored(self, app):
         with app.app_context():
             uid = _make_user("time_user")
-            cid = add_map_catch(uid, 40.0, -74.0, "Striper",
-                                caught_at="2024-06-15 07:30:00")
+            cid = add_map_catch(
+                uid, 40.0, -74.0, "Striper", caught_at="2024-06-15 07:30:00"
+            )
             row = get_map_catch(cid)
             assert "2024-06-15" in row["caught_at"]
 
     def test_default_caught_at_is_recent(self, app):
         import datetime
+
         with app.app_context():
             uid = _make_user("time_default")
             cid = add_map_catch(uid, 40.0, -74.0, "Flounder")
@@ -704,11 +749,14 @@ class TestCatchCreateAPINewFields:
         _login(client)
         rv = client.post(
             "/api/map/catches",
-            data=json.dumps({
-                "lat": 40.0, "lng": -74.0,
-                "species": "Striped bass",
-                "title": "Awesome striper session",
-            }),
+            data=json.dumps(
+                {
+                    "lat": 40.0,
+                    "lng": -74.0,
+                    "species": "Striped bass",
+                    "title": "Awesome striper session",
+                }
+            ),
             content_type="application/json",
         )
         assert rv.status_code == 201
@@ -721,12 +769,15 @@ class TestCatchCreateAPINewFields:
         _login(client)
         rv = client.post(
             "/api/map/catches",
-            data=json.dumps({
-                "lat": 40.0, "lng": -74.0,
-                "species": "Bluefish",
-                "title": "Bluefish blitz",
-                "image_url": "https://photos.example.com/catch1.jpg",
-            }),
+            data=json.dumps(
+                {
+                    "lat": 40.0,
+                    "lng": -74.0,
+                    "species": "Bluefish",
+                    "title": "Bluefish blitz",
+                    "image_url": "https://photos.example.com/catch1.jpg",
+                }
+            ),
             content_type="application/json",
         )
         assert rv.status_code == 201
@@ -744,11 +795,14 @@ class TestCatchCreateAPINewFields:
         _login(client)
         rv = client.post(
             "/api/map/catches",
-            data=json.dumps({
-                "lat": 40.0, "lng": -74.0,
-                "species": "Flounder",
-                "image_url": "http://insecure.example.com/img.jpg",
-            }),
+            data=json.dumps(
+                {
+                    "lat": 40.0,
+                    "lng": -74.0,
+                    "species": "Flounder",
+                    "image_url": "http://insecure.example.com/img.jpg",
+                }
+            ),
             content_type="application/json",
         )
         assert rv.status_code == 201
@@ -765,11 +819,14 @@ class TestCatchCreateAPINewFields:
         _login(client)
         rv = client.post(
             "/api/map/catches",
-            data=json.dumps({
-                "lat": 40.0, "lng": -74.0,
-                "species": "Pompano",
-                "caught_at": "2024-03-10 06:45:00",
-            }),
+            data=json.dumps(
+                {
+                    "lat": 40.0,
+                    "lng": -74.0,
+                    "species": "Pompano",
+                    "caught_at": "2024-03-10 06:45:00",
+                }
+            ),
             content_type="application/json",
         )
         assert rv.status_code == 201
@@ -782,9 +839,15 @@ class TestCatchCreateAPINewFields:
     def test_bbox_api_returns_new_fields(self, client, app):
         with app.app_context():
             uid = _make_user()
-            add_map_catch(uid, 40.0, -74.0, "Snook",
-                          title="Big snook", image_url="https://example.com/snook.jpg",
-                          is_public=True)
+            add_map_catch(
+                uid,
+                40.0,
+                -74.0,
+                "Snook",
+                title="Big snook",
+                image_url="https://example.com/snook.jpg",
+                is_public=True,
+            )
 
         rv = client.get(
             "/api/map/catches?sw_lat=39&sw_lng=-75&ne_lat=41&ne_lng=-73",
@@ -798,9 +861,15 @@ class TestCatchCreateAPINewFields:
     def test_feed_api_returns_new_fields(self, client, app):
         with app.app_context():
             uid = _make_user()
-            add_map_catch(uid, 40.0, -74.0, "Tarpon",
-                          title="Silver king", image_url="https://cdn.example.com/t.jpg",
-                          is_public=True)
+            add_map_catch(
+                uid,
+                40.0,
+                -74.0,
+                "Tarpon",
+                title="Silver king",
+                image_url="https://cdn.example.com/t.jpg",
+                is_public=True,
+            )
 
         rv = client.get("/api/map/feed?lat=40&lng=-74")
         assert rv.status_code == 200
