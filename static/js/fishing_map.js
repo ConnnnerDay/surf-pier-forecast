@@ -2091,11 +2091,7 @@
                 tide:       activeTide,
                 minTemp:    activeMinTemp,
                 maxTemp:    activeMaxTemp,
-                spotTypes:  activeSpotTypes.slice(),
-                // Persist the active tab so the user returns to where they left off.
-                // New users get no localStorage entry at all, so they always start on
-                // the default 'spots' tab with all filters empty.
-                tab:        activeTab
+                spotTypes:  activeSpotTypes.slice()
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -2149,23 +2145,7 @@
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
             }
-            // Restore last active tab (spots/ai/community).  Only switch away from
-            // the default 'spots' tab when a different tab was explicitly saved.
-            if (f.tab && f.tab !== 'spots') {
-                switchTab(f.tab);
-            }
             updateAdvBadge();
-            // If any advanced filter was restored, expand the panel so the user
-            // can see their active settings without needing to open it manually.
-            var hasAdv = (activeCoast && activeCoast !== 'all') || activeCat ||
-                         activeSeason || activeTime || activeTide || activeMinTemp || activeMaxTemp ||
-                         activeSpotTypes.length > 0;
-            if (hasAdv) {
-                var advPanel  = document.getElementById('fmap-adv-filters');
-                var advToggle = document.getElementById('fmap-adv-toggle');
-                if (advPanel)  advPanel.hidden = false;
-                if (advToggle) advToggle.setAttribute('aria-expanded', 'true');
-            }
         } catch (e) {
             console.warn('[fishing-map] loadFilters failed:', e);
         }
