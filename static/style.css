@@ -4581,6 +4581,8 @@ h2::before {
 }
 .fmap-layers-section-rows--filters {
   max-height: 1200px;
+}
+.fmap-layers-section-rows--filters > .fmap-filters-inner {
   padding: 0.5rem 0.85rem 0.75rem;
 }
 .fmap-layers-section--collapsed .fmap-layers-section-rows {

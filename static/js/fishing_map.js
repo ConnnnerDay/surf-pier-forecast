@@ -1938,7 +1938,7 @@
                 (activeSpotTypes.length > 0 ? 1 : 0);
         var countEl = document.getElementById('fmap-sec-count-filters');
         if (countEl) {
-            countEl.textContent = n + ' active';
+            countEl.textContent = n + ' on';
             countEl.style.display = n > 0 ? '' : 'none';
         }
     }

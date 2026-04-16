@@ -673,7 +673,7 @@
                     {# ── Filter search bar ── #}
                     <div class="fmap-layers-search-wrap">
                         <svg class="fmap-layers-search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Filter layers…" autocomplete="off" aria-label="Search map layers">
+                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" aria-label="Search live data layers">
                     </div>
                     {# ── Quick preset pills ── #}
                     <div class="fmap-layers-presets" aria-label="Layer presets">
@@ -701,6 +701,7 @@
                                 <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                             <div class="fmap-layers-section-rows fmap-layers-section-rows--filters">
+                                <div class="fmap-filters-inner">
                                 <div class="fmap-adv-row">
                                     <div class="fmap-adv-group">
                                         <span class="fmap-adv-label">Coast</span>
@@ -813,6 +814,7 @@
                                     <button type="button" id="fmap-spot-types-clear" class="fmap-adv-reset-btn fmap-struct-clear-btn" aria-label="Show all structure types — clear type filter" title="Reset to show all structure types" hidden>Clear map filter</button>
                                     <button type="button" id="fmap-adv-reset" class="fmap-adv-reset-btn">Reset all filters</button>
                                 </div>
+                                </div>{# /fmap-filters-inner #}
                             </div>
                         </div>{# /section filters #}
 
