@@ -6198,7 +6198,6 @@ h2::before {
   color: rgba(255,255,255,0.42);
 }
 .fmap-struct-clear-btn {
-  margin-left: auto;
   flex-shrink: 0;
 }
 
