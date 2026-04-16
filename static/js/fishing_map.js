@@ -1734,11 +1734,6 @@
         }
         _lastAiHotspotsData = locations;
 
-        var picks = locations.filter(function (l) { return l.ai_pick_rank; });
-        if (els.hotspotCount) {
-            els.hotspotCount.textContent = picks.length ? picks.length : '';
-            els.hotspotCount.style.display = picks.length ? '' : 'none';
-        }
         els.hotspotsList.innerHTML = _aiPickItemsHtml(locations);
         _wireAiPickClicks(els.hotspotsList);
     }
@@ -1766,12 +1761,6 @@
         active.sort(function (a, b) { return b.score - a.score; });
 
         var top = active.slice(0, 8);
-
-        // Update count badge
-        if (els.hotspotCount) {
-            els.hotspotCount.textContent = top.length ? top.length : '';
-            els.hotspotCount.style.display = top.length ? '' : 'none';
-        }
 
         if (!top.length) {
             // Empty state: show fuzzy "did you mean?" when a species is searched
