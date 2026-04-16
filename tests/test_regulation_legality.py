@@ -483,7 +483,8 @@ class TestSpeciesRankingRegulationStatus:
         )
 
     def test_no_harvest_text_hidden_from_ranking(self, monkeypatch):
-        """'No harvest' in regulation notes must hide the species — cannot keep the fish."""
+        """'No harvest' in notes alone no longer suppresses species; only bag_limit/season
+        fields determine catch-and-release status to avoid false positives for slot limits."""
         monkeypatch.setattr(
             "domain.species.lookup_regulation",
             lambda name, st: {
@@ -498,8 +499,8 @@ class TestSpeciesRankingRegulationStatus:
         ranking = build_species_ranking(
             month=6, water_temp=72, coast="east", state="NC"
         )
-        assert len(ranking) == 0, (
-            "'No harvest' (catch_and_release) must suppress species from ranking"
+        assert len(ranking) == 10, (
+            "With valid bag_limit/season, 'No harvest' in notes must not suppress species"
         )
 
     def test_federally_protected_species_hidden_from_biting(self, monkeypatch):
