@@ -2581,17 +2581,34 @@
     }
 
     function wireAdvancedFilters() {
-        var toggle  = document.getElementById('fmap-adv-toggle');
-        var panel   = document.getElementById('fmap-adv-filters');
+        var toggle   = document.getElementById('fmap-adv-toggle');
+        var panel    = document.getElementById('fmap-adv-filters');
+        var closeBtn = document.getElementById('fmap-adv-filters-close');
         var resetBtn = document.getElementById('fmap-adv-reset');
+
+        function closePanel() {
+            panel.hidden = true;
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+        function openPanel() {
+            panel.hidden = false;
+            toggle.setAttribute('aria-expanded', 'true');
+        }
 
         if (toggle && panel) {
             toggle.addEventListener('click', function () {
-                var open = panel.hidden;
-                panel.hidden = !open;
-                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (panel.hidden) { openPanel(); } else { closePanel(); }
             });
         }
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closePanel);
+        }
+        document.addEventListener('click', function (e) {
+            if (!panel || panel.hidden) return;
+            if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+                closePanel();
+            }
+        });
 
         document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
             b.addEventListener('click', function () {
