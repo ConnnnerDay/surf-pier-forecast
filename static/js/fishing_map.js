@@ -124,7 +124,6 @@
     var catchLogMode      = false;   // user is placing a catch pin
     var pendingCatchLatLng = null;   // {lat,lng} for the log modal
     var pendingCatchMarker = null;   // temporary L.marker shown before submit
-    var activeTab         = 'spots'; // 'spots' | 'ai' | 'community'
     var IS_LOGGED_IN      = !!(window.IS_LOGGED_IN || false);
 
     // ─── ArcGIS Live Feeds state ──────────────────────────────────────────────
@@ -1878,7 +1877,6 @@
                     activeSpecies = sp;
                     if (els.speciesInput) els.speciesInput.value = sp;
                     if (els.searchClear) els.searchClear.hidden = false;
-                    renderQuickChips();
                     scheduleFetch();
                 });
             });
@@ -2064,7 +2062,6 @@
                 activeSpecies = text;
                 if (els.speciesInput) els.speciesInput.value = text;
                 if (els.searchClear) els.searchClear.hidden = false;
-                renderQuickChips();
                 hideSuggestions();
                 scheduleFetch();
             });
@@ -2223,9 +2220,6 @@
                 var _currentM = data.month || (new Date().getMonth() + 1);
                 drawMarkers(currentData);
                 renderHotspots(currentData);
-                renderMonthPlanner(monthlySummary, _currentM);
-                updateInsight(data);
-                renderTrendingChips(data.trending_species || []);
 
                 // If AI overlay is already on, refresh it with the new scored data
                 if (aiMode) {
@@ -2243,11 +2237,6 @@
                 // Reload community map pins with the updated species filter, so pins
                 // reflect the same species the user has selected in the main search.
                 if (communityLayerOn) scheduleCommunityLoad();
-                // Load community catches only when the community tab is visible,
-                // avoiding a redundant feed request on every filter change.
-                if (activeTab === 'community') {
-                    setTimeout(function () { loadCommunityFeed(); }, 400);
-                }
             })
             .catch(function (err) {
                 if (err && err.name === 'AbortError') return; // superseded by newer request
@@ -2268,12 +2257,10 @@
                 activeSpecies = els.speciesInput.value.trim();
                 if (els.searchClear) els.searchClear.hidden = !activeSpecies;
                 showSuggestions(activeSpecies);
-                renderQuickChips();
                 scheduleFetch();
             });
             els.speciesInput.addEventListener('change', function () {
                 activeSpecies = els.speciesInput.value.trim();
-                renderQuickChips();
                 scheduleFetch();
             });
             els.speciesInput.addEventListener('keydown', function (e) {
@@ -2290,7 +2277,6 @@
                 activeSpecies = '';
                 if (els.speciesInput) els.speciesInput.value = '';
                 els.searchClear.hidden = true;
-                renderQuickChips();
                 scheduleFetch();
             });
         }
@@ -2643,7 +2629,6 @@
                 activeCoast = v;
                 setPillActive('.fmap-pill--coast', 'data-coast', v);
                 updateAdvBadge();
-                renderQuickChips();
                 scheduleFetch();
             });
         });
@@ -2687,7 +2672,6 @@
                 if (maxTempEl) maxTempEl.value = '';
                 _applySpotTypeUI([]);
                 updateAdvBadge();
-                renderQuickChips();
                 scheduleFetch();
                 clearTimeout(spotQueryTimer);
                 queryStructures();
@@ -3269,7 +3253,6 @@
                     showToast('Catch logged! \uD83C\uDFAF');
                     closeLogModal();
                     if (communityLayerOn) loadCommunityPins();
-                    if (activeTab === 'community') loadCommunityFeed();
                 })
                 .catch(function () {
                     if (els.logError) { els.logError.textContent = 'Could not save catch. Please try again.'; els.logError.hidden = false; }
@@ -5675,7 +5658,6 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                renderQuickChips();
                 wireFilters();
                 wireMapControls();
                 wireAdvancedFilters();
@@ -5950,13 +5932,9 @@
         els.detailSpecies = document.getElementById('fmap-detail-species');
         els.detailActions = document.getElementById('fmap-detail-actions');
         els.hotspotsList   = document.getElementById('fmap-hotspots-list');
-        els.hotspotCount   = document.getElementById('fmap-hotspot-count');
-        els.chips          = document.getElementById('fmap-chips');
         els.speciesInput   = document.getElementById('fmap-species-input');
         els.searchClear    = document.getElementById('fmap-search-clear');
         els.suggestions    = document.getElementById('fmap-suggestions');
-        els.insight        = document.getElementById('fmap-insight');
-        els.insightText    = document.getElementById('fmap-insight-text');
         // Community / social elements
         els.catchDetail    = document.getElementById('fmap-catch-detail');
         els.catchDetailTitle = document.getElementById('fmap-catch-detail-title');
@@ -5979,9 +5957,6 @@
         els.logPublic      = document.getElementById('fmap-log-public');
         els.logError       = document.getElementById('fmap-log-error');
         els.logSubmit      = document.getElementById('fmap-log-submit');
-        // Community feed
-        els.communityList  = document.getElementById('fmap-community-list');
-
         if (!els.mapEl) return;
         boot();
     }
