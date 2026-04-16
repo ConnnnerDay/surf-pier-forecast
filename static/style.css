@@ -6136,6 +6136,7 @@ h2::before {
   flex: 1 1 180px;
 }
 .fmap-adv-group--temp { flex: 0 1 160px; }
+.fmap-adv-group--full { flex: none; width: 100%; }
 .fmap-adv-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -6189,19 +6190,7 @@ h2::before {
 }
 .fmap-adv-reset-btn:hover { color: #6dd8f0; }
 
-/* ── Structure-type filter bar ── */
-.fmap-struct-filters {
-  padding: 0.6rem 1rem 0.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  background: rgba(11,40,54,0.6);
-}
-.fmap-struct-filters-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.45rem;
-}
+/* ── Structure-type filter (inside popup panel) ── */
 .fmap-struct-filters-hint {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.42);
@@ -6258,11 +6247,6 @@ h2::before {
   flex-wrap: wrap;
   gap: 0.3rem 0.35rem;
 }
-/* Keyboard focus ring on the group wrapper */
-.fmap-struct-filters:focus-within .fmap-struct-filters-header {
-  outline: none;
-}
-
 /* Shared pill styles (season/time/tide/spot-type pills reuse fmap-pill base) */
 .fmap-pill--season, .fmap-pill--time, .fmap-pill--tide, .fmap-pill--spot-type {
   padding: 0.25rem 0.6rem;
@@ -6739,10 +6723,6 @@ h2::before {
 }
 
 /* ── Light mode overrides for new elements ── */
-[data-theme="light"] .fmap-struct-filters {
-  background: rgba(232,244,248,0.7);
-  border-bottom-color: #c9d8e0;
-}
 [data-theme="light"] .fmap-struct-filters-hint { color: #7a9aaa; }
 [data-theme="light"] .fmap-struct-spinner { color: #7a9aaa; }
 [data-theme="light"] .fmap-struct-error {
@@ -6813,7 +6793,6 @@ h2::before {
   .fmap-adv-row { flex-direction: column; gap: 0.6rem; }
   /* On mobile the pill row scrolls horizontally instead of wrapping to save vertical space */
   .fmap-struct-filters-pills { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-  .fmap-struct-filters { padding: 0.5rem 0.75rem 0.45rem; }
   .fmap-modal-inner { max-width: 100%; margin: 0 0.5rem; }
   /* On mobile the FAB shows icon only to save space */
   .fmap-log-fab { padding: 0; width: 42px; border-radius: 50%; justify-content: center; }
