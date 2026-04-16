@@ -6109,40 +6109,6 @@ h2::before {
   border-left: 1px solid rgba(255,255,255,0.08);
   overflow: hidden;
 }
-.fmap-side-tabs {
-  display: flex;
-  border-bottom: 1px solid rgba(255,255,255,0.09);
-  background: rgba(0,0,0,0.25);
-}
-.fmap-side-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  padding: 0.6rem 0.3rem;
-  border: none;
-  background: none;
-  color: rgba(255,255,255,0.5);
-  font-size: 0.68rem;
-  font-weight: 600;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-.fmap-side-tab:hover { color: rgba(255,255,255,0.8); }
-.fmap-side-tab--active {
-  color: #fff;
-  border-bottom-color: #1fa8c9;
-}
-.fmap-side-pane {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.4rem 0;
-}
-.fmap-side-pane:not(.fmap-side-pane--active) { display: none; }
-
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
@@ -6193,16 +6159,6 @@ h2::before {
 .fmap-community-pin:hover { transform: scale(1.3); }
 .fmap-community-pin--public { background: #2dd4bf; box-shadow: 0 0 8px rgba(45,212,191,0.5); }
 .fmap-community-pin--mine   { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.6); }
-
-/* ── Community list ── */
-.fmap-side-panel-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary, #b0c4ce);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  flex: 1;
-}
 
 /* ── Community fire badge on hotspot items ── */
 .fmap-hotspot-community-badge {
@@ -6498,8 +6454,7 @@ h2::before {
   background: #f7fafc;
   border-color: #dde9ef;
 }
-[data-theme="light"] .fmap-side-tab { color: #7090a0; }
-[data-theme="light"] .fmap-side-tab--active { color: #0e5f78; }
+
 [data-theme="light"] .fmap-modal-inner {
   background: #f0f8fc;
   border-color: #c9d8e0;
