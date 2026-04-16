@@ -638,8 +638,8 @@
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
-                    {# Layers popup trigger — opens the live data layer selector panel #}
-                    <button type="button" id="fmap-layers-popup-btn" class="fmap-ctrl-btn" title="Toggle map data layers" aria-label="Open map layers panel" aria-pressed="false" style="position:relative">
+                    {# Layers popup trigger — opens spot filters + live data layers panel #}
+                    <button type="button" id="fmap-layers-popup-btn" class="fmap-ctrl-btn" title="Map layers &amp; filters" aria-label="Open map layers and filters" aria-pressed="false" style="position:relative">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
                         <span id="fmap-layers-active-badge" class="fmap-layer-badge" style="display:none"></span>
                     </button>
@@ -650,15 +650,15 @@
                     </button>
                 </div>
 
-                {# ── Layers popup panel — toggle live data overlays ─────────────────── #}
-                <div id="fmap-layers-popup" class="fmap-layers-popup" role="dialog" aria-label="Map data layers" aria-modal="false" hidden>
+                {# ── Layers popup panel — spot filters + live data overlays ──────────── #}
+                <div id="fmap-layers-popup" class="fmap-layers-popup" role="dialog" aria-label="Map layers and filters" aria-modal="false" hidden>
                     <div class="fmap-layers-popup-header">
                         <span class="fmap-layers-popup-title">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                            Live Feeds
+                            Layers &amp; Filters
                         </span>
                         <div class="fmap-layers-popup-header-actions">
-                            <span class="fmap-layers-kbd-hint" title="Press L to toggle this panel">L</span>
+                            <span class="fmap-layers-kbd-hint" title="Press L to open/close this panel">L</span>
                             <button type="button" id="fmap-layers-clear-btn" class="fmap-layers-clear-btn" aria-label="Turn off all layers" hidden>
                                 All off
                             </button>
