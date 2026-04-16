@@ -4015,9 +4015,10 @@ h2::before {
 .fmap-pill--habitat.fmap-pill--active { border-left-color: rgba(255,255,255,0.6); }
 
 
-/* ── Map body: map + side panel side by side ── */
+/* ── Map body ── */
 .fmap-body {
   margin-bottom: 0.65rem;
+  min-height: 520px;
 }
 
 .fmap-map-wrap {
@@ -4895,39 +4896,6 @@ h2::before {
   margin-left: auto;
 }
 
-/* ── AI panel label in hotspot header ── */
-.fmap-ai-panel-label {
-  background: linear-gradient(90deg, #fbbf24, #f87171);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
-}
-
-/* ── AI hotspot items ── */
-.fmap-ai-hotspot-rank {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #fff;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  box-shadow: 0 0 6px rgba(245,158,11,0.4);
-}
-.fmap-ai-hotspot-snippet {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--text-muted, #8a9ba8);
-  line-height: 1.4;
-  margin-top: 0.15rem;
-  white-space: normal;
-}
-
 /* ── ArcGIS Live Feeds: badge on map control buttons ── */
 .fmap-layer-badge {
   position: absolute;
@@ -5703,13 +5671,6 @@ h2::before {
   color: #fff;
 }
 
-/* ── Side panel tabs ── */
-.fmap-body {
-  display: flex;
-  gap: 0;
-  align-items: stretch;
-  min-height: 520px;
-}
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;

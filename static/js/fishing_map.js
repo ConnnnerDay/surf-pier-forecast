@@ -27,8 +27,6 @@
     var mapReady      = false;
     var markers       = [];          // [{id, leaflet, data}]
     var _markerIndex         = {};    // loc.id → marker entry — O(1) icon-swap on select
-    var _lastHotspotsData    = null;  // locations ref from last full renderHotspots rebuild
-    var _lastAiHotspotsData  = null;  // locations ref from last full renderAiHotspots rebuild
     var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
     var allSpeciesLower = [];        // pre-lowercased mirror of allSpecies — avoids .toLowerCase() on every keystroke
@@ -1624,9 +1622,6 @@
 
         els.detail.hidden = false;
 
-        // Update the hotspot panel to mark selected
-        renderHotspots(currentData);
-
         // Scroll detail into view on mobile
         if (window.innerWidth < 768) {
             setTimeout(function () {
@@ -1644,208 +1639,8 @@
             _markerIndex[prevId].leaflet.setIcon(
                 makeIcon(_markerIndex[prevId].data.activity, false));
         }
-        renderHotspots(currentData);
     }
 
-    // ─── Hotspots list ────────────────────────────────────────────────────────
-
-    function updateHotspotHeader(isAiMode) {
-        var headerLeft = document.querySelector('.fmap-hotspots-header-left');
-        if (!headerLeft) return;
-        if (isAiMode) {
-            headerLeft.innerHTML =
-                '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fbbf24" stroke-width="2.5" aria-hidden="true">' +
-                '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
-                '<span class="fmap-ai-panel-label">AI Picks</span>';
-        } else {
-            headerLeft.innerHTML =
-                '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
-                '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
-                ' Top Spots';
-        }
-    }
-
-    // ── Shared AI-picks rendering helpers ────────────────────────────────────
-    // The Spots-tab hotspot list and the dedicated AI tab panel render the same
-    // data; these two helpers keep the HTML in one place.
-
-    // Return the <li> markup for the ranked AI picks in `locations`.
-    function _aiPickItemsHtml(locations) {
-        var picks = locations
-            .filter(function (l) { return l.ai_pick_rank; })
-            .sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
-        if (!picks.length) {
-            return '<li class="fmap-hotspot-empty">No AI picks for current filters</li>';
-        }
-        var html = '';
-        picks.forEach(function (loc) {
-            var sp      = loc.top_species && loc.top_species[0];
-            var spName  = sp ? (sp.name || '') : '';
-            var reason  = loc.ai_reasoning || '';
-            var snippet = reason.split('.')[0];
-            if (snippet && snippet.length < reason.length) snippet += '.';
-            var act = loc.activity || 'none';
-            var cfg = ACTIVITY[act] || ACTIVITY.none;
-            var wt  = loc.water_temp != null ? Math.round(loc.water_temp) + '\u00b0F' : '';
-            html +=
-                '<li class="fmap-hotspot-item fmap-ai-hotspot-item' +
-                (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
-                '" data-loc-id="' + esc(loc.id) + '">' +
-                '<span class="fmap-ai-hotspot-rank">' + loc.ai_pick_rank + '</span>' +
-                '<span class="fmap-hotspot-info">' +
-                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
-                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + (wt ? ' &bull; ' + wt : '') + '</span>' : '') +
-                  (snippet ? '<span class="fmap-ai-hotspot-snippet">' + esc(snippet) + '</span>' : '') +
-                '</span>' +
-                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + act + '">' + cfg.label + '</span>' +
-                '</li>';
-        });
-        return html;
-    }
-
-    // Wire fly-to + popup on each rendered AI pick <li> within `container`.
-    // Uses _markerIndex for O(1) location lookup instead of scanning currentData.
-    function _wireAiPickClicks(container) {
-        container.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
-            li.addEventListener('click', function () {
-                var id    = li.getAttribute('data-loc-id');
-                var entry = _markerIndex[id];
-                var loc   = entry ? entry.data : null;
-                if (!loc) return;
-                map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.5 });
-                setTimeout(function () { showAiPickPopup(loc); }, 600);
-            });
-        });
-    }
-
-    function renderAiHotspots(locations) {
-        if (!els.hotspotsList) return;
-
-        // Fast path: only the selected item changed — toggle CSS class, skip full rebuild.
-        if (locations === _lastAiHotspotsData && els.hotspotsList.children.length) {
-            els.hotspotsList.querySelectorAll('.fmap-hotspot-item--sel').forEach(function (li) {
-                li.classList.remove('fmap-hotspot-item--sel');
-            });
-            if (selectedId) {
-                var sel = els.hotspotsList.querySelector('[data-loc-id="' + selectedId + '"]');
-                if (sel) sel.classList.add('fmap-hotspot-item--sel');
-            }
-            return;
-        }
-        _lastAiHotspotsData = locations;
-
-        els.hotspotsList.innerHTML = _aiPickItemsHtml(locations);
-        _wireAiPickClicks(els.hotspotsList);
-    }
-
-    function renderHotspots(locations) {
-        if (!els.hotspotsList) return;
-
-        // Fast path: the underlying data is the same — only selectedId changed.
-        // Toggle the --sel CSS class on the two affected <li>s instead of
-        // blowing away and rebuilding the entire list + rebinding click handlers.
-        if (locations === _lastHotspotsData && els.hotspotsList.children.length) {
-            els.hotspotsList.querySelectorAll('.fmap-hotspot-item--sel').forEach(function (li) {
-                li.classList.remove('fmap-hotspot-item--sel');
-            });
-            if (selectedId) {
-                var sel = els.hotspotsList.querySelector('[data-loc-id="' + selectedId + '"]');
-                if (sel) sel.classList.add('fmap-hotspot-item--sel');
-            }
-            return;
-        }
-        _lastHotspotsData = locations;
-
-        var active = locations.filter(function (l) { return l.activity !== 'none'; });
-
-        active.sort(function (a, b) { return b.score - a.score; });
-
-        var top = active.slice(0, 8);
-
-        if (!top.length) {
-            // Empty state: show fuzzy "did you mean?" when a species is searched
-            var emptyHtml = '<li class="fmap-hotspot-empty">';
-            if (activeSpecies && allSpecies.length) {
-                var lower = activeSpecies.toLowerCase();
-                var _lsrc = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
-                var suggestions = allSpecies
-                    .map(function (n, i) {
-                        var nl = _lsrc ? _lsrc[i] : n.toLowerCase();
-                        return { name: n, dist: levenshtein(lower, nl.slice(0, lower.length + 3)) };
-                    })
-                    .filter(function (x) { return x.dist <= 3; })
-                    .sort(function (a, b) { return a.dist - b.dist; })
-                    .slice(0, 3)
-                    .map(function (x) { return x.name; });
-                if (suggestions.length) {
-                    emptyHtml += 'No spots for \u201c' + esc(activeSpecies) + '\u201d';
-                    emptyHtml += '<div class="fmap-did-you-mean">Did you mean: ';
-                    emptyHtml += suggestions.map(function (s) {
-                        return '<button type="button" class="fmap-dym-btn" data-sp="' + esc(s) + '">' + esc(s) + '</button>';
-                    }).join(', ');
-                    emptyHtml += '</div>';
-                } else {
-                    emptyHtml += 'No active spots for \u201c' + esc(activeSpecies) + '\u201d';
-                }
-            } else {
-                emptyHtml += 'No active spots for this filter';
-            }
-            emptyHtml += '</li>';
-            els.hotspotsList.innerHTML = emptyHtml;
-
-            // Wire "did you mean" buttons
-            els.hotspotsList.querySelectorAll('.fmap-dym-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var sp = btn.getAttribute('data-sp');
-                    activeSpecies = sp;
-                    if (els.speciesInput) els.speciesInput.value = sp;
-                    if (els.searchClear) els.searchClear.hidden = false;
-                    scheduleFetch();
-                });
-            });
-            return;
-        }
-
-        var html = '';
-        top.forEach(function (loc, i) {
-            var cfg   = ACTIVITY[loc.activity] || ACTIVITY.none;
-            var sp    = loc.top_species && loc.top_species[0];
-            var spName = sp ? (typeof sp === 'string' ? sp : sp.name || '') : '';
-            var distHtml = '';
-            if (userCoords) {
-                var mi = haversineMi(userCoords.lat, userCoords.lng, loc.lat, loc.lng);
-                distHtml = '<span class="fmap-hotspot-dist">' +
-                    (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + ' mi</span>';
-            }
-            var commCount = loc.community_catches || 0;
-            var commBadge = commCount > 0
-                ? '<span class="fmap-hotspot-community-badge" title="' + commCount + ' recent community catch' + (commCount !== 1 ? 'es' : '') + '">' +
-                  '\uD83D\uDD25 ' + commCount + '</span>'
-                : '';
-            html +=
-                '<li class="fmap-hotspot-item' + (loc.id === selectedId ? ' fmap-hotspot-item--sel' : '') +
-                '" data-loc-id="' + esc(loc.id) + '">' +
-                '<span class="fmap-hotspot-rank">' + (i + 1) + '</span>' +
-                '<span class="fmap-hotspot-dot" style="background:' + cfg.color + ';box-shadow:0 0 5px ' + cfg.ring + '"></span>' +
-                '<span class="fmap-hotspot-info">' +
-                  '<span class="fmap-hotspot-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</span>' +
-                  (spName ? '<span class="fmap-hotspot-sp">' + esc(spName) + '</span>' : '') +
-                '</span>' +
-                commBadge +
-                distHtml +
-                '<span class="fmap-hotspot-badge fmap-hotspot-badge--' + loc.activity + '">' + cfg.label + '</span>' +
-                '</li>';
-        });
-        els.hotspotsList.innerHTML = html;
-
-        els.hotspotsList.querySelectorAll('.fmap-hotspot-item').forEach(function (li) {
-            li.addEventListener('click', function () {
-                var id    = li.getAttribute('data-loc-id');
-                var entry = _markerIndex[id];
-                if (entry) selectLocation(entry.data);
-            });
-        });
-    }
 
     // ─── Autocomplete ─────────────────────────────────────────────────────────
     function showSuggestions(q) {
@@ -2031,9 +1826,8 @@
                 currentSpeciesMeta = (data.species_meta && data.species_meta.name)
                     ? data.species_meta : null;
 
-                // Render map markers and all sidebar panels with the new data
+                // Render map markers with the new data
                 drawMarkers(currentData);
-                renderHotspots(currentData);
 
                 // Zoom to saved location then load structure overlays and community feed
                 autoZoomToSavedLocation(currentData);
