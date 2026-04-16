@@ -4623,6 +4623,13 @@ h2::before {
   .fmap-legend { order: -1; }
 }
 
+.fmap-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 480px) {
   .fmap-filter-row { flex-direction: column; }
   .fmap-search-wrap { max-width: 100%; }
@@ -6096,15 +6103,16 @@ h2::before {
   color: #6dd8f0;
 }
 .fmap-adv-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #1fa8c9;
   color: #fff;
-  border-radius: 50%;
-  width: 16px; height: 16px;
+  border-radius: 999px;
+  min-width: 16px; height: 16px;
+  padding: 0 3px;
   font-size: 0.65rem;
   font-weight: 700;
-  text-align: center;
-  line-height: 16px;
   margin-left: 2px;
 }
 .fmap-adv-filters {
@@ -6188,10 +6196,8 @@ h2::before {
 .fmap-struct-filters-hint {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.42);
-  flex: 1 1 auto;
 }
 .fmap-struct-clear-btn {
-  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -13402,7 +13408,7 @@ body:not([data-theme="dark"]) .fmap-layers-pin-btn[aria-pressed="true"] {
 }
 
 /* ── Map legend control ───────────────────────────────────────────────────── */
-.fmap-legend {
+.fmap-legend-ctrl {
   pointer-events: auto;
   background: rgba(12, 22, 36, 0.90);
   border: 1px solid rgba(255,255,255,0.10);
@@ -13485,8 +13491,8 @@ body:not([data-theme="dark"]) .fmap-layers-pin-btn[aria-pressed="true"] {
 }
 
 /* Light theme legend */
-[data-theme="light"] .fmap-legend,
-body:not([data-theme="dark"]) .fmap-legend {
+[data-theme="light"] .fmap-legend-ctrl,
+body:not([data-theme="dark"]) .fmap-legend-ctrl {
   background: rgba(255,255,255,0.93);
   border-color: rgba(0,0,0,0.12);
   box-shadow: 0 4px 16px rgba(0,0,0,0.14);

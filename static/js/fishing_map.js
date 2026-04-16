@@ -5304,7 +5304,7 @@
         var LegendCtrl = L.Control.extend({
             options: { position: 'bottomleft' },
             onAdd: function () {
-                var div = L.DomUtil.create('div', 'fmap-legend');
+                var div = L.DomUtil.create('div', 'fmap-legend-ctrl');
                 div.hidden = true;
                 L.DomEvent.disableClickPropagation(div);
                 return div;
