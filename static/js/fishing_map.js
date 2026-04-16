@@ -4653,12 +4653,14 @@
                 var show = !lq || text.indexOf(lq) !== -1;
                 row.style.display = show ? '' : 'none';
             });
-            // Hide section headers when all their rows are hidden; show otherwise
+            // Hide section headers when all their rows are hidden; show otherwise.
+            // Sections with no .fmap-layer-row elements (e.g. Spot Filters) are always shown.
             sections.forEach(function (sec) {
-                var visibleRows = Array.prototype.filter.call(
-                    sec.querySelectorAll('.fmap-layer-row'),
-                    function (r) { return r.style.display !== 'none'; }
-                );
+                var allSectionRows = sec.querySelectorAll('.fmap-layer-row');
+                if (!allSectionRows.length) { sec.style.display = ''; return; }
+                var visibleRows = Array.prototype.filter.call(allSectionRows, function (r) {
+                    return r.style.display !== 'none';
+                });
                 sec.style.display = visibleRows.length ? '' : 'none';
                 // When searching, expand collapsed sections so matches are visible
                 if (lq && visibleRows.length) {
