@@ -97,8 +97,12 @@ _TIMEOUT: Tuple[float, float] = (5.0, 20.0)
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def fetch_pier_locations(
-    south: float, west: float, north: float, east: float,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
 ) -> List[Dict[str, Any]]:
     """Return pier / dock / marina features within a geographic bounding box.
 
@@ -113,22 +117,33 @@ def fetch_pier_locations(
     -------
     List of GeoJSON-style feature dicts {lat, lng, name, type, props}
     """
-    cache_key = ("piers", round(south, 2), round(west, 2),
-                 round(north, 2), round(east, 2))
+    cache_key = (
+        "piers",
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
+    )
     hit = _cache_get(cache_key)
     if hit is not None:
         return hit
 
     results = _query_bbox(
         _SERVICES["noaa_marinas"],
-        south, west, north, east,
+        south,
+        west,
+        north,
+        east,
         result_record_count=50,
     )
 
     # Also try the USACE boat-ramps layer
     ramps = _query_bbox(
         _SERVICES["usace_water_access"],
-        south, west, north, east,
+        south,
+        west,
+        north,
+        east,
         result_record_count=30,
     )
     results.extend(ramps)
@@ -139,7 +154,10 @@ def fetch_pier_locations(
 
 
 def fetch_coastal_parks(
-    south: float, west: float, north: float, east: float,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
 ) -> List[Dict[str, Any]]:
     """Return coastal park and protected-area features within a bounding box.
 
@@ -150,15 +168,23 @@ def fetch_coastal_parks(
     -------
     List of feature dicts {name, type, area_ha, geometry_type, bbox}
     """
-    cache_key = ("parks", round(south, 2), round(west, 2),
-                 round(north, 2), round(east, 2))
+    cache_key = (
+        "parks",
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
+    )
     hit = _cache_get(cache_key)
     if hit is not None:
         return hit
 
     results = _query_bbox(
         _SERVICES["nps_boundaries"],
-        south, west, north, east,
+        south,
+        west,
+        north,
+        east,
         result_record_count=20,
     )
 
@@ -168,7 +194,10 @@ def fetch_coastal_parks(
 
 
 def fetch_epa_beaches(
-    south: float, west: float, north: float, east: float,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
 ) -> List[Dict[str, Any]]:
     """Return EPA BEACON 2.0 monitored beach locations within a bounding box.
 
@@ -179,15 +208,23 @@ def fetch_epa_beaches(
     -------
     List of feature dicts {name, lat, lng, state, county, beach_id}
     """
-    cache_key = ("beaches", round(south, 2), round(west, 2),
-                 round(north, 2), round(east, 2))
+    cache_key = (
+        "beaches",
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
+    )
     hit = _cache_get(cache_key)
     if hit is not None:
         return hit
 
     results = _query_bbox(
         _SERVICES["epa_beaches"],
-        south, west, north, east,
+        south,
+        west,
+        north,
+        east,
         result_record_count=50,
     )
     features = _normalise_features(results, default_type="beach")
@@ -241,9 +278,13 @@ def fetch_esri_layers_config() -> Dict[str, Any]:
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _query_bbox(
     url: str,
-    south: float, west: float, north: float, east: float,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
     result_record_count: int = 50,
 ) -> List[Dict[str, Any]]:
     """Execute an ArcGIS REST spatial query and return raw feature list."""
@@ -293,30 +334,49 @@ def _normalise_features(
                 lat = sum(c[1] for c in ring) / len(ring)
 
         name = (
-            props.get("NAME") or props.get("name") or
-            props.get("FACILITYNAME") or props.get("BeachName") or
-            props.get("UNIT_NAME") or ""
+            props.get("NAME")
+            or props.get("name")
+            or props.get("FACILITYNAME")
+            or props.get("BeachName")
+            or props.get("UNIT_NAME")
+            or ""
         )
         feature_type = (
-            props.get("TYPE") or props.get("type") or
-            props.get("FACILITY_TYPE") or default_type
+            props.get("TYPE")
+            or props.get("type")
+            or props.get("FACILITY_TYPE")
+            or default_type
         )
 
-        out.append({
-            "lat": lat,
-            "lng": lng,
-            "name": name,
-            "type": feature_type,
-            "geometry_type": geom_type,
-            "props": {
-                k: v for k, v in props.items()
-                if k in (
-                    "NAME", "name", "TYPE", "STATE", "COUNTY",
-                    "FACILITYNAME", "BeachName", "UNIT_NAME",
-                    "ACRES", "STATUS", "PHONE", "URL", "ADDRESS",
-                )
-            },
-        })
+        out.append(
+            {
+                "lat": lat,
+                "lng": lng,
+                "name": name,
+                "type": feature_type,
+                "geometry_type": geom_type,
+                "props": {
+                    k: v
+                    for k, v in props.items()
+                    if k
+                    in (
+                        "NAME",
+                        "name",
+                        "TYPE",
+                        "STATE",
+                        "COUNTY",
+                        "FACILITYNAME",
+                        "BeachName",
+                        "UNIT_NAME",
+                        "ACRES",
+                        "STATUS",
+                        "PHONE",
+                        "URL",
+                        "ADDRESS",
+                    )
+                },
+            }
+        )
     return out
 
 

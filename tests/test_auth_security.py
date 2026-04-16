@@ -320,13 +320,22 @@ def test_register_accepts_allowed_email_domains(client, monkeypatch):
 
     sample_domains = [
         # Big consumer providers
-        "gmail.com", "outlook.com", "yahoo.com", "icloud.com",
+        "gmail.com",
+        "outlook.com",
+        "yahoo.com",
+        "icloud.com",
         # Privacy-focused
-        "proton.me", "tuta.com", "mailbox.org", "posteo.de",
+        "proton.me",
+        "tuta.com",
+        "mailbox.org",
+        "posteo.de",
         # Apple Hide My Email / Private Relay
         "privaterelay.appleid.com",
         # Regional / ISP
-        "comcast.net", "qq.com", "naver.com", "mail.ru",
+        "comcast.net",
+        "qq.com",
+        "naver.com",
+        "mail.ru",
     ]
     for domain in sample_domains:
         assert domain in _ALLOWED_EMAIL_DOMAINS, f"{domain} should be in the allowlist"
@@ -445,14 +454,17 @@ def test_csrf_comparison_uses_constant_time(app):
 
 def test_resend_verification_rate_limited_per_account(client, monkeypatch):
     """A second resend within the throttle window is rejected."""
-    import time as _time
 
     uid = create_user("resend_throttle_user", "Aa123456", "resend_throttle@example.com")
     assert uid is not None
 
     # Plant a recent sent_at timestamp so the per-account throttle fires.
-    monkeypatch.setattr("storage.sqlite.DB_PATH", monkeypatch._patches[-1].temp_path
-                        if hasattr(monkeypatch, "_patches") else None) if False else None
+    monkeypatch.setattr(
+        "storage.sqlite.DB_PATH",
+        monkeypatch._patches[-1].temp_path
+        if hasattr(monkeypatch, "_patches")
+        else None,
+    ) if False else None
 
     # Set a very recent sent_at by doing a legitimate first resend.
     set_email_verification_token(uid, "firsttoken")

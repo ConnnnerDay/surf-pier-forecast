@@ -27,8 +27,6 @@ from flask import (
 )
 from werkzeug.security import check_password_hash
 
-logger = logging.getLogger(__name__)
-
 from locations import get_location
 from storage.db import (
     authenticate_user,
@@ -59,6 +57,8 @@ from storage.db import (
     delete_webauthn_credential,
 )
 from services.email import send_verification_email, smtp_is_configured
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("auth", __name__)
 
@@ -243,8 +243,10 @@ def _clear_attempts(
 
 def _login_is_rate_limited() -> bool:
     return _is_rate_limited(
-        _rate_limit_store, _rate_limit_lock,
-        _LOGIN_RATE_LIMIT_MAX_ATTEMPTS, _LOGIN_RATE_LIMIT_WINDOW_S,
+        _rate_limit_store,
+        _rate_limit_lock,
+        _LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+        _LOGIN_RATE_LIMIT_WINDOW_S,
     )
 
 
@@ -258,14 +260,17 @@ def _clear_login_failures() -> None:
 
 def _register_is_rate_limited() -> bool:
     return _is_rate_limited(
-        _register_rate_limit_store, _register_rate_limit_lock,
-        _REGISTER_RATE_LIMIT_MAX_ATTEMPTS, _REGISTER_RATE_LIMIT_WINDOW_S,
+        _register_rate_limit_store,
+        _register_rate_limit_lock,
+        _REGISTER_RATE_LIMIT_MAX_ATTEMPTS,
+        _REGISTER_RATE_LIMIT_WINDOW_S,
     )
 
 
 def _record_register_attempt() -> None:
     _record_attempt(
-        _register_rate_limit_store, _register_rate_limit_lock,
+        _register_rate_limit_store,
+        _register_rate_limit_lock,
         _REGISTER_RATE_LIMIT_WINDOW_S,
     )
 
@@ -273,14 +278,17 @@ def _record_register_attempt() -> None:
 def refresh_is_rate_limited() -> bool:
     """Return True if this IP has exceeded the forecast force-refresh rate limit."""
     return _is_rate_limited(
-        _refresh_rate_limit_store, _refresh_rate_limit_lock,
-        _REFRESH_RATE_LIMIT_MAX_ATTEMPTS, _REFRESH_RATE_LIMIT_WINDOW_S,
+        _refresh_rate_limit_store,
+        _refresh_rate_limit_lock,
+        _REFRESH_RATE_LIMIT_MAX_ATTEMPTS,
+        _REFRESH_RATE_LIMIT_WINDOW_S,
     )
 
 
 def record_refresh_attempt() -> None:
     _record_attempt(
-        _refresh_rate_limit_store, _refresh_rate_limit_lock,
+        _refresh_rate_limit_store,
+        _refresh_rate_limit_lock,
         _REFRESH_RATE_LIMIT_WINDOW_S,
     )
 
@@ -293,8 +301,11 @@ _LOCKOUT_PRUNE_EVERY = 500  # prune expired lockout entries every N checks
 def _prune_lockout_store() -> None:
     """Remove expired entries from the lockout store (call while holding the lock)."""
     now = time.time()
-    expired = [k for k, (start, _) in _account_lockout_store.items()
-               if now - start > _ACCOUNT_LOCKOUT_WINDOW_S]
+    expired = [
+        k
+        for k, (start, _) in _account_lockout_store.items()
+        if now - start > _ACCOUNT_LOCKOUT_WINDOW_S
+    ]
     for k in expired:
         del _account_lockout_store[k]
 
@@ -433,228 +444,419 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # Allowlist of widely-distributed consumer email domains.
 # Only these domains are accepted at registration to reduce spam, disposable
 # address abuse, and accounts with unreachable mailboxes.
-_ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset({
-    # ── Google ────────────────────────────────────────────────────────────────
-    "gmail.com", "googlemail.com",
-
-    # ── Microsoft (Outlook / Hotmail / Live / MSN) ────────────────────────────
-    # Global + regional Outlook
-    "outlook.com", "outlook.co.uk", "outlook.com.au", "outlook.fr",
-    "outlook.de", "outlook.es", "outlook.it", "outlook.co.in",
-    "outlook.com.br", "outlook.com.ar", "outlook.com.mx", "outlook.cl",
-    "outlook.pt", "outlook.be", "outlook.nl", "outlook.at", "outlook.dk",
-    "outlook.fi", "outlook.se", "outlook.no", "outlook.ie", "outlook.sg",
-    "outlook.jp", "outlook.kr", "outlook.ph", "outlook.my",
-    "outlook.co.nz", "outlook.co.za", "outlook.co.th", "outlook.com.vn",
-    "outlook.com.ng", "outlook.com.pk", "outlook.com.co", "outlook.com.pe",
-    "outlook.com.tr", "outlook.hr", "outlook.rs", "outlook.hu",
-    "outlook.ro", "outlook.cz", "outlook.sk", "outlook.bg",
-    "outlook.gr", "outlook.lv", "outlook.lt", "outlook.ee",
-    "outlook.sa", "outlook.ae", "outlook.co.il",
-    # Hotmail regional
-    "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
-    "hotmail.es", "hotmail.it", "hotmail.com.au", "hotmail.co.in",
-    "hotmail.com.br", "hotmail.com.ar", "hotmail.com.mx", "hotmail.cl",
-    "hotmail.pt", "hotmail.be", "hotmail.nl", "hotmail.gr",
-    "hotmail.dk", "hotmail.fi", "hotmail.se", "hotmail.no",
-    "hotmail.co.jp", "hotmail.rs", "hotmail.hr",
-    "hotmail.co.nz", "hotmail.co.za", "hotmail.com.tr", "hotmail.com.vn",
-    "hotmail.com.co", "hotmail.com.pe", "hotmail.hu", "hotmail.ro",
-    "hotmail.cz", "hotmail.sk", "hotmail.bg", "hotmail.lv",
-    "hotmail.lt", "hotmail.ee",
-    # Live regional
-    "live.com", "live.co.uk", "live.fr", "live.de", "live.com.au",
-    "live.co.in", "live.it", "live.ca", "live.be", "live.nl",
-    "live.at", "live.dk", "live.fi", "live.se", "live.no", "live.ie",
-    "live.sg", "live.jp", "live.in", "live.cl",
-    "live.com.ar", "live.com.mx", "live.com.pt",
-    "live.co.nz", "live.co.za", "live.co.th", "live.com.vn",
-    "live.com.tr", "live.ph", "live.my", "live.kr",
-    "live.hu", "live.ro", "live.cz", "live.sk", "live.bg",
-    "live.lv", "live.lt", "live.ee", "live.sa", "live.ae",
-    "msn.com",
-
-    # ── Yahoo / Oath ──────────────────────────────────────────────────────────
-    "yahoo.com", "yahoo.co.uk", "yahoo.ca", "yahoo.com.au",
-    "yahoo.fr", "yahoo.de", "yahoo.es", "yahoo.it", "yahoo.co.jp",
-    "yahoo.co.in", "yahoo.com.br", "yahoo.com.ar", "yahoo.com.mx",
-    "yahoo.com.hk", "yahoo.com.sg", "yahoo.com.ph", "yahoo.com.tw",
-    "yahoo.com.my", "yahoo.com.vn", "yahoo.com.pe", "yahoo.com.co",
-    "yahoo.com.pk", "yahoo.co.id", "yahoo.co.nz", "yahoo.co.za",
-    "yahoo.co.th",
-    "yahoo.gr", "yahoo.ro", "yahoo.hu", "yahoo.dk", "yahoo.se",
-    "yahoo.no", "yahoo.fi", "yahoo.be", "yahoo.at", "yahoo.pt",
-    "yahoo.nl", "yahoo.ie", "yahoo.in",
-    "yahoo.pl", "yahoo.cz", "yahoo.sk", "yahoo.hr", "yahoo.rs",
-    "yahoo.bg", "yahoo.lv", "yahoo.lt",
-    "ymail.com",
-
-    # ── Apple — standard + Hide My Email (Private Relay) ─────────────────────
-    "icloud.com", "me.com", "mac.com",
-    # Hide My Email / Private Relay (format: random@privaterelay.appleid.com)
-    "privaterelay.appleid.com",
-
-    # ── AOL / Verizon Media ───────────────────────────────────────────────────
-    "aol.com", "aol.co.uk",
-
-    # ── US ISP / cable email ──────────────────────────────────────────────────
-    "comcast.net", "xfinity.com",
-    "att.net", "sbcglobal.net", "bellsouth.net", "pacbell.net",
-    "verizon.net",
-    "cox.net",
-    "charter.net", "spectrum.net",
-    "earthlink.net",
-    "windstream.net",
-    "centurylink.net", "lumen.com",
-    "mindspring.com",           # legacy EarthLink brand
-
-    # ── Proton ────────────────────────────────────────────────────────────────
-    "proton.me", "protonmail.com", "pm.me",
-
-    # ── Tuta (formerly Tutanota) ──────────────────────────────────────────────
-    "tuta.com", "tutanota.com", "tutanota.de", "tutamail.com", "tuta.io",
-
-    # ── Zoho ──────────────────────────────────────────────────────────────────
-    "zoho.com",
-
-    # ── GMX / Web.de / Mail.com (United Internet) ────────────────────────────
-    "gmx.com", "gmx.net", "gmx.de", "gmx.at", "gmx.ch",
-    "web.de", "mail.com",
-
-    # ── Fastmail ──────────────────────────────────────────────────────────────
-    "fastmail.com", "fastmail.fm",
-
-    # ── Yandex (Russia / CIS) ────────────────────────────────────────────────
-    "yandex.com", "yandex.ru", "yandex.ua", "yandex.by",
-    "yandex.kz", "yandex.com.tr", "ya.ru",
-
-    # ── Mail.ru / VK (Russia) ─────────────────────────────────────────────────
-    "mail.ru", "list.ru", "inbox.ru", "bk.ru", "internet.ru",
-
-    # ── Rambler (Russia) ──────────────────────────────────────────────────────
-    "rambler.ru", "lenta.ru", "ro.ru",
-
-    # ── UKR.net (Ukraine) ────────────────────────────────────────────────────
-    "ukr.net",
-
-    # ── NetEase / 163 (China) ─────────────────────────────────────────────────
-    "163.com", "126.com", "yeah.net",
-
-    # ── QQ / Tencent (China) ──────────────────────────────────────────────────
-    "qq.com", "foxmail.com",
-
-    # ── Sina (China) ──────────────────────────────────────────────────────────
-    "sina.com", "sina.cn",
-
-    # ── Sohu (China) ──────────────────────────────────────────────────────────
-    "sohu.com",
-
-    # ── 21CN (China) ──────────────────────────────────────────────────────────
-    "21cn.com",
-
-    # ── Naver / Daum / Kakao / Nate (South Korea) ────────────────────────────
-    "naver.com", "hanmail.net", "daum.net", "kakao.com", "nate.com",
-
-    # ── Japanese carrier / ISP email ─────────────────────────────────────────
-    "docomo.ne.jp", "softbank.ne.jp", "i.softbank.jp",
-    "ezweb.ne.jp", "au.com",
-    "biglobe.ne.jp", "nifty.com",
-
-    # ── Rediffmail (India) ───────────────────────────────────────────────────
-    "rediffmail.com", "indiatimes.com",
-
-    # ── UK ISPs ──────────────────────────────────────────────────────────────
-    "btinternet.com", "bt.com", "btopenworld.com",
-    "sky.com", "skymail.com",
-    "virginmedia.com", "virgin.net",
-    "talktalk.net", "talktalk.co.uk",
-    "ntlworld.com",
-    "plusnet.com",
-    "tiscali.co.uk",
-
-    # ── German ISPs ──────────────────────────────────────────────────────────
-    "t-online.de",
-    "freenet.de",
-    "arcor.de", "vodafone.de",
-    "kabelbw.de",
-
-    # ── French ISPs / portals ────────────────────────────────────────────────
-    "orange.fr", "sfr.fr", "neuf.fr", "laposte.net",
-    "free.fr", "wanadoo.fr",
-    "bbox.fr", "bouyguestelecom.fr",
-    "club-internet.fr",
-
-    # ── Italian ISP / portals ────────────────────────────────────────────────
-    "libero.it", "virgilio.it", "alice.it", "tiscali.it",
-    "tim.it", "vodafone.it",
-
-    # ── Dutch ISPs ───────────────────────────────────────────────────────────
-    "ziggo.nl", "kpn.nl", "hetnet.nl", "planet.nl",
-    "xs4all.nl", "casema.nl",
-
-    # ── Belgian ISPs ────────────────────────────────────────────────────────
-    "skynet.be", "telenet.be", "proximus.be",
-
-    # ── Swedish / Norwegian / Danish / Finnish ISPs ───────────────────────────
-    "telia.com", "swipnet.se", "tele2.se",
-    "online.no", "telenor.no",
-    "tdc.dk", "telenor.dk",
-    "kolumbus.fi",
-
-    # ── Polish portals (dominant in Poland) ──────────────────────────────────
-    "wp.pl", "onet.pl", "interia.pl", "o2.pl", "gazeta.pl",
-
-    # ── Czech portals ────────────────────────────────────────────────────────
-    "seznam.cz", "centrum.cz", "email.cz", "volny.cz",
-
-    # ── Hungarian portals ────────────────────────────────────────────────────
-    "freemail.hu", "citromail.hu",
-
-    # ── Australian ISPs ──────────────────────────────────────────────────────
-    "bigpond.com", "bigpond.net.au",
-    "optusnet.com.au", "iinet.net.au",
-    "westnet.com.au", "internode.on.net",
-
-    # ── New Zealand ISPs ─────────────────────────────────────────────────────
-    "xtra.co.nz", "slingshot.co.nz",
-
-    # ── South African ISPs ───────────────────────────────────────────────────
-    "mweb.co.za", "webmail.co.za", "vodamail.co.za",
-
-    # ── Canadian ISPs ────────────────────────────────────────────────────────
-    "rogers.com", "shaw.ca", "bell.net", "sympatico.ca",
-    "telus.net", "videotron.ca", "eastlink.ca",
-
-    # ── Brazilian portals ────────────────────────────────────────────────────
-    "uol.com.br", "bol.com.br", "terra.com.br", "ig.com.br",
-    "r7.com", "msn.com.br",
-
-    # ── Other Latin American portals ─────────────────────────────────────────
-    "fibertel.com.ar",          # Argentina ISP
-    "speedy.com.ar",            # Argentina ISP
-    "telmex.net.mx",            # Mexico ISP
-
-    # ── Email relay / alias services (like Apple Hide My Email) ──────────────
-    "duck.com",                 # DuckDuckGo Email Protection
-    "mozmail.com",              # Firefox Relay
-    "simplelogin.io", "simplelogin.co", "slmail.me",  # SimpleLogin
-    "anonaddy.com", "anonaddy.me",  # AnonAddy / addy.io
-
-    # ── Other privacy-focused / reputable independent providers ──────────────
-    "mailbox.org",              # Germany, privacy-first
-    "posteo.de", "posteo.net",  # Germany, privacy-first
-    "mailfence.com",            # Belgium, encrypted
-    "runbox.com",               # Norway, privacy-first
-    "startmail.com",            # Netherlands, privacy-first
-    "disroot.org",              # Netherlands, open-source community
-    "riseup.net",               # Privacy/activism
-    "kolabnow.com",             # Switzerland, privacy
-    "countermail.com",          # Sweden, encrypted
-    "hushmail.com",             # Canada, encrypted
-    "lavabit.com",              # Privacy-focused (relaunched)
-    "cock.li",                  # Reputable independent provider
-    "teknik.io",                # Privacy-focused
-})
+_ALLOWED_EMAIL_DOMAINS: frozenset[str] = frozenset(
+    {
+        # ── Google ────────────────────────────────────────────────────────────────
+        "gmail.com",
+        "googlemail.com",
+        # ── Microsoft (Outlook / Hotmail / Live / MSN) ────────────────────────────
+        # Global + regional Outlook
+        "outlook.com",
+        "outlook.co.uk",
+        "outlook.com.au",
+        "outlook.fr",
+        "outlook.de",
+        "outlook.es",
+        "outlook.it",
+        "outlook.co.in",
+        "outlook.com.br",
+        "outlook.com.ar",
+        "outlook.com.mx",
+        "outlook.cl",
+        "outlook.pt",
+        "outlook.be",
+        "outlook.nl",
+        "outlook.at",
+        "outlook.dk",
+        "outlook.fi",
+        "outlook.se",
+        "outlook.no",
+        "outlook.ie",
+        "outlook.sg",
+        "outlook.jp",
+        "outlook.kr",
+        "outlook.ph",
+        "outlook.my",
+        "outlook.co.nz",
+        "outlook.co.za",
+        "outlook.co.th",
+        "outlook.com.vn",
+        "outlook.com.ng",
+        "outlook.com.pk",
+        "outlook.com.co",
+        "outlook.com.pe",
+        "outlook.com.tr",
+        "outlook.hr",
+        "outlook.rs",
+        "outlook.hu",
+        "outlook.ro",
+        "outlook.cz",
+        "outlook.sk",
+        "outlook.bg",
+        "outlook.gr",
+        "outlook.lv",
+        "outlook.lt",
+        "outlook.ee",
+        "outlook.sa",
+        "outlook.ae",
+        "outlook.co.il",
+        # Hotmail regional
+        "hotmail.com",
+        "hotmail.co.uk",
+        "hotmail.fr",
+        "hotmail.de",
+        "hotmail.es",
+        "hotmail.it",
+        "hotmail.com.au",
+        "hotmail.co.in",
+        "hotmail.com.br",
+        "hotmail.com.ar",
+        "hotmail.com.mx",
+        "hotmail.cl",
+        "hotmail.pt",
+        "hotmail.be",
+        "hotmail.nl",
+        "hotmail.gr",
+        "hotmail.dk",
+        "hotmail.fi",
+        "hotmail.se",
+        "hotmail.no",
+        "hotmail.co.jp",
+        "hotmail.rs",
+        "hotmail.hr",
+        "hotmail.co.nz",
+        "hotmail.co.za",
+        "hotmail.com.tr",
+        "hotmail.com.vn",
+        "hotmail.com.co",
+        "hotmail.com.pe",
+        "hotmail.hu",
+        "hotmail.ro",
+        "hotmail.cz",
+        "hotmail.sk",
+        "hotmail.bg",
+        "hotmail.lv",
+        "hotmail.lt",
+        "hotmail.ee",
+        # Live regional
+        "live.com",
+        "live.co.uk",
+        "live.fr",
+        "live.de",
+        "live.com.au",
+        "live.co.in",
+        "live.it",
+        "live.ca",
+        "live.be",
+        "live.nl",
+        "live.at",
+        "live.dk",
+        "live.fi",
+        "live.se",
+        "live.no",
+        "live.ie",
+        "live.sg",
+        "live.jp",
+        "live.in",
+        "live.cl",
+        "live.com.ar",
+        "live.com.mx",
+        "live.com.pt",
+        "live.co.nz",
+        "live.co.za",
+        "live.co.th",
+        "live.com.vn",
+        "live.com.tr",
+        "live.ph",
+        "live.my",
+        "live.kr",
+        "live.hu",
+        "live.ro",
+        "live.cz",
+        "live.sk",
+        "live.bg",
+        "live.lv",
+        "live.lt",
+        "live.ee",
+        "live.sa",
+        "live.ae",
+        "msn.com",
+        # ── Yahoo / Oath ──────────────────────────────────────────────────────────
+        "yahoo.com",
+        "yahoo.co.uk",
+        "yahoo.ca",
+        "yahoo.com.au",
+        "yahoo.fr",
+        "yahoo.de",
+        "yahoo.es",
+        "yahoo.it",
+        "yahoo.co.jp",
+        "yahoo.co.in",
+        "yahoo.com.br",
+        "yahoo.com.ar",
+        "yahoo.com.mx",
+        "yahoo.com.hk",
+        "yahoo.com.sg",
+        "yahoo.com.ph",
+        "yahoo.com.tw",
+        "yahoo.com.my",
+        "yahoo.com.vn",
+        "yahoo.com.pe",
+        "yahoo.com.co",
+        "yahoo.com.pk",
+        "yahoo.co.id",
+        "yahoo.co.nz",
+        "yahoo.co.za",
+        "yahoo.co.th",
+        "yahoo.gr",
+        "yahoo.ro",
+        "yahoo.hu",
+        "yahoo.dk",
+        "yahoo.se",
+        "yahoo.no",
+        "yahoo.fi",
+        "yahoo.be",
+        "yahoo.at",
+        "yahoo.pt",
+        "yahoo.nl",
+        "yahoo.ie",
+        "yahoo.in",
+        "yahoo.pl",
+        "yahoo.cz",
+        "yahoo.sk",
+        "yahoo.hr",
+        "yahoo.rs",
+        "yahoo.bg",
+        "yahoo.lv",
+        "yahoo.lt",
+        "ymail.com",
+        # ── Apple — standard + Hide My Email (Private Relay) ─────────────────────
+        "icloud.com",
+        "me.com",
+        "mac.com",
+        # Hide My Email / Private Relay (format: random@privaterelay.appleid.com)
+        "privaterelay.appleid.com",
+        # ── AOL / Verizon Media ───────────────────────────────────────────────────
+        "aol.com",
+        "aol.co.uk",
+        # ── US ISP / cable email ──────────────────────────────────────────────────
+        "comcast.net",
+        "xfinity.com",
+        "att.net",
+        "sbcglobal.net",
+        "bellsouth.net",
+        "pacbell.net",
+        "verizon.net",
+        "cox.net",
+        "charter.net",
+        "spectrum.net",
+        "earthlink.net",
+        "windstream.net",
+        "centurylink.net",
+        "lumen.com",
+        "mindspring.com",  # legacy EarthLink brand
+        # ── Proton ────────────────────────────────────────────────────────────────
+        "proton.me",
+        "protonmail.com",
+        "pm.me",
+        # ── Tuta (formerly Tutanota) ──────────────────────────────────────────────
+        "tuta.com",
+        "tutanota.com",
+        "tutanota.de",
+        "tutamail.com",
+        "tuta.io",
+        # ── Zoho ──────────────────────────────────────────────────────────────────
+        "zoho.com",
+        # ── GMX / Web.de / Mail.com (United Internet) ────────────────────────────
+        "gmx.com",
+        "gmx.net",
+        "gmx.de",
+        "gmx.at",
+        "gmx.ch",
+        "web.de",
+        "mail.com",
+        # ── Fastmail ──────────────────────────────────────────────────────────────
+        "fastmail.com",
+        "fastmail.fm",
+        # ── Yandex (Russia / CIS) ────────────────────────────────────────────────
+        "yandex.com",
+        "yandex.ru",
+        "yandex.ua",
+        "yandex.by",
+        "yandex.kz",
+        "yandex.com.tr",
+        "ya.ru",
+        # ── Mail.ru / VK (Russia) ─────────────────────────────────────────────────
+        "mail.ru",
+        "list.ru",
+        "inbox.ru",
+        "bk.ru",
+        "internet.ru",
+        # ── Rambler (Russia) ──────────────────────────────────────────────────────
+        "rambler.ru",
+        "lenta.ru",
+        "ro.ru",
+        # ── UKR.net (Ukraine) ────────────────────────────────────────────────────
+        "ukr.net",
+        # ── NetEase / 163 (China) ─────────────────────────────────────────────────
+        "163.com",
+        "126.com",
+        "yeah.net",
+        # ── QQ / Tencent (China) ──────────────────────────────────────────────────
+        "qq.com",
+        "foxmail.com",
+        # ── Sina (China) ──────────────────────────────────────────────────────────
+        "sina.com",
+        "sina.cn",
+        # ── Sohu (China) ──────────────────────────────────────────────────────────
+        "sohu.com",
+        # ── 21CN (China) ──────────────────────────────────────────────────────────
+        "21cn.com",
+        # ── Naver / Daum / Kakao / Nate (South Korea) ────────────────────────────
+        "naver.com",
+        "hanmail.net",
+        "daum.net",
+        "kakao.com",
+        "nate.com",
+        # ── Japanese carrier / ISP email ─────────────────────────────────────────
+        "docomo.ne.jp",
+        "softbank.ne.jp",
+        "i.softbank.jp",
+        "ezweb.ne.jp",
+        "au.com",
+        "biglobe.ne.jp",
+        "nifty.com",
+        # ── Rediffmail (India) ───────────────────────────────────────────────────
+        "rediffmail.com",
+        "indiatimes.com",
+        # ── UK ISPs ──────────────────────────────────────────────────────────────
+        "btinternet.com",
+        "bt.com",
+        "btopenworld.com",
+        "sky.com",
+        "skymail.com",
+        "virginmedia.com",
+        "virgin.net",
+        "talktalk.net",
+        "talktalk.co.uk",
+        "ntlworld.com",
+        "plusnet.com",
+        "tiscali.co.uk",
+        # ── German ISPs ──────────────────────────────────────────────────────────
+        "t-online.de",
+        "freenet.de",
+        "arcor.de",
+        "vodafone.de",
+        "kabelbw.de",
+        # ── French ISPs / portals ────────────────────────────────────────────────
+        "orange.fr",
+        "sfr.fr",
+        "neuf.fr",
+        "laposte.net",
+        "free.fr",
+        "wanadoo.fr",
+        "bbox.fr",
+        "bouyguestelecom.fr",
+        "club-internet.fr",
+        # ── Italian ISP / portals ────────────────────────────────────────────────
+        "libero.it",
+        "virgilio.it",
+        "alice.it",
+        "tiscali.it",
+        "tim.it",
+        "vodafone.it",
+        # ── Dutch ISPs ───────────────────────────────────────────────────────────
+        "ziggo.nl",
+        "kpn.nl",
+        "hetnet.nl",
+        "planet.nl",
+        "xs4all.nl",
+        "casema.nl",
+        # ── Belgian ISPs ────────────────────────────────────────────────────────
+        "skynet.be",
+        "telenet.be",
+        "proximus.be",
+        # ── Swedish / Norwegian / Danish / Finnish ISPs ───────────────────────────
+        "telia.com",
+        "swipnet.se",
+        "tele2.se",
+        "online.no",
+        "telenor.no",
+        "tdc.dk",
+        "telenor.dk",
+        "kolumbus.fi",
+        # ── Polish portals (dominant in Poland) ──────────────────────────────────
+        "wp.pl",
+        "onet.pl",
+        "interia.pl",
+        "o2.pl",
+        "gazeta.pl",
+        # ── Czech portals ────────────────────────────────────────────────────────
+        "seznam.cz",
+        "centrum.cz",
+        "email.cz",
+        "volny.cz",
+        # ── Hungarian portals ────────────────────────────────────────────────────
+        "freemail.hu",
+        "citromail.hu",
+        # ── Australian ISPs ──────────────────────────────────────────────────────
+        "bigpond.com",
+        "bigpond.net.au",
+        "optusnet.com.au",
+        "iinet.net.au",
+        "westnet.com.au",
+        "internode.on.net",
+        # ── New Zealand ISPs ─────────────────────────────────────────────────────
+        "xtra.co.nz",
+        "slingshot.co.nz",
+        # ── South African ISPs ───────────────────────────────────────────────────
+        "mweb.co.za",
+        "webmail.co.za",
+        "vodamail.co.za",
+        # ── Canadian ISPs ────────────────────────────────────────────────────────
+        "rogers.com",
+        "shaw.ca",
+        "bell.net",
+        "sympatico.ca",
+        "telus.net",
+        "videotron.ca",
+        "eastlink.ca",
+        # ── Brazilian portals ────────────────────────────────────────────────────
+        "uol.com.br",
+        "bol.com.br",
+        "terra.com.br",
+        "ig.com.br",
+        "r7.com",
+        "msn.com.br",
+        # ── Other Latin American portals ─────────────────────────────────────────
+        "fibertel.com.ar",  # Argentina ISP
+        "speedy.com.ar",  # Argentina ISP
+        "telmex.net.mx",  # Mexico ISP
+        # ── Email relay / alias services (like Apple Hide My Email) ──────────────
+        "duck.com",  # DuckDuckGo Email Protection
+        "mozmail.com",  # Firefox Relay
+        "simplelogin.io",
+        "simplelogin.co",
+        "slmail.me",  # SimpleLogin
+        "anonaddy.com",
+        "anonaddy.me",  # AnonAddy / addy.io
+        # ── Other privacy-focused / reputable independent providers ──────────────
+        "mailbox.org",  # Germany, privacy-first
+        "posteo.de",
+        "posteo.net",  # Germany, privacy-first
+        "mailfence.com",  # Belgium, encrypted
+        "runbox.com",  # Norway, privacy-first
+        "startmail.com",  # Netherlands, privacy-first
+        "disroot.org",  # Netherlands, open-source community
+        "riseup.net",  # Privacy/activism
+        "kolabnow.com",  # Switzerland, privacy
+        "countermail.com",  # Sweden, encrypted
+        "hushmail.com",  # Canada, encrypted
+        "lavabit.com",  # Privacy-focused (relaunched)
+        "cock.li",  # Reputable independent provider
+        "teknik.io",  # Privacy-focused
+    }
+)
 
 
 def _email_domain_allowed(email: str) -> bool:
@@ -683,26 +885,31 @@ def register() -> Any:
     confirm = request.form.get("confirm", "")
     if not username or not email or not password:
         return render_template(
-            "register.html", error="Please fill in all fields.",
-            username=username, email=email,
+            "register.html",
+            error="Please fill in all fields.",
+            username=username,
+            email=email,
         )
     if len(username) < 2 or len(username) > 30:
         return render_template(
             "register.html",
             error="Username must be 2-30 characters.",
-            username=username, email=email,
+            username=username,
+            email=email,
         )
     if not re.match(r"^[A-Za-z0-9_-]+$", username):
         return render_template(
             "register.html",
             error="Username may only contain letters, numbers, underscores, and hyphens.",
-            username=username, email=email,
+            username=username,
+            email=email,
         )
     if not _EMAIL_RE.match(email):
         return render_template(
             "register.html",
             error="Please enter a valid email address.",
-            username=username, email=email,
+            username=username,
+            email=email,
         )
     # Only enforce the consumer-email allowlist when SMTP is configured.
     # On a local install without email setup the check serves no purpose and
@@ -711,35 +918,46 @@ def register() -> Any:
         return render_template(
             "register.html",
             error="Please use an email from a major email provider (Gmail, Outlook, Yahoo, iCloud, etc.).",
-            username=username, email=email,
+            username=username,
+            email=email,
         )
     if len(email) > 254:
         return render_template(
             "register.html",
             error="Email address is too long.",
-            username=username, email=email,
+            username=username,
+            email=email,
         )
     if get_user_by_email(email):
         return render_template(
             "register.html",
             error="Registration could not be completed. Please check your details and try again.",
-            username=username, email=email,
+            username=username,
+            email=email,
         )
     complexity_error = _password_complexity_error(password)
     if complexity_error:
         return render_template(
-            "register.html", error=complexity_error, username=username, email=email,
+            "register.html",
+            error=complexity_error,
+            username=username,
+            email=email,
         )
     if password != confirm:
         return render_template(
-            "register.html", error="Passwords do not match.", username=username, email=email,
+            "register.html",
+            error="Passwords do not match.",
+            username=username,
+            email=email,
         )
     _record_register_attempt()
     user_id = create_user(username, password, email)
     if user_id is None:
         return render_template(
-            "register.html", error="That username is already taken.",
-            username=username, email=email,
+            "register.html",
+            error="That username is already taken.",
+            username=username,
+            email=email,
         )
     # Send verification email (best-effort; account is created regardless).
     token = secrets.token_urlsafe(32)
@@ -827,6 +1045,7 @@ def resend_verification() -> Any:
     if sent_at_raw:
         try:
             from datetime import timezone as _tz
+
             sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=_tz.utc)
             elapsed = (datetime.now(tz=_tz.utc) - sent_at).total_seconds()
             if elapsed < _RESEND_MIN_INTERVAL_S:
@@ -838,7 +1057,9 @@ def resend_verification() -> Any:
         except Exception:
             pass
 
-    _record_attempt(_resend_rate_limit_store, _resend_rate_limit_lock, _RESEND_RATE_LIMIT_WINDOW_S)
+    _record_attempt(
+        _resend_rate_limit_store, _resend_rate_limit_lock, _RESEND_RATE_LIMIT_WINDOW_S
+    )
     token = secrets.token_urlsafe(32)
     set_email_verification_token(g.user["id"], token)
     base_url = request.host_url
@@ -1018,13 +1239,20 @@ def delete_account_route() -> Any:
         for rel_path in get_all_user_photo_paths(user_id):
             if not rel_path:
                 continue
-            sub = rel_path[len("uploads/"):] if rel_path.startswith("uploads/") else rel_path
+            sub = (
+                rel_path[len("uploads/") :]
+                if rel_path.startswith("uploads/")
+                else rel_path
+            )
             abs_path = os.path.realpath(os.path.join(upload_root, sub))
             if abs_path.startswith(upload_root_real + os.sep):
                 try:
                     os.remove(abs_path)
                 except OSError:
-                    logger.warning("Could not remove photo file during account deletion: %s", rel_path)
+                    logger.warning(
+                        "Could not remove photo file during account deletion: %s",
+                        rel_path,
+                    )
 
     delete_user(user_id)
     session.clear()
@@ -1032,6 +1260,7 @@ def delete_account_route() -> Any:
 
 
 # ── WebAuthn / passkey (biometric) endpoints ──────────────────────────────────
+
 
 def _webauthn_rp_id() -> str:
     return request.host.split(":")[0]
@@ -1108,7 +1337,9 @@ def webauthn_register_complete() -> Any:
         public_key=bytes_to_base64url(verified.credential_public_key),
         sign_count=verified.sign_count,
     )
-    logger.info("webauthn.register_complete user_id=%s ip=%s", g.user["id"], _client_ip())
+    logger.info(
+        "webauthn.register_complete user_id=%s ip=%s", g.user["id"], _client_ip()
+    )
     return jsonify({"ok": True})
 
 
@@ -1132,7 +1363,7 @@ def webauthn_authenticate_begin() -> Any:
 def webauthn_authenticate_complete() -> Any:
     """Verify the authentication response and log the user in."""
     from webauthn import verify_authentication_response
-    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+    from webauthn.helpers import base64url_to_bytes
 
     challenge_b64 = session.pop("webauthn_auth_challenge", None)
     origin = session.pop("webauthn_auth_origin", None)
@@ -1195,6 +1426,7 @@ def webauthn_delete_credential(credential_id: str) -> Any:
 # ---------------------------------------------------------------------------
 # Social login — shared helpers
 # ---------------------------------------------------------------------------
+
 
 def _establish_session(user_id: int) -> None:
     """Clear the current session and establish a fresh authenticated one.
@@ -1272,7 +1504,9 @@ def _social_login_or_create(
             return user_by_email["id"], False
 
     username = _generate_social_username(display_name, email)
-    user_id = create_social_user(username, email, provider, provider_uid, display_name, avatar_url)
+    user_id = create_social_user(
+        username, email, provider, provider_uid, display_name, avatar_url
+    )
     return user_id, True
 
 
@@ -1423,7 +1657,9 @@ def google_login() -> Any:
         return redirect(url_for("views.index"))
     client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
     if not client_id:
-        return render_template("login.html", error="Google login is not configured on this server.")
+        return render_template(
+            "login.html", error="Google login is not configured on this server."
+        )
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
     session["oauth_provider"] = "google"
@@ -1452,16 +1688,21 @@ def google_callback() -> Any:
     stored_state = session.pop("oauth_state", None)
     stored_provider = session.pop("oauth_provider", None)
     if not state or state != stored_state or stored_provider != "google":
-        return render_template("login.html", error="Login session expired. Please try again.")
+        return render_template(
+            "login.html", error="Login session expired. Please try again."
+        )
 
     code = request.args.get("code", "")
     if not code:
-        return render_template("login.html", error="Google sign-in failed. Please try again.")
+        return render_template(
+            "login.html", error="Google sign-in failed. Please try again."
+        )
 
     client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
     import requests as _req
+
     try:
         token_resp = _req.post(
             _GOOGLE_TOKEN_URL,
@@ -1477,11 +1718,15 @@ def google_callback() -> Any:
         token_data = token_resp.json()
     except Exception as exc:
         logger.error("google_oauth.token_exchange_failed: %s", exc)
-        return render_template("login.html", error="Could not complete Google sign-in. Please try again.")
+        return render_template(
+            "login.html", error="Could not complete Google sign-in. Please try again."
+        )
 
     if "error" in token_data or "access_token" not in token_data:
         logger.warning("google_oauth.token_error: %s", token_data.get("error"))
-        return render_template("login.html", error="Google sign-in failed. Please try again.")
+        return render_template(
+            "login.html", error="Google sign-in failed. Please try again."
+        )
 
     try:
         userinfo_resp = _req.get(
@@ -1492,22 +1737,35 @@ def google_callback() -> Any:
         userinfo = userinfo_resp.json()
     except Exception as exc:
         logger.error("google_oauth.userinfo_failed: %s", exc)
-        return render_template("login.html", error="Could not retrieve Google profile. Please try again.")
+        return render_template(
+            "login.html", error="Could not retrieve Google profile. Please try again."
+        )
 
     provider_uid = userinfo.get("sub", "")
     email = userinfo.get("email") or None
     # Prefer given_name for display (friendlier); fall back to full name
-    display_name = (userinfo.get("given_name") or userinfo.get("name") or None)
+    display_name = userinfo.get("given_name") or userinfo.get("name") or None
     avatar_url = userinfo.get("picture") or None
 
     if not provider_uid:
-        return render_template("login.html", error="Google sign-in failed: missing user ID.")
+        return render_template(
+            "login.html", error="Google sign-in failed: missing user ID."
+        )
 
-    user_id, is_new = _social_login_or_create("google", provider_uid, email, display_name, avatar_url)
+    user_id, is_new = _social_login_or_create(
+        "google", provider_uid, email, display_name, avatar_url
+    )
     if user_id is None:
-        return render_template("login.html", error="Could not create account. Please try again.")
+        return render_template(
+            "login.html", error="Could not create account. Please try again."
+        )
 
-    logger.info("security.social_login provider=google user_id=%s new=%s ip=%s", user_id, is_new, _client_ip())
+    logger.info(
+        "security.social_login provider=google user_id=%s new=%s ip=%s",
+        user_id,
+        is_new,
+        _client_ip(),
+    )
     _establish_session(user_id)
     # New accounts go to location setup first; after picking a location the
     # before_request hook will redirect them to the profile wizard automatically.
@@ -1539,7 +1797,9 @@ def _generate_apple_client_secret() -> str:
         from cryptography.hazmat.primitives.asymmetric import ec
         from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
     except ImportError as exc:
-        raise RuntimeError("cryptography package is required for Apple Sign In") from exc
+        raise RuntimeError(
+            "cryptography package is required for Apple Sign In"
+        ) from exc
 
     team_id = os.environ.get("APPLE_TEAM_ID", "")
     key_id = os.environ.get("APPLE_KEY_ID", "")
@@ -1558,7 +1818,9 @@ def _generate_apple_client_secret() -> str:
         return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
     now = int(time.time())
-    header = _b64url(json.dumps({"alg": "ES256", "kid": key_id}, separators=(",", ":")).encode())
+    header = _b64url(
+        json.dumps({"alg": "ES256", "kid": key_id}, separators=(",", ":")).encode()
+    )
     payload = _b64url(
         json.dumps(
             {
@@ -1572,8 +1834,10 @@ def _generate_apple_client_secret() -> str:
         ).encode()
     )
     message = f"{header}.{payload}".encode()
-    private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=None)
-    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))  # type: ignore[arg-type]
+    private_key = serialization.load_pem_private_key(
+        private_key_pem.encode(), password=None
+    )
+    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))  # type: ignore[arg-type,union-attr,call-arg]
     r, s = decode_dss_signature(der_sig)
     raw_sig = _b64url(r.to_bytes(32, "big") + s.to_bytes(32, "big"))
     return f"{header}.{payload}.{raw_sig}"
@@ -1586,7 +1850,9 @@ def apple_login() -> Any:
         return redirect(url_for("views.index"))
     client_id = os.environ.get("APPLE_CLIENT_ID", "")
     if not client_id:
-        return render_template("login.html", error="Apple Sign In is not configured on this server.")
+        return render_template(
+            "login.html", error="Apple Sign In is not configured on this server."
+        )
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
     session["oauth_provider"] = "apple"
@@ -1618,20 +1884,28 @@ def apple_callback() -> Any:
     stored_state = session.pop("oauth_state", None)
     stored_provider = session.pop("oauth_provider", None)
     if not state or state != stored_state or stored_provider != "apple":
-        return render_template("login.html", error="Login session expired. Please try again.")
+        return render_template(
+            "login.html", error="Login session expired. Please try again."
+        )
 
     code = request.values.get("code", "")
     if not code:
-        return render_template("login.html", error="Apple Sign In failed. Please try again.")
+        return render_template(
+            "login.html", error="Apple Sign In failed. Please try again."
+        )
 
     client_id = os.environ.get("APPLE_CLIENT_ID", "")
     try:
         client_secret = _generate_apple_client_secret()
     except Exception as exc:
         logger.error("apple_oauth.client_secret_failed: %s", exc)
-        return render_template("login.html", error="Apple Sign In is misconfigured. Please contact support.")
+        return render_template(
+            "login.html",
+            error="Apple Sign In is misconfigured. Please contact support.",
+        )
 
     import requests as _req
+
     try:
         token_resp = _req.post(
             _APPLE_TOKEN_URL,
@@ -1648,27 +1922,42 @@ def apple_callback() -> Any:
         token_data = token_resp.json()
     except Exception as exc:
         logger.error("apple_oauth.token_exchange_failed: %s", exc)
-        return render_template("login.html", error="Could not complete Apple Sign In. Please try again.")
+        return render_template(
+            "login.html", error="Could not complete Apple Sign In. Please try again."
+        )
 
     if "error" in token_data or "id_token" not in token_data:
         logger.warning("apple_oauth.token_error: %s", token_data.get("error"))
-        return render_template("login.html", error="Apple Sign In failed. Please try again.")
+        return render_template(
+            "login.html", error="Apple Sign In failed. Please try again."
+        )
 
     payload = _verify_apple_id_token(token_data["id_token"], client_id)
     if not payload:
-        return render_template("login.html", error="Apple Sign In failed: could not read token.")
+        return render_template(
+            "login.html", error="Apple Sign In failed: could not read token."
+        )
 
     provider_uid = payload.get("sub", "")
     email = payload.get("email") or None
 
     if not provider_uid:
-        return render_template("login.html", error="Apple Sign In failed: missing user ID.")
+        return render_template(
+            "login.html", error="Apple Sign In failed: missing user ID."
+        )
 
     user_id, is_new = _social_login_or_create("apple", provider_uid, email, None, None)
     if user_id is None:
-        return render_template("login.html", error="Could not create account. Please try again.")
+        return render_template(
+            "login.html", error="Could not create account. Please try again."
+        )
 
-    logger.info("security.social_login provider=apple user_id=%s new=%s ip=%s", user_id, is_new, _client_ip())
+    logger.info(
+        "security.social_login provider=apple user_id=%s new=%s ip=%s",
+        user_id,
+        is_new,
+        _client_ip(),
+    )
     _establish_session(user_id)
     # New accounts go to location setup first; after picking a location the
     # before_request hook will redirect them to the profile wizard automatically.

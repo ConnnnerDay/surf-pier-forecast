@@ -201,12 +201,23 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
     return row is not None
 
 
-_KNOWN_TABLES = frozenset({
-    "users", "profiles", "locations", "forecasts",
-    "forecast_cache", "catch_log", "reg_scrape_cache", "webauthn_credentials",
-    "social_accounts", "map_catches", "map_catch_comments", "map_catch_likes",
-    "custom_map_markers",
-})
+_KNOWN_TABLES = frozenset(
+    {
+        "users",
+        "profiles",
+        "locations",
+        "forecasts",
+        "forecast_cache",
+        "catch_log",
+        "reg_scrape_cache",
+        "webauthn_credentials",
+        "social_accounts",
+        "map_catches",
+        "map_catch_comments",
+        "map_catch_likes",
+        "custom_map_markers",
+    }
+)
 
 
 def _column_names(conn: sqlite3.Connection, table: str) -> List[str]:
@@ -257,9 +268,7 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             "ALTER TABLE users ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0"
         )
     if "is_admin" not in user_cols:
-        conn.execute(
-            "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0"
-        )
+        conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
     # Always ensure 'Conner' has admin rights — runs every startup so the flag
     # is applied even if the account was created after the column was added.
     conn.execute(
@@ -428,8 +437,7 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         # map_catches already existed — add new columns if they were introduced
         # after the initial schema migration (idempotent: ignore if already present).
         existing_cols = {
-            row[1]
-            for row in conn.execute("PRAGMA table_info(map_catches)").fetchall()
+            row[1] for row in conn.execute("PRAGMA table_info(map_catches)").fetchall()
         }
         if "title" not in existing_cols:
             conn.execute("ALTER TABLE map_catches ADD COLUMN title TEXT")
@@ -471,7 +479,9 @@ def init_db() -> None:
 # User auth -----------------------------------------------------------------
 
 
-def create_user(username: str, password: str, email: Optional[str] = None) -> Optional[int]:
+def create_user(
+    username: str, password: str, email: Optional[str] = None
+) -> Optional[int]:
     # Explicitly specify the algorithm so we are not dependent on Werkzeug's
     # default changing in a future release.
     pw_hash = generate_password_hash(password, method="pbkdf2:sha256")
@@ -505,7 +515,9 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     # Always run the hash check to prevent timing-based user enumeration.
     # When no matching row exists, compare against the dummy hash so the
     # response time is indistinguishable from a real (failed) comparison.
-    stored_hash = (row["password_hash"] if (row and row["password_hash"]) else _DUMMY_HASH)
+    stored_hash = (
+        row["password_hash"] if (row and row["password_hash"]) else _DUMMY_HASH
+    )
     password_ok = check_password_hash(stored_hash, password)
     if not password_ok or not row:
         return None
@@ -901,7 +913,7 @@ def get_log_entries(
     ]
 
 
-_CATCH_LOG_SIZE_MAX = 50    # e.g. "24 inches"
+_CATCH_LOG_SIZE_MAX = 50  # e.g. "24 inches"
 _CATCH_LOG_NOTES_MAX = 1000  # free-text field
 
 
@@ -1175,6 +1187,7 @@ def delete_forecast(location_id: str) -> bool:
 
 # ── WebAuthn / passkey credential storage ─────────────────────────────────────
 
+
 def save_webauthn_credential(
     user_id: int,
     credential_id: str,
@@ -1343,7 +1356,10 @@ def get_social_accounts_for_user(user_id: int) -> List[Dict[str, Any]]:
         ).fetchall()
     finally:
         conn.close()
-    return [{"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]} for r in rows]
+    return [
+        {"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]}
+        for r in rows
+    ]
 
 
 # ── Map catch log (community pins) ──────────────────────────────────────────
@@ -1653,8 +1669,12 @@ def get_recent_public_catches(
         """
         if lat is not None and lng is not None:
             sql += " AND mc.lat BETWEEN ? AND ? AND mc.lng BETWEEN ? AND ?"
-            params += [lat - radius_deg, lat + radius_deg,
-                       lng - radius_deg, lng + radius_deg]
+            params += [
+                lat - radius_deg,
+                lat + radius_deg,
+                lng - radius_deg,
+                lng + radius_deg,
+            ]
         if species_filter:
             sql += " AND LOWER(mc.species) LIKE ?"
             params.append(f"%{species_filter.lower()}%")
@@ -1688,8 +1708,8 @@ def get_recent_public_catches(
 # ── Community catch rows — short-lived cache ──────────────────────────────────
 # The raw lat/lng rows from map_catches don't change between requests; caching
 # them for 5 minutes avoids re-querying the DB on every fishing-map cache miss.
-_CATCH_ROWS_CACHE: Optional[tuple] = None   # (expiry_ts, rows_list)
-_CATCH_ROWS_TTL: int = 300                  # 5 minutes
+_CATCH_ROWS_CACHE: Optional[tuple] = None  # (expiry_ts, rows_list)
+_CATCH_ROWS_TTL: int = 300  # 5 minutes
 
 
 def _get_public_catch_rows(days_back: int) -> list:
@@ -1743,25 +1763,42 @@ def get_catch_counts_near_locations(
 
 # Custom map markers (admin-editable) ----------------------------------------
 
-_VALID_MARKER_TYPES = frozenset({
-    "pier", "jetty", "bridge", "reef", "oyster_reef", "wreck", "inlet",
-    "marina", "shoal", "point", "beach", "grass_flat", "tidal_flat",
-    "saltmarsh", "mangrove", "buoy", "fishing", "fishing_shop",
-})
+_VALID_MARKER_TYPES = frozenset(
+    {
+        "pier",
+        "jetty",
+        "bridge",
+        "reef",
+        "oyster_reef",
+        "wreck",
+        "inlet",
+        "marina",
+        "shoal",
+        "point",
+        "beach",
+        "grass_flat",
+        "tidal_flat",
+        "saltmarsh",
+        "mangrove",
+        "buoy",
+        "fishing",
+        "fishing_shop",
+    }
+)
 
 
 def _marker_row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
     return {
-        "id":          row["id"],
-        "lat":         row["lat"],
-        "lng":         row["lng"],
-        "name":        row["name"],
-        "type":        row["type"],
+        "id": row["id"],
+        "lat": row["lat"],
+        "lng": row["lng"],
+        "name": row["name"],
+        "type": row["type"],
         "description": row["description"],
-        "created_by":  row["created_by"],
-        "created_at":  row["created_at"],
-        "updated_at":  row["updated_at"],
-        "custom":      True,
+        "created_by": row["created_by"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "custom": True,
     }
 
 
@@ -1822,15 +1859,20 @@ def update_custom_marker(
         updates: list = []
         params: list = []
         if lat is not None:
-            updates.append("lat = ?");         params.append(lat)
+            updates.append("lat = ?")
+            params.append(lat)
         if lng is not None:
-            updates.append("lng = ?");         params.append(lng)
+            updates.append("lng = ?")
+            params.append(lng)
         if name is not None:
-            updates.append("name = ?");        params.append(name.strip())
+            updates.append("name = ?")
+            params.append(name.strip())
         if type_ is not None and type_ in _VALID_MARKER_TYPES:
-            updates.append("type = ?");        params.append(type_)
+            updates.append("type = ?")
+            params.append(type_)
         if description is not None:
-            updates.append("description = ?"); params.append(description.strip())
+            updates.append("description = ?")
+            params.append(description.strip())
         updates.append("updated_at = datetime('now')")
         params.append(marker_id)
         conn.execute(

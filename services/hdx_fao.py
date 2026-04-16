@@ -53,9 +53,9 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: Dict[str, Dict[str, Any]] = {}
-_CACHE_HDX_TTL: int      = 86400     # 24 hours — HDX catalog changes slowly
-_CACHE_FAO_ZONE_TTL: int = 604800    # 7 days — zone boundaries are static
-_CACHE_SPECIES_TTL: int  = 604800    # 7 days — ASFIS species list is static
+_CACHE_HDX_TTL: int = 86400  # 24 hours — HDX catalog changes slowly
+_CACHE_FAO_ZONE_TTL: int = 604800  # 7 days — zone boundaries are static
+_CACHE_SPECIES_TTL: int = 604800  # 7 days — ASFIS species list is static
 _CACHE_MAX: int = 512
 
 # ── HDX CKAN API ──────────────────────────────────────────────────────────────
@@ -64,7 +64,12 @@ _HDX_BASE = "https://data.humdata.org/api/3/action"
 # Pre-selected HDX dataset IDs of high relevance to coastal fisheries.
 # Fetched lazily via search_hdx_datasets().
 _HDX_FISHERIES_TAGS = [
-    "fisheries", "marine", "ocean", "fish", "coastal", "aquaculture",
+    "fisheries",
+    "marine",
+    "ocean",
+    "fish",
+    "coastal",
+    "aquaculture",
 ]
 
 # ── FAO endpoints ─────────────────────────────────────────────────────────────
@@ -77,29 +82,115 @@ _FAO_SPECIES_BASE = "https://www.fao.org/fishery/api/fao-species"
 # Maps FAO Major Fishing Area codes to human-readable names and lat/lng ranges.
 # Source: FAO Fisheries Circular No. 826 Rev.3
 _FAO_MAJOR_AREAS: List[Dict[str, Any]] = [
-    {"code": "21", "name": "Northwest Atlantic",        "lat_range": (27, 78),  "lng_range": (-100, -40)},
-    {"code": "27", "name": "Northeast Atlantic",        "lat_range": (36, 82),  "lng_range": (-45,  70)},
-    {"code": "31", "name": "Western Central Atlantic",  "lat_range": (7,  30),  "lng_range": (-98, -52)},
-    {"code": "34", "name": "Eastern Central Atlantic",  "lat_range": (-6, 36),  "lng_range": (-45,  20)},
-    {"code": "41", "name": "Southwest Atlantic",        "lat_range": (-60, 5),  "lng_range": (-65, -25)},
-    {"code": "47", "name": "Southeast Atlantic",        "lat_range": (-50, 0),  "lng_range": (-20,  30)},
-    {"code": "48", "name": "Atlantic, Antarctic",       "lat_range": (-90,-45), "lng_range": (-180,180)},
-    {"code": "51", "name": "Western Indian Ocean",      "lat_range": (-45, 30), "lng_range": (30,  80)},
-    {"code": "57", "name": "Eastern Indian Ocean",      "lat_range": (-55, 30), "lng_range": (80, 150)},
-    {"code": "58", "name": "Indian Ocean, Antarctic",   "lat_range": (-90,-45), "lng_range": (20, 150)},
-    {"code": "61", "name": "Northwest Pacific",         "lat_range": (0,  65),  "lng_range": (100, 180)},
-    {"code": "67", "name": "Northeast Pacific",         "lat_range": (5,  75),  "lng_range": (-180,-120)},
-    {"code": "71", "name": "Western Central Pacific",   "lat_range": (-25, 25), "lng_range": (100, 180)},
-    {"code": "77", "name": "Eastern Central Pacific",   "lat_range": (-5, 40),  "lng_range": (-180,-75)},
-    {"code": "81", "name": "Southwest Pacific",         "lat_range": (-55, 0),  "lng_range": (150, 180)},
-    {"code": "87", "name": "Southeast Pacific",         "lat_range": (-60, 5),  "lng_range": (-120,-70)},
-    {"code": "88", "name": "Pacific, Antarctic",        "lat_range": (-90,-45), "lng_range": (-180,180)},
+    {
+        "code": "21",
+        "name": "Northwest Atlantic",
+        "lat_range": (27, 78),
+        "lng_range": (-100, -40),
+    },
+    {
+        "code": "27",
+        "name": "Northeast Atlantic",
+        "lat_range": (36, 82),
+        "lng_range": (-45, 70),
+    },
+    {
+        "code": "31",
+        "name": "Western Central Atlantic",
+        "lat_range": (7, 30),
+        "lng_range": (-98, -52),
+    },
+    {
+        "code": "34",
+        "name": "Eastern Central Atlantic",
+        "lat_range": (-6, 36),
+        "lng_range": (-45, 20),
+    },
+    {
+        "code": "41",
+        "name": "Southwest Atlantic",
+        "lat_range": (-60, 5),
+        "lng_range": (-65, -25),
+    },
+    {
+        "code": "47",
+        "name": "Southeast Atlantic",
+        "lat_range": (-50, 0),
+        "lng_range": (-20, 30),
+    },
+    {
+        "code": "48",
+        "name": "Atlantic, Antarctic",
+        "lat_range": (-90, -45),
+        "lng_range": (-180, 180),
+    },
+    {
+        "code": "51",
+        "name": "Western Indian Ocean",
+        "lat_range": (-45, 30),
+        "lng_range": (30, 80),
+    },
+    {
+        "code": "57",
+        "name": "Eastern Indian Ocean",
+        "lat_range": (-55, 30),
+        "lng_range": (80, 150),
+    },
+    {
+        "code": "58",
+        "name": "Indian Ocean, Antarctic",
+        "lat_range": (-90, -45),
+        "lng_range": (20, 150),
+    },
+    {
+        "code": "61",
+        "name": "Northwest Pacific",
+        "lat_range": (0, 65),
+        "lng_range": (100, 180),
+    },
+    {
+        "code": "67",
+        "name": "Northeast Pacific",
+        "lat_range": (5, 75),
+        "lng_range": (-180, -120),
+    },
+    {
+        "code": "71",
+        "name": "Western Central Pacific",
+        "lat_range": (-25, 25),
+        "lng_range": (100, 180),
+    },
+    {
+        "code": "77",
+        "name": "Eastern Central Pacific",
+        "lat_range": (-5, 40),
+        "lng_range": (-180, -75),
+    },
+    {
+        "code": "81",
+        "name": "Southwest Pacific",
+        "lat_range": (-55, 0),
+        "lng_range": (150, 180),
+    },
+    {
+        "code": "87",
+        "name": "Southeast Pacific",
+        "lat_range": (-60, 5),
+        "lng_range": (-120, -70),
+    },
+    {
+        "code": "88",
+        "name": "Pacific, Antarctic",
+        "lat_range": (-90, -45),
+        "lng_range": (-180, 180),
+    },
 ]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def search_hdx_datasets(
     query: str = "fisheries coastal",
@@ -272,6 +363,7 @@ def get_hdx_fao_enrichment(
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[Dict[str, Any]]:
     """Query FAO GeoServer WFS for the fishing zone at a coordinate."""
     params = {
@@ -339,12 +431,14 @@ def _parse_hdx_package(pkg: Dict[str, Any]) -> Dict[str, Any]:
     """Extract key fields from an HDX CKAN package record."""
     resources = []
     for res in pkg.get("resources", [])[:3]:
-        resources.append({
-            "name": res.get("name", ""),
-            "format": res.get("format", ""),
-            "url": res.get("url", ""),
-            "size": res.get("size"),
-        })
+        resources.append(
+            {
+                "name": res.get("name", ""),
+                "format": res.get("format", ""),
+                "url": res.get("url", ""),
+                "size": res.get("size"),
+            }
+        )
 
     tags = [t.get("name", "") for t in pkg.get("tags", [])]
 

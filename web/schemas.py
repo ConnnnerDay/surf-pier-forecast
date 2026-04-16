@@ -43,11 +43,23 @@ def error_envelope(
     }
 
 
-_VALID_FISHING_TYPES = frozenset({
-    "surf", "pier", "jetty", "bridge", "wade",
-    "kayak", "inshore", "offshore", "fly", "charter",
-})
-_VALID_TARGETS = frozenset({"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "anything"})
+_VALID_FISHING_TYPES = frozenset(
+    {
+        "surf",
+        "pier",
+        "jetty",
+        "bridge",
+        "wade",
+        "kayak",
+        "inshore",
+        "offshore",
+        "fly",
+        "charter",
+    }
+)
+_VALID_TARGETS = frozenset(
+    {"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "anything"}
+)
 _VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
 _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
 _VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night"})
@@ -173,7 +185,8 @@ class ProfilePayload:
             fp_preferred_times = fishing_profile.get("preferred_times")
             if fp_preferred_times is not None:
                 if not isinstance(fp_preferred_times, list) or not all(
-                    isinstance(x, str) and x in _VALID_PREFERRED_TIMES for x in fp_preferred_times
+                    isinstance(x, str) and x in _VALID_PREFERRED_TIMES
+                    for x in fp_preferred_times
                 ):
                     raise ApiError(
                         "invalid_preferred_times",
@@ -181,35 +194,50 @@ class ProfilePayload:
                         status=400,
                     )
             fp_primary_goal = fishing_profile.get("primary_goal")
-            if fp_primary_goal is not None and fp_primary_goal not in _VALID_PRIMARY_GOAL:
+            if (
+                fp_primary_goal is not None
+                and fp_primary_goal not in _VALID_PRIMARY_GOAL
+            ):
                 raise ApiError(
                     "invalid_primary_goal",
                     f"primary_goal must be one of: {sorted(_VALID_PRIMARY_GOAL)}",
                     status=400,
                 )
             fp_condition_tolerance = fishing_profile.get("condition_tolerance")
-            if fp_condition_tolerance is not None and fp_condition_tolerance not in _VALID_CONDITION_TOLERANCE:
+            if (
+                fp_condition_tolerance is not None
+                and fp_condition_tolerance not in _VALID_CONDITION_TOLERANCE
+            ):
                 raise ApiError(
                     "invalid_condition_tolerance",
                     f"condition_tolerance must be one of: {sorted(_VALID_CONDITION_TOLERANCE)}",
                     status=400,
                 )
             fp_tide_preference = fishing_profile.get("tide_preference")
-            if fp_tide_preference is not None and fp_tide_preference not in _VALID_TIDE_PREFERENCE:
+            if (
+                fp_tide_preference is not None
+                and fp_tide_preference not in _VALID_TIDE_PREFERENCE
+            ):
                 raise ApiError(
                     "invalid_tide_preference",
                     f"tide_preference must be one of: {sorted(_VALID_TIDE_PREFERENCE)}",
                     status=400,
                 )
             fp_session_frequency = fishing_profile.get("session_frequency")
-            if fp_session_frequency is not None and fp_session_frequency not in _VALID_SESSION_FREQUENCY:
+            if (
+                fp_session_frequency is not None
+                and fp_session_frequency not in _VALID_SESSION_FREQUENCY
+            ):
                 raise ApiError(
                     "invalid_session_frequency",
                     f"session_frequency must be one of: {sorted(_VALID_SESSION_FREQUENCY)}",
                     status=400,
                 )
             fp_catch_release = fishing_profile.get("catch_release")
-            if fp_catch_release is not None and fp_catch_release not in _VALID_CATCH_RELEASE:
+            if (
+                fp_catch_release is not None
+                and fp_catch_release not in _VALID_CATCH_RELEASE
+            ):
                 raise ApiError(
                     "invalid_catch_release",
                     f"catch_release must be one of: {sorted(_VALID_CATCH_RELEASE)}",

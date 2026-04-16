@@ -15,8 +15,6 @@ Coverage
 
 from __future__ import annotations
 
-import json
-import time
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
@@ -49,19 +47,32 @@ def _clear_structure_cache():
 # _classify_osm_tags
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestClassifyOsmTags:
     # Habitats — wetland subtypes
     def test_seagrass(self):
-        assert _classify_osm_tags({"natural": "wetland", "wetland": "seagrass"}) == "grass_flat"
+        assert (
+            _classify_osm_tags({"natural": "wetland", "wetland": "seagrass"})
+            == "grass_flat"
+        )
 
     def test_saltmarsh(self):
-        assert _classify_osm_tags({"natural": "wetland", "wetland": "saltmarsh"}) == "saltmarsh"
+        assert (
+            _classify_osm_tags({"natural": "wetland", "wetland": "saltmarsh"})
+            == "saltmarsh"
+        )
 
     def test_mangrove(self):
-        assert _classify_osm_tags({"natural": "wetland", "wetland": "mangrove"}) == "mangrove"
+        assert (
+            _classify_osm_tags({"natural": "wetland", "wetland": "mangrove"})
+            == "mangrove"
+        )
 
     def test_tidalflat(self):
-        assert _classify_osm_tags({"natural": "wetland", "wetland": "tidalflat"}) == "tidal_flat"
+        assert (
+            _classify_osm_tags({"natural": "wetland", "wetland": "tidalflat"})
+            == "tidal_flat"
+        )
 
     def test_unknown_wetland_returns_none(self):
         assert _classify_osm_tags({"natural": "wetland", "wetland": "bog"}) is None
@@ -98,10 +109,16 @@ class TestClassifyOsmTags:
 
     # Oyster aquaculture
     def test_aquaculture_produce_oyster(self):
-        assert _classify_osm_tags({"landuse": "aquaculture", "produce": "oyster"}) == "oyster_reef"
+        assert (
+            _classify_osm_tags({"landuse": "aquaculture", "produce": "oyster"})
+            == "oyster_reef"
+        )
 
     def test_aquaculture_product_oysters(self):
-        assert _classify_osm_tags({"landuse": "aquaculture", "product": "oysters"}) == "oyster_reef"
+        assert (
+            _classify_osm_tags({"landuse": "aquaculture", "product": "oysters"})
+            == "oyster_reef"
+        )
 
     def test_aquaculture_other_produce_returns_none(self):
         assert _classify_osm_tags({"landuse": "aquaculture", "produce": "fish"}) is None
@@ -235,7 +252,7 @@ class TestBuildOverpassQuery:
 
     def test_oyster_and_reef_both_trigger_reef_tags(self):
         q_oyster = _build_overpass_query(BBOX, {"oyster_reef"})
-        q_reef   = _build_overpass_query(BBOX, {"reef"})
+        q_reef = _build_overpass_query(BBOX, {"reef"})
         # oyster_reef uses aquaculture landuse tags (NOT natural=reef);
         # natural=reef is only added when the "reef" type is requested.
         assert '"natural"="reef"' not in q_oyster
@@ -271,20 +288,21 @@ class TestBuildOverpassQuery:
 # _deduplicate
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestDeduplicate:
     def test_empty_input(self):
         assert _deduplicate([]) == []
 
     def test_passthrough_unique_spots(self):
         spots = [
-            {"lat": 25.0, "lng": -80.0, "type": "pier",  "name": "Pier A"},
+            {"lat": 25.0, "lng": -80.0, "type": "pier", "name": "Pier A"},
             {"lat": 26.0, "lng": -81.0, "type": "jetty", "name": "Jetty B"},
         ]
         assert len(_deduplicate(spots)) == 2
 
     def test_name_dedup_same_type(self):
         spots = [
-            {"lat": 25.0,   "lng": -80.0,   "type": "pier", "name": "Sunshine Pier"},
+            {"lat": 25.0, "lng": -80.0, "type": "pier", "name": "Sunshine Pier"},
             {"lat": 25.001, "lng": -80.001, "type": "pier", "name": "Sunshine Pier"},
         ]
         result = _deduplicate(spots)
@@ -293,15 +311,20 @@ class TestDeduplicate:
 
     def test_name_dedup_different_type_keeps_both(self):
         spots = [
-            {"lat": 25.0, "lng": -80.0, "type": "pier",  "name": "Marina Walk"},
-            {"lat": 25.0, "lng": -80.0, "type": "marina","name": "Marina Walk"},
+            {"lat": 25.0, "lng": -80.0, "type": "pier", "name": "Marina Walk"},
+            {"lat": 25.0, "lng": -80.0, "type": "marina", "name": "Marina Walk"},
         ]
         assert len(_deduplicate(spots)) == 2
 
     def test_name_dedup_case_insensitive(self):
         spots = [
-            {"lat": 25.0,   "lng": -80.0,   "type": "bridge", "name": "Tampa Bay Bridge"},
-            {"lat": 25.001, "lng": -80.001, "type": "bridge", "name": "tampa bay bridge"},
+            {"lat": 25.0, "lng": -80.0, "type": "bridge", "name": "Tampa Bay Bridge"},
+            {
+                "lat": 25.001,
+                "lng": -80.001,
+                "type": "bridge",
+                "name": "tampa bay bridge",
+            },
         ]
         assert len(_deduplicate(spots)) == 1
 
@@ -333,7 +356,7 @@ class TestDeduplicate:
     def test_different_types_not_proximity_deduped(self):
         # Same location, different types → both kept
         spots = [
-            {"lat": 25.0, "lng": -80.0, "type": "pier",  "name": ""},
+            {"lat": 25.0, "lng": -80.0, "type": "pier", "name": ""},
             {"lat": 25.0, "lng": -80.0, "type": "jetty", "name": ""},
         ]
         assert len(_deduplicate(spots)) == 2
@@ -353,6 +376,7 @@ class TestDeduplicate:
 # fetch_osm_structures (Overpass integration — mocked network)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _make_overpass_response(elements: List[Dict[str, Any]]) -> MagicMock:
     mock = MagicMock()
     mock.raise_for_status.return_value = None
@@ -363,72 +387,100 @@ def _make_overpass_response(elements: List[Dict[str, Any]]) -> MagicMock:
 class TestFetchOsmStructures:
     def test_returns_classified_spots_within_bbox(self):
         el = {
-            "type": "node", "id": 1,
-            "lat": 25.1, "lon": -80.2,
+            "type": "node",
+            "id": 1,
+            "lat": 25.1,
+            "lon": -80.2,
             "tags": {"man_made": "pier", "name": "City Pier"},
         }
-        with patch.object(_fs_mod._HTTP, "post", return_value=_make_overpass_response([el])):
+        with patch.object(
+            _fs_mod._HTTP, "post", return_value=_make_overpass_response([el])
+        ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
         assert len(spots) == 1
-        assert spots[0] == {"lat": 25.1, "lng": -80.2, "type": "pier", "name": "City Pier"}
+        assert spots[0] == {
+            "lat": 25.1,
+            "lng": -80.2,
+            "type": "pier",
+            "name": "City Pier",
+        }
 
     def test_way_center_coordinates_used(self):
         el = {
-            "type": "way", "id": 2,
+            "type": "way",
+            "id": 2,
             "center": {"lat": 25.2, "lon": -80.3},
             "tags": {"natural": "beach"},
         }
-        with patch.object(_fs_mod._HTTP, "post", return_value=_make_overpass_response([el])):
+        with patch.object(
+            _fs_mod._HTTP, "post", return_value=_make_overpass_response([el])
+        ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"beach"})
         assert len(spots) == 1
         assert spots[0]["lat"] == 25.2 and spots[0]["lng"] == -80.3
 
     def test_element_outside_bbox_filtered_out(self):
         el = {
-            "type": "node", "id": 3,
-            "lat": 30.0, "lon": -80.2,   # outside bbox
+            "type": "node",
+            "id": 3,
+            "lat": 30.0,
+            "lon": -80.2,  # outside bbox
             "tags": {"man_made": "pier"},
         }
-        with patch.object(_fs_mod._HTTP, "post", return_value=_make_overpass_response([el])):
+        with patch.object(
+            _fs_mod._HTTP, "post", return_value=_make_overpass_response([el])
+        ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
         assert spots == []
 
     def test_element_wrong_type_filtered_out(self):
         # Element classifies as "beach" but only "pier" was requested
         el = {
-            "type": "way", "id": 4,
+            "type": "way",
+            "id": 4,
             "center": {"lat": 25.1, "lon": -80.2},
             "tags": {"natural": "beach"},
         }
-        with patch.object(_fs_mod._HTTP, "post", return_value=_make_overpass_response([el])):
+        with patch.object(
+            _fs_mod._HTTP, "post", return_value=_make_overpass_response([el])
+        ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
         assert spots == []
 
     def test_element_missing_coords_skipped(self):
         el = {"type": "way", "id": 5, "tags": {"man_made": "pier"}}
-        with patch.object(_fs_mod._HTTP, "post", return_value=_make_overpass_response([el])):
+        with patch.object(
+            _fs_mod._HTTP, "post", return_value=_make_overpass_response([el])
+        ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
         assert spots == []
 
     def test_seamark_name_used_when_no_name_tag(self):
         el = {
-            "type": "node", "id": 6,
-            "lat": 25.1, "lon": -80.2,
+            "type": "node",
+            "id": 6,
+            "lat": 25.1,
+            "lon": -80.2,
             "tags": {"man_made": "buoy", "seamark:name": "Buoy 12A"},
         }
-        with patch.object(_fs_mod._HTTP, "post", return_value=_make_overpass_response([el])):
+        with patch.object(
+            _fs_mod._HTTP, "post", return_value=_make_overpass_response([el])
+        ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"buoy"})
         assert spots[0]["name"] == "Buoy 12A"
 
     def test_fallback_to_mirror_on_primary_failure(self):
         el = {
-            "type": "node", "id": 7,
-            "lat": 25.1, "lon": -80.2,
+            "type": "node",
+            "id": 7,
+            "lat": 25.1,
+            "lon": -80.2,
             "tags": {"natural": "reef"},
         }
         good_response = _make_overpass_response([el])
 
         call_count = {"n": 0}
+
         def side_effect(url, **kwargs):
             call_count["n"] += 1
             if call_count["n"] == 1:
@@ -451,6 +503,7 @@ class TestFetchOsmStructures:
 # fetch_noaa_structures (NOAA ENC integration — mocked network)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _make_noaa_response(features: List[Dict[str, Any]]) -> MagicMock:
     mock = MagicMock()
     mock.raise_for_status.return_value = None
@@ -461,10 +514,12 @@ def _make_noaa_response(features: List[Dict[str, Any]]) -> MagicMock:
 class TestFetchNoaaStructures:
     def test_wreck_type_queries_wreck_layer(self):
         feat = {
-            "geometry":   {"x": -80.2, "y": 25.1},
+            "geometry": {"x": -80.2, "y": 25.1},
             "attributes": {"OBJNAM": "SS Tarpon", "INFORM": ""},
         }
-        with patch.object(_fs_mod._HTTP, "get", return_value=_make_noaa_response([feat])) as mock_get:
+        with patch.object(
+            _fs_mod._HTTP, "get", return_value=_make_noaa_response([feat])
+        ) as mock_get:
             spots = fetch_noaa_structures(25.0, -80.5, 25.5, -80.0, {"wreck"})
         assert len(spots) == 1
         assert spots[0]["type"] == "wreck"
@@ -475,7 +530,7 @@ class TestFetchNoaaStructures:
 
     def test_shoal_type_queries_obstruction_and_rock_layers(self):
         feat = {
-            "geometry":   {"x": -80.1, "y": 25.2},
+            "geometry": {"x": -80.1, "y": 25.2},
             "attributes": {"OBJNAM": "Ledge Rock", "INFORM": ""},
         }
         responses = [_make_noaa_response([feat]), _make_noaa_response([])]
@@ -492,15 +547,23 @@ class TestFetchNoaaStructures:
         feat = {
             "geometry": {
                 "rings": [
-                    [[-80.3, 25.0], [-80.1, 25.0], [-80.1, 25.2], [-80.3, 25.2], [-80.3, 25.0]]
+                    [
+                        [-80.3, 25.0],
+                        [-80.1, 25.0],
+                        [-80.1, 25.2],
+                        [-80.3, 25.2],
+                        [-80.3, 25.0],
+                    ]
                 ]
             },
             "attributes": {"OBJNAM": "Rock Pile"},
         }
-        with patch.object(_fs_mod._HTTP, "get", return_value=_make_noaa_response([feat])):
+        with patch.object(
+            _fs_mod._HTTP, "get", return_value=_make_noaa_response([feat])
+        ):
             spots = fetch_noaa_structures(25.0, -80.5, 25.5, -80.0, {"wreck"})
         assert len(spots) == 1
-        assert abs(spots[0]["lat"] - 25.08) < 0.02   # centroid ≈ (25.08, -80.2)
+        assert abs(spots[0]["lat"] - 25.08) < 0.02  # centroid ≈ (25.08, -80.2)
         assert abs(spots[0]["lng"] - (-80.2)) < 0.02
 
     def test_noaa_failure_returns_empty_list(self):
@@ -518,13 +581,21 @@ class TestFetchNoaaStructures:
 # find_fish_structures (integration — mocked sub-calls)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestFindFishStructures:
     def test_returns_combined_osm_and_noaa_with_tips(self):
-        osm_spots  = [{"lat": 25.1, "lng": -80.2, "type": "pier",  "name": "City Pier"}]
+        osm_spots = [{"lat": 25.1, "lng": -80.2, "type": "pier", "name": "City Pier"}]
         noaa_spots = [{"lat": 25.3, "lng": -80.4, "type": "wreck", "name": "SS Tarpon"}]
 
-        with patch("services.fish_structures.fetch_osm_structures",  return_value=osm_spots), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=noaa_spots):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=osm_spots
+            ),
+            patch(
+                "services.fish_structures.fetch_noaa_structures",
+                return_value=noaa_spots,
+            ),
+        ):
             result = find_fish_structures(25.0, -80.5, 25.5, -80.0)
 
         assert len(result) == 2
@@ -533,36 +604,57 @@ class TestFindFishStructures:
 
     def test_deduplication_applied_across_sources(self):
         # Same wreck reported by both OSM and NOAA at effectively the same coords
-        osm_spots  = [{"lat": 25.1,   "lng": -80.2,   "type": "wreck", "name": "Urca de Lima"}]
-        noaa_spots = [{"lat": 25.1,   "lng": -80.2,   "type": "wreck", "name": "Urca de Lima"}]
+        osm_spots = [
+            {"lat": 25.1, "lng": -80.2, "type": "wreck", "name": "Urca de Lima"}
+        ]
+        noaa_spots = [
+            {"lat": 25.1, "lng": -80.2, "type": "wreck", "name": "Urca de Lima"}
+        ]
 
-        with patch("services.fish_structures.fetch_osm_structures",  return_value=osm_spots), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=noaa_spots):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=osm_spots
+            ),
+            patch(
+                "services.fish_structures.fetch_noaa_structures",
+                return_value=noaa_spots,
+            ),
+        ):
             result = find_fish_structures(25.0, -80.5, 25.5, -80.0)
 
         assert len(result) == 1
         assert result[0]["name"] == "Urca de Lima"
 
     def test_type_filter_applied(self):
-        osm_spots  = [
-            {"lat": 25.1, "lng": -80.2, "type": "pier",  "name": ""},
+        osm_spots = [
+            {"lat": 25.1, "lng": -80.2, "type": "pier", "name": ""},
             {"lat": 25.2, "lng": -80.3, "type": "wreck", "name": ""},
         ]
-        with patch("services.fish_structures.fetch_osm_structures",  return_value=osm_spots), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=osm_spots
+            ),
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
             result = find_fish_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
 
         assert all(s["type"] == "pier" for s in result)
 
     def test_unrecognised_types_silently_ignored(self):
-        with patch("services.fish_structures.fetch_osm_structures",  return_value=[]), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+        with (
+            patch("services.fish_structures.fetch_osm_structures", return_value=[]),
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
             result = find_fish_structures(25.0, -80.5, 25.5, -80.0, {"not_a_type"})
         assert result == []
 
     def test_none_types_uses_all_valid_types(self):
-        with patch("services.fish_structures.fetch_osm_structures",  return_value=[]) as m_osm, \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=[]
+            ) as m_osm,
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
             find_fish_structures(25.0, -80.5, 25.5, -80.0, None)
 
         called_types = m_osm.call_args[0][4]  # fifth positional arg is 'types'
@@ -572,23 +664,35 @@ class TestFindFishStructures:
         """Every spot type in VALID_TYPES must have a STRUCTURE_TIPS entry and produce a result."""
         for spot_type in VALID_TYPES:
             osm_spots = [{"lat": 25.1, "lng": -80.2, "type": spot_type, "name": ""}]
-            with patch("services.fish_structures.fetch_osm_structures",  return_value=osm_spots), \
-                 patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            with (
+                patch(
+                    "services.fish_structures.fetch_osm_structures",
+                    return_value=osm_spots,
+                ),
+                patch(
+                    "services.fish_structures.fetch_noaa_structures", return_value=[]
+                ),
+            ):
                 result = find_fish_structures(25.0, -80.5, 25.5, -80.0, {spot_type})
             assert len(result) == 1, f"Expected a result for type '{spot_type}'"
-            assert STRUCTURE_TIPS.get(spot_type), f"Missing STRUCTURE_TIPS entry for type '{spot_type}'"
+            assert STRUCTURE_TIPS.get(spot_type), (
+                f"Missing STRUCTURE_TIPS entry for type '{spot_type}'"
+            )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GET /api/map/structures  (Flask test client)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def app(tmp_path, monkeypatch):
     monkeypatch.setattr("storage.sqlite.DB_PATH", str(tmp_path / "test_structures.db"))
     from storage.sqlite import init_db
+
     init_db()
     from app import create_app
+
     flask_app = create_app()
     flask_app.config["TESTING"] = True
     return flask_app
@@ -607,12 +711,28 @@ def _structures_url(**params) -> str:
 class TestMapStructuresEndpoint:
     def test_happy_path_returns_structures_and_count(self, client):
         spots = [
-            {"lat": 25.1, "lng": -80.2, "type": "pier",  "name": "City Pier",  "tip": "tip A"},
-            {"lat": 25.3, "lng": -80.4, "type": "wreck", "name": "SS Tarpon", "tip": "tip B"},
+            {
+                "lat": 25.1,
+                "lng": -80.2,
+                "type": "pier",
+                "name": "City Pier",
+                "tip": "tip A",
+            },
+            {
+                "lat": 25.3,
+                "lng": -80.4,
+                "type": "wreck",
+                "name": "SS Tarpon",
+                "tip": "tip B",
+            },
         ]
-        with patch("services.fish_structures.fetch_osm_structures",  return_value=spots), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
-            r = client.get(_structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0))
+        with (
+            patch("services.fish_structures.fetch_osm_structures", return_value=spots),
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
+            r = client.get(
+                _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
+            )
 
         assert r.status_code == 200
         data = r.get_json()
@@ -621,9 +741,11 @@ class TestMapStructuresEndpoint:
 
     def test_types_filter_forwarded_to_service(self, client):
         with patch("web.api.find_fish_structures", return_value=[]) as mock_fn:
-            r = client.get(_structures_url(
-                south=25.0, west=-80.5, north=25.5, east=-80.0, types="pier,jetty"
-            ))
+            r = client.get(
+                _structures_url(
+                    south=25.0, west=-80.5, north=25.5, east=-80.0, types="pier,jetty"
+                )
+            )
         assert r.status_code == 200
         called_types = mock_fn.call_args[0][4]
         assert called_types == {"pier", "jetty"}
@@ -649,23 +771,33 @@ class TestMapStructuresEndpoint:
         assert r.status_code == 400
 
     def test_invalid_types_only_returns_400(self, client):
-        r = client.get(_structures_url(
-            south=25.0, west=-80.5, north=25.5, east=-80.0, types="ghost,spaceship"
-        ))
+        r = client.get(
+            _structures_url(
+                south=25.0, west=-80.5, north=25.5, east=-80.0, types="ghost,spaceship"
+            )
+        )
         assert r.status_code == 400
 
     def test_mixed_valid_invalid_types_uses_valid_subset(self, client):
         with patch("web.api.find_fish_structures", return_value=[]) as mock_fn:
-            r = client.get(_structures_url(
-                south=25.0, west=-80.5, north=25.5, east=-80.0, types="pier,ghost_type"
-            ))
+            r = client.get(
+                _structures_url(
+                    south=25.0,
+                    west=-80.5,
+                    north=25.5,
+                    east=-80.0,
+                    types="pier,ghost_type",
+                )
+            )
         assert r.status_code == 200
         called_types = mock_fn.call_args[0][4]
         assert called_types == {"pier"}
 
     def test_empty_result_returns_200_with_empty_list(self, client):
         with patch("web.api.find_fish_structures", return_value=[]):
-            r = client.get(_structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0))
+            r = client.get(
+                _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
+            )
         assert r.status_code == 200
         data = r.get_json()
         assert data == {"structures": [], "count": 0}
@@ -673,14 +805,18 @@ class TestMapStructuresEndpoint:
     def test_response_structure_fields_present(self, client):
         spots = [{"lat": 25.1, "lng": -80.2, "type": "reef", "name": "Reef X"}]
         with patch("web.api.find_fish_structures", return_value=spots):
-            r = client.get(_structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0))
+            r = client.get(
+                _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
+            )
         s = r.get_json()["structures"][0]
         assert {"lat", "lng", "type", "name"} <= s.keys()
 
     def test_oversized_lat_span_returns_zoom_required(self, client):
         # 9-degree lat span > _STRUCT_MAX_LAT_SPAN (8); no service call expected
         with patch("services.fish_structures.find_fish_structures") as mock_fn:
-            r = client.get(_structures_url(south=20.0, west=-80.5, north=29.0, east=-80.0))
+            r = client.get(
+                _structures_url(south=20.0, west=-80.5, north=29.0, east=-80.0)
+            )
         assert r.status_code == 200
         data = r.get_json()
         assert data["zoom_required"] is True
@@ -690,14 +826,18 @@ class TestMapStructuresEndpoint:
     def test_oversized_lng_span_returns_zoom_required(self, client):
         # 13-degree lng span > _STRUCT_MAX_LNG_SPAN (12)
         with patch("services.fish_structures.find_fish_structures") as mock_fn:
-            r = client.get(_structures_url(south=25.0, west=-93.0, north=25.5, east=-80.0))
+            r = client.get(
+                _structures_url(south=25.0, west=-93.0, north=25.5, east=-80.0)
+            )
         assert r.status_code == 200
         assert r.get_json()["zoom_required"] is True
         mock_fn.assert_not_called()
 
     def test_valid_viewport_does_not_set_zoom_required(self, client):
         with patch("services.fish_structures.find_fish_structures", return_value=[]):
-            r = client.get(_structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0))
+            r = client.get(
+                _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
+            )
         data = r.get_json()
         assert "zoom_required" not in data
 
@@ -715,10 +855,13 @@ class TestFindFishStructuresCache:
         return find_fish_structures(*_BBOX, types)
 
     def test_cache_hit_skips_network_on_second_call(self):
-        with patch("services.fish_structures.fetch_osm_structures",
-                   return_value=[_SPOT]) as m_osm, \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
-            first  = self._call({"pier"})
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=[_SPOT]
+            ) as m_osm,
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
+            first = self._call({"pier"})
             second = self._call({"pier"})
 
         assert first == second
@@ -726,8 +869,8 @@ class TestFindFishStructuresCache:
         assert m_osm.call_count == 1
 
     def test_different_types_are_cached_independently(self):
-        pier_spot   = {**_SPOT, "type": "pier"}
-        wreck_spot  = {**_SPOT, "type": "wreck", "name": "SS Tarpon"}
+        pier_spot = {**_SPOT, "type": "pier"}
+        wreck_spot = {**_SPOT, "type": "wreck", "name": "SS Tarpon"}
 
         def osm_side_effect(s, w, n, e, types):
             if "pier" in types:
@@ -736,31 +879,41 @@ class TestFindFishStructuresCache:
                 return [wreck_spot]
             return []
 
-        with patch("services.fish_structures.fetch_osm_structures",
-                   side_effect=osm_side_effect), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
-            piers  = self._call({"pier"})
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures",
+                side_effect=osm_side_effect,
+            ),
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
+            piers = self._call({"pier"})
             wrecks = self._call({"wreck"})
             # Re-fetch from cache — must not mix results
             piers2 = self._call({"pier"})
 
-        assert all(s["type"] == "pier"  for s in piers)
+        assert all(s["type"] == "pier" for s in piers)
         assert all(s["type"] == "wreck" for s in wrecks)
         assert piers == piers2
 
     def test_cache_miss_after_ttl_expired(self):
-        with patch("services.fish_structures.fetch_osm_structures",
-                   return_value=[_SPOT]) as m_osm, \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=[_SPOT]
+            ),
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
             self._call({"pier"})
 
         # Expire the cache entry by backdating its timestamp
         for entry in _fs_mod._CACHE.values():
             entry["ts"] -= _fs_mod._CACHE_TTL + 1
 
-        with patch("services.fish_structures.fetch_osm_structures",
-                   return_value=[_SPOT]) as m_osm2, \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=[_SPOT]
+            ) as m_osm2,
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
             self._call({"pier"})
 
         assert m_osm2.call_count == 1  # network hit again after TTL
@@ -770,8 +923,12 @@ class TestFindFishStructuresCache:
         original_max = _fs_mod._CACHE_MAX
         _fs_mod._CACHE_MAX = 4
         try:
-            with patch("services.fish_structures.fetch_osm_structures", return_value=[]), \
-                 patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+            with (
+                patch("services.fish_structures.fetch_osm_structures", return_value=[]),
+                patch(
+                    "services.fish_structures.fetch_noaa_structures", return_value=[]
+                ),
+            ):
                 # Each call uses a unique bbox so each gets its own cache key
                 for i in range(6):
                     find_fish_structures(
@@ -783,8 +940,12 @@ class TestFindFishStructuresCache:
         assert len(_fs_mod._CACHE) <= 4
 
     def test_cache_clear_removes_all_entries(self):
-        with patch("services.fish_structures.fetch_osm_structures", return_value=[_SPOT]), \
-             patch("services.fish_structures.fetch_noaa_structures", return_value=[]):
+        with (
+            patch(
+                "services.fish_structures.fetch_osm_structures", return_value=[_SPOT]
+            ),
+            patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
+        ):
             self._call({"pier"})
 
         assert len(_fs_mod._CACHE) >= 1

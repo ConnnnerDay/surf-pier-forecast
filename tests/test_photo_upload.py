@@ -172,8 +172,11 @@ class TestPhotoUploadHappy:
         _login(client, uid)
 
         resp = _upload(
-            client, entry_id,
-            content=_png_bytes(), filename="catch.png", mimetype="image/png",
+            client,
+            entry_id,
+            content=_png_bytes(),
+            filename="catch.png",
+            mimetype="image/png",
         )
         assert resp.status_code == 201
 
@@ -183,8 +186,11 @@ class TestPhotoUploadHappy:
         _login(client, uid)
 
         resp = _upload(
-            client, entry_id,
-            content=_webp_bytes(), filename="catch.webp", mimetype="image/webp",
+            client,
+            entry_id,
+            content=_webp_bytes(),
+            filename="catch.webp",
+            mimetype="image/webp",
         )
         assert resp.status_code == 201
 

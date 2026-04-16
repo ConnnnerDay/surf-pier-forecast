@@ -762,7 +762,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Flounder (summer flounder)": ["game_fish"],
     "Southern flounder": ["game_fish"],
     "Gulf flounder": ["game_fish"],
-    "Windowpane flounder": ["other"],
     "Fringed flounder": ["other"],
     "Spanish mackerel": ["game_fish", "pelagic", "migratory"],
     "Cero mackerel": ["game_fish", "pelagic"],
@@ -780,13 +779,11 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Bar jack": ["game_fish", "pelagic"],
     "Yellow jack": ["game_fish", "pelagic"],
     "Horse-eye jack": ["game_fish", "pelagic"],
-    "Lookdown": ["reef_fish"],
     "Greater amberjack": ["game_fish", "pelagic"],
     "Almaco jack": ["game_fish", "pelagic"],
     "Almaco jack (large adult)": ["game_fish", "pelagic"],
     "Lesser amberjack": ["game_fish", "pelagic"],
     "Amberjack (juvenile, banded)": ["game_fish"],
-    "Banded rudderfish": ["game_fish", "pelagic"],
     "Rainbow runner": ["game_fish", "pelagic"],
     "Permit": ["game_fish"],
     "Tripletail": ["game_fish"],
@@ -801,10 +798,8 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Yellowfin tuna": ["game_fish", "pelagic"],
     "Bigeye tuna": ["game_fish", "pelagic"],
     "Albacore tuna": ["game_fish", "pelagic"],
-    "Skipjack tuna": ["game_fish", "pelagic"],
     "Frigate mackerel": ["pelagic", "bait_fish"],
     "Sailfish": ["game_fish", "pelagic"],
-    "Blue marlin": ["game_fish", "pelagic"],
     "White marlin": ["game_fish", "pelagic"],
     # ── East Coast — reef & structure fish ─────────────────────────────────
     "Triggerfish (gray)": ["reef_fish"],
@@ -819,8 +814,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Mangrove snapper (gray snapper)": ["game_fish", "reef_fish"],
     "Lane snapper": ["game_fish", "reef_fish"],
     "Yellowtail snapper": ["game_fish", "reef_fish"],
-    "Mutton snapper": ["game_fish", "reef_fish"],
-    "Cubera snapper": ["game_fish", "reef_fish"],
     "Schoolmaster snapper": ["game_fish", "reef_fish"],
     "Silk snapper": ["reef_fish"],
     "Queen snapper": ["reef_fish"],
@@ -833,24 +826,17 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Wreckfish": ["reef_fish"],
     "Yellowedge grouper": ["reef_fish"],
     "Misty grouper": ["reef_fish"],
-    "Nassau grouper": ["reef_fish"],
     "Goliath grouper (jewfish)": ["reef_fish"],
     "Coney": ["reef_fish"],
     "Rock hind": ["reef_fish"],
     "Red hind": ["reef_fish"],
     "Speckled hind": ["reef_fish"],
     "Warsaw grouper": ["reef_fish"],
-    "Yellowmouth grouper": ["reef_fish"],
     "Kitty Mitchell (yellowfin grouper)": ["game_fish", "reef_fish"],
     "Greater soapfish": ["reef_fish"],
     "Hogfish": ["game_fish", "reef_fish"],
-    "Red porgy": ["panfish", "reef_fish"],
     "Scup (porgy)": ["panfish"],
-    "Knobbed porgy": ["panfish", "reef_fish"],
-    "Whitebone porgy": ["panfish", "reef_fish"],
-    "Jolthead porgy": ["panfish", "reef_fish"],
     "Grass porgy": ["panfish", "reef_fish"],
-    "Saucereye porgy": ["panfish", "reef_fish"],
     "White grunt": ["panfish", "reef_fish"],
     "Blue-striped grunt": ["panfish", "reef_fish"],
     "Tomtate grunt": ["panfish", "reef_fish"],
@@ -878,7 +864,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Puddingwife (wrasse)": ["reef_fish"],
     "Bluehead wrasse": ["reef_fish"],
     "Creole wrasse": ["reef_fish"],
-    "Yellowhead wrasse": ["reef_fish"],
     "Cunner (bergall)": ["reef_fish"],
     "Striped blenny": ["reef_fish"],
     "Feather blenny": ["reef_fish"],
@@ -919,7 +904,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Atlantic menhaden (bunker)": ["bait_fish", "migratory"],
     "Ballyhoo (balao)": ["bait_fish"],
     "Round scad (cigar minnow)": ["bait_fish"],
-    "Bigeye scad": ["bait_fish"],
     "Spanish sardine": ["bait_fish"],
     "Atlantic thread herring (greenback)": ["bait_fish"],
     "Atlantic herring": ["bait_fish", "migratory"],
@@ -933,26 +917,19 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Southern sennet": ["bait_fish"],
     # ── East Coast — sharks ─────────────────────────────────────────────────
     "Blacktip shark": ["shark", "game_fish"],
-    "Spinner shark": ["shark"],
     "Atlantic sharpnose shark": ["shark"],
     "Bull shark": ["shark", "game_fish"],
-    "Sandbar shark": ["shark"],
     "Bonnethead shark": ["shark"],
-    "Lemon shark": ["shark"],
-    "Dusky shark": ["shark"],
     "Smooth dogfish": ["shark"],
     "Spiny dogfish": ["shark"],
-    "Sand tiger shark": ["shark"],
     "Tiger shark": ["shark", "game_fish"],
     "Scalloped hammerhead shark": ["shark"],
     "Shortfin mako shark": ["shark", "game_fish", "pelagic"],
     "Thresher shark": ["shark", "game_fish"],
-    "Nurse shark": ["shark"],
     "Finetooth shark": ["shark"],
     "Atlantic angel shark": ["shark"],
     # ── East Coast — rays ───────────────────────────────────────────────────
     "Southern stingray": ["ray"],
-    "Cownose ray": ["ray", "migratory"],
     "Clearnose skate": ["ray"],
     "Atlantic stingray": ["ray"],
     "Bluntnose stingray": ["ray"],
@@ -966,15 +943,11 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Northern sea robin": ["other"],
     "Oyster toadfish": ["other"],
     "Leopard toadfish": ["other"],
-    "Atlantic needlefish": ["other"],
     "Lizardfish": ["other"],
-    "American eel": ["other"],
     "Conger eel": ["other"],
     "Remora (sharksucker)": ["other"],
     "Sharksucker (whitefin)": ["other"],
     "Goosefish (monkfish)": ["other"],
-    "Atlantic wolffish": ["other"],
-    "Northern stargazer": ["other"],
     "Atlantic sturgeon": ["other"],
     "Shortnose sturgeon": ["other"],
     "Sargassumfish": ["other"],
@@ -983,7 +956,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Shortnose batfish": ["other"],
     "Flying gurnard": ["other"],
     "Ocean sunfish (mola mola)": ["other"],
-    "Ocean pout": ["other"],
     "Longnose gar": ["other"],
     "Kemp's ridley sea turtle": ["other"],
     "Hardhead catfish (sea catfish)": ["other"],
@@ -995,11 +967,9 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Hogchoker": ["other"],
     "Spotted hake": ["other"],
     "Red hake (ling)": ["other"],
-    "Longhorn sculpin": ["other"],
     "Pollock": ["game_fish", "reef_fish"],
     "Atlantic cod": ["game_fish", "reef_fish"],
     "Winter flounder": ["game_fish"],
-    "Cunner": ["reef_fish"],
     "Fluke (summer flounder)": ["game_fish"],
     "Weakfish": ["game_fish"],
     "Mojarra (yellowfin mojarra)": ["other"],
@@ -1009,7 +979,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Blue catfish": ["panfish"],
     "Flathead catfish": ["game_fish"],
     # ── Gulf region variants ─────────────────────────────────────────────────
-    "Sheepshead (Gulf)": ["game_fish", "reef_fish"],
     "Redfish (Gulf red drum)": ["game_fish"],
     # ── New species additions ────────────────────────────────────────────────
     "Haddock": ["game_fish", "reef_fish"],
@@ -1066,7 +1035,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Bluefin trevally (omilu)": ["game_fish", "pelagic"],
     "Papio (juvenile jack)": ["game_fish", "pelagic"],
     "Bonefish (oio)": ["game_fish"],
-    "Menpachi (soldierfish)": ["reef_fish"],
     "Moi (Pacific threadfin)": ["game_fish"],
     "Mu (bigeye emperor)": ["game_fish", "reef_fish"],
     "Kaku (barracuda)": ["game_fish", "pelagic"],
@@ -1086,7 +1054,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Onaga (long-tail red snapper)": ["game_fish", "reef_fish"],
     "Uku (gray snapper / jobfish)": ["game_fish", "reef_fish"],
     "Hapu'upu'u (Hawaiian grouper)": ["game_fish", "reef_fish"],
-    "Striped marlin": ["game_fish", "pelagic"],
     "Opah (moonfish)": ["game_fish", "pelagic"],
     "Porbeagle shark": ["shark"],
     "Acadian redfish (ocean perch)": ["game_fish", "reef_fish"],
@@ -1122,12 +1089,10 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Rougheye rockfish": ["game_fish", "reef_fish"],
     "Longspine thornyhead": ["game_fish", "reef_fish"],
     "Shortspine thornyhead": ["game_fish", "reef_fish"],
-    "Brown rockfish": ["game_fish", "reef_fish"],
     "Dover sole": ["game_fish"],
     "Rex sole": ["panfish"],
     "Kala (unicornfish)": ["reef_fish"],
     "Manini (convict tang)": ["reef_fish"],
-    "Kumu (whitesaddle goatfish)": ["reef_fish"],
     # New Hawaii species
     "Akule (bigeye scad)": ["bait_fish", "panfish"],
     "Opelu (mackerel scad)": ["bait_fish", "panfish"],
@@ -1170,7 +1135,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Fourspot flounder": ["game_fish", "panfish"],
     "Spotfin mojarra": ["panfish", "bait_fish"],
     "Striped mojarra": ["panfish", "bait_fish"],
-    "Blue runner": ["game_fish", "bait_fish"],
     "Papio (young ulua)": ["game_fish"],
     "Atlantic blue marlin": ["game_fish", "billfish"],
     "Longbill spearfish": ["game_fish", "billfish"],
@@ -1188,20 +1152,11 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Buffalo sculpin": ["panfish"],
     "Freshwater drum": ["game_fish"],
     "Kaku (barracuda, Hawaii)": ["game_fish"],
-    "Gag grouper": ["game_fish", "reef_fish"],
-    "Scamp grouper": ["game_fish", "reef_fish"],
-    "Lane snapper": ["game_fish", "reef_fish"],
     "Vermilion snapper (beeliners)": ["game_fish", "reef_fish"],
-    "Mutton snapper": ["game_fish", "reef_fish"],
-    "Cubera snapper": ["game_fish", "reef_fish"],
-    "Schoolmaster snapper": ["game_fish", "reef_fish"],
-    "Vermilion rockfish": ["game_fish", "reef_fish"],
-    "Quillback rockfish": ["game_fish", "reef_fish"],
     "Dusky rockfish": ["game_fish", "reef_fish"],
     "Yellowmouth grouper": ["game_fish", "reef_fish"],
     "Rock hind grouper": ["game_fish", "reef_fish"],
     "Little tunny (false albacore)": ["game_fish", "pelagic"],
-    "Blackfin tuna": ["game_fish", "pelagic"],
     "Skipjack tuna": ["game_fish", "pelagic", "bait_fish"],
     "Walleye (coastal)": ["game_fish"],
     "Olive flounder": ["game_fish"],
@@ -1218,7 +1173,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Inshore lizardfish": ["panfish"],
     "Northern stargazer": ["panfish"],
     "Bowfin": ["game_fish"],
-    "Rubberlip seaperch": ["panfish"],
     # West Coast flatfish / smelt / mackerel
     "Pacific sand dab": ["panfish"],
     "Speckled sand dab": ["panfish"],
@@ -1231,7 +1185,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Night smelt": ["panfish", "bait_fish"],
     "Barred sand bass": ["game_fish"],
     # Rays, skates
-    "Spotted eagle ray": ["game_fish", "catch_and_release"],
     "Cownose ray": ["ray", "migratory", "game_fish"],
     "Atlantic guitarfish": ["panfish"],
     "Barndoor skate": ["catch_and_release"],
@@ -1251,7 +1204,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     # Tropical/misc East
     "Atlantic menhaden": ["bait_fish"],
     "Gizzard shad": ["bait_fish"],
-    "Cero mackerel": ["game_fish", "pelagic"],
     "Striped burrfish": ["panfish"],
     "Balloonfish": ["panfish"],
     "Sharpnose puffer": ["panfish"],
@@ -1276,10 +1228,7 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Pilotfish": ["game_fish"],
     "Atlantic Spanish mackerel": ["game_fish"],
     "Longtail tuna": ["game_fish"],
-    "Almaco jack": ["game_fish", "pelagic"],
     "Banded rudderfish": ["game_fish", "pelagic", "bait_fish"],
-    "Bar jack": ["game_fish", "pelagic"],
-    "African pompano": ["game_fish", "pelagic"],
     # Tropical reef ornamentals
     "Blue tang (Atlantic)": ["reef_fish"],
     "Ocean surgeon": ["reef_fish"],
@@ -1288,12 +1237,10 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Rock beauty": ["reef_fish"],
     "French angelfish": ["reef_fish"],
     "Queen angelfish": ["reef_fish"],
-    "Gray angelfish": ["reef_fish"],
     "Hogfish (Atlantic)": ["game_fish", "reef_fish"],
     "Spanish hogfish": ["reef_fish", "panfish"],
     "Clown wrasse": ["reef_fish", "panfish"],
     "Yellowhead wrasse": ["reef_fish", "panfish"],
-    "Creole wrasse": ["reef_fish"],
     # Pacific surfperch
     "White seaperch": ["panfish"],
     # Hawaii additions
@@ -1321,12 +1268,7 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Permit (offshore)": ["game_fish"],
     "Cubera snapper": ["game_fish"],
     "Nassau grouper": ["catch_and_release"],
-    "Scamp grouper": ["game_fish", "reef_fish"],
-    "Yellowmouth grouper": ["game_fish", "reef_fish"],
-    "Black grouper": ["game_fish", "reef_fish"],
     "Goliath grouper": ["catch_and_release"],
-    "Greater amberjack": ["game_fish", "pelagic"],
-    "Florida pompano": ["game_fish"],
     # Surf species
     "Gulf kingfish (sea mullet)": ["panfish"],
     "Northern kingfish (sea mullet)": ["panfish"],
@@ -1371,20 +1313,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Onaga (longtail snapper)": ["game_fish", "reef_fish"],
     "Lehi (silver jaw snapper)": ["game_fish", "reef_fish"],
     "Nairagi (striped marlin, Hawaii)": ["game_fish", "catch_and_release"],
-    # NE groundfish / pollock
-    "Pollock (Atlantic)": ["game_fish"],
-    "Witch flounder": ["game_fish"],
-    "American plaice": ["game_fish"],
-    "Greenland halibut (turbot)": ["game_fish"],
-    # Misc SE/Gulf
-    "Vermilion snapper": ["game_fish", "reef_fish"],
-    "Yelloweye snapper": ["game_fish", "reef_fish"],
-    "Wenchman snapper": ["game_fish", "reef_fish"],
-    "Three-line grunt": ["panfish"],
-    "Belted sandfish": ["panfish"],
-    "Gulf kingfish (sea mullet)": ["panfish"],
-    "Northern kingfish (sea mullet)": ["panfish"],
-    "Southern kingfish (sea mullet)": ["panfish"],
     # West Coast additions
     "Darkblotched rockfish": ["game_fish"],
     "Pacific grenadier": ["game_fish"],
@@ -1416,16 +1344,11 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Glasseye snapper": ["reef_fish", "panfish"],
     "Graysby": ["reef_fish", "panfish"],
     "Coney grouper": ["game_fish", "reef_fish"],
-    "Schoolmaster snapper": ["game_fish", "reef_fish"],
     "Mutton snapper": ["game_fish"],
     "Gray tilefish": ["game_fish"],
-    # Pelagic / offshore
-    "Pacific bonito": ["game_fish", "pelagic"],
     "Skipjack tuna (Atlantic)": ["game_fish"],
-    "Little tunny (false albacore)": ["game_fish", "pelagic"],
     "Cobia (juvenile)": ["game_fish"],
     "Atlantic blacktip shark": ["game_fish"],
-    "Spinner shark": ["game_fish"],
     "Caribbean reef shark": ["catch_and_release"],
     "Sand tiger shark": ["shark", "catch_and_release"],
     "Dusky shark": ["shark", "catch_and_release"],
@@ -1442,9 +1365,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Pacific bluefin tuna (juvenile)": ["game_fish"],
     "Dorado (Pacific mahi)": ["game_fish"],
     "Pacific yellowtail (amberjack)": ["game_fish"],
-    "Wahoo (Pacific)": ["game_fish"],
-    # PNW salmon and char
-    "Coho salmon (Pacific)": ["game_fish"],
     "Pink salmon (Pacific)": ["game_fish"],
     "Sockeye salmon (Pacific)": ["game_fish"],
     "Chum salmon (Pacific)": ["game_fish"],
@@ -1457,8 +1377,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Sandbar shark": ["shark", "catch_and_release"],
     "Kingfish (Northern/Southern)": ["panfish"],
     "Bluefish (small)": ["game_fish"],
-    "Scup (porgy)": ["panfish"],
-    "Weakfish (seatrout)": ["game_fish"],
     "Flounder (winter)": ["game_fish"],
     # SE/Gulf
     "Red snapper (Gulf)": ["game_fish", "reef_fish"],
@@ -1468,21 +1386,16 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Sailfish (Atlantic)": ["game_fish", "catch_and_release"],
     "Dolphinfish (mahi) school": ["game_fish"],
     "Longfin albacore": ["game_fish"],
-    "Bigeye tuna": ["game_fish", "pelagic"],
     # Inshore SE/Gulf
     "Spotted seatrout (Gulf)": ["game_fish"],
     "Speckled trout (Gulf)": ["game_fish"],
-    "Gulf flounder": ["game_fish"],
     "Redfish (slot size)": ["game_fish"],
     "Snook (inshore)": ["game_fish"],
     "Permit (flats)": ["game_fish", "catch_and_release"],
     "Bonefish (flats)": ["catch_and_release"],
     "Tarpon (adult)": ["game_fish", "catch_and_release"],
     "Crevalle jack (small)": ["game_fish"],
-    "Florida pompano": ["game_fish"],
-    "Tripletail": ["game_fish"],
     "Sheepshead (Gulf)": ["game_fish"],
-    "Ladyfish": ["game_fish", "pelagic"],
     # Tidal river / estuary
     "Longnose gar (tidal)": ["game_fish"],
     "Bowfin (tidal)": ["game_fish"],
@@ -1511,24 +1424,14 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     # SE/Gulf reef
     "Gray snapper": ["game_fish", "reef_fish"],
     "Tiger grouper": ["game_fish", "reef_fish"],
-    "Nassau grouper": ["catch_and_release"],
-    "Goliath grouper": ["catch_and_release"],
     "Bluestriped grunt": ["panfish", "reef_fish"],
-    "Yellowtail snapper": ["game_fish", "reef_fish"],
-    "Lane snapper": ["game_fish", "reef_fish"],
-    "Cubera snapper": ["game_fish"],
-    "African pompano": ["game_fish", "pelagic"],
-    "Lookdown": ["panfish"],
-    "Atlantic needlefish": ["panfish"],
     "Gulf kingfish": ["panfish"],
     "Cardinal soldierfish": ["reef_fish", "panfish"],
     "Hardhead catfish": ["panfish"],
     "Atlantic torpedo ray": ["catch_and_release"],
     "Blue tang": ["reef_fish", "catch_and_release"],
     "Ocean surgeonfish": ["reef_fish", "catch_and_release"],
-    "Great barracuda": ["game_fish", "pelagic"],
     "Remora": ["panfish"],
-    "Florida gar": ["game_fish"],
     "Leatherjacket (filefish)": ["panfish"],
     "Burfish (spiny boxfish)": ["panfish"],
     "Mutton hamlet": ["reef_fish", "panfish"],
@@ -1575,8 +1478,6 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Tilefish (blueline)": ["game_fish"],
     # SE/Gulf jack complex
     "Crevalle jack (adult)": ["game_fish"],
-    "Horse-eye jack": ["game_fish", "pelagic"],
-    "Bar jack": ["game_fish", "pelagic"],
     "Blue runner": ["game_fish"],
     "Bigeye scad": ["panfish"],
     # SE/Gulf porgy complex
@@ -1683,10 +1584,8 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Tilefish (sand)": ["panfish"],
     "Atlantic croaker (large)": ["panfish"],
     "Yellowfin mojarra": ["panfish"],
-    "Pacific bonito": ["game_fish", "pelagic"],
     "Skipjack tuna (shore)": ["game_fish"],
     "Yellowtail amberjack (SoCal)": ["game_fish"],
-    "Blacktip shark": ["shark", "game_fish"],
     "Spinner shark": ["shark", "game_fish"],
     "Bull shark (inshore)": ["game_fish", "catch_and_release"],
     # Batches 79-87
@@ -1808,16 +1707,30 @@ def _species_matches_profile(
 
         # Charter: if the ONLY types selected are charter, gate to charter set
         only_charter = has_charter and not (
-            has_surf or has_pier or has_inshore or has_offshore
-            or has_jetty or has_bridge or has_wade or has_kayak or has_fly
+            has_surf
+            or has_pier
+            or has_inshore
+            or has_offshore
+            or has_jetty
+            or has_bridge
+            or has_wade
+            or has_kayak
+            or has_fly
         )
         if only_charter and sp_name not in _CHARTER_SPECIES:
             return False
 
         # Fly-only gate: if the only type selected is fly, restrict to fly species
         only_fly = has_fly and not (
-            has_surf or has_pier or has_inshore or has_offshore
-            or has_jetty or has_bridge or has_wade or has_kayak or has_charter
+            has_surf
+            or has_pier
+            or has_inshore
+            or has_offshore
+            or has_jetty
+            or has_bridge
+            or has_wade
+            or has_kayak
+            or has_charter
         )
         if only_fly and sp_name not in _FLY_SPECIES:
             return False
@@ -1829,9 +1742,15 @@ def _species_matches_profile(
         # sets (e.g. Pompano in both _SURF_SPECIES and _FLY_SPECIES prevented it
         # from ever being recognised as surf-only from a pier-only user's view).
         _primary_sets = (
-            _SURF_SPECIES, _PIER_SPECIES, _INSHORE_SPECIES,
-            _JETTY_SPECIES, _BRIDGE_SPECIES, _WADE_SPECIES,
-            _KAYAK_SPECIES, _CHARTER_SPECIES, _FLY_SPECIES,
+            _SURF_SPECIES,
+            _PIER_SPECIES,
+            _INSHORE_SPECIES,
+            _JETTY_SPECIES,
+            _BRIDGE_SPECIES,
+            _WADE_SPECIES,
+            _KAYAK_SPECIES,
+            _CHARTER_SPECIES,
+            _FLY_SPECIES,
         )
         _accessible: set = set()
         if has_surf:
@@ -2550,7 +2469,9 @@ _RIG_GEAR_TYPE: Dict[str, str] = {
 }
 
 # Rigs that work well as a first introduction — simple setup, forgiving tackle.
-_BEGINNER_FRIENDLY_RIGS = frozenset({"fishfinder", "hi-lo", "pompano", "float", "popping-cork"})
+_BEGINNER_FRIENDLY_RIGS = frozenset(
+    {"fishfinder", "hi-lo", "pompano", "float", "popping-cork"}
+)
 
 
 def build_rig_recommendations(
@@ -2577,8 +2498,11 @@ def build_rig_recommendations(
     ft = set(fishing_types or [])
 
     wants_lures = lures != "no"
-    wants_bait = not (live_bait == "no" and cut_bait == "no")
-    lures_only = (lures == "yes" or lures == "sometimes") and live_bait == "no" and cut_bait == "no"
+    lures_only = (
+        (lures == "yes" or lures == "sometimes")
+        and live_bait == "no"
+        and cut_bait == "no"
+    )
 
     rig_groups: Dict[str, List[Dict[str, Any]]] = {}
     rig_order: List[str] = []
@@ -2601,7 +2525,9 @@ def build_rig_recommendations(
     if "kayak" in ft and "kayak_live_bait" not in rig_order:
         type_rig_keys.append("kayak_live_bait")
 
-    def _make_rec(key: str, group: Optional[List[Dict[str, Any]]] = None) -> Optional[Dict[str, Any]]:
+    def _make_rec(
+        key: str, group: Optional[List[Dict[str, Any]]] = None
+    ) -> Optional[Dict[str, Any]]:
         category = RIG_CATEGORIES.get(key)
         if category is None:
             return None
@@ -2649,17 +2575,26 @@ def build_rig_recommendations(
     if live_bait or cut_bait or lures:
         if not wants_lures:
             # User explicitly doesn't use lures — drop lure-only rigs.
-            recommendations = [r for r in recommendations if _gear_type_for_rec(r) != "lure"]
+            recommendations = [
+                r for r in recommendations if _gear_type_for_rec(r) != "lure"
+            ]
         elif lures_only:
             # Lure-only angler: sort lure/mixed rigs first, bait rigs last.
-            recommendations.sort(key=lambda r: 0 if _gear_type_for_rec(r) in ("lure", "mixed") else 1)
+            recommendations.sort(
+                key=lambda r: 0 if _gear_type_for_rec(r) in ("lure", "mixed") else 1
+            )
 
     # ── Experience-level filtering ──────────────────────────────────────────
     if experience == "beginner":
-        beginner = [r for r in recommendations if any(
-            RIG_CATEGORIES.get(k, {}).get("name") == r.get("name") and k in _BEGINNER_FRIENDLY_RIGS
-            for k in RIG_CATEGORIES
-        )]
+        beginner = [
+            r
+            for r in recommendations
+            if any(
+                RIG_CATEGORIES.get(k, {}).get("name") == r.get("name")
+                and k in _BEGINNER_FRIENDLY_RIGS
+                for k in RIG_CATEGORIES
+            )
+        ]
         advanced = [r for r in recommendations if r not in beginner]
         # Beginners get friendly rigs first, capped at 3 total.
         recommendations = (beginner + advanced)[:3]
@@ -3623,15 +3558,22 @@ def build_bait_ranking(
 LURE_DB: List[Dict[str, Any]] = [
     {
         "lure": "Soft plastic paddle-tail swimbait",
-        "sizes": "3-5\"",
+        "sizes": '3-5"',
         "colors": "White, chartreuse, natural (match baitfish)",
         "retrieve": "Slow steady retrieve or bounce on bottom",
         "notes": "Versatile inshore lure; works for almost any predator species. Use on 1/4-3/8 oz jighead.",
         "image": "images/lures/swimbait-paddle.svg",
         "available_months": list(range(1, 13)),
         "targets": [
-            "Red drum", "Speckled trout", "Flounder", "Gray trout", "Striped bass",
-            "Snook", "Sand bass", "Kelp bass", "California halibut",
+            "Red drum",
+            "Speckled trout",
+            "Flounder",
+            "Gray trout",
+            "Striped bass",
+            "Snook",
+            "Sand bass",
+            "Kelp bass",
+            "California halibut",
         ],
     },
     {
@@ -3643,8 +3585,12 @@ LURE_DB: List[Dict[str, Any]] = [
         "image": "images/lures/spoon-gold.svg",
         "available_months": list(range(1, 13)),
         "targets": [
-            "Spanish mackerel", "Bluefish", "Red drum", "Jack crevalle",
-            "Pacific bonito", "False albacore",
+            "Spanish mackerel",
+            "Bluefish",
+            "Red drum",
+            "Jack crevalle",
+            "Pacific bonito",
+            "False albacore",
         ],
     },
     {
@@ -3656,13 +3602,19 @@ LURE_DB: List[Dict[str, Any]] = [
         "image": "images/lures/metal-jig.svg",
         "available_months": list(range(1, 13)),
         "targets": [
-            "False albacore", "Bluefish", "Spanish mackerel", "Atlantic bonito",
-            "Blackfin tuna", "Striped bass", "Pacific bonito", "Yellowtail",
+            "False albacore",
+            "Bluefish",
+            "Spanish mackerel",
+            "Atlantic bonito",
+            "Blackfin tuna",
+            "Striped bass",
+            "Pacific bonito",
+            "Yellowtail",
         ],
     },
     {
         "lure": "Topwater plug / walk-the-dog",
-        "sizes": "3.5-5\"",
+        "sizes": '3.5-5"',
         "colors": "White, bone, mullet pattern",
         "retrieve": "Walk-the-dog with slack-line twitches at dawn and dusk",
         "notes": "Most productive during low-light periods and calm conditions. Surface explosions make this a favorite lure.",
@@ -3672,8 +3624,13 @@ LURE_DB: List[Dict[str, Any]] = [
         },
         "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
         "targets": [
-            "Speckled trout", "Red drum", "Striped bass", "Snook",
-            "Jack crevalle", "Bluefish", "Tarpon",
+            "Speckled trout",
+            "Red drum",
+            "Striped bass",
+            "Snook",
+            "Jack crevalle",
+            "Bluefish",
+            "Tarpon",
         ],
     },
     {
@@ -3685,8 +3642,12 @@ LURE_DB: List[Dict[str, Any]] = [
         "image": "images/lures/bucktail-jig.svg",
         "available_months": list(range(1, 13)),
         "targets": [
-            "Flounder", "Striped bass", "Weakfish", "Gray trout",
-            "Fluke", "White seabass",
+            "Flounder",
+            "Striped bass",
+            "Weakfish",
+            "Gray trout",
+            "Fluke",
+            "White seabass",
         ],
     },
     {
@@ -3701,20 +3662,24 @@ LURE_DB: List[Dict[str, Any]] = [
     },
     {
         "lure": "Gulp! soft bait (shrimp / sand crab)",
-        "sizes": "2-3\"",
+        "sizes": '2-3"',
         "colors": "New penny, pink shine, natural",
         "retrieve": "Slow drag or short hops on bottom; extremely versatile",
         "notes": "Scented soft plastic that outperforms natural bait in many situations. Popular for surf perch and flatfish.",
         "image": "images/lures/gulp-soft.svg",
         "available_months": list(range(1, 13)),
         "targets": [
-            "Barred surfperch", "Corbina", "California halibut", "Pompano",
-            "Flounder", "Whiting",
+            "Barred surfperch",
+            "Corbina",
+            "California halibut",
+            "Pompano",
+            "Flounder",
+            "Whiting",
         ],
     },
     {
-        "lure": "Swimbaits (large, 5-9\")",
-        "sizes": "5-9\"",
+        "lure": 'Swimbaits (large, 5-9")',
+        "sizes": '5-9"',
         "colors": "Mullet pattern, sardine pattern, white",
         "retrieve": "Slow to medium; allow natural swimming action near structure",
         "notes": "Best for big predators — lingcod, yellowtail, cobia, tarpon. Match local baitfish size.",
@@ -3724,8 +3689,13 @@ LURE_DB: List[Dict[str, Any]] = [
         },
         "available_months": list(range(1, 13)),
         "targets": [
-            "Lingcod", "Yellowtail", "Cobia", "Tarpon", "Greater amberjack",
-            "White seabass", "Snook",
+            "Lingcod",
+            "Yellowtail",
+            "Cobia",
+            "Tarpon",
+            "Greater amberjack",
+            "White seabass",
+            "Snook",
         ],
     },
     {
@@ -3754,7 +3724,7 @@ LURE_DB: List[Dict[str, Any]] = [
     },
     {
         "lure": "Popper / surface plug",
-        "sizes": "3-4\"",
+        "sizes": '3-4"',
         "colors": "White, chartreuse, fire tiger",
         "retrieve": "Aggressive popping action; pause between pops",
         "notes": "Excellent for pier and jetty fishing when birds are working. Creates a commotion that calls fish from a distance.",
@@ -3764,21 +3734,30 @@ LURE_DB: List[Dict[str, Any]] = [
         },
         "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
         "targets": [
-            "Bluefish", "Spanish mackerel", "Jack crevalle", "Giant trevally",
-            "Bluefin trevally", "Snook",
+            "Bluefish",
+            "Spanish mackerel",
+            "Jack crevalle",
+            "Giant trevally",
+            "Bluefin trevally",
+            "Snook",
         ],
     },
     {
         "lure": "Offshore trolling lure",
-        "sizes": "6-12\"",
+        "sizes": '6-12"',
         "colors": "Blue/white, pink/white, black/red",
         "retrieve": "Trolled at 6-18 knots (speed depends on species)",
         "notes": "Skirted lures run behind the boat in spread formation. Ilanders for wahoo and marlin; smaller skirts for mahi and tuna.",
         "image": "images/lures/trolling-lure.svg",
         "available_months": [4, 5, 6, 7, 8, 9, 10, 11],
         "targets": [
-            "Mahi-mahi", "Wahoo", "Yellowfin tuna", "Blackfin tuna",
-            "Sailfish", "Blue marlin", "White marlin",
+            "Mahi-mahi",
+            "Wahoo",
+            "Yellowfin tuna",
+            "Blackfin tuna",
+            "Sailfish",
+            "Blue marlin",
+            "White marlin",
         ],
     },
     {
@@ -3840,16 +3819,21 @@ def build_lure_recommendations(
         if season in seasonal_notes:
             notes = seasonal_notes[season]
 
-        scored_lures.append((score, {
-            "lure": lure_entry["lure"],
-            "sizes": lure_entry.get("sizes", ""),
-            "colors": lure_entry.get("colors", ""),
-            "retrieve": lure_entry.get("retrieve", ""),
-            "notes": notes,
-            "image": lure_entry.get("image", ""),
-            "active_species": active,
-            "score": round(score, 1),
-        }))
+        scored_lures.append(
+            (
+                score,
+                {
+                    "lure": lure_entry["lure"],
+                    "sizes": lure_entry.get("sizes", ""),
+                    "colors": lure_entry.get("colors", ""),
+                    "retrieve": lure_entry.get("retrieve", ""),
+                    "notes": notes,
+                    "image": lure_entry.get("image", ""),
+                    "active_species": active,
+                    "score": round(score, 1),
+                },
+            )
+        )
 
     scored_lures.sort(key=lambda x: x[0], reverse=True)
     return [entry for _, entry in scored_lures]

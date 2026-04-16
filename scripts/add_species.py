@@ -24,27 +24,51 @@ l   lures
 ec  explanation_cold
 ew  explanation_warm
 """
+
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 DB_PATH = Path(__file__).resolve().parent.parent / "storage" / "species_data.json"
 
 _KEY_MAP = {
-    "n": "name", "c": "coast", "r": "regions",
-    "ti": "temp_min", "tx": "temp_max", "tl": "temp_ideal_low", "th": "temp_ideal_high",
-    "pm": "peak_months", "gm": "good_months",
-    "b": "bait", "rig": "rig", "h": "hook_size", "s": "sinker", "l": "lures",
-    "ec": "explanation_cold", "ew": "explanation_warm",
+    "n": "name",
+    "c": "coast",
+    "r": "regions",
+    "ti": "temp_min",
+    "tx": "temp_max",
+    "tl": "temp_ideal_low",
+    "th": "temp_ideal_high",
+    "pm": "peak_months",
+    "gm": "good_months",
+    "b": "bait",
+    "rig": "rig",
+    "h": "hook_size",
+    "s": "sinker",
+    "l": "lures",
+    "ec": "explanation_cold",
+    "ew": "explanation_warm",
 }
 
-_REQUIRED = {"name", "coast", "temp_min", "temp_max", "temp_ideal_low",
-             "temp_ideal_high", "peak_months", "good_months",
-             "bait", "rig", "hook_size", "sinker", "lures",
-             "explanation_cold", "explanation_warm"}
+_REQUIRED = {
+    "name",
+    "coast",
+    "temp_min",
+    "temp_max",
+    "temp_ideal_low",
+    "temp_ideal_high",
+    "peak_months",
+    "good_months",
+    "bait",
+    "rig",
+    "hook_size",
+    "sinker",
+    "lures",
+    "explanation_cold",
+    "explanation_warm",
+}
 
 
 def expand(raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -54,7 +78,7 @@ def expand(raw: Dict[str, Any]) -> Dict[str, Any]:
         entry[full] = v
     missing = _REQUIRED - entry.keys()
     if missing:
-        raise ValueError(f"{entry.get('name','?')} missing fields: {missing}")
+        raise ValueError(f"{entry.get('name', '?')} missing fields: {missing}")
     return entry
 
 
@@ -81,4 +105,6 @@ def add_species(entries: List[Dict[str, Any]]) -> None:
 
 if __name__ == "__main__":
     # Usage: python scripts/add_species.py  (runs self-test)
-    print("add_species helper loaded OK — import add_species and call add_species(entries)")
+    print(
+        "add_species helper loaded OK — import add_species and call add_species(entries)"
+    )
