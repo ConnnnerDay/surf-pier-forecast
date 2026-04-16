@@ -2156,34 +2156,7 @@
     }
 
     function wireAdvancedFilters() {
-        var toggle   = document.getElementById('fmap-adv-toggle');
-        var panel    = document.getElementById('fmap-adv-filters');
-        var closeBtn = document.getElementById('fmap-adv-filters-close');
         var resetBtn = document.getElementById('fmap-adv-reset');
-
-        function closePanel() {
-            panel.hidden = true;
-            toggle.setAttribute('aria-expanded', 'false');
-        }
-        function openPanel() {
-            panel.hidden = false;
-            toggle.setAttribute('aria-expanded', 'true');
-        }
-
-        if (toggle && panel) {
-            toggle.addEventListener('click', function () {
-                if (panel.hidden) { openPanel(); } else { closePanel(); }
-            });
-        }
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closePanel);
-        }
-        document.addEventListener('click', function (e) {
-            if (!panel || panel.hidden) return;
-            if (!panel.contains(e.target) && !toggle.contains(e.target)) {
-                closePanel();
-            }
-        });
 
         document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
             b.addEventListener('click', function () {
@@ -5338,7 +5311,6 @@
         els.detailBadge   = document.getElementById('fmap-detail-badge');
         els.detailSpecies = document.getElementById('fmap-detail-species');
         els.detailActions = document.getElementById('fmap-detail-actions');
-        els.hotspotsList   = document.getElementById('fmap-hotspots-list');
         els.speciesInput   = document.getElementById('fmap-species-input');
         els.searchClear    = document.getElementById('fmap-search-clear');
         els.suggestions    = document.getElementById('fmap-suggestions');
