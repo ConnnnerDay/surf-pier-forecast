@@ -3838,13 +3838,18 @@ h2::before {
   line-height: 1.5;
 }
 
-/* ── Legend (inline, right side of header) ── */
+/* ── Legend ── */
 .fmap-legend {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+/* Inside the Filters popup the legend is narrower — tighten the gap */
+.fmap-legend--popup {
+  gap: 0.3rem 0.5rem;
+  font-size: 0.72rem;
 }
 
 .fmap-legend-dot {

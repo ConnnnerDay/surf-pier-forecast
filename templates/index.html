@@ -592,22 +592,6 @@
                     AI Fishing Map
                 </h2>
             </div>
-            <div class="fmap-legend" aria-label="Fishing structure legend">
-                <!-- Habitat area overlays (filled polygon / coloured line) -->
-                <span class="fmap-legend-dot fmap-legend-dot--saltmarsh"></span><span class="fmap-legend-text">Saltmarsh</span>
-                <span class="fmap-legend-dot fmap-legend-dot--mangrove"></span><span class="fmap-legend-text">Mangrove</span>
-                <span class="fmap-legend-dot fmap-legend-dot--grass-flat"></span><span class="fmap-legend-text">Grass Flat</span>
-                <span class="fmap-legend-dot fmap-legend-dot--tidal-flat"></span><span class="fmap-legend-text">Tidal Flat</span>
-                <span class="fmap-legend-dot fmap-legend-dot--beach"></span><span class="fmap-legend-text">Beach</span>
-                <span class="fmap-legend-dot fmap-legend-dot--oyster"></span><span class="fmap-legend-text">Oyster Reef</span>
-                <span class="fmap-legend-dot fmap-legend-dot--inlet"></span><span class="fmap-legend-text">Inlet/Channel</span>
-                <!-- Point / structure icons -->
-                <span class="fmap-legend-sep" aria-hidden="true"></span>
-                <span class="fmap-legend-dot fmap-legend-dot--wreck"></span><span class="fmap-legend-text">Wreck</span>
-                <span class="fmap-legend-dot fmap-legend-dot--pier"></span><span class="fmap-legend-text">Pier/Jetty</span>
-                <span class="fmap-legend-dot fmap-legend-dot--buoy"></span><span class="fmap-legend-text">Buoy</span>
-                <span class="fmap-legend-dot fmap-legend-dot--tackle"></span><span class="fmap-legend-text">Bait &amp; Tackle</span>
-            </div>
         </div>
 
         <!-- ── Main filter bar: species search + coast/category + advanced filters ──
@@ -726,6 +710,24 @@
                         <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="buoy" aria-pressed="false" aria-label="Toggle Navigation Buoy markers on map">Buoy</button>
                         <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing" aria-pressed="false" aria-label="Toggle Fishing Spot markers on map">Fishing Spot</button>
                         <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing_shop" aria-pressed="false" aria-label="Toggle Bait &amp; Tackle markers on map">Bait &amp; Tackle</button>
+                    </div>
+                </div>
+                <!-- Map colour legend -->
+                <div class="fmap-adv-group fmap-adv-group--full">
+                    <span class="fmap-adv-label">Map Key</span>
+                    <div class="fmap-legend fmap-legend--popup" aria-label="Map colour legend">
+                        <span class="fmap-legend-dot fmap-legend-dot--saltmarsh"></span><span class="fmap-legend-text">Saltmarsh</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--mangrove"></span><span class="fmap-legend-text">Mangrove</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--grass-flat"></span><span class="fmap-legend-text">Grass Flat</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--tidal-flat"></span><span class="fmap-legend-text">Tidal Flat</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--beach"></span><span class="fmap-legend-text">Beach</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--oyster"></span><span class="fmap-legend-text">Oyster Reef</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--inlet"></span><span class="fmap-legend-text">Inlet</span>
+                        <span class="fmap-legend-sep" aria-hidden="true"></span>
+                        <span class="fmap-legend-dot fmap-legend-dot--wreck"></span><span class="fmap-legend-text">Wreck</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--pier"></span><span class="fmap-legend-text">Pier/Jetty</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--buoy"></span><span class="fmap-legend-text">Buoy</span>
+                        <span class="fmap-legend-dot fmap-legend-dot--tackle"></span><span class="fmap-legend-text">Bait &amp; Tackle</span>
                     </div>
                 </div>
                 <div class="fmap-adv-actions">
@@ -1168,76 +1170,13 @@
                 </button>
             </div>
 
-            <!-- ── Tabbed side panel: Spots | AI Picks | Community ── -->
+            <!-- Side panel: top-ranked fishing spots -->
             <div class="fmap-side-panel" id="fmap-side-panel">
-
-                <!-- Tab bar -->
-                <div class="fmap-side-tabs" role="tablist" aria-label="Map panel tabs">
-                    <button type="button" id="fmap-tab-spots"
-                            class="fmap-side-tab fmap-side-tab--active"
-                            role="tab" aria-selected="true" aria-controls="fmap-panel-spots">
-                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        Spots
-                        <span id="fmap-hotspot-count" class="fmap-tab-badge" style="display:none"></span>
-                    </button>
-                    <button type="button" id="fmap-tab-ai"
-                            class="fmap-side-tab"
-                            role="tab" aria-selected="false" aria-controls="fmap-panel-ai">
-                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#fbbf24" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        AI Picks
-                    </button>
-                    <button type="button" id="fmap-tab-community"
-                            class="fmap-side-tab"
-                            role="tab" aria-selected="false" aria-controls="fmap-panel-community">
-                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        Nearby
-                    </button>
-                </div>
-
-                <!-- Spots pane — top-ranked fishing locations -->
-                <div id="fmap-panel-spots" class="fmap-side-pane fmap-side-pane--active"
-                     role="tabpanel" aria-labelledby="fmap-tab-spots">
-                    <div class="fmap-hotspots-header">
-                        <div class="fmap-hotspots-header-left">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                            Top Spots
-                        </div>
-                    </div>
-                    <ul id="fmap-hotspots-list" class="fmap-hotspots-list" aria-label="Top fishing spots">
-                        <li class="fmap-hotspot-skeleton"></li>
-                        <li class="fmap-hotspot-skeleton"></li>
-                        <li class="fmap-hotspot-skeleton"></li>
-                    </ul>
-                </div>
-
-                <!-- AI Picks pane — AI-ranked top locations -->
-                <div id="fmap-panel-ai" class="fmap-side-pane"
-                     role="tabpanel" aria-labelledby="fmap-tab-ai" hidden>
-                    <ul id="fmap-ai-picks-list" class="fmap-hotspots-list" aria-label="AI fishing picks">
-                        <li class="fmap-hotspot-empty">Select a species to see AI picks</li>
-                    </ul>
-                </div>
-
-                <!-- Community pane — recent catches logged nearby -->
-                <div id="fmap-panel-community" class="fmap-side-pane"
-                     role="tabpanel" aria-labelledby="fmap-tab-community" hidden>
-                    <div class="fmap-community-toolbar">
-                        <span class="fmap-side-panel-label">Catches Nearby</span>
-                        <button type="button" id="fmap-community-refresh" class="fmap-community-refresh-btn" title="Refresh community catches">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                            Refresh
-                        </button>
-                        {% if g.user %}
-                        <span class="fmap-community-hint">Tap map to log a catch</span>
-                        {% else %}
-                        <a href="/login" class="fmap-community-login-hint">Sign in to log catches</a>
-                        {% endif %}
-                    </div>
-                    <ul id="fmap-community-list" class="fmap-community-list" aria-label="Recent community catches">
-                        <li class="fmap-hotspot-empty">Zoom in to see nearby catches</li>
-                    </ul>
-                </div>
-
+                <ul id="fmap-hotspots-list" class="fmap-hotspots-list" aria-label="Top fishing spots">
+                    <li class="fmap-hotspot-skeleton"></li>
+                    <li class="fmap-hotspot-skeleton"></li>
+                    <li class="fmap-hotspot-skeleton"></li>
+                </ul>
             </div><!-- /.fmap-side-panel -->
 
         </div><!-- /.fmap-body -->

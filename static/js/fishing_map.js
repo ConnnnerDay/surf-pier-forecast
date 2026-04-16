@@ -2091,11 +2091,7 @@
                 tide:       activeTide,
                 minTemp:    activeMinTemp,
                 maxTemp:    activeMaxTemp,
-                spotTypes:  activeSpotTypes.slice(),
-                // Persist the active tab so the user returns to where they left off.
-                // New users get no localStorage entry at all, so they always start on
-                // the default 'spots' tab with all filters empty.
-                tab:        activeTab
+                spotTypes:  activeSpotTypes.slice()
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -2148,11 +2144,6 @@
             if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
-            }
-            // Restore last active tab (spots/ai/community).  Only switch away from
-            // the default 'spots' tab when a different tab was explicitly saved.
-            if (f.tab && f.tab !== 'spots') {
-                switchTab(f.tab);
             }
             updateAdvBadge();
         } catch (e) {
