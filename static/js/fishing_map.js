@@ -2113,7 +2113,7 @@
                 if (els.speciesInput)  els.speciesInput.value = f.species;
                 if (els.searchClear) els.searchClear.hidden = false;
             }
-            if (f.coast && f.coast !== 'all') {
+            if (f.coast) {
                 activeCoast = f.coast;
                 setPillActive('.fmap-pill--coast', 'data-coast', f.coast);
             }
@@ -2157,7 +2157,9 @@
             updateAdvBadge();
             // If any advanced filter was restored, expand the panel so the user
             // can see their active settings without needing to open it manually.
-            var hasAdv = activeSeason || activeTime || activeTide || activeMinTemp || activeMaxTemp;
+            var hasAdv = (activeCoast && activeCoast !== 'all') || activeCat ||
+                         activeSeason || activeTime || activeTide || activeMinTemp || activeMaxTemp ||
+                         activeSpotTypes.length > 0;
             if (hasAdv) {
                 var advPanel  = document.getElementById('fmap-adv-filters');
                 var advToggle = document.getElementById('fmap-adv-toggle');
@@ -2593,11 +2595,13 @@
     // ─── Advanced filters ─────────────────────────────────────────────────────
 
     function updateAdvBadge() {
-        var n = (activeSeason ? 1 : 0) + (activeTime ? 1 : 0) +
+        var n = (activeCoast && activeCoast !== 'all' ? 1 : 0) +
+                (activeCat ? 1 : 0) +
+                (activeSeason ? 1 : 0) + (activeTime ? 1 : 0) +
                 (activeTide ? 1 : 0) +
-                ((activeMinTemp || activeMaxTemp) ? 1 : 0);
+                ((activeMinTemp || activeMaxTemp) ? 1 : 0) +
+                (activeSpotTypes.length > 0 ? 1 : 0);
         var badge  = document.getElementById('fmap-adv-badge');
-        var toggle = document.getElementById('fmap-adv-toggle');
         if (badge) {
             badge.textContent = n;
             badge.hidden = n === 0;
@@ -2658,6 +2662,7 @@
                 var v = b.getAttribute('data-coast') || 'all';
                 activeCoast = v;
                 setPillActive('.fmap-pill--coast', 'data-coast', v);
+                updateAdvBadge();
                 renderQuickChips();
                 scheduleFetch();
             });
@@ -2668,6 +2673,7 @@
                 var v = b.getAttribute('data-cat');
                 activeCat = (activeCat === v) ? '' : v;
                 setPillActive('.fmap-pill--cat', 'data-cat', activeCat);
+                updateAdvBadge();
                 scheduleFetch();
             });
         });
@@ -2689,14 +2695,22 @@
 
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
+                activeCoast = 'all';
+                activeCat = '';
                 activeSeason = activeTime = activeTide = activeMinTemp = activeMaxTemp = '';
+                setPillActive('.fmap-pill--coast', 'data-coast', 'all');
+                setPillActive('.fmap-pill--cat', 'data-cat', '');
                 setPillActive('.fmap-pill--season', 'data-season', '');
                 setPillActive('.fmap-pill--time', 'data-time', '');
                 setPillActive('.fmap-pill--tide', 'data-tide', '');
                 if (minTempEl) minTempEl.value = '';
                 if (maxTempEl) maxTempEl.value = '';
+                _applySpotTypeUI([]);
                 updateAdvBadge();
+                renderQuickChips();
                 scheduleFetch();
+                clearTimeout(spotQueryTimer);
+                queryStructures();
             });
         }
     }
@@ -2767,6 +2781,7 @@
                 btn.setAttribute('aria-pressed', active ? 'true' : 'false');
 
                 _updateSpotTypeHint();
+                updateAdvBadge();
                 _scheduleSpotTypeSave();
 
                 // Re-query immediately — _cachedSupersetOf will serve from the
@@ -2786,6 +2801,7 @@
                     btn.setAttribute('aria-pressed', 'false');
                 });
                 _updateSpotTypeHint();
+                updateAdvBadge();
                 _scheduleSpotTypeSave();
                 clearTimeout(spotQueryTimer);
                 queryStructures();
