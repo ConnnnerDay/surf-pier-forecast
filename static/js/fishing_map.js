@@ -2155,17 +2155,6 @@
                 switchTab(f.tab);
             }
             updateAdvBadge();
-            // If any advanced filter was restored, expand the panel so the user
-            // can see their active settings without needing to open it manually.
-            var hasAdv = (activeCoast && activeCoast !== 'all') || activeCat ||
-                         activeSeason || activeTime || activeTide || activeMinTemp || activeMaxTemp ||
-                         activeSpotTypes.length > 0;
-            if (hasAdv) {
-                var advPanel  = document.getElementById('fmap-adv-filters');
-                var advToggle = document.getElementById('fmap-adv-toggle');
-                if (advPanel)  advPanel.hidden = false;
-                if (advToggle) advToggle.setAttribute('aria-expanded', 'true');
-            }
         } catch (e) {
             console.warn('[fishing-map] loadFilters failed:', e);
         }

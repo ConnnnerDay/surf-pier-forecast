@@ -736,47 +736,6 @@
 
         </div><!-- /.fmap-filterbar -->
 
-        <!-- Quick species chips — rendered dynamically by renderQuickChips() -->
-        <div class="fmap-quick-species">
-            <span class="fmap-quick-label">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                Quick
-            </span>
-            <div id="fmap-chips" class="fmap-chips" role="list" aria-label="Quick-pick species"></div>
-        </div>
-
-        <!-- Trending species chips — rendered dynamically after data load -->
-        <div id="fmap-trending" class="fmap-trending" hidden>
-            <span class="fmap-trending-label">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
-                Trending
-            </span>
-            <div id="fmap-trending-chips" class="fmap-chips" role="list"></div>
-        </div>
-
-        <!-- AI habitat insight bar — shown when a species has a known habitat type -->
-        <div id="fmap-ai-bar" class="fmap-ai-bar" hidden>
-            <svg class="fmap-ai-bar-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span class="fmap-ai-bar-label">AI Tip</span>
-            <span id="fmap-ai-bar-text"></span>
-        </div>
-
-        <!-- General insight bar — shown after data load with a summary insight -->
-        <div id="fmap-insight" class="fmap-insight" hidden>
-            <svg class="fmap-insight-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span id="fmap-insight-text"></span>
-        </div>
-
-        <!-- Month planner — rendered dynamically by renderMonthPlanner() after data load -->
-        <div id="fmap-planner" class="fmap-planner" hidden>
-            <div class="fmap-planner-header">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Month Planner
-                <span class="fmap-planner-hint">Tap a month to filter</span>
-            </div>
-            <div id="fmap-planner-months" class="fmap-planner-months"></div>
-        </div>
-
         <!-- ── Map + side panel layout ── -->
         <div class="fmap-body">
 
