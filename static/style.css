@@ -6074,12 +6074,6 @@ h2::before {
 }
 
 /* ── Advanced filter panel ── */
-.fmap-filterbar {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
 .fmap-adv-toggle-btn {
   display: inline-flex;
   align-items: center;
@@ -6791,6 +6785,8 @@ h2::before {
   .fmap-body { flex-direction: column; }
   .fmap-side-panel { width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.08); max-height: 260px; }
   .fmap-adv-row { flex-direction: column; gap: 0.6rem; }
+  /* Popup panel: cap height and scroll so it never overflows the viewport */
+  .fmap-adv-filters { max-height: 70vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   /* On mobile the pill row scrolls horizontally instead of wrapping to save vertical space */
   .fmap-struct-filters-pills { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
   .fmap-modal-inner { max-width: 100%; margin: 0 0.5rem; }

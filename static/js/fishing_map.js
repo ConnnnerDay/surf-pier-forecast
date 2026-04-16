@@ -2113,7 +2113,7 @@
                 if (els.speciesInput)  els.speciesInput.value = f.species;
                 if (els.searchClear) els.searchClear.hidden = false;
             }
-            if (f.coast && f.coast !== 'all') {
+            if (f.coast) {
                 activeCoast = f.coast;
                 setPillActive('.fmap-pill--coast', 'data-coast', f.coast);
             }
