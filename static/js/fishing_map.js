@@ -65,9 +65,7 @@
     var activeCoast   = 'all';
     var activeCat     = '';
     var activeSpecies = '';
-    var activeMonth   = 0;           // 0 = current month (server default)
     var isFullscreen  = false;
-    var monthlySummary = [];         // from last API response
     var userCoords       = null;      // {lat, lng} set after Near Me fires
     var sortByDist       = false;    // legacy (kept for localStorage compat)
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
@@ -103,11 +101,6 @@
     var structureMarkers    = [];    // [{leaflet, data}]
     var structureFetchTimer = null;
     var lastStructureBbox   = null;  // last fetched {sw_lat,sw_lng,ne_lat,ne_lng}
-
-    // ─── AI-overlay state ─────────────────────────────────────────────────────
-    var aiMode        = false;
-    var heatLayer     = null;
-    var aiPickMarkers = [];          // [{leaflet, data}]
 
     // ─── Advanced filter state ────────────────────────────────────────────────
     var activeSeason  = '';          // spring|summer|fall|winter|''
@@ -539,17 +532,6 @@
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
 
-        var def     = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
-        var bar     = document.getElementById('fmap-ai-bar');
-        var barText = document.getElementById('fmap-ai-bar-text');
-
-        if (bar && barText && activeSpecies) {
-            barText.textContent = def.insight;
-            bar.hidden = false;
-        } else if (bar) {
-            bar.hidden = true;
-        }
-
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
@@ -566,28 +548,23 @@
 
     function queryAIHabitatSpots() {
         if (!map || !aiPickLayer) return;
-        var bar = document.getElementById('fmap-ai-bar');
 
         if (!activeSpecies || !currentSpeciesMeta) {
             aiPickLayer.clearLayers();
-            if (bar) bar.hidden = true;
             return;
         }
 
         var habitatType = inferHabitatType(currentSpeciesMeta);
         var def         = HABITAT_DEFS[habitatType];
 
-        // Pelagic / open-water: show insight bar only, no OSM markers to place
+        // Pelagic / open-water: no OSM markers to place
         if (!def || !def.tags.length) {
             aiPickLayer.clearLayers();
-            var barText = document.getElementById('fmap-ai-bar-text');
-            if (def && bar && barText) { barText.textContent = def.insight; bar.hidden = false; }
             return;
         }
 
         if (map.getZoom() < 10) {
             aiPickLayer.clearLayers();
-            if (bar) bar.hidden = true;
             return;
         }
 
@@ -1720,8 +1697,8 @@
     }
 
     // ── Shared AI-picks rendering helpers ────────────────────────────────────
-    // Both the Spots-tab hotspot list (aiMode=true) and the dedicated AI tab
-    // panel render the same data; these two helpers keep the HTML in one place.
+    // The Spots-tab hotspot list and the dedicated AI tab panel render the same
+    // data; these two helpers keep the HTML in one place.
 
     // Return the <li> markup for the ranked AI picks in `locations`.
     function _aiPickItemsHtml(locations) {
@@ -1798,10 +1775,6 @@
     }
 
     function renderHotspots(locations) {
-        // Always refresh AI picks list in its own panel
-        var aiList = document.getElementById('fmap-ai-picks-list');
-        if (aiList) renderAiPicksList(locations, aiList);
-
         if (!els.hotspotsList) return;
 
         // Fast path: the underlying data is the same — only selectedId changed.
@@ -2180,7 +2153,6 @@
         if (activeSpecies) params.set('species', activeSpecies);
         if (activeCoast && activeCoast !== 'all') params.set('coast', activeCoast);
         if (activeCat) params.set('category', activeCat);
-        if (activeMonth) params.set('month', String(activeMonth));
         // Advanced filters
         if (activeSeason) params.set('season', activeSeason);
         if (activeTime)   params.set('time_of_day', activeTime);
@@ -2216,19 +2188,8 @@
                     ? data.species_meta : null;
 
                 // Render map markers and all sidebar panels with the new data
-                monthlySummary = data.monthly_summary || [];
-                var _currentM = data.month || (new Date().getMonth() + 1);
                 drawMarkers(currentData);
                 renderHotspots(currentData);
-
-                // If AI overlay is already on, refresh it with the new scored data
-                if (aiMode) {
-                    clearAiOverlay();
-                    ensureLeafletHeat()
-                        .then(function () { if (aiMode) renderAiOverlay(currentData); })
-                        .catch(function () {});
-                    renderAiHotspots(currentData);
-                }
 
                 // Zoom to saved location then load structure overlays and community feed
                 autoZoomToSavedLocation(currentData);
@@ -2286,74 +2247,6 @@
         if (closeBtn) closeBtn.addEventListener('click', closeDetail);
     }
 
-    // ─── AI overlay ───────────────────────────────────────────────────────────
-
-    function ensureLeafletHeat() {
-        if (window.L && window.L.heatLayer) return Promise.resolve();
-        return new Promise(function (resolve, reject) {
-            var s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js';
-            s.onload = resolve;
-            s.onerror = reject;
-            document.head.appendChild(s);
-        });
-    }
-
-    function makeAiPickIcon(rank) {
-        return L.divIcon({
-            className: 'fmap-ai-pick-wrap',
-            html: '<span class="fmap-ai-pick-dot"><span class="fmap-ai-pick-rank">' + rank + '</span></span>',
-            iconSize:    [34, 34],
-            iconAnchor:  [17, 17],
-            popupAnchor: [0, -20]
-        });
-    }
-
-    function clearAiOverlay() {
-        if (heatLayer && map) { map.removeLayer(heatLayer); heatLayer = null; }
-        aiPickMarkers.forEach(function (m) { if (map) map.removeLayer(m.leaflet); });
-        aiPickMarkers = [];
-    }
-
-    function renderAiOverlay(locations) {
-        clearAiOverlay();
-        if (!map || !window.L || !window.L.heatLayer) return;
-
-        // Heat map — intensity proportional to score (0-100 → 0-1)
-        var points = locations
-            .filter(function (loc) { return loc.score > 0; })
-            .map(function (loc) { return [loc.lat, loc.lng, loc.score / 100]; });
-
-        if (points.length) {
-            heatLayer = L.heatLayer(points, {
-                radius:  55,
-                blur:    40,
-                maxZoom: 12,
-                max:     1.0,
-                gradient: { 0.15: '#164e63', 0.45: '#0e7490', 0.70: '#16a34a', 0.88: '#ca8a04', 1.0: '#dc2626' }
-            }).addTo(map);
-        }
-
-        // AI pick markers for top 5 locations
-        var picks = locations.filter(function (loc) { return loc.ai_pick_rank; });
-        picks.sort(function (a, b) { return (a.ai_pick_rank || 99) - (b.ai_pick_rank || 99); });
-
-        picks.forEach(function (loc) {
-            var m = L.marker([loc.lat, loc.lng], {
-                icon: makeAiPickIcon(loc.ai_pick_rank),
-                zIndexOffset: 1000
-            }).addTo(map);
-
-            m.bindTooltip(
-                '<strong>#' + loc.ai_pick_rank + ' AI Pick &mdash; ' + esc(loc.name) + ', ' + esc(loc.state) + '</strong>',
-                { direction: 'top', offset: [0, -10], className: 'fmap-tooltip' }
-            );
-
-            m.on('click', function () { showAiPickPopup(loc); });
-            aiPickMarkers.push({ leaflet: m, data: loc });
-        });
-    }
-
     function showAiPickPopup(loc) {
         if (!map) return;
         var badge = ACTIVITY[loc.activity] || ACTIVITY.none;
@@ -2375,29 +2268,6 @@
                 '</div>'
             )
             .openOn(map);
-    }
-
-    function toggleAiMode() {
-        aiMode = !aiMode;
-        var btn = document.getElementById('fmap-ai-btn');
-        if (btn) {
-            btn.classList.toggle('fmap-ctrl-btn--active', aiMode);
-            btn.setAttribute('aria-pressed', aiMode ? 'true' : 'false');
-        }
-
-        updateHotspotHeader(aiMode);
-
-        if (aiMode) {
-            markers.forEach(function (m) { m.leaflet.setOpacity(0); });
-            renderAiHotspots(currentData);
-            ensureLeafletHeat()
-                .then(function () { if (aiMode) renderAiOverlay(currentData); })
-                .catch(function (e) { console.error('[fishing-map] leaflet-heat load failed', e); });
-        } else {
-            clearAiOverlay();
-            markers.forEach(function (m) { m.leaflet.setOpacity(1); });
-            renderHotspots(currentData);
-        }
     }
 
     // ─── Structure mode ───────────────────────────────────────────────────────
@@ -2796,50 +2666,6 @@
         }
     }
 
-    // ─── Tabbed side panel ────────────────────────────────────────────────────
-
-    function switchTab(tab) {
-        activeTab = tab;
-        ['spots', 'ai', 'community'].forEach(function (t) {
-            var btn   = document.getElementById('fmap-tab-' + t);
-            var panel = document.getElementById('fmap-panel-' + t);
-            var active = (t === tab);
-            if (btn) {
-                btn.classList.toggle('fmap-side-tab--active', active);
-                btn.setAttribute('aria-selected', active ? 'true' : 'false');
-            }
-            if (panel) {
-                panel.classList.toggle('fmap-side-pane--active', active);
-                panel.hidden = !active;
-            }
-        });
-        if (tab === 'community') {
-            loadCommunityFeed();
-        } else if (tab === 'spots' && currentData.length) {
-            renderHotspots(currentData);
-        }
-        // Persist the chosen tab so the user returns to the same view on reload.
-        saveFilters();
-    }
-
-    function wireTabs() {
-        ['spots', 'ai', 'community'].forEach(function (t) {
-            var btn = document.getElementById('fmap-tab-' + t);
-            if (btn) btn.addEventListener('click', function () { switchTab(t); });
-        });
-        var refreshBtn = document.getElementById('fmap-community-refresh');
-        if (refreshBtn) refreshBtn.addEventListener('click', loadCommunityFeed);
-    }
-
-    // ─── AI picks list (dedicated AI tab panel) ─────────────────────────────
-    // Delegates to the shared helpers extracted near renderAiHotspots above.
-
-    function renderAiPicksList(locations, container) {
-        if (!container) return;
-        container.innerHTML = _aiPickItemsHtml(locations);
-        _wireAiPickClicks(container);
-    }
-
     // ─── Community layer ──────────────────────────────────────────────────────
 
     function makeCommunityPin(isMine) {
@@ -3049,74 +2875,6 @@
 
     function closeCatchDetail() {
         if (els.catchDetail) els.catchDetail.hidden = true;
-    }
-
-    // ─── Community feed ───────────────────────────────────────────────────────
-
-    function loadCommunityFeed() {
-        if (!els.communityList) return;
-        els.communityList.innerHTML = '<li class="fmap-hotspot-empty">Loading…</li>';
-
-        var url = '/api/map/feed?limit=20';
-        if (userCoords) url += '&lat=' + userCoords.lat + '&lng=' + userCoords.lng;
-
-        fetch(url)
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                var catches = data.catches || [];
-                if (!catches.length) {
-                    els.communityList.innerHTML = '<li class="fmap-hotspot-empty">No recent catches logged nearby.</li>';
-                    return;
-                }
-                var html = '';
-                catches.forEach(function (c) {
-                    var weightStr = c.weight_lb ? ' \u2022 ' + c.weight_lb.toFixed(1) + ' lb' : '';
-                    var headline  = c.title ? esc(c.title) : esc(c.species) + weightStr;
-                    var subline   = c.title ? '<span class="fmap-community-species">' + esc(c.species) + weightStr + '</span>' : '';
-                    var imgTag    = c.image_url
-                        ? '<img class="fmap-community-thumb" src="' + esc(c.image_url) +
-                          '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
-                        : '';
-                    html += '<li class="fmap-community-item' + (c.image_url ? ' fmap-community-item--has-img' : '') +
-                        '" data-lat="' + c.lat + '" data-lng="' + c.lng + '" data-id="' + c.id + '">' +
-                        imgTag +
-                        '<div class="fmap-community-content">' +
-                          '<span class="fmap-community-headline">' + headline + '</span>' +
-                          subline +
-                          '<div class="fmap-community-meta">' +
-                            '<span class="fmap-community-angler">' + esc(c.angler_name) + '</span>' +
-                            (c.bait ? '<span>' + esc(c.bait) + '</span>' : '') +
-                            '<span class="fmap-community-time">' + timeAgo(c.caught_at) + '</span>' +
-                          '</div>' +
-                        '</div>' +
-                        '</li>';
-                });
-                els.communityList.innerHTML = html;
-
-                // Wire click to fly-to + open detail
-                els.communityList.querySelectorAll('.fmap-community-item').forEach(function (li) {
-                    li.addEventListener('click', function () {
-                        var lat  = parseFloat(li.getAttribute('data-lat'));
-                        var lng  = parseFloat(li.getAttribute('data-lng'));
-                        var id   = parseInt(li.getAttribute('data-id'), 10);
-                        var c    = catches.find(function (x) { return x.id === id; }) || {};
-                        if (map && lat && lng) {
-                            map.flyTo([lat, lng], Math.max(map.getZoom(), 12), { duration: 0.7 });
-                        }
-                        if (c.id) setTimeout(function () { openCatchDetail(c); }, 750);
-                    });
-                });
-
-                // Update badge
-                var badge = document.getElementById('fmap-community-badge');
-                if (badge) {
-                    badge.textContent = catches.length;
-                    badge.style.display = catches.length ? '' : 'none';
-                }
-            })
-            .catch(function () {
-                if (els.communityList) els.communityList.innerHTML = '<li class="fmap-hotspot-empty">Could not load community catches.</li>';
-            });
     }
 
     // ─── Log Catch mode ───────────────────────────────────────────────────────
@@ -5679,7 +5437,6 @@
                 wireMapControls();
                 wireAdvancedFilters();
                 wireSpotTypeFilters();
-                wireTabs();
                 wireCommunityLayer();
                 wireLogCatch();
                 wireFullscreen();
@@ -5722,74 +5479,6 @@
                 console.error('[fishing-map] boot error:', err);
                 if (els.loading) els.loading.textContent = 'Map could not be loaded.';
             });
-    }
-
-    // ─── Month Planner ────────────────────────────────────────────────────────
-    var MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-    // Refs to last-rendered planner state for fast-path optimization
-    var _plannerSummary  = null;  // last summary array passed to renderMonthPlanner
-    var _plannerCurrentM = 0;     // last currentM passed to renderMonthPlanner
-
-    function renderMonthPlanner(summary, currentM) {
-        var planner = document.getElementById('fmap-planner');
-        var container = document.getElementById('fmap-planner-months');
-        if (!planner || !container || !summary || !summary.length) return;
-
-        // Fast path: bar data hasn't changed, only the selected month changed.
-        // Toggle CSS on the two affected cells instead of rebuilding all 12.
-        if (summary === _plannerSummary && currentM === _plannerCurrentM && container.children.length === 12) {
-            container.querySelectorAll('.fmap-month-cell').forEach(function (btn) {
-                var m = parseInt(btn.getAttribute('data-month'), 10);
-                btn.classList.toggle('fmap-month-cell--selected', m === activeMonth);
-            });
-            return;
-        }
-
-        _plannerSummary  = summary;
-        _plannerCurrentM = currentM;
-
-        // Find max combined active count for normalising bar heights
-        var maxActive = 1;
-        summary.forEach(function (m) {
-            var total = m.peak + m.good + m.fair;
-            if (total > maxActive) maxActive = total;
-        });
-
-        var html = '';
-        summary.forEach(function (m) {
-            var isCurrent = m.month === currentM;
-            var isSelected = m.month === activeMonth;
-            var total = m.peak + m.good + m.fair;
-            var heightPct = Math.round((total / maxActive) * 100);
-            var actClass = m.peak > 0 ? 'peak' : m.good > 0 ? 'good' : m.fair > 0 ? 'fair' : 'slow';
-
-            html +=
-                '<button type="button" class="fmap-month-cell' +
-                (isCurrent  ? ' fmap-month-cell--current'  : '') +
-                (isSelected ? ' fmap-month-cell--selected' : '') +
-                '" data-month="' + m.month + '" title="' + MONTH_NAMES[m.month] +
-                ': ' + m.peak + ' peak, ' + m.good + ' good, ' + m.fair + ' fair">' +
-                '<div class="fmap-month-bar-wrap">' +
-                  '<div class="fmap-month-bar fmap-month-bar--' + actClass +
-                  '" style="height:' + Math.max(4, heightPct) + '%"></div>' +
-                '</div>' +
-                '<span class="fmap-month-label">' + MONTH_SHORT[m.month] + '</span>' +
-                (isCurrent ? '<span class="fmap-month-now-dot"></span>' : '') +
-                '</button>';
-        });
-
-        container.innerHTML = html;
-        planner.hidden = false;
-
-        container.querySelectorAll('.fmap-month-cell').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var m = parseInt(btn.getAttribute('data-month'), 10);
-                activeMonth = (activeMonth === m) ? 0 : m;  // toggle off if same
-                renderMonthPlanner(monthlySummary, currentM);
-                fetchAndRender();
-            });
-        });
     }
 
     // ─── Sparkline helper (12-bar mini chart for species rows) ────────────────
@@ -5849,7 +5538,6 @@
             if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
             if (activeCoast && activeCoast !== 'all') hashParts.push('coast=' + activeCoast);
             if (activeCat)    hashParts.push('cat=' + activeCat);
-            if (activeMonth)  hashParts.push('month=' + activeMonth);
             if (activeSeason)   hashParts.push('season=' + activeSeason);
             if (activeTime)     hashParts.push('time=' + activeTime);
             if (activeTide)     hashParts.push('tide=' + activeTide);
@@ -5894,9 +5582,6 @@
                 document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
                     b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === v);
                 });
-            }
-            if (k === 'month' && v) {
-                activeMonth = parseInt(v, 10) || 0;
             }
             if (k === 'season' && v) {
                 activeSeason = v;

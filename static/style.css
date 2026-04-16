@@ -4142,44 +4142,6 @@ h2::before {
   margin-right: 0.35rem;
 }
 
-/* ── AI insight bar ── */
-.fmap-ai-bar {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.6rem 0.9rem;
-  margin-bottom: 0.5rem;
-  background: rgba(245,158,11,0.08);
-  border: 1px solid rgba(245,158,11,0.22);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  color: var(--text, #e0e6ed);
-  line-height: 1.45;
-}
-.fmap-ai-bar-icon {
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-  stroke: #f59e0b;
-}
-.fmap-ai-bar-label {
-  flex-shrink: 0;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #f59e0b;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  background: rgba(245,158,11,0.15);
-  border: 1px solid rgba(245,158,11,0.25);
-  align-self: flex-start;
-  margin-top: 0.05rem;
-}
-[data-theme="light"] .fmap-ai-bar {
-  background: rgba(245,158,11,0.07);
-  border-color: rgba(180,110,0,0.2);
-  color: #3d2a00;
-}
 
 /* ── Habitat area polygon overlays ── */
 .fmap-habitat-poly {
@@ -5778,40 +5740,6 @@ h2::before {
   box-shadow: 0 2px 12px rgba(0,0,0,0.12);
 }
 
-/* ── Month Planner ── */
-.fmap-planner {
-  margin-bottom: 0.65rem;
-}
-
-.fmap-planner-header {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted, #8a9ba8);
-  margin-bottom: 0.55rem;
-}
-
-.fmap-planner-hint {
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  margin-left: auto;
-  font-size: 0.68rem;
-  color: var(--text-muted, #8a9ba8);
-  opacity: 0.7;
-}
-
-.fmap-planner-months {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 3px;
-}
-
-
 /* ── Seasonal sparkline ── */
 .fmap-sparkline {
   display: block;
@@ -5893,11 +5821,6 @@ h2::before {
 [data-theme="light"] .fmap-toolbar-btn { border-color: #c9d8e0; color: #5a7080; }
 [data-theme="light"] .fmap-toolbar-btn:hover { background: #e8f4f8; color: #0e5f78; }
 
-/* ── Responsive extras ── */
-@media (max-width: 500px) {
-  .fmap-planner-months { gap: 2px; }
-  .fmap-planner-hint { display: none; }
-}
 
 /* ── Advanced filter panel ── */
 .fmap-adv-toggle-btn {
@@ -6280,67 +6203,6 @@ h2::before {
   text-transform: uppercase;
   flex: 1;
 }
-.fmap-community-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  gap: 0.5rem;
-}
-.fmap-community-refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: none;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px;
-  color: rgba(255,255,255,0.65);
-  font-size: 0.7rem;
-  padding: 0.2rem 0.55rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.fmap-community-refresh-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
-.fmap-community-hint, .fmap-community-login-hint {
-  font-size: 0.65rem;
-  color: rgba(255,255,255,0.4);
-  text-align: right;
-}
-.fmap-community-login-hint { color: #1fa8c9; text-decoration: none; }
-.fmap-community-login-hint:hover { color: #6dd8f0; text-decoration: underline; }
-.fmap-community-list {
-  list-style: none;
-  margin: 0; padding: 0;
-}
-.fmap-community-item {
-  display: flex;
-  flex-direction: column;
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  cursor: pointer;
-  transition: background 0.12s;
-  gap: 0.15rem;
-}
-.fmap-community-item:hover { background: rgba(255,255,255,0.04); }
-.fmap-community-species {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #e2f4fb;
-}
-.fmap-community-meta {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.5);
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.fmap-community-angler {
-  color: #1fa8c9;
-  font-weight: 600;
-}
-.fmap-community-weight { color: #6dd8f0; }
-.fmap-community-time  { color: rgba(255,255,255,0.4); margin-left: auto; }
 
 /* ── Community fire badge on hotspot items ── */
 .fmap-hotspot-community-badge {
@@ -6648,7 +6510,6 @@ h2::before {
   color: #1a2e38;
 }
 [data-theme="light"] .fmap-log-input:focus { border-color: #0e5f78; }
-[data-theme="light"] .fmap-community-item:hover { background: rgba(0,0,0,0.03); }
 [data-theme="light"] .fmap-temp-input {
   background: #fff;
   border-color: #c9d8e0;
@@ -6702,33 +6563,11 @@ h2::before {
     display: block;
 }
 
-/* ── Community list thumbnail ── */
-.fmap-community-item--has-img { align-items: flex-start; }
-.fmap-community-thumb {
-    width: 48px;
-    height: 48px;
-    border-radius: 5px;
-    object-fit: cover;
-    flex-shrink: 0;
-    background: rgba(0,0,0,.1);
-}
-.fmap-community-content { flex: 1; min-width: 0; }
-.fmap-community-headline {
-    display: block;
-    font-size: .8rem;
-    font-weight: 600;
-    color: #e2e8f0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: .1rem;
-}
 
 /* ── Log form hint text ── */
 .fmap-log-hint { font-size: .7rem; opacity: .55; margin-left: .3rem; font-weight: 400; }
 
 /* light mode overrides for new elements */
-[data-theme="light"] .fmap-community-headline { color: #1e293b; }
 [data-theme="light"] .fmap-catch-photo-wrap { background: #e2e8f0; }
 
 /* ── END AI FISHING MAP v2 ── */
