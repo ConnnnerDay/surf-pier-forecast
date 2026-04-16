@@ -2142,10 +2142,10 @@
                 (activeTide ? 1 : 0) +
                 ((activeMinTemp || activeMaxTemp) ? 1 : 0) +
                 (activeSpotTypes.length > 0 ? 1 : 0);
-        var badge  = document.getElementById('fmap-adv-badge');
-        if (badge) {
-            badge.textContent = n;
-            badge.hidden = n === 0;
+        var countEl = document.getElementById('fmap-sec-count-filters');
+        if (countEl) {
+            countEl.textContent = n + ' active';
+            countEl.style.display = n > 0 ? '' : 'none';
         }
     }
 

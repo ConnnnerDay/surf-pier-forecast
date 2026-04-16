@@ -611,139 +611,6 @@
                         <button type="button" id="fmap-search-clear" class="fmap-search-clear" aria-label="Clear species filter" hidden>&times;</button>
                         <ul id="fmap-suggestions" class="fmap-suggestions" role="listbox" aria-label="Species suggestions" hidden></ul>
                     </div>
-                    <button type="button" id="fmap-adv-toggle" class="fmap-adv-toggle-btn"
-                            aria-expanded="false" aria-controls="fmap-adv-filters">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-                        Filters
-                        <span id="fmap-adv-badge" class="fmap-adv-badge" hidden>0</span>
-                    </button>
-                </div>
-
-                <!-- Filters popup panel (floating, shown when toggle clicked) -->
-                <div id="fmap-adv-filters" class="fmap-adv-filters" role="dialog" aria-label="Map filters" hidden>
-                    <div class="fmap-adv-filters-header">
-                        <span class="fmap-adv-filters-title">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-                            Filters
-                        </span>
-                        <button type="button" id="fmap-adv-filters-close" class="fmap-adv-filters-close" aria-label="Close filters panel">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
-                    </div>
-                    <div class="fmap-adv-filters-body">
-                        <div class="fmap-adv-row">
-                            <div class="fmap-adv-group">
-                                <span class="fmap-adv-label">Coast</span>
-                                <div class="fmap-coast-pills" role="group" aria-label="Coast filter">
-                                    <button type="button" class="fmap-pill fmap-pill--coast fmap-pill--active" data-coast="all">All</button>
-                                    <button type="button" class="fmap-pill fmap-pill--coast" data-coast="east">East</button>
-                                    <button type="button" class="fmap-pill fmap-pill--coast" data-coast="west">West</button>
-                                    <button type="button" class="fmap-pill fmap-pill--coast" data-coast="hawaii">Hawaii</button>
-                                </div>
-                            </div>
-                            <div class="fmap-adv-group">
-                                <span class="fmap-adv-label">Type</span>
-                                <div class="fmap-cat-pills" role="group" aria-label="Category filter">
-                                    <button type="button" class="fmap-pill fmap-pill--cat" data-cat="pier">Piers</button>
-                                    <button type="button" class="fmap-pill fmap-pill--cat" data-cat="reef">Reefs/Wrecks</button>
-                                    <button type="button" class="fmap-pill fmap-pill--cat" data-cat="jetty">Jetties</button>
-                                </div>
-                            </div>
-                            <div class="fmap-adv-group">
-                                <span class="fmap-adv-label">Season</span>
-                                <div class="fmap-adv-pills">
-                                    <button type="button" class="fmap-pill fmap-pill--season" data-season="spring">Spring</button>
-                                    <button type="button" class="fmap-pill fmap-pill--season" data-season="summer">Summer</button>
-                                    <button type="button" class="fmap-pill fmap-pill--season" data-season="fall">Fall</button>
-                                    <button type="button" class="fmap-pill fmap-pill--season" data-season="winter">Winter</button>
-                                </div>
-                            </div>
-                            <div class="fmap-adv-group">
-                                <span class="fmap-adv-label">Time of Day</span>
-                                <div class="fmap-adv-pills">
-                                    <button type="button" class="fmap-pill fmap-pill--time" data-time="dawn">Dawn</button>
-                                    <button type="button" class="fmap-pill fmap-pill--time" data-time="morning">Morning</button>
-                                    <button type="button" class="fmap-pill fmap-pill--time" data-time="midday">Midday</button>
-                                    <button type="button" class="fmap-pill fmap-pill--time" data-time="evening">Evening</button>
-                                    <button type="button" class="fmap-pill fmap-pill--time" data-time="night">Night</button>
-                                </div>
-                            </div>
-                            <div class="fmap-adv-group">
-                                <span class="fmap-adv-label">Tide Phase</span>
-                                <div class="fmap-adv-pills">
-                                    <button type="button" class="fmap-pill fmap-pill--tide" data-tide="incoming">Incoming</button>
-                                    <button type="button" class="fmap-pill fmap-pill--tide" data-tide="outgoing">Outgoing</button>
-                                    <button type="button" class="fmap-pill fmap-pill--tide" data-tide="high">High</button>
-                                    <button type="button" class="fmap-pill fmap-pill--tide" data-tide="low">Low</button>
-                                </div>
-                            </div>
-                            <div class="fmap-adv-group fmap-adv-group--temp">
-                                <span class="fmap-adv-label">Water Temp (&deg;F)</span>
-                                <div class="fmap-adv-temp-row">
-                                    <input type="number" id="fmap-min-temp" class="fmap-temp-input"
-                                           placeholder="Min" min="32" max="100" step="1"
-                                           aria-label="Minimum water temperature">
-                                    <span class="fmap-temp-sep">&ndash;</span>
-                                    <input type="number" id="fmap-max-temp" class="fmap-temp-input"
-                                           placeholder="Max" min="32" max="100" step="1"
-                                           aria-label="Maximum water temperature">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="fmap-adv-group fmap-adv-group--full">
-                            <span class="fmap-adv-label" id="fmap-struct-filters-label">Show on Map</span>
-                            <span class="fmap-struct-filters-hint" id="fmap-struct-filters-hint">All types visible &mdash; tap to filter</span>
-                            <span id="fmap-struct-spinner" class="fmap-struct-spinner" role="status" aria-label="Loading structure markers" hidden>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            </span>
-                            <div id="fmap-struct-error" class="fmap-struct-error" role="status" aria-live="polite" hidden>
-                                <span id="fmap-struct-error-msg" class="fmap-struct-error-msg">Couldn't load structure data; showing basic map markers.</span>
-                                <button type="button" id="fmap-struct-error-dismiss" class="fmap-struct-error-dismiss" aria-label="Dismiss error message">&#x2715;</button>
-                            </div>
-                            <div class="fmap-struct-filters-pills" id="fmap-struct-filters" role="list" aria-labelledby="fmap-struct-filters-label">
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="pier" aria-pressed="false" aria-label="Toggle Pier markers on map">Pier</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="jetty" aria-pressed="false" aria-label="Toggle Jetty markers on map">Jetty</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="bridge" aria-pressed="false" aria-label="Toggle Bridge markers on map">Bridge</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="marina" aria-pressed="false" aria-label="Toggle Marina markers on map">Marina</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="reef" aria-pressed="false" aria-label="Toggle Reef markers on map">Reef</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="wreck" aria-pressed="false" aria-label="Toggle Wreck markers on map">Wreck</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="shoal" aria-pressed="false" aria-label="Toggle Shoal markers on map">Shoal</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="grass_flat" aria-pressed="false" aria-label="Toggle Grass Flat area overlay on map">Grass Flat</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="tidal_flat" aria-pressed="false" aria-label="Toggle Tidal Flat area overlay on map">Tidal Flat</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="saltmarsh" aria-pressed="false" aria-label="Toggle Saltmarsh area overlay on map">Saltmarsh</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="mangrove" aria-pressed="false" aria-label="Toggle Mangrove area overlay on map">Mangrove</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="oyster_reef" aria-pressed="false" aria-label="Toggle Oyster Reef area overlay on map">Oyster Reef</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="inlet" aria-pressed="false" aria-label="Toggle Inlet / Channel overlay on map">Inlet</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="point" aria-pressed="false" aria-label="Toggle Point / Headland markers on map">Point</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="beach" aria-pressed="false" aria-label="Toggle Beach area overlay on map">Beach</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="buoy" aria-pressed="false" aria-label="Toggle Navigation Buoy markers on map">Buoy</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing" aria-pressed="false" aria-label="Toggle Fishing Spot markers on map">Fishing Spot</button>
-                                <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing_shop" aria-pressed="false" aria-label="Toggle Bait &amp; Tackle markers on map">Bait &amp; Tackle</button>
-                            </div>
-                        </div>
-                        <!-- Map colour legend -->
-                        <div class="fmap-adv-group fmap-adv-group--full">
-                            <span class="fmap-adv-label">Map Key</span>
-                            <div class="fmap-legend fmap-legend--popup" aria-label="Map colour legend">
-                                <span class="fmap-legend-dot fmap-legend-dot--saltmarsh"></span><span class="fmap-legend-text">Saltmarsh</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--mangrove"></span><span class="fmap-legend-text">Mangrove</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--grass-flat"></span><span class="fmap-legend-text">Grass Flat</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--tidal-flat"></span><span class="fmap-legend-text">Tidal Flat</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--beach"></span><span class="fmap-legend-text">Beach</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--oyster"></span><span class="fmap-legend-text">Oyster Reef</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--inlet"></span><span class="fmap-legend-text">Inlet</span>
-                                <span class="fmap-legend-sep" aria-hidden="true"></span>
-                                <span class="fmap-legend-dot fmap-legend-dot--wreck"></span><span class="fmap-legend-text">Wreck</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--pier"></span><span class="fmap-legend-text">Pier/Jetty</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--buoy"></span><span class="fmap-legend-text">Buoy</span>
-                                <span class="fmap-legend-dot fmap-legend-dot--tackle"></span><span class="fmap-legend-text">Bait &amp; Tackle</span>
-                            </div>
-                        </div>
-                        <div class="fmap-adv-actions">
-                            <button type="button" id="fmap-spot-types-clear" class="fmap-adv-reset-btn fmap-struct-clear-btn" aria-label="Show all structure types — clear type filter" title="Reset to show all structure types" hidden>Clear map filter</button>
-                            <button type="button" id="fmap-adv-reset" class="fmap-adv-reset-btn">Reset all filters</button>
-                        </div>
-                    </div>
                 </div>
                 <div id="fmap-loading" class="fmap-map-loading" aria-live="polite" role="status">
                     <svg class="fmap-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -825,6 +692,129 @@
                     </div>
 
                     <div class="fmap-layers-popup-body">
+
+                        {# ── Section: Spot Filters ── #}
+                        <div class="fmap-layers-section" data-section="filters">
+                            <button type="button" class="fmap-layers-section-hdr" aria-expanded="true">
+                                <span class="fmap-layers-section-hdr-label">Spot Filters</span>
+                                <span class="fmap-layers-section-hdr-count" id="fmap-sec-count-filters"></span>
+                                <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="fmap-layers-section-rows fmap-layers-section-rows--filters">
+                                <div class="fmap-adv-row">
+                                    <div class="fmap-adv-group">
+                                        <span class="fmap-adv-label">Coast</span>
+                                        <div class="fmap-coast-pills" role="group" aria-label="Coast filter">
+                                            <button type="button" class="fmap-pill fmap-pill--coast fmap-pill--active" data-coast="all">All</button>
+                                            <button type="button" class="fmap-pill fmap-pill--coast" data-coast="east">East</button>
+                                            <button type="button" class="fmap-pill fmap-pill--coast" data-coast="west">West</button>
+                                            <button type="button" class="fmap-pill fmap-pill--coast" data-coast="hawaii">Hawaii</button>
+                                        </div>
+                                    </div>
+                                    <div class="fmap-adv-group">
+                                        <span class="fmap-adv-label">Type</span>
+                                        <div class="fmap-cat-pills" role="group" aria-label="Category filter">
+                                            <button type="button" class="fmap-pill fmap-pill--cat" data-cat="pier">Piers</button>
+                                            <button type="button" class="fmap-pill fmap-pill--cat" data-cat="reef">Reefs/Wrecks</button>
+                                            <button type="button" class="fmap-pill fmap-pill--cat" data-cat="jetty">Jetties</button>
+                                        </div>
+                                    </div>
+                                    <div class="fmap-adv-group">
+                                        <span class="fmap-adv-label">Season</span>
+                                        <div class="fmap-adv-pills">
+                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="spring">Spring</button>
+                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="summer">Summer</button>
+                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="fall">Fall</button>
+                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="winter">Winter</button>
+                                        </div>
+                                    </div>
+                                    <div class="fmap-adv-group">
+                                        <span class="fmap-adv-label">Time of Day</span>
+                                        <div class="fmap-adv-pills">
+                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="dawn">Dawn</button>
+                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="morning">Morning</button>
+                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="midday">Midday</button>
+                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="evening">Evening</button>
+                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="night">Night</button>
+                                        </div>
+                                    </div>
+                                    <div class="fmap-adv-group">
+                                        <span class="fmap-adv-label">Tide Phase</span>
+                                        <div class="fmap-adv-pills">
+                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="incoming">Incoming</button>
+                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="outgoing">Outgoing</button>
+                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="high">High</button>
+                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="low">Low</button>
+                                        </div>
+                                    </div>
+                                    <div class="fmap-adv-group fmap-adv-group--temp">
+                                        <span class="fmap-adv-label">Water Temp (&deg;F)</span>
+                                        <div class="fmap-adv-temp-row">
+                                            <input type="number" id="fmap-min-temp" class="fmap-temp-input"
+                                                   placeholder="Min" min="32" max="100" step="1"
+                                                   aria-label="Minimum water temperature">
+                                            <span class="fmap-temp-sep">&ndash;</span>
+                                            <input type="number" id="fmap-max-temp" class="fmap-temp-input"
+                                                   placeholder="Max" min="32" max="100" step="1"
+                                                   aria-label="Maximum water temperature">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fmap-adv-group fmap-adv-group--full">
+                                    <span class="fmap-adv-label" id="fmap-struct-filters-label">Show on Map</span>
+                                    <span class="fmap-struct-filters-hint" id="fmap-struct-filters-hint">All types visible &mdash; tap to filter</span>
+                                    <span id="fmap-struct-spinner" class="fmap-struct-spinner" role="status" aria-label="Loading structure markers" hidden>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                                    </span>
+                                    <div id="fmap-struct-error" class="fmap-struct-error" role="status" aria-live="polite" hidden>
+                                        <span id="fmap-struct-error-msg" class="fmap-struct-error-msg">Couldn't load structure data; showing basic map markers.</span>
+                                        <button type="button" id="fmap-struct-error-dismiss" class="fmap-struct-error-dismiss" aria-label="Dismiss error message">&#x2715;</button>
+                                    </div>
+                                    <div class="fmap-struct-filters-pills" id="fmap-struct-filters" role="list" aria-labelledby="fmap-struct-filters-label">
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="pier" aria-pressed="false" aria-label="Toggle Pier markers on map">Pier</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="jetty" aria-pressed="false" aria-label="Toggle Jetty markers on map">Jetty</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="bridge" aria-pressed="false" aria-label="Toggle Bridge markers on map">Bridge</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="marina" aria-pressed="false" aria-label="Toggle Marina markers on map">Marina</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="reef" aria-pressed="false" aria-label="Toggle Reef markers on map">Reef</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="wreck" aria-pressed="false" aria-label="Toggle Wreck markers on map">Wreck</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="shoal" aria-pressed="false" aria-label="Toggle Shoal markers on map">Shoal</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="grass_flat" aria-pressed="false" aria-label="Toggle Grass Flat area overlay on map">Grass Flat</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="tidal_flat" aria-pressed="false" aria-label="Toggle Tidal Flat area overlay on map">Tidal Flat</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="saltmarsh" aria-pressed="false" aria-label="Toggle Saltmarsh area overlay on map">Saltmarsh</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="mangrove" aria-pressed="false" aria-label="Toggle Mangrove area overlay on map">Mangrove</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="oyster_reef" aria-pressed="false" aria-label="Toggle Oyster Reef area overlay on map">Oyster Reef</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="inlet" aria-pressed="false" aria-label="Toggle Inlet / Channel overlay on map">Inlet</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="point" aria-pressed="false" aria-label="Toggle Point / Headland markers on map">Point</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="beach" aria-pressed="false" aria-label="Toggle Beach area overlay on map">Beach</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="buoy" aria-pressed="false" aria-label="Toggle Navigation Buoy markers on map">Buoy</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing" aria-pressed="false" aria-label="Toggle Fishing Spot markers on map">Fishing Spot</button>
+                                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing_shop" aria-pressed="false" aria-label="Toggle Bait &amp; Tackle markers on map">Bait &amp; Tackle</button>
+                                    </div>
+                                </div>
+                                <!-- Map colour legend -->
+                                <div class="fmap-adv-group fmap-adv-group--full">
+                                    <span class="fmap-adv-label">Map Key</span>
+                                    <div class="fmap-legend fmap-legend--popup" aria-label="Map colour legend">
+                                        <span class="fmap-legend-dot fmap-legend-dot--saltmarsh"></span><span class="fmap-legend-text">Saltmarsh</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--mangrove"></span><span class="fmap-legend-text">Mangrove</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--grass-flat"></span><span class="fmap-legend-text">Grass Flat</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--tidal-flat"></span><span class="fmap-legend-text">Tidal Flat</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--beach"></span><span class="fmap-legend-text">Beach</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--oyster"></span><span class="fmap-legend-text">Oyster Reef</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--inlet"></span><span class="fmap-legend-text">Inlet</span>
+                                        <span class="fmap-legend-sep" aria-hidden="true"></span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--wreck"></span><span class="fmap-legend-text">Wreck</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--pier"></span><span class="fmap-legend-text">Pier/Jetty</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--buoy"></span><span class="fmap-legend-text">Buoy</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--tackle"></span><span class="fmap-legend-text">Bait &amp; Tackle</span>
+                                    </div>
+                                </div>
+                                <div class="fmap-adv-actions">
+                                    <button type="button" id="fmap-spot-types-clear" class="fmap-adv-reset-btn fmap-struct-clear-btn" aria-label="Show all structure types — clear type filter" title="Reset to show all structure types" hidden>Clear map filter</button>
+                                    <button type="button" id="fmap-adv-reset" class="fmap-adv-reset-btn">Reset all filters</button>
+                                </div>
+                            </div>
+                        </div>{# /section filters #}
 
                         {# ── Section: Weather & Marine Safety ── #}
                         <div class="fmap-layers-section" data-section="weather">
@@ -1170,15 +1160,6 @@
                     <span class="fmap-log-fab-label">Log Catch</span>
                 </button>
             </div>
-
-            <!-- Side panel: top-ranked fishing spots -->
-            <div class="fmap-side-panel" id="fmap-side-panel">
-                <ul id="fmap-hotspots-list" class="fmap-hotspots-list" aria-label="Top fishing spots">
-                    <li class="fmap-hotspot-skeleton"></li>
-                    <li class="fmap-hotspot-skeleton"></li>
-                    <li class="fmap-hotspot-skeleton"></li>
-                </ul>
-            </div><!-- /.fmap-side-panel -->
 
         </div><!-- /.fmap-body -->
 

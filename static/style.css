@@ -4735,6 +4735,10 @@ h2::before {
   transition: max-height 0.22s ease, opacity 0.18s ease;
   opacity: 1;
 }
+.fmap-layers-section-rows--filters {
+  max-height: 1200px;
+  padding: 0.5rem 0.85rem 0.75rem;
+}
 .fmap-layers-section--collapsed .fmap-layers-section-rows {
   max-height: 0;
   opacity: 0;
