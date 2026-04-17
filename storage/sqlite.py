@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # is always performed, regardless of whether the username exists.  This
 # prevents an attacker from enumerating valid usernames by measuring how long
 # the login endpoint takes to respond.
-_DUMMY_HASH = generate_password_hash("__sentinel__", method="pbkdf2:sha256")
+_DUMMY_HASH = generate_password_hash("__sentinel__", method="scrypt")
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "app.db")
 
@@ -488,7 +488,7 @@ def create_user(
 ) -> Optional[int]:
     # Explicitly specify the algorithm so we are not dependent on Werkzeug's
     # default changing in a future release.
-    pw_hash = generate_password_hash(password, method="pbkdf2:sha256")
+    pw_hash = generate_password_hash(password, method="scrypt")
     email_val = email.strip().lower() if email else None
     conn = get_db()
     try:
@@ -677,7 +677,7 @@ def change_password(user_id: int, new_password: str) -> int:
     effectively logged out everywhere except the current device (which receives
     the new version in its cookie immediately after this call).
     """
-    pw_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
+    pw_hash = generate_password_hash(new_password, method="scrypt")
     conn = get_db()
     try:
         # Also clear any pending email-verification token: it was issued under
