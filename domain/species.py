@@ -2921,6 +2921,11 @@ BAIT_DB: list[dict[str, Any]] = [
     },
 ]
 
+def _temp_distance_score(distance: float, range_size: float) -> float:
+    """Score how far a temperature is from the edge of the ideal range (0–50)."""
+    return max(0.0, 50.0 * (1 - distance / range_size)) if range_size > 0 else 25.0
+
+
 def _score_species(
     sp: dict[str, Any],
     month: int,
@@ -2952,13 +2957,9 @@ def _score_species(
     if ideal_low <= water_temp <= ideal_high:
         score += 50.0
     elif water_temp < ideal_low:
-        distance = ideal_low - water_temp
-        temp_range = ideal_low - sp["temp_min"]
-        score += max(0, 50.0 * (1 - distance / temp_range)) if temp_range > 0 else 25.0
+        score += _temp_distance_score(ideal_low - water_temp, ideal_low - sp["temp_min"])
     else:
-        distance = water_temp - ideal_high
-        temp_range = sp["temp_max"] - ideal_high
-        score += max(0, 50.0 * (1 - distance / temp_range)) if temp_range > 0 else 25.0
+        score += _temp_distance_score(water_temp - ideal_high, sp["temp_max"] - ideal_high)
 
     if month in sp["peak_months"]:
         score += 30.0
