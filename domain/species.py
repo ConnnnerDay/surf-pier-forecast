@@ -1749,7 +1749,7 @@ def _species_matches_profile(
             _CHARTER_SPECIES,
             _FLY_SPECIES,
         )
-        _accessible: set = set()
+        _accessible: set[str] = set()
         if has_surf:
             _accessible |= _SURF_SPECIES
         if effective_pier:  # pier, jetty, or bridge
@@ -3255,7 +3255,7 @@ def _parse_closed_months(text: str) -> set:
     Returns a set of month numbers (1-12) that are closed.
     Handles year-wrap ranges like 'closed Nov-Feb'.
     """
-    closed: set = set()
+    closed: set[int] = set()
     # Match "closed MMM-MMM", "closed MMM–MMM", "closed MonthName-MonthName"
     pattern = r"closed\s+([a-z]+)[–\-]([a-z]+)"
     for m in re.finditer(pattern, text.lower()):

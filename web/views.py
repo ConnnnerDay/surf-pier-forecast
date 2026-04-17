@@ -473,7 +473,7 @@ def _render_forecast(
 
     # Build favorite locations list for the quick-switch bar.
     favorite_locations = []
-    caught_species: set = set()
+    caught_species: set[str] = set()
     if g.user:
         fav_ids = user_prefs.get("favorites") or []
         for fav_id in fav_ids:

@@ -254,7 +254,7 @@ def _parse_closed_months_text(text: str) -> set:
     Returns the set of month numbers (1-12) that are closed.
     Handles year-wrap ranges such as 'closed Nov-Feb'.
     """
-    closed: set = set()
+    closed: set[int] = set()
     for m in _CLOSED_RANGE_RE.finditer(text.lower()):
         start_str = m.group(1)[:3]
         end_str = m.group(2)[:3]

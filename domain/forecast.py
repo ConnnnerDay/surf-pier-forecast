@@ -1486,7 +1486,7 @@ def build_gear_checklist(
 ) -> list[dict[str, str]]:
     """Generate a conditions-aware packing list for a fishing trip."""
     items: list[dict[str, str]] = []
-    categories_seen: set = set()
+    categories_seen: set[str] = set()
     ft = set(fishing_types or [])
 
     def _add(category: str, item: str, reason: str = "") -> None:
@@ -3515,7 +3515,7 @@ def build_activity_timeline(
         else:
             tag = "low"
 
-        seen: set = set()
+        seen: set[str] = set()
         deduped = []
         for p in reason_parts[h]:
             if p not in seen:
@@ -3640,7 +3640,7 @@ def build_trip_setup(
     def _tokens(field: str) -> list[str]:
         """Collect unique comma-separated tokens across the working species."""
         seen: list[str] = []
-        seen_lower: set = set()
+        seen_lower: set[str] = set()
         for sp in working:
             for tok in (sp.get(field) or "").split(","):
                 tok = tok.strip()

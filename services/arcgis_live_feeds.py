@@ -51,6 +51,8 @@ _HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retri
 
 _BASE = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services"
 
+_CMS_TO_KT = 0.0194384  # centimetres/sec → knots (= 1.94384 / 100)
+
 # Request timeouts: (connect_s, read_s)
 # Connect timeout slightly above 3 s avoids blocking on slow DNS/TLS.
 # Read timeouts are grouped by expected payload size.
@@ -1124,7 +1126,7 @@ def fetch_precip_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
         return []
 
     # Deduplicate by fromdate (multiple polygons may cover the area; take first hit)
-    seen: set = set()
+    seen: set[Any] = set()
     results: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
@@ -2435,7 +2437,7 @@ def fetch_hfradar_currents(
                     "lat": float(lat_),
                     "lng": float(lng_),
                     "speed_cms": round(spd, 1),
-                    "speed_kts": round(spd * 0.0194384, 2),
+                    "speed_kts": round(spd * _CMS_TO_KT, 2),
                     "dir_deg": int(dir_) if dir_ is not None else None,
                     "u": round(float(a.get("u") or 0), 2),
                     "v": round(float(a.get("v") or 0), 2),
