@@ -57,6 +57,20 @@ from storage.db import (
     delete_webauthn_credential,
 )
 from services.email import send_verification_email, smtp_is_configured
+from webauthn import (
+    generate_authentication_options,
+    generate_registration_options,
+    options_to_json,
+    verify_authentication_response,
+    verify_registration_response,
+)
+from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    PublicKeyCredentialDescriptor,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +94,9 @@ _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
 # field on these forms.  Each IP is limited to 5 attempts per 15 minutes.
 _ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S = 15 * 60
+
+_HTTP_TIMEOUT_JWKS_S = 8    # Apple JWKS public key fetch
+_HTTP_TIMEOUT_OAUTH_S = 10  # Google/Apple token and userinfo exchanges
 
 _account_action_rate_limit_store: dict[str, tuple[float, int]] = {}
 _account_action_rate_limit_lock = threading.Lock()
@@ -1271,15 +1288,6 @@ def _webauthn_origin() -> str:
 @bp.route("/webauthn/register/begin")
 def webauthn_register_begin() -> Any:
     """Return WebAuthn registration options for the logged-in user."""
-    from webauthn import generate_registration_options, options_to_json
-    from webauthn.helpers.structs import (
-        AuthenticatorSelectionCriteria,
-        PublicKeyCredentialDescriptor,
-        ResidentKeyRequirement,
-        UserVerificationRequirement,
-    )
-    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
-
     if not g.user:
         return jsonify({"error": "Not logged in"}), 401
 
@@ -1307,9 +1315,6 @@ def webauthn_register_begin() -> Any:
 @bp.route("/webauthn/register/complete", methods=["POST"])
 def webauthn_register_complete() -> Any:
     """Verify the registration response and store the new credential."""
-    from webauthn import verify_registration_response
-    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
-
     if not g.user:
         return jsonify({"error": "Not logged in"}), 401
 
@@ -1344,9 +1349,6 @@ def webauthn_register_complete() -> Any:
 @bp.route("/webauthn/authenticate/begin", methods=["POST"])
 def webauthn_authenticate_begin() -> Any:
     """Return WebAuthn authentication options (discoverable credentials)."""
-    from webauthn import generate_authentication_options, options_to_json
-    from webauthn.helpers.structs import UserVerificationRequirement
-    from webauthn.helpers import bytes_to_base64url
 
     options = generate_authentication_options(
         rp_id=_webauthn_rp_id(),
@@ -1360,9 +1362,6 @@ def webauthn_authenticate_begin() -> Any:
 @bp.route("/webauthn/authenticate/complete", methods=["POST"])
 def webauthn_authenticate_complete() -> Any:
     """Verify the authentication response and log the user in."""
-    from webauthn import verify_authentication_response
-    from webauthn.helpers import base64url_to_bytes
-
     challenge_b64 = session.pop("webauthn_auth_challenge", None)
     origin = session.pop("webauthn_auth_origin", None)
     if not challenge_b64 or not origin:
@@ -1531,7 +1530,7 @@ def _get_apple_jwks() -> list:
             return keys
 
     try:
-        with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=8) as resp:
+        with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=_HTTP_TIMEOUT_JWKS_S) as resp:
             data = json.loads(resp.read())
         keys = data.get("keys", [])
     except Exception as exc:
@@ -1711,7 +1710,7 @@ def google_callback() -> Any:
                 "redirect_uri": url_for("auth.google_callback", _external=True),
                 "grant_type": "authorization_code",
             },
-            timeout=10,
+            timeout=_HTTP_TIMEOUT_OAUTH_S,
         )
         token_data = token_resp.json()
     except Exception as exc:
@@ -1730,7 +1729,7 @@ def google_callback() -> Any:
         userinfo_resp = _req.get(
             _GOOGLE_USERINFO_URL,
             headers={"Authorization": f"Bearer {token_data['access_token']}"},
-            timeout=10,
+            timeout=_HTTP_TIMEOUT_OAUTH_S,
         )
         userinfo = userinfo_resp.json()
     except Exception as exc:
@@ -1915,7 +1914,7 @@ def apple_callback() -> Any:
                 "redirect_uri": url_for("auth.apple_callback", _external=True),
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=10,
+            timeout=_HTTP_TIMEOUT_OAUTH_S,
         )
         token_data = token_resp.json()
     except Exception as exc:

@@ -47,6 +47,8 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 _CACHE: dict[tuple, dict[str, Any]] = {}
 _CACHE_TTL: int = 3600  # 1 hour — OAM catalog changes infrequently
 _CACHE_TTL_FAIL: int = 300
+
+_OAM_TIMEOUT: tuple[float, float] = (5, 20)
 _CACHE_MAX: int = 128
 
 # ── OpenAerialMap Catalog API ─────────────────────────────────────────────────
@@ -166,7 +168,7 @@ def search_oam_imagery(
         resp = _HTTP.get(
             _OAM_CATALOG_URL,
             params=params,
-            timeout=(5, 20),
+            timeout=_OAM_TIMEOUT,
             headers={"Accept": "application/json"},
         )
         if resp.status_code == 200:

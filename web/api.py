@@ -1438,6 +1438,7 @@ _STRUCTURE_CACHE_TTL = 3600  # 1 hour — wrecks don't move
 _STRUCTURE_CACHE_MAX = 128  # ~0.02° keys; cap so long-running servers don't leak
 
 _NOAA_ENC_BASE = "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
+_NOAA_ENC_TIMEOUT: tuple[float, float] = (3.05, 10)
 
 
 def _fetch_noaa_structures(
@@ -1483,7 +1484,7 @@ def _fetch_noaa_structures(
         resp = _req.get(
             f"{_NOAA_ENC_BASE}/enc_wrecks/MapServer/0/query",
             params=dict(base_params, outFields="WRECKNM,VALSOU,CAUTION"),
-            timeout=(3.05, 10),
+            timeout=_NOAA_ENC_TIMEOUT,
             headers={"User-Agent": "SurfPierForecast/1.0"},
         )
         if resp.ok:

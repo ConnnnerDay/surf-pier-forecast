@@ -18,6 +18,9 @@ NDBC_STATIONS = [
 _MS_TO_KNOTS = 1.94384
 _M_TO_FEET = 3.28084
 
+_NDBC_TIMEOUT_STATION: tuple[float, float] = (3.05, 15)
+_NDBC_TIMEOUT_PRESSURE: tuple[float, float] = (3.05, 10)
+
 def _deg_to_compass(deg: float) -> str:
     """Convert wind direction in degrees to a compass abbreviation."""
     _DEG_TO_DIR = [
@@ -50,7 +53,7 @@ def _try_ndbc_station(
         url,
         endpoint="ndbc.realtime",
         headers={"User-Agent": "SurfPierForecast/1.0"},
-        timeout=(3.05, 15),
+        timeout=_NDBC_TIMEOUT_STATION,
     )
     resp.raise_for_status()
 
@@ -117,7 +120,7 @@ def fetch_barometric_pressure(
                 url,
                 endpoint="ndbc.pressure",
                 headers={"User-Agent": "SurfPierForecast/1.0"},
-                timeout=(3.05, 10),
+                timeout=_NDBC_TIMEOUT_PRESSURE,
             )
             resp.raise_for_status()
             lines = resp.text.strip().split("\n")

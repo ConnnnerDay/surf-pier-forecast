@@ -20,6 +20,8 @@ from services.http_client import get as http_get
 
 logger = logging.getLogger(__name__)
 
+_GEOCODE_TIMEOUT: tuple[float, float] = (2.5, 8)
+
 # ---------------------------------------------------------------------------
 # Regional monthly water temperature profiles (°F), indexed Jan(1)–Dec(12).
 # Each location references one of these and may apply a small offset.
@@ -2134,7 +2136,7 @@ def geocode_zip(zipcode: str) -> Optional[tuple[float, float]]:
         resp = http_get(
             f"https://api.zippopotam.us/us/{zipcode}",
             endpoint="zippopotam.geocode_zip",
-            timeout=(2.5, 8),
+            timeout=_GEOCODE_TIMEOUT,
         )
         if resp.status_code != 200:
             return None

@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 
 import requests
 
+_CAM_CHECK_TIMEOUT: tuple[float, float] = (2.5, 7.0)
+
 from flask import (
     Blueprint,
     abort,
@@ -163,7 +165,7 @@ def _fetch_cam_status(url: str) -> None:
     try:
         resp = requests.get(
             url,
-            timeout=(2.5, 7.0),
+            timeout=_CAM_CHECK_TIMEOUT,
             # Disable redirect following: the cam URLs are hardcoded, so
             # redirects are unexpected and could lead to unintended hosts.
             allow_redirects=False,

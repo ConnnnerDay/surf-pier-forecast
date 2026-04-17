@@ -21,7 +21,7 @@ _MPH_TO_KNOTS = 0.868976
 _NWS_TIMEOUT: tuple[float, float] = (3.05, 10)
 _NWS_TIMEOUT_ZONE: tuple[float, float] = (3.05, 15)
 
-_DIR_MAP: dict = {
+_DIR_MAP: dict[str, str] = {
     "north": "N",
     "northeast": "NE",
     "northwest": "NW",
