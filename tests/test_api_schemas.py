@@ -6,6 +6,11 @@ from web.schemas import (
     ForecastQuery,
     LogCreatePayload,
     ProfilePayload,
+    _MAX_FAVORITES,
+    _MAX_FAVORITES_ENTRY_LEN,
+    _MAX_NOTES_LEN,
+    _MAX_SPECIES_LEN,
+    _MAX_SIZE_LEN,
     error_envelope,
     normalize_log_stats,
     parse_bool,
@@ -168,3 +173,78 @@ def test_success_envelope_meta_merge():
     result = success_envelope({"x": 1}, meta={"total": 5})
     assert result["meta"]["total"] == 5
     assert result["meta"]["version"] == "v1"
+
+
+# ---------------------------------------------------------------------------
+# Boundary condition tests for _MAX_* validation constants
+# ---------------------------------------------------------------------------
+
+
+def test_favorites_at_max_accepted():
+    p = ProfilePayload.from_json({"favorites": ["x"] * _MAX_FAVORITES})
+    assert len(p.favorites) == _MAX_FAVORITES
+
+
+def test_favorites_over_max_rejected():
+    _raises({"favorites": ["x"] * (_MAX_FAVORITES + 1)}, "invalid_favorites")
+
+
+def test_favorite_entry_at_max_len_accepted():
+    entry = "a" * _MAX_FAVORITES_ENTRY_LEN
+    p = ProfilePayload.from_json({"favorites": [entry]})
+    assert p.favorites[0] == entry
+
+
+def test_favorite_entry_over_max_len_rejected():
+    _raises({"favorites": ["a" * (_MAX_FAVORITES_ENTRY_LEN + 1)]}, "invalid_favorites")
+
+
+def test_log_notes_at_max_len_accepted():
+    payload = LogCreatePayload.from_json(
+        {"species": "Bass", "notes": "x" * _MAX_NOTES_LEN}, location_id="loc1"
+    )
+    assert len(payload.notes) == _MAX_NOTES_LEN
+
+
+def test_log_notes_over_max_len_rejected():
+    try:
+        LogCreatePayload.from_json(
+            {"species": "Bass", "notes": "x" * (_MAX_NOTES_LEN + 1)}, location_id="loc1"
+        )
+        raise AssertionError("Expected ApiError for oversized notes")
+    except ApiError as e:
+        assert e.code == "invalid_notes"
+
+
+def test_log_species_at_max_len_accepted():
+    payload = LogCreatePayload.from_json(
+        {"species": "B" * _MAX_SPECIES_LEN}, location_id="loc1"
+    )
+    assert len(payload.species) == _MAX_SPECIES_LEN
+
+
+def test_log_species_over_max_len_rejected():
+    try:
+        LogCreatePayload.from_json(
+            {"species": "B" * (_MAX_SPECIES_LEN + 1)}, location_id="loc1"
+        )
+        raise AssertionError("Expected ApiError for oversized species")
+    except ApiError as e:
+        assert e.code == "invalid_species"
+
+
+def test_log_size_at_max_len_accepted():
+    payload = LogCreatePayload.from_json(
+        {"species": "Bass", "size": "x" * _MAX_SIZE_LEN}, location_id="loc1"
+    )
+    assert len(payload.size) == _MAX_SIZE_LEN
+
+
+def test_log_size_over_max_len_rejected():
+    try:
+        LogCreatePayload.from_json(
+            {"species": "Bass", "size": "x" * (_MAX_SIZE_LEN + 1)}, location_id="loc1"
+        )
+        raise AssertionError("Expected ApiError for oversized size")
+    except ApiError as e:
+        assert e.code == "invalid_size"

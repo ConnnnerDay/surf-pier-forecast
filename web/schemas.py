@@ -77,6 +77,15 @@ _VALID_SESSION_FREQUENCY = frozenset({"weekly", "monthly", "occasional"})
 _VALID_CATCH_RELEASE = frozenset({"always", "sometimes", "keep"})
 
 
+def _validate_enum_list(field: str, value: Any, valid: frozenset) -> None:
+    if not isinstance(value, list) or not all(isinstance(x, str) and x in valid for x in value):
+        raise ApiError(
+            f"invalid_{field}",
+            f"{field} must be a list of: {sorted(valid)}",
+            status=400,
+        )
+
+
 def parse_bool(value: Any, default: bool = False) -> bool:
     if value is None:
         return default
@@ -156,24 +165,10 @@ class ProfilePayload:
                 )
             fp_types = fishing_profile.get("fishing_types")
             if fp_types is not None:
-                if not isinstance(fp_types, list) or not all(
-                    isinstance(x, str) and x in _VALID_FISHING_TYPES for x in fp_types
-                ):
-                    raise ApiError(
-                        "invalid_fishing_types",
-                        f"fishing_types must be a list of: {sorted(_VALID_FISHING_TYPES)}",
-                        status=400,
-                    )
+                _validate_enum_list("fishing_types", fp_types, _VALID_FISHING_TYPES)
             fp_targets = fishing_profile.get("targets")
             if fp_targets is not None:
-                if not isinstance(fp_targets, list) or not all(
-                    isinstance(x, str) and x in _VALID_TARGETS for x in fp_targets
-                ):
-                    raise ApiError(
-                        "invalid_targets",
-                        f"targets must be a list of: {sorted(_VALID_TARGETS)}",
-                        status=400,
-                    )
+                _validate_enum_list("targets", fp_targets, _VALID_TARGETS)
             fp_experience = fishing_profile.get("experience")
             if fp_experience is not None and fp_experience not in _VALID_EXPERIENCE:
                 raise ApiError(
@@ -191,15 +186,7 @@ class ProfilePayload:
                     )
             fp_preferred_times = fishing_profile.get("preferred_times")
             if fp_preferred_times is not None:
-                if not isinstance(fp_preferred_times, list) or not all(
-                    isinstance(x, str) and x in _VALID_PREFERRED_TIMES
-                    for x in fp_preferred_times
-                ):
-                    raise ApiError(
-                        "invalid_preferred_times",
-                        f"preferred_times must be a list of: {sorted(_VALID_PREFERRED_TIMES)}",
-                        status=400,
-                    )
+                _validate_enum_list("preferred_times", fp_preferred_times, _VALID_PREFERRED_TIMES)
             fp_primary_goal = fishing_profile.get("primary_goal")
             if (
                 fp_primary_goal is not None
