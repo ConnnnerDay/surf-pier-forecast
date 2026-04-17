@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -11,13 +11,13 @@ class ApiError(Exception):
     code: str
     message: str
     status: int = 400
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[dict[str, Any]] = None
 
 
 def success_envelope(
-    data: Dict[str, Any], *, version: str = "v1", meta: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {
+    data: dict[str, Any], *, version: str = "v1", meta: Optional[dict[str, Any]] = None
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
         "ok": True,
         "data": data,
         "error": None,
@@ -33,8 +33,8 @@ def error_envelope(
     message: str,
     *,
     version: str = "v1",
-    details: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    details: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     return {
         "ok": False,
         "data": None,
@@ -86,7 +86,7 @@ class ForecastQuery:
 
     @classmethod
     def from_request(
-        cls, args: Dict[str, Any], fallback_location_id: str = ""
+        cls, args: dict[str, Any], fallback_location_id: str = ""
     ) -> "ForecastQuery":
         loc_id = (args.get("location_id") or "")[:100].strip() or fallback_location_id
         return cls(
@@ -100,11 +100,11 @@ class ProfilePayload:
     location_id: Optional[str] = None
     theme: Optional[str] = None
     units: Optional[str] = None
-    fishing_profile: Optional[Dict[str, Any]] = None
-    favorites: Optional[List[str]] = None
+    fishing_profile: Optional[dict[str, Any]] = None
+    favorites: Optional[list[str]] = None
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "ProfilePayload":
+    def from_json(cls, data: dict[str, Any]) -> "ProfilePayload":
         if not isinstance(data, dict):
             raise ApiError(
                 "invalid_payload", "Request body must be a JSON object", status=400
@@ -265,8 +265,8 @@ class ProfilePayload:
             favorites=favorites,
         )
 
-    def as_updates(self) -> Dict[str, Any]:
-        updates: Dict[str, Any] = {}
+    def as_updates(self) -> dict[str, Any]:
+        updates: dict[str, Any] = {}
         for k in ("location_id", "theme", "units", "fishing_profile", "favorites"):
             v = getattr(self, k)
             if v is not None:
@@ -283,7 +283,7 @@ class LogCreatePayload:
 
     @classmethod
     def from_json(
-        cls, data: Dict[str, Any], location_id: str = ""
+        cls, data: dict[str, Any], location_id: str = ""
     ) -> "LogCreatePayload":
         if not isinstance(data, dict):
             raise ApiError(
@@ -312,8 +312,8 @@ class LogCreatePayload:
         return cls(species=species, size=size, notes=notes, location_id=loc)
 
 
-def normalize_log_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
-    base: Dict[str, Any] = {
+def normalize_log_stats(stats: dict[str, Any]) -> dict[str, Any]:
+    base: dict[str, Any] = {
         "total": 0,
         "unique_species": 0,
         "top_species": None,
@@ -325,7 +325,7 @@ def normalize_log_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
     return base
 
 
-def normalize_preferences(prefs: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_preferences(prefs: dict[str, Any]) -> dict[str, Any]:
     return {
         "location_id": prefs.get("location_id"),
         "theme": prefs.get("theme", "light"),

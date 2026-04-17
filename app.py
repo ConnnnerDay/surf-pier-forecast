@@ -27,7 +27,7 @@ import logging
 import os
 import secrets
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
 
 # Load .env file in development when python-dotenv is installed.
 # In production the environment is set by the systemd unit; this is a no-op.
@@ -296,7 +296,7 @@ def create_app() -> Flask:
         return token
 
     @app.context_processor
-    def _inject_user() -> Dict[str, Any]:
+    def _inject_user() -> dict[str, Any]:
         """Make ``user``, CSRF token, and social-login flags available in every template."""
         return {
             "user": getattr(g, "user", None),

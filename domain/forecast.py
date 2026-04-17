@@ -2521,11 +2521,11 @@ def generate_forecast(
             _wq_fut = _geo_pool.submit(_get_wq, loc_lat, loc_lng)
             _fao_fut = _geo_pool.submit(_get_fao, loc_lat, loc_lng, _species_names)
             try:
-                _wq = _wq_fut.result(timeout=8)
+                _wq = _wq_fut.result(timeout=4)
             except Exception:
                 _wq = {"available": False}
             try:
-                _fao = _fao_fut.result(timeout=8)
+                _fao = _fao_fut.result(timeout=4)
             except Exception:
                 _fao = {}
 

@@ -9,7 +9,7 @@ import threading
 import time
 import uuid
 from zoneinfo import available_timezones
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from flask import (
     Blueprint,
@@ -84,7 +84,7 @@ _VALID_TIMEZONES: frozenset[str] = frozenset(available_timezones())
 # event; anything beyond that is suspicious.
 _TZ_RATE_LIMIT_MAX = 5
 _TZ_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
-_tz_rate_store: Dict[str, tuple[float, int]] = {}
+_tz_rate_store: dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
 
 
@@ -105,15 +105,13 @@ def _client_ip() -> str:
     return request.remote_addr or "unknown"
 
 
-# Keep the old alias used by the timezone helpers below.
-_tz_client_ip = _client_ip
 
 
 _PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks
 _prune_counter = 0
 
 
-def _prune_rate_store(store: Dict[str, Tuple[float, int]], window_s: int) -> None:
+def _prune_rate_store(store: dict[str, tuple[float, int]], window_s: int) -> None:
     """Remove expired entries from a rate store.  Must be called under its lock."""
     now = time.time()
     expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
@@ -122,7 +120,7 @@ def _prune_rate_store(store: Dict[str, Tuple[float, int]], window_s: int) -> Non
 
 
 def _is_rate_limited_ip(
-    store: Dict[str, Tuple[float, int]],
+    store: dict[str, tuple[float, int]],
     lock: threading.Lock,
     max_attempts: int,
     window_s: int,
@@ -142,7 +140,7 @@ def _is_rate_limited_ip(
 
 
 def _record_ip_attempt(
-    store: Dict[str, Tuple[float, int]],
+    store: dict[str, tuple[float, int]],
     lock: threading.Lock,
     window_s: int,
 ) -> None:
@@ -173,7 +171,7 @@ def _tz_record_attempt() -> None:
 # abuse without affecting legitimate usage.
 _REG_RATE_LIMIT_MAX = 30
 _REG_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
-_reg_rate_store: Dict[str, Tuple[float, int]] = {}
+_reg_rate_store: dict[str, tuple[float, int]] = {}
 _reg_rate_lock = threading.Lock()
 
 
@@ -192,7 +190,7 @@ def _reg_record_attempt() -> None:
 # user can call this, so limit to 5 invalidations per IP per hour.
 _REG_REFRESH_RATE_LIMIT_MAX = 5
 _REG_REFRESH_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
-_reg_refresh_rate_store: Dict[str, Tuple[float, int]] = {}
+_reg_refresh_rate_store: dict[str, tuple[float, int]] = {}
 _reg_refresh_rate_lock = threading.Lock()
 
 
@@ -219,7 +217,7 @@ def _reg_refresh_record_attempt() -> None:
 # deliberate polling storms.
 _FORECAST_SUB_RATE_LIMIT_MAX = 120
 _FORECAST_SUB_RATE_LIMIT_WINDOW_S = 60  # 1 minute
-_forecast_sub_rate_store: Dict[str, Tuple[float, int]] = {}
+_forecast_sub_rate_store: dict[str, tuple[float, int]] = {}
 _forecast_sub_rate_lock = threading.Lock()
 
 
@@ -245,7 +243,7 @@ def _forecast_sub_record_attempt() -> None:
 # uploads per 10 minutes per IP to prevent disk-filling abuse.
 _UPLOAD_RATE_LIMIT_MAX = 20
 _UPLOAD_RATE_LIMIT_WINDOW_S = 10 * 60
-_upload_rate_store: Dict[str, Tuple[float, int]] = {}
+_upload_rate_store: dict[str, tuple[float, int]] = {}
 _upload_rate_lock = threading.Lock()
 
 
@@ -289,7 +287,7 @@ def set_timezone() -> Any:
         logger.warning(
             "security.timezone_rate_limit user_id=%s ip=%s",
             g.user["id"],
-            _tz_client_ip(),
+            _client_ip(),
         )
         return jsonify(
             {"ok": True}
@@ -307,7 +305,7 @@ def set_timezone() -> Any:
                 "security.invalid_timezone user_id=%s tz=%r ip=%s",
                 g.user["id"],
                 tz[:80],
-                _tz_client_ip(),
+                _client_ip(),
             )
         return jsonify({"ok": True})  # silent rejection — no error info to caller
 
@@ -316,7 +314,7 @@ def set_timezone() -> Any:
     return jsonify({"ok": True})
 
 
-def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
+def _v1_forecast_payload(query: ForecastQuery) -> dict[str, Any]:
     location = (
         get_location(query.location_id) if query.location_id else get_session_location()
     )
@@ -325,7 +323,7 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
 
     loc_id = location["id"]
     user_id = g.user["id"] if g.user else None
-    forecast_data: Optional[Dict[str, Any]] = None
+    forecast_data: Optional[dict[str, Any]] = None
     if query.force_refresh:
         if refresh_is_rate_limited():
             raise ApiError(
@@ -775,7 +773,7 @@ def _check_magic_bytes(data: bytes, claimed_mime: str) -> bool:
     return False
 
 
-def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
+def _save_upload(file_storage, user_id: int) -> tuple[str, str]:
     """Validate + write an uploaded photo.
 
     Returns ``(relative_path, absolute_path)`` where relative_path is suitable
@@ -892,7 +890,7 @@ def log_photos_v1(entry_id: int) -> Any:
             )
         )
 
-    saved: Dict[str, str] = {}
+    saved: dict[str, str] = {}
     try:
         if photo1_file and photo1_file.filename:
             rel, _ = _save_upload(photo1_file, uid)
@@ -933,7 +931,7 @@ def share_text() -> Any:
 # ---------------------------------------------------------------------------
 
 # Maps species 'regions' values → sets of location temp_region strings.
-_SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
+_SPECIES_REGION_TO_LOC_REGIONS: dict[str, frozenset] = {
     "northeast": frozenset({"northeast"}),
     "new_england": frozenset({"northeast"}),
     "mid-atlantic": frozenset({"midatlantic"}),
@@ -961,7 +959,7 @@ _SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
 }
 
 
-def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
+def _temp_factor(species: dict[str, Any], water_temp_f: float) -> float:
     """Return 0.3–1.0 temperature suitability multiplier for a species.
 
     1.0 = water is inside the ideal temperature window.
@@ -983,7 +981,7 @@ def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
     return 1.0 if span <= 0 else 0.5 + 0.5 * (t_max - water_temp_f) / span
 
 
-def _location_coast(loc: Dict[str, Any]) -> str:
+def _location_coast(loc: dict[str, Any]) -> str:
     """Return 'west', 'hawaii', or 'east' for a location."""
     region = loc.get("temp_region", "")
     if region.startswith("pacific_"):
@@ -993,7 +991,7 @@ def _location_coast(loc: Dict[str, Any]) -> str:
     return "east"
 
 
-def _species_present_at(species: Dict[str, Any], loc: Dict[str, Any]) -> bool:
+def _species_present_at(species: dict[str, Any], loc: dict[str, Any]) -> bool:
     """Return True when a species is plausibly found at a given location.
 
     Uses the optional per-species ``regions`` list for fine-grained matching;
@@ -1012,7 +1010,7 @@ def _species_present_at(species: Dict[str, Any], loc: Dict[str, Any]) -> bool:
     return False
 
 
-def _month_score(species: Dict[str, Any], month: int) -> int:
+def _month_score(species: dict[str, Any], month: int) -> int:
     """Activity score 0-100 for a species in the given calendar month."""
     if month in species.get("peak_months", []):
         return 100
@@ -1029,7 +1027,7 @@ _SPECIES_NAMES_CACHE: Optional[list] = None
 # Pre-built lowercase name index: list of (lowercase_name, species_dict) pairs
 # so species_q filtering avoids calling s["name"].lower() on every species on
 # every request.
-_SPECIES_LOWER_INDEX: Optional[List[Tuple[str, frozenset, Any]]] = None
+_SPECIES_LOWER_INDEX: Optional[list[tuple[str, frozenset, Any]]] = None
 
 # ── Location → species index — pre-computed once at first warm request ─────────
 # _species_present_at(sp, loc) is O(1) per call but it is called
@@ -1038,10 +1036,10 @@ _SPECIES_LOWER_INDEX: Optional[List[Tuple[str, frozenset, Any]]] = None
 # mapping once reduces the per-request cost to a single dict lookup for the
 # unfiltered case, and to iterating a much smaller per-location list for
 # filtered queries.
-_LOC_SPECIES_ALL: Optional[Dict[str, List]] = None  # loc_id → [species, ...]
+_LOC_SPECIES_ALL: Optional[dict[str, List]] = None  # loc_id → [species, ...]
 
 
-def _get_loc_species_all() -> Dict[str, List]:
+def _get_loc_species_all() -> dict[str, List]:
     """Return {loc_id: [species_dict, ...]} for every location using all species."""
     global _LOC_SPECIES_ALL
     if _LOC_SPECIES_ALL is None:
@@ -1064,7 +1062,7 @@ def _get_all_species_names() -> list:
     return _SPECIES_NAMES_CACHE
 
 
-def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
+def _get_species_lower_index() -> "list[tuple[str, frozenset, Any]]":
     """Return list of (lowercase_name, lowercase_category_frozenset, species_dict).
 
     Built once at first call so neither .lower() nor list-comp over categories
@@ -1091,19 +1089,19 @@ def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
 # coast, season…) that repeat a previous combination return instantly.
 # Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
 #        min_temp, max_temp)  — the complete set of params that affect output.
-_FMAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_FMAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month rolls over
 _FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
 
 
-def _fmap_cache_get(key: tuple) -> Optional[Dict[str, Any]]:
+def _fmap_cache_get(key: tuple) -> Optional[dict[str, Any]]:
     entry = _FMAP_CACHE.get(key)
     if entry and (time.time() - entry["ts"]) < _FMAP_CACHE_TTL:
         return entry["data"]
     return None
 
 
-def _fmap_cache_set(key: tuple, data: Dict[str, Any]) -> None:
+def _fmap_cache_set(key: tuple, data: dict[str, Any]) -> None:
     if len(_FMAP_CACHE) >= _FMAP_CACHE_MAX:
         # Drop the oldest insertion
         try:
@@ -1233,8 +1231,8 @@ def fishing_map_data() -> Any:
     # structures once:
     #   _cur_score[name]       → score for the current month (used in main loop)
     #   _all_scores[name][m]   → score for month m, 1-indexed (monthly summary)
-    _cur_score: Dict[str, int] = {}
-    _all_scores: Dict[str, List[int]] = {}
+    _cur_score: dict[str, int] = {}
+    _all_scores: dict[str, list[int]] = {}
     for _sp in filtered_species:
         _sn = _sp["name"]
         _cur_score[_sn] = _month_score(_sp, month)
@@ -1263,7 +1261,7 @@ def fishing_map_data() -> Any:
         _filtered_names: frozenset = frozenset(s["name"] for s in filtered_species)
 
     results = []
-    _loc_sp_map: Dict[str, list] = {}  # loc_id → [species_dict, ...]
+    _loc_sp_map: dict[str, list] = {}  # loc_id → [species_dict, ...]
     for loc in COASTAL_LOCATIONS:
         loc_coast = _location_coast(loc)
 

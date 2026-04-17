@@ -9,7 +9,7 @@ import secrets
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 from urllib.parse import urlencode
 
 import logging
@@ -81,7 +81,7 @@ _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
 _ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S = 15 * 60
 
-_account_action_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_account_action_rate_limit_store: dict[str, tuple[float, int]] = {}
 _account_action_rate_limit_lock = threading.Lock()
 
 
@@ -133,20 +133,20 @@ _ACCOUNT_LOCKOUT_WINDOW_S = 30 * 60  # 30 minutes
 # Data structure: {ip: (window_start_ts, attempt_count)}
 # A single lock guards all reads and writes.
 # ---------------------------------------------------------------------------
-_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_rate_limit_store: dict[str, tuple[float, int]] = {}
 _rate_limit_lock = threading.Lock()
 
-_register_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_register_rate_limit_store: dict[str, tuple[float, int]] = {}
 _register_rate_limit_lock = threading.Lock()
 
-_refresh_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_refresh_rate_limit_store: dict[str, tuple[float, int]] = {}
 _refresh_rate_limit_lock = threading.Lock()
 
 # Resend-verification: 3 attempts per 30 minutes per IP.
 _RESEND_RATE_LIMIT_MAX_ATTEMPTS = 3
 _RESEND_RATE_LIMIT_WINDOW_S = 30 * 60
 
-_resend_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_resend_rate_limit_store: dict[str, tuple[float, int]] = {}
 _resend_rate_limit_lock = threading.Lock()
 
 # Minimum seconds that must elapse between two verification emails for the
@@ -154,7 +154,7 @@ _resend_rate_limit_lock = threading.Lock()
 _RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 
 # Keyed by lowercase username rather than IP.
-_account_lockout_store: Dict[str, Tuple[float, int]] = {}
+_account_lockout_store: dict[str, tuple[float, int]] = {}
 _account_lockout_lock = threading.Lock()
 
 # Only trust X-Forwarded-For when running behind a known reverse proxy.
@@ -181,7 +181,7 @@ _PRUNE_EVERY = 200  # prune expired entries every N rate-limit checks
 _prune_counter = 0
 
 
-def _prune_store(store: Dict[str, Tuple[float, int]], window_s: float) -> None:
+def _prune_store(store: dict[str, tuple[float, int]], window_s: float) -> None:
     """Remove entries whose rate-limit window has expired.
 
     Called periodically (every _PRUNE_EVERY checks) to keep the in-memory
@@ -195,7 +195,7 @@ def _prune_store(store: Dict[str, Tuple[float, int]], window_s: float) -> None:
 
 
 def _is_rate_limited(
-    store: Dict[str, Tuple[float, int]],
+    store: dict[str, tuple[float, int]],
     lock: threading.Lock,
     max_attempts: int,
     window_s: float,
@@ -216,7 +216,7 @@ def _is_rate_limited(
 
 
 def _record_attempt(
-    store: Dict[str, Tuple[float, int]],
+    store: dict[str, tuple[float, int]],
     lock: threading.Lock,
     window_s: float,
 ) -> None:
@@ -232,7 +232,7 @@ def _record_attempt(
 
 
 def _clear_attempts(
-    store: Dict[str, Tuple[float, int]],
+    store: dict[str, tuple[float, int]],
     lock: threading.Lock,
 ) -> None:
     """Clear the attempt counter for the current client IP."""
@@ -1515,7 +1515,7 @@ def _social_login_or_create(
 # ---------------------------------------------------------------------------
 
 # JWKS cache: (keys_list, fetched_at_epoch)
-_apple_jwks_cache: Tuple[list, float] = ([], 0.0)
+_apple_jwks_cache: tuple[list, float] = ([], 0.0)
 _apple_jwks_lock = threading.Lock()
 _APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
 _APPLE_JWKS_TTL_S = 3600  # re-fetch at most once per hour
@@ -1545,7 +1545,7 @@ def _get_apple_jwks() -> list:
     return keys
 
 
-def _jwk_to_rsa_public_key(jwk: Dict[str, Any]) -> Any:
+def _jwk_to_rsa_public_key(jwk: dict[str, Any]) -> Any:
     """Convert an RSA JWK dict to a cryptography RSAPublicKey object, or None."""
     import base64
 
@@ -1565,7 +1565,7 @@ def _jwk_to_rsa_public_key(jwk: Dict[str, Any]) -> Any:
         return None
 
 
-def _verify_apple_id_token(token: str, client_id: str) -> Optional[Dict[str, Any]]:
+def _verify_apple_id_token(token: str, client_id: str) -> Optional[dict[str, Any]]:
     """Verify an Apple id_token JWT and return its payload, or None on failure.
 
     Steps:

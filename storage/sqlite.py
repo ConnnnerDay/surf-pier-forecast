@@ -9,7 +9,7 @@ import os
 import sqlite3
 import time as _time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -220,7 +220,7 @@ _KNOWN_TABLES = frozenset(
 )
 
 
-def _column_names(conn: sqlite3.Connection, table: str) -> List[str]:
+def _column_names(conn: sqlite3.Connection, table: str) -> list[str]:
     if table not in _KNOWN_TABLES or not _table_exists(conn, table):
         return []
     # PRAGMA does not support parameter binding; validate against the known-table
@@ -507,7 +507,7 @@ def create_user(
         conn.close()
 
 
-def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
+def authenticate_user(username: str, password: str) -> Optional[dict[str, Any]]:
     conn = get_db()
     try:
         row = conn.execute(
@@ -528,7 +528,7 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     return {"id": row["id"], "username": row["username"]}
 
 
-def get_user(user_id: int) -> Optional[Dict[str, Any]]:
+def get_user(user_id: int) -> Optional[dict[str, Any]]:
     conn = get_db()
     try:
         row = conn.execute(
@@ -554,7 +554,7 @@ def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     }
 
 
-def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+def get_user_by_email(email: str) -> Optional[dict[str, Any]]:
     """Return the user with the given email address (case-insensitive), or None."""
     conn = get_db()
     try:
@@ -604,7 +604,7 @@ def get_email_verification_sent_at(user_id: int) -> Optional[str]:
     return row["email_verification_sent_at"] if row else None
 
 
-def get_user_by_verification_token(token: str) -> Optional[Dict[str, Any]]:
+def get_user_by_verification_token(token: str) -> Optional[dict[str, Any]]:
     """Return the user matching *token* if the token was sent within 2 hours.
 
     The token is hashed before querying so the raw value never touches the DB.
@@ -710,7 +710,7 @@ def get_user_password_hash(user_id: int) -> Optional[str]:
         conn.close()
 
 
-def get_all_user_photo_paths(user_id: int) -> List[str]:
+def get_all_user_photo_paths(user_id: int) -> list[str]:
     """Return every stored photo path for *user_id* across all catch-log entries."""
     conn = get_db()
     try:
@@ -720,7 +720,7 @@ def get_all_user_photo_paths(user_id: int) -> List[str]:
         ).fetchall()
     finally:
         conn.close()
-    paths: List[str] = []
+    paths: list[str] = []
     for row in rows:
         if row["photo1_path"]:
             paths.append(row["photo1_path"])
@@ -748,7 +748,7 @@ def delete_user(user_id: int) -> None:
 # Profiles + locations ------------------------------------------------------
 
 
-def get_preferences(user_id: int) -> Dict[str, Any]:
+def get_preferences(user_id: int) -> dict[str, Any]:
     conn = get_db()
     row = conn.execute(
         """
@@ -775,7 +775,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
             )
             profile = None
 
-    favorites: List[str] = []
+    favorites: list[str] = []
     if row["favorites"]:
         try:
             favorites = json.loads(row["favorites"])
@@ -785,7 +785,7 @@ def get_preferences(user_id: int) -> Dict[str, Any]:
             )
             favorites = []
 
-    notification_prefs: Dict[str, Any] = {}
+    notification_prefs: dict[str, Any] = {}
     if row["notification_prefs"]:
         try:
             notification_prefs = json.loads(row["notification_prefs"])
@@ -822,7 +822,7 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
             )
 
         profile_sets = []
-        vals: List[Any] = []
+        vals: list[Any] = []
         map_fields = {
             "theme": "theme",
             "units": "units",
@@ -863,7 +863,7 @@ def save_preferences(user_id: int, **kwargs: Any) -> None:
 # Page layout ----------------------------------------------------------------
 
 
-def get_page_layout(user_id: int) -> Optional[List[Any]]:
+def get_page_layout(user_id: int) -> Optional[list[Any]]:
     conn = get_db()
     row = conn.execute(
         "SELECT page_layout FROM profiles WHERE user_id = ?", (user_id,)
@@ -877,7 +877,7 @@ def get_page_layout(user_id: int) -> Optional[List[Any]]:
         return None
 
 
-def save_page_layout(user_id: int, layout: List[Any]) -> None:
+def save_page_layout(user_id: int, layout: list[Any]) -> None:
     conn = get_db()
     try:
         conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
@@ -895,7 +895,7 @@ def save_page_layout(user_id: int, layout: List[Any]) -> None:
 
 def get_log_entries(
     user_id: int, location_id: str, limit: int = 50
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     conn = get_db()
     rows = conn.execute(
         "SELECT id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
@@ -954,7 +954,7 @@ def delete_log_entry(user_id: int, entry_id: int) -> bool:
 
 def get_entry_photo_paths(
     user_id: int, entry_id: int
-) -> Optional[Tuple[Optional[str], Optional[str]]]:
+) -> Optional[tuple[Optional[str], Optional[str]]]:
     """Return (photo1_path, photo2_path) for the entry, or None if entry not found."""
     conn = get_db()
     row = conn.execute(
@@ -1005,7 +1005,7 @@ def attach_photos_to_entry(
     return ok
 
 
-def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
+def get_log_stats(user_id: int, location_id: str) -> dict[str, Any]:
     """Return aggregate statistics for a user's catch log at a location.
 
     Uses a single query with a CTE to avoid 4 separate roundtrips to SQLite.
@@ -1056,7 +1056,7 @@ def get_log_stats(user_id: int, location_id: str) -> Dict[str, Any]:
     }
 
 
-def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
+def get_recent_logs(user_id: int, limit: int = 5) -> list[dict[str, Any]]:
     conn = get_db()
     rows = conn.execute(
         "SELECT id, location_id, species, size, notes, caught_at, photo1_path, photo2_path FROM catch_log "
@@ -1082,7 +1082,7 @@ def get_recent_logs(user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
 # Forecast cache -------------------------------------------------------------
 
 
-def save_forecast_to_db(location_id: str, data: Dict[str, Any]) -> None:
+def save_forecast_to_db(location_id: str, data: dict[str, Any]) -> None:
     if not location_id:
         return
     generated_at = data.get("generated_at") or datetime.utcnow().isoformat()
@@ -1095,7 +1095,7 @@ def save_forecast_to_db(location_id: str, data: Dict[str, Any]) -> None:
     conn.close()
 
 
-def save_forecast_cache(user_id: int, location_id: str, data: Dict[str, Any]) -> None:
+def save_forecast_cache(user_id: int, location_id: str, data: dict[str, Any]) -> None:
     if not location_id:
         return
     generated_at = data.get("generated_at") or datetime.utcnow().isoformat()
@@ -1116,7 +1116,7 @@ def save_forecast_cache(user_id: int, location_id: str, data: Dict[str, Any]) ->
     conn.close()
 
 
-def load_forecast_cache(user_id: int, location_id: str) -> Optional[Dict[str, Any]]:
+def load_forecast_cache(user_id: int, location_id: str) -> Optional[dict[str, Any]]:
     if not location_id:
         return None
     conn = get_db()
@@ -1145,7 +1145,7 @@ def delete_forecast_cache(user_id: int, location_id: str) -> bool:
     return deleted
 
 
-def load_forecast(location_id: str) -> Optional[Dict[str, Any]]:
+def load_forecast(location_id: str) -> Optional[dict[str, Any]]:
     if not location_id:
         return None
     conn = get_db()
@@ -1163,7 +1163,7 @@ def load_forecast(location_id: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def list_cached_locations() -> List[Dict[str, str]]:
+def list_cached_locations() -> list[dict[str, str]]:
     conn = get_db()
     rows = conn.execute(
         "SELECT location_id, MAX(generated_at) AS generated_at, MAX(created_at) AS updated_at "
@@ -1211,7 +1211,7 @@ def save_webauthn_credential(
     conn.close()
 
 
-def get_webauthn_credentials(user_id: int) -> List[Dict[str, Any]]:
+def get_webauthn_credentials(user_id: int) -> list[dict[str, Any]]:
     conn = get_db()
     rows = conn.execute(
         "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
@@ -1221,7 +1221,7 @@ def get_webauthn_credentials(user_id: int) -> List[Dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-def get_webauthn_credential_by_id(credential_id: str) -> Optional[Dict[str, Any]]:
+def get_webauthn_credential_by_id(credential_id: str) -> Optional[dict[str, Any]]:
     conn = get_db()
     row = conn.execute(
         "SELECT * FROM webauthn_credentials WHERE credential_id = ?",
@@ -1256,7 +1256,7 @@ def delete_webauthn_credential(credential_id: str, user_id: int) -> bool:
 # Social login (Google / Apple OAuth) --------------------------------------
 
 
-def get_social_account(provider: str, provider_uid: str) -> Optional[Dict[str, Any]]:
+def get_social_account(provider: str, provider_uid: str) -> Optional[dict[str, Any]]:
     """Return the user_id linked to a social provider account, or None."""
     conn = get_db()
     try:
@@ -1350,7 +1350,7 @@ def update_user_social_profile(
         conn.close()
 
 
-def get_social_accounts_for_user(user_id: int) -> List[Dict[str, Any]]:
+def get_social_accounts_for_user(user_id: int) -> list[dict[str, Any]]:
     """Return all social accounts linked to a user."""
     conn = get_db()
     try:
@@ -1431,13 +1431,13 @@ def get_map_catches_in_bbox(
     limit: int = 200,
     species_filter: str = "",
     days_back: int = 90,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return public catch pins in a bounding box, plus the viewer's own private ones."""
     conn = get_db()
     try:
         # days_back is a positive integer; negate it for the SQLite date modifier
         lookback = f"-{abs(days_back)} days"
-        params: List[Any] = [sw_lat, ne_lat, sw_lng, ne_lng, lookback]
+        params: list[Any] = [sw_lat, ne_lat, sw_lng, ne_lng, lookback]
         sql = """
             SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.title,
                    mc.bait, mc.weight_lb, mc.length_in, mc.notes, mc.image_url,
@@ -1489,7 +1489,7 @@ def get_map_catches_in_bbox(
     ]
 
 
-def get_map_catch(catch_id: int) -> Optional[Dict[str, Any]]:
+def get_map_catch(catch_id: int) -> Optional[dict[str, Any]]:
     """Return a single catch record by id, or None."""
     conn = get_db()
     try:
@@ -1520,7 +1520,7 @@ def delete_map_catch(catch_id: int, user_id: int) -> bool:
         conn.close()
 
 
-def toggle_map_catch_like(catch_id: int, user_id: int) -> Tuple[bool, int]:
+def toggle_map_catch_like(catch_id: int, user_id: int) -> tuple[bool, int]:
     """Toggle a like on a catch.  Returns (liked: bool, new_likes_count: int)."""
     conn = get_db()
     try:
@@ -1558,7 +1558,7 @@ def toggle_map_catch_like(catch_id: int, user_id: int) -> Tuple[bool, int]:
     return liked, count
 
 
-def get_map_catch_comments(catch_id: int) -> List[Dict[str, Any]]:
+def get_map_catch_comments(catch_id: int) -> list[dict[str, Any]]:
     """Return all comments on a catch pin, oldest first."""
     conn = get_db()
     try:
@@ -1606,7 +1606,7 @@ def get_community_hotspots(
     days_back: int = 30,
     limit: int = 10,
     coast: str = "",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return top catch locations aggregated over the last N days.
 
     Groups catch pins by rounded lat/lng (0.1° grid ~ 6 mi) so nearby catches
@@ -1615,7 +1615,7 @@ def get_community_hotspots(
     conn = get_db()
     try:
         lookback = f"-{abs(days_back)} days"
-        params: List[Any] = [lookback]
+        params: list[Any] = [lookback]
         sql = """
             SELECT
                 ROUND(lat, 1) AS grid_lat,
@@ -1657,11 +1657,11 @@ def get_recent_public_catches(
     lat: Optional[float] = None,
     lng: Optional[float] = None,
     radius_deg: float = 3.0,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return the most recent public catch pins, optionally near a point."""
     conn = get_db()
     try:
-        params: List[Any] = []
+        params: list[Any] = []
         sql = """
             SELECT mc.id, mc.user_id, mc.lat, mc.lng, mc.species, mc.title,
                    mc.bait, mc.weight_lb, mc.length_in, mc.notes, mc.image_url,
@@ -1739,10 +1739,10 @@ def _get_public_catch_rows(days_back: int) -> list:
 
 
 def get_catch_counts_near_locations(
-    locations: List[Dict[str, Any]],
+    locations: list[dict[str, Any]],
     days_back: int = 30,
     radius_deg: float = 0.3,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Return a dict mapping location_id → recent community catch count.
 
     Counts public map catches within *radius_deg* of each NOAA location.
@@ -1751,7 +1751,7 @@ def get_catch_counts_near_locations(
     if not locations:
         return {}
     rows = _get_public_catch_rows(days_back)
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for loc in locations:
         loc_lat = loc["lat"]
         loc_lng = loc["lng"]
@@ -1791,7 +1791,7 @@ _VALID_MARKER_TYPES = frozenset(
 )
 
 
-def _marker_row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
+def _marker_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
     return {
         "id": row["id"],
         "lat": row["lat"],
@@ -1806,7 +1806,7 @@ def _marker_row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
     }
 
 
-def get_custom_markers() -> List[Dict[str, Any]]:
+def get_custom_markers() -> list[dict[str, Any]]:
     """Return all non-deleted custom map markers."""
     conn = get_db()
     try:
@@ -1821,7 +1821,7 @@ def get_custom_markers() -> List[Dict[str, Any]]:
 
 def create_custom_marker(
     lat: float, lng: float, name: str, type_: str, description: str, user_id: int
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Insert a new custom marker and return it."""
     if type_ not in _VALID_MARKER_TYPES:
         type_ = "fishing"
@@ -1850,7 +1850,7 @@ def update_custom_marker(
     name: Optional[str] = None,
     type_: Optional[str] = None,
     description: Optional[str] = None,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[dict[str, Any]]:
     """Update fields on an existing custom marker; returns the updated dict or None."""
     conn = get_db()
     try:

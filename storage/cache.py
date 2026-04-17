@@ -14,7 +14,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from utils import norm_user_id as _norm_user_id
 
@@ -42,7 +42,7 @@ CACHE_FILE = os.path.join(CACHE_DIR, "forecast.json")
 # ---------------------------------------------------------------------------
 
 
-def _is_stale(forecast: Dict[str, Any]) -> bool:
+def _is_stale(forecast: dict[str, Any]) -> bool:
     age = _forecast_age_minutes(forecast)
     return bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
 
@@ -51,7 +51,7 @@ def load_cached_forecast(
     location_id: str = "",
     user_id: Optional[int] = None,
     include_stale: bool = False,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[dict[str, Any]]:
     """Load the cached forecast, trying SQLite first then JSON fallback.
 
     By default stale entries are treated as cache misses and removed from the
@@ -92,7 +92,7 @@ def load_cached_forecast(
 
 
 def save_forecast(
-    data: Dict[str, Any], location_id: str = "", user_id: Optional[int] = None
+    data: dict[str, Any], location_id: str = "", user_id: Optional[int] = None
 ) -> None:
     """Persist the forecast to SQLite; JSON is fallback-only for resilience."""
     if not location_id:
@@ -127,7 +127,7 @@ def _cache_path(location_id: str = "") -> str:
     return CACHE_FILE
 
 
-def _load_json_fallback(location_id: str = "") -> Optional[Dict[str, Any]]:
+def _load_json_fallback(location_id: str = "") -> Optional[dict[str, Any]]:
     """Load from the legacy JSON file if it exists."""
     path = _cache_path(location_id)
     if os.path.exists(path):
@@ -139,7 +139,7 @@ def _load_json_fallback(location_id: str = "") -> Optional[Dict[str, Any]]:
     return None
 
 
-def _save_json(data: Dict[str, Any], location_id: str = "") -> None:
+def _save_json(data: dict[str, Any], location_id: str = "") -> None:
     """Write forecast to a JSON file (backup)."""
     path = _cache_path(location_id)
     try:
@@ -150,7 +150,7 @@ def _save_json(data: Dict[str, Any], location_id: str = "") -> None:
 
 
 def _migrate_json_to_db(
-    location_id: str, data: Dict[str, Any], user_id: int = 0
+    location_id: str, data: dict[str, Any], user_id: int = 0
 ) -> None:
     """One-time migration: copy a JSON-cached forecast into the DB."""
     try:
@@ -167,7 +167,7 @@ def _migrate_json_to_db(
 # ---------------------------------------------------------------------------
 
 
-def _forecast_age_minutes(forecast: Dict[str, Any]) -> Optional[float]:
+def _forecast_age_minutes(forecast: dict[str, Any]) -> Optional[float]:
     """Return the age of a cached forecast in minutes, or None.
 
     All comparisons are done in UTC so the result is correct regardless of the

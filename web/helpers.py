@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from flask import g, session
 
@@ -10,7 +10,7 @@ from locations import get_location
 from storage.sqlite import get_preferences
 
 
-def get_session_location() -> Optional[Dict[str, Any]]:
+def get_session_location() -> Optional[dict[str, Any]]:
     """Return the location config from the user's session, or None.
 
     For logged-in users, falls back to their saved location preference
