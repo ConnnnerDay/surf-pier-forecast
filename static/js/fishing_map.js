@@ -37,7 +37,6 @@
     var activeCat     = '';
     var activeSpecies = '';
     var isFullscreen  = false;
-    var userCoords       = null;      // {lat, lng} set after Near Me fires
 
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
@@ -66,9 +65,6 @@
     var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
-
-    // ─── Structure-mode state ─────────────────────────────────────────────────
-
 
     // ─── Advanced filter state ────────────────────────────────────────────────
     var activeSeason  = '';          // spring|summer|fall|winter|''
@@ -158,31 +154,6 @@
         return String(s || '')
             .replace(/&/g,'&amp;').replace(/</g,'&lt;')
             .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    function haversineMi(lat1, lng1, lat2, lng2) {
-        var R = 3958.8; // Earth radius in miles
-        var dLat = (lat2 - lat1) * Math.PI / 180;
-        var dLng = (lng2 - lng1) * Math.PI / 180;
-        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    // Simple Levenshtein distance for "Did you mean?" fuzzy matching
-    function levenshtein(a, b) {
-        var m = a.length, n = b.length;
-        var dp = [];
-        for (var i = 0; i <= m; i++) {
-            dp[i] = [i];
-            for (var j = 1; j <= n; j++) {
-                dp[i][j] = i === 0 ? j :
-                    a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] :
-                    1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-            }
-        }
-        return dp[m][n];
     }
 
     // ─── Leaflet loader ───────────────────────────────────────────────────────
@@ -308,8 +279,7 @@
                     function (pos) {
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');
                         if (!map) return;
-                        userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                        map.flyTo([userCoords.lat, userCoords.lng], 12, { duration: 0.9 });
+                        map.flyTo([pos.coords.latitude, pos.coords.longitude], 12, { duration: 0.9 });
                     },
                     function () {
                         nearMeBtn.classList.remove('fmap-ctrl-btn--loading');

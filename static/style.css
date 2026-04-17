@@ -4449,7 +4449,7 @@ h2::before {
   top: 0.6rem;
   right: 3rem; /* sits just left of the toolbar */
   z-index: 460;
-  width: 300px;
+  width: 340px;
   background: rgba(10,19,29,0.96);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
