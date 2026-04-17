@@ -152,7 +152,7 @@ def _parse_bbox() -> Optional[tuple[float, float, float, float]]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 @bp.route("/api/v1/geo/layers")
-def geo_layers():
+def geo_layers() -> Any:
     """Return all available map layer configurations.
 
     No parameters required.  Returns a combined dict with OSM base layers,
@@ -197,7 +197,7 @@ def geo_layers():
     )
 
 @bp.route("/api/v1/geo/environmental")
-def geo_environmental():
+def geo_environmental() -> Any:
     """Return water quality and environmental metrics for a location.
 
     Required query parameters:
@@ -238,7 +238,7 @@ def geo_environmental():
     )
 
 @bp.route("/api/v1/geo/coastlines")
-def geo_coastlines():
+def geo_coastlines() -> Any:
     """Return Natural Earth coastline GeoJSON, optionally clipped to a bbox.
 
     Optional query parameters:
@@ -264,7 +264,7 @@ def geo_coastlines():
     return jsonify(geojson)
 
 @bp.route("/api/v1/geo/osm/amenities")
-def geo_osm_amenities():
+def geo_osm_amenities() -> Any:
     """Return OpenStreetMap marine amenities near a point.
 
     Required:
@@ -290,7 +290,7 @@ def geo_osm_amenities():
     return _ok({"amenities": amenities, "count": len(amenities)})
 
 @bp.route("/api/v1/geo/esri/piers")
-def geo_esri_piers():
+def geo_esri_piers() -> Any:
     """Return pier / marina features for a bounding box (Esri Open Data)."""
     if _is_rate_limited():
         return _err("Rate limit exceeded", 429)
@@ -304,7 +304,7 @@ def geo_esri_piers():
     return _ok({"features": features, "count": len(features)})
 
 @bp.route("/api/v1/geo/esri/beaches")
-def geo_esri_beaches():
+def geo_esri_beaches() -> Any:
     """Return EPA-monitored beach locations for a bounding box."""
     if _is_rate_limited():
         return _err("Rate limit exceeded", 429)
@@ -318,7 +318,7 @@ def geo_esri_beaches():
     return _ok({"features": beaches, "count": len(beaches)})
 
 @bp.route("/api/v1/geo/esri/parks")
-def geo_esri_parks():
+def geo_esri_parks() -> Any:
     """Return NPS coastal park boundaries for a bounding box."""
     if _is_rate_limited():
         return _err("Rate limit exceeded", 429)
@@ -332,7 +332,7 @@ def geo_esri_parks():
     return _ok({"features": parks, "count": len(parks)})
 
 @bp.route("/api/v1/geo/aerial/oam")
-def geo_oam_imagery():
+def geo_oam_imagery() -> Any:
     """Return OpenAerialMap imagery catalog results for a bounding box."""
     if _is_rate_limited():
         return _err("Rate limit exceeded", 429)
@@ -346,7 +346,7 @@ def geo_oam_imagery():
     return _ok({"imagery": results, "count": len(results)})
 
 @bp.route("/api/v1/geo/hdx-fao")
-def geo_hdx_fao():
+def geo_hdx_fao() -> Any:
     """Return FAO fishing-zone and HDX dataset enrichment for a location.
 
     Required:

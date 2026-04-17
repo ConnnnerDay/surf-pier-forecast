@@ -161,7 +161,7 @@ def get_state_boundaries_geojson() -> dict[str, Any]:
     geojson["license"] = "Public Domain (CC0)"
     return geojson
 
-def load_ne_shapefile(name: str, resolution: str = "10m"):
+def load_ne_shapefile(name: str, resolution: str = "10m") -> Optional[Any]:
     """Download and load a Natural Earth shapefile layer as a GeoDataFrame.
 
     Requires ``geopandas`` to be installed.  Downloads and unzips the
