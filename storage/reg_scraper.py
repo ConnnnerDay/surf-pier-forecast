@@ -28,6 +28,7 @@ from threading import Lock
 from typing import Any, Optional
 
 import requests
+from bs4 import BeautifulSoup
 
 from storage.sqlite import get_db
 
@@ -461,11 +462,6 @@ def _parse_ga_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     Each <dt> is a species name; the paired <dd> contains text like:
       'Season: All year  Limit: 5  Minimum size: 14" TL (Maximum 23" TL)'
     """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        _log.warning("beautifulsoup4 not installed; GA scraping unavailable")
-        return None
 
     names = None
     for candidate in _name_variants(species_name):
@@ -554,11 +550,6 @@ def _parse_nc_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     3-cell rows (second cell has colspan=2) use a single combined info cell
     for species that are closed or have complex proclamation references.
     """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        _log.warning("beautifulsoup4 not installed; NC scraping unavailable")
-        return None
 
     names = None
     for candidate in _name_variants(species_name):
@@ -658,11 +649,6 @@ def _parse_ny_page(html: str, species_name: str) -> Optional[dict[str, str]]:
 
     Columns: Species | Min Size | Bag Limit | Open Season
     """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        _log.warning("beautifulsoup4 not installed; NY scraping unavailable")
-        return None
 
     names = None
     for candidate in _name_variants(species_name):
@@ -755,11 +741,6 @@ def _parse_al_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     Layout: each species is a div.table-row with three div.row-column children:
       [0] species name  [1] size limit  [2] bag limit
     """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        _log.warning("beautifulsoup4 not installed; AL scraping unavailable")
-        return None
 
     names = None
     for candidate in _name_variants(species_name):
@@ -838,11 +819,6 @@ def _parse_ri_page(html: str, species_name: str) -> Optional[dict[str, str]]:
       Species | Minimum Size | Season | Possession Limit
     Some rows have fewer cells when a species spans multiple season periods.
     """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        _log.warning("beautifulsoup4 not installed; RI scraping unavailable")
-        return None
 
     names = None
     for candidate in _name_variants(species_name):
@@ -1021,7 +997,7 @@ def _scrape_tx(species_name: str) -> Optional[dict[str, str]]:
         _log.warning("TX scrape failed for %s", species_name)
         return None
     try:
-        from bs4 import BeautifulSoup
+    
 
         soup = BeautifulSoup(html, "html.parser")
         return _parse_tx_page(soup.get_text("\n", strip=True), target)
@@ -1093,11 +1069,6 @@ def _parse_ms_page(html: str, species_name: str) -> Optional[dict[str, str]]:
       4-cell rows: [category, species, min_size, bag]
       3-cell rows: [species, min_size, bag]  (category cell has rowspan)
     """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        _log.warning("beautifulsoup4 not installed; MS scraping unavailable")
-        return None
 
     names = None
     for candidate in _name_variants(species_name):

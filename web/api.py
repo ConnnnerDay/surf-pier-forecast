@@ -38,6 +38,7 @@ from storage.cache import (
     save_forecast,
 )
 from services.arcgis_live_feeds import (
+    _evict_oldest,
     fetch_active_storms,
     fetch_air_quality,
     fetch_aqi_map,
@@ -1420,9 +1421,7 @@ def _fetch_noaa_structures(
     if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
         return cached["data"]
 
-    if len(_STRUCTURE_CACHE) >= _STRUCTURE_CACHE_MAX:
-        oldest = min(_STRUCTURE_CACHE, key=lambda k: _STRUCTURE_CACHE[k]["ts"])
-        _STRUCTURE_CACHE.pop(oldest, None)
+    _evict_oldest(_STRUCTURE_CACHE, _STRUCTURE_CACHE_MAX)
 
     geometry_json = _json_mod.dumps(
         {
