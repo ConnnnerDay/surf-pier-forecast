@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 NWS_MARINE_ZONE = "AMZ158"
 
 _MPH_TO_KNOTS = 0.868976
+_KT_TO_MPH = 1.15078
 
 # Connect timeout kept slightly above 3 s to survive a slow DNS + TCP handshake
 # without blocking the forecast pipeline. Read timeouts differ by endpoint:

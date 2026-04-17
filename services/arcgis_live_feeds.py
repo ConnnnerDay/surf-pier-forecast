@@ -42,6 +42,8 @@ logger = logging.getLogger(__name__)
 # across the many layer fetches that hit the same services9.arcgis.com host.
 # All 27+ requests.get() calls in this module use _HTTP instead of bare
 # requests.get(), saving ~50-200 ms of handshake overhead per call.
+_KT_TO_MPH = 1.15078
+
 _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16, max_retries=0))
 _HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=0))
@@ -329,7 +331,7 @@ def fetch_active_storms() -> list[dict[str, Any]]:
                 "category": _category_label(kt),
                 "lat": geom.get("y", 0),
                 "lng": geom.get("x", 0),
-                "wind_mph": round(kt * 1.15078),
+                "wind_mph": round(kt * _KT_TO_MPH),
                 "pressure_mb": int(attrs.get("MSLP") or 0),
                 "track": [],
                 "cone": [],
@@ -356,9 +358,7 @@ def fetch_active_storms() -> list[dict[str, Any]]:
             geom = feat.get("geometry") or {}
             paths = geom.get("paths") or []
             if name in storms and paths:
-                storms[name]["track"] = [
-                    [pt[1], pt[0]] for pt in paths[0] if len(pt) >= 2
-                ]
+                storms[name]["track"] = _ring_to_latlng(paths[0])
     except Exception as exc:
         logger.warning("ArcGIS storm track fetch failed: %s", exc)
 
@@ -504,7 +504,7 @@ def fetch_recent_storm_tracks(
                 "ss_max": ss,
                 "category": _SS_LABELS.get(ss, "Unknown"),
                 "color": _SS_COLORS.get(ss, "#94a3b8"),
-                "path": [[pt[1], pt[0]] for pt in paths[0] if len(pt) >= 2],
+                "path": _ring_to_latlng(paths[0]),
             }
         )
 

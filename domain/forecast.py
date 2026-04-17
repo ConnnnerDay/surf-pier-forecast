@@ -37,6 +37,7 @@ from services.noaa import (
 )
 from services.nws import (
     NWS_MARINE_ZONE,
+    _KT_TO_MPH,
     _MPH_TO_KNOTS,
     _try_nws_forecast,
     _try_nws_gridpoint,
@@ -2092,7 +2093,7 @@ def _wind_chill_f(temp_f: Optional[float], wind_kt: Optional[float]) -> Optional
     if temp_f is None or wind_kt is None:
         return None
     t = float(temp_f)
-    wind_mph = float(wind_kt) * 1.15078
+    wind_mph = float(wind_kt) * _KT_TO_MPH
     if t > 50 or wind_mph < 3:
         return None
     wc = 35.74 + 0.6215 * t - 35.75 * (wind_mph**0.16) + 0.4275 * t * (wind_mph**0.16)

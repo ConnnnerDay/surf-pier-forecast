@@ -110,6 +110,8 @@ _cam_status_lock = threading.Lock()
 _cam_check_pool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="cam-check")
 _CAM_STATUS_UNKNOWN: dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
 
+_KT_TO_MPH = 1.15078
+
 _KT_RANGE_RE = re.compile(
     r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE
 )
@@ -122,15 +124,15 @@ def _convert_wind_text_units(text: str, wind_units: str) -> str:
         return text
 
     def _to_mph_range(match: re.Match[str]) -> str:
-        low = round(float(match.group("low")) * 1.15078)
-        high = round(float(match.group("high")) * 1.15078)
+        low = round(float(match.group("low")) * _KT_TO_MPH)
+        high = round(float(match.group("high")) * _KT_TO_MPH)
         return f"{low}-{high} mph"
 
     converted = _KT_RANGE_RE.sub(_to_mph_range, text)
 
     def _to_mph(match: re.Match[str]) -> str:
         kt = float(match.group("value"))
-        mph = round(kt * 1.15078)
+        mph = round(kt * _KT_TO_MPH)
         return f"{mph} mph"
 
     return _KT_VALUE_RE.sub(_to_mph, converted)

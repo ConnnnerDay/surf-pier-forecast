@@ -92,71 +92,11 @@ _tz_rate_store: dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
 
 
-_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
-
-
-def _client_ip() -> str:
-    """Return the best-effort client IP for rate limiting.
-
-    X-Forwarded-For is only honoured when TRUSTED_PROXY=1 is set in the
-    environment.  Without that flag, the header is ignored to prevent clients
-    from spoofing arbitrary IPs and bypassing IP-based rate limiting.
-    """
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
-
-
-
-
-_PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks
-_prune_counter = 0
-
-
-def _prune_rate_store(store: dict[str, tuple[float, int]], window_s: int) -> None:
-    """Remove expired entries from a rate store.  Must be called under its lock."""
-    now = time.time()
-    expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
-    for ip in expired:
-        del store[ip]
-
-
-def _is_rate_limited_ip(
-    store: dict[str, tuple[float, int]],
-    lock: threading.Lock,
-    max_attempts: int,
-    window_s: int,
-) -> bool:
-    """Generic IP-keyed sliding-window rate limiter (read-only check)."""
-    global _prune_counter
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        _prune_counter += 1
-        if _prune_counter % _PRUNE_EVERY == 0:
-            _prune_rate_store(store, window_s)
-        start, count = store.get(ip, (now, 0))
-        if now - start > window_s:
-            return False
-        return count >= max_attempts
-
-
-def _record_ip_attempt(
-    store: dict[str, tuple[float, int]],
-    lock: threading.Lock,
-    window_s: int,
-) -> None:
-    """Record one attempt in a generic IP-keyed sliding-window rate store."""
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        start, count = store.get(ip, (now, 0))
-        if now - start > window_s:
-            store[ip] = (now, 1)
-        else:
-            store[ip] = (start, count + 1)
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _is_rate_limited_ip,
+    record_attempt as _record_ip_attempt,
+)
 
 
 def _tz_is_rate_limited() -> bool:

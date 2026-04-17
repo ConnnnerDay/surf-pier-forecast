@@ -183,88 +183,12 @@ _RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 _account_lockout_store: dict[str, tuple[float, int]] = {}
 _account_lockout_lock = threading.Lock()
 
-# Only trust X-Forwarded-For when running behind a known reverse proxy.
-_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
-
-
-def _client_ip() -> str:
-    """Return the best-effort client IP.
-
-    X-Forwarded-For is only honoured when the app is explicitly configured to
-    run behind a trusted reverse proxy (``TRUSTED_PROXY=1``).  Without that
-    flag, blindly reading X-Forwarded-For would let any client forge a
-    different IP on every request and trivially bypass IP-based rate limiting.
-    """
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the left-most entry — the original client IP.
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
-
-
-_PRUNE_EVERY = 200  # prune expired entries every N rate-limit checks
-_prune_counter = 0
-
-
-def _prune_store(store: dict[str, tuple[float, int]], window_s: float) -> None:
-    """Remove entries whose rate-limit window has expired.
-
-    Called periodically (every _PRUNE_EVERY checks) to keep the in-memory
-    stores from growing without bound when the app is hit from many unique IPs.
-    Must be called while holding the relevant lock.
-    """
-    now = time.time()
-    expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
-    for ip in expired:
-        del store[ip]
-
-
-def _is_rate_limited(
-    store: dict[str, tuple[float, int]],
-    lock: threading.Lock,
-    max_attempts: int,
-    window_s: float,
-) -> bool:
-    """Return True if the current client IP has exceeded the given rate limit."""
-    global _prune_counter
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        _prune_counter += 1
-        if _prune_counter % _PRUNE_EVERY == 0:
-            _prune_store(store, window_s)
-        start, attempts = store.get(ip, (now, 0))
-        if now - start > window_s:
-            store[ip] = (now, 0)
-            return False
-        return attempts >= max_attempts
-
-
-def _record_attempt(
-    store: dict[str, tuple[float, int]],
-    lock: threading.Lock,
-    window_s: float,
-) -> None:
-    """Increment the attempt counter for the current client IP."""
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        start, attempts = store.get(ip, (now, 0))
-        if now - start > window_s:
-            store[ip] = (now, 1)
-        else:
-            store[ip] = (start, attempts + 1)
-
-
-def _clear_attempts(
-    store: dict[str, tuple[float, int]],
-    lock: threading.Lock,
-) -> None:
-    """Clear the attempt counter for the current client IP."""
-    ip = _client_ip()
-    with lock:
-        store.pop(ip, None)
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _is_rate_limited,
+    record_attempt as _record_attempt,
+    clear_attempts as _clear_attempts,
+)
 
 
 def _login_is_rate_limited() -> bool:
