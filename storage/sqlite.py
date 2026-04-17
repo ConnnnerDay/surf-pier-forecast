@@ -269,11 +269,15 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
     if "is_admin" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
-    # Always ensure 'Conner' has admin rights — runs every startup so the flag
-    # is applied even if the account was created after the column was added.
-    conn.execute(
-        "UPDATE users SET is_admin = 1 WHERE username = 'Conner' COLLATE NOCASE"
-    )
+    # Grant admin rights to accounts listed in ADMIN_USERS (comma-separated).
+    # Runs every startup so the flag is applied even if accounts were created
+    # after the is_admin column was added. Set ADMIN_USERS=yourusername in .env.
+    _admin_env = os.environ.get("ADMIN_USERS", "").strip()
+    for _admin_name in [u.strip() for u in _admin_env.split(",") if u.strip()]:
+        conn.execute(
+            "UPDATE users SET is_admin = 1 WHERE username = ? COLLATE NOCASE",
+            (_admin_name,),
+        )
 
     # Create custom_map_markers if it didn't exist before the SCHEMA ran it.
     conn.executescript(

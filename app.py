@@ -264,18 +264,13 @@ def create_app() -> Flask:
             origin = request.headers.get("Origin", "")
             referer = request.headers.get("Referer", "")
             host = request.host  # includes port if non-standard
-            if origin:
-                # origin is "scheme://host[:port]" — must match our host exactly.
-                from urllib.parse import urlparse as _urlparse
+            from urllib.parse import urlparse as _urlparse
 
-                parsed = _urlparse(origin)
-                if parsed.netloc != host:
+            if origin:
+                if _urlparse(origin).netloc != host:
                     abort(400)
             elif referer:
-                from urllib.parse import urlparse as _urlparse
-
-                parsed = _urlparse(referer)
-                if parsed.netloc != host:
+                if _urlparse(referer).netloc != host:
                     abort(400)
             # No Origin/Referer — allow (same-host curl, mobile app, tests).
             return

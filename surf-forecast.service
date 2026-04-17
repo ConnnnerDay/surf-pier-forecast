@@ -24,6 +24,8 @@ ExecStart=REPLACE_DIR/.venv/bin/gunicorn \
 Restart=on-failure
 RestartSec=10
 Environment=PORT=5757
+# Comma-separated list of usernames to grant admin privileges on startup.
+# Environment=ADMIN_USERS=yourusername
 # Set SESSION_COOKIE_SECURE=true only when running behind HTTPS (TLS termination
 # at nginx/reverse proxy).  Omit or set to empty string for plain HTTP.
 # Environment=SESSION_COOKIE_SECURE=true
