@@ -47,6 +47,8 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
+_TIMEOUT_DOWNLOAD: tuple[float, float] = (10, 60)
+
 logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
@@ -204,7 +206,7 @@ def load_ne_shapefile(name: str, resolution: str = "10m"):
     )
     logger.info("natural_earth: downloading shapefile %s", zip_url)
     try:
-        resp = _HTTP.get(zip_url, timeout=(10, 60))
+        resp = _HTTP.get(zip_url, timeout=_TIMEOUT_DOWNLOAD)
         resp.raise_for_status()
     except requests.RequestException as exc:
         logger.error("natural_earth: download failed for %s: %s", name, exc)
@@ -257,7 +259,7 @@ def _download_layer(layer_name: str) -> Optional[dict[str, Any]]:
 
     logger.info("natural_earth: downloading %s from %s", layer_name, url)
     try:
-        resp = _HTTP.get(url, timeout=(10, 60))
+        resp = _HTTP.get(url, timeout=_TIMEOUT_DOWNLOAD)
         resp.raise_for_status()
         data = resp.json()
     except (requests.RequestException, json.JSONDecodeError) as exc:

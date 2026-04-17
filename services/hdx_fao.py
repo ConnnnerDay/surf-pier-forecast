@@ -45,6 +45,9 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
+_TIMEOUT_HDX: tuple[float, float] = (5, 20)
+_TIMEOUT_FAO: tuple[float, float] = (5, 15)
+
 logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
@@ -228,7 +231,7 @@ def search_hdx_datasets(
         resp = _HTTP.get(
             f"{_HDX_BASE}/package_search",
             params=params,
-            timeout=(5, 20),
+            timeout=_TIMEOUT_HDX,
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()
@@ -295,7 +298,7 @@ def fetch_fao_species_info(common_name: str) -> Optional[dict[str, Any]]:
         resp = _HTTP.get(
             f"{_FAO_SPECIES_BASE}/search",
             params={"q": common_name, "limit": "5"},
-            timeout=(5, 15),
+            timeout=_TIMEOUT_FAO,
             headers={"Accept": "application/json"},
         )
         if resp.status_code == 200:
@@ -369,7 +372,7 @@ def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[dict[str, Any]]:
         "maxFeatures": "5",
     }
     try:
-        resp = _HTTP.get(_FAO_WFS_BASE, params=params, timeout=(5, 15))
+        resp = _HTTP.get(_FAO_WFS_BASE, params=params, timeout=_TIMEOUT_FAO)
         if resp.status_code == 200:
             data = resp.json()
             features = data.get("features", [])

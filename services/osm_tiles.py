@@ -30,6 +30,8 @@ from typing import Any
 import requests
 from requests.adapters import HTTPAdapter
 
+_TIMEOUT_OVERPASS: tuple[float, float] = (4, 15)
+
 logger = logging.getLogger(__name__)
 
 # ── HTTP session with connection pooling ──────────────────────────────────────
@@ -183,7 +185,7 @@ def fetch_osm_amenities(
 
     for mirror in _OVERPASS_MIRRORS:
         try:
-            resp = _HTTP.post(mirror, data={"data": query}, timeout=(4, 15))
+            resp = _HTTP.post(mirror, data={"data": query}, timeout=_TIMEOUT_OVERPASS)
             if resp.status_code == 200:
                 data = resp.json()
                 results = _parse_overpass_elements(data.get("elements", []))

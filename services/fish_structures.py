@@ -30,6 +30,9 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
+_TIMEOUT_OVERPASS: tuple[float, float] = (6, 22)
+_TIMEOUT_NOAA_ENC: tuple[float, float] = (4, 12)
+
 logger = logging.getLogger(__name__)
 
 # ── Persistent HTTP session with connection pooling ────────────────────────────
@@ -576,7 +579,7 @@ def _post_overpass(query: str) -> list[dict[str, Any]]:
 
     for url in _OVERPASS_URLS:
         try:
-            resp = _HTTP.post(url, data=body, headers=headers, timeout=(6, 22))
+            resp = _HTTP.post(url, data=body, headers=headers, timeout=_TIMEOUT_OVERPASS)
             resp.raise_for_status()
             return resp.json().get("elements", [])
         except Exception as exc:
@@ -616,7 +619,7 @@ def _get_noaa_enc_layer(
     }
     url = f"{_NOAA_ENC_BASE}/{layer}/query"
     try:
-        resp = _HTTP.get(url, params=params, timeout=(4, 12))
+        resp = _HTTP.get(url, params=params, timeout=_TIMEOUT_NOAA_ENC)
         resp.raise_for_status()
         return resp.json().get("features", [])
     except Exception as exc:

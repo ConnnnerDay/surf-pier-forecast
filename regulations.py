@@ -15,7 +15,7 @@ from datetime import date
 from pathlib import Path
 from threading import Lock
 from time import monotonic
-from typing import Optional
+from typing import Any, Optional
 
 from storage.species_loader import SPECIES_DB
 
@@ -196,7 +196,7 @@ def _ensure_data_loaded() -> None:
         _REG_DATA.source_file = loaded.source_file
         _LAST_LOADED_MONO = now
 
-def _base_payload(state: str) -> dict[str, str]:
+def _base_payload(state: str) -> dict[str, Any]:
     source = _STATE_REGULATION_SOURCES.get(state, _FALLBACK_SOURCE)
     return {
         "min_size": "",
@@ -208,7 +208,7 @@ def _base_payload(state: str) -> dict[str, str]:
         "source_file": _REG_DATA.source_file,
         "data_status": "official_reference",
         "last_updated": _REG_DATA.last_updated,
-        "is_stale": _months_since(_REG_DATA.last_updated) >= _STALE_MONTHS,  # type: ignore[dict-item]
+        "is_stale": _months_since(_REG_DATA.last_updated) >= _STALE_MONTHS,
         "fetched_at": "",
     }
 
@@ -456,7 +456,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]
         if scraped:
             payload.update(scraped)
             payload["data_status"] = "live"
-            payload["is_stale"] = False  # type: ignore[assignment]
+            payload["is_stale"] = False
             # Make sure official_source is always set
             if not payload.get("official_source"):
                 payload["official_source"] = _STATE_REGULATION_SOURCES.get(
@@ -492,7 +492,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]
         payload.update(matched)
         payload["data_status"] = "snapshot"
         payload["is_stale"] = (
-            _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS  # type: ignore[assignment]
+            _months_since(payload.get("last_updated", "")) >= _STALE_MONTHS
         )
         if payload.get("source"):
             payload["snapshot_source"] = payload["source"]

@@ -36,6 +36,9 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
+_TIMEOUT_RESULT: tuple[float, float] = (5, 30)
+_TIMEOUT_STATION: tuple[float, float] = (5, 20)
+
 logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
@@ -134,7 +137,7 @@ def fetch_water_quality(
         resp = _HTTP.get(
             f"{_WQP_BASE}/data/Result/search",
             params=params,
-            timeout=(5, 30),
+            timeout=_TIMEOUT_RESULT,
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()
@@ -218,7 +221,7 @@ def fetch_beach_closures(state_code: str) -> list[dict[str, Any]]:
         resp = _HTTP.get(
             f"{_WQP_BASE}/data/Station/search",
             params=params,
-            timeout=(5, 20),
+            timeout=_TIMEOUT_STATION,
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()

@@ -13,6 +13,8 @@ from utils import safe_zone as _safe_zone
 
 logger = logging.getLogger(__name__)
 
+
+_COOPS_TIMEOUT: tuple[float, float] = (5, 15)
 _COOPS_HEADERS = {
     "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
     "Accept": "application/json",
@@ -65,7 +67,7 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
             url,
             endpoint="noaa.water_temperature",
             headers=_COOPS_HEADERS,
-            timeout=(5, 15),
+            timeout=_COOPS_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -93,7 +95,7 @@ def fetch_latest_coops_product(
             "&time_zone=lst_ldt&format=json"
         )
         resp = http_get(
-            url, endpoint=f"noaa.{product}", headers=_COOPS_HEADERS, timeout=(5, 15)
+            url, endpoint=f"noaa.{product}", headers=_COOPS_HEADERS, timeout=_COOPS_TIMEOUT
         )
         resp.raise_for_status()
         payload = resp.json()
@@ -143,7 +145,7 @@ def fetch_currents_predictions(
             url,
             endpoint="noaa.currents_predictions",
             headers=_COOPS_HEADERS,
-            timeout=(5, 15),
+            timeout=_COOPS_TIMEOUT,
         )
         resp.raise_for_status()
         rows = resp.json().get("cp", [])
@@ -190,7 +192,7 @@ def fetch_currents_observation(
     )
     try:
         resp = http_get(
-            url, endpoint="noaa.currents", headers=_COOPS_HEADERS, timeout=(5, 15)
+            url, endpoint="noaa.currents", headers=_COOPS_HEADERS, timeout=_COOPS_TIMEOUT
         )
         resp.raise_for_status()
         rows = resp.json().get("data", [])
@@ -263,7 +265,7 @@ def _try_coops_wind(
     """
     url = COOPS_WIND_URL.format(station=station_id or WATER_TEMP_STATION)
     resp = http_get(
-        url, endpoint="noaa.coops_wind", headers=_COOPS_HEADERS, timeout=(5, 15)
+        url, endpoint="noaa.coops_wind", headers=_COOPS_HEADERS, timeout=_COOPS_TIMEOUT
     )
     resp.raise_for_status()
     data = resp.json()
@@ -309,7 +311,7 @@ def fetch_tide_predictions(
             url,
             endpoint="noaa.tide_predictions",
             headers=_COOPS_HEADERS,
-            timeout=(5, 15),
+            timeout=_COOPS_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
