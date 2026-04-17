@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import logging
 import math
 import re
@@ -46,6 +47,8 @@ from services.nws import (
     fetch_state_alerts,
     fetch_weather_alerts,
 )
+from services.datagov import get_water_quality_summary as _get_wq
+from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
 from domain.species import (
     SPECIES_DB,
     _OFFSHORE_DIRS_EAST,
@@ -2486,10 +2489,6 @@ def generate_forecast(
     # Both fetches run in a bounded thread pool so upstream latency never
     # blocks the core forecast pipeline; each call is capped at 8 seconds.
     try:
-        import concurrent.futures as _cf
-        from services.datagov import get_water_quality_summary as _get_wq
-        from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
-
         _species_names = [sp["name"] for sp in species[:3]]
         with _cf.ThreadPoolExecutor(max_workers=2) as _geo_pool:
             _wq_fut = _geo_pool.submit(_get_wq, loc_lat, loc_lng)

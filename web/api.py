@@ -28,6 +28,7 @@ from flask import (
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
 from locations import COASTAL_LOCATIONS, get_location, get_water_temp
+from storage.reg_scraper import invalidate_cache as _reg_invalidate_cache
 from storage.species_loader import SPECIES_DB
 from regulations import lookup_regulation
 from storage.cache import (
@@ -664,9 +665,7 @@ def regulations_refresh_v1() -> Any:
 
     state = request.args.get("state", "").strip().upper() or None
     try:
-        from storage.reg_scraper import invalidate_cache
-
-        removed = invalidate_cache(state)
+        removed = _reg_invalidate_cache(state)
     except Exception:
         removed = 0
     return jsonify(success_envelope({"invalidated": removed, "state": state}))

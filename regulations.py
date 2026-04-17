@@ -17,6 +17,7 @@ from threading import Lock
 from time import monotonic
 from typing import Any, Optional
 
+from storage.reg_scraper import scrape_regulation as _scrape_regulation
 from storage.species_loader import SPECIES_DB
 
 _STALE_MONTHS = 6  # snapshot data older than this is flagged as potentially outdated
@@ -450,9 +451,7 @@ def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]
 
     # ── 1. Try live scraper ──────────────────────────────────────────
     try:
-        from storage.reg_scraper import scrape_regulation
-
-        scraped = scrape_regulation(species_name, state_key)
+        scraped = _scrape_regulation(species_name, state_key)
         if scraped:
             payload.update(scraped)
             payload["data_status"] = "live"

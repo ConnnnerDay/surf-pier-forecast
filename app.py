@@ -26,6 +26,8 @@ import hmac
 import logging
 import os
 import secrets
+import threading as _threading
+import time as _time
 from datetime import timedelta
 from typing import Any
 from urllib.parse import urlparse as _urlparse
@@ -43,6 +45,7 @@ from flask import (
     Flask,
     abort,
     g,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -54,7 +57,12 @@ import werkzeug
 
 from storage.sqlite import init_db, get_user
 from web.auth import bp as auth_bp
-from web.api import bp as api_bp
+from web.api import (
+    bp as api_bp,
+    _get_loc_species_all,
+    _get_species_lower_index,
+    _get_all_species_names,
+)
 from web.views import bp as views_bp
 from web.geo_api import bp as geo_api_bp
 
@@ -404,8 +412,6 @@ def create_app() -> Flask:
     @app.errorhandler(400)
     def _bad_request(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
-            from flask import jsonify
-
             return jsonify(
                 {
                     "ok": False,
@@ -417,8 +423,6 @@ def create_app() -> Flask:
     @app.errorhandler(404)
     def _not_found(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
-            from flask import jsonify
-
             return jsonify(
                 {"ok": False, "error": {"code": "not_found", "message": "Not found"}}
             ), 404
@@ -427,8 +431,6 @@ def create_app() -> Flask:
     @app.errorhandler(405)
     def _method_not_allowed(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
-            from flask import jsonify
-
             return jsonify(
                 {
                     "ok": False,
@@ -443,8 +445,6 @@ def create_app() -> Flask:
     @app.errorhandler(413)
     def _request_too_large(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
-            from flask import jsonify
-
             return jsonify(
                 {
                     "ok": False,
@@ -456,8 +456,6 @@ def create_app() -> Flask:
     @app.errorhandler(429)
     def _rate_limited(exc: Any) -> Any:
         if request.accept_mimetypes.best == "application/json":
-            from flask import jsonify
-
             return jsonify(
                 {
                     "ok": False,
@@ -472,8 +470,6 @@ def create_app() -> Flask:
     def _internal_error(exc: Any) -> Any:
         logging.getLogger(__name__).exception("Unhandled exception")
         if request.accept_mimetypes.best == "application/json":
-            from flask import jsonify
-
             return jsonify(
                 {
                     "ok": False,
@@ -515,11 +511,7 @@ def create_app() -> Flask:
     # server restart gets a cache hit instead of waiting for the full scoring
     # loop.  Uses the test client (provides a proper request/g context) and
     # runs in a daemon thread so startup is not delayed.
-    import threading as _threading
-
     def _prewarm_fishing_map_cache() -> None:
-        import time as _time
-
         _time.sleep(2)  # let gunicorn workers and DB fully initialise first
         try:
             # Build all lazy indices before the first real request so none of
@@ -527,12 +519,6 @@ def create_app() -> Flask:
             #   _get_loc_species_all     → 101-location × 895-species presence map
             #   _get_species_lower_index → pre-lowercased names + category frozensets
             #   _get_all_species_names   → sorted name list for autocomplete
-            from web.api import (
-                _get_loc_species_all,
-                _get_species_lower_index,
-                _get_all_species_names,
-            )
-
             _get_loc_species_all()
             _get_species_lower_index()
             _get_all_species_names()
