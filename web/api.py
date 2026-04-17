@@ -40,7 +40,6 @@ from storage.sqlite import (
     attach_photos_to_entry,
     delete_log_entry,
     delete_map_catch,
-    get_catch_counts_near_locations,
     get_community_hotspots,
     get_custom_markers,
     get_entry_photo_paths,
@@ -1022,111 +1021,6 @@ def _month_score(species: Dict[str, Any], month: int) -> int:
     return 20
 
 
-_AI_MONTH_NAMES = [
-    "",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
-
-
-def _build_ai_reasoning(loc_result: dict, month: int) -> str:
-    """Return plain-text AI recommendation for a fishing location.
-
-    Incorporates water temperature vs species ideal range, species-specific
-    behavioral notes (cold/warm), secondary species, and tackle tips.
-    """
-    mname = _AI_MONTH_NAMES[month] if 1 <= month <= 12 else "this month"
-    species = loc_result.get("top_species", [])
-    water_temp = loc_result.get("water_temp")  # °F or None
-
-    if not species:
-        return f"Conditions are quiet at this location in {mname}."
-
-    top = species[0]
-    sp_name = top.get("name", "Fish")
-    activity = top.get("activity", "fair")
-    bait = top.get("bait", "")
-    rig = top.get("rig", "")
-    lures = top.get("lures", "")
-    t_low = top.get("temp_ideal_low")
-    t_high = top.get("temp_ideal_high")
-    expl_cold = top.get("explanation_cold", "")
-    expl_warm = top.get("explanation_warm", "")
-
-    parts: list[str] = []
-
-    # 1. Activity opener
-    if activity == "peak":
-        parts.append(f"{sp_name} are at peak seasonal activity for {mname}.")
-    elif activity == "good":
-        parts.append(f"{sp_name} showing strong activity through {mname}.")
-    else:
-        parts.append(f"{sp_name} are active with fair conditions in {mname}.")
-
-    # 2. Water temperature context
-    if water_temp is not None and t_low is not None and t_high is not None:
-        wt = round(water_temp)
-        if water_temp < t_low:
-            gap = round(t_low - water_temp)
-            parts.append(
-                f"Water is {wt}\u00b0F — {gap}\u00b0 below the ideal "
-                f"{round(t_low)}\u2013{round(t_high)}\u00b0F window; "
-                f"fish are present but slower."
-            )
-        elif water_temp > t_high:
-            gap = round(water_temp - t_high)
-            parts.append(
-                f"Water is warm at {wt}\u00b0F — {gap}\u00b0 above ideal; "
-                f"target early morning or deeper structure."
-            )
-        else:
-            parts.append(
-                f"Water at {wt}\u00b0F is squarely in the sweet spot "
-                f"({round(t_low)}\u2013{round(t_high)}\u00b0F) — prime feeding conditions."
-            )
-
-    # 3. Behavioral explanation (cold vs warm)
-    if water_temp is not None and t_low is not None and t_high is not None:
-        midpoint = (t_low + t_high) / 2.0
-        expl = expl_cold if water_temp < midpoint else expl_warm
-        if expl:
-            # Truncate to first sentence
-            sentence = expl.split(".")[0].strip()
-            if sentence:
-                parts.append(sentence + ".")
-
-    # 4. Secondary species
-    secondary = [s["name"] for s in species[1:2]]
-    if secondary:
-        parts.append(f"Also watch for {secondary[0]}.")
-
-    # 5. Tackle
-    tackle: list[str] = []
-    if bait:
-        # Bait strings can be long — take the first item before "or" / ";"
-        short_bait = bait.split(";")[0].split(" or ")[0].strip()
-        tackle.append(f"bait: {short_bait}")
-    elif lures:
-        short_lure = lures.split(",")[0].strip()
-        tackle.append(f"try {short_lure}")
-    if rig:
-        tackle.append(f"rig: {rig}")
-    if tackle:
-        parts.append(f"Recommended \u2014 {', '.join(tackle)}.")
-
-    return " ".join(parts)
-
-
 # ── Species-names list (autocomplete) — pre-computed once ─────────────────────
 # sorted({s["name"] for s in SPECIES_DB}) iterates 800+ species every cold
 # request.  The list never changes at runtime so we compute it once and reuse.
@@ -1448,7 +1342,6 @@ def fishing_map_data() -> Any:
                 "lat": loc["lat"],
                 "lng": loc["lng"],
                 "coast": loc_coast,
-                "score": score,
                 "ai_score": round(ai_score, 1),
                 "water_temp": water_temp,
                 "activity": activity,
@@ -1458,15 +1351,6 @@ def fishing_map_data() -> Any:
                 "time_hint": time_q or None,
             }
         )
-
-    # Mark top 5 locations as AI picks with generated reasoning text
-    _ai_ranked = sorted(
-        (r for r in results if r["activity"] != "none"),
-        key=lambda r: -(r.get("ai_score") or r["score"]),
-    )[:5]
-    for _rank, _pick in enumerate(_ai_ranked, 1):
-        _pick["ai_pick_rank"] = _rank
-        _pick["ai_reasoning"] = _build_ai_reasoning(_pick, month)
 
     # Autocomplete dropdown names — served from pre-computed cache
     species_names = _get_all_species_names()
@@ -1526,12 +1410,6 @@ def fishing_map_data() -> Any:
             "lures": sp0.get("lures", ""),
             "coast": sp0.get("coast", ""),
         }
-
-    # Community catch counts — overlay how many recent community pins are near
-    # each NOAA location so the front-end can show a "hot community" badge.
-    community_counts = get_catch_counts_near_locations(results, days_back=30)
-    for r in results:
-        r["community_catches"] = community_counts.get(r["id"], 0)
 
     _response_data = {
         "locations": results,

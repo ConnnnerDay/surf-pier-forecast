@@ -559,14 +559,6 @@ class TestFishingMapExtendedFilters:
         rv = client.get("/api/fishing-map?min_water_temp=abc")
         assert rv.status_code == 200  # invalid ignored, not a 400
 
-    def test_community_catches_in_response(self, client):
-        rv = client.get("/api/fishing-map")
-        data = json.loads(rv.data)
-        # Every location should have a community_catches field
-        for loc in data["locations"]:
-            assert "community_catches" in loc
-            assert isinstance(loc["community_catches"], int)
-
     def test_coast_filter_east(self, client):
         rv = client.get("/api/fishing-map?coast=east")
         assert rv.status_code == 200
