@@ -52,6 +52,11 @@ from storage.cache import (
 )
 from storage.sqlite import get_preferences, save_preferences, get_log_stats
 from web.helpers import get_session_location
+from web.rate_limit import (
+    is_rate_limited as _rl_is_rate_limited,
+    record_attempt as _rl_record_attempt,
+)
+from regulations import get_official_regulations_url as _get_official_regulations_url
 
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
@@ -61,44 +66,18 @@ logger = logging.getLogger(__name__)
 # Limit each IP to 30 requests per 10 minutes to prevent abuse.
 _SETUP_RATE_LIMIT_MAX = 30
 _SETUP_RATE_LIMIT_WINDOW_S = 10 * 60
-_setup_rate_limit_store: dict[str, tuple] = {}
+_setup_rate_limit_store: dict[str, tuple[float, int]] = {}
 _setup_rate_limit_lock = threading.Lock()
-_setup_prune_counter = 0
-
-
-def _setup_client_ip() -> str:
-    from flask import request as _req
-    from web.auth import _TRUST_PROXY  # type: ignore[attr-defined]
-
-    if _TRUST_PROXY:
-        forwarded = _req.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return _req.remote_addr or "unknown"
 
 
 def _setup_is_rate_limited() -> bool:
-    global _setup_prune_counter
-    ip = _setup_client_ip()
-    now = time.time()
-    with _setup_rate_limit_lock:
-        _setup_prune_counter += 1
-        if _setup_prune_counter % 200 == 0:
-            expired = [
-                k
-                for k, (s, _) in _setup_rate_limit_store.items()
-                if now - s > _SETUP_RATE_LIMIT_WINDOW_S
-            ]
-            for k in expired:
-                del _setup_rate_limit_store[k]
-        start, count = _setup_rate_limit_store.get(ip, (now, 0))
-        if now - start > _SETUP_RATE_LIMIT_WINDOW_S:
-            _setup_rate_limit_store[ip] = (now, 1)
-            return False
-        if count >= _SETUP_RATE_LIMIT_MAX:
-            return True
-        _setup_rate_limit_store[ip] = (start, count + 1)
-        return False
+    if _rl_is_rate_limited(
+        _setup_rate_limit_store, _setup_rate_limit_lock,
+        _SETUP_RATE_LIMIT_MAX, _SETUP_RATE_LIMIT_WINDOW_S,
+    ):
+        return True
+    _rl_record_attempt(_setup_rate_limit_store, _setup_rate_limit_lock, _SETUP_RATE_LIMIT_WINDOW_S)
+    return False
 
 
 # -- Camera status cache -----------------------------------------------------
@@ -470,11 +449,9 @@ def _render_forecast(
     if not forecast.get("location_state"):
         forecast["location_state"] = location.get("state", "")
     if not forecast.get("official_regulations_url"):
-        from regulations import get_official_regulations_url as _get_reg_url
-
         _st = forecast.get("location_state") or location.get("state", "")
         if _st:
-            forecast["official_regulations_url"] = _get_reg_url(_st)
+            forecast["official_regulations_url"] = _get_official_regulations_url(_st)
     # tide_chart was stored as a JSON string in older cache entries; parse it
     # back to a dict so the template can access fields directly.
     tc = forecast.get("tide_chart")
