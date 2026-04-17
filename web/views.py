@@ -43,6 +43,7 @@ from domain.forecast import (
     build_trip_setup,
 )
 from services.forecast_refresh import enqueue_forecast_refresh
+from services.nws import _KT_TO_MPH
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
     _forecast_age_minutes,
@@ -89,8 +90,6 @@ _cam_status_lock = threading.Lock()
 # Shared daemon pool for background cam probes — never blocks a WSGI worker.
 _cam_check_pool = ThreadPoolExecutor(max_workers=_CAM_CHECK_POOL_WORKERS, thread_name_prefix="cam-check")
 _CAM_STATUS_UNKNOWN: dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
-
-_KT_TO_MPH = 1.15078
 
 _KT_RANGE_RE = re.compile(
     r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE

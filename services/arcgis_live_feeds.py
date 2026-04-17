@@ -36,13 +36,14 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
+from services.nws import _KT_TO_MPH
+
 logger = logging.getLogger(__name__)
 
 # Shared session with connection pooling so that TCP+TLS handshakes are reused
 # across the many layer fetches that hit the same services9.arcgis.com host.
 # All 27+ requests.get() calls in this module use _HTTP instead of bare
 # requests.get(), saving ~50-200 ms of handshake overhead per call.
-_KT_TO_MPH = 1.15078
 
 _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16, max_retries=0))
