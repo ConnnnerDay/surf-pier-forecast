@@ -864,7 +864,7 @@ def build_multiday_outlook(
             )
             if isinstance(fb_wind, tuple):
                 wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
-                wind_range = fb_wind  # type: ignore[assignment]
+                wind_range = (float(fb_wind[0]), float(fb_wind[1]))
                 wind_dir_day = fb_dir
 
         # --- Wave estimate ---
@@ -1441,10 +1441,10 @@ def pick_best_fishing_day(
 
     for day in outlook:
         v = day.get("verdict", "Unknown")
-        s = verdict_scores.get(v, 2)
+        s: float = verdict_scores.get(v, 2)
         n_species = len(day.get("top_species", []))
         # Bonus for having more active species
-        s += min(n_species * 0.2, 1.0)  # type: ignore[assignment]
+        s += min(n_species * 0.2, 1.0)
         if s > best_score:
             best_score = s
             best_day = day["day"]
@@ -2466,8 +2466,10 @@ def generate_forecast(
     env_metrics = builder.environment_service.get_coops_environmental(coops_station)
     if env_metrics:
         if weather:
-            env_metrics.setdefault("air_temp_f", weather.get("air_temp_f"))  # type: ignore[arg-type]
-            env_metrics.setdefault("humidity_pct", weather.get("humidity"))  # type: ignore[arg-type]
+            if "air_temp_f" not in env_metrics:
+                env_metrics["air_temp_f"] = weather.get("air_temp_f")
+            if "humidity_pct" not in env_metrics:
+                env_metrics["humidity_pct"] = weather.get("humidity")
         forecast["environment"] = env_metrics
         sources_used.append("NOAA CO-OPS environmental")
     else:

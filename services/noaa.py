@@ -288,7 +288,7 @@ def _try_coops_wind(
 def fetch_tide_predictions(
     station_id: str,
     tz_name: str = "America/New_York",
-) -> list[dict[str, str]]:
+) -> list[dict[str, Any]]:
     """Fetch today's tide predictions from NOAA CO-OPS.
 
     Returns a list of dicts like:
@@ -342,7 +342,7 @@ def fetch_tide_predictions(
                     else today_str,
                 }
             )
-        return tides  # type: ignore[return-value]
+        return tides
     except Exception:
         logger.debug("Tide predictions fetch failed", exc_info=True)
         return []
