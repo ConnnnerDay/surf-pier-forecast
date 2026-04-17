@@ -11,7 +11,7 @@ import time
 import base64
 import urllib.request
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from urllib.parse import urlencode
 
 import logging
@@ -30,6 +30,7 @@ from flask import (
 import requests as _requests
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
@@ -66,6 +67,12 @@ from storage.db import (
     delete_webauthn_credential,
 )
 from services.email import send_verification_email, smtp_is_configured
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _is_rate_limited,
+    record_attempt as _record_attempt,
+    clear_attempts as _clear_attempts,
+)
 from webauthn import (
     generate_authentication_options,
     generate_registration_options,
@@ -182,14 +189,6 @@ _RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 # Keyed by lowercase username rather than IP.
 _account_lockout_store: dict[str, tuple[float, int]] = {}
 _account_lockout_lock = threading.Lock()
-
-from web.rate_limit import (
-    client_ip as _client_ip,
-    is_rate_limited as _is_rate_limited,
-    record_attempt as _record_attempt,
-    clear_attempts as _clear_attempts,
-)
-
 
 def _login_is_rate_limited() -> bool:
     return _is_rate_limited(
@@ -1738,10 +1737,11 @@ def _generate_apple_client_secret() -> str:
         ).encode()
     )
     message = f"{header}.{payload}".encode()
-    private_key = serialization.load_pem_private_key(
-        private_key_pem.encode(), password=None
+    private_key = cast(
+        EllipticCurvePrivateKey,
+        serialization.load_pem_private_key(private_key_pem.encode(), password=None),
     )
-    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))  # type: ignore[arg-type,union-attr,call-arg]
+    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))
     r, s = decode_dss_signature(der_sig)
     raw_sig = _b64url(r.to_bytes(32, "big") + s.to_bytes(32, "big"))
     return f"{header}.{payload}.{raw_sig}"

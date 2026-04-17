@@ -83,10 +83,11 @@ def _setup_is_rate_limited() -> bool:
 # -- Camera status cache -----------------------------------------------------
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _CAM_STATUS_CACHE_MAX = 500  # prevent unbounded growth with many unique URLs
+_CAM_CHECK_POOL_WORKERS = 6
 _cam_status_cache: dict[str, dict[str, Any]] = {}
 _cam_status_lock = threading.Lock()
 # Shared daemon pool for background cam probes — never blocks a WSGI worker.
-_cam_check_pool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="cam-check")
+_cam_check_pool = ThreadPoolExecutor(max_workers=_CAM_CHECK_POOL_WORKERS, thread_name_prefix="cam-check")
 _CAM_STATUS_UNKNOWN: dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
 
 _KT_TO_MPH = 1.15078

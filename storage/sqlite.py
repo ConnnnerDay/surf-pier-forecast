@@ -1860,8 +1860,8 @@ def update_custom_marker(
         ).fetchone()
         if not row:
             return None
-        updates: list = []
-        params: list = []
+        updates: list[str] = []
+        params: list[Any] = []
         if lat is not None:
             updates.append("lat = ?")
             params.append(lat)

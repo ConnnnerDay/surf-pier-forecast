@@ -28,6 +28,7 @@ import os
 import secrets
 from datetime import timedelta
 from typing import Any
+from urllib.parse import urlparse as _urlparse
 
 # Load .env file in development when python-dotenv is installed.
 # In production the environment is set by the systemd unit; this is a no-op.
@@ -264,8 +265,6 @@ def create_app() -> Flask:
             origin = request.headers.get("Origin", "")
             referer = request.headers.get("Referer", "")
             host = request.host  # includes port if non-standard
-            from urllib.parse import urlparse as _urlparse
-
             if origin:
                 if _urlparse(origin).netloc != host:
                     abort(400)
