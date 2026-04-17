@@ -16,6 +16,12 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from storage.sqlite import (
+    delete_forecast_cache,
+    load_forecast,
+    load_forecast_cache,
+    save_forecast_cache,
+)
 from utils import norm_user_id as _norm_user_id
 
 logger = logging.getLogger(__name__)
@@ -61,8 +67,6 @@ def load_cached_forecast(
     if not location_id:
         return _load_json_fallback(location_id)
 
-    from storage.sqlite import delete_forecast_cache, load_forecast, load_forecast_cache
-
     normalized_uid = _norm_user_id(user_id)
     result = load_forecast_cache(normalized_uid, location_id)
     if result is None and normalized_uid != 0:
@@ -100,8 +104,6 @@ def save_forecast(
         return
 
     try:
-        from storage.sqlite import save_forecast_cache
-
         save_forecast_cache(_norm_user_id(user_id), location_id, data)
     except Exception as exc:
         logger.warning(
@@ -154,8 +156,6 @@ def _migrate_json_to_db(
 ) -> None:
     """One-time migration: copy a JSON-cached forecast into the DB."""
     try:
-        from storage.sqlite import save_forecast_cache
-
         save_forecast_cache(user_id, location_id, data)
         logger.info("Migrated JSON forecast to DB for %s", location_id)
     except Exception as exc:

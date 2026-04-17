@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -696,7 +697,6 @@ def fetch_wind_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
         return []
 
     # Group by IntervalStart: average across all city points returned in the bbox
-    from collections import defaultdict
 
     buckets: dict[int, list] = defaultdict(list)
     for feat in feats:

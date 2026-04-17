@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 DB_PATH = Path(__file__).resolve().parent.parent / "storage" / "species_data.json"
 
@@ -71,8 +71,8 @@ _REQUIRED = {
 }
 
 
-def expand(raw: Dict[str, Any]) -> Dict[str, Any]:
-    entry: Dict[str, Any] = {}
+def expand(raw: dict[str, Any]) -> dict[str, Any]:
+    entry: dict[str, Any] = {}
     for k, v in raw.items():
         full = _KEY_MAP.get(k, k)
         entry[full] = v
@@ -82,8 +82,8 @@ def expand(raw: Dict[str, Any]) -> Dict[str, Any]:
     return entry
 
 
-def add_species(entries: List[Dict[str, Any]]) -> None:
-    db: List[Dict] = json.loads(DB_PATH.read_text())
+def add_species(entries: list[dict[str, Any]]) -> None:
+    db: list[Dict] = json.loads(DB_PATH.read_text())
     existing = {s["name"] for s in db}
 
     added, skipped = [], []

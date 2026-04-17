@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import json as _json_mod
 import logging
 import os
@@ -10,6 +11,8 @@ import time
 import uuid
 from zoneinfo import available_timezones
 from typing import Any, Optional
+
+import requests as _requests
 
 from flask import (
     Blueprint,
@@ -24,7 +27,8 @@ from flask import (
 
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
-from locations import get_location, get_water_temp
+from locations import COASTAL_LOCATIONS, get_location, get_water_temp
+from storage.species_loader import SPECIES_DB
 from regulations import lookup_regulation
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -1126,10 +1130,6 @@ def fishing_map_data() -> Any:
     month   : int 1-12, optional
         Override current month (for testing / future planning).
     """
-    import datetime
-    from storage.species_loader import SPECIES_DB
-    from locations import COASTAL_LOCATIONS
-
     # -- parse & sanitise params -----------------------------------------------
     species_q = request.args.get("species", "").strip()[:100].lower()
     coast_q = request.args.get("coast", "").strip()[:20].lower()
@@ -1445,8 +1445,6 @@ def _fetch_noaa_structures(
     sw_lat: float, sw_lng: float, ne_lat: float, ne_lng: float
 ) -> list:
     """Fetch wrecks from NOAA ENC Direct within bbox. Results are cached for 1 h."""
-    import requests as _req
-
     cache_key = (
         f"{round(sw_lat, 2)},{round(sw_lng, 2)},{round(ne_lat, 2)},{round(ne_lng, 2)}"
     )
@@ -1481,7 +1479,7 @@ def _fetch_noaa_structures(
 
     # Wrecks
     try:
-        resp = _req.get(
+        resp = _requests.get(
             f"{_NOAA_ENC_BASE}/enc_wrecks/MapServer/0/query",
             params=dict(base_params, outFields="WRECKNM,VALSOU,CAUTION"),
             timeout=_NOAA_ENC_TIMEOUT,

@@ -8,6 +8,8 @@ import re
 import secrets
 import threading
 import time
+import base64
+import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Optional
 from urllib.parse import urlencode
@@ -25,6 +27,13 @@ from flask import (
     session,
     url_for,
 )
+import requests as _requests
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+from cryptography.hazmat.primitives.hashes import SHA256
 from werkzeug.security import check_password_hash
 
 from locations import get_location
@@ -1521,8 +1530,6 @@ _APPLE_ISSUER = "https://appleid.apple.com"
 
 def _get_apple_jwks() -> list:
     """Return Apple's current JWKS keys, using a 1-hour in-memory cache."""
-    import urllib.request
-
     global _apple_jwks_cache
     with _apple_jwks_lock:
         keys, fetched_at = _apple_jwks_cache
@@ -1544,13 +1551,7 @@ def _get_apple_jwks() -> list:
 
 def _jwk_to_rsa_public_key(jwk: dict[str, Any]) -> Any:
     """Convert an RSA JWK dict to a cryptography RSAPublicKey object, or None."""
-    import base64
-
     try:
-        from cryptography.hazmat.primitives.asymmetric.rsa import (
-            RSAPublicNumbers,
-        )
-
         def _b64_to_int(s: str) -> int:
             padding = "=" * (-len(s) % 4)
             return int.from_bytes(base64.urlsafe_b64decode(s + padding), "big")
@@ -1571,11 +1572,6 @@ def _verify_apple_id_token(token: str, client_id: str) -> Optional[dict[str, Any
     3. Reconstruct the RSA public key and verify the RS256 signature.
     4. Validate iss, aud, and exp claims.
     """
-    import base64
-
-    from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-    from cryptography.hazmat.primitives.hashes import SHA256
-
     parts = token.split(".")
     if len(parts) != 3:
         logger.warning("apple_jwt.invalid_format")
@@ -1698,10 +1694,8 @@ def google_callback() -> Any:
     client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
-    import requests as _req
-
     try:
-        token_resp = _req.post(
+        token_resp = _requests.post(
             _GOOGLE_TOKEN_URL,
             data={
                 "code": code,
@@ -1726,7 +1720,7 @@ def google_callback() -> Any:
         )
 
     try:
-        userinfo_resp = _req.get(
+        userinfo_resp = _requests.get(
             _GOOGLE_USERINFO_URL,
             headers={"Authorization": f"Bearer {token_data['access_token']}"},
             timeout=_HTTP_TIMEOUT_OAUTH_S,
@@ -1789,15 +1783,6 @@ def _generate_apple_client_secret() -> str:
       APPLE_CLIENT_ID   — Service ID (e.g. com.example.app.service)
       APPLE_PRIVATE_KEY — PEM content of the .p8 private key (newlines as \\n)
     """
-    try:
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import ec
-        from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
-    except ImportError as exc:
-        raise RuntimeError(
-            "cryptography package is required for Apple Sign In"
-        ) from exc
-
     team_id = os.environ.get("APPLE_TEAM_ID", "")
     key_id = os.environ.get("APPLE_KEY_ID", "")
     client_id = os.environ.get("APPLE_CLIENT_ID", "")
@@ -1808,8 +1793,6 @@ def _generate_apple_client_secret() -> str:
             "Apple Sign In requires APPLE_TEAM_ID, APPLE_KEY_ID, "
             "APPLE_CLIENT_ID, and APPLE_PRIVATE_KEY to be set."
         )
-
-    import base64
 
     def _b64url(data: bytes) -> str:
         return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
@@ -1901,10 +1884,8 @@ def apple_callback() -> Any:
             error="Apple Sign In is misconfigured. Please contact support.",
         )
 
-    import requests as _req
-
     try:
-        token_resp = _req.post(
+        token_resp = _requests.post(
             _APPLE_TOKEN_URL,
             data={
                 "client_id": client_id,
