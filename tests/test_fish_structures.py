@@ -15,7 +15,7 @@ Coverage
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -377,7 +377,7 @@ class TestDeduplicate:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def _make_overpass_response(elements: List[Dict[str, Any]]) -> MagicMock:
+def _make_overpass_response(elements: list[dict[str, Any]]) -> MagicMock:
     mock = MagicMock()
     mock.raise_for_status.return_value = None
     mock.json.return_value = {"elements": elements}
@@ -504,7 +504,7 @@ class TestFetchOsmStructures:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def _make_noaa_response(features: List[Dict[str, Any]]) -> MagicMock:
+def _make_noaa_response(features: list[dict[str, Any]]) -> MagicMock:
     mock = MagicMock()
     mock.raise_for_status.return_value = None
     mock.json.return_value = {"features": features}
