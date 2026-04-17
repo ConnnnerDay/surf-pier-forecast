@@ -224,7 +224,7 @@ def geo_environmental():
     sst_config = get_sst_tile_config()
 
     # Beach closures (if state code provided)
-    beach_closures: list = []
+    beach_closures: list[dict[str, Any]] = []
     if state and len(state) == 2:
         beach_closures = fetch_beach_closures(state)[:10]
 

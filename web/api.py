@@ -1248,7 +1248,7 @@ def fishing_map_data() -> Any:
         if not loc_species:
             score = 0
             activity = "none"
-            top_species: list = []
+            top_species: list[dict[str, Any]] = []
         else:
             scored = sorted(loc_species, key=lambda s: -_cur_score[s["name"]])
             best_score = _cur_score[scored[0]["name"]]
@@ -1258,7 +1258,7 @@ def fishing_map_data() -> Any:
             # Build rich species objects for the detail drawer.
             # Include up to 6 species that are at least "fair" (score >= 30),
             # each carrying bait, rig, and their own activity label.
-            rich: list = []
+            rich: list[dict[str, Any]] = []
             for sp in scored[:10]:
                 sp_score = _cur_score[sp["name"]]
                 if sp_score < 30 and len(rich) >= 3:
@@ -1345,13 +1345,13 @@ def fishing_map_data() -> Any:
 
     # Trending species: in peak season this month, ranked by number of active locations.
     # frozenset lookup is O(1) vs re-calling _species_present_at O(n) per check.
-    trending_species: list = []
+    trending_species: list[str] = []
     if not species_q:
         _loc_sp_names = {
             lid: frozenset(s["name"] for s in sp_list)
             for lid, sp_list in _loc_sp_map.items()
         }
-        peak_sp_counts: dict = {}
+        peak_sp_counts: dict[str, int] = {}
         for sp in filtered_species:
             if month not in sp.get("peak_months", []):
                 continue
@@ -1367,7 +1367,7 @@ def fishing_map_data() -> Any:
 
     # When a species filter is active, return enough metadata for the JS to infer
     # habitat type and build a relevant Overpass query — without hardcoding species names.
-    species_meta: dict = {}
+    species_meta: dict[str, Any] = {}
     if species_q and filtered_species:
         sp0 = filtered_species[0]
         species_meta = {
@@ -1402,7 +1402,7 @@ def fishing_map_data() -> Any:
 
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
 
-_STRUCTURE_CACHE: dict = {}  # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE: dict[str, dict[str, Any]] = {}  # {cache_key: {"ts": float, "data": list}}
 _STRUCTURE_CACHE_TTL = 3600  # 1 hour — wrecks don't move
 _STRUCTURE_CACHE_MAX = 128  # ~0.02° keys; cap so long-running servers don't leak
 
@@ -1412,7 +1412,7 @@ _NOAA_ENC_TIMEOUT: tuple[float, float] = (3.05, 10)
 
 def _fetch_noaa_structures(
     sw_lat: float, sw_lng: float, ne_lat: float, ne_lng: float
-) -> list:
+) -> list[dict[str, Any]]:
     """Fetch wrecks from NOAA ENC Direct within bbox. Results are cached for 1 h."""
     cache_key = (
         f"{round(sw_lat, 2)},{round(sw_lng, 2)},{round(ne_lat, 2)},{round(ne_lng, 2)}"
@@ -1444,7 +1444,7 @@ def _fetch_noaa_structures(
         "resultRecordCount": "200",
     }
 
-    features: list = []
+    features: list[dict[str, Any]] = []
 
     # Wrecks
     try:
