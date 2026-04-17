@@ -36,12 +36,40 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
+from services.arcgis_live_feeds import (
+    fetch_active_storms,
+    fetch_air_quality,
+    fetch_aqi_map,
+    fetch_drought,
+    fetch_drought_map,
+    fetch_hfradar_currents,
+    fetch_marine_warnings,
+    fetch_metar_stations,
+    fetch_ndbc_buoys,
+    fetch_ndfd_temperature_map,
+    fetch_precip_forecast,
+    fetch_precipitation_map,
+    fetch_recent_storm_tracks,
+    fetch_sea_ice_extent,
+    fetch_seismic_events,
+    fetch_smoke_forecast,
+    fetch_sst_stations,
+    fetch_storm_reports,
+    fetch_stream_gauges,
+    fetch_temp_forecast,
+    fetch_terminator,
+    fetch_tropical_outlook,
+    fetch_wildfire_incidents,
+    fetch_wind_forecast,
+)
 from services.fish_structures import VALID_TYPES, find_fish_structures
 from storage.sqlite import (
     add_log_entry,
     add_map_catch,
     add_map_catch_comment,
     attach_photos_to_entry,
+    create_custom_marker,
+    delete_custom_marker,
     delete_log_entry,
     delete_map_catch,
     get_community_hotspots,
@@ -57,6 +85,7 @@ from storage.sqlite import (
     get_recent_public_catches,
     save_page_layout,
     save_preferences,
+    update_custom_marker,
     toggle_map_catch_like,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
@@ -1825,7 +1854,6 @@ def map_marine_warnings() -> Any:
     Each warning has: event, severity, summary, description, instruction,
     affected, expires (ISO-8601), color (hex), marine (bool), rings ([[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_marine_warnings
 
     try:
         south = float(request.args["south"])
@@ -1858,7 +1886,6 @@ def map_active_storms() -> Any:
     Each storm has: name, category, lat, lng, wind_mph, pressure_mb,
     track ([[lat,lng]]), cone (list of rings [[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_active_storms
 
     storms = fetch_active_storms()
     return jsonify({"storms": storms, "count": len(storms)})
@@ -1881,7 +1908,6 @@ def map_recent_storms() -> Any:
     Each track has: storm_id, name, basin, start_dtg, end_dtg, ss_max,
     category, color, path ([[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_recent_storm_tracks
 
     basin = request.args.get("basin", "").strip().upper() or None
     tracks = fetch_recent_storm_tracks(basin=basin)
@@ -1904,7 +1930,6 @@ def weather_air_quality() -> Any:
     JSON: { "aqi": { location, city, value, unit, updated, category, color,
                      distance_km } | null }
     """
-    from services.arcgis_live_feeds import fetch_air_quality
 
     try:
         lat = float(request.args["lat"])
@@ -1937,7 +1962,6 @@ def weather_wind_forecast() -> Any:
     Each period has: interval_start (ISO-8601), wind_dir_deg, wind_dir,
     wind_speed (knots), wind_gust (knots)
     """
-    from services.arcgis_live_feeds import fetch_wind_forecast
 
     try:
         lat = float(request.args["lat"])
@@ -1969,7 +1993,6 @@ def map_sst_stations() -> Any:
     Each station has: name, lat, lng, sst_c, sst_f, ssta, dhw,
     alert, alert_label, alert_color, updated
     """
-    from services.arcgis_live_feeds import fetch_sst_stations
 
     try:
         south = float(request.args["south"])
@@ -2002,7 +2025,6 @@ def map_wildfires() -> Any:
     Each fire has: name, state, county, acres, contained_pct, cause,
     discovered, age_days, lat, lng
     """
-    from services.arcgis_live_feeds import fetch_wildfire_incidents
 
     try:
         south = float(request.args["south"])
@@ -2036,7 +2058,6 @@ def map_smoke() -> Any:
     Each polygon has: class_desc, label, fill (hex), opacity, valid_from,
     valid_to, rings ([[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_smoke_forecast
 
     try:
         south = float(request.args["south"])
@@ -2069,7 +2090,6 @@ def weather_precip_forecast() -> Any:
 
     Each period has: from_time, to_time, category (0–19), label, rain (bool)
     """
-    from services.arcgis_live_feeds import fetch_precip_forecast
 
     try:
         lat = float(request.args["lat"])
@@ -2094,7 +2114,6 @@ def map_sea_ice() -> Any:
     -------
     JSON: { "sea_ice": { year, month, area_mkm2, extent_mkm2, rings } | null }
     """
-    from services.arcgis_live_feeds import fetch_sea_ice_extent
 
     result = fetch_sea_ice_extent()
     return jsonify({"sea_ice": result})
@@ -2113,7 +2132,6 @@ def weather_temp_forecast() -> Any:
     -------
     JSON: { "days": [ { date, min_f, max_f }, … ] }
     """
-    from services.arcgis_live_feeds import fetch_temp_forecast
 
     try:
         lat = float(request.args["lat"])
@@ -2141,7 +2159,6 @@ def map_seismic() -> Any:
     JSON: { "events": [ { lat, lng, mag, depth_km, place, time, hours_old,
                            tsunami, alert, alert_color, sig, event_type } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_seismic_events
 
     try:
         south = float(request.args["south"])
@@ -2170,7 +2187,6 @@ def weather_drought() -> Any:
     -------
     JSON: { "drought": { dm, code, label, color, date, d0, d1, d2, d3, d4 } | null }
     """
-    from services.arcgis_live_feeds import fetch_drought
 
     try:
         lat = float(request.args["lat"])
@@ -2200,7 +2216,6 @@ def map_metar() -> Any:
                              wind_chill_f, heat_index_f, visibility_m, pressure_mb,
                              sky, weather, flight_cat, cat_color } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_metar_stations
 
     try:
         south = float(request.args["south"])
@@ -2228,7 +2243,6 @@ def map_terminator() -> Any:
     -------
     JSON: { "terminator": { rings ([[lat,lng]]), timestamp (ISO) } | null }
     """
-    from services.arcgis_live_feeds import fetch_terminator
 
     result = fetch_terminator()
     return jsonify({"terminator": result})
@@ -2250,7 +2264,6 @@ def map_stream_gauges() -> Any:
                           status_48h, status_72h, updated, station_url,
                           graph_url } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_stream_gauges
 
     try:
         south = float(request.args["south"])
@@ -2280,7 +2293,6 @@ def map_storm_reports() -> Any:
     JSON: { "reports": [ { type, lat, lng, time (ISO), location, state,
                             comments, magnitude, color } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_storm_reports
 
     try:
         south = float(request.args["south"])
@@ -2310,7 +2322,6 @@ def map_air_quality() -> Any:
     JSON: { "stations": [ { lat, lng, name, pm25, category, color, updated } ],
             "count" }
     """
-    from services.arcgis_live_feeds import fetch_aqi_map
 
     try:
         south = float(request.args["south"])
@@ -2342,7 +2353,6 @@ def map_drought() -> Any:
     JSON: { "polygons": [ { dm, code, label, color, rings [[lat,lng]] } ],
             "count" }
     """
-    from services.arcgis_live_feeds import fetch_drought_map
 
     try:
         south = float(request.args["south"])
@@ -2375,7 +2385,6 @@ def map_precipitation() -> Any:
     JSON: { "polygons": [ { from_time, to_time, category, label, color,
                              rings [[lat,lng]] } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_precipitation_map
 
     try:
         south = float(request.args["south"])
@@ -2409,7 +2418,6 @@ def map_temperature() -> Any:
     JSON: { "min": [...], "max": [...] }
     Each entry: { temp_f, period (YYYY-MM-DD), color, rings [[lat,lng]] }
     """
-    from services.arcgis_live_feeds import fetch_ndfd_temperature_map
 
     try:
         south = float(request.args["south"])
@@ -2443,7 +2451,6 @@ def map_buoys() -> Any:
                           wind_kt, wind_dir, period_s, pressure_mb, updated } ],
             "count" }
     """
-    from services.arcgis_live_feeds import fetch_ndbc_buoys
 
     try:
         south = float(request.args["south"])
@@ -2475,7 +2482,6 @@ def map_hfradar() -> Any:
     JSON: { "vectors": [ { lat, lng, speed_cms, speed_kts, dir_deg,
                             u, v, color, updated } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_hfradar_currents
 
     try:
         south = float(request.args["south"])
@@ -2505,7 +2511,6 @@ def map_tropical_outlook() -> Any:
     JSON: { "areas": [ { probability, prob_label, color, basin,
                           rings [[lat,lng]], discussion } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_tropical_outlook
 
     areas = fetch_tropical_outlook()
     resp = jsonify({"areas": areas, "count": len(areas)})
@@ -2536,7 +2541,6 @@ def custom_markers_create() -> Any:
     err = _require_map_admin()
     if err:
         return err
-    from storage.sqlite import create_custom_marker
 
     data = request.get_json(silent=True) or {}
     try:
@@ -2559,7 +2563,6 @@ def custom_markers_update(marker_id: int) -> Any:
     err = _require_map_admin()
     if err:
         return err
-    from storage.sqlite import update_custom_marker
 
     data = request.get_json(silent=True) or {}
     lat = float(data["lat"]) if "lat" in data else None
@@ -2581,7 +2584,6 @@ def custom_markers_delete(marker_id: int) -> Any:
     err = _require_map_admin()
     if err:
         return err
-    from storage.sqlite import delete_custom_marker
 
     ok = delete_custom_marker(marker_id)
     if not ok:
