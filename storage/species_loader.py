@@ -25,6 +25,7 @@ _REQUIRED_FIELDS: frozenset = frozenset(
         "rig",
         "hook_size",
         "sinker",
+        "lures",
         "explanation_cold",
         "explanation_warm",
         "coast",

@@ -15,6 +15,12 @@ NWS_MARINE_ZONE = "AMZ158"
 
 _MPH_TO_KNOTS = 0.868976
 
+# Connect timeout kept slightly above 3 s to survive a slow DNS + TCP handshake
+# without blocking the forecast pipeline. Read timeouts differ by endpoint:
+# zone forecasts return larger payloads so they get a longer read window.
+_NWS_TIMEOUT: tuple[float, float] = (3.05, 10)
+_NWS_TIMEOUT_ZONE: tuple[float, float] = (3.05, 15)
+
 _DIR_MAP: dict = {
     "north": "N",
     "northeast": "NE",
@@ -43,7 +49,7 @@ def _try_nws_forecast(
     zone = zone or NWS_MARINE_ZONE
     url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
     response = http_get(
-        url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15)
+        url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=_NWS_TIMEOUT_ZONE
     )
     response.raise_for_status()
     data = response.json()
@@ -68,14 +74,14 @@ def _try_nws_gridpoint(
         f"https://api.weather.gov/points/{lat},{lng}",
         endpoint="nws.points",
         headers=_NWS_HEADERS,
-        timeout=(3.05, 10),
+        timeout=_NWS_TIMEOUT,
     )
     pts.raise_for_status()
     forecast_url = pts.json()["properties"]["forecast"]
 
     # Then get the forecast
     fc = http_get(
-        forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=(3.05, 10)
+        forecast_url, endpoint="nws.forecast", headers=_NWS_HEADERS, timeout=_NWS_TIMEOUT
     )
     fc.raise_for_status()
     periods = fc.json()["properties"]["periods"]
@@ -189,7 +195,7 @@ def fetch_weather_alerts(lat: float, lng: float) -> list[dict[str, str]]:
             f"https://api.weather.gov/alerts/active?point={lat},{lng}",
             endpoint="nws.alerts",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -229,7 +235,7 @@ def fetch_state_alerts(state_code: str) -> list[dict[str, str]]:
             f"https://api.weather.gov/alerts/active?area={state_code.upper()}",
             endpoint="nws.alerts_state",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -265,7 +271,7 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[dict[str, Any]]:
             f"https://api.weather.gov/points/{lat},{lng}",
             endpoint="nws.points",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         pts.raise_for_status()
         obs_url = pts.json()["properties"].get("observationStations", "")
@@ -277,7 +283,7 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[dict[str, Any]]:
             obs_url,
             endpoint="nws.observation_stations",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         stations.raise_for_status()
         station_list = stations.json().get("observationStations", [])
@@ -289,7 +295,7 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[dict[str, Any]]:
             f"https://api.weather.gov/stations/{station_id}/observations/latest",
             endpoint="nws.observation_latest",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         obs.raise_for_status()
         props = obs.json().get("properties", {})
@@ -349,7 +355,7 @@ def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> list[dict[str
             f"https://api.weather.gov/points/{lat},{lng}",
             endpoint="nws.points",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         pts.raise_for_status()
         forecast_url = pts.json()["properties"]["forecast"]
@@ -357,7 +363,7 @@ def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> list[dict[str
             forecast_url,
             endpoint="nws.forecast",
             headers=_NWS_HEADERS,
-            timeout=(3.05, 10),
+            timeout=_NWS_TIMEOUT,
         )
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]
@@ -372,7 +378,7 @@ def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> list[dict[str
     try:
         url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
         fc = http_get(
-            url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=(3.05, 15)
+            url, endpoint="nws.zone_forecast", headers=_NWS_HEADERS, timeout=_NWS_TIMEOUT_ZONE
         )
         fc.raise_for_status()
         return fc.json()["properties"]["periods"]

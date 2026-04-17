@@ -16,6 +16,37 @@ logger = logging.getLogger(__name__)
 _LAT = 34.2104
 _LNG = -77.7964
 
+# Astronomical constants
+_SYNODIC_MONTH_DAYS = 29.53058867   # Synodic month (new moon to new moon)
+_MOON_RISE_SET_OFFSET = 6.2         # Hours from moon transit to moonrise/moonset
+_EARTH_MOON_DISTANCE_KM = 384400    # Mean Earth-Moon distance
+_MOON_ANOMALY_COEFFICIENT_KM = 20905  # Lunar distance variation amplitude
+
+
+def _eqtime(gamma: float) -> float:
+    """Equation of time correction in minutes (NOAA algorithm)."""
+    return 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(gamma)
+        - 0.032077 * math.sin(gamma)
+        - 0.014615 * math.cos(2 * gamma)
+        - 0.040849 * math.sin(2 * gamma)
+    )
+
+
+def _solar_decl(gamma: float) -> float:
+    """Solar declination in radians (NOAA algorithm)."""
+    return (
+        0.006918
+        - 0.399912 * math.cos(gamma)
+        + 0.070257 * math.sin(gamma)
+        - 0.006758 * math.cos(2 * gamma)
+        + 0.000907 * math.sin(2 * gamma)
+        - 0.002697 * math.cos(3 * gamma)
+        + 0.00148 * math.sin(3 * gamma)
+    )
+
+
 def _sun_times(
     dt: datetime,
     lat: float = 0,
@@ -39,26 +70,8 @@ def _sun_times(
 
     # Fractional year in radians
     gamma = 2 * math.pi / 365 * (n - 1)
-
-    # Equation of time (minutes)
-    eqtime = 229.18 * (
-        0.000075
-        + 0.001868 * math.cos(gamma)
-        - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma)
-        - 0.040849 * math.sin(2 * gamma)
-    )
-
-    # Solar declination (radians)
-    decl = (
-        0.006918
-        - 0.399912 * math.cos(gamma)
-        + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma)
-        + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma)
-        + 0.00148 * math.sin(3 * gamma)
-    )
+    eqtime = _eqtime(gamma)
+    decl = _solar_decl(gamma)
 
     lat_rad = math.radians(lat)
 
@@ -87,7 +100,7 @@ def _moon_phase(dt: datetime) -> float:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
     diff = (dt - ref).total_seconds()
-    synodic = 29.53058867  # days
+    synodic = _SYNODIC_MONTH_DAYS
     phase = (diff / (synodic * 86400)) % 1.0
     return phase
 
@@ -130,22 +143,8 @@ def _sun_event_time(
         dt = dt.replace(tzinfo=tz)
     n = dt.timetuple().tm_yday
     gamma = 2 * math.pi / 365 * (n - 1)
-    eqtime = 229.18 * (
-        0.000075
-        + 0.001868 * math.cos(gamma)
-        - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma)
-        - 0.040849 * math.sin(2 * gamma)
-    )
-    decl = (
-        0.006918
-        - 0.399912 * math.cos(gamma)
-        + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma)
-        + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma)
-        + 0.00148 * math.sin(3 * gamma)
-    )
+    eqtime = _eqtime(gamma)
+    decl = _solar_decl(gamma)
     lat_rad = math.radians(lat)
     cos_ha = math.cos(math.radians(zenith_deg)) / (
         math.cos(lat_rad) * math.cos(decl)
@@ -193,11 +192,10 @@ def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> dict[str, A
         dt = dt.replace(tzinfo=tz)
 
     phase_frac = _moon_phase(dt)
-    synodic = 29.53058867
-    age_days = phase_frac * synodic
+    age_days = phase_frac * _SYNODIC_MONTH_DAYS
     overhead, _underfoot = _moon_transit_hours(dt, lng)
-    moonrise_h = (overhead - 6.2) % 24.0
-    moonset_h = (overhead + 6.2) % 24.0
+    moonrise_h = (overhead - _MOON_RISE_SET_OFFSET) % 24.0
+    moonset_h = (overhead + _MOON_RISE_SET_OFFSET) % 24.0
 
     def hour_to_str(hour: float) -> str:
         h = int(hour) % 24
@@ -207,9 +205,8 @@ def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> dict[str, A
         return f"{display}:{m:02d} {ampm}"
 
     # Approximate geocentric moon distance in km with simple anomaly model.
-    mean_distance_km = 384400
     anomaly = 2 * math.pi * phase_frac
-    distance_km = mean_distance_km - 20905 * math.cos(anomaly)
+    distance_km = _EARTH_MOON_DISTANCE_KM - _MOON_ANOMALY_COEFFICIENT_KM * math.cos(anomaly)
 
     return {
         "moonrise": hour_to_str(moonrise_h),
