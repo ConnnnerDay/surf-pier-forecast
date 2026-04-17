@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from services.http_client import get as http_get
 
@@ -12,7 +12,6 @@ from locations import get_monthly_water_temps
 from utils import safe_zone as _safe_zone
 
 logger = logging.getLogger(__name__)
-
 
 _COOPS_HEADERS = {
     "User-Agent": "(SurfPierForecast, github.com/ConnnnerDay/surf-pier-forecast)",
@@ -54,7 +53,6 @@ MONTHLY_AVG_WATER_TEMP_F = {
     12: 54,
 }
 
-
 def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     """Fetch the latest water temperature (F) from NOAA CO-OPS.
 
@@ -78,7 +76,6 @@ def fetch_water_temperature(station_id: str = "") -> Optional[float]:
     except Exception:
         logger.debug("Water temperature fetch failed", exc_info=True)
     return None
-
 
 def fetch_latest_coops_product(
     station_id: str, product: str, units: str = "english"
@@ -109,10 +106,9 @@ def fetch_latest_coops_product(
         logger.debug("NOAA CO-OPS product %r fetch failed", product, exc_info=True)
         return None
 
-
-def fetch_coops_environmental_metrics(station_id: str) -> Dict[str, float]:
+def fetch_coops_environmental_metrics(station_id: str) -> dict[str, float]:
     """Fetch optional NOAA CO-OPS environmental products for a station."""
-    metrics: Dict[str, float] = {}
+    metrics: dict[str, float] = {}
     products = {
         "air_temperature": ("air_temp_f", "english"),
         "humidity": ("humidity_pct", "metric"),
@@ -127,10 +123,9 @@ def fetch_coops_environmental_metrics(station_id: str) -> Dict[str, float]:
             metrics[key] = round(val, 2)
     return metrics
 
-
 def fetch_currents_predictions(
     station_id: str, tz_name: str = "America/New_York"
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Fetch NOAA CO-OPS current prediction events (flood/ebb/slack)."""
     tz = _safe_zone(tz_name)
     now = datetime.now(tz)
@@ -152,7 +147,7 @@ def fetch_currents_predictions(
         )
         resp.raise_for_status()
         rows = resp.json().get("cp", [])
-        out: List[Dict[str, str]] = []
+        out: list[dict[str, str]] = []
         for row in rows:
             raw = row.get("Time") or row.get("time")
             velocity = row.get("Velocity_Major") or row.get("Velocity") or row.get("v")
@@ -182,10 +177,9 @@ def fetch_currents_predictions(
         )
         return []
 
-
 def fetch_currents_observation(
     station_id: str, tz_name: str = "America/New_York"
-) -> Optional[Dict[str, str]]:
+) -> Optional[dict[str, str]]:
     """Fetch latest measured current speed/direction from NOAA CO-OPS."""
     tz = _safe_zone(tz_name)
     url = (
@@ -230,13 +224,12 @@ def fetch_currents_observation(
         )
         return None
 
-
 def get_water_temp(
     month: int,
-    location: Optional[Dict[str, Any]] = None,
-    sources_used: Optional[List[str]] = None,
-    fallbacks_triggered: Optional[List[str]] = None,
-) -> Tuple[float, bool]:
+    location: Optional[dict[str, Any]] = None,
+    sources_used: Optional[list[str]] = None,
+    fallbacks_triggered: Optional[list[str]] = None,
+) -> tuple[float, bool]:
     """Return (water_temp_f, is_live).
 
     Tries the live NOAA reading first.  Falls back to the historical
@@ -257,13 +250,11 @@ def get_water_temp(
         fallbacks_triggered.append("monthly_regional_water_temp")
     return float(MONTHLY_AVG_WATER_TEMP_F[month]), False
 
-
 # -- Source 3: NOAA CO-OPS wind data (same station as water temp) -----------
-
 
 def _try_coops_wind(
     station_id: str = "",
-) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+) -> tuple[Optional[tuple[float, float]], Optional[tuple[float, float]], Optional[str]]:
     """Fetch wind from a NOAA CO-OPS station.
 
     This is the same station we use for water temperature, so if water temp
@@ -292,11 +283,10 @@ def _try_coops_wind(
 
     return wind_range, None, wind_dir
 
-
 def fetch_tide_predictions(
     station_id: str,
     tz_name: str = "America/New_York",
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Fetch today's tide predictions from NOAA CO-OPS.
 
     Returns a list of dicts like:
@@ -355,10 +345,9 @@ def fetch_tide_predictions(
         logger.debug("Tide predictions fetch failed", exc_info=True)
         return []
 
-
 def build_tide_chart_svg(
-    tides: List[Dict[str, Any]], now_hour: Optional[float] = None
-) -> Optional[Dict[str, Any]]:
+    tides: list[dict[str, Any]], now_hour: Optional[float] = None
+) -> Optional[dict[str, Any]]:
     """Build a tide chart data dict for SVG rendering.
 
     Returns a dict with 'path' (SVG path d attribute), 'points' (list of

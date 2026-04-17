@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 from services.http_client import get as http_get
 
@@ -17,7 +17,6 @@ NDBC_STATIONS = [
 
 _MS_TO_KNOTS = 1.94384
 _M_TO_FEET = 3.28084
-
 
 def _deg_to_compass(deg: float) -> str:
     """Convert wind direction in degrees to a compass abbreviation."""
@@ -42,10 +41,9 @@ def _deg_to_compass(deg: float) -> str:
     idx = round(deg / 22.5) % 16
     return _DEG_TO_DIR[idx]
 
-
 def _try_ndbc_station(
     station_id: str,
-) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+) -> tuple[Optional[tuple[float, float]], Optional[tuple[float, float]], Optional[str]]:
     """Fetch real-time wind/wave observations from a single NDBC buoy."""
     url = f"https://www.ndbc.noaa.gov/data/realtime2/{station_id}.txt"
     resp = http_get(
@@ -97,10 +95,9 @@ def _try_ndbc_station(
 
     return wind_range, wave_range, wind_dir
 
-
 def fetch_barometric_pressure(
-    location: Optional[Dict[str, Any]] = None,
-) -> Optional[Dict[str, Any]]:
+    location: Optional[dict[str, Any]] = None,
+) -> Optional[dict[str, Any]]:
     """Fetch barometric pressure from NDBC buoy or NOAA CO-OPS station.
 
     Returns a dict with:

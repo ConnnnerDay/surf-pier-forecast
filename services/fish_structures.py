@@ -8,7 +8,7 @@ Data sources
 Public API
 ----------
     find_fish_structures(south, west, north, east, types=None)
-        → List[{lat, lng, type, name, tip}]
+        → list[{lat, lng, type, name, tip}]
 
 Each returned dict has:
     lat   float   WGS-84 latitude
@@ -25,7 +25,7 @@ import logging
 import time as _time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -47,16 +47,15 @@ _HTTP.mount("http://", HTTPAdapter(pool_connections=4, pool_maxsize=8))
 # Entries expire after _CACHE_TTL seconds; the dict is capped at _CACHE_MAX
 # entries — oldest insertion is dropped first once the cap is hit.
 
-_CACHE: Dict[
-    tuple, Dict[str, Any]
+_CACHE: dict[
+    tuple, dict[str, Any]
 ] = {}  # {key: {"ts": float, "data": list, "failed": bool}}
 _CACHE_TTL: int = 1800  # 30 minutes — piers and reefs don't move
 _CACHE_TTL_FAILED: int = 90  # 90 seconds — retry failed bboxes less aggressively
 _CACHE_MAX: int = 256  # max bbox+types combinations kept in memory
 
-
 def _cache_key(
-    south: float, west: float, north: float, east: float, types: Set[str]
+    south: float, west: float, north: float, east: float, types: set[str]
 ) -> tuple:
     """Stable, hashable cache key rounded to 2 decimal places (~1 km grid)."""
     return (
@@ -67,10 +66,8 @@ def _cache_key(
         frozenset(types),
     )
 
-
 _CACHE_EVICT_INTERVAL: float = 60.0  # seconds between full TTL scans
 _cache_last_evict: float = 0.0
-
 
 def _cache_evict() -> None:
     """Purge entries older than TTL; if still over cap, drop oldest by insertion.
@@ -96,11 +93,9 @@ def _cache_evict() -> None:
         except (KeyError, StopIteration):
             break  # another thread cleared it first
 
-
 def cache_clear() -> None:
     """Remove all cached results.  Intended for tests and cache-invalidation hooks."""
     _CACHE.clear()
-
 
 # ── Habitat types rendered as filled polygon overlays ─────────────────────────
 # These are area features (wetlands, beaches, …) whose OSM ways carry closed
@@ -146,7 +141,7 @@ VALID_TYPES: frozenset[str] = frozenset(
 
 # ── Fishing context tips  ──────────────────────────────────────────────────────
 # Mirrors STRUCTURE_TIPS in static/js/fishing_map.js
-STRUCTURE_TIPS: Dict[str, str] = {
+STRUCTURE_TIPS: dict[str, str] = {
     "pier": (
         "Work the pilings and shadow lines — baitfish stack against current "
         "breaks at dawn and dusk."
@@ -221,7 +216,7 @@ STRUCTURE_TIPS: Dict[str, str] = {
 # are distinct features and must not be collapsed just because their
 # computed centroids happen to be close.  Only name-based dedup applies to
 # those types.  Tight thresholds remain for point structures.
-_PROX: Dict[str, float] = {
+_PROX: dict[str, float] = {
     "inlet": 0.005,  # ~550 m — tidal channel nodes cluster heavily
     "marina": 0.004,  # ~440 m
     "beach": 0.0,  # polygon area — skip centroid proximity dedup
@@ -240,8 +235,7 @@ _PROX: Dict[str, float] = {
 # for dense coastal features that OSM often encodes with 300–1 000 nodes.
 _MAX_POLYGON_COORDS: int = 200
 
-
-def _decimate_ring(coords: List[List[float]]) -> List[List[float]]:
+def _decimate_ring(coords: list[list[float]]) -> list[list[float]]:
     """Thin a coordinate ring to at most ``_MAX_POLYGON_COORDS`` points.
 
     Uses uniform Nth-point selection so the ring shape is preserved evenly.
@@ -257,7 +251,6 @@ def _decimate_ring(coords: List[List[float]]) -> List[List[float]]:
         indices.add(round(i * step))
     return [coords[i] for i in sorted(indices)]
 
-
 # ── Overpass API endpoints (primary + mirror fallback) ────────────────────────
 _OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
@@ -272,13 +265,11 @@ _NOAA_LAYER_WRECKS = 2
 _NOAA_LAYER_OBSTRUCTIONS = 3
 _NOAA_LAYER_ROCKS = 4
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def _build_overpass_query(bbox: str, types: Set[str]) -> str:
+def _build_overpass_query(bbox: str, types: set[str]) -> str:
     """Return an Overpass QL query string for the requested types.
 
     ``bbox`` must be the Overpass format string ``"south,west,north,east"``.
@@ -294,8 +285,8 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
       these are rendered as small icon markers so full geometry would just
       inflate the payload for no benefit.
     """
-    habitat: List[str] = []  # will use `out geom;`
-    struct: List[str] = []  # will use `out center;`
+    habitat: list[str] = []  # will use `out geom;`
+    struct: list[str] = []  # will use `out center;`
 
     # ── Habitat area types (polygon rendering) ──────────────────────────────
     if "grass_flat" in types:
@@ -422,7 +413,7 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
     # Build the combined query using named sets so each half can use the
     # correct output mode.  Both sets' results land in the same `elements`
     # array in the Overpass JSON response.
-    parts: List[str] = ["[out:json][timeout:20];"]
+    parts: list[str] = ["[out:json][timeout:20];"]
     if habitat:
         parts.append("(" + "".join(habitat) + ")->.h;")
     if struct:
@@ -433,8 +424,7 @@ def _build_overpass_query(bbox: str, types: Set[str]) -> str:
         parts.append(".s out center;")
     return "".join(parts)
 
-
-def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
+def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     """Map an OSM element's tags to a VALID_TYPES string, or None to discard."""
     natural = tags.get("natural", "")
     wetland = tags.get("wetland", "")
@@ -522,8 +512,7 @@ def _classify_osm_tags(tags: Dict[str, Any]) -> Optional[str]:
 
     return None
 
-
-def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _deduplicate(spots: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Remove duplicate markers by name and by proximity.
 
     Strategy
@@ -543,9 +532,9 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     border-zone artefact (spots between 1× and √2× thresh apart near a
     cell corner).  For display deduplication that trade-off is acceptable.
     """
-    named_seen: Dict[str, bool] = {}
-    grid: Dict[tuple, bool] = {}  # (type, grid_lat, grid_lng) → True
-    out: List[Dict[str, Any]] = []
+    named_seen: dict[str, bool] = {}
+    grid: dict[tuple, bool] = {}  # (type, grid_lat, grid_lng) → True
+    out: list[dict[str, Any]] = []
 
     for spot in spots:
         name = (spot.get("name") or "").strip()
@@ -575,8 +564,7 @@ def _deduplicate(spots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
     return out
 
-
-def _post_overpass(query: str) -> List[Dict[str, Any]]:
+def _post_overpass(query: str) -> list[dict[str, Any]]:
     """POST an Overpass QL query, falling back to the mirror on failure.
 
     Returns the raw ``elements`` list from the Overpass JSON response.
@@ -597,14 +585,13 @@ def _post_overpass(query: str) -> List[Dict[str, Any]]:
 
     raise last_exc or RuntimeError("All Overpass endpoints failed")
 
-
 def _get_noaa_enc_layer(
     layer: int,
     south: float,
     west: float,
     north: float,
     east: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Query a single NOAA ENC ArcGIS layer within the bounding box.
 
     Returns the raw ``features`` list, or an empty list on any error so that
@@ -619,7 +606,7 @@ def _get_noaa_enc_layer(
             "spatialReference": {"wkid": 4326},
         }
     )
-    params: Dict[str, str] = {
+    params: dict[str, str] = {
         "geometry": geometry,
         "geometryType": "esriGeometryEnvelope",
         "spatialRel": "esriSpatialRelIntersects",
@@ -636,17 +623,16 @@ def _get_noaa_enc_layer(
         logger.warning("NOAA ENC layer=%s query failed: %s", layer, exc)
         return []
 
-
 def _noaa_features_to_spots(
-    features: List[Dict[str, Any]],
+    features: list[dict[str, Any]],
     spot_type: str,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Convert NOAA ENC ArcGIS feature dicts to our ``{lat, lng, type, name}`` format.
 
     Handles both point geometries (``x``/``y``) and polygon geometries
     (``rings``), using the centroid of the first ring for polygons.
     """
-    spots: List[Dict[str, Any]] = []
+    spots: list[dict[str, Any]] = []
     for feat in features:
         geom = feat.get("geometry") or {}
         attrs = feat.get("attributes") or {}
@@ -671,19 +657,17 @@ def _noaa_features_to_spots(
 
     return spots
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public functions
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def fetch_osm_structures(
     south: float,
     west: float,
     north: float,
     east: float,
-    types: Set[str],
-) -> List[Dict[str, Any]]:
+    types: set[str],
+) -> list[dict[str, Any]]:
     """Fetch fish-holding structures from OpenStreetMap via the Overpass API.
 
     Parameters
@@ -704,7 +688,7 @@ def fetch_osm_structures(
 
     elements = _post_overpass(query)
 
-    spots: List[Dict[str, Any]] = []
+    spots: list[dict[str, Any]] = []
     for el in elements:
         lat = el.get("lat") or (el.get("center") or {}).get("lat")
         lng = el.get("lon") or (el.get("center") or {}).get("lon")
@@ -734,7 +718,7 @@ def fetch_osm_structures(
             or tags.get("addr:housename")
             or ""
         )
-        spot: Dict[str, Any] = {"lat": lat, "lng": lng, "type": spot_type, "name": name}
+        spot: dict[str, Any] = {"lat": lat, "lng": lng, "type": spot_type, "name": name}
 
         # Attach polygon geometry for habitat area types so the client can
         # draw a filled outline instead of a single-point marker.
@@ -750,14 +734,13 @@ def fetch_osm_structures(
 
     return spots
 
-
 def fetch_noaa_structures(
     south: float,
     west: float,
     north: float,
     east: float,
-    types: Set[str],
-) -> List[Dict[str, Any]]:
+    types: set[str],
+) -> list[dict[str, Any]]:
     """Fetch wrecks and marine obstructions from the NOAA ENC chart service.
 
     Queries the NOAA OCS ENCOnline ArcGIS REST service for:
@@ -781,7 +764,7 @@ def fetch_noaa_structures(
     # Previously the 3 NOAA layers were sequential; each _get_noaa_enc_layer()
     # call takes up to 4+12 s on a cold connection.  Running them concurrently
     # halves the worst-case NOAA latency when both wrecks and shoals are active.
-    layer_jobs: List[tuple] = []  # [(layer_id, spot_type), ...]
+    layer_jobs: list[tuple] = []  # [(layer_id, spot_type), ...]
     if "wreck" in types:
         layer_jobs.append((_NOAA_LAYER_WRECKS, "wreck"))
     if types & {"shoal", "reef"}:
@@ -791,7 +774,7 @@ def fetch_noaa_structures(
     if not layer_jobs:
         return []
 
-    spots: List[Dict[str, Any]] = []
+    spots: list[dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=len(layer_jobs)) as pool:
         futs = {
             pool.submit(_get_noaa_enc_layer, lid, south, west, north, east): stype
@@ -806,14 +789,13 @@ def fetch_noaa_structures(
 
     return spots
 
-
 def find_fish_structures(
     south: float,
     west: float,
     north: float,
     east: float,
-    types: Optional[Set[str]] = None,
-) -> List[Dict[str, Any]]:
+    types: Optional[set[str]] = None,
+) -> list[dict[str, Any]]:
     """Identify fish-holding structures within a map bounding box.
 
     Queries OpenStreetMap (via Overpass API) and NOAA ENC (for wrecks and
@@ -846,7 +828,7 @@ def find_fish_structures(
     ``STRUCTURE_TIPS`` locally and looks them up as
     ``f.tip || STRUCTURE_TIPS[f.type]``, halving the wire payload.
     """
-    active_types: Set[str] = (
+    active_types: set[str] = (
         set(VALID_TYPES) if types is None else (set(types) & VALID_TYPES)
     )
     if not active_types:
@@ -868,8 +850,8 @@ def find_fish_structures(
     # ── Fetch from sources in parallel  ──────────────────────────────────────
     # OSM (Overpass) and NOAA ENC run concurrently so neither blocks the other.
     # Each is caught individually so a NOAA outage never drops the OSM results.
-    osm_spots: List[Dict[str, Any]] = []
-    noaa_spots: List[Dict[str, Any]] = []
+    osm_spots: list[dict[str, Any]] = []
+    noaa_spots: list[dict[str, Any]] = []
     fetch_failed = False
 
     with ThreadPoolExecutor(max_workers=2) as pool:

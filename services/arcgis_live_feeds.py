@@ -30,7 +30,7 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -143,18 +143,16 @@ _MARINE_KEYWORDS = frozenset(
 
 # ── Caches ─────────────────────────────────────────────────────────────────────
 
-_WARN_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_WARN_CACHE: dict[tuple, dict[str, Any]] = {}
 _WARN_TTL = 600  # 10 minutes — warnings update frequently
 _WARN_MAX = 64  # bbox combinations kept in memory
 
-_STORM_CACHE: Optional[List[Dict[str, Any]]] = None
+_STORM_CACHE: Optional[list[dict[str, Any]]] = None
 _STORM_TS = 0.0
 _STORM_TTL = 600  # 10 minutes
 
-
 def _warn_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 2), round(w, 2), round(n, 2), round(e, 2))
-
 
 def _warn_evict() -> None:
     now = time.time()
@@ -167,11 +165,9 @@ def _warn_evict() -> None:
         except (KeyError, StopIteration):
             break
 
-
 def _is_marine(event: str) -> bool:
     ev = event.lower()
     return any(kw in ev for kw in _MARINE_KEYWORDS)
-
 
 def _warning_color(severity: str, event: str) -> str:
     """Map severity + event type to a hex fill color for map polygons."""
@@ -190,7 +186,6 @@ def _warning_color(severity: str, event: str) -> str:
         return "#eab308"  # yellow
     return "#60a5fa"  # blue — minor advisories
 
-
 def _ms_to_iso(ms: Any) -> str:
     """Convert ArcGIS epoch-milliseconds timestamp to ISO-8601 string."""
     if not ms:
@@ -200,18 +195,15 @@ def _ms_to_iso(ms: Any) -> str:
     except Exception:
         return ""
 
-
 def _ring_to_latlng(ring: list) -> list:
     """Convert ArcGIS [x=lng, y=lat] ring coordinates to Leaflet [[lat, lng]]."""
     return [[pt[1], pt[0]] for pt in ring if len(pt) >= 2]
 
-
 # ── Marine warnings ────────────────────────────────────────────────────────────
-
 
 def fetch_marine_warnings(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return active NWS watches/warnings that intersect the bounding box.
 
     Each dict has:
@@ -256,7 +248,7 @@ def fetch_marine_warnings(
         logger.warning("ArcGIS marine-warnings fetch failed: %s", exc)
         return []
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in data.get("features", []):
         attrs = feat.get("attributes", {})
         event = attrs.get("Event") or ""
@@ -283,11 +275,9 @@ def fetch_marine_warnings(
     _WARN_CACHE[key] = {"ts": time.time(), "data": results}
     return results
 
-
 # ── Active storm tracker ───────────────────────────────────────────────────────
 
-
-def fetch_active_storms() -> List[Dict[str, Any]]:
+def fetch_active_storms() -> list[dict[str, Any]]:
     """Return currently active tropical cyclones with forecast track and cone.
 
     Each dict has:
@@ -312,7 +302,7 @@ def fetch_active_storms() -> List[Dict[str, Any]]:
         "resultRecordCount": 50,
     }
 
-    storms: Dict[str, Dict[str, Any]] = {}  # keyed by UPPER storm name
+    storms: dict[str, dict[str, Any]] = {}  # keyed by UPPER storm name
 
     # ── Step 1: Forecast positions ─────────────────────────────────────────────
     try:
@@ -383,7 +373,6 @@ def fetch_active_storms() -> List[Dict[str, Any]]:
     _STORM_TS = time.time()
     return result
 
-
 def _category_label(kt: int) -> str:
     """Convert max sustained wind speed (knots) to a human-readable category."""
     if kt >= 137:
@@ -402,10 +391,9 @@ def _category_label(kt: int) -> str:
         return "Tropical Depression"
     return "Unknown"
 
-
 # ── Recent Hurricane Tracks ────────────────────────────────────────────────────
 
-_RECENT_TRACK_CACHE: Optional[List[Dict[str, Any]]] = None
+_RECENT_TRACK_CACHE: Optional[list[dict[str, Any]]] = None
 _RECENT_TRACK_TS = 0.0
 _RECENT_TRACK_TTL = 3600  # 1 hour — historical; updates a few times per day
 
@@ -433,10 +421,9 @@ _SS_COLORS = {
     6: "#7c3aed",  # violet — Cat 5
 }
 
-
 def fetch_recent_storm_tracks(
     basin: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return observed storm tracks for the current and recent hurricane seasons.
 
     Queries the Recent_Hurricanes_v1 live feed (NHC / JTWC source).
@@ -487,7 +474,7 @@ def fetch_recent_storm_tracks(
         logger.warning("ArcGIS recent storm tracks fetch failed: %s", exc)
         return []
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in data.get("features", []):
         attrs = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -522,7 +509,6 @@ def fetch_recent_storm_tracks(
         return [s for s in results if s.get("basin", "").upper() == basin.upper()]
     return results
 
-
 # ── Air Quality (PM2.5) ────────────────────────────────────────────────────────
 
 # PM2.5 (µg/m³) breakpoints → AQI category
@@ -535,14 +521,12 @@ _PM25_BREAKPOINTS = [
     (250.5, 9999.0, "Hazardous", "#7c3aed"),
 ]
 
-_AQI_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_AQI_CACHE: dict[tuple, dict[str, Any]] = {}
 _AQI_CACHE_TTL = 1800  # 30 minutes
 _AQI_CACHE_MAX = 32
 
-
 def _aqi_key(lat: float, lng: float) -> tuple:
     return (round(lat, 1), round(lng, 1))
-
 
 def _pm25_category(value: float) -> tuple:
     """Return (category_label, color_hex) for a PM2.5 reading in µg/m³."""
@@ -551,8 +535,7 @@ def _pm25_category(value: float) -> tuple:
             return label, color
     return "Unknown", "#94a3b8"
 
-
-def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
+def fetch_air_quality(lat: float, lng: float) -> Optional[dict[str, Any]]:
     """Return the nearest OpenAQ PM2.5 reading to the given coordinates.
 
     Searches within a ~0.5-degree (~55 km) bounding box; expands to ~1.0 degree
@@ -603,7 +586,7 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
             continue  # try wider search
 
         # Find the closest station by Euclidean distance (good enough at this scale)
-        best: Optional[Dict[str, Any]] = None
+        best: Optional[dict[str, Any]] = None
         best_dist = float("inf")
         for feat in feats:
             geom_obj = feat.get("geometry") or {}
@@ -623,7 +606,7 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         # 1 degree ≈ 111 km
         dist_km = round(best_dist * 111, 1)
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "location": attrs.get("location") or attrs.get("city") or "Unknown",
             "city": attrs.get("city") or "",
             "value": round(raw, 1),
@@ -639,17 +622,14 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[Dict[str, Any]]:
     _AQI_CACHE[key] = {"ts": time.time(), "data": None}
     return None
 
-
 # ── NDFD Wind Forecast ─────────────────────────────────────────────────────────
 
-_WIND_FC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_WIND_FC_CACHE: dict[tuple, dict[str, Any]] = {}
 _WIND_FC_TTL = 3600  # 1 hour — NDFD updates every 1-3 hours
 _WIND_FC_MAX = 32
 
-
 def _wind_key(lat: float, lng: float) -> tuple:
     return (round(lat, 1), round(lng, 1))
-
 
 def _deg_to_compass(deg: Optional[int]) -> str:
     """Convert wind direction in degrees to an 8-point compass abbreviation."""
@@ -659,8 +639,7 @@ def _deg_to_compass(deg: Optional[int]) -> str:
     idx = round(int(deg) / 45) % 8
     return directions[idx]
 
-
-def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
+def fetch_wind_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
     """Return NDFD wind forecast for the nearest city-level point.
 
     Queries NDFD_WindForecast_v1 FeatureServer layer 6 (City Level) in a
@@ -711,7 +690,7 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     # Group by IntervalStart: average across all city points returned in the bbox
     from collections import defaultdict
 
-    buckets: Dict[int, list] = defaultdict(list)
+    buckets: dict[int, list] = defaultdict(list)
     for feat in feats:
         attrs = feat.get("attributes", {})
         ts = attrs.get("IntervalStart")
@@ -725,7 +704,7 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
             }
         )
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for ts_ms in sorted(buckets.keys()):
         entries = buckets[ts_ms]
         dirs = [e["dir"] for e in entries if e["dir"] is not None]
@@ -751,10 +730,9 @@ def fetch_wind_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     _WIND_FC_CACHE[key] = {"ts": time.time(), "data": results}
     return results
 
-
 # ── SST / Coral Reef Stations ─────────────────────────────────────────────────
 
-_SST_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_SST_CACHE: dict[tuple, dict[str, Any]] = {}
 _SST_CACHE_TTL = 1800  # 30 minutes
 _SST_CACHE_MAX = 64
 
@@ -767,14 +745,12 @@ _SST_ALERT = {
     4: ("Bleaching Alert 2", "#7c3aed"),
 }
 
-
 def _sst_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 2), round(w, 2), round(n, 2), round(e, 2))
 
-
 def fetch_sst_stations(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return NOAA coral reef / SST monitoring stations in the bounding box.
 
     Each returned dict has:
@@ -820,7 +796,7 @@ def fetch_sst_stations(
         logger.warning("ArcGIS SST stations fetch failed: %s", exc)
         return []
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -867,21 +843,18 @@ def fetch_sst_stations(
     _SST_CACHE[key] = {"ts": time.time(), "data": results}
     return results
 
-
 # ── Active Wildfires ───────────────────────────────────────────────────────────
 
-_FIRE_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_FIRE_CACHE: dict[tuple, dict[str, Any]] = {}
 _FIRE_CACHE_TTL = 900  # 15 minutes
 _FIRE_CACHE_MAX = 32
-
 
 def _fire_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
 def fetch_wildfire_incidents(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return active wildfire incidents intersecting the bounding box.
 
     Each dict has:
@@ -929,7 +902,7 @@ def fetch_wildfire_incidents(
         logger.warning("ArcGIS wildfire fetch failed: %s", exc)
         return []
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -958,10 +931,9 @@ def fetch_wildfire_incidents(
     _FIRE_CACHE[key] = {"ts": time.time(), "data": results}
     return results
 
-
 # ── Smoke Forecast ─────────────────────────────────────────────────────────────
 
-_SMOKE_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_SMOKE_CACHE: dict[tuple, dict[str, Any]] = {}
 _SMOKE_CACHE_TTL = 3600  # 1 hour — hourly forecast product
 _SMOKE_CACHE_MAX = 32
 
@@ -974,22 +946,19 @@ _SMOKE_CLASSES = {
     "158-1000": {"fill": "#7f1d1d", "opacity": 0.65, "label": "Extreme (>158 µg/m³)"},
 }
 
-
 def _smoke_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
-def _smoke_style(class_desc: str) -> Dict[str, Any]:
+def _smoke_style(class_desc: str) -> dict[str, Any]:
     """Map NDGD smoke class description to fill/opacity/label."""
     for key_frag, style in _SMOKE_CLASSES.items():
         if key_frag in (class_desc or ""):
             return style
     return {"fill": "#fef9c3", "opacity": 0.20, "label": class_desc or "Unknown"}
 
-
 def fetch_smoke_forecast(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return the current smoke forecast polygons intersecting the bounding box.
 
     Returns only the most recent hour's forecast polygons (lowest
@@ -1045,7 +1014,7 @@ def fetch_smoke_forecast(
     ref_dates_valid = [d for d in ref_dates if d is not None]
     latest_ref = max(ref_dates_valid) if ref_dates_valid else None
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         # Only include the current hour's polygons to avoid stacking
@@ -1072,10 +1041,9 @@ def fetch_smoke_forecast(
     _SMOKE_CACHE[key] = {"ts": time.time(), "data": results}
     return results
 
-
 # ── Precipitation Forecast ─────────────────────────────────────────────────────
 
-_PRECIP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_PRECIP_CACHE: dict[tuple, dict[str, Any]] = {}
 _PRECIP_CACHE_TTL = 3600  # 1 hour
 _PRECIP_CACHE_MAX = 32
 
@@ -1103,12 +1071,10 @@ _PRECIP_CAT_LABEL = {
     19: '>40.0"',
 }
 
-
 def _precip_key(lat: float, lng: float) -> tuple:
     return (round(lat, 1), round(lng, 1))
 
-
-def fetch_precip_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
+def fetch_precip_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
     """Return NDFD precipitation forecast for the nearest area around lat/lng.
 
     Returns up to 4 periods (≈ 24 hours at 6-h intervals).
@@ -1155,7 +1121,7 @@ def fetch_precip_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
 
     # Deduplicate by fromdate (multiple polygons may cover the area; take first hit)
     seen: set = set()
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         fd = attrs.get("fromdate")
@@ -1179,15 +1145,13 @@ def fetch_precip_forecast(lat: float, lng: float) -> List[Dict[str, Any]]:
     _PRECIP_CACHE[key] = {"ts": time.time(), "data": results}
     return results
 
-
 # ── Arctic Sea Ice Extent ─────────────────────────────────────────────────────
 
-_SEA_ICE_CACHE: Optional[Dict[str, Any]] = None
+_SEA_ICE_CACHE: Optional[dict[str, Any]] = None
 _SEA_ICE_TS = 0.0
 _SEA_ICE_TTL = 86400  # 24 hours — monthly product
 
-
-def fetch_sea_ice_extent() -> Optional[Dict[str, Any]]:
+def fetch_sea_ice_extent() -> Optional[dict[str, Any]]:
     """Return the most recent Arctic sea ice extent polygon and statistics.
 
     Returns a dict or None:
@@ -1230,7 +1194,7 @@ def fetch_sea_ice_extent() -> Optional[Dict[str, Any]]:
     geom = feats[0].get("geometry") or {}
     rings = geom.get("rings") or []
 
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "year": int(attrs.get("Rec_Year") or 0),
         "month": int(attrs.get("Rec_Month") or 0),
         "area_mkm2": round(float(attrs.get("Rec_Area") or 0), 2),
@@ -1242,19 +1206,16 @@ def fetch_sea_ice_extent() -> Optional[Dict[str, Any]]:
     _SEA_ICE_TS = time.time()
     return result
 
-
 # ── NDFD Daily Temperature ─────────────────────────────────────────────────────
 
-_TEMP_FC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_TEMP_FC_CACHE: dict[tuple, dict[str, Any]] = {}
 _TEMP_FC_TTL = 3600  # 1 hour
 _TEMP_FC_MAX = 32
-
 
 def _temp_key(lat: float, lng: float) -> tuple:
     return (round(lat, 2), round(lng, 2))
 
-
-def fetch_temp_forecast(lat: float, lng: float) -> List[Dict]:
+def fetch_temp_forecast(lat: float, lng: float) -> list[Dict]:
     """Return NDFD 5-7 day daily high/low temperature forecast for (lat, lng).
 
     Each item: { date (YYYY-MM-DD), min_f (int|None), max_f (int|None) }
@@ -1279,7 +1240,7 @@ def fetch_temp_forecast(lat: float, lng: float) -> List[Dict]:
         "f": "json",
     }
 
-    results: Dict[str, Dict[str, Any]] = {}
+    results: dict[str, dict[str, Any]] = {}
 
     for url, field in [(_NDFD_TMIN_URL, "min_f"), (_NDFD_TMAX_URL, "max_f")]:
         try:
@@ -1325,28 +1286,25 @@ def fetch_temp_forecast(lat: float, lng: float) -> List[Dict]:
     _TEMP_FC_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── USGS Seismic Events ────────────────────────────────────────────────────────
 
-_SEISMIC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_SEISMIC_CACHE: dict[tuple, dict[str, Any]] = {}
 _SEISMIC_TTL = 900  # 15 minutes
 _SEISMIC_MAX = 32
 
-_ALERT_COLORS: Dict[str, str] = {
+_ALERT_COLORS: dict[str, str] = {
     "green": "#4CAF50",
     "yellow": "#FFC107",
     "orange": "#FF9800",
     "red": "#F44336",
 }
 
-
 def _seismic_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
 def fetch_seismic_events(
     south: float, west: float, north: float, east: float
-) -> List[Dict]:
+) -> list[Dict]:
     """Return USGS earthquake events (M ≥ 2.5) intersecting the bounding box.
 
     Each item: { lat, lng, mag, depth_km, place, time (ISO), hours_old,
@@ -1383,7 +1341,7 @@ def fetch_seismic_events(
         _SEISMIC_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         lat = attrs.get("latitude")
@@ -1413,21 +1371,20 @@ def fetch_seismic_events(
     _SEISMIC_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── US Drought Intensity ───────────────────────────────────────────────────────
 
-_DROUGHT_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_DROUGHT_CACHE: dict[tuple, dict[str, Any]] = {}
 _DROUGHT_TTL = 21600  # 6 hours — drought data updates weekly
 _DROUGHT_MAX = 64
 
-_DROUGHT_LABELS: Dict[int, tuple] = {
+_DROUGHT_LABELS: dict[int, tuple] = {
     0: ("D0", "Abnormally Dry"),
     1: ("D1", "Moderate Drought"),
     2: ("D2", "Severe Drought"),
     3: ("D3", "Extreme Drought"),
     4: ("D4", "Exceptional Drought"),
 }
-_DROUGHT_COLORS: Dict[int, str] = {
+_DROUGHT_COLORS: dict[int, str] = {
     0: "#FFFF00",  # yellow
     1: "#FCD37F",  # tan/buff
     2: "#FFAA00",  # orange
@@ -1435,10 +1392,8 @@ _DROUGHT_COLORS: Dict[int, str] = {
     4: "#730000",  # dark maroon
 }
 
-
 def _drought_key(lat: float, lng: float) -> tuple:
     return (round(lat, 1), round(lng, 1))
-
 
 def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
     """Return current US Drought Monitor intensity at (lat, lng), or None outside CONUS.
@@ -1485,7 +1440,7 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
 
     if not feats:
         # Point is covered by CONUS extent but no active drought polygon
-        result: Optional[Dict[str, Any]] = {
+        result: Optional[dict[str, Any]] = {
             "dm": -1,
             "code": "None",
             "label": "No Drought",
@@ -1523,28 +1478,25 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
     _DROUGHT_CACHE[k] = {"ts": now, "data": result}
     return result
 
-
 # ── NOAA METAR Surface Observations ───────────────────────────────────────────
 
-_METAR_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_METAR_CACHE: dict[tuple, dict[str, Any]] = {}
 _METAR_TTL = 1800  # 30 minutes — METAR updates hourly
 _METAR_MAX = 32
 
-_FLT_CAT_COLORS: Dict[str, str] = {
+_FLT_CAT_COLORS: dict[str, str] = {
     "VFR": "#22c55e",  # green  — clear flying conditions
     "MVFR": "#60a5fa",  # blue   — marginal VFR
     "IFR": "#f87171",  # red    — instrument conditions / low visibility
     "LIFR": "#c084fc",  # purple — low instrument conditions / fog
 }
 
-
 def _metar_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
 def fetch_metar_stations(
     south: float, west: float, north: float, east: float
-) -> List[Dict]:
+) -> list[Dict]:
     """Return current NOAA METAR surface observations intersecting the bounding box.
 
     Each item: { icao, name, lat, lng, observed (ISO), temp_f, dew_f, humidity,
@@ -1587,7 +1539,7 @@ def fetch_metar_stations(
         _METAR_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         a = feat.get("attributes", {})
         lat = a.get("LATITUDE")
@@ -1645,13 +1597,11 @@ def fetch_metar_stations(
     _METAR_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── Day/Night Terminator ───────────────────────────────────────────────────────
 
-_TERM_CACHE: Optional[Dict[str, Any]] = None
+_TERM_CACHE: Optional[dict[str, Any]] = None
 _TERM_TS = 0.0
 _TERM_TTL = 300  # 5 minutes — the subsolar point moves ~0.07°/min
-
 
 def fetch_terminator() -> Optional[Dict]:
     """Return the current night-shadow polygon (Day/Night Terminator).
@@ -1700,15 +1650,14 @@ def fetch_terminator() -> Optional[Dict]:
     _TERM_TS = now
     return _TERM_CACHE
 
-
 # ── Live Stream Gauges ─────────────────────────────────────────────────────────
 
-_GAUGE_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_GAUGE_CACHE: dict[tuple, dict[str, Any]] = {}
 _GAUGE_TTL = 900  # 15 minutes
 _GAUGE_MAX = 32
 
 # Map statusClass integer to a human label and colour
-_GAUGE_STATUS: Dict[int, tuple] = {
+_GAUGE_STATUS: dict[int, tuple] = {
     0: ("Normal", "#22c55e"),
     1: ("Action Stage", "#facc15"),
     2: ("Minor Flood", "#f97316"),
@@ -1716,14 +1665,12 @@ _GAUGE_STATUS: Dict[int, tuple] = {
     4: ("Major Flood", "#9f1239"),
 }
 
-
 def _gauge_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
 def fetch_stream_gauges(
     south: float, west: float, north: float, east: float
-) -> List[Dict]:
+) -> list[Dict]:
     """Return live USGS/NWS stream gauge readings intersecting the bounding box.
 
     Each item: { id, name, lat, lng, stage_ft, flow_cfs, status, status_class,
@@ -1764,7 +1711,7 @@ def fetch_stream_gauges(
         _GAUGE_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         a = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -1804,27 +1751,24 @@ def fetch_stream_gauges(
     _GAUGE_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── NOAA Storm Reports (past 24 h) ────────────────────────────────────────────
 
-_STORM_RPT_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_STORM_RPT_CACHE: dict[tuple, dict[str, Any]] = {}
 _STORM_RPT_TTL = 1800  # 30 minutes
 _STORM_RPT_MAX = 32
 
-_STORM_RPT_COLORS: Dict[str, str] = {
+_STORM_RPT_COLORS: dict[str, str] = {
     "hail": "#facc15",  # yellow
     "tornado": "#ef4444",  # red
     "wind": "#60a5fa",  # blue
 }
 
-
 def _storm_rpt_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
 def fetch_storm_reports(
     south: float, west: float, north: float, east: float
-) -> List[Dict]:
+) -> list[Dict]:
     """Return NOAA severe weather reports (past 24 h) intersecting the bounding box.
 
     Queries hail, tornado, and wind-damage layers and combines them.
@@ -1851,7 +1795,7 @@ def fetch_storm_reports(
         "f": "json",
     }
 
-    combined: List[Dict[str, Any]] = []
+    combined: list[dict[str, Any]] = []
 
     # Hail layer
     try:
@@ -1953,21 +1897,18 @@ def fetch_storm_reports(
     _STORM_RPT_CACHE[k] = {"ts": now, "data": combined}
     return combined
 
-
 # ── AQI Stations (bbox map overlay) ───────────────────────────────────────────
 
-_AQI_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_AQI_MAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _AQI_MAP_TTL = 1800  # 30 minutes
 _AQI_MAP_MAX = 32
-
 
 def _bbox_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 1), round(w, 1), round(n, 1), round(e, 1))
 
-
 def fetch_aqi_map(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return PM2.5 AQI monitoring stations within the bounding box.
 
     Each dict:
@@ -2010,7 +1951,7 @@ def fetch_aqi_map(
         _AQI_MAP_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         geom = feat.get("geometry") or {}
         lng_ = geom.get("x")
@@ -2035,17 +1976,15 @@ def fetch_aqi_map(
     _AQI_MAP_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── Drought Polygons (bbox map overlay) ───────────────────────────────────────
 
-_DROUGHT_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_DROUGHT_MAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _DROUGHT_MAP_TTL = 21600  # 6 hours — drought updates weekly
 _DROUGHT_MAP_MAX = 32
 
-
 def fetch_drought_map(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return US Drought Monitor intensity polygons intersecting the bounding box.
 
     Each dict:
@@ -2089,7 +2028,7 @@ def fetch_drought_map(
         _DROUGHT_MAP_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -2116,10 +2055,9 @@ def fetch_drought_map(
     _DROUGHT_MAP_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── Precipitation Polygons (bbox map overlay) ─────────────────────────────────
 
-_PRECIP_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_PRECIP_MAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _PRECIP_MAP_TTL = 3600  # 1 hour
 _PRECIP_MAP_MAX = 32
 
@@ -2135,15 +2073,13 @@ _PRECIP_POLY_COLORS = [
     "#172554",
 ]
 
-
 def _precip_color(cat: int) -> str:
     idx = min(cat * 8 // 20, len(_PRECIP_POLY_COLORS) - 1) if cat > 0 else 0
     return _PRECIP_POLY_COLORS[max(0, idx)]
 
-
 def fetch_precipitation_map(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return NDFD precipitation forecast polygons intersecting the bounding box.
 
     Each dict:
@@ -2186,7 +2122,7 @@ def fetch_precipitation_map(
         _PRECIP_MAP_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -2211,17 +2147,15 @@ def fetch_precipitation_map(
     _PRECIP_MAP_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── NDBC Weather Buoys (bbox map overlay) ─────────────────────────────────────
 
-_NDBC_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_NDBC_CACHE: dict[tuple, dict[str, Any]] = {}
 _NDBC_TTL = 1800  # 30 minutes — NDBC updates hourly
 _NDBC_MAX = 32
 
-
 def fetch_ndbc_buoys(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return NDBC weather buoy observations within the bounding box.
 
     Each dict:
@@ -2281,7 +2215,7 @@ def fetch_ndbc_buoys(
         except (TypeError, ValueError):
             return None
 
-    data: List[Dict[str, Any]] = []
+    data: list[dict[str, Any]] = []
     for feat in feats:
         a = feat.get("attributes", {})
         lat_ = a.get("LAT")
@@ -2309,13 +2243,11 @@ def fetch_ndbc_buoys(
     _NDBC_CACHE[k] = {"ts": now, "data": data}
     return data
 
-
 # ── NDFD Daily Temperature polygons (bbox map overlay) ───────────────────────
 
-_NDFD_TEMP_MAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_NDFD_TEMP_MAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _NDFD_TEMP_MAP_TTL = 3600  # 1 hour — NDFD updates infrequently
 _NDFD_TEMP_MAP_MAX = 32
-
 
 def _temp_color(temp_f: float, layer: str) -> str:
     """Temperature-to-colour for the map layer.
@@ -2350,10 +2282,9 @@ def _temp_color(temp_f: float, layer: str) -> str:
             return "#f97316"  # orange     80-95°F
         return "#ef4444"  # red        >95°F
 
-
 def fetch_ndfd_temperature_map(
     south: float, west: float, north: float, east: float
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """Return NDFD daily high/low temperature polygons for the bounding box.
 
     Returns a dict with two keys:
@@ -2391,7 +2322,7 @@ def fetch_ndfd_temperature_map(
         "f": "json",
     }
 
-    result: Dict[str, List[Dict[str, Any]]] = {"min": [], "max": []}
+    result: dict[str, list[dict[str, Any]]] = {"min": [], "max": []}
 
     for url, layer_key in [(_NDFD_TMIN_URL, "min"), (_NDFD_TMAX_URL, "max")]:
         try:
@@ -2437,13 +2368,11 @@ def fetch_ndfd_temperature_map(
     _NDFD_TEMP_MAP_CACHE[k] = {"ts": now, "data": result}
     return result
 
-
 # ── NOAA HF Radar Surface Currents (bbox map overlay) ─────────────────────────
 
-_HFRADAR_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_HFRADAR_CACHE: dict[tuple, dict[str, Any]] = {}
 _HFRADAR_TTL = 3600  # 1 hour — HF Radar updates hourly
 _HFRADAR_MAX = 32
-
 
 # Beaufort-scale-like colour ramp for current speed (cm/s)
 def _current_color(speed_cms: float) -> str:
@@ -2457,10 +2386,9 @@ def _current_color(speed_cms: float) -> str:
         return "#f97316"  # orange     0.5–1 m/s
     return "#ef4444"  # red        > 1 m/s
 
-
 def fetch_hfradar_currents(
     south: float, west: float, north: float, east: float
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return NOAA HF Radar surface current vectors intersecting the bounding box.
 
     Queries East Coast, Gulf of Mexico, and West Coast regional services in
@@ -2500,7 +2428,7 @@ def fetch_hfradar_currents(
         "f": "json",
     }
 
-    combined: List[Dict[str, Any]] = []
+    combined: list[dict[str, Any]] = []
 
     for url in (_HFRADAR_EAST_URL, _HFRADAR_GULF_URL, _HFRADAR_WEST_URL):
         try:
@@ -2541,21 +2469,19 @@ def fetch_hfradar_currents(
     _HFRADAR_CACHE[k] = {"ts": now, "data": combined}
     return combined
 
-
 # ── NHC Tropical Weather Outlook (map overlay) ────────────────────────────────
 
-_TROP_OUTLOOK_CACHE: Optional[List[Dict[str, Any]]] = None
+_TROP_OUTLOOK_CACHE: Optional[list[dict[str, Any]]] = None
 _TROP_OUTLOOK_TS = 0.0
 _TROP_OUTLOOK_TTL = 3600  # 1 hour — outlook updates every 6 hours
 
-_TROP_PROB_COLORS: Dict[str, str] = {
+_TROP_PROB_COLORS: dict[str, str] = {
     "high": "#ef4444",  # ≥60 % — red
     "medium": "#f97316",  # 40–59 % — orange
     "low": "#eab308",  # < 40 % — yellow
 }
 
-
-def fetch_tropical_outlook() -> List[Dict[str, Any]]:
+def fetch_tropical_outlook() -> list[dict[str, Any]]:
     """Return NHC tropical weather outlook development-area polygons.
 
     Updated every 6 hours by the National Hurricane Center.  Returns an empty
@@ -2597,7 +2523,7 @@ def fetch_tropical_outlook() -> List[Dict[str, Any]]:
         _TROP_OUTLOOK_TS = now
         return []
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for feat in feats:
         attrs = feat.get("attributes", {})
         geom = feat.get("geometry") or {}
@@ -2636,7 +2562,6 @@ def fetch_tropical_outlook() -> List[Dict[str, Any]]:
     _TROP_OUTLOOK_CACHE = results
     _TROP_OUTLOOK_TS = now
     return results
-
 
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""

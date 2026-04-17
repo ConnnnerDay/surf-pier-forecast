@@ -15,12 +15,11 @@ from datetime import date
 from pathlib import Path
 from threading import Lock
 from time import monotonic
-from typing import Dict, List, Optional
+from typing import Optional
 
 from storage.species_loader import SPECIES_DB
 
 _STALE_MONTHS = 6  # snapshot data older than this is flagged as potentially outdated
-
 
 def _months_since(date_str: str) -> float:
     """Return approximate months since a 'YYYY-MM' date string. Returns inf on error."""
@@ -32,7 +31,6 @@ def _months_since(date_str: str) -> float:
     except Exception:
         return float("inf")
 
-
 logger = logging.getLogger(__name__)
 
 _DEFAULT_REGULATIONS_PATH = (
@@ -40,7 +38,7 @@ _DEFAULT_REGULATIONS_PATH = (
 )
 _RELOAD_INTERVAL_SECONDS = 300.0
 
-_STATE_REGULATION_SOURCES: Dict[str, str] = {
+_STATE_REGULATION_SOURCES: dict[str, str] = {
     "AL": "https://www.outdooralabama.com/saltwater-fishing",
     "CA": "https://wildlife.ca.gov/Fishing/Ocean/Regulations",
     "DE": "https://dnrec.delaware.gov/fish-wildlife/fishing/saltwater-fishing/",
@@ -65,16 +63,14 @@ _STATE_REGULATION_SOURCES: Dict[str, str] = {
 
 _FALLBACK_SOURCE = "https://www.fisheries.noaa.gov/recreational-fishing-rules"
 
-
 class _RegData:
     def __init__(self) -> None:
-        self.name_map: Dict[str, str] = {}
-        self.normalized_name_map: Dict[str, str] = {}
-        self.states: Dict[str, Dict[str, Dict[str, str]]] = {}
+        self.name_map: dict[str, str] = {}
+        self.normalized_name_map: dict[str, str] = {}
+        self.states: dict[str, dict[str, dict[str, str]]] = {}
         self.last_updated: str = ""
         self.snapshot_source: str = ""
         self.source_file: str = ""
-
 
 def _normalize_species_name(name: str) -> str:
     return (
@@ -89,10 +85,9 @@ def _normalize_species_name(name: str) -> str:
         .replace(" ", "_")
     )
 
-
-def _species_name_variants(name: str) -> List[str]:
+def _species_name_variants(name: str) -> list[str]:
     raw = str(name or "").strip()
-    variants: List[str] = []
+    variants: list[str] = []
 
     normalized = _normalize_species_name(raw)
     if normalized:
@@ -105,14 +100,12 @@ def _species_name_variants(name: str) -> List[str]:
 
     return variants
 
-
 _REG_DATA = _RegData()
 _REG_LOCK = Lock()
 _LAST_LOADED_MONO = -_RELOAD_INTERVAL_SECONDS  # ensure first call always loads
 
-
-def _build_default_name_map() -> Dict[str, str]:
-    default_map: Dict[str, str] = {}
+def _build_default_name_map() -> dict[str, str]:
+    default_map: dict[str, str] = {}
     for entry in SPECIES_DB:
         name = str(entry.get("name") or "").strip()
         if not name:
@@ -121,11 +114,9 @@ def _build_default_name_map() -> Dict[str, str]:
         default_map[name] = key
     return default_map
 
-
 def _resolve_path() -> Path:
     custom = os.getenv("REGULATIONS_DATA_PATH", "").strip()
     return Path(custom) if custom else _DEFAULT_REGULATIONS_PATH
-
 
 def _load_data_file() -> _RegData:
     data = _RegData()
@@ -165,7 +156,7 @@ def _load_data_file() -> _RegData:
 
     states = raw.get("states")
     if isinstance(states, dict):
-        normalized_states: Dict[str, Dict[str, Dict[str, str]]] = {}
+        normalized_states: dict[str, dict[str, dict[str, str]]] = {}
         for st, regs in states.items():
             if not isinstance(st, str) or not isinstance(regs, dict):
                 continue
@@ -187,7 +178,6 @@ def _load_data_file() -> _RegData:
     data.snapshot_source = str(raw.get("snapshot_source") or "").strip()
     return data
 
-
 def _ensure_data_loaded() -> None:
     global _LAST_LOADED_MONO
     now = monotonic()
@@ -206,8 +196,7 @@ def _ensure_data_loaded() -> None:
         _REG_DATA.source_file = loaded.source_file
         _LAST_LOADED_MONO = now
 
-
-def _base_payload(state: str) -> Dict[str, str]:
+def _base_payload(state: str) -> dict[str, str]:
     source = _STATE_REGULATION_SOURCES.get(state, _FALLBACK_SOURCE)
     return {
         "min_size": "",
@@ -223,11 +212,10 @@ def _base_payload(state: str) -> Dict[str, str]:
         "fetched_at": "",
     }
 
-
 # ---------------------------------------------------------------------------
 # Month abbreviations for closed-season parsing in classify_legality
 # ---------------------------------------------------------------------------
-_LEGALITY_MONTH_ABBREVS: Dict[str, int] = {
+_LEGALITY_MONTH_ABBREVS: dict[str, int] = {
     "jan": 1,
     "feb": 2,
     "mar": 3,
@@ -259,7 +247,6 @@ _QUALIFIER_WORDS = frozenset(
     ("some", "certain", "have", "having", "with", "may", "areas")
 )
 
-
 def _parse_closed_months_text(text: str) -> set:
     """Parse month ranges from text like 'closed Jan-May'.
 
@@ -281,7 +268,6 @@ def _parse_closed_months_text(text: str) -> set:
                 closed.update(range(1, end + 1))
     return closed
 
-
 def get_official_regulations_url(state: str) -> str:
     """Return the official state fishing regulations URL for *state* (2-letter code).
 
@@ -291,7 +277,6 @@ def get_official_regulations_url(state: str) -> str:
     return _STATE_REGULATION_SOURCES.get(
         (state or "").upper().strip(), _FALLBACK_SOURCE
     )
-
 
 def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
     """Return a normalised legality status for a regulation payload.
@@ -427,7 +412,6 @@ def classify_legality(reg: Optional[Dict], month: int = 0) -> str:
 
     return "legal"
 
-
 def should_hide_from_forecast(status: str) -> bool:
     """Return True when a species should be suppressed from 'What\'s Biting',
     'What\'s Spawning Now', and all other ranked forecast surfaces.
@@ -447,8 +431,7 @@ def should_hide_from_forecast(status: str) -> bool:
     """
     return status != "legal"
 
-
-def lookup_regulation(species_name: str, state: str) -> Optional[Dict[str, str]]:
+def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]:
     """Look up fishing regulations for a species in a state.
 
     Tries in order:

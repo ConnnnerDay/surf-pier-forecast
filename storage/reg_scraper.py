@@ -25,7 +25,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 
@@ -38,11 +38,9 @@ _REQUEST_TIMEOUT = 12  # seconds
 _MAX_RESPONSE_BYTES = 2 * 1024 * 1024  # 2 MB — refuse larger regulation pages
 _USER_AGENT = "Mozilla/5.0 (compatible; SurfForecast/1.0 fishing-regulation-lookup)"
 
-
 # ──────────────────────────────────────────────────────────────────
 # Shared helpers
 # ──────────────────────────────────────────────────────────────────
-
 
 def _fetch_page(url: str) -> Optional[str]:
     """Fetch *url* and return its text content, or None on error.
@@ -77,7 +75,6 @@ def _fetch_page(url: str) -> Optional[str]:
         _log.warning("reg_scraper: fetch failed for %s: %s", url, exc)
         return None
 
-
 def _normalize_name(name: str) -> str:
     """Convert a display species name to a snake_case key."""
     return (
@@ -92,8 +89,7 @@ def _normalize_name(name: str) -> str:
         .replace(" ", "_")
     )
 
-
-def _name_variants(display_name: str) -> List[str]:
+def _name_variants(display_name: str) -> list[str]:
     """Return candidate snake_case keys for a species display name.
 
     Returns the full normalized form first, then the short form with any
@@ -103,13 +99,12 @@ def _name_variants(display_name: str) -> List[str]:
     raw = str(display_name or "").strip()
     full = _normalize_name(raw)
     short = _normalize_name(re.sub(r"\s*\([^)]*\)", "", raw).strip())
-    variants: List[str] = []
+    variants: list[str] = []
     if full:
         variants.append(full)
     if short and short != full:
         variants.append(short)
     return variants
-
 
 def _strip_html(html: str) -> str:
     text = re.sub(r"<[^>]+>", " ", html)
@@ -117,14 +112,12 @@ def _strip_html(html: str) -> str:
     text = re.sub(r"&[a-zA-Z]+;", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
-
-def _most_common(values: List[str]) -> str:
+def _most_common(values: list[str]) -> str:
     """Return the most frequently occurring non-empty string in *values*."""
     cleaned = [v.strip() for v in values if v.strip()]
     if not cleaned:
         return ""
     return Counter(cleaned).most_common(1)[0][0]
-
 
 # ──────────────────────────────────────────────────────────────────
 # Florida — FWC per-species pages
@@ -133,7 +126,7 @@ def _most_common(values: List[str]) -> str:
 _FL_BASE = "https://myfwc.com/fishing/saltwater/recreational/"
 
 # species_key → URL slug on myfwc.com/fishing/saltwater/recreational/{slug}/
-_FL_SLUGS: Dict[str, str] = {
+_FL_SLUGS: dict[str, str] = {
     # Keys are the short snake_case form from _name_variants() (parenthetical stripped)
     "red_drum": "red-drum",
     "spotted_seatrout": "spotted-seatrout",
@@ -161,8 +154,7 @@ _FL_SLUGS: Dict[str, str] = {
     "scup": "scup",
 }
 
-
-def _parse_fl_page(html: str) -> Optional[Dict[str, str]]:
+def _parse_fl_page(html: str) -> Optional[dict[str, str]]:
     """Extract dominant regulations from a FWC species page.
 
     FWC pages list regulations per management region using labels like
@@ -243,8 +235,7 @@ def _parse_fl_page(html: str) -> Optional[Dict[str, str]]:
         "scraped_source": "myfwc.com",
     }
 
-
-def _scrape_fl(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_fl(species_name: str) -> Optional[dict[str, str]]:
     slug = None
     for candidate in _name_variants(species_name):
         slug = _FL_SLUGS.get(candidate)
@@ -259,7 +250,6 @@ def _scrape_fl(species_name: str) -> Optional[Dict[str, str]]:
         return None
     return _parse_fl_page(html)
 
-
 # ──────────────────────────────────────────────────────────────────
 # Virginia — VA Marine Resources Commission (single-page listing)
 # ──────────────────────────────────────────────────────────────────
@@ -271,7 +261,7 @@ _va_page_cache: Optional[str] = None
 _va_page_lock = Lock()
 
 # species_key → uppercase names as they appear in the VA MRC page
-_VA_NAMES: Dict[str, List[str]] = {
+_VA_NAMES: dict[str, list[str]] = {
     "red_drum": ["RED DRUM", "CHANNEL BASS"],
     "striped_bass": ["STRIPED BASS", "ROCKFISH"],
     "summer_flounder": ["SUMMER FLOUNDER"],
@@ -288,7 +278,6 @@ _VA_NAMES: Dict[str, List[str]] = {
     "red_snapper": ["RED SNAPPER"],
 }
 
-
 def _get_va_html() -> Optional[str]:
     global _va_page_cache
     with _va_page_lock:
@@ -299,8 +288,7 @@ def _get_va_html() -> Optional[str]:
             _va_page_cache = html
         return html
 
-
-def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_va_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     names = None
     for candidate in _name_variants(species_name):
         names = _VA_NAMES.get(candidate)
@@ -341,7 +329,7 @@ def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
             re.IGNORECASE,
         )
 
-        def _cv(m: Optional[re.Match]) -> str:  # type: ignore[type-arg]
+        def _cv(m: Optional[re.Match[str]]) -> str:
             return m.group(1).strip().rstrip(".,;")[:120] if m else ""
 
         if size_m or bag_m:
@@ -358,13 +346,11 @@ def _parse_va_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
 
     return None
 
-
-def _scrape_va(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_va(species_name: str) -> Optional[dict[str, str]]:
     html = _get_va_html()
     if not html:
         return None
     return _parse_va_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # Georgia — Coastal GA DNR definition-list page
@@ -376,7 +362,7 @@ _GA_URL = "https://coastalgadnr.org/Limits"
 _ga_page_cache: Optional[str] = None
 _ga_page_lock = Lock()
 
-_GA_NAMES: Dict[str, List[str]] = {
+_GA_NAMES: dict[str, list[str]] = {
     "red_drum": ["red drum"],
     "spotted_seatrout": ["spotted seatrout", "speckled trout"],
     "striped_bass": ["striped bass", "rockfish"],
@@ -399,7 +385,6 @@ _GA_NAMES: Dict[str, List[str]] = {
     "amberjack": ["amberjack"],
 }
 
-
 def _get_ga_html() -> Optional[str]:
     global _ga_page_cache
     with _ga_page_lock:
@@ -410,8 +395,7 @@ def _get_ga_html() -> Optional[str]:
             _ga_page_cache = html
         return html
 
-
-def _parse_ga_dd(dd_text: str) -> Dict[str, str]:
+def _parse_ga_dd(dd_text: str) -> dict[str, str]:
     """Extract season/limit/size from a GA coastalgadnr DD text block.
 
     DD text format (space-separated labels):
@@ -471,8 +455,7 @@ def _parse_ga_dd(dd_text: str) -> Dict[str, str]:
         "min_size": size[:120],
     }
 
-
-def _parse_ga_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_ga_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse coastalgadnr.org/Limits which uses <dl>/<dt>/<dd> structure.
 
     Each <dt> is a species name; the paired <dd> contains text like:
@@ -509,13 +492,11 @@ def _parse_ga_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                     }
     return None
 
-
-def _scrape_ga(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_ga(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ga_html()
     if not html:
         return None
     return _parse_ga_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # North Carolina — NC DMF size/bag limits table
@@ -530,7 +511,7 @@ _nc_page_cache: Optional[str] = None
 _nc_page_lock = Lock()
 
 # species_key → substrings to look for in the NC table's first column (lowercased)
-_NC_NAMES: Dict[str, List[str]] = {
+_NC_NAMES: dict[str, list[str]] = {
     "red_drum": ["red drum", "channel bass"],
     "spotted_seatrout": ["spotted seatrout", "speckled trout"],
     "striped_bass": ["striped bass"],
@@ -551,7 +532,6 @@ _NC_NAMES: Dict[str, List[str]] = {
     "gag_grouper": ["snapper", "grouper"],  # grouped complex on NC page
 }
 
-
 def _get_nc_html() -> Optional[str]:
     global _nc_page_cache
     with _nc_page_lock:
@@ -562,8 +542,7 @@ def _get_nc_html() -> Optional[str]:
             _nc_page_cache = html
         return html
 
-
-def _parse_nc_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_nc_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse the NC DMF recreational size/bag limits table.
 
     Table column layout (4-cell rows):
@@ -629,13 +608,11 @@ def _parse_nc_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                     }
     return None
 
-
-def _scrape_nc(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_nc(species_name: str) -> Optional[dict[str, str]]:
     html = _get_nc_html()
     if not html:
         return None
     return _parse_nc_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # New York — NY DEC recreational fishing regulations table
@@ -649,7 +626,7 @@ _ny_page_cache: Optional[str] = None
 _ny_page_lock = Lock()
 
 # species_key → substrings to look for in NY table first column (lowercased)
-_NY_NAMES: Dict[str, List[str]] = {
+_NY_NAMES: dict[str, list[str]] = {
     "red_drum": ["red drum"],
     "striped_bass": ["striped bass: marine"],  # prefer marine over Hudson River row
     "bluefish": ["bluefish"],
@@ -666,7 +643,6 @@ _NY_NAMES: Dict[str, List[str]] = {
     "flounder": ["summer flounder", "fluke"],
 }
 
-
 def _get_ny_html() -> Optional[str]:
     global _ny_page_cache
     with _ny_page_lock:
@@ -677,8 +653,7 @@ def _get_ny_html() -> Optional[str]:
             _ny_page_cache = html
         return html
 
-
-def _parse_ny_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_ny_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse NY DEC 4-column saltwater regulations table.
 
     Columns: Species | Min Size | Bag Limit | Open Season
@@ -727,13 +702,11 @@ def _parse_ny_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                     }
     return None
 
-
-def _scrape_ny(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_ny(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ny_html()
     if not html:
         return None
     return _parse_ny_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # Alabama — ADCNR div.table-row layout
@@ -746,7 +719,7 @@ _AL_URL = (
 _al_page_cache: Optional[str] = None
 _al_page_lock = Lock()
 
-_AL_NAMES: Dict[str, List[str]] = {
+_AL_NAMES: dict[str, list[str]] = {
     "red_drum": ["red drum", "redfish"],
     "spotted_seatrout": ["spotted seatrout", "speckled trout"],
     "striped_bass": ["striped bass", "rockfish"],
@@ -766,7 +739,6 @@ _AL_NAMES: Dict[str, List[str]] = {
     "amberjack": ["greater amberjack", "amberjack"],
 }
 
-
 def _get_al_html() -> Optional[str]:
     global _al_page_cache
     with _al_page_lock:
@@ -777,8 +749,7 @@ def _get_al_html() -> Optional[str]:
             _al_page_cache = html
         return html
 
-
-def _parse_al_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_al_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse outdooralabama.com saltwater size/creel limits page.
 
     Layout: each species is a div.table-row with three div.row-column children:
@@ -818,13 +789,11 @@ def _parse_al_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                     }
     return None
 
-
-def _scrape_al(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_al(species_name: str) -> Optional[dict[str, str]]:
     html = _get_al_html()
     if not html:
         return None
     return _parse_al_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # Rhode Island — RI DEM recreational table (Table index 1)
@@ -838,7 +807,7 @@ _RI_URL = (
 _ri_page_cache: Optional[str] = None
 _ri_page_lock = Lock()
 
-_RI_NAMES: Dict[str, List[str]] = {
+_RI_NAMES: dict[str, list[str]] = {
     "striped_bass": ["striped bass"],
     "bluefish": ["bluefish"],
     "summer_flounder": ["summer flounder", "fluke"],
@@ -852,7 +821,6 @@ _RI_NAMES: Dict[str, List[str]] = {
     "flounder": ["summer flounder", "fluke"],
 }
 
-
 def _get_ri_html() -> Optional[str]:
     global _ri_page_cache
     with _ri_page_lock:
@@ -863,8 +831,7 @@ def _get_ri_html() -> Optional[str]:
             _ri_page_cache = html
         return html
 
-
-def _parse_ri_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_ri_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse RI DEM min-sizes/possession-limits page.
 
     Table 0 = commercial, Table 1 = recreational (4 columns):
@@ -911,13 +878,11 @@ def _parse_ri_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                     }
     return None
 
-
-def _scrape_ri(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_ri(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ri_html()
     if not html:
         return None
     return _parse_ri_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # Texas — TPWD per-species bag/length limit pages
@@ -929,7 +894,7 @@ _TX_BASE = (
 )
 
 # species_key → URL slug on TPWD per-species pages
-_TX_SLUGS: Dict[str, str] = {
+_TX_SLUGS: dict[str, str] = {
     "red_drum": "drum-bag-length-limits",
     "black_drum": "drum-bag-length-limits",
     "spotted_seatrout": "seatrout-bag-length-limits",
@@ -950,7 +915,7 @@ _TX_SLUGS: Dict[str, str] = {
 
 # Per-page target species names (lowercased fragments) so multi-species pages
 # (e.g. drum page has "red drum" and "black drum") pick the right entry.
-_TX_TARGET: Dict[str, str] = {
+_TX_TARGET: dict[str, str] = {
     "red_drum": "red drum",
     "black_drum": "black drum",
     "spotted_seatrout": "spotted seatrout",
@@ -969,8 +934,7 @@ _TX_TARGET: Dict[str, str] = {
     "pompano": "pompano",
 }
 
-
-def _parse_tx_page(text: str, target: str) -> Optional[Dict[str, str]]:
+def _parse_tx_page(text: str, target: str) -> Optional[dict[str, str]]:
     """Extract Daily Bag / Min Length / Max Length from a TPWD species page.
 
     Each TPWD per-species page has one or more labelled text blocks:
@@ -1018,7 +982,7 @@ def _parse_tx_page(text: str, target: str) -> Optional[Dict[str, str]]:
         r"Max(?:imum)?\s+Length\s*:[\s\n]*(\S[^\n]*)", section, re.IGNORECASE
     )
 
-    def _cv(m: Optional[re.Match]) -> str:  # type: ignore[type-arg]
+    def _cv(m: Optional[re.Match[str]]) -> str:
         return m.group(1).strip()[:80] if m else ""
 
     bag = _cv(bag_m)
@@ -1040,8 +1004,7 @@ def _parse_tx_page(text: str, target: str) -> Optional[Dict[str, str]]:
         }
     return None
 
-
-def _scrape_tx(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_tx(species_name: str) -> Optional[dict[str, str]]:
     slug = None
     target = None
     for candidate in _name_variants(species_name):
@@ -1066,7 +1029,6 @@ def _scrape_tx(species_name: str) -> Optional[Dict[str, str]]:
         _log.warning("TX parse failed for %s: %s", species_name, exc)
         return None
 
-
 # ──────────────────────────────────────────────────────────────────
 # Mississippi — eRegulations.com inshore/nearshore table
 # ──────────────────────────────────────────────────────────────────
@@ -1076,7 +1038,7 @@ _MS_URL = "https://www.eregulations.com/mississippi/fishing/saltwater/recreation
 _ms_page_cache: Optional[str] = None
 _ms_page_lock = Lock()
 
-_MS_NAMES: Dict[str, List[str]] = {
+_MS_NAMES: dict[str, list[str]] = {
     "red_drum": ["red drum"],
     "spotted_seatrout": ["spotted seatrout", "speckled trout"],
     "southern_flounder": ["flounder"],
@@ -1093,7 +1055,6 @@ _MS_NAMES: Dict[str, List[str]] = {
     "black_drum": ["black drum"],
     "tripletail": ["tripletail"],
 }
-
 
 def _get_ms_html() -> Optional[str]:
     global _ms_page_cache
@@ -1125,8 +1086,7 @@ def _get_ms_html() -> Optional[str]:
             _log.warning("MS page fetch failed: %s", exc)
             return None
 
-
-def _parse_ms_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
+def _parse_ms_page(html: str, species_name: str) -> Optional[dict[str, str]]:
     """Parse MS eregulations inshore/nearshore table (Table 1).
 
     Table 1 column layout (variable number of cells due to rowspan):
@@ -1190,13 +1150,11 @@ def _parse_ms_page(html: str, species_name: str) -> Optional[Dict[str, str]]:
                         }
     return None
 
-
-def _scrape_ms(species_name: str) -> Optional[Dict[str, str]]:
+def _scrape_ms(species_name: str) -> Optional[dict[str, str]]:
     html = _get_ms_html()
     if not html:
         return None
     return _parse_ms_page(html, species_name)
-
 
 # ──────────────────────────────────────────────────────────────────
 # State dispatcher
@@ -1214,13 +1172,11 @@ _SCRAPERS = {
     "MS": _scrape_ms,
 }
 
-
 # ──────────────────────────────────────────────────────────────────
 # SQLite cache helpers
 # ──────────────────────────────────────────────────────────────────
 
-
-def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
+def _cache_get(species_key: str, state: str) -> Optional[dict[str, Any]]:
     """Return cached regulation dict, or None if missing / expired."""
     try:
         conn = get_db()
@@ -1244,8 +1200,7 @@ def _cache_get(species_key: str, state: str) -> Optional[Dict[str, Any]]:
     except Exception:
         return None
 
-
-def _cache_set(species_key: str, state: str, data: Dict[str, Any]) -> None:
+def _cache_set(species_key: str, state: str, data: dict[str, Any]) -> None:
     try:
         conn = get_db()
         conn.execute(
@@ -1264,16 +1219,14 @@ def _cache_set(species_key: str, state: str, data: Dict[str, Any]) -> None:
             exc_info=True,
         )
 
-
 # ──────────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────────
 
-
 def scrape_regulation(
     species_name: str,
     state: str,
-) -> Optional[Dict[str, str]]:
+) -> Optional[dict[str, str]]:
     """Return live-scraped regulation data for *species_name* in *state*.
 
     Results are cached in SQLite for 24 hours so state agency sites are
@@ -1304,7 +1257,6 @@ def scrape_regulation(
     _cache_set(cache_key, state, result or {})
 
     return result
-
 
 def invalidate_cache(state: Optional[str] = None) -> int:
     """Delete cached scrape entries, optionally filtered to one state.

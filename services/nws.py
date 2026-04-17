@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from services.http_client import get as http_get
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +36,9 @@ _NWS_HEADERS = {
     "Accept": "application/ld+json",
 }
 
-
 def _try_nws_forecast(
     zone: str = "",
-) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+) -> tuple[Optional[tuple[float, float]], Optional[tuple[float, float]], Optional[str]]:
     """NWS marine zone forecast -- provides 24-hour forecast ranges."""
     zone = zone or NWS_MARINE_ZONE
     url = f"https://api.weather.gov/zones/forecast/{zone}/forecast"
@@ -52,11 +50,10 @@ def _try_nws_forecast(
     periods = data["properties"]["periods"]
     return parse_conditions(periods)
 
-
 def _try_nws_gridpoint(
     lat: float = 0,
     lng: float = 0,
-) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+) -> tuple[Optional[tuple[float, float]], Optional[tuple[float, float]], Optional[str]]:
     """NWS grid forecast for the nearest land point to a location.
 
     Provides wind speed and direction from the standard forecast.  No wave
@@ -83,8 +80,8 @@ def _try_nws_gridpoint(
     fc.raise_for_status()
     periods = fc.json()["properties"]["periods"]
 
-    wind_ranges: List[Tuple[float, float]] = []
-    wind_dirs: List[str] = []
+    wind_ranges: list[tuple[float, float]] = []
+    wind_dirs: list[str] = []
 
     for period in periods[:3]:
         # windSpeed is like "10 mph" or "5 to 10 mph"
@@ -110,18 +107,17 @@ def _try_nws_gridpoint(
     wind_dir = wind_dirs[0] if wind_dirs else None
     return wind_range, None, wind_dir
 
-
 def parse_conditions(
-    periods: List[Dict[str, Any]],
-) -> Tuple[Optional[Tuple[float, float]], Optional[Tuple[float, float]], Optional[str]]:
+    periods: list[dict[str, Any]],
+) -> tuple[Optional[tuple[float, float]], Optional[tuple[float, float]], Optional[str]]:
     """Extract wind and wave ranges from NWS marine forecast periods.
 
     Examines the first 3 periods (~24 hours) and regex-parses wind speed (kt)
     and sea height (ft) from the ``detailedForecast`` text.
     """
-    wind_ranges: List[Tuple[float, float]] = []
-    wave_ranges: List[Tuple[float, float]] = []
-    wind_directions: List[str] = []
+    wind_ranges: list[tuple[float, float]] = []
+    wave_ranges: list[tuple[float, float]] = []
+    wind_directions: list[str] = []
 
     for period in periods[:3]:
         text = period.get("detailedForecast", "")
@@ -165,7 +161,7 @@ def parse_conditions(
     wind_dir = wind_directions[0] if wind_directions else None
 
     if wind_ranges:
-        wind_range: Optional[Tuple[float, float]] = (
+        wind_range: Optional[tuple[float, float]] = (
             min(w[0] for w in wind_ranges),
             max(w[1] for w in wind_ranges),
         )
@@ -173,7 +169,7 @@ def parse_conditions(
         wind_range = None
 
     if wave_ranges:
-        wave_range: Optional[Tuple[float, float]] = (
+        wave_range: Optional[tuple[float, float]] = (
             min(s[0] for s in wave_ranges),
             max(s[1] for s in wave_ranges),
         )
@@ -182,8 +178,7 @@ def parse_conditions(
 
     return wind_range, wave_range, wind_dir
 
-
-def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
+def fetch_weather_alerts(lat: float, lng: float) -> list[dict[str, str]]:
     """Fetch active weather alerts from NWS for a lat/lng.
 
     Returns a list of dicts with: event, severity, headline, description.
@@ -225,8 +220,7 @@ def fetch_weather_alerts(lat: float, lng: float) -> List[Dict[str, str]]:
         logger.warning("Weather alerts unavailable", exc_info=True)
         return []
 
-
-def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:
+def fetch_state_alerts(state_code: str) -> list[dict[str, str]]:
     """Fetch active alerts for an entire state via /alerts/active?area=XX."""
     if not state_code:
         return []
@@ -240,7 +234,7 @@ def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:
         resp.raise_for_status()
         data = resp.json()
         features = data.get("features", []) or data.get("@graph", [])
-        alerts: List[Dict[str, str]] = []
+        alerts: list[dict[str, str]] = []
         for feat in features[:10]:
             props = feat.get("properties", feat)
             event = props.get("event", "")
@@ -259,8 +253,7 @@ def fetch_state_alerts(state_code: str) -> List[Dict[str, str]]:
         logger.warning("State alerts unavailable", exc_info=True)
         return []
 
-
-def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
+def fetch_current_weather(lat: float, lng: float) -> Optional[dict[str, Any]]:
     """Fetch current weather observations from NWS.
 
     Returns a dict with: air_temp_f, humidity, description, sky, wind_chill_f.
@@ -307,7 +300,7 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         description = props.get("textDescription", "")
         wind_chill_c = props.get("windChill", {}).get("value")
 
-        result: Dict[str, Any] = {"description": description or ""}
+        result: dict[str, Any] = {"description": description or ""}
 
         if temp_c is not None:
             result["air_temp_f"] = round(temp_c * 9 / 5 + 32, 1)
@@ -339,8 +332,7 @@ def fetch_current_weather(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         logger.warning("Current weather unavailable", exc_info=True)
         return None
 
-
-def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> List[Dict[str, str]]:
+def _fetch_nws_extended(lat: float, lng: float, zone: str = "") -> list[dict[str, str]]:
     """Fetch the NWS 7-day forecast for a lat/lng.
 
     Tries the NWS gridpoint forecast first (works for land coordinates).  For

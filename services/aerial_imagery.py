@@ -20,7 +20,7 @@ Integration points
     get_aerial_tile_config() -> dict
         Returns tile layer configurations for Leaflet (ESRI + optional OAM).
 
-    search_oam_imagery(south, west, north, east) -> List[dict]
+    search_oam_imagery(south, west, north, east) -> list[dict]
         Searches the OAM catalog for imagery covering a bounding box.
 
     get_imagery_sources() -> dict
@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -44,7 +44,7 @@ _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
-_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_CACHE: dict[tuple, dict[str, Any]] = {}
 _CACHE_TTL: int = 3600  # 1 hour — OAM catalog changes infrequently
 _CACHE_TTL_FAIL: int = 300
 _CACHE_MAX: int = 128
@@ -71,13 +71,11 @@ _ESRI_LABELS_URL = (
     "Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
 )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def get_aerial_tile_config() -> Dict[str, Any]:
+def get_aerial_tile_config() -> dict[str, Any]:
     """Return Leaflet tile-layer configurations for aerial/satellite imagery.
 
     The ESRI World Imagery layer is always included as a reliable fallback.
@@ -121,14 +119,13 @@ def get_aerial_tile_config() -> Dict[str, Any]:
         ],
     }
 
-
 def search_oam_imagery(
     south: float,
     west: float,
     north: float,
     east: float,
     limit: int = 10,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Search OpenAerialMap for imagery covering a geographic bounding box.
 
     Parameters
@@ -162,7 +159,7 @@ def search_oam_imagery(
         "orderby": "acquisition_end",  # most recent first
     }
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     failed = True
 
     try:
@@ -190,8 +187,7 @@ def search_oam_imagery(
     _cache_set(cache_key, results, failed=failed)
     return results
 
-
-def get_imagery_sources() -> Dict[str, Any]:
+def get_imagery_sources() -> dict[str, Any]:
     """Return combined metadata for all imagery sources.
 
     Used to populate the front-end layer switcher panel and attribution
@@ -243,13 +239,11 @@ def get_imagery_sources() -> Dict[str, Any]:
         ]
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def _parse_oam_result(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _parse_oam_result(item: dict[str, Any]) -> Optional[dict[str, Any]]:
     """Parse a single OAM catalog result into a simplified dict."""
     uuid = item.get("uuid", "")
     title = item.get("title", item.get("provider", "OpenAerialMap image"))
@@ -297,7 +291,6 @@ def _parse_oam_result(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "oam_url": f"https://openaerialmap.org/image/{uuid}",
     }
 
-
 def _cache_get(key: tuple) -> Optional[Any]:
     entry = _CACHE.get(key)
     if not entry:
@@ -306,7 +299,6 @@ def _cache_get(key: tuple) -> Optional[Any]:
     if time.time() - entry["ts"] < ttl:
         return entry["data"]
     return None
-
 
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
     if len(_CACHE) >= _CACHE_MAX:

@@ -17,7 +17,7 @@ Integration points
     fetch_water_quality(lat, lng, radius_km=50) -> dict
         Returns recent water-quality measurements for the nearest stations.
 
-    fetch_beach_closures(state_code) -> List[dict]
+    fetch_beach_closures(state_code) -> list[dict]
         Returns active beach-closure / advisory records for a US state.
 
     get_water_quality_summary(lat, lng) -> dict
@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -43,7 +43,7 @@ _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process result cache ───────────────────────────────────────────────────
-_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_CACHE: dict[tuple, dict[str, Any]] = {}
 _CACHE_TTL: int = 7200  # 2 hours — water quality changes slowly
 _CACHE_TTL_FAIL: int = 300  # 5 min — retry failed queries sooner
 _CACHE_MAX: int = 256
@@ -66,18 +66,16 @@ _CHARACTERISTICS = [
     "Enterococcus",  # beach closure indicator
 ]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def fetch_water_quality(
     lat: float,
     lng: float,
     radius_km: float = 50,
     within_days: int = 7,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Fetch recent water-quality measurements near a location.
 
     Queries the EPA Water Quality Portal for the most recent results from
@@ -124,7 +122,7 @@ def fetch_water_quality(
         "maxResultRows": "200",
     }
 
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "stations": [],
         "summary": {},
         "source": "EPA Water Quality Portal",
@@ -151,7 +149,7 @@ def fetch_water_quality(
         return result
 
     rows = data if isinstance(data, list) else data.get("features", [])
-    stations_map: Dict[str, Dict[str, Any]] = {}
+    stations_map: dict[str, dict[str, Any]] = {}
 
     for row in rows:
         props = row.get("properties", row)
@@ -184,8 +182,7 @@ def fetch_water_quality(
     _cache_set(cache_key, result)
     return result
 
-
-def fetch_beach_closures(state_code: str) -> List[Dict[str, Any]]:
+def fetch_beach_closures(state_code: str) -> list[dict[str, Any]]:
     """Fetch active beach-closure / advisory records for a US state.
 
     Uses the EPA Beach Advisory and Closing Online Notification (BEACON)
@@ -216,7 +213,7 @@ def fetch_beach_closures(state_code: str) -> List[Dict[str, Any]]:
         "maxResultRows": "100",
     }
 
-    closures: List[Dict[str, Any]] = []
+    closures: list[dict[str, Any]] = []
     try:
         resp = _HTTP.get(
             f"{_WQP_BASE}/data/Station/search",
@@ -252,8 +249,7 @@ def fetch_beach_closures(state_code: str) -> List[Dict[str, Any]]:
     _cache_set(cache_key, closures)
     return closures[:50]  # cap at 50
 
-
-def get_water_quality_summary(lat: float, lng: float) -> Dict[str, Any]:
+def get_water_quality_summary(lat: float, lng: float) -> dict[str, Any]:
     """Return a simplified water-quality summary for template rendering.
 
     Calls ``fetch_water_quality`` and returns a flat dict of the most
@@ -299,15 +295,13 @@ def get_water_quality_summary(lat: float, lng: float) -> Dict[str, Any]:
         "station_count": len(raw.get("stations", [])),
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def _build_summary(stations: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_summary(stations: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate measurements across stations into a single summary dict."""
-    accum: Dict[str, List[float]] = {}
+    accum: dict[str, list[float]] = {}
 
     char_map = {
         "Temperature, water": "water_temp_c",
@@ -328,29 +322,24 @@ def _build_summary(stations: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     return {k: round(sum(v) / len(v), 3) for k, v in accum.items() if v}
 
-
 def _safe_float(val: Any) -> Optional[float]:
     try:
         return float(val)
     except (TypeError, ValueError):
         return None
 
-
 def _fmt(val: Optional[float], decimals: int) -> Optional[str]:
     if val is None:
         return None
     return f"{val:.{decimals}f}"
 
-
 def _c_to_f(c: Optional[float]) -> Optional[float]:
     return c * 9 / 5 + 32 if c is not None else None
-
 
 def _now_iso() -> str:
     from datetime import datetime, timezone
 
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
 
 def _cache_get(key: tuple) -> Optional[Any]:
     entry = _CACHE.get(key)
@@ -361,16 +350,14 @@ def _cache_get(key: tuple) -> Optional[Any]:
         return entry["data"]
     return None
 
-
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
     if len(_CACHE) >= _CACHE_MAX:
         oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
         _CACHE.pop(oldest, None)
     _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}
 
-
 # ── FIPS codes for US states (needed for WQP state queries) ──────────────────
-_STATE_FIPS: Dict[str, str] = {
+_STATE_FIPS: dict[str, str] = {
     "AL": "01",
     "AK": "02",
     "AZ": "04",

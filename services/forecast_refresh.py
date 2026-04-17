@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
-from typing import Optional, Set, Tuple
+from typing import Optional
 
 from domain.forecast import generate_forecast
 from locations import get_location
@@ -14,14 +14,13 @@ from utils import norm_user_id as _norm_user_id
 
 logger = logging.getLogger(__name__)
 
-QueueKey = Tuple[str, int]
+QueueKey = tuple[str, int]
 
 _refresh_queue: "queue.Queue[QueueKey]" = queue.Queue()
 _refresh_lock = threading.Lock()
-_refreshing: Set[QueueKey] = set()
-_enqueued: Set[QueueKey] = set()
+_refreshing: set[QueueKey] = set()
+_enqueued: set[QueueKey] = set()
 _worker_started = False
-
 
 def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:
     """Generate and persist a fresh forecast for a location."""
@@ -36,7 +35,6 @@ def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:
         "refresh.completed location_id=%s user_id=%s", location_id, user_id or 0
     )
     return True
-
 
 def _worker_loop() -> None:
     while True:
@@ -56,7 +54,6 @@ def _worker_loop() -> None:
                 _refreshing.discard(key)
             _refresh_queue.task_done()
 
-
 def _ensure_worker_started() -> None:
     global _worker_started
     with _refresh_lock:
@@ -67,7 +64,6 @@ def _ensure_worker_started() -> None:
         )
         worker.start()
         _worker_started = True
-
 
 def enqueue_forecast_refresh(location_id: str, user_id: Optional[int] = None) -> bool:
     """Queue a refresh if one is not already queued/running for this location/user."""
@@ -80,7 +76,6 @@ def enqueue_forecast_refresh(location_id: str, user_id: Optional[int] = None) ->
     _refresh_queue.put(key)
     logger.info("refresh.enqueued location_id=%s user_id=%s", key[0], key[1])
     return True
-
 
 def is_refreshing(location_id: str, user_id: Optional[int] = None) -> bool:
     """Best-effort signal for UI/API polling."""

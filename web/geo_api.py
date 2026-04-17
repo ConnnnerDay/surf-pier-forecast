@@ -40,7 +40,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 from flask import Blueprint, jsonify, request
 
@@ -65,7 +65,7 @@ bp = Blueprint("geo_api", __name__)
 # ── Per-IP rate limiting (shared with existing pattern in web/api.py) ─────────
 _GEO_RATE_LIMIT_MAX = 60  # 60 requests per window
 _GEO_RATE_LIMIT_WINDOW_S = 60  # 1-minute window
-_geo_rate_store: Dict[str, Tuple[float, int]] = {}
+_geo_rate_store: dict[str, tuple[float, int]] = {}
 _geo_rate_lock = threading.Lock()
 
 _TRUST_PROXY: bool = False  # set from os.environ in app.py if needed
@@ -73,11 +73,9 @@ _TRUST_PROXY: bool = False  # set from os.environ in app.py if needed
 # ── bbox validation constants ─────────────────────────────────────────────────
 _BBOX_MAX_DEGREES = 10.0  # reject unreasonably large bboxes
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Rate limiting helper
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _client_ip() -> str:
     if _TRUST_PROXY:
@@ -85,7 +83,6 @@ def _client_ip() -> str:
         if forwarded:
             return forwarded.split(",")[0].strip()
     return request.remote_addr or "unknown"
-
 
 def _is_rate_limited() -> bool:
     ip = _client_ip()
@@ -108,21 +105,17 @@ def _is_rate_limited() -> bool:
         _geo_rate_store[ip] = (window_start, count + 1)
         return False
 
-
 def _err(msg: str, status: int = 400):
     return jsonify({"ok": False, "error": msg}), status
 
-
 def _ok(data: Any):
     return jsonify({"ok": True, "data": data})
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Parameter helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def _parse_latlon() -> Optional[Tuple[float, float]]:
+def _parse_latlon() -> Optional[tuple[float, float]]:
     """Parse ?lat=&lng= from query string.  Returns None on bad input."""
     try:
         lat = float(request.args["lat"])
@@ -133,8 +126,7 @@ def _parse_latlon() -> Optional[Tuple[float, float]]:
         return None
     return lat, lng
 
-
-def _parse_bbox() -> Optional[Tuple[float, float, float, float]]:
+def _parse_bbox() -> Optional[tuple[float, float, float, float]]:
     """Parse ?south=&west=&north=&east= query parameters.
 
     Returns (south, west, north, east) or None if any value is invalid.
@@ -155,11 +147,9 @@ def _parse_bbox() -> Optional[Tuple[float, float, float, float]]:
         return None
     return south, west, north, east
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Routes
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 @bp.route("/api/v1/geo/layers")
 def geo_layers():
@@ -206,7 +196,6 @@ def geo_layers():
         }
     )
 
-
 @bp.route("/api/v1/geo/environmental")
 def geo_environmental():
     """Return water quality and environmental metrics for a location.
@@ -248,7 +237,6 @@ def geo_environmental():
         }
     )
 
-
 @bp.route("/api/v1/geo/coastlines")
 def geo_coastlines():
     """Return Natural Earth coastline GeoJSON, optionally clipped to a bbox.
@@ -274,7 +262,6 @@ def geo_coastlines():
         geojson = get_coastlines_geojson(bbox=bbox, resolution=res)
 
     return jsonify(geojson)
-
 
 @bp.route("/api/v1/geo/osm/amenities")
 def geo_osm_amenities():
@@ -302,7 +289,6 @@ def geo_osm_amenities():
     amenities = fetch_osm_amenities(lat, lng, radius_m=radius_m)
     return _ok({"amenities": amenities, "count": len(amenities)})
 
-
 @bp.route("/api/v1/geo/esri/piers")
 def geo_esri_piers():
     """Return pier / marina features for a bounding box (Esri Open Data)."""
@@ -316,7 +302,6 @@ def geo_esri_piers():
 
     features = fetch_pier_locations(south, west, north, east)
     return _ok({"features": features, "count": len(features)})
-
 
 @bp.route("/api/v1/geo/esri/beaches")
 def geo_esri_beaches():
@@ -332,7 +317,6 @@ def geo_esri_beaches():
     beaches = fetch_epa_beaches(south, west, north, east)
     return _ok({"features": beaches, "count": len(beaches)})
 
-
 @bp.route("/api/v1/geo/esri/parks")
 def geo_esri_parks():
     """Return NPS coastal park boundaries for a bounding box."""
@@ -347,7 +331,6 @@ def geo_esri_parks():
     parks = fetch_coastal_parks(south, west, north, east)
     return _ok({"features": parks, "count": len(parks)})
 
-
 @bp.route("/api/v1/geo/aerial/oam")
 def geo_oam_imagery():
     """Return OpenAerialMap imagery catalog results for a bounding box."""
@@ -361,7 +344,6 @@ def geo_oam_imagery():
 
     results = search_oam_imagery(south, west, north, east, limit=8)
     return _ok({"imagery": results, "count": len(results)})
-
 
 @bp.route("/api/v1/geo/hdx-fao")
 def geo_hdx_fao():

@@ -42,7 +42,7 @@ import os
 import threading
 import time
 import zipfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -66,7 +66,7 @@ _NE_GEOJSON_BASE = (
     "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson"
 )
 
-_NE_LAYERS: Dict[str, str] = {
+_NE_LAYERS: dict[str, str] = {
     # Coastlines (lines)
     "coastline_110m": f"{_NE_GEOJSON_BASE}/ne_110m_coastline.geojson",
     # Land polygons (useful for land-masking ocean layers)
@@ -82,7 +82,7 @@ _NE_LAYERS: Dict[str, str] = {
 }
 
 # ── In-process metadata cache ─────────────────────────────────────────────────
-_meta: Dict[str, Dict[str, Any]] = {}  # {layer_name: {path, loaded_at, ok}}
+_meta: dict[str, dict[str, Any]] = {}  # {layer_name: {path, loaded_at, ok}}
 _meta_lock = threading.Lock()
 
 # ── Optional geopandas import ─────────────────────────────────────────────────
@@ -96,16 +96,14 @@ except ImportError:
     _HAS_GEOPANDAS = False
     logger.debug("natural_earth: geopandas not installed; using pure-Python fallback")
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def get_coastlines_geojson(
     bbox: Optional[tuple[float, float, float, float]] = None,
     resolution: str = "110m",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Return Natural Earth coastline GeoJSON, optionally clipped to a bbox.
 
     Parameters
@@ -140,8 +138,7 @@ def get_coastlines_geojson(
     )
     return geojson
 
-
-def get_ocean_boundaries_geojson() -> Dict[str, Any]:
+def get_ocean_boundaries_geojson() -> dict[str, Any]:
     """Return the 110m-resolution ocean polygon layer as GeoJSON.
 
     Suitable for a faint ocean-fill overlay on a transparent canvas layer.
@@ -153,8 +150,7 @@ def get_ocean_boundaries_geojson() -> Dict[str, Any]:
     geojson["license"] = "Public Domain (CC0)"
     return geojson
 
-
-def get_state_boundaries_geojson() -> Dict[str, Any]:
+def get_state_boundaries_geojson() -> dict[str, Any]:
     """Return US state / province boundary lines as GeoJSON."""
     geojson = _load_layer("states_110m")
     if not geojson:
@@ -162,7 +158,6 @@ def get_state_boundaries_geojson() -> Dict[str, Any]:
     geojson["source"] = "Natural Earth"
     geojson["license"] = "Public Domain (CC0)"
     return geojson
-
 
 def load_ne_shapefile(name: str, resolution: str = "10m"):
     """Download and load a Natural Earth shapefile layer as a GeoDataFrame.
@@ -228,17 +223,14 @@ def load_ne_shapefile(name: str, resolution: str = "10m"):
         return None
     return gpd.read_file(os.path.join(shp_dir, shp_files[0]))
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def _layer_path(layer_name: str) -> str:
     return os.path.join(_BASE_DIR, f"{layer_name}.geojson")
 
-
-def _load_layer(layer_name: str) -> Optional[Dict[str, Any]]:
+def _load_layer(layer_name: str) -> Optional[dict[str, Any]]:
     """Load a Natural Earth GeoJSON layer from disk, downloading if needed."""
     path = _layer_path(layer_name)
 
@@ -256,8 +248,7 @@ def _load_layer(layer_name: str) -> Optional[Dict[str, Any]]:
     # Not cached — download synchronously (first time only)
     return _download_layer(layer_name)
 
-
-def _download_layer(layer_name: str) -> Optional[Dict[str, Any]]:
+def _download_layer(layer_name: str) -> Optional[dict[str, Any]]:
     """Download a Natural Earth GeoJSON layer and persist it to disk."""
     url = _NE_LAYERS.get(layer_name)
     if url is None:
@@ -289,8 +280,7 @@ def _download_layer(layer_name: str) -> Optional[Dict[str, Any]]:
 
     return data
 
-
-def _read_geojson(path: str) -> Optional[Dict[str, Any]]:
+def _read_geojson(path: str) -> Optional[dict[str, Any]]:
     """Read a GeoJSON file from disk, returning None on parse error."""
     try:
         with open(path, "r", encoding="utf-8") as fh:
@@ -299,11 +289,10 @@ def _read_geojson(path: str) -> Optional[Dict[str, Any]]:
         logger.error("natural_earth: could not read %s: %s", path, exc)
         return None
 
-
 def _clip_geojson(
-    geojson: Dict[str, Any],
+    geojson: dict[str, Any],
     bbox: tuple[float, float, float, float],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Return a new FeatureCollection with only features intersecting bbox.
 
     Parameters
@@ -334,9 +323,8 @@ def _clip_geojson(
     ]
     return {"type": "FeatureCollection", "features": filtered}
 
-
 def _feature_intersects_bbox(
-    feature: Dict[str, Any],
+    feature: dict[str, Any],
     south: float,
     west: float,
     north: float,
@@ -350,14 +338,13 @@ def _feature_intersects_bbox(
             return True
     return False
 
-
-def _flatten_coords(coords: Any) -> List[tuple[float, float]]:
+def _flatten_coords(coords: Any) -> list[tuple[float, float]]:
     """Recursively flatten nested coordinate arrays to (lng, lat) pairs."""
     if not coords:
         return []
     if isinstance(coords[0], (int, float)):
         return [(coords[0], coords[1])]
-    out: List[tuple[float, float]] = []
+    out: list[tuple[float, float]] = []
     for item in coords:
         out.extend(_flatten_coords(item))
     return out
