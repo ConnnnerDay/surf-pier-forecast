@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import requests
@@ -108,8 +109,6 @@ def fetch_water_quality(
     bbox = f"{lng - deg},{lat - deg},{lng + deg},{lat + deg}"
 
     # Build start date
-    from datetime import datetime, timezone, timedelta
-
     start_date = (datetime.now(timezone.utc) - timedelta(days=within_days)).strftime(
         "%m-%d-%Y"
     )
@@ -340,8 +339,6 @@ def _c_to_f(c: Optional[float]) -> Optional[float]:
     return c * 9 / 5 + 32 if c is not None else None
 
 def _now_iso() -> str:
-    from datetime import datetime, timezone
-
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 def _cache_get(key: tuple) -> Optional[Any]:
