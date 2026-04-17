@@ -210,6 +210,13 @@ def _ring_to_latlng(ring: list) -> list:
     """Convert ArcGIS [x=lng, y=lat] ring coordinates to Leaflet [[lat, lng]]."""
     return [[pt[1], pt[0]] for pt in ring if len(pt) >= 2]
 
+
+def _evict_oldest(cache: dict, max_size: int) -> None:
+    """Drop the oldest entry when the cache is at capacity."""
+    if len(cache) >= max_size:
+        oldest = min(cache, key=lambda k: cache[k]["ts"])
+        cache.pop(oldest, None)
+
 # ── Marine warnings ────────────────────────────────────────────────────────────
 
 def fetch_marine_warnings(
@@ -565,9 +572,7 @@ def fetch_air_quality(lat: float, lng: float) -> Optional[dict[str, Any]]:
     if cached and time.time() - cached["ts"] < _AQI_CACHE_TTL:
         return cached["data"]
 
-    if len(_AQI_CACHE) >= _AQI_CACHE_MAX:
-        oldest = min(_AQI_CACHE, key=lambda x: _AQI_CACHE[x]["ts"])
-        _AQI_CACHE.pop(oldest, None)
+    _evict_oldest(_AQI_CACHE, _AQI_CACHE_MAX)
 
     for pad in (0.5, 1.0, 2.0):
         geom = f"{lng - pad},{lat - pad},{lng + pad},{lat + pad}"
@@ -667,9 +672,7 @@ def fetch_wind_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
     if cached and time.time() - cached["ts"] < _WIND_FC_TTL:
         return cached["data"]
 
-    if len(_WIND_FC_CACHE) >= _WIND_FC_MAX:
-        oldest = min(_WIND_FC_CACHE, key=lambda x: _WIND_FC_CACHE[x]["ts"])
-        _WIND_FC_CACHE.pop(oldest, None)
+    _evict_oldest(_WIND_FC_CACHE, _WIND_FC_MAX)
 
     pad = 0.5  # ½ degree search radius (~55 km)
     geom = f"{lng - pad},{lat - pad},{lng + pad},{lat + pad}"
@@ -779,9 +782,7 @@ def fetch_sst_stations(
     if cached and time.time() - cached["ts"] < _SST_CACHE_TTL:
         return cached["data"]
 
-    if len(_SST_CACHE) >= _SST_CACHE_MAX:
-        oldest = min(_SST_CACHE, key=lambda x: _SST_CACHE[x]["ts"])
-        _SST_CACHE.pop(oldest, None)
+    _evict_oldest(_SST_CACHE, _SST_CACHE_MAX)
 
     params = {
         "where": "1=1",
@@ -882,9 +883,7 @@ def fetch_wildfire_incidents(
     if cached and time.time() - cached["ts"] < _FIRE_CACHE_TTL:
         return cached["data"]
 
-    if len(_FIRE_CACHE) >= _FIRE_CACHE_MAX:
-        oldest = min(_FIRE_CACHE, key=lambda x: _FIRE_CACHE[x]["ts"])
-        _FIRE_CACHE.pop(oldest, None)
+    _evict_oldest(_FIRE_CACHE, _FIRE_CACHE_MAX)
 
     params = {
         "where": "IncidentTypeCategory='WF'",  # wildfire only (exclude Rx burns)
@@ -986,9 +985,7 @@ def fetch_smoke_forecast(
     if cached and time.time() - cached["ts"] < _SMOKE_CACHE_TTL:
         return cached["data"]
 
-    if len(_SMOKE_CACHE) >= _SMOKE_CACHE_MAX:
-        oldest = min(_SMOKE_CACHE, key=lambda x: _SMOKE_CACHE[x]["ts"])
-        _SMOKE_CACHE.pop(oldest, None)
+    _evict_oldest(_SMOKE_CACHE, _SMOKE_CACHE_MAX)
 
     params = {
         "where": "1=1",
@@ -1099,9 +1096,7 @@ def fetch_precip_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
     if cached and time.time() - cached["ts"] < _PRECIP_CACHE_TTL:
         return cached["data"]
 
-    if len(_PRECIP_CACHE) >= _PRECIP_CACHE_MAX:
-        oldest = min(_PRECIP_CACHE, key=lambda x: _PRECIP_CACHE[x]["ts"])
-        _PRECIP_CACHE.pop(oldest, None)
+    _evict_oldest(_PRECIP_CACHE, _PRECIP_CACHE_MAX)
 
     pad = 0.5
     params = {
@@ -1288,9 +1283,7 @@ def fetch_temp_forecast(lat: float, lng: float) -> list[Dict]:
         for d, v in sorted(results.items())[:7]
     ]
 
-    if len(_TEMP_FC_CACHE) >= _TEMP_FC_MAX:
-        oldest = min(_TEMP_FC_CACHE, key=lambda x: _TEMP_FC_CACHE[x]["ts"])
-        _TEMP_FC_CACHE.pop(oldest, None)
+    _evict_oldest(_TEMP_FC_CACHE, _TEMP_FC_MAX)
     _TEMP_FC_CACHE[k] = {"ts": now, "data": data}
     return data
 
@@ -1323,9 +1316,7 @@ def fetch_seismic_events(
     if k in _SEISMIC_CACHE and now - _SEISMIC_CACHE[k]["ts"] < _SEISMIC_TTL:
         return _SEISMIC_CACHE[k]["data"]
 
-    if len(_SEISMIC_CACHE) >= _SEISMIC_MAX:
-        oldest = min(_SEISMIC_CACHE, key=lambda x: _SEISMIC_CACHE[x]["ts"])
-        _SEISMIC_CACHE.pop(oldest, None)
+    _evict_oldest(_SEISMIC_CACHE, _SEISMIC_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -1416,9 +1407,7 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
     if k in _DROUGHT_CACHE and now - _DROUGHT_CACHE[k]["ts"] < _DROUGHT_TTL:
         return _DROUGHT_CACHE[k]["data"]
 
-    if len(_DROUGHT_CACHE) >= _DROUGHT_MAX:
-        oldest = min(_DROUGHT_CACHE, key=lambda x: _DROUGHT_CACHE[x]["ts"])
-        _DROUGHT_CACHE.pop(oldest, None)
+    _evict_oldest(_DROUGHT_CACHE, _DROUGHT_MAX)
 
     params = {
         "geometry": f"{lng},{lat}",
@@ -1517,9 +1506,7 @@ def fetch_metar_stations(
     if k in _METAR_CACHE and now - _METAR_CACHE[k]["ts"] < _METAR_TTL:
         return _METAR_CACHE[k]["data"]
 
-    if len(_METAR_CACHE) >= _METAR_MAX:
-        oldest = min(_METAR_CACHE, key=lambda x: _METAR_CACHE[x]["ts"])
-        _METAR_CACHE.pop(oldest, None)
+    _evict_oldest(_METAR_CACHE, _METAR_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -1690,9 +1677,7 @@ def fetch_stream_gauges(
     if k in _GAUGE_CACHE and now - _GAUGE_CACHE[k]["ts"] < _GAUGE_TTL:
         return _GAUGE_CACHE[k]["data"]
 
-    if len(_GAUGE_CACHE) >= _GAUGE_MAX:
-        oldest = min(_GAUGE_CACHE, key=lambda x: _GAUGE_CACHE[x]["ts"])
-        _GAUGE_CACHE.pop(oldest, None)
+    _evict_oldest(_GAUGE_CACHE, _GAUGE_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -1788,9 +1773,7 @@ def fetch_storm_reports(
     if k in _STORM_RPT_CACHE and now - _STORM_RPT_CACHE[k]["ts"] < _STORM_RPT_TTL:
         return _STORM_RPT_CACHE[k]["data"]
 
-    if len(_STORM_RPT_CACHE) >= _STORM_RPT_MAX:
-        oldest = min(_STORM_RPT_CACHE, key=lambda x: _STORM_RPT_CACHE[x]["ts"])
-        _STORM_RPT_CACHE.pop(oldest, None)
+    _evict_oldest(_STORM_RPT_CACHE, _STORM_RPT_MAX)
 
     bbox = f"{west},{south},{east},{north}"
     base = {
@@ -1933,9 +1916,7 @@ def fetch_aqi_map(
     if k in _AQI_MAP_CACHE and now - _AQI_MAP_CACHE[k]["ts"] < _AQI_MAP_TTL:
         return _AQI_MAP_CACHE[k]["data"]
 
-    if len(_AQI_MAP_CACHE) >= _AQI_MAP_MAX:
-        oldest = min(_AQI_MAP_CACHE, key=lambda x: _AQI_MAP_CACHE[x]["ts"])
-        _AQI_MAP_CACHE.pop(oldest, None)
+    _evict_oldest(_AQI_MAP_CACHE, _AQI_MAP_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -2007,9 +1988,7 @@ def fetch_drought_map(
     if k in _DROUGHT_MAP_CACHE and now - _DROUGHT_MAP_CACHE[k]["ts"] < _DROUGHT_MAP_TTL:
         return _DROUGHT_MAP_CACHE[k]["data"]
 
-    if len(_DROUGHT_MAP_CACHE) >= _DROUGHT_MAP_MAX:
-        oldest = min(_DROUGHT_MAP_CACHE, key=lambda x: _DROUGHT_MAP_CACHE[x]["ts"])
-        _DROUGHT_MAP_CACHE.pop(oldest, None)
+    _evict_oldest(_DROUGHT_MAP_CACHE, _DROUGHT_MAP_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -2103,9 +2082,7 @@ def fetch_precipitation_map(
     if k in _PRECIP_MAP_CACHE and now - _PRECIP_MAP_CACHE[k]["ts"] < _PRECIP_MAP_TTL:
         return _PRECIP_MAP_CACHE[k]["data"]
 
-    if len(_PRECIP_MAP_CACHE) >= _PRECIP_MAP_MAX:
-        oldest = min(_PRECIP_MAP_CACHE, key=lambda x: _PRECIP_MAP_CACHE[x]["ts"])
-        _PRECIP_MAP_CACHE.pop(oldest, None)
+    _evict_oldest(_PRECIP_MAP_CACHE, _PRECIP_MAP_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -2184,9 +2161,7 @@ def fetch_ndbc_buoys(
     if k in _NDBC_CACHE and now - _NDBC_CACHE[k]["ts"] < _NDBC_TTL:
         return _NDBC_CACHE[k]["data"]
 
-    if len(_NDBC_CACHE) >= _NDBC_MAX:
-        oldest = min(_NDBC_CACHE, key=lambda x: _NDBC_CACHE[x]["ts"])
-        _NDBC_CACHE.pop(oldest, None)
+    _evict_oldest(_NDBC_CACHE, _NDBC_MAX)
 
     params = {
         "geometry": f"{west},{south},{east},{north}",
@@ -2313,9 +2288,7 @@ def fetch_ndfd_temperature_map(
     ):
         return _NDFD_TEMP_MAP_CACHE[k]["data"]
 
-    if len(_NDFD_TEMP_MAP_CACHE) >= _NDFD_TEMP_MAP_MAX:
-        oldest = min(_NDFD_TEMP_MAP_CACHE, key=lambda x: _NDFD_TEMP_MAP_CACHE[x]["ts"])
-        _NDFD_TEMP_MAP_CACHE.pop(oldest, None)
+    _evict_oldest(_NDFD_TEMP_MAP_CACHE, _NDFD_TEMP_MAP_MAX)
 
     params_base = {
         "geometry": f"{west},{south},{east},{north}",
@@ -2418,9 +2391,7 @@ def fetch_hfradar_currents(
     if k in _HFRADAR_CACHE and now - _HFRADAR_CACHE[k]["ts"] < _HFRADAR_TTL:
         return _HFRADAR_CACHE[k]["data"]
 
-    if len(_HFRADAR_CACHE) >= _HFRADAR_MAX:
-        oldest = min(_HFRADAR_CACHE, key=lambda x: _HFRADAR_CACHE[x]["ts"])
-        _HFRADAR_CACHE.pop(oldest, None)
+    _evict_oldest(_HFRADAR_CACHE, _HFRADAR_MAX)
 
     bbox = f"{west},{south},{east},{north}"
     base_params = {
