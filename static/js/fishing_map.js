@@ -1855,29 +1855,6 @@
         if (closeBtn) closeBtn.addEventListener('click', closeDetail);
     }
 
-    function showAiPickPopup(loc) {
-        if (!map) return;
-        var badge = ACTIVITY[loc.activity] || ACTIVITY.none;
-        var wtHtml = loc.water_temp != null
-            ? '<span class="fmap-ai-popup-wt">\uD83C\uDF21\uFE0F ' + Math.round(loc.water_temp) + '\u00b0F water</span>'
-            : '';
-        L.popup({ className: 'fmap-ai-popup', maxWidth: 295, minWidth: 230 })
-            .setLatLng([loc.lat, loc.lng])
-            .setContent(
-                '<div class="fmap-ai-popup-inner">' +
-                '<div class="fmap-ai-popup-header">' +
-                '<span class="fmap-ai-popup-pick-badge">#' + loc.ai_pick_rank + ' AI Pick</span>' +
-                '<span class="fmap-ai-popup-act-badge fmap-ai-popup-act-badge--' + loc.activity + '">' + badge.label + '</span>' +
-                wtHtml +
-                '</div>' +
-                '<div class="fmap-ai-popup-name">' + esc(loc.name) + ', ' + esc(loc.state) + '</div>' +
-                '<p class="fmap-ai-popup-reasoning">' + esc(loc.ai_reasoning || '') + '</p>' +
-                '<a href="/f/' + esc(loc.id) + '" class="fmap-ai-popup-link">View Full Forecast \u2192</a>' +
-                '</div>'
-            )
-            .openOn(map);
-    }
-
     // ─── Utilities ────────────────────────────────────────────────────────────
 
     function getCsrfToken() {
