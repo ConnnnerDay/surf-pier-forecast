@@ -2130,6 +2130,9 @@ def geocode_zip(zipcode: str) -> Optional[tuple[float, float]]:
     Returns None if the zip code is invalid or the service is down.
     """
     zipcode = zipcode.strip()
+    # Accept ZIP+4 format (e.g. "12345-6789") — keep only the 5-digit base.
+    if len(zipcode) == 10 and zipcode[5] == "-":
+        zipcode = zipcode[:5]
     if not zipcode.isdigit() or len(zipcode) != 5:
         return None
     try:

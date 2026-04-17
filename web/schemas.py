@@ -43,6 +43,13 @@ def error_envelope(
     }
 
 
+_MAX_FAVORITES = 20
+_MAX_FAVORITES_ENTRY_LEN = 100
+_MAX_LOCATION_ID_LEN = 100
+_MAX_SPECIES_LEN = 100
+_MAX_SIZE_LEN = 50
+_MAX_NOTES_LEN = 1000
+
 _VALID_FISHING_TYPES = frozenset(
     {
         "surf",
@@ -128,16 +135,16 @@ class ProfilePayload:
                     "favorites must be a list of strings",
                     status=400,
                 )
-            if len(favorites) > 20:
+            if len(favorites) > _MAX_FAVORITES:
                 raise ApiError(
                     "invalid_favorites",
-                    "favorites may not contain more than 20 entries",
+                    f"favorites may not contain more than {_MAX_FAVORITES} entries",
                     status=400,
                 )
-            if not all(isinstance(x, str) and len(x) <= 100 for x in favorites):
+            if not all(isinstance(x, str) and len(x) <= _MAX_FAVORITES_ENTRY_LEN for x in favorites):
                 raise ApiError(
                     "invalid_favorites",
-                    "favorites must be a list of strings (max 100 characters each)",
+                    f"favorites must be a list of strings (max {_MAX_FAVORITES_ENTRY_LEN} characters each)",
                     status=400,
                 )
 
@@ -250,10 +257,10 @@ class ProfilePayload:
                 raise ApiError(
                     "invalid_location_id", "location_id must be a string", status=400
                 )
-            if len(location_id) > 100:
+            if len(location_id) > _MAX_LOCATION_ID_LEN:
                 raise ApiError(
                     "invalid_location_id",
-                    "location_id must be 100 characters or fewer",
+                    f"location_id must be {_MAX_LOCATION_ID_LEN} characters or fewer",
                     status=400,
                 )
 
@@ -292,19 +299,19 @@ class LogCreatePayload:
         species = str(data.get("species", "")).strip()
         if not species:
             raise ApiError("missing_species", "species is required", status=400)
-        if len(species) > 100:
+        if len(species) > _MAX_SPECIES_LEN:
             raise ApiError(
-                "invalid_species", "species must be 100 characters or fewer", status=400
+                "invalid_species", f"species must be {_MAX_SPECIES_LEN} characters or fewer", status=400
             )
         size = str(data.get("size", "")).strip()
-        if len(size) > 50:
+        if len(size) > _MAX_SIZE_LEN:
             raise ApiError(
-                "invalid_size", "size must be 50 characters or fewer", status=400
+                "invalid_size", f"size must be {_MAX_SIZE_LEN} characters or fewer", status=400
             )
         notes = str(data.get("notes", "")).strip()
-        if len(notes) > 1000:
+        if len(notes) > _MAX_NOTES_LEN:
             raise ApiError(
-                "invalid_notes", "notes must be 1000 characters or fewer", status=400
+                "invalid_notes", f"notes must be {_MAX_NOTES_LEN} characters or fewer", status=400
             )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:

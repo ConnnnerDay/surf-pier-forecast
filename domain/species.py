@@ -82,7 +82,6 @@ _OFFSHORE_ONLY_SPECIES: set = {
     "Shortbill spearfish",
     "Splitnose rockfish",
     "Greenstriped rockfish",
-    "Rougheye rockfish",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
