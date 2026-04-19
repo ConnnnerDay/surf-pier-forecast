@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import pathlib
-from typing import Any, Dict, List
+from typing import Any
 
 _JSON_PATH = pathlib.Path(__file__).parent / "species_data.json"
 
@@ -25,6 +25,7 @@ _REQUIRED_FIELDS: frozenset = frozenset(
         "rig",
         "hook_size",
         "sinker",
+        "lures",
         "explanation_cold",
         "explanation_warm",
         "coast",
@@ -33,8 +34,7 @@ _REQUIRED_FIELDS: frozenset = frozenset(
 
 _VALID_COASTS: frozenset = frozenset({"east", "west", "hawaii"})
 
-
-def _validate(entries: List[Dict[str, Any]]) -> None:
+def _validate(entries: list[dict[str, Any]]) -> None:
     """Raise ValueError with a descriptive message if any entry is malformed."""
     if not isinstance(entries, list) or len(entries) == 0:
         raise ValueError("species_data.json must be a non-empty JSON array")
@@ -103,8 +103,7 @@ def _validate(entries: List[Dict[str, Any]]) -> None:
                     f"Species '{name}': 'categories' must be a list of strings"
                 )
 
-
-def load_species_db(path: pathlib.Path | None = None) -> List[Dict[str, Any]]:
+def load_species_db(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
     """Read, parse, and validate the species JSON file.
 
     Parameters
@@ -136,6 +135,5 @@ def load_species_db(path: pathlib.Path | None = None) -> List[Dict[str, Any]]:
     _validate(entries)
     return entries
 
-
 # Module-level singleton — loaded once at import time.
-SPECIES_DB: List[Dict[str, Any]] = load_species_db()
+SPECIES_DB: list[dict[str, Any]] = load_species_db()

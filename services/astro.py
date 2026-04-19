@@ -5,17 +5,46 @@ from __future__ import annotations
 import logging
 import math
 from datetime import datetime, timedelta
-from typing import Any, Dict, Tuple
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from utils import safe_zone as _safe_zone
 
 logger = logging.getLogger(__name__)
 
-
 # Default coordinates (overridden per location; only used when no location set)
 _LAT = 34.2104
 _LNG = -77.7964
+
+# Astronomical constants
+_SYNODIC_MONTH_DAYS = 29.53058867   # Synodic month (new moon to new moon)
+_MOON_RISE_SET_OFFSET = 6.2         # Hours from moon transit to moonrise/moonset
+_EARTH_MOON_DISTANCE_KM = 384400    # Mean Earth-Moon distance
+_MOON_ANOMALY_COEFFICIENT_KM = 20905  # Lunar distance variation amplitude
+
+
+def _eqtime(gamma: float) -> float:
+    """Equation of time correction in minutes (NOAA algorithm)."""
+    return 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(gamma)
+        - 0.032077 * math.sin(gamma)
+        - 0.014615 * math.cos(2 * gamma)
+        - 0.040849 * math.sin(2 * gamma)
+    )
+
+
+def _solar_decl(gamma: float) -> float:
+    """Solar declination in radians (NOAA algorithm)."""
+    return (
+        0.006918
+        - 0.399912 * math.cos(gamma)
+        + 0.070257 * math.sin(gamma)
+        - 0.006758 * math.cos(2 * gamma)
+        + 0.000907 * math.sin(2 * gamma)
+        - 0.002697 * math.cos(3 * gamma)
+        + 0.00148 * math.sin(3 * gamma)
+    )
 
 
 def _sun_times(
@@ -23,7 +52,7 @@ def _sun_times(
     lat: float = 0,
     lng: float = 0,
     tz_name: str = "America/New_York",
-) -> Tuple[datetime, datetime]:
+) -> tuple[datetime, datetime]:
     """Compute approximate sunrise and sunset for a coastal location.
 
     Uses the simplified NOAA algorithm based on the day-of-year, latitude,
@@ -41,26 +70,8 @@ def _sun_times(
 
     # Fractional year in radians
     gamma = 2 * math.pi / 365 * (n - 1)
-
-    # Equation of time (minutes)
-    eqtime = 229.18 * (
-        0.000075
-        + 0.001868 * math.cos(gamma)
-        - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma)
-        - 0.040849 * math.sin(2 * gamma)
-    )
-
-    # Solar declination (radians)
-    decl = (
-        0.006918
-        - 0.399912 * math.cos(gamma)
-        + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma)
-        + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma)
-        + 0.00148 * math.sin(3 * gamma)
-    )
+    eqtime = _eqtime(gamma)
+    decl = _solar_decl(gamma)
 
     lat_rad = math.radians(lat)
 
@@ -82,7 +93,6 @@ def _sun_times(
 
     return sunrise.astimezone(tz), sunset.astimezone(tz)
 
-
 def _moon_phase(dt: datetime) -> float:
     """Return the moon phase as a fraction (0.0 = new, 0.5 = full)."""
     # Reference new moon: 2000-01-06 18:14 UTC
@@ -90,12 +100,11 @@ def _moon_phase(dt: datetime) -> float:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
     diff = (dt - ref).total_seconds()
-    synodic = 29.53058867  # days
+    synodic = _SYNODIC_MONTH_DAYS
     phase = (diff / (synodic * 86400)) % 1.0
     return phase
 
-
-def _moon_transit_hours(dt: datetime, lng: float) -> Tuple[float, float]:
+def _moon_transit_hours(dt: datetime, lng: float) -> tuple[float, float]:
     """Approximate moon overhead and underfoot times (local hour of day).
 
     Returns (overhead_hour, underfoot_hour).  These are rough estimates
@@ -120,7 +129,6 @@ def _moon_transit_hours(dt: datetime, lng: float) -> Tuple[float, float]:
     underfoot = (overhead + 12.0) % 24.0
     return overhead, underfoot
 
-
 def _sun_event_time(
     dt: datetime,
     lat: float,
@@ -135,22 +143,8 @@ def _sun_event_time(
         dt = dt.replace(tzinfo=tz)
     n = dt.timetuple().tm_yday
     gamma = 2 * math.pi / 365 * (n - 1)
-    eqtime = 229.18 * (
-        0.000075
-        + 0.001868 * math.cos(gamma)
-        - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma)
-        - 0.040849 * math.sin(2 * gamma)
-    )
-    decl = (
-        0.006918
-        - 0.399912 * math.cos(gamma)
-        + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma)
-        + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma)
-        + 0.00148 * math.sin(3 * gamma)
-    )
+    eqtime = _eqtime(gamma)
+    decl = _solar_decl(gamma)
     lat_rad = math.radians(lat)
     cos_ha = math.cos(math.radians(zenith_deg)) / (
         math.cos(lat_rad) * math.cos(decl)
@@ -161,10 +155,9 @@ def _sun_event_time(
     base = datetime(dt.year, dt.month, dt.day, tzinfo=ZoneInfo("UTC"))
     return (base + timedelta(minutes=event_utc)).astimezone(tz)
 
-
 def compute_twilight_times(
     dt: datetime, lat: float, lng: float, tz_name: str
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Compute civil/nautical/astronomical dawn+dusk and golden hour windows."""
     civil_dawn = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=96.0, rising=True)
     civil_dusk = _sun_event_time(dt, lat, lng, tz_name, zenith_deg=96.0, rising=False)
@@ -192,19 +185,17 @@ def compute_twilight_times(
         "golden_pm": f"{fmt(sunset)} - {fmt(civil_dusk)}",
     }
 
-
-def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> Dict[str, Any]:
+def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> dict[str, Any]:
     """Compute moonrise/moonset plus simple phase-age-distance info."""
     tz = _safe_zone(tz_name)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=tz)
 
     phase_frac = _moon_phase(dt)
-    synodic = 29.53058867
-    age_days = phase_frac * synodic
+    age_days = phase_frac * _SYNODIC_MONTH_DAYS
     overhead, _underfoot = _moon_transit_hours(dt, lng)
-    moonrise_h = (overhead - 6.2) % 24.0
-    moonset_h = (overhead + 6.2) % 24.0
+    moonrise_h = (overhead - _MOON_RISE_SET_OFFSET) % 24.0
+    moonset_h = (overhead + _MOON_RISE_SET_OFFSET) % 24.0
 
     def hour_to_str(hour: float) -> str:
         h = int(hour) % 24
@@ -214,9 +205,8 @@ def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> Dict[str, A
         return f"{display}:{m:02d} {ampm}"
 
     # Approximate geocentric moon distance in km with simple anomaly model.
-    mean_distance_km = 384400
     anomaly = 2 * math.pi * phase_frac
-    distance_km = mean_distance_km - 20905 * math.cos(anomaly)
+    distance_km = _EARTH_MOON_DISTANCE_KM - _MOON_ANOMALY_COEFFICIENT_KM * math.cos(anomaly)
 
     return {
         "moonrise": hour_to_str(moonrise_h),
@@ -225,13 +215,12 @@ def compute_lunar_details(dt: datetime, lng: float, tz_name: str) -> Dict[str, A
         "distance_km": round(distance_km),
     }
 
-
 def compute_solunar_times(
     dt: datetime,
     lat: float,
     lng: float,
     tz_name: str = "America/New_York",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compute solunar major and minor fishing periods for the given day.
 
     Returns a dict with:
@@ -256,7 +245,7 @@ def compute_solunar_times(
             display_h = 12
         return f"{display_h}:{m:02d} {period}"
 
-    def time_window(center: float, half_width: float) -> Tuple[str, str]:
+    def time_window(center: float, half_width: float) -> tuple[str, str]:
         start = (center - half_width) % 24.0
         end = (center + half_width) % 24.0
         return fmt_time(start), fmt_time(end)
@@ -277,7 +266,7 @@ def compute_solunar_times(
     ]
 
     # Sort by start time
-    def sort_key(p: Tuple[str, str]) -> float:
+    def sort_key(p: tuple[str, str]) -> float:
         parts = p[0].replace(":", " ").replace("AM", "").replace("PM", "").split()
         h = int(parts[0])
         m = int(parts[1])

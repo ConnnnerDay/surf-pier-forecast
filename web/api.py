@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import json as _json_mod
 import logging
 import os
@@ -9,7 +10,9 @@ import threading
 import time
 import uuid
 from zoneinfo import available_timezones
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
+
+import requests as _requests
 
 from flask import (
     Blueprint,
@@ -24,7 +27,9 @@ from flask import (
 
 from domain.forecast import build_share_text, generate_forecast
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
-from locations import get_location, get_water_temp
+from locations import COASTAL_LOCATIONS, get_location, get_water_temp
+from storage.reg_scraper import invalidate_cache as _reg_invalidate_cache
+from storage.species_loader import SPECIES_DB
 from regulations import lookup_regulation
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -32,12 +37,41 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
+from services.arcgis_live_feeds import (
+    _evict_oldest,
+    fetch_active_storms,
+    fetch_air_quality,
+    fetch_aqi_map,
+    fetch_drought,
+    fetch_drought_map,
+    fetch_hfradar_currents,
+    fetch_marine_warnings,
+    fetch_metar_stations,
+    fetch_ndbc_buoys,
+    fetch_ndfd_temperature_map,
+    fetch_precip_forecast,
+    fetch_precipitation_map,
+    fetch_recent_storm_tracks,
+    fetch_sea_ice_extent,
+    fetch_seismic_events,
+    fetch_smoke_forecast,
+    fetch_sst_stations,
+    fetch_storm_reports,
+    fetch_stream_gauges,
+    fetch_temp_forecast,
+    fetch_terminator,
+    fetch_tropical_outlook,
+    fetch_wildfire_incidents,
+    fetch_wind_forecast,
+)
 from services.fish_structures import VALID_TYPES, find_fish_structures
 from storage.sqlite import (
     add_log_entry,
     add_map_catch,
     add_map_catch_comment,
     attach_photos_to_entry,
+    create_custom_marker,
+    delete_custom_marker,
     delete_log_entry,
     delete_map_catch,
     get_community_hotspots,
@@ -53,6 +87,7 @@ from storage.sqlite import (
     get_recent_public_catches,
     save_page_layout,
     save_preferences,
+    update_custom_marker,
     toggle_map_catch_like,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
@@ -84,77 +119,15 @@ _VALID_TIMEZONES: frozenset[str] = frozenset(available_timezones())
 # event; anything beyond that is suspicious.
 _TZ_RATE_LIMIT_MAX = 5
 _TZ_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
-_tz_rate_store: Dict[str, tuple[float, int]] = {}
+_tz_rate_store: dict[str, tuple[float, int]] = {}
 _tz_rate_lock = threading.Lock()
 
 
-_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
-
-
-def _client_ip() -> str:
-    """Return the best-effort client IP for rate limiting.
-
-    X-Forwarded-For is only honoured when TRUSTED_PROXY=1 is set in the
-    environment.  Without that flag, the header is ignored to prevent clients
-    from spoofing arbitrary IPs and bypassing IP-based rate limiting.
-    """
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
-
-
-# Keep the old alias used by the timezone helpers below.
-_tz_client_ip = _client_ip
-
-
-_PRUNE_EVERY = 200  # evict expired entries every N rate-limit checks
-_prune_counter = 0
-
-
-def _prune_rate_store(store: Dict[str, Tuple[float, int]], window_s: int) -> None:
-    """Remove expired entries from a rate store.  Must be called under its lock."""
-    now = time.time()
-    expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
-    for ip in expired:
-        del store[ip]
-
-
-def _is_rate_limited_ip(
-    store: Dict[str, Tuple[float, int]],
-    lock: threading.Lock,
-    max_attempts: int,
-    window_s: int,
-) -> bool:
-    """Generic IP-keyed sliding-window rate limiter (read-only check)."""
-    global _prune_counter
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        _prune_counter += 1
-        if _prune_counter % _PRUNE_EVERY == 0:
-            _prune_rate_store(store, window_s)
-        start, count = store.get(ip, (now, 0))
-        if now - start > window_s:
-            return False
-        return count >= max_attempts
-
-
-def _record_ip_attempt(
-    store: Dict[str, Tuple[float, int]],
-    lock: threading.Lock,
-    window_s: int,
-) -> None:
-    """Record one attempt in a generic IP-keyed sliding-window rate store."""
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        start, count = store.get(ip, (now, 0))
-        if now - start > window_s:
-            store[ip] = (now, 1)
-        else:
-            store[ip] = (start, count + 1)
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _is_rate_limited_ip,
+    record_attempt as _record_ip_attempt,
+)
 
 
 def _tz_is_rate_limited() -> bool:
@@ -173,7 +146,7 @@ def _tz_record_attempt() -> None:
 # abuse without affecting legitimate usage.
 _REG_RATE_LIMIT_MAX = 30
 _REG_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
-_reg_rate_store: Dict[str, Tuple[float, int]] = {}
+_reg_rate_store: dict[str, tuple[float, int]] = {}
 _reg_rate_lock = threading.Lock()
 
 
@@ -192,7 +165,7 @@ def _reg_record_attempt() -> None:
 # user can call this, so limit to 5 invalidations per IP per hour.
 _REG_REFRESH_RATE_LIMIT_MAX = 5
 _REG_REFRESH_RATE_LIMIT_WINDOW_S = 60 * 60  # 1 hour
-_reg_refresh_rate_store: Dict[str, Tuple[float, int]] = {}
+_reg_refresh_rate_store: dict[str, tuple[float, int]] = {}
 _reg_refresh_rate_lock = threading.Lock()
 
 
@@ -219,7 +192,7 @@ def _reg_refresh_record_attempt() -> None:
 # deliberate polling storms.
 _FORECAST_SUB_RATE_LIMIT_MAX = 120
 _FORECAST_SUB_RATE_LIMIT_WINDOW_S = 60  # 1 minute
-_forecast_sub_rate_store: Dict[str, Tuple[float, int]] = {}
+_forecast_sub_rate_store: dict[str, tuple[float, int]] = {}
 _forecast_sub_rate_lock = threading.Lock()
 
 
@@ -245,7 +218,7 @@ def _forecast_sub_record_attempt() -> None:
 # uploads per 10 minutes per IP to prevent disk-filling abuse.
 _UPLOAD_RATE_LIMIT_MAX = 20
 _UPLOAD_RATE_LIMIT_WINDOW_S = 10 * 60
-_upload_rate_store: Dict[str, Tuple[float, int]] = {}
+_upload_rate_store: dict[str, tuple[float, int]] = {}
 _upload_rate_lock = threading.Lock()
 
 
@@ -289,7 +262,7 @@ def set_timezone() -> Any:
         logger.warning(
             "security.timezone_rate_limit user_id=%s ip=%s",
             g.user["id"],
-            _tz_client_ip(),
+            _client_ip(),
         )
         return jsonify(
             {"ok": True}
@@ -307,7 +280,7 @@ def set_timezone() -> Any:
                 "security.invalid_timezone user_id=%s tz=%r ip=%s",
                 g.user["id"],
                 tz[:80],
-                _tz_client_ip(),
+                _client_ip(),
             )
         return jsonify({"ok": True})  # silent rejection — no error info to caller
 
@@ -316,7 +289,7 @@ def set_timezone() -> Any:
     return jsonify({"ok": True})
 
 
-def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
+def _v1_forecast_payload(query: ForecastQuery) -> dict[str, Any]:
     location = (
         get_location(query.location_id) if query.location_id else get_session_location()
     )
@@ -325,7 +298,7 @@ def _v1_forecast_payload(query: ForecastQuery) -> Dict[str, Any]:
 
     loc_id = location["id"]
     user_id = g.user["id"] if g.user else None
-    forecast_data: Optional[Dict[str, Any]] = None
+    forecast_data: Optional[dict[str, Any]] = None
     if query.force_refresh:
         if refresh_is_rate_limited():
             raise ApiError(
@@ -693,9 +666,7 @@ def regulations_refresh_v1() -> Any:
 
     state = request.args.get("state", "").strip().upper() or None
     try:
-        from storage.reg_scraper import invalidate_cache
-
-        removed = invalidate_cache(state)
+        removed = _reg_invalidate_cache(state)
     except Exception:
         removed = 0
     return jsonify(success_envelope({"invalidated": removed, "state": state}))
@@ -775,7 +746,7 @@ def _check_magic_bytes(data: bytes, claimed_mime: str) -> bool:
     return False
 
 
-def _save_upload(file_storage, user_id: int) -> Tuple[str, str]:
+def _save_upload(file_storage, user_id: int) -> tuple[str, str]:
     """Validate + write an uploaded photo.
 
     Returns ``(relative_path, absolute_path)`` where relative_path is suitable
@@ -892,7 +863,7 @@ def log_photos_v1(entry_id: int) -> Any:
             )
         )
 
-    saved: Dict[str, str] = {}
+    saved: dict[str, str] = {}
     try:
         if photo1_file and photo1_file.filename:
             rel, _ = _save_upload(photo1_file, uid)
@@ -933,7 +904,7 @@ def share_text() -> Any:
 # ---------------------------------------------------------------------------
 
 # Maps species 'regions' values → sets of location temp_region strings.
-_SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
+_SPECIES_REGION_TO_LOC_REGIONS: dict[str, frozenset] = {
     "northeast": frozenset({"northeast"}),
     "new_england": frozenset({"northeast"}),
     "mid-atlantic": frozenset({"midatlantic"}),
@@ -961,7 +932,7 @@ _SPECIES_REGION_TO_LOC_REGIONS: Dict[str, frozenset] = {
 }
 
 
-def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
+def _temp_factor(species: dict[str, Any], water_temp_f: float) -> float:
     """Return 0.3–1.0 temperature suitability multiplier for a species.
 
     1.0 = water is inside the ideal temperature window.
@@ -983,7 +954,7 @@ def _temp_factor(species: Dict[str, Any], water_temp_f: float) -> float:
     return 1.0 if span <= 0 else 0.5 + 0.5 * (t_max - water_temp_f) / span
 
 
-def _location_coast(loc: Dict[str, Any]) -> str:
+def _location_coast(loc: dict[str, Any]) -> str:
     """Return 'west', 'hawaii', or 'east' for a location."""
     region = loc.get("temp_region", "")
     if region.startswith("pacific_"):
@@ -993,7 +964,7 @@ def _location_coast(loc: Dict[str, Any]) -> str:
     return "east"
 
 
-def _species_present_at(species: Dict[str, Any], loc: Dict[str, Any]) -> bool:
+def _species_present_at(species: dict[str, Any], loc: dict[str, Any]) -> bool:
     """Return True when a species is plausibly found at a given location.
 
     Uses the optional per-species ``regions`` list for fine-grained matching;
@@ -1012,7 +983,7 @@ def _species_present_at(species: Dict[str, Any], loc: Dict[str, Any]) -> bool:
     return False
 
 
-def _month_score(species: Dict[str, Any], month: int) -> int:
+def _month_score(species: dict[str, Any], month: int) -> int:
     """Activity score 0-100 for a species in the given calendar month."""
     if month in species.get("peak_months", []):
         return 100
@@ -1029,7 +1000,7 @@ _SPECIES_NAMES_CACHE: Optional[list] = None
 # Pre-built lowercase name index: list of (lowercase_name, species_dict) pairs
 # so species_q filtering avoids calling s["name"].lower() on every species on
 # every request.
-_SPECIES_LOWER_INDEX: Optional[List[Tuple[str, frozenset, Any]]] = None
+_SPECIES_LOWER_INDEX: Optional[list[tuple[str, frozenset, Any]]] = None
 
 # ── Location → species index — pre-computed once at first warm request ─────────
 # _species_present_at(sp, loc) is O(1) per call but it is called
@@ -1038,10 +1009,10 @@ _SPECIES_LOWER_INDEX: Optional[List[Tuple[str, frozenset, Any]]] = None
 # mapping once reduces the per-request cost to a single dict lookup for the
 # unfiltered case, and to iterating a much smaller per-location list for
 # filtered queries.
-_LOC_SPECIES_ALL: Optional[Dict[str, List]] = None  # loc_id → [species, ...]
+_LOC_SPECIES_ALL: Optional[dict[str, List]] = None  # loc_id → [species, ...]
 
 
-def _get_loc_species_all() -> Dict[str, List]:
+def _get_loc_species_all() -> dict[str, List]:
     """Return {loc_id: [species_dict, ...]} for every location using all species."""
     global _LOC_SPECIES_ALL
     if _LOC_SPECIES_ALL is None:
@@ -1064,7 +1035,7 @@ def _get_all_species_names() -> list:
     return _SPECIES_NAMES_CACHE
 
 
-def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
+def _get_species_lower_index() -> "list[tuple[str, frozenset, Any]]":
     """Return list of (lowercase_name, lowercase_category_frozenset, species_dict).
 
     Built once at first call so neither .lower() nor list-comp over categories
@@ -1091,19 +1062,19 @@ def _get_species_lower_index() -> "List[Tuple[str, frozenset, Any]]":
 # coast, season…) that repeat a previous combination return instantly.
 # Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
 #        min_temp, max_temp)  — the complete set of params that affect output.
-_FMAP_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_FMAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month rolls over
 _FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
 
 
-def _fmap_cache_get(key: tuple) -> Optional[Dict[str, Any]]:
+def _fmap_cache_get(key: tuple) -> Optional[dict[str, Any]]:
     entry = _FMAP_CACHE.get(key)
     if entry and (time.time() - entry["ts"]) < _FMAP_CACHE_TTL:
         return entry["data"]
     return None
 
 
-def _fmap_cache_set(key: tuple, data: Dict[str, Any]) -> None:
+def _fmap_cache_set(key: tuple, data: dict[str, Any]) -> None:
     if len(_FMAP_CACHE) >= _FMAP_CACHE_MAX:
         # Drop the oldest insertion
         try:
@@ -1128,10 +1099,6 @@ def fishing_map_data() -> Any:
     month   : int 1-12, optional
         Override current month (for testing / future planning).
     """
-    import datetime
-    from storage.species_loader import SPECIES_DB
-    from locations import COASTAL_LOCATIONS
-
     # -- parse & sanitise params -----------------------------------------------
     species_q = request.args.get("species", "").strip()[:100].lower()
     coast_q = request.args.get("coast", "").strip()[:20].lower()
@@ -1233,8 +1200,8 @@ def fishing_map_data() -> Any:
     # structures once:
     #   _cur_score[name]       → score for the current month (used in main loop)
     #   _all_scores[name][m]   → score for month m, 1-indexed (monthly summary)
-    _cur_score: Dict[str, int] = {}
-    _all_scores: Dict[str, List[int]] = {}
+    _cur_score: dict[str, int] = {}
+    _all_scores: dict[str, list[int]] = {}
     for _sp in filtered_species:
         _sn = _sp["name"]
         _cur_score[_sn] = _month_score(_sp, month)
@@ -1263,7 +1230,7 @@ def fishing_map_data() -> Any:
         _filtered_names: frozenset = frozenset(s["name"] for s in filtered_species)
 
     results = []
-    _loc_sp_map: Dict[str, list] = {}  # loc_id → [species_dict, ...]
+    _loc_sp_map: dict[str, list] = {}  # loc_id → [species_dict, ...]
     for loc in COASTAL_LOCATIONS:
         loc_coast = _location_coast(loc)
 
@@ -1281,7 +1248,7 @@ def fishing_map_data() -> Any:
         if not loc_species:
             score = 0
             activity = "none"
-            top_species: list = []
+            top_species: list[dict[str, Any]] = []
         else:
             scored = sorted(loc_species, key=lambda s: -_cur_score[s["name"]])
             best_score = _cur_score[scored[0]["name"]]
@@ -1291,7 +1258,7 @@ def fishing_map_data() -> Any:
             # Build rich species objects for the detail drawer.
             # Include up to 6 species that are at least "fair" (score >= 30),
             # each carrying bait, rig, and their own activity label.
-            rich: list = []
+            rich: list[dict[str, Any]] = []
             for sp in scored[:10]:
                 sp_score = _cur_score[sp["name"]]
                 if sp_score < 30 and len(rich) >= 3:
@@ -1378,13 +1345,13 @@ def fishing_map_data() -> Any:
 
     # Trending species: in peak season this month, ranked by number of active locations.
     # frozenset lookup is O(1) vs re-calling _species_present_at O(n) per check.
-    trending_species: list = []
+    trending_species: list[str] = []
     if not species_q:
         _loc_sp_names = {
             lid: frozenset(s["name"] for s in sp_list)
             for lid, sp_list in _loc_sp_map.items()
         }
-        peak_sp_counts: dict = {}
+        peak_sp_counts: dict[str, int] = {}
         for sp in filtered_species:
             if month not in sp.get("peak_months", []):
                 continue
@@ -1400,7 +1367,7 @@ def fishing_map_data() -> Any:
 
     # When a species filter is active, return enough metadata for the JS to infer
     # habitat type and build a relevant Overpass query — without hardcoding species names.
-    species_meta: dict = {}
+    species_meta: dict[str, Any] = {}
     if species_q and filtered_species:
         sp0 = filtered_species[0]
         species_meta = {
@@ -1435,19 +1402,18 @@ def fishing_map_data() -> Any:
 
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
 
-_STRUCTURE_CACHE: dict = {}  # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE: dict[str, dict[str, Any]] = {}  # {cache_key: {"ts": float, "data": list}}
 _STRUCTURE_CACHE_TTL = 3600  # 1 hour — wrecks don't move
 _STRUCTURE_CACHE_MAX = 128  # ~0.02° keys; cap so long-running servers don't leak
 
 _NOAA_ENC_BASE = "https://encdirect.noaa.gov/arcgis/rest/services/encdirect"
+_NOAA_ENC_TIMEOUT: tuple[float, float] = (3.05, 10)
 
 
 def _fetch_noaa_structures(
     sw_lat: float, sw_lng: float, ne_lat: float, ne_lng: float
-) -> list:
+) -> list[dict[str, Any]]:
     """Fetch wrecks from NOAA ENC Direct within bbox. Results are cached for 1 h."""
-    import requests as _req
-
     cache_key = (
         f"{round(sw_lat, 2)},{round(sw_lng, 2)},{round(ne_lat, 2)},{round(ne_lng, 2)}"
     )
@@ -1455,9 +1421,7 @@ def _fetch_noaa_structures(
     if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
         return cached["data"]
 
-    if len(_STRUCTURE_CACHE) >= _STRUCTURE_CACHE_MAX:
-        oldest = min(_STRUCTURE_CACHE, key=lambda k: _STRUCTURE_CACHE[k]["ts"])
-        _STRUCTURE_CACHE.pop(oldest, None)
+    _evict_oldest(_STRUCTURE_CACHE, _STRUCTURE_CACHE_MAX)
 
     geometry_json = _json_mod.dumps(
         {
@@ -1478,14 +1442,14 @@ def _fetch_noaa_structures(
         "resultRecordCount": "200",
     }
 
-    features: list = []
+    features: list[dict[str, Any]] = []
 
     # Wrecks
     try:
-        resp = _req.get(
+        resp = _requests.get(
             f"{_NOAA_ENC_BASE}/enc_wrecks/MapServer/0/query",
             params=dict(base_params, outFields="WRECKNM,VALSOU,CAUTION"),
-            timeout=(3.05, 10),
+            timeout=_NOAA_ENC_TIMEOUT,
             headers={"User-Agent": "SurfPierForecast/1.0"},
         )
         if resp.ok:
@@ -1888,7 +1852,6 @@ def map_marine_warnings() -> Any:
     Each warning has: event, severity, summary, description, instruction,
     affected, expires (ISO-8601), color (hex), marine (bool), rings ([[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_marine_warnings
 
     try:
         south = float(request.args["south"])
@@ -1921,7 +1884,6 @@ def map_active_storms() -> Any:
     Each storm has: name, category, lat, lng, wind_mph, pressure_mb,
     track ([[lat,lng]]), cone (list of rings [[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_active_storms
 
     storms = fetch_active_storms()
     return jsonify({"storms": storms, "count": len(storms)})
@@ -1944,7 +1906,6 @@ def map_recent_storms() -> Any:
     Each track has: storm_id, name, basin, start_dtg, end_dtg, ss_max,
     category, color, path ([[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_recent_storm_tracks
 
     basin = request.args.get("basin", "").strip().upper() or None
     tracks = fetch_recent_storm_tracks(basin=basin)
@@ -1967,7 +1928,6 @@ def weather_air_quality() -> Any:
     JSON: { "aqi": { location, city, value, unit, updated, category, color,
                      distance_km } | null }
     """
-    from services.arcgis_live_feeds import fetch_air_quality
 
     try:
         lat = float(request.args["lat"])
@@ -2000,7 +1960,6 @@ def weather_wind_forecast() -> Any:
     Each period has: interval_start (ISO-8601), wind_dir_deg, wind_dir,
     wind_speed (knots), wind_gust (knots)
     """
-    from services.arcgis_live_feeds import fetch_wind_forecast
 
     try:
         lat = float(request.args["lat"])
@@ -2032,7 +1991,6 @@ def map_sst_stations() -> Any:
     Each station has: name, lat, lng, sst_c, sst_f, ssta, dhw,
     alert, alert_label, alert_color, updated
     """
-    from services.arcgis_live_feeds import fetch_sst_stations
 
     try:
         south = float(request.args["south"])
@@ -2065,7 +2023,6 @@ def map_wildfires() -> Any:
     Each fire has: name, state, county, acres, contained_pct, cause,
     discovered, age_days, lat, lng
     """
-    from services.arcgis_live_feeds import fetch_wildfire_incidents
 
     try:
         south = float(request.args["south"])
@@ -2099,7 +2056,6 @@ def map_smoke() -> Any:
     Each polygon has: class_desc, label, fill (hex), opacity, valid_from,
     valid_to, rings ([[lat,lng]])
     """
-    from services.arcgis_live_feeds import fetch_smoke_forecast
 
     try:
         south = float(request.args["south"])
@@ -2132,7 +2088,6 @@ def weather_precip_forecast() -> Any:
 
     Each period has: from_time, to_time, category (0–19), label, rain (bool)
     """
-    from services.arcgis_live_feeds import fetch_precip_forecast
 
     try:
         lat = float(request.args["lat"])
@@ -2157,7 +2112,6 @@ def map_sea_ice() -> Any:
     -------
     JSON: { "sea_ice": { year, month, area_mkm2, extent_mkm2, rings } | null }
     """
-    from services.arcgis_live_feeds import fetch_sea_ice_extent
 
     result = fetch_sea_ice_extent()
     return jsonify({"sea_ice": result})
@@ -2176,7 +2130,6 @@ def weather_temp_forecast() -> Any:
     -------
     JSON: { "days": [ { date, min_f, max_f }, … ] }
     """
-    from services.arcgis_live_feeds import fetch_temp_forecast
 
     try:
         lat = float(request.args["lat"])
@@ -2204,7 +2157,6 @@ def map_seismic() -> Any:
     JSON: { "events": [ { lat, lng, mag, depth_km, place, time, hours_old,
                            tsunami, alert, alert_color, sig, event_type } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_seismic_events
 
     try:
         south = float(request.args["south"])
@@ -2233,7 +2185,6 @@ def weather_drought() -> Any:
     -------
     JSON: { "drought": { dm, code, label, color, date, d0, d1, d2, d3, d4 } | null }
     """
-    from services.arcgis_live_feeds import fetch_drought
 
     try:
         lat = float(request.args["lat"])
@@ -2263,7 +2214,6 @@ def map_metar() -> Any:
                              wind_chill_f, heat_index_f, visibility_m, pressure_mb,
                              sky, weather, flight_cat, cat_color } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_metar_stations
 
     try:
         south = float(request.args["south"])
@@ -2291,7 +2241,6 @@ def map_terminator() -> Any:
     -------
     JSON: { "terminator": { rings ([[lat,lng]]), timestamp (ISO) } | null }
     """
-    from services.arcgis_live_feeds import fetch_terminator
 
     result = fetch_terminator()
     return jsonify({"terminator": result})
@@ -2313,7 +2262,6 @@ def map_stream_gauges() -> Any:
                           status_48h, status_72h, updated, station_url,
                           graph_url } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_stream_gauges
 
     try:
         south = float(request.args["south"])
@@ -2343,7 +2291,6 @@ def map_storm_reports() -> Any:
     JSON: { "reports": [ { type, lat, lng, time (ISO), location, state,
                             comments, magnitude, color } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_storm_reports
 
     try:
         south = float(request.args["south"])
@@ -2373,7 +2320,6 @@ def map_air_quality() -> Any:
     JSON: { "stations": [ { lat, lng, name, pm25, category, color, updated } ],
             "count" }
     """
-    from services.arcgis_live_feeds import fetch_aqi_map
 
     try:
         south = float(request.args["south"])
@@ -2405,7 +2351,6 @@ def map_drought() -> Any:
     JSON: { "polygons": [ { dm, code, label, color, rings [[lat,lng]] } ],
             "count" }
     """
-    from services.arcgis_live_feeds import fetch_drought_map
 
     try:
         south = float(request.args["south"])
@@ -2438,7 +2383,6 @@ def map_precipitation() -> Any:
     JSON: { "polygons": [ { from_time, to_time, category, label, color,
                              rings [[lat,lng]] } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_precipitation_map
 
     try:
         south = float(request.args["south"])
@@ -2472,7 +2416,6 @@ def map_temperature() -> Any:
     JSON: { "min": [...], "max": [...] }
     Each entry: { temp_f, period (YYYY-MM-DD), color, rings [[lat,lng]] }
     """
-    from services.arcgis_live_feeds import fetch_ndfd_temperature_map
 
     try:
         south = float(request.args["south"])
@@ -2506,7 +2449,6 @@ def map_buoys() -> Any:
                           wind_kt, wind_dir, period_s, pressure_mb, updated } ],
             "count" }
     """
-    from services.arcgis_live_feeds import fetch_ndbc_buoys
 
     try:
         south = float(request.args["south"])
@@ -2538,7 +2480,6 @@ def map_hfradar() -> Any:
     JSON: { "vectors": [ { lat, lng, speed_cms, speed_kts, dir_deg,
                             u, v, color, updated } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_hfradar_currents
 
     try:
         south = float(request.args["south"])
@@ -2568,7 +2509,6 @@ def map_tropical_outlook() -> Any:
     JSON: { "areas": [ { probability, prob_label, color, basin,
                           rings [[lat,lng]], discussion } ], "count" }
     """
-    from services.arcgis_live_feeds import fetch_tropical_outlook
 
     areas = fetch_tropical_outlook()
     resp = jsonify({"areas": areas, "count": len(areas)})
@@ -2599,7 +2539,6 @@ def custom_markers_create() -> Any:
     err = _require_map_admin()
     if err:
         return err
-    from storage.sqlite import create_custom_marker
 
     data = request.get_json(silent=True) or {}
     try:
@@ -2622,7 +2561,6 @@ def custom_markers_update(marker_id: int) -> Any:
     err = _require_map_admin()
     if err:
         return err
-    from storage.sqlite import update_custom_marker
 
     data = request.get_json(silent=True) or {}
     lat = float(data["lat"]) if "lat" in data else None
@@ -2644,7 +2582,6 @@ def custom_markers_delete(marker_id: int) -> Any:
     err = _require_map_admin()
     if err:
         return err
-    from storage.sqlite import delete_custom_marker
 
     ok = delete_custom_marker(marker_id)
     if not ok:

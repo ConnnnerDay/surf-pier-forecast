@@ -872,7 +872,6 @@
                 if (data && data.structures && !data.zoom_required) {
                     _spotCachePut(key, data.structures);
                     _ssSave();
-                    console.log('[fishing-map] home corridor pre-fetch → ' + data.structures.length + ' features cached');
                     // If the current viewport is already within this corridor,
                     // render immediately (avoids waiting for the next moveend).
                     if (map && map.getZoom() >= 8 && fishingSpotLayer) {
@@ -994,7 +993,6 @@
                 }
 
                 var spots = data.structures || [];
-                console.log('[fishing-map] /api/map/structures → ' + spots.length + ' features');
                 _spotCachePut(key, spots);
                 _ssSave();
                 renderFishingSpots(spots, key);
@@ -1274,7 +1272,6 @@
             });
 
             var deduped = deduplicateSpots(spots);
-            console.log('[fishing-map] Overpass fallback → ' + spots.length + ' features → ' + deduped.length + ' after dedup');
             _spotCachePut(key, deduped);
             _ssSave();
             hideStructLoading(); // request chain complete; drop spinner
@@ -1371,7 +1368,6 @@
             while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
                 delete spotCache[_spotCacheKeys.shift()];
             }
-            if (loaded) console.log('[fishing-map] sessionStorage → ' + loaded + ' bbox entries restored');
         } catch (e) { /* quota or parse error — start cold */ }
     }
 

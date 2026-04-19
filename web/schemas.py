@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -11,13 +11,13 @@ class ApiError(Exception):
     code: str
     message: str
     status: int = 400
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[dict[str, Any]] = None
 
 
 def success_envelope(
-    data: Dict[str, Any], *, version: str = "v1", meta: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {
+    data: dict[str, Any], *, version: str = "v1", meta: Optional[dict[str, Any]] = None
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
         "ok": True,
         "data": data,
         "error": None,
@@ -33,8 +33,8 @@ def error_envelope(
     message: str,
     *,
     version: str = "v1",
-    details: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    details: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     return {
         "ok": False,
         "data": None,
@@ -42,6 +42,13 @@ def error_envelope(
         "meta": {"version": version},
     }
 
+
+_MAX_FAVORITES = 20
+_MAX_FAVORITES_ENTRY_LEN = 100
+_MAX_LOCATION_ID_LEN = 100
+_MAX_SPECIES_LEN = 100
+_MAX_SIZE_LEN = 50
+_MAX_NOTES_LEN = 1000
 
 _VALID_FISHING_TYPES = frozenset(
     {
@@ -70,6 +77,15 @@ _VALID_SESSION_FREQUENCY = frozenset({"weekly", "monthly", "occasional"})
 _VALID_CATCH_RELEASE = frozenset({"always", "sometimes", "keep"})
 
 
+def _validate_enum_list(field: str, value: Any, valid: frozenset) -> None:
+    if not isinstance(value, list) or not all(isinstance(x, str) and x in valid for x in value):
+        raise ApiError(
+            f"invalid_{field}",
+            f"{field} must be a list of: {sorted(valid)}",
+            status=400,
+        )
+
+
 def parse_bool(value: Any, default: bool = False) -> bool:
     if value is None:
         return default
@@ -86,7 +102,7 @@ class ForecastQuery:
 
     @classmethod
     def from_request(
-        cls, args: Dict[str, Any], fallback_location_id: str = ""
+        cls, args: dict[str, Any], fallback_location_id: str = ""
     ) -> "ForecastQuery":
         loc_id = (args.get("location_id") or "")[:100].strip() or fallback_location_id
         return cls(
@@ -100,11 +116,11 @@ class ProfilePayload:
     location_id: Optional[str] = None
     theme: Optional[str] = None
     units: Optional[str] = None
-    fishing_profile: Optional[Dict[str, Any]] = None
-    favorites: Optional[List[str]] = None
+    fishing_profile: Optional[dict[str, Any]] = None
+    favorites: Optional[list[str]] = None
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "ProfilePayload":
+    def from_json(cls, data: dict[str, Any]) -> "ProfilePayload":
         if not isinstance(data, dict):
             raise ApiError(
                 "invalid_payload", "Request body must be a JSON object", status=400
@@ -128,16 +144,16 @@ class ProfilePayload:
                     "favorites must be a list of strings",
                     status=400,
                 )
-            if len(favorites) > 20:
+            if len(favorites) > _MAX_FAVORITES:
                 raise ApiError(
                     "invalid_favorites",
-                    "favorites may not contain more than 20 entries",
+                    f"favorites may not contain more than {_MAX_FAVORITES} entries",
                     status=400,
                 )
-            if not all(isinstance(x, str) and len(x) <= 100 for x in favorites):
+            if not all(isinstance(x, str) and len(x) <= _MAX_FAVORITES_ENTRY_LEN for x in favorites):
                 raise ApiError(
                     "invalid_favorites",
-                    "favorites must be a list of strings (max 100 characters each)",
+                    f"favorites must be a list of strings (max {_MAX_FAVORITES_ENTRY_LEN} characters each)",
                     status=400,
                 )
 
@@ -149,24 +165,10 @@ class ProfilePayload:
                 )
             fp_types = fishing_profile.get("fishing_types")
             if fp_types is not None:
-                if not isinstance(fp_types, list) or not all(
-                    isinstance(x, str) and x in _VALID_FISHING_TYPES for x in fp_types
-                ):
-                    raise ApiError(
-                        "invalid_fishing_types",
-                        f"fishing_types must be a list of: {sorted(_VALID_FISHING_TYPES)}",
-                        status=400,
-                    )
+                _validate_enum_list("fishing_types", fp_types, _VALID_FISHING_TYPES)
             fp_targets = fishing_profile.get("targets")
             if fp_targets is not None:
-                if not isinstance(fp_targets, list) or not all(
-                    isinstance(x, str) and x in _VALID_TARGETS for x in fp_targets
-                ):
-                    raise ApiError(
-                        "invalid_targets",
-                        f"targets must be a list of: {sorted(_VALID_TARGETS)}",
-                        status=400,
-                    )
+                _validate_enum_list("targets", fp_targets, _VALID_TARGETS)
             fp_experience = fishing_profile.get("experience")
             if fp_experience is not None and fp_experience not in _VALID_EXPERIENCE:
                 raise ApiError(
@@ -184,15 +186,7 @@ class ProfilePayload:
                     )
             fp_preferred_times = fishing_profile.get("preferred_times")
             if fp_preferred_times is not None:
-                if not isinstance(fp_preferred_times, list) or not all(
-                    isinstance(x, str) and x in _VALID_PREFERRED_TIMES
-                    for x in fp_preferred_times
-                ):
-                    raise ApiError(
-                        "invalid_preferred_times",
-                        f"preferred_times must be a list of: {sorted(_VALID_PREFERRED_TIMES)}",
-                        status=400,
-                    )
+                _validate_enum_list("preferred_times", fp_preferred_times, _VALID_PREFERRED_TIMES)
             fp_primary_goal = fishing_profile.get("primary_goal")
             if (
                 fp_primary_goal is not None
@@ -250,10 +244,10 @@ class ProfilePayload:
                 raise ApiError(
                     "invalid_location_id", "location_id must be a string", status=400
                 )
-            if len(location_id) > 100:
+            if len(location_id) > _MAX_LOCATION_ID_LEN:
                 raise ApiError(
                     "invalid_location_id",
-                    "location_id must be 100 characters or fewer",
+                    f"location_id must be {_MAX_LOCATION_ID_LEN} characters or fewer",
                     status=400,
                 )
 
@@ -265,8 +259,8 @@ class ProfilePayload:
             favorites=favorites,
         )
 
-    def as_updates(self) -> Dict[str, Any]:
-        updates: Dict[str, Any] = {}
+    def as_updates(self) -> dict[str, Any]:
+        updates: dict[str, Any] = {}
         for k in ("location_id", "theme", "units", "fishing_profile", "favorites"):
             v = getattr(self, k)
             if v is not None:
@@ -283,7 +277,7 @@ class LogCreatePayload:
 
     @classmethod
     def from_json(
-        cls, data: Dict[str, Any], location_id: str = ""
+        cls, data: dict[str, Any], location_id: str = ""
     ) -> "LogCreatePayload":
         if not isinstance(data, dict):
             raise ApiError(
@@ -292,19 +286,19 @@ class LogCreatePayload:
         species = str(data.get("species", "")).strip()
         if not species:
             raise ApiError("missing_species", "species is required", status=400)
-        if len(species) > 100:
+        if len(species) > _MAX_SPECIES_LEN:
             raise ApiError(
-                "invalid_species", "species must be 100 characters or fewer", status=400
+                "invalid_species", f"species must be {_MAX_SPECIES_LEN} characters or fewer", status=400
             )
         size = str(data.get("size", "")).strip()
-        if len(size) > 50:
+        if len(size) > _MAX_SIZE_LEN:
             raise ApiError(
-                "invalid_size", "size must be 50 characters or fewer", status=400
+                "invalid_size", f"size must be {_MAX_SIZE_LEN} characters or fewer", status=400
             )
         notes = str(data.get("notes", "")).strip()
-        if len(notes) > 1000:
+        if len(notes) > _MAX_NOTES_LEN:
             raise ApiError(
-                "invalid_notes", "notes must be 1000 characters or fewer", status=400
+                "invalid_notes", f"notes must be {_MAX_NOTES_LEN} characters or fewer", status=400
             )
         loc = str(data.get("location_id", "")).strip() or location_id
         if not loc:
@@ -312,8 +306,8 @@ class LogCreatePayload:
         return cls(species=species, size=size, notes=notes, location_id=loc)
 
 
-def normalize_log_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
-    base: Dict[str, Any] = {
+def normalize_log_stats(stats: dict[str, Any]) -> dict[str, Any]:
+    base: dict[str, Any] = {
         "total": 0,
         "unique_species": 0,
         "top_species": None,
@@ -325,7 +319,7 @@ def normalize_log_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
     return base
 
 
-def normalize_preferences(prefs: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_preferences(prefs: dict[str, Any]) -> dict[str, Any]:
     return {
         "location_id": prefs.get("location_id"),
         "theme": prefs.get("theme", "light"),

@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from locations import get_monthly_water_temps
 from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
 from storage.species_loader import SPECIES_DB
 
 logger = logging.getLogger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # Profile-based species classification
@@ -83,7 +82,6 @@ _OFFSHORE_ONLY_SPECIES: set = {
     "Shortbill spearfish",
     "Splitnose rockfish",
     "Greenstriped rockfish",
-    "Rougheye rockfish",
 }
 
 # Species best caught from a pier or jetty (structure-dependent).
@@ -747,7 +745,7 @@ _NUISANCE_SPECIES: set = {
 # This dict is independent of _GAMEFISH_SPECIES / _PELAGIC_SPECIES / etc.;
 # those sets drive profile-based filtering; this dict drives display taxonomy.
 # ---------------------------------------------------------------------------
-_SPECIES_CATEGORIES: Dict[str, List[str]] = {
+_SPECIES_CATEGORIES: dict[str, list[str]] = {
     # ── East Coast — primary sport fish ────────────────────────────────────
     "Red drum (puppy drum)": ["game_fish"],
     "Speckled trout (spotted seatrout)": ["game_fish"],
@@ -1668,11 +1666,10 @@ _SPECIES_CATEGORIES: Dict[str, List[str]] = {
     "Surfperch (shiner)": ["panfish"],
 }
 
-
 def _species_matches_profile(
     sp_name: str,
-    fishing_types: Optional[List[str]] = None,
-    targets: Optional[List[str]] = None,
+    fishing_types: Optional[list[str]] = None,
+    targets: Optional[list[str]] = None,
 ) -> bool:
     """Return True if a species matches the user's profile preferences.
 
@@ -1752,7 +1749,7 @@ def _species_matches_profile(
             _CHARTER_SPECIES,
             _FLY_SPECIES,
         )
-        _accessible: set = set()
+        _accessible: set[str] = set()
         if has_surf:
             _accessible |= _SURF_SPECIES
         if effective_pier:  # pier, jetty, or bridge
@@ -1801,13 +1798,11 @@ def _species_matches_profile(
 
     return True
 
-
 # ---------------------------------------------------------------------------
 # Seasonal explanation overrides -- species that behave differently during
 # spring/fall transitions get specific text.  Species NOT listed here fall
 # back to explanation_cold (winter) or explanation_warm (summer).
 # ---------------------------------------------------------------------------
-
 
 def _get_season(month: int) -> str:
     """Map month number to meteorological season name."""
@@ -1819,8 +1814,7 @@ def _get_season(month: int) -> str:
         return "summer"
     return "fall"
 
-
-SEASONAL_EXPLANATIONS: Dict[str, Dict[str, str]] = {
+SEASONAL_EXPLANATIONS: dict[str, dict[str, str]] = {
     "Red drum (puppy drum)": {
         "spring": "Red drum are pushing into the surf zone and inlets as water warms; they feed aggressively on shrimp, crabs and mullet during the spring transition.",
         "fall": "The fall red drum run is on — large schools move through inlets and along the beach, feeding heavily on mullet and menhaden before winter.",
@@ -2015,8 +2009,7 @@ SEASONAL_EXPLANATIONS: Dict[str, Dict[str, str]] = {
     },
 }
 
-
-def _get_explanation(sp: Dict[str, Any], month: int, water_temp: float) -> str:
+def _get_explanation(sp: dict[str, Any], month: int, water_temp: float) -> str:
     """Pick the best seasonal explanation for a species.
 
     Checks for a season-specific override first (spring/fall for species with
@@ -2033,7 +2026,6 @@ def _get_explanation(sp: Dict[str, Any], month: int, water_temp: float) -> str:
     # Default: cold/warm split based on water temperature
     is_cold = water_temp < 65
     return sp["explanation_cold"] if is_cold else sp["explanation_warm"]
-
 
 def _get_technique_tip(
     sp_name: str,
@@ -2143,12 +2135,11 @@ def _get_technique_tip(
         return "Fish deeper water or shaded structure during bright midday conditions"
     return "Match your bait to what's naturally in the water right now"
 
-
 # ---------------------------------------------------------------------------
 # Dynamic rig recommendations -- built from active species
 # ---------------------------------------------------------------------------
 
-RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
+RIG_CATEGORIES: dict[str, dict[str, Any]] = {
     "fishfinder": {
         "name": "Fish Finder Rig (Carolina Rig)",
         "description": (
@@ -2372,7 +2363,6 @@ RIG_CATEGORIES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-
 def _classify_rig(rig_text: str) -> str:
     """Map a species' rig description to a canonical rig category key."""
     text = rig_text.lower()
@@ -2446,10 +2436,9 @@ def _classify_rig(rig_text: str) -> str:
         return "fishfinder"
     return "fishfinder"
 
-
 # Maps rig keys to their primary gear style ("bait", "lure", or "mixed").
 # Used to filter recommendations based on user bait/lure preferences.
-_RIG_GEAR_TYPE: Dict[str, str] = {
+_RIG_GEAR_TYPE: dict[str, str] = {
     "fishfinder": "bait",
     "hi-lo": "bait",
     "knocker": "bait",
@@ -2473,15 +2462,14 @@ _BEGINNER_FRIENDLY_RIGS = frozenset(
     {"fishfinder", "hi-lo", "pompano", "float", "popping-cork"}
 )
 
-
 def build_rig_recommendations(
-    species_ranking: List[Dict[str, Any]],
-    fishing_types: Optional[List[str]] = None,
+    species_ranking: list[dict[str, Any]],
+    fishing_types: Optional[list[str]] = None,
     experience: str = "",
     live_bait: str = "",
     cut_bait: str = "",
     lures: str = "",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Build rig recommendations based on currently-active species.
 
     Groups active species by rig type and produces one recommendation
@@ -2504,8 +2492,8 @@ def build_rig_recommendations(
         and cut_bait == "no"
     )
 
-    rig_groups: Dict[str, List[Dict[str, Any]]] = {}
-    rig_order: List[str] = []
+    rig_groups: dict[str, list[dict[str, Any]]] = {}
+    rig_order: list[str] = []
 
     for sp in species_ranking:
         key = _classify_rig(sp["rig"])
@@ -2515,7 +2503,7 @@ def build_rig_recommendations(
         rig_groups[key].append(sp)
 
     # Prepend fishing-type-specific rigs that may not emerge from species data
-    type_rig_keys: List[str] = []
+    type_rig_keys: list[str] = []
     if "fly" in ft and "fly_pattern" not in rig_order:
         type_rig_keys.append("fly_pattern")
     if ("bridge" in ft or "jetty" in ft) and "current_jig" not in rig_order:
@@ -2526,8 +2514,8 @@ def build_rig_recommendations(
         type_rig_keys.append("kayak_live_bait")
 
     def _make_rec(
-        key: str, group: Optional[List[Dict[str, Any]]] = None
-    ) -> Optional[Dict[str, Any]]:
+        key: str, group: Optional[list[dict[str, Any]]] = None
+    ) -> Optional[dict[str, Any]]:
         category = RIG_CATEGORIES.get(key)
         if category is None:
             return None
@@ -2546,7 +2534,7 @@ def build_rig_recommendations(
             "knots": get_knots_for_rig(key),
         }
 
-    recommendations: List[Dict[str, Any]] = []
+    recommendations: list[dict[str, Any]] = []
 
     # Type-specific rigs first
     for key in type_rig_keys:
@@ -2565,7 +2553,7 @@ def build_rig_recommendations(
     # ── Bait/lure preference filtering ─────────────────────────────────────
     # Annotate each rec with its gear type for template use, then filter.
     # We need to track which key produced each rec — rebuild with key metadata.
-    def _gear_type_for_rec(rec: Dict[str, Any]) -> str:
+    def _gear_type_for_rec(rec: dict[str, Any]) -> str:
         # Match rec name back to a rig key via RIG_CATEGORIES.
         for k, cat in RIG_CATEGORIES.items():
             if cat.get("name") == rec.get("name"):
@@ -2601,12 +2589,11 @@ def build_rig_recommendations(
 
     return recommendations
 
-
 # ---------------------------------------------------------------------------
 # Fishing knot recommendations
 # ---------------------------------------------------------------------------
 
-KNOTS_DB: Dict[str, Dict[str, str]] = {
+KNOTS_DB: dict[str, dict[str, str]] = {
     "improved_clinch": {
         "name": "Improved Clinch Knot",
         "use": "Hook or swivel to mono/fluoro leader",
@@ -2699,7 +2686,7 @@ KNOTS_DB: Dict[str, Dict[str, str]] = {
 }
 
 # Map rig types to their recommended knots
-_RIG_KNOTS: Dict[str, List[str]] = {
+_RIG_KNOTS: dict[str, list[str]] = {
     "fishfinder": ["improved_clinch", "uni_to_uni"],
     "hi-lo": ["dropper_loop", "improved_clinch"],
     "knocker": ["palomar", "uni_to_uni"],
@@ -2714,19 +2701,17 @@ _RIG_KNOTS: Dict[str, List[str]] = {
     "trolling": ["improved_clinch", "fg_knot"],
 }
 
-
-def get_knots_for_rig(rig_key: str) -> List[Dict[str, str]]:
+def get_knots_for_rig(rig_key: str) -> list[dict[str, str]]:
     """Return the recommended knots for a rig type."""
     knot_keys = _RIG_KNOTS.get(rig_key, ["improved_clinch"])
     return [KNOTS_DB[k] for k in knot_keys if k in KNOTS_DB]
-
 
 # Natural baits with the species they target and seasonal availability.
 # ``available_months`` controls when a bait is practical to obtain/use.
 # ``notes_seasonal`` overrides the default ``notes`` during specific seasons.
 # Baits out of season are demoted in the ranking so anglers see what they
 # can actually get their hands on right now.
-BAIT_DB: List[Dict[str, Any]] = [
+BAIT_DB: list[dict[str, Any]] = [
     {
         "bait": "Live shrimp",
         "available_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -2936,14 +2921,18 @@ BAIT_DB: List[Dict[str, Any]] = [
     },
 ]
 
+def _temp_distance_score(distance: float, range_size: float) -> float:
+    """Score how far a temperature is from the edge of the ideal range (0–50)."""
+    return max(0.0, 50.0 * (1 - distance / range_size)) if range_size > 0 else 25.0
+
 
 def _score_species(
-    sp: Dict[str, Any],
+    sp: dict[str, Any],
     month: int,
     water_temp: float,
     wind_dir: Optional[str] = None,
-    wind_range: Optional[Tuple[float, float]] = None,
-    wave_range: Optional[Tuple[float, float]] = None,
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
     hour: int = 12,
     coast: str = "east",
 ) -> float:
@@ -2968,13 +2957,9 @@ def _score_species(
     if ideal_low <= water_temp <= ideal_high:
         score += 50.0
     elif water_temp < ideal_low:
-        distance = ideal_low - water_temp
-        temp_range = ideal_low - sp["temp_min"]
-        score += max(0, 50.0 * (1 - distance / temp_range)) if temp_range > 0 else 25.0
+        score += _temp_distance_score(ideal_low - water_temp, ideal_low - sp["temp_min"])
     else:
-        distance = water_temp - ideal_high
-        temp_range = sp["temp_max"] - ideal_high
-        score += max(0, 50.0 * (1 - distance / temp_range)) if temp_range > 0 else 25.0
+        score += _temp_distance_score(water_temp - ideal_high, sp["temp_max"] - ideal_high)
 
     if month in sp["peak_months"]:
         score += 30.0
@@ -2985,7 +2970,6 @@ def _score_species(
     score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
 
     return score
-
 
 # ---------------------------------------------------------------------------
 # Conditions-based scoring modifiers
@@ -3153,8 +3137,8 @@ _DAYTIME_SPECIES: set = {
 # East-facing coasts (Atlantic): onshore = easterly, offshore = westerly
 # West-facing coasts (Pacific): onshore = westerly, offshore = easterly
 # Hawaii / Gulf south: mixed, so use east-facing defaults
-_ONSHORE_DIRS_EAST: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE"}
-_OFFSHORE_DIRS_EAST: set = {"N", "NW", "W", "NNW", "WNW", "NNE", "NE"}
+_ONSHORE_DIRS_EAST: set = {"S", "SE", "E", "SSE", "ESE", "SSW", "ENE", "NE"}
+_OFFSHORE_DIRS_EAST: set = {"N", "NW", "W", "NNW", "WNW", "NNE"}
 _ONSHORE_DIRS_WEST: set = {"W", "NW", "SW", "WNW", "WSW", "NNW", "SSW"}
 _OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
 
@@ -3162,12 +3146,11 @@ _OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
 _ONSHORE_DIRS = _ONSHORE_DIRS_EAST
 _OFFSHORE_DIRS = _OFFSHORE_DIRS_EAST
 
-
 def _conditions_modifier(
-    sp: Dict[str, Any],
+    sp: dict[str, Any],
     wind_dir: Optional[str],
-    wind_range: Optional[Tuple[float, float]],
-    wave_range: Optional[Tuple[float, float]],
+    wind_range: Optional[tuple[float, float]],
+    wave_range: Optional[tuple[float, float]],
     hour: int,
     coast: str = "east",
 ) -> float:
@@ -3236,13 +3219,11 @@ def _conditions_modifier(
 
     return modifier
 
-
 # Minimum score to include a species in the forecast.
 # This filters out species that technically survive but aren't really biting.
 SPECIES_SCORE_THRESHOLD = 30
 
-
-_MONTH_ABBREVS: Dict[str, int] = {
+_MONTH_ABBREVS: dict[str, int] = {
     "jan": 1,
     "feb": 2,
     "mar": 3,
@@ -3268,14 +3249,13 @@ _MONTH_ABBREVS: Dict[str, int] = {
     "december": 12,
 }
 
-
 def _parse_closed_months(text: str) -> set:
     """Parse month ranges from regulation text like 'closed Jan-May' or 'Gulf closed Jan–May'.
 
     Returns a set of month numbers (1-12) that are closed.
     Handles year-wrap ranges like 'closed Nov-Feb'.
     """
-    closed: set = set()
+    closed: set[int] = set()
     # Match "closed MMM-MMM", "closed MMM–MMM", "closed MonthName-MonthName"
     pattern = r"closed\s+([a-z]+)[–\-]([a-z]+)"
     for m in re.finditer(pattern, text.lower()):
@@ -3292,8 +3272,7 @@ def _parse_closed_months(text: str) -> set:
                 closed.update(range(1, end + 1))
     return closed
 
-
-def _retention_prohibited(regulation: Dict[str, str], month: int = 0) -> bool:
+def _retention_prohibited(regulation: dict[str, str], month: int = 0) -> bool:
     """Return True when regulations prohibit retaining / keeping the fish.
 
     This is a **retention-only** check — it answers "must the angler release
@@ -3353,20 +3332,19 @@ def _retention_prohibited(regulation: Dict[str, str], month: int = 0) -> bool:
 
     return False
 
-
 def build_species_ranking(
     month: int,
     water_temp: float,
     wind_dir: Optional[str] = None,
-    wind_range: Optional[Tuple[float, float]] = None,
-    wave_range: Optional[Tuple[float, float]] = None,
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
     hour: int = 12,
     coast: Optional[str] = None,
     state: str = "",
-    fishing_types: Optional[List[str]] = None,
-    targets: Optional[List[str]] = None,
+    fishing_types: Optional[list[str]] = None,
+    targets: Optional[list[str]] = None,
     fish_region: str = "",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Dynamically rank species based on conditions and user profile.
 
     Factors in water temperature, month, wind direction, wind speed,
@@ -3423,7 +3401,7 @@ def build_species_ranking(
     # Max possible raw score: 50 (temp) + 30 (season) + 15 (conditions) = 95
     _MAX_RAW_SCORE = 95.0
 
-    result: List[Dict[str, Any]] = []
+    result: list[dict[str, Any]] = []
     for score, sp, explanation in scored:
         if score >= 65:
             activity = "Hot"
@@ -3455,11 +3433,11 @@ def build_species_ranking(
 
         # Look up display categories: JSON field takes precedence if present,
         # then the curated _SPECIES_CATEGORIES dict, then default to ["other"].
-        categories: List[str] = (
+        categories: list[str] = (
             sp.get("categories") or _SPECIES_CATEGORIES.get(sp["name"]) or ["other"]
         )
 
-        entry: Dict[str, Any] = {
+        entry: dict[str, Any] = {
             "rank": len(result) + 1,
             "name": sp["name"],
             "score": display_score,
@@ -3486,11 +3464,10 @@ def build_species_ranking(
 
     return result
 
-
 def build_bait_ranking(
-    species_ranking: List[Dict[str, Any]],
+    species_ranking: list[dict[str, Any]],
     month: int,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Rank baits by relevance to the current top species and season.
 
     Baits whose target species rank highly are scored higher.  Baits that are
@@ -3500,7 +3477,7 @@ def build_bait_ranking(
     season = _get_season(month)
 
     # Map species short names to their rank for quick lookup.
-    species_ranks: Dict[str, int] = {}
+    species_ranks: dict[str, int] = {}
     for sp in species_ranking:
         short = sp["name"].split("(")[0].strip()
         species_ranks[short] = sp["rank"]
@@ -3513,7 +3490,7 @@ def build_bait_ranking(
         }
         return alias_map.get(cleaned, cleaned)
 
-    scored_baits: List[Tuple[float, Dict[str, str]]] = []
+    scored_baits: list[tuple[float, dict[str, str]]] = []
     for bait_entry in BAIT_DB:
         bait_score = 0.0
         for target in bait_entry["targets"]:
@@ -3536,7 +3513,7 @@ def build_bait_ranking(
 
     scored_baits.sort(key=lambda x: x[0], reverse=True)
 
-    deduped_rankings: List[Dict[str, str]] = []
+    deduped_rankings: list[dict[str, str]] = []
     seen_baits: set[str] = set()
     for _, bait in scored_baits:
         key = canonical_bait_name(bait["bait"])
@@ -3547,7 +3524,6 @@ def build_bait_ranking(
 
     return deduped_rankings
 
-
 # ---------------------------------------------------------------------------
 # Lure recommendations
 # ---------------------------------------------------------------------------
@@ -3555,7 +3531,7 @@ def build_bait_ranking(
 # Lure categories with descriptions, target species, and seasonal notes.
 # ``available_months`` can optionally restrict when a lure category is useful.
 # ``targets`` lists species short-names that commonly respond to this lure type.
-LURE_DB: List[Dict[str, Any]] = [
+LURE_DB: list[dict[str, Any]] = [
     {
         "lure": "Soft plastic paddle-tail swimbait",
         "sizes": '3-5"',
@@ -3772,11 +3748,10 @@ LURE_DB: List[Dict[str, Any]] = [
     },
 ]
 
-
 def build_lure_recommendations(
-    species_ranking: List[Dict[str, Any]],
+    species_ranking: list[dict[str, Any]],
     month: int,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Rank lure types by relevance to current top species and season.
 
     Follows the same scoring approach as build_bait_ranking: lure types whose
@@ -3791,17 +3766,17 @@ def build_lure_recommendations(
 
     # Map species short names (before parenthetical) to their full display name
     # and rank for scoring / active-fish display.
-    species_ranks: Dict[str, int] = {}
-    species_display: Dict[str, str] = {}
+    species_ranks: dict[str, int] = {}
+    species_display: dict[str, str] = {}
     for sp in species_ranking:
         short = sp["name"].split("(")[0].strip()
         species_ranks[short] = sp.get("rank", 0)
         species_display[short] = sp["name"]
 
-    scored_lures: List[tuple] = []
+    scored_lures: list[tuple] = []
     for lure_entry in LURE_DB:
         score = 0.0
-        active: List[str] = []
+        active: list[str] = []
         for target in lure_entry["targets"]:
             rank = species_ranks.get(target)
             if rank is not None:
@@ -3838,12 +3813,11 @@ def build_lure_recommendations(
     scored_lures.sort(key=lambda x: x[0], reverse=True)
     return [entry for _, entry in scored_lures]
 
-
 # ---------------------------------------------------------------------------
 # Natural bait / forage species availability
 # ---------------------------------------------------------------------------
 
-NATURAL_BAIT_DB: List[Dict[str, Any]] = [
+NATURAL_BAIT_DB: list[dict[str, Any]] = [
     # Atlantic / Gulf
     {
         "name": "Menhaden (bunker)",
@@ -3956,8 +3930,7 @@ NATURAL_BAIT_DB: List[Dict[str, Any]] = [
     },
 ]
 
-
-def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, str]]:
+def build_natural_bait_chart(month: int, coast: str = "east") -> list[dict[str, str]]:
     """Return the list of natural bait species available this month.
 
     Filters by coast and month, returns a list of dicts with name, note,
@@ -3982,7 +3955,6 @@ def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, 
     available.sort(key=lambda x: (0 if x["status"] == "available" else 1, x["name"]))
     return available
 
-
 # ---------------------------------------------------------------------------
 # Spawning data — months, temperature windows, and behavior notes
 # ---------------------------------------------------------------------------
@@ -3990,7 +3962,7 @@ def build_natural_bait_chart(month: int, coast: str = "east") -> List[Dict[str, 
 # surface a "What's Spawning" section.  Temp ranges are °F.
 # ---------------------------------------------------------------------------
 
-SPAWNING_DATA: List[Dict] = [
+SPAWNING_DATA: list[Dict] = [
     # ── East Coast & Gulf (coast="east") ────────────────────────────────────
     # Gulf locations use coast="east" in the species database, so Gulf species
     # are included here with temperature constraints naturally limiting them to
@@ -4875,8 +4847,7 @@ SPAWNING_DATA: List[Dict] = [
     },
 ]
 
-
-def _format_spawn_window(spawn_months: List[int]) -> str:
+def _format_spawn_window(spawn_months: list[int]) -> str:
     """Format a list of spawn months into a human-readable string.
 
     Handles wrap-around ranges (e.g. Nov–Feb) and non-contiguous lists.
@@ -4926,13 +4897,12 @@ def _format_spawn_window(spawn_months: List[int]) -> str:
     # Multiple gaps — list months individually
     return ", ".join(_MA[m] for m in sm)
 
-
 def build_spawning_report(
     month: int,
     water_temp: float,
     coast: Optional[str] = None,
     state: str = "",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return species that are currently spawning or approaching their spawn window.
 
     Each entry is a dict::
@@ -4968,7 +4938,7 @@ def build_spawning_report(
     Passing ``None`` returns an empty list — the coast must be known to
     avoid showing wrong-region spawning data.
     """
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
 
     for entry in SPAWNING_DATA:
         # Also filters out all entries when coast is None (unknown location).
@@ -5011,7 +4981,7 @@ def build_spawning_report(
             status = "post_spawn"
 
         # Regulation lookup — only query when a state is known.
-        reg: Optional[Dict[str, str]] = None
+        reg: Optional[dict[str, str]] = None
         if state:
             try:
                 reg = lookup_regulation(entry["name"], state)
@@ -5044,7 +5014,7 @@ def build_spawning_report(
 
         # Resolve display categories from the canonical dict (or JSON field).
         spawn_sp = next((s for s in SPECIES_DB if s["name"] == entry["name"]), None)
-        sp_categories: List[str] = (
+        sp_categories: list[str] = (
             (spawn_sp.get("categories") if spawn_sp else None)
             or _SPECIES_CATEGORIES.get(entry["name"])
             or ["other"]
@@ -5071,7 +5041,6 @@ def build_spawning_report(
     results.sort(key=lambda x: (_STATUS_ORDER.get(x["status"], 9), x["name"]))
     return results
 
-
 _MONTH_ABBR = [
     "Jan",
     "Feb",
@@ -5090,7 +5059,7 @@ _MONTH_ABBR = [
 # Curated headline species shown on the year-round calendar, per region.
 # These are the iconic target species anglers actually plan trips around —
 # independent of current day-to-day conditions.
-_NOTABLE_SPECIES_BY_REGION: Dict[str, List[str]] = {
+_NOTABLE_SPECIES_BY_REGION: dict[str, list[str]] = {
     "northeast": [
         "Striped bass (rockfish)",
         "Bluefish",
@@ -5191,12 +5160,11 @@ _NOTABLE_SPECIES_BY_REGION: Dict[str, List[str]] = {
     ],
 }
 
-
 def build_species_calendar(
-    species_list: List[Dict[str, Any]],
-    location: Optional[Dict[str, Any]] = None,
+    species_list: list[dict[str, Any]],
+    location: Optional[dict[str, Any]] = None,
     fish_region: str = "",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Build a 12-month availability calendar.
 
     When *fish_region* is provided the calendar shows the region's notable
@@ -5219,10 +5187,10 @@ def build_species_calendar(
     average water temp falls outside the species' temp range are marked empty.
     """
     # Build a name → SPECIES_DB entry lookup
-    db_map: Dict[str, Dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
+    db_map: dict[str, dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
 
     # Get regional water temps (12 months) for temp filtering
-    monthly_temps: Dict[int, float] = {}
+    monthly_temps: dict[int, float] = {}
     if location:
         monthly_temps = get_monthly_water_temps(location)
 
@@ -5232,7 +5200,7 @@ def build_species_calendar(
     else:
         source = species_list[:10]
 
-    calendar: List[Dict[str, Any]] = []
+    calendar: list[dict[str, Any]] = []
     for ranked_sp in source:
         sp = db_map.get(ranked_sp["name"])
         if not sp:

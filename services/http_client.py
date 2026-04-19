@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import requests
 from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TIMEOUT: Tuple[float, float] = (3.05, 10.0)
+DEFAULT_TIMEOUT: tuple[float, float] = (3.05, 10.0)
 TRANSIENT_STATUS_CODES = {429, 500, 502, 503, 504}
 
 # Shared session with a connection pool so TCP+TLS handshakes are reused
@@ -27,8 +27,8 @@ def get(
     url: str,
     *,
     endpoint: str,
-    headers: Optional[Dict[str, str]] = None,
-    timeout: Tuple[float, float] = DEFAULT_TIMEOUT,
+    headers: Optional[dict[str, str]] = None,
+    timeout: tuple[float, float] = DEFAULT_TIMEOUT,
     retries: int = 2,
     backoff_s: float = 0.25,
 ) -> requests.Response:

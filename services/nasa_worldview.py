@@ -37,7 +37,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,6 @@ _GIBS_ATTRIB = (
     "operated by the NASA/GSFC/Earth Science Data and Information System (ESDIS) "
     "with funding provided by NASA/HQ."
 )
-
 
 def _gibs_url(layer_id: str, date: Optional[str] = None) -> str:
     """Build a Leaflet-compatible XYZ tile URL for a GIBS layer.
@@ -82,20 +81,17 @@ def _gibs_url(layer_id: str, date: Optional[str] = None) -> str:
             "/{{z}}/{{y}}/{{x}}.{fmt}"
         ).format(fmt=fmt)
 
-
 def _today() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-
 def _yesterday() -> str:
     return (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
-
 
 # ── Layer registry ─────────────────────────────────────────────────────────────
 # Each entry maps a canonical layer_id to Leaflet / GIBS metadata.
 # max_zoom is set conservatively — GIBS tiles degrade gracefully beyond native res.
 
-_LAYERS: Dict[str, Dict[str, Any]] = {
+_LAYERS: dict[str, dict[str, Any]] = {
     "VIIRS_SNPP_TrueColor_375m": {
         "label": "True Color (VIIRS, 375 m)",
         "description": "Near-real-time true-color composite from Suomi NPP VIIRS, updated daily.",
@@ -215,13 +211,11 @@ _LAYERS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def get_gibs_layers(date: Optional[str] = None) -> Dict[str, Any]:
+def get_gibs_layers(date: Optional[str] = None) -> dict[str, Any]:
     """Return all GIBS layer descriptors with Leaflet-ready tile URLs.
 
     Parameters
@@ -239,7 +233,7 @@ def get_gibs_layers(date: Optional[str] = None) -> Dict[str, Any]:
     """
     effective_date = date or _yesterday()
 
-    layers: List[Dict[str, Any]] = []
+    layers: list[dict[str, Any]] = []
     for layer_id, meta in _LAYERS.items():
         url = _gibs_url(layer_id, effective_date)
         layers.append(
@@ -272,8 +266,7 @@ def get_gibs_layers(date: Optional[str] = None) -> Dict[str, Any]:
         "license": "NASA Open Data Policy — public domain",
     }
 
-
-def get_sst_tile_config(date: Optional[str] = None) -> Dict[str, Any]:
+def get_sst_tile_config(date: Optional[str] = None) -> dict[str, Any]:
     """Return Sea Surface Temperature layer config for Leaflet.
 
     Parameters
@@ -286,10 +279,9 @@ def get_sst_tile_config(date: Optional[str] = None) -> Dict[str, Any]:
     """
     return get_imagery_tile_config("GHRSST_L4_MUR_Sea_Surface_Temperature", date)
 
-
 def get_imagery_tile_config(
     layer_id: str, date: Optional[str] = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Return Leaflet tile config for any GIBS layer by ID.
 
     Parameters
@@ -329,7 +321,6 @@ def get_imagery_tile_config(
             "fishing_relevance": meta.get("fishing_relevance"),
         },
     }
-
 
 def get_default_date_for_layer(layer_id: str) -> str:
     """Return the most appropriate date to use for a given GIBS layer.

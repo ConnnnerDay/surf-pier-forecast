@@ -15,7 +15,7 @@ Two complementary open-data sources for fisheries and ocean biodiversity:
 
 Integration points
 ------------------
-    search_hdx_datasets(query, rows=5) -> List[dict]
+    search_hdx_datasets(query, rows=5) -> list[dict]
         Search HDX for fisheries / coastal / ocean datasets by keyword.
 
     fetch_fao_fisheries_zones(lat, lng) -> dict
@@ -40,10 +40,13 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
+
+_TIMEOUT_HDX: tuple[float, float] = (5, 20)
+_TIMEOUT_FAO: tuple[float, float] = (5, 15)
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +55,7 @@ _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
-_CACHE: Dict[str, Dict[str, Any]] = {}
+_CACHE: dict[str, dict[str, Any]] = {}
 _CACHE_HDX_TTL: int = 86400  # 24 hours — HDX catalog changes slowly
 _CACHE_FAO_ZONE_TTL: int = 604800  # 7 days — zone boundaries are static
 _CACHE_SPECIES_TTL: int = 604800  # 7 days — ASFIS species list is static
@@ -81,7 +84,7 @@ _FAO_SPECIES_BASE = "https://www.fao.org/fishery/api/fao-species"
 # ── FAO major fishing area look-up table ─────────────────────────────────────
 # Maps FAO Major Fishing Area codes to human-readable names and lat/lng ranges.
 # Source: FAO Fisheries Circular No. 826 Rev.3
-_FAO_MAJOR_AREAS: List[Dict[str, Any]] = [
+_FAO_MAJOR_AREAS: list[dict[str, Any]] = [
     {
         "code": "21",
         "name": "Northwest Atlantic",
@@ -186,16 +189,14 @@ _FAO_MAJOR_AREAS: List[Dict[str, Any]] = [
     },
 ]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def search_hdx_datasets(
     query: str = "fisheries coastal",
     rows: int = 5,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Search HDX for fisheries / coastal / ocean datasets.
 
     Uses the HDX CKAN ``package_search`` action which is fully public.
@@ -223,14 +224,14 @@ def search_hdx_datasets(
         "fq": "tags:fisheries OR tags:marine OR tags:ocean",
     }
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     failed = True
 
     try:
         resp = _HTTP.get(
             f"{_HDX_BASE}/package_search",
             params=params,
-            timeout=(5, 20),
+            timeout=_TIMEOUT_HDX,
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()
@@ -246,8 +247,7 @@ def search_hdx_datasets(
     _cache_set(cache_key, results, ttl=ttl)
     return results
 
-
-def fetch_fao_fisheries_zones(lat: float, lng: float) -> Dict[str, Any]:
+def fetch_fao_fisheries_zones(lat: float, lng: float) -> dict[str, Any]:
     """Identify the FAO Major Fishing Area and sub-area for a coordinate.
 
     Falls back to a pure-Python lookup table when the WFS request fails.
@@ -274,8 +274,7 @@ def fetch_fao_fisheries_zones(lat: float, lng: float) -> Dict[str, Any]:
     _cache_set(cache_key, result, ttl=_CACHE_FAO_ZONE_TTL)
     return result
 
-
-def fetch_fao_species_info(common_name: str) -> Optional[Dict[str, Any]]:
+def fetch_fao_species_info(common_name: str) -> Optional[dict[str, Any]]:
     """Look up ASFIS species metadata from FAO's fisheries species list.
 
     The FAO ASFIS (Aquatic Sciences and Fisheries Information System) list
@@ -299,7 +298,7 @@ def fetch_fao_species_info(common_name: str) -> Optional[Dict[str, Any]]:
         resp = _HTTP.get(
             f"{_FAO_SPECIES_BASE}/search",
             params={"q": common_name, "limit": "5"},
-            timeout=(5, 15),
+            timeout=_TIMEOUT_FAO,
             headers={"Accept": "application/json"},
         )
         if resp.status_code == 200:
@@ -314,12 +313,11 @@ def fetch_fao_species_info(common_name: str) -> Optional[Dict[str, Any]]:
     _cache_set(cache_key, None, ttl=_CACHE_SPECIES_TTL)
     return None
 
-
 def get_hdx_fao_enrichment(
     lat: float,
     lng: float,
-    species_names: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    species_names: Optional[list[str]] = None,
+) -> dict[str, Any]:
     """Combined enrichment call for the dashboard template.
 
     Fetches:
@@ -340,7 +338,7 @@ def get_hdx_fao_enrichment(
     hdx_query = f"{fao_zone.get('area_name', 'marine fisheries')} fish"
     hdx_datasets = search_hdx_datasets(hdx_query, rows=3)
 
-    species_enrichment: List[Dict[str, Any]] = []
+    species_enrichment: list[dict[str, Any]] = []
     if species_names:
         for name in (species_names or [])[:3]:
             info = fetch_fao_species_info(name)
@@ -358,13 +356,11 @@ def get_hdx_fao_enrichment(
         "fao_url": "https://www.fao.org/fishery/",
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[Dict[str, Any]]:
+def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[dict[str, Any]]:
     """Query FAO GeoServer WFS for the fishing zone at a coordinate."""
     params = {
         "service": "WFS",
@@ -376,7 +372,7 @@ def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         "maxFeatures": "5",
     }
     try:
-        resp = _HTTP.get(_FAO_WFS_BASE, params=params, timeout=(5, 15))
+        resp = _HTTP.get(_FAO_WFS_BASE, params=params, timeout=_TIMEOUT_FAO)
         if resp.status_code == 200:
             data = resp.json()
             features = data.get("features", [])
@@ -397,8 +393,7 @@ def _fetch_fao_zone_wfs(lat: float, lng: float) -> Optional[Dict[str, Any]]:
         logger.debug("hdx_fao: FAO WFS error: %s", exc)
     return None
 
-
-def _lookup_fao_area(lat: float, lng: float) -> Dict[str, Any]:
+def _lookup_fao_area(lat: float, lng: float) -> dict[str, Any]:
     """Coordinate-range fallback for FAO area identification."""
     # Normalise longitude to [-180, 180]
     lng = ((lng + 180) % 360) - 180
@@ -426,8 +421,7 @@ def _lookup_fao_area(lat: float, lng: float) -> Dict[str, Any]:
         "method": "lookup_table",
     }
 
-
-def _parse_hdx_package(pkg: Dict[str, Any]) -> Dict[str, Any]:
+def _parse_hdx_package(pkg: dict[str, Any]) -> dict[str, Any]:
     """Extract key fields from an HDX CKAN package record."""
     resources = []
     for res in pkg.get("resources", [])[:3]:
@@ -455,8 +449,7 @@ def _parse_hdx_package(pkg: Dict[str, Any]) -> Dict[str, Any]:
         "last_modified": pkg.get("last_modified", ""),
     }
 
-
-def _parse_fao_species(item: Dict[str, Any]) -> Dict[str, Any]:
+def _parse_fao_species(item: dict[str, Any]) -> dict[str, Any]:
     """Parse FAO species API result into a simplified dict."""
     return {
         "scientific_name": item.get("nameScientific", ""),
@@ -469,7 +462,6 @@ def _parse_fao_species(item: Dict[str, Any]) -> Dict[str, Any]:
         ),
     }
 
-
 def _cache_get(key: str) -> Optional[Any]:
     entry = _CACHE.get(key)
     if not entry:
@@ -477,7 +469,6 @@ def _cache_get(key: str) -> Optional[Any]:
     if time.time() - entry["ts"] < entry["ttl"]:
         return entry["data"]
     return None
-
 
 def _cache_set(key: str, data: Any, ttl: int = _CACHE_HDX_TTL) -> None:
     if len(_CACHE) >= _CACHE_MAX:

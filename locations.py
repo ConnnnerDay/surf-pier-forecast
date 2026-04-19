@@ -14,19 +14,20 @@ from __future__ import annotations
 import logging
 import math
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from services.http_client import get as http_get
 
 logger = logging.getLogger(__name__)
 
+_GEOCODE_TIMEOUT: tuple[float, float] = (2.5, 8)
 
 # ---------------------------------------------------------------------------
 # Regional monthly water temperature profiles (°F), indexed Jan(1)–Dec(12).
 # Each location references one of these and may apply a small offset.
 # ---------------------------------------------------------------------------
 
-_WATER_TEMPS: Dict[str, Dict[int, float]] = {
+_WATER_TEMPS: dict[str, dict[int, float]] = {
     "northeast": {
         1: 40,
         2: 38,
@@ -301,8 +302,8 @@ _WATER_TEMPS: Dict[str, Dict[int, float]] = {
 # Used when live data is unavailable.  Format: {month: ((wind_lo, wind_hi), (wave_lo, wave_hi))}
 # ---------------------------------------------------------------------------
 
-_FALLBACK_CONDITIONS: Dict[
-    str, Dict[int, Tuple[Tuple[float, float], Tuple[float, float]]]
+_FALLBACK_CONDITIONS: dict[
+    str, dict[int, tuple[tuple[float, float], tuple[float, float]]]
 ] = {
     "atlantic_north": {
         1: ((12, 28), (4, 8)),
@@ -404,7 +405,7 @@ _FALLBACK_CONDITIONS: Dict[
     },
 }
 
-_FALLBACK_WIND_DIR: Dict[str, Dict[int, str]] = {
+_FALLBACK_WIND_DIR: dict[str, dict[int, str]] = {
     "atlantic_north": {
         1: "NW",
         2: "NW",
@@ -505,7 +506,6 @@ _FALLBACK_WIND_DIR: Dict[str, Dict[int, str]] = {
     },
 }
 
-
 def get_water_temp(
     temp_region: str, month: int, offset: float = 0.0
 ) -> Optional[float]:
@@ -519,12 +519,11 @@ def get_water_temp(
         return None
     return float(base + offset)
 
-
 # ---------------------------------------------------------------------------
 # Coastal location database
 # ---------------------------------------------------------------------------
 
-COASTAL_LOCATIONS: List[Dict[str, Any]] = [
+COASTAL_LOCATIONS: list[dict[str, Any]] = [
     # ── Northeast ──────────────────────────────────────────────────────────
     {
         "id": "montauk-ny",
@@ -1901,7 +1900,7 @@ COASTAL_LOCATIONS: List[Dict[str, Any]] = [
 # Nearby public beach/pier live cams used to enhance the forecast dashboard.
 # Distances are computed from the user's selected fishing location and filtered
 # to the requested search radius in ``find_nearby_live_cams``.
-COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
+COASTAL_LIVE_CAMS: list[dict[str, Any]] = [
     {
         "id": "virginia-beach-boardwalk-cam",
         "name": "Virginia Beach Boardwalk Cam",
@@ -2032,14 +2031,13 @@ COASTAL_LIVE_CAMS: List[Dict[str, Any]] = [
     },
 ]
 
-
 # ---------------------------------------------------------------------------
 # Assign fish_region to each location for species filtering.
 # Regions: northeast, midatlantic, southeast, florida, gulf,
 #          socal, norcal, pacific_nw, hawaii
 # ---------------------------------------------------------------------------
 
-_FISH_REGION_BY_STATE: Dict[str, str] = {
+_FISH_REGION_BY_STATE: dict[str, str] = {
     "ME": "northeast",
     "NH": "northeast",
     "MA": "northeast",
@@ -2073,20 +2071,17 @@ for _loc in COASTAL_LOCATIONS:
         _loc["fish_region"] = _FISH_REGION_BY_STATE.get(_st, "southeast")
 del _loc, _st
 
-
 # ---------------------------------------------------------------------------
 # Build a fast lookup by id
 # ---------------------------------------------------------------------------
 
-_LOCATION_MAP: Dict[str, Dict[str, Any]] = {loc["id"]: loc for loc in COASTAL_LOCATIONS}
+_LOCATION_MAP: dict[str, dict[str, Any]] = {loc["id"]: loc for loc in COASTAL_LOCATIONS}
 
-
-def get_location(location_id: str) -> Optional[Dict[str, Any]]:
+def get_location(location_id: str) -> Optional[dict[str, Any]]:
     """Look up a location by its ID string."""
     return _LOCATION_MAP.get(location_id)
 
-
-def get_monthly_water_temps(location: Dict[str, Any]) -> Dict[int, float]:
+def get_monthly_water_temps(location: dict[str, Any]) -> dict[int, float]:
     """Return the monthly average water temp dict for a location.
 
     Applies the optional ``temp_offset`` to the regional base temps.
@@ -2098,11 +2093,10 @@ def get_monthly_water_temps(location: Dict[str, Any]) -> Dict[int, float]:
         return {m: t + offset for m, t in base.items()}
     return dict(base)
 
-
 def get_fallback_conditions(
-    location: Dict[str, Any],
+    location: dict[str, Any],
     month: int,
-) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+) -> tuple[tuple[float, float], tuple[float, float], str]:
     """Return (wind_range, wave_range, wind_dir) fallback for the given month."""
     region = location.get("conditions_region", "atlantic_mid")
     cond = _FALLBACK_CONDITIONS.get(region, _FALLBACK_CONDITIONS["atlantic_mid"])
@@ -2112,11 +2106,9 @@ def get_fallback_conditions(
     wind, waves = cond[safe_month]
     return wind, waves, dirs[safe_month]
 
-
 # ---------------------------------------------------------------------------
 # Geocoding + nearest location search
 # ---------------------------------------------------------------------------
-
 
 def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Great-circle distance in miles between two lat/lng points."""
@@ -2131,21 +2123,23 @@ def _haversine_miles(lat1: float, lng1: float, lat2: float, lng2: float) -> floa
     )
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-
-def geocode_zip(zipcode: str) -> Optional[Tuple[float, float]]:
+def geocode_zip(zipcode: str) -> Optional[tuple[float, float]]:
     """Convert a US zip code to (latitude, longitude).
 
     Uses the free zippopotam.us API (no key required).
     Returns None if the zip code is invalid or the service is down.
     """
     zipcode = zipcode.strip()
+    # Accept ZIP+4 format (e.g. "12345-6789") — keep only the 5-digit base.
+    if len(zipcode) == 10 and zipcode[5] == "-":
+        zipcode = zipcode[:5]
     if not zipcode.isdigit() or len(zipcode) != 5:
         return None
     try:
         resp = http_get(
             f"https://api.zippopotam.us/us/{zipcode}",
             endpoint="zippopotam.geocode_zip",
-            timeout=(2.5, 8),
+            timeout=_GEOCODE_TIMEOUT,
         )
         if resp.status_code != 200:
             return None
@@ -2160,13 +2154,12 @@ def geocode_zip(zipcode: str) -> Optional[Tuple[float, float]]:
         logger.debug("geocode_zip failed for %r", zipcode, exc_info=True)
         return None
 
-
 def find_nearest_locations(
     lat: float,
     lng: float,
     n: int = 5,
     max_miles: float = 300.0,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Find the nearest N coastal locations within max_miles.
 
     Returns a list of location dicts with an added ``distance_miles`` field,
@@ -2183,19 +2176,18 @@ def find_nearest_locations(
     results.sort(key=lambda x: x["distance_miles"])
     return results[:n]
 
-
 def find_nearby_live_cams(
     lat: float,
     lng: float,
     max_miles: float = 10.0,
     include_pier_cams: bool = True,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return nearby live cam links within ``max_miles`` of a point.
 
     When ``include_pier_cams`` is False, pier cam results are removed so we
     only recommend beach-focused camera feeds.
     """
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for cam in COASTAL_LIVE_CAMS:
         if cam.get("cam_type") == "pier" and not include_pier_cams:
             continue
@@ -2208,9 +2200,8 @@ def find_nearby_live_cams(
     results.sort(key=lambda x: x["distance_miles"])
     return results
 
-
 @lru_cache(maxsize=1)
-def all_locations_sorted() -> List[Dict[str, Any]]:
+def all_locations_sorted() -> list[dict[str, Any]]:
     """Return all locations sorted by state then name (for browse view).
 
     The result is cached for the process lifetime since COASTAL_LOCATIONS is

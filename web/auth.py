@@ -8,8 +8,10 @@ import re
 import secrets
 import threading
 import time
-from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+import base64
+import urllib.request
+from datetime import datetime, timezone
+from typing import Any, Optional, cast
 from urllib.parse import urlencode
 
 import logging
@@ -25,6 +27,14 @@ from flask import (
     session,
     url_for,
 )
+import requests as _requests
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+from cryptography.hazmat.primitives.hashes import SHA256
 from werkzeug.security import check_password_hash
 
 from locations import get_location
@@ -57,6 +67,26 @@ from storage.db import (
     delete_webauthn_credential,
 )
 from services.email import send_verification_email, smtp_is_configured
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _is_rate_limited,
+    record_attempt as _record_attempt,
+    clear_attempts as _clear_attempts,
+)
+from webauthn import (
+    generate_authentication_options,
+    generate_registration_options,
+    options_to_json,
+    verify_authentication_response,
+    verify_registration_response,
+)
+from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    PublicKeyCredentialDescriptor,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +111,10 @@ _REFRESH_RATE_LIMIT_WINDOW_S = 5 * 60
 _ACCOUNT_ACTION_RATE_LIMIT_MAX_ATTEMPTS = 5
 _ACCOUNT_ACTION_RATE_LIMIT_WINDOW_S = 15 * 60
 
-_account_action_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_HTTP_TIMEOUT_JWKS_S = 8    # Apple JWKS public key fetch
+_HTTP_TIMEOUT_OAUTH_S = 10  # Google/Apple token and userinfo exchanges
+
+_account_action_rate_limit_store: dict[str, tuple[float, int]] = {}
 _account_action_rate_limit_lock = threading.Lock()
 
 
@@ -133,20 +166,20 @@ _ACCOUNT_LOCKOUT_WINDOW_S = 30 * 60  # 30 minutes
 # Data structure: {ip: (window_start_ts, attempt_count)}
 # A single lock guards all reads and writes.
 # ---------------------------------------------------------------------------
-_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_rate_limit_store: dict[str, tuple[float, int]] = {}
 _rate_limit_lock = threading.Lock()
 
-_register_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_register_rate_limit_store: dict[str, tuple[float, int]] = {}
 _register_rate_limit_lock = threading.Lock()
 
-_refresh_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_refresh_rate_limit_store: dict[str, tuple[float, int]] = {}
 _refresh_rate_limit_lock = threading.Lock()
 
 # Resend-verification: 3 attempts per 30 minutes per IP.
 _RESEND_RATE_LIMIT_MAX_ATTEMPTS = 3
 _RESEND_RATE_LIMIT_WINDOW_S = 30 * 60
 
-_resend_rate_limit_store: Dict[str, Tuple[float, int]] = {}
+_resend_rate_limit_store: dict[str, tuple[float, int]] = {}
 _resend_rate_limit_lock = threading.Lock()
 
 # Minimum seconds that must elapse between two verification emails for the
@@ -154,92 +187,8 @@ _resend_rate_limit_lock = threading.Lock()
 _RESEND_MIN_INTERVAL_S = 120  # 2 minutes
 
 # Keyed by lowercase username rather than IP.
-_account_lockout_store: Dict[str, Tuple[float, int]] = {}
+_account_lockout_store: dict[str, tuple[float, int]] = {}
 _account_lockout_lock = threading.Lock()
-
-# Only trust X-Forwarded-For when running behind a known reverse proxy.
-_TRUST_PROXY = os.environ.get("TRUSTED_PROXY", "").strip() == "1"
-
-
-def _client_ip() -> str:
-    """Return the best-effort client IP.
-
-    X-Forwarded-For is only honoured when the app is explicitly configured to
-    run behind a trusted reverse proxy (``TRUSTED_PROXY=1``).  Without that
-    flag, blindly reading X-Forwarded-For would let any client forge a
-    different IP on every request and trivially bypass IP-based rate limiting.
-    """
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            # Take the left-most entry — the original client IP.
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
-
-
-_PRUNE_EVERY = 200  # prune expired entries every N rate-limit checks
-_prune_counter = 0
-
-
-def _prune_store(store: Dict[str, Tuple[float, int]], window_s: float) -> None:
-    """Remove entries whose rate-limit window has expired.
-
-    Called periodically (every _PRUNE_EVERY checks) to keep the in-memory
-    stores from growing without bound when the app is hit from many unique IPs.
-    Must be called while holding the relevant lock.
-    """
-    now = time.time()
-    expired = [ip for ip, (start, _) in store.items() if now - start > window_s]
-    for ip in expired:
-        del store[ip]
-
-
-def _is_rate_limited(
-    store: Dict[str, Tuple[float, int]],
-    lock: threading.Lock,
-    max_attempts: int,
-    window_s: float,
-) -> bool:
-    """Return True if the current client IP has exceeded the given rate limit."""
-    global _prune_counter
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        _prune_counter += 1
-        if _prune_counter % _PRUNE_EVERY == 0:
-            _prune_store(store, window_s)
-        start, attempts = store.get(ip, (now, 0))
-        if now - start > window_s:
-            store[ip] = (now, 0)
-            return False
-        return attempts >= max_attempts
-
-
-def _record_attempt(
-    store: Dict[str, Tuple[float, int]],
-    lock: threading.Lock,
-    window_s: float,
-) -> None:
-    """Increment the attempt counter for the current client IP."""
-    ip = _client_ip()
-    now = time.time()
-    with lock:
-        start, attempts = store.get(ip, (now, 0))
-        if now - start > window_s:
-            store[ip] = (now, 1)
-        else:
-            store[ip] = (start, attempts + 1)
-
-
-def _clear_attempts(
-    store: Dict[str, Tuple[float, int]],
-    lock: threading.Lock,
-) -> None:
-    """Clear the attempt counter for the current client IP."""
-    ip = _client_ip()
-    with lock:
-        store.pop(ip, None)
-
 
 def _login_is_rate_limited() -> bool:
     return _is_rate_limited(
@@ -1044,10 +993,8 @@ def resend_verification() -> Any:
     sent_at_raw = get_email_verification_sent_at(g.user["id"])
     if sent_at_raw:
         try:
-            from datetime import timezone as _tz
-
-            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=_tz.utc)
-            elapsed = (datetime.now(tz=_tz.utc) - sent_at).total_seconds()
+            sent_at = datetime.fromisoformat(sent_at_raw).replace(tzinfo=timezone.utc)
+            elapsed = (datetime.now(tz=timezone.utc) - sent_at).total_seconds()
             if elapsed < _RESEND_MIN_INTERVAL_S:
                 wait = int(_RESEND_MIN_INTERVAL_S - elapsed)
                 return render_template(
@@ -1273,15 +1220,6 @@ def _webauthn_origin() -> str:
 @bp.route("/webauthn/register/begin")
 def webauthn_register_begin() -> Any:
     """Return WebAuthn registration options for the logged-in user."""
-    from webauthn import generate_registration_options, options_to_json
-    from webauthn.helpers.structs import (
-        AuthenticatorSelectionCriteria,
-        PublicKeyCredentialDescriptor,
-        ResidentKeyRequirement,
-        UserVerificationRequirement,
-    )
-    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
-
     if not g.user:
         return jsonify({"error": "Not logged in"}), 401
 
@@ -1309,9 +1247,6 @@ def webauthn_register_begin() -> Any:
 @bp.route("/webauthn/register/complete", methods=["POST"])
 def webauthn_register_complete() -> Any:
     """Verify the registration response and store the new credential."""
-    from webauthn import verify_registration_response
-    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
-
     if not g.user:
         return jsonify({"error": "Not logged in"}), 401
 
@@ -1346,9 +1281,6 @@ def webauthn_register_complete() -> Any:
 @bp.route("/webauthn/authenticate/begin", methods=["POST"])
 def webauthn_authenticate_begin() -> Any:
     """Return WebAuthn authentication options (discoverable credentials)."""
-    from webauthn import generate_authentication_options, options_to_json
-    from webauthn.helpers.structs import UserVerificationRequirement
-    from webauthn.helpers import bytes_to_base64url
 
     options = generate_authentication_options(
         rp_id=_webauthn_rp_id(),
@@ -1362,9 +1294,6 @@ def webauthn_authenticate_begin() -> Any:
 @bp.route("/webauthn/authenticate/complete", methods=["POST"])
 def webauthn_authenticate_complete() -> Any:
     """Verify the authentication response and log the user in."""
-    from webauthn import verify_authentication_response
-    from webauthn.helpers import base64url_to_bytes
-
     challenge_b64 = session.pop("webauthn_auth_challenge", None)
     origin = session.pop("webauthn_auth_origin", None)
     if not challenge_b64 or not origin:
@@ -1515,7 +1444,7 @@ def _social_login_or_create(
 # ---------------------------------------------------------------------------
 
 # JWKS cache: (keys_list, fetched_at_epoch)
-_apple_jwks_cache: Tuple[list, float] = ([], 0.0)
+_apple_jwks_cache: tuple[list, float] = ([], 0.0)
 _apple_jwks_lock = threading.Lock()
 _APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
 _APPLE_JWKS_TTL_S = 3600  # re-fetch at most once per hour
@@ -1524,8 +1453,6 @@ _APPLE_ISSUER = "https://appleid.apple.com"
 
 def _get_apple_jwks() -> list:
     """Return Apple's current JWKS keys, using a 1-hour in-memory cache."""
-    import urllib.request
-
     global _apple_jwks_cache
     with _apple_jwks_lock:
         keys, fetched_at = _apple_jwks_cache
@@ -1533,7 +1460,7 @@ def _get_apple_jwks() -> list:
             return keys
 
     try:
-        with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=8) as resp:
+        with urllib.request.urlopen(_APPLE_JWKS_URL, timeout=_HTTP_TIMEOUT_JWKS_S) as resp:
             data = json.loads(resp.read())
         keys = data.get("keys", [])
     except Exception as exc:
@@ -1545,15 +1472,9 @@ def _get_apple_jwks() -> list:
     return keys
 
 
-def _jwk_to_rsa_public_key(jwk: Dict[str, Any]) -> Any:
+def _jwk_to_rsa_public_key(jwk: dict[str, Any]) -> Any:
     """Convert an RSA JWK dict to a cryptography RSAPublicKey object, or None."""
-    import base64
-
     try:
-        from cryptography.hazmat.primitives.asymmetric.rsa import (
-            RSAPublicNumbers,
-        )
-
         def _b64_to_int(s: str) -> int:
             padding = "=" * (-len(s) % 4)
             return int.from_bytes(base64.urlsafe_b64decode(s + padding), "big")
@@ -1565,7 +1486,7 @@ def _jwk_to_rsa_public_key(jwk: Dict[str, Any]) -> Any:
         return None
 
 
-def _verify_apple_id_token(token: str, client_id: str) -> Optional[Dict[str, Any]]:
+def _verify_apple_id_token(token: str, client_id: str) -> Optional[dict[str, Any]]:
     """Verify an Apple id_token JWT and return its payload, or None on failure.
 
     Steps:
@@ -1574,11 +1495,6 @@ def _verify_apple_id_token(token: str, client_id: str) -> Optional[Dict[str, Any
     3. Reconstruct the RSA public key and verify the RS256 signature.
     4. Validate iss, aud, and exp claims.
     """
-    import base64
-
-    from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-    from cryptography.hazmat.primitives.hashes import SHA256
-
     parts = token.split(".")
     if len(parts) != 3:
         logger.warning("apple_jwt.invalid_format")
@@ -1701,10 +1617,8 @@ def google_callback() -> Any:
     client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
-    import requests as _req
-
     try:
-        token_resp = _req.post(
+        token_resp = _requests.post(
             _GOOGLE_TOKEN_URL,
             data={
                 "code": code,
@@ -1713,7 +1627,7 @@ def google_callback() -> Any:
                 "redirect_uri": url_for("auth.google_callback", _external=True),
                 "grant_type": "authorization_code",
             },
-            timeout=10,
+            timeout=_HTTP_TIMEOUT_OAUTH_S,
         )
         token_data = token_resp.json()
     except Exception as exc:
@@ -1729,10 +1643,10 @@ def google_callback() -> Any:
         )
 
     try:
-        userinfo_resp = _req.get(
+        userinfo_resp = _requests.get(
             _GOOGLE_USERINFO_URL,
             headers={"Authorization": f"Bearer {token_data['access_token']}"},
-            timeout=10,
+            timeout=_HTTP_TIMEOUT_OAUTH_S,
         )
         userinfo = userinfo_resp.json()
     except Exception as exc:
@@ -1792,15 +1706,6 @@ def _generate_apple_client_secret() -> str:
       APPLE_CLIENT_ID   — Service ID (e.g. com.example.app.service)
       APPLE_PRIVATE_KEY — PEM content of the .p8 private key (newlines as \\n)
     """
-    try:
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import ec
-        from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
-    except ImportError as exc:
-        raise RuntimeError(
-            "cryptography package is required for Apple Sign In"
-        ) from exc
-
     team_id = os.environ.get("APPLE_TEAM_ID", "")
     key_id = os.environ.get("APPLE_KEY_ID", "")
     client_id = os.environ.get("APPLE_CLIENT_ID", "")
@@ -1811,8 +1716,6 @@ def _generate_apple_client_secret() -> str:
             "Apple Sign In requires APPLE_TEAM_ID, APPLE_KEY_ID, "
             "APPLE_CLIENT_ID, and APPLE_PRIVATE_KEY to be set."
         )
-
-    import base64
 
     def _b64url(data: bytes) -> str:
         return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
@@ -1834,10 +1737,11 @@ def _generate_apple_client_secret() -> str:
         ).encode()
     )
     message = f"{header}.{payload}".encode()
-    private_key = serialization.load_pem_private_key(
-        private_key_pem.encode(), password=None
+    private_key = cast(
+        EllipticCurvePrivateKey,
+        serialization.load_pem_private_key(private_key_pem.encode(), password=None),
     )
-    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))  # type: ignore[arg-type,union-attr,call-arg]
+    der_sig = private_key.sign(message, ec.ECDSA(hashes.SHA256()))
     r, s = decode_dss_signature(der_sig)
     raw_sig = _b64url(r.to_bytes(32, "big") + s.to_bytes(32, "big"))
     return f"{header}.{payload}.{raw_sig}"
@@ -1904,10 +1808,8 @@ def apple_callback() -> Any:
             error="Apple Sign In is misconfigured. Please contact support.",
         )
 
-    import requests as _req
-
     try:
-        token_resp = _req.post(
+        token_resp = _requests.post(
             _APPLE_TOKEN_URL,
             data={
                 "client_id": client_id,
@@ -1917,7 +1819,7 @@ def apple_callback() -> Any:
                 "redirect_uri": url_for("auth.apple_callback", _external=True),
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=10,
+            timeout=_HTTP_TIMEOUT_OAUTH_S,
         )
         token_data = token_resp.json()
     except Exception as exc:

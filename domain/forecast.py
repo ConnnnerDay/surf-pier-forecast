@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import logging
 import math
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from locations import get_fallback_conditions, get_monthly_water_temps
 from regulations import get_official_regulations_url
@@ -37,6 +38,7 @@ from services.noaa import (
 )
 from services.nws import (
     NWS_MARINE_ZONE,
+    _KT_TO_MPH,
     _MPH_TO_KNOTS,
     _try_nws_forecast,
     _try_nws_gridpoint,
@@ -45,8 +47,14 @@ from services.nws import (
     fetch_state_alerts,
     fetch_weather_alerts,
 )
+from services.datagov import get_water_quality_summary as _get_wq
+from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
 from domain.species import (
     SPECIES_DB,
+    _OFFSHORE_DIRS_EAST,
+    _OFFSHORE_DIRS_WEST,
+    _ONSHORE_DIRS_EAST,
+    _ONSHORE_DIRS_WEST,
     _get_technique_tip,
     _score_species,
     _species_matches_profile,
@@ -65,7 +73,7 @@ FORECAST_VERSION = "v1.0.0"
 
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
-MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
+MONTHLY_AVG_WIND: dict[int, tuple[float, float]] = {
     1: (8, 15),
     2: (8, 16),
     3: (9, 16),
@@ -79,7 +87,7 @@ MONTHLY_AVG_WIND: Dict[int, Tuple[float, float]] = {
     11: (7, 14),
     12: (8, 15),
 }
-MONTHLY_AVG_WAVES: Dict[int, Tuple[float, float]] = {
+MONTHLY_AVG_WAVES: dict[int, tuple[float, float]] = {
     1: (2, 4),
     2: (2, 4),
     3: (2, 4),
@@ -93,7 +101,7 @@ MONTHLY_AVG_WAVES: Dict[int, Tuple[float, float]] = {
     11: (2, 4),
     12: (2, 4),
 }
-MONTHLY_AVG_WIND_DIR: Dict[int, str] = {
+MONTHLY_AVG_WIND_DIR: dict[int, str] = {
     1: "NW",
     2: "NW",
     3: "SW",
@@ -113,7 +121,7 @@ _LAT = 34.2104
 _LNG = -77.7964
 
 # Direction abbreviation map (shared by multiple forecast helpers)
-_DIR_MAP: Dict[str, str] = {
+_DIR_MAP: dict[str, str] = {
     "north": "N",
     "northeast": "NE",
     "northwest": "NW",
@@ -126,10 +134,9 @@ _DIR_MAP: Dict[str, str] = {
 
 # -- Source 5: Seasonal averages (ALWAYS succeeds) --------------------------
 
-
 def _seasonal_averages(
     month: int,
-) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+) -> tuple[tuple[float, float], tuple[float, float], str]:
     """Historical monthly averages -- the last resort. Never fails."""
     return (
         MONTHLY_AVG_WIND[month],
@@ -137,16 +144,14 @@ def _seasonal_averages(
         MONTHLY_AVG_WIND_DIR[month],
     )
 
-
 # -- Combined fetcher -------------------------------------------------------
-
 
 def get_marine_conditions(
     month: int,
-    location: Optional[Dict[str, Any]] = None,
-    sources_used: Optional[List[str]] = None,
-    fallbacks_triggered: Optional[List[str]] = None,
-) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+    location: Optional[dict[str, Any]] = None,
+    sources_used: Optional[list[str]] = None,
+    fallbacks_triggered: Optional[list[str]] = None,
+) -> tuple[tuple[float, float], tuple[float, float], str]:
     """Get marine conditions, trying every source until we have full data.
 
     Returns (wind_range, wave_range, wind_dir).  Guaranteed to never return
@@ -158,11 +163,11 @@ def get_marine_conditions(
     loc_lat = (location or {}).get("lat", _LAT)
     loc_lng = (location or {}).get("lng", _LNG)
 
-    wind_range: Optional[Tuple[float, float]] = None
-    wave_range: Optional[Tuple[float, float]] = None
+    wind_range: Optional[tuple[float, float]] = None
+    wave_range: Optional[tuple[float, float]] = None
     wind_dir: Optional[str] = None
 
-    sources: List[Tuple[str, Any]] = [
+    sources: list[tuple[str, Any]] = [
         ("NWS zone forecast", lambda: _try_nws_forecast(nws_zone)),
     ]
     for sid in ndbc_list:
@@ -217,7 +222,6 @@ def get_marine_conditions(
 
     return wind_range, wave_range, wind_dir
 
-
 class ExternalDataService:
     """Base service with consistent retries and logging for upstream calls."""
 
@@ -235,15 +239,14 @@ class ExternalDataService:
                     return default
                 time.sleep(self.retry_delay_s)
 
-
 class MarineForecastService(ExternalDataService):
     def get_marine_forecast(
         self,
         month: int,
-        location: Optional[Dict[str, Any]] = None,
-        sources_used: Optional[List[str]] = None,
-        fallbacks_triggered: Optional[List[str]] = None,
-    ) -> Tuple[Tuple[float, float], Tuple[float, float], str]:
+        location: Optional[dict[str, Any]] = None,
+        sources_used: Optional[list[str]] = None,
+        fallbacks_triggered: Optional[list[str]] = None,
+    ) -> tuple[tuple[float, float], tuple[float, float], str]:
         return self._run_with_retries(
             "marine forecast",
             lambda: get_marine_conditions(
@@ -255,14 +258,13 @@ class MarineForecastService(ExternalDataService):
             default=_seasonal_averages(month),
         )
 
-
 class TidePredictionService(ExternalDataService):
     def get_tide_predictions(
         self,
         now: datetime,
-        location: Optional[Dict[str, Any]] = None,
+        location: Optional[dict[str, Any]] = None,
         tz_name: str = "America/New_York",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
         tides = (
             self._run_with_retries(
@@ -285,7 +287,7 @@ class TidePredictionService(ExternalDataService):
             )
             if first_date:
                 today_tides = [t for t in tides if t.get("date_str") == first_date]
-        result: Dict[str, Any] = {"tides": today_tides}
+        result: dict[str, Any] = {"tides": today_tides}
         current_hour = now.hour + now.minute / 60
         chart_data = build_tide_chart_svg(today_tides, now_hour=current_hour)
         if chart_data:
@@ -309,10 +311,9 @@ class TidePredictionService(ExternalDataService):
             result["tide_state"] = tide_state
         return result
 
-
 class BuoyDataService(ExternalDataService):
     def get_barometric_pressure(
-        self, location: Optional[Dict[str, Any]] = None
+        self, location: Optional[dict[str, Any]] = None
     ) -> Optional[float]:
         return self._run_with_retries(
             "barometric pressure",
@@ -320,9 +321,8 @@ class BuoyDataService(ExternalDataService):
             default=None,
         )
 
-
 class WeatherDataService(ExternalDataService):
-    def get_weather_alerts(self, lat: float, lng: float) -> List[Dict[str, Any]]:
+    def get_weather_alerts(self, lat: float, lng: float) -> list[dict[str, Any]]:
         return (
             self._run_with_retries(
                 "weather alerts",
@@ -332,7 +332,7 @@ class WeatherDataService(ExternalDataService):
             or []
         )
 
-    def get_state_alerts(self, state_code: str) -> List[Dict[str, Any]]:
+    def get_state_alerts(self, state_code: str) -> list[dict[str, Any]]:
         return (
             self._run_with_retries(
                 "state weather alerts",
@@ -342,16 +342,15 @@ class WeatherDataService(ExternalDataService):
             or []
         )
 
-    def get_current_weather(self, lat: float, lng: float) -> Optional[Dict[str, Any]]:
+    def get_current_weather(self, lat: float, lng: float) -> Optional[dict[str, Any]]:
         return self._run_with_retries(
             "current weather",
             lambda: fetch_current_weather(lat, lng),
             default=None,
         )
 
-
 class EnvironmentalDataService(ExternalDataService):
-    def get_coops_environmental(self, station_id: str) -> Dict[str, float]:
+    def get_coops_environmental(self, station_id: str) -> dict[str, float]:
         return (
             self._run_with_retries(
                 "coops environmental",
@@ -361,7 +360,7 @@ class EnvironmentalDataService(ExternalDataService):
             or {}
         )
 
-    def get_currents(self, station_id: str, tz_name: str) -> List[Dict[str, str]]:
+    def get_currents(self, station_id: str, tz_name: str) -> list[dict[str, str]]:
         return (
             self._run_with_retries(
                 "currents predictions",
@@ -373,13 +372,12 @@ class EnvironmentalDataService(ExternalDataService):
 
     def get_current_observation(
         self, station_id: str, tz_name: str
-    ) -> Optional[Dict[str, str]]:
+    ) -> Optional[dict[str, str]]:
         return self._run_with_retries(
             "currents observation",
             lambda: fetch_currents_observation(station_id, tz_name),
             default=None,
         )
-
 
 class AstronomyService(ExternalDataService):
     def get_sun_times(
@@ -388,7 +386,7 @@ class AstronomyService(ExternalDataService):
         lat: float,
         lng: float,
         tz_name: str,
-    ) -> Tuple[Optional[datetime], Optional[datetime], str]:
+    ) -> tuple[Optional[datetime], Optional[datetime], str]:
         values = self._run_with_retries(
             "sun times",
             lambda: _sun_times(now, lat, lng, tz_name),
@@ -405,7 +403,7 @@ class AstronomyService(ExternalDataService):
 
     def get_solunar_times(
         self, now: datetime, lat: float, lng: float, tz_name: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return (
             self._run_with_retries(
                 "solunar",
@@ -417,7 +415,7 @@ class AstronomyService(ExternalDataService):
 
     def get_twilight_times(
         self, now: datetime, lat: float, lng: float, tz_name: str
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         return (
             self._run_with_retries(
                 "twilight",
@@ -429,7 +427,7 @@ class AstronomyService(ExternalDataService):
 
     def get_lunar_details(
         self, now: datetime, lng: float, tz_name: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return (
             self._run_with_retries(
                 "lunar details",
@@ -438,7 +436,6 @@ class AstronomyService(ExternalDataService):
             )
             or {}
         )
-
 
 class ForecastBuilder:
     """Central forecast orchestrator for external services + domain assembly."""
@@ -450,7 +447,6 @@ class ForecastBuilder:
         self.weather_service = WeatherDataService()
         self.environment_service = EnvironmentalDataService()
         self.astro_service = AstronomyService()
-
 
 # ---------------------------------------------------------------------------
 # Fishability scoring constants
@@ -477,13 +473,11 @@ _VERDICT_GOOD = 64
 _VERDICT_FAIR = 48
 _VERDICT_CHALLENGING = 32
 
-
 # ---------------------------------------------------------------------------
 # Canonical coast derivation
 # ---------------------------------------------------------------------------
 
-
-def _derive_coast(location: Optional[Dict[str, Any]]) -> Optional[str]:
+def _derive_coast(location: Optional[dict[str, Any]]) -> Optional[str]:
     """Return the canonical coast string for a location, or ``None`` if unknown.
 
     Mapping of ``conditions_region`` prefix → coast:
@@ -511,21 +505,20 @@ def _derive_coast(location: Optional[Dict[str, Any]]) -> Optional[str]:
         return "east"
     return None
 
-
 def classify_conditions(
-    wind_range: Optional[Tuple[float, float]],
-    wave_range: Optional[Tuple[float, float]],
+    wind_range: Optional[tuple[float, float]],
+    wave_range: Optional[tuple[float, float]],
     wind_dir: str = "",
     water_temp_f: Optional[float] = None,
     is_live_temp: bool = False,
     tide_state: str = "",
-    tides: Optional[List[Dict[str, Any]]] = None,
+    tides: Optional[list[dict[str, Any]]] = None,
     sunrise: Optional[datetime] = None,
     sunset: Optional[datetime] = None,
     now: Optional[datetime] = None,
-    solunar: Optional[Dict[str, Any]] = None,
+    solunar: Optional[dict[str, Any]] = None,
     coast: str = "east",
-    fishing_types: Optional[List[str]] = None,
+    fishing_types: Optional[list[str]] = None,
 ) -> str:
     """Classify fishability using all available marine + astronomical signals.
 
@@ -570,11 +563,12 @@ def classify_conditions(
 
     # Wind direction heuristic by coast (offshore usually cleaner water).
     if wind_dir:
-        offshore_dirs = {"W", "NW", "NNW", "N", "WNW"}
-        onshore_dirs = {"E", "ENE", "ESE", "NE", "SE"}
         if coast == "west":
-            offshore_dirs = {"E", "ENE", "ESE", "NE", "SE"}
-            onshore_dirs = {"W", "NW", "NNW", "N", "WNW"}
+            offshore_dirs = _OFFSHORE_DIRS_WEST
+            onshore_dirs = _ONSHORE_DIRS_WEST
+        else:
+            offshore_dirs = _OFFSHORE_DIRS_EAST
+            onshore_dirs = _ONSHORE_DIRS_EAST
         if wind_dir in offshore_dirs:
             score += 4
         elif wind_dir in onshore_dirs:
@@ -738,13 +732,12 @@ def classify_conditions(
         return "Challenging"
     return "Poor"
 
-
 def build_multiday_outlook(
     now: datetime,
-    location: Optional[Dict[str, Any]] = None,
-    fishing_types: Optional[List[str]] = None,
-    targets: Optional[List[str]] = None,
-) -> List[Dict[str, Any]]:
+    location: Optional[dict[str, Any]] = None,
+    fishing_types: Optional[list[str]] = None,
+    targets: Optional[list[str]] = None,
+) -> list[dict[str, Any]]:
     """Build a 3-day outlook with conditions and fishability.
 
     Each day includes: day_label, wind summary, wave estimate,
@@ -765,8 +758,8 @@ def build_multiday_outlook(
     nws_periods = _fetch_nws_extended(loc_lat, loc_lng, zone=loc_zone)
 
     def _estimate_wave_range_from_wind(
-        day_wind_range: Optional[Tuple[float, float]],
-    ) -> Optional[Tuple[float, float]]:
+        day_wind_range: Optional[tuple[float, float]],
+    ) -> Optional[tuple[float, float]]:
         """Estimate wave range from forecast wind when marine seas are unavailable."""
         if not day_wind_range:
             return None
@@ -875,7 +868,7 @@ def build_multiday_outlook(
             )
             if isinstance(fb_wind, tuple):
                 wind_str = f"{fb_dir} {int(fb_wind[0])}-{int(fb_wind[1])} kt"
-                wind_range = fb_wind  # type: ignore[assignment]
+                wind_range = (float(fb_wind[0]), float(fb_wind[1]))
                 wind_dir_day = fb_dir
 
         # --- Wave estimate ---
@@ -956,8 +949,8 @@ def build_multiday_outlook(
         # --- Top species for this day ---
         wind_coast = "west" if coast == "west" else "east"
         outlook_fish_region = (location or {}).get("fish_region", "")
-        top_species_names: List[str] = []
-        species_scores: List[Tuple[str, float]] = []
+        top_species_names: list[str] = []
+        species_scores: list[tuple[str, float]] = []
         for sp in SPECIES_DB:
             if coast is None or sp.get("coast", "east") != coast:
                 continue
@@ -997,22 +990,20 @@ def build_multiday_outlook(
 
     return days
 
-
 # -- Spot-specific fishing tips based on conditions -------------------------
 
-
 def build_spot_tips(
-    wind_range: Optional[Tuple[float, float]] = None,
-    wave_range: Optional[Tuple[float, float]] = None,
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
     wind_dir: str = "",
     hour: int = 12,
     month: int = 6,
     coast: str = "east",
     tide_state: str = "",
-    fishing_types: Optional[List[str]] = None,
+    fishing_types: Optional[list[str]] = None,
     experience: str = "",
-    water_quality: Optional[Dict[str, Any]] = None,
-) -> List[Dict[str, str]]:
+    water_quality: Optional[dict[str, Any]] = None,
+) -> list[dict[str, str]]:
     """Generate 3-5 actionable fishing tips based on current conditions.
 
     Each tip has an 'icon' (emoji-free label), 'title', and 'detail'.
@@ -1023,7 +1014,7 @@ def build_spot_tips(
     dissolved-oxygen and enterococcus warnings are injected when thresholds
     are breached.
     """
-    tips: List[Dict[str, str]] = []
+    tips: list[dict[str, str]] = []
 
     # Water quality warnings — injected first so they appear prominently.
     if water_quality and water_quality.get("available"):
@@ -1198,7 +1189,7 @@ def build_spot_tips(
         )
 
     # --- Fishing-type-specific tips (prepended to be prominent) ---
-    type_tips: List[Dict[str, str]] = []
+    type_tips: list[dict[str, str]] = []
 
     if "bridge" in ft:
         avg_wind = ((wind_range[0] + wind_range[1]) / 2) if wind_range else 0
@@ -1386,15 +1377,14 @@ def build_spot_tips(
     # Prepend type-specific tips, then fill remaining slots with generic tips
     return (type_tips + tips)[: max(5, len(type_tips) + 2)]
 
-
 def build_bite_alerts(
     verdict: str,
-    species: List[Dict[str, Any]],
-    pressure: Optional[Dict[str, Any]] = None,
+    species: list[dict[str, Any]],
+    pressure: Optional[dict[str, Any]] = None,
     tide_state: str = "",
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Generate bite alert notifications when conditions are especially good."""
-    alerts: List[Dict[str, str]] = []
+    alerts: list[dict[str, str]] = []
 
     # Hot species alert
     hot_species = [sp["name"] for sp in species if sp.get("activity") == "Hot"]
@@ -1431,11 +1421,10 @@ def build_bite_alerts(
 
     return alerts[:3]
 
-
 def pick_best_fishing_day(
     today_verdict: str,
-    outlook: List[Dict[str, Any]],
-) -> Dict[str, str]:
+    outlook: list[dict[str, Any]],
+) -> dict[str, str]:
     """Analyze today and 3-day outlook to recommend the best day to fish.
 
     Returns a dict with 'best_day', 'reason', and 'recommendation'.
@@ -1456,10 +1445,10 @@ def pick_best_fishing_day(
 
     for day in outlook:
         v = day.get("verdict", "Unknown")
-        s = verdict_scores.get(v, 2)
+        s: float = verdict_scores.get(v, 2)
         n_species = len(day.get("top_species", []))
         # Bonus for having more active species
-        s += min(n_species * 0.2, 1.0)  # type: ignore[assignment]
+        s += min(n_species * 0.2, 1.0)
         if s > best_score:
             best_score = s
             best_day = day["day"]
@@ -1486,19 +1475,18 @@ def pick_best_fishing_day(
         "recommendation": recommendation,
     }
 
-
 def build_gear_checklist(
-    species: List[Dict[str, Any]],
-    wind_range: Optional[Tuple[float, float]] = None,
-    wave_range: Optional[Tuple[float, float]] = None,
+    species: list[dict[str, Any]],
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
     hour: int = 12,
     water_temp: float = 65.0,
-    weather: Optional[Dict[str, Any]] = None,
-    fishing_types: Optional[List[str]] = None,
-) -> List[Dict[str, str]]:
+    weather: Optional[dict[str, Any]] = None,
+    fishing_types: Optional[list[str]] = None,
+) -> list[dict[str, str]]:
     """Generate a conditions-aware packing list for a fishing trip."""
-    items: List[Dict[str, str]] = []
-    categories_seen: set = set()
+    items: list[dict[str, str]] = []
+    categories_seen: set[str] = set()
     ft = set(fishing_types or [])
 
     def _add(category: str, item: str, reason: str = "") -> None:
@@ -1657,18 +1645,17 @@ def build_gear_checklist(
 
     return items
 
-
 def build_conditions_explainer(
-    wind_range: Optional[Tuple[float, float]] = None,
-    wave_range: Optional[Tuple[float, float]] = None,
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
     wind_dir: Optional[str] = None,
     water_temp: float = 65.0,
-    pressure: Optional[Dict[str, Any]] = None,
+    pressure: Optional[dict[str, Any]] = None,
     tide_state: str = "",
     coast: str = "east",
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Translate raw marine conditions into fishing-relevant plain English."""
-    bullets: List[Dict[str, str]] = []
+    bullets: list[dict[str, str]] = []
 
     # Wind analysis
     if wind_range:
@@ -1799,17 +1786,16 @@ def build_conditions_explainer(
 
     return bullets[:5]
 
-
 def build_safety_checklist(
-    wind_range: Optional[Tuple[float, float]] = None,
-    wave_range: Optional[Tuple[float, float]] = None,
+    wind_range: Optional[tuple[float, float]] = None,
+    wave_range: Optional[tuple[float, float]] = None,
     hour: int = 12,
-    alerts: Optional[List[Dict[str, str]]] = None,
-    fishing_types: Optional[List[str]] = None,
+    alerts: Optional[list[dict[str, str]]] = None,
+    fishing_types: Optional[list[str]] = None,
     water_temp: Optional[float] = None,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Build a conditions-aware safety checklist for surf/pier fishing."""
-    items: List[Dict[str, str]] = []
+    items: list[dict[str, str]] = []
     ft = set(fishing_types or [])
 
     # Always show basics
@@ -1999,8 +1985,7 @@ def build_safety_checklist(
 
     return items
 
-
-def _uv_category(uv_index: float) -> Dict[str, str]:
+def _uv_category(uv_index: float) -> dict[str, str]:
     if uv_index <= 2:
         return {
             "level": "Low",
@@ -2015,7 +2000,6 @@ def _uv_category(uv_index: float) -> Dict[str, str]:
         "level": "Very High to Extreme",
         "advice": "Limit direct midday exposure and reapply SPF often.",
     }
-
 
 def _estimate_uv_index(
     now: datetime,
@@ -2034,8 +2018,7 @@ def _estimate_uv_index(
     uv = peak * max(0.0, 1 - (2 * pct - 1) ** 2)
     return round(uv, 1)
 
-
-def recompute_current_uv(location: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def recompute_current_uv(location: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Compute UV index for the current time at the given location.
 
     Intended for refreshing stale cached UV values at page-render time so the
@@ -2054,10 +2037,9 @@ def recompute_current_uv(location: Optional[Dict[str, Any]] = None) -> Dict[str,
     uv_index = _estimate_uv_index(now, sunrise, sunset, lat)
     return {"index": uv_index, **_uv_category(uv_index)}
 
-
 def _rip_risk_from_conditions(
-    wave_range: Optional[Tuple[float, float]], wind_range: Optional[Tuple[float, float]]
-) -> Dict[str, str]:
+    wave_range: Optional[tuple[float, float]], wind_range: Optional[tuple[float, float]]
+) -> dict[str, str]:
     wave_max = wave_range[1] if wave_range else 0.0
     wind_max = wind_range[1] if wind_range else 0.0
     if wave_max >= 5 or wind_max >= 20:
@@ -2075,7 +2057,6 @@ def _rip_risk_from_conditions(
         "guidance": "Risk still exists near piers and cuts. Never fish or swim alone in surf.",
     }
 
-
 def _dew_point_f(
     temp_f: Optional[float], humidity_pct: Optional[float]
 ) -> Optional[float]:
@@ -2088,7 +2069,6 @@ def _dew_point_f(
     alpha = ((a * temp_c) / (b + temp_c)) + math.log(rh / 100.0)
     dew_c = (b * alpha) / (a - alpha)
     return round(dew_c * 9 / 5 + 32, 1)
-
 
 def _heat_index_f(
     temp_f: Optional[float], humidity_pct: Optional[float]
@@ -2112,19 +2092,17 @@ def _heat_index_f(
     )
     return round(hi, 1)
 
-
 def _wind_chill_f(temp_f: Optional[float], wind_kt: Optional[float]) -> Optional[float]:
     if temp_f is None or wind_kt is None:
         return None
     t = float(temp_f)
-    wind_mph = float(wind_kt) * 1.15078
+    wind_mph = float(wind_kt) * _KT_TO_MPH
     if t > 50 or wind_mph < 3:
         return None
     wc = 35.74 + 0.6215 * t - 35.75 * (wind_mph**0.16) + 0.4275 * t * (wind_mph**0.16)
     return round(wc, 1)
 
-
-def _build_pier_info(location: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_pier_info(location: Optional[dict[str, Any]]) -> dict[str, Any]:
     """Return location-aware planning details without requiring APIs."""
     loc = location or {}
     state = loc.get("state", "")
@@ -2162,12 +2140,11 @@ def _build_pier_info(location: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         ),
     }
 
-
 def _build_education_cards(
-    profile: Dict[str, Any],
-    uv: Dict[str, Any],
-    rip_current_risk: Dict[str, str],
-) -> List[Dict[str, str]]:
+    profile: dict[str, Any],
+    uv: dict[str, Any],
+    rip_current_risk: dict[str, str],
+) -> list[dict[str, str]]:
     """Build educational/safety cards tailored to setup/profile choices."""
     experience = (profile or {}).get("experience", "")
     fishing_types = set((profile or {}).get("fishing_types") or [])
@@ -2283,10 +2260,9 @@ def _build_education_cards(
         )
     return cards
 
-
-def _seasonality_highlights(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
+def _seasonality_highlights(forecast: dict[str, Any]) -> list[dict[str, str]]:
     """Summarize active calendar windows for top species with regulation hints."""
-    highlights: List[Dict[str, str]] = []
+    highlights: list[dict[str, str]] = []
     species_by_name = {sp.get("name"): sp for sp in forecast.get("species", [])}
     for row in (forecast.get("calendar") or [])[:5]:
         active = [
@@ -2310,11 +2286,10 @@ def _seasonality_highlights(forecast: Dict[str, Any]) -> List[Dict[str, str]]:
         )
     return highlights
 
-
 def generate_forecast(
-    location: Optional[Dict[str, Any]] = None,
-    profile: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    location: Optional[dict[str, Any]] = None,
+    profile: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """Generate the complete fishing forecast.
 
     Fetches marine conditions and water temperature, classifies fishability,
@@ -2330,8 +2305,8 @@ def generate_forecast(
     now = datetime.now(tz)
     month = now.month
     builder = ForecastBuilder()
-    sources_used: List[str] = []
-    fallbacks_triggered: List[str] = []
+    sources_used: list[str] = []
+    fallbacks_triggered: list[str] = []
     location_id = (location or {}).get("id", "")
     started = time.perf_counter()
     logger.info(
@@ -2353,7 +2328,7 @@ def generate_forecast(
         fallbacks_triggered=fallbacks_triggered,
     )
 
-    def format_range(r: Optional[Tuple[float, float]], unit: str) -> str:
+    def format_range(r: Optional[tuple[float, float]], unit: str) -> str:
         if r is None:
             return "Unknown"
         low, high = r
@@ -2436,7 +2411,7 @@ def generate_forecast(
     if location:
         loc_name = f"{location['name']}, {location['state']}"
 
-    forecast: Dict[str, Any] = {
+    forecast: dict[str, Any] = {
         "generated_at": now.isoformat(),
         "forecast_version": FORECAST_VERSION,
         "sources_used": sorted(set(sources_used)),
@@ -2495,8 +2470,10 @@ def generate_forecast(
     env_metrics = builder.environment_service.get_coops_environmental(coops_station)
     if env_metrics:
         if weather:
-            env_metrics.setdefault("air_temp_f", weather.get("air_temp_f"))  # type: ignore[arg-type]
-            env_metrics.setdefault("humidity_pct", weather.get("humidity"))  # type: ignore[arg-type]
+            if "air_temp_f" not in env_metrics:
+                env_metrics["air_temp_f"] = weather.get("air_temp_f")
+            if "humidity_pct" not in env_metrics:
+                env_metrics["humidity_pct"] = weather.get("humidity")
         forecast["environment"] = env_metrics
         sources_used.append("NOAA CO-OPS environmental")
     else:
@@ -2512,20 +2489,16 @@ def generate_forecast(
     # Both fetches run in a bounded thread pool so upstream latency never
     # blocks the core forecast pipeline; each call is capped at 8 seconds.
     try:
-        import concurrent.futures as _cf
-        from services.datagov import get_water_quality_summary as _get_wq
-        from services.hdx_fao import get_hdx_fao_enrichment as _get_fao
-
         _species_names = [sp["name"] for sp in species[:3]]
         with _cf.ThreadPoolExecutor(max_workers=2) as _geo_pool:
             _wq_fut = _geo_pool.submit(_get_wq, loc_lat, loc_lng)
             _fao_fut = _geo_pool.submit(_get_fao, loc_lat, loc_lng, _species_names)
             try:
-                _wq = _wq_fut.result(timeout=8)
+                _wq = _wq_fut.result(timeout=4)
             except Exception:
                 _wq = {"available": False}
             try:
-                _fao = _fao_fut.result(timeout=8)
+                _fao = _fao_fut.result(timeout=4)
             except Exception:
                 _fao = {}
 
@@ -2614,7 +2587,7 @@ def generate_forecast(
             else forecast["weather"].get("air_temp_f")
         )
     dew_point = _dew_point_f(temp_for_dew, humidity_for_dew)
-    derived_indices: Dict[str, float] = {}
+    derived_indices: dict[str, float] = {}
     if dew_point is not None:
         derived_indices["dew_point_f"] = dew_point
 
@@ -2775,14 +2748,13 @@ def generate_forecast(
     )
     return forecast
 
-
 # ---------------------------------------------------------------------------
 # Profile personalization helpers
 # ---------------------------------------------------------------------------
 
 # Species name keywords → score boost per primary fishing goal.
 # Uses lowercase substring matching so partial names work across regions.
-_TROPHY_BOOSTS: Dict[str, int] = {
+_TROPHY_BOOSTS: dict[str, int] = {
     "tarpon": 14,
     "cobia": 12,
     "mahi-mahi": 12,
@@ -2801,7 +2773,7 @@ _TROPHY_BOOSTS: Dict[str, int] = {
     "blackfin tuna": 10,
     "permit": 8,
 }
-_ACTION_BOOSTS: Dict[str, int] = {
+_ACTION_BOOSTS: dict[str, int] = {
     "bluefish": 10,
     "spanish mackerel": 8,
     "jack crevalle": 8,
@@ -2815,7 +2787,7 @@ _ACTION_BOOSTS: Dict[str, int] = {
     "corbina": 6,
     "blue runner": 6,
 }
-_RELAXING_BOOSTS: Dict[str, int] = {
+_RELAXING_BOOSTS: dict[str, int] = {
     "whiting": 8,
     "spot": 8,
     "atlantic croaker": 8,
@@ -2828,7 +2800,7 @@ _RELAXING_BOOSTS: Dict[str, int] = {
     "white croaker": 7,
     "surfperch": 6,
 }
-_GOAL_BOOST_MAP: Dict[str, Dict[str, int]] = {
+_GOAL_BOOST_MAP: dict[str, dict[str, int]] = {
     "trophy": _TROPHY_BOOSTS,
     "action": _ACTION_BOOSTS,
     "relaxing": _RELAXING_BOOSTS,
@@ -2838,15 +2810,14 @@ _GOAL_BOOST_MAP: Dict[str, Dict[str, int]] = {
 # Condition tolerance verdict shifts.
 # rough = willing to fish hard conditions → upgrade marginal verdicts
 # calm  = prefers flat water → downgrade marginal verdicts
-_TOLERANCE_SHIFT: Dict[str, Dict[str, str]] = {
+_TOLERANCE_SHIFT: dict[str, dict[str, str]] = {
     "rough": {"Poor": "Challenging", "Challenging": "Fair"},
     "calm": {"Fair": "Challenging", "Challenging": "Poor"},
 }
 
-
 def _apply_primary_goal_boost(
-    species: List[Dict[str, Any]], primary_goal: str
-) -> List[Dict[str, Any]]:
+    species: list[dict[str, Any]], primary_goal: str
+) -> list[dict[str, Any]]:
     """Re-rank species list based on the angler's primary fishing goal."""
     boosts = _GOAL_BOOST_MAP.get(primary_goal)
     if not boosts:
@@ -2862,12 +2833,11 @@ def _apply_primary_goal_boost(
         sp["rank"] = i + 1
     return species
 
-
 def personalize_forecast(
-    forecast: Dict[str, Any],
-    profile: Dict[str, Any],
-    location: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    forecast: dict[str, Any],
+    profile: dict[str, Any],
+    location: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """Apply profile-based personalization to a cached forecast.
 
     Re-runs species ranking with profile filters and rebuilds the
@@ -2902,7 +2872,7 @@ def personalize_forecast(
     wind_dir = conds.get("wind_dir") or None
 
     # Parse wind/wave ranges from formatted strings
-    def _parse_range(s: str) -> Optional[Tuple[float, float]]:
+    def _parse_range(s: str) -> Optional[tuple[float, float]]:
         if not s or s == "Unknown":
             return None
         # Remove direction prefix and unit suffix
@@ -3113,7 +3083,6 @@ def personalize_forecast(
 
     return forecast
 
-
 def _parse_time_str(s: str) -> float:
     """Parse a time string like '6:32 AM' to decimal hour."""
     try:
@@ -3130,13 +3099,12 @@ def _parse_time_str(s: str) -> float:
     except Exception:
         return 12.0
 
-
 def build_best_times(
-    forecast: Dict[str, Any],
-    fishing_types: Optional[List[str]] = None,
-    preferred_times: Optional[List[str]] = None,
+    forecast: dict[str, Any],
+    fishing_types: Optional[list[str]] = None,
+    preferred_times: Optional[list[str]] = None,
     tide_preference: str = "",
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Build a list of recommended fishing windows.
 
     Combines solunar major/minor periods with tide change windows and
@@ -3154,7 +3122,7 @@ def build_best_times(
     boosted so the user sees the windows that match their preferred conditions.
     """
     ft = set(fishing_types or [])
-    windows: List[Dict[str, Any]] = []
+    windows: list[dict[str, Any]] = []
 
     # Sunrise/sunset windows (dawn and dusk are prime fishing)
     sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
@@ -3335,7 +3303,7 @@ def build_best_times(
 
     # Score each window: boost when multiple factors overlap
     # Check for overlaps between windows
-    scored_windows: List[Dict[str, Any]] = []
+    scored_windows: list[dict[str, Any]] = []
     for w in windows:
         overlap_bonus = 0
         for other in windows:
@@ -3349,8 +3317,8 @@ def build_best_times(
 
     # Sort by total score and pick the best 3 non-overlapping windows
     scored_windows.sort(key=lambda x: x["total_score"], reverse=True)
-    selected: List[Dict[str, str]] = []
-    used_hours: List[Tuple[float, float]] = []
+    selected: list[dict[str, str]] = []
+    used_hours: list[tuple[float, float]] = []
     for w in scored_windows:
         # Skip if too close to an already-selected window
         skip = False
@@ -3382,10 +3350,9 @@ def build_best_times(
 
     return selected
 
-
 def build_activity_timeline(
-    forecast: Dict[str, Any], now_hour: int = -1
-) -> List[Dict[str, Any]]:
+    forecast: dict[str, Any], now_hour: int = -1
+) -> list[dict[str, Any]]:
     """Build a 24-hour fish activity timeline (one value per hour).
 
     Each entry: {"hour": 0-23, "label": "12 AM", "level": 0-100,
@@ -3395,7 +3362,7 @@ def build_activity_timeline(
     Dampens bars when wind conditions are rough.
     """
     activity = [15.0] * 24
-    reason_parts: List[List[str]] = [[] for _ in range(24)]
+    reason_parts: list[list[str]] = [[] for _ in range(24)]
 
     # Dawn/dusk boost
     sun_str = forecast.get("conditions", {}).get("sunrise_sunset", "")
@@ -3548,7 +3515,7 @@ def build_activity_timeline(
         else:
             tag = "low"
 
-        seen: set = set()
+        seen: set[str] = set()
         deduped = []
         for p in reason_parts[h]:
             if p not in seen:
@@ -3571,8 +3538,7 @@ def build_activity_timeline(
 
     return timeline
 
-
-def build_share_text(forecast: Dict[str, Any]) -> str:
+def build_share_text(forecast: dict[str, Any]) -> str:
     """Build a plain-text summary of the forecast for sharing."""
     lines = []
     loc = forecast.get("location_name", "")
@@ -3608,11 +3574,10 @@ def build_share_text(forecast: Dict[str, Any]) -> str:
 
     return "\n".join(lines)
 
-
 def build_trip_setup(
-    forecast: Dict[str, Any],
-    profile: Optional[Dict[str, Any]] = None,
-) -> Optional[Dict[str, Any]]:
+    forecast: dict[str, Any],
+    profile: Optional[dict[str, Any]] = None,
+) -> Optional[dict[str, Any]]:
     """Build a personalised tackle/bait card for today's trip.
 
     Combines the user's gear preferences (lures / live bait / cut bait) with
@@ -3672,10 +3637,10 @@ def build_trip_setup(
     is_low_light = now_hour < 8 or now_hour >= 18
 
     # ── Harvest unique values from species ────────────────────────────────
-    def _tokens(field: str) -> List[str]:
+    def _tokens(field: str) -> list[str]:
         """Collect unique comma-separated tokens across the working species."""
-        seen: List[str] = []
-        seen_lower: set = set()
+        seen: list[str] = []
+        seen_lower: set[str] = set()
         for sp in working:
             for tok in (sp.get(field) or "").split(","):
                 tok = tok.strip()
@@ -3690,7 +3655,7 @@ def build_trip_setup(
     raw_rig = _tokens("rig")
 
     # ── Build rows ─────────────────────────────────────────────────────────
-    rows: List[Dict[str, str]] = []
+    rows: list[dict[str, str]] = []
 
     # -- Lure suggestions --
     if wants_lures and raw_lures:

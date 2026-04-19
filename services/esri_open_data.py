@@ -15,13 +15,13 @@ standard GeoJSON — no ESRI-specific libraries required.
 
 Integration points
 ------------------
-    fetch_pier_locations(bbox) -> List[dict]
+    fetch_pier_locations(bbox) -> list[dict]
         Nearby pier/dock/water-access features as GeoJSON points.
 
-    fetch_coastal_parks(bbox) -> List[dict]
+    fetch_coastal_parks(bbox) -> list[dict]
         Coastal park / protected-area polygons for a bounding box.
 
-    fetch_fishing_access_points(lat, lng, radius_m) -> List[dict]
+    fetch_fishing_access_points(lat, lng, radius_m) -> list[dict]
         ArcGIS Living Atlas fishing and boat-access features.
 
 Caching
@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -45,7 +45,7 @@ _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=6))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
-_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_CACHE: dict[tuple, dict[str, Any]] = {}
 _CACHE_TTL: int = 1800
 _CACHE_TTL_FAIL: int = 120
 _CACHE_MAX: int = 256
@@ -54,7 +54,7 @@ _CACHE_MAX: int = 256
 # These are open/public layers hosted on ArcGIS Online or Living Atlas.
 # The "query" endpoint accepts standard spatial filters and returns GeoJSON.
 
-_SERVICES: Dict[str, str] = {
+_SERVICES: dict[str, str] = {
     # NOAA Coastal Services Center — public piers and marinas
     "noaa_marinas": (
         "https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/"
@@ -83,27 +83,25 @@ _SERVICES: Dict[str, str] = {
 }
 
 # Common ArcGIS REST query parameters for GeoJSON output
-_COMMON_PARAMS: Dict[str, str] = {
+_COMMON_PARAMS: dict[str, str] = {
     "f": "geojson",
     "outFields": "*",
     "returnGeometry": "true",
     "where": "1=1",
 }
 
-_TIMEOUT: Tuple[float, float] = (5.0, 20.0)
-
+_TIMEOUT: tuple[float, float] = (5.0, 20.0)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def fetch_pier_locations(
     south: float,
     west: float,
     north: float,
     east: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return pier / dock / marina features within a geographic bounding box.
 
     Queries the NOAA Marinas public ArcGIS layer, which includes official pier
@@ -152,13 +150,12 @@ def fetch_pier_locations(
     _cache_set(cache_key, features, failed=not results)
     return features
 
-
 def fetch_coastal_parks(
     south: float,
     west: float,
     north: float,
     east: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return coastal park and protected-area features within a bounding box.
 
     Queries the NPS Park Boundaries open dataset for national parks and
@@ -192,13 +189,12 @@ def fetch_coastal_parks(
     _cache_set(cache_key, features, failed=not results)
     return features
 
-
 def fetch_epa_beaches(
     south: float,
     west: float,
     north: float,
     east: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return EPA BEACON 2.0 monitored beach locations within a bounding box.
 
     These locations have water-quality monitoring data (enterococcus,
@@ -231,8 +227,7 @@ def fetch_epa_beaches(
     _cache_set(cache_key, features, failed=not results)
     return features
 
-
-def fetch_esri_layers_config() -> Dict[str, Any]:
+def fetch_esri_layers_config() -> dict[str, Any]:
     """Return Esri Open Data layer configuration for the front-end.
 
     Provides layer metadata (id, label, endpoint, type) so the JavaScript
@@ -273,11 +268,9 @@ def fetch_esri_layers_config() -> Dict[str, Any]:
         ],
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _query_bbox(
     url: str,
@@ -286,7 +279,7 @@ def _query_bbox(
     north: float,
     east: float,
     result_record_count: int = 50,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Execute an ArcGIS REST spatial query and return raw feature list."""
     params = {
         **_COMMON_PARAMS,
@@ -308,13 +301,12 @@ def _query_bbox(
 
     return []
 
-
 def _normalise_features(
-    features: List[Dict[str, Any]],
+    features: list[dict[str, Any]],
     default_type: str = "feature",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Convert raw ArcGIS GeoJSON features to simple dicts."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for feat in features:
         geom = feat.get("geometry") or {}
         props = feat.get("properties") or {}
@@ -379,7 +371,6 @@ def _normalise_features(
         )
     return out
 
-
 def _cache_get(key: tuple) -> Optional[Any]:
     entry = _CACHE.get(key)
     if not entry:
@@ -388,7 +379,6 @@ def _cache_get(key: tuple) -> Optional[Any]:
     if time.time() - entry["ts"] < ttl:
         return entry["data"]
     return None
-
 
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
     if len(_CACHE) >= _CACHE_MAX:

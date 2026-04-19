@@ -9,10 +9,12 @@ import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 import requests
+
+_CAM_CHECK_TIMEOUT: tuple[float, float] = (2.5, 7.0)
 
 from flask import (
     Blueprint,
@@ -41,6 +43,7 @@ from domain.forecast import (
     build_trip_setup,
 )
 from services.forecast_refresh import enqueue_forecast_refresh
+from services.nws import _KT_TO_MPH
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
     _forecast_age_minutes,
@@ -50,6 +53,11 @@ from storage.cache import (
 )
 from storage.sqlite import get_preferences, save_preferences, get_log_stats
 from web.helpers import get_session_location
+from web.rate_limit import (
+    is_rate_limited as _rl_is_rate_limited,
+    record_attempt as _rl_record_attempt,
+)
+from regulations import get_official_regulations_url as _get_official_regulations_url
 
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
@@ -59,54 +67,29 @@ logger = logging.getLogger(__name__)
 # Limit each IP to 30 requests per 10 minutes to prevent abuse.
 _SETUP_RATE_LIMIT_MAX = 30
 _SETUP_RATE_LIMIT_WINDOW_S = 10 * 60
-_setup_rate_limit_store: Dict[str, tuple] = {}
+_setup_rate_limit_store: dict[str, tuple[float, int]] = {}
 _setup_rate_limit_lock = threading.Lock()
-_setup_prune_counter = 0
-
-
-def _setup_client_ip() -> str:
-    from flask import request as _req
-    from web.auth import _TRUST_PROXY  # type: ignore[attr-defined]
-
-    if _TRUST_PROXY:
-        forwarded = _req.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return _req.remote_addr or "unknown"
 
 
 def _setup_is_rate_limited() -> bool:
-    global _setup_prune_counter
-    ip = _setup_client_ip()
-    now = time.time()
-    with _setup_rate_limit_lock:
-        _setup_prune_counter += 1
-        if _setup_prune_counter % 200 == 0:
-            expired = [
-                k
-                for k, (s, _) in _setup_rate_limit_store.items()
-                if now - s > _SETUP_RATE_LIMIT_WINDOW_S
-            ]
-            for k in expired:
-                del _setup_rate_limit_store[k]
-        start, count = _setup_rate_limit_store.get(ip, (now, 0))
-        if now - start > _SETUP_RATE_LIMIT_WINDOW_S:
-            _setup_rate_limit_store[ip] = (now, 1)
-            return False
-        if count >= _SETUP_RATE_LIMIT_MAX:
-            return True
-        _setup_rate_limit_store[ip] = (start, count + 1)
-        return False
+    if _rl_is_rate_limited(
+        _setup_rate_limit_store, _setup_rate_limit_lock,
+        _SETUP_RATE_LIMIT_MAX, _SETUP_RATE_LIMIT_WINDOW_S,
+    ):
+        return True
+    _rl_record_attempt(_setup_rate_limit_store, _setup_rate_limit_lock, _SETUP_RATE_LIMIT_WINDOW_S)
+    return False
 
 
 # -- Camera status cache -----------------------------------------------------
 _CAM_STATUS_TTL_SECONDS = 30 * 60
 _CAM_STATUS_CACHE_MAX = 500  # prevent unbounded growth with many unique URLs
-_cam_status_cache: Dict[str, Dict[str, Any]] = {}
+_CAM_CHECK_POOL_WORKERS = 6
+_cam_status_cache: dict[str, dict[str, Any]] = {}
 _cam_status_lock = threading.Lock()
 # Shared daemon pool for background cam probes — never blocks a WSGI worker.
-_cam_check_pool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="cam-check")
-_CAM_STATUS_UNKNOWN: Dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
+_cam_check_pool = ThreadPoolExecutor(max_workers=_CAM_CHECK_POOL_WORKERS, thread_name_prefix="cam-check")
+_CAM_STATUS_UNKNOWN: dict[str, Any] = {"is_live": False, "status_label": "Checking…"}
 
 _KT_RANGE_RE = re.compile(
     r"(?P<low>\d+(?:\.\d+)?)\s*-\s*(?P<high>\d+(?:\.\d+)?)\s*kt\b", re.IGNORECASE
@@ -120,21 +103,21 @@ def _convert_wind_text_units(text: str, wind_units: str) -> str:
         return text
 
     def _to_mph_range(match: re.Match[str]) -> str:
-        low = round(float(match.group("low")) * 1.15078)
-        high = round(float(match.group("high")) * 1.15078)
+        low = round(float(match.group("low")) * _KT_TO_MPH)
+        high = round(float(match.group("high")) * _KT_TO_MPH)
         return f"{low}-{high} mph"
 
     converted = _KT_RANGE_RE.sub(_to_mph_range, text)
 
     def _to_mph(match: re.Match[str]) -> str:
         kt = float(match.group("value"))
-        mph = round(kt * 1.15078)
+        mph = round(kt * _KT_TO_MPH)
         return f"{mph} mph"
 
     return _KT_VALUE_RE.sub(_to_mph, converted)
 
 
-def _apply_wind_unit_preference(forecast: Dict[str, Any], wind_units: str) -> None:
+def _apply_wind_unit_preference(forecast: dict[str, Any], wind_units: str) -> None:
     """Mutate wind labels in a forecast to match a user's preferred wind units."""
     if wind_units != "mph":
         return
@@ -154,7 +137,7 @@ def _fetch_cam_status(url: str) -> None:
     Runs in the background thread pool so it never blocks a WSGI worker.
     """
     now = time.time()
-    status: Dict[str, Any] = {
+    status: dict[str, Any] = {
         "is_live": False,
         "status_label": "Unavailable",
         "checked_at_ts": now,
@@ -163,7 +146,7 @@ def _fetch_cam_status(url: str) -> None:
     try:
         resp = requests.get(
             url,
-            timeout=(2.5, 7.0),
+            timeout=_CAM_CHECK_TIMEOUT,
             # Disable redirect following: the cam URLs are hardcoded, so
             # redirects are unexpected and could lead to unintended hosts.
             allow_redirects=False,
@@ -190,7 +173,7 @@ def _fetch_cam_status(url: str) -> None:
         _cam_status_cache[url] = status
 
 
-def _cam_status_cached(url: str) -> Dict[str, Any]:
+def _cam_status_cached(url: str) -> dict[str, Any]:
     """Return the cached cam status, scheduling a background refresh if stale.
 
     Never blocks — always returns immediately.  The first call for a URL
@@ -211,8 +194,8 @@ def _cam_status_cached(url: str) -> Dict[str, Any]:
 
 
 def _build_live_cam_context(
-    location: Dict[str, Any], profile: Optional[Dict[str, Any]]
-) -> Dict[str, Any]:
+    location: dict[str, Any], profile: Optional[dict[str, Any]]
+) -> dict[str, Any]:
     """Build nearby live cam data.
 
     Returns cached availability immediately; stale/unseen URLs trigger a
@@ -326,7 +309,7 @@ def _require_login() -> Any:
         return redirect(url_for("views.profile"))
 
 
-def _setup_context(**kwargs: Any) -> Dict[str, Any]:
+def _setup_context(**kwargs: Any) -> dict[str, Any]:
     """Build common template context for the setup page."""
     current_loc = get_session_location()
     favorite_ids = []
@@ -341,7 +324,7 @@ def _setup_context(**kwargs: Any) -> Dict[str, Any]:
         ]
         favorite_ids = [loc["id"] for loc in favorite_locations]
 
-    context: Dict[str, Any] = {
+    context: dict[str, Any] = {
         "results": None,
         "all_locations": all_locations_sorted(),
         "current_location": current_loc,
@@ -361,7 +344,7 @@ _VALID_EXPERIENCE_PARAMS = frozenset({"beginner", "intermediate", "experienced"}
 _VALID_BAIT_PARAMS = frozenset({"yes", "sometimes", "no"})
 
 
-def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
+def _extract_profile_from_request() -> Optional[dict[str, Any]]:
     """Extract fishing profile from query parameters.
 
     Expected params: fishing_types (comma-separated), targets (comma-separated),
@@ -379,7 +362,7 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
     if not ft and not tg and not exp and not live_bait and not cut_bait and not lures:
         return None
 
-    profile: Dict[str, Any] = {}
+    profile: dict[str, Any] = {}
     if ft:
         profile["fishing_types"] = [t.strip() for t in ft.split(",") if t.strip()][
             :_PROFILE_PARAM_MAX_ITEMS
@@ -400,7 +383,7 @@ def _extract_profile_from_request() -> Optional[Dict[str, Any]]:
 
 
 def _render_forecast(
-    location: Dict[str, Any], cached_flag: Optional[str] = None
+    location: dict[str, Any], cached_flag: Optional[str] = None
 ) -> Any:
     """Load (or refresh) the forecast for a location and render the dashboard."""
     loc_id = location["id"]
@@ -433,8 +416,8 @@ def _render_forecast(
 
     # Apply profile-based personalization (re-rank species for this user).
     # Query params take precedence; fall back to the user's stored DB profile.
-    user_prefs: Dict[str, Any] = {}
-    stored_profile: Dict[str, Any] = {}
+    user_prefs: dict[str, Any] = {}
+    stored_profile: dict[str, Any] = {}
     if g.user:
         user_prefs = get_preferences(g.user["id"])
         stored_profile = user_prefs.get("fishing_profile") or {}
@@ -466,11 +449,9 @@ def _render_forecast(
     if not forecast.get("location_state"):
         forecast["location_state"] = location.get("state", "")
     if not forecast.get("official_regulations_url"):
-        from regulations import get_official_regulations_url as _get_reg_url
-
         _st = forecast.get("location_state") or location.get("state", "")
         if _st:
-            forecast["official_regulations_url"] = _get_reg_url(_st)
+            forecast["official_regulations_url"] = _get_official_regulations_url(_st)
     # tide_chart was stored as a JSON string in older cache entries; parse it
     # back to a dict so the template can access fields directly.
     tc = forecast.get("tide_chart")
@@ -492,7 +473,7 @@ def _render_forecast(
 
     # Build favorite locations list for the quick-switch bar.
     favorite_locations = []
-    caught_species: set = set()
+    caught_species: set[str] = set()
     if g.user:
         fav_ids = user_prefs.get("favorites") or []
         for fav_id in fav_ids:

@@ -12,7 +12,7 @@ Public API
     get_tile_config() -> dict
         Returns tile-layer descriptors for OSM Standard and OSM Humanitarian.
 
-    fetch_osm_amenities(lat, lng, radius_m=2000) -> List[dict]
+    fetch_osm_amenities(lat, lng, radius_m=2000) -> list[dict]
         Returns nearby marine amenities from Overpass (no API key required).
 
 Caching
@@ -25,10 +25,12 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
+
+_TIMEOUT_OVERPASS: tuple[float, float] = (4, 15)
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 _HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process Overpass result cache ─────────────────────────────────────────
-_CACHE: Dict[tuple, Dict[str, Any]] = {}
+_CACHE: dict[tuple, dict[str, Any]] = {}
 _CACHE_TTL: int = 1800  # 30 min — harbour infrastructure changes rarely
 _CACHE_TTL_FAIL: int = 120  # 2 min — retry failed queries sooner
 _CACHE_MAX: int = 128
@@ -51,7 +53,7 @@ _OVERPASS_MIRRORS = [
 
 # ── OSM amenity tags relevant to fishing / marine activities ──────────────────
 # Each entry is an Overpass tag filter and a human-readable label.
-_AMENITY_FILTERS: List[tuple[str, str]] = [
+_AMENITY_FILTERS: list[tuple[str, str]] = [
     ("amenity=marina", "marina"),
     ("leisure=marina", "marina"),
     ("amenity=boat_rental", "boat_rental"),
@@ -76,13 +78,11 @@ _HOT_ATTRIB = (
     'rel="noopener noreferrer" target="_blank">Humanitarian OSM Team</a>'
 )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-def get_tile_config() -> Dict[str, Any]:
+def get_tile_config() -> dict[str, Any]:
     """Return Leaflet tile-layer configurations for all OSM-based base maps.
 
     All URL templates use {z}/{x}/{y} placeholders that Leaflet resolves
@@ -142,12 +142,11 @@ def get_tile_config() -> Dict[str, Any]:
         ],
     }
 
-
 def fetch_osm_amenities(
     lat: float,
     lng: float,
     radius_m: int = 2000,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Fetch nearby marine amenities from the Overpass API.
 
     Uses a compact Overpass QL query that retrieves nodes and ways matching
@@ -181,12 +180,12 @@ def fetch_osm_amenities(
     )
     query = f"[out:json][timeout:15];\n(\n{union_parts}\n);\nout body;"
 
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     failed = True
 
     for mirror in _OVERPASS_MIRRORS:
         try:
-            resp = _HTTP.post(mirror, data={"data": query}, timeout=(4, 15))
+            resp = _HTTP.post(mirror, data={"data": query}, timeout=_TIMEOUT_OVERPASS)
             if resp.status_code == 200:
                 data = resp.json()
                 results = _parse_overpass_elements(data.get("elements", []))
@@ -208,17 +207,15 @@ def fetch_osm_amenities(
     _CACHE[cache_key] = {"ts": now, "data": results, "failed": failed}
     return results
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def _parse_overpass_elements(
-    elements: List[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
+    elements: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """Convert raw Overpass elements into simple location dicts."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for el in elements:
         if el.get("type") != "node":
             continue
@@ -255,15 +252,13 @@ def _parse_overpass_elements(
         )
     return out
 
-
-def _classify_osm_tags(tags: Dict[str, str]) -> str:
+def _classify_osm_tags(tags: dict[str, str]) -> str:
     """Map OSM tags to a canonical amenity type string."""
     for tag_expr, label in _AMENITY_FILTERS:
         key, val = tag_expr.split("=", 1)
         if tags.get(key) == val:
             return label
     return "other"
-
 
 def _evict_cache(now: float) -> None:
     """Remove expired entries; if still over cap, drop oldest by timestamp."""

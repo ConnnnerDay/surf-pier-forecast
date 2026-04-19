@@ -76,6 +76,20 @@ class TestClassifyConditions:
         order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
         assert order[good] >= order[bad]
 
+    def test_east_coast_ne_wind_is_onshore(self):
+        # NE is onshore on the Atlantic coast — should score worse than NW (offshore).
+        nw = classify_conditions((6, 10), (1, 2), wind_dir="NW", coast="east", water_temp_f=65)
+        ne = classify_conditions((6, 10), (1, 2), wind_dir="NE", coast="east", water_temp_f=65)
+        order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
+        assert order[nw] >= order[ne]
+
+    def test_east_coast_sw_wind_is_offshore(self):
+        # SW is offshore on the Atlantic coast — should score better than SE (onshore).
+        sw = classify_conditions((6, 10), (1, 2), wind_dir="SW", coast="east", water_temp_f=65)
+        se = classify_conditions((6, 10), (1, 2), wind_dir="SE", coast="east", water_temp_f=65)
+        order = {"Poor": 1, "Challenging": 2, "Fair": 3, "Good": 4, "Excellent": 5}
+        assert order[sw] >= order[se]
+
 
 class TestMonthlyData:
     def test_wind_data_complete(self):
