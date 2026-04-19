@@ -1,6 +1,5 @@
         <!-- Species ranking -->
         <section class="species-section">
-            <h2>What's Biting Now</h2>
             <p class="section-sub">Top {{ forecast.species|length }} based on current conditions{% if request.args.get('fishing_types') or request.args.get('targets') %} &middot; filtered for your profile{% endif %}</p>
             <p class="reg-section-disclaimer">
                 Please check local regulations before fishing.

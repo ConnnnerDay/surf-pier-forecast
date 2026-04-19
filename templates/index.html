@@ -98,26 +98,6 @@
          1. CONDITIONS SUMMARY CARD — most prominent element
          ============================================================ -->
     <div class="section-block" data-section-id="conditions" data-section-label="Conditions" data-required="1">
-    {% set wind_str = forecast.conditions.wind or '' %}
-    {# Find the first token that starts with a digit (handles "S 16-21 kt", "16 kt", "Calm", etc.) #}
-    {% set wind_speed = namespace(val=0) %}
-    {% for token in wind_str.split(' ') %}
-        {% if wind_speed.val == 0 and token and token[0].isdigit() %}
-            {% set wind_speed.val = token.split('-')[0] | int %}
-        {% endif %}
-    {% endfor %}
-    {% if 'calm' in wind_str.lower() or wind_speed.val == 0 %}
-        {% set wind_class = 'calm' %}{% set wind_label = 'Calm Seas' %}
-    {% elif wind_speed.val <= 8 %}
-        {% set wind_class = 'light' %}{% set wind_label = 'Light Wind' %}
-    {% elif wind_speed.val <= 15 %}
-        {% set wind_class = 'moderate' %}{% set wind_label = 'Moderate Wind' %}
-    {% elif wind_speed.val <= 25 %}
-        {% set wind_class = 'strong' %}{% set wind_label = 'Strong Wind' %}
-    {% else %}
-        {% set wind_class = 'gale' %}{% set wind_label = 'Gale Warning' %}
-    {% endif %}
-
     {% include 'partials/_conditions.html' %}
     </div><!-- /.section-block conditions -->
 
@@ -358,29 +338,6 @@
                             {% endfor %}
                         </div>
                         {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-            {% endif %}
-
-            {# Lure section — shown for anglers who use lures (yes or sometimes) #}
-            {% if uses_lures and forecast.lure_recommendations %}
-            <section class="lure-section">
-                <h2>Lure Recommendations</h2>
-                <p class="section-sub">Ranked for species biting now</p>
-                <div class="lure-cards">
-                    {% for lure in forecast.lure_recommendations[:5] %}
-                    <div class="lure-card">
-                        <div class="lure-card-header">
-                            <h3 class="lure-name">{{ lure.lure }}</h3>
-                        </div>
-                        <p class="lure-notes">{{ lure.notes }}</p>
-                        <dl class="lure-specs">
-                            {% if lure.sizes %}<dt>Size</dt><dd>{{ lure.sizes }}</dd>{% endif %}
-                            {% if lure.colors %}<dt>Colors</dt><dd>{{ lure.colors }}</dd>{% endif %}
-                            {% if lure.retrieve %}<dt>Retrieve</dt><dd>{{ lure.retrieve }}</dd>{% endif %}
-                        </dl>
                     </div>
                     {% endfor %}
                 </div>
