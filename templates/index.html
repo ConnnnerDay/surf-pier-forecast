@@ -289,6 +289,9 @@
     </details>
     </div><!-- /.section-block peak-feeding -->
 
+    {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
+    {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
+
     <!-- Fishing Plan (rigs, tips, bait) -->
     <div class="section-block" data-section-id="rigs-tips" data-section-label="Rigs &amp; Tips">
     <details class="collapsible-module">
@@ -300,9 +303,6 @@
             <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </summary>
         <div class="collapsible-module-body">
-            {# Determine lure-only mode: user fishes lures exclusively (not "sometimes") #}
-            {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
-            {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
 
             {# Rig section — hidden for lure-only anglers #}
             {% if forecast.rig_recommendations and not lures_only %}
@@ -390,8 +390,7 @@
     </div><!-- /.section-block rigs-tips -->
 
     <!-- Lure Box — only for anglers who use lures -->
-    {% set _uses_lures_mod = profile and profile.lures in ('yes', 'sometimes') %}
-    {% if _uses_lures_mod and forecast.lure_recommendations %}
+    {% if uses_lures and forecast.lure_recommendations %}
     <div class="section-block" data-section-id="lure-guide" data-section-label="Lure Guide">
     <details class="collapsible-module lure-module">
         <summary>
@@ -473,8 +472,7 @@
             </section>
             {% endif %}
 
-            {% set _lures_only_forage = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
-            {% if forecast.natural_bait and not _lures_only_forage %}
+            {% if forecast.natural_bait and not lures_only %}
             <section class="forage-section">
                 <h2>What&rsquo;s in the Water</h2>
                 <p class="section-sub">Natural forage this month &mdash; match your bait</p>
