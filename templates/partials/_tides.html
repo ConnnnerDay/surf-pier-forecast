@@ -1,29 +1,7 @@
         <!-- Tide predictions -->
         {% if forecast.tides %}
         <section class="tide-section">
-            <div class="section-header-row">
-                <div>
-                    <h2>Today's Tides</h2>
-                    <p class="section-sub" style="margin-bottom:0">High &amp; low tide times from NOAA predictions</p>
-                </div>
-                {% if forecast.tide_state %}
-                {% set _ts = (forecast.tide_state or '')|lower|trim %}
-                <span class="section-context-badge section-context-badge--{{ 'incoming-tide' if _ts == 'rising' else ('slack-tide' if _ts == 'slack' else 'outgoing-tide') }}">
-                    {% if _ts == 'rising' %}
-                    <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 4l4 5H4z"/></svg>
-                    Incoming Tide
-                    {% elif _ts == 'falling' %}
-                    <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M8 12l4-5H4z"/></svg>
-                    Outgoing Tide
-                    {% elif _ts == 'slack' %}
-                    <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><rect x="2" y="7" width="12" height="2" rx="1"/></svg>
-                    Slack Tide
-                    {% else %}
-                    {{ forecast.tide_state }}
-                    {% endif %}
-                </span>
-                {% endif %}
-            </div>
+            <p class="section-sub" style="margin-bottom:0.5rem">High &amp; low tide times from NOAA predictions</p>
             {% if forecast.tide_state %}
             {% set _ts2 = (forecast.tide_state or '')|lower|trim %}
             <div class="tide-state-banner tide-state-banner--{{ 'rising' if _ts2 == 'rising' else ('slack' if _ts2 == 'slack' else 'falling') }}">

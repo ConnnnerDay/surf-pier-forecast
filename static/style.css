@@ -8636,8 +8636,13 @@ footer p {
   border-top: 3px solid var(--coral);
 }
 
-.hourly-timeline-section h2 {
-  margin-bottom: 0.2rem;
+.timeline-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 0.1rem;
 }
 
 .hourly-timeline-section .activity-timeline {

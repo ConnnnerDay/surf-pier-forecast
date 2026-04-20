@@ -31,8 +31,6 @@
     <meta property="og:image" content="{{ url_for('static', filename='icons/icon-192.svg', _external=True) }}">
     {% if share_id %}<meta property="og:url" content="{{ url_for('views.shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
-    <meta name="twitter:description" content="Water {{ forecast.conditions.water_temp_f }}°F | Wind {{ forecast.conditions.wind }} | Waves {{ forecast.conditions.waves }}">
 </head>
 <body class="forecast-page has-app-header">
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -98,26 +96,6 @@
          1. CONDITIONS SUMMARY CARD — most prominent element
          ============================================================ -->
     <div class="section-block" data-section-id="conditions" data-section-label="Conditions" data-required="1">
-    {% set wind_str = forecast.conditions.wind or '' %}
-    {# Find the first token that starts with a digit (handles "S 16-21 kt", "16 kt", "Calm", etc.) #}
-    {% set wind_speed = namespace(val=0) %}
-    {% for token in wind_str.split(' ') %}
-        {% if wind_speed.val == 0 and token and token[0].isdigit() %}
-            {% set wind_speed.val = token.split('-')[0] | int %}
-        {% endif %}
-    {% endfor %}
-    {% if 'calm' in wind_str.lower() or wind_speed.val == 0 %}
-        {% set wind_class = 'calm' %}{% set wind_label = 'Calm Seas' %}
-    {% elif wind_speed.val <= 8 %}
-        {% set wind_class = 'light' %}{% set wind_label = 'Light Wind' %}
-    {% elif wind_speed.val <= 15 %}
-        {% set wind_class = 'moderate' %}{% set wind_label = 'Moderate Wind' %}
-    {% elif wind_speed.val <= 25 %}
-        {% set wind_class = 'strong' %}{% set wind_label = 'Strong Wind' %}
-    {% else %}
-        {% set wind_class = 'gale' %}{% set wind_label = 'Gale Warning' %}
-    {% endif %}
-
     {% include 'partials/_conditions.html' %}
     </div><!-- /.section-block conditions -->
 
@@ -309,6 +287,9 @@
     </details>
     </div><!-- /.section-block peak-feeding -->
 
+    {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
+    {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
+
     <!-- Fishing Plan (rigs, tips, bait) -->
     <div class="section-block" data-section-id="rigs-tips" data-section-label="Rigs &amp; Tips">
     <details class="collapsible-module">
@@ -320,9 +301,6 @@
             <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </summary>
         <div class="collapsible-module-body">
-            {# Determine lure-only mode: user fishes lures exclusively (not "sometimes") #}
-            {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
-            {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
 
             {# Rig section — hidden for lure-only anglers #}
             {% if forecast.rig_recommendations and not lures_only %}
@@ -358,29 +336,6 @@
                             {% endfor %}
                         </div>
                         {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-            {% endif %}
-
-            {# Lure section — shown for anglers who use lures (yes or sometimes) #}
-            {% if uses_lures and forecast.lure_recommendations %}
-            <section class="lure-section">
-                <h2>Lure Recommendations</h2>
-                <p class="section-sub">Ranked for species biting now</p>
-                <div class="lure-cards">
-                    {% for lure in forecast.lure_recommendations[:5] %}
-                    <div class="lure-card">
-                        <div class="lure-card-header">
-                            <h3 class="lure-name">{{ lure.lure }}</h3>
-                        </div>
-                        <p class="lure-notes">{{ lure.notes }}</p>
-                        <dl class="lure-specs">
-                            {% if lure.sizes %}<dt>Size</dt><dd>{{ lure.sizes }}</dd>{% endif %}
-                            {% if lure.colors %}<dt>Colors</dt><dd>{{ lure.colors }}</dd>{% endif %}
-                            {% if lure.retrieve %}<dt>Retrieve</dt><dd>{{ lure.retrieve }}</dd>{% endif %}
-                        </dl>
                     </div>
                     {% endfor %}
                 </div>
@@ -433,8 +388,7 @@
     </div><!-- /.section-block rigs-tips -->
 
     <!-- Lure Box — only for anglers who use lures -->
-    {% set _uses_lures_mod = profile and profile.lures in ('yes', 'sometimes') %}
-    {% if _uses_lures_mod and forecast.lure_recommendations %}
+    {% if uses_lures and forecast.lure_recommendations %}
     <div class="section-block" data-section-id="lure-guide" data-section-label="Lure Guide">
     <details class="collapsible-module lure-module">
         <summary>
@@ -482,7 +436,6 @@
 
             {% if forecast.calendar %}
             <section class="calendar-section">
-                <h2>Species Calendar</h2>
                 <p class="section-sub">Monthly availability at {{ forecast.location_name or 'this location' }}</p>
                 <div class="calendar-table-wrap">
                     <table class="calendar-table">
@@ -516,8 +469,7 @@
             </section>
             {% endif %}
 
-            {% set _lures_only_forage = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
-            {% if forecast.natural_bait and not _lures_only_forage %}
+            {% if forecast.natural_bait and not lures_only %}
             <section class="forage-section">
                 <h2>What&rsquo;s in the Water</h2>
                 <p class="section-sub">Natural forage this month &mdash; match your bait</p>
