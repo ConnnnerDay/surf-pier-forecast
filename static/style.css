@@ -666,6 +666,19 @@ h2::before {
 
 /* Semantic icon above the stat label */
 .stat-icon {
+  display: block;
+  color: var(--text-muted);
+  opacity: 0.55;
+  margin-bottom: 0.3rem;
+  line-height: 0;
+  flex-shrink: 0;
+}
+.stat-icon svg {
+  width: 16px;
+  height: 16px;
+}
+/* Hero water-temp card is oversized — keep its icon hidden */
+.stat-grid .stat-card:first-child .stat-icon {
   display: none;
 }
 
@@ -702,6 +715,7 @@ h2::before {
 .stat-card[data-stat="air-temp"] { border-top: 2px solid #F97316; }
 .stat-card[data-stat="uv"]       { border-top: 2px solid #FBBF24; }
 /* Live feed card accents */
+.stat-card[data-stat="salinity"] { border-top: 2px solid #06B6D4; }
 .stat-card[data-stat="aqi"]      { border-top: 2px solid #0EA5E9; }
 .stat-card[data-stat="drought"]  { border-top: 2px solid #D97706; }
 .stat-card[data-stat="buoy"]     { border-top: 2px solid #0D9488; }
@@ -713,6 +727,54 @@ h2::before {
 .temp-trend-icon {
   vertical-align: -1px;
   margin-left: 0.15rem;
+}
+
+/* Skeleton shimmer for client-side live cards */
+@keyframes stat-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.stat-card--loading .stat-value,
+.stat-card--loading .stat-detail {
+  display: block;
+  min-width: 3.5rem;
+  min-height: 0.85em;
+  background: linear-gradient(
+    90deg,
+    var(--border-light) 25%,
+    var(--bg-subtle)    50%,
+    var(--border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: stat-shimmer 1.4s ease-in-out infinite;
+  border-radius: 3px;
+  color: transparent !important;
+  user-select: none;
+}
+.stat-card--loading .stat-value {
+  min-width: 5rem;
+  min-height: 1.25rem;
+  margin-bottom: 0.3rem;
+}
+
+/* UV gradient scale bar */
+.uv-scale-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #22c55e 0%, #eab308 25%, #f97316 50%, #ef4444 73%, #8b5cf6 100%);
+  position: relative;
+  margin-top: 0.45rem;
+  flex-shrink: 0;
+}
+.uv-scale-marker {
+  position: absolute;
+  top: -3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 2px var(--white);
 }
 
 /* Wind compass card */
