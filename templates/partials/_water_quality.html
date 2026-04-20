@@ -23,22 +23,7 @@
          data-state="{{ forecast.state if forecast and forecast.state else '' }}"
          data-species="{{ (forecast.species[:3] | map(attribute='name') | join(',')) if forecast and forecast.species else '' }}">
 
-  <div class="wq-header">
-    <h2 class="wq-title">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/>
-        <path d="M12 8v4l3 3"/>
-        <path d="M20 2v6h-6"/>
-      </svg>
-      Water Quality &amp; Environmental Data
-    </h2>
-    <p class="wq-subtitle">
-      Source: <a href="https://www.waterqualitydata.us/" rel="noopener noreferrer" target="_blank">EPA Water Quality Portal</a>
-      &middot; <a href="https://www.fao.org/fishery/" rel="noopener noreferrer" target="_blank">FAO Fisheries</a>
-    </p>
-  </div>
-
-  {# ── Loading skeleton ───────────────────────────────────────────────────── #}
+{# ── Loading skeleton ───────────────────────────────────────────────────── #}
   <div class="wq-loading" id="wq-loading" aria-live="polite">
     <div class="wq-skeleton"></div>
     <div class="wq-skeleton wq-skeleton--sm"></div>
