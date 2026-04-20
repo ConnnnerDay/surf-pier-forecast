@@ -714,6 +714,9 @@ h2::before {
 .stat-card[data-stat="pressure"] { border-top: 2px solid #7C3AED; }
 .stat-card[data-stat="air-temp"] { border-top: 2px solid #F97316; }
 .stat-card[data-stat="uv"]       { border-top: 2px solid #FBBF24; }
+/* Server-rendered safety / condition cards */
+.stat-card[data-stat="rip"]      { border-top: 2px solid #64748B; } /* overridden inline per level */
+.stat-card[data-stat="humidity"] { border-top: 2px solid #38BDF8; }
 /* Live feed card accents */
 .stat-card[data-stat="salinity"] { border-top: 2px solid #06B6D4; }
 .stat-card[data-stat="aqi"]      { border-top: 2px solid #0EA5E9; }
