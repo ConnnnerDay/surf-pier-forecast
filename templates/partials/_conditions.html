@@ -39,11 +39,6 @@
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
                     {{ _wql }}
                 </span>
-                {% if forecast.conditions.wind_dir %}
-                <span class="wind-direction-context">{{ forecast.conditions.wind_dir }} &middot; {{ _wind_str }}</span>
-                {% elif _wind_str %}
-                <span class="wind-direction-context">{{ _wind_str }}</span>
-                {% endif %}
             </div>
 
             <!-- Fishing-relevant stats only -->
