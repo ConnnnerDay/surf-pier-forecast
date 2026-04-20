@@ -38,9 +38,6 @@
                             </div>
                             <span class="score-label">{{ sp.score }}/100</span>
                         </div>
-                        {# Determine what to show based on the user's fishing method preferences #}
-                        {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
-                        {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
                         <div class="species-meta">
                             {# Bait and rig — hidden for lure-only anglers #}
                             {% if not lures_only %}
