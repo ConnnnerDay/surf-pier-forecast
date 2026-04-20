@@ -112,7 +112,7 @@
                         {{ pressure_mb }} mb
                         {% endif %}
                     </span>
-                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact if forecast.pressure and forecast.pressure.fishing_impact else '' }}">{{ forecast.pressure.fishing_impact if forecast.pressure and forecast.pressure.fishing_impact else 'CO-OPS latest reading' }}</span>
+                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact if forecast.pressure and forecast.pressure.fishing_impact else '' }}">{{ pressure_mb }} mb{% if forecast.pressure and forecast.pressure.fishing_impact %} &middot; {{ forecast.pressure.fishing_impact }}{% endif %}</span>
                 </div>
                 {% endif %}
 
@@ -129,10 +129,16 @@
                 {% endif %}
 
                 {% if forecast.uv and forecast.uv.index is defined %}
+                {% set _uv_idx = forecast.uv.index %}
+                {% if _uv_idx <= 2 %}{% set _uv_color = '#22c55e' %}
+                {% elif _uv_idx <= 5 %}{% set _uv_color = '#eab308' %}
+                {% elif _uv_idx <= 7 %}{% set _uv_color = '#f97316' %}
+                {% elif _uv_idx <= 10 %}{% set _uv_color = '#ef4444' %}
+                {% else %}{% set _uv_color = '#8b5cf6' %}{% endif %}
                 <div class="stat-card" data-stat="uv">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
                     <span class="stat-label">UV Index</span>
-                    <span class="stat-value">{{ forecast.uv.index }}</span>
+                    <span class="stat-value" style="color:{{ _uv_color }}">{{ _uv_idx }}</span>
                     <span class="stat-detail">{{ forecast.uv.level or 'sun exposure' }}</span>
                 </div>
                 {% endif %}
@@ -147,43 +153,43 @@
                 {% endif %}
 
                 {# Air Quality card — populated client-side from ArcGIS OpenAQ live feed #}
-                <div class="stat-card" id="aqi-stat-card" hidden>
+                <div class="stat-card" data-stat="aqi" id="aqi-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8h18M5 12h14M8 16h8"/></svg>
                     </span>
                     <span class="stat-label">Air Quality</span>
                     <span class="stat-value" id="aqi-stat-value"></span>
                     <span class="stat-detail" id="aqi-stat-detail"></span>
                 </div>
                 {# Drought card — populated client-side from ArcGIS US Drought Monitor live feed #}
-                <div class="stat-card" id="drought-stat-card" hidden>
+                <div class="stat-card" data-stat="drought" id="drought-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
                     </span>
                     <span class="stat-label">Drought</span>
                     <span class="stat-value" id="drought-stat-value"></span>
                     <span class="stat-detail" id="drought-stat-detail"></span>
                 </div>
                 {# Nearest NDBC buoy — populated client-side from ArcGIS NDBC live feed #}
-                <div class="stat-card" id="ndbc-stat-card" hidden>
+                <div class="stat-card" data-stat="buoy" id="ndbc-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M5 19l2-2M17 7l2-2M5 5l2 2M17 17l2 2"/></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 15H2a10 10 0 0 0 20 0h-3"/></svg>
                     </span>
                     <span class="stat-label">Nearest Buoy</span>
                     <span class="stat-value" id="ndbc-stat-value"></span>
                     <span class="stat-detail" id="ndbc-stat-detail"></span>
                 </div>
                 {# Tropical Outlook — populated client-side from ArcGIS NHC live feed #}
-                <div class="stat-card" id="tropical-stat-card" hidden>
+                <div class="stat-card" data-stat="tropical" id="tropical-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8c-2.5 0-4 2-4 4s1.5 4 4 4 4-2 4-4-1.5-4-4-4z"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
                     </span>
                     <span class="stat-label">Tropics</span>
                     <span class="stat-value" id="tropical-stat-value"></span>
                     <span class="stat-detail" id="tropical-stat-detail"></span>
                 </div>
                 {# Flood stage — populated client-side from ArcGIS Live Stream Gauges #}
-                <div class="stat-card" id="gauge-stat-card" hidden>
+                <div class="stat-card" data-stat="gauge" id="gauge-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16c2-4 4-4 6-8s4-4 6-8"/></svg>
                     </span>
@@ -192,16 +198,16 @@
                     <span class="stat-detail" id="gauge-stat-detail"></span>
                 </div>
                 {# Nearest METAR — visibility, flight category & conditions from ArcGIS NOAA METAR live feed #}
-                <div class="stat-card" id="metar-stat-card" hidden>
+                <div class="stat-card" data-stat="metar" id="metar-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
                     </span>
                     <span class="stat-label">Nearest METAR</span>
                     <span class="stat-value" id="metar-stat-value"></span>
                     <span class="stat-detail" id="metar-stat-detail"></span>
                 </div>
                 {# Wildfire & Smoke — populated client-side from ArcGIS NIFC/NDGD live feeds #}
-                <div class="stat-card" id="wildfire-stat-card" hidden>
+                <div class="stat-card" data-stat="wildfire" id="wildfire-stat-card" hidden>
                     <span class="stat-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>
                     </span>
