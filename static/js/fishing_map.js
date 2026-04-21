@@ -337,7 +337,10 @@
         surf: {
             tags: [
                 'way["natural"="beach"]',
-                'node["natural"="shoal"]'
+                'node["natural"="shoal"]',
+                'way["natural"="shoal"]',
+                'node["natural"="sandbank"]',
+                'node["seamark:type"="rock_awash"]'
             ],
             color:   '#fde68a',
             insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough.'
@@ -364,7 +367,9 @@
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
                 'way["waterway"="tidal_channel"]',
                 'node["natural"="shoal"]',
-                'way["natural"="wetland"]["wetland"="tidalflat"]'
+                'way["natural"="wetland"]["wetland"="tidalflat"]',
+                'way["landuse"="aquaculture"]["produce"="oyster"]',
+                'way["landuse"="aquaculture"]["product"="oysters"]'
             ],
             color:   '#2dd4bf',
             insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits.'
@@ -372,9 +377,13 @@
         reef: {
             tags: [
                 'way["natural"="reef"]',
+                'node["natural"="reef"]',
                 'node["natural"="shoal"]',
                 'node["seamark:type"="wreck"]',
-                'node["historic"="wreck"]'
+                'node["historic"="wreck"]',
+                'way["seamark:type"="wreck"]',
+                'way["historic"="wreck"]',
+                'node["seamark:type"="artificial_reef"]'
             ],
             color:   '#f59e0b',
             insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, and wrecks. Fish the upcurrent edge where bait gets swept against structure. Work the base of rock walls and depth transitions.'
@@ -382,6 +391,8 @@
         bottom: {
             tags: [
                 'node["natural"="shoal"]',
+                'way["natural"="shoal"]',
+                'node["natural"="sandbank"]',
                 'way["waterway"="tidal_channel"]',
                 'way["natural"="wetland"]["wetland"="tidalflat"]'
             ],
@@ -391,6 +402,7 @@
         general: {
             tags: [
                 'way["natural"="reef"]',
+                'node["natural"="reef"]',
                 'node["natural"="shoal"]',
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
                 'way["waterway"="tidal_channel"]'
@@ -607,7 +619,8 @@
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false },
         boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false },
-        dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false }
+        dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false },
+        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false }
     };
 
     // Habitat area types rendered as filled polygon overlays instead of point markers.
@@ -668,7 +681,8 @@
         fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.',
         kelp:         'Kelp forests hold some of the richest habitat on the Pacific coast — rockfish, lingcod, and kelp bass hold along the canopy edge and base of the fronds.',
         boat_ramp:    'Boat ramps draw early-morning activity. Cast along the ramp edges and nearby channel drops — baitfish concentrate where the bottom changes.',
-        dive_site:    'Dive sites flag clear water over structure — the same reefs, ledges, and wrecks divers explore hold trophy fish. Work the upcurrent edge.'
+        dive_site:    'Dive sites flag clear water over structure — the same reefs, ledges, and wrecks divers explore hold trophy fish. Work the upcurrent edge.',
+        seawall:      'Seawalls create hard current edges and shadow lines — stripers, bluefish, snook, and tarpon patrol the base of the wall on tide changes. Night fishing near lit walls is consistently productive.'
     };
 
     function spotTypeLabel(type) {
@@ -1072,8 +1086,9 @@
         if (natural === 'beach')     return 'beach';
         if (natural === 'bay')       return 'inlet';
         if (natural === 'reef')      return 'reef';
-        if (natural === 'shoal' || natural === 'rock') return 'shoal';
-        if (natural === 'cape' || natural === 'headland' || natural === 'peninsula') return 'point';
+        if (natural === 'shoal' || natural === 'rock' || natural === 'sandbank') return 'shoal';
+        if (natural === 'cape' || natural === 'headland' ||
+            natural === 'peninsula' || natural === 'promontory') return 'point';
 
         if (tags.harbour === 'yes') return 'inlet';
 
@@ -1084,12 +1099,17 @@
 
         if (tags.historic === 'wreck' || seamark === 'wreck') return 'wreck';
 
-        if (seamark === 'rock_awash' || seamark === 'underwater_rock') return 'shoal';
+        if (seamark === 'rock_awash' || seamark === 'underwater_rock' ||
+            seamark === 'rock_submerged' || seamark === 'obstruction') return 'shoal';
         if (seamark === 'artificial_reef' || tags.landuse === 'artificial_reef') return 'reef';
+        if ((seamark && seamark.indexOf('beacon') === 0) ||
+            seamark === 'light_major' || seamark === 'light_minor') return 'buoy';
 
         if (waterway === 'tidal_channel' || waterway === 'river' ||
             waterway === 'canal'         || waterway === 'stream') return 'inlet';
-        if (waterway === 'weir' || waterway === 'dam') return 'jetty';
+        if (waterway === 'weir'   || waterway === 'dam'       ||
+            waterway === 'rapids' || waterway === 'fish_pass' ||
+            waterway === 'lock') return 'jetty';
 
         if (manMade === 'pier' || tags.leisure === 'pier') {
             if (tags.access === 'private' || tags.access === 'no') return null;
@@ -1097,6 +1117,7 @@
         }
         if (manMade === 'jetty')                              return 'jetty';
         if (manMade === 'groyne' || manMade === 'breakwater') return 'jetty';
+        if (manMade === 'seawall' || manMade === 'revetment') return 'seawall';
         if (manMade === 'lighthouse' || manMade === 'offshore_platform') return 'point';
         if (manMade === 'buoy')                               return 'buoy';
 
@@ -1181,9 +1202,13 @@
         if (has('shoal')) {
             s.push('node["natural"="shoal"](' + bbox + ');',
                    'way["natural"="shoal"](' + bbox + ');',
+                   'node["natural"="sandbank"](' + bbox + ');',
+                   'way["natural"="sandbank"](' + bbox + ');',
                    'node["natural"="rock"](' + bbox + ');',
                    'node["seamark:type"="rock_awash"](' + bbox + ');',
-                   'node["seamark:type"="underwater_rock"](' + bbox + ');');
+                   'node["seamark:type"="underwater_rock"](' + bbox + ');',
+                   'node["seamark:type"="rock_submerged"](' + bbox + ');',
+                   'node["seamark:type"="obstruction"](' + bbox + ');');
         }
         if (has('pier')) {
             // Only publicly accessible piers — private docks are excluded
@@ -1201,7 +1226,12 @@
                    'way["man_made"="breakwater"](' + bbox + ');',
                    'node["waterway"="weir"](' + bbox + ');',
                    'way["waterway"="weir"](' + bbox + ');',
-                   'node["waterway"="dam"](' + bbox + ');');
+                   'node["waterway"="dam"](' + bbox + ');',
+                   'node["waterway"="rapids"](' + bbox + ');',
+                   'way["waterway"="rapids"](' + bbox + ');',
+                   'node["waterway"="fish_pass"](' + bbox + ');',
+                   'way["waterway"="fish_pass"](' + bbox + ');',
+                   'node["waterway"="lock"](' + bbox + ');');
         }
         if (has('bridge')) {
             s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
@@ -1218,6 +1248,7 @@
                    'node["natural"="headland"](' + bbox + ');',
                    'way["natural"="headland"](' + bbox + ');',
                    'node["natural"="peninsula"](' + bbox + ');',
+                   'node["natural"="promontory"](' + bbox + ');',
                    'node["man_made"="lighthouse"](' + bbox + ');',
                    'node["man_made"="offshore_platform"](' + bbox + ');');
         }
@@ -1229,6 +1260,13 @@
             s.push('node["seamark:type"="buoy_lateral"](' + bbox + ');',
                    'node["seamark:type"="buoy_cardinal"](' + bbox + ');',
                    'node["seamark:type"="buoy_safe_water"](' + bbox + ');',
+                   'node["seamark:type"="buoy_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="beacon_lateral"](' + bbox + ');',
+                   'node["seamark:type"="beacon_cardinal"](' + bbox + ');',
+                   'node["seamark:type"="beacon_safe_water"](' + bbox + ');',
+                   'node["seamark:type"="beacon_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="light_major"](' + bbox + ');',
+                   'node["seamark:type"="light_minor"](' + bbox + ');',
                    'node["man_made"="buoy"](' + bbox + ');');
         }
         if (has('fishing_shop')) {
@@ -1244,6 +1282,12 @@
             s.push('node["sport"="scuba_diving"](' + bbox + ');',
                    'node["sport"="diving"](' + bbox + ');',
                    'way["sport"="scuba_diving"](' + bbox + ');');
+        }
+        if (has('seawall')) {
+            s.push('node["man_made"="seawall"](' + bbox + ');',
+                   'way["man_made"="seawall"](' + bbox + ');',
+                   'node["man_made"="revetment"](' + bbox + ');',
+                   'way["man_made"="revetment"](' + bbox + ');');
         }
 
         if (!h.length && !s.length) return '';
