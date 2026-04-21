@@ -565,47 +565,25 @@
 
         if (aiCache[key]) { renderAIHabitatSpots(aiCache[key], habitatType); return; }
 
-        var bbox  = s + ',' + w + ',' + n + ',' + e;
-        var tags  = def.tags.map(function (t) { return t + '(' + bbox + ');'; }).join('');
-        var query = '[out:json][timeout:20];(' + tags + ');out center;';
-        var body  = 'data=' + encodeURIComponent(query);
-
         // Abort any in-flight AI habitat fetch before starting the new one.
         if (_aiAbort) _aiAbort.abort();
         _aiAbort = new AbortController();
         var thisAiGen = ++_aiReqGen;
-        var aiSignal  = _aiAbort.signal;
 
-        function tryAIOverpass(urlIdx) {
-            return fetch(OVERPASS_URLS[urlIdx], {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body:    body,
-                signal:  aiSignal,
-            }).then(function (r) {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            }).catch(function (err) {
-                if (err.name === 'AbortError') throw err;  // don't retry aborted requests
-                if (urlIdx + 1 < OVERPASS_URLS.length) {
-                    console.warn('[fishing-map] AI habitat: mirror ' + OVERPASS_URLS[urlIdx] + ' failed, trying next…');
-                    return tryAIOverpass(urlIdx + 1);
-                }
-                throw err;
-            });
-        }
+        var url = '/api/v1/geo/habitats?south=' + s + '&west=' + w +
+                  '&north=' + n + '&east=' + e +
+                  '&habitat_type=' + encodeURIComponent(habitatType);
 
-        tryAIOverpass(0)
+        fetch(url, { signal: _aiAbort.signal })
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
         .then(function (data) {
-            if (thisAiGen !== _aiReqGen) return; // superseded by newer species/pan
-            var features = (data.elements || []).map(function (el) {
-                return {
-                    lat:     el.lat  || (el.center && el.center.lat),
-                    lng:     el.lon  || (el.center && el.center.lon),
-                    name:    (el.tags || {}).name || '',
-                    osmType: osmTagsToType(el.tags || {})
-                };
-            }).filter(function (f) { return f.lat && f.lng; });
+            if (thisAiGen !== _aiReqGen) return;
+            var features = ((data.data && data.data.features) || []).map(function (f) {
+                return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general' };
+            });
             _aiCachePut(key, features);
             renderAIHabitatSpots(features, habitatType);
         })
