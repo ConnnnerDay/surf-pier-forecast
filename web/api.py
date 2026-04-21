@@ -1058,13 +1058,14 @@ def _get_species_lower_index() -> "list[tuple[str, frozenset, Any]]":
 
 # ── Fishing-map response cache ─────────────────────────────────────────────────
 # The scoring loop iterates 100+ locations × 800+ species every request.  Cache
-# the fully-built response dict for 5 minutes so rapid filter changes (species,
+# the fully-built response dict for 15 minutes so rapid filter changes (species,
 # coast, season…) that repeat a previous combination return instantly.
 # Key: (species_q, coast_q, category_q, month, season_q, time_q, tide_q,
 #        min_temp, max_temp)  — the complete set of params that affect output.
 _FMAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month rolls over
 _FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
+_FMAP_CACHE_LOCK = threading.Lock()  # guards evict+set so the cap is never exceeded
 
 
 def _fmap_cache_get(key: tuple) -> Optional[dict[str, Any]]:
@@ -1075,13 +1076,16 @@ def _fmap_cache_get(key: tuple) -> Optional[dict[str, Any]]:
 
 
 def _fmap_cache_set(key: tuple, data: dict[str, Any]) -> None:
-    if len(_FMAP_CACHE) >= _FMAP_CACHE_MAX:
-        # Drop the oldest insertion
-        try:
-            del _FMAP_CACHE[next(iter(_FMAP_CACHE))]
-        except (KeyError, StopIteration):
-            pass
-    _FMAP_CACHE[key] = {"ts": time.time(), "data": data}
+    with _FMAP_CACHE_LOCK:
+        # Evict the oldest entry when the cap is reached.  The lock makes the
+        # len-check → evict → insert sequence atomic so concurrent threads
+        # cannot both evict and together leave the dict over the cap.
+        if len(_FMAP_CACHE) >= _FMAP_CACHE_MAX:
+            try:
+                del _FMAP_CACHE[next(iter(_FMAP_CACHE))]
+            except (KeyError, StopIteration):
+                pass
+        _FMAP_CACHE[key] = {"ts": time.time(), "data": data}
 
 
 @bp.route("/api/fishing-map")

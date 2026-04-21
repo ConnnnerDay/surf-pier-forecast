@@ -151,11 +151,13 @@
     }
 
     function ensureLeafletCss() {
-        if (document.querySelector('link[data-leaflet-geo]')) return;
+        // Shared guard: check by URL so this is idempotent even when fishing_map.js
+        // has already inserted the same stylesheet under a different attribute name.
+        if (document.querySelector('link[rel="stylesheet"][href*="leaflet"]')) return;
         var l = document.createElement('link');
         l.rel = 'stylesheet';
         l.href = LEAFLET_CSS_URL;
-        l.setAttribute('data-leaflet-geo', '1');
+        l.setAttribute('data-leaflet-css', '1');
         document.head.appendChild(l);
     }
 

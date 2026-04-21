@@ -39,7 +39,6 @@ from __future__ import annotations
 
 import logging
 import threading
-import time
 from typing import Any, Optional
 
 from flask import Blueprint, jsonify, request
@@ -57,53 +56,46 @@ from services.esri_open_data import (
 from services.nasa_worldview import get_gibs_layers, get_sst_tile_config
 from services.aerial_imagery import get_aerial_tile_config, search_oam_imagery
 from services.hdx_fao import get_hdx_fao_enrichment
+from web.rate_limit import (
+    client_ip as _client_ip,
+    is_rate_limited as _rl_check,
+    record_attempt as _rl_record,
+)
+
+import time as _time
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint("geo_api", __name__)
 
-# ── Per-IP rate limiting (shared with existing pattern in web/api.py) ─────────
-_GEO_RATE_LIMIT_MAX = 60  # 60 requests per window
-_GEO_RATE_LIMIT_WINDOW_S = 60  # 1-minute window
+# ── Per-IP rate limiting — uses the shared web/rate_limit module ──────────────
+# Previously this blueprint duplicated the sliding-window rate-limit logic with
+# its own store/lock and a _TRUST_PROXY bool that was never wired to os.environ.
+# The shared module reads TRUSTED_PROXY from the environment correctly.
+_GEO_RATE_LIMIT_MAX = 60      # requests per window
+_GEO_RATE_LIMIT_WINDOW_S = 60  # 1-minute sliding window
 _geo_rate_store: dict[str, tuple[float, int]] = {}
 _geo_rate_lock = threading.Lock()
 
-_TRUST_PROXY: bool = False  # set from os.environ in app.py if needed
-
 # ── bbox validation constants ─────────────────────────────────────────────────
 _BBOX_MAX_DEGREES = 10.0  # reject unreasonably large bboxes
+
+# ── /api/v1/geo/layers response cache ────────────────────────────────────────
+# Layer configs are pure tile URL templates — they change only when a new ?date=
+# is requested (daily GIBS imagery date).  Cache the built dict in-process for
+# 1 hour so repeated page loads hit memory instead of re-running 4 functions.
+_LAYERS_CACHE: dict[str, dict[str, Any]] = {}  # date_key → {"ts": float, "data": dict}
+_LAYERS_CACHE_TTL = 3600  # 1 hour
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rate limiting helper
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _client_ip() -> str:
-    if _TRUST_PROXY:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
-
 def _is_rate_limited() -> bool:
-    ip = _client_ip()
-    now = time.time()
-    with _geo_rate_lock:
-        # Prune stale entries periodically (every ~100 requests)
-        if len(_geo_rate_store) > 500:
-            cutoff = now - _GEO_RATE_LIMIT_WINDOW_S
-            stale = [k for k, (t, _) in _geo_rate_store.items() if t < cutoff]
-            for k in stale:
-                _geo_rate_store.pop(k, None)
-
-        window_start, count = _geo_rate_store.get(ip, (now, 0))
-        if now - window_start > _GEO_RATE_LIMIT_WINDOW_S:
-            # New window
-            _geo_rate_store[ip] = (now, 1)
-            return False
-        if count >= _GEO_RATE_LIMIT_MAX:
-            return True
-        _geo_rate_store[ip] = (window_start, count + 1)
-        return False
+    if _rl_check(_geo_rate_store, _geo_rate_lock, _GEO_RATE_LIMIT_MAX, _GEO_RATE_LIMIT_WINDOW_S):
+        return True
+    _rl_record(_geo_rate_store, _geo_rate_lock, _GEO_RATE_LIMIT_WINDOW_S)
+    return False
 
 def _err(msg: str, status: int = 400):
     return jsonify({"ok": False, "error": msg}), status
@@ -165,36 +157,48 @@ def geo_layers() -> Any:
     if _is_rate_limited():
         return _err("Rate limit exceeded", 429)
 
-    date_param = request.args.get("date")
+    date_param = request.args.get("date") or ""
+    cache_key = date_param or "default"
 
-    osm_config = get_tile_config()
-    gibs_config = get_gibs_layers(date=date_param)
-    aerial_config = get_aerial_tile_config()
-    esri_layers = fetch_esri_layers_config()
+    cached = _LAYERS_CACHE.get(cache_key)
+    if cached and (_time.time() - cached["ts"]) < _LAYERS_CACHE_TTL:
+        resp = _ok(cached["data"])
+        resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
+        resp.headers["X-Cache"] = "HIT"
+        return resp
 
-    return _ok(
-        {
-            "base_layers": {
-                "osm": osm_config,
+    layer_data = {
+        "base_layers": {
+            "osm": get_tile_config(),
+        },
+        "overlay_layers": {
+            "nasa_gibs": get_gibs_layers(date=date_param or None),
+            "aerial": get_aerial_tile_config(),
+        },
+        "data_layers": {
+            "esri": fetch_esri_layers_config(),
+        },
+        "natural_earth": {
+            "description": "Natural Earth public-domain vector overlays",
+            "source_url": "https://www.naturalearthdata.com/",
+            "license": "Public Domain (CC0)",
+            "endpoints": {
+                "coastlines": "/api/v1/geo/coastlines",
+                "states": "/api/v1/geo/coastlines?layer=states",
             },
-            "overlay_layers": {
-                "nasa_gibs": gibs_config,
-                "aerial": aerial_config,
-            },
-            "data_layers": {
-                "esri": esri_layers,
-            },
-            "natural_earth": {
-                "description": "Natural Earth public-domain vector overlays",
-                "source_url": "https://www.naturalearthdata.com/",
-                "license": "Public Domain (CC0)",
-                "endpoints": {
-                    "coastlines": "/api/v1/geo/coastlines",
-                    "states": "/api/v1/geo/coastlines?layer=states",
-                },
-            },
-        }
-    )
+        },
+    }
+
+    # Evict stale entries before storing the new one (simple LRU: keep ≤10 dates)
+    if len(_LAYERS_CACHE) >= 10:
+        oldest = min(_LAYERS_CACHE, key=lambda k: _LAYERS_CACHE[k]["ts"])
+        _LAYERS_CACHE.pop(oldest, None)
+    _LAYERS_CACHE[cache_key] = {"ts": _time.time(), "data": layer_data}
+
+    resp = _ok(layer_data)
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
+    resp.headers["X-Cache"] = "MISS"
+    return resp
 
 @bp.route("/api/v1/geo/environmental")
 def geo_environmental() -> Any:

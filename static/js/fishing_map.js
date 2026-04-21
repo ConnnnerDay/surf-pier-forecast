@@ -169,11 +169,13 @@
         });
     }
     function ensureLeafletCss() {
-        if (document.querySelector('link[data-fmap-css]')) return;
+        // Shared guard: check by URL so this is idempotent even when geo_layers.js
+        // has already inserted the same stylesheet under a different attribute name.
+        if (document.querySelector('link[rel="stylesheet"][href*="leaflet"]')) return;
         var l = document.createElement('link');
         l.rel = 'stylesheet';
         l.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
-        l.setAttribute('data-fmap-css', '1');
+        l.setAttribute('data-leaflet-css', '1');
         document.head.appendChild(l);
     }
     function ensureLeaflet() {
