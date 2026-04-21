@@ -43,7 +43,14 @@
 
             <!-- Fishing-relevant stats only -->
             <div class="stat-grid">
-                <div class="stat-card">
+                {% set _wt_f = forecast.conditions.water_temp_f | float %}
+                {% if _wt_f < 45 %}{% set _wt_cat = 'very cold — sluggish bite' %}
+                {% elif _wt_f < 55 %}{% set _wt_cat = 'cold — slow bite' %}
+                {% elif _wt_f < 65 %}{% set _wt_cat = 'cool — fair conditions' %}
+                {% elif _wt_f < 75 %}{% set _wt_cat = 'ideal temp' %}
+                {% elif _wt_f < 82 %}{% set _wt_cat = 'warm — active bite' %}
+                {% else %}{% set _wt_cat = 'hot — fish run deep' %}{% endif %}
+                <div class="stat-card" data-stat="water-temp">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span>
                     <span class="stat-label">Water Temp</span>
                     <span class="stat-value">
@@ -57,7 +64,7 @@
                         <svg class="temp-trend-icon" viewBox="0 0 16 16" width="14" height="14"><rect x="2" y="7" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
                         {% endif %}
                     </span>
-                    <span class="stat-detail" title="{{ forecast.conditions.water_temp_trend_detail }}">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}{% if forecast.conditions.water_temp_trend %} &middot; {{ forecast.conditions.water_temp_trend }}{% endif %}</span>
+                    <span class="stat-detail" title="{{ forecast.conditions.water_temp_trend_detail }}">{% if forecast.conditions.water_temp_live %}live reading{% else %}monthly avg{% endif %}{% if forecast.conditions.water_temp_trend %} &middot; {{ forecast.conditions.water_temp_trend }}{% endif %} &middot; {{ _wt_cat }}</span>
                 </div>
 
                 <div class="stat-card" data-stat="wind">
@@ -81,9 +88,25 @@
                     <span class="stat-detail">next 24 h</span>
                 </div>
 
+                {% if forecast.rip_current_risk %}
+                {% set _rip_lvl = (forecast.rip_current_risk.level or '') | lower %}
+                {% if _rip_lvl == 'high' %}{% set _rip_clr = '#ef4444' %}
+                {% elif _rip_lvl == 'moderate' %}{% set _rip_clr = '#f97316' %}
+                {% else %}{% set _rip_clr = '#22c55e' %}{% endif %}
+                <div class="stat-card" data-stat="rip" style="border-top-color:{{ _rip_clr }}">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                    <span class="stat-label">Rip Current</span>
+                    <span class="stat-value" style="color:{{ _rip_clr }}">{{ forecast.rip_current_risk.level }}</span>
+                    {% if _rip_lvl == 'high' %}{% set _rip_short = 'Stay off surf — fish from structure' %}
+                    {% elif _rip_lvl == 'moderate' %}{% set _rip_short = 'Currents near piers/jetties' %}
+                    {% else %}{% set _rip_short = 'Minimal risk — stay alert' %}{% endif %}
+                    <span class="stat-detail" title="{{ forecast.rip_current_risk.guidance }}">{{ _rip_short }}</span>
+                </div>
+                {% endif %}
+
                 {% if forecast.tide_state %}
                 <div class="stat-card" data-stat="tide">
-                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 15H2a10 10 0 0 0 20 0h-3"/></svg></span>
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 9c.6.5 1.2 1 2.5 1C7 10 7 8 9.5 8c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2M2 15c.6.5 1.2 1 2.5 1C7 16 7 14 9.5 14c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2"/></svg></span>
                     <span class="stat-label">Tide</span>
                     {% set _ts = (forecast.tide_state or '')|lower|trim %}
                     <span class="stat-value">
@@ -151,6 +174,16 @@
                     <div class="uv-scale-bar" aria-hidden="true">
                         <div class="uv-scale-marker" style="left:{{ _uv_pct }}%;background:{{ _uv_color }}"></div>
                     </div>
+                </div>
+                {% endif %}
+
+                {% if forecast.conditions.humidity is defined and forecast.conditions.humidity is not none %}
+                {% set _hum = forecast.conditions.humidity | round | int %}
+                <div class="stat-card" data-stat="humidity">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><path d="M16 14v6M8 14v6M12 16v6"/></svg></span>
+                    <span class="stat-label">Humidity</span>
+                    <span class="stat-value">{{ _hum }}%</span>
+                    <span class="stat-detail">relative humidity</span>
                 </div>
                 {% endif %}
 
