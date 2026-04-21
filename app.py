@@ -522,10 +522,15 @@ def create_app() -> Flask:
             _get_loc_species_all()
             _get_species_lower_index()
             _get_all_species_names()
-            # Then warm the full response cache via a real request context
+            # Warm the four most common filter combinations (all + each coast).
+            # After a restart the first real user for each coast variant would
+            # otherwise pay the full scoring loop latency before getting a cache hit.
             with app.test_client() as _c:
-                _c.get("/api/fishing-map")
-            logging.getLogger(__name__).info("fishing-map cache pre-warmed")
+                _c.get("/api/fishing-map")               # unfiltered (all coasts)
+                _c.get("/api/fishing-map?coast=east")
+                _c.get("/api/fishing-map?coast=west")
+                _c.get("/api/fishing-map?coast=hawaii")
+            logging.getLogger(__name__).info("fishing-map cache pre-warmed (4 variants)")
         except Exception as _exc:
             logging.getLogger(__name__).debug(
                 "fishing-map pre-warm failed (non-fatal): %s", _exc

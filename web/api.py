@@ -1027,10 +1027,10 @@ _SPECIES_LOWER_INDEX: Optional[list[tuple[str, frozenset, Any]]] = None
 # mapping once reduces the per-request cost to a single dict lookup for the
 # unfiltered case, and to iterating a much smaller per-location list for
 # filtered queries.
-_LOC_SPECIES_ALL: Optional[dict[str, List]] = None  # loc_id → [species, ...]
+_LOC_SPECIES_ALL: Optional[dict[str, list]] = None  # loc_id → [species, ...]
 
 
-def _get_loc_species_all() -> dict[str, List]:
+def _get_loc_species_all() -> dict[str, list]:
     """Return {loc_id: [species_dict, ...]} for every location using all species."""
     global _LOC_SPECIES_ALL
     if _LOC_SPECIES_ALL is None:

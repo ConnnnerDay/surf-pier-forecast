@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures as _cf
 import logging
 import math
+import os
 import re
 import time
 from datetime import datetime, timedelta
@@ -116,9 +117,11 @@ MONTHLY_AVG_WIND_DIR: dict[int, str] = {
     12: "NW",
 }
 
-# Default coordinates
-_LAT = 34.2104
-_LNG = -77.7964
+# Fallback coordinates used only when no location is set and no session exists.
+# Wrightsville Beach, NC — a geographically central east-coast default.
+# Override via environment: DEFAULT_LAT / DEFAULT_LNG.
+_LAT: float = float(os.environ.get("DEFAULT_LAT", "34.2104"))
+_LNG: float = float(os.environ.get("DEFAULT_LNG", "-77.7964"))
 
 # Direction abbreviation map (shared by multiple forecast helpers)
 _DIR_MAP: dict[str, str] = {
