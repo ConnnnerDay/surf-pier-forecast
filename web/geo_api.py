@@ -58,7 +58,6 @@ from services.aerial_imagery import get_aerial_tile_config, search_oam_imagery
 from services.hdx_fao import get_hdx_fao_enrichment
 from services.fish_structures import fetch_ai_habitats
 from web.rate_limit import (
-    client_ip as _client_ip,
     is_rate_limited as _rl_check,
     record_attempt as _rl_record,
 )
