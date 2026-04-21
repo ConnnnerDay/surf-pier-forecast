@@ -114,6 +114,7 @@ POLYGON_HABITAT_TYPES: frozenset[str] = frozenset(
         "beach",
         "oyster_reef",
         "inlet",
+        "kelp",
     }
 )
 
@@ -127,6 +128,7 @@ VALID_TYPES: frozenset[str] = frozenset(
         "saltmarsh",
         "mangrove",
         "tidal_flat",
+        "kelp",
         "shoal",
         "pier",
         "jetty",
@@ -139,6 +141,9 @@ VALID_TYPES: frozenset[str] = frozenset(
         "buoy",
         "fishing_shop",
         "fishing",
+        "boat_ramp",
+        "dive_site",
+        "seawall",
     }
 )
 
@@ -211,6 +216,26 @@ STRUCTURE_TIPS: dict[str, str] = {
     ),
     "fishing": "Local fishing access point.",
     "fishing_shop": "Local bait & tackle — stop in for real-time bite reports.",
+    "kelp": (
+        "Kelp forests hold some of the richest habitat on the Pacific coast — "
+        "rockfish, lingcod, and kelp bass hold along the canopy edge and at the "
+        "base of the fronds. Work the outer edge and depth transitions."
+    ),
+    "boat_ramp": (
+        "Boat ramps and launch sites draw early activity. Cast along the ramp "
+        "edges and nearby channel drops — baitfish concentrate where the bottom "
+        "changes and fish ambush from the shadows."
+    ),
+    "dive_site": (
+        "Dive sites flag clear water over structure — the same reefs, ledges, "
+        "and wrecks divers explore hold trophy fish. Work the upcurrent edge "
+        "and depth transitions."
+    ),
+    "seawall": (
+        "Seawalls create hard current edges and shadow lines — stripers, bluefish, "
+        "snook, and tarpon patrol the base of the wall on tide changes. "
+        "Night fishing near lit walls is consistently productive."
+    ),
 }
 
 # ── Proximity deduplication thresholds (decimal degrees) ─────────────────────
@@ -222,12 +247,16 @@ STRUCTURE_TIPS: dict[str, str] = {
 _PROX: dict[str, float] = {
     "inlet": 0.005,  # ~550 m — tidal channel nodes cluster heavily
     "marina": 0.004,  # ~440 m
+    "wreck": 0.003,  # ~330 m — unnamed OSM + NOAA ENC wrecks often overlap
+    "shoal": 0.003,  # ~330 m — OSM/NOAA obstruction nodes cluster at a point
     "beach": 0.0,  # polygon area — skip centroid proximity dedup
     "grass_flat": 0.0,  # polygon area
     "saltmarsh": 0.0,  # polygon area
     "tidal_flat": 0.0,  # polygon area
     "mangrove": 0.0,  # polygon area
     "oyster_reef": 0.0,  # polygon area
+    "kelp": 0.0,  # polygon area
+    "seawall": 0.003,  # ~330 m — seawall/revetment centroid markers can cluster
     "_default": 0.002,  # ~220 m — piers, jetties, buoys, etc.
 }
 
@@ -307,12 +336,21 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'way["natural"="mud"]({bbox});',
         ]
     if "beach" in types:
-        habitat += [f'way["natural"="beach"]({bbox});']
+        habitat += [
+            f'way["natural"="beach"]({bbox});',
+            f'node["natural"="beach"]({bbox});',
+            f'way["natural"="sand"]["access"!="private"]({bbox});',
+        ]
     if "oyster_reef" in types:
         habitat += [
             f'node["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
             f'way["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
             f'way["landuse"="aquaculture"]["product"="oysters"]({bbox});',
+        ]
+    if "kelp" in types:
+        habitat += [
+            f'way["natural"="wetland"]["wetland"="kelp"]({bbox});',
+            f'way["natural"="kelp"]({bbox});',
         ]
     if "inlet" in types:
         # Waterways (linestrings) and bay polygons both go into habitat so
@@ -334,31 +372,37 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["natural"="reef"]({bbox});',
             f'way["natural"="reef"]({bbox});',
+            f'node["seamark:type"="artificial_reef"]({bbox});',
+            f'way["seamark:type"="artificial_reef"]({bbox});',
+            f'node["landuse"="artificial_reef"]({bbox});',
+            f'way["landuse"="artificial_reef"]({bbox});',
         ]
     if "wreck" in types:
         struct += [
             f'node["historic"="wreck"]({bbox});',
             f'way["historic"="wreck"]({bbox});',
             f'node["seamark:type"="wreck"]({bbox});',
+            f'way["seamark:type"="wreck"]({bbox});',
         ]
     if "shoal" in types:
         struct += [
             f'node["natural"="shoal"]({bbox});',
             f'way["natural"="shoal"]({bbox});',
+            f'node["natural"="sandbank"]({bbox});',
+            f'way["natural"="sandbank"]({bbox});',
             f'node["natural"="rock"]({bbox});',
+            f'node["seamark:type"="rock_awash"]({bbox});',
+            f'node["seamark:type"="underwater_rock"]({bbox});',
+            f'node["seamark:type"="rock_submerged"]({bbox});',
+            f'node["seamark:type"="obstruction"]({bbox});',
         ]
     if "pier" in types:
+        # Only fetch publicly accessible piers — private/restricted docks are excluded
         struct += [
-            f'node["man_made"="pier"]({bbox});',
-            f'way["man_made"="pier"]({bbox});',
-            f'node["leisure"="pier"]({bbox});',
-            f'way["leisure"="pier"]({bbox});',
-            f'node["waterway"="dock"]({bbox});',
-            f'way["waterway"="dock"]({bbox});',
-            f'node["man_made"="wharf"]({bbox});',
-            f'way["man_made"="wharf"]({bbox});',
-            f'node["amenity"="boat_ramp"]({bbox});',
-            f'way["amenity"="boat_ramp"]({bbox});',
+            f'node["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'way["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'way["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
         ]
     if "jetty" in types:
         struct += [
@@ -371,6 +415,13 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["waterway"="weir"]({bbox});',
             f'way["waterway"="weir"]({bbox});',
             f'node["waterway"="dam"]({bbox});',
+            f'way["waterway"="dam"]({bbox});',
+            f'node["waterway"="waterfall"]({bbox});',
+            f'node["waterway"="rapids"]({bbox});',
+            f'way["waterway"="rapids"]({bbox});',
+            f'node["waterway"="fish_pass"]({bbox});',
+            f'way["waterway"="fish_pass"]({bbox});',
+            f'node["waterway"="lock"]({bbox});',
         ]
     if "bridge" in types:
         struct += [
@@ -392,6 +443,7 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["natural"="headland"]({bbox});',
             f'way["natural"="headland"]({bbox});',
             f'node["natural"="peninsula"]({bbox});',
+            f'node["natural"="promontory"]({bbox});',
             f'node["man_made"="lighthouse"]({bbox});',
             f'node["man_made"="offshore_platform"]({bbox});',
         ]
@@ -399,16 +451,46 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["leisure"="fishing"]({bbox});',
             f'way["leisure"="fishing"]({bbox});',
+            f'node["leisure"="fishing_stand"]({bbox});',
+            f'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"]({bbox});',
+            f'node["sport"="fishing"]({bbox});',
         ]
     if "buoy" in types:
         struct += [
             f'node["seamark:type"="buoy_lateral"]({bbox});',
             f'node["seamark:type"="buoy_cardinal"]({bbox});',
             f'node["seamark:type"="buoy_safe_water"]({bbox});',
+            f'node["seamark:type"="buoy_isolated_danger"]({bbox});',
+            f'node["seamark:type"="beacon_lateral"]({bbox});',
+            f'node["seamark:type"="beacon_cardinal"]({bbox});',
+            f'node["seamark:type"="beacon_safe_water"]({bbox});',
+            f'node["seamark:type"="beacon_isolated_danger"]({bbox});',
+            f'node["seamark:type"="light_major"]({bbox});',
+            f'node["seamark:type"="light_minor"]({bbox});',
             f'node["man_made"="buoy"]({bbox});',
         ]
     if "fishing_shop" in types:
         struct += [f'node["shop"="fishing"]({bbox});']
+    if "boat_ramp" in types:
+        struct += [
+            f'node["amenity"="boat_ramp"]({bbox});',
+            f'way["amenity"="boat_ramp"]({bbox});',
+            f'node["leisure"="slipway"]({bbox});',
+            f'way["leisure"="slipway"]({bbox});',
+        ]
+    if "dive_site" in types:
+        struct += [
+            f'node["sport"="scuba_diving"]({bbox});',
+            f'node["sport"="diving"]({bbox});',
+            f'way["sport"="scuba_diving"]({bbox});',
+        ]
+    if "seawall" in types:
+        struct += [
+            f'node["man_made"="seawall"]({bbox});',
+            f'way["man_made"="seawall"]({bbox});',
+            f'node["man_made"="revetment"]({bbox});',
+            f'way["man_made"="revetment"]({bbox});',
+        ]
 
     if not habitat and not struct:
         return ""
@@ -445,8 +527,12 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
             return "mangrove"
         if wetland == "tidalflat":
             return "tidal_flat"
+        if wetland == "kelp":
+            return "kelp"
         return None  # unknown wetland subtype — skip
 
+    if natural == "kelp":
+        return "kelp"
     if natural == "mud":
         return "tidal_flat"
     if natural == "beach":
@@ -455,10 +541,12 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "inlet"
     if natural == "reef":
         return "reef"
-    if natural in ("shoal", "rock"):
+    if natural in ("shoal", "rock", "sandbank"):
         return "shoal"
-    if natural in ("cape", "headland", "peninsula"):
+    if natural in ("cape", "headland", "peninsula", "promontory"):
         return "point"
+    if natural in ("sand",) and tags.get("access") not in ("private", "no"):
+        return "beach"
 
     if tags.get("harbour") == "yes":
         return "inlet"
@@ -471,23 +559,31 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     if tags.get("historic") == "wreck" or seamark == "wreck":
         return "wreck"
 
+    if seamark in ("rock_awash", "underwater_rock", "rock_submerged", "obstruction"):
+        return "shoal"
+    if seamark == "artificial_reef" or tags.get("landuse") == "artificial_reef":
+        return "reef"
+    if seamark.startswith("beacon") or seamark in ("light_major", "light_minor"):
+        return "buoy"
+
     # ── Waterways ─────────────────────────────────────────────────────────────
     if waterway in ("tidal_channel", "river", "canal", "stream"):
         return "inlet"
-    if waterway in ("weir", "dam"):
-        return "jetty"  # turbulent oxygenated water — same angling context
-    if waterway == "dock":
-        return "pier"
+    if waterway in ("weir", "dam", "waterfall", "rapids", "fish_pass", "lock"):
+        return "jetty"  # turbulent/oxygenated water — same angling context
 
     # ── Man-made structures ───────────────────────────────────────────────────
     if man_made == "pier" or tags.get("leisure") == "pier":
+        # Exclude private/restricted access — private docks and boat yards are not public fishing piers
+        if tags.get("access") in ("private", "no"):
+            return None
         return "pier"
     if man_made == "jetty":
         return "jetty"
     if man_made in ("groyne", "breakwater"):
         return "jetty"
-    if man_made == "wharf":
-        return "pier"
+    if man_made in ("seawall", "revetment"):
+        return "seawall"
     if man_made in ("lighthouse", "offshore_platform"):
         return "point"
     if man_made == "buoy":
@@ -500,11 +596,23 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     if amenity in ("marina",):
         return "marina"
     if amenity == "boat_ramp":
-        return "pier"
+        return "boat_ramp"
 
-    if tags.get("leisure") == "marina":
+    leisure = tags.get("leisure", "")
+    if leisure == "marina":
         return "marina"
-    if tags.get("leisure") == "fishing":
+    if leisure in ("fishing", "fishing_stand"):
+        return "fishing"
+    if leisure == "slipway":
+        return "boat_ramp"
+
+    sport = tags.get("sport", "")
+    if sport in ("scuba_diving", "diving"):
+        return "dive_site"
+    if sport == "fishing":
+        return "fishing"
+
+    if tags.get("fishing") == "yes" and amenity not in ("boat_ramp",) and leisure not in ("slipway",):
         return "fishing"
 
     if seamark.startswith("buoy"):
@@ -655,7 +763,8 @@ def _noaa_features_to_spots(
 
         name = attrs.get("OBJNAM") or attrs.get("INFORM") or ""
         spots.append(
-            {"lat": float(y), "lng": float(x), "type": spot_type, "name": name}
+            {"lat": float(y), "lng": float(x), "type": spot_type, "name": name,
+             "source": "noaa"}
         )
 
     return spots
@@ -721,7 +830,14 @@ def fetch_osm_structures(
             or tags.get("addr:housename")
             or ""
         )
-        spot: dict[str, Any] = {"lat": lat, "lng": lng, "type": spot_type, "name": name}
+        osm_id = el.get("id")
+        spot: dict[str, Any] = {
+            "lat": lat, "lng": lng, "type": spot_type, "name": name,
+            "source": "osm",
+        }
+        if osm_id:
+            spot["osm_id"] = osm_id
+            spot["osm_type"] = el.get("type", "node")
 
         # Attach polygon geometry for habitat area types so the client can
         # draw a filled outline instead of a single-point marker.

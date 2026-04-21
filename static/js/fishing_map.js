@@ -337,94 +337,143 @@
         surf: {
             tags: [
                 'way["natural"="beach"]',
-                'node["natural"="shoal"]'
+                'node["natural"="beach"]',
+                'node["natural"="shoal"]',
+                'way["natural"="shoal"]',
+                'node["natural"="sandbank"]',
+                'way["natural"="sandbank"]',
+                'node["seamark:type"="rock_awash"]',
+                'node["seamark:type"="rock_submerged"]'
             ],
             color:   '#fde68a',
-            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough.'
+            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough and any rip current that breaks through a sandbar.'
         },
         mangrove: {
             tags: [
                 'way["natural"="wetland"]["wetland"="mangrove"]',
-                'way["waterway"="tidal_channel"]'
+                'way["waterway"="tidal_channel"]',
+                'way["waterway"="stream"]["tidal"="yes"]',
+                'way["waterway"="drain"]["tidal"="yes"]'
             ],
             color:   '#22c55e',
-            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out.'
+            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out. Snook and tarpon stage at creek mouths on outgoing tide; push into the roots on the flood.'
         },
         grassflat: {
             tags: [
                 'way["natural"="wetland"]["wetland"="seagrass"]',
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'way["waterway"="tidal_channel"]'
+                'node["natural"="wetland"]["wetland"="seagrass"]',
+                'way["waterway"="tidal_channel"]',
+                'way["natural"="shoal"]'
             ],
             color:   '#34d399',
-            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points.'
+            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points and any pothole (sandy opening) in dense grass beds.'
         },
         estuary: {
             tags: [
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
                 'way["waterway"="tidal_channel"]',
                 'node["natural"="shoal"]',
-                'way["natural"="wetland"]["wetland"="tidalflat"]'
+                'way["natural"="wetland"]["wetland"="tidalflat"]',
+                'node["natural"="wetland"]["wetland"="tidalflat"]',
+                'way["landuse"="aquaculture"]["produce"="oyster"]',
+                'way["landuse"="aquaculture"]["product"="oysters"]',
+                'node["seamark:type"="beacon_lateral"]',
+                'node["seamark:type"="buoy_lateral"]'
             ],
             color:   '#2dd4bf',
-            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits.'
+            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits — position at the creek mouth and let the current deliver the bait.'
         },
         reef: {
             tags: [
                 'way["natural"="reef"]',
+                'node["natural"="reef"]',
                 'node["natural"="shoal"]',
                 'node["seamark:type"="wreck"]',
-                'node["historic"="wreck"]'
+                'node["historic"="wreck"]',
+                'way["seamark:type"="wreck"]',
+                'way["historic"="wreck"]',
+                'node["seamark:type"="artificial_reef"]',
+                'node["seamark:type"="obstruction"]',
+                'node["man_made"="pier"]["access"!="private"]',
+                'node["man_made"="jetty"]',
+                'node["seamark:type"="rock_awash"]'
             ],
             color:   '#f59e0b',
-            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, and wrecks. Fish the upcurrent edge where bait gets swept against structure. Work the base of rock walls and depth transitions.'
+            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, wrecks, and pier pilings. Fish the upcurrent edge where bait gets swept against structure. Drop-shot or deep jig on the uptide face; drift live bait across the downtide shadow.'
         },
         bottom: {
             tags: [
                 'node["natural"="shoal"]',
+                'way["natural"="shoal"]',
+                'node["natural"="sandbank"]',
+                'way["natural"="sandbank"]',
                 'way["waterway"="tidal_channel"]',
-                'way["natural"="wetland"]["wetland"="tidalflat"]'
+                'way["natural"="wetland"]["wetland"="tidalflat"]',
+                'node["natural"="wetland"]["wetland"="tidalflat"]'
             ],
             color:   '#fb923c',
-            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation.'
+            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation. Look for where hard substrate meets soft mud; that seam concentrates prey.'
         },
         general: {
             tags: [
                 'way["natural"="reef"]',
+                'node["natural"="reef"]',
                 'node["natural"="shoal"]',
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'way["waterway"="tidal_channel"]'
+                'way["waterway"="tidal_channel"]',
+                'node["man_made"="pier"]["access"!="private"]',
+                'node["man_made"="breakwater"]'
             ],
             color:   '#a78bfa',
             insight: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, and marsh creek mouths. These highlighted areas offer the best natural ambush opportunities in the current view.'
         }
     };
 
-    // Infer habitat type from bait + rig + lures text.
-    // Automatically covers all 851 species without any name hardcoding.
+    // Infer habitat type from species name, bait, rig, and lures text.
     function inferHabitatType(meta) {
+        var name = (meta.name || '').toLowerCase();
         var text = [meta.bait || '', meta.rig || '', meta.lures || ''].join(' ').toLowerCase();
+        var all  = name + ' ' + text;
 
-        if (/troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|marlin|sailfish|wahoo|yellowfin|blackfin\s*tuna|mahi/.test(text)) {
+        // Pelagic / offshore species — check name first for strong signals
+        if (/\b(marlin|sailfish|wahoo|mahi|dorado|yellowfin|bluefin|skipjack|albacore|false\s*albacore|little\s*tunny|bonito|spanish\s*mackerel|king\s*mackerel|kingfish\s*mac|cobia\s*(offshore|troll)|permit\s*offshore)\b/.test(name) ||
+            /troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|kona\s*head/.test(text)) {
             return 'pelagic';
         }
-        if (/sand\s*(crab|flea)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
+        // Surf / beach species
+        if (/\b(pompano|whiting|kingfish|surf\s*perch|surfperch|barred\s*perch|corbina|spotfin\s*croaker|yellowfin\s*croaker|pismo\s*croaker|striped\s*bass.*surf|bluefish.*surf)\b/.test(name) ||
+            /sand\s*(crab|flea)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
             return 'surf';
         }
-        if (/mangrove/.test(text)) {
+        // Mangrove specialists
+        if (/\b(snook|common\s*snook|tarpon|atlantic\s*tarpon|baby\s*tarpon|jack\s*crevalle|mangrove\s*snapper|gray\s*snapper)\b/.test(name) ||
+            /mangrove/.test(all)) {
             return 'mangrove';
         }
-        if (/popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
+        // Grass flat / seagrass species
+        if (/\b(spotted\s*sea\s*trout|speckled\s*trout|seatrout|bonefish|permit|redfish|red\s*drum|puppy\s*drum)\b/.test(name) ||
+            /popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
             return 'grassflat';
         }
-        if (/marsh|tidal\s*(creek|channel)|inlet|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
+        // Estuary / inshore tidal species
+        if (/\b(weakfish|gray\s*trout|flounder|southern\s*flounder|summer\s*flounder|fluke|black\s*drum|sheepshead|drum|croaker|atlantic\s*croaker|spot\s*fish|white\s*perch|striped\s*bass.*inshore|white\s*bass|hybrid\s*striped)\b/.test(name) ||
+            /marsh|tidal\s*(creek|channel)|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
             return 'estuary';
         }
-        if (/reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef/.test(text)) {
+        // Reef / structure species
+        if (/\b(grouper|snapper|amberjack|tautog|blackfish|cunner|sea\s*bass|black\s*sea\s*bass|rockfish|lingcod|cabezon|kelp\s*bass|calico\s*bass|gopher\s*rockfish|copper\s*rockfish|hogfish|triggerfish|wreckfish|cobia|tripletail|yellowtail|almaco|greater\s*amber)\b/.test(name) ||
+            /reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef|piling|bridge|dock/.test(all)) {
             return 'reef';
         }
-        if (/bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
+        // Bottom feeders
+        if (/\b(catfish|channel\s*catfish|flathead\s*catfish|halibut|pacific\s*halibut|atlantic\s*halibut|skate|ray|stingray|sand\s*shark|smooth\s*dogfish|spiny\s*dogfish|cusk)\b/.test(name) ||
+            /bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
             return 'bottom';
+        }
+        // Inlet / channel species (not already caught above)
+        if (/inlet|channel|current\s*seam/.test(text)) {
+            return 'estuary';
         }
         return 'general';
     }
@@ -587,31 +636,35 @@
         'https://overpass.kumi.systems/api/interpreter'
     ];
     var SPOT_TYPES = {
-        pier:         { label: 'Pier',              color: '#a78bfa', habitat: false },
-        jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false },
-        bridge:       { label: 'Bridge',            color: '#f97316', habitat: false },
-        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false },
-        oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true  },
-        wreck:        { label: 'Wreck',             color: '#d97706', habitat: false },
-        inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true  },
-        marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false },
-        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false },
-        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false },
-        beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false },
-        grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true  },
-        tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
-        saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
-        mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true  },
-        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false },
-        fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
-        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
+        pier:         { label: 'Pier',              color: '#a78bfa', habitat: false, minZoom: 8  },
+        jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false, minZoom: 8  },
+        bridge:       { label: 'Bridge',            color: '#f97316', habitat: false, minZoom: 8  },
+        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false, minZoom: 8  },
+        oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true,  minZoom: 9  },
+        wreck:        { label: 'Wreck',             color: '#d97706', habitat: false, minZoom: 8  },
+        inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
+        marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 10 },
+        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false, minZoom: 9  },
+        beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
+        grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
+        tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true,  minZoom: 9  },
+        saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true,  minZoom: 9  },
+        mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true,  minZoom: 9  },
+        kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true,  minZoom: 9  },
+        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false, minZoom: 10 },
+        fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false, minZoom: 9  },
+        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 11 },
+        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 10 },
+        dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false, minZoom: 10 },
+        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false, minZoom: 11 }
     };
 
     // Habitat area types rendered as filled polygon overlays instead of point markers.
     // Must match POLYGON_HABITAT_TYPES in services/fish_structures.py.
     var POLYGON_HABITAT_TYPES = {
         saltmarsh: true, mangrove: true, tidal_flat: true,
-        grass_flat: true, beach: true, oyster_reef: true, inlet: true
+        grass_flat: true, beach: true, oyster_reef: true, inlet: true, kelp: true
     };
 
     var _MAX_POLYGON_COORDS = 200;
@@ -637,10 +690,10 @@
 
     // Single-character labels rendered inside circle markers for at-a-glance identification
     var SPOT_LABELS = {
-        pier:         'P',  jetty:  'J',  bridge: 'B',  reef:  'R',
-        oyster_reef:  'O',  wreck:  'W',  inlet:  'C',  marina:'M',
-        shoal:        'S',  point:  '^',  beach:  '~',  buoy:  '·',
-        fishing:      'F',  fishing_shop: '$'
+        pier:         'P',  jetty:      'J',  bridge:    'B',  reef:  'R',
+        oyster_reef:  'O',  wreck:      'W',  inlet:     'C',  marina:'M',
+        shoal:        'S',  point:      '^',  beach:     '~',  buoy:  '·',
+        fishing:      'F',  fishing_shop:'$', boat_ramp: 'L',  dive_site: 'D'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -662,7 +715,11 @@
         mangrove:     'Work the mangrove root edges on rising tides; snook, redfish, and tarpon ambush prey along the shadow line.',
         buoy:         'Channel markers and buoys identify edges where deep water meets shallow structure — fish the up-current side.',
         fishing:      'Local fishing access point.',
-        fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.'
+        fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.',
+        kelp:         'Kelp forests hold some of the richest habitat on the Pacific coast — rockfish, lingcod, and kelp bass hold along the canopy edge and base of the fronds.',
+        boat_ramp:    'Boat ramps draw early-morning activity. Cast along the ramp edges and nearby channel drops — baitfish concentrate where the bottom changes.',
+        dive_site:    'Dive sites flag clear water over structure — the same reefs, ledges, and wrecks divers explore hold trophy fish. Work the upcurrent edge.',
+        seawall:      'Seawalls create hard current edges and shadow lines — stripers, bluefish, snook, and tarpon patrol the base of the wall on tide changes. Night fishing near lit walls is consistently productive.'
     };
 
     function spotTypeLabel(type) {
@@ -702,24 +759,69 @@
 
     function renderFishingSpots(spots, cacheKey) {
         if (!fishingSpotLayer) return;
-        // Skip rebuilding all Leaflet markers when the same data is already
-        // displayed — common when the user pans within the same 0.5° grid cell.
-        if (cacheKey && cacheKey === _lastRenderedSpotKey &&
-                fishingSpotLayer.getLayers().length) {
+
+        // Build a render key that folds in current viewport bounds (at ~5 km
+        // resolution) so panning within the same 0.5° cache grid still triggers
+        // a re-render — the viewport-culled subset changes even though the
+        // cached data doesn't.
+        var vb = map ? map.getBounds() : null;
+        var vbKey = vb
+            ? (Math.floor(vb.getSouth() * 20) + ',' + Math.floor(vb.getWest()  * 20) + ',' +
+               Math.ceil (vb.getNorth() * 20) + ',' + Math.ceil (vb.getEast()  * 20))
+            : '';
+        var currentZoom = map ? Math.floor(map.getZoom()) : 8;
+        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom;
+
+        if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
         }
-        _lastRenderedSpotKey = cacheKey || null;
+        _lastRenderedSpotKey = renderKey;
         fishingSpotLayer.clearLayers();
         _customMarkers = [];  // will be repopulated by renderCustomMarkers below
 
+        // Viewport bounds + 10 % padding for point-marker culling.
+        // Polygon habitats (geometry array present) are always included because
+        // their outlines may straddle the viewport boundary.
+        var vS, vN, vW, vE, doCull = false;
+        if (vb) {
+            var latPad = (vb.getNorth() - vb.getSouth()) * 0.10;
+            var lngPad = (vb.getEast()  - vb.getWest())  * 0.10;
+            vS = vb.getSouth() - latPad;  vN = vb.getNorth() + latPad;
+            vW = vb.getWest()  - lngPad;  vE = vb.getEast()  + lngPad;
+            doCull = true;
+        }
+
+        // Track types whose minZoom exceeds the current zoom so we can hint.
+        var _suppressedTypes = {};
+
         // Render OSM / NOAA spots first
-        spots.filter(function (f) { return !f.custom; }).forEach(function (f) {
+        spots.filter(function (f) {
+            if (f.custom) return false;
+            // Hide types that require a higher zoom level than current.
+            var typeDef = SPOT_TYPES[f.type];
+            if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
+                _suppressedTypes[f.type] = true;
+                return false;
+            }
+            // Cull point markers that lie outside the padded viewport.
+            // Features with a geometry array are polygon habitats — always keep.
+            if (doCull && !f.geometry && f.lat && f.lng) {
+                return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
+            }
+            return true;
+        }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || '';
+            var srcLabel = f.source === 'noaa' ? 'NOAA ENC' : 'OpenStreetMap';
+            var coordStr = f.lat && f.lng
+                ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
+                : '';
             var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
                 '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
-                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '');
+                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '') +
+                '<br><span style="opacity:0.45;font-size:0.65rem;margin-top:2px;display:block">' +
+                esc(srcLabel) + (coordStr ? ' · ' + coordStr : '') + '</span>';
 
             // Habitat area features with geometry → area overlay
             if (f.geometry && f.geometry.length >= 3 && POLYGON_HABITAT_TYPES[f.type]) {
@@ -771,6 +873,28 @@
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
+
+        // Update the filter hint to surface any types hidden by minZoom.
+        _updateZoomSuppressedHint(_suppressedTypes);
+    }
+
+    // Show a subtle hint when the current zoom hides some spot types.
+    function _updateZoomSuppressedHint(suppressedTypes) {
+        if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
+        if (!_elStructFiltersHint) return;
+        var keys = Object.keys(suppressedTypes);
+        if (!keys.length) {
+            // No suppression; let the regular hint text stand.
+            _updateSpotTypeHint();
+            return;
+        }
+        var labels = keys.map(function (t) {
+            return (SPOT_TYPES[t] || {}).label || t;
+        });
+        var shown = labels.slice(0, 2).join(', ');
+        var extra = labels.length > 2 ? ' +' + (labels.length - 2) + ' more' : '';
+        _elStructFiltersHint.textContent =
+            'Zoom in to see: ' + shown + extra;
     }
 
     // ── Structure-query loading / error UI helpers ────────────────────────────
@@ -887,7 +1011,7 @@
                             var _vkey = vs + ',' + vw + ',' + vn + ',' + ve;
                             _spotCachePut(_vkey, data.structures);
                             renderFishingSpots(data.structures, _vkey);
-                            _updateSpotTypeHint();
+                            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
                         }
                     }
                 }
@@ -944,7 +1068,7 @@
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key], key);
-            _updateSpotTypeHint();
+            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
@@ -955,7 +1079,7 @@
         if (superResult) {
             _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
-            _updateSpotTypeHint();
+            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
@@ -996,8 +1120,7 @@
                 _spotCachePut(key, spots);
                 _ssSave();
                 renderFishingSpots(spots, key);
-                // Restore normal hint text (may have been set to zoom-in message)
-                _updateSpotTypeHint();
+                // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             })
             .catch(function (err) {
                 if (err.name === 'AbortError') { hideStructLoading(); return; }
@@ -1029,14 +1152,18 @@
             if (wetland === 'saltmarsh') return 'saltmarsh';
             if (wetland === 'mangrove')  return 'mangrove';
             if (wetland === 'tidalflat') return 'tidal_flat';
+            if (wetland === 'kelp')      return 'kelp';
             return null;
         }
+        if (natural === 'kelp')      return 'kelp';
         if (natural === 'mud')       return 'tidal_flat';
         if (natural === 'beach')     return 'beach';
         if (natural === 'bay')       return 'inlet';
         if (natural === 'reef')      return 'reef';
-        if (natural === 'shoal' || natural === 'rock') return 'shoal';
-        if (natural === 'cape' || natural === 'headland' || natural === 'peninsula') return 'point';
+        if (natural === 'shoal' || natural === 'rock' || natural === 'sandbank') return 'shoal';
+        if (natural === 'cape' || natural === 'headland' ||
+            natural === 'peninsula' || natural === 'promontory') return 'point';
+        if (natural === 'sand' && tags.access !== 'private' && tags.access !== 'no') return 'beach';
 
         if (tags.harbour === 'yes') return 'inlet';
 
@@ -1047,23 +1174,36 @@
 
         if (tags.historic === 'wreck' || seamark === 'wreck') return 'wreck';
 
+        if (seamark === 'rock_awash' || seamark === 'underwater_rock' ||
+            seamark === 'rock_submerged' || seamark === 'obstruction') return 'shoal';
+        if (seamark === 'artificial_reef' || tags.landuse === 'artificial_reef') return 'reef';
+        if ((seamark && seamark.indexOf('beacon') === 0) ||
+            seamark === 'light_major' || seamark === 'light_minor') return 'buoy';
+
         if (waterway === 'tidal_channel' || waterway === 'river' ||
             waterway === 'canal'         || waterway === 'stream') return 'inlet';
-        if (waterway === 'weir' || waterway === 'dam') return 'jetty';
-        if (waterway === 'dock')                       return 'pier';
+        if (waterway === 'weir'      || waterway === 'dam'       ||
+            waterway === 'waterfall' || waterway === 'rapids'    ||
+            waterway === 'fish_pass' || waterway === 'lock') return 'jetty';
 
-        if (manMade === 'pier'  || tags.leisure === 'pier')   return 'pier';
+        if (manMade === 'pier' || tags.leisure === 'pier') {
+            if (tags.access === 'private' || tags.access === 'no') return null;
+            return 'pier';
+        }
         if (manMade === 'jetty')                              return 'jetty';
         if (manMade === 'groyne' || manMade === 'breakwater') return 'jetty';
-        if (manMade === 'wharf')                              return 'pier';
+        if (manMade === 'seawall' || manMade === 'revetment') return 'seawall';
         if (manMade === 'lighthouse' || manMade === 'offshore_platform') return 'point';
         if (manMade === 'buoy')                               return 'buoy';
 
         if (tags.bridge === 'yes' && tags.highway) return 'bridge';
 
         if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
-        if (tags.amenity === 'boat_ramp') return 'pier';
-        if (tags.leisure === 'fishing')   return 'fishing';
+        if (tags.amenity === 'boat_ramp' || tags.leisure === 'slipway') return 'boat_ramp';
+        if (tags.leisure === 'fishing' || tags.leisure === 'fishing_stand') return 'fishing';
+        if (tags.sport === 'scuba_diving' || tags.sport === 'diving') return 'dive_site';
+        if (tags.sport === 'fishing') return 'fishing';
+        if (tags.fishing === 'yes' && tags.amenity !== 'boat_ramp' && tags.leisure !== 'slipway') return 'fishing';
 
         if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
         if (tags.shop === 'fishing') return 'fishing_shop';
@@ -1098,12 +1238,18 @@
                    'way["natural"="mud"](' + bbox + ');');
         }
         if (has('beach')) {
-            h.push('way["natural"="beach"](' + bbox + ');');
+            h.push('way["natural"="beach"](' + bbox + ');',
+                   'node["natural"="beach"](' + bbox + ');',
+                   'way["natural"="sand"]["access"!="private"](' + bbox + ');');
         }
         if (has('oyster_reef')) {
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+        }
+        if (has('kelp')) {
+            h.push('way["natural"="wetland"]["wetland"="kelp"](' + bbox + ');',
+                   'way["natural"="kelp"](' + bbox + ');');
         }
         if (has('inlet')) {
             h.push('way["waterway"="tidal_channel"](' + bbox + ');',
@@ -1120,29 +1266,35 @@
         // ── Structure point/linear types (centroid only) ──────────────────
         if (has('reef')) {
             s.push('node["natural"="reef"](' + bbox + ');',
-                   'way["natural"="reef"](' + bbox + ');');
+                   'way["natural"="reef"](' + bbox + ');',
+                   'node["seamark:type"="artificial_reef"](' + bbox + ');',
+                   'way["seamark:type"="artificial_reef"](' + bbox + ');',
+                   'node["landuse"="artificial_reef"](' + bbox + ');',
+                   'way["landuse"="artificial_reef"](' + bbox + ');');
         }
         if (has('wreck')) {
             s.push('node["historic"="wreck"](' + bbox + ');',
                    'way["historic"="wreck"](' + bbox + ');',
-                   'node["seamark:type"="wreck"](' + bbox + ');');
+                   'node["seamark:type"="wreck"](' + bbox + ');',
+                   'way["seamark:type"="wreck"](' + bbox + ');');
         }
         if (has('shoal')) {
             s.push('node["natural"="shoal"](' + bbox + ');',
                    'way["natural"="shoal"](' + bbox + ');',
-                   'node["natural"="rock"](' + bbox + ');');
+                   'node["natural"="sandbank"](' + bbox + ');',
+                   'way["natural"="sandbank"](' + bbox + ');',
+                   'node["natural"="rock"](' + bbox + ');',
+                   'node["seamark:type"="rock_awash"](' + bbox + ');',
+                   'node["seamark:type"="underwater_rock"](' + bbox + ');',
+                   'node["seamark:type"="rock_submerged"](' + bbox + ');',
+                   'node["seamark:type"="obstruction"](' + bbox + ');');
         }
         if (has('pier')) {
-            s.push('node["man_made"="pier"](' + bbox + ');',
-                   'way["man_made"="pier"](' + bbox + ');',
-                   'node["leisure"="pier"](' + bbox + ');',
-                   'way["leisure"="pier"](' + bbox + ');',
-                   'node["waterway"="dock"](' + bbox + ');',
-                   'way["waterway"="dock"](' + bbox + ');',
-                   'node["man_made"="wharf"](' + bbox + ');',
-                   'way["man_made"="wharf"](' + bbox + ');',
-                   'node["amenity"="boat_ramp"](' + bbox + ');',
-                   'way["amenity"="boat_ramp"](' + bbox + ');');
+            // Only publicly accessible piers — private docks are excluded
+            s.push('node["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'way["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'way["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');');
         }
         if (has('jetty')) {
             s.push('node["man_made"="jetty"](' + bbox + ');',
@@ -1153,7 +1305,14 @@
                    'way["man_made"="breakwater"](' + bbox + ');',
                    'node["waterway"="weir"](' + bbox + ');',
                    'way["waterway"="weir"](' + bbox + ');',
-                   'node["waterway"="dam"](' + bbox + ');');
+                   'node["waterway"="dam"](' + bbox + ');',
+                   'way["waterway"="dam"](' + bbox + ');',
+                   'node["waterway"="waterfall"](' + bbox + ');',
+                   'node["waterway"="rapids"](' + bbox + ');',
+                   'way["waterway"="rapids"](' + bbox + ');',
+                   'node["waterway"="fish_pass"](' + bbox + ');',
+                   'way["waterway"="fish_pass"](' + bbox + ');',
+                   'node["waterway"="lock"](' + bbox + ');');
         }
         if (has('bridge')) {
             s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
@@ -1170,21 +1329,49 @@
                    'node["natural"="headland"](' + bbox + ');',
                    'way["natural"="headland"](' + bbox + ');',
                    'node["natural"="peninsula"](' + bbox + ');',
+                   'node["natural"="promontory"](' + bbox + ');',
                    'node["man_made"="lighthouse"](' + bbox + ');',
                    'node["man_made"="offshore_platform"](' + bbox + ');');
         }
         if (has('fishing')) {
             s.push('node["leisure"="fishing"](' + bbox + ');',
-                   'way["leisure"="fishing"](' + bbox + ');');
+                   'way["leisure"="fishing"](' + bbox + ');',
+                   'node["leisure"="fishing_stand"](' + bbox + ');',
+                   'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"](' + bbox + ');',
+                   'node["sport"="fishing"](' + bbox + ');');
         }
         if (has('buoy')) {
             s.push('node["seamark:type"="buoy_lateral"](' + bbox + ');',
                    'node["seamark:type"="buoy_cardinal"](' + bbox + ');',
                    'node["seamark:type"="buoy_safe_water"](' + bbox + ');',
+                   'node["seamark:type"="buoy_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="beacon_lateral"](' + bbox + ');',
+                   'node["seamark:type"="beacon_cardinal"](' + bbox + ');',
+                   'node["seamark:type"="beacon_safe_water"](' + bbox + ');',
+                   'node["seamark:type"="beacon_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="light_major"](' + bbox + ');',
+                   'node["seamark:type"="light_minor"](' + bbox + ');',
                    'node["man_made"="buoy"](' + bbox + ');');
         }
         if (has('fishing_shop')) {
             s.push('node["shop"="fishing"](' + bbox + ');');
+        }
+        if (has('boat_ramp')) {
+            s.push('node["amenity"="boat_ramp"](' + bbox + ');',
+                   'way["amenity"="boat_ramp"](' + bbox + ');',
+                   'node["leisure"="slipway"](' + bbox + ');',
+                   'way["leisure"="slipway"](' + bbox + ');');
+        }
+        if (has('dive_site')) {
+            s.push('node["sport"="scuba_diving"](' + bbox + ');',
+                   'node["sport"="diving"](' + bbox + ');',
+                   'way["sport"="scuba_diving"](' + bbox + ');');
+        }
+        if (has('seawall')) {
+            s.push('node["man_made"="seawall"](' + bbox + ');',
+                   'way["man_made"="seawall"](' + bbox + ');',
+                   'node["man_made"="revetment"](' + bbox + ');',
+                   'way["man_made"="revetment"](' + bbox + ');');
         }
 
         if (!h.length && !s.length) return '';
@@ -1277,7 +1464,7 @@
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped, key);
-            _updateSpotTypeHint();
+            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
@@ -2017,7 +2204,7 @@
         if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
         if (!_elSpotTypesClear)    _elSpotTypesClear    = document.getElementById('fmap-spot-types-clear');
         var n     = activeSpotTypes.length;
-        var total = Object.keys(SPOT_TYPES).length;  // 18
+        var total = Object.keys(SPOT_TYPES).length;
         if (_elStructFiltersHint) {
             _elStructFiltersHint.textContent = n === 0
                 ? 'All types visible \u2014 tap to filter'

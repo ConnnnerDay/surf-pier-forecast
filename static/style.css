@@ -3971,6 +3971,15 @@ h2::before {
 .fmap-legend-dot--beach      { width: 11px; height: 11px; background: rgba(251,191,36,0.30);  border: 2px solid rgba(251,191,36,0.85);  border-radius: 2px; box-shadow: none; }
 .fmap-legend-dot--oyster     { width: 11px; height: 11px; background: rgba(245,158,11,0.30);  border: 2px solid rgba(245,158,11,0.85);  border-radius: 2px; box-shadow: none; }
 .fmap-legend-dot--inlet      { width: 11px; height: 11px; background: rgba(56,189,248,0.30);  border: 2px solid rgba(56,189,248,0.85);  border-radius: 2px; box-shadow: none; }
+.fmap-legend-dot--kelp       { width: 11px; height: 11px; background: rgba(74,222,128,0.30);   border: 2px solid rgba(74,222,128,0.85);   border-radius: 2px; box-shadow: none; }
+/* Additional structure marker legend dots */
+.fmap-legend-dot--shoal      { background: #94a3b8; box-shadow: 0 0 4px rgba(148,163,184,0.4);  border-radius: 50%; }
+.fmap-legend-dot--marina     { background: #67e8f9; box-shadow: 0 0 5px rgba(103,232,249,0.5);  border-radius: 50%; }
+.fmap-legend-dot--point      { background: #c084fc; box-shadow: 0 0 5px rgba(192,132,252,0.5);  border-radius: 50%; }
+.fmap-legend-dot--boat-ramp  { background: #0ea5e9; box-shadow: 0 0 5px rgba(14,165,233,0.5);   border-radius: 50%; }
+.fmap-legend-dot--dive-site  { background: #0284c7; box-shadow: 0 0 5px rgba(2,132,199,0.5);    border-radius: 50%; }
+.fmap-legend-dot--seawall    { background: #6b7280; box-shadow: 0 0 4px rgba(107,114,128,0.4);  border-radius: 50%; }
+.fmap-legend-dot--fishing    { background: #2dd4bf; box-shadow: 0 0 5px rgba(45,212,191,0.5);   border-radius: 50%; }
 /* Separator between habitat area and structure icon sections */
 .fmap-legend-sep {
   display: inline-block;
@@ -3985,6 +3994,17 @@ h2::before {
   font-size: 0.72rem;
   color: var(--text-muted, #8a9ba8);
   margin-right: 0.3rem;
+}
+
+.fmap-legend-section-label {
+  display: block;
+  width: 100%;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin: 4px 0 2px;
 }
 
 /* ── Filter bar ── */
