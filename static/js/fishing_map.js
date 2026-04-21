@@ -1047,22 +1047,25 @@
 
         if (tags.historic === 'wreck' || seamark === 'wreck') return 'wreck';
 
+        if (seamark === 'rock_awash' || seamark === 'underwater_rock') return 'shoal';
+        if (seamark === 'artificial_reef' || tags.landuse === 'artificial_reef') return 'reef';
+
         if (waterway === 'tidal_channel' || waterway === 'river' ||
             waterway === 'canal'         || waterway === 'stream') return 'inlet';
         if (waterway === 'weir' || waterway === 'dam') return 'jetty';
-        if (waterway === 'dock')                       return 'pier';
 
-        if (manMade === 'pier'  || tags.leisure === 'pier')   return 'pier';
+        if (manMade === 'pier' || tags.leisure === 'pier') {
+            if (tags.access === 'private' || tags.access === 'no') return null;
+            return 'pier';
+        }
         if (manMade === 'jetty')                              return 'jetty';
         if (manMade === 'groyne' || manMade === 'breakwater') return 'jetty';
-        if (manMade === 'wharf')                              return 'pier';
         if (manMade === 'lighthouse' || manMade === 'offshore_platform') return 'point';
         if (manMade === 'buoy')                               return 'buoy';
 
         if (tags.bridge === 'yes' && tags.highway) return 'bridge';
 
         if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
-        if (tags.amenity === 'boat_ramp') return 'pier';
         if (tags.leisure === 'fishing')   return 'fishing';
 
         if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
@@ -1120,29 +1123,31 @@
         // ── Structure point/linear types (centroid only) ──────────────────
         if (has('reef')) {
             s.push('node["natural"="reef"](' + bbox + ');',
-                   'way["natural"="reef"](' + bbox + ');');
+                   'way["natural"="reef"](' + bbox + ');',
+                   'node["seamark:type"="artificial_reef"](' + bbox + ');',
+                   'way["seamark:type"="artificial_reef"](' + bbox + ');',
+                   'node["landuse"="artificial_reef"](' + bbox + ');',
+                   'way["landuse"="artificial_reef"](' + bbox + ');');
         }
         if (has('wreck')) {
             s.push('node["historic"="wreck"](' + bbox + ');',
                    'way["historic"="wreck"](' + bbox + ');',
-                   'node["seamark:type"="wreck"](' + bbox + ');');
+                   'node["seamark:type"="wreck"](' + bbox + ');',
+                   'way["seamark:type"="wreck"](' + bbox + ');');
         }
         if (has('shoal')) {
             s.push('node["natural"="shoal"](' + bbox + ');',
                    'way["natural"="shoal"](' + bbox + ');',
-                   'node["natural"="rock"](' + bbox + ');');
+                   'node["natural"="rock"](' + bbox + ');',
+                   'node["seamark:type"="rock_awash"](' + bbox + ');',
+                   'node["seamark:type"="underwater_rock"](' + bbox + ');');
         }
         if (has('pier')) {
-            s.push('node["man_made"="pier"](' + bbox + ');',
-                   'way["man_made"="pier"](' + bbox + ');',
-                   'node["leisure"="pier"](' + bbox + ');',
-                   'way["leisure"="pier"](' + bbox + ');',
-                   'node["waterway"="dock"](' + bbox + ');',
-                   'way["waterway"="dock"](' + bbox + ');',
-                   'node["man_made"="wharf"](' + bbox + ');',
-                   'way["man_made"="wharf"](' + bbox + ');',
-                   'node["amenity"="boat_ramp"](' + bbox + ');',
-                   'way["amenity"="boat_ramp"](' + bbox + ');');
+            // Only publicly accessible piers — private docks are excluded
+            s.push('node["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'way["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'way["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');');
         }
         if (has('jetty')) {
             s.push('node["man_made"="jetty"](' + bbox + ');',

@@ -334,31 +334,33 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["natural"="reef"]({bbox});',
             f'way["natural"="reef"]({bbox});',
+            f'node["seamark:type"="artificial_reef"]({bbox});',
+            f'way["seamark:type"="artificial_reef"]({bbox});',
+            f'node["landuse"="artificial_reef"]({bbox});',
+            f'way["landuse"="artificial_reef"]({bbox});',
         ]
     if "wreck" in types:
         struct += [
             f'node["historic"="wreck"]({bbox});',
             f'way["historic"="wreck"]({bbox});',
             f'node["seamark:type"="wreck"]({bbox});',
+            f'way["seamark:type"="wreck"]({bbox});',
         ]
     if "shoal" in types:
         struct += [
             f'node["natural"="shoal"]({bbox});',
             f'way["natural"="shoal"]({bbox});',
             f'node["natural"="rock"]({bbox});',
+            f'node["seamark:type"="rock_awash"]({bbox});',
+            f'node["seamark:type"="underwater_rock"]({bbox});',
         ]
     if "pier" in types:
+        # Only fetch publicly accessible piers — private/restricted docks are excluded
         struct += [
-            f'node["man_made"="pier"]({bbox});',
-            f'way["man_made"="pier"]({bbox});',
-            f'node["leisure"="pier"]({bbox});',
-            f'way["leisure"="pier"]({bbox});',
-            f'node["waterway"="dock"]({bbox});',
-            f'way["waterway"="dock"]({bbox});',
-            f'node["man_made"="wharf"]({bbox});',
-            f'way["man_made"="wharf"]({bbox});',
-            f'node["amenity"="boat_ramp"]({bbox});',
-            f'way["amenity"="boat_ramp"]({bbox});',
+            f'node["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'way["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'way["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
         ]
     if "jetty" in types:
         struct += [
@@ -471,23 +473,27 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     if tags.get("historic") == "wreck" or seamark == "wreck":
         return "wreck"
 
+    if seamark in ("rock_awash", "underwater_rock"):
+        return "shoal"
+    if seamark == "artificial_reef" or tags.get("landuse") == "artificial_reef":
+        return "reef"
+
     # ── Waterways ─────────────────────────────────────────────────────────────
     if waterway in ("tidal_channel", "river", "canal", "stream"):
         return "inlet"
     if waterway in ("weir", "dam"):
         return "jetty"  # turbulent oxygenated water — same angling context
-    if waterway == "dock":
-        return "pier"
 
     # ── Man-made structures ───────────────────────────────────────────────────
     if man_made == "pier" or tags.get("leisure") == "pier":
+        # Exclude private/restricted access — private docks and boat yards are not public fishing piers
+        if tags.get("access") in ("private", "no"):
+            return None
         return "pier"
     if man_made == "jetty":
         return "jetty"
     if man_made in ("groyne", "breakwater"):
         return "jetty"
-    if man_made == "wharf":
-        return "pier"
     if man_made in ("lighthouse", "offshore_platform"):
         return "point"
     if man_made == "buoy":
@@ -499,8 +505,6 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     amenity = tags.get("amenity", "")
     if amenity in ("marina",):
         return "marina"
-    if amenity == "boat_ramp":
-        return "pier"
 
     if tags.get("leisure") == "marina":
         return "marina"
