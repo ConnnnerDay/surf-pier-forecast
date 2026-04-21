@@ -337,30 +337,37 @@
         surf: {
             tags: [
                 'way["natural"="beach"]',
+                'node["natural"="beach"]',
                 'node["natural"="shoal"]',
                 'way["natural"="shoal"]',
                 'node["natural"="sandbank"]',
-                'node["seamark:type"="rock_awash"]'
+                'way["natural"="sandbank"]',
+                'node["seamark:type"="rock_awash"]',
+                'node["seamark:type"="rock_submerged"]'
             ],
             color:   '#fde68a',
-            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough.'
+            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough and any rip current that breaks through a sandbar.'
         },
         mangrove: {
             tags: [
                 'way["natural"="wetland"]["wetland"="mangrove"]',
-                'way["waterway"="tidal_channel"]'
+                'way["waterway"="tidal_channel"]',
+                'way["waterway"="stream"]["tidal"="yes"]',
+                'way["waterway"="drain"]["tidal"="yes"]'
             ],
             color:   '#22c55e',
-            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out.'
+            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out. Snook and tarpon stage at creek mouths on outgoing tide; push into the roots on the flood.'
         },
         grassflat: {
             tags: [
                 'way["natural"="wetland"]["wetland"="seagrass"]',
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'way["waterway"="tidal_channel"]'
+                'node["natural"="wetland"]["wetland"="seagrass"]',
+                'way["waterway"="tidal_channel"]',
+                'way["natural"="shoal"]'
             ],
             color:   '#34d399',
-            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points.'
+            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points and any pothole (sandy opening) in dense grass beds.'
         },
         estuary: {
             tags: [
@@ -368,11 +375,14 @@
                 'way["waterway"="tidal_channel"]',
                 'node["natural"="shoal"]',
                 'way["natural"="wetland"]["wetland"="tidalflat"]',
+                'node["natural"="wetland"]["wetland"="tidalflat"]',
                 'way["landuse"="aquaculture"]["produce"="oyster"]',
-                'way["landuse"="aquaculture"]["product"="oysters"]'
+                'way["landuse"="aquaculture"]["product"="oysters"]',
+                'node["seamark:type"="beacon_lateral"]',
+                'node["seamark:type"="buoy_lateral"]'
             ],
             color:   '#2dd4bf',
-            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits.'
+            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits — position at the creek mouth and let the current deliver the bait.'
         },
         reef: {
             tags: [
@@ -383,21 +393,27 @@
                 'node["historic"="wreck"]',
                 'way["seamark:type"="wreck"]',
                 'way["historic"="wreck"]',
-                'node["seamark:type"="artificial_reef"]'
+                'node["seamark:type"="artificial_reef"]',
+                'node["seamark:type"="obstruction"]',
+                'node["man_made"="pier"]["access"!="private"]',
+                'node["man_made"="jetty"]',
+                'node["seamark:type"="rock_awash"]'
             ],
             color:   '#f59e0b',
-            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, and wrecks. Fish the upcurrent edge where bait gets swept against structure. Work the base of rock walls and depth transitions.'
+            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, wrecks, and pier pilings. Fish the upcurrent edge where bait gets swept against structure. Drop-shot or deep jig on the uptide face; drift live bait across the downtide shadow.'
         },
         bottom: {
             tags: [
                 'node["natural"="shoal"]',
                 'way["natural"="shoal"]',
                 'node["natural"="sandbank"]',
+                'way["natural"="sandbank"]',
                 'way["waterway"="tidal_channel"]',
-                'way["natural"="wetland"]["wetland"="tidalflat"]'
+                'way["natural"="wetland"]["wetland"="tidalflat"]',
+                'node["natural"="wetland"]["wetland"="tidalflat"]'
             ],
             color:   '#fb923c',
-            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation.'
+            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation. Look for where hard substrate meets soft mud; that seam concentrates prey.'
         },
         general: {
             tags: [
@@ -405,38 +421,59 @@
                 'node["natural"="reef"]',
                 'node["natural"="shoal"]',
                 'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'way["waterway"="tidal_channel"]'
+                'way["waterway"="tidal_channel"]',
+                'node["man_made"="pier"]["access"!="private"]',
+                'node["man_made"="breakwater"]'
             ],
             color:   '#a78bfa',
             insight: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, and marsh creek mouths. These highlighted areas offer the best natural ambush opportunities in the current view.'
         }
     };
 
-    // Infer habitat type from bait + rig + lures text.
-    // Automatically covers all 851 species without any name hardcoding.
+    // Infer habitat type from species name, bait, rig, and lures text.
     function inferHabitatType(meta) {
+        var name = (meta.name || '').toLowerCase();
         var text = [meta.bait || '', meta.rig || '', meta.lures || ''].join(' ').toLowerCase();
+        var all  = name + ' ' + text;
 
-        if (/troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|marlin|sailfish|wahoo|yellowfin|blackfin\s*tuna|mahi/.test(text)) {
+        // Pelagic / offshore species — check name first for strong signals
+        if (/\b(marlin|sailfish|wahoo|mahi|dorado|yellowfin|bluefin|skipjack|albacore|false\s*albacore|little\s*tunny|bonito|spanish\s*mackerel|king\s*mackerel|kingfish\s*mac|cobia\s*(offshore|troll)|permit\s*offshore)\b/.test(name) ||
+            /troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|kona\s*head/.test(text)) {
             return 'pelagic';
         }
-        if (/sand\s*(crab|flea)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
+        // Surf / beach species
+        if (/\b(pompano|whiting|kingfish|surf\s*perch|surfperch|barred\s*perch|corbina|spotfin\s*croaker|yellowfin\s*croaker|pismo\s*croaker|striped\s*bass.*surf|bluefish.*surf)\b/.test(name) ||
+            /sand\s*(crab|flea)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
             return 'surf';
         }
-        if (/mangrove/.test(text)) {
+        // Mangrove specialists
+        if (/\b(snook|common\s*snook|tarpon|atlantic\s*tarpon|baby\s*tarpon|jack\s*crevalle|mangrove\s*snapper|gray\s*snapper)\b/.test(name) ||
+            /mangrove/.test(all)) {
             return 'mangrove';
         }
-        if (/popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
+        // Grass flat / seagrass species
+        if (/\b(spotted\s*sea\s*trout|speckled\s*trout|seatrout|bonefish|permit|redfish|red\s*drum|puppy\s*drum)\b/.test(name) ||
+            /popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
             return 'grassflat';
         }
-        if (/marsh|tidal\s*(creek|channel)|inlet|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
+        // Estuary / inshore tidal species
+        if (/\b(weakfish|gray\s*trout|flounder|southern\s*flounder|summer\s*flounder|fluke|black\s*drum|sheepshead|drum|croaker|atlantic\s*croaker|spot\s*fish|white\s*perch|striped\s*bass.*inshore|white\s*bass|hybrid\s*striped)\b/.test(name) ||
+            /marsh|tidal\s*(creek|channel)|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
             return 'estuary';
         }
-        if (/reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef/.test(text)) {
+        // Reef / structure species
+        if (/\b(grouper|snapper|amberjack|tautog|blackfish|cunner|sea\s*bass|black\s*sea\s*bass|rockfish|lingcod|cabezon|kelp\s*bass|calico\s*bass|gopher\s*rockfish|copper\s*rockfish|hogfish|triggerfish|wreckfish|cobia|tripletail|yellowtail|almaco|greater\s*amber)\b/.test(name) ||
+            /reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef|piling|bridge|dock/.test(all)) {
             return 'reef';
         }
-        if (/bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
+        // Bottom feeders
+        if (/\b(catfish|channel\s*catfish|flathead\s*catfish|halibut|pacific\s*halibut|atlantic\s*halibut|skate|ray|stingray|sand\s*shark|smooth\s*dogfish|spiny\s*dogfish|cusk)\b/.test(name) ||
+            /bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
             return 'bottom';
+        }
+        // Inlet / channel species (not already caught above)
+        if (/inlet|channel|current\s*seam/.test(text)) {
+            return 'estuary';
         }
         return 'general';
     }
@@ -974,7 +1011,7 @@
                             var _vkey = vs + ',' + vw + ',' + vn + ',' + ve;
                             _spotCachePut(_vkey, data.structures);
                             renderFishingSpots(data.structures, _vkey);
-                            _updateSpotTypeHint();
+                            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
                         }
                     }
                 }
@@ -1031,7 +1068,7 @@
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key], key);
-            _updateSpotTypeHint();
+            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
@@ -1042,7 +1079,7 @@
         if (superResult) {
             _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
-            _updateSpotTypeHint();
+            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
@@ -1083,8 +1120,7 @@
                 _spotCachePut(key, spots);
                 _ssSave();
                 renderFishingSpots(spots, key);
-                // Restore normal hint text (may have been set to zoom-in message)
-                _updateSpotTypeHint();
+                // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             })
             .catch(function (err) {
                 if (err.name === 'AbortError') { hideStructLoading(); return; }
@@ -1418,7 +1454,7 @@
             hideStructLoading(); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped, key);
-            _updateSpotTypeHint();
+            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
