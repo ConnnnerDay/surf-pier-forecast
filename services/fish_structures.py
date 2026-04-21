@@ -30,7 +30,7 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
-_TIMEOUT_OVERPASS: tuple[float, float] = (6, 22)
+_TIMEOUT_OVERPASS: tuple[float, float] = (6, 15)
 _TIMEOUT_NOAA_ENC: tuple[float, float] = (4, 12)
 
 logger = logging.getLogger(__name__)
@@ -498,7 +498,7 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
     # Build the combined query using named sets so each half can use the
     # correct output mode.  Both sets' results land in the same `elements`
     # array in the Overpass JSON response.
-    parts: list[str] = ["[out:json][timeout:20];"]
+    parts: list[str] = ["[out:json][timeout:14];"]
     if habitat:
         parts.append("(" + "".join(habitat) + ")->.h;")
     if struct:
@@ -982,7 +982,7 @@ def find_fish_structures(
         )
 
         try:
-            osm_spots = osm_fut.result(timeout=28)
+            osm_spots = osm_fut.result(timeout=22)
         except FutureTimeoutError:
             logger.warning("fetch_osm_structures timed out (parallel executor)")
             fetch_failed = True

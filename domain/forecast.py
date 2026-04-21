@@ -2315,18 +2315,75 @@ def generate_forecast(
         FORECAST_VERSION,
     )
 
-    wind_range, wave_range, wind_dir = builder.marine_service.get_marine_forecast(
-        month,
-        location,
-        sources_used=sources_used,
-        fallbacks_triggered=fallbacks_triggered,
+    loc_lat = (location or {}).get("lat", _LAT)
+    loc_lng = (location or {}).get("lng", _LNG)
+    coops_station = (location or {}).get("coops_station", WATER_TEMP_STATION)
+    loc_state = (location or {}).get("state", "")
+
+    # ── Parallel external fetch ────────────────────────────────────────────────
+    # All network-bound calls are independent; submit them simultaneously so
+    # per-source latency does not accumulate.  marine + water_temp are resolved
+    # first since they gate species ranking (which runs CPU-only while the
+    # remaining calls continue in the background).
+    _pool = _cf.ThreadPoolExecutor(
+        max_workers=10, thread_name_prefix="forecast-fetch"
     )
-    water_temp, temp_is_live = get_water_temp(
-        month,
-        location,
-        sources_used=sources_used,
-        fallbacks_triggered=fallbacks_triggered,
+    _marine_fut = _pool.submit(
+        builder.marine_service.get_marine_forecast,
+        month, location, sources_used, fallbacks_triggered,
     )
+    _wtemp_fut = _pool.submit(
+        get_water_temp, month, location, sources_used, fallbacks_triggered,
+    )
+    _alerts_fut = _pool.submit(
+        builder.weather_service.get_weather_alerts, loc_lat, loc_lng
+    )
+    _state_alerts_fut = (
+        _pool.submit(builder.weather_service.get_state_alerts, loc_state)
+        if loc_state else None
+    )
+    _pressure_fut = _pool.submit(
+        builder.buoy_service.get_barometric_pressure, location
+    )
+    _weather_fut = _pool.submit(
+        builder.weather_service.get_current_weather, loc_lat, loc_lng
+    )
+    _env_fut = _pool.submit(
+        builder.environment_service.get_coops_environmental, coops_station
+    )
+    _currents_fut = _pool.submit(
+        builder.environment_service.get_currents, coops_station, tz_name
+    )
+    _cur_obs_fut = _pool.submit(
+        builder.environment_service.get_current_observation, coops_station, tz_name
+    )
+    _tides_fut = _pool.submit(
+        builder.tide_service.get_tide_predictions, now, location, tz_name
+    )
+    _wq_fut = _pool.submit(_get_wq, loc_lat, loc_lng)
+    _fao_fut = _pool.submit(_get_fao, loc_lat, loc_lng, [])
+
+    # Resolve marine + water_temp first — they gate species ranking.
+    try:
+        wind_range, wave_range, wind_dir = _marine_fut.result(timeout=15)
+    except Exception:
+        logger.warning(
+            "Marine forecast timed out for location_id=%s; using seasonal averages",
+            location_id,
+        )
+        wind_range, wave_range, wind_dir = _seasonal_averages(month)
+        fallbacks_triggered.append("marine_forecast_timeout")
+
+    try:
+        water_temp, temp_is_live = _wtemp_fut.result(timeout=12)
+    except Exception:
+        logger.warning(
+            "Water temp unavailable for location_id=%s; using monthly average",
+            location_id,
+        )
+        water_temp = float(MONTHLY_AVG_WATER_TEMP_F[month])
+        temp_is_live = False
+        fallbacks_triggered.append("water_temp_timeout")
 
     def format_range(r: Optional[tuple[float, float]], unit: str) -> str:
         if r is None:
@@ -2336,8 +2393,6 @@ def generate_forecast(
             return f"{low:.0f} {unit}"
         return f"{low:.0f}-{high:.0f} {unit}"
 
-    loc_lat = (location or {}).get("lat", _LAT)
-    loc_lng = (location or {}).get("lng", _LNG)
     sunrise, sunset, sun_str = builder.astro_service.get_sun_times(
         now, loc_lat, loc_lng, tz_name
     )
@@ -2389,7 +2444,6 @@ def generate_forecast(
     # Determine coast for wind direction scoring and species filtering
     coast = _derive_coast(location) or "east"
 
-    loc_state = (location or {}).get("state", "")
     loc_fish_region = (location or {}).get("fish_region", "")
     profile = profile or {}
     species = build_species_ranking(
@@ -2430,15 +2484,24 @@ def generate_forecast(
         "pier_info": _build_pier_info(location),
     }
 
-    alerts = builder.weather_service.get_weather_alerts(loc_lat, loc_lng)
+    # ── Collect remaining results from the parallel pool ──────────────────────
+    # By the time species ranking finishes (above), most upstream calls have
+    # likely already returned.  Each future uses an individual timeout so a
+    # single slow source never delays the others.
+    try:
+        alerts = _alerts_fut.result(timeout=10) or []
+    except Exception:
+        alerts = []
+        fallbacks_triggered.append("weather_alerts_unavailable")
     if alerts:
         forecast["alerts"] = alerts
         sources_used.append("NWS weather alerts")
-    else:
-        fallbacks_triggered.append("weather_alerts_unavailable")
 
-    if loc_state:
-        state_alerts = builder.weather_service.get_state_alerts(loc_state)
+    if _state_alerts_fut is not None:
+        try:
+            state_alerts = _state_alerts_fut.result(timeout=10) or []
+        except Exception:
+            state_alerts = []
         if state_alerts:
             # Deduplicate: remove state alerts already present in the point-based
             # alerts list (the point query is a subset of the state query).
@@ -2450,24 +2513,29 @@ def generate_forecast(
                 forecast["state_alerts"] = state_alerts[:5]
                 sources_used.append("NWS state alerts")
 
-    # Barometric pressure
-    pressure = builder.buoy_service.get_barometric_pressure(location)
+    try:
+        pressure = _pressure_fut.result(timeout=10)
+    except Exception:
+        pressure = None
+        fallbacks_triggered.append("barometric_pressure_unavailable")
     if pressure:
         forecast["pressure"] = pressure
         sources_used.append("NDBC barometric pressure")
-    else:
-        fallbacks_triggered.append("barometric_pressure_unavailable")
 
-    # Current weather (air temp, humidity)
-    weather = builder.weather_service.get_current_weather(loc_lat, loc_lng)
+    try:
+        weather = _weather_fut.result(timeout=10)
+    except Exception:
+        weather = None
+        fallbacks_triggered.append("current_weather_unavailable")
     if weather:
         forecast["weather"] = weather
         sources_used.append("NWS current weather")
-    else:
-        fallbacks_triggered.append("current_weather_unavailable")
 
-    coops_station = (location or {}).get("coops_station", WATER_TEMP_STATION)
-    env_metrics = builder.environment_service.get_coops_environmental(coops_station)
+    try:
+        env_metrics = _env_fut.result(timeout=10) or {}
+    except Exception:
+        env_metrics = {}
+        fallbacks_triggered.append("coops_environment_unavailable")
     if env_metrics:
         if weather:
             if "air_temp_f" not in env_metrics:
@@ -2476,8 +2544,6 @@ def generate_forecast(
                 env_metrics["humidity_pct"] = weather.get("humidity")
         forecast["environment"] = env_metrics
         sources_used.append("NOAA CO-OPS environmental")
-    else:
-        fallbacks_triggered.append("coops_environment_unavailable")
 
     # Expose coordinates and state so templates and API consumers can use them
     # without digging into the location dict.
@@ -2485,33 +2551,25 @@ def generate_forecast(
     forecast["lng"] = loc_lng
     forecast["state"] = loc_state
 
-    # Water quality and FAO enrichment (EPA WQP + FAO GeoNetwork / HDX).
-    # Both fetches run in a bounded thread pool so upstream latency never
-    # blocks the core forecast pipeline; each call is capped at 8 seconds.
     try:
-        _species_names = [sp["name"] for sp in species[:3]]
-        with _cf.ThreadPoolExecutor(max_workers=2) as _geo_pool:
-            _wq_fut = _geo_pool.submit(_get_wq, loc_lat, loc_lng)
-            _fao_fut = _geo_pool.submit(_get_fao, loc_lat, loc_lng, _species_names)
-            try:
-                _wq = _wq_fut.result(timeout=4)
-            except Exception:
-                _wq = {"available": False}
-            try:
-                _fao = _fao_fut.result(timeout=4)
-            except Exception:
-                _fao = {}
-
-        if _wq.get("available"):
-            forecast["water_quality"] = _wq
-            sources_used.append("EPA Water Quality Portal")
-        if _fao.get("fao_zone"):
-            forecast["fao_enrichment"] = _fao
-            sources_used.append("FAO GeoNetwork")
+        _wq = _wq_fut.result(timeout=8)
     except Exception:
-        logger.debug(
-            "Geospatial enrichment skipped (services not available)", exc_info=True
-        )
+        _wq = {"available": False}
+    if _wq.get("available"):
+        forecast["water_quality"] = _wq
+        sources_used.append("EPA Water Quality Portal")
+
+    try:
+        _fao = _fao_fut.result(timeout=8)
+    except Exception:
+        _fao = {}
+    if _fao.get("fao_zone"):
+        forecast["fao_enrichment"] = _fao
+        sources_used.append("FAO GeoNetwork")
+
+    # Shut down pool; any future still running past its timeout continues in
+    # the background but won't block this response.
+    _pool.shutdown(wait=False)
 
     # Propagate humidity into conditions so the template always has a single
     # reliable place to look, regardless of which data source provided it.
@@ -2521,10 +2579,14 @@ def generate_forecast(
     if _humidity is not None:
         forecast["conditions"]["humidity"] = _humidity
 
-    currents = builder.environment_service.get_currents(coops_station, tz_name)
-    current_observation = builder.environment_service.get_current_observation(
-        coops_station, tz_name
-    )
+    try:
+        currents = _currents_fut.result(timeout=10) or []
+    except Exception:
+        currents = []
+    try:
+        current_observation = _cur_obs_fut.result(timeout=10)
+    except Exception:
+        current_observation = None
     if current_observation:
         currents = [current_observation, *currents]
         sources_used.append("NOAA currents observation")
@@ -2532,13 +2594,14 @@ def generate_forecast(
         forecast["currents"] = currents
         sources_used.append("NOAA currents predictions")
 
-    # Tide predictions
-    tide_data = builder.tide_service.get_tide_predictions(now, location, tz_name)
+    try:
+        tide_data = _tides_fut.result(timeout=12) or {}
+    except Exception:
+        tide_data = {}
+        fallbacks_triggered.append("tide_predictions_unavailable")
     if tide_data:
         forecast.update(tide_data)
         sources_used.append("NOAA tide predictions")
-    else:
-        fallbacks_triggered.append("tide_predictions_unavailable")
 
     # Solunar fishing times
     solunar = builder.astro_service.get_solunar_times(now, loc_lat, loc_lng, tz_name)

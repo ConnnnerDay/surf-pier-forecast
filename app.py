@@ -512,7 +512,7 @@ def create_app() -> Flask:
     # loop.  Uses the test client (provides a proper request/g context) and
     # runs in a daemon thread so startup is not delayed.
     def _prewarm_fishing_map_cache() -> None:
-        _time.sleep(2)  # let gunicorn workers and DB fully initialise first
+        _time.sleep(0.5)  # brief yield so the main thread finishes returning the app
         try:
             # Build all lazy indices before the first real request so none of
             # the O(n) setup work happens inside a user-facing request:
