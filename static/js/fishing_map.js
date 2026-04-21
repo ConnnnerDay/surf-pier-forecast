@@ -754,12 +754,18 @@
             doCull = true;
         }
 
+        // Track types whose minZoom exceeds the current zoom so we can hint.
+        var _suppressedTypes = {};
+
         // Render OSM / NOAA spots first
         spots.filter(function (f) {
             if (f.custom) return false;
             // Hide types that require a higher zoom level than current.
             var typeDef = SPOT_TYPES[f.type];
-            if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) return false;
+            if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
+                _suppressedTypes[f.type] = true;
+                return false;
+            }
             // Cull point markers that lie outside the padded viewport.
             // Features with a geometry array are polygon habitats — always keep.
             if (doCull && !f.geometry && f.lat && f.lng) {
@@ -769,10 +775,16 @@
         }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || '';
+            var srcLabel = f.source === 'noaa' ? 'NOAA ENC' : 'OpenStreetMap';
+            var coordStr = f.lat && f.lng
+                ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
+                : '';
             var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
                 '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
-                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '');
+                (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '') +
+                '<br><span style="opacity:0.45;font-size:0.65rem;margin-top:2px;display:block">' +
+                esc(srcLabel) + (coordStr ? ' · ' + coordStr : '') + '</span>';
 
             // Habitat area features with geometry → area overlay
             if (f.geometry && f.geometry.length >= 3 && POLYGON_HABITAT_TYPES[f.type]) {
@@ -824,6 +836,28 @@
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
+
+        // Update the filter hint to surface any types hidden by minZoom.
+        _updateZoomSuppressedHint(_suppressedTypes);
+    }
+
+    // Show a subtle hint when the current zoom hides some spot types.
+    function _updateZoomSuppressedHint(suppressedTypes) {
+        if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
+        if (!_elStructFiltersHint) return;
+        var keys = Object.keys(suppressedTypes);
+        if (!keys.length) {
+            // No suppression; let the regular hint text stand.
+            _updateSpotTypeHint();
+            return;
+        }
+        var labels = keys.map(function (t) {
+            return (SPOT_TYPES[t] || {}).label || t;
+        });
+        var shown = labels.slice(0, 2).join(', ');
+        var extra = labels.length > 2 ? ' +' + (labels.length - 2) + ' more' : '';
+        _elStructFiltersHint.textContent =
+            'Zoom in to see: ' + shown + extra;
     }
 
     // ── Structure-query loading / error UI helpers ────────────────────────────

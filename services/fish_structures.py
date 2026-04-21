@@ -247,6 +247,8 @@ STRUCTURE_TIPS: dict[str, str] = {
 _PROX: dict[str, float] = {
     "inlet": 0.005,  # ~550 m — tidal channel nodes cluster heavily
     "marina": 0.004,  # ~440 m
+    "wreck": 0.003,  # ~330 m — unnamed OSM + NOAA ENC wrecks often overlap
+    "shoal": 0.003,  # ~330 m — OSM/NOAA obstruction nodes cluster at a point
     "beach": 0.0,  # polygon area — skip centroid proximity dedup
     "grass_flat": 0.0,  # polygon area
     "saltmarsh": 0.0,  # polygon area
@@ -745,7 +747,8 @@ def _noaa_features_to_spots(
 
         name = attrs.get("OBJNAM") or attrs.get("INFORM") or ""
         spots.append(
-            {"lat": float(y), "lng": float(x), "type": spot_type, "name": name}
+            {"lat": float(y), "lng": float(x), "type": spot_type, "name": name,
+             "source": "noaa"}
         )
 
     return spots
@@ -811,7 +814,14 @@ def fetch_osm_structures(
             or tags.get("addr:housename")
             or ""
         )
-        spot: dict[str, Any] = {"lat": lat, "lng": lng, "type": spot_type, "name": name}
+        osm_id = el.get("id")
+        spot: dict[str, Any] = {
+            "lat": lat, "lng": lng, "type": spot_type, "name": name,
+            "source": "osm",
+        }
+        if osm_id:
+            spot["osm_id"] = osm_id
+            spot["osm_type"] = el.get("type", "node")
 
         # Attach polygon geometry for habitat area types so the client can
         # draw a filled outline instead of a single-point marker.
