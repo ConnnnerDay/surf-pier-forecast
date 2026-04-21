@@ -1163,6 +1163,7 @@
         if (natural === 'shoal' || natural === 'rock' || natural === 'sandbank') return 'shoal';
         if (natural === 'cape' || natural === 'headland' ||
             natural === 'peninsula' || natural === 'promontory') return 'point';
+        if (natural === 'sand' && tags.access !== 'private' && tags.access !== 'no') return 'beach';
 
         if (tags.harbour === 'yes') return 'inlet';
 
@@ -1181,9 +1182,9 @@
 
         if (waterway === 'tidal_channel' || waterway === 'river' ||
             waterway === 'canal'         || waterway === 'stream') return 'inlet';
-        if (waterway === 'weir'   || waterway === 'dam'       ||
-            waterway === 'rapids' || waterway === 'fish_pass' ||
-            waterway === 'lock') return 'jetty';
+        if (waterway === 'weir'      || waterway === 'dam'       ||
+            waterway === 'waterfall' || waterway === 'rapids'    ||
+            waterway === 'fish_pass' || waterway === 'lock') return 'jetty';
 
         if (manMade === 'pier' || tags.leisure === 'pier') {
             if (tags.access === 'private' || tags.access === 'no') return null;
@@ -1199,8 +1200,10 @@
 
         if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
         if (tags.amenity === 'boat_ramp' || tags.leisure === 'slipway') return 'boat_ramp';
-        if (tags.leisure === 'fishing')   return 'fishing';
+        if (tags.leisure === 'fishing' || tags.leisure === 'fishing_stand') return 'fishing';
         if (tags.sport === 'scuba_diving' || tags.sport === 'diving') return 'dive_site';
+        if (tags.sport === 'fishing') return 'fishing';
+        if (tags.fishing === 'yes' && tags.amenity !== 'boat_ramp' && tags.leisure !== 'slipway') return 'fishing';
 
         if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
         if (tags.shop === 'fishing') return 'fishing_shop';
@@ -1235,7 +1238,9 @@
                    'way["natural"="mud"](' + bbox + ');');
         }
         if (has('beach')) {
-            h.push('way["natural"="beach"](' + bbox + ');');
+            h.push('way["natural"="beach"](' + bbox + ');',
+                   'node["natural"="beach"](' + bbox + ');',
+                   'way["natural"="sand"]["access"!="private"](' + bbox + ');');
         }
         if (has('oyster_reef')) {
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
@@ -1301,6 +1306,8 @@
                    'node["waterway"="weir"](' + bbox + ');',
                    'way["waterway"="weir"](' + bbox + ');',
                    'node["waterway"="dam"](' + bbox + ');',
+                   'way["waterway"="dam"](' + bbox + ');',
+                   'node["waterway"="waterfall"](' + bbox + ');',
                    'node["waterway"="rapids"](' + bbox + ');',
                    'way["waterway"="rapids"](' + bbox + ');',
                    'node["waterway"="fish_pass"](' + bbox + ');',
@@ -1328,7 +1335,10 @@
         }
         if (has('fishing')) {
             s.push('node["leisure"="fishing"](' + bbox + ');',
-                   'way["leisure"="fishing"](' + bbox + ');');
+                   'way["leisure"="fishing"](' + bbox + ');',
+                   'node["leisure"="fishing_stand"](' + bbox + ');',
+                   'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"](' + bbox + ');',
+                   'node["sport"="fishing"](' + bbox + ');');
         }
         if (has('buoy')) {
             s.push('node["seamark:type"="buoy_lateral"](' + bbox + ');',
@@ -2194,7 +2204,7 @@
         if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
         if (!_elSpotTypesClear)    _elSpotTypesClear    = document.getElementById('fmap-spot-types-clear');
         var n     = activeSpotTypes.length;
-        var total = Object.keys(SPOT_TYPES).length;  // 18
+        var total = Object.keys(SPOT_TYPES).length;
         if (_elStructFiltersHint) {
             _elStructFiltersHint.textContent = n === 0
                 ? 'All types visible \u2014 tap to filter'

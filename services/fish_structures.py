@@ -336,7 +336,11 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'way["natural"="mud"]({bbox});',
         ]
     if "beach" in types:
-        habitat += [f'way["natural"="beach"]({bbox});']
+        habitat += [
+            f'way["natural"="beach"]({bbox});',
+            f'node["natural"="beach"]({bbox});',
+            f'way["natural"="sand"]["access"!="private"]({bbox});',
+        ]
     if "oyster_reef" in types:
         habitat += [
             f'node["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
@@ -411,6 +415,8 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["waterway"="weir"]({bbox});',
             f'way["waterway"="weir"]({bbox});',
             f'node["waterway"="dam"]({bbox});',
+            f'way["waterway"="dam"]({bbox});',
+            f'node["waterway"="waterfall"]({bbox});',
             f'node["waterway"="rapids"]({bbox});',
             f'way["waterway"="rapids"]({bbox});',
             f'node["waterway"="fish_pass"]({bbox});',
@@ -445,6 +451,9 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["leisure"="fishing"]({bbox});',
             f'way["leisure"="fishing"]({bbox});',
+            f'node["leisure"="fishing_stand"]({bbox});',
+            f'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"]({bbox});',
+            f'node["sport"="fishing"]({bbox});',
         ]
     if "buoy" in types:
         struct += [
@@ -536,6 +545,8 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "shoal"
     if natural in ("cape", "headland", "peninsula", "promontory"):
         return "point"
+    if natural in ("sand",) and tags.get("access") not in ("private", "no"):
+        return "beach"
 
     if tags.get("harbour") == "yes":
         return "inlet"
@@ -558,7 +569,7 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     # ── Waterways ─────────────────────────────────────────────────────────────
     if waterway in ("tidal_channel", "river", "canal", "stream"):
         return "inlet"
-    if waterway in ("weir", "dam", "rapids", "fish_pass", "lock"):
+    if waterway in ("weir", "dam", "waterfall", "rapids", "fish_pass", "lock"):
         return "jetty"  # turbulent/oxygenated water — same angling context
 
     # ── Man-made structures ───────────────────────────────────────────────────
@@ -590,7 +601,7 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     leisure = tags.get("leisure", "")
     if leisure == "marina":
         return "marina"
-    if leisure == "fishing":
+    if leisure in ("fishing", "fishing_stand"):
         return "fishing"
     if leisure == "slipway":
         return "boat_ramp"
@@ -598,6 +609,11 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     sport = tags.get("sport", "")
     if sport in ("scuba_diving", "diving"):
         return "dive_site"
+    if sport == "fishing":
+        return "fishing"
+
+    if tags.get("fishing") == "yes" and amenity not in ("boat_ramp",) and leisure not in ("slipway",):
+        return "fishing"
 
     if seamark.startswith("buoy"):
         return "buoy"
