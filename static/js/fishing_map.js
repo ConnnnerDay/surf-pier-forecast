@@ -599,28 +599,28 @@
         'https://overpass.kumi.systems/api/interpreter'
     ];
     var SPOT_TYPES = {
-        pier:         { label: 'Pier',              color: '#a78bfa', habitat: false },
-        jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false },
-        bridge:       { label: 'Bridge',            color: '#f97316', habitat: false },
-        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false },
-        oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true  },
-        wreck:        { label: 'Wreck',             color: '#d97706', habitat: false },
-        inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true  },
-        marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false },
-        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false },
-        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false },
-        beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false },
-        grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true  },
-        tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
-        saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
-        mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true  },
-        kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true  },
-        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false },
-        fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
-        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false },
-        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false },
-        dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false },
-        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false }
+        pier:         { label: 'Pier',              color: '#a78bfa', habitat: false, minZoom: 8  },
+        jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false, minZoom: 8  },
+        bridge:       { label: 'Bridge',            color: '#f97316', habitat: false, minZoom: 8  },
+        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false, minZoom: 8  },
+        oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true,  minZoom: 9  },
+        wreck:        { label: 'Wreck',             color: '#d97706', habitat: false, minZoom: 8  },
+        inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
+        marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 10 },
+        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false, minZoom: 9  },
+        beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
+        grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
+        tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true,  minZoom: 9  },
+        saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true,  minZoom: 9  },
+        mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true,  minZoom: 9  },
+        kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true,  minZoom: 9  },
+        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false, minZoom: 10 },
+        fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false, minZoom: 9  },
+        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 11 },
+        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 10 },
+        dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false, minZoom: 10 },
+        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false, minZoom: 11 }
     };
 
     // Habitat area types rendered as filled polygon overlays instead of point markers.
@@ -732,7 +732,8 @@
             ? (Math.floor(vb.getSouth() * 20) + ',' + Math.floor(vb.getWest()  * 20) + ',' +
                Math.ceil (vb.getNorth() * 20) + ',' + Math.ceil (vb.getEast()  * 20))
             : '';
-        var renderKey = (cacheKey || '') + ':' + vbKey;
+        var currentZoom = map ? Math.floor(map.getZoom()) : 8;
+        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom;
 
         if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
@@ -756,6 +757,9 @@
         // Render OSM / NOAA spots first
         spots.filter(function (f) {
             if (f.custom) return false;
+            // Hide types that require a higher zoom level than current.
+            var typeDef = SPOT_TYPES[f.type];
+            if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) return false;
             // Cull point markers that lie outside the padded viewport.
             // Features with a geometry array are polygon habitats — always keep.
             if (doCull && !f.geometry && f.lat && f.lng) {
