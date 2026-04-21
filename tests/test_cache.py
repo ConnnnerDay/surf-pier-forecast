@@ -86,7 +86,7 @@ class TestSaveAndLoad:
         def _boom(*_args, **_kwargs):
             raise RuntimeError("db down")
 
-        monkeypatch.setattr("storage.sqlite.save_forecast_cache", _boom)
+        monkeypatch.setattr("storage.cache.save_forecast_cache", _boom)
         save_forecast(data, "backup-test")
         json_path = isolated_storage / "forecast_backup-test.json"
         assert json_path.exists()

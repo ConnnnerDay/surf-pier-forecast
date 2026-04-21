@@ -2328,40 +2328,44 @@ def generate_forecast(
     _pool = _cf.ThreadPoolExecutor(
         max_workers=10, thread_name_prefix="forecast-fetch"
     )
-    _marine_fut = _pool.submit(
-        builder.marine_service.get_marine_forecast,
-        month, location, sources_used, fallbacks_triggered,
-    )
-    _wtemp_fut = _pool.submit(
-        get_water_temp, month, location, sources_used, fallbacks_triggered,
-    )
-    _alerts_fut = _pool.submit(
-        builder.weather_service.get_weather_alerts, loc_lat, loc_lng
-    )
-    _state_alerts_fut = (
-        _pool.submit(builder.weather_service.get_state_alerts, loc_state)
-        if loc_state else None
-    )
-    _pressure_fut = _pool.submit(
-        builder.buoy_service.get_barometric_pressure, location
-    )
-    _weather_fut = _pool.submit(
-        builder.weather_service.get_current_weather, loc_lat, loc_lng
-    )
-    _env_fut = _pool.submit(
-        builder.environment_service.get_coops_environmental, coops_station
-    )
-    _currents_fut = _pool.submit(
-        builder.environment_service.get_currents, coops_station, tz_name
-    )
-    _cur_obs_fut = _pool.submit(
-        builder.environment_service.get_current_observation, coops_station, tz_name
-    )
-    _tides_fut = _pool.submit(
-        builder.tide_service.get_tide_predictions, now, location, tz_name
-    )
-    _wq_fut = _pool.submit(_get_wq, loc_lat, loc_lng)
-    _fao_fut = _pool.submit(_get_fao, loc_lat, loc_lng, [])
+    try:
+        _marine_fut = _pool.submit(
+            builder.marine_service.get_marine_forecast,
+            month, location, sources_used, fallbacks_triggered,
+        )
+        _wtemp_fut = _pool.submit(
+            get_water_temp, month, location, sources_used, fallbacks_triggered,
+        )
+        _alerts_fut = _pool.submit(
+            builder.weather_service.get_weather_alerts, loc_lat, loc_lng
+        )
+        _state_alerts_fut = (
+            _pool.submit(builder.weather_service.get_state_alerts, loc_state)
+            if loc_state else None
+        )
+        _pressure_fut = _pool.submit(
+            builder.buoy_service.get_barometric_pressure, location
+        )
+        _weather_fut = _pool.submit(
+            builder.weather_service.get_current_weather, loc_lat, loc_lng
+        )
+        _env_fut = _pool.submit(
+            builder.environment_service.get_coops_environmental, coops_station
+        )
+        _currents_fut = _pool.submit(
+            builder.environment_service.get_currents, coops_station, tz_name
+        )
+        _cur_obs_fut = _pool.submit(
+            builder.environment_service.get_current_observation, coops_station, tz_name
+        )
+        _tides_fut = _pool.submit(
+            builder.tide_service.get_tide_predictions, now, location, tz_name
+        )
+        _wq_fut = _pool.submit(_get_wq, loc_lat, loc_lng)
+        _fao_fut = _pool.submit(_get_fao, loc_lat, loc_lng, [])
+    except Exception:
+        _pool.shutdown(wait=False)
+        raise
 
     # Resolve marine + water_temp first — they gate species ranking.
     try:

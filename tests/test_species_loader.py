@@ -40,6 +40,7 @@ def _minimal_entry(**overrides) -> dict:
         "rig": "Fish finder rig",
         "hook_size": "2/0 circle hook",
         "sinker": "2 oz pyramid",
+        "lures": "Gulp shrimp",
         "explanation_cold": "Hides in deep holes.",
         "explanation_warm": "Active in the surf.",
         "coast": "east",

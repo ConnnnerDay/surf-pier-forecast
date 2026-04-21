@@ -401,8 +401,14 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'way["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["man_made"="wharf"]["access"!="private"]["access"!="no"]({bbox});',
+            f'way["man_made"="wharf"]["access"!="private"]["access"!="no"]({bbox});',
             f'node["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'way["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["waterway"="dock"]({bbox});',
+            f'way["waterway"="dock"]({bbox});',
+            f'node["amenity"="boat_ramp"]({bbox});',
+            f'way["amenity"="boat_ramp"]({bbox});',
         ]
     if "jetty" in types:
         struct += [
@@ -571,9 +577,11 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "inlet"
     if waterway in ("weir", "dam", "waterfall", "rapids", "fish_pass", "lock"):
         return "jetty"  # turbulent/oxygenated water — same angling context
+    if waterway == "dock":
+        return "pier"
 
     # ── Man-made structures ───────────────────────────────────────────────────
-    if man_made == "pier" or tags.get("leisure") == "pier":
+    if man_made in ("pier", "wharf") or tags.get("leisure") == "pier":
         # Exclude private/restricted access — private docks and boat yards are not public fishing piers
         if tags.get("access") in ("private", "no"):
             return None
@@ -596,7 +604,7 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     if amenity in ("marina",):
         return "marina"
     if amenity == "boat_ramp":
-        return "boat_ramp"
+        return "pier"
 
     leisure = tags.get("leisure", "")
     if leisure == "marina":

@@ -56,6 +56,7 @@ from services.esri_open_data import (
 from services.nasa_worldview import get_gibs_layers, get_sst_tile_config
 from services.aerial_imagery import get_aerial_tile_config, search_oam_imagery
 from services.hdx_fao import get_hdx_fao_enrichment
+from services.fish_structures import fetch_ai_habitats
 from web.rate_limit import (
     client_ip as _client_ip,
     is_rate_limited as _rl_check,
@@ -65,6 +66,11 @@ from web.rate_limit import (
 import time as _time
 
 logger = logging.getLogger(__name__)
+
+# ── Habitat type validation ───────────────────────────────────────────────────
+_VALID_HABITAT_TYPES = frozenset(
+    ("surf", "mangrove", "grassflat", "estuary", "reef", "bottom", "general", "pelagic")
+)
 
 bp = Blueprint("geo_api", __name__)
 
@@ -371,14 +377,10 @@ def geo_habitats() -> Any:
         return _err("south, west, north, east are required (valid decimal degrees)")
     south, west, north, east = bbox
 
-    _VALID_HABITAT_TYPES = frozenset(
-        ("surf", "mangrove", "grassflat", "estuary", "reef", "bottom", "general", "pelagic")
-    )
     habitat_type = request.args.get("habitat_type", "general")
     if habitat_type not in _VALID_HABITAT_TYPES:
         habitat_type = "general"
 
-    from services.fish_structures import fetch_ai_habitats
     features = fetch_ai_habitats(south, west, north, east, habitat_type)
     resp = _ok({"features": features, "count": len(features)})
     resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
