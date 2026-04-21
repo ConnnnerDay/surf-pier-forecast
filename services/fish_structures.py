@@ -114,6 +114,7 @@ POLYGON_HABITAT_TYPES: frozenset[str] = frozenset(
         "beach",
         "oyster_reef",
         "inlet",
+        "kelp",
     }
 )
 
@@ -127,6 +128,7 @@ VALID_TYPES: frozenset[str] = frozenset(
         "saltmarsh",
         "mangrove",
         "tidal_flat",
+        "kelp",
         "shoal",
         "pier",
         "jetty",
@@ -139,6 +141,8 @@ VALID_TYPES: frozenset[str] = frozenset(
         "buoy",
         "fishing_shop",
         "fishing",
+        "boat_ramp",
+        "dive_site",
     }
 )
 
@@ -211,6 +215,21 @@ STRUCTURE_TIPS: dict[str, str] = {
     ),
     "fishing": "Local fishing access point.",
     "fishing_shop": "Local bait & tackle — stop in for real-time bite reports.",
+    "kelp": (
+        "Kelp forests hold some of the richest habitat on the Pacific coast — "
+        "rockfish, lingcod, and kelp bass hold along the canopy edge and at the "
+        "base of the fronds. Work the outer edge and depth transitions."
+    ),
+    "boat_ramp": (
+        "Boat ramps and launch sites draw early activity. Cast along the ramp "
+        "edges and nearby channel drops — baitfish concentrate where the bottom "
+        "changes and fish ambush from the shadows."
+    ),
+    "dive_site": (
+        "Dive sites flag clear water over structure — the same reefs, ledges, "
+        "and wrecks divers explore hold trophy fish. Work the upcurrent edge "
+        "and depth transitions."
+    ),
 }
 
 # ── Proximity deduplication thresholds (decimal degrees) ─────────────────────
@@ -228,6 +247,7 @@ _PROX: dict[str, float] = {
     "tidal_flat": 0.0,  # polygon area
     "mangrove": 0.0,  # polygon area
     "oyster_reef": 0.0,  # polygon area
+    "kelp": 0.0,  # polygon area
     "_default": 0.002,  # ~220 m — piers, jetties, buoys, etc.
 }
 
@@ -313,6 +333,11 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
             f'way["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
             f'way["landuse"="aquaculture"]["product"="oysters"]({bbox});',
+        ]
+    if "kelp" in types:
+        habitat += [
+            f'way["natural"="wetland"]["wetland"="kelp"]({bbox});',
+            f'way["natural"="kelp"]({bbox});',
         ]
     if "inlet" in types:
         # Waterways (linestrings) and bay polygons both go into habitat so
@@ -411,6 +436,19 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         ]
     if "fishing_shop" in types:
         struct += [f'node["shop"="fishing"]({bbox});']
+    if "boat_ramp" in types:
+        struct += [
+            f'node["amenity"="boat_ramp"]({bbox});',
+            f'way["amenity"="boat_ramp"]({bbox});',
+            f'node["leisure"="slipway"]({bbox});',
+            f'way["leisure"="slipway"]({bbox});',
+        ]
+    if "dive_site" in types:
+        struct += [
+            f'node["sport"="scuba_diving"]({bbox});',
+            f'node["sport"="diving"]({bbox});',
+            f'way["sport"="scuba_diving"]({bbox});',
+        ]
 
     if not habitat and not struct:
         return ""
@@ -447,8 +485,12 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
             return "mangrove"
         if wetland == "tidalflat":
             return "tidal_flat"
+        if wetland == "kelp":
+            return "kelp"
         return None  # unknown wetland subtype — skip
 
+    if natural == "kelp":
+        return "kelp"
     if natural == "mud":
         return "tidal_flat"
     if natural == "beach":
@@ -505,11 +547,20 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     amenity = tags.get("amenity", "")
     if amenity in ("marina",):
         return "marina"
+    if amenity == "boat_ramp":
+        return "boat_ramp"
 
-    if tags.get("leisure") == "marina":
+    leisure = tags.get("leisure", "")
+    if leisure == "marina":
         return "marina"
-    if tags.get("leisure") == "fishing":
+    if leisure == "fishing":
         return "fishing"
+    if leisure == "slipway":
+        return "boat_ramp"
+
+    sport = tags.get("sport", "")
+    if sport in ("scuba_diving", "diving"):
+        return "dive_site"
 
     if seamark.startswith("buoy"):
         return "buoy"

@@ -602,16 +602,19 @@
         tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true  },
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true  },
         mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true  },
+        kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true  },
         buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false },
-        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false }
+        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false },
+        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false },
+        dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false }
     };
 
     // Habitat area types rendered as filled polygon overlays instead of point markers.
     // Must match POLYGON_HABITAT_TYPES in services/fish_structures.py.
     var POLYGON_HABITAT_TYPES = {
         saltmarsh: true, mangrove: true, tidal_flat: true,
-        grass_flat: true, beach: true, oyster_reef: true, inlet: true
+        grass_flat: true, beach: true, oyster_reef: true, inlet: true, kelp: true
     };
 
     var _MAX_POLYGON_COORDS = 200;
@@ -637,10 +640,10 @@
 
     // Single-character labels rendered inside circle markers for at-a-glance identification
     var SPOT_LABELS = {
-        pier:         'P',  jetty:  'J',  bridge: 'B',  reef:  'R',
-        oyster_reef:  'O',  wreck:  'W',  inlet:  'C',  marina:'M',
-        shoal:        'S',  point:  '^',  beach:  '~',  buoy:  '·',
-        fishing:      'F',  fishing_shop: '$'
+        pier:         'P',  jetty:      'J',  bridge:    'B',  reef:  'R',
+        oyster_reef:  'O',  wreck:      'W',  inlet:     'C',  marina:'M',
+        shoal:        'S',  point:      '^',  beach:     '~',  buoy:  '·',
+        fishing:      'F',  fishing_shop:'$', boat_ramp: 'L',  dive_site: 'D'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -662,7 +665,10 @@
         mangrove:     'Work the mangrove root edges on rising tides; snook, redfish, and tarpon ambush prey along the shadow line.',
         buoy:         'Channel markers and buoys identify edges where deep water meets shallow structure — fish the up-current side.',
         fishing:      'Local fishing access point.',
-        fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.'
+        fishing_shop: 'Local bait & tackle — stop in for real-time bite reports.',
+        kelp:         'Kelp forests hold some of the richest habitat on the Pacific coast — rockfish, lingcod, and kelp bass hold along the canopy edge and base of the fronds.',
+        boat_ramp:    'Boat ramps draw early-morning activity. Cast along the ramp edges and nearby channel drops — baitfish concentrate where the bottom changes.',
+        dive_site:    'Dive sites flag clear water over structure — the same reefs, ledges, and wrecks divers explore hold trophy fish. Work the upcurrent edge.'
     };
 
     function spotTypeLabel(type) {
@@ -702,18 +708,47 @@
 
     function renderFishingSpots(spots, cacheKey) {
         if (!fishingSpotLayer) return;
-        // Skip rebuilding all Leaflet markers when the same data is already
-        // displayed — common when the user pans within the same 0.5° grid cell.
-        if (cacheKey && cacheKey === _lastRenderedSpotKey &&
-                fishingSpotLayer.getLayers().length) {
+
+        // Build a render key that folds in current viewport bounds (at ~5 km
+        // resolution) so panning within the same 0.5° cache grid still triggers
+        // a re-render — the viewport-culled subset changes even though the
+        // cached data doesn't.
+        var vb = map ? map.getBounds() : null;
+        var vbKey = vb
+            ? (Math.floor(vb.getSouth() * 20) + ',' + Math.floor(vb.getWest()  * 20) + ',' +
+               Math.ceil (vb.getNorth() * 20) + ',' + Math.ceil (vb.getEast()  * 20))
+            : '';
+        var renderKey = (cacheKey || '') + ':' + vbKey;
+
+        if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
         }
-        _lastRenderedSpotKey = cacheKey || null;
+        _lastRenderedSpotKey = renderKey;
         fishingSpotLayer.clearLayers();
         _customMarkers = [];  // will be repopulated by renderCustomMarkers below
 
+        // Viewport bounds + 10 % padding for point-marker culling.
+        // Polygon habitats (geometry array present) are always included because
+        // their outlines may straddle the viewport boundary.
+        var vS, vN, vW, vE, doCull = false;
+        if (vb) {
+            var latPad = (vb.getNorth() - vb.getSouth()) * 0.10;
+            var lngPad = (vb.getEast()  - vb.getWest())  * 0.10;
+            vS = vb.getSouth() - latPad;  vN = vb.getNorth() + latPad;
+            vW = vb.getWest()  - lngPad;  vE = vb.getEast()  + lngPad;
+            doCull = true;
+        }
+
         // Render OSM / NOAA spots first
-        spots.filter(function (f) { return !f.custom; }).forEach(function (f) {
+        spots.filter(function (f) {
+            if (f.custom) return false;
+            // Cull point markers that lie outside the padded viewport.
+            // Features with a geometry array are polygon habitats — always keep.
+            if (doCull && !f.geometry && f.lat && f.lng) {
+                return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
+            }
+            return true;
+        }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || '';
             var tooltipHtml =
@@ -1029,8 +1064,10 @@
             if (wetland === 'saltmarsh') return 'saltmarsh';
             if (wetland === 'mangrove')  return 'mangrove';
             if (wetland === 'tidalflat') return 'tidal_flat';
+            if (wetland === 'kelp')      return 'kelp';
             return null;
         }
+        if (natural === 'kelp')      return 'kelp';
         if (natural === 'mud')       return 'tidal_flat';
         if (natural === 'beach')     return 'beach';
         if (natural === 'bay')       return 'inlet';
@@ -1066,7 +1103,9 @@
         if (tags.bridge === 'yes' && tags.highway) return 'bridge';
 
         if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
+        if (tags.amenity === 'boat_ramp' || tags.leisure === 'slipway') return 'boat_ramp';
         if (tags.leisure === 'fishing')   return 'fishing';
+        if (tags.sport === 'scuba_diving' || tags.sport === 'diving') return 'dive_site';
 
         if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
         if (tags.shop === 'fishing') return 'fishing_shop';
@@ -1107,6 +1146,10 @@
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+        }
+        if (has('kelp')) {
+            h.push('way["natural"="wetland"]["wetland"="kelp"](' + bbox + ');',
+                   'way["natural"="kelp"](' + bbox + ');');
         }
         if (has('inlet')) {
             h.push('way["waterway"="tidal_channel"](' + bbox + ');',
@@ -1190,6 +1233,17 @@
         }
         if (has('fishing_shop')) {
             s.push('node["shop"="fishing"](' + bbox + ');');
+        }
+        if (has('boat_ramp')) {
+            s.push('node["amenity"="boat_ramp"](' + bbox + ');',
+                   'way["amenity"="boat_ramp"](' + bbox + ');',
+                   'node["leisure"="slipway"](' + bbox + ');',
+                   'way["leisure"="slipway"](' + bbox + ');');
+        }
+        if (has('dive_site')) {
+            s.push('node["sport"="scuba_diving"](' + bbox + ');',
+                   'node["sport"="diving"](' + bbox + ');',
+                   'way["sport"="scuba_diving"](' + bbox + ');');
         }
 
         if (!h.length && !s.length) return '';
