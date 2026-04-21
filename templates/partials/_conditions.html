@@ -142,7 +142,7 @@
                         {{ pressure_mb }} mb
                         {% endif %}
                     </span>
-                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact if forecast.pressure and forecast.pressure.fishing_impact else '' }}">{{ pressure_mb }} mb{% if forecast.pressure and forecast.pressure.fishing_impact %} &middot; {{ forecast.pressure.fishing_impact }}{% endif %}</span>
+                    <span class="stat-detail" title="{{ forecast.pressure.fishing_impact if forecast.pressure and forecast.pressure.fishing_impact else '' }}">{{ pressure_mb }} mb{% if forecast.pressure and forecast.pressure.fishing_impact %} &middot; {{ forecast.pressure.fishing_impact }}{% elif not forecast.pressure and forecast.environment and forecast.environment.air_pressure_mb is defined %} &middot; CO-OPS latest reading{% endif %}</span>
                 </div>
                 {% endif %}
 

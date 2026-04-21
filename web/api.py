@@ -1067,6 +1067,24 @@ _FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month r
 _FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
 _FMAP_CACHE_LOCK = threading.Lock()  # guards evict+set so the cap is never exceeded
 
+_SEASON_MONTHS: dict[str, list[int]] = {
+    "spring": [3, 4, 5],
+    "summer": [6, 7, 8],
+    "fall": [9, 10, 11],
+    "winter": [12, 1, 2],
+}
+_DAWN_DUSK_TIMES: frozenset[str] = frozenset({"dawn", "morning", "evening", "night"})
+
+
+def _activity_label(sc: int) -> str:
+    if sc >= 100:
+        return "peak"
+    if sc >= 65:
+        return "good"
+    if sc >= 30:
+        return "fair"
+    return "slow"
+
 
 def _fmap_cache_get(key: tuple) -> Optional[dict[str, Any]]:
     entry = _FMAP_CACHE.get(key)
@@ -1139,23 +1157,12 @@ def fishing_map_data() -> Any:
     except (ValueError, TypeError):
         month = datetime.date.today().month
 
-    # Map season → months
-    _SEASON_MONTHS = {
-        "spring": [3, 4, 5],
-        "summer": [6, 7, 8],
-        "fall": [9, 10, 11],
-        "winter": [12, 1, 2],
-    }
     # When a season is supplied force the month selection to that season's
     # representative middle month (used for scoring), unless month was
     # explicitly provided by the caller.
     if season_q in _SEASON_MONTHS and not request.args.get("month"):
         season_months = _SEASON_MONTHS[season_q]
         month = season_months[1]  # middle of the season
-
-    # Map time-of-day → preferred fishing "bonus" (used for scoring later)
-    # Dawn/dusk/night species get a mild boost when those times are selected.
-    _DAWN_DUSK_TIMES = {"dawn", "morning", "evening", "night"}
 
     # Tide phase is informational metadata returned in the response for the
     # frontend to display; the backend scores don't change by tide currently.
@@ -1219,15 +1226,6 @@ def fishing_map_data() -> Any:
     #   • No filter  → use pre-built list directly (zero _species_present_at calls)
     #   • Filtered   → intersect pre-built list with filtered_names frozenset
     #                  (O(loc × species_at_loc) instead of O(loc × all_species))
-    def _activity_label(sc: int) -> str:
-        if sc >= 100:
-            return "peak"
-        if sc >= 65:
-            return "good"
-        if sc >= 30:
-            return "fair"
-        return "slow"
-
     _all_loc_sp = _get_loc_species_all()  # pre-built; O(1)
     _is_filtered = bool(species_q or category_q)
     if _is_filtered:

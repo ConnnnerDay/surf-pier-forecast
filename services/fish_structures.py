@@ -30,7 +30,7 @@ from typing import Any, Optional
 import requests
 from requests.adapters import HTTPAdapter
 
-_TIMEOUT_OVERPASS: tuple[float, float] = (6, 22)
+_TIMEOUT_OVERPASS: tuple[float, float] = (6, 15)
 _TIMEOUT_NOAA_ENC: tuple[float, float] = (4, 12)
 
 logger = logging.getLogger(__name__)
@@ -401,8 +401,14 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'way["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["man_made"="wharf"]["access"!="private"]["access"!="no"]({bbox});',
+            f'way["man_made"="wharf"]["access"!="private"]["access"!="no"]({bbox});',
             f'node["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'way["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["waterway"="dock"]({bbox});',
+            f'way["waterway"="dock"]({bbox});',
+            f'node["amenity"="boat_ramp"]({bbox});',
+            f'way["amenity"="boat_ramp"]({bbox});',
         ]
     if "jetty" in types:
         struct += [
@@ -498,7 +504,7 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
     # Build the combined query using named sets so each half can use the
     # correct output mode.  Both sets' results land in the same `elements`
     # array in the Overpass JSON response.
-    parts: list[str] = ["[out:json][timeout:20];"]
+    parts: list[str] = ["[out:json][timeout:14];"]
     if habitat:
         parts.append("(" + "".join(habitat) + ")->.h;")
     if struct:
@@ -571,9 +577,11 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "inlet"
     if waterway in ("weir", "dam", "waterfall", "rapids", "fish_pass", "lock"):
         return "jetty"  # turbulent/oxygenated water — same angling context
+    if waterway == "dock":
+        return "pier"
 
     # ── Man-made structures ───────────────────────────────────────────────────
-    if man_made == "pier" or tags.get("leisure") == "pier":
+    if man_made in ("pier", "wharf") or tags.get("leisure") == "pier":
         # Exclude private/restricted access — private docks and boat yards are not public fishing piers
         if tags.get("access") in ("private", "no"):
             return None
@@ -596,7 +604,7 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     if amenity in ("marina",):
         return "marina"
     if amenity == "boat_ramp":
-        return "boat_ramp"
+        return "pier"
 
     leisure = tags.get("leisure", "")
     if leisure == "marina":
@@ -982,7 +990,7 @@ def find_fish_structures(
         )
 
         try:
-            osm_spots = osm_fut.result(timeout=28)
+            osm_spots = osm_fut.result(timeout=22)
         except FutureTimeoutError:
             logger.warning("fetch_osm_structures timed out (parallel executor)")
             fetch_failed = True
@@ -1029,3 +1037,190 @@ def find_fish_structures(
     _CACHE[key] = {"ts": _time.time(), "data": deduped, "failed": fetch_failed}
 
     return deduped
+
+
+# ── AI Habitat Spot Finder ────────────────────────────────────────────────────
+# Serves the AI Habitat overlay on the fishing map.  Previously the browser
+# called Overpass directly; routing it through the backend adds a 30-minute
+# server-side cache so the same viewport/species combination from multiple users
+# triggers only one Overpass round-trip.
+#
+# Tag lists mirror HABITAT_DEFS.tags in static/js/fishing_map.js — keep them
+# in sync if either side changes.
+
+_HABITAT_TAGS: dict[str, list[str]] = {
+    "surf": [
+        'way["natural"="beach"]',
+        'node["natural"="beach"]',
+        'node["natural"="shoal"]',
+        'way["natural"="shoal"]',
+        'node["natural"="sandbank"]',
+        'way["natural"="sandbank"]',
+        'node["seamark:type"="rock_awash"]',
+        'node["seamark:type"="rock_submerged"]',
+    ],
+    "mangrove": [
+        'way["natural"="wetland"]["wetland"="mangrove"]',
+        'way["waterway"="tidal_channel"]',
+        'way["waterway"="stream"]["tidal"="yes"]',
+        'way["waterway"="drain"]["tidal"="yes"]',
+    ],
+    "grassflat": [
+        'way["natural"="wetland"]["wetland"="seagrass"]',
+        'way["natural"="wetland"]["wetland"="saltmarsh"]',
+        'node["natural"="wetland"]["wetland"="seagrass"]',
+        'way["waterway"="tidal_channel"]',
+        'way["natural"="shoal"]',
+    ],
+    "estuary": [
+        'way["natural"="wetland"]["wetland"="saltmarsh"]',
+        'way["waterway"="tidal_channel"]',
+        'node["natural"="shoal"]',
+        'way["natural"="wetland"]["wetland"="tidalflat"]',
+        'node["natural"="wetland"]["wetland"="tidalflat"]',
+        'way["landuse"="aquaculture"]["produce"="oyster"]',
+        'way["landuse"="aquaculture"]["product"="oysters"]',
+        'node["seamark:type"="beacon_lateral"]',
+        'node["seamark:type"="buoy_lateral"]',
+    ],
+    "reef": [
+        'way["natural"="reef"]',
+        'node["natural"="reef"]',
+        'node["natural"="shoal"]',
+        'node["seamark:type"="wreck"]',
+        'node["historic"="wreck"]',
+        'way["seamark:type"="wreck"]',
+        'way["historic"="wreck"]',
+        'node["seamark:type"="artificial_reef"]',
+        'node["seamark:type"="obstruction"]',
+        'node["man_made"="pier"]["access"!="private"]',
+        'node["man_made"="jetty"]',
+        'node["seamark:type"="rock_awash"]',
+    ],
+    "bottom": [
+        'node["natural"="shoal"]',
+        'way["natural"="shoal"]',
+        'node["natural"="sandbank"]',
+        'way["natural"="sandbank"]',
+        'way["waterway"="tidal_channel"]',
+        'way["natural"="wetland"]["wetland"="tidalflat"]',
+        'node["natural"="wetland"]["wetland"="tidalflat"]',
+    ],
+    "general": [
+        'way["natural"="reef"]',
+        'node["natural"="reef"]',
+        'node["natural"="shoal"]',
+        'way["natural"="wetland"]["wetland"="saltmarsh"]',
+        'way["waterway"="tidal_channel"]',
+        'node["man_made"="pier"]["access"!="private"]',
+        'node["man_made"="breakwater"]',
+    ],
+}
+
+_HABITAT_CACHE: dict[tuple, dict[str, Any]] = {}
+_HABITAT_CACHE_TTL: int = 1800   # 30 minutes
+_HABITAT_CACHE_MAX: int = 128    # bbox × habitat_type slots
+
+
+def _osm_tags_to_type(tags: dict[str, str]) -> str:
+    """Classify OSM element tags into a habitat type string.
+
+    Mirrors osmTagsToType() in fishing_map.js for consistent feature labelling.
+    """
+    if tags.get("wetland") == "saltmarsh":  return "saltmarsh"
+    if tags.get("wetland") == "seagrass":   return "seagrass"
+    if tags.get("wetland") == "mangrove":   return "mangrove"
+    if tags.get("wetland") == "tidalflat":  return "tidalflat"
+    if tags.get("natural") == "reef":       return "reef"
+    if tags.get("natural") == "shoal":      return "shoal"
+    if tags.get("natural") == "beach":      return "beach"
+    if tags.get("natural") == "bay":        return "bay"
+    if tags.get("waterway"):                return "channel"
+    if tags.get("seamark:type") == "wreck" or tags.get("historic") == "wreck":
+        return "wreck"
+    return "general"
+
+
+def fetch_ai_habitats(
+    south: float,
+    west: float,
+    north: float,
+    east: float,
+    habitat_type: str,
+) -> list[dict[str, Any]]:
+    """Return Overpass OSM features for the AI Habitat map overlay.
+
+    Results are cached server-side for _HABITAT_CACHE_TTL seconds.
+    Returns an empty list for the ``"pelagic"`` habitat type (open-ocean
+    species have no fixed OSM features) or when all Overpass mirrors fail.
+    """
+    tags = _HABITAT_TAGS.get(habitat_type, [])
+    if not tags:
+        return []
+
+    cache_key = (
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
+        habitat_type,
+    )
+    now = _time.time()
+    cached = _HABITAT_CACHE.get(cache_key)
+    if cached and now - cached["ts"] < _HABITAT_CACHE_TTL:
+        logger.debug("fetch_ai_habitats cache hit key=%s", cache_key)
+        return cached["data"]
+
+    if len(_HABITAT_CACHE) >= _HABITAT_CACHE_MAX:
+        stale = [
+            k for k, v in list(_HABITAT_CACHE.items())
+            if now - v["ts"] >= _HABITAT_CACHE_TTL
+        ]
+        for k in stale:
+            _HABITAT_CACHE.pop(k, None)
+        if len(_HABITAT_CACHE) >= _HABITAT_CACHE_MAX:
+            try:
+                del _HABITAT_CACHE[next(iter(_HABITAT_CACHE))]
+            except (KeyError, StopIteration):
+                pass
+
+    bbox = f"{south},{west},{north},{east}"
+    tag_str = "".join(f"{t}({bbox});" for t in tags)
+    query = f"[out:json][timeout:14];({tag_str});out center;"
+
+    features: list[dict[str, Any]] = []
+    for url in _OVERPASS_URLS:
+        try:
+            resp = _HTTP.post(url, data={"data": query}, timeout=_TIMEOUT_OVERPASS)
+            if resp.status_code != 200:
+                logger.warning(
+                    "fetch_ai_habitats: Overpass %s returned HTTP %s", url, resp.status_code
+                )
+                continue
+            for el in resp.json().get("elements", []):
+                lat = el.get("lat") or (el.get("center") or {}).get("lat")
+                lng = el.get("lon") or (el.get("center") or {}).get("lon")
+                if not (lat and lng):
+                    continue
+                el_tags: dict[str, str] = el.get("tags") or {}
+                features.append(
+                    {
+                        "lat": lat,
+                        "lng": lng,
+                        "name": el_tags.get("name", ""),
+                        "osm_type": _osm_tags_to_type(el_tags),
+                    }
+                )
+            break
+        except Exception as exc:
+            logger.warning(
+                "fetch_ai_habitats: Overpass %s failed (%s); trying next mirror", url, exc
+            )
+            continue
+
+    _HABITAT_CACHE[cache_key] = {"ts": _time.time(), "data": features}
+    logger.info(
+        "fetch_ai_habitats bbox=(%.2f,%.2f,%.2f,%.2f) habitat=%s features=%d",
+        south, west, north, east, habitat_type, len(features),
+    )
+    return features

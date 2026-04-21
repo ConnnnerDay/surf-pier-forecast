@@ -398,12 +398,12 @@ class TestFetchOsmStructures:
         ):
             spots = fetch_osm_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
         assert len(spots) == 1
-        assert spots[0] == {
-            "lat": 25.1,
-            "lng": -80.2,
-            "type": "pier",
-            "name": "City Pier",
-        }
+        spot = spots[0]
+        assert spot["lat"] == 25.1
+        assert spot["lng"] == -80.2
+        assert spot["type"] == "pier"
+        assert spot["name"] == "City Pier"
+        assert spot["source"] == "osm"
 
     def test_way_center_coordinates_used(self):
         el = {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Optional
@@ -110,7 +111,6 @@ def fetch_latest_coops_product(
 
 def fetch_coops_environmental_metrics(station_id: str) -> dict[str, float]:
     """Fetch optional NOAA CO-OPS environmental products for a station."""
-    metrics: dict[str, float] = {}
     products = {
         "air_temperature": ("air_temp_f", "english"),
         "humidity": ("humidity_pct", "metric"),
@@ -119,10 +119,19 @@ def fetch_coops_environmental_metrics(station_id: str) -> dict[str, float]:
         "salinity": ("salinity_psu", "metric"),
         "conductivity": ("conductivity", "metric"),
     }
-    for product, (key, units) in products.items():
-        val = fetch_latest_coops_product(station_id, product, units=units)
-        if val is not None:
-            metrics[key] = round(val, 2)
+    metrics: dict[str, float] = {}
+    with _cf.ThreadPoolExecutor(max_workers=6, thread_name_prefix="coops-env") as pool:
+        futures = {
+            pool.submit(fetch_latest_coops_product, station_id, product, units=units): key
+            for product, (key, units) in products.items()
+        }
+        for fut, key in futures.items():
+            try:
+                val = fut.result(timeout=18)
+                if val is not None:
+                    metrics[key] = round(val, 2)
+            except Exception:
+                pass
     return metrics
 
 def fetch_currents_predictions(

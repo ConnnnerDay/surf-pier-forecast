@@ -187,7 +187,7 @@ def test_v1_regulations_with_state_returns_envelope(client):
 def test_v1_regulations_species_lookup_is_case_insensitive(client, monkeypatch):
     """Species lookup should work even when species capitalization differs."""
     # Disable live scraper so the snapshot data path is exercised.
-    monkeypatch.setattr("storage.reg_scraper.scrape_regulation", lambda *a, **kw: None)
+    monkeypatch.setattr("regulations._scrape_regulation", lambda *a, **kw: None)
     resp = client.get("/api/v1/regulations?species=red+drum+%28puppy+drum%29&state=NC")
     assert resp.status_code == 200
     body = resp.get_json()
@@ -366,7 +366,7 @@ def test_v1_regulations_uses_account_saved_location_when_no_params(
     in get_session_location() → state derivation → regulation lookup.
     """
     # Disable live scraper so the snapshot data path is exercised.
-    monkeypatch.setattr("storage.reg_scraper.scrape_regulation", lambda *a, **kw: None)
+    monkeypatch.setattr("regulations._scrape_regulation", lambda *a, **kw: None)
 
     with app.app_context():
         uid = create_user("loctest", "pw")

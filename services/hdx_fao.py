@@ -38,6 +38,7 @@ indefinitely (static reference data).
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import logging
 import time
 from typing import Any, Optional
@@ -60,6 +61,7 @@ _CACHE_HDX_TTL: int = 86400  # 24 hours — HDX catalog changes slowly
 _CACHE_FAO_ZONE_TTL: int = 604800  # 7 days — zone boundaries are static
 _CACHE_SPECIES_TTL: int = 604800  # 7 days — ASFIS species list is static
 _CACHE_MAX: int = 512
+_CACHE_ENRICHMENT_TTL: int = 3600  # 1 hour — combined enrichment results
 
 # ── HDX CKAN API ──────────────────────────────────────────────────────────────
 _HDX_BASE = "https://data.humdata.org/api/3/action"
@@ -334,19 +336,42 @@ def get_hdx_fao_enrichment(
     -------
     dict: {fao_zone, hdx_datasets, species_enrichment, available}
     """
-    fao_zone = fetch_fao_fisheries_zones(lat, lng)
-    hdx_query = f"{fao_zone.get('area_name', 'marine fisheries')} fish"
-    hdx_datasets = search_hdx_datasets(hdx_query, rows=3)
+    names_key = tuple(sorted((species_names or [])[:3]))
+    cache_key = f"enrichment:{round(lat, 2)},{round(lng, 2)}:{names_key}"
+    hit = _cache_get(cache_key)
+    if hit is not None:
+        return hit
 
-    species_enrichment: list[dict[str, Any]] = []
-    if species_names:
-        for name in (species_names or [])[:3]:
-            info = fetch_fao_species_info(name)
-            if info:
-                info["common_name"] = name
-                species_enrichment.append(info)
+    # Run FAO zone + HDX search + per-species lookups concurrently.
+    names = list((species_names or [])[:3])
+    with _cf.ThreadPoolExecutor(max_workers=2 + len(names), thread_name_prefix="hdx-fao") as pool:
+        zone_fut = pool.submit(fetch_fao_fisheries_zones, lat, lng)
+        species_futs = {pool.submit(fetch_fao_species_info, n): n for n in names}
 
-    return {
+        try:
+            fao_zone = zone_fut.result(timeout=18)
+        except Exception:
+            fao_zone = {}
+
+        hdx_query = f"{fao_zone.get('area_name', 'marine fisheries')} fish"
+        hdx_fut = pool.submit(search_hdx_datasets, hdx_query, rows=3)
+
+        species_enrichment: list[dict[str, Any]] = []
+        for fut, name in species_futs.items():
+            try:
+                info = fut.result(timeout=18)
+                if info:
+                    info["common_name"] = name
+                    species_enrichment.append(info)
+            except Exception:
+                pass
+
+        try:
+            hdx_datasets = hdx_fut.result(timeout=22)
+        except Exception:
+            hdx_datasets = []
+
+    result = {
         "available": bool(fao_zone.get("area_code")),
         "fao_zone": fao_zone,
         "hdx_datasets": hdx_datasets,
@@ -355,6 +380,8 @@ def get_hdx_fao_enrichment(
         "hdx_url": "https://data.humdata.org/",
         "fao_url": "https://www.fao.org/fishery/",
     }
+    _cache_set(cache_key, result, ttl=_CACHE_ENRICHMENT_TTL)
+    return result
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
