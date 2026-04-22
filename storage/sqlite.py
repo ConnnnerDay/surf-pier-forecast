@@ -470,9 +470,12 @@ def _prune_old_forecasts(conn: sqlite3.Connection) -> None:
 def init_db() -> None:
     conn = get_db()
     try:
-        # WAL mode is a persistent database-level setting — set it once here
-        # rather than on every connection in get_db() to avoid redundant work.
+        # WAL mode and synchronous=NORMAL are persistent database-level settings.
+        # With WAL, NORMAL is safe: the database is always consistent after a
+        # crash; at most the last committed transaction may be lost on an OS crash.
+        # NORMAL avoids the fsync-after-each-commit overhead of the FULL default.
         conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
         _run_migrations(conn)
         _prune_old_forecasts(conn)
         conn.commit()

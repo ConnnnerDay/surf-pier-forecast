@@ -1061,8 +1061,14 @@ def account() -> Any:
         loc = get_location(prefs["location_id"])
     favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
-    recent_logs = get_recent_logs(g.user["id"], limit=5)
-    passkeys, social_accounts = _load_account_credentials(g.user["id"])
+    uid = g.user["id"]
+    with _cf.ThreadPoolExecutor(max_workers=3, thread_name_prefix="acct-page") as pool:
+        logs_fut = pool.submit(get_recent_logs, uid, 5)
+        pk_fut = pool.submit(get_webauthn_credentials, uid)
+        sa_fut = pool.submit(get_social_accounts_for_user, uid)
+        recent_logs = logs_fut.result()
+        passkeys = pk_fut.result()
+        social_accounts = sa_fut.result()
     return render_template(
         "account.html",
         prefs=prefs,
