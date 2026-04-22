@@ -534,7 +534,9 @@ def forecast() -> Any:
         return jsonify({"error": err.message}), err.status
 
     # Keep legacy shape: return raw forecast document
-    return jsonify(payload["forecast"])
+    resp = jsonify(payload["forecast"])
+    resp.headers["Cache-Control"] = "private, no-store"
+    return resp
 
 
 @bp.route("/api/v1/forecast", methods=["GET"])
@@ -548,7 +550,9 @@ def forecast_v1() -> Any:
     except ApiError as err:
         return _json_error(err)
 
-    return jsonify(success_envelope(payload))
+    resp = jsonify(success_envelope(payload))
+    resp.headers["Cache-Control"] = "private, no-store"
+    return resp
 
 
 @bp.route("/api/v1/forecast/<location_id>/status", methods=["GET"])
@@ -1408,6 +1412,7 @@ def fishing_map_data() -> Any:
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
 
 _STRUCTURE_CACHE: dict[str, dict[str, Any]] = {}  # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE_LOCK = threading.Lock()
 _STRUCTURE_CACHE_TTL = 3600  # 1 hour — wrecks don't move
 _STRUCTURE_CACHE_MAX = 128  # ~0.02° keys; cap so long-running servers don't leak
 
@@ -1422,11 +1427,10 @@ def _fetch_noaa_structures(
     cache_key = (
         f"{round(sw_lat, 2)},{round(sw_lng, 2)},{round(ne_lat, 2)},{round(ne_lng, 2)}"
     )
-    cached = _STRUCTURE_CACHE.get(cache_key)
+    with _STRUCTURE_CACHE_LOCK:
+        cached = _STRUCTURE_CACHE.get(cache_key)
     if cached and (time.time() - cached["ts"]) < _STRUCTURE_CACHE_TTL:
         return cached["data"]
-
-    _evict_oldest(_STRUCTURE_CACHE, _STRUCTURE_CACHE_MAX)
 
     geometry_json = _json_mod.dumps(
         {
@@ -1476,7 +1480,9 @@ def _fetch_noaa_structures(
     except Exception:
         pass
 
-    _STRUCTURE_CACHE[cache_key] = {"ts": time.time(), "data": features}
+    with _STRUCTURE_CACHE_LOCK:
+        _evict_oldest(_STRUCTURE_CACHE, _STRUCTURE_CACHE_MAX)
+        _STRUCTURE_CACHE[cache_key] = {"ts": time.time(), "data": features}
     return features
 
 
@@ -1502,7 +1508,9 @@ def structure_spots() -> Any:
         return jsonify({"features": [], "zoom_required": True})
 
     features = _fetch_noaa_structures(sw_lat, sw_lng, ne_lat, ne_lng)
-    return jsonify({"features": features})
+    resp = jsonify({"features": features})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 # ── Community map catch endpoints ─────────────────────────────────────────────
@@ -1731,7 +1739,9 @@ def map_community_hotspots() -> Any:
         limit = 10
 
     hotspots = get_community_hotspots(days_back=days_back, limit=limit)
-    return jsonify({"hotspots": hotspots, "days_back": days_back})
+    resp = jsonify({"hotspots": hotspots, "days_back": days_back})
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+    return resp
 
 
 _STRUCT_MAX_LAT_SPAN = 8.0  # degrees — wider than this and Overpass times out
@@ -1872,7 +1882,9 @@ def map_marine_warnings() -> Any:
         ), 400
 
     warnings = fetch_marine_warnings(south, west, north, east)
-    return jsonify({"warnings": warnings, "count": len(warnings)})
+    resp = jsonify({"warnings": warnings, "count": len(warnings)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/active-storms", methods=["GET"])
@@ -1891,7 +1903,9 @@ def map_active_storms() -> Any:
     """
 
     storms = fetch_active_storms()
-    return jsonify({"storms": storms, "count": len(storms)})
+    resp = jsonify({"storms": storms, "count": len(storms)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/recent-storms", methods=["GET"])
@@ -1914,7 +1928,9 @@ def map_recent_storms() -> Any:
 
     basin = request.args.get("basin", "").strip().upper() or None
     tracks = fetch_recent_storm_tracks(basin=basin)
-    return jsonify({"tracks": tracks, "count": len(tracks)})
+    resp = jsonify({"tracks": tracks, "count": len(tracks)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/weather/air-quality", methods=["GET"])
@@ -1943,7 +1959,9 @@ def weather_air_quality() -> Any:
         ), 400
 
     result = fetch_air_quality(lat, lng)
-    return jsonify({"aqi": result})
+    resp = jsonify({"aqi": result})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/weather/wind-forecast", methods=["GET"])
@@ -1975,7 +1993,9 @@ def weather_wind_forecast() -> Any:
         ), 400
 
     periods = fetch_wind_forecast(lat, lng)
-    return jsonify({"periods": periods, "count": len(periods)})
+    resp = jsonify({"periods": periods, "count": len(periods)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/map/sst-stations", methods=["GET"])
@@ -2008,7 +2028,9 @@ def map_sst_stations() -> Any:
         ), 400
 
     stations = fetch_sst_stations(south, west, north, east)
-    return jsonify({"stations": stations, "count": len(stations)})
+    resp = jsonify({"stations": stations, "count": len(stations)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/wildfires", methods=["GET"])
@@ -2040,7 +2062,9 @@ def map_wildfires() -> Any:
         ), 400
 
     fires = fetch_wildfire_incidents(south, west, north, east)
-    return jsonify({"fires": fires, "count": len(fires)})
+    resp = jsonify({"fires": fires, "count": len(fires)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/smoke", methods=["GET"])
@@ -2073,7 +2097,9 @@ def map_smoke() -> Any:
         ), 400
 
     polygons = fetch_smoke_forecast(south, west, north, east)
-    return jsonify({"polygons": polygons, "count": len(polygons)})
+    resp = jsonify({"polygons": polygons, "count": len(polygons)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/weather/precip-forecast", methods=["GET"])
@@ -2103,7 +2129,9 @@ def weather_precip_forecast() -> Any:
         ), 400
 
     periods = fetch_precip_forecast(lat, lng)
-    return jsonify({"periods": periods, "count": len(periods)})
+    resp = jsonify({"periods": periods, "count": len(periods)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/map/sea-ice", methods=["GET"])
@@ -2119,7 +2147,9 @@ def map_sea_ice() -> Any:
     """
 
     result = fetch_sea_ice_extent()
-    return jsonify({"sea_ice": result})
+    resp = jsonify({"sea_ice": result})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/weather/temp-forecast", methods=["GET"])
@@ -2145,7 +2175,9 @@ def weather_temp_forecast() -> Any:
         ), 400
 
     days = fetch_temp_forecast(lat, lng)
-    return jsonify({"days": days})
+    resp = jsonify({"days": days})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/map/seismic", methods=["GET"])
@@ -2174,7 +2206,9 @@ def map_seismic() -> Any:
         ), 400
 
     events = fetch_seismic_events(south, west, north, east)
-    return jsonify({"events": events, "count": len(events)})
+    resp = jsonify({"events": events, "count": len(events)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/weather/drought", methods=["GET"])
@@ -2200,7 +2234,9 @@ def weather_drought() -> Any:
         ), 400
 
     result = fetch_drought(lat, lng)
-    return jsonify({"drought": result})
+    resp = jsonify({"drought": result})
+    resp.headers["Cache-Control"] = "public, max-age=21600, stale-while-revalidate=3600"
+    return resp
 
 
 @bp.route("/api/map/metar", methods=["GET"])
@@ -2231,7 +2267,9 @@ def map_metar() -> Any:
         ), 400
 
     stations = fetch_metar_stations(south, west, north, east)
-    return jsonify({"stations": stations, "count": len(stations)})
+    resp = jsonify({"stations": stations, "count": len(stations)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/terminator", methods=["GET"])
@@ -2248,7 +2286,9 @@ def map_terminator() -> Any:
     """
 
     result = fetch_terminator()
-    return jsonify({"terminator": result})
+    resp = jsonify({"terminator": result})
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/stream-gauges", methods=["GET"])
@@ -2279,7 +2319,9 @@ def map_stream_gauges() -> Any:
         ), 400
 
     gauges = fetch_stream_gauges(south, west, north, east)
-    return jsonify({"gauges": gauges, "count": len(gauges)})
+    resp = jsonify({"gauges": gauges, "count": len(gauges)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/storm-reports", methods=["GET"])
@@ -2308,7 +2350,9 @@ def map_storm_reports() -> Any:
         ), 400
 
     reports = fetch_storm_reports(south, west, north, east)
-    return jsonify({"reports": reports, "count": len(reports)})
+    resp = jsonify({"reports": reports, "count": len(reports)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/air-quality", methods=["GET"])
@@ -2535,7 +2579,9 @@ def _require_map_admin():
 def custom_markers_list() -> Any:
     """Return all non-deleted custom map markers (public read)."""
     markers = get_custom_markers()
-    return jsonify({"markers": markers, "count": len(markers)})
+    resp = jsonify({"markers": markers, "count": len(markers)})
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/custom-markers", methods=["POST"])
