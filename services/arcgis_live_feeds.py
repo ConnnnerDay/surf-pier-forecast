@@ -27,6 +27,7 @@ Public API
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import logging
 import time
 from collections import defaultdict
@@ -357,35 +358,44 @@ def fetch_active_storms() -> list[dict[str, Any]]:
         _STORM_TS = time.time()
         return []
 
-    # ── Step 2: Forecast track ─────────────────────────────────────────────────
-    try:
+    # ── Steps 2 & 3: Forecast track + uncertainty cone (parallel) ────────────
+    def _fetch_track():
         p = {**common, "outFields": "STORMNAME"}
         resp = _HTTP.get(_STORM_TRACK_URL, params=p, timeout=_T_STD)
         resp.raise_for_status()
-        for feat in resp.json().get("features", []):
-            attrs = feat.get("attributes", {})
-            name = (attrs.get("STORMNAME") or "").strip().upper()
-            geom = feat.get("geometry") or {}
-            paths = geom.get("paths") or []
-            if name in storms and paths:
-                storms[name]["track"] = _ring_to_latlng(paths[0])
-    except Exception as exc:
-        logger.warning("ArcGIS storm track fetch failed: %s", exc)
+        return resp.json().get("features", [])
 
-    # ── Step 3: Forecast uncertainty cone ─────────────────────────────────────
-    try:
+    def _fetch_cone():
         p = {**common, "outFields": "STORMNAME"}
         resp = _HTTP.get(_STORM_CONE_URL, params=p, timeout=_T_STD)
         resp.raise_for_status()
-        for feat in resp.json().get("features", []):
-            attrs = feat.get("attributes", {})
-            name = (attrs.get("STORMNAME") or "").strip().upper()
-            geom = feat.get("geometry") or {}
-            rings = geom.get("rings") or []
-            if name in storms and rings:
-                storms[name]["cone"] = [_ring_to_latlng(r) for r in rings]
-    except Exception as exc:
-        logger.warning("ArcGIS storm cone fetch failed: %s", exc)
+        return resp.json().get("features", [])
+
+    with _cf.ThreadPoolExecutor(max_workers=2, thread_name_prefix="storm-geo") as pool:
+        track_fut = pool.submit(_fetch_track)
+        cone_fut = pool.submit(_fetch_cone)
+
+        try:
+            for feat in track_fut.result(timeout=_T_STD[1] + 2):
+                attrs = feat.get("attributes", {})
+                name = (attrs.get("STORMNAME") or "").strip().upper()
+                geom = feat.get("geometry") or {}
+                paths = geom.get("paths") or []
+                if name in storms and paths:
+                    storms[name]["track"] = _ring_to_latlng(paths[0])
+        except Exception as exc:
+            logger.warning("ArcGIS storm track fetch failed: %s", exc)
+
+        try:
+            for feat in cone_fut.result(timeout=_T_STD[1] + 2):
+                attrs = feat.get("attributes", {})
+                name = (attrs.get("STORMNAME") or "").strip().upper()
+                geom = feat.get("geometry") or {}
+                rings = geom.get("rings") or []
+                if name in storms and rings:
+                    storms[name]["cone"] = [_ring_to_latlng(r) for r in rings]
+        except Exception as exc:
+            logger.warning("ArcGIS storm cone fetch failed: %s", exc)
 
     result = list(storms.values())
     _STORM_CACHE = result

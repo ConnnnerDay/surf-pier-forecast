@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
 _HTTP: requests.Session = requests.Session()
-_HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
+_HTTP.mount("https://", HTTPAdapter(pool_connections=3, pool_maxsize=8))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: dict[str, dict[str, Any]] = {}
