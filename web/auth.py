@@ -38,7 +38,7 @@ from cryptography.hazmat.primitives.hashes import SHA256
 from werkzeug.security import check_password_hash
 
 from locations import get_location
-from storage.db import (
+from storage.sqlite import (
     authenticate_user,
     bump_session_version,
     change_password,

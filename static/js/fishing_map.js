@@ -49,6 +49,13 @@
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
     var _markerIconCache      = {};   // "activity|0/1" → L.divIcon (10 combinations max)
+    // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
+    // These layers clear and redraw on every fetch; caching the icon objects avoids
+    // re-running L.divIcon() for every marker on every refresh.
+    // Key format is layer-prefix + variant (e.g. 'sst|#22c55e|72').
+    // Capped at 512 entries; when full the oldest 256 are evicted.
+    var _overlayIconCache     = {};
+    var _overlayIconKeys      = [];   // insertion-ordered keys for eviction
     var _elStructSpinner      = null; // cached DOM ref — fmap-struct-spinner
     var _elStructError        = null; // cached DOM ref — fmap-struct-error
     var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
@@ -608,6 +615,23 @@
             _aiCacheKeys.push(key);
         }
         aiCache[key] = data;
+    }
+
+    // Overlay icon cache — returns a cached L.divIcon, creating it on first use.
+    // Evicts oldest 256 entries when the 512-entry cap is reached so long-running
+    // sessions don't accumulate unbounded icon objects.
+    function _cachedDivIcon(key, opts) {
+        if (Object.prototype.hasOwnProperty.call(_overlayIconCache, key)) {
+            return _overlayIconCache[key];
+        }
+        if (_overlayIconKeys.length >= 512) {
+            var evict = _overlayIconKeys.splice(0, 256);
+            for (var i = 0; i < evict.length; i++) delete _overlayIconCache[evict[i]];
+        }
+        var icon = L.divIcon(opts);
+        _overlayIconCache[key] = icon;
+        _overlayIconKeys.push(key);
+        return icon;
     }
 
     // ─── OSM Fishing Spots (Overpass API) ─────────────────────────────────────
@@ -2900,11 +2924,11 @@
                 sstLayer.clearLayers();
                 (data.stations || []).forEach(function (s) {
                     var color = _sstColor(s.sst_f);
-                    var icon = L.divIcon({
+                    var tempLabel = s.sst_f != null ? Math.round(s.sst_f) + '°' : '?';
+                    var icon = _cachedDivIcon('sst|' + color + '|' + tempLabel, {
                         className: '',
                         html: '<div class="fmap-sst-dot" style="background:' + color + '">' +
-                              (s.sst_f != null ? Math.round(s.sst_f) + '°' : '?') +
-                              '</div>',
+                              tempLabel + '</div>',
                         iconSize:    [34, 34],
                         iconAnchor:  [17, 17],
                         popupAnchor: [0, -18],
@@ -3314,7 +3338,7 @@
                     var tempStr  = st.temp_f != null ? st.temp_f + '°F' : '–';
 
                     // Small circle with flight-category color + temp label
-                    var icon = L.divIcon({
+                    var icon = _cachedDivIcon('metar|' + catColor + '|' + tempStr, {
                         className: '',
                         html: '<div class="fmap-metar-dot" style="border-color:' + catColor + '">' +
                               '<span class="fmap-metar-temp">' + tempStr + '</span>' +
@@ -3488,7 +3512,7 @@
 
                 gauges.forEach(function (g) {
                     var color = g.status_color || '#22c55e';
-                    var icon  = L.divIcon({
+                    var icon  = _cachedDivIcon('gauge|' + color, {
                         className: '',
                         html: '<div class="fmap-gauge-dot" style="background:' + color + '"></div>',
                         iconSize:   [14, 14],
@@ -3583,11 +3607,12 @@
 
                 var ICONS = { hail: '🌨', tornado: '🌪', wind: '💨' };
                 reports.forEach(function (rpt) {
-                    var color = rpt.color || '#facc15';
-                    var icon  = L.divIcon({
+                    var color    = rpt.color || '#facc15';
+                    var rptEmoji = ICONS[rpt.type] || '⚡';
+                    var icon  = _cachedDivIcon('srpt|' + color + '|' + (rpt.type || ''), {
                         className: '',
                         html: '<div class="fmap-storm-rpt-dot" style="background:' + color + '">' +
-                              (ICONS[rpt.type] || '⚡') + '</div>',
+                              rptEmoji + '</div>',
                         iconSize:   [22, 22],
                         iconAnchor: [11, 11],
                     });
@@ -3997,9 +4022,11 @@
                 if (!aqiOn || !map || !data) return;
                 aqiLayer.clearLayers();
                 (data.stations || []).forEach(function (s) {
-                    var icon = L.divIcon({
+                    // title attr excluded from icon HTML so icons are cacheable by color.
+                    // Station name is available in the popup bindPopup below.
+                    var icon = _cachedDivIcon('aqi|' + s.color, {
                         className: '',
-                        html: '<div class="fmap-aqi-dot" style="background:' + s.color + '" title="' + esc(s.name) + '"></div>',
+                        html: '<div class="fmap-aqi-dot" style="background:' + s.color + '"></div>',
                         iconSize: [14, 14], iconAnchor: [7, 7],
                     });
                     var updStr = '';
@@ -4246,11 +4273,12 @@
                     var wh  = b.wave_ht_ft   != null ? b.wave_ht_ft   + ' ft' : '–';
                     var ws  = b.wind_kt      != null ? b.wind_kt      + ' kt' : '–';
                     var pr  = b.period_s     != null ? b.period_s     + ' s' : '–';
-                    var clr = _sstColor(b.water_temp_f);
-                    var icon = L.divIcon({
+                    var clr      = _sstColor(b.water_temp_f);
+                    var waveLabel = b.wave_ht_ft != null ? b.wave_ht_ft : '·';
+                    var icon = _cachedDivIcon('buoy|' + clr + '|' + waveLabel, {
                         className: '',
                         html: '<div class="fmap-buoy-dot" style="border-color:' + clr + '">' +
-                              '<span class="fmap-buoy-wave">' + (b.wave_ht_ft != null ? b.wave_ht_ft : '·') + '</span>' +
+                              '<span class="fmap-buoy-wave">' + waveLabel + '</span>' +
                               '</div>',
                         iconSize: [38, 22], iconAnchor: [19, 11],
                     });

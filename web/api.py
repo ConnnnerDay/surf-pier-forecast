@@ -1028,28 +1028,39 @@ _SPECIES_LOWER_INDEX: Optional[list[tuple[str, frozenset, Any]]] = None
 # unfiltered case, and to iterating a much smaller per-location list for
 # filtered queries.
 _LOC_SPECIES_ALL: Optional[dict[str, list]] = None  # loc_id → [species, ...]
+# Locks guard the one-time O(n) builds below.  Double-checked locking (check →
+# acquire → check again) prevents concurrent requests from each building the
+# same index on a cold start, which would waste CPU and memory.
+_LOC_SPECIES_LOCK = threading.Lock()
+_SPECIES_NAMES_LOCK = threading.Lock()
+_SPECIES_LOWER_LOCK = threading.Lock()
 
 
 def _get_loc_species_all() -> dict[str, list]:
     """Return {loc_id: [species_dict, ...]} for every location using all species."""
     global _LOC_SPECIES_ALL
-    if _LOC_SPECIES_ALL is None:
-        from storage.species_loader import SPECIES_DB
-        from locations import COASTAL_LOCATIONS
+    if _LOC_SPECIES_ALL is not None:
+        return _LOC_SPECIES_ALL
+    with _LOC_SPECIES_LOCK:
+        if _LOC_SPECIES_ALL is None:
+            from storage.species_loader import SPECIES_DB
+            from locations import COASTAL_LOCATIONS
 
-        _LOC_SPECIES_ALL = {
-            loc["id"]: [s for s in SPECIES_DB if _species_present_at(s, loc)]
-            for loc in COASTAL_LOCATIONS
-        }
+            _LOC_SPECIES_ALL = {
+                loc["id"]: [s for s in SPECIES_DB if _species_present_at(s, loc)]
+                for loc in COASTAL_LOCATIONS
+            }
     return _LOC_SPECIES_ALL
 
 
 def _get_all_species_names() -> list:
     global _SPECIES_NAMES_CACHE
-    if _SPECIES_NAMES_CACHE is None:
-        from storage.species_loader import SPECIES_DB
-
-        _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
+    if _SPECIES_NAMES_CACHE is not None:
+        return _SPECIES_NAMES_CACHE
+    with _SPECIES_NAMES_LOCK:
+        if _SPECIES_NAMES_CACHE is None:
+            from storage.species_loader import SPECIES_DB
+            _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
     return _SPECIES_NAMES_CACHE
 
 
@@ -1060,17 +1071,19 @@ def _get_species_lower_index() -> "list[tuple[str, frozenset, Any]]":
     runs at filter time.
     """
     global _SPECIES_LOWER_INDEX
-    if _SPECIES_LOWER_INDEX is None:
-        from storage.species_loader import SPECIES_DB
-
-        _SPECIES_LOWER_INDEX = [
-            (
-                s["name"].lower(),
-                frozenset(c.lower() for c in s.get("categories", [])),
-                s,
-            )
-            for s in SPECIES_DB
-        ]
+    if _SPECIES_LOWER_INDEX is not None:
+        return _SPECIES_LOWER_INDEX
+    with _SPECIES_LOWER_LOCK:
+        if _SPECIES_LOWER_INDEX is None:
+            from storage.species_loader import SPECIES_DB
+            _SPECIES_LOWER_INDEX = [
+                (
+                    s["name"].lower(),
+                    frozenset(c.lower() for c in s.get("categories", [])),
+                    s,
+                )
+                for s in SPECIES_DB
+            ]
     return _SPECIES_LOWER_INDEX
 
 
