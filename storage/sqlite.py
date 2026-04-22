@@ -1648,6 +1648,11 @@ def add_map_catch_comment(catch_id: int, user_id: int, body: str) -> int:
         conn.close()
 
 
+_HOTSPOTS_CACHE: dict[tuple, dict[str, Any]] = {}
+_HOTSPOTS_CACHE_TTL: float = 300.0  # 5 minutes
+_HOTSPOTS_CACHE_LOCK = _threading.Lock()
+
+
 def get_community_hotspots(
     days_back: int = 30,
     limit: int = 10,
@@ -1657,44 +1662,59 @@ def get_community_hotspots(
 
     Groups catch pins by rounded lat/lng (0.1° grid ~ 6 mi) so nearby catches
     cluster into a single hotspot rather than showing individual pins.
+    Results are cached in-process for 5 minutes to avoid running the GROUP BY
+    aggregate on every map load from concurrent users.
     """
-    conn = get_db()
-    try:
-        lookback = f"-{abs(days_back)} days"
-        params: list[Any] = [lookback]
-        sql = """
-            SELECT
-                ROUND(lat, 1) AS grid_lat,
-                ROUND(lng, 1) AS grid_lng,
-                COUNT(*) AS catch_count,
-                SUM(likes_count) AS total_likes,
-                GROUP_CONCAT(DISTINCT species) AS species_list,
-                MAX(caught_at) AS last_catch_at,
-                AVG(weight_lb) AS avg_weight
-            FROM map_catches
-            WHERE is_public = 1
-              AND caught_at >= datetime('now', ?)
-            GROUP BY grid_lat, grid_lng
-            ORDER BY catch_count DESC, total_likes DESC
-            LIMIT ?
-        """
-        params.append(limit)
-        rows = conn.execute(sql, params).fetchall()
-    finally:
-        conn.close()
+    cache_key = (days_back, limit, coast)
+    now = _time.time()
+    entry = _HOTSPOTS_CACHE.get(cache_key)
+    if entry and now - entry["ts"] < _HOTSPOTS_CACHE_TTL:
+        return entry["data"]
 
-    return [
-        {
-            "lat": r["grid_lat"],
-            "lng": r["grid_lng"],
-            "catch_count": r["catch_count"],
-            "total_likes": r["total_likes"] or 0,
-            "species": (r["species_list"] or "").split(",")[:5],
-            "last_catch_at": r["last_catch_at"],
-            "avg_weight": round(r["avg_weight"], 1) if r["avg_weight"] else None,
-        }
-        for r in rows
-    ]
+    with _HOTSPOTS_CACHE_LOCK:
+        entry = _HOTSPOTS_CACHE.get(cache_key)
+        if entry and now - entry["ts"] < _HOTSPOTS_CACHE_TTL:
+            return entry["data"]
+
+        conn = get_db()
+        try:
+            lookback = f"-{abs(days_back)} days"
+            params: list[Any] = [lookback]
+            sql = """
+                SELECT
+                    ROUND(lat, 1) AS grid_lat,
+                    ROUND(lng, 1) AS grid_lng,
+                    COUNT(*) AS catch_count,
+                    SUM(likes_count) AS total_likes,
+                    GROUP_CONCAT(DISTINCT species) AS species_list,
+                    MAX(caught_at) AS last_catch_at,
+                    AVG(weight_lb) AS avg_weight
+                FROM map_catches
+                WHERE is_public = 1
+                  AND caught_at >= datetime('now', ?)
+                GROUP BY grid_lat, grid_lng
+                ORDER BY catch_count DESC, total_likes DESC
+                LIMIT ?
+            """
+            params.append(limit)
+            rows = conn.execute(sql, params).fetchall()
+        finally:
+            conn.close()
+
+        result = [
+            {
+                "lat": r["grid_lat"],
+                "lng": r["grid_lng"],
+                "catch_count": r["catch_count"],
+                "total_likes": r["total_likes"] or 0,
+                "species": (r["species_list"] or "").split(",")[:5],
+                "last_catch_at": r["last_catch_at"],
+                "avg_weight": round(r["avg_weight"], 1) if r["avg_weight"] else None,
+            }
+            for r in rows
+        ]
+        _HOTSPOTS_CACHE[cache_key] = {"ts": now, "data": result}
+        return result
 
 
 def get_recent_public_catches(
