@@ -1387,8 +1387,11 @@ def _establish_session(user_id: int) -> None:
     session["session_version"] = new_version
     session.permanent = True
     session["csrf_token"] = secrets.token_urlsafe(24)
-    prefs = get_preferences(user_id)
-    user = get_user(user_id)
+    with _cf.ThreadPoolExecutor(max_workers=2, thread_name_prefix="session-init") as pool:
+        prefs_fut = pool.submit(get_preferences, user_id)
+        user_fut = pool.submit(get_user, user_id)
+        prefs = prefs_fut.result()
+        user = user_fut.result()
     if prefs.get("location_id"):
         session["location_id"] = prefs["location_id"]
     elif user and user.get("default_location_id"):

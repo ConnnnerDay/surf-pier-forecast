@@ -51,8 +51,12 @@ from storage.cache import (
     load_cached_forecast,
     save_forecast,
 )
-from storage.sqlite import get_preferences, save_preferences, get_log_stats
-from web.helpers import get_session_location
+from storage.sqlite import save_preferences, get_log_stats
+from web.helpers import (
+    get_session_location,
+    get_preferences_cached,
+    invalidate_preferences_cache,
+)
 from web.rate_limit import (
     is_rate_limited as _rl_is_rate_limited,
     record_attempt as _rl_record_attempt,
@@ -263,7 +267,7 @@ def _user_requires_profile_setup() -> bool:
     """Return True when a logged-in user has picked a location but no profile."""
     if g.user is None:
         return False
-    prefs = get_preferences(g.user["id"])
+    prefs = get_preferences_cached(g.user["id"])
     has_location = bool(
         (prefs.get("location_id") or session.get("location_id") or "").strip()
     )
@@ -315,7 +319,7 @@ def _setup_context(**kwargs: Any) -> dict[str, Any]:
     favorite_ids = []
     favorite_locations = []
     if g.user:
-        prefs = get_preferences(g.user["id"])
+        prefs = get_preferences_cached(g.user["id"])
         favorite_locations = [
             loc
             for loc_id in prefs.get("favorites", [])
@@ -419,7 +423,7 @@ def _render_forecast(
     user_prefs: dict[str, Any] = {}
     stored_profile: dict[str, Any] = {}
     if g.user:
-        user_prefs = get_preferences(g.user["id"])
+        user_prefs = get_preferences_cached(g.user["id"])
         stored_profile = user_prefs.get("fishing_profile") or {}
 
     profile = _extract_profile_from_request()
@@ -532,7 +536,7 @@ def live_cams() -> Any:
 
     profile = _extract_profile_from_request()
     if not profile and g.user:
-        stored = get_preferences(g.user["id"]).get("fishing_profile") or {}
+        stored = get_preferences_cached(g.user["id"]).get("fishing_profile") or {}
         if stored.get("fishing_types") or stored.get("targets"):
             profile = stored
 
@@ -656,6 +660,7 @@ def setup_select(location_id: str) -> Any:
         save_preferences(
             g.user["id"], location_id=location_id, default_location_id=location_id
         )
+        invalidate_preferences_cache(g.user["id"])
         if _user_requires_profile_setup():
             return redirect(url_for("views.profile"))
     return redirect(url_for("views.index"))
@@ -669,7 +674,7 @@ def setup_favorite(location_id: str) -> Any:
     if get_location(location_id) is None:
         return redirect(url_for("views.setup"))
 
-    prefs = get_preferences(g.user["id"])
+    prefs = get_preferences_cached(g.user["id"])
     favorites = [
         loc_id for loc_id in prefs.get("favorites", []) if get_location(loc_id)
     ]
@@ -678,6 +683,7 @@ def setup_favorite(location_id: str) -> Any:
     else:
         favorites.append(location_id)
     save_preferences(g.user["id"], favorites=favorites)
+    invalidate_preferences_cache(g.user["id"])
 
     next_url = request.form.get("next", "")
     # Only redirect to same-origin relative paths.  Use urlparse to reject
@@ -700,7 +706,7 @@ def profile() -> Any:
     """Show the fishing profile setup page."""
     if g.user is None:
         return redirect(url_for("auth.login"))
-    prefs = get_preferences(g.user["id"])
+    prefs = get_preferences_cached(g.user["id"])
     return render_template("profile.html", prefs=prefs)
 
 

@@ -91,7 +91,7 @@ from storage.sqlite import (
     toggle_map_catch_like,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
-from web.helpers import get_session_location
+from web.helpers import get_session_location, invalidate_preferences_cache
 from web.openapi import build_openapi_spec
 from web.schemas import (
     ApiError,
@@ -334,7 +334,9 @@ def _v1_forecast_payload(query: ForecastQuery) -> dict[str, Any]:
 @bp.route("/api/openapi.json", methods=["GET"])
 @bp.route("/api/v1/openapi.json", methods=["GET"])
 def openapi_spec() -> Any:
-    return jsonify(build_openapi_spec())
+    resp = jsonify(build_openapi_spec())
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/preferences", methods=["GET", "POST"])
@@ -379,6 +381,7 @@ def profile_v1() -> Any:
     updates = payload.as_updates()
     if updates:
         save_preferences(uid, **updates)
+        invalidate_preferences_cache(uid)
         if "location_id" in updates and updates["location_id"]:
             session["location_id"] = updates["location_id"]
 

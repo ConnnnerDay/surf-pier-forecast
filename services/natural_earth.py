@@ -87,6 +87,14 @@ _NE_LAYERS: dict[str, str] = {
 _meta: dict[str, dict[str, Any]] = {}  # {layer_name: {path, loaded_at, ok}}
 _meta_lock = threading.Lock()
 
+# ── Parsed GeoJSON cache ──────────────────────────────────────────────────────
+# Keyed by (layer_name, file_mtime_int) so the entry is automatically
+# invalidated whenever the background refresh thread overwrites the file.
+# Values are the already-parsed Python dict — avoids re-reading + re-parsing
+# the JSON on every request (the 110m coastline is ~300 KB; the 10m is ~1.5 MB).
+_parsed_cache: dict[tuple, dict[str, Any]] = {}
+_parsed_lock = threading.Lock()
+
 # ── Optional geopandas import ─────────────────────────────────────────────────
 try:
     import geopandas as gpd  # type: ignore
@@ -283,13 +291,38 @@ def _download_layer(layer_name: str) -> Optional[dict[str, Any]]:
     return data
 
 def _read_geojson(path: str) -> Optional[dict[str, Any]]:
-    """Read a GeoJSON file from disk, returning None on parse error."""
+    """Read a GeoJSON file from disk, caching the parsed result in-process.
+
+    The cache key includes the file's mtime integer so a background refresh
+    that rewrites the file will automatically bust the stale entry on the
+    next request without any explicit invalidation.
+    """
+    try:
+        mtime = int(os.path.getmtime(path))
+    except OSError:
+        return None
+
+    cache_key = (path, mtime)
+    with _parsed_lock:
+        hit = _parsed_cache.get(cache_key)
+        if hit is not None:
+            return hit
+
     try:
         with open(path, "r", encoding="utf-8") as fh:
-            return json.load(fh)
+            data = json.load(fh)
     except (OSError, json.JSONDecodeError) as exc:
         logger.error("natural_earth: could not read %s: %s", path, exc)
         return None
+
+    with _parsed_lock:
+        # Evict any stale entry for this path (old mtime) before inserting.
+        stale = [k for k in _parsed_cache if k[0] == path and k != cache_key]
+        for k in stale:
+            _parsed_cache.pop(k, None)
+        _parsed_cache[cache_key] = data
+
+    return data
 
 def _clip_geojson(
     geojson: dict[str, Any],

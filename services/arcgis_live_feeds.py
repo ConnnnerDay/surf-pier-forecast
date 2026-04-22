@@ -1632,6 +1632,7 @@ def fetch_metar_stations(
 _TERM_CACHE: Optional[dict[str, Any]] = None
 _TERM_TS = 0.0
 _TERM_TTL = 300  # 5 minutes — the subsolar point moves ~0.07°/min
+_TERM_LOCK = threading.Lock()
 
 def fetch_terminator() -> Optional[Dict]:
     """Return the current night-shadow polygon (Day/Night Terminator).
@@ -1644,41 +1645,44 @@ def fetch_terminator() -> Optional[Dict]:
     if _TERM_CACHE is not None and now - _TERM_TS < _TERM_TTL:
         return _TERM_CACHE
 
-    params = {
-        "where": "1=1",
-        "outFields": "timestamp",
-        "returnGeometry": "true",
-        "outSR": "4326",
-        "f": "json",
-    }
+    with _TERM_LOCK:
+        now = time.time()
+        if _TERM_CACHE is not None and now - _TERM_TS < _TERM_TTL:
+            return _TERM_CACHE
 
-    try:
-        resp = _HTTP.get(_TERMINATOR_URL, params=params, timeout=_T_STD)
-        resp.raise_for_status()
-        feats = resp.json().get("features", [])
-    except Exception as exc:
-        logger.warning("ArcGIS terminator fetch failed: %s", exc)
-        _TERM_CACHE = None
+        params = {
+            "where": "1=1",
+            "outFields": "timestamp",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        }
+
+        try:
+            resp = _HTTP.get(_TERMINATOR_URL, params=params, timeout=_T_STD)
+            resp.raise_for_status()
+            feats = resp.json().get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS terminator fetch failed: %s", exc)
+            _TERM_TS = now
+            return None
+
+        if not feats:
+            _TERM_TS = now
+            return None
+
+        feat = feats[0]
+        attrs = feat.get("attributes", {})
+        geom = feat.get("geometry") or {}
+        rings = geom.get("rings") or []
+
+        ts_ms = attrs.get("timestamp")
+        _TERM_CACHE = {
+            "rings": [_ring_to_latlng(r) for r in rings],
+            "timestamp": _ms_to_iso(ts_ms) if ts_ms is not None else None,
+        }
         _TERM_TS = now
-        return None
-
-    if not feats:
-        _TERM_CACHE = None
-        _TERM_TS = now
-        return None
-
-    feat = feats[0]
-    attrs = feat.get("attributes", {})
-    geom = feat.get("geometry") or {}
-    rings = geom.get("rings") or []
-
-    ts_ms = attrs.get("timestamp")
-    _TERM_CACHE = {
-        "rings": [_ring_to_latlng(r) for r in rings],
-        "timestamp": _ms_to_iso(ts_ms) if ts_ms is not None else None,
-    }
-    _TERM_TS = now
-    return _TERM_CACHE
+        return _TERM_CACHE
 
 # ── Live Stream Gauges ─────────────────────────────────────────────────────────
 
@@ -2488,6 +2492,7 @@ def fetch_hfradar_currents(
 _TROP_OUTLOOK_CACHE: Optional[list[dict[str, Any]]] = None
 _TROP_OUTLOOK_TS = 0.0
 _TROP_OUTLOOK_TTL = 3600  # 1 hour — outlook updates every 6 hours
+_TROP_OUTLOOK_LOCK = threading.Lock()
 
 _TROP_PROB_COLORS: dict[str, str] = {
     "high": "#ef4444",  # ≥60 % — red
@@ -2515,67 +2520,71 @@ def fetch_tropical_outlook() -> list[dict[str, Any]]:
     if _TROP_OUTLOOK_CACHE is not None and now - _TROP_OUTLOOK_TS < _TROP_OUTLOOK_TTL:
         return _TROP_OUTLOOK_CACHE
 
-    params = {
-        "where": "1=1",
-        "outFields": "probability,basin,discussion,FormationChance2day,FormationChance5day",
-        "returnGeometry": "true",
-        "resultRecordCount": 50,
-        "outSR": "4326",
-        "f": "json",
-    }
+    with _TROP_OUTLOOK_LOCK:
+        now = time.time()
+        if _TROP_OUTLOOK_CACHE is not None and now - _TROP_OUTLOOK_TS < _TROP_OUTLOOK_TTL:
+            return _TROP_OUTLOOK_CACHE
 
-    try:
-        resp = _HTTP.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=_T_STD)
-        resp.raise_for_status()
-        body = resp.json()
-        if body.get("error"):
-            raise ValueError(body["error"].get("message", "service error"))
-        feats = body.get("features", [])
-    except Exception as exc:
-        logger.warning("ArcGIS tropical outlook fetch failed: %s", exc)
-        _TROP_OUTLOOK_CACHE = []
+        params = {
+            "where": "1=1",
+            "outFields": "probability,basin,discussion,FormationChance2day,FormationChance5day",
+            "returnGeometry": "true",
+            "resultRecordCount": 50,
+            "outSR": "4326",
+            "f": "json",
+        }
+
+        try:
+            resp = _HTTP.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=_T_STD)
+            resp.raise_for_status()
+            body = resp.json()
+            if body.get("error"):
+                raise ValueError(body["error"].get("message", "service error"))
+            feats = body.get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS tropical outlook fetch failed: %s", exc)
+            _TROP_OUTLOOK_CACHE = []
+            _TROP_OUTLOOK_TS = now
+            return []
+
+        results: list[dict[str, Any]] = []
+        for feat in feats:
+            attrs = feat.get("attributes", {})
+            geom = feat.get("geometry") or {}
+            rings = geom.get("rings") or []
+            if not rings:
+                continue
+
+            raw_prob = str(
+                attrs.get("probability") or attrs.get("FormationChance2day") or ""
+            ).lower()
+            if "high" in raw_prob:
+                prob = "high"
+            elif "medium" in raw_prob or "mod" in raw_prob:
+                prob = "medium"
+            else:
+                prob = "low"
+
+            prob_label = str(
+                attrs.get("FormationChance2day") or attrs.get("probability") or ""
+            ).strip()
+            basin = str(attrs.get("basin") or "ATL").upper()
+            discussion = str(attrs.get("discussion") or "").strip()[:300]
+
+            results.append(
+                {
+                    "probability": prob,
+                    "prob_label": prob_label or prob.capitalize(),
+                    "color": _TROP_PROB_COLORS.get(prob, "#eab308"),
+                    "basin": basin,
+                    "rings": [_ring_to_latlng(r) for r in rings],
+                    "discussion": discussion,
+                }
+            )
+
+        _TROP_OUTLOOK_CACHE = results
         _TROP_OUTLOOK_TS = now
-        return []
-
-    results: list[dict[str, Any]] = []
-    for feat in feats:
-        attrs = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        rings = geom.get("rings") or []
-        if not rings:
-            continue
-
-        raw_prob = str(
-            attrs.get("probability") or attrs.get("FormationChance2day") or ""
-        ).lower()
-        # Normalise to low/medium/high
-        if "high" in raw_prob:
-            prob = "high"
-        elif "medium" in raw_prob or "mod" in raw_prob:
-            prob = "medium"
-        else:
-            prob = "low"
-
-        prob_label = str(
-            attrs.get("FormationChance2day") or attrs.get("probability") or ""
-        ).strip()
-        basin = str(attrs.get("basin") or "ATL").upper()
-        discussion = str(attrs.get("discussion") or "").strip()[:300]
-
-        results.append(
-            {
-                "probability": prob,
-                "prob_label": prob_label or prob.capitalize(),
-                "color": _TROP_PROB_COLORS.get(prob, "#eab308"),
-                "basin": basin,
-                "rings": [_ring_to_latlng(r) for r in rings],
-                "discussion": discussion,
-            }
-        )
-
-    _TROP_OUTLOOK_CACHE = results
-    _TROP_OUTLOOK_TS = now
-    return results
+        return results
 
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""
