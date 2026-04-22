@@ -165,6 +165,7 @@ _WARN_MAX = 64  # bbox combinations kept in memory
 _STORM_CACHE: Optional[list[dict[str, Any]]] = None
 _STORM_TS = 0.0
 _STORM_TTL = 600  # 10 minutes
+_STORM_LOCK = _threading.Lock()
 
 def _warn_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 2), round(w, 2), round(n, 2), round(e, 2))
@@ -313,85 +314,91 @@ def fetch_active_storms() -> list[dict[str, Any]]:
         cone        list   list of rings [[lat, lng], ...] uncertainty cone
     """
     global _STORM_CACHE, _STORM_TS
+    # Fast path — skip lock when cache is fresh
     if _STORM_CACHE is not None and time.time() - _STORM_TS < _STORM_TTL:
         return _STORM_CACHE
 
-    common = {
-        "where": "1=1",
-        "outSR": "4326",
-        "returnGeometry": "true",
-        "f": "json",
-        "resultRecordCount": 50,
-    }
+    with _STORM_LOCK:
+        # Double-check: another thread may have populated the cache while we waited
+        if _STORM_CACHE is not None and time.time() - _STORM_TS < _STORM_TTL:
+            return _STORM_CACHE
 
-    storms: dict[str, dict[str, Any]] = {}  # keyed by UPPER storm name
+        common = {
+            "where": "1=1",
+            "outSR": "4326",
+            "returnGeometry": "true",
+            "f": "json",
+            "resultRecordCount": 50,
+        }
 
-    # ── Step 1: Forecast positions ─────────────────────────────────────────────
-    try:
-        p = {**common, "outFields": "STORMNAME,STORMTYPE,INTENSITY,MSLP,ADVISNUM"}
-        resp = _HTTP.get(_STORM_POS_URL, params=p, timeout=_T_STD)
-        resp.raise_for_status()
-        for feat in resp.json().get("features", []):
-            attrs = feat.get("attributes", {})
-            geom = feat.get("geometry") or {}
-            name = (attrs.get("STORMNAME") or "Unknown").strip()
-            key = name.upper()
-            kt = int(attrs.get("INTENSITY") or 0)
-            storms[key] = {
-                "name": name.title(),
-                "category": _category_label(kt),
-                "lat": geom.get("y", 0),
-                "lng": geom.get("x", 0),
-                "wind_mph": round(kt * _KT_TO_MPH),
-                "pressure_mb": int(attrs.get("MSLP") or 0),
-                "track": [],
-                "cone": [],
-            }
-    except Exception as exc:
-        logger.warning("ArcGIS storm positions fetch failed: %s", exc)
-        _STORM_CACHE = []
+        storms: dict[str, dict[str, Any]] = {}  # keyed by UPPER storm name
+
+        # ── Step 1: Forecast positions ─────────────────────────────────────────
+        try:
+            p = {**common, "outFields": "STORMNAME,STORMTYPE,INTENSITY,MSLP,ADVISNUM"}
+            resp = _HTTP.get(_STORM_POS_URL, params=p, timeout=_T_STD)
+            resp.raise_for_status()
+            for feat in resp.json().get("features", []):
+                attrs = feat.get("attributes", {})
+                geom = feat.get("geometry") or {}
+                name = (attrs.get("STORMNAME") or "Unknown").strip()
+                key = name.upper()
+                kt = int(attrs.get("INTENSITY") or 0)
+                storms[key] = {
+                    "name": name.title(),
+                    "category": _category_label(kt),
+                    "lat": geom.get("y", 0),
+                    "lng": geom.get("x", 0),
+                    "wind_mph": round(kt * _KT_TO_MPH),
+                    "pressure_mb": int(attrs.get("MSLP") or 0),
+                    "track": [],
+                    "cone": [],
+                }
+        except Exception as exc:
+            logger.warning("ArcGIS storm positions fetch failed: %s", exc)
+            _STORM_CACHE = []
+            _STORM_TS = time.time()
+            return []
+
+        if not storms:
+            _STORM_CACHE = []
+            _STORM_TS = time.time()
+            return []
+
+        # ── Step 2: Forecast track ───────────────────────────────────────────
+        try:
+            p = {**common, "outFields": "STORMNAME"}
+            resp = _HTTP.get(_STORM_TRACK_URL, params=p, timeout=_T_STD)
+            resp.raise_for_status()
+            for feat in resp.json().get("features", []):
+                attrs = feat.get("attributes", {})
+                name = (attrs.get("STORMNAME") or "").strip().upper()
+                geom = feat.get("geometry") or {}
+                paths = geom.get("paths") or []
+                if name in storms and paths:
+                    storms[name]["track"] = _ring_to_latlng(paths[0])
+        except Exception as exc:
+            logger.warning("ArcGIS storm track fetch failed: %s", exc)
+
+        # ── Step 3: Forecast uncertainty cone ───────────────────────────────
+        try:
+            p = {**common, "outFields": "STORMNAME"}
+            resp = _HTTP.get(_STORM_CONE_URL, params=p, timeout=_T_STD)
+            resp.raise_for_status()
+            for feat in resp.json().get("features", []):
+                attrs = feat.get("attributes", {})
+                name = (attrs.get("STORMNAME") or "").strip().upper()
+                geom = feat.get("geometry") or {}
+                rings = geom.get("rings") or []
+                if name in storms and rings:
+                    storms[name]["cone"] = [_ring_to_latlng(r) for r in rings]
+        except Exception as exc:
+            logger.warning("ArcGIS storm cone fetch failed: %s", exc)
+
+        result = list(storms.values())
+        _STORM_CACHE = result
         _STORM_TS = time.time()
-        return []
-
-    if not storms:
-        _STORM_CACHE = []
-        _STORM_TS = time.time()
-        return []
-
-    # ── Step 2: Forecast track ─────────────────────────────────────────────────
-    try:
-        p = {**common, "outFields": "STORMNAME"}
-        resp = _HTTP.get(_STORM_TRACK_URL, params=p, timeout=_T_STD)
-        resp.raise_for_status()
-        for feat in resp.json().get("features", []):
-            attrs = feat.get("attributes", {})
-            name = (attrs.get("STORMNAME") or "").strip().upper()
-            geom = feat.get("geometry") or {}
-            paths = geom.get("paths") or []
-            if name in storms and paths:
-                storms[name]["track"] = _ring_to_latlng(paths[0])
-    except Exception as exc:
-        logger.warning("ArcGIS storm track fetch failed: %s", exc)
-
-    # ── Step 3: Forecast uncertainty cone ─────────────────────────────────────
-    try:
-        p = {**common, "outFields": "STORMNAME"}
-        resp = _HTTP.get(_STORM_CONE_URL, params=p, timeout=_T_STD)
-        resp.raise_for_status()
-        for feat in resp.json().get("features", []):
-            attrs = feat.get("attributes", {})
-            name = (attrs.get("STORMNAME") or "").strip().upper()
-            geom = feat.get("geometry") or {}
-            rings = geom.get("rings") or []
-            if name in storms and rings:
-                storms[name]["cone"] = [_ring_to_latlng(r) for r in rings]
-    except Exception as exc:
-        logger.warning("ArcGIS storm cone fetch failed: %s", exc)
-
-    result = list(storms.values())
-    _STORM_CACHE = result
-    _STORM_TS = time.time()
-    return result
+        return result
 
 def _category_label(kt: int) -> str:
     """Convert max sustained wind speed (knots) to a human-readable category."""

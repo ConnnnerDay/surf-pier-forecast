@@ -1267,6 +1267,33 @@ def get_webauthn_credentials(user_id: int) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def get_account_credentials(user_id: int) -> dict[str, Any]:
+    """Return passkeys and linked social accounts in one DB round-trip.
+
+    Both tables are owned by the same user and rarely written to, so fetching
+    them together halves the number of connections opened on the account page.
+    """
+    conn = get_db()
+    try:
+        passkey_rows = conn.execute(
+            "SELECT * FROM webauthn_credentials WHERE user_id = ? ORDER BY created_at",
+            (user_id,),
+        ).fetchall()
+        social_rows = conn.execute(
+            "SELECT provider, email, created_at FROM social_accounts WHERE user_id = ?",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {
+        "passkeys": [dict(r) for r in passkey_rows],
+        "social_accounts": [
+            {"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]}
+            for r in social_rows
+        ],
+    }
+
+
 def get_webauthn_credential_by_id(credential_id: str) -> Optional[dict[str, Any]]:
     conn = get_db()
     row = conn.execute(

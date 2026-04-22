@@ -7,7 +7,7 @@ from typing import Any, Optional
 from flask import g, session
 
 from locations import get_location
-from storage.sqlite import get_preferences
+from storage.sqlite import get_account_credentials, get_preferences
 
 
 def get_prefs_cached(user_id: int) -> dict[str, Any]:
@@ -24,6 +24,23 @@ def get_prefs_cached(user_id: int) -> dict[str, Any]:
         g._prefs_cache = cache
     if user_id not in cache:
         cache[user_id] = get_preferences(user_id)
+    return cache[user_id]
+
+
+def get_account_credentials_cached(user_id: int) -> dict[str, Any]:
+    """Return passkeys + social accounts for ``user_id``, cached on Flask ``g``.
+
+    The account page and its error-rendering helpers all need the same two
+    tables.  Caching on ``g`` means we open one DB connection per request
+    regardless of how many times the helper is called (e.g. initial render
+    plus an error path that re-renders the full page).
+    """
+    cache: dict[int, dict[str, Any]] = getattr(g, "_account_creds_cache", None)
+    if cache is None:
+        cache = {}
+        g._account_creds_cache = cache
+    if user_id not in cache:
+        cache[user_id] = get_account_credentials(user_id)
     return cache[user_id]
 
 

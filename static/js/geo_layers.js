@@ -104,6 +104,8 @@
     var activeBaseId  = 'osm_standard';
     var overlayLayers = {};     // layerId → L.tileLayer (null if not loaded)
     var neCoastlineLayer = null; // L.geoJSON for Natural Earth coastlines
+    var _neCoastlineAbort = null; // AbortController for the in-flight coastlines fetch
+    var _wqAbort = null;          // AbortController for the water-quality fetch pair
     var featureLayers = {};     // layerId → L.layerGroup (null while fetch in-flight)
     var _featAborts   = {};     // layerId → AbortController (pending fetch)
     var initAttempted = false;
@@ -279,6 +281,7 @@
         if (!mapReady || !map) return;
 
         if (layerId === 'ne_coastlines') {
+            if (_neCoastlineAbort) { _neCoastlineAbort.abort(); _neCoastlineAbort = null; }
             if (neCoastlineLayer) map.removeLayer(neCoastlineLayer);
             return;
         }
@@ -303,9 +306,16 @@
             return;
         }
 
+        // Cancel any in-flight fetch so only the most recent request's response
+        // is used. Without this, toggling quickly causes two responses to race;
+        // the first to resolve may overwrite a later layer that was already added.
+        if (_neCoastlineAbort) { _neCoastlineAbort.abort(); }
+        _neCoastlineAbort = new AbortController();
+        var signal = _neCoastlineAbort.signal;
+
         // Fetch the full global 110m dataset (no bbox) — small enough (~300 KB)
         // that clipping by viewport would only hide coastlines after panning.
-        fetch(NE_COASTLINES_ENDPOINT)
+        fetch(NE_COASTLINES_ENDPOINT, { signal: signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (geojson) {
                 if (!geojson || !mapReady || !map) return;
@@ -319,6 +329,7 @@
                 }).addTo(map);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[geo_layers] NE coastlines fetch failed:', err);
             });
     }
@@ -467,10 +478,15 @@
         var faoUrl = '/api/v1/geo/hdx-fao?lat=' + lat + '&lng=' + lng +
                      (species ? '&species=' + encodeURIComponent(species) : '');
 
+        if (_wqAbort) { _wqAbort.abort(); }
+        _wqAbort = new AbortController();
+        var signal = _wqAbort.signal;
+
         Promise.all([
-            fetch(wqUrl).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
-            fetch(faoUrl).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+            fetch(wqUrl,  { signal: signal }).then(function (r) { return r.ok ? r.json() : null; }).catch(function (e) { return (e && e.name === 'AbortError') ? 'aborted' : null; }),
+            fetch(faoUrl, { signal: signal }).then(function (r) { return r.ok ? r.json() : null; }).catch(function (e) { return (e && e.name === 'AbortError') ? 'aborted' : null; })
         ]).then(function (results) {
+            if (results[0] === 'aborted' || results[1] === 'aborted') return;
             var wqResp  = results[0];
             var faoResp = results[1];
             _hideWQLoading();
