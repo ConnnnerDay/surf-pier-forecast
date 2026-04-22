@@ -487,7 +487,7 @@
     function makeAIPickIcon(habitatType) {
         var def   = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
         var html  = '<span class="fmap-ai-dot" style="--ai-c:' + def.color + '"></span>';
-        return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [14, 14], iconAnchor: [7, 7] });
+        return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [16, 16], iconAnchor: [8, 8] });
     }
 
     var currentSpeciesMeta = null;
@@ -629,14 +629,14 @@
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
         shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 10 },
-        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false, minZoom: 9  },
+        point:        { label: 'Point / Headland',  color: '#60a5fa', habitat: false, minZoom: 9  },
         beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
         tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true,  minZoom: 9  },
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true,  minZoom: 9  },
         mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true,  minZoom: 9  },
         kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true,  minZoom: 9  },
-        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false, minZoom: 10 },
+        buoy:         { label: 'Navigation Buoy',   color: '#f43f5e', habitat: false, minZoom: 10 },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false, minZoom: 9  },
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 11 },
         boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 10 },
@@ -677,7 +677,8 @@
         pier:         'P',  jetty:      'J',  bridge:    'B',  reef:  'R',
         oyster_reef:  'O',  wreck:      'W',  inlet:     'C',  marina:'M',
         shoal:        'S',  point:      '^',  beach:     '~',  buoy:  '·',
-        fishing:      'F',  fishing_shop:'$', boat_ramp: 'L',  dive_site: 'D'
+        fishing:      'F',  fishing_shop:'$', boat_ramp: 'L',  dive_site: 'D',
+        seawall:      '='
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -722,12 +723,12 @@
         var color     = def.color;
         var isHabitat = def.habitat;
         // Habitat = rotating diamond (no letter); Structure = circle with type letter
-        var sz    = isHabitat ? 14 : 18;
+        var sz    = isHabitat ? 17 : 22;
         var br    = isHabitat ? '3px' : '50%';
         var rot   = isHabitat ? 'transform:rotate(45deg)' : '';
         var lbl   = isHabitat ? '' : (SPOT_LABELS[type] || '');
         var inner = lbl
-            ? '<span style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.95);' +
+            ? '<span style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.97);' +
               'font-family:system-ui,sans-serif;line-height:1;pointer-events:none;' +
               'letter-spacing:-0.5px">' + lbl + '</span>'
             : '';

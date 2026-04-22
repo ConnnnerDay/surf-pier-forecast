@@ -4197,17 +4197,17 @@ h2::before {
 }
 .fmap-ai-dot {
   display: block;
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
   background: var(--ai-c, #f59e0b);
-  border: 2px solid rgba(255,255,255,0.6);
+  border: 2px solid rgba(255,255,255,0.85);
   box-shadow: 0 0 8px var(--ai-c, #f59e0b), 0 0 18px var(--ai-c, #f59e0b)44;
-  animation: fmap-ai-pulse 2.4s ease-in-out infinite;
+  animation: fmap-ai-pulse 3s ease-in-out infinite;
 }
 @keyframes fmap-ai-pulse {
   0%, 100% { transform: scale(1);    opacity: 1; }
-  50%       { transform: scale(1.25); opacity: 0.8; }
+  50%       { transform: scale(1.12); opacity: 0.85; }
 }
 .fmap-ai-tooltip .fmap-ai-tip-label {
   display: inline-block;
@@ -4245,7 +4245,7 @@ h2::before {
   width: 10px;
   height: 10px;
   border-radius: 3px;
-  border: 1.5px solid rgba(255,255,255,0.45);
+  border: 2px solid rgba(255,255,255,0.82);
 }
 
 /* ── Zoom-in hint overlay ── */
