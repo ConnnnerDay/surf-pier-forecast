@@ -337,14 +337,20 @@ def openapi_spec() -> Any:
     return jsonify(build_openapi_spec())
 
 
+_DEPRECATION_HEADER = "true"  # RFC 8594 §3 — value "true" marks as deprecated without a date
+
+
 @bp.route("/api/preferences", methods=["GET", "POST"])
 def preferences() -> Any:
-    """Legacy profile endpoint (compatible shape)."""
+    """Legacy profile endpoint — superseded by /api/v1/profile."""
     if g.user is None:
         return jsonify({"error": "Not logged in"}), 401
     uid = g.user["id"]
     if request.method == "GET":
-        return jsonify(get_preferences(uid))
+        resp = jsonify(get_preferences(uid))
+        resp.headers["Deprecation"] = _DEPRECATION_HEADER
+        resp.headers["Link"] = '</api/v1/profile>; rel="successor-version"'
+        return resp
 
     data = request.get_json(silent=True) or {}
     try:
@@ -357,7 +363,10 @@ def preferences() -> Any:
         save_preferences(uid, **updates)
         if "location_id" in updates and updates["location_id"]:
             session["location_id"] = updates["location_id"]
-    return jsonify({"ok": True})
+    resp = jsonify({"ok": True})
+    resp.headers["Deprecation"] = _DEPRECATION_HEADER
+    resp.headers["Link"] = '</api/v1/profile>; rel="successor-version"'
+    return resp
 
 
 @bp.route("/api/v1/profile", methods=["GET", "POST"])
@@ -418,7 +427,7 @@ def page_layout_v1() -> Any:
 
 @bp.route("/api/log", methods=["GET", "POST"])
 def log() -> Any:
-    """Legacy log endpoint (compatible shape)."""
+    """Legacy log endpoint — superseded by /api/v1/log."""
     if g.user is None:
         return jsonify({"error": "Not logged in"}), 401
     uid = g.user["id"]
@@ -426,7 +435,10 @@ def log() -> Any:
     if request.method == "GET":
         entries = get_log_entries(uid, loc_id)
         stats = get_log_stats(uid, loc_id) if loc_id else {}
-        return jsonify({"entries": entries, "stats": stats})
+        resp = jsonify({"entries": entries, "stats": stats})
+        resp.headers["Deprecation"] = _DEPRECATION_HEADER
+        resp.headers["Link"] = '</api/v1/log>; rel="successor-version"'
+        return resp
     data = request.get_json(silent=True) or {}
     try:
         payload = LogCreatePayload.from_json(data, loc_id)
@@ -439,7 +451,10 @@ def log() -> Any:
         size=payload.size,
         notes=payload.notes,
     )
-    return jsonify({"ok": True, "id": entry_id}), 201
+    resp = jsonify({"ok": True, "id": entry_id})
+    resp.headers["Deprecation"] = _DEPRECATION_HEADER
+    resp.headers["Link"] = '</api/v1/log>; rel="successor-version"'
+    return resp, 201
 
 
 @bp.route("/api/v1/log", methods=["GET", "POST"])
@@ -517,7 +532,7 @@ def log_delete_v1(entry_id: int) -> Any:
 
 @bp.route("/api/forecast")
 def forecast() -> Any:
-    """Legacy forecast endpoint with support for location_id + force_refresh."""
+    """Legacy forecast endpoint — superseded by /api/v1/forecast."""
     session_loc = get_session_location()
     fallback = session_loc["id"] if session_loc else ""
     query = ForecastQuery.from_request(request.args, fallback_location_id=fallback)
@@ -531,7 +546,10 @@ def forecast() -> Any:
         return jsonify({"error": err.message}), err.status
 
     # Keep legacy shape: return raw forecast document
-    return jsonify(payload["forecast"])
+    resp = jsonify(payload["forecast"])
+    resp.headers["Deprecation"] = _DEPRECATION_HEADER
+    resp.headers["Link"] = '</api/v1/forecast>; rel="successor-version"'
+    return resp
 
 
 @bp.route("/api/v1/forecast", methods=["GET"])
@@ -588,11 +606,9 @@ def forecast_outlook_v1(location_id: str) -> Any:
         return _json_error(ApiError("rate_limited", "Too many requests", status=429))
     _forecast_sub_record_attempt()
     user_id = g.user["id"] if g.user else None
+    # load_cached_forecast already falls back to the anonymous (user_id=0)
+    # pre-warmed cache internally; no second call needed.
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
-    if not forecast_data and user_id is not None:
-        # Dashboard renders from the shared cache namespace today; fall back so
-        # authenticated users can still hydrate lazy sections.
-        forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
         return _json_error(
             ApiError("forecast_not_cached", "No cached forecast available", status=404)
@@ -618,8 +634,6 @@ def forecast_solunar_v1(location_id: str) -> Any:
     _forecast_sub_record_attempt()
     user_id = g.user["id"] if g.user else None
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
-    if not forecast_data and user_id is not None:
-        forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
         return _json_error(
             ApiError("forecast_not_cached", "No cached forecast available", status=404)
@@ -637,7 +651,7 @@ def forecast_solunar_v1(location_id: str) -> Any:
 
 @bp.route("/api/refresh", methods=["POST"])
 def refresh() -> Any:
-    """Queue generation of a new forecast and return immediately."""
+    """Legacy forecast refresh — superseded by POST /api/v1/forecast?force_refresh=1."""
     location = get_session_location()
     if location is None:
         return redirect(url_for("views.setup"))
@@ -645,7 +659,10 @@ def refresh() -> Any:
         return redirect(url_for("views.index"))
     record_refresh_attempt()
     enqueue_forecast_refresh(location["id"], user_id=None)
-    return redirect(url_for("views.index", cached="refreshing"))
+    resp = redirect(url_for("views.index", cached="refreshing"))
+    resp.headers["Deprecation"] = _DEPRECATION_HEADER
+    resp.headers["Link"] = '</api/v1/forecast>; rel="successor-version"'
+    return resp
 
 
 @bp.route("/api/v1/regulations/refresh", methods=["POST"])
@@ -1009,29 +1026,40 @@ _SPECIES_LOWER_INDEX: Optional[list[tuple[str, frozenset, Any]]] = None
 # mapping once reduces the per-request cost to a single dict lookup for the
 # unfiltered case, and to iterating a much smaller per-location list for
 # filtered queries.
-_LOC_SPECIES_ALL: Optional[dict[str, List]] = None  # loc_id → [species, ...]
+_LOC_SPECIES_ALL: Optional[dict[str, list]] = None  # loc_id → [species, ...]
+# Locks guard the one-time O(n) builds below.  Double-checked locking (check →
+# acquire → check again) prevents concurrent requests from each building the
+# same index on a cold start, which would waste CPU and memory.
+_LOC_SPECIES_LOCK = threading.Lock()
+_SPECIES_NAMES_LOCK = threading.Lock()
+_SPECIES_LOWER_LOCK = threading.Lock()
 
 
-def _get_loc_species_all() -> dict[str, List]:
+def _get_loc_species_all() -> dict[str, list]:
     """Return {loc_id: [species_dict, ...]} for every location using all species."""
     global _LOC_SPECIES_ALL
-    if _LOC_SPECIES_ALL is None:
-        from storage.species_loader import SPECIES_DB
-        from locations import COASTAL_LOCATIONS
+    if _LOC_SPECIES_ALL is not None:
+        return _LOC_SPECIES_ALL
+    with _LOC_SPECIES_LOCK:
+        if _LOC_SPECIES_ALL is None:
+            from storage.species_loader import SPECIES_DB
+            from locations import COASTAL_LOCATIONS
 
-        _LOC_SPECIES_ALL = {
-            loc["id"]: [s for s in SPECIES_DB if _species_present_at(s, loc)]
-            for loc in COASTAL_LOCATIONS
-        }
+            _LOC_SPECIES_ALL = {
+                loc["id"]: [s for s in SPECIES_DB if _species_present_at(s, loc)]
+                for loc in COASTAL_LOCATIONS
+            }
     return _LOC_SPECIES_ALL
 
 
 def _get_all_species_names() -> list:
     global _SPECIES_NAMES_CACHE
-    if _SPECIES_NAMES_CACHE is None:
-        from storage.species_loader import SPECIES_DB
-
-        _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
+    if _SPECIES_NAMES_CACHE is not None:
+        return _SPECIES_NAMES_CACHE
+    with _SPECIES_NAMES_LOCK:
+        if _SPECIES_NAMES_CACHE is None:
+            from storage.species_loader import SPECIES_DB
+            _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
     return _SPECIES_NAMES_CACHE
 
 
@@ -1042,17 +1070,19 @@ def _get_species_lower_index() -> "list[tuple[str, frozenset, Any]]":
     runs at filter time.
     """
     global _SPECIES_LOWER_INDEX
-    if _SPECIES_LOWER_INDEX is None:
-        from storage.species_loader import SPECIES_DB
-
-        _SPECIES_LOWER_INDEX = [
-            (
-                s["name"].lower(),
-                frozenset(c.lower() for c in s.get("categories", [])),
-                s,
-            )
-            for s in SPECIES_DB
-        ]
+    if _SPECIES_LOWER_INDEX is not None:
+        return _SPECIES_LOWER_INDEX
+    with _SPECIES_LOWER_LOCK:
+        if _SPECIES_LOWER_INDEX is None:
+            from storage.species_loader import SPECIES_DB
+            _SPECIES_LOWER_INDEX = [
+                (
+                    s["name"].lower(),
+                    frozenset(c.lower() for c in s.get("categories", [])),
+                    s,
+                )
+                for s in SPECIES_DB
+            ]
     return _SPECIES_LOWER_INDEX
 
 
@@ -1066,6 +1096,13 @@ _FMAP_CACHE: dict[tuple, dict[str, Any]] = {}
 _FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month rolls over
 _FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
 _FMAP_CACHE_LOCK = threading.Lock()  # guards evict+set so the cap is never exceeded
+
+# Singleflight: when the cache is cold and N concurrent requests arrive with the
+# same params, only one thread runs the scoring loop; the rest wait on an Event
+# and then read from the cache that the winner populated.
+# dict[cache_key, threading.Event] — entry present means "compute in progress".
+_FMAP_INFLIGHT: dict[tuple, threading.Event] = {}
+_FMAP_INFLIGHT_LOCK = threading.Lock()
 
 _SEASON_MONTHS: dict[str, list[int]] = {
     "spring": [3, 4, 5],
@@ -1120,6 +1157,10 @@ def fishing_map_data() -> Any:
         Species category filter (e.g. 'shark', 'game_fish', 'reef_fish').
     month   : int 1-12, optional
         Override current month (for testing / future planning).
+    sw_lat, sw_lng, ne_lat, ne_lng : float, optional
+        Viewport bounding box.  When supplied only locations inside the box
+        are returned.  The full scored set is still cached server-side, so
+        bbox filtering is a cheap post-cache slice with no extra scoring cost.
     """
     # -- parse & sanitise params -----------------------------------------------
     species_q = request.args.get("species", "").strip()[:100].lower()
@@ -1150,6 +1191,22 @@ def fishing_map_data() -> Any:
     except (ValueError, TypeError):
         pass
 
+    # Viewport bounding box — optional; applied as a post-cache slice so the
+    # expensive scoring loop always covers all locations (cache hit rate stays
+    # high) but the response payload is trimmed to what's actually visible.
+    _bbox: Optional[tuple[float, float, float, float]] = None
+    try:
+        _sw_lat = request.args.get("sw_lat")
+        _sw_lng = request.args.get("sw_lng")
+        _ne_lat = request.args.get("ne_lat")
+        _ne_lng = request.args.get("ne_lng")
+        if _sw_lat and _sw_lng and _ne_lat and _ne_lng:
+            _b = (float(_sw_lat), float(_sw_lng), float(_ne_lat), float(_ne_lng))
+            if -90 <= _b[0] < _b[2] <= 90 and -180 <= _b[1] < _b[3] <= 180:
+                _bbox = _b
+    except (ValueError, TypeError):
+        pass
+
     try:
         month = int(request.args.get("month", "0"))
         if not 1 <= month <= 12:
@@ -1169,6 +1226,9 @@ def fishing_map_data() -> Any:
     include_tide_hint = tide_q in {"incoming", "outgoing", "high", "low"}
 
     # ── Cache check — return pre-built response dict if still fresh ───────────
+    # Bbox is intentionally excluded from the cache key: the full scored set is
+    # cached once, then the viewport slice is applied on every response.  This
+    # keeps the cache compact (one entry per filter combo, not per viewport).
     _fmap_key = (
         species_q,
         coast_q,
@@ -1182,14 +1242,61 @@ def fishing_map_data() -> Any:
     )
     _cached_response = _fmap_cache_get(_fmap_key)
     if _cached_response is not None:
-        if has_species_q and _cached_response.get("species_names"):
-            _hit_data = {**_cached_response, "species_names": []}
-            resp = jsonify(_hit_data)
-        else:
-            resp = jsonify(_cached_response)
+        _hit_data = _cached_response
+        if _bbox is not None:
+            _bsw_lat, _bsw_lng, _bne_lat, _bne_lng = _bbox
+            _hit_data = {
+                **_cached_response,
+                "locations": [
+                    loc for loc in _cached_response["locations"]
+                    if _bsw_lat <= loc["lat"] <= _bne_lat
+                    and _bsw_lng <= loc["lng"] <= _bne_lng
+                ],
+            }
+        if has_species_q and _hit_data.get("species_names"):
+            _hit_data = {**_hit_data, "species_names": []}
+        resp = jsonify(_hit_data)
         resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
         resp.headers["X-Cache"] = "HIT"
         return resp
+
+    # ── Singleflight: one thread computes; the rest wait and read from cache ─────
+    # Check whether another thread is already computing the same key.
+    # If so, wait for it to finish and return the cached result.
+    # If not, register ourselves as the computing thread.
+    _my_event: Optional[threading.Event] = None
+    with _FMAP_INFLIGHT_LOCK:
+        _existing_event = _FMAP_INFLIGHT.get(_fmap_key)
+        if _existing_event is not None:
+            _wait_event = _existing_event
+        else:
+            _my_event = threading.Event()
+            _FMAP_INFLIGHT[_fmap_key] = _my_event
+            _wait_event = None
+
+    if _wait_event is not None:
+        # Another thread is computing — wait up to 8 s then fall through
+        _wait_event.wait(timeout=8.0)
+        _waited_result = _fmap_cache_get(_fmap_key)
+        if _waited_result is not None:
+            _hit_data = _waited_result
+            if _bbox is not None:
+                _bsw_lat, _bsw_lng, _bne_lat, _bne_lng = _bbox
+                _hit_data = {
+                    **_waited_result,
+                    "locations": [
+                        loc for loc in _waited_result["locations"]
+                        if _bsw_lat <= loc["lat"] <= _bne_lat
+                        and _bsw_lng <= loc["lng"] <= _bne_lng
+                    ],
+                }
+            if has_species_q and _hit_data.get("species_names"):
+                _hit_data = {**_hit_data, "species_names": []}
+            resp = jsonify(_hit_data)
+            resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+            resp.headers["X-Cache"] = "HIT-WAIT"
+            return resp
+        # Timed out or spurious wake — fall through to compute ourselves
 
     # -- filter the species DB once -------------------------------------------
     # Use _get_species_lower_index() so .lower() is never called at filter time;
@@ -1324,17 +1431,26 @@ def fishing_map_data() -> Any:
     # Autocomplete dropdown names — served from pre-computed cache
     species_names = _get_all_species_names()
 
-    # Monthly activity summary — use pre-computed _all_scores[name][m] so
-    # _month_score is never called here at all (it was already called once
-    # per species above when building _all_scores).
+    # Monthly activity summary.
+    # Pre-compute per-location "best score for each month" as a 13-element list
+    # (index 0 unused; indices 1–12 = Jan–Dec) so the outer month loop is just
+    # a threshold check on an int rather than a max() over species every time.
+    # This reduces the summary from O(12 × locs × species) → O(locs × species + 12 × locs).
+    _loc_monthly_best: dict[str, list[int]] = {}
+    for _lid, _lsp in _loc_sp_map.items():
+        if not _lsp:
+            _loc_monthly_best[_lid] = [0] * 13
+        else:
+            _best_by_month = [0] * 13
+            for _m in range(1, 13):
+                _best_by_month[_m] = max(_all_scores[s["name"]][_m] for s in _lsp)
+            _loc_monthly_best[_lid] = _best_by_month
+
     monthly_summary = []
     for m in range(1, 13):
         peak_c = good_c = fair_c = 0
         for loc in results:
-            loc_sp = _loc_sp_map.get(loc["id"], [])
-            if not loc_sp:
-                continue
-            best = max(_all_scores[s["name"]][m] for s in loc_sp)
+            best = _loc_monthly_best.get(loc["id"], [0] * 13)[m]
             if best >= 100:
                 peak_c += 1
             elif best >= 65:
@@ -1392,11 +1508,33 @@ def fishing_map_data() -> Any:
         "trending_species": trending_species,
         "species_meta": species_meta,
     }
-    _fmap_cache_set(_fmap_key, _response_data)
+    # Signal waiting singleflight threads in a finally so they are always
+    # released — even if _fmap_cache_set raises (e.g. pickle error).
+    # Exceptions in the scoring computation above propagate normally; the
+    # 8-second wait timeout in those threads is the fallback for that case.
+    try:
+        _fmap_cache_set(_fmap_key, _response_data)
+    finally:
+        if _my_event is not None:
+            with _FMAP_INFLIGHT_LOCK:
+                _FMAP_INFLIGHT.pop(_fmap_key, None)
+            _my_event.set()
 
+    # Apply bbox slice on the MISS path (same logic as the HIT path above).
+    _send_data = _response_data
+    if _bbox is not None:
+        _bsw_lat, _bsw_lng, _bne_lat, _bne_lng = _bbox
+        _send_data = {
+            **_response_data,
+            "locations": [
+                loc for loc in results
+                if _bsw_lat <= loc["lat"] <= _bne_lat
+                and _bsw_lng <= loc["lng"] <= _bne_lng
+            ],
+        }
     if has_species_q:
-        _response_data = {**_response_data, "species_names": []}
-    resp = jsonify(_response_data)
+        _send_data = {**_send_data, "species_names": []}
+    resp = jsonify(_send_data)
     resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
     resp.headers["X-Cache"] = "MISS"
     return resp
@@ -1505,6 +1643,9 @@ def structure_spots() -> Any:
 # ── Community map catch endpoints ─────────────────────────────────────────────
 
 
+_MAP_CATCHES_MAX_LIMIT = 500  # hard cap on catches returned per bbox request
+
+
 @bp.route("/api/map/catches", methods=["GET"])
 def map_catches_list() -> Any:
     """Return public catch pins in a bounding box (+ viewer's own private ones).
@@ -1514,6 +1655,7 @@ def map_catches_list() -> Any:
     sw_lat, sw_lng, ne_lat, ne_lng : float  – viewport bounding box (required)
     species   : str  – optional case-insensitive species filter
     days_back : int  – how many days of history to include (default 90, max 365)
+    limit     : int  – max pins returned (default 200, max 500)
     """
     try:
         sw_lat = float(request.args["sw_lat"])
@@ -1531,6 +1673,13 @@ def map_catches_list() -> Any:
     except (ValueError, TypeError):
         days_back = 90
 
+    try:
+        limit = min(int(request.args.get("limit", 200)), _MAP_CATCHES_MAX_LIMIT)
+        if limit < 1:
+            limit = 200
+    except (ValueError, TypeError):
+        limit = 200
+
     species_filter = request.args.get("species", "").strip()[:80]
     viewer_user_id = g.user["id"] if g.get("user") else None
 
@@ -1542,6 +1691,7 @@ def map_catches_list() -> Any:
         viewer_user_id=viewer_user_id,
         species_filter=species_filter,
         days_back=days_back,
+        limit=limit,
     )
     return jsonify({"catches": catches})
 

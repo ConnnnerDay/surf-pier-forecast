@@ -11,14 +11,26 @@ import json
 import logging
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 from threading import Lock
 from time import monotonic
 from typing import Any, Optional
 
-from storage.reg_scraper import scrape_regulation as _scrape_regulation
+from storage.reg_scraper import (
+    get_regulation_stale as _get_regulation_stale,
+    scrape_regulation as _scrape_regulation,
+)
 from storage.species_loader import SPECIES_DB
+
+# Single-worker pool for background regulation re-scrapes.  Daemon threads so
+# the process exits cleanly without waiting for in-flight scrapes.
+_reg_bg_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="reg-refresh")
+# Track which (species, state) pairs have a refresh already queued so we never
+# submit the same pair twice while it is still in flight.
+_reg_refresh_pending: set[tuple[str, str]] = set()
+_reg_refresh_lock = Lock()
 
 _STALE_MONTHS = 6  # snapshot data older than this is flagged as potentially outdated
 
@@ -432,14 +444,44 @@ def should_hide_from_forecast(status: str) -> bool:
     """
     return status != "legal"
 
+def _bg_refresh_regulation(species_name: str, state_key: str) -> None:
+    """Background task: scrape and cache; remove from pending set when done."""
+    try:
+        _scrape_regulation(species_name, state_key)
+    except Exception:
+        logger.debug(
+            "Background regulation refresh failed for %r/%r",
+            species_name,
+            state_key,
+        )
+    finally:
+        with _reg_refresh_lock:
+            _reg_refresh_pending.discard((species_name, state_key))
+
+
+def _schedule_reg_refresh(species_name: str, state_key: str) -> None:
+    """Submit a background regulation refresh if one is not already in flight."""
+    key = (species_name, state_key)
+    with _reg_refresh_lock:
+        if key in _reg_refresh_pending:
+            return
+        _reg_refresh_pending.add(key)
+    try:
+        _reg_bg_executor.submit(_bg_refresh_regulation, species_name, state_key)
+    except RuntimeError:
+        with _reg_refresh_lock:
+            _reg_refresh_pending.discard(key)
+
+
 def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]:
     """Look up fishing regulations for a species in a state.
 
-    Tries in order:
-      1. Live scrape from the official state agency website (cached 24 h).
-      2. Local JSON snapshot (storage/regulations_data.json).
-      3. Returns a bare payload with just the official-source link so the
-         modal can still point the angler somewhere useful.
+    Uses stale-while-revalidate for the live scraper:
+      • If a fresh cached result exists, return it immediately.
+      • If a *stale* cached result exists, return it immediately and schedule
+        a background re-scrape so the next caller gets a fresh result.
+      • If no cache at all (first-time), do a blocking scrape (unavoidable).
+      • Falls back to the local JSON snapshot, then a link-only payload.
     """
     state_key = (state or "").upper().strip()
     if not state_key:
@@ -449,19 +491,39 @@ def lookup_regulation(species_name: str, state: str) -> Optional[dict[str, str]]
 
     payload = _base_payload(state_key)
 
-    # ── 1. Try live scraper ──────────────────────────────────────────
+    # ── 1. Try live scraper (stale-while-revalidate) ─────────────────
     try:
-        scraped = _scrape_regulation(species_name, state_key)
-        if scraped:
-            payload.update(scraped)
-            payload["data_status"] = "live"
-            payload["is_stale"] = False
-            # Make sure official_source is always set
-            if not payload.get("official_source"):
-                payload["official_source"] = _STATE_REGULATION_SOURCES.get(
-                    state_key, _FALLBACK_SOURCE
-                )
-            return payload
+        stale_data, is_fresh = _get_regulation_stale(species_name, state_key)
+
+        if stale_data is not None:
+            # We have something in cache (fresh or stale).  Return immediately.
+            if not is_fresh:
+                # Data exists but is expired — refresh it in the background so
+                # the next request gets a fresh result without blocking this one.
+                _schedule_reg_refresh(species_name, state_key)
+
+            if stale_data:  # non-empty dict means the scraper found a result
+                payload.update(stale_data)
+                payload["data_status"] = "live" if is_fresh else "live_stale"
+                payload["is_stale"] = not is_fresh
+                if not payload.get("official_source"):
+                    payload["official_source"] = _STATE_REGULATION_SOURCES.get(
+                        state_key, _FALLBACK_SOURCE
+                    )
+                return payload
+            # stale_data == {} means a previous scrape found nothing; skip to snapshot.
+        else:
+            # Nothing in cache at all — blocking scrape (first-time only).
+            scraped = _scrape_regulation(species_name, state_key)
+            if scraped:
+                payload.update(scraped)
+                payload["data_status"] = "live"
+                payload["is_stale"] = False
+                if not payload.get("official_source"):
+                    payload["official_source"] = _STATE_REGULATION_SOURCES.get(
+                        state_key, _FALLBACK_SOURCE
+                    )
+                return payload
     except Exception:
         logger.warning(
             "Live regulation scraper failed for %r/%r; falling back to snapshot",

@@ -49,6 +49,13 @@
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
     var _markerIconCache      = {};   // "activity|0/1" → L.divIcon (10 combinations max)
+    // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
+    // These layers clear and redraw on every fetch; caching the icon objects avoids
+    // re-running L.divIcon() for every marker on every refresh.
+    // Key format is layer-prefix + variant (e.g. 'sst|#22c55e|72').
+    // Capped at 512 entries; when full the oldest 256 are evicted.
+    var _overlayIconCache     = {};
+    var _overlayIconKeys      = [];   // insertion-ordered keys for eviction
     var _elStructSpinner      = null; // cached DOM ref — fmap-struct-spinner
     var _elStructError        = null; // cached DOM ref — fmap-struct-error
     var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
@@ -58,6 +65,7 @@
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
     var _mainAbort           = null; // AbortController for the in-flight /api/fishing-map fetch
+    var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -247,6 +255,10 @@
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
+            // Re-fetch location markers so the viewport bbox is sent to the server;
+            // the server returns only visible locations from its cache, keeping the
+            // response small without an extra scoring pass.
+            scheduleFetch();
         });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
@@ -608,6 +620,23 @@
             _aiCacheKeys.push(key);
         }
         aiCache[key] = data;
+    }
+
+    // Overlay icon cache — returns a cached L.divIcon, creating it on first use.
+    // Evicts oldest 256 entries when the 512-entry cap is reached so long-running
+    // sessions don't accumulate unbounded icon objects.
+    function _cachedDivIcon(key, opts) {
+        if (Object.prototype.hasOwnProperty.call(_overlayIconCache, key)) {
+            return _overlayIconCache[key];
+        }
+        if (_overlayIconKeys.length >= 512) {
+            var evict = _overlayIconKeys.splice(0, 256);
+            for (var i = 0; i < evict.length; i++) delete _overlayIconCache[evict[i]];
+        }
+        var icon = L.divIcon(opts);
+        _overlayIconCache[key] = icon;
+        _overlayIconKeys.push(key);
+        return icon;
     }
 
     // ─── OSM Fishing Spots (Overpass API) ─────────────────────────────────────
@@ -1642,7 +1671,13 @@
                 // Update icon and tooltip in-place — no DOM insert/remove
                 var entry = _markerIndex[loc.id];
                 var prevActivity = entry.data.activity;
-                entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
+                var prevSel = entry.selected;
+                // Only call setIcon when something visible actually changed.
+                // makeIcon results are cached, but setIcon still touches the DOM.
+                if (loc.activity !== prevActivity || isSel !== prevSel) {
+                    entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
+                    entry.selected = isSel;
+                }
                 entry.data = loc;          // refresh data so click handler gets new species/scores
                 // Resync tooltip text if activity label changed
                 if (loc.activity !== prevActivity) {
@@ -1677,7 +1712,7 @@
                 { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
             );
 
-            var entry = { id: loc.id, leaflet: m, data: loc };
+            var entry = { id: loc.id, leaflet: m, data: loc, selected: isSel };
             markers.push(entry);
             _markerIndex[loc.id] = entry;
         });
@@ -1693,9 +1728,11 @@
         if (prevId && prevId !== selectedId && _markerIndex[prevId]) {
             _markerIndex[prevId].leaflet.setIcon(
                 makeIcon(_markerIndex[prevId].data.activity, false));
+            _markerIndex[prevId].selected = false;
         }
         if (_markerIndex[selectedId]) {
             _markerIndex[selectedId].leaflet.setIcon(makeIcon(loc.activity, true));
+            _markerIndex[selectedId].selected = true;
         }
 
         map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.55 });
@@ -1771,6 +1808,7 @@
         if (prevId && _markerIndex[prevId]) {
             _markerIndex[prevId].leaflet.setIcon(
                 makeIcon(_markerIndex[prevId].data.activity, false));
+            _markerIndex[prevId].selected = false;
         }
     }
 
@@ -1933,6 +1971,16 @@
         if (activeMaxTemp) params.set('max_water_temp', activeMaxTemp);
         // Tell server to omit the 895-name species list once the client has it
         if (allSpecies.length > 0) params.set('has_species', '1');
+        // Send viewport bounds so the server returns only visible locations.
+        // The server caches the full scored set and slices cheaply by bbox,
+        // so this cuts response payload by ~80% when zoomed into one region.
+        if (map) {
+            var bounds = map.getBounds();
+            params.set('sw_lat', bounds.getSouth().toFixed(4));
+            params.set('sw_lng', bounds.getWest().toFixed(4));
+            params.set('ne_lat', bounds.getNorth().toFixed(4));
+            params.set('ne_lng', bounds.getEast().toFixed(4));
+        }
 
         var url = API_URL + (params.toString() ? '?' + params.toString() : '');
 
@@ -2263,17 +2311,23 @@
 
     function loadCommunityPins() {
         if (!communityLayerOn || !map || !communityLayer) return;
+
+        // Cancel any in-flight request so rapid panning doesn't pile up stale responses.
+        if (_communityAbort) { _communityAbort.abort(); }
+        _communityAbort = new AbortController();
+
         var b    = map.getBounds();
         var sw   = b.getSouthWest();
         var ne   = b.getNorthEast();
         var url  = '/api/map/catches?sw_lat=' + Math.round(sw.lat * 100) / 100 +
                    '&sw_lng=' + Math.round(sw.lng * 100) / 100 +
                    '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
-                   '&ne_lng=' + Math.round(ne.lng * 100) / 100;
+                   '&ne_lng=' + Math.round(ne.lng * 100) / 100 +
+                   '&limit=200';
         // When the user has filtered by species, show only matching catches on the map.
         if (activeSpecies) url += '&species=' + encodeURIComponent(activeSpecies);
 
-        fetch(url)
+        fetch(url, { signal: _communityAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (data) {
                 communityData = data.catches || [];
@@ -2297,6 +2351,7 @@
                 }
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return; // superseded by newer fetch
                 console.warn('[fishing-map] loadCommunityPins failed:', err);
             });
     }
@@ -2890,11 +2945,11 @@
                 sstLayer.clearLayers();
                 (data.stations || []).forEach(function (s) {
                     var color = _sstColor(s.sst_f);
-                    var icon = L.divIcon({
+                    var tempLabel = s.sst_f != null ? Math.round(s.sst_f) + '°' : '?';
+                    var icon = _cachedDivIcon('sst|' + color + '|' + tempLabel, {
                         className: '',
                         html: '<div class="fmap-sst-dot" style="background:' + color + '">' +
-                              (s.sst_f != null ? Math.round(s.sst_f) + '°' : '?') +
-                              '</div>',
+                              tempLabel + '</div>',
                         iconSize:    [34, 34],
                         iconAnchor:  [17, 17],
                         popupAnchor: [0, -18],
@@ -3304,7 +3359,7 @@
                     var tempStr  = st.temp_f != null ? st.temp_f + '°F' : '–';
 
                     // Small circle with flight-category color + temp label
-                    var icon = L.divIcon({
+                    var icon = _cachedDivIcon('metar|' + catColor + '|' + tempStr, {
                         className: '',
                         html: '<div class="fmap-metar-dot" style="border-color:' + catColor + '">' +
                               '<span class="fmap-metar-temp">' + tempStr + '</span>' +
@@ -3478,7 +3533,7 @@
 
                 gauges.forEach(function (g) {
                     var color = g.status_color || '#22c55e';
-                    var icon  = L.divIcon({
+                    var icon  = _cachedDivIcon('gauge|' + color, {
                         className: '',
                         html: '<div class="fmap-gauge-dot" style="background:' + color + '"></div>',
                         iconSize:   [14, 14],
@@ -3573,11 +3628,12 @@
 
                 var ICONS = { hail: '🌨', tornado: '🌪', wind: '💨' };
                 reports.forEach(function (rpt) {
-                    var color = rpt.color || '#facc15';
-                    var icon  = L.divIcon({
+                    var color    = rpt.color || '#facc15';
+                    var rptEmoji = ICONS[rpt.type] || '⚡';
+                    var icon  = _cachedDivIcon('srpt|' + color + '|' + (rpt.type || ''), {
                         className: '',
                         html: '<div class="fmap-storm-rpt-dot" style="background:' + color + '">' +
-                              (ICONS[rpt.type] || '⚡') + '</div>',
+                              rptEmoji + '</div>',
                         iconSize:   [22, 22],
                         iconAnchor: [11, 11],
                     });
@@ -3987,9 +4043,11 @@
                 if (!aqiOn || !map || !data) return;
                 aqiLayer.clearLayers();
                 (data.stations || []).forEach(function (s) {
-                    var icon = L.divIcon({
+                    // title attr excluded from icon HTML so icons are cacheable by color.
+                    // Station name is available in the popup bindPopup below.
+                    var icon = _cachedDivIcon('aqi|' + s.color, {
                         className: '',
-                        html: '<div class="fmap-aqi-dot" style="background:' + s.color + '" title="' + esc(s.name) + '"></div>',
+                        html: '<div class="fmap-aqi-dot" style="background:' + s.color + '"></div>',
                         iconSize: [14, 14], iconAnchor: [7, 7],
                     });
                     var updStr = '';
@@ -4236,11 +4294,12 @@
                     var wh  = b.wave_ht_ft   != null ? b.wave_ht_ft   + ' ft' : '–';
                     var ws  = b.wind_kt      != null ? b.wind_kt      + ' kt' : '–';
                     var pr  = b.period_s     != null ? b.period_s     + ' s' : '–';
-                    var clr = _sstColor(b.water_temp_f);
-                    var icon = L.divIcon({
+                    var clr      = _sstColor(b.water_temp_f);
+                    var waveLabel = b.wave_ht_ft != null ? b.wave_ht_ft : '·';
+                    var icon = _cachedDivIcon('buoy|' + clr + '|' + waveLabel, {
                         className: '',
                         html: '<div class="fmap-buoy-dot" style="border-color:' + clr + '">' +
-                              '<span class="fmap-buoy-wave">' + (b.wave_ht_ft != null ? b.wave_ht_ft : '·') + '</span>' +
+                              '<span class="fmap-buoy-wave">' + waveLabel + '</span>' +
                               '</div>',
                         iconSize: [38, 22], iconAnchor: [19, 11],
                     });

@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sqlite3
+import threading as _threading
 import time as _time
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 _DUMMY_HASH = generate_password_hash("__sentinel__", method="scrypt")
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "app.db")
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -123,6 +125,8 @@ CREATE INDEX IF NOT EXISTS idx_map_catches_public_time
 ON map_catches(is_public, caught_at DESC);
 CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
 ON map_catches(lat, lng);
+CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
+ON map_catches(lat, lng, caught_at DESC);
 
 CREATE TABLE IF NOT EXISTS map_catch_comments (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -185,10 +189,10 @@ def get_db() -> sqlite3.Connection:
     ``journal_mode=WAL`` is a persistent database setting applied once in
     ``init_db()``.  ``foreign_keys=ON`` must be set per-connection (it is a
     connection-level pragma that SQLite resets on every new connection), so it
-    remains here.
+    remains here.  ``busy_timeout`` is set so that concurrent writers retry for
+    up to 2 s before raising OperationalError instead of failing immediately.
     """
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=2.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
@@ -419,6 +423,8 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             ON map_catches(is_public, caught_at DESC);
             CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
             ON map_catches(lat, lng);
+            CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
+            ON map_catches(lat, lng, caught_at DESC);
 
             CREATE TABLE IF NOT EXISTS map_catch_comments (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1133,6 +1139,46 @@ def load_forecast_cache(user_id: int, location_id: str) -> Optional[dict[str, An
         return None
 
 
+def load_forecast_cache_for_user(
+    user_id: int, location_id: str
+) -> Optional[dict[str, Any]]:
+    """Load forecast cache preferring user-specific row, falling back to anonymous.
+
+    Combines the two separate load_forecast_cache(uid) + load_forecast_cache(0)
+    calls in storage.cache into a single DB connection + single query.
+
+    Returns the user-specific forecast if it exists; otherwise the anonymous
+    (user_id=0) one; otherwise None.  Anonymous users (user_id=0) just execute
+    a plain equality match.
+    """
+    if not location_id:
+        return None
+    conn = get_db()
+    try:
+        if user_id == 0:
+            row = conn.execute(
+                "SELECT forecast_json FROM forecast_cache "
+                "WHERE user_id = 0 AND location_id = ?",
+                (location_id,),
+            ).fetchone()
+        else:
+            # Fetch both rows in one pass; user-specific row sorts first.
+            row = conn.execute(
+                "SELECT forecast_json FROM forecast_cache "
+                "WHERE location_id = ? AND user_id IN (?, 0) "
+                "ORDER BY (user_id = ?) DESC LIMIT 1",
+                (location_id, user_id, user_id),
+            ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return None
+    try:
+        return json.loads(row["forecast_json"])
+    except Exception:
+        return None
+
+
 def delete_forecast_cache(user_id: int, location_id: str) -> bool:
     conn = get_db()
     cur = conn.execute(
@@ -1602,6 +1648,11 @@ def add_map_catch_comment(catch_id: int, user_id: int, body: str) -> int:
         conn.close()
 
 
+_HOTSPOTS_CACHE: dict[tuple, dict[str, Any]] = {}
+_HOTSPOTS_CACHE_TTL: float = 300.0  # 5 minutes
+_HOTSPOTS_CACHE_LOCK = _threading.Lock()
+
+
 def get_community_hotspots(
     days_back: int = 30,
     limit: int = 10,
@@ -1611,44 +1662,59 @@ def get_community_hotspots(
 
     Groups catch pins by rounded lat/lng (0.1° grid ~ 6 mi) so nearby catches
     cluster into a single hotspot rather than showing individual pins.
+    Results are cached in-process for 5 minutes to avoid running the GROUP BY
+    aggregate on every map load from concurrent users.
     """
-    conn = get_db()
-    try:
-        lookback = f"-{abs(days_back)} days"
-        params: list[Any] = [lookback]
-        sql = """
-            SELECT
-                ROUND(lat, 1) AS grid_lat,
-                ROUND(lng, 1) AS grid_lng,
-                COUNT(*) AS catch_count,
-                SUM(likes_count) AS total_likes,
-                GROUP_CONCAT(DISTINCT species) AS species_list,
-                MAX(caught_at) AS last_catch_at,
-                AVG(weight_lb) AS avg_weight
-            FROM map_catches
-            WHERE is_public = 1
-              AND caught_at >= datetime('now', ?)
-            GROUP BY grid_lat, grid_lng
-            ORDER BY catch_count DESC, total_likes DESC
-            LIMIT ?
-        """
-        params.append(limit)
-        rows = conn.execute(sql, params).fetchall()
-    finally:
-        conn.close()
+    cache_key = (days_back, limit, coast)
+    now = _time.time()
+    entry = _HOTSPOTS_CACHE.get(cache_key)
+    if entry and now - entry["ts"] < _HOTSPOTS_CACHE_TTL:
+        return entry["data"]
 
-    return [
-        {
-            "lat": r["grid_lat"],
-            "lng": r["grid_lng"],
-            "catch_count": r["catch_count"],
-            "total_likes": r["total_likes"] or 0,
-            "species": (r["species_list"] or "").split(",")[:5],
-            "last_catch_at": r["last_catch_at"],
-            "avg_weight": round(r["avg_weight"], 1) if r["avg_weight"] else None,
-        }
-        for r in rows
-    ]
+    with _HOTSPOTS_CACHE_LOCK:
+        entry = _HOTSPOTS_CACHE.get(cache_key)
+        if entry and now - entry["ts"] < _HOTSPOTS_CACHE_TTL:
+            return entry["data"]
+
+        conn = get_db()
+        try:
+            lookback = f"-{abs(days_back)} days"
+            params: list[Any] = [lookback]
+            sql = """
+                SELECT
+                    ROUND(lat, 1) AS grid_lat,
+                    ROUND(lng, 1) AS grid_lng,
+                    COUNT(*) AS catch_count,
+                    SUM(likes_count) AS total_likes,
+                    GROUP_CONCAT(DISTINCT species) AS species_list,
+                    MAX(caught_at) AS last_catch_at,
+                    AVG(weight_lb) AS avg_weight
+                FROM map_catches
+                WHERE is_public = 1
+                  AND caught_at >= datetime('now', ?)
+                GROUP BY grid_lat, grid_lng
+                ORDER BY catch_count DESC, total_likes DESC
+                LIMIT ?
+            """
+            params.append(limit)
+            rows = conn.execute(sql, params).fetchall()
+        finally:
+            conn.close()
+
+        result = [
+            {
+                "lat": r["grid_lat"],
+                "lng": r["grid_lng"],
+                "catch_count": r["catch_count"],
+                "total_likes": r["total_likes"] or 0,
+                "species": (r["species_list"] or "").split(",")[:5],
+                "last_catch_at": r["last_catch_at"],
+                "avg_weight": round(r["avg_weight"], 1) if r["avg_weight"] else None,
+            }
+            for r in rows
+        ]
+        _HOTSPOTS_CACHE[cache_key] = {"ts": now, "data": result}
+        return result
 
 
 def get_recent_public_catches(
@@ -1709,60 +1775,6 @@ def get_recent_public_catches(
     ]
 
 
-# ── Community catch rows — short-lived cache ──────────────────────────────────
-# The raw lat/lng rows from map_catches don't change between requests; caching
-# them for 5 minutes avoids re-querying the DB on every fishing-map cache miss.
-_CATCH_ROWS_CACHE: Optional[tuple] = None  # (expiry_ts, rows_list)
-_CATCH_ROWS_TTL: int = 300  # 5 minutes
-
-
-def _get_public_catch_rows(days_back: int) -> list:
-    global _CATCH_ROWS_CACHE
-    now = _time.time()
-    if _CATCH_ROWS_CACHE and now < _CATCH_ROWS_CACHE[0]:
-        return _CATCH_ROWS_CACHE[1]
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            """
-            SELECT lat, lng
-            FROM map_catches
-            WHERE is_public = 1
-              AND caught_at >= datetime('now', ?)
-            """,
-            (f"-{abs(days_back)} days",),
-        ).fetchall()
-    finally:
-        conn.close()
-    _CATCH_ROWS_CACHE = (now + _CATCH_ROWS_TTL, list(rows))
-    return _CATCH_ROWS_CACHE[1]
-
-
-def get_catch_counts_near_locations(
-    locations: list[dict[str, Any]],
-    days_back: int = 30,
-    radius_deg: float = 0.3,
-) -> dict[str, int]:
-    """Return a dict mapping location_id → recent community catch count.
-
-    Counts public map catches within *radius_deg* of each NOAA location.
-    Uses a single DB query (cached 5 min) and O(n×m) matching.
-    """
-    if not locations:
-        return {}
-    rows = _get_public_catch_rows(days_back)
-    counts: dict[str, int] = {}
-    for loc in locations:
-        loc_lat = loc["lat"]
-        loc_lng = loc["lng"]
-        cnt = sum(
-            1
-            for r in rows
-            if abs(r["lat"] - loc_lat) <= radius_deg
-            and abs(r["lng"] - loc_lng) <= radius_deg
-        )
-        counts[loc["id"]] = cnt
-    return counts
 
 
 # Custom map markers (admin-editable) ----------------------------------------
@@ -1806,8 +1818,26 @@ def _marker_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
+_CUSTOM_MARKERS_CACHE: Optional[list[dict[str, Any]]] = None
+_CUSTOM_MARKERS_TS: float = 0.0
+_CUSTOM_MARKERS_TTL: float = 300.0  # 5 minutes — admin writes are rare
+_CUSTOM_MARKERS_LOCK = _threading.Lock()
+
+
+def _invalidate_custom_markers_cache() -> None:
+    global _CUSTOM_MARKERS_TS
+    with _CUSTOM_MARKERS_LOCK:
+        _CUSTOM_MARKERS_TS = 0.0
+
+
 def get_custom_markers() -> list[dict[str, Any]]:
-    """Return all non-deleted custom map markers."""
+    """Return all non-deleted custom map markers, from in-memory cache when fresh."""
+    global _CUSTOM_MARKERS_CACHE, _CUSTOM_MARKERS_TS
+    now = _time.monotonic()
+    with _CUSTOM_MARKERS_LOCK:
+        if _CUSTOM_MARKERS_CACHE is not None and now - _CUSTOM_MARKERS_TS < _CUSTOM_MARKERS_TTL:
+            return _CUSTOM_MARKERS_CACHE
+
     conn = get_db()
     try:
         rows = conn.execute(
@@ -1816,7 +1846,12 @@ def get_custom_markers() -> list[dict[str, Any]]:
         ).fetchall()
     finally:
         conn.close()
-    return [_marker_row_to_dict(r) for r in rows]
+
+    result = [_marker_row_to_dict(r) for r in rows]
+    with _CUSTOM_MARKERS_LOCK:
+        _CUSTOM_MARKERS_CACHE = result
+        _CUSTOM_MARKERS_TS = _time.monotonic()
+    return result
 
 
 def create_custom_marker(
@@ -1840,6 +1875,7 @@ def create_custom_marker(
         conn.commit()
     finally:
         conn.close()
+    _invalidate_custom_markers_cache()
     return _marker_row_to_dict(row)
 
 
@@ -1891,6 +1927,7 @@ def update_custom_marker(
         conn.commit()
     finally:
         conn.close()
+    _invalidate_custom_markers_cache()
     return _marker_row_to_dict(updated)
 
 
@@ -1906,4 +1943,6 @@ def delete_custom_marker(marker_id: int) -> bool:
         conn.commit()
     finally:
         conn.close()
+    if cur.rowcount > 0:
+        _invalidate_custom_markers_cache()
     return cur.rowcount > 0

@@ -1194,6 +1194,55 @@ def _cache_set(species_key: str, state: str, data: dict[str, Any]) -> None:
 # Public API
 # ──────────────────────────────────────────────────────────────────
 
+def get_regulation_stale(
+    species_name: str,
+    state: str,
+) -> tuple[Optional[dict[str, Any]], bool]:
+    """Return ``(cached_data, is_fresh)`` without triggering a live scrape.
+
+    cached_data is the raw cached dict (or None if not cached at all; an empty
+    dict means a previous scrape found nothing for this species/state pair).
+    is_fresh is True when the cached entry is within the 24-hour TTL.
+
+    Useful for stale-while-revalidate: callers can return stale data immediately
+    and schedule a background refresh when ``is_fresh`` is False.
+    """
+    state = (state or "").upper().strip()
+    if not state or state not in _SCRAPERS:
+        return None, False
+
+    variants = _name_variants(species_name)
+    if not variants:
+        return None, False
+    cache_key = variants[-1]
+
+    # Try fresh cache first
+    fresh = _cache_get(cache_key, state)
+    if fresh is not None:
+        return fresh, True
+
+    # Try the DB regardless of TTL to get stale data
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT reg_json FROM reg_scrape_cache WHERE species_key=? AND state=?",
+            (cache_key, state),
+        ).fetchone()
+        conn.close()
+    except Exception:
+        return None, False
+
+    if row is None:
+        return None, False  # never cached
+    try:
+        data = json.loads(row["reg_json"])
+    except Exception:
+        return None, False
+    if data is not None:
+        data["fetched_at"] = None  # stale; timestamp not meaningful
+    return data, False
+
+
 def scrape_regulation(
     species_name: str,
     state: str,

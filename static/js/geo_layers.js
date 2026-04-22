@@ -104,7 +104,8 @@
     var activeBaseId  = 'osm_standard';
     var overlayLayers = {};     // layerId → L.tileLayer (null if not loaded)
     var neCoastlineLayer = null; // L.geoJSON for Natural Earth coastlines
-    var featureLayers = {};     // layerId → L.layerGroup
+    var featureLayers = {};     // layerId → L.layerGroup (null while fetch in-flight)
+    var _featAborts   = {};     // layerId → AbortController (pending fetch)
     var initAttempted = false;
 
     // ── DOM references ───────────────────────────────────────────────────────
@@ -345,6 +346,11 @@
             return;
         }
 
+        // Cancel any in-flight request for this layer (stale bbox)
+        if (_featAborts[layerId]) { _featAborts[layerId].abort(); }
+        _featAborts[layerId] = new AbortController();
+        var signal = _featAborts[layerId].signal;
+
         var bounds = map.getBounds();
         var bboxParams = '?south=' + bounds.getSouth().toFixed(3) +
                          '&west='  + bounds.getWest().toFixed(3) +
@@ -354,7 +360,7 @@
         var endpoint = _featEndpoint(layerId, bboxParams);
         if (!endpoint) return;
 
-        fetch(endpoint)
+        fetch(endpoint, { signal: signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (resp) {
                 if (!resp || !resp.ok || !mapReady || !map) return;
@@ -369,6 +375,7 @@
                 featureLayers[layerId] = group.addTo(map);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[geo_layers] feature layer', layerId, 'failed:', err);
             });
     }
@@ -391,6 +398,10 @@
                     if (layer && map.hasLayer(layer)) {
                         map.removeLayer(layer);
                         featureLayers[layerId] = null;
+                        loadFeatureLayer(layerId);
+                    } else if (!layer && _featAborts[layerId]) {
+                        // Prior pan started a fetch that hasn't resolved yet;
+                        // cancel it and start a new one for the current viewport.
                         loadFeatureLayer(layerId);
                     }
                 });
