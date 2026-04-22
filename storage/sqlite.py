@@ -123,6 +123,8 @@ CREATE INDEX IF NOT EXISTS idx_map_catches_public_time
 ON map_catches(is_public, caught_at DESC);
 CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
 ON map_catches(lat, lng);
+CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
+ON map_catches(lat, lng, caught_at DESC);
 
 CREATE TABLE IF NOT EXISTS map_catch_comments (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -419,6 +421,8 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             ON map_catches(is_public, caught_at DESC);
             CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
             ON map_catches(lat, lng);
+            CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
+            ON map_catches(lat, lng, caught_at DESC);
 
             CREATE TABLE IF NOT EXISTS map_catch_comments (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,

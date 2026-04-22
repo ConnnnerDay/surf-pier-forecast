@@ -655,7 +655,7 @@ def forecast_solunar_v1(location_id: str) -> Any:
 
 @bp.route("/api/refresh", methods=["POST"])
 def refresh() -> Any:
-    """Queue generation of a new forecast and return immediately."""
+    """Legacy forecast refresh — superseded by POST /api/v1/forecast?force_refresh=1."""
     location = get_session_location()
     if location is None:
         return redirect(url_for("views.setup"))
@@ -663,7 +663,10 @@ def refresh() -> Any:
         return redirect(url_for("views.index"))
     record_refresh_attempt()
     enqueue_forecast_refresh(location["id"], user_id=None)
-    return redirect(url_for("views.index", cached="refreshing"))
+    resp = redirect(url_for("views.index", cached="refreshing"))
+    resp.headers["Deprecation"] = _DEPRECATION_HEADER
+    resp.headers["Link"] = '</api/v1/forecast>; rel="successor-version"'
+    return resp
 
 
 @bp.route("/api/v1/regulations/refresh", methods=["POST"])
@@ -1098,6 +1101,13 @@ _FMAP_CACHE_TTL: int = 900  # 15 minutes — scores only change when the month r
 _FMAP_CACHE_MAX: int = 128  # cap entries; each is ~50 KB serialised
 _FMAP_CACHE_LOCK = threading.Lock()  # guards evict+set so the cap is never exceeded
 
+# Singleflight: when the cache is cold and N concurrent requests arrive with the
+# same params, only one thread runs the scoring loop; the rest wait on an Event
+# and then read from the cache that the winner populated.
+# dict[cache_key, threading.Event] — entry present means "compute in progress".
+_FMAP_INFLIGHT: dict[tuple, threading.Event] = {}
+_FMAP_INFLIGHT_LOCK = threading.Lock()
+
 _SEASON_MONTHS: dict[str, list[int]] = {
     "spring": [3, 4, 5],
     "summer": [6, 7, 8],
@@ -1253,6 +1263,44 @@ def fishing_map_data() -> Any:
         resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
         resp.headers["X-Cache"] = "HIT"
         return resp
+
+    # ── Singleflight: one thread computes; the rest wait and read from cache ─────
+    # Check whether another thread is already computing the same key.
+    # If so, wait for it to finish and return the cached result.
+    # If not, register ourselves as the computing thread.
+    _my_event: Optional[threading.Event] = None
+    with _FMAP_INFLIGHT_LOCK:
+        _existing_event = _FMAP_INFLIGHT.get(_fmap_key)
+        if _existing_event is not None:
+            _wait_event = _existing_event
+        else:
+            _my_event = threading.Event()
+            _FMAP_INFLIGHT[_fmap_key] = _my_event
+            _wait_event = None
+
+    if _wait_event is not None:
+        # Another thread is computing — wait up to 8 s then fall through
+        _wait_event.wait(timeout=8.0)
+        _waited_result = _fmap_cache_get(_fmap_key)
+        if _waited_result is not None:
+            _hit_data = _waited_result
+            if _bbox is not None:
+                _bsw_lat, _bsw_lng, _bne_lat, _bne_lng = _bbox
+                _hit_data = {
+                    **_waited_result,
+                    "locations": [
+                        loc for loc in _waited_result["locations"]
+                        if _bsw_lat <= loc["lat"] <= _bne_lat
+                        and _bsw_lng <= loc["lng"] <= _bne_lng
+                    ],
+                }
+            if has_species_q and _hit_data.get("species_names"):
+                _hit_data = {**_hit_data, "species_names": []}
+            resp = jsonify(_hit_data)
+            resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+            resp.headers["X-Cache"] = "HIT-WAIT"
+            return resp
+        # Timed out or spurious wake — fall through to compute ourselves
 
     # -- filter the species DB once -------------------------------------------
     # Use _get_species_lower_index() so .lower() is never called at filter time;
@@ -1465,6 +1513,13 @@ def fishing_map_data() -> Any:
         "species_meta": species_meta,
     }
     _fmap_cache_set(_fmap_key, _response_data)
+
+    # Signal any threads that were waiting on the singleflight event, then
+    # remove the inflight entry so future callers take the fast HIT path.
+    if _my_event is not None:
+        with _FMAP_INFLIGHT_LOCK:
+            _FMAP_INFLIGHT.pop(_fmap_key, None)
+        _my_event.set()
 
     # Apply bbox slice on the MISS path (same logic as the HIT path above).
     _send_data = _response_data

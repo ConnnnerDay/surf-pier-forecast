@@ -254,6 +254,10 @@
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
+            // Re-fetch location markers so the viewport bbox is sent to the server;
+            // the server returns only visible locations from its cache, keeping the
+            // response small without an extra scoring pass.
+            scheduleFetch();
         });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
