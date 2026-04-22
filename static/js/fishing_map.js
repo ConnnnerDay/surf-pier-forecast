@@ -1671,7 +1671,13 @@
                 // Update icon and tooltip in-place — no DOM insert/remove
                 var entry = _markerIndex[loc.id];
                 var prevActivity = entry.data.activity;
-                entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
+                var prevSel = entry.selected;
+                // Only call setIcon when something visible actually changed.
+                // makeIcon results are cached, but setIcon still touches the DOM.
+                if (loc.activity !== prevActivity || isSel !== prevSel) {
+                    entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
+                    entry.selected = isSel;
+                }
                 entry.data = loc;          // refresh data so click handler gets new species/scores
                 // Resync tooltip text if activity label changed
                 if (loc.activity !== prevActivity) {
@@ -1706,7 +1712,7 @@
                 { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
             );
 
-            var entry = { id: loc.id, leaflet: m, data: loc };
+            var entry = { id: loc.id, leaflet: m, data: loc, selected: isSel };
             markers.push(entry);
             _markerIndex[loc.id] = entry;
         });
@@ -1722,9 +1728,11 @@
         if (prevId && prevId !== selectedId && _markerIndex[prevId]) {
             _markerIndex[prevId].leaflet.setIcon(
                 makeIcon(_markerIndex[prevId].data.activity, false));
+            _markerIndex[prevId].selected = false;
         }
         if (_markerIndex[selectedId]) {
             _markerIndex[selectedId].leaflet.setIcon(makeIcon(loc.activity, true));
+            _markerIndex[selectedId].selected = true;
         }
 
         map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.55 });
@@ -1800,6 +1808,7 @@
         if (prevId && _markerIndex[prevId]) {
             _markerIndex[prevId].leaflet.setIcon(
                 makeIcon(_markerIndex[prevId].data.activity, false));
+            _markerIndex[prevId].selected = false;
         }
     }
 

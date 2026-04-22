@@ -606,11 +606,9 @@ def forecast_outlook_v1(location_id: str) -> Any:
         return _json_error(ApiError("rate_limited", "Too many requests", status=429))
     _forecast_sub_record_attempt()
     user_id = g.user["id"] if g.user else None
+    # load_cached_forecast already falls back to the anonymous (user_id=0)
+    # pre-warmed cache internally; no second call needed.
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
-    if not forecast_data and user_id is not None:
-        # Dashboard renders from the shared cache namespace today; fall back so
-        # authenticated users can still hydrate lazy sections.
-        forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
         return _json_error(
             ApiError("forecast_not_cached", "No cached forecast available", status=404)
@@ -636,8 +634,6 @@ def forecast_solunar_v1(location_id: str) -> Any:
     _forecast_sub_record_attempt()
     user_id = g.user["id"] if g.user else None
     forecast_data = load_cached_forecast(location_id, user_id=user_id)
-    if not forecast_data and user_id is not None:
-        forecast_data = load_cached_forecast(location_id, user_id=None)
     if not forecast_data:
         return _json_error(
             ApiError("forecast_not_cached", "No cached forecast available", status=404)
