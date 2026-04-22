@@ -28,6 +28,7 @@ Public API
 from __future__ import annotations
 
 import logging
+import threading as _threading
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -415,6 +416,7 @@ def _category_label(kt: int) -> str:
 _RECENT_TRACK_CACHE: Optional[list[dict[str, Any]]] = None
 _RECENT_TRACK_TS = 0.0
 _RECENT_TRACK_TTL = 3600  # 1 hour — historical; updates a few times per day
+_RECENT_TRACK_LOCK = _threading.Lock()
 
 # Saffir-Simpson integer → human label
 _SS_LABELS = {
@@ -466,6 +468,7 @@ def fetch_recent_storm_tracks(
         path       list   [[lat, lng], ...] observed track polyline
     """
     global _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
+    # Fast path — no lock needed
     if (
         _RECENT_TRACK_CACHE is not None
         and time.time() - _RECENT_TRACK_TS < _RECENT_TRACK_TTL
@@ -475,58 +478,69 @@ def fetch_recent_storm_tracks(
             return [s for s in cached if s.get("basin", "").upper() == basin.upper()]
         return cached
 
-    where = f"BASIN='{basin.upper()}'" if basin else "1=1"
-    params = {
-        "where": where,
-        "outFields": "STORMID,STORMNAME,BASIN,STORMTYPE,SS,STARTDTG,ENDDTG",
-        "outSR": "4326",
-        "returnGeometry": "true",
-        "resultRecordCount": 500,
-        "f": "json",
-    }
+    with _RECENT_TRACK_LOCK:
+        # Double-check: another thread may have populated the cache while we waited
+        if (
+            _RECENT_TRACK_CACHE is not None
+            and time.time() - _RECENT_TRACK_TS < _RECENT_TRACK_TTL
+        ):
+            cached = _RECENT_TRACK_CACHE
+            if basin:
+                return [s for s in cached if s.get("basin", "").upper() == basin.upper()]
+            return cached
 
-    try:
-        resp = _HTTP.get(_RECENT_TRACK_URL, params=params, timeout=_T_XLONG)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as exc:
-        logger.warning("ArcGIS recent storm tracks fetch failed: %s", exc)
-        return []
+        where = f"BASIN='{basin.upper()}'" if basin else "1=1"
+        params = {
+            "where": where,
+            "outFields": "STORMID,STORMNAME,BASIN,STORMTYPE,SS,STARTDTG,ENDDTG",
+            "outSR": "4326",
+            "returnGeometry": "true",
+            "resultRecordCount": 500,
+            "f": "json",
+        }
 
-    results: list[dict[str, Any]] = []
-    for feat in data.get("features", []):
-        attrs = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        paths = geom.get("paths") or []
-        if not paths:
-            continue
+        try:
+            resp = _HTTP.get(_RECENT_TRACK_URL, params=params, timeout=_T_XLONG)
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as exc:
+            logger.warning("ArcGIS recent storm tracks fetch failed: %s", exc)
+            return []
 
-        ss = int(attrs.get("SS") or 0)
-        name = (attrs.get("STORMNAME") or "Unknown").strip().title()
+        results: list[dict[str, Any]] = []
+        for feat in data.get("features", []):
+            attrs = feat.get("attributes", {})
+            geom = feat.get("geometry") or {}
+            paths = geom.get("paths") or []
+            if not paths:
+                continue
 
-        results.append(
-            {
-                "storm_id": attrs.get("STORMID") or "",
-                "name": name,
-                "basin": (attrs.get("BASIN") or "").strip(),
-                "start_dtg": _ms_to_iso(attrs.get("STARTDTG")),
-                "end_dtg": _ms_to_iso(attrs.get("ENDDTG")),
-                "ss_max": ss,
-                "category": _SS_LABELS.get(ss, "Unknown"),
-                "color": _SS_COLORS.get(ss, "#94a3b8"),
-                "path": _ring_to_latlng(paths[0]),
-            }
-        )
+            ss = int(attrs.get("SS") or 0)
+            name = (attrs.get("STORMNAME") or "Unknown").strip().title()
 
-    # Sort by most recent start date first
-    results.sort(key=lambda s: s["start_dtg"], reverse=True)
+            results.append(
+                {
+                    "storm_id": attrs.get("STORMID") or "",
+                    "name": name,
+                    "basin": (attrs.get("BASIN") or "").strip(),
+                    "start_dtg": _ms_to_iso(attrs.get("STARTDTG")),
+                    "end_dtg": _ms_to_iso(attrs.get("ENDDTG")),
+                    "ss_max": ss,
+                    "category": _SS_LABELS.get(ss, "Unknown"),
+                    "color": _SS_COLORS.get(ss, "#94a3b8"),
+                    "path": _ring_to_latlng(paths[0]),
+                }
+            )
 
-    _RECENT_TRACK_CACHE = results
-    _RECENT_TRACK_TS = time.time()
+        # Sort by most recent start date first
+        results.sort(key=lambda s: s["start_dtg"], reverse=True)
 
-    if basin:
-        return [s for s in results if s.get("basin", "").upper() == basin.upper()]
-    return results
+        _RECENT_TRACK_CACHE = results
+        _RECENT_TRACK_TS = time.time()
+
+        if basin:
+            return [s for s in results if s.get("basin", "").upper() == basin.upper()]
+        return results
 
 # ── Air Quality (PM2.5) ────────────────────────────────────────────────────────
 
@@ -1156,6 +1170,7 @@ def fetch_precip_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
 _SEA_ICE_CACHE: Optional[dict[str, Any]] = None
 _SEA_ICE_TS = 0.0
 _SEA_ICE_TTL = 86400  # 24 hours — monthly product
+_SEA_ICE_LOCK = _threading.Lock()
 
 def fetch_sea_ice_extent() -> Optional[dict[str, Any]]:
     """Return the most recent Arctic sea ice extent polygon and statistics.
@@ -1168,49 +1183,54 @@ def fetch_sea_ice_extent() -> Optional[dict[str, Any]]:
         rings       list   list of rings [[lat, lng], ...] for the boundary
     """
     global _SEA_ICE_CACHE, _SEA_ICE_TS
+    # Fast path — no lock needed
     if _SEA_ICE_CACHE is not None and time.time() - _SEA_ICE_TS < _SEA_ICE_TTL:
         return _SEA_ICE_CACHE
 
-    params = {
-        "where": "1=1",
-        "outFields": "Rec_Year,Rec_Month,Rec_Area,Rec_Extent,Rec_Date",
-        "returnGeometry": "true",
-        "orderByFields": "Rec_Date DESC",
-        "resultRecordCount": 1,
-        "outSR": "4326",
-        "f": "json",
-    }
+    with _SEA_ICE_LOCK:
+        if _SEA_ICE_CACHE is not None and time.time() - _SEA_ICE_TS < _SEA_ICE_TTL:
+            return _SEA_ICE_CACHE
 
-    try:
-        resp = _HTTP.get(_SEA_ICE_N_URL, params=params, timeout=_T_XLONG)
-        resp.raise_for_status()
-        feats = resp.json().get("features", [])
-    except Exception as exc:
-        logger.warning("ArcGIS sea ice fetch failed: %s", exc)
-        _SEA_ICE_CACHE = None
+        params = {
+            "where": "1=1",
+            "outFields": "Rec_Year,Rec_Month,Rec_Area,Rec_Extent,Rec_Date",
+            "returnGeometry": "true",
+            "orderByFields": "Rec_Date DESC",
+            "resultRecordCount": 1,
+            "outSR": "4326",
+            "f": "json",
+        }
+
+        try:
+            resp = _HTTP.get(_SEA_ICE_N_URL, params=params, timeout=_T_XLONG)
+            resp.raise_for_status()
+            feats = resp.json().get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS sea ice fetch failed: %s", exc)
+            _SEA_ICE_CACHE = None
+            _SEA_ICE_TS = time.time()
+            return None
+
+        if not feats:
+            _SEA_ICE_CACHE = None
+            _SEA_ICE_TS = time.time()
+            return None
+
+        attrs = feats[0].get("attributes", {})
+        geom = feats[0].get("geometry") or {}
+        rings = geom.get("rings") or []
+
+        result: dict[str, Any] = {
+            "year": int(attrs.get("Rec_Year") or 0),
+            "month": int(attrs.get("Rec_Month") or 0),
+            "area_mkm2": round(float(attrs.get("Rec_Area") or 0), 2),
+            "extent_mkm2": round(float(attrs.get("Rec_Extent") or 0), 2),
+            "rings": [_ring_to_latlng(r) for r in rings],
+        }
+
+        _SEA_ICE_CACHE = result
         _SEA_ICE_TS = time.time()
-        return None
-
-    if not feats:
-        _SEA_ICE_CACHE = None
-        _SEA_ICE_TS = time.time()
-        return None
-
-    attrs = feats[0].get("attributes", {})
-    geom = feats[0].get("geometry") or {}
-    rings = geom.get("rings") or []
-
-    result: dict[str, Any] = {
-        "year": int(attrs.get("Rec_Year") or 0),
-        "month": int(attrs.get("Rec_Month") or 0),
-        "area_mkm2": round(float(attrs.get("Rec_Area") or 0), 2),
-        "extent_mkm2": round(float(attrs.get("Rec_Extent") or 0), 2),
-        "rings": [_ring_to_latlng(r) for r in rings],
-    }
-
-    _SEA_ICE_CACHE = result
-    _SEA_ICE_TS = time.time()
-    return result
+        return result
 
 # ── NDFD Daily Temperature ─────────────────────────────────────────────────────
 
@@ -1600,6 +1620,7 @@ def fetch_metar_stations(
 _TERM_CACHE: Optional[dict[str, Any]] = None
 _TERM_TS = 0.0
 _TERM_TTL = 300  # 5 minutes — the subsolar point moves ~0.07°/min
+_TERM_LOCK = _threading.Lock()
 
 def fetch_terminator() -> Optional[Dict]:
     """Return the current night-shadow polygon (Day/Night Terminator).
@@ -1609,44 +1630,50 @@ def fetch_terminator() -> Optional[Dict]:
     """
     global _TERM_CACHE, _TERM_TS
     now = time.time()
+    # Fast path — no lock needed
     if _TERM_CACHE is not None and now - _TERM_TS < _TERM_TTL:
         return _TERM_CACHE
 
-    params = {
-        "where": "1=1",
-        "outFields": "timestamp",
-        "returnGeometry": "true",
-        "outSR": "4326",
-        "f": "json",
-    }
+    with _TERM_LOCK:
+        now = time.time()
+        if _TERM_CACHE is not None and now - _TERM_TS < _TERM_TTL:
+            return _TERM_CACHE
 
-    try:
-        resp = _HTTP.get(_TERMINATOR_URL, params=params, timeout=_T_STD)
-        resp.raise_for_status()
-        feats = resp.json().get("features", [])
-    except Exception as exc:
-        logger.warning("ArcGIS terminator fetch failed: %s", exc)
-        _TERM_CACHE = None
+        params = {
+            "where": "1=1",
+            "outFields": "timestamp",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        }
+
+        try:
+            resp = _HTTP.get(_TERMINATOR_URL, params=params, timeout=_T_STD)
+            resp.raise_for_status()
+            feats = resp.json().get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS terminator fetch failed: %s", exc)
+            _TERM_CACHE = None
+            _TERM_TS = now
+            return None
+
+        if not feats:
+            _TERM_CACHE = None
+            _TERM_TS = now
+            return None
+
+        feat = feats[0]
+        attrs = feat.get("attributes", {})
+        geom = feat.get("geometry") or {}
+        rings = geom.get("rings") or []
+
+        ts_ms = attrs.get("timestamp")
+        _TERM_CACHE = {
+            "rings": [_ring_to_latlng(r) for r in rings],
+            "timestamp": _ms_to_iso(ts_ms) if ts_ms is not None else None,
+        }
         _TERM_TS = now
-        return None
-
-    if not feats:
-        _TERM_CACHE = None
-        _TERM_TS = now
-        return None
-
-    feat = feats[0]
-    attrs = feat.get("attributes", {})
-    geom = feat.get("geometry") or {}
-    rings = geom.get("rings") or []
-
-    ts_ms = attrs.get("timestamp")
-    _TERM_CACHE = {
-        "rings": [_ring_to_latlng(r) for r in rings],
-        "timestamp": _ms_to_iso(ts_ms) if ts_ms is not None else None,
-    }
-    _TERM_TS = now
-    return _TERM_CACHE
+        return _TERM_CACHE
 
 # ── Live Stream Gauges ─────────────────────────────────────────────────────────
 
@@ -2456,6 +2483,7 @@ def fetch_hfradar_currents(
 _TROP_OUTLOOK_CACHE: Optional[list[dict[str, Any]]] = None
 _TROP_OUTLOOK_TS = 0.0
 _TROP_OUTLOOK_TTL = 3600  # 1 hour — outlook updates every 6 hours
+_TROP_OUTLOOK_LOCK = _threading.Lock()
 
 _TROP_PROB_COLORS: dict[str, str] = {
     "high": "#ef4444",  # ≥60 % — red
@@ -2480,70 +2508,76 @@ def fetch_tropical_outlook() -> list[dict[str, Any]]:
     """
     global _TROP_OUTLOOK_CACHE, _TROP_OUTLOOK_TS
     now = time.time()
+    # Fast path — no lock needed
     if _TROP_OUTLOOK_CACHE is not None and now - _TROP_OUTLOOK_TS < _TROP_OUTLOOK_TTL:
         return _TROP_OUTLOOK_CACHE
 
-    params = {
-        "where": "1=1",
-        "outFields": "probability,basin,discussion,FormationChance2day,FormationChance5day",
-        "returnGeometry": "true",
-        "resultRecordCount": 50,
-        "outSR": "4326",
-        "f": "json",
-    }
+    with _TROP_OUTLOOK_LOCK:
+        now = time.time()
+        if _TROP_OUTLOOK_CACHE is not None and now - _TROP_OUTLOOK_TS < _TROP_OUTLOOK_TTL:
+            return _TROP_OUTLOOK_CACHE
 
-    try:
-        resp = _HTTP.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=_T_STD)
-        resp.raise_for_status()
-        body = resp.json()
-        if body.get("error"):
-            raise ValueError(body["error"].get("message", "service error"))
-        feats = body.get("features", [])
-    except Exception as exc:
-        logger.warning("ArcGIS tropical outlook fetch failed: %s", exc)
-        _TROP_OUTLOOK_CACHE = []
+        params = {
+            "where": "1=1",
+            "outFields": "probability,basin,discussion,FormationChance2day,FormationChance5day",
+            "returnGeometry": "true",
+            "resultRecordCount": 50,
+            "outSR": "4326",
+            "f": "json",
+        }
+
+        try:
+            resp = _HTTP.get(_TROPICAL_OUTLOOK_URL, params=params, timeout=_T_STD)
+            resp.raise_for_status()
+            body = resp.json()
+            if body.get("error"):
+                raise ValueError(body["error"].get("message", "service error"))
+            feats = body.get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS tropical outlook fetch failed: %s", exc)
+            _TROP_OUTLOOK_CACHE = []
+            _TROP_OUTLOOK_TS = now
+            return []
+
+        results: list[dict[str, Any]] = []
+        for feat in feats:
+            attrs = feat.get("attributes", {})
+            geom = feat.get("geometry") or {}
+            rings = geom.get("rings") or []
+            if not rings:
+                continue
+
+            raw_prob = str(
+                attrs.get("probability") or attrs.get("FormationChance2day") or ""
+            ).lower()
+            # Normalise to low/medium/high
+            if "high" in raw_prob:
+                prob = "high"
+            elif "medium" in raw_prob or "mod" in raw_prob:
+                prob = "medium"
+            else:
+                prob = "low"
+
+            prob_label = str(
+                attrs.get("FormationChance2day") or attrs.get("probability") or ""
+            ).strip()
+            basin = str(attrs.get("basin") or "ATL").upper()
+            discussion = str(attrs.get("discussion") or "").strip()[:300]
+
+            results.append(
+                {
+                    "probability": prob,
+                    "prob_label": prob_label or prob.capitalize(),
+                    "color": _TROP_PROB_COLORS.get(prob, "#eab308"),
+                    "basin": basin,
+                    "rings": [_ring_to_latlng(r) for r in rings],
+                    "discussion": discussion,
+                }
+            )
+
+        _TROP_OUTLOOK_CACHE = results
         _TROP_OUTLOOK_TS = now
-        return []
-
-    results: list[dict[str, Any]] = []
-    for feat in feats:
-        attrs = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        rings = geom.get("rings") or []
-        if not rings:
-            continue
-
-        raw_prob = str(
-            attrs.get("probability") or attrs.get("FormationChance2day") or ""
-        ).lower()
-        # Normalise to low/medium/high
-        if "high" in raw_prob:
-            prob = "high"
-        elif "medium" in raw_prob or "mod" in raw_prob:
-            prob = "medium"
-        else:
-            prob = "low"
-
-        prob_label = str(
-            attrs.get("FormationChance2day") or attrs.get("probability") or ""
-        ).strip()
-        basin = str(attrs.get("basin") or "ATL").upper()
-        discussion = str(attrs.get("discussion") or "").strip()[:300]
-
-        results.append(
-            {
-                "probability": prob,
-                "prob_label": prob_label or prob.capitalize(),
-                "color": _TROP_PROB_COLORS.get(prob, "#eab308"),
-                "basin": basin,
-                "rings": [_ring_to_latlng(r) for r in rings],
-                "discussion": discussion,
-            }
-        )
-
-    _TROP_OUTLOOK_CACHE = results
-    _TROP_OUTLOOK_TS = now
-    return results
+        return results
 
 def cache_clear() -> None:
     """Clear all cached results.  Useful in tests."""

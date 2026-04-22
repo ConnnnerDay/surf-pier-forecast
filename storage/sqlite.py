@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 _DUMMY_HASH = generate_password_hash("__sentinel__", method="scrypt")
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "app.db")
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -188,10 +189,10 @@ def get_db() -> sqlite3.Connection:
     ``journal_mode=WAL`` is a persistent database setting applied once in
     ``init_db()``.  ``foreign_keys=ON`` must be set per-connection (it is a
     connection-level pragma that SQLite resets on every new connection), so it
-    remains here.
+    remains here.  ``busy_timeout`` is set so that concurrent writers retry for
+    up to 2 s before raising OperationalError instead of failing immediately.
     """
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=2.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
