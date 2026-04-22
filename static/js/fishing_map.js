@@ -2025,7 +2025,7 @@
     // ─── Advanced filters ─────────────────────────────────────────────────────
 
     function updateAdvBadge() {
-        var n = (activeSpotTypes.length > 0 ? 1 : 0);
+        var n = activeSpotTypes.length;
         var countEl = document.getElementById('fmap-sec-count-filters');
         if (countEl) {
             countEl.textContent = n + ' on';
@@ -2037,19 +2037,6 @@
         document.querySelectorAll(selector).forEach(function (b) {
             b.classList.toggle('fmap-pill--active', b.getAttribute(attrName) === value);
         });
-    }
-
-    function wireAdvancedFilters() {
-        var resetBtn = document.getElementById('fmap-adv-reset');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function () {
-                _applySpotTypeUI([]);
-                updateAdvBadge();
-                scheduleFetch();
-                clearTimeout(spotQueryTimer);
-                queryStructures();
-            });
-        }
     }
 
     // ─── Structure type-filter pills ─────────────────────────────────────────
@@ -4934,7 +4921,6 @@
                 loadFilters();
                 wireFilters();
                 wireMapControls();
-                wireAdvancedFilters();
                 wireSpotTypeFilters();
                 wireCommunityLayer();
                 wireLogCatch();
