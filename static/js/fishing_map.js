@@ -7,24 +7,12 @@
     var DEFAULT_CENTER = [37.5, -96.0];
     var DEFAULT_ZOOM   = 4;
 
-    var ACTIVITY = {
-        peak: { color: '#22c55e', ring: 'rgba(34,197,94,0.35)',  label: 'Peak', size: 11 },
-        good: { color: '#3b82f6', ring: 'rgba(59,130,246,0.30)', label: 'Good', size: 9  },
-        fair: { color: '#f59e0b', ring: 'rgba(245,158,11,0.28)', label: 'Fair', size: 8  },
-        slow: { color: '#ef4444', ring: 'rgba(239,68,68,0.20)',  label: 'Slow', size: 6  },
-        none: { color: '#4b5563', ring: 'rgba(75,85,99,0.15)',   label: 'N/A',  size: 5  }
-    };
-
     // ─── State ────────────────────────────────────────────────────────────────
     var map           = null;
     var mapReady      = false;
-    var markers       = [];          // [{id, leaflet, data}]
-    var _markerIndex         = {};    // loc.id → marker entry — O(1) icon-swap on select
-    var locationLayer = null;        // L.layerGroup for NOAA location markers
     var allSpecies    = [];          // species name strings for autocomplete
     var allSpeciesLower = [];        // pre-lowercased mirror of allSpecies — avoids .toLowerCase() on every keystroke
     var currentData   = [];          // last API response locations
-    var selectedId    = null;
     var fetchTimer    = null;
     var activeSpecies = '';
     var isFullscreen  = false;
@@ -39,7 +27,6 @@
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
-    var _markerIconCache      = {};   // "activity|0/1" → L.divIcon (10 combinations max)
     // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
     // These layers clear and redraw on every fetch; caching the icon objects avoids
     // re-running L.divIcon() for every marker on every refresh.
@@ -226,9 +213,8 @@
         });
         activeTileLayer.addTo(map);
 
-        // Layer groups — render order: AI picks → location markers → OSM structures
+        // Layer groups — render order: AI picks → OSM structures
         aiPickLayer      = L.layerGroup().addTo(map);
-        locationLayer    = L.layerGroup().addTo(map);
         fishingSpotLayer = L.layerGroup().addTo(map);
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
@@ -237,9 +223,6 @@
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
-            // Re-fetch location markers so the viewport bbox is sent to the server;
-            // the server returns only visible locations from its cache, keeping the
-            // response small without an extra scoring pass.
             scheduleFetch();
         });
 
@@ -1580,221 +1563,6 @@
         spotCache[key] = data;
     }
 
-    // ─── Custom marker icon ───────────────────────────────────────────────────
-    function makeIcon(activity, isSelected) {
-        var _mk = activity + (isSelected ? '|1' : '|0');
-        if (_markerIconCache[_mk]) return _markerIconCache[_mk];
-        var cfg  = ACTIVITY[activity] || ACTIVITY.none;
-        var size = cfg.size + (isSelected ? 3 : 0);
-        var pulse = (activity === 'peak' || activity === 'good') && !isSelected;
-        var border = isSelected ? '2.5px solid #fff' : '1.5px solid rgba(0,0,0,0.4)';
-        var shadow = isSelected
-            ? '0 0 0 3px rgba(255,255,255,0.3), 0 0 ' + size + 'px ' + cfg.ring
-            : '0 0 ' + size + 'px ' + cfg.ring;
-        var ring = pulse
-            ? '<span class="fmap-pulse" style="background:' + cfg.ring +
-              ';width:' + (size * 3.2) + 'px;height:' + (size * 3.2) + 'px' +
-              ';margin-left:' + (-(size * 1.1)) + 'px;margin-top:' + (-(size * 1.1)) + 'px"></span>'
-            : '';
-        var html = ring +
-            '<span class="fmap-dot" style="width:' + (size * 2) + 'px;height:' + (size * 2) +
-            'px;background:' + cfg.color + ';border:' + border + ';box-shadow:' + shadow + '"></span>';
-        var icon = L.divIcon({
-            className: 'fmap-marker-wrap',
-            html: html,
-            iconSize:    [size * 2, size * 2],
-            iconAnchor:  [size, size],
-            popupAnchor: [0, -size - 2]
-        });
-        _markerIconCache[_mk] = icon;
-        return icon;
-    }
-
-    // ─── Render markers ───────────────────────────────────────────────────────
-    function clearMarkers() {
-        // clearLayers() removes all children in one operation instead of
-        // calling map.removeLayer() individually for each marker.
-        if (locationLayer) locationLayer.clearLayers();
-        markers = [];
-        _markerIndex = {};
-    }
-
-    function drawMarkers(locations) {
-        if (!map || !locationLayer) return;
-
-        // ── Incremental update — avoids the clear→recreate cycle that causes
-        // a visible flicker on every filter change.
-        //
-        // Strategy:
-        //  1. Build a fast lookup of incoming location ids.
-        //  2. Remove markers for locations that no longer appear (coast filter
-        //     toggled, etc.) — rare, so the O(n) sweep is acceptable.
-        //  3. For locations that already have a marker, update the icon and
-        //     stored data reference in-place.  Click handlers read from
-        //     currentData at click-time so they always use the freshest data.
-        //  4. For brand-new locations, create and add a marker.
-
-        var incoming = {};
-        locations.forEach(function (loc) { incoming[loc.id] = loc; });
-
-        // Step 2 — remove stale markers
-        var stalIds = Object.keys(_markerIndex).filter(function (id) { return !incoming[id]; });
-        stalIds.forEach(function (id) {
-            locationLayer.removeLayer(_markerIndex[id].leaflet);
-            delete _markerIndex[id];
-        });
-        markers = markers.filter(function (e) { return _markerIndex[e.id]; });
-
-        // Steps 3 & 4
-        locations.forEach(function (loc) {
-            var isSel = loc.id === selectedId;
-
-            if (_markerIndex[loc.id]) {
-                // Update icon and tooltip in-place — no DOM insert/remove
-                var entry = _markerIndex[loc.id];
-                var prevActivity = entry.data.activity;
-                var prevSel = entry.selected;
-                // Only call setIcon when something visible actually changed.
-                // makeIcon results are cached, but setIcon still touches the DOM.
-                if (loc.activity !== prevActivity || isSel !== prevSel) {
-                    entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
-                    entry.selected = isSel;
-                }
-                entry.data = loc;          // refresh data so click handler gets new species/scores
-                // Resync tooltip text if activity label changed
-                if (loc.activity !== prevActivity) {
-                    var tLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
-                    entry.leaflet.unbindTooltip();
-                    entry.leaflet.bindTooltip(
-                        '<strong>' + esc(loc.name) + '</strong>, ' + esc(loc.state) +
-                        '<br><span class="fmap-tip-badge fmap-tip-' + esc(loc.activity) + '">' + tLabel + '</span>',
-                        { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
-                    );
-                }
-                return;
-            }
-
-            // New marker — created once per location per session (coast changes are rare)
-            var m = L.marker([loc.lat, loc.lng], {
-                icon:  makeIcon(loc.activity, isSel),
-                title: loc.name + ', ' + loc.state
-            });
-            locationLayer.addLayer(m);
-
-            // Always read the live entry so the handler uses the latest scored data
-            m.on('click', function () {
-                var live = _markerIndex[loc.id];
-                if (live) selectLocation(live.data);
-            });
-
-            var tipLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
-            m.bindTooltip(
-                '<strong>' + esc(loc.name) + '</strong>, ' + esc(loc.state) +
-                '<br><span class="fmap-tip-badge fmap-tip-' + esc(loc.activity) + '">' + tipLabel + '</span>',
-                { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
-            );
-
-            var entry = { id: loc.id, leaflet: m, data: loc, selected: isSel };
-            markers.push(entry);
-            _markerIndex[loc.id] = entry;
-        });
-    }
-
-    // ─── Location selection ───────────────────────────────────────────────────
-    function selectLocation(loc) {
-        var prevId = selectedId;
-        selectedId = loc.id;
-
-        // Swap icons only on the two affected markers (O(1) via _markerIndex)
-        // instead of iterating the full markers array and calling setIcon on all.
-        if (prevId && prevId !== selectedId && _markerIndex[prevId]) {
-            _markerIndex[prevId].leaflet.setIcon(
-                makeIcon(_markerIndex[prevId].data.activity, false));
-            _markerIndex[prevId].selected = false;
-        }
-        if (_markerIndex[selectedId]) {
-            _markerIndex[selectedId].leaflet.setIcon(makeIcon(loc.activity, true));
-            _markerIndex[selectedId].selected = true;
-        }
-
-        map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.55 });
-
-        // ── Detail drawer ──────────────────────────────────────────────────────
-        var cfg = ACTIVITY[loc.activity] || ACTIVITY.none;
-
-        els.detailName.textContent = loc.name + ', ' + loc.state;
-        els.detailMeta.textContent =
-            (loc.coast === 'east' ? 'East & Gulf Coast' :
-             loc.coast === 'west' ? 'West Coast' : 'Hawaii');
-
-        els.detailBadge.textContent = cfg.label;
-        els.detailBadge.className = 'fmap-detail-badge fmap-detail-badge--' + loc.activity;
-
-        // Build species rows — each has activity badge, name, expandable bait section
-        var speciesHtml = '';
-        var species = loc.top_species || [];
-        if (species.length) {
-            species.forEach(function (sp) {
-                var spName = typeof sp === 'string' ? sp : (sp.name || '');
-                var spBait  = typeof sp === 'object' ? (sp.bait || '') : '';
-                var spRig   = typeof sp === 'object' ? (sp.rig  || '') : '';
-                var spLure  = typeof sp === 'object' ? (sp.lures || '') : '';
-                var spAct   = typeof sp === 'object' ? (sp.activity || loc.activity) : loc.activity;
-                var spPeak  = typeof sp === 'object' ? (sp.peak_months || []) : [];
-                var spGood  = typeof sp === 'object' ? (sp.good_months || []) : [];
-                var spCfg   = ACTIVITY[spAct] || ACTIVITY.none;
-                var hasInfo = spBait || spRig || spLure || spPeak.length;
-                var uid = 'fmap-sp-' + spName.replace(/\W/g, '_');
-
-                speciesHtml +=
-                    '<div class="fmap-sp-row' + (hasInfo ? ' fmap-sp-row--expand' : '') + '"' +
-                    (hasInfo ? ' onclick="(function(el){el.classList.toggle(\'open\')})(this)"' : '') + '>' +
-                    '<span class="fmap-sp-act fmap-sp-act--' + spAct + '"></span>' +
-                    '<span class="fmap-sp-name">' + esc(spName) + '</span>' +
-                    (hasInfo ? '<svg class="fmap-sp-chevron" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' : '') +
-                    (hasInfo ?
-                        '<div class="fmap-sp-info">' +
-                        (spPeak.length ? '<div class="fmap-sp-info-row fmap-sp-info-row--spark"><span class="fmap-sp-info-lbl">Season</span><span class="fmap-sp-info-val">' + buildSparkline(spPeak, spGood) + '</span></div>' : '') +
-                        (spBait ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Bait</span><span class="fmap-sp-info-val">' + esc(spBait) + '</span></div>' : '') +
-                        (spRig  ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Rig</span><span class="fmap-sp-info-val">'  + esc(spRig)  + '</span></div>' : '') +
-                        (spLure ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Lures</span><span class="fmap-sp-info-val">' + esc(spLure) + '</span></div>' : '') +
-                        '</div>'
-                    : '') +
-                    '</div>';
-            });
-        } else {
-            speciesHtml = '<p class="fmap-no-species">No active species match for this month.</p>';
-        }
-        els.detailSpecies.innerHTML = speciesHtml;
-
-        els.detailActions.innerHTML =
-            '<a href="/f/' + esc(loc.id) + '" class="fmap-forecast-btn">' +
-            '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
-            ' View Full Forecast</a>';
-
-        els.detail.hidden = false;
-
-        // Scroll detail into view on mobile
-        if (window.innerWidth < 768) {
-            setTimeout(function () {
-                els.detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 200);
-        }
-    }
-
-    function closeDetail() {
-        var prevId = selectedId;
-        selectedId = null;
-        els.detail.hidden = true;
-        // Only the previously-selected marker needs an icon update (O(1))
-        if (prevId && _markerIndex[prevId]) {
-            _markerIndex[prevId].leaflet.setIcon(
-                makeIcon(_markerIndex[prevId].data.activity, false));
-            _markerIndex[prevId].selected = false;
-        }
-    }
-
-
     // ─── Autocomplete ─────────────────────────────────────────────────────────
     function showSuggestions(q) {
         if (!els.suggestions || !q || q.length < 2) { hideSuggestions(); return; }
@@ -1944,9 +1712,6 @@
                 currentSpeciesMeta = (data.species_meta && data.species_meta.name)
                     ? data.species_meta : null;
 
-                // Render map markers with the new data
-                drawMarkers(currentData);
-
                 // Zoom to saved location then load structure overlays and community feed
                 autoZoomToSavedLocation(currentData);
                 updateZoomHint();
@@ -1998,9 +1763,6 @@
             });
         }
 
-        // Detail drawer close button
-        var closeBtn = document.getElementById('fmap-detail-close');
-        if (closeBtn) closeBtn.addEventListener('click', closeDetail);
     }
 
     // ─── Utilities ────────────────────────────────────────────────────────────
@@ -4966,22 +4728,6 @@
             });
     }
 
-    // ─── Sparkline helper (12-bar mini chart for species rows) ────────────────
-    // Returns an SVG string showing peak months (dark), good (medium), other (faint)
-    function buildSparkline(peakMonths, goodMonths) {
-        var bars = '';
-        for (var m = 1; m <= 12; m++) {
-            var isPeak = peakMonths.indexOf(m) !== -1;
-            var isGood = goodMonths.indexOf(m) !== -1;
-            var fill = isPeak ? '#22c55e' : isGood ? '#3b82f6' : 'rgba(255,255,255,0.1)';
-            var h    = isPeak ? 10 : isGood ? 7 : 3;
-            var x    = (m - 1) * 5;
-            var y    = 10 - h;
-            bars += '<rect x="' + x + '" y="' + y + '" width="3.5" height="' + h + '" rx="1" fill="' + fill + '"/>';
-        }
-        return '<svg class="fmap-sparkline" viewBox="0 0 60 10" width="60" height="10" aria-hidden="true">' + bars + '</svg>';
-    }
-
     // ─── Fullscreen map toggle ─────────────────────────────────────────────────
     function wireFullscreen() {
         var mapWrap = document.querySelector('.fmap-map-wrap');
@@ -5065,12 +4811,6 @@
 
         els.mapEl         = document.getElementById('fishing-map-el');
         els.loading       = document.getElementById('fmap-loading');
-        els.detail        = document.getElementById('fmap-detail');
-        els.detailName    = document.getElementById('fmap-detail-name');
-        els.detailMeta    = document.getElementById('fmap-detail-meta');
-        els.detailBadge   = document.getElementById('fmap-detail-badge');
-        els.detailSpecies = document.getElementById('fmap-detail-species');
-        els.detailActions = document.getElementById('fmap-detail-actions');
         els.speciesInput   = document.getElementById('fmap-species-input');
         els.searchClear    = document.getElementById('fmap-search-clear');
         els.suggestions    = document.getElementById('fmap-suggestions');
