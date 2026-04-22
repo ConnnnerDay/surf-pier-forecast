@@ -190,7 +190,6 @@
         opts: { attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19 }
     };
     var activeTileLayer = null;
-    var isSatellite = true;
 
     function initMap() {
         if (mapReady) return;

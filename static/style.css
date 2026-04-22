@@ -5574,7 +5574,6 @@ h2::before {
   gap: 0.35rem;
   flex: 1 1 180px;
 }
-.fmap-adv-group--temp { flex: 0 1 160px; }
 .fmap-adv-group--full { flex: none; width: 100%; }
 .fmap-adv-label {
   font-size: 0.7rem;
@@ -5582,35 +5581,6 @@ h2::before {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(255,255,255,0.5);
-}
-.fmap-adv-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-.fmap-adv-temp-row {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-.fmap-temp-input {
-  width: 60px;
-  padding: 0.3rem 0.4rem;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 6px;
-  color: inherit;
-  font-size: 0.8rem;
-  text-align: center;
-}
-.fmap-temp-input:focus {
-  outline: none;
-  border-color: #1fa8c9;
-  background: rgba(14,95,120,0.15);
-}
-.fmap-temp-sep {
-  color: rgba(255,255,255,0.4);
-  font-size: 0.85rem;
 }
 .fmap-adv-actions {
   display: flex;
@@ -5684,8 +5654,8 @@ h2::before {
   flex-wrap: wrap;
   gap: 0.3rem 0.35rem;
 }
-/* Shared pill styles (season/time/tide/spot-type pills reuse fmap-pill base) */
-.fmap-pill--season, .fmap-pill--time, .fmap-pill--tide, .fmap-pill--spot-type {
+/* Spot-type pills */
+.fmap-pill--spot-type {
   padding: 0.25rem 0.6rem;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.18);
@@ -5696,7 +5666,6 @@ h2::before {
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.fmap-pill--season:hover, .fmap-pill--time:hover, .fmap-pill--tide:hover,
 .fmap-pill--spot-type:hover {
   background: rgba(14,95,120,0.25);
   border-color: #1fa8c9;
@@ -5706,9 +5675,6 @@ h2::before {
   outline: 2px solid #1fa8c9;
   outline-offset: 2px;
 }
-.fmap-pill--season.fmap-pill--active,
-.fmap-pill--time.fmap-pill--active,
-.fmap-pill--tide.fmap-pill--active,
 .fmap-pill--spot-type.fmap-pill--active {
   background: #0e5f78;
   border-color: #1fa8c9;
@@ -6025,17 +5991,11 @@ h2::before {
 }
 [data-theme="light"] .fmap-struct-error-dismiss { color: #b91c1c; }
 [data-theme="light"] .fmap-adv-label { color: #5a7080; }
-[data-theme="light"] .fmap-pill--season,
-[data-theme="light"] .fmap-pill--time,
-[data-theme="light"] .fmap-pill--tide,
 [data-theme="light"] .fmap-pill--spot-type {
   background: #e8f4f8;
   border-color: #b3cfd9;
   color: #2d6070;
 }
-[data-theme="light"] .fmap-pill--season.fmap-pill--active,
-[data-theme="light"] .fmap-pill--time.fmap-pill--active,
-[data-theme="light"] .fmap-pill--tide.fmap-pill--active,
 [data-theme="light"] .fmap-pill--spot-type.fmap-pill--active {
   background: #0e5f78;
   border-color: #0e5f78;
@@ -6051,11 +6011,6 @@ h2::before {
   color: #1a2e38;
 }
 [data-theme="light"] .fmap-log-input:focus { border-color: #0e5f78; }
-[data-theme="light"] .fmap-temp-input {
-  background: #fff;
-  border-color: #c9d8e0;
-  color: #1a2e38;
-}
 [data-theme="light"] .fmap-map-search-bar .fmap-search-input {
   background: rgba(232,244,248,0.92);
   border-color: #b3cfd9;
