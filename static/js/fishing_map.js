@@ -65,6 +65,7 @@
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
     var _mainAbort           = null; // AbortController for the in-flight /api/fishing-map fetch
+    var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
     var aiCache          = {};       // bbox-key+species → array of habitat features
@@ -2301,17 +2302,23 @@
 
     function loadCommunityPins() {
         if (!communityLayerOn || !map || !communityLayer) return;
+
+        // Cancel any in-flight request so rapid panning doesn't pile up stale responses.
+        if (_communityAbort) { _communityAbort.abort(); }
+        _communityAbort = new AbortController();
+
         var b    = map.getBounds();
         var sw   = b.getSouthWest();
         var ne   = b.getNorthEast();
         var url  = '/api/map/catches?sw_lat=' + Math.round(sw.lat * 100) / 100 +
                    '&sw_lng=' + Math.round(sw.lng * 100) / 100 +
                    '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
-                   '&ne_lng=' + Math.round(ne.lng * 100) / 100;
+                   '&ne_lng=' + Math.round(ne.lng * 100) / 100 +
+                   '&limit=200';
         // When the user has filtered by species, show only matching catches on the map.
         if (activeSpecies) url += '&species=' + encodeURIComponent(activeSpecies);
 
-        fetch(url)
+        fetch(url, { signal: _communityAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (data) {
                 communityData = data.catches || [];
@@ -2335,6 +2342,7 @@
                 }
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return; // superseded by newer fetch
                 console.warn('[fishing-map] loadCommunityPins failed:', err);
             });
     }

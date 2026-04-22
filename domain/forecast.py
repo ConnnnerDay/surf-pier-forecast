@@ -72,6 +72,14 @@ logger = logging.getLogger(__name__)
 
 FORECAST_VERSION = "v1.0.0"
 
+# Shared pool for all forecast requests.  Creating a new executor per request
+# wastes time spawning/tearing down threads; a module-level pool keeps workers
+# warm and handles concurrent requests without queuing (30 workers ≈ 3 × 10
+# concurrent forecasts before back-pressure).
+_FORECAST_POOL = _cf.ThreadPoolExecutor(
+    max_workers=30, thread_name_prefix="forecast-fetch"
+)
+
 # Generic mid-Atlantic historical monthly averages used as the absolute
 # last resort when no location is set.
 MONTHLY_AVG_WIND: dict[int, tuple[float, float]] = {
@@ -2328,47 +2336,41 @@ def generate_forecast(
     # per-source latency does not accumulate.  marine + water_temp are resolved
     # first since they gate species ranking (which runs CPU-only while the
     # remaining calls continue in the background).
-    _pool = _cf.ThreadPoolExecutor(
-        max_workers=10, thread_name_prefix="forecast-fetch"
+    # Uses _FORECAST_POOL (module-level) to avoid per-request thread creation.
+    _marine_fut = _FORECAST_POOL.submit(
+        builder.marine_service.get_marine_forecast,
+        month, location, sources_used, fallbacks_triggered,
     )
-    try:
-        _marine_fut = _pool.submit(
-            builder.marine_service.get_marine_forecast,
-            month, location, sources_used, fallbacks_triggered,
-        )
-        _wtemp_fut = _pool.submit(
-            get_water_temp, month, location, sources_used, fallbacks_triggered,
-        )
-        _alerts_fut = _pool.submit(
-            builder.weather_service.get_weather_alerts, loc_lat, loc_lng
-        )
-        _state_alerts_fut = (
-            _pool.submit(builder.weather_service.get_state_alerts, loc_state)
-            if loc_state else None
-        )
-        _pressure_fut = _pool.submit(
-            builder.buoy_service.get_barometric_pressure, location
-        )
-        _weather_fut = _pool.submit(
-            builder.weather_service.get_current_weather, loc_lat, loc_lng
-        )
-        _env_fut = _pool.submit(
-            builder.environment_service.get_coops_environmental, coops_station
-        )
-        _currents_fut = _pool.submit(
-            builder.environment_service.get_currents, coops_station, tz_name
-        )
-        _cur_obs_fut = _pool.submit(
-            builder.environment_service.get_current_observation, coops_station, tz_name
-        )
-        _tides_fut = _pool.submit(
-            builder.tide_service.get_tide_predictions, now, location, tz_name
-        )
-        _wq_fut = _pool.submit(_get_wq, loc_lat, loc_lng)
-        _fao_fut = _pool.submit(_get_fao, loc_lat, loc_lng, [])
-    except Exception:
-        _pool.shutdown(wait=False)
-        raise
+    _wtemp_fut = _FORECAST_POOL.submit(
+        get_water_temp, month, location, sources_used, fallbacks_triggered,
+    )
+    _alerts_fut = _FORECAST_POOL.submit(
+        builder.weather_service.get_weather_alerts, loc_lat, loc_lng
+    )
+    _state_alerts_fut = (
+        _FORECAST_POOL.submit(builder.weather_service.get_state_alerts, loc_state)
+        if loc_state else None
+    )
+    _pressure_fut = _FORECAST_POOL.submit(
+        builder.buoy_service.get_barometric_pressure, location
+    )
+    _weather_fut = _FORECAST_POOL.submit(
+        builder.weather_service.get_current_weather, loc_lat, loc_lng
+    )
+    _env_fut = _FORECAST_POOL.submit(
+        builder.environment_service.get_coops_environmental, coops_station
+    )
+    _currents_fut = _FORECAST_POOL.submit(
+        builder.environment_service.get_currents, coops_station, tz_name
+    )
+    _cur_obs_fut = _FORECAST_POOL.submit(
+        builder.environment_service.get_current_observation, coops_station, tz_name
+    )
+    _tides_fut = _FORECAST_POOL.submit(
+        builder.tide_service.get_tide_predictions, now, location, tz_name
+    )
+    _wq_fut = _FORECAST_POOL.submit(_get_wq, loc_lat, loc_lng)
+    _fao_fut = _FORECAST_POOL.submit(_get_fao, loc_lat, loc_lng, [])
 
     # Resolve marine + water_temp first — they gate species ranking.
     try:
@@ -2573,10 +2575,6 @@ def generate_forecast(
     if _fao.get("fao_zone"):
         forecast["fao_enrichment"] = _fao
         sources_used.append("FAO GeoNetwork")
-
-    # Shut down pool; any future still running past its timeout continues in
-    # the background but won't block this response.
-    _pool.shutdown(wait=False)
 
     # Propagate humidity into conditions so the template always has a single
     # reliable place to look, regardless of which data source provided it.

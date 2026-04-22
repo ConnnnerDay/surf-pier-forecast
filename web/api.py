@@ -1512,14 +1512,17 @@ def fishing_map_data() -> Any:
         "trending_species": trending_species,
         "species_meta": species_meta,
     }
-    _fmap_cache_set(_fmap_key, _response_data)
-
-    # Signal any threads that were waiting on the singleflight event, then
-    # remove the inflight entry so future callers take the fast HIT path.
-    if _my_event is not None:
-        with _FMAP_INFLIGHT_LOCK:
-            _FMAP_INFLIGHT.pop(_fmap_key, None)
-        _my_event.set()
+    # Signal waiting singleflight threads in a finally so they are always
+    # released — even if _fmap_cache_set raises (e.g. pickle error).
+    # Exceptions in the scoring computation above propagate normally; the
+    # 8-second wait timeout in those threads is the fallback for that case.
+    try:
+        _fmap_cache_set(_fmap_key, _response_data)
+    finally:
+        if _my_event is not None:
+            with _FMAP_INFLIGHT_LOCK:
+                _FMAP_INFLIGHT.pop(_fmap_key, None)
+            _my_event.set()
 
     # Apply bbox slice on the MISS path (same logic as the HIT path above).
     _send_data = _response_data
