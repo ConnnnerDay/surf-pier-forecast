@@ -539,12 +539,13 @@
                     <div class="fmap-search-wrap">
                         <svg class="fmap-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <input type="text" id="fmap-species-input" class="fmap-search-input"
-                               placeholder="Filter by species…" autocomplete="off" spellcheck="false"
-                               aria-label="Filter fishing spots by species"
+                               placeholder="Search species to refine AI picks…" autocomplete="off" spellcheck="false"
+                               aria-label="Search species to refine AI habitat picks"
                                aria-autocomplete="list" aria-expanded="false" aria-controls="fmap-suggestions">
                         <button type="button" id="fmap-search-clear" class="fmap-search-clear" aria-label="Clear species filter" hidden>&times;</button>
                         <ul id="fmap-suggestions" class="fmap-suggestions" role="listbox" aria-label="Species suggestions" hidden></ul>
                     </div>
+                    <div id="fmap-habitat-insight" class="fmap-habitat-insight" hidden></div>
                 </div>
                 <div id="fmap-loading" class="fmap-map-loading" aria-live="polite" role="status">
                     <svg class="fmap-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>

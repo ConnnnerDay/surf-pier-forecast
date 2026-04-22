@@ -496,18 +496,30 @@
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
 
+        var tipLabel = habitatType === 'general' ? 'Habitat' : 'AI Pick';
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
             var m      = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(habitatType) });
             var name   = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             m.bindTooltip(
-                '<span class="fmap-ai-tip-label">AI Pick</span>' + name +
+                '<span class="fmap-ai-tip-label">' + tipLabel + '</span>' + name +
                 '<span style="opacity:.8">' + esc(tipCfg.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
         });
+    }
+
+    function _updateHabitatInsight(habitatType, def) {
+        var el = document.getElementById('fmap-habitat-insight');
+        if (!el) return;
+        if (habitatType === 'general' || !def || !def.insight) {
+            el.hidden = true;
+            return;
+        }
+        el.textContent = def.insight;
+        el.hidden = false;
     }
 
     function queryAIHabitatSpots() {
@@ -517,6 +529,8 @@
             ? inferHabitatType(currentSpeciesMeta)
             : 'general';
         var def         = HABITAT_DEFS[habitatType];
+
+        _updateHabitatInsight(habitatType, def);
 
         // Pelagic / open-water: no OSM markers to place
         if (!def || !def.tags.length) {

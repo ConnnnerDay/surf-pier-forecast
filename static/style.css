@@ -5359,8 +5359,22 @@ h2::before {
   left: 0.6rem;
   z-index: 450;
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+.fmap-habitat-insight {
+  max-width: 280px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(232,240,245,0.88);
+  background: rgba(10,19,29,0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(31,168,201,0.22);
+  border-radius: 7px;
+  padding: 0.45rem 0.65rem;
+  font-style: italic;
 }
 .fmap-map-search-bar .fmap-search-wrap { max-width: 220px; }
 .fmap-map-search-bar .fmap-search-input {
