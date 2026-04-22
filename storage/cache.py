@@ -20,6 +20,7 @@ from storage.sqlite import (
     delete_forecast_cache,
     load_forecast,
     load_forecast_cache,
+    load_forecast_cache_for_user,
     save_forecast_cache,
 )
 from utils import norm_user_id as _norm_user_id
@@ -68,9 +69,8 @@ def load_cached_forecast(
         return _load_json_fallback(location_id)
 
     normalized_uid = _norm_user_id(user_id)
-    result = load_forecast_cache(normalized_uid, location_id)
-    if result is None and normalized_uid != 0:
-        result = load_forecast_cache(0, location_id)
+    # Combined query: one connection handles user-specific + anonymous fallback.
+    result = load_forecast_cache_for_user(normalized_uid, location_id)
 
     if result is not None:
         if _is_stale(result):

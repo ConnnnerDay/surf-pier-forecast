@@ -1138,6 +1138,46 @@ def load_forecast_cache(user_id: int, location_id: str) -> Optional[dict[str, An
         return None
 
 
+def load_forecast_cache_for_user(
+    user_id: int, location_id: str
+) -> Optional[dict[str, Any]]:
+    """Load forecast cache preferring user-specific row, falling back to anonymous.
+
+    Combines the two separate load_forecast_cache(uid) + load_forecast_cache(0)
+    calls in storage.cache into a single DB connection + single query.
+
+    Returns the user-specific forecast if it exists; otherwise the anonymous
+    (user_id=0) one; otherwise None.  Anonymous users (user_id=0) just execute
+    a plain equality match.
+    """
+    if not location_id:
+        return None
+    conn = get_db()
+    try:
+        if user_id == 0:
+            row = conn.execute(
+                "SELECT forecast_json FROM forecast_cache "
+                "WHERE user_id = 0 AND location_id = ?",
+                (location_id,),
+            ).fetchone()
+        else:
+            # Fetch both rows in one pass; user-specific row sorts first.
+            row = conn.execute(
+                "SELECT forecast_json FROM forecast_cache "
+                "WHERE location_id = ? AND user_id IN (?, 0) "
+                "ORDER BY (user_id = ?) DESC LIMIT 1",
+                (location_id, user_id, user_id),
+            ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return None
+    try:
+        return json.loads(row["forecast_json"])
+    except Exception:
+        return None
+
+
 def delete_forecast_cache(user_id: int, location_id: str) -> bool:
     conn = get_db()
     cur = conn.execute(
