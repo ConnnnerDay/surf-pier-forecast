@@ -31,7 +31,9 @@ Results are cached in-process for 30 minutes (same TTL as fish_structures.py).
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import logging
+import threading
 import time
 from typing import Any, Optional
 
@@ -46,6 +48,7 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=6))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: dict[tuple, dict[str, Any]] = {}
+_CACHE_LOCK = threading.Lock()
 _CACHE_TTL: int = 1800
 _CACHE_TTL_FAIL: int = 120
 _CACHE_MAX: int = 256
@@ -126,25 +129,15 @@ def fetch_pier_locations(
     if hit is not None:
         return hit
 
-    results = _query_bbox(
-        _SERVICES["noaa_marinas"],
-        south,
-        west,
-        north,
-        east,
-        result_record_count=50,
-    )
-
-    # Also try the USACE boat-ramps layer
-    ramps = _query_bbox(
-        _SERVICES["usace_water_access"],
-        south,
-        west,
-        north,
-        east,
-        result_record_count=30,
-    )
-    results.extend(ramps)
+    with _cf.ThreadPoolExecutor(max_workers=2, thread_name_prefix="esri-piers") as pool:
+        marinas_fut = pool.submit(
+            _query_bbox, _SERVICES["noaa_marinas"], south, west, north, east, 50
+        )
+        ramps_fut = pool.submit(
+            _query_bbox, _SERVICES["usace_water_access"], south, west, north, east, 30
+        )
+        results = marinas_fut.result()
+        results.extend(ramps_fut.result())
 
     features = _normalise_features(results, default_type="pier")
     _cache_set(cache_key, features, failed=not results)
@@ -372,7 +365,8 @@ def _normalise_features(
     return out
 
 def _cache_get(key: tuple) -> Optional[Any]:
-    entry = _CACHE.get(key)
+    with _CACHE_LOCK:
+        entry = _CACHE.get(key)
     if not entry:
         return None
     ttl = _CACHE_TTL_FAIL if entry.get("failed") else _CACHE_TTL
@@ -381,7 +375,8 @@ def _cache_get(key: tuple) -> Optional[Any]:
     return None
 
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
-    if len(_CACHE) >= _CACHE_MAX:
-        oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
-        _CACHE.pop(oldest, None)
-    _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}
+    with _CACHE_LOCK:
+        if len(_CACHE) >= _CACHE_MAX:
+            oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
+            _CACHE.pop(oldest, None)
+        _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}

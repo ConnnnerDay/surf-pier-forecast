@@ -31,6 +31,7 @@ Integration points
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from typing import Any, Optional
 
@@ -45,6 +46,7 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: dict[tuple, dict[str, Any]] = {}
+_CACHE_LOCK = threading.Lock()
 _CACHE_TTL: int = 3600  # 1 hour — OAM catalog changes infrequently
 _CACHE_TTL_FAIL: int = 300
 
@@ -294,7 +296,8 @@ def _parse_oam_result(item: dict[str, Any]) -> Optional[dict[str, Any]]:
     }
 
 def _cache_get(key: tuple) -> Optional[Any]:
-    entry = _CACHE.get(key)
+    with _CACHE_LOCK:
+        entry = _CACHE.get(key)
     if not entry:
         return None
     ttl = _CACHE_TTL_FAIL if entry.get("failed") else _CACHE_TTL
@@ -303,7 +306,8 @@ def _cache_get(key: tuple) -> Optional[Any]:
     return None
 
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
-    if len(_CACHE) >= _CACHE_MAX:
-        oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
-        _CACHE.pop(oldest, None)
-    _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}
+    with _CACHE_LOCK:
+        if len(_CACHE) >= _CACHE_MAX:
+            oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
+            _CACHE.pop(oldest, None)
+        _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}

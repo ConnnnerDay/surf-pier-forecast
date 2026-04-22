@@ -24,6 +24,7 @@ Tile config is static.  Overpass results are cached in-process for
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from typing import Any
 
@@ -41,6 +42,7 @@ _HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process Overpass result cache ─────────────────────────────────────────
 _CACHE: dict[tuple, dict[str, Any]] = {}
+_CACHE_LOCK = threading.Lock()
 _CACHE_TTL: int = 1800  # 30 min — harbour infrastructure changes rarely
 _CACHE_TTL_FAIL: int = 120  # 2 min — retry failed queries sooner
 _CACHE_MAX: int = 128
@@ -167,7 +169,8 @@ def fetch_osm_amenities(
     now = time.time()
 
     # Cache hit?
-    entry = _CACHE.get(cache_key)
+    with _CACHE_LOCK:
+        entry = _CACHE.get(cache_key)
     if entry:
         ttl = _CACHE_TTL_FAIL if entry.get("failed") else _CACHE_TTL
         if now - entry["ts"] < ttl:
@@ -200,11 +203,10 @@ def fetch_osm_amenities(
             "osm_tiles: all Overpass mirrors failed for (%.3f, %.3f)", lat, lng
         )
 
-    # Evict stale entries if cache is too large
-    if len(_CACHE) >= _CACHE_MAX:
-        _evict_cache(now)
-
-    _CACHE[cache_key] = {"ts": now, "data": results, "failed": failed}
+    with _CACHE_LOCK:
+        if len(_CACHE) >= _CACHE_MAX:
+            _evict_cache(now)
+        _CACHE[cache_key] = {"ts": now, "data": results, "failed": failed}
     return results
 
 # ─────────────────────────────────────────────────────────────────────────────

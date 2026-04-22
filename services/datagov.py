@@ -30,6 +30,7 @@ registration or API key.  Results are cached in-process for 2 hours.
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -48,6 +49,7 @@ _HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
 
 # ── In-process result cache ───────────────────────────────────────────────────
 _CACHE: dict[tuple, dict[str, Any]] = {}
+_CACHE_LOCK = threading.Lock()
 _CACHE_TTL: int = 7200  # 2 hours — water quality changes slowly
 _CACHE_TTL_FAIL: int = 300  # 5 min — retry failed queries sooner
 _CACHE_MAX: int = 256
@@ -342,7 +344,8 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 def _cache_get(key: tuple) -> Optional[Any]:
-    entry = _CACHE.get(key)
+    with _CACHE_LOCK:
+        entry = _CACHE.get(key)
     if not entry:
         return None
     ttl = _CACHE_TTL_FAIL if entry.get("failed") else _CACHE_TTL
@@ -351,10 +354,11 @@ def _cache_get(key: tuple) -> Optional[Any]:
     return None
 
 def _cache_set(key: tuple, data: Any, failed: bool = False) -> None:
-    if len(_CACHE) >= _CACHE_MAX:
-        oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
-        _CACHE.pop(oldest, None)
-    _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}
+    with _CACHE_LOCK:
+        if len(_CACHE) >= _CACHE_MAX:
+            oldest = min(_CACHE, key=lambda k: _CACHE[k]["ts"])
+            _CACHE.pop(oldest, None)
+        _CACHE[key] = {"ts": time.time(), "data": data, "failed": failed}
 
 # ── FIPS codes for US states (needed for WQP state queries) ──────────────────
 _STATE_FIPS: dict[str, str] = {
