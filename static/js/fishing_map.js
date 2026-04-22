@@ -223,7 +223,6 @@
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
-            scheduleFetch();
         });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
@@ -514,12 +513,9 @@
     function queryAIHabitatSpots() {
         if (!map || !aiPickLayer) return;
 
-        if (!activeSpecies || !currentSpeciesMeta) {
-            aiPickLayer.clearLayers();
-            return;
-        }
-
-        var habitatType = inferHabitatType(currentSpeciesMeta);
+        var habitatType = (activeSpecies && currentSpeciesMeta)
+            ? inferHabitatType(currentSpeciesMeta)
+            : 'general';
         var def         = HABITAT_DEFS[habitatType];
 
         // Pelagic / open-water: no OSM markers to place
@@ -1676,16 +1672,6 @@
         if (activeSpecies) params.set('species', activeSpecies);
         // Tell server to omit the 895-name species list once the client has it
         if (allSpecies.length > 0) params.set('has_species', '1');
-        // Send viewport bounds so the server returns only visible locations.
-        // The server caches the full scored set and slices cheaply by bbox,
-        // so this cuts response payload by ~80% when zoomed into one region.
-        if (map) {
-            var bounds = map.getBounds();
-            params.set('sw_lat', bounds.getSouth().toFixed(4));
-            params.set('sw_lng', bounds.getWest().toFixed(4));
-            params.set('ne_lat', bounds.getNorth().toFixed(4));
-            params.set('ne_lng', bounds.getEast().toFixed(4));
-        }
 
         var url = API_URL + (params.toString() ? '?' + params.toString() : '');
 
