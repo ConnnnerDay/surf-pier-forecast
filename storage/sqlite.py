@@ -1775,60 +1775,6 @@ def get_recent_public_catches(
     ]
 
 
-# ── Community catch rows — short-lived cache ──────────────────────────────────
-# The raw lat/lng rows from map_catches don't change between requests; caching
-# them for 5 minutes avoids re-querying the DB on every fishing-map cache miss.
-_CATCH_ROWS_CACHE: Optional[tuple] = None  # (expiry_ts, rows_list)
-_CATCH_ROWS_TTL: int = 300  # 5 minutes
-
-
-def _get_public_catch_rows(days_back: int) -> list:
-    global _CATCH_ROWS_CACHE
-    now = _time.time()
-    if _CATCH_ROWS_CACHE and now < _CATCH_ROWS_CACHE[0]:
-        return _CATCH_ROWS_CACHE[1]
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            """
-            SELECT lat, lng
-            FROM map_catches
-            WHERE is_public = 1
-              AND caught_at >= datetime('now', ?)
-            """,
-            (f"-{abs(days_back)} days",),
-        ).fetchall()
-    finally:
-        conn.close()
-    _CATCH_ROWS_CACHE = (now + _CATCH_ROWS_TTL, list(rows))
-    return _CATCH_ROWS_CACHE[1]
-
-
-def get_catch_counts_near_locations(
-    locations: list[dict[str, Any]],
-    days_back: int = 30,
-    radius_deg: float = 0.3,
-) -> dict[str, int]:
-    """Return a dict mapping location_id → recent community catch count.
-
-    Counts public map catches within *radius_deg* of each NOAA location.
-    Uses a single DB query (cached 5 min) and O(n×m) matching.
-    """
-    if not locations:
-        return {}
-    rows = _get_public_catch_rows(days_back)
-    counts: dict[str, int] = {}
-    for loc in locations:
-        loc_lat = loc["lat"]
-        loc_lng = loc["lng"]
-        cnt = sum(
-            1
-            for r in rows
-            if abs(r["lat"] - loc_lat) <= radius_deg
-            and abs(r["lng"] - loc_lng) <= radius_deg
-        )
-        counts[loc["id"]] = cnt
-    return counts
 
 
 # Custom map markers (admin-editable) ----------------------------------------
