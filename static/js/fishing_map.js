@@ -7,13 +7,6 @@
     var DEFAULT_CENTER = [37.5, -96.0];
     var DEFAULT_ZOOM   = 4;
 
-    // Bounding boxes for coast auto-zoom [south, west, north, east]
-    var COAST_BOUNDS = {
-        east:   [[24.0, -98.0],  [47.5, -66.0]],
-        west:   [[32.0, -125.0], [49.0, -116.0]],
-        hawaii: [[18.5, -161.0], [22.5, -154.0]]
-    };
-
     var ACTIVITY = {
         peak: { color: '#22c55e', ring: 'rgba(34,197,94,0.35)',  label: 'Peak', size: 11 },
         good: { color: '#3b82f6', ring: 'rgba(59,130,246,0.30)', label: 'Good', size: 9  },
@@ -33,7 +26,6 @@
     var currentData   = [];          // last API response locations
     var selectedId    = null;
     var fetchTimer    = null;
-    var activeCoast   = 'all';
     var activeCat     = '';
     var activeSpecies = '';
     var isFullscreen  = false;
@@ -73,13 +65,6 @@
     var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
-
-    // ─── Advanced filter state ────────────────────────────────────────────────
-    var activeSeason  = '';          // spring|summer|fall|winter|''
-    var activeTime    = '';          // dawn|morning|midday|evening|night|''
-    var activeTide    = '';          // incoming|outgoing|high|low|''
-    var activeMinTemp = '';          // numeric string or ''
-    var activeMaxTemp = '';          // numeric string or ''
 
     // ─── Community / social state ─────────────────────────────────────────────
     var communityLayerOn  = false;   // whether community pins are visible
@@ -1864,13 +1849,7 @@
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
                 species:    activeSpecies,
-                coast:      activeCoast,
                 cat:        activeCat,
-                season:     activeSeason,
-                time:       activeTime,
-                tide:       activeTide,
-                minTemp:    activeMinTemp,
-                maxTemp:    activeMaxTemp,
                 spotTypes:  activeSpotTypes.slice()
             }));
         } catch (e) {
@@ -1889,35 +1868,9 @@
                 if (els.speciesInput)  els.speciesInput.value = f.species;
                 if (els.searchClear) els.searchClear.hidden = false;
             }
-            if (f.coast) {
-                activeCoast = f.coast;
-                setPillActive('.fmap-pill--coast', 'data-coast', f.coast);
-            }
             if (f.cat) {
                 activeCat = f.cat;
                 setPillActive('.fmap-pill--cat', 'data-cat', f.cat);
-            }
-            if (f.season) {
-                activeSeason = f.season;
-                setPillActive('.fmap-pill--season', 'data-season', f.season);
-            }
-            if (f.time) {
-                activeTime = f.time;
-                setPillActive('.fmap-pill--time', 'data-time', f.time);
-            }
-            if (f.tide) {
-                activeTide = f.tide;
-                setPillActive('.fmap-pill--tide', 'data-tide', f.tide);
-            }
-            if (f.minTemp) {
-                activeMinTemp = f.minTemp;
-                var minInput = document.getElementById('fmap-min-temp');
-                if (minInput) minInput.value = f.minTemp;
-            }
-            if (f.maxTemp) {
-                activeMaxTemp = f.maxTemp;
-                var maxInput = document.getElementById('fmap-max-temp');
-                if (maxInput) maxInput.value = f.maxTemp;
             }
             // Only restore from storage when restoreFromHash() hasn't already
             // applied types from the URL — the hash (shared link) wins.
@@ -1961,14 +1914,7 @@
 
         var params = new URLSearchParams();
         if (activeSpecies) params.set('species', activeSpecies);
-        if (activeCoast && activeCoast !== 'all') params.set('coast', activeCoast);
         if (activeCat) params.set('category', activeCat);
-        // Advanced filters
-        if (activeSeason) params.set('season', activeSeason);
-        if (activeTime)   params.set('time_of_day', activeTime);
-        if (activeTide)   params.set('tide_phase', activeTide);
-        if (activeMinTemp) params.set('min_water_temp', activeMinTemp);
-        if (activeMaxTemp) params.set('max_water_temp', activeMaxTemp);
         // Tell server to omit the 895-name species list once the client has it
         if (allSpecies.length > 0) params.set('has_species', '1');
         // Send viewport bounds so the server returns only visible locations.
@@ -2088,11 +2034,7 @@
     // ─── Advanced filters ─────────────────────────────────────────────────────
 
     function updateAdvBadge() {
-        var n = (activeCoast && activeCoast !== 'all' ? 1 : 0) +
-                (activeCat ? 1 : 0) +
-                (activeSeason ? 1 : 0) + (activeTime ? 1 : 0) +
-                (activeTide ? 1 : 0) +
-                ((activeMinTemp || activeMaxTemp) ? 1 : 0) +
+        var n = (activeCat ? 1 : 0) +
                 (activeSpotTypes.length > 0 ? 1 : 0);
         var countEl = document.getElementById('fmap-sec-count-filters');
         if (countEl) {
@@ -2110,46 +2052,6 @@
     function wireAdvancedFilters() {
         var resetBtn = document.getElementById('fmap-adv-reset');
 
-        document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var v = b.getAttribute('data-season');
-                activeSeason = (activeSeason === v) ? '' : v;
-                setPillActive('.fmap-pill--season', 'data-season', activeSeason);
-                updateAdvBadge();
-                scheduleFetch();
-            });
-        });
-
-        document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var v = b.getAttribute('data-time');
-                activeTime = (activeTime === v) ? '' : v;
-                setPillActive('.fmap-pill--time', 'data-time', activeTime);
-                updateAdvBadge();
-                scheduleFetch();
-            });
-        });
-
-        document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var v = b.getAttribute('data-tide');
-                activeTide = (activeTide === v) ? '' : v;
-                setPillActive('.fmap-pill--tide', 'data-tide', activeTide);
-                updateAdvBadge();
-                scheduleFetch();
-            });
-        });
-
-        document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var v = b.getAttribute('data-coast') || 'all';
-                activeCoast = v;
-                setPillActive('.fmap-pill--coast', 'data-coast', v);
-                updateAdvBadge();
-                scheduleFetch();
-            });
-        });
-
         document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
             b.addEventListener('click', function () {
                 var v = b.getAttribute('data-cat');
@@ -2160,33 +2062,10 @@
             });
         });
 
-        var minTempEl = document.getElementById('fmap-min-temp');
-        var maxTempEl = document.getElementById('fmap-max-temp');
-        var tempTimer = null;
-        function onTempChange() {
-            clearTimeout(tempTimer);
-            tempTimer = setTimeout(function () {
-                activeMinTemp = (minTempEl && minTempEl.value) ? minTempEl.value : '';
-                activeMaxTemp = (maxTempEl && maxTempEl.value) ? maxTempEl.value : '';
-                updateAdvBadge();
-                scheduleFetch();
-            }, 600);
-        }
-        if (minTempEl) minTempEl.addEventListener('input', onTempChange);
-        if (maxTempEl) maxTempEl.addEventListener('input', onTempChange);
-
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
-                activeCoast = 'all';
                 activeCat = '';
-                activeSeason = activeTime = activeTide = activeMinTemp = activeMaxTemp = '';
-                setPillActive('.fmap-pill--coast', 'data-coast', 'all');
                 setPillActive('.fmap-pill--cat', 'data-cat', '');
-                setPillActive('.fmap-pill--season', 'data-season', '');
-                setPillActive('.fmap-pill--time', 'data-time', '');
-                setPillActive('.fmap-pill--tide', 'data-tide', '');
-                if (minTempEl) minTempEl.value = '';
-                if (maxTempEl) maxTempEl.value = '';
                 _applySpotTypeUI([]);
                 updateAdvBadge();
                 scheduleFetch();
@@ -5179,13 +5058,7 @@
             // Encode current fishing map state into URL hash
             var hashParts = [];
             if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
-            if (activeCoast && activeCoast !== 'all') hashParts.push('coast=' + activeCoast);
             if (activeCat)    hashParts.push('cat=' + activeCat);
-            if (activeSeason)   hashParts.push('season=' + activeSeason);
-            if (activeTime)     hashParts.push('time=' + activeTime);
-            if (activeTide)     hashParts.push('tide=' + activeTide);
-            if (activeMinTemp)  hashParts.push('min_temp=' + activeMinTemp);
-            if (activeMaxTemp)  hashParts.push('max_temp=' + activeMaxTemp);
             if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
@@ -5214,45 +5087,11 @@
                 if (els.speciesInput) els.speciesInput.value = v;
                 if (els.searchClear) els.searchClear.hidden = false;
             }
-            if (k === 'coast' && v) {
-                activeCoast = v;
-                document.querySelectorAll('.fmap-pill--coast').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-coast') === v);
-                });
-            }
             if (k === 'cat' && v) {
                 activeCat = v;
                 document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
                     b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === v);
                 });
-            }
-            if (k === 'season' && v) {
-                activeSeason = v;
-                document.querySelectorAll('.fmap-pill--season').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-season') === v);
-                });
-            }
-            if (k === 'time' && v) {
-                activeTime = v;
-                document.querySelectorAll('.fmap-pill--time').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-time') === v);
-                });
-            }
-            if (k === 'tide' && v) {
-                activeTide = v;
-                document.querySelectorAll('.fmap-pill--tide').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-tide') === v);
-                });
-            }
-            if (k === 'min_temp' && v) {
-                activeMinTemp = v;
-                var minEl = document.getElementById('fmap-min-temp');
-                if (minEl) minEl.value = v;
-            }
-            if (k === 'max_temp' && v) {
-                activeMaxTemp = v;
-                var maxEl = document.getElementById('fmap-max-temp');
-                if (maxEl) maxEl.value = v;
             }
             if (k === 'types' && v) {
                 var requested = v.split(',').map(function (t) { return t.trim(); })

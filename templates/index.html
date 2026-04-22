@@ -490,24 +490,6 @@
     </details>
     </div><!-- /.section-block species-calendar -->
 
-    <!-- ============================================================
-         SATELLITE & MAP LAYERS  (NASA GIBS, OSM, Natural Earth, Esri)
-         ============================================================ -->
-    <div class="section-block" data-section-id="satellite-layers" data-section-label="Satellite &amp; Map Layers">
-    <details class="collapsible-module" id="satellite-layers-details">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                Satellite &amp; Map Layers
-            </span>
-            <span class="collapsible-module-sub">OSM &middot; NASA Worldview &middot; Natural Earth &middot; Esri</span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            {% include 'partials/_geo_layers.html' %}
-        </div>
-    </details>
-    </div><!-- /.section-block satellite-layers -->
 
     <!-- ============================================================
          WATER QUALITY & ENVIRONMENTAL DATA  (EPA WQP, FAO, HDX)
@@ -656,60 +638,11 @@
                                 <div class="fmap-filters-inner">
                                 <div class="fmap-adv-row">
                                     <div class="fmap-adv-group">
-                                        <span class="fmap-adv-label">Coast</span>
-                                        <div class="fmap-coast-pills" role="group" aria-label="Coast filter">
-                                            <button type="button" class="fmap-pill fmap-pill--coast fmap-pill--active" data-coast="all">All</button>
-                                            <button type="button" class="fmap-pill fmap-pill--coast" data-coast="east">East</button>
-                                            <button type="button" class="fmap-pill fmap-pill--coast" data-coast="west">West</button>
-                                            <button type="button" class="fmap-pill fmap-pill--coast" data-coast="hawaii">Hawaii</button>
-                                        </div>
-                                    </div>
-                                    <div class="fmap-adv-group">
                                         <span class="fmap-adv-label">Type</span>
                                         <div class="fmap-cat-pills" role="group" aria-label="Category filter">
                                             <button type="button" class="fmap-pill fmap-pill--cat" data-cat="pier">Piers</button>
                                             <button type="button" class="fmap-pill fmap-pill--cat" data-cat="reef">Reefs/Wrecks</button>
                                             <button type="button" class="fmap-pill fmap-pill--cat" data-cat="jetty">Jetties</button>
-                                        </div>
-                                    </div>
-                                    <div class="fmap-adv-group">
-                                        <span class="fmap-adv-label">Season</span>
-                                        <div class="fmap-adv-pills">
-                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="spring">Spring</button>
-                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="summer">Summer</button>
-                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="fall">Fall</button>
-                                            <button type="button" class="fmap-pill fmap-pill--season" data-season="winter">Winter</button>
-                                        </div>
-                                    </div>
-                                    <div class="fmap-adv-group">
-                                        <span class="fmap-adv-label">Time of Day</span>
-                                        <div class="fmap-adv-pills">
-                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="dawn">Dawn</button>
-                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="morning">Morning</button>
-                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="midday">Midday</button>
-                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="evening">Evening</button>
-                                            <button type="button" class="fmap-pill fmap-pill--time" data-time="night">Night</button>
-                                        </div>
-                                    </div>
-                                    <div class="fmap-adv-group">
-                                        <span class="fmap-adv-label">Tide Phase</span>
-                                        <div class="fmap-adv-pills">
-                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="incoming">Incoming</button>
-                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="outgoing">Outgoing</button>
-                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="high">High</button>
-                                            <button type="button" class="fmap-pill fmap-pill--tide" data-tide="low">Low</button>
-                                        </div>
-                                    </div>
-                                    <div class="fmap-adv-group fmap-adv-group--temp">
-                                        <span class="fmap-adv-label">Water Temp (&deg;F)</span>
-                                        <div class="fmap-adv-temp-row">
-                                            <input type="number" id="fmap-min-temp" class="fmap-temp-input"
-                                                   placeholder="Min" min="32" max="100" step="1"
-                                                   aria-label="Minimum water temperature">
-                                            <span class="fmap-temp-sep">&ndash;</span>
-                                            <input type="number" id="fmap-max-temp" class="fmap-temp-input"
-                                                   placeholder="Max" min="32" max="100" step="1"
-                                                   aria-label="Maximum water temperature">
                                         </div>
                                     </div>
                                 </div>
@@ -2132,7 +2065,6 @@ if ('serviceWorker' in navigator) {
 <script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
 <script>window.IS_LOGGED_IN = {{ 'true' if g.user else 'false' }};</script>
 <script src="{{ url_for('static', filename='js/fishing_map.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/geo_layers.js') }}" defer></script>
 
 <script>
 /* ── Auto-detected location toast ────────────────────────────────────────── */
