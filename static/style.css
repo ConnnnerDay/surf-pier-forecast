@@ -4087,13 +4087,6 @@ h2::before {
 .fmap-suggestions li:hover { background: rgba(14,95,120,0.18); color: var(--text-primary,#e8f0f5); }
 .fmap-suggestions li mark { background: none; color: #1fa8c9; font-weight: 600; }
 
-/* Pill groups (coast + category) */
-.fmap-coast-pills,
-.fmap-cat-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
 
 .fmap-pill {
   padding: 0.3rem 0.75rem;
@@ -5563,11 +5556,6 @@ h2::before {
   border-color: rgba(255,255,255,0.14);
 }
 
-.fmap-adv-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
 .fmap-adv-group {
   display: flex;
   flex-direction: column;
@@ -6018,7 +6006,6 @@ h2::before {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .fmap-adv-row { flex-direction: column; gap: 0.6rem; }
   /* On mobile the pill row scrolls horizontally instead of wrapping to save vertical space */
   .fmap-struct-filters-pills { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
   .fmap-modal-inner { max-width: 100%; margin: 0 0.5rem; }

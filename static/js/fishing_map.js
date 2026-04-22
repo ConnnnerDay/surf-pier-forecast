@@ -26,7 +26,6 @@
     var currentData   = [];          // last API response locations
     var selectedId    = null;
     var fetchTimer    = null;
-    var activeCat     = '';
     var activeSpecies = '';
     var isFullscreen  = false;
 
@@ -162,8 +161,7 @@
         });
     }
     function ensureLeafletCss() {
-        // Shared guard: check by URL so this is idempotent even when geo_layers.js
-        // has already inserted the same stylesheet under a different attribute name.
+        // Guard: skip if Leaflet CSS is already present (idempotent).
         if (document.querySelector('link[rel="stylesheet"][href*="leaflet"]')) return;
         var l = document.createElement('link');
         l.rel = 'stylesheet';
@@ -1848,7 +1846,6 @@
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
                 species:    activeSpecies,
-                cat:        activeCat,
                 spotTypes:  activeSpotTypes.slice()
             }));
         } catch (e) {
@@ -1866,10 +1863,6 @@
                 activeSpecies = f.species;
                 if (els.speciesInput)  els.speciesInput.value = f.species;
                 if (els.searchClear) els.searchClear.hidden = false;
-            }
-            if (f.cat) {
-                activeCat = f.cat;
-                setPillActive('.fmap-pill--cat', 'data-cat', f.cat);
             }
             // Only restore from storage when restoreFromHash() hasn't already
             // applied types from the URL — the hash (shared link) wins.
@@ -1913,7 +1906,6 @@
 
         var params = new URLSearchParams();
         if (activeSpecies) params.set('species', activeSpecies);
-        if (activeCat) params.set('category', activeCat);
         // Tell server to omit the 895-name species list once the client has it
         if (allSpecies.length > 0) params.set('has_species', '1');
         // Send viewport bounds so the server returns only visible locations.
@@ -2033,8 +2025,7 @@
     // ─── Advanced filters ─────────────────────────────────────────────────────
 
     function updateAdvBadge() {
-        var n = (activeCat ? 1 : 0) +
-                (activeSpotTypes.length > 0 ? 1 : 0);
+        var n = (activeSpotTypes.length > 0 ? 1 : 0);
         var countEl = document.getElementById('fmap-sec-count-filters');
         if (countEl) {
             countEl.textContent = n + ' on';
@@ -2050,21 +2041,8 @@
 
     function wireAdvancedFilters() {
         var resetBtn = document.getElementById('fmap-adv-reset');
-
-        document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var v = b.getAttribute('data-cat');
-                activeCat = (activeCat === v) ? '' : v;
-                setPillActive('.fmap-pill--cat', 'data-cat', activeCat);
-                updateAdvBadge();
-                scheduleFetch();
-            });
-        });
-
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
-                activeCat = '';
-                setPillActive('.fmap-pill--cat', 'data-cat', '');
                 _applySpotTypeUI([]);
                 updateAdvBadge();
                 scheduleFetch();
@@ -5057,7 +5035,6 @@
             // Encode current fishing map state into URL hash
             var hashParts = [];
             if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
-            if (activeCat)    hashParts.push('cat=' + activeCat);
             if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
@@ -5085,12 +5062,6 @@
                 activeSpecies = v;
                 if (els.speciesInput) els.speciesInput.value = v;
                 if (els.searchClear) els.searchClear.hidden = false;
-            }
-            if (k === 'cat' && v) {
-                activeCat = v;
-                document.querySelectorAll('.fmap-pill--cat').forEach(function (b) {
-                    b.classList.toggle('fmap-pill--active', b.getAttribute('data-cat') === v);
-                });
             }
             if (k === 'types' && v) {
                 var requested = v.split(',').map(function (t) { return t.trim(); })
