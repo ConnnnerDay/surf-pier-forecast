@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sqlite3
+import threading as _threading
 import time as _time
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -1810,8 +1811,26 @@ def _marker_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
+_CUSTOM_MARKERS_CACHE: Optional[list[dict[str, Any]]] = None
+_CUSTOM_MARKERS_TS: float = 0.0
+_CUSTOM_MARKERS_TTL: float = 300.0  # 5 minutes — admin writes are rare
+_CUSTOM_MARKERS_LOCK = _threading.Lock()
+
+
+def _invalidate_custom_markers_cache() -> None:
+    global _CUSTOM_MARKERS_TS
+    with _CUSTOM_MARKERS_LOCK:
+        _CUSTOM_MARKERS_TS = 0.0
+
+
 def get_custom_markers() -> list[dict[str, Any]]:
-    """Return all non-deleted custom map markers."""
+    """Return all non-deleted custom map markers, from in-memory cache when fresh."""
+    global _CUSTOM_MARKERS_CACHE, _CUSTOM_MARKERS_TS
+    now = _time.monotonic()
+    with _CUSTOM_MARKERS_LOCK:
+        if _CUSTOM_MARKERS_CACHE is not None and now - _CUSTOM_MARKERS_TS < _CUSTOM_MARKERS_TTL:
+            return _CUSTOM_MARKERS_CACHE
+
     conn = get_db()
     try:
         rows = conn.execute(
@@ -1820,7 +1839,12 @@ def get_custom_markers() -> list[dict[str, Any]]:
         ).fetchall()
     finally:
         conn.close()
-    return [_marker_row_to_dict(r) for r in rows]
+
+    result = [_marker_row_to_dict(r) for r in rows]
+    with _CUSTOM_MARKERS_LOCK:
+        _CUSTOM_MARKERS_CACHE = result
+        _CUSTOM_MARKERS_TS = _time.monotonic()
+    return result
 
 
 def create_custom_marker(
@@ -1844,6 +1868,7 @@ def create_custom_marker(
         conn.commit()
     finally:
         conn.close()
+    _invalidate_custom_markers_cache()
     return _marker_row_to_dict(row)
 
 
@@ -1895,6 +1920,7 @@ def update_custom_marker(
         conn.commit()
     finally:
         conn.close()
+    _invalidate_custom_markers_cache()
     return _marker_row_to_dict(updated)
 
 
@@ -1910,4 +1936,6 @@ def delete_custom_marker(marker_id: int) -> bool:
         conn.commit()
     finally:
         conn.close()
+    if cur.rowcount > 0:
+        _invalidate_custom_markers_cache()
     return cur.rowcount > 0
