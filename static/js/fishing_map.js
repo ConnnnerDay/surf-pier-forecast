@@ -672,13 +672,25 @@
         return out;
     }
 
-    // Single-character labels rendered inside circle markers for at-a-glance identification
+    // Symbols rendered inside structure markers — chosen to visually suggest the feature type
     var SPOT_LABELS = {
-        pier:         'P',  jetty:      'J',  bridge:    'B',  reef:  'R',
-        oyster_reef:  'O',  wreck:      'W',  inlet:     'C',  marina:'M',
-        shoal:        'S',  point:      '^',  beach:     '~',  buoy:  '·',
-        fishing:      'F',  fishing_shop:'$', boat_ramp: 'L',  dive_site: 'D',
-        seawall:      '='
+        pier:         '⊥',   // T/dock shape from above
+        jetty:        '≡',   // stacked lines = rock armour
+        bridge:       '∩',   // arch = bridge span
+        reef:         '≈',   // wavy = underwater relief
+        oyster_reef:  '◌',   // open ring = shell cluster
+        wreck:        '✕',   // X = hazard / charted wreck
+        inlet:        '⇢',   // arrow = tidal flow
+        marina:       '⚓',   // anchor = marina/harbor
+        shoal:        '〜',   // wave = shallow break
+        point:        '△',   // triangle = headland jutting out
+        beach:        '∿',   // sine wave = surf break
+        buoy:         '◎',   // bullseye = channel buoy
+        fishing:      '✦',   // star = access point
+        fishing_shop: '⚙',   // gear = tackle & bait
+        boat_ramp:    '▽',   // inverted triangle = ramp into water
+        dive_site:    '✚',   // cross = dive-flag reference
+        seawall:      '▬'    // bar = wall face
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -728,9 +740,9 @@
         var rot   = isHabitat ? 'transform:rotate(45deg)' : '';
         var lbl   = isHabitat ? '' : (SPOT_LABELS[type] || '');
         var inner = lbl
-            ? '<span style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.97);' +
-              'font-family:system-ui,sans-serif;line-height:1;pointer-events:none;' +
-              'letter-spacing:-0.5px">' + lbl + '</span>'
+            ? '<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.97);' +
+              'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+              'line-height:1;pointer-events:none;">' + lbl + '</span>'
             : '';
         var html  = '<span class="fmap-spot-dot" style="background:' + color +
                     ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
