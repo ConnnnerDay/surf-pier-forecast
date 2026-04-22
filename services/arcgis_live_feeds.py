@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import concurrent.futures as _cf
 import logging
+import threading
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -165,6 +166,7 @@ _WARN_MAX = 64  # bbox combinations kept in memory
 _STORM_CACHE: Optional[list[dict[str, Any]]] = None
 _STORM_TS = 0.0
 _STORM_TTL = 600  # 10 minutes
+_STORM_LOCK = threading.Lock()
 
 def _warn_key(s: float, w: float, n: float, e: float) -> tuple:
     return (round(s, 2), round(w, 2), round(n, 2), round(e, 2))
@@ -316,6 +318,17 @@ def fetch_active_storms() -> list[dict[str, Any]]:
     if _STORM_CACHE is not None and time.time() - _STORM_TS < _STORM_TTL:
         return _STORM_CACHE
 
+    with _STORM_LOCK:
+        # Double-checked: another thread may have populated the cache while we waited.
+        if _STORM_CACHE is not None and time.time() - _STORM_TS < _STORM_TTL:
+            return _STORM_CACHE
+
+        return _fetch_active_storms_locked()
+
+def _fetch_active_storms_locked() -> list[dict[str, Any]]:
+    """Inner fetch executed while _STORM_LOCK is held."""
+    global _STORM_CACHE, _STORM_TS
+
     common = {
         "where": "1=1",
         "outSR": "4326",
@@ -425,6 +438,7 @@ def _category_label(kt: int) -> str:
 _RECENT_TRACK_CACHE: Optional[list[dict[str, Any]]] = None
 _RECENT_TRACK_TS = 0.0
 _RECENT_TRACK_TTL = 3600  # 1 hour — historical; updates a few times per day
+_RECENT_TRACK_LOCK = threading.Lock()
 
 # Saffir-Simpson integer → human label
 _SS_LABELS = {
@@ -476,63 +490,67 @@ def fetch_recent_storm_tracks(
         path       list   [[lat, lng], ...] observed track polyline
     """
     global _RECENT_TRACK_CACHE, _RECENT_TRACK_TS
-    if (
-        _RECENT_TRACK_CACHE is not None
-        and time.time() - _RECENT_TRACK_TS < _RECENT_TRACK_TTL
-    ):
+    now = time.time()
+    if _RECENT_TRACK_CACHE is not None and now - _RECENT_TRACK_TS < _RECENT_TRACK_TTL:
         cached = _RECENT_TRACK_CACHE
         if basin:
             return [s for s in cached if s.get("basin", "").upper() == basin.upper()]
         return cached
 
-    where = f"BASIN='{basin.upper()}'" if basin else "1=1"
-    params = {
-        "where": where,
-        "outFields": "STORMID,STORMNAME,BASIN,STORMTYPE,SS,STARTDTG,ENDDTG",
-        "outSR": "4326",
-        "returnGeometry": "true",
-        "resultRecordCount": 500,
-        "f": "json",
-    }
+    with _RECENT_TRACK_LOCK:
+        # Double-checked: another thread may have fetched while we waited for the lock.
+        now = time.time()
+        if _RECENT_TRACK_CACHE is not None and now - _RECENT_TRACK_TS < _RECENT_TRACK_TTL:
+            cached = _RECENT_TRACK_CACHE
+            if basin:
+                return [s for s in cached if s.get("basin", "").upper() == basin.upper()]
+            return cached
 
-    try:
-        resp = _HTTP.get(_RECENT_TRACK_URL, params=params, timeout=_T_XLONG)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as exc:
-        logger.warning("ArcGIS recent storm tracks fetch failed: %s", exc)
-        return []
+        params = {
+            "where": "1=1",
+            "outFields": "STORMID,STORMNAME,BASIN,STORMTYPE,SS,STARTDTG,ENDDTG",
+            "outSR": "4326",
+            "returnGeometry": "true",
+            "resultRecordCount": 500,
+            "f": "json",
+        }
 
-    results: list[dict[str, Any]] = []
-    for feat in data.get("features", []):
-        attrs = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        paths = geom.get("paths") or []
-        if not paths:
-            continue
+        try:
+            resp = _HTTP.get(_RECENT_TRACK_URL, params=params, timeout=_T_XLONG)
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as exc:
+            logger.warning("ArcGIS recent storm tracks fetch failed: %s", exc)
+            return []
 
-        ss = int(attrs.get("SS") or 0)
-        name = (attrs.get("STORMNAME") or "Unknown").strip().title()
+        results: list[dict[str, Any]] = []
+        for feat in data.get("features", []):
+            attrs = feat.get("attributes", {})
+            geom = feat.get("geometry") or {}
+            paths = geom.get("paths") or []
+            if not paths:
+                continue
 
-        results.append(
-            {
-                "storm_id": attrs.get("STORMID") or "",
-                "name": name,
-                "basin": (attrs.get("BASIN") or "").strip(),
-                "start_dtg": _ms_to_iso(attrs.get("STARTDTG")),
-                "end_dtg": _ms_to_iso(attrs.get("ENDDTG")),
-                "ss_max": ss,
-                "category": _SS_LABELS.get(ss, "Unknown"),
-                "color": _SS_COLORS.get(ss, "#94a3b8"),
-                "path": _ring_to_latlng(paths[0]),
-            }
-        )
+            ss = int(attrs.get("SS") or 0)
+            name = (attrs.get("STORMNAME") or "Unknown").strip().title()
 
-    # Sort by most recent start date first
-    results.sort(key=lambda s: s["start_dtg"], reverse=True)
+            results.append(
+                {
+                    "storm_id": attrs.get("STORMID") or "",
+                    "name": name,
+                    "basin": (attrs.get("BASIN") or "").strip(),
+                    "start_dtg": _ms_to_iso(attrs.get("STARTDTG")),
+                    "end_dtg": _ms_to_iso(attrs.get("ENDDTG")),
+                    "ss_max": ss,
+                    "category": _SS_LABELS.get(ss, "Unknown"),
+                    "color": _SS_COLORS.get(ss, "#94a3b8"),
+                    "path": _ring_to_latlng(paths[0]),
+                }
+            )
 
-    _RECENT_TRACK_CACHE = results
-    _RECENT_TRACK_TS = time.time()
+        results.sort(key=lambda s: s["start_dtg"], reverse=True)
+        _RECENT_TRACK_CACHE = results
+        _RECENT_TRACK_TS = time.time()
 
     if basin:
         return [s for s in results if s.get("basin", "").upper() == basin.upper()]
@@ -1166,6 +1184,7 @@ def fetch_precip_forecast(lat: float, lng: float) -> list[dict[str, Any]]:
 _SEA_ICE_CACHE: Optional[dict[str, Any]] = None
 _SEA_ICE_TS = 0.0
 _SEA_ICE_TTL = 86400  # 24 hours — monthly product
+_SEA_ICE_LOCK = threading.Lock()
 
 def fetch_sea_ice_extent() -> Optional[dict[str, Any]]:
     """Return the most recent Arctic sea ice extent polygon and statistics.
@@ -1181,46 +1200,49 @@ def fetch_sea_ice_extent() -> Optional[dict[str, Any]]:
     if _SEA_ICE_CACHE is not None and time.time() - _SEA_ICE_TS < _SEA_ICE_TTL:
         return _SEA_ICE_CACHE
 
-    params = {
-        "where": "1=1",
-        "outFields": "Rec_Year,Rec_Month,Rec_Area,Rec_Extent,Rec_Date",
-        "returnGeometry": "true",
-        "orderByFields": "Rec_Date DESC",
-        "resultRecordCount": 1,
-        "outSR": "4326",
-        "f": "json",
-    }
+    with _SEA_ICE_LOCK:
+        # Double-checked: another thread may have fetched while we waited.
+        if _SEA_ICE_CACHE is not None and time.time() - _SEA_ICE_TS < _SEA_ICE_TTL:
+            return _SEA_ICE_CACHE
 
-    try:
-        resp = _HTTP.get(_SEA_ICE_N_URL, params=params, timeout=_T_XLONG)
-        resp.raise_for_status()
-        feats = resp.json().get("features", [])
-    except Exception as exc:
-        logger.warning("ArcGIS sea ice fetch failed: %s", exc)
-        _SEA_ICE_CACHE = None
+        params = {
+            "where": "1=1",
+            "outFields": "Rec_Year,Rec_Month,Rec_Area,Rec_Extent,Rec_Date",
+            "returnGeometry": "true",
+            "orderByFields": "Rec_Date DESC",
+            "resultRecordCount": 1,
+            "outSR": "4326",
+            "f": "json",
+        }
+
+        try:
+            resp = _HTTP.get(_SEA_ICE_N_URL, params=params, timeout=_T_XLONG)
+            resp.raise_for_status()
+            feats = resp.json().get("features", [])
+        except Exception as exc:
+            logger.warning("ArcGIS sea ice fetch failed: %s", exc)
+            _SEA_ICE_TS = time.time()
+            return None
+
+        if not feats:
+            _SEA_ICE_TS = time.time()
+            return None
+
+        attrs = feats[0].get("attributes", {})
+        geom = feats[0].get("geometry") or {}
+        rings = geom.get("rings") or []
+
+        result: dict[str, Any] = {
+            "year": int(attrs.get("Rec_Year") or 0),
+            "month": int(attrs.get("Rec_Month") or 0),
+            "area_mkm2": round(float(attrs.get("Rec_Area") or 0), 2),
+            "extent_mkm2": round(float(attrs.get("Rec_Extent") or 0), 2),
+            "rings": [_ring_to_latlng(r) for r in rings],
+        }
+
+        _SEA_ICE_CACHE = result
         _SEA_ICE_TS = time.time()
-        return None
-
-    if not feats:
-        _SEA_ICE_CACHE = None
-        _SEA_ICE_TS = time.time()
-        return None
-
-    attrs = feats[0].get("attributes", {})
-    geom = feats[0].get("geometry") or {}
-    rings = geom.get("rings") or []
-
-    result: dict[str, Any] = {
-        "year": int(attrs.get("Rec_Year") or 0),
-        "month": int(attrs.get("Rec_Month") or 0),
-        "area_mkm2": round(float(attrs.get("Rec_Area") or 0), 2),
-        "extent_mkm2": round(float(attrs.get("Rec_Extent") or 0), 2),
-        "rings": [_ring_to_latlng(r) for r in rings],
-    }
-
-    _SEA_ICE_CACHE = result
-    _SEA_ICE_TS = time.time()
-    return result
+        return result
 
 # ── NDFD Daily Temperature ─────────────────────────────────────────────────────
 

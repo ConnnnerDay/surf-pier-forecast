@@ -105,6 +105,7 @@
     var overlayLayers = {};     // layerId → L.tileLayer (null if not loaded)
     var neCoastlineLayer = null; // L.geoJSON for Natural Earth coastlines
     var featureLayers = {};     // layerId → L.layerGroup
+    var featureAborts = {};     // layerId → AbortController (in-flight fetch, if any)
     var initAttempted = false;
 
     // ── DOM references ───────────────────────────────────────────────────────
@@ -345,6 +346,14 @@
             return;
         }
 
+        // Abort any in-flight fetch for this layer so a stale response from a
+        // previous viewport cannot overwrite the layer we are about to build.
+        if (featureAborts[layerId]) {
+            featureAborts[layerId].abort();
+        }
+        var controller = new AbortController();
+        featureAborts[layerId] = controller;
+
         var bounds = map.getBounds();
         var bboxParams = '?south=' + bounds.getSouth().toFixed(3) +
                          '&west='  + bounds.getWest().toFixed(3) +
@@ -354,10 +363,12 @@
         var endpoint = _featEndpoint(layerId, bboxParams);
         if (!endpoint) return;
 
-        fetch(endpoint)
+        fetch(endpoint, { signal: controller.signal })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (resp) {
                 if (!resp || !resp.ok || !mapReady || !map) return;
+                // Only apply if this controller is still the active one for this layer.
+                if (featureAborts[layerId] !== controller) return;
                 var features = (resp.data || {}).features || (resp.data || {}).imagery || [];
                 var group = L.layerGroup();
                 features.forEach(function (f) {
@@ -369,11 +380,16 @@
                 featureLayers[layerId] = group.addTo(map);
             })
             .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 console.warn('[geo_layers] feature layer', layerId, 'failed:', err);
             });
     }
 
     function unloadFeatureLayer(layerId) {
+        if (featureAborts[layerId]) {
+            featureAborts[layerId].abort();
+            featureAborts[layerId] = null;
+        }
         var layer = featureLayers[layerId];
         if (layer && map) map.removeLayer(layer);
         featureLayers[layerId] = null;

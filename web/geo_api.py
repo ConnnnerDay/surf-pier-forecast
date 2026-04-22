@@ -237,7 +237,7 @@ def geo_environmental() -> Any:
     if state and len(state) == 2:
         beach_closures = fetch_beach_closures(state)[:10]
 
-    return _ok(
+    resp = _ok(
         {
             "water_quality": wq_summary,
             "sst_tile": sst_config,
@@ -245,6 +245,8 @@ def geo_environmental() -> Any:
             "location": {"lat": lat, "lng": lng},
         }
     )
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 @bp.route("/api/v1/geo/coastlines")
 def geo_coastlines() -> Any:
@@ -270,7 +272,9 @@ def geo_coastlines() -> Any:
     else:
         geojson = get_coastlines_geojson(bbox=bbox, resolution=res)
 
-    return jsonify(geojson)
+    resp = jsonify(geojson)
+    resp.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+    return resp
 
 @bp.route("/api/v1/geo/osm/amenities")
 def geo_osm_amenities() -> Any:
@@ -296,7 +300,9 @@ def geo_osm_amenities() -> Any:
         radius_m = 2000
 
     amenities = fetch_osm_amenities(lat, lng, radius_m=radius_m)
-    return _ok({"amenities": amenities, "count": len(amenities)})
+    resp = _ok({"amenities": amenities, "count": len(amenities)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
+    return resp
 
 @bp.route("/api/v1/geo/esri/piers")
 def geo_esri_piers() -> Any:
@@ -310,7 +316,9 @@ def geo_esri_piers() -> Any:
     south, west, north, east = bbox
 
     features = fetch_pier_locations(south, west, north, east)
-    return _ok({"features": features, "count": len(features)})
+    resp = _ok({"features": features, "count": len(features)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 @bp.route("/api/v1/geo/esri/beaches")
 def geo_esri_beaches() -> Any:
@@ -324,7 +332,9 @@ def geo_esri_beaches() -> Any:
     south, west, north, east = bbox
 
     beaches = fetch_epa_beaches(south, west, north, east)
-    return _ok({"features": beaches, "count": len(beaches)})
+    resp = _ok({"features": beaches, "count": len(beaches)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 @bp.route("/api/v1/geo/esri/parks")
 def geo_esri_parks() -> Any:
@@ -338,7 +348,9 @@ def geo_esri_parks() -> Any:
     south, west, north, east = bbox
 
     parks = fetch_coastal_parks(south, west, north, east)
-    return _ok({"features": parks, "count": len(parks)})
+    resp = _ok({"features": parks, "count": len(parks)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    return resp
 
 @bp.route("/api/v1/geo/aerial/oam")
 def geo_oam_imagery() -> Any:
@@ -352,7 +364,9 @@ def geo_oam_imagery() -> Any:
     south, west, north, east = bbox
 
     results = search_oam_imagery(south, west, north, east, limit=8)
-    return _ok({"imagery": results, "count": len(results)})
+    resp = _ok({"imagery": results, "count": len(results)})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
+    return resp
 
 @bp.route("/api/v1/geo/habitats")
 def geo_habitats() -> Any:
@@ -412,4 +426,6 @@ def geo_hdx_fao() -> Any:
     )
 
     enrichment = get_hdx_fao_enrichment(lat, lng, species_names)
-    return _ok(enrichment)
+    resp = _ok(enrichment)
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
+    return resp

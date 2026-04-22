@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import json
 import os
 import re
@@ -137,6 +138,20 @@ def _record_account_action_failure() -> None:
 
 def _clear_account_action_failures() -> None:
     _clear_attempts(_account_action_rate_limit_store, _account_action_rate_limit_lock)
+
+
+def _load_account_credentials(user_id: int) -> tuple[list, list]:
+    """Return (passkeys, social_accounts) fetched in parallel.
+
+    Both are independent SQLite reads; running them concurrently halves
+    wall-clock time on account page renders and error-path re-renders.
+    """
+    with _cf.ThreadPoolExecutor(max_workers=2, thread_name_prefix="acct-creds") as pool:
+        pk_fut = pool.submit(get_webauthn_credentials, user_id)
+        sa_fut = pool.submit(get_social_accounts_for_user, user_id)
+        passkeys = pk_fut.result()
+        social_accounts = sa_fut.result()
+    return passkeys, social_accounts
 
 
 # Per-username account lockout.
@@ -1047,8 +1062,7 @@ def account() -> Any:
     favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
     recent_logs = get_recent_logs(g.user["id"], limit=5)
-    passkeys = get_webauthn_credentials(g.user["id"])
-    social_accounts = get_social_accounts_for_user(g.user["id"])
+    passkeys, social_accounts = _load_account_credentials(g.user["id"])
     return render_template(
         "account.html",
         prefs=prefs,
@@ -1106,14 +1120,15 @@ def change_password_route() -> Any:
     def _pw_error(msg: str) -> Any:
         prefs = get_preferences(g.user["id"])
         prefs.setdefault("notification_prefs", {})
+        _passkeys, _social = _load_account_credentials(g.user["id"])
         return render_template(
             "account.html",
             prefs=prefs,
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            passkeys=get_webauthn_credentials(g.user["id"]),
-            social_accounts=get_social_accounts_for_user(g.user["id"]),
+            passkeys=_passkeys,
+            social_accounts=_social,
             pw_error=msg,
         )
 
@@ -1155,14 +1170,15 @@ def delete_account_route() -> Any:
     def _del_error(msg: str) -> Any:
         prefs = get_preferences(g.user["id"])
         prefs.setdefault("notification_prefs", {})
+        _passkeys, _social = _load_account_credentials(g.user["id"])
         return render_template(
             "account.html",
             prefs=prefs,
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            passkeys=get_webauthn_credentials(g.user["id"]),
-            social_accounts=get_social_accounts_for_user(g.user["id"]),
+            passkeys=_passkeys,
+            social_accounts=_social,
             delete_error=msg,
         )
 
