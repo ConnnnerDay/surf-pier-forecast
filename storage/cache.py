@@ -19,7 +19,6 @@ from typing import Any, Optional
 from storage.sqlite import (
     delete_forecast_cache,
     load_forecast,
-    load_forecast_cache,
     load_forecast_cache_for_user,
     save_forecast_cache,
 )
