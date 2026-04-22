@@ -105,8 +105,13 @@ def _is_rate_limited() -> bool:
 def _err(msg: str, status: int = 400):
     return jsonify({"ok": False, "error": msg}), status
 
-def _ok(data: Any):
-    return jsonify({"ok": True, "data": data})
+def _ok(data: Any, max_age: int = 0):
+    resp = jsonify({"ok": True, "data": data})
+    if max_age > 0:
+        resp.headers["Cache-Control"] = (
+            f"public, max-age={max_age}, stale-while-revalidate=60"
+        )
+    return resp
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Parameter helpers
@@ -243,7 +248,8 @@ def geo_environmental() -> Any:
             "sst_tile": sst_config,
             "beach_closures": beach_closures,
             "location": {"lat": lat, "lng": lng},
-        }
+        },
+        max_age=1800,
     )
 
 @bp.route("/api/v1/geo/coastlines")
@@ -270,7 +276,9 @@ def geo_coastlines() -> Any:
     else:
         geojson = get_coastlines_geojson(bbox=bbox, resolution=res)
 
-    return jsonify(geojson)
+    resp = jsonify(geojson)
+    resp.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+    return resp
 
 @bp.route("/api/v1/geo/osm/amenities")
 def geo_osm_amenities() -> Any:
@@ -296,7 +304,7 @@ def geo_osm_amenities() -> Any:
         radius_m = 2000
 
     amenities = fetch_osm_amenities(lat, lng, radius_m=radius_m)
-    return _ok({"amenities": amenities, "count": len(amenities)})
+    return _ok({"amenities": amenities, "count": len(amenities)}, max_age=1800)
 
 @bp.route("/api/v1/geo/esri/piers")
 def geo_esri_piers() -> Any:
@@ -310,7 +318,7 @@ def geo_esri_piers() -> Any:
     south, west, north, east = bbox
 
     features = fetch_pier_locations(south, west, north, east)
-    return _ok({"features": features, "count": len(features)})
+    return _ok({"features": features, "count": len(features)}, max_age=1800)
 
 @bp.route("/api/v1/geo/esri/beaches")
 def geo_esri_beaches() -> Any:
@@ -324,7 +332,7 @@ def geo_esri_beaches() -> Any:
     south, west, north, east = bbox
 
     beaches = fetch_epa_beaches(south, west, north, east)
-    return _ok({"features": beaches, "count": len(beaches)})
+    return _ok({"features": beaches, "count": len(beaches)}, max_age=1800)
 
 @bp.route("/api/v1/geo/esri/parks")
 def geo_esri_parks() -> Any:
@@ -338,7 +346,7 @@ def geo_esri_parks() -> Any:
     south, west, north, east = bbox
 
     parks = fetch_coastal_parks(south, west, north, east)
-    return _ok({"features": parks, "count": len(parks)})
+    return _ok({"features": parks, "count": len(parks)}, max_age=1800)
 
 @bp.route("/api/v1/geo/aerial/oam")
 def geo_oam_imagery() -> Any:
@@ -352,7 +360,7 @@ def geo_oam_imagery() -> Any:
     south, west, north, east = bbox
 
     results = search_oam_imagery(south, west, north, east, limit=8)
-    return _ok({"imagery": results, "count": len(results)})
+    return _ok({"imagery": results, "count": len(results)}, max_age=1800)
 
 @bp.route("/api/v1/geo/habitats")
 def geo_habitats() -> Any:
@@ -412,4 +420,4 @@ def geo_hdx_fao() -> Any:
     )
 
     enrichment = get_hdx_fao_enrichment(lat, lng, species_names)
-    return _ok(enrichment)
+    return _ok(enrichment, max_age=3600)
