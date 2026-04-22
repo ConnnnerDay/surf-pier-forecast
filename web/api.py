@@ -2038,7 +2038,9 @@ def map_active_storms() -> Any:
     """
 
     storms = fetch_active_storms()
-    return jsonify({"storms": storms, "count": len(storms)})
+    resp = jsonify({"storms": storms, "count": len(storms)})
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/recent-storms", methods=["GET"])
@@ -2061,7 +2063,9 @@ def map_recent_storms() -> Any:
 
     basin = request.args.get("basin", "").strip().upper() or None
     tracks = fetch_recent_storm_tracks(basin=basin)
-    return jsonify({"tracks": tracks, "count": len(tracks)})
+    resp = jsonify({"tracks": tracks, "count": len(tracks)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/weather/air-quality", methods=["GET"])
@@ -2090,7 +2094,9 @@ def weather_air_quality() -> Any:
         ), 400
 
     result = fetch_air_quality(lat, lng)
-    return jsonify({"aqi": result})
+    resp = jsonify({"aqi": result})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/weather/wind-forecast", methods=["GET"])
@@ -2122,7 +2128,9 @@ def weather_wind_forecast() -> Any:
         ), 400
 
     periods = fetch_wind_forecast(lat, lng)
-    return jsonify({"periods": periods, "count": len(periods)})
+    resp = jsonify({"periods": periods, "count": len(periods)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/sst-stations", methods=["GET"])
@@ -2155,7 +2163,9 @@ def map_sst_stations() -> Any:
         ), 400
 
     stations = fetch_sst_stations(south, west, north, east)
-    return jsonify({"stations": stations, "count": len(stations)})
+    resp = jsonify({"stations": stations, "count": len(stations)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/wildfires", methods=["GET"])
@@ -2187,7 +2197,9 @@ def map_wildfires() -> Any:
         ), 400
 
     fires = fetch_wildfire_incidents(south, west, north, east)
-    return jsonify({"fires": fires, "count": len(fires)})
+    resp = jsonify({"fires": fires, "count": len(fires)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/smoke", methods=["GET"])
@@ -2220,7 +2232,9 @@ def map_smoke() -> Any:
         ), 400
 
     polygons = fetch_smoke_forecast(south, west, north, east)
-    return jsonify({"polygons": polygons, "count": len(polygons)})
+    resp = jsonify({"polygons": polygons, "count": len(polygons)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/weather/precip-forecast", methods=["GET"])
@@ -2250,7 +2264,9 @@ def weather_precip_forecast() -> Any:
         ), 400
 
     periods = fetch_precip_forecast(lat, lng)
-    return jsonify({"periods": periods, "count": len(periods)})
+    resp = jsonify({"periods": periods, "count": len(periods)})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/sea-ice", methods=["GET"])
@@ -2266,7 +2282,9 @@ def map_sea_ice() -> Any:
     """
 
     result = fetch_sea_ice_extent()
-    return jsonify({"sea_ice": result})
+    resp = jsonify({"sea_ice": result})
+    resp.headers["Cache-Control"] = "public, max-age=7200, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/weather/temp-forecast", methods=["GET"])
@@ -2292,7 +2310,9 @@ def weather_temp_forecast() -> Any:
         ), 400
 
     days = fetch_temp_forecast(lat, lng)
-    return jsonify({"days": days})
+    resp = jsonify({"days": days})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
 
 
 @bp.route("/api/map/seismic", methods=["GET"])
@@ -2321,7 +2341,9 @@ def map_seismic() -> Any:
         ), 400
 
     events = fetch_seismic_events(south, west, north, east)
-    return jsonify({"events": events, "count": len(events)})
+    resp = jsonify({"events": events, "count": len(events)})
+    resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/weather/drought", methods=["GET"])
@@ -2347,7 +2369,9 @@ def weather_drought() -> Any:
         ), 400
 
     result = fetch_drought(lat, lng)
-    return jsonify({"drought": result})
+    resp = jsonify({"drought": result})
+    resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=300"
+    return resp
 
 
 @bp.route("/api/map/metar", methods=["GET"])
@@ -2378,7 +2402,9 @@ def map_metar() -> Any:
         ), 400
 
     stations = fetch_metar_stations(south, west, north, east)
-    return jsonify({"stations": stations, "count": len(stations)})
+    resp = jsonify({"stations": stations, "count": len(stations)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/terminator", methods=["GET"])
@@ -2395,7 +2421,9 @@ def map_terminator() -> Any:
     """
 
     result = fetch_terminator()
-    return jsonify({"terminator": result})
+    resp = jsonify({"terminator": result})
+    resp.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=30"
+    return resp
 
 
 @bp.route("/api/map/stream-gauges", methods=["GET"])
@@ -2426,7 +2454,9 @@ def map_stream_gauges() -> Any:
         ), 400
 
     gauges = fetch_stream_gauges(south, west, north, east)
-    return jsonify({"gauges": gauges, "count": len(gauges)})
+    resp = jsonify({"gauges": gauges, "count": len(gauges)})
+    resp.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/storm-reports", methods=["GET"])
@@ -2455,7 +2485,9 @@ def map_storm_reports() -> Any:
         ), 400
 
     reports = fetch_storm_reports(south, west, north, east)
-    return jsonify({"reports": reports, "count": len(reports)})
+    resp = jsonify({"reports": reports, "count": len(reports)})
+    resp.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=60"
+    return resp
 
 
 @bp.route("/api/map/air-quality", methods=["GET"])

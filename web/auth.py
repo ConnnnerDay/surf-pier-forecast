@@ -51,7 +51,6 @@ from storage.sqlite import (
     get_preferences,
     get_recent_logs,
     get_social_account,
-    get_social_accounts_for_user,
     get_user,
     get_user_by_email,
     get_user_by_verification_token,
@@ -67,6 +66,7 @@ from storage.sqlite import (
     delete_webauthn_credential,
 )
 from services.email import send_verification_email, smtp_is_configured
+from web.helpers import get_account_credentials_cached, get_prefs_cached
 from web.rate_limit import (
     client_ip as _client_ip,
     is_rate_limited as _is_rate_limited,
@@ -1039,24 +1039,24 @@ def account() -> Any:
     """Account settings page for logged-in users."""
     if g.user is None:
         return redirect(url_for("auth.login"))
-    prefs = get_preferences(g.user["id"])
+    uid = g.user["id"]
+    prefs = get_prefs_cached(uid)
     prefs.setdefault("notification_prefs", {})
     loc = None
     if prefs.get("location_id"):
         loc = get_location(prefs["location_id"])
     favorites = [get_location(loc_id) for loc_id in prefs.get("favorites", [])]
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
-    recent_logs = get_recent_logs(g.user["id"], limit=5)
-    passkeys = get_webauthn_credentials(g.user["id"])
-    social_accounts = get_social_accounts_for_user(g.user["id"])
+    recent_logs = get_recent_logs(uid, limit=5)
+    creds = get_account_credentials_cached(uid)
     return render_template(
         "account.html",
         prefs=prefs,
         saved_location=loc,
         recent_logs=recent_logs,
         favorite_locations=favorites,
-        passkeys=passkeys,
-        social_accounts=social_accounts,
+        passkeys=creds["passkeys"],
+        social_accounts=creds["social_accounts"],
     )
 
 
@@ -1104,16 +1104,18 @@ def change_password_route() -> Any:
         return redirect(url_for("auth.login"))
 
     def _pw_error(msg: str) -> Any:
-        prefs = get_preferences(g.user["id"])
+        uid = g.user["id"]
+        prefs = get_prefs_cached(uid)
         prefs.setdefault("notification_prefs", {})
+        creds = get_account_credentials_cached(uid)
         return render_template(
             "account.html",
             prefs=prefs,
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            passkeys=get_webauthn_credentials(g.user["id"]),
-            social_accounts=get_social_accounts_for_user(g.user["id"]),
+            passkeys=creds["passkeys"],
+            social_accounts=creds["social_accounts"],
             pw_error=msg,
         )
 
@@ -1153,16 +1155,18 @@ def delete_account_route() -> Any:
         return redirect(url_for("auth.login"))
 
     def _del_error(msg: str) -> Any:
-        prefs = get_preferences(g.user["id"])
+        uid = g.user["id"]
+        prefs = get_prefs_cached(uid)
         prefs.setdefault("notification_prefs", {})
+        creds = get_account_credentials_cached(uid)
         return render_template(
             "account.html",
             prefs=prefs,
             saved_location=None,
             recent_logs=[],
             favorite_locations=[],
-            passkeys=get_webauthn_credentials(g.user["id"]),
-            social_accounts=get_social_accounts_for_user(g.user["id"]),
+            passkeys=creds["passkeys"],
+            social_accounts=creds["social_accounts"],
             delete_error=msg,
         )
 
