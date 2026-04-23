@@ -1549,7 +1549,7 @@ def fetch_metar_stations(
             "PRESSURE,SKY_CONDTN,WEATHER,HEAT_INDEX,LATITUDE,LONGITUDE,"
             "FLT_CATEGORY"
         ),
-        "returnGeometry": "false",
+        "returnGeometry": "true",
         "resultRecordCount": 300,
         "outSR": "4326",
         "f": "json",
@@ -1567,8 +1567,9 @@ def fetch_metar_stations(
     data: list[dict[str, Any]] = []
     for feat in feats:
         a = feat.get("attributes", {})
-        lat = a.get("LATITUDE")
-        lng = a.get("LONGITUDE")
+        geom = feat.get("geometry") or {}
+        lat = a.get("LATITUDE") or geom.get("y")
+        lng = a.get("LONGITUDE") or geom.get("x")
         if lat is None or lng is None:
             continue
         # km/h → knots
@@ -2209,9 +2210,9 @@ def fetch_ndbc_buoys(
         "outFields": (
             "STATION_ID,STATION_NAME,WATER_TEMP_F,WAVE_HT_FT,"
             "WIND_SPEED_KT,WIND_DIR,DOMINANT_PERIOD_S,PRESSURE_MB,"
-            "LAT,LON,LAST_UPDATE"
+            "LAT,LON,LATITUDE,LONGITUDE,LAST_UPDATE"
         ),
-        "returnGeometry": "false",
+        "returnGeometry": "true",
         "resultRecordCount": 200,
         "outSR": "4326",
         "f": "json",
@@ -2238,8 +2239,11 @@ def fetch_ndbc_buoys(
     data: list[dict[str, Any]] = []
     for feat in feats:
         a = feat.get("attributes", {})
-        lat_ = a.get("LAT")
-        lng_ = a.get("LON")
+        geom = feat.get("geometry") or {}
+        # Service has used both LAT/LON and LATITUDE/LONGITUDE over time; fall
+        # back to point geometry coordinates when attribute fields are absent.
+        lat_ = a.get("LAT") or a.get("LATITUDE") or geom.get("y")
+        lng_ = a.get("LON") or a.get("LONGITUDE") or geom.get("x")
         if lat_ is None or lng_ is None:
             continue
         data.append(
@@ -2526,7 +2530,7 @@ def fetch_tropical_outlook() -> list[dict[str, Any]]:
 
         params = {
             "where": "1=1",
-            "outFields": "probability,basin,discussion,FormationChance2day,FormationChance5day",
+            "outFields": "probability,basin,discussion,FormationChance2day,FormationChance5day,FormationChance7day",
             "returnGeometry": "true",
             "resultRecordCount": 50,
             "outSR": "4326",
@@ -2554,8 +2558,12 @@ def fetch_tropical_outlook() -> list[dict[str, Any]]:
             if not rings:
                 continue
 
+            # NHC changed from 2-day/5-day to 7-day outlook in 2024; try all variants.
             raw_prob = str(
-                attrs.get("probability") or attrs.get("FormationChance2day") or ""
+                attrs.get("probability")
+                or attrs.get("FormationChance7day")
+                or attrs.get("FormationChance2day")
+                or ""
             ).lower()
             # Normalise to low/medium/high
             if "high" in raw_prob:
@@ -2566,7 +2574,10 @@ def fetch_tropical_outlook() -> list[dict[str, Any]]:
                 prob = "low"
 
             prob_label = str(
-                attrs.get("FormationChance2day") or attrs.get("probability") or ""
+                attrs.get("FormationChance7day")
+                or attrs.get("FormationChance2day")
+                or attrs.get("probability")
+                or ""
             ).strip()
             basin = str(attrs.get("basin") or "ATL").upper()
             discussion = str(attrs.get("discussion") or "").strip()[:300]
