@@ -4013,86 +4013,6 @@ h2::before {
   margin: 4px 0 2px;
 }
 
-/* ── Filter bar ── */
-/* Species search */
-.fmap-search-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  max-width: 420px;
-}
-
-.fmap-search-icon {
-  position: absolute;
-  left: 0.7rem;
-  color: var(--text-muted, #8a9ba8);
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.fmap-search-input {
-  width: 100%;
-  padding: 0.5rem 2.2rem 0.5rem 2.2rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-light, #2a3f4d);
-  background: var(--card-bg, #0d2233);
-  color: var(--text-primary, #e8f0f5);
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.fmap-search-input::placeholder { color: var(--text-muted, #8a9ba8); }
-
-.fmap-search-input:focus {
-  border-color: var(--ocean, #0e5f78);
-  box-shadow: 0 0 0 3px rgba(14,95,120,0.2);
-}
-
-.fmap-search-clear {
-  position: absolute;
-  right: 0.65rem;
-  background: none;
-  border: none;
-  color: var(--text-muted, #8a9ba8);
-  font-size: 1rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 0.2rem;
-  transition: color 0.12s;
-}
-.fmap-search-clear:hover { color: var(--text-primary, #e8f0f5); }
-
-/* Autocomplete suggestions */
-.fmap-suggestions {
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
-  min-width: 100%;
-  width: max-content;
-  max-width: 340px;
-  background: var(--card-bg, #0c1f2e);
-  border: 1px solid var(--border-light, #1e3547);
-  border-radius: 10px;
-  z-index: 700;
-  list-style: none;
-  margin: 0;
-  padding: 0.35rem 0;
-  max-height: 240px;
-  overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-}
-
-.fmap-suggestions li {
-  padding: 0.45rem 0.9rem;
-  font-size: 0.84rem;
-  cursor: pointer;
-  color: var(--text-secondary, #b0c4ce);
-  transition: background 0.1s;
-}
-.fmap-suggestions li:hover { background: rgba(14,95,120,0.18); color: var(--text-primary,#e8f0f5); }
-.fmap-suggestions li mark { background: none; color: #1fa8c9; font-weight: 600; }
-
 
 .fmap-pill {
   padding: 0.3rem 0.75rem;
@@ -4341,22 +4261,6 @@ h2::before {
 .fmap-species-chip:hover { background: rgba(31,168,201,0.18); }
 
 /* ── Light theme overrides ── */
-[data-theme="light"] .fmap-search-input {
-  background: #f7fafc;
-  color: #1a2f3d;
-  border-color: #c9d8e0;
-}
-[data-theme="light"] .fmap-search-input:focus {
-  border-color: #0e5f78;
-  box-shadow: 0 0 0 3px rgba(14,95,120,0.12);
-}
-[data-theme="light"] .fmap-suggestions {
-  background: #fff;
-  border-color: #c9d8e0;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-}
-[data-theme="light"] .fmap-suggestions li { color: #1a2f3d; }
-[data-theme="light"] .fmap-suggestions li:hover { background: #e8f4f8; }
 [data-theme="light"] .fmap-pill {
   border-color: #c9d8e0;
   color: #5a7080;
@@ -4383,8 +4287,6 @@ h2::before {
 }
 
 @media (max-width: 480px) {
-  .fmap-map-search-bar { max-width: calc(100% - 1.2rem); }
-  .fmap-map-search-bar .fmap-search-wrap { max-width: 100%; flex: 1; }
 }
 
 /* ── Stats strip ── */
@@ -5322,10 +5224,7 @@ h2::before {
   top: 1rem;
   right: 3.4rem;
 }
-.fmap-map-wrap--fullscreen .fmap-map-search-bar {
-  top: 1rem;
-  left: 1rem;
-}
+
 /* ── Map ctrl divider ── */
 .fmap-ctrl-divider {
   height: 1px;
@@ -5366,37 +5265,6 @@ h2::before {
 [data-theme="light"] .fmap-toolbar-btn:hover { background: #e8f4f8; color: #0e5f78; }
 
 
-/* ── Floating search bar overlay (top-left of map) ── */
-.fmap-map-search-bar {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  z-index: 450;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-}
-.fmap-habitat-insight {
-  max-width: 280px;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  color: rgba(232,240,245,0.88);
-  background: rgba(10,19,29,0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(31,168,201,0.22);
-  border-radius: 7px;
-  padding: 0.45rem 0.65rem;
-  font-style: italic;
-}
-.fmap-map-search-bar .fmap-search-wrap { max-width: 220px; }
-.fmap-map-search-bar .fmap-search-input {
-  background: rgba(10,19,29,0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border-color: rgba(255,255,255,0.14);
-}
 
 .fmap-adv-group {
   display: flex;
@@ -5845,10 +5713,6 @@ h2::before {
   color: #1a2e38;
 }
 [data-theme="light"] .fmap-log-input:focus { border-color: #0e5f78; }
-[data-theme="light"] .fmap-map-search-bar .fmap-search-input {
-  background: rgba(232,244,248,0.92);
-  border-color: #b3cfd9;
-}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

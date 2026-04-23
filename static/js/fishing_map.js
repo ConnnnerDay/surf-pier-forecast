@@ -10,11 +10,6 @@
     // ─── State ────────────────────────────────────────────────────────────────
     var map           = null;
     var mapReady      = false;
-    var allSpecies    = [];          // species name strings for autocomplete
-    var allSpeciesLower = [];        // pre-lowercased mirror of allSpecies — avoids .toLowerCase() on every keystroke
-    var currentData   = [];          // last API response locations
-    var fetchTimer    = null;
-    var activeSpecies = '';
     var isFullscreen  = false;
 
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
@@ -42,7 +37,6 @@
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
-    var _mainAbort           = null; // AbortController for the in-flight /api/fishing-map fetch
     var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
@@ -190,7 +184,7 @@
 
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
-            hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
+            hasAutoZoomed = true;
             // Pre-warm the structure cache for the full home corridor so nearby
             // icons appear immediately and pan/zoom serve from cache.
             // 500 ms lets the tile request and first moveend query fire first,
@@ -490,13 +484,11 @@
         return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [16, 16], iconAnchor: [8, 8] });
     }
 
-    var currentSpeciesMeta = null;
-
     function renderAIHabitatSpots(features, habitatType) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
 
-        var tipLabel = habitatType === 'general' ? 'Habitat' : 'AI Pick';
+        var tipLabel = 'Habitat';
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
@@ -511,26 +503,11 @@
         });
     }
 
-    function _updateHabitatInsight(habitatType, def) {
-        var el = document.getElementById('fmap-habitat-insight');
-        if (!el) return;
-        if (habitatType === 'general' || !def || !def.insight) {
-            el.hidden = true;
-            return;
-        }
-        el.textContent = def.insight;
-        el.hidden = false;
-    }
-
     function queryAIHabitatSpots() {
         if (!map || !aiPickLayer) return;
 
-        var habitatType = (activeSpecies && currentSpeciesMeta)
-            ? inferHabitatType(currentSpeciesMeta)
-            : 'general';
+        var habitatType = 'general';
         var def         = HABITAT_DEFS[habitatType];
-
-        _updateHabitatInsight(habitatType, def);
 
         // Pelagic / open-water: no OSM markers to place
         if (!def || !def.tags.length) {
@@ -1590,57 +1567,15 @@
     }
 
     // ─── Autocomplete ─────────────────────────────────────────────────────────
-    function showSuggestions(q) {
-        if (!els.suggestions || !q || q.length < 2) { hideSuggestions(); return; }
-        var lower = q.toLowerCase();
-        // Use pre-built lowercase mirror so we never call .toLowerCase() on all 895 names at keystroke time
-        var src   = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
-        var hits  = [];
-        for (var _i = 0; _i < allSpecies.length && hits.length < 10; _i++) {
-            if ((src ? src[_i] : allSpecies[_i].toLowerCase()).indexOf(lower) !== -1) {
-                hits.push(allSpecies[_i]);
-            }
-        }
-        if (!hits.length) { hideSuggestions(); return; }
-        var html = '';
-        hits.forEach(function (n) {
-            var idx    = n.toLowerCase().indexOf(lower);
-            var before = esc(n.slice(0, idx));
-            var match  = esc(n.slice(idx, idx + q.length));
-            var after  = esc(n.slice(idx + q.length));
-            html += '<li role="option" tabindex="-1">' + before + '<mark>' + match + '</mark>' + after + '</li>';
-        });
-        els.suggestions.innerHTML = html;
-        els.suggestions.hidden = false;
-        if (els.speciesInput) els.speciesInput.setAttribute('aria-expanded', 'true');
-
-        els.suggestions.querySelectorAll('li').forEach(function (li) {
-            li.addEventListener('mousedown', function (e) {
-                e.preventDefault();
-                var text = li.textContent;
-                activeSpecies = text;
-                if (els.speciesInput) els.speciesInput.value = text;
-                if (els.searchClear) els.searchClear.hidden = false;
-                hideSuggestions();
-                scheduleFetch();
-            });
-        });
-    }
-    function hideSuggestions() {
-        if (els.suggestions) els.suggestions.hidden = true;
-        if (els.speciesInput) els.speciesInput.setAttribute('aria-expanded', 'false');
-    }
-
     // ─── localStorage persistence ─────────────────────────────────────────────
     // Key is versioned — bump when adding incompatible fields so old saved data
     // is silently ignored rather than causing unexpected UI state for users.
-    var LS_KEY = 'fmap_filters_v4';  // spotTypes field added in v4
+    var LS_KEY = 'fmap_filters_v5';  // v5: species filter removed
 
     function saveFilters() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
-                species:    activeSpecies,
-                spotTypes:  activeSpotTypes.slice()
+                spotTypes: activeSpotTypes.slice()
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -1650,14 +1585,8 @@
     function loadFilters() {
         try {
             var raw = localStorage.getItem(LS_KEY);
-            // No saved state → new user → leave all filters at their empty defaults.
             if (!raw) return;
             var f = JSON.parse(raw);
-            if (f.species) {
-                activeSpecies = f.species;
-                if (els.speciesInput)  els.speciesInput.value = f.species;
-                if (els.searchClear) els.searchClear.hidden = false;
-            }
             // Only restore from storage when restoreFromHash() hasn't already
             // applied types from the URL — the hash (shared link) wins.
             if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
@@ -1674,111 +1603,15 @@
     var hasAutoZoomed = false;
     var savedLocationLatLng = null; // lat/lng of user's saved forecast location
 
-    function autoZoomToSavedLocation(locations) {
-        if (hasAutoZoomed) return;
-        var locId = (typeof CURRENT_LOC_ID !== 'undefined') ? CURRENT_LOC_ID : '';
-        if (!locId || !map) return;
-        var match = locations.find(function (l) { return l.id === locId; });
-        if (match) {
-            hasAutoZoomed = true;
-            savedLocationLatLng = { lat: match.lat, lng: match.lng };
-            // Zoom to 12 so habitat/structure overlays are visible immediately
-            map.setView([match.lat, match.lng], 12, { animate: false });
-        }
-    }
-
-    // ─── Fetch & render ───────────────────────────────────────────────────────
+    // ─── Loading indicator ────────────────────────────────────────────────────
     function _hideMainLoading() {
         if (!els.loading) return;
         els.loading.style.opacity = '0';
         setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
     }
 
-    function fetchAndRender() {
-        if (!map) return;
-        saveFilters();
-
-        var params = new URLSearchParams();
-        if (activeSpecies) params.set('species', activeSpecies);
-        // Tell server to omit the 895-name species list once the client has it
-        if (allSpecies.length > 0) params.set('has_species', '1');
-
-        var url = API_URL + (params.toString() ? '?' + params.toString() : '');
-
-        if (els.loading) { els.loading.style.opacity = '1'; els.loading.style.pointerEvents = 'auto'; }
-
-        // Cancel any in-flight request so stale filter responses never overwrite fresh ones.
-        if (_mainAbort) { try { _mainAbort.abort(); } catch (e) {} }
-        _mainAbort = new AbortController();
-
-        fetch(url, { signal: _mainAbort.signal })
-            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-            .then(function (data) {
-                _hideMainLoading();
-
-                currentData = data.locations || [];
-
-                if (allSpecies.length === 0 && data.species_names && data.species_names.length) {
-                    allSpecies = data.species_names;
-                    // Pre-build lowercase mirror so showSuggestions never calls .toLowerCase() at keystroke time
-                    allSpeciesLower = allSpecies.map(function (n) { return n.toLowerCase(); });
-                }
-
-                // Update species meta for AI habitat inference (works for all 895 species)
-                currentSpeciesMeta = (data.species_meta && data.species_meta.name)
-                    ? data.species_meta : null;
-
-                // Zoom to saved location then load structure overlays and community feed
-                autoZoomToSavedLocation(currentData);
-                updateZoomHint();
-                scheduleFishingSpotQuery();
-                // Reload community map pins with the updated species filter, so pins
-                // reflect the same species the user has selected in the main search.
-                if (communityLayerOn) scheduleCommunityLoad();
-            })
-            .catch(function (err) {
-                if (err && err.name === 'AbortError') return; // superseded by newer request
-                _hideMainLoading();
-                console.error('[fishing-map] fetch error:', err);
-            });
-    }
-
-    function scheduleFetch() {
-        clearTimeout(fetchTimer);
-        fetchTimer = setTimeout(fetchAndRender, 280);
-    }
-
     // ─── Filter wiring ────────────────────────────────────────────────────────
     function wireFilters() {
-        if (els.speciesInput) {
-            els.speciesInput.addEventListener('input', function () {
-                activeSpecies = els.speciesInput.value.trim();
-                if (els.searchClear) els.searchClear.hidden = !activeSpecies;
-                showSuggestions(activeSpecies);
-                scheduleFetch();
-            });
-            els.speciesInput.addEventListener('change', function () {
-                activeSpecies = els.speciesInput.value.trim();
-                scheduleFetch();
-            });
-            els.speciesInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') hideSuggestions();
-                if (e.key === 'Enter')  { hideSuggestions(); scheduleFetch(); }
-            });
-            els.speciesInput.addEventListener('blur', function () {
-                setTimeout(hideSuggestions, 160);
-            });
-        }
-
-        if (els.searchClear) {
-            els.searchClear.addEventListener('click', function () {
-                activeSpecies = '';
-                if (els.speciesInput) els.speciesInput.value = '';
-                els.searchClear.hidden = true;
-                scheduleFetch();
-            });
-        }
-
     }
 
     // ─── Utilities ────────────────────────────────────────────────────────────
@@ -1945,9 +1778,6 @@
                    '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
                    '&ne_lng=' + Math.round(ne.lng * 100) / 100 +
                    '&limit=200';
-        // When the user has filtered by species, show only matching catches on the map.
-        if (activeSpecies) url += '&species=' + encodeURIComponent(activeSpecies);
-
         fetch(url, { signal: _communityAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (data) {
@@ -4657,8 +4487,8 @@
     // Restore which layers were active in the previous session.
     // Must be called AFTER all wire*Layer() functions have attached their handlers.
     //
-    // Layers are staggered 350 ms apart (starting 700 ms after boot) so the
-    // main fetchAndRender() and tile loads get network priority first.
+    // Layers are staggered 350 ms apart (starting 700 ms after boot) so that
+    // tile loads get network priority first.
     function restoreLayerState() {
         try {
             var raw = localStorage.getItem(LS_LAYERS_KEY);
@@ -4736,7 +4566,8 @@
                     // populated spotCache, so queryStructures() can render at once.
                     queryStructures();
                 }
-                fetchAndRender();
+                _hideMainLoading();
+                scheduleAIQuery();
             })
             .catch(function (err) {
                 console.error('[fishing-map] boot error:', err);
@@ -4782,7 +4613,6 @@
             var params = new URLSearchParams(window.location.search);
             // Encode current fishing map state into URL hash
             var hashParts = [];
-            if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
             if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
@@ -4806,11 +4636,6 @@
             if (eq === -1) return;
             var k = part.slice(0, eq);
             var v = decodeURIComponent(part.slice(eq + 1));
-            if (k === 'species' && v) {
-                activeSpecies = v;
-                if (els.speciesInput) els.speciesInput.value = v;
-                if (els.searchClear) els.searchClear.hidden = false;
-            }
             if (k === 'types' && v) {
                 var requested = v.split(',').map(function (t) { return t.trim(); })
                                  .filter(function (t) { return t && SPOT_TYPES[t]; });
@@ -4827,9 +4652,6 @@
 
         els.mapEl         = document.getElementById('fishing-map-el');
         els.loading       = document.getElementById('fmap-loading');
-        els.speciesInput   = document.getElementById('fmap-species-input');
-        els.searchClear    = document.getElementById('fmap-search-clear');
-        els.suggestions    = document.getElementById('fmap-suggestions');
         // Community / social elements
         els.catchDetail    = document.getElementById('fmap-catch-detail');
         els.catchDetailTitle = document.getElementById('fmap-catch-detail-title');
