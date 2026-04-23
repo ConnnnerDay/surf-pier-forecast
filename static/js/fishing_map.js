@@ -105,6 +105,10 @@
     var buoyLayer       = null;    // L.layerGroup for buoy markers
     var buoyTimer       = null;    // debounce for viewport reload
 
+    // Basemap toggle state — promoted to module scope so the tileerror fallback
+    // in initMap() can keep the button in sync when satellite tiles are unavailable.
+    var _isSatellite    = true;
+
     // Per-layer AbortControllers — cancel in-flight requests when viewport changes
     var sstAbort        = null;
     var wildfireAbort   = null;
@@ -201,9 +205,12 @@
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
         activeTileLayer.once('tileerror', function () {
-            // Fall back to street tiles if ESRI is unavailable
+            // Fall back to street tiles if ESRI is unavailable.
+            // Also update module-level _isSatellite so the basemap button stays in sync.
             map.removeLayer(activeTileLayer);
             activeTileLayer = L.tileLayer(TILE_STREET.url, TILE_STREET.opts).addTo(map);
+            _isSatellite = false;
+            _syncBasemapBtn();
         });
         activeTileLayer.addTo(map);
 
@@ -230,6 +237,26 @@
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
+
+    // Sync the basemap toggle button's icon, classes, and labels to _isSatellite.
+    // Called from both wireMapControls() and the tileerror fallback in initMap().
+    function _syncBasemapBtn() {
+        var btn     = document.getElementById('fmap-basemap-btn');
+        var iconSat = document.getElementById('fmap-basemap-icon-sat');
+        var iconMap = document.getElementById('fmap-basemap-icon-map');
+        if (!btn) return;
+        btn.classList.toggle('fmap-ctrl-btn--active', _isSatellite);
+        if (_isSatellite) {
+            btn.title = 'Satellite · click for Street map';
+            btn.setAttribute('aria-label', 'Basemap: Satellite. Click to switch to Street map');
+        } else {
+            btn.title = 'Street map · click for Satellite';
+            btn.setAttribute('aria-label', 'Basemap: Street map. Click to switch to Satellite');
+        }
+        if (iconSat) iconSat.hidden = !_isSatellite;
+        if (iconMap) iconMap.hidden =  _isSatellite;
+    }
+
     function wireMapControls() {
         // Near Me — snap to saved forecast location; GPS as fallback
         var nearMeBtn = document.getElementById('fmap-near-me');
@@ -272,10 +299,7 @@
         }
 
         // Basemap toggle — satellite (default) ↔ dark street
-        var _isSatellite = true;
-        var basemapBtn   = document.getElementById('fmap-basemap-btn');
-        var iconSat      = document.getElementById('fmap-basemap-icon-sat');
-        var iconMap      = document.getElementById('fmap-basemap-icon-map');
+        var basemapBtn = document.getElementById('fmap-basemap-btn');
         if (basemapBtn) {
             basemapBtn.addEventListener('click', function () {
                 if (!map) return;
@@ -287,16 +311,7 @@
                 ).addTo(map);
                 map.removeLayer(activeTileLayer);
                 activeTileLayer = newLayer;
-                basemapBtn.classList.toggle('fmap-ctrl-btn--active', _isSatellite);
-                if (_isSatellite) {
-                    basemapBtn.title = 'Satellite · click for Street map';
-                    basemapBtn.setAttribute('aria-label', 'Basemap: Satellite. Click to switch to Street map');
-                } else {
-                    basemapBtn.title = 'Street map · click for Satellite';
-                    basemapBtn.setAttribute('aria-label', 'Basemap: Street map. Click to switch to Satellite');
-                }
-                if (iconSat) iconSat.hidden = !_isSatellite;
-                if (iconMap) iconMap.hidden =  _isSatellite;
+                _syncBasemapBtn();
             });
         }
     }
@@ -1735,7 +1750,7 @@
                 'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
                 '</div>';
         }
-        if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + c.weight_lb.toFixed(1) + ' lb</div>';
+        if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + parseFloat(c.weight_lb).toFixed(1) + ' lb</div>';
         if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + c.length_in + ' in</div>';
         if (c.bait)      bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Bait</span>' + esc(c.bait) + '</div>';
         if (c.notes)     bodyHtml += '<div class="fmap-catch-notes">' + esc(c.notes) + '</div>';
