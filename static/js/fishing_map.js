@@ -813,9 +813,12 @@
             var coordStr = f.lat && f.lng
                 ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
                 : '';
+            var sym = SPOT_LABELS[f.type] || '';
             var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
-                '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
+                '<br><span style="opacity:0.75;font-size:0.7rem">' +
+                (sym ? '<span style="font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;margin-right:3px">' + sym + '</span>' : '') +
+                esc(spotTypeLabel(f.type)) + '</span>' +
                 (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '') +
                 '<br><span style="opacity:0.45;font-size:0.65rem;margin-top:2px;display:block">' +
                 esc(srcLabel) + (coordStr ? ' · ' + coordStr : '') + '</span>';
@@ -1921,9 +1924,9 @@
         return L.divIcon({
             className: 'fmap-community-pin-wrap',
             html: '<span class="fmap-community-pin ' + cls + '"></span>',
-            iconSize:    [12, 12],
-            iconAnchor:  [6, 6],
-            popupAnchor: [0, -8]
+            iconSize:    [22, 28],
+            iconAnchor:  [11, 26],
+            popupAnchor: [0, -26]
         });
     }
 
@@ -2228,8 +2231,8 @@
                 pendingCatchMarker = L.marker([lat, lng], {
                     icon: L.divIcon({
                         className: 'fmap-community-pin-wrap',
-                        html: '<span class="fmap-community-pin fmap-community-pin--mine" style="width:16px;height:16px;border-width:2.5px"></span>',
-                        iconSize: [16, 16], iconAnchor: [8, 8]
+                        html: '<span class="fmap-community-pin fmap-community-pin--mine"></span>',
+                        iconSize: [22, 28], iconAnchor: [11, 26]
                     })
                 }).addTo(map);
 
