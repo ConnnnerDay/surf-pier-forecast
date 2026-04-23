@@ -270,6 +270,35 @@
                 map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
             });
         }
+
+        // Basemap toggle — satellite (default) ↔ dark street
+        var _isSatellite = true;
+        var basemapBtn   = document.getElementById('fmap-basemap-btn');
+        var iconSat      = document.getElementById('fmap-basemap-icon-sat');
+        var iconMap      = document.getElementById('fmap-basemap-icon-map');
+        if (basemapBtn) {
+            basemapBtn.addEventListener('click', function () {
+                if (!map) return;
+                _isSatellite = !_isSatellite;
+                // Add new layer before removing old to avoid blank-tile flash
+                var newLayer = L.tileLayer(
+                    _isSatellite ? TILE_SATELLITE.url : TILE_STREET.url,
+                    _isSatellite ? TILE_SATELLITE.opts : TILE_STREET.opts
+                ).addTo(map);
+                map.removeLayer(activeTileLayer);
+                activeTileLayer = newLayer;
+                basemapBtn.classList.toggle('fmap-ctrl-btn--active', _isSatellite);
+                if (_isSatellite) {
+                    basemapBtn.title = 'Satellite · click for Street map';
+                    basemapBtn.setAttribute('aria-label', 'Basemap: Satellite. Click to switch to Street map');
+                } else {
+                    basemapBtn.title = 'Street map · click for Satellite';
+                    basemapBtn.setAttribute('aria-label', 'Basemap: Street map. Click to switch to Satellite');
+                }
+                if (iconSat) iconSat.hidden = !_isSatellite;
+                if (iconMap) iconMap.hidden =  _isSatellite;
+            });
+        }
     }
 
     // ─── Toast ────────────────────────────────────────────────────────────────
@@ -1633,7 +1662,8 @@
                     var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
                     m.bindTooltip(
                         '<strong>' + esc(c.species) + '</strong><br>' +
-                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>',
+                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
+                        '<br><span style="opacity:.4;font-size:.65rem">Tap to view catch details</span>',
                         { className: 'fmap-tooltip', direction: 'top', offset: [0, -6] }
                     );
                     m.on('click', function () { openCatchDetail(c); });
