@@ -297,17 +297,6 @@
 
     // ─── AI Habitat Spot Finder ───────────────────────────────────────────────
     //
-    // OSM tags queried for the general-purpose AI pick layer.
-    var AI_HABITAT_TAGS = [
-        'way["natural"="reef"]',
-        'node["natural"="reef"]',
-        'node["natural"="shoal"]',
-        'way["natural"="wetland"]["wetland"="saltmarsh"]',
-        'way["waterway"="tidal_channel"]',
-        'node["man_made"="pier"]["access"!="private"]',
-        'node["man_made"="breakwater"]'
-    ];
-
     // Per-osmType colors that match the structure/habitat layer palette so
     // AI picks blend visually with the rest of the map legend.
     var AI_PICK_COLORS = {
@@ -340,7 +329,7 @@
     };
 
 
-function makeAIPickIcon(osmType) {
+    function makeAIPickIcon(osmType) {
         var cacheKey = 'ai|' + osmType;
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;

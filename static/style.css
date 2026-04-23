@@ -3986,6 +3986,15 @@ h2::before {
 .fmap-legend-dot--dive-site  { background: #0284c7; box-shadow: 0 0 5px rgba(2,132,199,0.5);    border-radius: 50%; }
 .fmap-legend-dot--seawall    { background: #6b7280; box-shadow: 0 0 4px rgba(107,114,128,0.4);  border-radius: 50%; }
 .fmap-legend-dot--fishing    { background: #2dd4bf; box-shadow: 0 0 5px rgba(45,212,191,0.5);   border-radius: 50%; }
+/* AI habitat pick swatch — animated pulsing square mirroring the on-map dot */
+.fmap-legend-dot--ai-pick {
+  width: 11px; height: 11px;
+  border-radius: 3px;
+  background: #a78bfa;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 6px #a78bfa88;
+  animation: fmap-ai-pulse 3s ease-in-out infinite;
+}
 /* Separator between habitat area and structure icon sections */
 .fmap-legend-sep {
   display: inline-block;
