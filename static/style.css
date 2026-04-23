@@ -3947,10 +3947,16 @@ h2::before {
 }
 
 .fmap-legend-dot {
-  display: inline-block;
-  width: 9px; height: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
   border-radius: 50%;
   flex-shrink: 0;
+  font-size: 9px;
+  font-family: system-ui, 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
+  color: rgba(255,255,255,0.92);
+  line-height: 1;
 }
 .fmap-legend-dot--peak  { background: #22c55e; box-shadow: 0 0 5px rgba(34,197,94,0.6); }
 .fmap-legend-dot--good  { background: #3b82f6; box-shadow: 0 0 5px rgba(59,130,246,0.5); }
@@ -3961,7 +3967,7 @@ h2::before {
 .fmap-legend-dot--bridge     { background: #f97316; box-shadow: 0 0 5px rgba(249,115,22,0.5);  border-radius: 50%; }
 .fmap-legend-dot--reef       { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.4);  border-radius: 50%; }
 .fmap-legend-dot--wreck      { background: #d97706; box-shadow: 0 0 5px rgba(217,119,6,0.4);   border-radius: 50%; }
-.fmap-legend-dot--buoy       { background: #e879f9; box-shadow: 0 0 5px rgba(232,121,249,0.5); border-radius: 50%; }
+.fmap-legend-dot--buoy       { background: #f43f5e; box-shadow: 0 0 5px rgba(244,63,94,0.5);  border-radius: 50%; }
 .fmap-legend-dot--tackle     { background: #fb923c; box-shadow: 0 0 5px rgba(251,146,60,0.5);  border-radius: 50%; }
 /* Habitat area legend swatches (filled polygon / coloured line overlay) */
 .fmap-legend-dot--saltmarsh  { width: 11px; height: 11px; background: rgba(52,211,153,0.30);  border: 2px solid rgba(52,211,153,0.85);  border-radius: 2px; box-shadow: none; }
@@ -3975,11 +3981,20 @@ h2::before {
 /* Additional structure marker legend dots */
 .fmap-legend-dot--shoal      { background: #94a3b8; box-shadow: 0 0 4px rgba(148,163,184,0.4);  border-radius: 50%; }
 .fmap-legend-dot--marina     { background: #67e8f9; box-shadow: 0 0 5px rgba(103,232,249,0.5);  border-radius: 50%; }
-.fmap-legend-dot--point      { background: #c084fc; box-shadow: 0 0 5px rgba(192,132,252,0.5);  border-radius: 50%; }
+.fmap-legend-dot--point      { background: #60a5fa; box-shadow: 0 0 5px rgba(96,165,250,0.5);   border-radius: 50%; }
 .fmap-legend-dot--boat-ramp  { background: #0ea5e9; box-shadow: 0 0 5px rgba(14,165,233,0.5);   border-radius: 50%; }
 .fmap-legend-dot--dive-site  { background: #0284c7; box-shadow: 0 0 5px rgba(2,132,199,0.5);    border-radius: 50%; }
 .fmap-legend-dot--seawall    { background: #6b7280; box-shadow: 0 0 4px rgba(107,114,128,0.4);  border-radius: 50%; }
 .fmap-legend-dot--fishing    { background: #2dd4bf; box-shadow: 0 0 5px rgba(45,212,191,0.5);   border-radius: 50%; }
+/* AI habitat pick swatch — animated pulsing square mirroring the on-map dot */
+.fmap-legend-dot--ai-pick {
+  width: 11px; height: 11px;
+  border-radius: 3px;
+  background: #a78bfa;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 6px #a78bfa88;
+  animation: fmap-ai-pulse 3s ease-in-out infinite;
+}
 /* Separator between habitat area and structure icon sections */
 .fmap-legend-sep {
   display: inline-block;
@@ -4007,86 +4022,6 @@ h2::before {
   margin: 4px 0 2px;
 }
 
-/* ── Filter bar ── */
-/* Species search */
-.fmap-search-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  max-width: 420px;
-}
-
-.fmap-search-icon {
-  position: absolute;
-  left: 0.7rem;
-  color: var(--text-muted, #8a9ba8);
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.fmap-search-input {
-  width: 100%;
-  padding: 0.5rem 2.2rem 0.5rem 2.2rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-light, #2a3f4d);
-  background: var(--card-bg, #0d2233);
-  color: var(--text-primary, #e8f0f5);
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.fmap-search-input::placeholder { color: var(--text-muted, #8a9ba8); }
-
-.fmap-search-input:focus {
-  border-color: var(--ocean, #0e5f78);
-  box-shadow: 0 0 0 3px rgba(14,95,120,0.2);
-}
-
-.fmap-search-clear {
-  position: absolute;
-  right: 0.65rem;
-  background: none;
-  border: none;
-  color: var(--text-muted, #8a9ba8);
-  font-size: 1rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 0.2rem;
-  transition: color 0.12s;
-}
-.fmap-search-clear:hover { color: var(--text-primary, #e8f0f5); }
-
-/* Autocomplete suggestions */
-.fmap-suggestions {
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
-  min-width: 100%;
-  width: max-content;
-  max-width: 340px;
-  background: var(--card-bg, #0c1f2e);
-  border: 1px solid var(--border-light, #1e3547);
-  border-radius: 10px;
-  z-index: 700;
-  list-style: none;
-  margin: 0;
-  padding: 0.35rem 0;
-  max-height: 240px;
-  overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-}
-
-.fmap-suggestions li {
-  padding: 0.45rem 0.9rem;
-  font-size: 0.84rem;
-  cursor: pointer;
-  color: var(--text-secondary, #b0c4ce);
-  transition: background 0.1s;
-}
-.fmap-suggestions li:hover { background: rgba(14,95,120,0.18); color: var(--text-primary,#e8f0f5); }
-.fmap-suggestions li mark { background: none; color: #1fa8c9; font-weight: 600; }
-
 
 .fmap-pill {
   padding: 0.3rem 0.75rem;
@@ -4105,6 +4040,14 @@ h2::before {
   background: rgba(14,95,120,0.15);
   color: var(--text-primary, #e8f0f5);
   border-color: rgba(31,168,201,0.35);
+}
+.fmap-pill-sym {
+  font-family: system-ui, 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  margin-right: 4px;
+  opacity: 0.8;
+  vertical-align: middle;
 }
 .fmap-pill--active {
   background: var(--ocean, #0e5f78);
@@ -4166,33 +4109,6 @@ h2::before {
   opacity: 0.7;
 }
 
-/* ── Custom markers ── */
-.fmap-marker-wrap {
-  background: none !important;
-  border: none !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.fmap-dot {
-  display: block;
-  border-radius: 50%;
-  position: relative;
-  z-index: 2;
-}
-.fmap-pulse {
-  display: block;
-  border-radius: 50%;
-  position: absolute;
-  animation: fmap-ping 1.8s ease-out infinite;
-  z-index: 1;
-}
-@keyframes fmap-ping {
-  0%   { transform: scale(0.7); opacity: 0.8; }
-  70%  { transform: scale(1.5); opacity: 0.15; }
-  100% { transform: scale(1.8); opacity: 0; }
-}
-
 /* ── Leaflet tooltip (hover) ── */
 .fmap-tooltip {
   background: rgba(10,19,29,0.92) !important;
@@ -4224,17 +4140,17 @@ h2::before {
 }
 .fmap-ai-dot {
   display: block;
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
   background: var(--ai-c, #f59e0b);
-  border: 2px solid rgba(255,255,255,0.6);
+  border: 2px solid rgba(255,255,255,0.85);
   box-shadow: 0 0 8px var(--ai-c, #f59e0b), 0 0 18px var(--ai-c, #f59e0b)44;
-  animation: fmap-ai-pulse 2.4s ease-in-out infinite;
+  animation: fmap-ai-pulse 3s ease-in-out infinite;
 }
 @keyframes fmap-ai-pulse {
   0%, 100% { transform: scale(1);    opacity: 1; }
-  50%       { transform: scale(1.25); opacity: 0.8; }
+  50%       { transform: scale(1.12); opacity: 0.85; }
 }
 .fmap-ai-tooltip .fmap-ai-tip-label {
   display: inline-block;
@@ -4242,7 +4158,7 @@ h2::before {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #f59e0b;
+  color: #1fa8c9;
   margin-bottom: 0.15rem;
   margin-right: 0.35rem;
 }
@@ -4272,7 +4188,7 @@ h2::before {
   width: 10px;
   height: 10px;
   border-radius: 3px;
-  border: 1.5px solid rgba(255,255,255,0.45);
+  border: 2px solid rgba(255,255,255,0.82);
 }
 
 /* ── Zoom-in hint overlay ── */
@@ -4306,23 +4222,6 @@ h2::before {
   color: #1fa8c9 !important;
   border-left-color: rgba(31,168,201,0.3) !important;
 }
-
-.fmap-tip-badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.05rem 0.35rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 0.15rem;
-}
-.fmap-tip-peak { background: rgba(34,197,94,0.25); color: #22c55e; }
-.fmap-tip-good { background: rgba(59,130,246,0.25); color: #60a5fa; }
-.fmap-tip-fair { background: rgba(245,158,11,0.25); color: #fbbf24; }
-.fmap-tip-slow { background: rgba(239,68,68,0.25);  color: #f87171; }
-.fmap-tip-none { background: rgba(107,114,128,0.2); color: #9ca3af; }
-
 
 /* ── Location detail drawer ── */
 .fmap-detail {
@@ -4358,29 +4257,6 @@ h2::before {
   margin-top: 0.1rem;
 }
 
-.fmap-detail-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.fmap-detail-badge--peak { background: rgba(34,197,94,0.18); color: #22c55e; border: 1px solid rgba(34,197,94,0.35); }
-.fmap-detail-badge--good { background: rgba(59,130,246,0.18); color: #60a5fa; border: 1px solid rgba(59,130,246,0.35); }
-.fmap-detail-badge--fair { background: rgba(245,158,11,0.18); color: #fbbf24; border: 1px solid rgba(245,158,11,0.35); }
-.fmap-detail-badge--slow { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.35); }
-.fmap-detail-badge--none { background: rgba(107,114,128,0.15); color: #9ca3af; border: 1px solid rgba(107,114,128,0.3); }
-
-.fmap-detail-species {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
-}
-
 .fmap-species-chip {
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
@@ -4393,50 +4269,7 @@ h2::before {
 }
 .fmap-species-chip:hover { background: rgba(31,168,201,0.18); }
 
-.fmap-no-species {
-  font-size: 0.78rem;
-  color: var(--text-muted, #8a9ba8);
-  font-style: italic;
-}
-
-.fmap-detail-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.fmap-forecast-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 1rem;
-  border-radius: 6px;
-  background: var(--ocean, #0e5f78);
-  color: #fff;
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 600;
-  transition: background 0.14s;
-}
-.fmap-forecast-btn:hover { background: #0a4f65; }
-
-
 /* ── Light theme overrides ── */
-[data-theme="light"] .fmap-search-input {
-  background: #f7fafc;
-  color: #1a2f3d;
-  border-color: #c9d8e0;
-}
-[data-theme="light"] .fmap-search-input:focus {
-  border-color: #0e5f78;
-  box-shadow: 0 0 0 3px rgba(14,95,120,0.12);
-}
-[data-theme="light"] .fmap-suggestions {
-  background: #fff;
-  border-color: #c9d8e0;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-}
-[data-theme="light"] .fmap-suggestions li { color: #1a2f3d; }
-[data-theme="light"] .fmap-suggestions li:hover { background: #e8f4f8; }
 [data-theme="light"] .fmap-pill {
   border-color: #c9d8e0;
   color: #5a7080;
@@ -4463,8 +4296,6 @@ h2::before {
 }
 
 @media (max-width: 480px) {
-  .fmap-map-search-bar { max-width: calc(100% - 1.2rem); }
-  .fmap-map-search-bar .fmap-search-wrap { max-width: 100%; flex: 1; }
 }
 
 /* ── Stats strip ── */
@@ -5333,86 +5164,6 @@ h2::before {
   border-color: rgba(239,68,68,0.4);
 }
 
-/* ── Species rows with expandable bait/rig info ── */
-.fmap-sp-row {
-  display: grid;
-  grid-template-columns: 10px 1fr auto;
-  grid-template-areas: "dot name chevron" ". info info";
-  align-items: center;
-  gap: 0 0.5rem;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  position: relative;
-}
-.fmap-sp-row:last-child { border-bottom: none; }
-.fmap-sp-row--expand { cursor: pointer; }
-.fmap-sp-row--expand:hover .fmap-sp-name { color: #1fa8c9; }
-
-.fmap-sp-act {
-  grid-area: dot;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  align-self: center;
-}
-.fmap-sp-act--peak { background: #22c55e; box-shadow: 0 0 4px rgba(34,197,94,0.5); }
-.fmap-sp-act--good { background: #3b82f6; box-shadow: 0 0 4px rgba(59,130,246,0.4); }
-.fmap-sp-act--fair { background: #f59e0b; }
-.fmap-sp-act--slow { background: #ef4444; }
-.fmap-sp-act--none { background: #4b5563; }
-
-.fmap-sp-name {
-  grid-area: name;
-  font-size: 0.83rem;
-  font-weight: 500;
-  color: var(--text-primary, #e8f0f5);
-  transition: color 0.12s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fmap-sp-chevron {
-  grid-area: chevron;
-  color: var(--text-muted, #8a9ba8);
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-.fmap-sp-row.open .fmap-sp-chevron { transform: rotate(180deg); }
-
-.fmap-sp-info {
-  grid-area: info;
-  display: none;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.5rem 0 0.25rem;
-}
-.fmap-sp-row.open .fmap-sp-info { display: flex; }
-
-.fmap-sp-info-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
-.fmap-sp-info-lbl {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted, #8a9ba8);
-  white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 34px;
-  padding-top: 0.1rem;
-}
-
-.fmap-sp-info-val {
-  font-size: 0.78rem;
-  color: var(--text-secondary, #b0c4ce);
-  line-height: 1.5;
-}
-
 /* ── Toast notification ── */
 .fmap-toast {
   position: fixed;
@@ -5450,9 +5201,6 @@ h2::before {
   background: #e8f4f8;
   color: #0e5f78;
 }
-[data-theme="light"] .fmap-sp-row { border-color: rgba(0,0,0,0.05); }
-[data-theme="light"] .fmap-sp-name { color: #1a2f3d; }
-[data-theme="light"] .fmap-sp-info-val { color: #3d5a6a; }
 [data-theme="light"] .fmap-detail-close { border-color: #c9d8e0; color: #6b7b8d; }
 [data-theme="light"] .fmap-toast {
   background: rgba(255,255,255,0.95);
@@ -5462,15 +5210,6 @@ h2::before {
 }
 
 /* ── Seasonal sparkline ── */
-.fmap-sparkline {
-  display: block;
-  vertical-align: middle;
-}
-.fmap-sp-info-row--spark .fmap-sp-info-val {
-  display: flex;
-  align-items: center;
-}
-
 /* ── Fullscreen map ── */
 .fmap-map-wrap--fullscreen {
   position: fixed !important;
@@ -5494,10 +5233,7 @@ h2::before {
   top: 1rem;
   right: 3.4rem;
 }
-.fmap-map-wrap--fullscreen .fmap-map-search-bar {
-  top: 1rem;
-  left: 1rem;
-}
+
 /* ── Map ctrl divider ── */
 .fmap-ctrl-divider {
   height: 1px;
@@ -5538,23 +5274,6 @@ h2::before {
 [data-theme="light"] .fmap-toolbar-btn:hover { background: #e8f4f8; color: #0e5f78; }
 
 
-/* ── Floating search bar overlay (top-left of map) ── */
-.fmap-map-search-bar {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  z-index: 450;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-.fmap-map-search-bar .fmap-search-wrap { max-width: 220px; }
-.fmap-map-search-bar .fmap-search-input {
-  background: rgba(10,19,29,0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border-color: rgba(255,255,255,0.14);
-}
 
 .fmap-adv-group {
   display: flex;
@@ -5664,8 +5383,9 @@ h2::before {
   outline-offset: 2px;
 }
 .fmap-pill--spot-type.fmap-pill--active {
-  background: #0e5f78;
-  border-color: #1fa8c9;
+  background: rgba(14,95,120,0.35);
+  border-color: var(--pill-color, #1fa8c9);
+  box-shadow: inset 3px 0 0 var(--pill-color, #1fa8c9);
   color: #fff;
 }
 
@@ -5709,16 +5429,19 @@ h2::before {
 /* ── Community catch pin markers ── */
 .fmap-community-pin-wrap { background: transparent; border: none; }
 .fmap-community-pin {
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.7);
-  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  display: block;
+  width: 18px; height: 18px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2.5px solid rgba(255,255,255,0.88);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.55);
   cursor: pointer;
   transition: transform 0.15s;
+  margin: 4px 2px;
 }
-.fmap-community-pin:hover { transform: scale(1.3); }
-.fmap-community-pin--public { background: #2dd4bf; box-shadow: 0 0 8px rgba(45,212,191,0.5); }
-.fmap-community-pin--mine   { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.6); }
+.fmap-community-pin:hover { transform: rotate(-45deg) scale(1.2); }
+.fmap-community-pin--public { background: #2dd4bf; box-shadow: 0 2px 10px rgba(45,212,191,0.6); }
+.fmap-community-pin--mine   { background: #fbbf24; box-shadow: 0 2px 10px rgba(251,191,36,0.7); }
 
 /* ── Log Catch modal ── */
 .fmap-modal {
@@ -5999,10 +5722,6 @@ h2::before {
   color: #1a2e38;
 }
 [data-theme="light"] .fmap-log-input:focus { border-color: #0e5f78; }
-[data-theme="light"] .fmap-map-search-bar .fmap-search-input {
-  background: rgba(232,244,248,0.92);
-  border-color: #b3cfd9;
-}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

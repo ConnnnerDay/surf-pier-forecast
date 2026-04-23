@@ -7,26 +7,9 @@
     var DEFAULT_CENTER = [37.5, -96.0];
     var DEFAULT_ZOOM   = 4;
 
-    var ACTIVITY = {
-        peak: { color: '#22c55e', ring: 'rgba(34,197,94,0.35)',  label: 'Peak', size: 11 },
-        good: { color: '#3b82f6', ring: 'rgba(59,130,246,0.30)', label: 'Good', size: 9  },
-        fair: { color: '#f59e0b', ring: 'rgba(245,158,11,0.28)', label: 'Fair', size: 8  },
-        slow: { color: '#ef4444', ring: 'rgba(239,68,68,0.20)',  label: 'Slow', size: 6  },
-        none: { color: '#4b5563', ring: 'rgba(75,85,99,0.15)',   label: 'N/A',  size: 5  }
-    };
-
     // ─── State ────────────────────────────────────────────────────────────────
     var map           = null;
     var mapReady      = false;
-    var markers       = [];          // [{id, leaflet, data}]
-    var _markerIndex         = {};    // loc.id → marker entry — O(1) icon-swap on select
-    var locationLayer = null;        // L.layerGroup for NOAA location markers
-    var allSpecies    = [];          // species name strings for autocomplete
-    var allSpeciesLower = [];        // pre-lowercased mirror of allSpecies — avoids .toLowerCase() on every keystroke
-    var currentData   = [];          // last API response locations
-    var selectedId    = null;
-    var fetchTimer    = null;
-    var activeSpecies = '';
     var isFullscreen  = false;
 
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
@@ -39,7 +22,6 @@
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
-    var _markerIconCache      = {};   // "activity|0/1" → L.divIcon (10 combinations max)
     // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
     // These layers clear and redraw on every fetch; caching the icon objects avoids
     // re-running L.divIcon() for every marker on every refresh.
@@ -55,7 +37,6 @@
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
-    var _mainAbort           = null; // AbortController for the in-flight /api/fishing-map fetch
     var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
@@ -123,6 +104,10 @@
     var buoyOn          = false;   // NDBC buoy overlay active
     var buoyLayer       = null;    // L.layerGroup for buoy markers
     var buoyTimer       = null;    // debounce for viewport reload
+
+    // Basemap toggle state — promoted to module scope so the tileerror fallback
+    // in initMap() can keep the button in sync when satellite tiles are unavailable.
+    var _isSatellite    = true;
 
     // Per-layer AbortControllers — cancel in-flight requests when viewport changes
     var sstAbort        = null;
@@ -203,7 +188,7 @@
 
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
-            hasAutoZoomed = true; // don't let autoZoomToSavedLocation reset the view
+            hasAutoZoomed = true;
             // Pre-warm the structure cache for the full home corridor so nearby
             // icons appear immediately and pan/zoom serve from cache.
             // 500 ms lets the tile request and first moveend query fire first,
@@ -220,15 +205,17 @@
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
         activeTileLayer.once('tileerror', function () {
-            // Fall back to street tiles if ESRI is unavailable
+            // Fall back to street tiles if ESRI is unavailable.
+            // Also update module-level _isSatellite so the basemap button stays in sync.
             map.removeLayer(activeTileLayer);
             activeTileLayer = L.tileLayer(TILE_STREET.url, TILE_STREET.opts).addTo(map);
+            _isSatellite = false;
+            _syncBasemapBtn();
         });
         activeTileLayer.addTo(map);
 
-        // Layer groups — render order: AI picks → location markers → OSM structures
+        // Layer groups — render order: AI picks → OSM structures
         aiPickLayer      = L.layerGroup().addTo(map);
-        locationLayer    = L.layerGroup().addTo(map);
         fishingSpotLayer = L.layerGroup().addTo(map);
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
@@ -237,10 +224,6 @@
             updateZoomHint();
             scheduleFishingSpotQuery();
             scheduleAIQuery();
-            // Re-fetch location markers so the viewport bbox is sent to the server;
-            // the server returns only visible locations from its cache, keeping the
-            // response small without an extra scoring pass.
-            scheduleFetch();
         });
 
         setTimeout(function () { if (map) map.invalidateSize(); }, 350);
@@ -254,6 +237,26 @@
     }
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
+
+    // Sync the basemap toggle button's icon, classes, and labels to _isSatellite.
+    // Called from both wireMapControls() and the tileerror fallback in initMap().
+    function _syncBasemapBtn() {
+        var btn     = document.getElementById('fmap-basemap-btn');
+        var iconSat = document.getElementById('fmap-basemap-icon-sat');
+        var iconMap = document.getElementById('fmap-basemap-icon-map');
+        if (!btn) return;
+        btn.classList.toggle('fmap-ctrl-btn--active', _isSatellite);
+        if (_isSatellite) {
+            btn.title = 'Satellite · click for Street map';
+            btn.setAttribute('aria-label', 'Basemap: Satellite. Click to switch to Street map');
+        } else {
+            btn.title = 'Street map · click for Satellite';
+            btn.setAttribute('aria-label', 'Basemap: Street map. Click to switch to Satellite');
+        }
+        if (iconSat) iconSat.hidden = !_isSatellite;
+        if (iconMap) iconMap.hidden =  _isSatellite;
+    }
+
     function wireMapControls() {
         // Near Me — snap to saved forecast location; GPS as fallback
         var nearMeBtn = document.getElementById('fmap-near-me');
@@ -294,6 +297,23 @@
                 map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
             });
         }
+
+        // Basemap toggle — satellite (default) ↔ dark street
+        var basemapBtn = document.getElementById('fmap-basemap-btn');
+        if (basemapBtn) {
+            basemapBtn.addEventListener('click', function () {
+                if (!map) return;
+                _isSatellite = !_isSatellite;
+                // Add new layer before removing old to avoid blank-tile flash
+                var newLayer = L.tileLayer(
+                    _isSatellite ? TILE_SATELLITE.url : TILE_STREET.url,
+                    _isSatellite ? TILE_SATELLITE.opts : TILE_STREET.opts
+                ).addTo(map);
+                map.removeLayer(activeTileLayer);
+                activeTileLayer = newLayer;
+                _syncBasemapBtn();
+            });
+        }
     }
 
     // ─── Toast ────────────────────────────────────────────────────────────────
@@ -321,207 +341,60 @@
 
     // ─── AI Habitat Spot Finder ───────────────────────────────────────────────
     //
-    // Habitat type is inferred from the bait/rig/lures text returned by the API
-    // for the matched species — covers all 851 species without name hardcoding.
-    //
-    var HABITAT_DEFS = {
-        pelagic: {
-            tags:    [],   // open-ocean species — no fixed OSM features
-            color:   '#60a5fa',
-            insight: 'This is an offshore, open-water species. Fish concentrate along temperature breaks, current edges, floating weedlines, and bait schools — none of which are fixed map features. Head offshore and watch for birds, bait activity, and blue/green water color changes.'
-        },
-        surf: {
-            tags: [
-                'way["natural"="beach"]',
-                'node["natural"="beach"]',
-                'node["natural"="shoal"]',
-                'way["natural"="shoal"]',
-                'node["natural"="sandbank"]',
-                'way["natural"="sandbank"]',
-                'node["seamark:type"="rock_awash"]',
-                'node["seamark:type"="rock_submerged"]'
-            ],
-            color:   '#fde68a',
-            insight: 'Surf species work the wash zone along sandy beaches. Focus on troughs and cuts behind sandbars — the water digs deeper in those spots and concentrates bait. Fish low-light edges of the trough and any rip current that breaks through a sandbar.'
-        },
-        mangrove: {
-            tags: [
-                'way["natural"="wetland"]["wetland"="mangrove"]',
-                'way["waterway"="tidal_channel"]',
-                'way["waterway"="stream"]["tidal"="yes"]',
-                'way["waterway"="drain"]["tidal"="yes"]'
-            ],
-            color:   '#22c55e',
-            insight: 'Mangrove species ambush prey along root edges and tidal creek mouths. Work falling tides at pinch points — culverts, bends, and channel exits where bait gets squeezed out. Snook and tarpon stage at creek mouths on outgoing tide; push into the roots on the flood.'
-        },
-        grassflat: {
-            tags: [
-                'way["natural"="wetland"]["wetland"="seagrass"]',
-                'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'node["natural"="wetland"]["wetland"="seagrass"]',
-                'way["waterway"="tidal_channel"]',
-                'way["natural"="shoal"]'
-            ],
-            color:   '#34d399',
-            insight: 'Grass-flat species patrol the edges where seagrass or marsh meets deeper water. Dawn topwater bites happen on shallow flats; mid-day fish slide to channel edges and drop-offs. Fish current-swept grass points and any pothole (sandy opening) in dense grass beds.'
-        },
-        estuary: {
-            tags: [
-                'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'way["waterway"="tidal_channel"]',
-                'node["natural"="shoal"]',
-                'way["natural"="wetland"]["wetland"="tidalflat"]',
-                'node["natural"="wetland"]["wetland"="tidalflat"]',
-                'way["landuse"="aquaculture"]["produce"="oyster"]',
-                'way["landuse"="aquaculture"]["product"="oysters"]',
-                'node["seamark:type"="beacon_lateral"]',
-                'node["seamark:type"="buoy_lateral"]'
-            ],
-            color:   '#2dd4bf',
-            insight: 'Estuary species follow bait in and out with tidal flow. Key spots: channel bends, creek mouths, oyster bars, and shallow flat edges adjacent to deeper water. Falling tides concentrate everything at the exits — position at the creek mouth and let the current deliver the bait.'
-        },
-        reef: {
-            tags: [
-                'way["natural"="reef"]',
-                'node["natural"="reef"]',
-                'node["natural"="shoal"]',
-                'node["seamark:type"="wreck"]',
-                'node["historic"="wreck"]',
-                'way["seamark:type"="wreck"]',
-                'way["historic"="wreck"]',
-                'node["seamark:type"="artificial_reef"]',
-                'node["seamark:type"="obstruction"]',
-                'node["man_made"="pier"]["access"!="private"]',
-                'node["man_made"="jetty"]',
-                'node["seamark:type"="rock_awash"]'
-            ],
-            color:   '#f59e0b',
-            insight: 'Reef and structure species hold on hard bottom — rocky reefs, pinnacles, wrecks, and pier pilings. Fish the upcurrent edge where bait gets swept against structure. Drop-shot or deep jig on the uptide face; drift live bait across the downtide shadow.'
-        },
-        bottom: {
-            tags: [
-                'node["natural"="shoal"]',
-                'way["natural"="shoal"]',
-                'node["natural"="sandbank"]',
-                'way["natural"="sandbank"]',
-                'way["waterway"="tidal_channel"]',
-                'way["natural"="wetland"]["wetland"="tidalflat"]',
-                'node["natural"="wetland"]["wetland"="tidalflat"]'
-            ],
-            color:   '#fb923c',
-            insight: 'Bottom feeders work sandy or muddy substrate near structure transitions. Channel edges adjacent to flats are prime ambush zones — fish depth changes with a slow bottom presentation. Look for where hard substrate meets soft mud; that seam concentrates prey.'
-        },
-        general: {
-            tags: [
-                'way["natural"="reef"]',
-                'node["natural"="reef"]',
-                'node["natural"="shoal"]',
-                'way["natural"="wetland"]["wetland"="saltmarsh"]',
-                'way["waterway"="tidal_channel"]',
-                'node["man_made"="pier"]["access"!="private"]',
-                'node["man_made"="breakwater"]'
-            ],
-            color:   '#a78bfa',
-            insight: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, and marsh creek mouths. These highlighted areas offer the best natural ambush opportunities in the current view.'
-        }
+    // Per-osmType colors that match the structure/habitat layer palette so
+    // AI picks blend visually with the rest of the map legend.
+    var AI_PICK_COLORS = {
+        reef:      '#f59e0b',
+        saltmarsh: '#34d399',
+        seagrass:  '#22c55e',
+        mangrove:  '#16a34a',
+        channel:   '#38bdf8',
+        shoal:     '#94a3b8',
+        tidalflat: '#6ee7b7',
+        beach:     '#fbbf24',
+        wreck:     '#d97706',
+        bay:       '#60a5fa',
+        general:   '#a78bfa'
     };
 
-    // Infer habitat type from species name, bait, rig, and lures text.
-    function inferHabitatType(meta) {
-        var name = (meta.name || '').toLowerCase();
-        var text = [meta.bait || '', meta.rig || '', meta.lures || ''].join(' ').toLowerCase();
-        var all  = name + ' ' + text;
-
-        // Pelagic / offshore species — check name first for strong signals
-        if (/\b(marlin|sailfish|wahoo|mahi|dorado|yellowfin|bluefin|skipjack|albacore|false\s*albacore|little\s*tunny|bonito|spanish\s*mackerel|king\s*mackerel|kingfish\s*mac|cobia\s*(offshore|troll)|permit\s*offshore)\b/.test(name) ||
-            /troll|offshore|blue\s*water|open\s*ocean|spreader\s*bar|ballyhoo|cedar\s*plug|feather|kona\s*head/.test(text)) {
-            return 'pelagic';
-        }
-        // Surf / beach species
-        if (/\b(pompano|whiting|kingfish|surf\s*perch|surfperch|barred\s*perch|corbina|spotfin\s*croaker|yellowfin\s*croaker|pismo\s*croaker|striped\s*bass.*surf|bluefish.*surf)\b/.test(name) ||
-            /sand\s*(crab|flea)|mole\s*crab|pompano\s*jig|surf\s*(rod|cast|fish)/.test(text)) {
-            return 'surf';
-        }
-        // Mangrove specialists
-        if (/\b(snook|common\s*snook|tarpon|atlantic\s*tarpon|baby\s*tarpon|jack\s*crevalle|mangrove\s*snapper|gray\s*snapper)\b/.test(name) ||
-            /mangrove/.test(all)) {
-            return 'mangrove';
-        }
-        // Grass flat / seagrass species
-        if (/\b(spotted\s*sea\s*trout|speckled\s*trout|seatrout|bonefish|permit|redfish|red\s*drum|puppy\s*drum)\b/.test(name) ||
-            /popping[- ]?cork|grass\s*flat|seagrass|over\s*(grass|flat)|shrimp.*cork|cork.*shrimp/.test(text)) {
-            return 'grassflat';
-        }
-        // Estuary / inshore tidal species
-        if (/\b(weakfish|gray\s*trout|flounder|southern\s*flounder|summer\s*flounder|fluke|black\s*drum|sheepshead|drum|croaker|atlantic\s*croaker|spot\s*fish|white\s*perch|striped\s*bass.*inshore|white\s*bass|hybrid\s*striped)\b/.test(name) ||
-            /marsh|tidal\s*(creek|channel)|estuar|finger\s*mullet|live\s*shrimp|cut\s*(menhaden|mullet)/.test(text)) {
-            return 'estuary';
-        }
-        // Reef / structure species
-        if (/\b(grouper|snapper|amberjack|tautog|blackfish|cunner|sea\s*bass|black\s*sea\s*bass|rockfish|lingcod|cabezon|kelp\s*bass|calico\s*bass|gopher\s*rockfish|copper\s*rockfish|hogfish|triggerfish|wreckfish|cobia|tripletail|yellowtail|almaco|greater\s*amber)\b/.test(name) ||
-            /reef|rock\s*(fish|cod)|kelp|wreck|structure|bucktail|dropper\s*loop|hi[- ]?lo|jig.*reef|piling|bridge|dock/.test(all)) {
-            return 'reef';
-        }
-        // Bottom feeders
-        if (/\b(catfish|channel\s*catfish|flathead\s*catfish|halibut|pacific\s*halibut|atlantic\s*halibut|skate|ray|stingray|sand\s*shark|smooth\s*dogfish|spiny\s*dogfish|cusk)\b/.test(name) ||
-            /bottom\s*rig|egg\s*sinker|fish\s*finder|pyramid\s*sinker|spreader\s*rig|sinker.*bottom/.test(text)) {
-            return 'bottom';
-        }
-        // Inlet / channel species (not already caught above)
-        if (/inlet|channel|current\s*seam/.test(text)) {
-            return 'estuary';
-        }
-        return 'general';
-    }
-
-    var HABITAT_TYPE_LABELS = {
-        reef:      { tip: 'Rocky reef or wreck' },
-        saltmarsh: { tip: 'Salt marsh edge' },
-        seagrass:  { tip: 'Seagrass flat' },
-        mangrove:  { tip: 'Mangrove shoreline' },
-        channel:   { tip: 'Tidal creek / channel' },
-        shoal:     { tip: 'Shallow shoal / sandbar' },
-        tidalflat: { tip: 'Tidal flat' },
-        beach:     { tip: 'Sandy beach trough' },
-        wreck:     { tip: 'Submerged wreck' },
-        bay:       { tip: 'Bay / cove' }
+    // Label + fishing tip shown in each AI pick tooltip.
+    var AI_PICK_INFO = {
+        reef:      { label: 'Reef',        tip: 'Reef edge — grouper, snapper, and bass stack on the upcurrent face. Work the drop with a jig or live bait.' },
+        saltmarsh: { label: 'Saltmarsh',   tip: 'Marsh creek mouth — redfish and snook ambush bait washing out on the falling tide. Position at the exit.' },
+        seagrass:  { label: 'Seagrass',    tip: 'Seagrass flat — trout, redfish, and flounder push shallow on the flood. Work the edges and any potholes.' },
+        mangrove:  { label: 'Mangrove',    tip: 'Mangrove roots — snook, tarpon, and jack hold in the shadow line. Cast tight to the prop roots.' },
+        channel:   { label: 'Channel',     tip: 'Tidal channel — bait funnels through on every tide change. Fish the current seam at the channel edge.' },
+        shoal:     { label: 'Shoal',       tip: 'Shoal drop-off — fish hold on the seam between shallow and deep waiting for bait swept off the flat.' },
+        tidalflat: { label: 'Tidal Flat',  tip: 'Tidal flat — fish push onto the flat as the tide floods and stack on the edges at low water.' },
+        beach:     { label: 'Beach',       tip: 'Beach trough — look for rip cuts and gutters behind sandbars where drum and stripers feed.' },
+        wreck:     { label: 'Wreck',       tip: 'Submerged wreck — acts as an artificial reef. Cast up-current and let bait drift into the structure shadow.' },
+        bay:       { label: 'Bay',         tip: 'Bay or cove — sheltered water concentrates bait. Work points, channel edges, and any drop-off.' },
+        general:   { label: 'Habitat',     tip: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, marsh creek mouths.' }
     };
 
-    function osmTagsToType(tags) {
-        if (!tags) return 'general';
-        if (tags.wetland === 'saltmarsh')  return 'saltmarsh';
-        if (tags.wetland === 'seagrass')   return 'seagrass';
-        if (tags.wetland === 'mangrove')   return 'mangrove';
-        if (tags.wetland === 'tidalflat')  return 'tidalflat';
-        if (tags.natural === 'reef')       return 'reef';
-        if (tags.natural === 'shoal')      return 'shoal';
-        if (tags.natural === 'beach')      return 'beach';
-        if (tags.natural === 'bay')        return 'bay';
-        if (tags.waterway)                 return 'channel';
-        if (tags['seamark:type'] === 'wreck' || tags.historic === 'wreck') return 'wreck';
-        return 'general';
+
+    function makeAIPickIcon(osmType) {
+        var cacheKey = 'ai|' + osmType;
+        if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
+        var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
+        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + color + '"></span>';
+        var icon  = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [16, 16], iconAnchor: [8, 8] });
+        _spotIconCache[cacheKey] = icon;
+        return icon;
     }
 
-    function makeAIPickIcon(habitatType) {
-        var def   = HABITAT_DEFS[habitatType] || HABITAT_DEFS.general;
-        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + def.color + '"></span>';
-        return L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [14, 14], iconAnchor: [7, 7] });
-    }
-
-    var currentSpeciesMeta = null;
-
-    function renderAIHabitatSpots(features, habitatType) {
+    function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
-
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
-            var tipCfg = HABITAT_TYPE_LABELS[f.osmType] || { tip: 'Habitat feature' };
-            var m      = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(habitatType) });
-            var name   = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            var osmType = f.osmType || 'general';
+            var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
+            var m       = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
+            var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             m.bindTooltip(
-                '<span class="fmap-ai-tip-label">AI Pick</span>' + name +
-                '<span style="opacity:.8">' + esc(tipCfg.tip) + '</span>',
+                '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
+                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
@@ -530,20 +403,6 @@
 
     function queryAIHabitatSpots() {
         if (!map || !aiPickLayer) return;
-
-        if (!activeSpecies || !currentSpeciesMeta) {
-            aiPickLayer.clearLayers();
-            return;
-        }
-
-        var habitatType = inferHabitatType(currentSpeciesMeta);
-        var def         = HABITAT_DEFS[habitatType];
-
-        // Pelagic / open-water: no OSM markers to place
-        if (!def || !def.tags.length) {
-            aiPickLayer.clearLayers();
-            return;
-        }
 
         if (map.getZoom() < 10) {
             aiPickLayer.clearLayers();
@@ -555,9 +414,9 @@
         var w   = Math.floor(b.getWest()  * 4) / 4;
         var n   = Math.ceil(b.getNorth()  * 4) / 4;
         var e   = Math.ceil(b.getEast()   * 4) / 4;
-        var key = habitatType + '|' + s + ',' + w + ',' + n + ',' + e;
+        var key = s + ',' + w + ',' + n + ',' + e;
 
-        if (aiCache[key]) { renderAIHabitatSpots(aiCache[key], habitatType); return; }
+        if (aiCache[key]) { renderAIHabitatSpots(aiCache[key]); return; }
 
         // Abort any in-flight AI habitat fetch before starting the new one.
         if (_aiAbort) _aiAbort.abort();
@@ -566,7 +425,7 @@
 
         var url = '/api/v1/geo/habitats?south=' + s + '&west=' + w +
                   '&north=' + n + '&east=' + e +
-                  '&habitat_type=' + encodeURIComponent(habitatType);
+                  '&habitat_type=general';
 
         fetch(url, { signal: _aiAbort.signal })
         .then(function (r) {
@@ -579,7 +438,7 @@
                 return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general' };
             });
             _aiCachePut(key, features);
-            renderAIHabitatSpots(features, habitatType);
+            renderAIHabitatSpots(features);
         })
         .catch(function (err) {
             if (err.name !== 'AbortError') {
@@ -636,14 +495,14 @@
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
         shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 10 },
-        point:        { label: 'Point / Headland',  color: '#c084fc', habitat: false, minZoom: 9  },
+        point:        { label: 'Point / Headland',  color: '#60a5fa', habitat: false, minZoom: 9  },
         beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
         tidal_flat:   { label: 'Tidal Flat',        color: '#6ee7b7', habitat: true,  minZoom: 9  },
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true,  minZoom: 9  },
         mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true,  minZoom: 9  },
         kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true,  minZoom: 9  },
-        buoy:         { label: 'Navigation Buoy',   color: '#e879f9', habitat: false, minZoom: 10 },
+        buoy:         { label: 'Navigation Buoy',   color: '#f43f5e', habitat: false, minZoom: 10 },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false, minZoom: 9  },
         fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 11 },
         boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 10 },
@@ -679,12 +538,25 @@
         return out;
     }
 
-    // Single-character labels rendered inside circle markers for at-a-glance identification
+    // Symbols rendered inside structure markers — chosen to visually suggest the feature type
     var SPOT_LABELS = {
-        pier:         'P',  jetty:      'J',  bridge:    'B',  reef:  'R',
-        oyster_reef:  'O',  wreck:      'W',  inlet:     'C',  marina:'M',
-        shoal:        'S',  point:      '^',  beach:     '~',  buoy:  '·',
-        fishing:      'F',  fishing_shop:'$', boat_ramp: 'L',  dive_site: 'D'
+        pier:         '⊥',   // T/dock shape from above
+        jetty:        '≡',   // stacked lines = rock armour
+        bridge:       '∩',   // arch = bridge span
+        reef:         '≈',   // wavy = underwater relief
+        oyster_reef:  '◌',   // open ring = shell cluster
+        wreck:        '✕',   // X = hazard / charted wreck
+        inlet:        '⇢',   // arrow = tidal flow
+        marina:       '⚓',   // anchor = marina/harbor
+        shoal:        '〜',   // wave = shallow break
+        point:        '△',   // triangle = headland jutting out
+        beach:        '∿',   // sine wave = surf break
+        buoy:         '◎',   // bullseye = channel buoy
+        fishing:      '✦',   // star = access point
+        fishing_shop: '⚙',   // gear = tackle & bait
+        boat_ramp:    '▽',   // inverted triangle = ramp into water
+        dive_site:    '✚',   // cross = dive-flag reference
+        seawall:      '▬'    // bar = wall face
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -729,14 +601,14 @@
         var color     = def.color;
         var isHabitat = def.habitat;
         // Habitat = rotating diamond (no letter); Structure = circle with type letter
-        var sz    = isHabitat ? 14 : 18;
+        var sz    = isHabitat ? 17 : 22;
         var br    = isHabitat ? '3px' : '50%';
         var rot   = isHabitat ? 'transform:rotate(45deg)' : '';
         var lbl   = isHabitat ? '' : (SPOT_LABELS[type] || '');
         var inner = lbl
-            ? '<span style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.95);' +
-              'font-family:system-ui,sans-serif;line-height:1;pointer-events:none;' +
-              'letter-spacing:-0.5px">' + lbl + '</span>'
+            ? '<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.97);' +
+              'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+              'line-height:1;pointer-events:none;">' + lbl + '</span>'
             : '';
         var html  = '<span class="fmap-spot-dot" style="background:' + color +
                     ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
@@ -807,9 +679,12 @@
             var coordStr = f.lat && f.lng
                 ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
                 : '';
+            var sym = SPOT_LABELS[f.type] || '';
             var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
-                '<br><span style="opacity:0.75;font-size:0.7rem">' + esc(spotTypeLabel(f.type)) + '</span>' +
+                '<br><span style="opacity:0.75;font-size:0.7rem">' +
+                (sym ? '<span style="font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;margin-right:3px">' + sym + '</span>' : '') +
+                esc(spotTypeLabel(f.type)) + '</span>' +
                 (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '') +
                 '<br><span style="opacity:0.45;font-size:0.65rem;margin-top:2px;display:block">' +
                 esc(srcLabel) + (coordStr ? ' · ' + coordStr : '') + '</span>';
@@ -1580,273 +1455,16 @@
         spotCache[key] = data;
     }
 
-    // ─── Custom marker icon ───────────────────────────────────────────────────
-    function makeIcon(activity, isSelected) {
-        var _mk = activity + (isSelected ? '|1' : '|0');
-        if (_markerIconCache[_mk]) return _markerIconCache[_mk];
-        var cfg  = ACTIVITY[activity] || ACTIVITY.none;
-        var size = cfg.size + (isSelected ? 3 : 0);
-        var pulse = (activity === 'peak' || activity === 'good') && !isSelected;
-        var border = isSelected ? '2.5px solid #fff' : '1.5px solid rgba(0,0,0,0.4)';
-        var shadow = isSelected
-            ? '0 0 0 3px rgba(255,255,255,0.3), 0 0 ' + size + 'px ' + cfg.ring
-            : '0 0 ' + size + 'px ' + cfg.ring;
-        var ring = pulse
-            ? '<span class="fmap-pulse" style="background:' + cfg.ring +
-              ';width:' + (size * 3.2) + 'px;height:' + (size * 3.2) + 'px' +
-              ';margin-left:' + (-(size * 1.1)) + 'px;margin-top:' + (-(size * 1.1)) + 'px"></span>'
-            : '';
-        var html = ring +
-            '<span class="fmap-dot" style="width:' + (size * 2) + 'px;height:' + (size * 2) +
-            'px;background:' + cfg.color + ';border:' + border + ';box-shadow:' + shadow + '"></span>';
-        var icon = L.divIcon({
-            className: 'fmap-marker-wrap',
-            html: html,
-            iconSize:    [size * 2, size * 2],
-            iconAnchor:  [size, size],
-            popupAnchor: [0, -size - 2]
-        });
-        _markerIconCache[_mk] = icon;
-        return icon;
-    }
-
-    // ─── Render markers ───────────────────────────────────────────────────────
-    function clearMarkers() {
-        // clearLayers() removes all children in one operation instead of
-        // calling map.removeLayer() individually for each marker.
-        if (locationLayer) locationLayer.clearLayers();
-        markers = [];
-        _markerIndex = {};
-    }
-
-    function drawMarkers(locations) {
-        if (!map || !locationLayer) return;
-
-        // ── Incremental update — avoids the clear→recreate cycle that causes
-        // a visible flicker on every filter change.
-        //
-        // Strategy:
-        //  1. Build a fast lookup of incoming location ids.
-        //  2. Remove markers for locations that no longer appear (coast filter
-        //     toggled, etc.) — rare, so the O(n) sweep is acceptable.
-        //  3. For locations that already have a marker, update the icon and
-        //     stored data reference in-place.  Click handlers read from
-        //     currentData at click-time so they always use the freshest data.
-        //  4. For brand-new locations, create and add a marker.
-
-        var incoming = {};
-        locations.forEach(function (loc) { incoming[loc.id] = loc; });
-
-        // Step 2 — remove stale markers
-        var stalIds = Object.keys(_markerIndex).filter(function (id) { return !incoming[id]; });
-        stalIds.forEach(function (id) {
-            locationLayer.removeLayer(_markerIndex[id].leaflet);
-            delete _markerIndex[id];
-        });
-        markers = markers.filter(function (e) { return _markerIndex[e.id]; });
-
-        // Steps 3 & 4
-        locations.forEach(function (loc) {
-            var isSel = loc.id === selectedId;
-
-            if (_markerIndex[loc.id]) {
-                // Update icon and tooltip in-place — no DOM insert/remove
-                var entry = _markerIndex[loc.id];
-                var prevActivity = entry.data.activity;
-                var prevSel = entry.selected;
-                // Only call setIcon when something visible actually changed.
-                // makeIcon results are cached, but setIcon still touches the DOM.
-                if (loc.activity !== prevActivity || isSel !== prevSel) {
-                    entry.leaflet.setIcon(makeIcon(loc.activity, isSel));
-                    entry.selected = isSel;
-                }
-                entry.data = loc;          // refresh data so click handler gets new species/scores
-                // Resync tooltip text if activity label changed
-                if (loc.activity !== prevActivity) {
-                    var tLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
-                    entry.leaflet.unbindTooltip();
-                    entry.leaflet.bindTooltip(
-                        '<strong>' + esc(loc.name) + '</strong>, ' + esc(loc.state) +
-                        '<br><span class="fmap-tip-badge fmap-tip-' + esc(loc.activity) + '">' + tLabel + '</span>',
-                        { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
-                    );
-                }
-                return;
-            }
-
-            // New marker — created once per location per session (coast changes are rare)
-            var m = L.marker([loc.lat, loc.lng], {
-                icon:  makeIcon(loc.activity, isSel),
-                title: loc.name + ', ' + loc.state
-            });
-            locationLayer.addLayer(m);
-
-            // Always read the live entry so the handler uses the latest scored data
-            m.on('click', function () {
-                var live = _markerIndex[loc.id];
-                if (live) selectLocation(live.data);
-            });
-
-            var tipLabel = (ACTIVITY[loc.activity] || ACTIVITY.none).label;
-            m.bindTooltip(
-                '<strong>' + esc(loc.name) + '</strong>, ' + esc(loc.state) +
-                '<br><span class="fmap-tip-badge fmap-tip-' + esc(loc.activity) + '">' + tipLabel + '</span>',
-                { direction: 'top', offset: [0, -6], className: 'fmap-tooltip' }
-            );
-
-            var entry = { id: loc.id, leaflet: m, data: loc, selected: isSel };
-            markers.push(entry);
-            _markerIndex[loc.id] = entry;
-        });
-    }
-
-    // ─── Location selection ───────────────────────────────────────────────────
-    function selectLocation(loc) {
-        var prevId = selectedId;
-        selectedId = loc.id;
-
-        // Swap icons only on the two affected markers (O(1) via _markerIndex)
-        // instead of iterating the full markers array and calling setIcon on all.
-        if (prevId && prevId !== selectedId && _markerIndex[prevId]) {
-            _markerIndex[prevId].leaflet.setIcon(
-                makeIcon(_markerIndex[prevId].data.activity, false));
-            _markerIndex[prevId].selected = false;
-        }
-        if (_markerIndex[selectedId]) {
-            _markerIndex[selectedId].leaflet.setIcon(makeIcon(loc.activity, true));
-            _markerIndex[selectedId].selected = true;
-        }
-
-        map.flyTo([loc.lat, loc.lng], Math.max(map.getZoom(), 7), { duration: 0.55 });
-
-        // ── Detail drawer ──────────────────────────────────────────────────────
-        var cfg = ACTIVITY[loc.activity] || ACTIVITY.none;
-
-        els.detailName.textContent = loc.name + ', ' + loc.state;
-        els.detailMeta.textContent =
-            (loc.coast === 'east' ? 'East & Gulf Coast' :
-             loc.coast === 'west' ? 'West Coast' : 'Hawaii');
-
-        els.detailBadge.textContent = cfg.label;
-        els.detailBadge.className = 'fmap-detail-badge fmap-detail-badge--' + loc.activity;
-
-        // Build species rows — each has activity badge, name, expandable bait section
-        var speciesHtml = '';
-        var species = loc.top_species || [];
-        if (species.length) {
-            species.forEach(function (sp) {
-                var spName = typeof sp === 'string' ? sp : (sp.name || '');
-                var spBait  = typeof sp === 'object' ? (sp.bait || '') : '';
-                var spRig   = typeof sp === 'object' ? (sp.rig  || '') : '';
-                var spLure  = typeof sp === 'object' ? (sp.lures || '') : '';
-                var spAct   = typeof sp === 'object' ? (sp.activity || loc.activity) : loc.activity;
-                var spPeak  = typeof sp === 'object' ? (sp.peak_months || []) : [];
-                var spGood  = typeof sp === 'object' ? (sp.good_months || []) : [];
-                var spCfg   = ACTIVITY[spAct] || ACTIVITY.none;
-                var hasInfo = spBait || spRig || spLure || spPeak.length;
-                var uid = 'fmap-sp-' + spName.replace(/\W/g, '_');
-
-                speciesHtml +=
-                    '<div class="fmap-sp-row' + (hasInfo ? ' fmap-sp-row--expand' : '') + '"' +
-                    (hasInfo ? ' onclick="(function(el){el.classList.toggle(\'open\')})(this)"' : '') + '>' +
-                    '<span class="fmap-sp-act fmap-sp-act--' + spAct + '"></span>' +
-                    '<span class="fmap-sp-name">' + esc(spName) + '</span>' +
-                    (hasInfo ? '<svg class="fmap-sp-chevron" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' : '') +
-                    (hasInfo ?
-                        '<div class="fmap-sp-info">' +
-                        (spPeak.length ? '<div class="fmap-sp-info-row fmap-sp-info-row--spark"><span class="fmap-sp-info-lbl">Season</span><span class="fmap-sp-info-val">' + buildSparkline(spPeak, spGood) + '</span></div>' : '') +
-                        (spBait ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Bait</span><span class="fmap-sp-info-val">' + esc(spBait) + '</span></div>' : '') +
-                        (spRig  ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Rig</span><span class="fmap-sp-info-val">'  + esc(spRig)  + '</span></div>' : '') +
-                        (spLure ? '<div class="fmap-sp-info-row"><span class="fmap-sp-info-lbl">Lures</span><span class="fmap-sp-info-val">' + esc(spLure) + '</span></div>' : '') +
-                        '</div>'
-                    : '') +
-                    '</div>';
-            });
-        } else {
-            speciesHtml = '<p class="fmap-no-species">No active species match for this month.</p>';
-        }
-        els.detailSpecies.innerHTML = speciesHtml;
-
-        els.detailActions.innerHTML =
-            '<a href="/f/' + esc(loc.id) + '" class="fmap-forecast-btn">' +
-            '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
-            ' View Full Forecast</a>';
-
-        els.detail.hidden = false;
-
-        // Scroll detail into view on mobile
-        if (window.innerWidth < 768) {
-            setTimeout(function () {
-                els.detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 200);
-        }
-    }
-
-    function closeDetail() {
-        var prevId = selectedId;
-        selectedId = null;
-        els.detail.hidden = true;
-        // Only the previously-selected marker needs an icon update (O(1))
-        if (prevId && _markerIndex[prevId]) {
-            _markerIndex[prevId].leaflet.setIcon(
-                makeIcon(_markerIndex[prevId].data.activity, false));
-            _markerIndex[prevId].selected = false;
-        }
-    }
-
-
     // ─── Autocomplete ─────────────────────────────────────────────────────────
-    function showSuggestions(q) {
-        if (!els.suggestions || !q || q.length < 2) { hideSuggestions(); return; }
-        var lower = q.toLowerCase();
-        // Use pre-built lowercase mirror so we never call .toLowerCase() on all 895 names at keystroke time
-        var src   = allSpeciesLower.length === allSpecies.length ? allSpeciesLower : null;
-        var hits  = [];
-        for (var _i = 0; _i < allSpecies.length && hits.length < 10; _i++) {
-            if ((src ? src[_i] : allSpecies[_i].toLowerCase()).indexOf(lower) !== -1) {
-                hits.push(allSpecies[_i]);
-            }
-        }
-        if (!hits.length) { hideSuggestions(); return; }
-        var html = '';
-        hits.forEach(function (n) {
-            var idx    = n.toLowerCase().indexOf(lower);
-            var before = esc(n.slice(0, idx));
-            var match  = esc(n.slice(idx, idx + q.length));
-            var after  = esc(n.slice(idx + q.length));
-            html += '<li role="option" tabindex="-1">' + before + '<mark>' + match + '</mark>' + after + '</li>';
-        });
-        els.suggestions.innerHTML = html;
-        els.suggestions.hidden = false;
-        if (els.speciesInput) els.speciesInput.setAttribute('aria-expanded', 'true');
-
-        els.suggestions.querySelectorAll('li').forEach(function (li) {
-            li.addEventListener('mousedown', function (e) {
-                e.preventDefault();
-                var text = li.textContent;
-                activeSpecies = text;
-                if (els.speciesInput) els.speciesInput.value = text;
-                if (els.searchClear) els.searchClear.hidden = false;
-                hideSuggestions();
-                scheduleFetch();
-            });
-        });
-    }
-    function hideSuggestions() {
-        if (els.suggestions) els.suggestions.hidden = true;
-        if (els.speciesInput) els.speciesInput.setAttribute('aria-expanded', 'false');
-    }
-
     // ─── localStorage persistence ─────────────────────────────────────────────
     // Key is versioned — bump when adding incompatible fields so old saved data
     // is silently ignored rather than causing unexpected UI state for users.
-    var LS_KEY = 'fmap_filters_v4';  // spotTypes field added in v4
+    var LS_KEY = 'fmap_filters_v5';  // v5: species filter removed
 
     function saveFilters() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
-                species:    activeSpecies,
-                spotTypes:  activeSpotTypes.slice()
+                spotTypes: activeSpotTypes.slice()
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -1856,14 +1474,8 @@
     function loadFilters() {
         try {
             var raw = localStorage.getItem(LS_KEY);
-            // No saved state → new user → leave all filters at their empty defaults.
             if (!raw) return;
             var f = JSON.parse(raw);
-            if (f.species) {
-                activeSpecies = f.species;
-                if (els.speciesInput)  els.speciesInput.value = f.species;
-                if (els.searchClear) els.searchClear.hidden = false;
-            }
             // Only restore from storage when restoreFromHash() hasn't already
             // applied types from the URL — the hash (shared link) wins.
             if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
@@ -1880,127 +1492,15 @@
     var hasAutoZoomed = false;
     var savedLocationLatLng = null; // lat/lng of user's saved forecast location
 
-    function autoZoomToSavedLocation(locations) {
-        if (hasAutoZoomed) return;
-        var locId = (typeof CURRENT_LOC_ID !== 'undefined') ? CURRENT_LOC_ID : '';
-        if (!locId || !map) return;
-        var match = locations.find(function (l) { return l.id === locId; });
-        if (match) {
-            hasAutoZoomed = true;
-            savedLocationLatLng = { lat: match.lat, lng: match.lng };
-            // Zoom to 12 so habitat/structure overlays are visible immediately
-            map.setView([match.lat, match.lng], 12, { animate: false });
-        }
-    }
-
-    // ─── Fetch & render ───────────────────────────────────────────────────────
+    // ─── Loading indicator ────────────────────────────────────────────────────
     function _hideMainLoading() {
         if (!els.loading) return;
         els.loading.style.opacity = '0';
         setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
     }
 
-    function fetchAndRender() {
-        if (!map) return;
-        saveFilters();
-
-        var params = new URLSearchParams();
-        if (activeSpecies) params.set('species', activeSpecies);
-        // Tell server to omit the 895-name species list once the client has it
-        if (allSpecies.length > 0) params.set('has_species', '1');
-        // Send viewport bounds so the server returns only visible locations.
-        // The server caches the full scored set and slices cheaply by bbox,
-        // so this cuts response payload by ~80% when zoomed into one region.
-        if (map) {
-            var bounds = map.getBounds();
-            params.set('sw_lat', bounds.getSouth().toFixed(4));
-            params.set('sw_lng', bounds.getWest().toFixed(4));
-            params.set('ne_lat', bounds.getNorth().toFixed(4));
-            params.set('ne_lng', bounds.getEast().toFixed(4));
-        }
-
-        var url = API_URL + (params.toString() ? '?' + params.toString() : '');
-
-        if (els.loading) { els.loading.style.opacity = '1'; els.loading.style.pointerEvents = 'auto'; }
-
-        // Cancel any in-flight request so stale filter responses never overwrite fresh ones.
-        if (_mainAbort) { try { _mainAbort.abort(); } catch (e) {} }
-        _mainAbort = new AbortController();
-
-        fetch(url, { signal: _mainAbort.signal })
-            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-            .then(function (data) {
-                _hideMainLoading();
-
-                currentData = data.locations || [];
-
-                if (allSpecies.length === 0 && data.species_names && data.species_names.length) {
-                    allSpecies = data.species_names;
-                    // Pre-build lowercase mirror so showSuggestions never calls .toLowerCase() at keystroke time
-                    allSpeciesLower = allSpecies.map(function (n) { return n.toLowerCase(); });
-                }
-
-                // Update species meta for AI habitat inference (works for all 895 species)
-                currentSpeciesMeta = (data.species_meta && data.species_meta.name)
-                    ? data.species_meta : null;
-
-                // Render map markers with the new data
-                drawMarkers(currentData);
-
-                // Zoom to saved location then load structure overlays and community feed
-                autoZoomToSavedLocation(currentData);
-                updateZoomHint();
-                scheduleFishingSpotQuery();
-                // Reload community map pins with the updated species filter, so pins
-                // reflect the same species the user has selected in the main search.
-                if (communityLayerOn) scheduleCommunityLoad();
-            })
-            .catch(function (err) {
-                if (err && err.name === 'AbortError') return; // superseded by newer request
-                _hideMainLoading();
-                console.error('[fishing-map] fetch error:', err);
-            });
-    }
-
-    function scheduleFetch() {
-        clearTimeout(fetchTimer);
-        fetchTimer = setTimeout(fetchAndRender, 280);
-    }
-
     // ─── Filter wiring ────────────────────────────────────────────────────────
     function wireFilters() {
-        if (els.speciesInput) {
-            els.speciesInput.addEventListener('input', function () {
-                activeSpecies = els.speciesInput.value.trim();
-                if (els.searchClear) els.searchClear.hidden = !activeSpecies;
-                showSuggestions(activeSpecies);
-                scheduleFetch();
-            });
-            els.speciesInput.addEventListener('change', function () {
-                activeSpecies = els.speciesInput.value.trim();
-                scheduleFetch();
-            });
-            els.speciesInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') hideSuggestions();
-                if (e.key === 'Enter')  { hideSuggestions(); scheduleFetch(); }
-            });
-            els.speciesInput.addEventListener('blur', function () {
-                setTimeout(hideSuggestions, 160);
-            });
-        }
-
-        if (els.searchClear) {
-            els.searchClear.addEventListener('click', function () {
-                activeSpecies = '';
-                if (els.speciesInput) els.speciesInput.value = '';
-                els.searchClear.hidden = true;
-                scheduleFetch();
-            });
-        }
-
-        // Detail drawer close button
-        var closeBtn = document.getElementById('fmap-detail-close');
-        if (closeBtn) closeBtn.addEventListener('click', closeDetail);
     }
 
     // ─── Utilities ────────────────────────────────────────────────────────────
@@ -2025,7 +1525,7 @@
     // ─── Advanced filters ─────────────────────────────────────────────────────
 
     function updateAdvBadge() {
-        var n = (activeSpotTypes.length > 0 ? 1 : 0);
+        var n = activeSpotTypes.length;
         var countEl = document.getElementById('fmap-sec-count-filters');
         if (countEl) {
             countEl.textContent = n + ' on';
@@ -2037,19 +1537,6 @@
         document.querySelectorAll(selector).forEach(function (b) {
             b.classList.toggle('fmap-pill--active', b.getAttribute(attrName) === value);
         });
-    }
-
-    function wireAdvancedFilters() {
-        var resetBtn = document.getElementById('fmap-adv-reset');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function () {
-                _applySpotTypeUI([]);
-                updateAdvBadge();
-                scheduleFetch();
-                clearTimeout(spotQueryTimer);
-                queryStructures();
-            });
-        }
     }
 
     // ─── Structure type-filter pills ─────────────────────────────────────────
@@ -2159,9 +1646,9 @@
         return L.divIcon({
             className: 'fmap-community-pin-wrap',
             html: '<span class="fmap-community-pin ' + cls + '"></span>',
-            iconSize:    [12, 12],
-            iconAnchor:  [6, 6],
-            popupAnchor: [0, -8]
+            iconSize:    [22, 28],
+            iconAnchor:  [11, 26],
+            popupAnchor: [0, -26]
         });
     }
 
@@ -2180,9 +1667,6 @@
                    '&ne_lat=' + Math.round(ne.lat * 100) / 100 +
                    '&ne_lng=' + Math.round(ne.lng * 100) / 100 +
                    '&limit=200';
-        // When the user has filtered by species, show only matching catches on the map.
-        if (activeSpecies) url += '&species=' + encodeURIComponent(activeSpecies);
-
         fetch(url, { signal: _communityAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (data) {
@@ -2193,7 +1677,8 @@
                     var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
                     m.bindTooltip(
                         '<strong>' + esc(c.species) + '</strong><br>' +
-                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>',
+                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
+                        '<br><span style="opacity:.4;font-size:.65rem">Tap to view catch details</span>',
                         { className: 'fmap-tooltip', direction: 'top', offset: [0, -6] }
                     );
                     m.on('click', function () { openCatchDetail(c); });
@@ -2265,7 +1750,7 @@
                 'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
                 '</div>';
         }
-        if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + c.weight_lb.toFixed(1) + ' lb</div>';
+        if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + parseFloat(c.weight_lb).toFixed(1) + ' lb</div>';
         if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + c.length_in + ' in</div>';
         if (c.bait)      bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Bait</span>' + esc(c.bait) + '</div>';
         if (c.notes)     bodyHtml += '<div class="fmap-catch-notes">' + esc(c.notes) + '</div>';
@@ -2466,8 +1951,8 @@
                 pendingCatchMarker = L.marker([lat, lng], {
                     icon: L.divIcon({
                         className: 'fmap-community-pin-wrap',
-                        html: '<span class="fmap-community-pin fmap-community-pin--mine" style="width:16px;height:16px;border-width:2.5px"></span>',
-                        iconSize: [16, 16], iconAnchor: [8, 8]
+                        html: '<span class="fmap-community-pin fmap-community-pin--mine"></span>',
+                        iconSize: [22, 28], iconAnchor: [11, 26]
                     })
                 }).addTo(map);
 
@@ -4892,8 +4377,8 @@
     // Restore which layers were active in the previous session.
     // Must be called AFTER all wire*Layer() functions have attached their handlers.
     //
-    // Layers are staggered 350 ms apart (starting 700 ms after boot) so the
-    // main fetchAndRender() and tile loads get network priority first.
+    // Layers are staggered 350 ms apart (starting 700 ms after boot) so that
+    // tile loads get network priority first.
     function restoreLayerState() {
         try {
             var raw = localStorage.getItem(LS_LAYERS_KEY);
@@ -4934,7 +4419,6 @@
                 loadFilters();
                 wireFilters();
                 wireMapControls();
-                wireAdvancedFilters();
                 wireSpotTypeFilters();
                 wireCommunityLayer();
                 wireLogCatch();
@@ -4972,28 +4456,13 @@
                     // populated spotCache, so queryStructures() can render at once.
                     queryStructures();
                 }
-                fetchAndRender();
+                _hideMainLoading();
+                scheduleAIQuery();
             })
             .catch(function (err) {
                 console.error('[fishing-map] boot error:', err);
                 if (els.loading) els.loading.textContent = 'Map could not be loaded.';
             });
-    }
-
-    // ─── Sparkline helper (12-bar mini chart for species rows) ────────────────
-    // Returns an SVG string showing peak months (dark), good (medium), other (faint)
-    function buildSparkline(peakMonths, goodMonths) {
-        var bars = '';
-        for (var m = 1; m <= 12; m++) {
-            var isPeak = peakMonths.indexOf(m) !== -1;
-            var isGood = goodMonths.indexOf(m) !== -1;
-            var fill = isPeak ? '#22c55e' : isGood ? '#3b82f6' : 'rgba(255,255,255,0.1)';
-            var h    = isPeak ? 10 : isGood ? 7 : 3;
-            var x    = (m - 1) * 5;
-            var y    = 10 - h;
-            bars += '<rect x="' + x + '" y="' + y + '" width="3.5" height="' + h + '" rx="1" fill="' + fill + '"/>';
-        }
-        return '<svg class="fmap-sparkline" viewBox="0 0 60 10" width="60" height="10" aria-hidden="true">' + bars + '</svg>';
     }
 
     // ─── Fullscreen map toggle ─────────────────────────────────────────────────
@@ -5034,7 +4503,6 @@
             var params = new URLSearchParams(window.location.search);
             // Encode current fishing map state into URL hash
             var hashParts = [];
-            if (activeSpecies) hashParts.push('species=' + encodeURIComponent(activeSpecies));
             if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
@@ -5058,11 +4526,6 @@
             if (eq === -1) return;
             var k = part.slice(0, eq);
             var v = decodeURIComponent(part.slice(eq + 1));
-            if (k === 'species' && v) {
-                activeSpecies = v;
-                if (els.speciesInput) els.speciesInput.value = v;
-                if (els.searchClear) els.searchClear.hidden = false;
-            }
             if (k === 'types' && v) {
                 var requested = v.split(',').map(function (t) { return t.trim(); })
                                  .filter(function (t) { return t && SPOT_TYPES[t]; });
@@ -5079,15 +4542,6 @@
 
         els.mapEl         = document.getElementById('fishing-map-el');
         els.loading       = document.getElementById('fmap-loading');
-        els.detail        = document.getElementById('fmap-detail');
-        els.detailName    = document.getElementById('fmap-detail-name');
-        els.detailMeta    = document.getElementById('fmap-detail-meta');
-        els.detailBadge   = document.getElementById('fmap-detail-badge');
-        els.detailSpecies = document.getElementById('fmap-detail-species');
-        els.detailActions = document.getElementById('fmap-detail-actions');
-        els.speciesInput   = document.getElementById('fmap-species-input');
-        els.searchClear    = document.getElementById('fmap-search-clear');
-        els.suggestions    = document.getElementById('fmap-suggestions');
         // Community / social elements
         els.catchDetail    = document.getElementById('fmap-catch-detail');
         els.catchDetailTitle = document.getElementById('fmap-catch-detail-title');
