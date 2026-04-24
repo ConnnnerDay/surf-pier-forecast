@@ -623,17 +623,17 @@
     function renderFishingSpots(spots, cacheKey) {
         if (!fishingSpotLayer) return;
 
-        // Build a render key that folds in current viewport bounds (at ~5 km
-        // resolution) so panning within the same 0.5° cache grid still triggers
-        // a re-render — the viewport-culled subset changes even though the
-        // cached data doesn't.
+        // Build a render key that folds in viewport bounds (~5 km resolution)
+        // and the active type filter so panning or toggling filter pills both
+        // trigger a re-render even when the underlying cached data is unchanged.
         var vb = map ? map.getBounds() : null;
         var vbKey = vb
             ? (Math.floor(vb.getSouth() * 20) + ',' + Math.floor(vb.getWest()  * 20) + ',' +
                Math.ceil (vb.getNorth() * 20) + ',' + Math.ceil (vb.getEast()  * 20))
             : '';
         var currentZoom = map ? Math.floor(map.getZoom()) : 8;
-        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom;
+        var typeKey  = activeSpotTypes.length ? ':f' + activeSpotTypes.slice().sort().join(',') : '';
+        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom + typeKey;
 
         if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
@@ -1608,8 +1608,7 @@
                 updateAdvBadge();
                 _scheduleSpotTypeSave();
 
-                // Re-query immediately — _cachedSupersetOf will serve from the
-                // all-types cache when available, so no server round-trip needed.
+                // Re-render immediately from the bbox cache; no server round-trip.
                 clearTimeout(spotQueryTimer);
                 queryStructures();
             });
@@ -2129,6 +2128,8 @@
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (modal)    { modal.hidden    = false; }
         if (backdrop) { backdrop.hidden = false; backdrop.style.display = ''; }
+        var statusEl = document.getElementById('fmap-admin-status');
+        if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     }
 
     function _closeAdminModal() {
@@ -2182,8 +2183,9 @@
         var saveBtn = document.getElementById('fmap-admin-save');
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
-                var markerId = saveBtn.dataset.markerId;
-                var payload = {
+                var markerId  = saveBtn.dataset.markerId;
+                var statusEl  = document.getElementById('fmap-admin-status');
+                var payload   = {
                     lat:         parseFloat(document.getElementById('fmap-admin-lat').value),
                     lng:         parseFloat(document.getElementById('fmap-admin-lng').value),
                     name:        document.getElementById('fmap-admin-name').value.trim(),
@@ -2192,19 +2194,37 @@
                 };
                 var url    = markerId ? '/api/map/custom-markers/' + markerId : '/api/map/custom-markers';
                 var method = markerId ? 'PUT' : 'POST';
+
+                if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+                saveBtn.disabled    = true;
+                saveBtn.textContent = 'Saving…';
+
                 fetch(url, {
                     method:  method,
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify(payload),
                 })
-                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Server error ' + r.status);
+                    return r.json();
+                })
                 .then(function () {
+                    saveBtn.disabled    = false;
+                    saveBtn.textContent = 'Save';
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
-                .catch(function (e) { console.error('[admin] save marker failed:', e); });
+                .catch(function (e) {
+                    console.error('[admin] save marker failed:', e);
+                    saveBtn.disabled    = false;
+                    saveBtn.textContent = 'Save';
+                    if (statusEl) {
+                        statusEl.style.color = '#f87171';
+                        statusEl.textContent = 'Save failed — ' + e.message;
+                    }
+                });
             });
         }
 
@@ -2215,15 +2235,31 @@
                 var markerId = delBtn.dataset.markerId;
                 if (!markerId) return;
                 if (!confirm('Delete this marker?')) return;
+
+                var statusEl    = document.getElementById('fmap-admin-status');
+                if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+                delBtn.disabled = true;
+
                 fetch('/api/map/custom-markers/' + markerId, { method: 'DELETE' })
-                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Server error ' + r.status);
+                    return r.json();
+                })
                 .then(function () {
+                    delBtn.disabled = false;
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
-                .catch(function (e) { console.error('[admin] delete marker failed:', e); });
+                .catch(function (e) {
+                    console.error('[admin] delete marker failed:', e);
+                    delBtn.disabled = false;
+                    if (statusEl) {
+                        statusEl.style.color = '#f87171';
+                        statusEl.textContent = 'Delete failed — ' + e.message;
+                    }
+                });
             });
         }
 
