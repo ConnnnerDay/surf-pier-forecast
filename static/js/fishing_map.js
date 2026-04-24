@@ -1054,6 +1054,7 @@
                 if (thisGen !== _structReqGen) { hideStructLoading(); return; }
 
                 hideStructLoading();
+                hideStructError();
 
                 // Server signals the viewport is too large — show hint, clear layers.
                 if (data.zoom_required) {
