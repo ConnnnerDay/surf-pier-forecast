@@ -768,9 +768,11 @@
             // The cache always holds all-types results; filtering here avoids a
             // server round-trip when the user toggles type pills.
             if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
-            // Hide types that require a higher zoom level than current.
+            // Hide types that require a higher zoom level than current, but
+            // only in the all-types view.  When the user has explicitly chosen
+            // types via the filter pills, always show them regardless of zoom.
             var typeDef = SPOT_TYPES[f.type];
-            if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
+            if (!activeSpotTypes.length && typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
                 _suppressedTypes[f.type] = true;
                 return false;
             }
