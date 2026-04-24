@@ -52,6 +52,7 @@ sudo apt-get update && sudo apt-get install -y \
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env          # optional: edit .env to set PORT, SMTP, OAuth, etc.
 python app.py
 ```
 
@@ -66,12 +67,13 @@ brew install gdal geos proj
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env          # optional: edit .env to set PORT, SMTP, OAuth, etc.
 python app.py
 ```
 
 Open: **http://localhost:5757**
 
-The SQLite database (`data/app.db`) is created automatically on first startup.
+The SQLite database (`data/app.db`) and `data/` directory are created automatically on first startup. `.env` values are loaded automatically via `python-dotenv`.
 
 > **AI Fishing Map note**: The first time you load a new map viewport, structure markers (piers, reefs, wrecks, etc.) take 5–15 seconds to appear — they're fetched live from the public Overpass/OpenStreetMap API. Subsequent pans and filter changes are served from a 30-minute local cache and load instantly.
 
