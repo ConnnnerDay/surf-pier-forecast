@@ -803,43 +803,16 @@
 
     // ── Structure cache helpers ───────────────────────────────────────────────
 
-    // Return a cached spot list whose bbox fully contains [s, w, n, e] and
-    // whose type string matches, or null if none found.  Used to serve
+    // Return a cached spot list whose bbox fully contains [s, w, n, e], or
+    // null if none found.  All cache keys are bbox-only ("s,w,n,e"); client-
+    // side type filtering is handled in renderFishingSpots().  Used to serve
     // viewport queries from a wider pre-fetched corridor without a new request.
-    // Find a cached result whose bbox covers s/w/n/e AND whose type set is a
-    // superset of the requested types.  Keys have the form "s,w,n,e" (all
-    // types) or "s,w,n,e|type1,type2,…" (filtered).
-    //
-    // When the cached entry has ALL types but the caller wants a subset, we
-    // filter the array in JS so the caller never has to hit the server.
-    function _cachedSupersetOf(s, w, n, e, typesStr) {
-        var requestedTypes = typesStr ? typesStr.split(',') : null; // null = all
-        // Build an O(1) lookup object once so the filter below doesn't use indexOf
-        var requestedSet = null;
-        if (requestedTypes) {
-            requestedSet = {};
-            for (var i = 0; i < requestedTypes.length; i++) requestedSet[requestedTypes[i]] = true;
-        }
+    function _cachedSupersetOf(s, w, n, e) {
         for (var k in spotCache) {
-            var pipe      = k.indexOf('|');
-            var coordsStr = pipe >= 0 ? k.slice(0, pipe) : k;
-            var ktype     = pipe >= 0 ? k.slice(pipe + 1) : ''; // '' = all types
-            var coords    = coordsStr.split(',');
-            if (coords.length < 4) continue;
+            var coords = k.split(',');
+            if (coords.length !== 4) continue;
             var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
-            if (!(cs <= s && cw <= w && cn >= n && ce >= e)) continue; // bbox too small
-
-            if (ktype === (typesStr || '')) {
-                // Exact match — return directly
-                return spotCache[k];
-            }
-            if (!ktype && requestedSet) {
-                // Cached all-types entry; filter client-side — zero server round-trip
-                return spotCache[k].filter(function (sp) {
-                    return requestedSet[sp.type] === true;
-                });
-            }
-            // ktype is a different subset; skip (we can't expand a subset to all types)
+            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
         }
         return null;
     }
@@ -945,7 +918,7 @@
         // Check whether a previously fetched (wider) bbox already contains
         // this viewport — e.g. the home-corridor pre-fetch covers zoom-12
         // viewport queries without a second Overpass trip.
-        var superResult = _cachedSupersetOf(s, w, n, e, '');
+        var superResult = _cachedSupersetOf(s, w, n, e);
         if (superResult) {
             _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
@@ -1397,7 +1370,7 @@
     // Persists the in-memory spotCache across page refreshes within the same
     // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
     // so a 30-minute TTL per entry is safe.  Quota errors are silently ignored.
-    var _SS_KEY = 'fmap_spot_cache_v2';
+    var _SS_KEY = 'fmap_spot_cache_v3'; // v3: bbox-only keys (no type-filter suffix)
     var _SS_TTL = 1800000; // 30 minutes in ms
 
     function _ssLoad() {
@@ -1406,15 +1379,15 @@
             if (!raw) return;
             var obj = JSON.parse(raw);
             var now = Date.now();
-            var loaded = 0;
             Object.keys(obj).forEach(function (k) {
+                // Skip any stale type-specific keys that sneaked in before v3
+                if (k.indexOf('|') !== -1) return;
                 var e = obj[k];
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
                     // Bypass _spotCachePut to avoid eviction during bulk restore;
                     // rebuild _spotCacheKeys so future puts evict correctly.
                     spotCache[k] = e.data;
                     _spotCacheKeys.push(k);
-                    loaded++;
                 }
             });
             // Enforce cap after restore in case stored data exceeded the limit
@@ -1505,11 +1478,6 @@
 
     // ─── Utilities ────────────────────────────────────────────────────────────
 
-    function getCsrfToken() {
-        var meta = document.querySelector('meta[name="csrf-token"]');
-        if (meta) return meta.getAttribute('content') || '';
-        return window.CSRF_TOKEN || '';
-    }
 
     function timeAgo(dateStr) {
         if (!dateStr) return '';
