@@ -143,6 +143,8 @@
     </section>
 
     <!-- Full species list (hidden by default) -->
+    {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
+    {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
     <div id="full-species-panel" class="full-species-list" aria-label="Full species forecast" hidden>
         {% include 'partials/_species.html' %}
     </div>
@@ -286,9 +288,6 @@
         </div>
     </details>
     </div><!-- /.section-block peak-feeding -->
-
-    {% set lures_only = profile and profile.lures == 'yes' and profile.live_bait != 'yes' and profile.live_bait != 'sometimes' and profile.cut_bait != 'yes' and profile.cut_bait != 'sometimes' %}
-    {% set uses_lures = profile and profile.lures in ('yes', 'sometimes') %}
 
     <!-- Fishing Plan (rigs, tips, bait) -->
     <div class="section-block" data-section-id="rigs-tips" data-section-label="Rigs &amp; Tips">

@@ -3108,10 +3108,11 @@
                     }
 
                     var marker = L.marker([rpt.lat, rpt.lng], { icon: icon });
+                    var rptTypeLabel = rpt.type ? rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1) : 'Report';
                     marker.bindPopup(
                         '<div class="fmap-storm-rpt-popup">' +
                         '<strong>' + (ICONS[rpt.type] || '') + ' ' +
-                        esc(rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1)) +
+                        esc(rptTypeLabel) +
                         (rpt.magnitude ? ' · ' + esc(String(rpt.magnitude)) : '') + '</strong>' +
                         (rpt.location ? '<div>' + esc(rpt.location) + (rpt.state ? ', ' + esc(rpt.state) : '') + '</div>' : '') +
                         (timeStr ? '<div class="fmap-storm-rpt-time">' + timeStr + '</div>' : '') +
@@ -3124,7 +3125,7 @@
                 });
 
                 var types = {};
-                reports.forEach(function (r) { types[r.type] = (types[r.type] || 0) + 1; });
+                reports.forEach(function (r) { var k = r.type || 'unknown'; types[k] = (types[k] || 0) + 1; });
                 var summary = Object.keys(types).map(function (t) {
                     return types[t] + ' ' + t;
                 }).join(', ');
