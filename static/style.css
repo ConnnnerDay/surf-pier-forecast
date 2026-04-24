@@ -12918,14 +12918,11 @@ body.dark .geo-control-group {
 .wq-hdx-credit { font-size: 0.65rem; color: var(--text-muted); margin: 0.2rem 0 0; }
 .wq-hdx-credit a { color: inherit; }
 
-/* Unavailable notice */
-.wq-unavailable {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
+/* Source attribution */
+.wq-source {
+  font-size: 0.68rem;
   color: var(--text-muted);
-  padding: 0.5rem 0;
+  margin: 0.1rem 0 0;
 }
 
 /* Dark theme for WQ section */

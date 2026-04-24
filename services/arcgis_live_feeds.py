@@ -1431,6 +1431,7 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
               d0, d1, d2, d3, d4 (% area in each category) }
     When no drought polygon covers the point, dm=-1 and label='No Drought'.
     Outside the CONUS coverage area returns None.
+    Uses the NDMC REST API directly (droughtmonitor.unl.edu) to avoid ESRI auth.
     """
     k = _drought_key(lat, lng)
     now = time.time()
@@ -1439,67 +1440,67 @@ def fetch_drought(lat: float, lng: float) -> Optional[Dict]:
 
     _evict_oldest(_DROUGHT_CACHE, _DROUGHT_MAX)
 
-    params = {
-        "geometry": f"{lng},{lat}",
-        "geometryType": "esriGeometryPoint",
-        "spatialRel": "esriSpatialRelIntersects",
-        "inSR": "4326",
-        "where": "1=1",
-        "outFields": "dm,d0,d1,d2,d3,d4,ddate",
-        "returnGeometry": "false",
-        "resultRecordCount": 1,
-        "outSR": "4326",
-        "f": "json",
-    }
-
     try:
-        resp = _HTTP.get(_DROUGHT_URL, params=params, timeout=_T_XLONG)
+        resp = _HTTP.get(
+            "https://droughtmonitor.unl.edu/api/webservice/current/GetDMDataForPoint.ashx",
+            params={"longitude": round(lng, 4), "latitude": round(lat, 4), "statistic": 0},
+            timeout=_T_XLONG,
+        )
         resp.raise_for_status()
-        body = resp.json()
-        feats = body.get("features", [])
-        # Detect service error (e.g. layer not found)
-        if body.get("error"):
-            raise ValueError(body["error"].get("message", "service error"))
+        raw = resp.json()
     except Exception as exc:
-        logger.warning("ArcGIS drought fetch failed: %s", exc)
+        logger.warning("NDMC drought fetch failed: %s", exc)
         _DROUGHT_CACHE[k] = {"ts": now, "data": None}
         return None
 
-    if not feats:
-        # Point is covered by CONUS extent but no active drought polygon
-        result: Optional[dict[str, Any]] = {
-            "dm": -1,
-            "code": "None",
-            "label": "No Drought",
-            "color": "#FFFFFF",
-            "date": None,
-            "d0": 0.0,
-            "d1": 0.0,
-            "d2": 0.0,
-            "d3": 0.0,
-            "d4": 0.0,
-        }
-        _DROUGHT_CACHE[k] = {"ts": now, "data": result}
-        return result
+    if not raw:
+        _DROUGHT_CACHE[k] = {"ts": now, "data": None}
+        return None
 
-    attrs = feats[0].get("attributes", {})
-    dm = int(attrs["dm"]) if attrs.get("dm") is not None else -1
-    code, label = _DROUGHT_LABELS.get(dm, ("D?", "Unknown"))
-    color = _DROUGHT_COLORS.get(dm, "#9E9E9E")
-    ddate = attrs.get("ddate")
-    date_str = _ms_to_iso(ddate).split("T")[0] if ddate is not None else None
+    entry = raw[0] if isinstance(raw, list) else raw
 
-    result = {
+    # D0–D4 are cumulative area percentages (D4 ⊆ D3 ⊆ D2 ⊆ D1 ⊆ D0).
+    # Use highest non-zero category as the drought level at this point.
+    d4 = float(entry.get("D4") or 0)
+    d3 = float(entry.get("D3") or 0)
+    d2 = float(entry.get("D2") or 0)
+    d1 = float(entry.get("D1") or 0)
+    d0 = float(entry.get("D0") or 0)
+
+    if d4 > 0:
+        dm = 4
+    elif d3 > 0:
+        dm = 3
+    elif d2 > 0:
+        dm = 2
+    elif d1 > 0:
+        dm = 1
+    elif d0 > 0:
+        dm = 0
+    else:
+        dm = -1
+
+    map_date = str(entry.get("MapDate", ""))
+    date_str = (
+        f"{map_date[:4]}-{map_date[4:6]}-{map_date[6:]}"
+        if len(map_date) == 8
+        else None
+    )
+
+    code, label = _DROUGHT_LABELS.get(dm, ("None", "No Drought"))
+    color = _DROUGHT_COLORS.get(dm, "#FFFFFF")
+
+    result: Optional[dict[str, Any]] = {
         "dm": dm,
         "code": code,
         "label": label,
         "color": color,
         "date": date_str,
-        "d0": round(float(attrs.get("d0") or 0), 1),
-        "d1": round(float(attrs.get("d1") or 0), 1),
-        "d2": round(float(attrs.get("d2") or 0), 1),
-        "d3": round(float(attrs.get("d3") or 0), 1),
-        "d4": round(float(attrs.get("d4") or 0), 1),
+        "d0": round(d0, 1),
+        "d1": round(d1, 1),
+        "d2": round(d2, 1),
+        "d3": round(d3, 1),
+        "d4": round(d4, 1),
     }
 
     _DROUGHT_CACHE[k] = {"ts": now, "data": result}
@@ -1529,7 +1530,8 @@ def fetch_metar_stations(
     Each item: { icao, name, lat, lng, observed (ISO), temp_f, dew_f, humidity,
                  wind_deg, wind_kt, gust_kt, wind_dir, visibility_m, pressure_mb,
                  sky, weather, heat_index_f, wind_chill_f, flight_cat, cat_color }
-    Wind speed is converted from km/h → knots (÷ 1.852).
+    Uses NOAA Aviation Weather Center JSON API (aviationweather.gov).
+    Wind speed is already in knots from AWC; visibility in statute miles → metres.
     """
     k = _metar_key(south, west, north, east)
     now = time.time()
@@ -1538,83 +1540,79 @@ def fetch_metar_stations(
 
     _evict_oldest(_METAR_CACHE, _METAR_MAX)
 
-    params = {
-        "geometry": f"{west},{south},{east},{north}",
-        "geometryType": "esriGeometryEnvelope",
-        "spatialRel": "esriSpatialRelIntersects",
-        "where": "1=1",
-        "outFields": (
-            "ICAO,STATION_NAME,OBS_DATETIME,TEMP,DEW_POINT,R_HUMIDITY,"
-            "WIND_DIRECT,WIND_SPEED,WIND_GUST,WIND_CHILL,VISIBILITY,"
-            "PRESSURE,SKY_CONDTN,WEATHER,HEAT_INDEX,LATITUDE,LONGITUDE,"
-            "FLT_CATEGORY"
-        ),
-        "returnGeometry": "true",
-        "resultRecordCount": 300,
-        "outSR": "4326",
-        "f": "json",
-    }
-
     try:
-        resp = _HTTP.get(_METAR_URL, params=params, timeout=_T_XLONG)
+        resp = _HTTP.get(
+            "https://aviationweather.gov/api/data/metar",
+            params={
+                "bbox": f"{south},{west},{north},{east}",
+                "format": "json",
+                "hours": 1,
+            },
+            timeout=_T_XLONG,
+        )
         resp.raise_for_status()
-        feats = resp.json().get("features", [])
+        raw = resp.json()
+        if not isinstance(raw, list):
+            raw = raw.get("data", [])
     except Exception as exc:
-        logger.warning("ArcGIS METAR fetch failed: %s", exc)
+        logger.warning("AWC METAR fetch failed: %s", exc)
         _METAR_CACHE[k] = {"ts": now, "data": []}
         return []
 
     data: list[dict[str, Any]] = []
-    for feat in feats:
-        a = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        lat = a.get("LATITUDE") or geom.get("y")
-        lng = a.get("LONGITUDE") or geom.get("x")
-        if lat is None or lng is None:
+    for st in raw:
+        lat_ = st.get("lat")
+        lng_ = st.get("lon")
+        if lat_ is None or lng_ is None:
             continue
-        # km/h → knots
-        spd_kmh = a.get("WIND_SPEED")
-        gust_kmh = a.get("WIND_GUST")
-        spd_kt = round(float(spd_kmh) / 1.852, 1) if spd_kmh is not None else None
-        gust_kt = round(float(gust_kmh) / 1.852, 1) if gust_kmh is not None else None
-        wind_deg = a.get("WIND_DIRECT")
-        cat = str(a.get("FLT_CATEGORY") or "").strip().upper()
+
+        temp_c = st.get("temp")
+        dewp_c = st.get("dewp")
+        temp_f = round(float(temp_c) * 9 / 5 + 32, 1) if temp_c is not None else None
+        dew_f = round(float(dewp_c) * 9 / 5 + 32, 1) if dewp_c is not None else None
+
+        vis_mi = st.get("visib")
+        try:
+            vis_m = round(float(vis_mi) * 1609.34) if vis_mi is not None else None
+        except (TypeError, ValueError):
+            vis_m = None
+
+        wspd = st.get("wspd")  # knots
+        wgst = st.get("wgst")  # knots
+        wdir = st.get("wdir")
+
+        slp = st.get("slp")
+        altim = st.get("altim")  # hPa
+        pressure_mb = (
+            round(float(slp), 1)
+            if slp is not None
+            else (round(float(altim), 1) if altim is not None else None)
+        )
+
+        sky_cond = st.get("sky_condition") or []
+        sky_str = sky_cond[0].get("cover", "") if sky_cond else str(st.get("sky") or "")
+        cat = str(st.get("fltcat") or "").strip().upper()
+
         data.append(
             {
-                "icao": str(a.get("ICAO") or ""),
-                "name": str(a.get("STATION_NAME") or ""),
-                "lat": float(lat),
-                "lng": float(lng),
-                "observed": _ms_to_iso(a["OBS_DATETIME"])
-                if a.get("OBS_DATETIME") is not None
-                else None,
-                "temp_f": round(float(a["TEMP"]), 1)
-                if a.get("TEMP") is not None
-                else None,
-                "dew_f": round(float(a["DEW_POINT"]), 1)
-                if a.get("DEW_POINT") is not None
-                else None,
-                "humidity": int(a["R_HUMIDITY"])
-                if a.get("R_HUMIDITY") is not None
-                else None,
-                "wind_deg": int(wind_deg) if wind_deg is not None else None,
-                "wind_dir": _deg_to_compass(wind_deg) if wind_deg is not None else None,
-                "wind_kt": spd_kt,
-                "gust_kt": gust_kt,
-                "wind_chill_f": round(float(a["WIND_CHILL"]), 1)
-                if a.get("WIND_CHILL") is not None
-                else None,
-                "heat_index_f": round(float(a["HEAT_INDEX"]), 1)
-                if a.get("HEAT_INDEX") is not None
-                else None,
-                "visibility_m": int(a["VISIBILITY"])
-                if a.get("VISIBILITY") is not None
-                else None,
-                "pressure_mb": round(float(a["PRESSURE"]), 1)
-                if a.get("PRESSURE") is not None
-                else None,
-                "sky": str(a.get("SKY_CONDTN") or ""),
-                "weather": str(a.get("WEATHER") or ""),
+                "icao": str(st.get("icaoId") or ""),
+                "name": str(st.get("name") or ""),
+                "lat": float(lat_),
+                "lng": float(lng_),
+                "observed": str(st.get("obsTime") or ""),
+                "temp_f": temp_f,
+                "dew_f": dew_f,
+                "humidity": st.get("relh"),
+                "wind_deg": int(wdir) if wdir is not None else None,
+                "wind_dir": _deg_to_compass(wdir) if wdir is not None else None,
+                "wind_kt": float(wspd) if wspd is not None else None,
+                "gust_kt": float(wgst) if wgst is not None else None,
+                "wind_chill_f": None,
+                "heat_index_f": None,
+                "visibility_m": vis_m,
+                "pressure_mb": pressure_mb,
+                "sky": sky_str,
+                "weather": str(st.get("wx_string") or ""),
                 "flight_cat": cat or None,
                 "cat_color": _FLT_CAT_COLORS.get(cat, "#9ca3af"),
             }
@@ -1704,11 +1702,12 @@ def _gauge_key(s: float, w: float, n: float, e: float) -> tuple:
 def fetch_stream_gauges(
     south: float, west: float, north: float, east: float
 ) -> list[Dict]:
-    """Return live USGS/NWS stream gauge readings intersecting the bounding box.
+    """Return live USGS stream gauge readings intersecting the bounding box.
 
     Each item: { id, name, lat, lng, stage_ft, flow_cfs, status, status_class,
                  status_color, status_24h, status_48h, status_72h,
                  updated (ISO), station_url, graph_url }
+    Uses USGS Water Services IV API directly (waterservices.usgs.gov).
     """
     k = _gauge_key(south, west, north, east)
     now = time.time()
@@ -1717,68 +1716,77 @@ def fetch_stream_gauges(
 
     _evict_oldest(_GAUGE_CACHE, _GAUGE_MAX)
 
-    params = {
-        "geometry": f"{west},{south},{east},{north}",
-        "geometryType": "esriGeometryEnvelope",
-        "spatialRel": "esriSpatialRelIntersects",
-        "where": "1=1",
-        "outFields": (
-            "stationid,name,stage_ft,flow_cfs,status,statusClass,"
-            "status_full,status_24h,status_48h,status_72h,"
-            "lastupdate,stationurl,graphurl,LATITUDE,LONGITUDE"
-        ),
-        "returnGeometry": "true",
-        "resultRecordCount": 200,
-        "outSR": "4326",
-        "f": "json",
-    }
-
     try:
-        resp = _HTTP.get(_GAUGE_URL, params=params, timeout=_T_XLONG)
+        resp = _HTTP.get(
+            "https://waterservices.usgs.gov/nwis/iv/",
+            params={
+                "format": "json",
+                "bBox": f"{west},{south},{east},{north}",
+                "parameterCd": "00065,00060",  # gage height (ft), discharge (cfs)
+                "siteStatus": "active",
+                "siteType": "ST",
+            },
+            timeout=_T_XLONG,
+        )
         resp.raise_for_status()
-        feats = resp.json().get("features", [])
+        body = resp.json()
     except Exception as exc:
-        logger.warning("ArcGIS stream gauge fetch failed: %s", exc)
+        logger.warning("USGS stream gauge fetch failed: %s", exc)
         _GAUGE_CACHE[k] = {"ts": now, "data": []}
         return []
 
-    data: list[dict[str, Any]] = []
-    for feat in feats:
-        a = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        lat = a.get("LATITUDE") or geom.get("y")
-        lng = a.get("LONGITUDE") or geom.get("x")
-        if lat is None or lng is None:
+    time_series = body.get("value", {}).get("timeSeries", [])
+    sites: dict[str, dict[str, Any]] = {}
+    for ts in time_series:
+        src = ts.get("sourceInfo", {})
+        codes = src.get("siteCode") or []
+        site_no = codes[0].get("value", "") if codes else ""
+        if not site_no:
             continue
-        sc = int(a.get("statusClass") or 0)
-        status_lbl, color = _GAUGE_STATUS.get(sc, ("Unknown", "#9ca3af"))
-        data.append(
-            {
-                "id": str(a.get("stationid") or ""),
-                "name": str(a.get("name") or ""),
-                "lat": float(lat),
-                "lng": float(lng),
-                "stage_ft": round(float(a["stage_ft"]), 2)
-                if a.get("stage_ft") is not None
-                else None,
-                "flow_cfs": round(float(a["flow_cfs"]), 1)
-                if a.get("flow_cfs") is not None
-                else None,
-                "status": str(a.get("status") or status_lbl),
-                "status_class": sc,
-                "status_color": color,
-                "status_full": str(a.get("status_full") or ""),
-                "status_24h": str(a.get("status_24h") or ""),
-                "status_48h": str(a.get("status_48h") or ""),
-                "status_72h": str(a.get("status_72h") or ""),
-                "updated": _ms_to_iso(a["lastupdate"])
-                if a.get("lastupdate") is not None
-                else None,
-                "station_url": str(a.get("stationurl") or ""),
-                "graph_url": str(a.get("graphurl") or ""),
-            }
-        )
 
+        geo = src.get("geoLocation", {}).get("geogLocation", {})
+        lat_ = geo.get("latitude")
+        lng_ = geo.get("longitude")
+        if lat_ is None or lng_ is None:
+            continue
+
+        var_code = ((ts.get("variable", {}).get("variableCode")) or [{}])[0].get("value", "")
+        values = ((ts.get("values") or [{}])[0]).get("value", [])
+        latest = values[-1] if values else {}
+        val_str = latest.get("value")
+        val_dt = latest.get("dateTime")
+
+        try:
+            val = float(val_str) if val_str not in (None, "", "-999999") else None
+        except (TypeError, ValueError):
+            val = None
+
+        if site_no not in sites:
+            sites[site_no] = {
+                "id": site_no,
+                "name": str(src.get("siteName", "")),
+                "lat": float(lat_),
+                "lng": float(lng_),
+                "stage_ft": None,
+                "flow_cfs": None,
+                "status": "Normal",
+                "status_class": 0,
+                "status_color": _GAUGE_STATUS[0][1],
+                "status_full": "",
+                "status_24h": "",
+                "status_48h": "",
+                "status_72h": "",
+                "updated": val_dt,
+                "station_url": f"https://waterdata.usgs.gov/nwis/uv?site_no={site_no}",
+                "graph_url": f"https://waterdata.usgs.gov/nwis/uv?site_no={site_no}",
+            }
+
+        if var_code == "00065" and val is not None:
+            sites[site_no]["stage_ft"] = round(val, 2)
+        elif var_code == "00060" and val is not None:
+            sites[site_no]["flow_cfs"] = round(val, 1)
+
+    data = list(sites.values())
     _GAUGE_CACHE[k] = {"ts": now, "data": data}
     return data
 
@@ -2193,7 +2201,12 @@ def fetch_ndbc_buoys(
         period_s      float|None  dominant wave period in seconds
         pressure_mb   float|None  sea-level pressure in mb
         updated       str         ISO-8601 observation time
+    Uses NOAA CoastWatch ERDDAP (cwwcNDBCMet dataset) instead of ArcGIS.
+    ERDDAP returns m/s for wind, m for wave height, °C for temperature —
+    all converted to imperial/knots here.
     """
+    from datetime import timedelta
+
     k = _bbox_key(south, west, north, east)
     now = time.time()
     if k in _NDBC_CACHE and now - _NDBC_CACHE[k]["ts"] < _NDBC_TTL:
@@ -2201,34 +2214,41 @@ def fetch_ndbc_buoys(
 
     _evict_oldest(_NDBC_CACHE, _NDBC_MAX)
 
-    params = {
-        "geometry": f"{west},{south},{east},{north}",
-        "geometryType": "esriGeometryEnvelope",
-        "spatialRel": "esriSpatialRelIntersects",
-        "inSR": "4326",
-        "where": "1=1",
-        "outFields": (
-            "STATION_ID,STATION_NAME,WATER_TEMP_F,WAVE_HT_FT,"
-            "WIND_SPEED_KT,WIND_DIR,DOMINANT_PERIOD_S,PRESSURE_MB,"
-            "LAT,LON,LATITUDE,LONGITUDE,LAST_UPDATE"
-        ),
-        "returnGeometry": "true",
-        "resultRecordCount": 200,
-        "outSR": "4326",
-        "f": "json",
-    }
+    cutoff = (
+        datetime.now(tz=timezone.utc) - timedelta(hours=2)
+    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    query = (
+        "station,latitude,longitude,time,wd,wspd,gst,wvht,dpd,wtmp,atmp,bar"
+        f"&latitude>={south}&latitude<={north}"
+        f"&longitude>={west}&longitude<={east}"
+        f"&time>={cutoff}"
+        '&orderByMax("station,time")'
+    )
 
     try:
-        resp = _HTTP.get(_NDBC_URL, params=params, timeout=_T_STD)
+        resp = _HTTP.get(
+            f"https://coastwatch.pfeg.noaa.gov/erddap/tabledap/cwwcNDBCMet.json?{query}",
+            timeout=_T_XLONG,
+        )
+        if resp.status_code == 404:
+            # ERDDAP returns 404 when no data matches the constraints
+            _NDBC_CACHE[k] = {"ts": now, "data": []}
+            return []
         resp.raise_for_status()
-        body = resp.json()
-        if body.get("error"):
-            raise ValueError(body["error"].get("message", "service error"))
-        feats = body.get("features", [])
+        table = resp.json().get("table", {})
+        col_names: list[str] = table.get("columnNames", [])
+        rows: list[list] = table.get("rows", [])
     except Exception as exc:
-        logger.warning("ArcGIS NDBC buoy fetch failed: %s", exc)
+        logger.warning("ERDDAP NDBC fetch failed: %s", exc)
         _NDBC_CACHE[k] = {"ts": now, "data": []}
         return []
+
+    def _col(row: list, name: str) -> Any:
+        try:
+            return row[col_names.index(name)]
+        except (ValueError, IndexError):
+            return None
 
     def _f(v: Any) -> Optional[float]:
         try:
@@ -2237,30 +2257,37 @@ def fetch_ndbc_buoys(
             return None
 
     data: list[dict[str, Any]] = []
-    for feat in feats:
-        a = feat.get("attributes", {})
-        geom = feat.get("geometry") or {}
-        # Service has used both LAT/LON and LATITUDE/LONGITUDE over time; fall
-        # back to point geometry coordinates when attribute fields are absent.
-        lat_ = a.get("LAT") or a.get("LATITUDE") or geom.get("y")
-        lng_ = a.get("LON") or a.get("LONGITUDE") or geom.get("x")
+    for row in rows:
+        lat_ = _col(row, "latitude")
+        lng_ = _col(row, "longitude")
         if lat_ is None or lng_ is None:
             continue
+
+        # ERDDAP units: wind/gust m/s → knots; wave height m → ft; temp °C → °F
+        wspd_ms = _col(row, "wspd")
+        gst_ms = _col(row, "gst")
+        wvht_m = _col(row, "wvht")
+        wtmp_c = _col(row, "wtmp")
+
+        wind_kt = _f(float(wspd_ms) * 1.94384) if wspd_ms is not None else None
+        gust_kt = _f(float(gst_ms) * 1.94384) if gst_ms is not None else None
+        wave_ft = _f(float(wvht_m) * 3.28084) if wvht_m is not None else None
+        water_f = _f(float(wtmp_c) * 9 / 5 + 32) if wtmp_c is not None else None
+
+        station = str(_col(row, "station") or "")
         data.append(
             {
                 "lat": float(lat_),
                 "lng": float(lng_),
-                "id": str(a.get("STATION_ID") or ""),
-                "name": str(a.get("STATION_NAME") or ""),
-                "water_temp_f": _f(a.get("WATER_TEMP_F")),
-                "wave_ht_ft": _f(a.get("WAVE_HT_FT")),
-                "wind_kt": _f(a.get("WIND_SPEED_KT")),
-                "wind_dir": a.get("WIND_DIR"),
-                "period_s": _f(a.get("DOMINANT_PERIOD_S")),
-                "pressure_mb": _f(a.get("PRESSURE_MB")),
-                "updated": _ms_to_iso(a["LAST_UPDATE"])
-                if a.get("LAST_UPDATE") is not None
-                else "",
+                "id": station,
+                "name": station,
+                "water_temp_f": water_f,
+                "wave_ht_ft": wave_ft,
+                "wind_kt": wind_kt,
+                "wind_dir": _col(row, "wd"),
+                "period_s": _f(_col(row, "dpd")),
+                "pressure_mb": _f(_col(row, "bar")),
+                "updated": str(_col(row, "time") or ""),
             }
         )
 
