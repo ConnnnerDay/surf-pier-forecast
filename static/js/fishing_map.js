@@ -14,7 +14,7 @@
 
     var fishingSpotLayer = null;     // L.layerGroup for structure markers
     var spotQueryTimer   = null;     // debounce timer for structure queries
-    var spotCache        = {};       // bbox+types key → array of spot objects
+    var spotCache        = {};       // bbox key → array of spot objects (all types)
     var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
     var _SPOT_CACHE_MAX  = 48;       // cap to prevent unbounded sessionStorage growth
     var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
@@ -37,6 +37,7 @@
     var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
+    var _inflightStructKey   = null; // bbox key of the currently in-flight structures fetch
     var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
@@ -890,6 +891,7 @@
         if (_structLoadCount > 0) return;
         if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
         if (_elStructSpinner) _elStructSpinner.hidden = true;
+        _inflightStructKey = null;
     }
 
     // Show the dismissible error banner with a custom message.
@@ -1031,6 +1033,13 @@
             return;
         }
 
+        // If this exact bbox is already being fetched (e.g. a filter pill was
+        // toggled while the initial Overpass call was still in flight), skip
+        // re-fetching.  renderFishingSpots() reads activeSpotTypes at render
+        // time, so the current filter will be applied when the in-flight
+        // request completes.
+        if (_inflightStructKey === key) return;
+
         // Always fetch all structure types; renderFishingSpots() filters client-side.
         var url = '/api/map/structures' +
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
@@ -1040,6 +1049,7 @@
         if (_structAbort) _structAbort.abort();
         _structAbort = new AbortController();
         var thisGen = ++_structReqGen;
+        _inflightStructKey = key;
 
         showStructLoading();
         hideStructError();
@@ -1619,8 +1629,9 @@
     // restrict which structure types appear on the map.  Empty activeSpotTypes
     // means "show all" (the default state).
     //
-    // The spot cache is fully invalidated on every change so stale data from a
-    // different filter selection never leaks through.
+    // The spot cache is bbox-keyed and always stores all types; filtering is
+    // applied client-side in renderFishingSpots() so toggling pills never
+    // triggers a new server round-trip when data is already cached.
 
     // Apply an array of type strings to activeSpotTypes and sync pill UI.
     // Passes an empty array to reset to "show all".

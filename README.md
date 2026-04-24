@@ -59,6 +59,16 @@ The SQLite database (`data/app.db`) is created automatically on first startup.
 
 If you're on macOS or Windows, skip the `apt-get` line and run the remaining commands in your terminal.
 
+**AI Fishing Map — structure markers**: The map fetches piers, reefs, wrecks, and other structure data from the public [Overpass API](https://overpass-api.de) (OpenStreetMap) and NOAA ENC. No API key required. The first load for a new map viewport takes 5–15 seconds while Overpass processes the query; subsequent pans/zooms are served from a 30-minute cache. If markers fail to load, Overpass may be temporarily rate-limited — wait a moment and pan to retry.
+
+**Optional GIS packages** (coastline overlay only — not required for the fishing map):
+```bash
+# Debian/Ubuntu
+sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev
+pip install "geopandas>=0.14" "pandas>=2.0"
+```
+Without these the app uses a pure-Python bbox filter for coastlines, which works correctly but is slightly slower for large GeoJSON files.
+
 ---
 
 ## One-click install (systemd)
