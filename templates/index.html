@@ -498,10 +498,10 @@
     <details class="collapsible-module" id="water-quality-details">
         <summary>
             <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/><path d="M12 8v4l3 3"/><path d="M20 2v6h-6"/></svg>
-                Water Quality &amp; Environmental Data
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22a8 8 0 0 1-8-8c0-3.5 2.5-7 5-10l3-4 3 4c2.5 3 5 6.5 5 10a8 8 0 0 1-8 8z"/></svg>
+                Water Conditions
             </span>
-            <span class="collapsible-module-sub">EPA Water Quality Portal &middot; FAO Fishing Zones &middot; HDX Datasets</span>
+            <span class="collapsible-module-sub">Temp &middot; Clarity &middot; Dissolved Oxygen &middot; Beach Status</span>
             <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </summary>
         <div class="collapsible-module-body">
@@ -2442,119 +2442,69 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-/* ── Water Quality & Environmental Data ─────────────────────────────────── */
+/* ── Water Conditions ─────────────────────────────────────────────────────────────────────────────────────── */
 (function () {
-    var section = document.getElementById('wq-section');
+    var section    = document.getElementById('wq-section');
     if (!section) return;
+    var lat        = section.dataset.lat;
+    var lng        = section.dataset.lng;
+    var state      = section.dataset.state || '';
+    var loadingEl  = document.getElementById('wq-loading');
+    var metricsEl  = document.getElementById('wq-metrics-grid');
+    var advisoryEl = document.getElementById('wq-advisory');
+    var advisoryTx = document.getElementById('wq-advisory-text');
+    var sourceEl   = document.getElementById('wq-source');
 
-    var lat     = section.dataset.lat;
-    var lng     = section.dataset.lng;
-    var state   = section.dataset.state   || '';
-    var species = section.dataset.species || '';
-
-    var loadingEl     = document.getElementById('wq-loading');
-    var metricsEl     = document.getElementById('wq-metrics-grid');
-    var advisoryEl    = document.getElementById('wq-advisory');
-    var advisoryText  = document.getElementById('wq-advisory-text');
-    var faoZoneEl     = document.getElementById('wq-fao-zone');
-    var faoNameEl     = document.getElementById('wq-fao-name');
-    var faoLinkEl     = document.getElementById('wq-fao-link');
-    var speciesEl     = document.getElementById('wq-species-enrich');
-    var speciesListEl = document.getElementById('wq-species-list');
-    var hdxEl         = document.getElementById('wq-hdx-details');
-    var hdxListEl     = document.getElementById('wq-hdx-list');
-    var unavailEl     = document.getElementById('wq-unavailable');
-
-    function showUnavailable() {
-        if (loadingEl)  loadingEl.hidden  = true;
-        if (unavailEl)  unavailEl.hidden  = false;
+    function hideSection() {
+        var block = section.closest('.section-block');
+        if (block) block.hidden = true;
     }
 
-    if (!lat || !lng) { showUnavailable(); return; }
+    if (!lat || !lng) { hideSection(); return; }
 
-    var envUrl = '/api/v1/geo/environmental?lat=' + lat + '&lng=' + lng +
-                 (state ? '&state=' + encodeURIComponent(state) : '');
-    var hdxUrl = '/api/v1/geo/hdx-fao?lat=' + lat + '&lng=' + lng +
-                 (species ? '&species=' + encodeURIComponent(species) : '');
+    var url = '/api/v1/geo/environmental?lat=' + lat + '&lng=' + lng +
+              (state ? '&state=' + encodeURIComponent(state) : '');
 
-    var envData = null, hdxData = null, envDone = false, hdxDone = false;
-
-    function tryRender() {
-        if (!envDone || !hdxDone) return;
-
-        var wq = envData && envData.data && envData.data.water_quality;
-
-        var metrics = [];
-        if (wq) {
-            if (wq.temp_f   != null) metrics.push({ label: 'Water Temp (WQP)', value: wq.temp_f   + '°F' });
-            if (wq.do_mg_l  != null) metrics.push({ label: 'Dissolved Oxygen',  value: wq.do_mg_l  + ' mg/L' });
-            if (wq.ph       != null) metrics.push({ label: 'pH',                value: wq.ph });
-            if (wq.salinity_ppt   != null) metrics.push({ label: 'Salinity',   value: wq.salinity_ppt   + ' ppt' });
-            if (wq.turbidity_ntu  != null) metrics.push({ label: 'Turbidity',  value: wq.turbidity_ntu  + ' NTU' });
-        }
-
-        if (!metrics.length) { showUnavailable(); return; }
-
-        // Metrics grid
-        if (metricsEl) {
-            metricsEl.innerHTML = metrics.map(function (m) {
-                return '<div class="wq-metric">' +
-                    '<span class="wq-metric-label">' + m.label + '</span>' +
-                    '<span class="wq-metric-value">' + m.value + '</span>' +
-                    '</div>';
-            }).join('');
-            metricsEl.hidden = false;
-        }
-
-        // Enterococcus advisory
-        if (wq && wq.enterococcus_flag === 'advisory' && advisoryEl && advisoryText) {
-            advisoryText.textContent =
-                'Beach advisory: Enterococcus ' + (wq.enterococcus_cfu_100ml || '') +
-                ' CFU/100 mL (EPA limit: 104)';
-            advisoryEl.hidden = false;
-        }
-
-        // FAO fishing zone
-        var hdxPayload = hdxData && hdxData.data;
-        var faoZone    = hdxPayload && hdxPayload.fao_zone;
-        if (faoZone && faoZone.area_name && faoZoneEl) {
-            if (faoNameEl) faoNameEl.textContent = faoZone.area_name;
-            if (faoLinkEl && hdxPayload.fao_url) faoLinkEl.href = hdxPayload.fao_url;
-            faoZoneEl.hidden = false;
-        }
-
-        // Species scientific names
-        var speciesEnrich = (hdxPayload && hdxPayload.species_enrichment) || [];
-        if (speciesEnrich.length && speciesEl && speciesListEl) {
-            speciesListEl.innerHTML = speciesEnrich.map(function (s) {
-                return '<li><em>' + (s.scientific_name || '') + '</em>' +
-                       (s.common_name ? ' — ' + s.common_name : '') + '</li>';
-            }).join('');
-            speciesEl.hidden = false;
-        }
-
-        // HDX dataset links
-        var datasets = (hdxPayload && hdxPayload.hdx_datasets) || [];
-        if (datasets.length && hdxEl && hdxListEl) {
-            hdxListEl.innerHTML = datasets.slice(0, 5).map(function (d) {
-                return '<li><a href="' + (d.url || '#') + '" target="_blank" rel="noopener noreferrer">' +
-                       (d.title || 'Dataset') + '</a></li>';
-            }).join('');
-            hdxEl.hidden = false;
-        }
-
-        if (loadingEl) loadingEl.hidden = true;
-    }
-
-    fetch(envUrl)
+    fetch(url)
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) { envData = d; envDone = true; tryRender(); })
-        .catch(function ()  { envDone = true; tryRender(); });
+        .then(function (d) {
+            var wq = d && d.data && d.data.water_quality;
+            var metrics = [];
+            if (wq) {
+                if (wq.temp_f        != null) metrics.push({ label: 'Water Temp', value: wq.temp_f + '\u00b0F' });
+                if (wq.turbidity_ntu != null) metrics.push({ label: 'Clarity',    value: wq.turbidity_ntu + ' NTU' });
+                if (wq.do_mg_l       != null) metrics.push({ label: 'Oxygen',     value: wq.do_mg_l + ' mg/L' });
+                if (wq.salinity_ppt  != null) metrics.push({ label: 'Salinity',   value: wq.salinity_ppt + ' ppt' });
+                if (wq.ph            != null) metrics.push({ label: 'pH',         value: wq.ph });
+            }
+            if (!metrics.length) { hideSection(); return; }
 
-    fetch(hdxUrl)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) { hdxData = d; hdxDone = true; tryRender(); })
-        .catch(function ()  { hdxDone = true; tryRender(); });
+            if (metricsEl) {
+                metricsEl.innerHTML = metrics.map(function (m) {
+                    return '<div class="wq-metric">' +
+                        '<span class="wq-metric-value">' + m.value + '</span>' +
+                        '<span class="wq-metric-label">' + m.label + '</span>' +
+                        '</div>';
+                }).join('');
+                metricsEl.hidden = false;
+            }
+
+            if (wq && wq.enterococcus_flag === 'advisory' && advisoryEl && advisoryTx) {
+                advisoryTx.textContent = 'Beach advisory \u2014 enterococcus ' +
+                    (wq.enterococcus_cfu_100ml != null ? wq.enterococcus_cfu_100ml + ' CFU/100\u00a0mL' : 'elevated') +
+                    ' (EPA limit: 104)';
+                advisoryEl.hidden = false;
+            }
+
+            if (sourceEl && wq && wq.source) {
+                sourceEl.textContent = 'Source: ' + wq.source +
+                    (wq.station_count ? ' \u00b7 ' + wq.station_count + ' station' + (wq.station_count > 1 ? 's' : '') : '');
+                sourceEl.hidden = false;
+            }
+
+            if (loadingEl) loadingEl.hidden = true;
+        })
+        .catch(function () { hideSection(); });
 })();
 </script>
 </html>
