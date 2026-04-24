@@ -1833,7 +1833,7 @@
         // Load comments
         els.catchDetailComments.innerHTML = '<div style="opacity:.5;font-size:.75rem;padding:.4rem 0">Loading comments…</div>';
         fetch('/api/map/catches/' + c.id + '/comments')
-            .then(function (r) { return r.json(); })
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 var comments = data.comments || [];
                 var html = '';
@@ -1862,7 +1862,7 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ body: body })
                         })
-                        .then(function (r) { return r.json(); })
+                        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                         .then(function () { openCatchDetail(c); })
                         .catch(function () { showToast('Could not post comment.'); });
                     });
@@ -1890,7 +1890,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 })
-                .then(function (r) { return r.json(); })
+                .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function (d) {
                     likeBtn.textContent = '\u2764\uFE0F ' + d.likes_count + ' likes';
                     likeBtn.classList.toggle('fmap-catch-action-btn--liked', d.liked);
@@ -2070,7 +2070,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 })
-                .then(function (r) { return r.json(); })
+                .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function (data) {
                     if (data.error) {
                         if (els.logError) { els.logError.textContent = data.error; els.logError.hidden = false; }

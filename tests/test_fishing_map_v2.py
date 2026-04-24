@@ -22,6 +22,7 @@ from app import create_app
 from storage.sqlite import (
     add_map_catch,
     add_map_catch_comment,
+    clear_hotspots_cache,
     confirm_email,
     create_user,
     get_community_hotspots,
@@ -36,6 +37,14 @@ from storage.sqlite import (
 
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _clear_module_caches():
+    """Prevent module-level caches from leaking between tests."""
+    clear_hotspots_cache()
+    yield
+    clear_hotspots_cache()
 
 
 @pytest.fixture

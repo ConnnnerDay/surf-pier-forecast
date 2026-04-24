@@ -1744,6 +1744,12 @@ def get_community_hotspots(
         return result
 
 
+def clear_hotspots_cache() -> None:
+    """Invalidate the in-process community hotspots cache.  Intended for tests."""
+    with _HOTSPOTS_CACHE_LOCK:
+        _HOTSPOTS_CACHE.clear()
+
+
 def get_recent_public_catches(
     limit: int = 20,
     species_filter: str = "",
