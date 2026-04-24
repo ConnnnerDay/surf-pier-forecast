@@ -538,25 +538,112 @@
         return out;
     }
 
-    // Symbols rendered inside structure markers — chosen to visually suggest the feature type
+    // Symbols rendered inside structure markers — chosen to visually suggest the feature type.
+    // These appear as text in the filter-pill labels; SVG icons are used inside the actual markers.
     var SPOT_LABELS = {
-        pier:         '⊥',   // T/dock shape from above
-        jetty:        '≡',   // stacked lines = rock armour
-        bridge:       '∩',   // arch = bridge span
-        reef:         '≈',   // wavy = underwater relief
-        oyster_reef:  '◌',   // open ring = shell cluster
-        wreck:        '✕',   // X = hazard / charted wreck
-        inlet:        '⇢',   // arrow = tidal flow
-        marina:       '⚓',   // anchor = marina/harbor
-        shoal:        '〜',   // wave = shallow break
-        point:        '△',   // triangle = headland jutting out
-        beach:        '∿',   // sine wave = surf break
-        buoy:         '◎',   // bullseye = channel buoy
-        fishing:      '✦',   // star = access point
-        fishing_shop: '⚙',   // gear = tackle & bait
-        boat_ramp:    '▽',   // inverted triangle = ramp into water
-        dive_site:    '✚',   // cross = dive-flag reference
-        seawall:      '▬'    // bar = wall face
+        pier:         '⊥',
+        jetty:        '≡',
+        bridge:       '∩',
+        reef:         '≈',
+        oyster_reef:  '◌',
+        wreck:        '✕',
+        inlet:        '⇢',
+        marina:       '⚓',
+        shoal:        '〜',
+        point:        '△',
+        beach:        '∿',
+        buoy:         '◎',
+        fishing:      '✦',
+        fishing_shop: '⚙',
+        boat_ramp:    '▽',
+        dive_site:    '✚',
+        seawall:      '▬'
+    };
+
+    // Inline SVG path content rendered inside the 22px circular structure markers.
+    // ViewBox is 0 0 14 14; paths use stroke/fill values relative to white @ full
+    // opacity.  Habitat types (diamond icons) don't use these — they show no inner shape.
+    var SPOT_SVGS = {
+        // Pier: top platform bar + vertical walkway + two support pilings
+        pier:
+            '<line x1="7" y1="12" x2="7" y2="3" stroke-width="2"/>' +
+            '<line x1="2.5" y1="3" x2="11.5" y2="3" stroke-width="2"/>' +
+            '<line x1="4.5" y1="3" x2="4.5" y2="12" stroke-width="1.2" opacity="0.7"/>' +
+            '<line x1="9.5" y1="3" x2="9.5" y2="12" stroke-width="1.2" opacity="0.7"/>',
+
+        // Jetty: three horizontal lines = layered rock armour cross-section
+        jetty:
+            '<line x1="1.5" y1="4.5" x2="12.5" y2="4.5" stroke-width="1.7"/>' +
+            '<line x1="1.5" y1="7.5" x2="12.5" y2="7.5" stroke-width="1.7"/>' +
+            '<line x1="1.5" y1="10.5" x2="12.5" y2="10.5" stroke-width="1.7"/>',
+
+        // Bridge: parabolic arch + two vertical abutments
+        bridge:
+            '<path d="M1.5 11.5 Q7 2.5 12.5 11.5" stroke-width="2" fill="none"/>' +
+            '<line x1="1.5" y1="11.5" x2="1.5" y2="13.5" stroke-width="2"/>' +
+            '<line x1="12.5" y1="11.5" x2="12.5" y2="13.5" stroke-width="2"/>',
+
+        // Reef: double wave suggesting underwater hard-bottom relief
+        reef:
+            '<path d="M1 9 Q3.5 4.5 7 9 Q10.5 13.5 13 9" stroke-width="2" fill="none"/>' +
+            '<path d="M1 5.5 Q3.5 2 7 5.5 Q10.5 9 13 5.5" stroke-width="1.2" fill="none" opacity="0.6"/>',
+
+        // Wreck: charted-wreck X with a faint sunken-hull arc beneath
+        wreck:
+            '<line x1="3" y1="3" x2="11" y2="10.5" stroke-width="2"/>' +
+            '<line x1="11" y1="3" x2="3" y2="10.5" stroke-width="2"/>' +
+            '<path d="M2 12.5 Q7 10 12 12.5" stroke-width="1.2" fill="none" opacity="0.65"/>',
+
+        // Marina: classic anchor (ring, stem, crossbar, flukes)
+        marina:
+            '<circle cx="7" cy="3.2" r="1.6" stroke-width="1.5" fill="none"/>' +
+            '<line x1="7" y1="4.8" x2="7" y2="12.5" stroke-width="1.7"/>' +
+            '<path d="M4.2 9.5 L7 12.5 L9.8 9.5" stroke-width="1.5" fill="none"/>' +
+            '<line x1="3" y1="12.5" x2="11" y2="12.5" stroke-width="1.8"/>',
+
+        // Shoal: S-curve wave = shallow, breaking water
+        shoal:
+            '<path d="M1 8.5 C3 5 5 12 7 8.5 C9 5 11 12 13 8.5" stroke-width="2" fill="none"/>',
+
+        // Point: solid triangle pointing up = headland jutting seaward
+        point:
+            '<polygon points="7,2 13,12.5 1,12.5" fill="rgba(255,255,255,0.92)" stroke="none"/>',
+
+        // Beach: shore-line arc + dashed vertical = surf break / waterline
+        beach:
+            '<path d="M1 11 Q7 6.5 13 11" stroke-width="2.2" fill="none"/>' +
+            '<line x1="7" y1="3.5" x2="7" y2="11" stroke-width="1.5" stroke-dasharray="2,1.5"/>',
+
+        // Buoy: bullseye = channel marker ring + centre dot
+        buoy:
+            '<circle cx="7" cy="7" r="4.5" stroke-width="1.8" fill="none"/>' +
+            '<circle cx="7" cy="7" r="1.8" fill="rgba(255,255,255,0.92)" stroke="none"/>',
+
+        // Fishing: 8-pointed asterisk = generic access / catch spot
+        fishing:
+            '<line x1="7" y1="1.5" x2="7" y2="12.5" stroke-width="1.5"/>' +
+            '<line x1="1.5" y1="7" x2="12.5" y2="7" stroke-width="1.5"/>' +
+            '<line x1="3" y1="3" x2="11" y2="11" stroke-width="1.5"/>' +
+            '<line x1="11" y1="3" x2="3" y2="11" stroke-width="1.5"/>',
+
+        // Fishing shop: shopping-bag silhouette with handle = bait & tackle
+        fishing_shop:
+            '<path d="M2.5 5.5 h9 l-1.5 7 h-6 z" fill="rgba(255,255,255,0.82)" stroke-width="1.3"/>' +
+            '<path d="M5 5.5 V4 a2 2 0 0 1 4 0 V5.5" stroke-width="1.5" fill="none"/>',
+
+        // Boat ramp: downward triangle = ramp slope entering water
+        boat_ramp:
+            '<polygon points="7,12 1.5,4.5 12.5,4.5" fill="rgba(255,255,255,0.92)" stroke="none"/>' +
+            '<line x1="1" y1="13" x2="13" y2="13" stroke-width="2"/>',
+
+        // Dive site: plus / cross = dive-flag crosspiece
+        dive_site:
+            '<line x1="7" y1="1.5" x2="7" y2="12.5" stroke-width="2.2"/>' +
+            '<line x1="1.5" y1="7" x2="12.5" y2="7" stroke-width="2.2"/>',
+
+        // Seawall: thick horizontal bar = wall face / revetment
+        seawall:
+            '<rect x="1.5" y="5" width="11" height="4" rx="0.5" fill="rgba(255,255,255,0.9)" stroke="none"/>'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -600,19 +687,36 @@
         var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
         var color     = def.color;
         var isHabitat = def.habitat;
-        // Habitat = rotating diamond (no letter); Structure = circle with type letter
-        var sz    = isHabitat ? 17 : 22;
-        var br    = isHabitat ? '3px' : '50%';
-        var rot   = isHabitat ? 'transform:rotate(45deg)' : '';
-        var lbl   = isHabitat ? '' : (SPOT_LABELS[type] || '');
-        var inner = lbl
-            ? '<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.97);' +
-              'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-              'line-height:1;pointer-events:none;">' + lbl + '</span>'
-            : '';
-        var html  = '<span class="fmap-spot-dot" style="background:' + color +
-                    ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
-                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
+        // Habitat = rotating diamond with no inner graphic.
+        // Structure = 22px filled circle with an inline SVG icon centred inside.
+        var sz  = isHabitat ? 17 : 22;
+        var br  = isHabitat ? '3px' : '50%';
+        var rot = isHabitat ? 'transform:rotate(45deg)' : '';
+        var inner = '';
+        if (!isHabitat) {
+            var svgPaths = SPOT_SVGS[type];
+            if (svgPaths) {
+                // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
+                // stroke/fill inherited from the <svg> root; individual paths may
+                // override fill for solid shapes.
+                inner = '<svg viewBox="0 0 14 14" width="14" height="14"' +
+                        ' stroke="rgba(255,255,255,0.95)" fill="none"' +
+                        ' stroke-linecap="round" stroke-linejoin="round"' +
+                        ' aria-hidden="true" style="pointer-events:none;flex-shrink:0">' +
+                        svgPaths + '</svg>';
+            } else {
+                // Fallback for any type not yet in SPOT_SVGS
+                var lbl = SPOT_LABELS[type] || '';
+                if (lbl) {
+                    inner = '<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.97);' +
+                            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+                            'line-height:1;pointer-events:none;">' + lbl + '</span>';
+                }
+            }
+        }
+        var html = '<span class="fmap-spot-dot" style="background:' + color +
+                   ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
+                   ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
         var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
                                iconSize:   [sz + 4, sz + 4],
                                iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
@@ -623,17 +727,17 @@
     function renderFishingSpots(spots, cacheKey) {
         if (!fishingSpotLayer) return;
 
-        // Build a render key that folds in current viewport bounds (at ~5 km
-        // resolution) so panning within the same 0.5° cache grid still triggers
-        // a re-render — the viewport-culled subset changes even though the
-        // cached data doesn't.
+        // Build a render key that folds in viewport bounds (~5 km resolution)
+        // and the active type filter so panning or toggling filter pills both
+        // trigger a re-render even when the underlying cached data is unchanged.
         var vb = map ? map.getBounds() : null;
         var vbKey = vb
             ? (Math.floor(vb.getSouth() * 20) + ',' + Math.floor(vb.getWest()  * 20) + ',' +
                Math.ceil (vb.getNorth() * 20) + ',' + Math.ceil (vb.getEast()  * 20))
             : '';
         var currentZoom = map ? Math.floor(map.getZoom()) : 8;
-        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom;
+        var typeKey  = activeSpotTypes.length ? ':f' + activeSpotTypes.slice().sort().join(',') : '';
+        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom + typeKey;
 
         if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
@@ -660,9 +764,15 @@
         // Render OSM / NOAA spots first
         spots.filter(function (f) {
             if (f.custom) return false;
-            // Hide types that require a higher zoom level than current.
+            // Client-side type filter: activeSpotTypes = [] means show all types.
+            // The cache always holds all-types results; filtering here avoids a
+            // server round-trip when the user toggles type pills.
+            if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
+            // Hide types that require a higher zoom level than current, but
+            // only in the all-types view.  When the user has explicitly chosen
+            // types via the filter pills, always show them regardless of zoom.
             var typeDef = SPOT_TYPES[f.type];
-            if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
+            if (!activeSpotTypes.length && typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
                 _suppressedTypes[f.type] = true;
                 return false;
             }
@@ -674,7 +784,7 @@
             return true;
         }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
-            var tip  = f.tip || STRUCTURE_TIPS[f.type] || '';
+            var tip  = f.tip || STRUCTURE_TIPS[f.type] || 'No details available';
             var srcLabel = f.source === 'noaa' ? 'NOAA ENC' : 'OpenStreetMap';
             var coordStr = f.lat && f.lng
                 ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
@@ -799,43 +909,16 @@
 
     // ── Structure cache helpers ───────────────────────────────────────────────
 
-    // Return a cached spot list whose bbox fully contains [s, w, n, e] and
-    // whose type string matches, or null if none found.  Used to serve
+    // Return a cached spot list whose bbox fully contains [s, w, n, e], or
+    // null if none found.  All cache keys are bbox-only ("s,w,n,e"); client-
+    // side type filtering is handled in renderFishingSpots().  Used to serve
     // viewport queries from a wider pre-fetched corridor without a new request.
-    // Find a cached result whose bbox covers s/w/n/e AND whose type set is a
-    // superset of the requested types.  Keys have the form "s,w,n,e" (all
-    // types) or "s,w,n,e|type1,type2,…" (filtered).
-    //
-    // When the cached entry has ALL types but the caller wants a subset, we
-    // filter the array in JS so the caller never has to hit the server.
-    function _cachedSupersetOf(s, w, n, e, typesStr) {
-        var requestedTypes = typesStr ? typesStr.split(',') : null; // null = all
-        // Build an O(1) lookup object once so the filter below doesn't use indexOf
-        var requestedSet = null;
-        if (requestedTypes) {
-            requestedSet = {};
-            for (var i = 0; i < requestedTypes.length; i++) requestedSet[requestedTypes[i]] = true;
-        }
+    function _cachedSupersetOf(s, w, n, e) {
         for (var k in spotCache) {
-            var pipe      = k.indexOf('|');
-            var coordsStr = pipe >= 0 ? k.slice(0, pipe) : k;
-            var ktype     = pipe >= 0 ? k.slice(pipe + 1) : ''; // '' = all types
-            var coords    = coordsStr.split(',');
-            if (coords.length < 4) continue;
+            var coords = k.split(',');
+            if (coords.length !== 4) continue;
             var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
-            if (!(cs <= s && cw <= w && cn >= n && ce >= e)) continue; // bbox too small
-
-            if (ktype === (typesStr || '')) {
-                // Exact match — return directly
-                return spotCache[k];
-            }
-            if (!ktype && requestedSet) {
-                // Cached all-types entry; filter client-side — zero server round-trip
-                return spotCache[k].filter(function (sp) {
-                    return requestedSet[sp.type] === true;
-                });
-            }
-            // ktype is a different subset; skip (we can't expand a subset to all types)
+            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
         }
         return null;
     }
@@ -886,8 +969,9 @@
     }
 
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
-    // Builds a cache key that includes the type filter so different selections
-    // are cached independently.  Falls back to Overpass if the server fails.
+    // Always fetches all structure types and caches by bbox only.  Type filter
+    // pills are applied client-side in renderFishingSpots() so toggling them
+    // never triggers a new server request.  Falls back to Overpass on failure.
     function queryStructures() {
         if (!map || !fishingSpotLayer) return;
         var zoom = map.getZoom();
@@ -928,30 +1012,28 @@
         var n = Math.ceil (rawN * 2) / 2;
         var e = Math.ceil (rawE * 2) / 2;
 
-        // Include active type filter in the cache key
-        var typesStr = activeSpotTypes.length ? activeSpotTypes.slice().sort().join(',') : '';
-        var key = s + ',' + w + ',' + n + ',' + e + (typesStr ? '|' + typesStr : '');
+        // Always use bbox-only cache key; type filtering is applied client-side
+        // in renderFishingSpots() so toggling type pills never triggers a new fetch.
+        var key = s + ',' + w + ',' + n + ',' + e;
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key], key);
-            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
         // Check whether a previously fetched (wider) bbox already contains
         // this viewport — e.g. the home-corridor pre-fetch covers zoom-12
         // viewport queries without a second Overpass trip.
-        var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
+        var superResult = _cachedSupersetOf(s, w, n, e);
         if (superResult) {
             _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
-            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
+        // Always fetch all structure types; renderFishingSpots() filters client-side.
         var url = '/api/map/structures' +
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
-        if (typesStr) url += '&types=' + encodeURIComponent(typesStr);
 
         // Abort any in-flight structure fetch so the previous stale request
         // stops consuming network / server resources immediately.
@@ -1256,8 +1338,8 @@
     // cancelling the structure request also cancels the Overpass fallback chain.
     function _queryFishingSpotsFallback(s, w, n, e, key, gen, signal) {
         var bbox = s + ',' + w + ',' + n + ',' + e;
-        // Build a query scoped to active types; empty activeSpotTypes = all types.
-        var q = _buildFallbackQuery(bbox, activeSpotTypes);
+        // Always fetch all types so the cached result serves every filter combination.
+        var q = _buildFallbackQuery(bbox, []);
         if (!q) {
             hideStructLoading();
             renderFishingSpots([]);
@@ -1318,10 +1400,7 @@
                 return spot;
             }).filter(function (f) {
                 if (!f || !f.lat || !f.lng) return false;
-                if (f.lat < s || f.lat > n || f.lng < w || f.lng > e) return false;
-                // Belt-and-suspenders type filter; the query is already scoped
-                if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
-                return true;
+                return f.lat >= s && f.lat <= n && f.lng >= w && f.lng <= e;
             });
 
             var deduped = deduplicateSpots(spots);
@@ -1397,7 +1476,7 @@
     // Persists the in-memory spotCache across page refreshes within the same
     // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
     // so a 30-minute TTL per entry is safe.  Quota errors are silently ignored.
-    var _SS_KEY = 'fmap_spot_cache_v2';
+    var _SS_KEY = 'fmap_spot_cache_v3'; // v3: bbox-only keys (no type-filter suffix)
     var _SS_TTL = 1800000; // 30 minutes in ms
 
     function _ssLoad() {
@@ -1406,15 +1485,15 @@
             if (!raw) return;
             var obj = JSON.parse(raw);
             var now = Date.now();
-            var loaded = 0;
             Object.keys(obj).forEach(function (k) {
+                // Skip any stale type-specific keys that sneaked in before v3
+                if (k.indexOf('|') !== -1) return;
                 var e = obj[k];
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
                     // Bypass _spotCachePut to avoid eviction during bulk restore;
                     // rebuild _spotCacheKeys so future puts evict correctly.
                     spotCache[k] = e.data;
                     _spotCacheKeys.push(k);
-                    loaded++;
                 }
             });
             // Enforce cap after restore in case stored data exceeded the limit
@@ -1505,11 +1584,6 @@
 
     // ─── Utilities ────────────────────────────────────────────────────────────
 
-    function getCsrfToken() {
-        var meta = document.querySelector('meta[name="csrf-token"]');
-        if (meta) return meta.getAttribute('content') || '';
-        return window.CSRF_TOKEN || '';
-    }
 
     function timeAgo(dateStr) {
         if (!dateStr) return '';
@@ -1608,8 +1682,7 @@
                 updateAdvBadge();
                 _scheduleSpotTypeSave();
 
-                // Re-query immediately — _cachedSupersetOf will serve from the
-                // all-types cache when available, so no server round-trip needed.
+                // Re-render immediately from the bbox cache; no server round-trip.
                 clearTimeout(spotQueryTimer);
                 queryStructures();
             });
@@ -2129,6 +2202,8 @@
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (modal)    { modal.hidden    = false; }
         if (backdrop) { backdrop.hidden = false; backdrop.style.display = ''; }
+        var statusEl = document.getElementById('fmap-admin-status');
+        if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     }
 
     function _closeAdminModal() {
@@ -2182,8 +2257,9 @@
         var saveBtn = document.getElementById('fmap-admin-save');
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
-                var markerId = saveBtn.dataset.markerId;
-                var payload = {
+                var markerId  = saveBtn.dataset.markerId;
+                var statusEl  = document.getElementById('fmap-admin-status');
+                var payload   = {
                     lat:         parseFloat(document.getElementById('fmap-admin-lat').value),
                     lng:         parseFloat(document.getElementById('fmap-admin-lng').value),
                     name:        document.getElementById('fmap-admin-name').value.trim(),
@@ -2192,19 +2268,37 @@
                 };
                 var url    = markerId ? '/api/map/custom-markers/' + markerId : '/api/map/custom-markers';
                 var method = markerId ? 'PUT' : 'POST';
+
+                if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+                saveBtn.disabled    = true;
+                saveBtn.textContent = 'Saving…';
+
                 fetch(url, {
                     method:  method,
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify(payload),
                 })
-                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Server error ' + r.status);
+                    return r.json();
+                })
                 .then(function () {
+                    saveBtn.disabled    = false;
+                    saveBtn.textContent = 'Save';
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
-                .catch(function (e) { console.error('[admin] save marker failed:', e); });
+                .catch(function (e) {
+                    console.error('[admin] save marker failed:', e);
+                    saveBtn.disabled    = false;
+                    saveBtn.textContent = 'Save';
+                    if (statusEl) {
+                        statusEl.style.color = '#f87171';
+                        statusEl.textContent = 'Save failed — ' + e.message;
+                    }
+                });
             });
         }
 
@@ -2215,15 +2309,31 @@
                 var markerId = delBtn.dataset.markerId;
                 if (!markerId) return;
                 if (!confirm('Delete this marker?')) return;
+
+                var statusEl    = document.getElementById('fmap-admin-status');
+                if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+                delBtn.disabled = true;
+
                 fetch('/api/map/custom-markers/' + markerId, { method: 'DELETE' })
-                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Server error ' + r.status);
+                    return r.json();
+                })
                 .then(function () {
+                    delBtn.disabled = false;
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
                     try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
                     scheduleFishingSpotQuery();
                 })
-                .catch(function (e) { console.error('[admin] delete marker failed:', e); });
+                .catch(function (e) {
+                    console.error('[admin] delete marker failed:', e);
+                    delBtn.disabled = false;
+                    if (statusEl) {
+                        statusEl.style.color = '#f87171';
+                        statusEl.textContent = 'Delete failed — ' + e.message;
+                    }
+                });
             });
         }
 
