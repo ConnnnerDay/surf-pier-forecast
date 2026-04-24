@@ -1968,13 +1968,17 @@ def map_structures() -> Any:
     structures = find_fish_structures(south, west, north, east, active_types)
 
     # Merge in admin-created custom markers that fall within the bbox.
-    custom = [
-        m
-        for m in get_custom_markers()
-        if south <= m["lat"] <= north
-        and west <= m["lng"] <= east
-        and (active_types is None or m["type"] in active_types)
-    ]
+    try:
+        custom = [
+            m
+            for m in get_custom_markers()
+            if south <= m["lat"] <= north
+            and west <= m["lng"] <= east
+            and (active_types is None or m["type"] in active_types)
+        ]
+    except Exception:
+        logger.warning("get_custom_markers() failed in map_structures; skipping custom markers")
+        custom = []
     all_structures = structures + custom
 
     resp = jsonify({"structures": all_structures, "count": len(all_structures)})

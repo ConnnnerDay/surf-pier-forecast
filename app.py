@@ -351,7 +351,7 @@ def create_app() -> Flask:
                 "https://*.basemaps.cartocdn.com "
                 "https://server.arcgisonline.com https://tiles.openseamap.org "
                 "https://gibs.earthdata.nasa.gov; "
-                "connect-src 'self'; "
+                "connect-src 'self' https://overpass-api.de https://overpass.kumi.systems; "
                 "worker-src 'self'; "
                 "frame-ancestors 'none';"
             ),

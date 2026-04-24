@@ -44,6 +44,9 @@ logger = logging.getLogger(__name__)
 _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=8))
 _HTTP.mount("http://", HTTPAdapter(pool_connections=4, pool_maxsize=8))
+# Overpass API policy requires a descriptive User-Agent; bare python-requests
+# is blocked by some Overpass mirrors and CDN WAFs.
+_HTTP.headers.update({"User-Agent": "surf-pier-forecast/1.0 (fishing forecast app; contact via GitHub)"})
 
 # ── Result cache  ─────────────────────────────────────────────────────────────
 # Keyed on (south2dp, west2dp, north2dp, east2dp, frozenset(active_types)).
