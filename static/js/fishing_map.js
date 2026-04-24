@@ -660,6 +660,10 @@
         // Render OSM / NOAA spots first
         spots.filter(function (f) {
             if (f.custom) return false;
+            // Client-side type filter: activeSpotTypes = [] means show all types.
+            // The cache always holds all-types results; filtering here avoids a
+            // server round-trip when the user toggles type pills.
+            if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
             // Hide types that require a higher zoom level than current.
             var typeDef = SPOT_TYPES[f.type];
             if (typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
@@ -674,7 +678,7 @@
             return true;
         }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
-            var tip  = f.tip || STRUCTURE_TIPS[f.type] || '';
+            var tip  = f.tip || STRUCTURE_TIPS[f.type] || 'No details available';
             var srcLabel = f.source === 'noaa' ? 'NOAA ENC' : 'OpenStreetMap';
             var coordStr = f.lat && f.lng
                 ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
@@ -886,8 +890,9 @@
     }
 
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
-    // Builds a cache key that includes the type filter so different selections
-    // are cached independently.  Falls back to Overpass if the server fails.
+    // Always fetches all structure types and caches by bbox only.  Type filter
+    // pills are applied client-side in renderFishingSpots() so toggling them
+    // never triggers a new server request.  Falls back to Overpass on failure.
     function queryStructures() {
         if (!map || !fishingSpotLayer) return;
         var zoom = map.getZoom();
@@ -928,30 +933,28 @@
         var n = Math.ceil (rawN * 2) / 2;
         var e = Math.ceil (rawE * 2) / 2;
 
-        // Include active type filter in the cache key
-        var typesStr = activeSpotTypes.length ? activeSpotTypes.slice().sort().join(',') : '';
-        var key = s + ',' + w + ',' + n + ',' + e + (typesStr ? '|' + typesStr : '');
+        // Always use bbox-only cache key; type filtering is applied client-side
+        // in renderFishingSpots() so toggling type pills never triggers a new fetch.
+        var key = s + ',' + w + ',' + n + ',' + e;
 
         if (spotCache[key]) {
             renderFishingSpots(spotCache[key], key);
-            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
         // Check whether a previously fetched (wider) bbox already contains
         // this viewport — e.g. the home-corridor pre-fetch covers zoom-12
         // viewport queries without a second Overpass trip.
-        var superResult = _cachedSupersetOf(s, w, n, e, typesStr);
+        var superResult = _cachedSupersetOf(s, w, n, e, '');
         if (superResult) {
             _spotCachePut(key, superResult);  // alias so next pan hits directly
             renderFishingSpots(superResult, key);
-            // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             return;
         }
 
+        // Always fetch all structure types; renderFishingSpots() filters client-side.
         var url = '/api/map/structures' +
             '?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
-        if (typesStr) url += '&types=' + encodeURIComponent(typesStr);
 
         // Abort any in-flight structure fetch so the previous stale request
         // stops consuming network / server resources immediately.
@@ -1256,8 +1259,8 @@
     // cancelling the structure request also cancels the Overpass fallback chain.
     function _queryFishingSpotsFallback(s, w, n, e, key, gen, signal) {
         var bbox = s + ',' + w + ',' + n + ',' + e;
-        // Build a query scoped to active types; empty activeSpotTypes = all types.
-        var q = _buildFallbackQuery(bbox, activeSpotTypes);
+        // Always fetch all types so the cached result serves every filter combination.
+        var q = _buildFallbackQuery(bbox, []);
         if (!q) {
             hideStructLoading();
             renderFishingSpots([]);
@@ -1318,10 +1321,7 @@
                 return spot;
             }).filter(function (f) {
                 if (!f || !f.lat || !f.lng) return false;
-                if (f.lat < s || f.lat > n || f.lng < w || f.lng > e) return false;
-                // Belt-and-suspenders type filter; the query is already scoped
-                if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
-                return true;
+                return f.lat >= s && f.lat <= n && f.lng >= w && f.lng <= e;
             });
 
             var deduped = deduplicateSpots(spots);

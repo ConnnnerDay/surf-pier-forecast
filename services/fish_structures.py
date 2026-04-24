@@ -990,7 +990,7 @@ def find_fish_structures(
         )
 
         try:
-            osm_spots = osm_fut.result(timeout=22)
+            osm_spots = osm_fut.result(timeout=16)
         except FutureTimeoutError:
             logger.warning("fetch_osm_structures timed out (parallel executor)")
             fetch_failed = True
@@ -1001,7 +1001,7 @@ def find_fish_structures(
             fetch_failed = True
 
         try:
-            noaa_spots = noaa_fut.result(timeout=14)
+            noaa_spots = noaa_fut.result(timeout=12)
         except FutureTimeoutError:
             logger.warning("fetch_noaa_structures timed out (parallel executor)")
         except Exception as exc:
