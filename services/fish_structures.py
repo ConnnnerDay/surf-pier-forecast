@@ -328,32 +328,55 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         habitat += [
             f'way["natural"="wetland"]["wetland"="seagrass"]({bbox});',
             f'node["natural"="wetland"]["wetland"="seagrass"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="seagrass_bed"]({bbox});',
+            f'way["natural"="seagrass"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="seagrass_meadow"]({bbox});',
         ]
     if "saltmarsh" in types:
-        habitat += [f'way["natural"="wetland"]["wetland"="saltmarsh"]({bbox});']
+        habitat += [
+            f'way["natural"="wetland"]["wetland"="saltmarsh"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="salt_marsh"]({bbox});',
+            f'way["natural"="saltmarsh"]({bbox});',
+            f'way["natural"="salt_marsh"]({bbox});',
+        ]
     if "mangrove" in types:
-        habitat += [f'way["natural"="wetland"]["wetland"="mangrove"]({bbox});']
+        habitat += [
+            f'way["natural"="wetland"]["wetland"="mangrove"]({bbox});',
+            f'way["natural"="mangrove"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="mangrove_swamp"]({bbox});',
+        ]
     if "tidal_flat" in types:
         habitat += [
             f'way["natural"="wetland"]["wetland"="tidalflat"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="tidal_flat"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="tidal_flats"]({bbox});',
+            f'way["natural"="wetland"]["wetland"="mudflat"]({bbox});',
             f'way["natural"="mud"]({bbox});',
         ]
     if "beach" in types:
         habitat += [
             f'way["natural"="beach"]({bbox});',
             f'node["natural"="beach"]({bbox});',
+            f'way["leisure"="beach"]({bbox});',
+            f'node["leisure"="beach"]({bbox});',
             f'way["natural"="sand"]["access"!="private"]({bbox});',
         ]
     if "oyster_reef" in types:
         habitat += [
             f'node["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
             f'way["landuse"="aquaculture"]["produce"="oyster"]({bbox});',
+            f'way["landuse"="aquaculture"]["produce"="oysters"]({bbox});',
             f'way["landuse"="aquaculture"]["product"="oysters"]({bbox});',
+            f'way["landuse"="aquaculture"]["aquaculture"="oyster"]({bbox});',
+            f'way["natural"="reef"]["reef:type"="oyster"]({bbox});',
+            f'way["natural"="reef"]["reef"="oyster"]({bbox});',
         ]
     if "kelp" in types:
         habitat += [
             f'way["natural"="wetland"]["wetland"="kelp"]({bbox});',
             f'way["natural"="kelp"]({bbox});',
+            f'way["natural"="kelp_forest"]({bbox});',
+            f'node["seamark:type"="kelp"]({bbox});',
         ]
     if "inlet" in types:
         # Waterways (linestrings) and bay polygons both go into habitat so
@@ -410,8 +433,8 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'way["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'node["waterway"="dock"]({bbox});',
             f'way["waterway"="dock"]({bbox});',
-            f'node["amenity"="boat_ramp"]({bbox});',
-            f'way["amenity"="boat_ramp"]({bbox});',
+            f'node["amenity"="fishing_pier"]({bbox});',
+            f'way["amenity"="fishing_pier"]({bbox});',
         ]
     if "jetty" in types:
         struct += [
@@ -461,6 +484,9 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["leisure"="fishing"]({bbox});',
             f'way["leisure"="fishing"]({bbox});',
             f'node["leisure"="fishing_stand"]({bbox});',
+            f'way["leisure"="fishing_stand"]({bbox});',
+            f'node["leisure"="fishing_pond"]({bbox});',
+            f'way["leisure"="fishing_pond"]({bbox});',
             f'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"]({bbox});',
             f'node["sport"="fishing"]({bbox});',
         ]
@@ -479,7 +505,12 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["man_made"="buoy"]({bbox});',
         ]
     if "fishing_shop" in types:
-        struct += [f'node["shop"="fishing"]({bbox});']
+        struct += [
+            f'node["shop"="fishing"]({bbox});',
+            f'way["shop"="fishing"]({bbox});',
+            f'node["shop"="fishing_tackle"]({bbox});',
+            f'node["amenity"="fishing_shop"]({bbox});',
+        ]
     if "boat_ramp" in types:
         struct += [
             f'node["amenity"="boat_ramp"]({bbox});',
@@ -491,7 +522,9 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["sport"="scuba_diving"]({bbox});',
             f'node["sport"="diving"]({bbox});',
+            f'node["sport"="underwater_diving"]({bbox});',
             f'way["sport"="scuba_diving"]({bbox});',
+            f'node["seamark:type"="dive_site"]({bbox});',
         ]
     if "seawall" in types:
         struct += [
@@ -528,20 +561,26 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
 
     # ── Habitats ──────────────────────────────────────────────────────────────
     if natural == "wetland":
-        if wetland == "seagrass":
+        if wetland in ("seagrass", "seagrass_bed", "seagrass_meadow"):
             return "grass_flat"
-        if wetland == "saltmarsh":
+        if wetland in ("saltmarsh", "salt_marsh"):
             return "saltmarsh"
-        if wetland == "mangrove":
+        if wetland in ("mangrove", "mangrove_swamp"):
             return "mangrove"
-        if wetland == "tidalflat":
+        if wetland in ("tidalflat", "tidal_flat", "tidal_flats", "mudflat"):
             return "tidal_flat"
         if wetland == "kelp":
             return "kelp"
         return None  # unknown wetland subtype — skip
 
-    if natural == "kelp":
+    if natural in ("kelp", "kelp_forest"):
         return "kelp"
+    if natural == "seagrass":
+        return "grass_flat"
+    if natural in ("mangrove",):
+        return "mangrove"
+    if natural in ("saltmarsh", "salt_marsh"):
+        return "saltmarsh"
     if natural == "mud":
         return "tidal_flat"
     if natural == "beach":
@@ -606,30 +645,40 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     amenity = tags.get("amenity", "")
     if amenity in ("marina",):
         return "marina"
-    if amenity == "boat_ramp":
-        return "pier"
+    if amenity in ("boat_ramp", "fishing_pier"):
+        return "boat_ramp"
 
     leisure = tags.get("leisure", "")
     if leisure == "marina":
         return "marina"
-    if leisure in ("fishing", "fishing_stand"):
+    if leisure in ("fishing", "fishing_stand", "fishing_pond"):
         return "fishing"
     if leisure == "slipway":
         return "boat_ramp"
+    if leisure == "beach":
+        return "beach"
 
     sport = tags.get("sport", "")
-    if sport in ("scuba_diving", "diving"):
+    if sport in ("scuba_diving", "diving", "underwater_diving"):
         return "dive_site"
     if sport == "fishing":
         return "fishing"
 
-    if tags.get("fishing") == "yes" and amenity not in ("boat_ramp",) and leisure not in ("slipway",):
+    if seamark == "dive_site":
+        return "dive_site"
+    if seamark == "kelp":
+        return "kelp"
+
+    if tags.get("fishing") == "yes" and amenity not in ("boat_ramp", "fishing_pier") and leisure not in ("slipway",):
         return "fishing"
 
     if seamark.startswith("buoy"):
         return "buoy"
 
-    if tags.get("shop") == "fishing":
+    shop = tags.get("shop", "")
+    if shop in ("fishing", "fishing_tackle"):
+        return "fishing_shop"
+    if amenity == "fishing_shop":
         return "fishing_shop"
 
     return None

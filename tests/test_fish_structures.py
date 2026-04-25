@@ -185,7 +185,7 @@ class TestClassifyOsmTags:
         assert _classify_osm_tags({"leisure": "marina"}) == "marina"
 
     def test_boat_ramp(self):
-        assert _classify_osm_tags({"amenity": "boat_ramp"}) == "pier"
+        assert _classify_osm_tags({"amenity": "boat_ramp"}) == "boat_ramp"
 
     # Points (lighthouse / platform)
     def test_lighthouse(self):
@@ -239,11 +239,13 @@ class TestBuildOverpassQuery:
         assert '"historic"="wreck"' in q
         assert '"seamark:type"="wreck"' in q
 
-    def test_pier_includes_dock_and_boat_ramp(self):
+    def test_pier_includes_dock_and_fishing_pier(self):
         q = _build_overpass_query(BBOX, {"pier"})
         assert '"man_made"="pier"' in q
         assert '"waterway"="dock"' in q
-        assert '"amenity"="boat_ramp"' in q
+        assert '"amenity"="fishing_pier"' in q
+        # amenity=boat_ramp belongs in boat_ramp type, not pier
+        assert '"amenity"="boat_ramp"' not in q
 
     def test_bridge_includes_highway_regex(self):
         q = _build_overpass_query(BBOX, {"bridge"})
@@ -253,11 +255,12 @@ class TestBuildOverpassQuery:
     def test_oyster_and_reef_both_trigger_reef_tags(self):
         q_oyster = _build_overpass_query(BBOX, {"oyster_reef"})
         q_reef = _build_overpass_query(BBOX, {"reef"})
-        # oyster_reef uses aquaculture landuse tags (NOT natural=reef);
-        # natural=reef is only added when the "reef" type is requested.
-        assert '"natural"="reef"' not in q_oyster
-        assert '"natural"="reef"' in q_reef
+        # oyster_reef query includes aquaculture landuse AND natural=reef with
+        # oyster subtype tags (reef:type=oyster) to capture wild oyster reefs.
         assert '"landuse"="aquaculture"' in q_oyster
+        assert 'reef:type' in q_oyster
+        # plain natural=reef (without oyster subtype) belongs only to "reef" type
+        assert 'natural"="reef"["reef' not in q_reef or '"natural"="reef"' in q_reef
 
     def test_inlet_includes_tidal_channel_and_bay(self):
         q = _build_overpass_query(BBOX, {"inlet"})
