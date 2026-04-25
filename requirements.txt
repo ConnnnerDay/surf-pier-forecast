@@ -16,18 +16,13 @@ webauthn>=2.7,<3.0
 # Also a transitive dependency of webauthn; pinned here explicitly.
 cryptography>=41.0,<45.0
 
-# ── Geospatial / GIS extras (all optional — app degrades gracefully without them) ──
-#
-# geopandas: spatial clip + shapefile loading in services/natural_earth.py.
-#   Requires: GDAL, GEOS, Proj system libraries.
-#   Install system deps first:
-#     Debian/Ubuntu: sudo apt-get install libgdal-dev libgeos-dev libproj-dev
-#     macOS (Homebrew): brew install gdal geos proj
-#   Then: pip install geopandas>=0.14,<2.0
-#
-# pandas: DataFrame utilities used by datagov.py aggregation helpers.
-#   pip install pandas>=2.0,<3.0
-#
-# Uncomment these lines to enable full GIS functionality:
-# geopandas>=0.14,<2.0
-# pandas>=2.0,<3.0
+# .env file support — loads environment variables from .env in dev automatically
+python-dotenv>=1.0,<2.0
+
+# ── Geospatial / GIS (spatial clip + coastline overlays) ──────────────────────
+# Requires system libraries before pip install:
+#   Debian/Ubuntu: sudo apt-get install libgdal-dev libgeos-dev libproj-dev
+#   macOS:         brew install gdal geos proj
+# install.sh handles system deps automatically on Debian/Ubuntu.
+geopandas>=0.14,<2.0
+pandas>=2.0,<3.0

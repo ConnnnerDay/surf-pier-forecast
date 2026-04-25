@@ -40,24 +40,42 @@ Python packages (`requirements.txt`):
 
 ## Quick start (local dev)
 
+**Linux (Debian/Ubuntu):**
 ```bash
 git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
 cd surf-pier-forecast
 
-# Linux only: install venv support if missing
-sudo apt-get update && sudo apt-get install -y python3-venv
+# System deps — Python venv + GIS libraries (required for map overlays)
+sudo apt-get update && sudo apt-get install -y \
+    python3-venv libgdal-dev libgeos-dev libproj-dev
 
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env          # optional: edit .env to set PORT, SMTP, OAuth, etc.
+python app.py
+```
+
+**macOS:**
+```bash
+git clone https://github.com/ConnnnerDay/surf-pier-forecast.git
+cd surf-pier-forecast
+
+# System deps — GIS libraries (required for map overlays)
+brew install gdal geos proj
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # optional: edit .env to set PORT, SMTP, OAuth, etc.
 python app.py
 ```
 
 Open: **http://localhost:5757**
 
-The SQLite database (`data/app.db`) is created automatically on first startup.
+The SQLite database (`data/app.db`) and `data/` directory are created automatically on first startup. `.env` values are loaded automatically via `python-dotenv`.
 
-If you're on macOS or Windows, skip the `apt-get` line and run the remaining commands in your terminal.
+> **AI Fishing Map note**: The first time you load a new map viewport, structure markers (piers, reefs, wrecks, etc.) take 5–15 seconds to appear — they're fetched live from the public Overpass/OpenStreetMap API. Subsequent pans and filter changes are served from a 30-minute local cache and load instantly.
 
 ---
 
@@ -68,13 +86,11 @@ If you're on macOS or Windows, skip the `apt-get` line and run the remaining com
 ```
 
 What it does:
-1. Installs system packages (`python3-venv`, `python3-pip`)
-2. Creates `.venv` and installs dependencies
+1. Installs system packages (`python3-venv`, `python3-pip`, GIS libraries)
+2. Creates `.venv` and installs all dependencies including geopandas
 3. Initializes the SQLite database (`migrate_sqlite.py`)
 4. Installs and starts `surf-forecast.service`
 5. Enables auto-start on boot
-
-If your distro does not include the Python `venv` module by default, install it first:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y python3-venv
@@ -304,27 +320,14 @@ The app degrades gracefully when any upstream service is unavailable.
 | `GET /api/v1/geo/aerial/oam?south=…` | OpenAerialMap imagery catalog |
 | `GET /api/v1/geo/hdx-fao?lat=&lng=` | FAO zone + HDX dataset links |
 
-### Optional GIS dependencies
+### GIS dependencies
 
-The base install works without any extra packages. To enable full
-GeoDataFrame support in `services/natural_earth.py` (spatial clip, shapefile
-loading via `load_ne_shapefile()`), install the optional GIS stack:
+`geopandas` and `pandas` are included in `requirements.txt` and installed by default. They require native system libraries that must be installed first:
 
-**Debian/Ubuntu:**
-```bash
-sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev
-pip install geopandas>=0.14 pandas>=2.0
-```
+- **Debian/Ubuntu**: `sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev` (handled automatically by `install.sh`)
+- **macOS**: `brew install gdal geos proj`
 
-**macOS (Homebrew):**
-```bash
-brew install gdal geos proj
-pip install geopandas>=0.14 pandas>=2.0
-```
-
-Without these packages the app uses a pure-Python bbox filter for coastline
-clipping, which works correctly for all resolutions but is slightly slower for
-large GeoJSON files.
+Without these packages `pip install -r requirements.txt` will fail on the geopandas wheel. If you're on a platform where building GDAL from source is not practical, comment out the `geopandas` and `pandas` lines in `requirements.txt` — the app will fall back to a pure-Python bbox filter for coastline clipping and still work correctly.
 
 ### Natural Earth data caching
 

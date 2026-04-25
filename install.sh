@@ -21,7 +21,8 @@ PORT="${PORT:-5757}"
 # ---------------------------------------------------------------------------
 info "Installing system dependencies..."
 sudo apt-get update -qq
-sudo apt-get install -y -qq python3 python3-venv python3-pip
+sudo apt-get install -y -qq python3 python3-venv python3-pip \
+    libgdal-dev libgeos-dev libproj-dev
 
 # ---------------------------------------------------------------------------
 # 2. Python virtual environment
