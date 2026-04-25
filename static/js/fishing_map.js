@@ -495,7 +495,7 @@
         wreck:        { label: 'Wreck',             color: '#d97706', habitat: false, minZoom: 8  },
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
-        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 10 },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 9  },
         point:        { label: 'Point / Headland',  color: '#60a5fa', habitat: false, minZoom: 9  },
         beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
@@ -503,12 +503,12 @@
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true,  minZoom: 9  },
         mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true,  minZoom: 9  },
         kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true,  minZoom: 9  },
-        buoy:         { label: 'Navigation Buoy',   color: '#f43f5e', habitat: false, minZoom: 10 },
+        buoy:         { label: 'Navigation Buoy',   color: '#f43f5e', habitat: false, minZoom: 9  },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false, minZoom: 9  },
-        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 11 },
-        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 10 },
+        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 9  },
+        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 9  },
         dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false, minZoom: 10 },
-        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false, minZoom: 11 }
+        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false, minZoom: 9  }
     };
 
     // Habitat area types rendered as filled polygon overlays instead of point markers.

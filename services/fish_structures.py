@@ -248,8 +248,8 @@ STRUCTURE_TIPS: dict[str, str] = {
 # computed centroids happen to be close.  Only name-based dedup applies to
 # those types.  Tight thresholds remain for point structures.
 _PROX: dict[str, float] = {
-    "inlet": 0.005,  # ~550 m — tidal channel nodes cluster heavily
-    "marina": 0.004,  # ~440 m
+    "inlet": 0.003,  # ~330 m — tighter; two harbour entrances 400 m apart are distinct
+    "marina": 0.002,  # ~220 m — match _default; distinct marinas 400 m apart are common
     "wreck": 0.003,  # ~330 m — unnamed OSM + NOAA ENC wrecks often overlap
     "shoal": 0.003,  # ~330 m — OSM/NOAA obstruction nodes cluster at a point
     "beach": 0.0,  # polygon area — skip centroid proximity dedup
@@ -299,6 +299,19 @@ _NOAA_ENC_BASE = (
 _NOAA_LAYER_WRECKS = 2
 _NOAA_LAYER_OBSTRUCTIONS = 3
 _NOAA_LAYER_ROCKS = 4
+
+# ── ESRI / government ArcGIS Open Data services ───────────────────────────────
+# NOAA Coastal Services Center — publicly accessible marina and harbor locations
+_ESRI_NOAA_MARINAS = (
+    "https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/"
+    "Marinas_Public/FeatureServer/0/query"
+)
+# USACE National Inventory — public boat ramps and water-access launch points
+_ESRI_USACE_RAMPS = (
+    "https://services7.arcgis.com/n1YM8pTrFmm7L4hs/arcgis/rest/services/"
+    "BoatRamps/FeatureServer/0/query"
+)
+_TIMEOUT_ESRI: tuple[float, float] = (5.0, 18.0)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
@@ -459,7 +472,11 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             'way["bridge"="yes"]'
             '["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"]'
-            f"({bbox});"
+            f"({bbox});",
+            # Pedestrian/path bridges over waterways are prime fishing access points
+            f'way["bridge"="yes"]["highway"="footway"]({bbox});',
+            f'way["bridge"="yes"]["highway"="path"]({bbox});',
+            f'way["bridge"="yes"]["highway"="pedestrian"]({bbox});',
         ]
     if "marina" in types:
         struct += [
@@ -968,6 +985,111 @@ def fetch_noaa_structures(
 
     return spots
 
+def _query_esri_bbox(
+    url: str,
+    south: float,
+    west: float,
+    north: float,
+    east: float,
+    spot_type: str,
+    name_fields: list[str],
+) -> list[dict[str, Any]]:
+    """GET an ESRI ArcGIS GeoJSON query for a bounding box.
+
+    Returns spots as ``{lat, lng, type, name, source}`` dicts.
+    Returns an empty list on any error so a service outage is always silent.
+    """
+    params: dict[str, str] = {
+        "geometry": f"{west},{south},{east},{north}",
+        "geometryType": "esriGeometryEnvelope",
+        "spatialRel": "esriSpatialRelIntersects",
+        "inSR": "4326",
+        "outSR": "4326",
+        "outFields": ",".join(name_fields),
+        "returnGeometry": "true",
+        "f": "geojson",
+        "where": "1=1",
+        "resultRecordCount": "200",
+    }
+    try:
+        resp = _HTTP.get(url, params=params, timeout=_TIMEOUT_ESRI)
+        if resp.status_code != 200:
+            return []
+        features = resp.json().get("features", [])
+    except Exception as exc:
+        logger.debug("ESRI %s query failed url=%s: %s", spot_type, url, exc)
+        return []
+
+    spots: list[dict[str, Any]] = []
+    for feat in features:
+        geom = feat.get("geometry") or {}
+        props = feat.get("properties") or {}
+
+        lng, lat = None, None
+        if geom.get("type") == "Point":
+            coords = geom.get("coordinates") or []
+            if len(coords) >= 2:
+                lng, lat = coords[0], coords[1]
+        elif geom.get("type") in ("Polygon", "MultiPolygon"):
+            ring = (geom.get("coordinates") or [[]])[0]
+            if geom.get("type") == "MultiPolygon":
+                ring = (ring or [[]])[0]
+            if ring:
+                lng = sum(c[0] for c in ring) / len(ring)
+                lat = sum(c[1] for c in ring) / len(ring)
+
+        if lat is None or lng is None:
+            continue
+        try:
+            lat, lng = float(lat), float(lng)
+        except (TypeError, ValueError):
+            continue
+        if not (south <= lat <= north and west <= lng <= east):
+            continue
+
+        name = next((str(props[f]) for f in name_fields if props.get(f)), "")
+        spots.append({"lat": lat, "lng": lng, "type": spot_type, "name": name,
+                      "source": "esri"})
+    return spots
+
+
+def fetch_esri_structures(
+    south: float,
+    west: float,
+    north: float,
+    east: float,
+    types: set[str],
+) -> list[dict[str, Any]]:
+    """Fetch marina and boat ramp records from NOAA/USACE ArcGIS Open Data.
+
+    Only runs when ``marina`` or ``boat_ramp`` is in *types*.  Results are
+    merged with OSM and NOAA ENC data and deduplicated by name + proximity.
+    """
+    if not (types & {"marina", "boat_ramp"}):
+        return []
+
+    jobs: list[tuple] = []
+    if "marina" in types:
+        jobs.append((_ESRI_NOAA_MARINAS, "marina",
+                     ["NAME", "FACILITYNAME", "MARINA_NAME", "name"]))
+    if "boat_ramp" in types:
+        jobs.append((_ESRI_USACE_RAMPS, "boat_ramp",
+                     ["FACILITYNAME", "NAME", "SITE_NAME", "name"]))
+
+    spots: list[dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
+        futs = [
+            pool.submit(_query_esri_bbox, url, south, west, north, east, stype, fields)
+            for url, stype, fields in jobs
+        ]
+        for fut in futs:
+            try:
+                spots.extend(fut.result(timeout=20))
+            except Exception as exc:
+                logger.debug("ESRI fetch task failed: %s", exc)
+    return spots
+
+
 def find_fish_structures(
     south: float,
     west: float,
@@ -1031,14 +1153,18 @@ def find_fish_structures(
     # Each is caught individually so a NOAA outage never drops the OSM results.
     osm_spots: list[dict[str, Any]] = []
     noaa_spots: list[dict[str, Any]] = []
+    esri_spots: list[dict[str, Any]] = []
     fetch_failed = False
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    with ThreadPoolExecutor(max_workers=3) as pool:
         osm_fut = pool.submit(
             fetch_osm_structures, south, west, north, east, active_types
         )
         noaa_fut = pool.submit(
             fetch_noaa_structures, south, west, north, east, active_types
+        )
+        esri_fut = pool.submit(
+            fetch_esri_structures, south, west, north, east, active_types
         )
 
         try:
@@ -1059,10 +1185,20 @@ def find_fish_structures(
         except Exception as exc:
             logger.warning("fetch_noaa_structures failed: %s", exc)
 
+        try:
+            esri_spots = esri_fut.result(timeout=20)
+        except FutureTimeoutError:
+            logger.warning("fetch_esri_structures timed out (parallel executor)")
+        except Exception as exc:
+            logger.warning("fetch_esri_structures failed: %s", exc)
+
     # OSM first — it generally has richer names; NOAA supplements with
-    # authoritative wreck/obstruction records not always in OSM.
+    # authoritative wreck/obstruction records not always in OSM; ESRI provides
+    # official marina and boat-ramp data from NOAA/USACE datasets.
     # Post-filter by type to guard against any source returning extras.
-    all_spots = [s for s in osm_spots + noaa_spots if s["type"] in active_types]
+    all_spots = [
+        s for s in osm_spots + noaa_spots + esri_spots if s["type"] in active_types
+    ]
     deduped = _deduplicate(all_spots)
     # Tips are not attached server-side — the JS client owns STRUCTURE_TIPS and
     # looks them up locally via ``f.tip || STRUCTURE_TIPS[f.type]``.  Omitting
@@ -1071,7 +1207,7 @@ def find_fish_structures(
 
     logger.info(
         "find_fish_structures bbox=(%.4f,%.4f,%.4f,%.4f) types=%s "
-        "osm=%d noaa=%d merged=%d deduped=%d",
+        "osm=%d noaa=%d esri=%d merged=%d deduped=%d",
         south,
         west,
         north,
@@ -1079,6 +1215,7 @@ def find_fish_structures(
         sorted(active_types),
         len(osm_spots),
         len(noaa_spots),
+        len(esri_spots),
         len(all_spots),
         len(deduped),
     )
