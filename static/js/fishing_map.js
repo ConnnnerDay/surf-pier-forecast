@@ -842,7 +842,9 @@
         }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || 'No details available';
-            var srcLabel = f.source === 'noaa' ? 'NOAA ENC' : 'OpenStreetMap';
+            var srcLabel = f.source === 'noaa' ? 'NOAA ENC'
+                        : f.source === 'esri' ? 'NOAA/USACE'
+                        : 'OpenStreetMap';
             var coordStr = f.lat && f.lng
                 ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
                 : '';
@@ -1163,18 +1165,27 @@
         var seamark  = tags['seamark:type'] || '';
 
         if (natural === 'wetland') {
-            if (wetland === 'seagrass')  return 'grass_flat';
-            if (wetland === 'saltmarsh') return 'saltmarsh';
-            if (wetland === 'mangrove')  return 'mangrove';
-            if (wetland === 'tidalflat') return 'tidal_flat';
-            if (wetland === 'kelp')      return 'kelp';
+            if (wetland === 'seagrass' || wetland === 'seagrass_bed' || wetland === 'seagrass_meadow') return 'grass_flat';
+            if (wetland === 'saltmarsh' || wetland === 'salt_marsh') return 'saltmarsh';
+            if (wetland === 'mangrove' || wetland === 'mangrove_swamp') return 'mangrove';
+            if (wetland === 'tidalflat' || wetland === 'tidal_flat' || wetland === 'tidal_flats' || wetland === 'mudflat') return 'tidal_flat';
+            if (wetland === 'kelp') return 'kelp';
             return null;
         }
-        if (natural === 'kelp')      return 'kelp';
-        if (natural === 'mud')       return 'tidal_flat';
-        if (natural === 'beach')     return 'beach';
-        if (natural === 'bay')       return 'inlet';
-        if (natural === 'reef')      return 'reef';
+        if (natural === 'kelp' || natural === 'kelp_forest') return 'kelp';
+        if (natural === 'seagrass')   return 'grass_flat';
+        if (natural === 'mangrove')   return 'mangrove';
+        if (natural === 'saltmarsh' || natural === 'salt_marsh') return 'saltmarsh';
+        if (natural === 'mud')        return 'tidal_flat';
+        if (natural === 'beach')      return 'beach';
+        if (natural === 'bay')        return 'inlet';
+        if (natural === 'estuary')    return 'inlet';
+        if (natural === 'reef') {
+            var reefSub = tags['reef:type'] || tags.reef || '';
+            if (reefSub === 'oyster' || reefSub === 'oyster_reef') return 'oyster_reef';
+            return 'reef';
+        }
+        if (natural === 'coral_reef' || natural === 'coral') return 'reef';
         if (natural === 'shoal' || natural === 'rock' || natural === 'sandbank') return 'shoal';
         if (natural === 'cape' || natural === 'headland' ||
             natural === 'peninsula' || natural === 'promontory') return 'point';
@@ -1183,7 +1194,9 @@
         if (tags.harbour === 'yes') return 'inlet';
 
         if (tags.landuse === 'aquaculture' &&
-            (tags.produce === 'oyster' || tags.product === 'oysters')) {
+            (tags.produce === 'oyster' || tags.produce === 'oysters' ||
+             tags.product === 'oyster' || tags.product === 'oysters' ||
+             tags.aquaculture === 'oyster' || tags.aquaculture === 'oysters')) {
             return 'oyster_reef';
         }
 
@@ -1192,16 +1205,24 @@
         if (seamark === 'rock_awash' || seamark === 'underwater_rock' ||
             seamark === 'rock_submerged' || seamark === 'obstruction') return 'shoal';
         if (seamark === 'artificial_reef' || tags.landuse === 'artificial_reef') return 'reef';
+        if (seamark === 'dive_site') return 'dive_site';
+        if (seamark === 'kelp')      return 'kelp';
+
         if ((seamark && seamark.indexOf('beacon') === 0) ||
             seamark === 'light_major' || seamark === 'light_minor') return 'buoy';
+        if (seamark === 'buoy_special_purpose' || seamark === 'buoy_installation' ||
+            seamark === 'mooring' || seamark === 'beacon_special_purpose') return 'buoy';
+        if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
 
-        if (waterway === 'tidal_channel' || waterway === 'river' ||
-            waterway === 'canal'         || waterway === 'stream') return 'inlet';
+        if (waterway === 'tidal_channel' || waterway === 'tidal_creek' ||
+            waterway === 'river' || waterway === 'canal' || waterway === 'stream') return 'inlet';
         if (waterway === 'weir'      || waterway === 'dam'       ||
             waterway === 'waterfall' || waterway === 'rapids'    ||
             waterway === 'fish_pass' || waterway === 'lock') return 'jetty';
+        if (waterway === 'dock')     return 'pier';
+        if (waterway === 'boatyard') return 'marina';
 
-        if (manMade === 'pier' || tags.leisure === 'pier') {
+        if (manMade === 'pier' || manMade === 'wharf' || manMade === 'fishing_platform' || tags.leisure === 'pier') {
             if (tags.access === 'private' || tags.access === 'no') return null;
             return 'pier';
         }
@@ -1213,15 +1234,24 @@
 
         if (tags.bridge === 'yes' && tags.highway) return 'bridge';
 
-        if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
-        if (tags.amenity === 'boat_ramp' || tags.leisure === 'slipway') return 'boat_ramp';
-        if (tags.leisure === 'fishing' || tags.leisure === 'fishing_stand') return 'fishing';
-        if (tags.sport === 'scuba_diving' || tags.sport === 'diving') return 'dive_site';
-        if (tags.sport === 'fishing') return 'fishing';
-        if (tags.fishing === 'yes' && tags.amenity !== 'boat_ramp' && tags.leisure !== 'slipway') return 'fishing';
+        var amenity = tags.amenity || '';
+        var leisure = tags.leisure || '';
+        var shop    = tags.shop    || '';
+        var sport   = tags.sport   || '';
 
-        if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
-        if (tags.shop === 'fishing') return 'fishing_shop';
+        if (amenity === 'marina' || amenity === 'harbour') return 'marina';
+        if (amenity === 'boat_ramp')   return 'boat_ramp';
+        if (amenity === 'fishing_pier') return 'pier';
+        if (leisure === 'marina')      return 'marina';
+        if (leisure === 'slipway')     return 'boat_ramp';
+        if (leisure === 'fishing' || leisure === 'fishing_stand' || leisure === 'fishing_pond') return 'fishing';
+        if (leisure === 'beach')       return 'beach';
+        if (sport === 'scuba_diving' || sport === 'diving' || sport === 'underwater_diving') return 'dive_site';
+        if (sport === 'fishing')       return 'fishing';
+        if (tags.fishing === 'yes' && amenity !== 'boat_ramp' && leisure !== 'slipway') return 'fishing';
+        if (shop === 'fishing' || shop === 'fishing_tackle' || shop === 'bait' ||
+            shop === 'tackle'  || shop === 'bait_and_tackle' || shop === 'boat_chandler') return 'fishing_shop';
+        if (amenity === 'fishing_shop' || amenity === 'fish_market') return 'fishing_shop';
 
         return null;
     }
@@ -1240,34 +1270,51 @@
         // ── Habitat area types (need full ring geometry) ──────────────────
         if (has('grass_flat')) {
             h.push('way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
-                   'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');');
+                   'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="seagrass_bed"](' + bbox + ');',
+                   'way["natural"="seagrass"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="seagrass_meadow"](' + bbox + ');');
         }
         if (has('saltmarsh')) {
-            h.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');');
+            h.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="salt_marsh"](' + bbox + ');',
+                   'way["natural"="saltmarsh"](' + bbox + ');',
+                   'way["natural"="salt_marsh"](' + bbox + ');');
         }
         if (has('mangrove')) {
-            h.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');');
+            h.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');',
+                   'way["natural"="mangrove"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="mangrove_swamp"](' + bbox + ');');
         }
         if (has('tidal_flat')) {
             h.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="tidal_flat"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="mudflat"](' + bbox + ');',
                    'way["natural"="mud"](' + bbox + ');');
         }
         if (has('beach')) {
             h.push('way["natural"="beach"](' + bbox + ');',
                    'node["natural"="beach"](' + bbox + ');',
+                   'way["leisure"="beach"](' + bbox + ');',
                    'way["natural"="sand"]["access"!="private"](' + bbox + ');');
         }
         if (has('oyster_reef')) {
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
-                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["aquaculture"="oyster"](' + bbox + ');',
+                   'way["natural"="reef"]["reef:type"="oyster"](' + bbox + ');',
+                   'way["natural"="reef"]["reef"="oyster"](' + bbox + ');');
         }
         if (has('kelp')) {
             h.push('way["natural"="wetland"]["wetland"="kelp"](' + bbox + ');',
-                   'way["natural"="kelp"](' + bbox + ');');
+                   'way["natural"="kelp"](' + bbox + ');',
+                   'way["natural"="kelp_forest"](' + bbox + ');',
+                   'node["seamark:type"="kelp"](' + bbox + ');');
         }
         if (has('inlet')) {
             h.push('way["waterway"="tidal_channel"](' + bbox + ');',
+                   'way["waterway"="tidal_creek"](' + bbox + ');',
                    'way["waterway"="river"](' + bbox + ');',
                    'way["waterway"="canal"](' + bbox + ');',
                    'node["waterway"="stream"](' + bbox + ');',
@@ -1275,13 +1322,19 @@
                    'node["harbour"="yes"](' + bbox + ');',
                    'way["harbour"="yes"](' + bbox + ');',
                    'node["natural"="bay"](' + bbox + ');',
-                   'way["natural"="bay"](' + bbox + ');');
+                   'way["natural"="bay"](' + bbox + ');',
+                   'node["natural"="estuary"](' + bbox + ');',
+                   'way["natural"="estuary"](' + bbox + ');');
         }
 
         // ── Structure point/linear types (centroid only) ──────────────────
         if (has('reef')) {
             s.push('node["natural"="reef"](' + bbox + ');',
                    'way["natural"="reef"](' + bbox + ');',
+                   'node["natural"="coral_reef"](' + bbox + ');',
+                   'way["natural"="coral_reef"](' + bbox + ');',
+                   'node["natural"="coral"](' + bbox + ');',
+                   'way["natural"="coral"](' + bbox + ');',
                    'node["seamark:type"="artificial_reef"](' + bbox + ');',
                    'way["seamark:type"="artificial_reef"](' + bbox + ');',
                    'node["landuse"="artificial_reef"](' + bbox + ');',
@@ -1308,8 +1361,16 @@
             // Only publicly accessible piers — private docks are excluded
             s.push('node["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
                    'way["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["man_made"="wharf"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'way["man_made"="wharf"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["man_made"="fishing_platform"](' + bbox + ');',
+                   'way["man_made"="fishing_platform"](' + bbox + ');',
                    'node["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
-                   'way["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');');
+                   'way["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["waterway"="dock"](' + bbox + ');',
+                   'way["waterway"="dock"](' + bbox + ');',
+                   'node["amenity"="fishing_pier"](' + bbox + ');',
+                   'way["amenity"="fishing_pier"](' + bbox + ');');
         }
         if (has('jetty')) {
             s.push('node["man_made"="jetty"](' + bbox + ');',
@@ -1330,14 +1391,21 @@
                    'node["waterway"="lock"](' + bbox + ');');
         }
         if (has('bridge')) {
-            s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
+            s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');',
+                   'way["bridge"="yes"]["highway"="footway"](' + bbox + ');',
+                   'way["bridge"="yes"]["highway"="path"](' + bbox + ');',
+                   'way["bridge"="yes"]["highway"="pedestrian"](' + bbox + ');');
         }
         if (has('marina')) {
             s.push('node["amenity"="marina"](' + bbox + ');',
                    'way["amenity"="marina"](' + bbox + ');',
+                   'node["amenity"="harbour"](' + bbox + ');',
+                   'way["amenity"="harbour"](' + bbox + ');',
                    'node["leisure"="marina"](' + bbox + ');',
                    'way["leisure"="marina"](' + bbox + ');',
-                   'relation["leisure"="marina"](' + bbox + ');');
+                   'relation["leisure"="marina"](' + bbox + ');',
+                   'node["waterway"="boatyard"](' + bbox + ');',
+                   'way["waterway"="boatyard"](' + bbox + ');');
         }
         if (has('point')) {
             s.push('node["natural"="cape"](' + bbox + ');',
@@ -1352,6 +1420,9 @@
             s.push('node["leisure"="fishing"](' + bbox + ');',
                    'way["leisure"="fishing"](' + bbox + ');',
                    'node["leisure"="fishing_stand"](' + bbox + ');',
+                   'way["leisure"="fishing_stand"](' + bbox + ');',
+                   'node["leisure"="fishing_pond"](' + bbox + ');',
+                   'way["leisure"="fishing_pond"](' + bbox + ');',
                    'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"](' + bbox + ');',
                    'node["sport"="fishing"](' + bbox + ');');
         }
@@ -1360,16 +1431,29 @@
                    'node["seamark:type"="buoy_cardinal"](' + bbox + ');',
                    'node["seamark:type"="buoy_safe_water"](' + bbox + ');',
                    'node["seamark:type"="buoy_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="buoy_special_purpose"](' + bbox + ');',
+                   'node["seamark:type"="buoy_installation"](' + bbox + ');',
+                   'node["seamark:type"="mooring"](' + bbox + ');',
                    'node["seamark:type"="beacon_lateral"](' + bbox + ');',
                    'node["seamark:type"="beacon_cardinal"](' + bbox + ');',
                    'node["seamark:type"="beacon_safe_water"](' + bbox + ');',
                    'node["seamark:type"="beacon_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="beacon_special_purpose"](' + bbox + ');',
                    'node["seamark:type"="light_major"](' + bbox + ');',
                    'node["seamark:type"="light_minor"](' + bbox + ');',
                    'node["man_made"="buoy"](' + bbox + ');');
         }
         if (has('fishing_shop')) {
-            s.push('node["shop"="fishing"](' + bbox + ');');
+            s.push('node["shop"="fishing"](' + bbox + ');',
+                   'way["shop"="fishing"](' + bbox + ');',
+                   'node["shop"="fishing_tackle"](' + bbox + ');',
+                   'node["shop"="bait"](' + bbox + ');',
+                   'node["shop"="tackle"](' + bbox + ');',
+                   'node["shop"="bait_and_tackle"](' + bbox + ');',
+                   'node["shop"="boat_chandler"](' + bbox + ');',
+                   'way["shop"="boat_chandler"](' + bbox + ');',
+                   'node["amenity"="fish_market"](' + bbox + ');',
+                   'node["amenity"="fishing_shop"](' + bbox + ');');
         }
         if (has('boat_ramp')) {
             s.push('node["amenity"="boat_ramp"](' + bbox + ');',
@@ -1380,7 +1464,9 @@
         if (has('dive_site')) {
             s.push('node["sport"="scuba_diving"](' + bbox + ');',
                    'node["sport"="diving"](' + bbox + ');',
-                   'way["sport"="scuba_diving"](' + bbox + ');');
+                   'node["sport"="underwater_diving"](' + bbox + ');',
+                   'way["sport"="scuba_diving"](' + bbox + ');',
+                   'node["seamark:type"="dive_site"](' + bbox + ');');
         }
         if (has('seawall')) {
             s.push('node["man_made"="seawall"](' + bbox + ');',

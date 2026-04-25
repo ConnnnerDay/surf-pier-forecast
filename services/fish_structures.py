@@ -296,6 +296,7 @@ _OVERPASS_URLS = [
 _NOAA_ENC_BASE = (
     "https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/ENCOnline/MapServer"
 )
+_NOAA_LAYER_ATON = 1       # LIGHTS/BCNLAT/BOYLAT — aids to navigation (buoys, lights, beacons)
 _NOAA_LAYER_WRECKS = 2
 _NOAA_LAYER_OBSTRUCTIONS = 3
 _NOAA_LAYER_ROCKS = 4
@@ -1003,6 +1004,8 @@ def fetch_noaa_structures(
     # call takes up to 4+12 s on a cold connection.  Running them concurrently
     # halves the worst-case NOAA latency when both wrecks and shoals are active.
     layer_jobs: list[tuple] = []  # [(layer_id, spot_type), ...]
+    if "buoy" in types:
+        layer_jobs.append((_NOAA_LAYER_ATON, "buoy"))
     if "wreck" in types:
         layer_jobs.append((_NOAA_LAYER_WRECKS, "wreck"))
     if types & {"shoal", "reef"}:
