@@ -558,7 +558,12 @@
         fishing_shop: '⚙',
         boat_ramp:    '▽',
         dive_site:    '✚',
-        seawall:      '▬'
+        seawall:      '▬',
+        grass_flat:   '≋',
+        tidal_flat:   '⊟',
+        saltmarsh:    'Ψ',
+        mangrove:     '⊕',
+        kelp:         '⇑'
     };
 
     // Inline SVG path content rendered inside the 22px circular structure markers.
@@ -644,7 +649,56 @@
 
         // Seawall: thick horizontal bar = wall face / revetment
         seawall:
-            '<rect x="1.5" y="5" width="11" height="4" rx="0.5" fill="rgba(255,255,255,0.9)" stroke="none"/>'
+            '<rect x="1.5" y="5" width="11" height="4" rx="0.5" fill="rgba(255,255,255,0.9)" stroke="none"/>',
+
+        // Oyster reef: overlapping arc-circles suggesting clustered shell mounds
+        oyster_reef:
+            '<circle cx="4.5" cy="8" r="2.8" stroke-width="1.4" fill="none"/>' +
+            '<circle cx="8.5" cy="6.5" r="2.5" stroke-width="1.4" fill="none" opacity="0.9"/>' +
+            '<circle cx="7" cy="10.5" r="2.2" stroke-width="1.4" fill="none" opacity="0.8"/>' +
+            '<circle cx="10.5" cy="9" r="2" stroke-width="1.3" fill="none" opacity="0.7"/>',
+
+        // Inlet / Channel: two converging shoreline curves with a tidal-flow arrow
+        inlet:
+            '<path d="M1.5 1.5 Q3 6 1.5 12" stroke-width="1.8" fill="none"/>' +
+            '<path d="M12.5 1.5 Q11 6 12.5 12" stroke-width="1.8" fill="none"/>' +
+            '<path d="M4.5 7 L9.5 7" stroke-width="1.3" stroke-dasharray="1.5,1.5" opacity="0.8"/>' +
+            '<path d="M8 5.5 L10 7 L8 8.5" stroke-width="1.3" fill="none"/>',
+
+        // Grass flat: three sinuous seagrass blades rising from the seafloor
+        grass_flat:
+            '<path d="M3 13.5 Q2 10 3.5 6.5 Q5 3 3.5 1" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7 13.5 Q6 9.5 7.5 5.5 Q9 2 7.5 1" stroke-width="1.5" fill="none"/>' +
+            '<path d="M11 13.5 Q10 10 11.5 6.5 Q13 3 11.5 1" stroke-width="1.5" fill="none"/>',
+
+        // Tidal flat: concave basin arc (waterline edge) with stipple dots = exposed mud/sand
+        tidal_flat:
+            '<path d="M1.5 5 Q7 12 12.5 5" stroke-width="2" fill="none"/>' +
+            '<circle cx="4.5" cy="10.5" r="0.8" fill="rgba(255,255,255,0.82)" stroke="none"/>' +
+            '<circle cx="7" cy="12.5" r="0.8" fill="rgba(255,255,255,0.82)" stroke="none"/>' +
+            '<circle cx="9.5" cy="10.5" r="0.8" fill="rgba(255,255,255,0.82)" stroke="none"/>',
+
+        // Saltmarsh: three reed stems of varying heights above a wavy waterline
+        saltmarsh:
+            '<line x1="3.5" y1="12.5" x2="3.5" y2="5" stroke-width="1.6"/>' +
+            '<line x1="7" y1="12.5" x2="7" y2="1.5" stroke-width="1.6"/>' +
+            '<line x1="10.5" y1="12.5" x2="10.5" y2="4" stroke-width="1.6"/>' +
+            '<path d="M1 12.5 Q4 11 7 12.5 Q10 14 13 12.5" stroke-width="1.2" fill="none" opacity="0.7"/>',
+
+        // Mangrove: solid canopy disc + trunk + spreading prop roots
+        mangrove:
+            '<circle cx="7" cy="3.2" r="2.5" fill="rgba(255,255,255,0.85)" stroke="none"/>' +
+            '<line x1="7" y1="5.7" x2="7" y2="8.5" stroke-width="1.5"/>' +
+            '<path d="M7 8.5 L4 13" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7 8.5 L10 13" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7 9.5 L5.5 13" stroke-width="1" opacity="0.65" fill="none"/>' +
+            '<path d="M7 9.5 L8.5 13" stroke-width="1" opacity="0.65" fill="none"/>',
+
+        // Kelp forest: three sinuous stipes undulating from seafloor to surface
+        kelp:
+            '<path d="M4 13.5 Q3 10 4.5 7 Q6 4 4.5 1.5" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7.5 13.5 Q6.5 9.5 8 6.5 Q9.5 3.5 8 1.5" stroke-width="1.5" fill="none"/>' +
+            '<path d="M11 13.5 Q10 10 11.5 7 Q13 4 11.5 1.5" stroke-width="1.5" fill="none"/>'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -693,26 +747,28 @@
         var sz  = isHabitat ? 17 : 22;
         var br  = isHabitat ? '3px' : '50%';
         var rot = isHabitat ? 'transform:rotate(45deg)' : '';
+        // Habitat diamonds counter-rotate inner content so icons stay upright.
+        var innerRot = isHabitat ? 'transform:rotate(-45deg);' : '';
+        var svgW = isHabitat ? 10 : 14;
         var inner = '';
-        if (!isHabitat) {
-            var svgPaths = SPOT_SVGS[type];
-            if (svgPaths) {
-                // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
-                // stroke/fill inherited from the <svg> root; individual paths may
-                // override fill for solid shapes.
-                inner = '<svg viewBox="0 0 14 14" width="14" height="14"' +
-                        ' stroke="rgba(255,255,255,0.95)" fill="none"' +
-                        ' stroke-linecap="round" stroke-linejoin="round"' +
-                        ' aria-hidden="true" style="pointer-events:none;flex-shrink:0">' +
-                        svgPaths + '</svg>';
-            } else {
-                // Fallback for any type not yet in SPOT_SVGS
-                var lbl = SPOT_LABELS[type] || '';
-                if (lbl) {
-                    inner = '<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.97);' +
-                            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-                            'line-height:1;pointer-events:none;">' + lbl + '</span>';
-                }
+        var svgPaths = SPOT_SVGS[type];
+        if (svgPaths) {
+            // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
+            // stroke/fill inherited from the <svg> root; individual paths may
+            // override fill for solid shapes.
+            inner = '<svg viewBox="0 0 14 14" width="' + svgW + '" height="' + svgW + '"' +
+                    ' stroke="rgba(255,255,255,0.95)" fill="none"' +
+                    ' stroke-linecap="round" stroke-linejoin="round"' +
+                    ' aria-hidden="true" style="' + innerRot + 'pointer-events:none;flex-shrink:0">' +
+                    svgPaths + '</svg>';
+        } else {
+            // Fallback for any type not yet in SPOT_SVGS
+            var lbl = SPOT_LABELS[type] || '';
+            if (lbl) {
+                inner = '<span style="font-size:' + (isHabitat ? '10' : '13') + 'px;font-weight:400;' +
+                        'color:rgba(255,255,255,0.97);' +
+                        'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+                        'line-height:1;pointer-events:none;' + innerRot + '">' + lbl + '</span>';
             }
         }
         var html = '<span class="fmap-spot-dot" style="background:' + color +
