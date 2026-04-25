@@ -1625,6 +1625,33 @@
         spotQueryTimer = setTimeout(queryStructures, 300);
     }
 
+    // Re-render the fishing spot layer from whatever bbox data is already cached,
+    // without triggering a new network request.  Used when filter pills are toggled
+    // so the switch between spot types is instant.  If no cache exists yet the
+    // in-flight moveend fetch will call renderFishingSpots() when it completes,
+    // at which point activeSpotTypes will already reflect the new selection.
+    function _renderFromCache() {
+        if (!map || !fishingSpotLayer) return;
+        var zoom = map.getZoom();
+        if (zoom < 8) return;
+        var b = map.getBounds();
+        var EXPAND = Math.min(0.75, Math.max(0, (zoom - 8) * 0.19));
+        var rawS = b.getSouth() - EXPAND,  rawN = b.getNorth() + EXPAND;
+        var rawW = b.getWest()  - EXPAND,  rawE = b.getEast()  + EXPAND;
+        if (rawN - rawS > 6) { var mLat = (rawS + rawN) / 2; rawS = mLat - 3; rawN = mLat + 3; }
+        if (rawE - rawW > 9) { var mLng = (rawW + rawE) / 2; rawW = mLng - 4.5; rawE = mLng + 4.5; }
+        var s = Math.floor(rawS * 2) / 2,  w = Math.floor(rawW * 2) / 2;
+        var n = Math.ceil (rawN * 2) / 2,  e = Math.ceil (rawE * 2) / 2;
+        var key = s + ',' + w + ',' + n + ',' + e;
+        var cached = spotCache[key];
+        if (!cached) {
+            var sup = _cachedSupersetOf(s, w, n, e);
+            if (sup) { _spotCachePut(key, sup); cached = sup; }
+        }
+        if (cached) renderFishingSpots(cached, key);
+        // No cache → no-op; the background fetch will render when it lands.
+    }
+
     // ─── sessionStorage persistence for spotCache ─────────────────────────────
     // Persists the in-memory spotCache across page refreshes within the same
     // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
@@ -1836,9 +1863,9 @@
                 updateAdvBadge();
                 _scheduleSpotTypeSave();
 
-                // Re-render immediately from the bbox cache; no server round-trip.
-                clearTimeout(spotQueryTimer);
-                queryStructures();
+                // Re-render instantly from the cached bbox data.
+                // Never trigger a new network fetch — type filtering is client-side.
+                _renderFromCache();
             });
         });
 
@@ -1854,8 +1881,7 @@
                 _updateSpotTypeHint();
                 updateAdvBadge();
                 _scheduleSpotTypeSave();
-                clearTimeout(spotQueryTimer);
-                queryStructures();
+                _renderFromCache();
             });
         }
 
