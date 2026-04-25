@@ -1946,6 +1946,8 @@ def create_custom_marker(
         conn.commit()
     finally:
         conn.close()
+    if row is None:
+        raise RuntimeError(f"custom marker INSERT succeeded but SELECT returned no row (lastrowid={cur.lastrowid})")
     _invalidate_custom_markers_cache()
     return _marker_row_to_dict(row)
 
@@ -1987,17 +1989,19 @@ def update_custom_marker(
         updates.append("updated_at = datetime('now')")
         params.append(marker_id)
         conn.execute(
-            f"UPDATE custom_map_markers SET {', '.join(updates)} WHERE id = ?",
+            f"UPDATE custom_map_markers SET {', '.join(updates)} WHERE id = ? AND is_deleted = 0",
             params,
         )
         updated = conn.execute(
             "SELECT id, lat, lng, name, type, description, created_by, created_at, updated_at "
-            "FROM custom_map_markers WHERE id = ?",
+            "FROM custom_map_markers WHERE id = ? AND is_deleted = 0",
             (marker_id,),
         ).fetchone()
         conn.commit()
     finally:
         conn.close()
+    if updated is None:
+        return None
     _invalidate_custom_markers_cache()
     return _marker_row_to_dict(updated)
 
