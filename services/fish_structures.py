@@ -299,6 +299,7 @@ _NOAA_ENC_BASE = (
 _NOAA_LAYER_WRECKS = 2
 _NOAA_LAYER_OBSTRUCTIONS = 3
 _NOAA_LAYER_ROCKS = 4
+_NOAA_LAYER_REEFS = 5  # REEFSMK — natural reef marks (coral, rocky reefs)
 
 # ── ESRI / government ArcGIS Open Data services ───────────────────────────────
 # NOAA Coastal Services Center — publicly accessible marina and harbor locations
@@ -396,6 +397,7 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         # the client can decide: closed ring → filled polygon, open → polyline.
         habitat += [
             f'way["waterway"="tidal_channel"]({bbox});',
+            f'way["waterway"="tidal_creek"]({bbox});',
             f'way["waterway"="river"]({bbox});',
             f'way["waterway"="canal"]({bbox});',
             f'node["waterway"="stream"]({bbox});',
@@ -404,6 +406,8 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'way["harbour"="yes"]({bbox});',
             f'node["natural"="bay"]({bbox});',
             f'way["natural"="bay"]({bbox});',
+            f'node["natural"="estuary"]({bbox});',
+            f'way["natural"="estuary"]({bbox});',
         ]
 
     # ── Structure point / linear types (centroid only) ───────────────────────
@@ -411,6 +415,10 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["natural"="reef"]({bbox});',
             f'way["natural"="reef"]({bbox});',
+            f'node["natural"="coral_reef"]({bbox});',
+            f'way["natural"="coral_reef"]({bbox});',
+            f'node["natural"="coral"]({bbox});',
+            f'way["natural"="coral"]({bbox});',
             f'node["seamark:type"="artificial_reef"]({bbox});',
             f'way["seamark:type"="artificial_reef"]({bbox});',
             f'node["landuse"="artificial_reef"]({bbox});',
@@ -442,6 +450,8 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'way["man_made"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'node["man_made"="wharf"]["access"!="private"]["access"!="no"]({bbox});',
             f'way["man_made"="wharf"]["access"!="private"]["access"!="no"]({bbox});',
+            f'node["man_made"="fishing_platform"]({bbox});',
+            f'way["man_made"="fishing_platform"]({bbox});',
             f'node["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'way["leisure"="pier"]["access"!="private"]["access"!="no"]({bbox});',
             f'node["waterway"="dock"]({bbox});',
@@ -482,9 +492,13 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         struct += [
             f'node["amenity"="marina"]({bbox});',
             f'way["amenity"="marina"]({bbox});',
+            f'node["amenity"="harbour"]({bbox});',
+            f'way["amenity"="harbour"]({bbox});',
             f'node["leisure"="marina"]({bbox});',
             f'way["leisure"="marina"]({bbox});',
             f'relation["leisure"="marina"]({bbox});',
+            f'node["waterway"="boatyard"]({bbox});',
+            f'way["waterway"="boatyard"]({bbox});',
         ]
     if "point" in types:
         struct += [
@@ -513,10 +527,14 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["seamark:type"="buoy_cardinal"]({bbox});',
             f'node["seamark:type"="buoy_safe_water"]({bbox});',
             f'node["seamark:type"="buoy_isolated_danger"]({bbox});',
+            f'node["seamark:type"="buoy_special_purpose"]({bbox});',
+            f'node["seamark:type"="buoy_installation"]({bbox});',
+            f'node["seamark:type"="mooring"]({bbox});',
             f'node["seamark:type"="beacon_lateral"]({bbox});',
             f'node["seamark:type"="beacon_cardinal"]({bbox});',
             f'node["seamark:type"="beacon_safe_water"]({bbox});',
             f'node["seamark:type"="beacon_isolated_danger"]({bbox});',
+            f'node["seamark:type"="beacon_special_purpose"]({bbox});',
             f'node["seamark:type"="light_major"]({bbox});',
             f'node["seamark:type"="light_minor"]({bbox});',
             f'node["man_made"="buoy"]({bbox});',
@@ -526,6 +544,12 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'node["shop"="fishing"]({bbox});',
             f'way["shop"="fishing"]({bbox});',
             f'node["shop"="fishing_tackle"]({bbox});',
+            f'node["shop"="bait"]({bbox});',
+            f'node["shop"="tackle"]({bbox});',
+            f'node["shop"="bait_and_tackle"]({bbox});',
+            f'node["shop"="boat_chandler"]({bbox});',
+            f'way["shop"="boat_chandler"]({bbox});',
+            f'node["amenity"="fish_market"]({bbox});',
             f'node["amenity"="fishing_shop"]({bbox});',
         ]
     if "boat_ramp" in types:
@@ -605,9 +629,17 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
     if natural == "bay":
         return "inlet"
     if natural == "reef":
+        # oyster reef tagged under natural=reef with a reef subtype key
+        reef_subtype = tags.get("reef:type") or tags.get("reef") or ""
+        if reef_subtype in ("oyster", "oyster_reef"):
+            return "oyster_reef"
+        return "reef"
+    if natural in ("coral_reef", "coral"):
         return "reef"
     if natural in ("shoal", "rock", "sandbank"):
         return "shoal"
+    if natural == "estuary":
+        return "inlet"
     if natural in ("cape", "headland", "peninsula", "promontory"):
         return "point"
     if natural in ("sand",) and tags.get("access") not in ("private", "no"):
@@ -617,7 +649,9 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "inlet"
 
     if tags.get("landuse") == "aquaculture" and (
-        tags.get("produce") == "oyster" or tags.get("product") == "oysters"
+        tags.get("produce") in ("oyster", "oysters")
+        or tags.get("product") in ("oyster", "oysters")
+        or tags.get("aquaculture") in ("oyster", "oysters")
     ):
         return "oyster_reef"
 
@@ -632,15 +666,17 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "buoy"
 
     # ── Waterways ─────────────────────────────────────────────────────────────
-    if waterway in ("tidal_channel", "river", "canal", "stream"):
+    if waterway in ("tidal_channel", "tidal_creek", "river", "canal", "stream"):
         return "inlet"
     if waterway in ("weir", "dam", "waterfall", "rapids", "fish_pass", "lock"):
         return "jetty"  # turbulent/oxygenated water — same angling context
-    if waterway == "dock":
+    if waterway in ("dock",):
         return "pier"
+    if waterway == "boatyard":
+        return "marina"
 
     # ── Man-made structures ───────────────────────────────────────────────────
-    if man_made in ("pier", "wharf") or tags.get("leisure") == "pier":
+    if man_made in ("pier", "wharf", "fishing_platform") or tags.get("leisure") == "pier":
         # Exclude private/restricted access — private docks and boat yards are not public fishing piers
         if tags.get("access") in ("private", "no"):
             return None
@@ -660,10 +696,12 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "bridge"
 
     amenity = tags.get("amenity", "")
-    if amenity in ("marina",):
+    if amenity in ("marina", "harbour"):
         return "marina"
-    if amenity in ("boat_ramp", "fishing_pier"):
+    if amenity == "boat_ramp":
         return "boat_ramp"
+    if amenity == "fishing_pier":
+        return "pier"
 
     leisure = tags.get("leisure", "")
     if leisure == "marina":
@@ -685,17 +723,21 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
         return "dive_site"
     if seamark == "kelp":
         return "kelp"
+    if seamark in ("buoy_special_purpose", "buoy_installation", "mooring",
+                   "beacon_special_purpose"):
+        return "buoy"
 
-    if tags.get("fishing") == "yes" and amenity not in ("boat_ramp", "fishing_pier") and leisure not in ("slipway",):
+    if tags.get("fishing") == "yes" and amenity not in ("boat_ramp",) and leisure not in ("slipway",):
         return "fishing"
 
     if seamark.startswith("buoy"):
         return "buoy"
 
     shop = tags.get("shop", "")
-    if shop in ("fishing", "fishing_tackle"):
+    if shop in ("fishing", "fishing_tackle", "bait", "tackle",
+                "bait_and_tackle", "boat_chandler"):
         return "fishing_shop"
-    if amenity == "fishing_shop":
+    if amenity in ("fishing_shop", "fish_market"):
         return "fishing_shop"
 
     return None
@@ -966,6 +1008,8 @@ def fetch_noaa_structures(
     if types & {"shoal", "reef"}:
         layer_jobs.append((_NOAA_LAYER_OBSTRUCTIONS, "shoal"))
         layer_jobs.append((_NOAA_LAYER_ROCKS, "shoal"))
+    if "reef" in types:
+        layer_jobs.append((_NOAA_LAYER_REEFS, "reef"))
 
     if not layer_jobs:
         return []
