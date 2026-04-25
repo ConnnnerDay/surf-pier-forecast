@@ -16,12 +16,17 @@
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox key → array of spot objects (all types)
     var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
-    var _SPOT_CACHE_MAX  = 48;       // cap to prevent unbounded sessionStorage growth
-    var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
+    var _SPOT_CACHE_MAX  = 200;      // cap for localStorage budget (~10 MB typical limit)
+    var _ssSaveTimer          = null; // debounce timer for localStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    // Adjacent-tile pre-fetch queue — background loads for N/S/E/W of the current view
+    var _prefetchQueue      = [];    // {s,w,n,e,key} objects waiting for background fetch
+    var _prefetchInFlight   = false; // whether a background fetch is running
+    var _PREFETCH_DELAY     = 5000;  // ms between background fetches (Overpass rate-limit)
+    var _PREFETCH_MAX_QUEUE = 8;     // max queued tiles (drops oldest if exceeded)
     // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
     // These layers clear and redraw on every fetch; caching the icon objects avoids
     // re-running L.divIcon() for every marker on every refresh.
@@ -1138,6 +1143,7 @@
                 _ssSave();
                 renderFishingSpots(spots, key);
                 // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
+                _scheduleAdjacentPrefetch(s, w, n, e);
             })
             .catch(function (err) {
                 if (err.name === 'AbortError') { hideStructLoading(); return; }
@@ -1563,6 +1569,7 @@
             hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped, key);
             // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
+            _scheduleAdjacentPrefetch(s, w, n, e);
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
@@ -1622,7 +1629,21 @@
 
     function scheduleFishingSpotQuery() {
         clearTimeout(spotQueryTimer);
-        spotQueryTimer = setTimeout(queryStructures, 300);
+        // Use a short delay when the incoming bbox is already in cache so
+        // panning through pre-fetched areas feels instant (~80 ms latency vs
+        // the 300 ms debounce we keep for cold-cache fetches that hit Overpass).
+        var delay = 300;
+        if (map) {
+            var _b = map.getBounds(), _z = map.getZoom();
+            var _exp = Math.min(0.75, Math.max(0, (_z - 8) * 0.19));
+            var _s = Math.floor((_b.getSouth() - _exp) * 2) / 2;
+            var _w = Math.floor((_b.getWest()  - _exp) * 2) / 2;
+            var _n = Math.ceil ((_b.getNorth() + _exp) * 2) / 2;
+            var _e = Math.ceil ((_b.getEast()  + _exp) * 2) / 2;
+            var _k = _s + ',' + _w + ',' + _n + ',' + _e;
+            if (spotCache[_k] || _cachedSupersetOf(_s, _w, _n, _e)) delay = 80;
+        }
+        spotQueryTimer = setTimeout(queryStructures, delay);
     }
 
     // Re-render the fishing spot layer from whatever bbox data is already cached,
@@ -1652,31 +1673,109 @@
         // No cache → no-op; the background fetch will render when it lands.
     }
 
-    // ─── sessionStorage persistence for spotCache ─────────────────────────────
-    // Persists the in-memory spotCache across page refreshes within the same
-    // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
-    // so a 30-minute TTL per entry is safe.  Quota errors are silently ignored.
-    var _SS_KEY = 'fmap_spot_cache_v3'; // v3: bbox-only keys (no type-filter suffix)
-    var _SS_TTL = 1800000; // 30 minutes in ms
+    // ─── Adjacent-tile background pre-fetch ───────────────────────────────────
+    // After each successful structure fetch, silently queue the 4 cardinal-
+    // direction neighbours (N/S/E/W) so that panning into them is a cache hit.
+    // At most one background request runs at a time with a 5 s gap to respect
+    // Overpass rate limits.  The queue caps at _PREFETCH_MAX_QUEUE; excess entries
+    // are dropped rather than stacking up from rapid map movement.
+
+    function _enqueuePrefetch(s, w, n, e) {
+        var key = s + ',' + w + ',' + n + ',' + e;
+        if (spotCache[key]) return;
+        if (_cachedSupersetOf(s, w, n, e)) return;
+        // Don't enqueue the same bbox twice
+        for (var i = 0; i < _prefetchQueue.length; i++) {
+            if (_prefetchQueue[i].key === key) return;
+        }
+        if (_prefetchQueue.length >= _PREFETCH_MAX_QUEUE) {
+            _prefetchQueue.shift();  // drop the oldest pending tile
+        }
+        _prefetchQueue.push({ s: s, w: w, n: n, e: e, key: key });
+    }
+
+    function _drainPrefetchQueue() {
+        if (_prefetchInFlight || _prefetchQueue.length === 0) return;
+        var job = _prefetchQueue.shift();
+        // Skip if the tile was cached between enqueue and drain
+        if (spotCache[job.key] || _cachedSupersetOf(job.s, job.w, job.n, job.e)) {
+            _drainPrefetchQueue();
+            return;
+        }
+        _prefetchInFlight = true;
+        var url = '/api/map/structures?south=' + job.s + '&west=' + job.w +
+                  '&north=' + job.n + '&east=' + job.e;
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                _prefetchInFlight = false;
+                if (data && data.structures && !data.zoom_required) {
+                    _spotCachePut(job.key, data.structures);
+                    _ssSave();
+                }
+                setTimeout(_drainPrefetchQueue, _PREFETCH_DELAY);
+            })
+            .catch(function () {
+                _prefetchInFlight = false;
+                setTimeout(_drainPrefetchQueue, _PREFETCH_DELAY);
+            });
+    }
+
+    // Enqueue the 4 cardinal neighbours of the just-fetched bbox.
+    // Step = half the bbox span so tiles overlap 50 %, ensuring smooth panning.
+    function _scheduleAdjacentPrefetch(s, w, n, e) {
+        var latSpan = n - s;
+        var lngSpan = e - w;
+        // Snap steps to the 0.5° cache grid to guarantee key-matching on pan
+        var latStep = Math.round(latSpan * 0.5 * 2) / 2;
+        var lngStep = Math.round(lngSpan * 0.5 * 2) / 2;
+        if (latStep <= 0) latStep = 0.5;
+        if (lngStep <= 0) lngStep = 0.5;
+
+        _enqueuePrefetch(
+            Math.floor((s         ) * 2) / 2, Math.floor((w + lngStep) * 2) / 2,
+            Math.ceil ((n         ) * 2) / 2, Math.ceil ((e + lngStep) * 2) / 2
+        ); // east
+        _enqueuePrefetch(
+            Math.floor((s         ) * 2) / 2, Math.floor((w - lngStep) * 2) / 2,
+            Math.ceil ((n         ) * 2) / 2, Math.ceil ((e - lngStep) * 2) / 2
+        ); // west
+        _enqueuePrefetch(
+            Math.floor((s + latStep) * 2) / 2, Math.floor(w * 2) / 2,
+            Math.ceil ((n + latStep) * 2) / 2, Math.ceil (e * 2) / 2
+        ); // north
+        _enqueuePrefetch(
+            Math.floor((s - latStep) * 2) / 2, Math.floor(w * 2) / 2,
+            Math.ceil ((n - latStep) * 2) / 2, Math.ceil (e * 2) / 2
+        ); // south
+
+        // Start draining after a short delay — let the current render finish first
+        setTimeout(_drainPrefetchQueue, 1500);
+    }
+
+    // ─── localStorage persistence for spotCache ───────────────────────────────
+    // Persists structure data across browser sessions — fish structures (piers,
+    // reefs, wrecks, marinas) change at most monthly, so a 4-hour TTL is safe.
+    // Using localStorage (not sessionStorage) means a returning angler opening
+    // a new tab sees their recent map data instantly without a server round-trip.
+    // Quota errors are silently ignored — worst case the cache starts cold.
+    var _SS_KEY = 'fmap_spot_cache_v4'; // bump version to drop old sessionStorage entries
+    var _SS_TTL = 14400000; // 4 hours in ms
 
     function _ssLoad() {
         try {
-            var raw = sessionStorage.getItem(_SS_KEY);
+            var raw = localStorage.getItem(_SS_KEY);
             if (!raw) return;
             var obj = JSON.parse(raw);
             var now = Date.now();
             Object.keys(obj).forEach(function (k) {
-                // Skip any stale type-specific keys that sneaked in before v3
-                if (k.indexOf('|') !== -1) return;
+                if (k.indexOf('|') !== -1) return; // skip legacy type-keyed entries
                 var e = obj[k];
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
-                    // Bypass _spotCachePut to avoid eviction during bulk restore;
-                    // rebuild _spotCacheKeys so future puts evict correctly.
                     spotCache[k] = e.data;
                     _spotCacheKeys.push(k);
                 }
             });
-            // Enforce cap after restore in case stored data exceeded the limit
             while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
                 delete spotCache[_spotCacheKeys.shift()];
             }
@@ -1690,7 +1789,7 @@
             Object.keys(spotCache).forEach(function (k) {
                 obj[k] = { ts: now, data: spotCache[k] };
             });
-            sessionStorage.setItem(_SS_KEY, JSON.stringify(obj));
+            localStorage.setItem(_SS_KEY, JSON.stringify(obj));
         } catch (e) { /* quota exceeded — silently skip */ }
     }
 
