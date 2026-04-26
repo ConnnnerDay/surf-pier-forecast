@@ -799,7 +799,8 @@
             : '';
         var currentZoom = map ? Math.floor(map.getZoom()) : 8;
         var typeKey  = activeSpotTypes.length ? ':f' + activeSpotTypes.slice().sort().join(',') : '';
-        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom + typeKey;
+        var admKey   = adminEditMode ? ':adm' : '';
+        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom + typeKey + admKey;
 
         if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
@@ -908,6 +909,13 @@
             m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
+            // In admin mode, clicking an OSM/NOAA spot offers Hide + Override actions
+            (function (spot) {
+                m.on('click', function () {
+                    if (!adminEditMode) return;
+                    _openAdminSpotActions(spot, m);
+                });
+            }(f));
             fishingSpotLayer.addLayer(m);
         });
 
@@ -2549,6 +2557,97 @@
         t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
     }
 
+    // ── Admin spot-suppression helpers ──────────────────────────────────────
+
+    // Open a compact popup on an OSM/NOAA/ESRI spot offering "Hide" and
+    // "Override" actions.  Only shown when adminEditMode is true.
+    function _openAdminSpotActions(spot, marker) {
+        var spotKey = spot.id || (spot.type + ':' + spot.lat + ':' + spot.lng);
+        var name    = esc(spot.name || spotTypeLabel(spot.type));
+
+        var html =
+            '<div style="min-width:160px">' +
+            '<strong style="font-size:.85rem">' + name + '</strong>' +
+            '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
+            '<button id="fmap-spot-hide-btn" style="' +
+            'padding:4px 10px;border:none;border-radius:5px;' +
+            'background:#991b1b;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Hide</button>' +
+            '<button id="fmap-spot-override-btn" style="' +
+            'padding:4px 10px;border:none;border-radius:5px;' +
+            'background:#1d4ed8;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Override</button>' +
+            '</div>' +
+            '<div id="fmap-spot-action-status" style="font-size:.75rem;margin-top:5px;color:#f87171"></div>' +
+            '</div>';
+
+        marker.bindPopup(html, { closeButton: true, maxWidth: 220 }).openPopup();
+
+        // Wire buttons after the popup DOM is inserted
+        marker.once('popupopen', function () {
+            var hideBtn     = document.getElementById('fmap-spot-hide-btn');
+            var overrideBtn = document.getElementById('fmap-spot-override-btn');
+            var statusEl    = document.getElementById('fmap-spot-action-status');
+
+            if (hideBtn) {
+                hideBtn.addEventListener('click', function () {
+                    hideBtn.disabled = true;
+                    hideBtn.textContent = '…';
+                    _suppressSpot(spot, spotKey, function (err) {
+                        if (err) {
+                            if (statusEl) statusEl.textContent = 'Failed: ' + err;
+                            hideBtn.disabled = false;
+                            hideBtn.textContent = 'Hide';
+                        } else {
+                            marker.closePopup();
+                            _showAdminToast('Spot hidden');
+                        }
+                    });
+                });
+            }
+
+            if (overrideBtn) {
+                overrideBtn.addEventListener('click', function () {
+                    marker.closePopup();
+                    // Pre-fill the add panel at the spot's location so the admin
+                    // can drop a precisely placed custom marker that replaces it.
+                    _openAdminAddPanel(spot.lat, spot.lng);
+                    var nameEl = document.getElementById('fmap-admin-name');
+                    var typeEl = document.getElementById('fmap-admin-type');
+                    if (nameEl) nameEl.value = spot.name || spotTypeLabel(spot.type);
+                    if (typeEl) typeEl.value = spot.type || 'fishing';
+                    // Also suppress the original so there's no duplicate
+                    _suppressSpot(spot, spotKey, function () {});
+                });
+            }
+        });
+    }
+
+    // Call POST /api/map/suppress-spot for a spot; cb(null) on success, cb(errMsg) on failure.
+    function _suppressSpot(spot, spotKey, cb) {
+        fetch('/api/map/suppress-spot', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                spot_key: spotKey,
+                lat:      spot.lat,
+                lng:      spot.lng,
+                type:     spot.type || '',
+                name:     spot.name || '',
+            }),
+        })
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            // Bust the local spot cache so the suppressed spot disappears on next render
+            spotCache = {}; _spotCacheKeys = [];
+            try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+            scheduleFishingSpotQuery();
+            cb(null);
+        })
+        .catch(function (err) {
+            console.warn('[admin] suppress spot failed:', err);
+            cb(err.message);
+        });
+    }
+
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
 
@@ -2576,6 +2675,10 @@
                         cm.leaflet.dragging.disable();
                     }
                 });
+
+                // Force re-render so OSM/NOAA spots get/lose click handlers
+                _lastRenderedSpotKey = null;
+                _renderFromCache();
 
                 // Click-to-add on map
                 if (adminEditMode) {

@@ -180,6 +180,19 @@ CREATE TABLE IF NOT EXISTS custom_map_markers (
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS suppressed_map_spots (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    spot_key    TEXT    NOT NULL UNIQUE,
+    lat         REAL    NOT NULL,
+    lng         REAL    NOT NULL,
+    type        TEXT    NOT NULL DEFAULT '',
+    name        TEXT    NOT NULL DEFAULT '',
+    suppressed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_suppressed_spots_bbox
+ON suppressed_map_spots(lat, lng);
 """
 
 
@@ -220,6 +233,7 @@ _KNOWN_TABLES = frozenset(
         "map_catch_comments",
         "map_catch_likes",
         "custom_map_markers",
+        "suppressed_map_spots",
     }
 )
 
@@ -298,6 +312,18 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
             updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS suppressed_map_spots (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            spot_key    TEXT    NOT NULL UNIQUE,
+            lat         REAL    NOT NULL,
+            lng         REAL    NOT NULL,
+            type        TEXT    NOT NULL DEFAULT '',
+            name        TEXT    NOT NULL DEFAULT '',
+            suppressed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_suppressed_spots_bbox
+        ON suppressed_map_spots(lat, lng);
         """
     )
 
@@ -2020,4 +2046,102 @@ def delete_custom_marker(marker_id: int) -> bool:
         conn.close()
     if cur.rowcount > 0:
         _invalidate_custom_markers_cache()
+    return cur.rowcount > 0
+
+
+# Suppressed map spots (admin-hidden OSM/NOAA spots) -------------------------
+
+_SUPPRESSED_SPOTS_CACHE: Optional[list[dict[str, Any]]] = None
+_SUPPRESSED_SPOTS_TS: float = 0.0
+_SUPPRESSED_SPOTS_TTL = 300.0  # 5 minutes
+_SUPPRESSED_SPOTS_LOCK = _threading.Lock()
+
+
+def _invalidate_suppressed_spots_cache() -> None:
+    global _SUPPRESSED_SPOTS_TS
+    with _SUPPRESSED_SPOTS_LOCK:
+        _SUPPRESSED_SPOTS_TS = 0.0
+
+
+def get_suppressed_spots() -> list[dict[str, Any]]:
+    """Return all suppressed spots, from in-memory cache when fresh."""
+    global _SUPPRESSED_SPOTS_CACHE, _SUPPRESSED_SPOTS_TS
+    now = _time.monotonic()
+    with _SUPPRESSED_SPOTS_LOCK:
+        if _SUPPRESSED_SPOTS_CACHE is not None and now - _SUPPRESSED_SPOTS_TS < _SUPPRESSED_SPOTS_TTL:
+            return _SUPPRESSED_SPOTS_CACHE
+
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, spot_key, lat, lng, type, name, suppressed_by, created_at "
+            "FROM suppressed_map_spots ORDER BY id"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    result = [
+        {
+            "id": r["id"],
+            "spot_key": r["spot_key"],
+            "lat": r["lat"],
+            "lng": r["lng"],
+            "type": r["type"],
+            "name": r["name"],
+            "suppressed_by": r["suppressed_by"],
+            "created_at": r["created_at"],
+        }
+        for r in rows
+    ]
+    with _SUPPRESSED_SPOTS_LOCK:
+        _SUPPRESSED_SPOTS_CACHE = result
+        _SUPPRESSED_SPOTS_TS = _time.monotonic()
+    return result
+
+
+def add_suppressed_spot(
+    spot_key: str, lat: float, lng: float, type_: str, name: str, user_id: Optional[int]
+) -> dict[str, Any]:
+    """Suppress a spot by its key; returns the new row dict (or the existing one)."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO suppressed_map_spots "
+            "(spot_key, lat, lng, type, name, suppressed_by) VALUES (?, ?, ?, ?, ?, ?)",
+            (spot_key, lat, lng, type_, name.strip(), user_id),
+        )
+        row = conn.execute(
+            "SELECT id, spot_key, lat, lng, type, name, suppressed_by, created_at "
+            "FROM suppressed_map_spots WHERE spot_key = ?",
+            (spot_key,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    _invalidate_suppressed_spots_cache()
+    return {
+        "id": row["id"],
+        "spot_key": row["spot_key"],
+        "lat": row["lat"],
+        "lng": row["lng"],
+        "type": row["type"],
+        "name": row["name"],
+        "suppressed_by": row["suppressed_by"],
+        "created_at": row["created_at"],
+    }
+
+
+def remove_suppressed_spot(suppression_id: int) -> bool:
+    """Remove a suppression row by id; returns True if deleted."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "DELETE FROM suppressed_map_spots WHERE id = ?",
+            (suppression_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount > 0:
+        _invalidate_suppressed_spots_cache()
     return cur.rowcount > 0
