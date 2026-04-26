@@ -16,12 +16,17 @@
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox key → array of spot objects (all types)
     var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
-    var _SPOT_CACHE_MAX  = 48;       // cap to prevent unbounded sessionStorage growth
-    var _ssSaveTimer          = null; // debounce timer for sessionStorage writes
+    var _SPOT_CACHE_MAX  = 200;      // cap for localStorage budget (~10 MB typical limit)
+    var _ssSaveTimer          = null; // debounce timer for localStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    // Adjacent-tile pre-fetch queue — background loads for N/S/E/W of the current view
+    var _prefetchQueue      = [];    // {s,w,n,e,key} objects waiting for background fetch
+    var _prefetchInFlight   = false; // whether a background fetch is running
+    var _PREFETCH_DELAY     = 5000;  // ms between background fetches (Overpass rate-limit)
+    var _PREFETCH_MAX_QUEUE = 8;     // max queued tiles (drops oldest if exceeded)
     // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
     // These layers clear and redraw on every fetch; caching the icon objects avoids
     // re-running L.divIcon() for every marker on every refresh.
@@ -41,11 +46,15 @@
     var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
-    var aiCache          = {};       // bbox-key+species → array of habitat features
+    var aiCache          = {};       // bbox-key → array of habitat features
     var _aiCacheKeys     = [];       // insertion-ordered keys for LRU eviction
     var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
+    var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
+    var _AI_LS_TTL       = 21600000;             // 6 hours in ms
+    var _AI_POLY_CAP     = 150;      // max polygon/polyline overlays rendered by AI layer
+    var _AI_POINT_CAP    = 60;       // max point-marker features rendered by AI layer
 
     // ─── Community / social state ─────────────────────────────────────────────
     var communityLayerOn  = false;   // whether community pins are visible
@@ -217,6 +226,7 @@
 
         // Layer groups — render order: AI picks → OSM structures
         aiPickLayer      = L.layerGroup().addTo(map);
+        _aiLsLoad();
         fishingSpotLayer = L.layerGroup().addTo(map);
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
@@ -373,33 +383,200 @@
         general:   { label: 'Habitat',     tip: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, marsh creek mouths.' }
     };
 
+    // Map filter pill data-type → API habitat_type parameter.
+    // Only habitat-relevant pill types are listed; structure-only types (pier,
+    // buoy, marina, ramp…) have no AI habitat equivalent and are omitted.
+    var _PILL_TO_HABITAT_TYPE = {
+        'reef':       'reef',
+        'oyster_reef':'estuary',
+        'wreck':      'reef',
+        'saltmarsh':  'estuary',
+        'seagrass':   'grassflat',
+        'grass_flat': 'grassflat',
+        'mangrove':   'mangrove',
+        'channel':    'estuary',
+        'inlet':      'estuary',
+        'shoal':      'bottom',
+        'tidal_flat': 'bottom',
+        'tidalflat':  'bottom',
+        'beach':      'surf',
+        'kelp':       'kelp',
+        'bay':        'general',
+    };
+
+    // Map filter pill data-type → AI osmType used in renderAIHabitatSpots.
+    var _PILL_TO_AI_OSMT = {
+        'reef':       'reef',
+        'oyster_reef':'reef',
+        'wreck':      'wreck',
+        'saltmarsh':  'saltmarsh',
+        'seagrass':   'seagrass',
+        'grass_flat': 'seagrass',
+        'mangrove':   'mangrove',
+        'channel':    'channel',
+        'inlet':      'channel',
+        'shoal':      'shoal',
+        'tidal_flat': 'tidalflat',
+        'tidalflat':  'tidalflat',
+        'beach':      'beach',
+        'kelp':       'seagrass',
+        'bay':        'bay',
+    };
+
+    // Symbols for AI pick osmTypes that don't have SPOT_LABELS entries
+    var _AI_OSMT_SYM = {
+        seagrass:  '≋',  // matches grass_flat
+        channel:   '⇢',  // matches inlet
+        tidalflat: '⊟',  // matches tidal_flat
+        bay:       '〜',
+        general:   '✦',
+    };
 
     function makeAIPickIcon(osmType) {
         var cacheKey = 'ai|' + osmType;
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
-        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + color + '"></span>';
-        var icon  = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [16, 16], iconAnchor: [8, 8] });
+        var sym   = (SPOT_LABELS && SPOT_LABELS[osmType]) || _AI_OSMT_SYM[osmType] || '✦';
+        var html  =
+            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';' +
+            'display:flex;align-items:center;justify-content:center;' +
+            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+            'font-size:10px;line-height:1">' + sym + '</span>';
+        var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [18, 18], iconAnchor: [9, 9] });
         _spotIconCache[cacheKey] = icon;
         return icon;
     }
 
+    // Render AI habitat picks, filtering to osmTypes that match active filter pills.
+    // When no pills are active, renders everything from the general query.
     function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
+
+        // Build the set of AI osmTypes wanted by the active filters.
+        var wantedOsmTypes = null;  // null = show all
+        if (activeSpotTypes.length) {
+            wantedOsmTypes = {};
+            var hasHabitatPill = false;
+            activeSpotTypes.forEach(function (t) {
+                var ot = _PILL_TO_AI_OSMT[t];
+                if (ot) { wantedOsmTypes[ot] = true; hasHabitatPill = true; }
+            });
+            // Only structure pills active (pier/buoy/etc) — AI has nothing to show.
+            if (!hasHabitatPill) { return; }
+        }
+
+        // Filter to wanted osmTypes; partition into polygon ways and point nodes.
+        var _PROX   = 0.002;
+        var polys   = [];
+        var rawPts  = [];
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
+            if (wantedOsmTypes && !wantedOsmTypes[f.osmType || 'general']) return;
+            if (f.geometry && f.geometry.length >= 3) {
+                polys.push(f);
+            } else {
+                rawPts.push(f);
+            }
+        });
+
+        // Point-vs-point proximity dedup (adjacent polygon patches are distinct so
+        // they skip this; each is already a separate OSM way).
+        var dedupedPts = [];
+        rawPts.forEach(function (f) {
+            for (var i = 0; i < dedupedPts.length; i++) {
+                if (Math.abs(dedupedPts[i].lat - f.lat) < _PROX &&
+                    Math.abs(dedupedPts[i].lng - f.lng) < _PROX) return;
+            }
+            dedupedPts.push(f);
+        });
+
+        // Render polygon/polyline overlays first, up to _AI_POLY_CAP.
+        // Pre-compute viewport span for the large-feature fill check below.
+        var _vBounds     = map ? map.getBounds() : null;
+        var _viewLatSpan = _vBounds ? (_vBounds.getNorth() - _vBounds.getSouth()) : 1;
+        var _viewLngSpan = _vBounds ? (_vBounds.getEast()  - _vBounds.getWest())  : 1;
+
+        var renderPolys = polys.slice(0, _AI_POLY_CAP);
+        renderPolys.forEach(function (f) {
             var osmType = f.osmType || 'general';
             var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
-            var m       = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            var color   = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
+            var geom    = f.geometry;
+            var first   = geom[0];
+            var last    = geom[geom.length - 1];
+            var closed  = Math.abs(first[0] - last[0]) < 0.00002 &&
+                          Math.abs(first[1] - last[1]) < 0.00002;
+
+            // Compute the polygon's lat/lng extent to decide fill opacity.
+            // Very large features (bay, coastline segment) that span ≥60% of the
+            // viewport in either axis get outline-only treatment so they don't
+            // wash out the underlying tiles.
+            var minLat = Infinity, maxLat = -Infinity;
+            var minLng = Infinity, maxLng = -Infinity;
+            geom.forEach(function (c) {
+                if (c[0] < minLat) minLat = c[0]; if (c[0] > maxLat) maxLat = c[0];
+                if (c[1] < minLng) minLng = c[1]; if (c[1] > maxLng) maxLng = c[1];
+            });
+            var isHuge = (maxLat - minLat) > _viewLatSpan * 0.6 ||
+                         (maxLng - minLng) > _viewLngSpan * 0.6;
+
+            var poly    = (closed && !isHuge)
+                ? L.polygon(geom, {
+                    color: color, weight: 2, opacity: 0.85,
+                    fillColor: color, fillOpacity: 0.25,
+                    className: 'fmap-habitat-poly'
+                  })
+                : L.polyline(geom, {
+                    color: color, weight: 3, opacity: 0.75,
+                    className: 'fmap-habitat-poly'
+                  });
+            poly.bindTooltip(
+                '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
+                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
+            );
+            aiPickLayer.addLayer(poly);
+        });
+
+        // Render point markers, up to _AI_POINT_CAP, skipping any point whose
+        // lat/lng sits within _PROX of a polygon centroid already rendered
+        // (avoids a dot marker stacked on top of its own polygon outline).
+        var pointCount = 0;
+        dedupedPts.forEach(function (f) {
+            if (pointCount >= _AI_POINT_CAP) return;
+            for (var j = 0; j < renderPolys.length; j++) {
+                if (Math.abs(renderPolys[j].lat - f.lat) < _PROX &&
+                    Math.abs(renderPolys[j].lng - f.lng) < _PROX) return;
+            }
+            var osmType = f.osmType || 'general';
+            var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
+            var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            var m = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
                 '<span style="opacity:.8">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
+            pointCount++;
         });
+    }
+
+    // Which API habitat_type strings to fetch, based on active filter pills.
+    // No pills → query 'general' (all common habitat types in one OSM query).
+    // Habitat pills → query the matching type(s).
+    // Only structure pills → null (nothing for AI to show).
+    function _activeHabitatTypes() {
+        if (!activeSpotTypes.length) return ['general'];
+        var seen = {};
+        var types = [];
+        activeSpotTypes.forEach(function (t) {
+            var ht = _PILL_TO_HABITAT_TYPE[t];
+            if (ht && !seen[ht]) { seen[ht] = true; types.push(ht); }
+        });
+        return types.length ? types : null;
     }
 
     function queryAIHabitatSpots() {
@@ -410,12 +587,20 @@
             return;
         }
 
+        var habitatTypes = _activeHabitatTypes();
+        if (!habitatTypes) {
+            // Only structure-type pills active — nothing for AI to show
+            aiPickLayer.clearLayers();
+            return;
+        }
+
         var b   = map.getBounds();
         var s   = Math.floor(b.getSouth() * 4) / 4;
         var w   = Math.floor(b.getWest()  * 4) / 4;
         var n   = Math.ceil(b.getNorth()  * 4) / 4;
         var e   = Math.ceil(b.getEast()   * 4) / 4;
-        var key = s + ',' + w + ',' + n + ',' + e;
+        // Cache key includes the habitat types so changing filters busts the cache.
+        var key = s + ',' + w + ',' + n + ',' + e + ':' + habitatTypes.slice().sort().join(',');
 
         if (aiCache[key]) { renderAIHabitatSpots(aiCache[key]); return; }
 
@@ -423,22 +608,36 @@
         if (_aiAbort) _aiAbort.abort();
         _aiAbort = new AbortController();
         var thisAiGen = ++_aiReqGen;
+        var thisKey   = key;
 
-        var url = '/api/v1/geo/habitats?south=' + s + '&west=' + w +
-                  '&north=' + n + '&east=' + e +
-                  '&habitat_type=general';
+        // Fetch all needed habitat types in parallel, then merge results.
+        var bboxParams = 'south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
+        var promises = habitatTypes.map(function (ht) {
+            var url = '/api/v1/geo/habitats?' + bboxParams + '&habitat_type=' + ht;
+            return fetch(url, { signal: _aiAbort.signal })
+                .then(function (r) { return r.ok ? r.json() : { data: { features: [] } }; })
+                .then(function (data) {
+                    return ((data.data && data.data.features) || []).map(function (f) {
+                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general', score: f.score || 0, geometry: f.geometry || null };
+                    });
+                })
+                .catch(function () { return []; });
+        });
 
-        fetch(url, { signal: _aiAbort.signal })
-        .then(function (r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        })
-        .then(function (data) {
+        Promise.all(promises)
+        .then(function (arrays) {
             if (thisAiGen !== _aiReqGen) return;
-            var features = ((data.data && data.data.features) || []).map(function (f) {
-                return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general' };
+            // Merge and deduplicate by lat+lng (same node can appear in multiple types)
+            var seen = {};
+            var features = [];
+            arrays.forEach(function (arr) {
+                arr.forEach(function (f) {
+                    var dedupeKey = Math.round(f.lat * 10000) + ',' + Math.round(f.lng * 10000);
+                    if (!seen[dedupeKey]) { seen[dedupeKey] = true; features.push(f); }
+                });
             });
-            _aiCachePut(key, features);
+            features.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
+            _aiCachePut(thisKey, features);
             renderAIHabitatSpots(features);
         })
         .catch(function (err) {
@@ -462,6 +661,42 @@
             _aiCacheKeys.push(key);
         }
         aiCache[key] = data;
+        // Persist to localStorage (best-effort, skip if quota exceeded)
+        try {
+            var raw = localStorage.getItem(_AI_LS_KEY);
+            var store = (raw ? JSON.parse(raw) : null) || {};
+            store[key] = { ts: Date.now(), d: data };
+            // Evict oldest entries to stay under quota
+            var keys = Object.keys(store);
+            if (keys.length > _AI_CACHE_MAX) {
+                keys.sort(function (a, b) { return (store[a].ts || 0) - (store[b].ts || 0); });
+                keys.slice(0, keys.length - _AI_CACHE_MAX).forEach(function (k) { delete store[k]; });
+            }
+            localStorage.setItem(_AI_LS_KEY, JSON.stringify(store));
+        } catch (_e) {}
+    }
+
+    function _aiLsLoad() {
+        try {
+            var raw = localStorage.getItem(_AI_LS_KEY);
+            if (!raw) return;
+            var saved = JSON.parse(raw);
+            if (!saved || typeof saved !== 'object') return;
+            var now = Date.now();
+            Object.keys(saved).forEach(function (k) {
+                var entry = saved[k];
+                if (entry && entry.ts && now - entry.ts < _AI_LS_TTL && Array.isArray(entry.d)) {
+                    // Populate in-memory cache directly — skip localStorage write to avoid loop
+                    if (!Object.prototype.hasOwnProperty.call(aiCache, k)) {
+                        if (_aiCacheKeys.length >= _AI_CACHE_MAX) {
+                            delete aiCache[_aiCacheKeys.shift()];
+                        }
+                        _aiCacheKeys.push(k);
+                    }
+                    aiCache[k] = entry.d;
+                }
+            });
+        } catch (_e) {}
     }
 
     // Overlay icon cache — returns a cached L.divIcon, creating it on first use.
@@ -495,7 +730,7 @@
         wreck:        { label: 'Wreck',             color: '#d97706', habitat: false, minZoom: 8  },
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
-        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 10 },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 9  },
         point:        { label: 'Point / Headland',  color: '#60a5fa', habitat: false, minZoom: 9  },
         beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
@@ -503,12 +738,12 @@
         saltmarsh:    { label: 'Saltmarsh Edge',    color: '#34d399', habitat: true,  minZoom: 9  },
         mangrove:     { label: 'Mangrove',          color: '#16a34a', habitat: true,  minZoom: 9  },
         kelp:         { label: 'Kelp Forest',       color: '#4ade80', habitat: true,  minZoom: 9  },
-        buoy:         { label: 'Navigation Buoy',   color: '#f43f5e', habitat: false, minZoom: 10 },
+        buoy:         { label: 'Navigation Buoy',   color: '#f43f5e', habitat: false, minZoom: 9  },
         fishing:      { label: 'Fishing Spot',      color: '#2dd4bf', habitat: false, minZoom: 9  },
-        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 11 },
-        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 10 },
+        fishing_shop: { label: 'Bait & Tackle',     color: '#fb923c', habitat: false, minZoom: 9  },
+        boat_ramp:    { label: 'Boat Ramp',         color: '#0ea5e9', habitat: false, minZoom: 9  },
         dive_site:    { label: 'Dive Site',         color: '#0284c7', habitat: false, minZoom: 10 },
-        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false, minZoom: 11 }
+        seawall:      { label: 'Seawall',           color: '#6b7280', habitat: false, minZoom: 9  }
     };
 
     // Habitat area types rendered as filled polygon overlays instead of point markers.
@@ -558,7 +793,12 @@
         fishing_shop: '⚙',
         boat_ramp:    '▽',
         dive_site:    '✚',
-        seawall:      '▬'
+        seawall:      '▬',
+        grass_flat:   '≋',
+        tidal_flat:   '⊟',
+        saltmarsh:    'Ψ',
+        mangrove:     '⊕',
+        kelp:         '⇑'
     };
 
     // Inline SVG path content rendered inside the 22px circular structure markers.
@@ -644,7 +884,56 @@
 
         // Seawall: thick horizontal bar = wall face / revetment
         seawall:
-            '<rect x="1.5" y="5" width="11" height="4" rx="0.5" fill="rgba(255,255,255,0.9)" stroke="none"/>'
+            '<rect x="1.5" y="5" width="11" height="4" rx="0.5" fill="rgba(255,255,255,0.9)" stroke="none"/>',
+
+        // Oyster reef: overlapping arc-circles suggesting clustered shell mounds
+        oyster_reef:
+            '<circle cx="4.5" cy="8" r="2.8" stroke-width="1.4" fill="none"/>' +
+            '<circle cx="8.5" cy="6.5" r="2.5" stroke-width="1.4" fill="none" opacity="0.9"/>' +
+            '<circle cx="7" cy="10.5" r="2.2" stroke-width="1.4" fill="none" opacity="0.8"/>' +
+            '<circle cx="10.5" cy="9" r="2" stroke-width="1.3" fill="none" opacity="0.7"/>',
+
+        // Inlet / Channel: two converging shoreline curves with a tidal-flow arrow
+        inlet:
+            '<path d="M1.5 1.5 Q3 6 1.5 12" stroke-width="1.8" fill="none"/>' +
+            '<path d="M12.5 1.5 Q11 6 12.5 12" stroke-width="1.8" fill="none"/>' +
+            '<path d="M4.5 7 L9.5 7" stroke-width="1.3" stroke-dasharray="1.5,1.5" opacity="0.8"/>' +
+            '<path d="M8 5.5 L10 7 L8 8.5" stroke-width="1.3" fill="none"/>',
+
+        // Grass flat: three sinuous seagrass blades rising from the seafloor
+        grass_flat:
+            '<path d="M3 13.5 Q2 10 3.5 6.5 Q5 3 3.5 1" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7 13.5 Q6 9.5 7.5 5.5 Q9 2 7.5 1" stroke-width="1.5" fill="none"/>' +
+            '<path d="M11 13.5 Q10 10 11.5 6.5 Q13 3 11.5 1" stroke-width="1.5" fill="none"/>',
+
+        // Tidal flat: concave basin arc (waterline edge) with stipple dots = exposed mud/sand
+        tidal_flat:
+            '<path d="M1.5 5 Q7 12 12.5 5" stroke-width="2" fill="none"/>' +
+            '<circle cx="4.5" cy="10.5" r="0.8" fill="rgba(255,255,255,0.82)" stroke="none"/>' +
+            '<circle cx="7" cy="12.5" r="0.8" fill="rgba(255,255,255,0.82)" stroke="none"/>' +
+            '<circle cx="9.5" cy="10.5" r="0.8" fill="rgba(255,255,255,0.82)" stroke="none"/>',
+
+        // Saltmarsh: three reed stems of varying heights above a wavy waterline
+        saltmarsh:
+            '<line x1="3.5" y1="12.5" x2="3.5" y2="5" stroke-width="1.6"/>' +
+            '<line x1="7" y1="12.5" x2="7" y2="1.5" stroke-width="1.6"/>' +
+            '<line x1="10.5" y1="12.5" x2="10.5" y2="4" stroke-width="1.6"/>' +
+            '<path d="M1 12.5 Q4 11 7 12.5 Q10 14 13 12.5" stroke-width="1.2" fill="none" opacity="0.7"/>',
+
+        // Mangrove: solid canopy disc + trunk + spreading prop roots
+        mangrove:
+            '<circle cx="7" cy="3.2" r="2.5" fill="rgba(255,255,255,0.85)" stroke="none"/>' +
+            '<line x1="7" y1="5.7" x2="7" y2="8.5" stroke-width="1.5"/>' +
+            '<path d="M7 8.5 L4 13" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7 8.5 L10 13" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7 9.5 L5.5 13" stroke-width="1" opacity="0.65" fill="none"/>' +
+            '<path d="M7 9.5 L8.5 13" stroke-width="1" opacity="0.65" fill="none"/>',
+
+        // Kelp forest: three sinuous stipes undulating from seafloor to surface
+        kelp:
+            '<path d="M4 13.5 Q3 10 4.5 7 Q6 4 4.5 1.5" stroke-width="1.5" fill="none"/>' +
+            '<path d="M7.5 13.5 Q6.5 9.5 8 6.5 Q9.5 3.5 8 1.5" stroke-width="1.5" fill="none"/>' +
+            '<path d="M11 13.5 Q10 10 11.5 7 Q13 4 11.5 1.5" stroke-width="1.5" fill="none"/>'
     };
 
     // Fishing context tip shown in each structure's tooltip
@@ -693,26 +982,28 @@
         var sz  = isHabitat ? 17 : 22;
         var br  = isHabitat ? '3px' : '50%';
         var rot = isHabitat ? 'transform:rotate(45deg)' : '';
+        // Habitat diamonds counter-rotate inner content so icons stay upright.
+        var innerRot = isHabitat ? 'transform:rotate(-45deg);' : '';
+        var svgW = isHabitat ? 10 : 14;
         var inner = '';
-        if (!isHabitat) {
-            var svgPaths = SPOT_SVGS[type];
-            if (svgPaths) {
-                // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
-                // stroke/fill inherited from the <svg> root; individual paths may
-                // override fill for solid shapes.
-                inner = '<svg viewBox="0 0 14 14" width="14" height="14"' +
-                        ' stroke="rgba(255,255,255,0.95)" fill="none"' +
-                        ' stroke-linecap="round" stroke-linejoin="round"' +
-                        ' aria-hidden="true" style="pointer-events:none;flex-shrink:0">' +
-                        svgPaths + '</svg>';
-            } else {
-                // Fallback for any type not yet in SPOT_SVGS
-                var lbl = SPOT_LABELS[type] || '';
-                if (lbl) {
-                    inner = '<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.97);' +
-                            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-                            'line-height:1;pointer-events:none;">' + lbl + '</span>';
-                }
+        var svgPaths = SPOT_SVGS[type];
+        if (svgPaths) {
+            // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
+            // stroke/fill inherited from the <svg> root; individual paths may
+            // override fill for solid shapes.
+            inner = '<svg viewBox="0 0 14 14" width="' + svgW + '" height="' + svgW + '"' +
+                    ' stroke="rgba(255,255,255,0.95)" fill="none"' +
+                    ' stroke-linecap="round" stroke-linejoin="round"' +
+                    ' aria-hidden="true" style="' + innerRot + 'pointer-events:none;flex-shrink:0">' +
+                    svgPaths + '</svg>';
+        } else {
+            // Fallback for any type not yet in SPOT_SVGS
+            var lbl = SPOT_LABELS[type] || '';
+            if (lbl) {
+                inner = '<span style="font-size:' + (isHabitat ? '10' : '13') + 'px;font-weight:400;' +
+                        'color:rgba(255,255,255,0.97);' +
+                        'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+                        'line-height:1;pointer-events:none;' + innerRot + '">' + lbl + '</span>';
             }
         }
         var html = '<span class="fmap-spot-dot" style="background:' + color +
@@ -738,7 +1029,8 @@
             : '';
         var currentZoom = map ? Math.floor(map.getZoom()) : 8;
         var typeKey  = activeSpotTypes.length ? ':f' + activeSpotTypes.slice().sort().join(',') : '';
-        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom + typeKey;
+        var admKey   = adminEditMode ? ':adm' : '';
+        var renderKey = (cacheKey || '') + ':' + vbKey + ':z' + currentZoom + typeKey + admKey;
 
         if (renderKey === _lastRenderedSpotKey && fishingSpotLayer.getLayers().length) {
             return;
@@ -786,7 +1078,9 @@
         }).forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || 'No details available';
-            var srcLabel = f.source === 'noaa' ? 'NOAA ENC' : 'OpenStreetMap';
+            var srcLabel = f.source === 'noaa' ? 'NOAA ENC'
+                        : f.source === 'esri' ? 'NOAA/USACE'
+                        : 'OpenStreetMap';
             var coordStr = f.lat && f.lng
                 ? (Math.round(f.lat * 10000) / 10000) + ', ' + (Math.round(f.lng * 10000) / 10000)
                 : '';
@@ -845,6 +1139,13 @@
             m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
+            // In admin mode, clicking an OSM/NOAA spot offers Hide + Override actions
+            (function (spot) {
+                m.on('click', function () {
+                    if (!adminEditMode) return;
+                    _openAdminSpotActions(spot, m);
+                });
+            }(f));
             fishingSpotLayer.addLayer(m);
         });
 
@@ -1080,6 +1381,7 @@
                 _ssSave();
                 renderFishingSpots(spots, key);
                 // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
+                _scheduleAdjacentPrefetch(s, w, n, e);
             })
             .catch(function (err) {
                 if (err.name === 'AbortError') { hideStructLoading(); return; }
@@ -1107,18 +1409,27 @@
         var seamark  = tags['seamark:type'] || '';
 
         if (natural === 'wetland') {
-            if (wetland === 'seagrass')  return 'grass_flat';
-            if (wetland === 'saltmarsh') return 'saltmarsh';
-            if (wetland === 'mangrove')  return 'mangrove';
-            if (wetland === 'tidalflat') return 'tidal_flat';
-            if (wetland === 'kelp')      return 'kelp';
+            if (wetland === 'seagrass' || wetland === 'seagrass_bed' || wetland === 'seagrass_meadow') return 'grass_flat';
+            if (wetland === 'saltmarsh' || wetland === 'salt_marsh') return 'saltmarsh';
+            if (wetland === 'mangrove' || wetland === 'mangrove_swamp') return 'mangrove';
+            if (wetland === 'tidalflat' || wetland === 'tidal_flat' || wetland === 'tidal_flats' || wetland === 'mudflat') return 'tidal_flat';
+            if (wetland === 'kelp') return 'kelp';
             return null;
         }
-        if (natural === 'kelp')      return 'kelp';
-        if (natural === 'mud')       return 'tidal_flat';
-        if (natural === 'beach')     return 'beach';
-        if (natural === 'bay')       return 'inlet';
-        if (natural === 'reef')      return 'reef';
+        if (natural === 'kelp' || natural === 'kelp_forest') return 'kelp';
+        if (natural === 'seagrass')   return 'grass_flat';
+        if (natural === 'mangrove')   return 'mangrove';
+        if (natural === 'saltmarsh' || natural === 'salt_marsh') return 'saltmarsh';
+        if (natural === 'mud')        return 'tidal_flat';
+        if (natural === 'beach')      return 'beach';
+        if (natural === 'bay')        return 'inlet';
+        if (natural === 'estuary')    return 'inlet';
+        if (natural === 'reef') {
+            var reefSub = tags['reef:type'] || tags.reef || '';
+            if (reefSub === 'oyster' || reefSub === 'oyster_reef') return 'oyster_reef';
+            return 'reef';
+        }
+        if (natural === 'coral_reef' || natural === 'coral') return 'reef';
         if (natural === 'shoal' || natural === 'rock' || natural === 'sandbank') return 'shoal';
         if (natural === 'cape' || natural === 'headland' ||
             natural === 'peninsula' || natural === 'promontory') return 'point';
@@ -1127,7 +1438,9 @@
         if (tags.harbour === 'yes') return 'inlet';
 
         if (tags.landuse === 'aquaculture' &&
-            (tags.produce === 'oyster' || tags.product === 'oysters')) {
+            (tags.produce === 'oyster' || tags.produce === 'oysters' ||
+             tags.product === 'oyster' || tags.product === 'oysters' ||
+             tags.aquaculture === 'oyster' || tags.aquaculture === 'oysters')) {
             return 'oyster_reef';
         }
 
@@ -1136,16 +1449,24 @@
         if (seamark === 'rock_awash' || seamark === 'underwater_rock' ||
             seamark === 'rock_submerged' || seamark === 'obstruction') return 'shoal';
         if (seamark === 'artificial_reef' || tags.landuse === 'artificial_reef') return 'reef';
+        if (seamark === 'dive_site') return 'dive_site';
+        if (seamark === 'kelp')      return 'kelp';
+
         if ((seamark && seamark.indexOf('beacon') === 0) ||
             seamark === 'light_major' || seamark === 'light_minor') return 'buoy';
+        if (seamark === 'buoy_special_purpose' || seamark === 'buoy_installation' ||
+            seamark === 'mooring' || seamark === 'beacon_special_purpose') return 'buoy';
+        if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
 
-        if (waterway === 'tidal_channel' || waterway === 'river' ||
-            waterway === 'canal'         || waterway === 'stream') return 'inlet';
+        if (waterway === 'tidal_channel' || waterway === 'tidal_creek' ||
+            waterway === 'river' || waterway === 'canal' || waterway === 'stream') return 'inlet';
         if (waterway === 'weir'      || waterway === 'dam'       ||
             waterway === 'waterfall' || waterway === 'rapids'    ||
             waterway === 'fish_pass' || waterway === 'lock') return 'jetty';
+        if (waterway === 'dock')     return 'pier';
+        if (waterway === 'boatyard') return 'marina';
 
-        if (manMade === 'pier' || tags.leisure === 'pier') {
+        if (manMade === 'pier' || manMade === 'wharf' || manMade === 'fishing_platform' || tags.leisure === 'pier') {
             if (tags.access === 'private' || tags.access === 'no') return null;
             return 'pier';
         }
@@ -1157,15 +1478,24 @@
 
         if (tags.bridge === 'yes' && tags.highway) return 'bridge';
 
-        if (tags.amenity === 'marina' || tags.leisure === 'marina') return 'marina';
-        if (tags.amenity === 'boat_ramp' || tags.leisure === 'slipway') return 'boat_ramp';
-        if (tags.leisure === 'fishing' || tags.leisure === 'fishing_stand') return 'fishing';
-        if (tags.sport === 'scuba_diving' || tags.sport === 'diving') return 'dive_site';
-        if (tags.sport === 'fishing') return 'fishing';
-        if (tags.fishing === 'yes' && tags.amenity !== 'boat_ramp' && tags.leisure !== 'slipway') return 'fishing';
+        var amenity = tags.amenity || '';
+        var leisure = tags.leisure || '';
+        var shop    = tags.shop    || '';
+        var sport   = tags.sport   || '';
 
-        if (seamark && seamark.indexOf('buoy') === 0) return 'buoy';
-        if (tags.shop === 'fishing') return 'fishing_shop';
+        if (amenity === 'marina' || amenity === 'harbour') return 'marina';
+        if (amenity === 'boat_ramp')   return 'boat_ramp';
+        if (amenity === 'fishing_pier') return 'pier';
+        if (leisure === 'marina')      return 'marina';
+        if (leisure === 'slipway')     return 'boat_ramp';
+        if (leisure === 'fishing' || leisure === 'fishing_stand' || leisure === 'fishing_pond') return 'fishing';
+        if (leisure === 'beach')       return 'beach';
+        if (sport === 'scuba_diving' || sport === 'diving' || sport === 'underwater_diving') return 'dive_site';
+        if (sport === 'fishing')       return 'fishing';
+        if (tags.fishing === 'yes' && amenity !== 'boat_ramp' && leisure !== 'slipway') return 'fishing';
+        if (shop === 'fishing' || shop === 'fishing_tackle' || shop === 'bait' ||
+            shop === 'tackle'  || shop === 'bait_and_tackle' || shop === 'boat_chandler') return 'fishing_shop';
+        if (amenity === 'fishing_shop' || amenity === 'fish_market') return 'fishing_shop';
 
         return null;
     }
@@ -1184,34 +1514,51 @@
         // ── Habitat area types (need full ring geometry) ──────────────────
         if (has('grass_flat')) {
             h.push('way["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
-                   'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');');
+                   'node["natural"="wetland"]["wetland"="seagrass"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="seagrass_bed"](' + bbox + ');',
+                   'way["natural"="seagrass"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="seagrass_meadow"](' + bbox + ');');
         }
         if (has('saltmarsh')) {
-            h.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');');
+            h.push('way["natural"="wetland"]["wetland"="saltmarsh"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="salt_marsh"](' + bbox + ');',
+                   'way["natural"="saltmarsh"](' + bbox + ');',
+                   'way["natural"="salt_marsh"](' + bbox + ');');
         }
         if (has('mangrove')) {
-            h.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');');
+            h.push('way["natural"="wetland"]["wetland"="mangrove"](' + bbox + ');',
+                   'way["natural"="mangrove"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="mangrove_swamp"](' + bbox + ');');
         }
         if (has('tidal_flat')) {
             h.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="tidal_flat"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="mudflat"](' + bbox + ');',
                    'way["natural"="mud"](' + bbox + ');');
         }
         if (has('beach')) {
             h.push('way["natural"="beach"](' + bbox + ');',
                    'node["natural"="beach"](' + bbox + ');',
+                   'way["leisure"="beach"](' + bbox + ');',
                    'way["natural"="sand"]["access"!="private"](' + bbox + ');');
         }
         if (has('oyster_reef')) {
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
-                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');');
+                   'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["aquaculture"="oyster"](' + bbox + ');',
+                   'way["natural"="reef"]["reef:type"="oyster"](' + bbox + ');',
+                   'way["natural"="reef"]["reef"="oyster"](' + bbox + ');');
         }
         if (has('kelp')) {
             h.push('way["natural"="wetland"]["wetland"="kelp"](' + bbox + ');',
-                   'way["natural"="kelp"](' + bbox + ');');
+                   'way["natural"="kelp"](' + bbox + ');',
+                   'way["natural"="kelp_forest"](' + bbox + ');',
+                   'node["seamark:type"="kelp"](' + bbox + ');');
         }
         if (has('inlet')) {
             h.push('way["waterway"="tidal_channel"](' + bbox + ');',
+                   'way["waterway"="tidal_creek"](' + bbox + ');',
                    'way["waterway"="river"](' + bbox + ');',
                    'way["waterway"="canal"](' + bbox + ');',
                    'node["waterway"="stream"](' + bbox + ');',
@@ -1219,13 +1566,19 @@
                    'node["harbour"="yes"](' + bbox + ');',
                    'way["harbour"="yes"](' + bbox + ');',
                    'node["natural"="bay"](' + bbox + ');',
-                   'way["natural"="bay"](' + bbox + ');');
+                   'way["natural"="bay"](' + bbox + ');',
+                   'node["natural"="estuary"](' + bbox + ');',
+                   'way["natural"="estuary"](' + bbox + ');');
         }
 
         // ── Structure point/linear types (centroid only) ──────────────────
         if (has('reef')) {
             s.push('node["natural"="reef"](' + bbox + ');',
                    'way["natural"="reef"](' + bbox + ');',
+                   'node["natural"="coral_reef"](' + bbox + ');',
+                   'way["natural"="coral_reef"](' + bbox + ');',
+                   'node["natural"="coral"](' + bbox + ');',
+                   'way["natural"="coral"](' + bbox + ');',
                    'node["seamark:type"="artificial_reef"](' + bbox + ');',
                    'way["seamark:type"="artificial_reef"](' + bbox + ');',
                    'node["landuse"="artificial_reef"](' + bbox + ');',
@@ -1252,8 +1605,16 @@
             // Only publicly accessible piers — private docks are excluded
             s.push('node["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
                    'way["man_made"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["man_made"="wharf"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'way["man_made"="wharf"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["man_made"="fishing_platform"](' + bbox + ');',
+                   'way["man_made"="fishing_platform"](' + bbox + ');',
                    'node["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
-                   'way["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');');
+                   'way["leisure"="pier"]["access"!="private"]["access"!="no"](' + bbox + ');',
+                   'node["waterway"="dock"](' + bbox + ');',
+                   'way["waterway"="dock"](' + bbox + ');',
+                   'node["amenity"="fishing_pier"](' + bbox + ');',
+                   'way["amenity"="fishing_pier"](' + bbox + ');');
         }
         if (has('jetty')) {
             s.push('node["man_made"="jetty"](' + bbox + ');',
@@ -1274,14 +1635,21 @@
                    'node["waterway"="lock"](' + bbox + ');');
         }
         if (has('bridge')) {
-            s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');');
+            s.push('way["bridge"="yes"]["highway"~"^(primary|secondary|tertiary|trunk|unclassified|residential|service)$"](' + bbox + ');',
+                   'way["bridge"="yes"]["highway"="footway"](' + bbox + ');',
+                   'way["bridge"="yes"]["highway"="path"](' + bbox + ');',
+                   'way["bridge"="yes"]["highway"="pedestrian"](' + bbox + ');');
         }
         if (has('marina')) {
             s.push('node["amenity"="marina"](' + bbox + ');',
                    'way["amenity"="marina"](' + bbox + ');',
+                   'node["amenity"="harbour"](' + bbox + ');',
+                   'way["amenity"="harbour"](' + bbox + ');',
                    'node["leisure"="marina"](' + bbox + ');',
                    'way["leisure"="marina"](' + bbox + ');',
-                   'relation["leisure"="marina"](' + bbox + ');');
+                   'relation["leisure"="marina"](' + bbox + ');',
+                   'node["waterway"="boatyard"](' + bbox + ');',
+                   'way["waterway"="boatyard"](' + bbox + ');');
         }
         if (has('point')) {
             s.push('node["natural"="cape"](' + bbox + ');',
@@ -1296,6 +1664,9 @@
             s.push('node["leisure"="fishing"](' + bbox + ');',
                    'way["leisure"="fishing"](' + bbox + ');',
                    'node["leisure"="fishing_stand"](' + bbox + ');',
+                   'way["leisure"="fishing_stand"](' + bbox + ');',
+                   'node["leisure"="fishing_pond"](' + bbox + ');',
+                   'way["leisure"="fishing_pond"](' + bbox + ');',
                    'node["fishing"="yes"]["leisure"!="slipway"]["amenity"!="boat_ramp"](' + bbox + ');',
                    'node["sport"="fishing"](' + bbox + ');');
         }
@@ -1304,16 +1675,29 @@
                    'node["seamark:type"="buoy_cardinal"](' + bbox + ');',
                    'node["seamark:type"="buoy_safe_water"](' + bbox + ');',
                    'node["seamark:type"="buoy_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="buoy_special_purpose"](' + bbox + ');',
+                   'node["seamark:type"="buoy_installation"](' + bbox + ');',
+                   'node["seamark:type"="mooring"](' + bbox + ');',
                    'node["seamark:type"="beacon_lateral"](' + bbox + ');',
                    'node["seamark:type"="beacon_cardinal"](' + bbox + ');',
                    'node["seamark:type"="beacon_safe_water"](' + bbox + ');',
                    'node["seamark:type"="beacon_isolated_danger"](' + bbox + ');',
+                   'node["seamark:type"="beacon_special_purpose"](' + bbox + ');',
                    'node["seamark:type"="light_major"](' + bbox + ');',
                    'node["seamark:type"="light_minor"](' + bbox + ');',
                    'node["man_made"="buoy"](' + bbox + ');');
         }
         if (has('fishing_shop')) {
-            s.push('node["shop"="fishing"](' + bbox + ');');
+            s.push('node["shop"="fishing"](' + bbox + ');',
+                   'way["shop"="fishing"](' + bbox + ');',
+                   'node["shop"="fishing_tackle"](' + bbox + ');',
+                   'node["shop"="bait"](' + bbox + ');',
+                   'node["shop"="tackle"](' + bbox + ');',
+                   'node["shop"="bait_and_tackle"](' + bbox + ');',
+                   'node["shop"="boat_chandler"](' + bbox + ');',
+                   'way["shop"="boat_chandler"](' + bbox + ');',
+                   'node["amenity"="fish_market"](' + bbox + ');',
+                   'node["amenity"="fishing_shop"](' + bbox + ');');
         }
         if (has('boat_ramp')) {
             s.push('node["amenity"="boat_ramp"](' + bbox + ');',
@@ -1324,7 +1708,9 @@
         if (has('dive_site')) {
             s.push('node["sport"="scuba_diving"](' + bbox + ');',
                    'node["sport"="diving"](' + bbox + ');',
-                   'way["sport"="scuba_diving"](' + bbox + ');');
+                   'node["sport"="underwater_diving"](' + bbox + ');',
+                   'way["sport"="scuba_diving"](' + bbox + ');',
+                   'node["seamark:type"="dive_site"](' + bbox + ');');
         }
         if (has('seawall')) {
             s.push('node["man_made"="seawall"](' + bbox + ');',
@@ -1421,6 +1807,7 @@
             hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped, key);
             // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
+            _scheduleAdjacentPrefetch(s, w, n, e);
         })
         .catch(function (err) {
             hideStructLoading(); // both paths must release the spinner
@@ -1480,34 +1867,155 @@
 
     function scheduleFishingSpotQuery() {
         clearTimeout(spotQueryTimer);
-        spotQueryTimer = setTimeout(queryStructures, 300);
+        // Use a short delay when the incoming bbox is already in cache so
+        // panning through pre-fetched areas feels instant (~80 ms latency vs
+        // the 300 ms debounce we keep for cold-cache fetches that hit Overpass).
+        var delay = 300;
+        if (map) {
+            var _b = map.getBounds(), _z = map.getZoom();
+            var _exp = Math.min(0.75, Math.max(0, (_z - 8) * 0.19));
+            var _s = Math.floor((_b.getSouth() - _exp) * 2) / 2;
+            var _w = Math.floor((_b.getWest()  - _exp) * 2) / 2;
+            var _n = Math.ceil ((_b.getNorth() + _exp) * 2) / 2;
+            var _e = Math.ceil ((_b.getEast()  + _exp) * 2) / 2;
+            var _k = _s + ',' + _w + ',' + _n + ',' + _e;
+            if (spotCache[_k] || _cachedSupersetOf(_s, _w, _n, _e)) delay = 80;
+        }
+        spotQueryTimer = setTimeout(queryStructures, delay);
     }
 
-    // ─── sessionStorage persistence for spotCache ─────────────────────────────
-    // Persists the in-memory spotCache across page refreshes within the same
-    // browser session.  Structure data (piers, reefs, wrecks) rarely changes,
-    // so a 30-minute TTL per entry is safe.  Quota errors are silently ignored.
-    var _SS_KEY = 'fmap_spot_cache_v3'; // v3: bbox-only keys (no type-filter suffix)
-    var _SS_TTL = 1800000; // 30 minutes in ms
+    // Re-render the fishing spot layer from whatever bbox data is already cached,
+    // without triggering a new network request.  Used when filter pills are toggled
+    // so the switch between spot types is instant.  If no cache exists yet the
+    // in-flight moveend fetch will call renderFishingSpots() when it completes,
+    // at which point activeSpotTypes will already reflect the new selection.
+    function _renderFromCache() {
+        if (!map || !fishingSpotLayer) return;
+        var zoom = map.getZoom();
+        if (zoom < 8) return;
+        var b = map.getBounds();
+        var EXPAND = Math.min(0.75, Math.max(0, (zoom - 8) * 0.19));
+        var rawS = b.getSouth() - EXPAND,  rawN = b.getNorth() + EXPAND;
+        var rawW = b.getWest()  - EXPAND,  rawE = b.getEast()  + EXPAND;
+        if (rawN - rawS > 6) { var mLat = (rawS + rawN) / 2; rawS = mLat - 3; rawN = mLat + 3; }
+        if (rawE - rawW > 9) { var mLng = (rawW + rawE) / 2; rawW = mLng - 4.5; rawE = mLng + 4.5; }
+        var s = Math.floor(rawS * 2) / 2,  w = Math.floor(rawW * 2) / 2;
+        var n = Math.ceil (rawN * 2) / 2,  e = Math.ceil (rawE * 2) / 2;
+        var key = s + ',' + w + ',' + n + ',' + e;
+        var cached = spotCache[key];
+        if (!cached) {
+            var sup = _cachedSupersetOf(s, w, n, e);
+            if (sup) { _spotCachePut(key, sup); cached = sup; }
+        }
+        if (cached) renderFishingSpots(cached, key);
+        // No cache → no-op; the background fetch will render when it lands.
+        // Always re-evaluate the AI layer too — filters may have changed.
+        scheduleAIQuery();
+    }
+
+    // ─── Adjacent-tile background pre-fetch ───────────────────────────────────
+    // After each successful structure fetch, silently queue the 4 cardinal-
+    // direction neighbours (N/S/E/W) so that panning into them is a cache hit.
+    // At most one background request runs at a time with a 5 s gap to respect
+    // Overpass rate limits.  The queue caps at _PREFETCH_MAX_QUEUE; excess entries
+    // are dropped rather than stacking up from rapid map movement.
+
+    function _enqueuePrefetch(s, w, n, e) {
+        var key = s + ',' + w + ',' + n + ',' + e;
+        if (spotCache[key]) return;
+        if (_cachedSupersetOf(s, w, n, e)) return;
+        // Don't enqueue the same bbox twice
+        for (var i = 0; i < _prefetchQueue.length; i++) {
+            if (_prefetchQueue[i].key === key) return;
+        }
+        if (_prefetchQueue.length >= _PREFETCH_MAX_QUEUE) {
+            _prefetchQueue.shift();  // drop the oldest pending tile
+        }
+        _prefetchQueue.push({ s: s, w: w, n: n, e: e, key: key });
+    }
+
+    function _drainPrefetchQueue() {
+        if (_prefetchInFlight || _prefetchQueue.length === 0) return;
+        var job = _prefetchQueue.shift();
+        // Skip if the tile was cached between enqueue and drain
+        if (spotCache[job.key] || _cachedSupersetOf(job.s, job.w, job.n, job.e)) {
+            _drainPrefetchQueue();
+            return;
+        }
+        _prefetchInFlight = true;
+        var url = '/api/map/structures?south=' + job.s + '&west=' + job.w +
+                  '&north=' + job.n + '&east=' + job.e;
+        fetch(url)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                _prefetchInFlight = false;
+                if (data && data.structures && !data.zoom_required) {
+                    _spotCachePut(job.key, data.structures);
+                    _ssSave();
+                }
+                setTimeout(_drainPrefetchQueue, _PREFETCH_DELAY);
+            })
+            .catch(function () {
+                _prefetchInFlight = false;
+                setTimeout(_drainPrefetchQueue, _PREFETCH_DELAY);
+            });
+    }
+
+    // Enqueue the 4 cardinal neighbours of the just-fetched bbox.
+    // Step = half the bbox span so tiles overlap 50 %, ensuring smooth panning.
+    function _scheduleAdjacentPrefetch(s, w, n, e) {
+        var latSpan = n - s;
+        var lngSpan = e - w;
+        // Snap steps to the 0.5° cache grid to guarantee key-matching on pan
+        var latStep = Math.round(latSpan * 0.5 * 2) / 2;
+        var lngStep = Math.round(lngSpan * 0.5 * 2) / 2;
+        if (latStep <= 0) latStep = 0.5;
+        if (lngStep <= 0) lngStep = 0.5;
+
+        _enqueuePrefetch(
+            Math.floor((s         ) * 2) / 2, Math.floor((w + lngStep) * 2) / 2,
+            Math.ceil ((n         ) * 2) / 2, Math.ceil ((e + lngStep) * 2) / 2
+        ); // east
+        _enqueuePrefetch(
+            Math.floor((s         ) * 2) / 2, Math.floor((w - lngStep) * 2) / 2,
+            Math.ceil ((n         ) * 2) / 2, Math.ceil ((e - lngStep) * 2) / 2
+        ); // west
+        _enqueuePrefetch(
+            Math.floor((s + latStep) * 2) / 2, Math.floor(w * 2) / 2,
+            Math.ceil ((n + latStep) * 2) / 2, Math.ceil (e * 2) / 2
+        ); // north
+        _enqueuePrefetch(
+            Math.floor((s - latStep) * 2) / 2, Math.floor(w * 2) / 2,
+            Math.ceil ((n - latStep) * 2) / 2, Math.ceil (e * 2) / 2
+        ); // south
+
+        // Start draining after a short delay — let the current render finish first
+        setTimeout(_drainPrefetchQueue, 1500);
+    }
+
+    // ─── localStorage persistence for spotCache ───────────────────────────────
+    // Persists structure data across browser sessions — fish structures (piers,
+    // reefs, wrecks, marinas) don't move — a pier built in 1970 is still there.
+    // 30-day TTL means a returning angler never waits for a re-fetch unless a
+    // full month has passed since they last visited this part of the coast.
+    // Quota errors are silently ignored — worst case the cache starts cold.
+    var _SS_KEY = 'fmap_spot_cache_v4'; // bump version to drop old sessionStorage entries
+    var _SS_TTL = 2592000000; // 30 days in ms
 
     function _ssLoad() {
         try {
-            var raw = sessionStorage.getItem(_SS_KEY);
+            var raw = localStorage.getItem(_SS_KEY);
             if (!raw) return;
             var obj = JSON.parse(raw);
             var now = Date.now();
             Object.keys(obj).forEach(function (k) {
-                // Skip any stale type-specific keys that sneaked in before v3
-                if (k.indexOf('|') !== -1) return;
+                if (k.indexOf('|') !== -1) return; // skip legacy type-keyed entries
                 var e = obj[k];
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
-                    // Bypass _spotCachePut to avoid eviction during bulk restore;
-                    // rebuild _spotCacheKeys so future puts evict correctly.
                     spotCache[k] = e.data;
                     _spotCacheKeys.push(k);
                 }
             });
-            // Enforce cap after restore in case stored data exceeded the limit
             while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
                 delete spotCache[_spotCacheKeys.shift()];
             }
@@ -1521,7 +2029,7 @@
             Object.keys(spotCache).forEach(function (k) {
                 obj[k] = { ts: now, data: spotCache[k] };
             });
-            sessionStorage.setItem(_SS_KEY, JSON.stringify(obj));
+            localStorage.setItem(_SS_KEY, JSON.stringify(obj));
         } catch (e) { /* quota exceeded — silently skip */ }
     }
 
@@ -1694,9 +2202,9 @@
                 updateAdvBadge();
                 _scheduleSpotTypeSave();
 
-                // Re-render immediately from the bbox cache; no server round-trip.
-                clearTimeout(spotQueryTimer);
-                queryStructures();
+                // Re-render instantly from the cached bbox data.
+                // Never trigger a new network fetch — type filtering is client-side.
+                _renderFromCache();
             });
         });
 
@@ -1712,8 +2220,7 @@
                 _updateSpotTypeHint();
                 updateAdvBadge();
                 _scheduleSpotTypeSave();
-                clearTimeout(spotQueryTimer);
-                queryStructures();
+                _renderFromCache();
             });
         }
 
@@ -2107,6 +2614,7 @@
 
     var adminEditMode    = false;
     var _customMarkers   = [];  // [{id, leaflet, data}] — live custom marker state
+    var _adminPreviewPin = null; // temporary L.marker shown while the add modal is open
 
     function _customMarkerIcon(type, editMode) {
         if (!editMode) return makeFishingSpotIcon(type);
@@ -2144,15 +2652,30 @@
 
             m.on('dragend', function () {
                 var ll = m.getLatLng();
+                var prevLat = spot.lat, prevLng = spot.lng;
+                spot.lat = ll.lat;
+                spot.lng = ll.lng;
+
                 fetch('/api/map/custom-markers/' + spot.id, {
                     method:  'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ lat: ll.lat, lng: ll.lng }),
-                }).catch(function (e) {
-                    console.warn('[admin] drag-save failed:', e);
+                })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    // Invalidate cache so panning away and back shows the new position
+                    spotCache = {}; _spotCacheKeys = [];
+                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    _showAdminToast('Position saved');
+                })
+                .catch(function (err) {
+                    console.warn('[admin] drag-save failed:', err);
+                    // Revert marker and data to the original position
+                    spot.lat = prevLat;
+                    spot.lng = prevLng;
+                    m.setLatLng([prevLat, prevLng]);
+                    _showAdminToast('Save failed — ' + err.message, true);
                 });
-                spot.lat = ll.lat;
-                spot.lng = ll.lng;
             });
 
             m.on('click', function () {
@@ -2181,6 +2704,13 @@
 
     // ── Admin modal ──────────────────────────────────────────────────────────
 
+    function _removeAdminPreviewPin() {
+        if (_adminPreviewPin && map) {
+            map.removeLayer(_adminPreviewPin);
+            _adminPreviewPin = null;
+        }
+    }
+
     function _openAdminAddPanel(lat, lng) {
         if (!document.getElementById('fmap-admin-modal')) return;
         document.getElementById('fmap-admin-modal-title').textContent = 'Add Marker';
@@ -2191,6 +2721,21 @@
         document.getElementById('fmap-admin-desc').value = '';
         document.getElementById('fmap-admin-delete').hidden = true;
         document.getElementById('fmap-admin-save').dataset.markerId = '';
+
+        // Show a temporary pin so the admin can see exactly where the marker will land
+        _removeAdminPreviewPin();
+        _adminPreviewPin = L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'fmap-spot-wrap',
+                html: '<span style="display:flex;align-items:center;justify-content:center;' +
+                      'width:26px;height:26px;border-radius:50%;background:#2563eb;' +
+                      'border:3px solid #fff;box-shadow:0 0 12px #2563eb99;' +
+                      'font-size:15px;animation:fmap-pulse 1s ease-in-out infinite alternate">📍</span>',
+                iconSize: [26, 26], iconAnchor: [13, 26],
+            }),
+            interactive: false,
+        }).addTo(map);
+
         _openAdminModal();
     }
 
@@ -2223,10 +2768,125 @@
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) { backdrop.hidden = true; backdrop.style.display = 'none'; }
+        _removeAdminPreviewPin();
+    }
+
+    // Brief non-blocking toast shown after drag-saves and other silent actions.
+    function _showAdminToast(msg, isError) {
+        var t = document.getElementById('fmap-admin-toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'fmap-admin-toast';
+            t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+                'z-index:4000;padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;' +
+                'color:#fff;pointer-events:none;transition:opacity .3s;white-space:nowrap';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.background = isError ? '#dc2626' : '#16a34a';
+        t.style.opacity = '1';
+        clearTimeout(t._hideTimer);
+        t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+    }
+
+    // ── Admin spot-suppression helpers ──────────────────────────────────────
+
+    // Open a compact popup on an OSM/NOAA/ESRI spot offering "Hide" and
+    // "Override" actions.  Only shown when adminEditMode is true.
+    function _openAdminSpotActions(spot, marker) {
+        var spotKey = spot.id || (spot.type + ':' + spot.lat + ':' + spot.lng);
+        var name    = esc(spot.name || spotTypeLabel(spot.type));
+
+        var html =
+            '<div style="min-width:160px">' +
+            '<strong style="font-size:.85rem">' + name + '</strong>' +
+            '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
+            '<button id="fmap-spot-hide-btn" style="' +
+            'padding:4px 10px;border:none;border-radius:5px;' +
+            'background:#991b1b;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Hide</button>' +
+            '<button id="fmap-spot-override-btn" style="' +
+            'padding:4px 10px;border:none;border-radius:5px;' +
+            'background:#1d4ed8;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Override</button>' +
+            '</div>' +
+            '<div id="fmap-spot-action-status" style="font-size:.75rem;margin-top:5px;color:#f87171"></div>' +
+            '</div>';
+
+        marker.bindPopup(html, { closeButton: true, maxWidth: 220 }).openPopup();
+
+        // Wire buttons after the popup DOM is inserted
+        marker.once('popupopen', function () {
+            var hideBtn     = document.getElementById('fmap-spot-hide-btn');
+            var overrideBtn = document.getElementById('fmap-spot-override-btn');
+            var statusEl    = document.getElementById('fmap-spot-action-status');
+
+            if (hideBtn) {
+                hideBtn.addEventListener('click', function () {
+                    hideBtn.disabled = true;
+                    hideBtn.textContent = '…';
+                    _suppressSpot(spot, spotKey, function (err) {
+                        if (err) {
+                            if (statusEl) statusEl.textContent = 'Failed: ' + err;
+                            hideBtn.disabled = false;
+                            hideBtn.textContent = 'Hide';
+                        } else {
+                            marker.closePopup();
+                            _showAdminToast('Spot hidden');
+                        }
+                    });
+                });
+            }
+
+            if (overrideBtn) {
+                overrideBtn.addEventListener('click', function () {
+                    marker.closePopup();
+                    // Pre-fill the add panel at the spot's location so the admin
+                    // can drop a precisely placed custom marker that replaces it.
+                    _openAdminAddPanel(spot.lat, spot.lng);
+                    var nameEl = document.getElementById('fmap-admin-name');
+                    var typeEl = document.getElementById('fmap-admin-type');
+                    if (nameEl) nameEl.value = spot.name || spotTypeLabel(spot.type);
+                    if (typeEl) typeEl.value = spot.type || 'fishing';
+                    // Also suppress the original so there's no duplicate
+                    _suppressSpot(spot, spotKey, function () {});
+                });
+            }
+        });
+    }
+
+    // Call POST /api/map/suppress-spot for a spot; cb(null) on success, cb(errMsg) on failure.
+    function _suppressSpot(spot, spotKey, cb) {
+        fetch('/api/map/suppress-spot', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                spot_key: spotKey,
+                lat:      spot.lat,
+                lng:      spot.lng,
+                type:     spot.type || '',
+                name:     spot.name || '',
+            }),
+        })
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            // Bust the local spot cache so the suppressed spot disappears on next render
+            spotCache = {}; _spotCacheKeys = [];
+            try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+            scheduleFishingSpotQuery();
+            cb(null);
+        })
+        .catch(function (err) {
+            console.warn('[admin] suppress spot failed:', err);
+            cb(err.message);
+        });
     }
 
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
+
+        // Escape key closes the modal from anywhere on the page
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') _closeAdminModal();
+        });
 
         // ── Toggle button ────────────────────────────────────────────────────
         var btn = document.getElementById('fmap-admin-edit-btn');
@@ -2247,6 +2907,10 @@
                         cm.leaflet.dragging.disable();
                     }
                 });
+
+                // Force re-render so OSM/NOAA spots get/lose click handlers
+                _lastRenderedSpotKey = null;
+                _renderFromCache();
 
                 // Click-to-add on map
                 if (adminEditMode) {
@@ -2299,7 +2963,8 @@
                     saveBtn.textContent = 'Save';
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
-                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
+                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) {
@@ -2314,15 +2979,37 @@
             });
         }
 
-        // ── Modal delete ──────────────────────────────────────────────────────
+        // ── Modal delete (two-tap confirmation — no blocking confirm dialog) ──
         var delBtn = document.getElementById('fmap-admin-delete');
         if (delBtn) {
+            var _delConfirmPending = false;
+            var _delConfirmTimer   = null;
+
             delBtn.addEventListener('click', function () {
                 var markerId = delBtn.dataset.markerId;
                 if (!markerId) return;
-                if (!confirm('Delete this marker?')) return;
 
-                var statusEl    = document.getElementById('fmap-admin-status');
+                // First tap: ask for confirmation inline
+                if (!_delConfirmPending) {
+                    _delConfirmPending = true;
+                    delBtn.textContent = 'Confirm delete?';
+                    delBtn.style.background = '#991b1b';
+                    // Auto-reset after 3 s if they don't confirm
+                    _delConfirmTimer = setTimeout(function () {
+                        _delConfirmPending = false;
+                        delBtn.textContent = 'Delete';
+                        delBtn.style.background = '#dc2626';
+                    }, 3000);
+                    return;
+                }
+
+                // Second tap: execute delete
+                clearTimeout(_delConfirmTimer);
+                _delConfirmPending = false;
+                delBtn.textContent = 'Delete';
+                delBtn.style.background = '#dc2626';
+
+                var statusEl = document.getElementById('fmap-admin-status');
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 delBtn.disabled = true;
 
@@ -2335,7 +3022,8 @@
                     delBtn.disabled = false;
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
-                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
+                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    _showAdminToast('Marker deleted');
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) {
@@ -2347,6 +3035,16 @@
                     }
                 });
             });
+
+            // Reset confirmation state when modal closes
+            var _origCloseAdminModal = _closeAdminModal;
+            _closeAdminModal = function () {
+                _delConfirmPending = false;
+                clearTimeout(_delConfirmTimer);
+                delBtn.textContent = 'Delete';
+                delBtn.style.background = '#dc2626';
+                _origCloseAdminModal();
+            };
         }
 
         // ── Modal close / backdrop ────────────────────────────────────────────

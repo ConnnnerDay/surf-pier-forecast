@@ -20,7 +20,7 @@ _refresh_queue: "queue.Queue[QueueKey]" = queue.Queue()
 _refresh_lock = threading.Lock()
 _refreshing: set[QueueKey] = set()
 _enqueued: set[QueueKey] = set()
-_worker_started = False
+_worker_thread: Optional[threading.Thread] = None
 
 def refresh_forecast(location_id: str, user_id: Optional[int] = None) -> bool:
     """Generate and persist a fresh forecast for a location."""
@@ -55,15 +55,15 @@ def _worker_loop() -> None:
             _refresh_queue.task_done()
 
 def _ensure_worker_started() -> None:
-    global _worker_started
+    global _worker_thread
     with _refresh_lock:
-        if _worker_started:
+        if _worker_thread is not None and _worker_thread.is_alive():
             return
         worker = threading.Thread(
             target=_worker_loop, name="forecast-refresh-worker", daemon=True
         )
         worker.start()
-        _worker_started = True
+        _worker_thread = worker
 
 def enqueue_forecast_refresh(location_id: str, user_id: Optional[int] = None) -> bool:
     """Queue a refresh if one is not already queued/running for this location/user."""

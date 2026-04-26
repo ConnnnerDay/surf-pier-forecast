@@ -170,13 +170,15 @@ def fetch_currents_predictions(
                 when = dt.strftime("%-I:%M %p")
             except Exception:
                 when = raw
+            try:
+                speed_kt = f"{float(velocity):.2f}" if velocity not in (None, "") else "0.00"
+            except (ValueError, TypeError):
+                speed_kt = "0.00"
             out.append(
                 {
                     "time": when,
                     "event": str(event).title(),
-                    "speed_kt": f"{float(velocity):.2f}"
-                    if velocity not in (None, "")
-                    else "0.00",
+                    "speed_kt": speed_kt,
                 }
             )
         return out

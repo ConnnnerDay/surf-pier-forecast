@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 # ── Habitat type validation ───────────────────────────────────────────────────
 _VALID_HABITAT_TYPES = frozenset(
-    ("surf", "mangrove", "grassflat", "estuary", "reef", "bottom", "general", "pelagic")
+    ("surf", "kelp", "mangrove", "grassflat", "estuary", "reef", "bottom", "general", "pelagic", "tidalflat")
 )
 
 bp = Blueprint("geo_api", __name__)

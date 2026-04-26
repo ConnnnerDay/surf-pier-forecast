@@ -69,6 +69,7 @@ from storage.sqlite import (
     add_log_entry,
     add_map_catch,
     add_map_catch_comment,
+    add_suppressed_spot,
     attach_photos_to_entry,
     create_custom_marker,
     delete_custom_marker,
@@ -85,6 +86,8 @@ from storage.sqlite import (
     get_page_layout,
     get_preferences,
     get_recent_public_catches,
+    get_suppressed_spots,
+    remove_suppressed_spot,
     save_page_layout,
     save_preferences,
     update_custom_marker,
@@ -1967,7 +1970,13 @@ def map_structures() -> Any:
 
     structures = find_fish_structures(south, west, north, east, active_types)
 
-    # Merge in admin-created custom markers that fall within the bbox.
+    # ── Load suppressed spots and custom markers ──────────────────────────────
+    try:
+        suppressed_keys: set[str] = {s["spot_key"] for s in get_suppressed_spots()}
+    except Exception:
+        logger.warning("get_suppressed_spots() failed; skipping suppression filter")
+        suppressed_keys = set()
+
     try:
         custom = [
             m
@@ -1979,7 +1988,32 @@ def map_structures() -> Any:
     except Exception:
         logger.warning("get_custom_markers() failed in map_structures; skipping custom markers")
         custom = []
-    all_structures = structures + custom
+
+    # ── Filter OSM/NOAA/ESRI spots ────────────────────────────────────────────
+    # 1. Remove explicitly suppressed spots.
+    # 2. Remove spots that are "overridden" by a nearby custom marker of the
+    #    same type (within ~0.003 degrees, roughly 300 m).  This lets admins
+    #    replace a mis-located OSM node with a precisely placed custom marker.
+    _OVERRIDE_RADIUS = 0.003
+
+    def _is_overridden(spot: dict) -> bool:
+        for cm in custom:
+            if cm["type"] != spot.get("type"):
+                continue
+            if (
+                abs(cm["lat"] - spot["lat"]) <= _OVERRIDE_RADIUS
+                and abs(cm["lng"] - spot["lng"]) <= _OVERRIDE_RADIUS
+            ):
+                return True
+        return False
+
+    filtered = [
+        s for s in structures
+        if s.get("id") not in suppressed_keys
+        and not _is_overridden(s)
+    ]
+
+    all_structures = filtered + custom
 
     resp = jsonify({"structures": all_structures, "count": len(all_structures)})
     # Structure data (OSM/NOAA) and admin custom markers are user-agnostic, so
@@ -2775,3 +2809,56 @@ def custom_markers_delete(marker_id: int) -> Any:
     if not ok:
         return jsonify({"error": "Marker not found"}), 404
     return jsonify({"deleted": marker_id})
+
+
+@bp.route("/api/map/suppress-spot", methods=["POST"])
+def suppress_spot_create() -> Any:
+    """Hide an OSM/NOAA/ESRI spot from the map (admin only).
+
+    Body: { spot_key, lat, lng, type, name }
+    Returns the new suppression row.
+    """
+    err = _require_map_admin()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    spot_key = str(data.get("spot_key", "")).strip()
+    if not spot_key:
+        return jsonify({"error": "spot_key is required"}), 400
+    try:
+        lat = float(data["lat"])
+        lng = float(data["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"error": "lat and lng are required floats"}), 400
+    if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+        return jsonify({"error": "lat/lng out of range"}), 400
+
+    type_ = str(data.get("type", ""))[:60]
+    name = str(data.get("name", ""))[:200]
+    row = add_suppressed_spot(spot_key, lat, lng, type_, name, g.user["id"])
+    return jsonify(row), 201
+
+
+@bp.route("/api/map/suppress-spot/<int:suppression_id>", methods=["DELETE"])
+def suppress_spot_delete(suppression_id: int) -> Any:
+    """Remove a suppression, making the spot visible again (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    ok = remove_suppressed_spot(suppression_id)
+    if not ok:
+        return jsonify({"error": "Suppression not found"}), 404
+    return jsonify({"deleted": suppression_id})
+
+
+@bp.route("/api/map/suppress-spot", methods=["GET"])
+def suppress_spot_list() -> Any:
+    """List all suppressed spots (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    spots = get_suppressed_spots()
+    return jsonify({"suppressions": spots, "count": len(spots)})
