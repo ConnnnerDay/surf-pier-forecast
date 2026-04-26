@@ -378,6 +378,45 @@
         general:   { label: 'Habitat',     tip: 'Fish concentrate where structure meets current — reef edges, channel bends, shoal drop-offs, marsh creek mouths.' }
     };
 
+    // Map filter pill data-type → API habitat_type parameter.
+    // Only habitat-relevant pill types are listed; structure-only types (pier,
+    // buoy, marina, ramp…) have no AI habitat equivalent and are omitted.
+    var _PILL_TO_HABITAT_TYPE = {
+        'reef':       'reef',
+        'oyster_reef':'estuary',
+        'wreck':      'reef',
+        'saltmarsh':  'estuary',
+        'seagrass':   'grassflat',
+        'grass_flat': 'grassflat',
+        'mangrove':   'mangrove',
+        'channel':    'estuary',
+        'inlet':      'estuary',
+        'shoal':      'bottom',
+        'tidal_flat': 'bottom',
+        'tidalflat':  'bottom',
+        'beach':      'surf',
+        'kelp':       'surf',
+        'bay':        'general',
+    };
+
+    // Map filter pill data-type → AI osmType used in renderAIHabitatSpots.
+    var _PILL_TO_AI_OSMT = {
+        'reef':       'reef',
+        'oyster_reef':'reef',
+        'wreck':      'wreck',
+        'saltmarsh':  'saltmarsh',
+        'seagrass':   'seagrass',
+        'grass_flat': 'seagrass',
+        'mangrove':   'mangrove',
+        'channel':    'channel',
+        'inlet':      'channel',
+        'shoal':      'shoal',
+        'tidal_flat': 'tidalflat',
+        'tidalflat':  'tidalflat',
+        'beach':      'beach',
+        'kelp':       'seagrass',
+        'bay':        'bay',
+    };
 
     function makeAIPickIcon(osmType) {
         var cacheKey = 'ai|' + osmType;
@@ -389,15 +428,34 @@
         return icon;
     }
 
+    // Render AI picks, filtering to only the osmTypes that match active filter pills.
+    // When no pills are active (show-all), render everything.
     function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
+
+        // Build the set of AI osmTypes that are currently "wanted" by the active filters.
+        var wantedOsmTypes = null;  // null = show all
+        if (activeSpotTypes.length) {
+            wantedOsmTypes = {};
+            var hasHabitatPill = false;
+            activeSpotTypes.forEach(function (t) {
+                var ot = _PILL_TO_AI_OSMT[t];
+                if (ot) { wantedOsmTypes[ot] = true; hasHabitatPill = true; }
+            });
+            // No habitat-relevant pills active (only structure pills like pier/buoy):
+            // hide the AI layer entirely so it doesn't clutter the view.
+            if (!hasHabitatPill) { return; }
+        }
+
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var osmType = f.osmType || 'general';
-            var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
-            var m       = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
-            var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            // Apply filter: skip types not in the wanted set
+            if (wantedOsmTypes && !wantedOsmTypes[osmType] && !wantedOsmTypes['general']) return;
+            var info = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
+            var m    = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
+            var name = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
                 '<span style="opacity:.8">' + esc(info.tip) + '</span>',
@@ -405,6 +463,20 @@
             );
             aiPickLayer.addLayer(m);
         });
+    }
+
+    // Determine which API habitat_type to query based on active filter pills.
+    // Returns an array of unique habitat_type strings to fetch.
+    function _activeHabitatTypes() {
+        if (!activeSpotTypes.length) return ['general'];
+        var seen = {};
+        var types = [];
+        activeSpotTypes.forEach(function (t) {
+            var ht = _PILL_TO_HABITAT_TYPE[t];
+            if (ht && !seen[ht]) { seen[ht] = true; types.push(ht); }
+        });
+        // If no habitat-relevant pills selected, return null so the AI layer clears.
+        return types.length ? types : null;
     }
 
     function queryAIHabitatSpots() {
@@ -415,12 +487,20 @@
             return;
         }
 
+        var habitatTypes = _activeHabitatTypes();
+        if (!habitatTypes) {
+            // Only structure-type pills active — nothing for AI to show
+            aiPickLayer.clearLayers();
+            return;
+        }
+
         var b   = map.getBounds();
         var s   = Math.floor(b.getSouth() * 4) / 4;
         var w   = Math.floor(b.getWest()  * 4) / 4;
         var n   = Math.ceil(b.getNorth()  * 4) / 4;
         var e   = Math.ceil(b.getEast()   * 4) / 4;
-        var key = s + ',' + w + ',' + n + ',' + e;
+        // Cache key includes the habitat types so changing filters busts the cache.
+        var key = s + ',' + w + ',' + n + ',' + e + ':' + habitatTypes.slice().sort().join(',');
 
         if (aiCache[key]) { renderAIHabitatSpots(aiCache[key]); return; }
 
@@ -428,22 +508,35 @@
         if (_aiAbort) _aiAbort.abort();
         _aiAbort = new AbortController();
         var thisAiGen = ++_aiReqGen;
+        var thisKey   = key;
 
-        var url = '/api/v1/geo/habitats?south=' + s + '&west=' + w +
-                  '&north=' + n + '&east=' + e +
-                  '&habitat_type=general';
+        // Fetch all needed habitat types in parallel, then merge results.
+        var bboxParams = 'south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
+        var promises = habitatTypes.map(function (ht) {
+            var url = '/api/v1/geo/habitats?' + bboxParams + '&habitat_type=' + ht;
+            return fetch(url, { signal: _aiAbort.signal })
+                .then(function (r) { return r.ok ? r.json() : { data: { features: [] } }; })
+                .then(function (data) {
+                    return ((data.data && data.data.features) || []).map(function (f) {
+                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general' };
+                    });
+                })
+                .catch(function () { return []; });
+        });
 
-        fetch(url, { signal: _aiAbort.signal })
-        .then(function (r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        })
-        .then(function (data) {
+        Promise.all(promises)
+        .then(function (arrays) {
             if (thisAiGen !== _aiReqGen) return;
-            var features = ((data.data && data.data.features) || []).map(function (f) {
-                return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general' };
+            // Merge and deduplicate by lat+lng (same node can appear in multiple types)
+            var seen = {};
+            var features = [];
+            arrays.forEach(function (arr) {
+                arr.forEach(function (f) {
+                    var dedupeKey = Math.round(f.lat * 10000) + ',' + Math.round(f.lng * 10000);
+                    if (!seen[dedupeKey]) { seen[dedupeKey] = true; features.push(f); }
+                });
             });
-            _aiCachePut(key, features);
+            _aiCachePut(thisKey, features);
             renderAIHabitatSpots(features);
         })
         .catch(function (err) {
@@ -1679,6 +1772,8 @@
         }
         if (cached) renderFishingSpots(cached, key);
         // No cache → no-op; the background fetch will render when it lands.
+        // Always re-evaluate the AI layer too — filters may have changed.
+        scheduleAIQuery();
     }
 
     // ─── Adjacent-tile background pre-fetch ───────────────────────────────────
