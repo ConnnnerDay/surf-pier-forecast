@@ -1755,12 +1755,12 @@
 
     // ─── localStorage persistence for spotCache ───────────────────────────────
     // Persists structure data across browser sessions — fish structures (piers,
-    // reefs, wrecks, marinas) change at most monthly, so a 4-hour TTL is safe.
-    // Using localStorage (not sessionStorage) means a returning angler opening
-    // a new tab sees their recent map data instantly without a server round-trip.
+    // reefs, wrecks, marinas) don't move — a pier built in 1970 is still there.
+    // 30-day TTL means a returning angler never waits for a re-fetch unless a
+    // full month has passed since they last visited this part of the coast.
     // Quota errors are silently ignored — worst case the cache starts cold.
     var _SS_KEY = 'fmap_spot_cache_v4'; // bump version to drop old sessionStorage entries
-    var _SS_TTL = 14400000; // 4 hours in ms
+    var _SS_TTL = 2592000000; // 30 days in ms
 
     function _ssLoad() {
         try {
