@@ -51,8 +51,10 @@
     var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
-    var _AI_LS_KEY  = 'fmap_ai_cache_v1';  // localStorage key for AI picks
-    var _AI_LS_TTL  = 21600000;             // 6 hours in ms
+    var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
+    var _AI_LS_TTL       = 21600000;             // 6 hours in ms
+    var _AI_RENDER_CAP   = 80;       // max features rendered per bbox to prevent clutter
+    var _aiAutoSpecies   = [];       // species names that drove the last auto-habitat query
 
     // ─── Community / social state ─────────────────────────────────────────────
     var communityLayerOn  = false;   // whether community pins are visible
@@ -421,20 +423,51 @@
         'bay':        'bay',
     };
 
-    function makeAIPickIcon(osmType) {
-        var cacheKey = 'ai|' + osmType;
+    // Symbols for AI pick osmTypes that don't have SPOT_LABELS entries
+    var _AI_OSMT_SYM = {
+        seagrass:  '≋',  // matches grass_flat
+        channel:   '⇢',  // matches inlet
+        tidalflat: '⊟',  // matches tidal_flat
+        bay:       '〜',
+        general:   '✦',
+    };
+
+    function makeAIPickIcon(osmType, size) {
+        // size: 's' (small/low-score), 'm' (medium), 'l' (high-score/named)
+        size = size || 'm';
+        var cacheKey = 'ai|' + osmType + '|' + size;
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
-        // Use the actual type emoji/symbol from SPOT_LABELS so it's instantly recognizable
-        var sym = SPOT_LABELS[osmType] || '✦';
-        var html =
-            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';' +
+        var sym   = (SPOT_LABELS && SPOT_LABELS[osmType]) || _AI_OSMT_SYM[osmType] || '✦';
+        var px    = size === 'l' ? 22 : size === 's' ? 14 : 18;
+        var fs    = size === 'l' ? 12 : size === 's' ? 8  : 10;
+        var html  =
+            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';width:' + px + 'px;height:' + px + 'px;' +
             'display:flex;align-items:center;justify-content:center;' +
             'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-            'font-size:11px;line-height:1">' + sym + '</span>';
-        var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [20, 20], iconAnchor: [10, 10] });
+            'font-size:' + fs + 'px;line-height:1">' + sym + '</span>';
+        var icon = L.divIcon({
+            className: 'fmap-ai-wrap',
+            html:      html,
+            iconSize:  [px, px],
+            iconAnchor:[Math.floor(px / 2), Math.floor(px / 2)],
+        });
         _spotIconCache[cacheKey] = icon;
         return icon;
+    }
+
+    // Update the AI status bar below the map controls.
+    // Shows which species drove the auto habitat selection (or clears it).
+    function _updateAIStatusBar(autoMode, speciesNames) {
+        var bar = document.getElementById('fmap-ai-status');
+        if (!bar) return;
+        if (!autoMode || !speciesNames || !speciesNames.length) {
+            bar.hidden = true;
+            bar.textContent = '';
+            return;
+        }
+        bar.hidden = false;
+        bar.textContent = '✦ AI habitat — based on: ' + speciesNames.slice(0, 3).join(', ');
     }
 
     // Render AI picks, filtering to only the osmTypes that match active filter pills.
@@ -442,10 +475,12 @@
     function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
+        _updateAIStatusBar(false);
 
         // Build the set of AI osmTypes that are currently "wanted" by the active filters.
         var wantedOsmTypes = null;  // null = show all
-        if (activeSpotTypes.length) {
+        var autoMode = !activeSpotTypes.length;
+        if (!autoMode) {
             wantedOsmTypes = {};
             var hasHabitatPill = false;
             activeSpotTypes.forEach(function (t) {
@@ -457,19 +492,51 @@
             if (!hasHabitatPill) { return; }
         }
 
-        var speciesCtx = (!activeSpotTypes.length) ? '<br><span style="opacity:.5;font-size:.65rem">Auto from forecast</span>' : '';
-        features.forEach(function (f) {
-            if (!f.lat || !f.lng) return;
+        // Filter by wanted osmTypes
+        var filtered = features.filter(function (f) {
+            if (!f.lat || !f.lng) return false;
+            var ot = f.osmType || 'general';
+            if (wantedOsmTypes && !wantedOsmTypes[ot]) return false;
+            return true;
+        });
+
+        // Proximity deduplication: discard lower-scored features within ~200 m of
+        // a higher-scored one (0.002° ≈ 220 m).  Features are already sorted by
+        // score desc so first-seen wins.
+        var _PROX = 0.002;
+        var kept = [];
+        filtered.forEach(function (f) {
+            for (var i = 0; i < kept.length; i++) {
+                if (Math.abs(kept[i].lat - f.lat) < _PROX &&
+                    Math.abs(kept[i].lng - f.lng) < _PROX) return;
+            }
+            kept.push(f);
+        });
+
+        // Cap total rendered features
+        var toRender = kept.slice(0, _AI_RENDER_CAP);
+
+        if (!toRender.length) return;
+
+        if (autoMode) {
+            _updateAIStatusBar(true, _aiAutoSpecies);
+        }
+
+        toRender.forEach(function (f) {
             var osmType = f.osmType || 'general';
-            // Apply filter: skip types not in the wanted set
-            if (wantedOsmTypes && !wantedOsmTypes[osmType] && !wantedOsmTypes['general']) return;
-            var info = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
-            var m    = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
+            var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
+            var score   = f.score || 0;
+            // Score-based icon size: named+way (score≥3) → large, score≥1 → medium, else small
+            var sz      = score >= 3 ? 'l' : score >= 1 ? 'm' : 's';
+            var m       = L.marker([f.lat, f.lng], {
+                icon:              makeAIPickIcon(osmType, sz),
+                zIndexOffset:      score >= 3 ? 10 : 0,
+            });
             var name = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
-            var star = (f.score >= 3) ? '<span style="color:#f59e0b"> &#9733;</span>' : '';
+            var star = score >= 3 ? '<span style="color:#f59e0b;margin-left:2px">★</span>' : '';
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + star + '</span>' + name +
-                '<span style="opacity:.8">' + esc(info.tip) + '</span>' + speciesCtx,
+                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
@@ -517,21 +584,27 @@
             if (raw) snapshot = JSON.parse(raw);
         } catch (_e) {}
         var topSpecies = (snapshot && snapshot.species) ? snapshot.species.slice(0, 5) : [];
-        if (!topSpecies.length) return ['general'];
+        if (!topSpecies.length) {
+            _aiAutoSpecies = [];
+            return ['general'];
+        }
         var seen = {};
         var types = [];
+        var matchedNames = [];
         topSpecies.forEach(function (sp) {
-            var name = (sp.name || '').toLowerCase();
+            var name = (sp.name || '');
             for (var i = 0; i < _SPECIES_HABITAT_HINTS.length; i++) {
                 var hint = _SPECIES_HABITAT_HINTS[i];
                 if (hint[0].test(name)) {
                     hint[1].forEach(function (ht) {
                         if (!seen[ht]) { seen[ht] = true; types.push(ht); }
                     });
+                    matchedNames.push(name);
                     break;
                 }
             }
         });
+        _aiAutoSpecies = matchedNames;
         return types.length ? types : ['general'];
     }
 
@@ -659,7 +732,14 @@
             Object.keys(saved).forEach(function (k) {
                 var entry = saved[k];
                 if (entry && entry.ts && now - entry.ts < _AI_LS_TTL && Array.isArray(entry.d)) {
-                    _aiCachePut(k, entry.d);
+                    // Populate in-memory cache directly — skip localStorage write to avoid loop
+                    if (!Object.prototype.hasOwnProperty.call(aiCache, k)) {
+                        if (_aiCacheKeys.length >= _AI_CACHE_MAX) {
+                            delete aiCache[_aiCacheKeys.shift()];
+                        }
+                        _aiCacheKeys.push(k);
+                    }
+                    aiCache[k] = entry.d;
                 }
             });
         } catch (_e) {}

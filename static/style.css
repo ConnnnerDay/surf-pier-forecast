@@ -4164,6 +4164,27 @@ h2::before {
 }
 
 
+/* ── AI status bar (species-driven habitat hint) ── */
+.fmap-ai-status {
+  margin: 4px 0 2px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1e3a5f22 0%, #0ea5e922 100%);
+  border: 1px solid #38bdf844;
+  font-size: 0.72rem;
+  color: #38bdf8;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .fmap-ai-status {
+  background: linear-gradient(90deg, #0c1f3322 0%, #0ea5e933 100%);
+  border-color: #38bdf855;
+  color: #7dd3fc;
+}
+
 /* ── Habitat area polygon overlays ── */
 .fmap-habitat-poly {
   cursor: pointer;
