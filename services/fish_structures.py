@@ -1487,7 +1487,9 @@ def fetch_ai_habitats(
 
     bbox = f"{south},{west},{north},{east}"
     tag_str = "".join(f"{t}({bbox});" for t in tags)
-    query = f"[out:json][timeout:14];({tag_str});out center;"
+    # Use out geom; so way elements return their coordinate rings, letting the
+    # client render habitat areas as filled polygon overlays instead of dots.
+    query = f"[out:json][timeout:14];({tag_str});out geom;"
 
     features: list[dict[str, Any]] = []
     for url in _OVERPASS_URLS:
@@ -1499,24 +1501,39 @@ def fetch_ai_habitats(
                 )
                 continue
             for el in resp.json().get("elements", []):
-                lat = el.get("lat") or (el.get("center") or {}).get("lat")
-                lng = el.get("lon") or (el.get("center") or {}).get("lon")
+                # For nodes: lat/lon are top-level fields.
+                # For ways: out geom; omits center — compute centroid from geometry.
+                lat = el.get("lat")
+                lng = el.get("lon")
+                is_way = el.get("type") == "way"
+                raw_geom = el.get("geometry") or []
+                if is_way and raw_geom and (lat is None or lng is None):
+                    pts = [(g["lat"], g["lon"]) for g in raw_geom if "lat" in g and "lon" in g]
+                    if pts:
+                        lat = sum(p[0] for p in pts) / len(pts)
+                        lng = sum(p[1] for p in pts) / len(pts)
                 if not (lat and lng):
                     continue
                 el_tags: dict[str, str] = el.get("tags") or {}
                 osm_type = _osm_tags_to_type(el_tags)
-                name_val  = el_tags.get("name", "")
-                is_way    = el.get("type") == "way"
-                score     = (2 if name_val else 0) + (1 if is_way else 0) + (1 if osm_type in ("reef", "wreck") else 0)
-                features.append(
-                    {
-                        "lat":      lat,
-                        "lng":      lng,
-                        "name":     name_val,
-                        "osm_type": osm_type,
-                        "score":    score,
-                    }
-                )
+                name_val = el_tags.get("name", "")
+                score    = (2 if name_val else 0) + (1 if is_way else 0) + (1 if osm_type in ("reef", "wreck") else 0)
+                feature: dict[str, Any] = {
+                    "lat":      lat,
+                    "lng":      lng,
+                    "name":     name_val,
+                    "osm_type": osm_type,
+                    "score":    score,
+                }
+                # Include polygon geometry for way elements so the client can
+                # render them as area overlays instead of point markers.
+                if is_way and len(raw_geom) >= 3:
+                    coords = [
+                        [g["lat"], g["lon"]] for g in raw_geom if "lat" in g and "lon" in g
+                    ]
+                    if len(coords) >= 3:
+                        feature["geometry"] = _decimate_ring(coords)
+                features.append(feature)
             features.sort(key=lambda f: f["score"], reverse=True)
             break
         except Exception as exc:

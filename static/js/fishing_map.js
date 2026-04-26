@@ -471,13 +471,17 @@
             return !wantedOsmTypes || !!wantedOsmTypes[f.osmType || 'general'];
         });
 
-        // Proximity dedup: drop features within ~200 m of an earlier (higher-scored) one.
+        // Proximity dedup: drop point features within ~200 m of an earlier one.
+        // Polygon features (have .geometry) skip this dedup — adjacent patches are distinct.
         var _PROX = 0.002;
         var kept = [];
         filtered.forEach(function (f) {
-            for (var i = 0; i < kept.length; i++) {
-                if (Math.abs(kept[i].lat - f.lat) < _PROX &&
-                    Math.abs(kept[i].lng - f.lng) < _PROX) return;
+            if (!f.geometry) {
+                for (var i = 0; i < kept.length; i++) {
+                    if (!kept[i].geometry &&
+                        Math.abs(kept[i].lat - f.lat) < _PROX &&
+                        Math.abs(kept[i].lng - f.lng) < _PROX) return;
+                }
             }
             kept.push(f);
         });
@@ -485,8 +489,37 @@
         kept.slice(0, _AI_RENDER_CAP).forEach(function (f) {
             var osmType = f.osmType || 'general';
             var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
-            var m       = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+
+            // Features with polygon geometry → render as area overlay.
+            if (f.geometry && f.geometry.length >= 3) {
+                var color  = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
+                var geom   = f.geometry;
+                var first  = geom[0];
+                var last   = geom[geom.length - 1];
+                var closed = Math.abs(first[0] - last[0]) < 0.00002 &&
+                             Math.abs(first[1] - last[1]) < 0.00002;
+                var poly   = closed
+                    ? L.polygon(geom, {
+                        color: color, weight: 2, opacity: 0.85,
+                        fillColor: color, fillOpacity: 0.25,
+                        className: 'fmap-habitat-poly'
+                    })
+                    : L.polyline(geom, {
+                        color: color, weight: 3, opacity: 0.75,
+                        className: 'fmap-habitat-poly'
+                    });
+                poly.bindTooltip(
+                    '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
+                    '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                    { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
+                );
+                aiPickLayer.addLayer(poly);
+                return;
+            }
+
+            // Point feature → icon marker.
+            var m = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
                 '<span style="opacity:.8">' + esc(info.tip) + '</span>',
@@ -550,7 +583,7 @@
                 .then(function (r) { return r.ok ? r.json() : { data: { features: [] } }; })
                 .then(function (data) {
                     return ((data.data && data.data.features) || []).map(function (f) {
-                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general', score: f.score || 0 };
+                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general', score: f.score || 0, geometry: f.geometry || null };
                     });
                 })
                 .catch(function () { return []; });
