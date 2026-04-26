@@ -51,6 +51,8 @@
     var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
+    var _AI_LS_KEY  = 'fmap_ai_cache_v1';  // localStorage key for AI picks
+    var _AI_LS_TTL  = 21600000;             // 6 hours in ms
 
     // ─── Community / social state ─────────────────────────────────────────────
     var communityLayerOn  = false;   // whether community pins are visible
@@ -222,6 +224,7 @@
 
         // Layer groups — render order: AI picks → OSM structures
         aiPickLayer      = L.layerGroup().addTo(map);
+        _aiLsLoad();
         fishingSpotLayer = L.layerGroup().addTo(map);
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
@@ -395,7 +398,7 @@
         'tidal_flat': 'bottom',
         'tidalflat':  'bottom',
         'beach':      'surf',
-        'kelp':       'surf',
+        'kelp':       'kelp',
         'bay':        'general',
     };
 
@@ -422,8 +425,14 @@
         var cacheKey = 'ai|' + osmType;
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
-        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + color + '"></span>';
-        var icon  = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [16, 16], iconAnchor: [8, 8] });
+        // Use the actual type emoji/symbol from SPOT_LABELS so it's instantly recognizable
+        var sym = SPOT_LABELS[osmType] || '✦';
+        var html =
+            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';' +
+            'display:flex;align-items:center;justify-content:center;' +
+            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
+            'font-size:11px;line-height:1">' + sym + '</span>';
+        var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [20, 20], iconAnchor: [10, 10] });
         _spotIconCache[cacheKey] = icon;
         return icon;
     }
@@ -448,6 +457,7 @@
             if (!hasHabitatPill) { return; }
         }
 
+        var speciesCtx = (!activeSpotTypes.length) ? '<br><span style="opacity:.5;font-size:.65rem">Auto from forecast</span>' : '';
         features.forEach(function (f) {
             if (!f.lat || !f.lng) return;
             var osmType = f.osmType || 'general';
@@ -456,19 +466,82 @@
             var info = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
             var m    = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             var name = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            var star = (f.score >= 3) ? '<span style="color:#f59e0b"> &#9733;</span>' : '';
             m.bindTooltip(
-                '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
-                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                '<span class="fmap-ai-tip-label">' + esc(info.label) + star + '</span>' + name +
+                '<span style="opacity:.8">' + esc(info.tip) + '</span>' + speciesCtx,
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
         });
     }
 
+    // Keyword patterns → [api habitat_type, ...] for the top forecast species.
+    // Checked in order; first match wins for each species name.
+    var _SPECIES_HABITAT_HINTS = [
+        [/grouper|snapper|amberjack|triggerfish|filefish|barracuda|hogfish|parrotfish|spadefish|porgies|grunt|cubera/i,
+            ['reef', 'wreck']],
+        [/redfish|red drum|speckled trout|spotted sea|flounder|black drum|sheepshead/i,
+            ['estuary', 'grassflat']],
+        [/snook|tarpon|jack crevalle/i,
+            ['mangrove', 'estuary']],
+        [/striped bass|striper|bluefish/i,
+            ['surf', 'bottom', 'estuary']],
+        [/tautog|blackfish|black sea bass|cunner|wrasse/i,
+            ['reef']],
+        [/croaker|spot fish|whiting|kingfish/i,
+            ['surf', 'bottom']],
+        [/pompano|permit/i,
+            ['surf', 'bottom']],
+        [/king mackerel|spanish mackerel|cobia/i,
+            ['reef', 'bottom']],
+        [/fluke|summer flounder|windowpane/i,
+            ['bottom', 'estuary']],
+        [/weakfish|spotted weakfish/i,
+            ['estuary', 'grassflat']],
+        [/halibut|lingcod|cabezon|rockfish|greenling/i,
+            ['reef', 'bottom']],
+        [/trout|salmon|steelhead|dolly varden/i,
+            ['estuary', 'surf']],
+        [/sheepshead|black drum/i,
+            ['reef', 'estuary']],
+        [/wiper|striped bass hybrid/i,
+            ['bottom', 'estuary']],
+    ];
+
+    function _habitatTypesFromSpecies() {
+        // Read forecast snapshot — populated server-side at page load
+        var snapshot = null;
+        try {
+            var raw = localStorage.getItem('fishforecast_snapshot');
+            if (raw) snapshot = JSON.parse(raw);
+        } catch (_e) {}
+        var topSpecies = (snapshot && snapshot.species) ? snapshot.species.slice(0, 5) : [];
+        if (!topSpecies.length) return ['general'];
+        var seen = {};
+        var types = [];
+        topSpecies.forEach(function (sp) {
+            var name = (sp.name || '').toLowerCase();
+            for (var i = 0; i < _SPECIES_HABITAT_HINTS.length; i++) {
+                var hint = _SPECIES_HABITAT_HINTS[i];
+                if (hint[0].test(name)) {
+                    hint[1].forEach(function (ht) {
+                        if (!seen[ht]) { seen[ht] = true; types.push(ht); }
+                    });
+                    break;
+                }
+            }
+        });
+        return types.length ? types : ['general'];
+    }
+
     // Determine which API habitat_type to query based on active filter pills.
     // Returns an array of unique habitat_type strings to fetch.
     function _activeHabitatTypes() {
-        if (!activeSpotTypes.length) return ['general'];
+        if (!activeSpotTypes.length) {
+            // No filter pills selected — derive habitat types from forecast species
+            return _habitatTypesFromSpecies();
+        }
         var seen = {};
         var types = [];
         activeSpotTypes.forEach(function (t) {
@@ -518,7 +591,7 @@
                 .then(function (r) { return r.ok ? r.json() : { data: { features: [] } }; })
                 .then(function (data) {
                     return ((data.data && data.data.features) || []).map(function (f) {
-                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general' };
+                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general', score: f.score || 0 };
                     });
                 })
                 .catch(function () { return []; });
@@ -536,6 +609,7 @@
                     if (!seen[dedupeKey]) { seen[dedupeKey] = true; features.push(f); }
                 });
             });
+            features.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
             _aiCachePut(thisKey, features);
             renderAIHabitatSpots(features);
         })
@@ -560,6 +634,35 @@
             _aiCacheKeys.push(key);
         }
         aiCache[key] = data;
+        // Persist to localStorage (best-effort, skip if quota exceeded)
+        try {
+            var raw = localStorage.getItem(_AI_LS_KEY);
+            var store = (raw ? JSON.parse(raw) : null) || {};
+            store[key] = { ts: Date.now(), d: data };
+            // Evict oldest entries to stay under quota
+            var keys = Object.keys(store);
+            if (keys.length > _AI_CACHE_MAX) {
+                keys.sort(function (a, b) { return (store[a].ts || 0) - (store[b].ts || 0); });
+                keys.slice(0, keys.length - _AI_CACHE_MAX).forEach(function (k) { delete store[k]; });
+            }
+            localStorage.setItem(_AI_LS_KEY, JSON.stringify(store));
+        } catch (_e) {}
+    }
+
+    function _aiLsLoad() {
+        try {
+            var raw = localStorage.getItem(_AI_LS_KEY);
+            if (!raw) return;
+            var saved = JSON.parse(raw);
+            if (!saved || typeof saved !== 'object') return;
+            var now = Date.now();
+            Object.keys(saved).forEach(function (k) {
+                var entry = saved[k];
+                if (entry && entry.ts && now - entry.ts < _AI_LS_TTL && Array.isArray(entry.d)) {
+                    _aiCachePut(k, entry.d);
+                }
+            });
+        } catch (_e) {}
     }
 
     // Overlay icon cache — returns a cached L.divIcon, creating it on first use.

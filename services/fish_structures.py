@@ -1294,22 +1294,42 @@ _HABITAT_TAGS: dict[str, list[str]] = {
         'way["natural"="sandbank"]',
         'node["seamark:type"="rock_awash"]',
         'node["seamark:type"="rock_submerged"]',
+        'way["natural"="bare_rock"]',
+        'node["natural"="cape"]',
+        'way["natural"="coastline"]',
+    ],
+    "kelp": [
+        'way["natural"="kelp_bed"]',
+        'node["natural"="kelp_bed"]',
+        'way["natural"="wetland"]["wetland"="kelp"]',
+        'node["natural"="wetland"]["wetland"="kelp"]',
+        'way["seamark:type"="kelp_bed"]',
+        'way["natural"="reef"]["reef:type"="kelp"]',
     ],
     "mangrove": [
         'way["natural"="wetland"]["wetland"="mangrove"]',
+        'node["natural"="wetland"]["wetland"="mangrove"]',
+        'way["natural"="wood"]["wood"="mangrove"]',
         'way["waterway"="tidal_channel"]',
         'way["waterway"="stream"]["tidal"="yes"]',
         'way["waterway"="drain"]["tidal"="yes"]',
+        'node["natural"="mangrove"]',
     ],
     "grassflat": [
         'way["natural"="wetland"]["wetland"="seagrass"]',
-        'way["natural"="wetland"]["wetland"="saltmarsh"]',
         'node["natural"="wetland"]["wetland"="seagrass"]',
+        'way["natural"="wetland"]["wetland"="saltmarsh"]',
+        'node["natural"="wetland"]["wetland"="saltmarsh"]',
         'way["waterway"="tidal_channel"]',
         'way["natural"="shoal"]',
+        'node["natural"="shoal"]',
+        'way["natural"="grassland"]["salt_tolerant"="yes"]',
     ],
     "estuary": [
         'way["natural"="wetland"]["wetland"="saltmarsh"]',
+        'node["natural"="wetland"]["wetland"="saltmarsh"]',
+        'way["natural"="estuary"]',
+        'node["natural"="estuary"]',
         'way["waterway"="tidal_channel"]',
         'node["natural"="shoal"]',
         'way["natural"="wetland"]["wetland"="tidalflat"]',
@@ -1318,20 +1338,30 @@ _HABITAT_TAGS: dict[str, list[str]] = {
         'way["landuse"="aquaculture"]["product"="oysters"]',
         'node["seamark:type"="beacon_lateral"]',
         'node["seamark:type"="buoy_lateral"]',
+        'node["waterway"="tidal_creek"]',
+        'way["waterway"="tidal_creek"]',
     ],
     "reef": [
         'way["natural"="reef"]',
         'node["natural"="reef"]',
+        'way["natural"="reef"]["reef:type"="coral"]',
+        'node["natural"="coral_reef"]',
+        'way["natural"="coral_reef"]',
         'node["natural"="shoal"]',
+        'way["natural"="shoal"]',
         'node["seamark:type"="wreck"]',
         'node["historic"="wreck"]',
         'way["seamark:type"="wreck"]',
         'way["historic"="wreck"]',
         'node["seamark:type"="artificial_reef"]',
+        'way["seamark:type"="artificial_reef"]',
         'node["seamark:type"="obstruction"]',
+        'node["seamark:type"="rock_awash"]',
+        'node["seamark:type"="rock_submerged"]',
         'node["man_made"="pier"]["access"!="private"]',
         'node["man_made"="jetty"]',
-        'node["seamark:type"="rock_awash"]',
+        'way["man_made"="breakwater"]',
+        'node["man_made"="breakwater"]',
     ],
     "bottom": [
         'node["natural"="shoal"]',
@@ -1341,20 +1371,33 @@ _HABITAT_TAGS: dict[str, list[str]] = {
         'way["waterway"="tidal_channel"]',
         'way["natural"="wetland"]["wetland"="tidalflat"]',
         'node["natural"="wetland"]["wetland"="tidalflat"]',
+        'node["natural"="mud"]',
+        'way["natural"="mud"]',
+        'node["natural"="bay"]',
+        'way["natural"="bay"]',
     ],
     "general": [
         'way["natural"="reef"]',
         'node["natural"="reef"]',
         'node["natural"="shoal"]',
+        'way["natural"="shoal"]',
         'way["natural"="wetland"]["wetland"="saltmarsh"]',
+        'node["natural"="wetland"]["wetland"="saltmarsh"]',
         'way["waterway"="tidal_channel"]',
         'node["man_made"="pier"]["access"!="private"]',
-        'node["man_made"="breakwater"]',
+        'node["man_made"="jetty"]',
+        'way["man_made"="breakwater"]',
+        'node["seamark:type"="wreck"]',
+        'node["historic"="wreck"]',
+        'node["natural"="bay"]',
+        'way["natural"="bay"]',
+        'node["natural"="estuary"]',
+        'way["natural"="estuary"]',
     ],
 }
 
 _HABITAT_CACHE: dict[tuple, dict[str, Any]] = {}
-_HABITAT_CACHE_TTL: int = 1800   # 30 minutes
+_HABITAT_CACHE_TTL: int = 14400  # 4 hours
 _HABITAT_CACHE_MAX: int = 128    # bbox × habitat_type slots
 
 
@@ -1363,17 +1406,39 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
 
     Mirrors osmTagsToType() in fishing_map.js for consistent feature labelling.
     """
-    if tags.get("wetland") == "saltmarsh":  return "saltmarsh"
-    if tags.get("wetland") == "seagrass":   return "seagrass"
-    if tags.get("wetland") == "mangrove":   return "mangrove"
-    if tags.get("wetland") == "tidalflat":  return "tidalflat"
-    if tags.get("natural") == "reef":       return "reef"
-    if tags.get("natural") == "shoal":      return "shoal"
-    if tags.get("natural") == "beach":      return "beach"
-    if tags.get("natural") == "bay":        return "bay"
-    if tags.get("waterway"):                return "channel"
-    if tags.get("seamark:type") == "wreck" or tags.get("historic") == "wreck":
-        return "wreck"
+    nat  = tags.get("natural", "")
+    wet  = tags.get("wetland", "")
+    sea  = tags.get("seamark:type", "")
+    wway = tags.get("waterway", "")
+    mm   = tags.get("man_made", "")
+    hist = tags.get("historic", "")
+
+    if wet == "saltmarsh":   return "saltmarsh"
+    if wet == "seagrass":    return "seagrass"
+    if wet == "mangrove":    return "mangrove"
+    if wet == "tidalflat":   return "tidalflat"
+    if wet == "kelp":        return "seagrass"
+    if nat == "reef":        return "reef"
+    if nat == "coral_reef":  return "reef"
+    if nat == "kelp_bed":    return "seagrass"
+    if nat == "shoal":       return "shoal"
+    if nat == "sandbank":    return "shoal"
+    if nat == "beach":       return "beach"
+    if nat == "bay":         return "bay"
+    if nat == "estuary":     return "channel"
+    if nat == "mud":         return "tidalflat"
+    if nat == "bare_rock":   return "shoal"
+    if nat == "cape":        return "beach"
+    if sea == "wreck" or hist == "wreck":     return "wreck"
+    if sea == "artificial_reef":              return "reef"
+    if sea == "obstruction":                  return "reef"
+    if sea == "rock_awash":                   return "shoal"
+    if sea == "rock_submerged":               return "shoal"
+    if sea in ("beacon_lateral", "buoy_lateral"): return "channel"
+    if sea == "kelp_bed":                     return "seagrass"
+    if wway in ("tidal_channel", "tidal_creek", "stream", "drain"): return "channel"
+    if mm in ("pier", "jetty", "breakwater"): return "reef"
+    if tags.get("reef:type") == "coral":      return "reef"
     return "general"
 
 
@@ -1439,14 +1504,20 @@ def fetch_ai_habitats(
                 if not (lat and lng):
                     continue
                 el_tags: dict[str, str] = el.get("tags") or {}
+                osm_type = _osm_tags_to_type(el_tags)
+                name_val  = el_tags.get("name", "")
+                is_way    = el.get("type") == "way"
+                score     = (2 if name_val else 0) + (1 if is_way else 0) + (1 if osm_type in ("reef", "wreck") else 0)
                 features.append(
                     {
-                        "lat": lat,
-                        "lng": lng,
-                        "name": el_tags.get("name", ""),
-                        "osm_type": _osm_tags_to_type(el_tags),
+                        "lat":      lat,
+                        "lng":      lng,
+                        "name":     name_val,
+                        "osm_type": osm_type,
+                        "score":    score,
                     }
                 )
+            features.sort(key=lambda f: f["score"], reverse=True)
             break
         except Exception as exc:
             logger.warning(
