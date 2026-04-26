@@ -53,7 +53,8 @@
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
     var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
-    var _AI_RENDER_CAP   = 80;       // max features rendered per bbox to prevent clutter
+    var _AI_POLY_CAP     = 150;      // max polygon/polyline overlays rendered by AI layer
+    var _AI_POINT_CAP    = 60;       // max point-marker features rendered by AI layer
 
     // ─── Community / social state ─────────────────────────────────────────────
     var communityLayerOn  = false;   // whether community pins are visible
@@ -465,60 +466,74 @@
             if (!hasHabitatPill) { return; }
         }
 
-        // Filter to wanted osmTypes
-        var filtered = features.filter(function (f) {
-            if (!f.lat || !f.lng) return false;
-            return !wantedOsmTypes || !!wantedOsmTypes[f.osmType || 'general'];
-        });
-
-        // Proximity dedup: drop point features within ~200 m of an earlier one.
-        // Polygon features (have .geometry) skip this dedup — adjacent patches are distinct.
-        var _PROX = 0.002;
-        var kept = [];
-        filtered.forEach(function (f) {
-            if (!f.geometry) {
-                for (var i = 0; i < kept.length; i++) {
-                    if (!kept[i].geometry &&
-                        Math.abs(kept[i].lat - f.lat) < _PROX &&
-                        Math.abs(kept[i].lng - f.lng) < _PROX) return;
-                }
+        // Filter to wanted osmTypes; partition into polygon ways and point nodes.
+        var _PROX   = 0.002;
+        var polys   = [];
+        var rawPts  = [];
+        features.forEach(function (f) {
+            if (!f.lat || !f.lng) return;
+            if (wantedOsmTypes && !wantedOsmTypes[f.osmType || 'general']) return;
+            if (f.geometry && f.geometry.length >= 3) {
+                polys.push(f);
+            } else {
+                rawPts.push(f);
             }
-            kept.push(f);
         });
 
-        kept.slice(0, _AI_RENDER_CAP).forEach(function (f) {
+        // Point-vs-point proximity dedup (adjacent polygon patches are distinct so
+        // they skip this; each is already a separate OSM way).
+        var dedupedPts = [];
+        rawPts.forEach(function (f) {
+            for (var i = 0; i < dedupedPts.length; i++) {
+                if (Math.abs(dedupedPts[i].lat - f.lat) < _PROX &&
+                    Math.abs(dedupedPts[i].lng - f.lng) < _PROX) return;
+            }
+            dedupedPts.push(f);
+        });
+
+        // Render polygon/polyline overlays first, up to _AI_POLY_CAP.
+        var renderPolys = polys.slice(0, _AI_POLY_CAP);
+        renderPolys.forEach(function (f) {
             var osmType = f.osmType || 'general';
             var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
             var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
+            var color   = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
+            var geom    = f.geometry;
+            var first   = geom[0];
+            var last    = geom[geom.length - 1];
+            var closed  = Math.abs(first[0] - last[0]) < 0.00002 &&
+                          Math.abs(first[1] - last[1]) < 0.00002;
+            var poly    = closed
+                ? L.polygon(geom, {
+                    color: color, weight: 2, opacity: 0.85,
+                    fillColor: color, fillOpacity: 0.25,
+                    className: 'fmap-habitat-poly'
+                  })
+                : L.polyline(geom, {
+                    color: color, weight: 3, opacity: 0.75,
+                    className: 'fmap-habitat-poly'
+                  });
+            poly.bindTooltip(
+                '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
+                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
+            );
+            aiPickLayer.addLayer(poly);
+        });
 
-            // Features with polygon geometry → render as area overlay.
-            if (f.geometry && f.geometry.length >= 3) {
-                var color  = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
-                var geom   = f.geometry;
-                var first  = geom[0];
-                var last   = geom[geom.length - 1];
-                var closed = Math.abs(first[0] - last[0]) < 0.00002 &&
-                             Math.abs(first[1] - last[1]) < 0.00002;
-                var poly   = closed
-                    ? L.polygon(geom, {
-                        color: color, weight: 2, opacity: 0.85,
-                        fillColor: color, fillOpacity: 0.25,
-                        className: 'fmap-habitat-poly'
-                    })
-                    : L.polyline(geom, {
-                        color: color, weight: 3, opacity: 0.75,
-                        className: 'fmap-habitat-poly'
-                    });
-                poly.bindTooltip(
-                    '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
-                    '<span style="opacity:.8">' + esc(info.tip) + '</span>',
-                    { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
-                );
-                aiPickLayer.addLayer(poly);
-                return;
+        // Render point markers, up to _AI_POINT_CAP, skipping any point whose
+        // lat/lng sits within _PROX of a polygon centroid already rendered
+        // (avoids a dot marker stacked on top of its own polygon outline).
+        var pointCount = 0;
+        dedupedPts.forEach(function (f) {
+            if (pointCount >= _AI_POINT_CAP) return;
+            for (var j = 0; j < renderPolys.length; j++) {
+                if (Math.abs(renderPolys[j].lat - f.lat) < _PROX &&
+                    Math.abs(renderPolys[j].lng - f.lng) < _PROX) return;
             }
-
-            // Point feature → icon marker.
+            var osmType = f.osmType || 'general';
+            var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
+            var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             var m = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
@@ -526,6 +541,7 @@
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
+            pointCount++;
         });
     }
 
