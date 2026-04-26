@@ -46,7 +46,7 @@
     var _communityAbort      = null; // AbortController for the in-flight /api/map/catches fetch
     var aiPickLayer      = null;     // L.layerGroup for AI habitat picks
     var aiQueryTimer     = null;     // debounce timer for AI habitat queries
-    var aiCache          = {};       // bbox-key+species → array of habitat features
+    var aiCache          = {};       // bbox-key → array of habitat features
     var _aiCacheKeys     = [];       // insertion-ordered keys for LRU eviction
     var _AI_CACHE_MAX    = 64;       // cap so heavy sessions don't leak memory
     var _aiReqGen        = 0;        // monotonic counter; stale AI completions are discarded
@@ -54,7 +54,6 @@
     var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
     var _AI_RENDER_CAP   = 80;       // max features rendered per bbox to prevent clutter
-    var _aiAutoSpecies   = [];       // species names that drove the last auto-habitat query
 
     // ─── Community / social state ─────────────────────────────────────────────
     var communityLayerOn  = false;   // whether community pins are visible
@@ -432,77 +431,47 @@
         general:   '✦',
     };
 
-    function makeAIPickIcon(osmType, size) {
-        // size: 's' (small/low-score), 'm' (medium), 'l' (high-score/named)
-        size = size || 'm';
-        var cacheKey = 'ai|' + osmType + '|' + size;
+    function makeAIPickIcon(osmType) {
+        var cacheKey = 'ai|' + osmType;
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
         var sym   = (SPOT_LABELS && SPOT_LABELS[osmType]) || _AI_OSMT_SYM[osmType] || '✦';
-        var px    = size === 'l' ? 22 : size === 's' ? 14 : 18;
-        var fs    = size === 'l' ? 12 : size === 's' ? 8  : 10;
         var html  =
-            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';width:' + px + 'px;height:' + px + 'px;' +
+            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';' +
             'display:flex;align-items:center;justify-content:center;' +
             'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-            'font-size:' + fs + 'px;line-height:1">' + sym + '</span>';
-        var icon = L.divIcon({
-            className: 'fmap-ai-wrap',
-            html:      html,
-            iconSize:  [px, px],
-            iconAnchor:[Math.floor(px / 2), Math.floor(px / 2)],
-        });
+            'font-size:10px;line-height:1">' + sym + '</span>';
+        var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [18, 18], iconAnchor: [9, 9] });
         _spotIconCache[cacheKey] = icon;
         return icon;
     }
 
-    // Update the AI status bar below the map controls.
-    // Shows which species drove the auto habitat selection (or clears it).
-    function _updateAIStatusBar(autoMode, speciesNames) {
-        var bar = document.getElementById('fmap-ai-status');
-        if (!bar) return;
-        if (!autoMode || !speciesNames || !speciesNames.length) {
-            bar.hidden = true;
-            bar.textContent = '';
-            return;
-        }
-        bar.hidden = false;
-        bar.textContent = '✦ AI habitat — based on: ' + speciesNames.slice(0, 3).join(', ');
-    }
-
-    // Render AI picks, filtering to only the osmTypes that match active filter pills.
-    // When no pills are active (show-all), render everything.
+    // Render AI habitat picks, filtering to osmTypes that match active filter pills.
+    // When no pills are active, renders everything from the general query.
     function renderAIHabitatSpots(features) {
         if (!aiPickLayer) return;
         aiPickLayer.clearLayers();
-        _updateAIStatusBar(false);
 
-        // Build the set of AI osmTypes that are currently "wanted" by the active filters.
+        // Build the set of AI osmTypes wanted by the active filters.
         var wantedOsmTypes = null;  // null = show all
-        var autoMode = !activeSpotTypes.length;
-        if (!autoMode) {
+        if (activeSpotTypes.length) {
             wantedOsmTypes = {};
             var hasHabitatPill = false;
             activeSpotTypes.forEach(function (t) {
                 var ot = _PILL_TO_AI_OSMT[t];
                 if (ot) { wantedOsmTypes[ot] = true; hasHabitatPill = true; }
             });
-            // No habitat-relevant pills active (only structure pills like pier/buoy):
-            // hide the AI layer entirely so it doesn't clutter the view.
+            // Only structure pills active (pier/buoy/etc) — AI has nothing to show.
             if (!hasHabitatPill) { return; }
         }
 
-        // Filter by wanted osmTypes
+        // Filter to wanted osmTypes
         var filtered = features.filter(function (f) {
             if (!f.lat || !f.lng) return false;
-            var ot = f.osmType || 'general';
-            if (wantedOsmTypes && !wantedOsmTypes[ot]) return false;
-            return true;
+            return !wantedOsmTypes || !!wantedOsmTypes[f.osmType || 'general'];
         });
 
-        // Proximity deduplication: discard lower-scored features within ~200 m of
-        // a higher-scored one (0.002° ≈ 220 m).  Features are already sorted by
-        // score desc so first-seen wins.
+        // Proximity dedup: drop features within ~200 m of an earlier (higher-scored) one.
         var _PROX = 0.002;
         var kept = [];
         filtered.forEach(function (f) {
@@ -513,29 +482,13 @@
             kept.push(f);
         });
 
-        // Cap total rendered features
-        var toRender = kept.slice(0, _AI_RENDER_CAP);
-
-        if (!toRender.length) return;
-
-        if (autoMode) {
-            _updateAIStatusBar(true, _aiAutoSpecies);
-        }
-
-        toRender.forEach(function (f) {
+        kept.slice(0, _AI_RENDER_CAP).forEach(function (f) {
             var osmType = f.osmType || 'general';
             var info    = AI_PICK_INFO[osmType] || AI_PICK_INFO.general;
-            var score   = f.score || 0;
-            // Score-based icon size: named+way (score≥3) → large, score≥1 → medium, else small
-            var sz      = score >= 3 ? 'l' : score >= 1 ? 'm' : 's';
-            var m       = L.marker([f.lat, f.lng], {
-                icon:              makeAIPickIcon(osmType, sz),
-                zIndexOffset:      score >= 3 ? 10 : 0,
-            });
-            var name = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
-            var star = score >= 3 ? '<span style="color:#f59e0b;margin-left:2px">★</span>' : '';
+            var m       = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
+            var name    = f.name ? '<strong>' + esc(f.name) + '</strong><br>' : '';
             m.bindTooltip(
-                '<span class="fmap-ai-tip-label">' + esc(info.label) + star + '</span>' + name +
+                '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
                 '<span style="opacity:.8">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
@@ -543,85 +496,18 @@
         });
     }
 
-    // Keyword patterns → [api habitat_type, ...] for the top forecast species.
-    // Checked in order; first match wins for each species name.
-    var _SPECIES_HABITAT_HINTS = [
-        [/grouper|snapper|amberjack|triggerfish|filefish|barracuda|hogfish|parrotfish|spadefish|porgies|grunt|cubera/i,
-            ['reef', 'wreck']],
-        [/redfish|red drum|speckled trout|spotted sea|flounder|black drum|sheepshead/i,
-            ['estuary', 'grassflat']],
-        [/snook|tarpon|jack crevalle/i,
-            ['mangrove', 'estuary']],
-        [/striped bass|striper|bluefish/i,
-            ['surf', 'bottom', 'estuary']],
-        [/tautog|blackfish|black sea bass|cunner|wrasse/i,
-            ['reef']],
-        [/croaker|spot fish|whiting|kingfish/i,
-            ['surf', 'bottom']],
-        [/pompano|permit/i,
-            ['surf', 'bottom']],
-        [/king mackerel|spanish mackerel|cobia/i,
-            ['reef', 'bottom']],
-        [/fluke|summer flounder|windowpane/i,
-            ['bottom', 'estuary']],
-        [/weakfish|spotted weakfish/i,
-            ['estuary', 'grassflat']],
-        [/halibut|lingcod|cabezon|rockfish|greenling/i,
-            ['reef', 'bottom']],
-        [/trout|salmon|steelhead|dolly varden/i,
-            ['estuary', 'surf']],
-        [/sheepshead|black drum/i,
-            ['reef', 'estuary']],
-        [/wiper|striped bass hybrid/i,
-            ['bottom', 'estuary']],
-    ];
-
-    function _habitatTypesFromSpecies() {
-        // Read forecast snapshot — populated server-side at page load
-        var snapshot = null;
-        try {
-            var raw = localStorage.getItem('fishforecast_snapshot');
-            if (raw) snapshot = JSON.parse(raw);
-        } catch (_e) {}
-        var topSpecies = (snapshot && snapshot.species) ? snapshot.species.slice(0, 5) : [];
-        if (!topSpecies.length) {
-            _aiAutoSpecies = [];
-            return ['general'];
-        }
-        var seen = {};
-        var types = [];
-        var matchedNames = [];
-        topSpecies.forEach(function (sp) {
-            var name = (sp.name || '');
-            for (var i = 0; i < _SPECIES_HABITAT_HINTS.length; i++) {
-                var hint = _SPECIES_HABITAT_HINTS[i];
-                if (hint[0].test(name)) {
-                    hint[1].forEach(function (ht) {
-                        if (!seen[ht]) { seen[ht] = true; types.push(ht); }
-                    });
-                    matchedNames.push(name);
-                    break;
-                }
-            }
-        });
-        _aiAutoSpecies = matchedNames;
-        return types.length ? types : ['general'];
-    }
-
-    // Determine which API habitat_type to query based on active filter pills.
-    // Returns an array of unique habitat_type strings to fetch.
+    // Which API habitat_type strings to fetch, based on active filter pills.
+    // No pills → query 'general' (all common habitat types in one OSM query).
+    // Habitat pills → query the matching type(s).
+    // Only structure pills → null (nothing for AI to show).
     function _activeHabitatTypes() {
-        if (!activeSpotTypes.length) {
-            // No filter pills selected — derive habitat types from forecast species
-            return _habitatTypesFromSpecies();
-        }
+        if (!activeSpotTypes.length) return ['general'];
         var seen = {};
         var types = [];
         activeSpotTypes.forEach(function (t) {
             var ht = _PILL_TO_HABITAT_TYPE[t];
             if (ht && !seen[ht]) { seen[ht] = true; types.push(ht); }
         });
-        // If no habitat-relevant pills selected, return null so the AI layer clears.
         return types.length ? types : null;
     }
 
