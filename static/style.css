@@ -85,6 +85,30 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
+/* Remove 300ms tap delay on interactive elements */
+button,
+a,
+summary,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+label[for] {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS auto-zoom when focusing inputs (requires ≥16px font-size) */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
+
 /* ---------- Accessibility ---------- */
 
 .skip-link {
@@ -1858,6 +1882,17 @@ h2::before {
   gap: 0.5rem;
 }
 
+@media (max-width: 480px) {
+  .bait-list {
+    grid-template-columns: 1fr;
+  }
+
+  .rig-cards,
+  .lure-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
 .bait-item {
   display: flex;
   align-items: flex-start;
@@ -3293,6 +3328,29 @@ h2::before {
   }
 }
 
+@media (max-width: 480px) {
+  /* Inner sections add their own 1rem horizontal padding on top of main's 1rem,
+     creating 2rem total on narrow phones. Zero it out so main handles it. */
+  .forage-section,
+  .spawning-section,
+  .spot-tips-section,
+  .calendar-section,
+  .fishlog-section {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Prevent 280px minmax columns from overflowing a ~300px content area */
+  .forage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Prevent 240px minmax columns from overflowing */
+  .spawning-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Fishing Log ---------- */
 
 .fishlog-section {
@@ -3315,6 +3373,7 @@ h2::before {
 .fishlog-row {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .fishlog-input {
@@ -3616,6 +3675,21 @@ h2::before {
 @media (max-width: 500px) {
   .catch-stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .fishlog-row {
+    flex-direction: column;
+  }
+
+  .fishlog-input--sm {
+    max-width: none;
+  }
+
+  .fishlog-add-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -7466,11 +7540,10 @@ footer p {
   height: auto;
 }
 
-/* ---- Mobile: fixed bottom tab bar ---- */
+/* ---- Mobile: iOS safe area clearance ---- */
 @media (max-width: 760px) {
   body {
-    /* make room for the fixed bottom nav */
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .app-nav {
@@ -10101,11 +10174,13 @@ body.has-app-header main {
 
 .csc-verdict-badge {
   display: block;
-  font-size: 2.6rem;
+  font-size: clamp(1.6rem, 6.5vw, 2.6rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   text-transform: uppercase;
   line-height: 1;
+  overflow-wrap: break-word;
+  word-break: break-word;
   padding: 0;
   border-radius: 0;
   background: none;
@@ -10630,6 +10705,15 @@ body.has-app-header main {
   gap: 0.3rem;
 }
 
+@media (max-width: 480px) {
+  .location-bar-change,
+  .location-bar-fav {
+    padding: 0.4rem 0.65rem;
+    min-height: 36px;
+    touch-action: manipulation;
+  }
+}
+
 /* ---- FAVORITES BAR (in location-bar) ---- */
 
 .location-bar-favs {
@@ -10659,6 +10743,12 @@ body.has-app-header main {
 
   .csc-stat-value {
     font-size: 0.92rem;
+  }
+
+  .collapsible-module summary {
+    font-size: 0.72rem;
+    min-height: 44px;
+    touch-action: manipulation;
   }
 }
 
