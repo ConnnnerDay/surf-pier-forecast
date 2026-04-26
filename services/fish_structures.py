@@ -1418,7 +1418,10 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
     if wet == "mangrove":    return "mangrove"
     if wet == "tidalflat":   return "tidalflat"
     if wet == "kelp":        return "seagrass"
-    if nat == "reef":        return "reef"
+    if nat == "reef":
+        # kelp-type reef → seagrass so it surfaces under the kelp filter pill
+        if tags.get("reef:type") == "kelp":  return "seagrass"
+        return "reef"
     if nat == "coral_reef":  return "reef"
     if nat == "kelp_bed":    return "seagrass"
     if nat == "shoal":       return "shoal"
@@ -1439,6 +1442,16 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
     if wway in ("tidal_channel", "tidal_creek", "stream", "drain"): return "channel"
     if mm in ("pier", "jetty", "breakwater"): return "reef"
     if tags.get("reef:type") == "coral":      return "reef"
+    # Oyster aquaculture beds → reef so they surface under the oyster_reef filter pill
+    # (_PILL_TO_AI_OSMT['oyster_reef'] = 'reef')
+    if tags.get("landuse") == "aquaculture" and tags.get("produce") in (
+        "oyster", "oysters"
+    ):
+        return "reef"
+    if tags.get("landuse") == "aquaculture" and tags.get("product") in (
+        "oyster", "oysters"
+    ):
+        return "reef"
     return "general"
 
 

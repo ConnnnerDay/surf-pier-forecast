@@ -492,6 +492,11 @@
         });
 
         // Render polygon/polyline overlays first, up to _AI_POLY_CAP.
+        // Pre-compute viewport span for the large-feature fill check below.
+        var _vBounds     = map ? map.getBounds() : null;
+        var _viewLatSpan = _vBounds ? (_vBounds.getNorth() - _vBounds.getSouth()) : 1;
+        var _viewLngSpan = _vBounds ? (_vBounds.getEast()  - _vBounds.getWest())  : 1;
+
         var renderPolys = polys.slice(0, _AI_POLY_CAP);
         renderPolys.forEach(function (f) {
             var osmType = f.osmType || 'general';
@@ -503,7 +508,21 @@
             var last    = geom[geom.length - 1];
             var closed  = Math.abs(first[0] - last[0]) < 0.00002 &&
                           Math.abs(first[1] - last[1]) < 0.00002;
-            var poly    = closed
+
+            // Compute the polygon's lat/lng extent to decide fill opacity.
+            // Very large features (bay, coastline segment) that span ≥60% of the
+            // viewport in either axis get outline-only treatment so they don't
+            // wash out the underlying tiles.
+            var minLat = Infinity, maxLat = -Infinity;
+            var minLng = Infinity, maxLng = -Infinity;
+            geom.forEach(function (c) {
+                if (c[0] < minLat) minLat = c[0]; if (c[0] > maxLat) maxLat = c[0];
+                if (c[1] < minLng) minLng = c[1]; if (c[1] > maxLng) maxLng = c[1];
+            });
+            var isHuge = (maxLat - minLat) > _viewLatSpan * 0.6 ||
+                         (maxLng - minLng) > _viewLngSpan * 0.6;
+
+            var poly    = (closed && !isHuge)
                 ? L.polygon(geom, {
                     color: color, weight: 2, opacity: 0.85,
                     fillColor: color, fillOpacity: 0.25,
