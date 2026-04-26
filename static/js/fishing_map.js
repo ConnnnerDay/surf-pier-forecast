@@ -2374,6 +2374,7 @@
 
     var adminEditMode    = false;
     var _customMarkers   = [];  // [{id, leaflet, data}] — live custom marker state
+    var _adminPreviewPin = null; // temporary L.marker shown while the add modal is open
 
     function _customMarkerIcon(type, editMode) {
         if (!editMode) return makeFishingSpotIcon(type);
@@ -2411,15 +2412,30 @@
 
             m.on('dragend', function () {
                 var ll = m.getLatLng();
+                var prevLat = spot.lat, prevLng = spot.lng;
+                spot.lat = ll.lat;
+                spot.lng = ll.lng;
+
                 fetch('/api/map/custom-markers/' + spot.id, {
                     method:  'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ lat: ll.lat, lng: ll.lng }),
-                }).catch(function (e) {
-                    console.warn('[admin] drag-save failed:', e);
+                })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    // Invalidate cache so panning away and back shows the new position
+                    spotCache = {}; _spotCacheKeys = [];
+                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    _showAdminToast('Position saved');
+                })
+                .catch(function (err) {
+                    console.warn('[admin] drag-save failed:', err);
+                    // Revert marker and data to the original position
+                    spot.lat = prevLat;
+                    spot.lng = prevLng;
+                    m.setLatLng([prevLat, prevLng]);
+                    _showAdminToast('Save failed — ' + err.message, true);
                 });
-                spot.lat = ll.lat;
-                spot.lng = ll.lng;
             });
 
             m.on('click', function () {
@@ -2448,6 +2464,13 @@
 
     // ── Admin modal ──────────────────────────────────────────────────────────
 
+    function _removeAdminPreviewPin() {
+        if (_adminPreviewPin && map) {
+            map.removeLayer(_adminPreviewPin);
+            _adminPreviewPin = null;
+        }
+    }
+
     function _openAdminAddPanel(lat, lng) {
         if (!document.getElementById('fmap-admin-modal')) return;
         document.getElementById('fmap-admin-modal-title').textContent = 'Add Marker';
@@ -2458,6 +2481,21 @@
         document.getElementById('fmap-admin-desc').value = '';
         document.getElementById('fmap-admin-delete').hidden = true;
         document.getElementById('fmap-admin-save').dataset.markerId = '';
+
+        // Show a temporary pin so the admin can see exactly where the marker will land
+        _removeAdminPreviewPin();
+        _adminPreviewPin = L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'fmap-spot-wrap',
+                html: '<span style="display:flex;align-items:center;justify-content:center;' +
+                      'width:26px;height:26px;border-radius:50%;background:#2563eb;' +
+                      'border:3px solid #fff;box-shadow:0 0 12px #2563eb99;' +
+                      'font-size:15px;animation:fmap-pulse 1s ease-in-out infinite alternate">📍</span>',
+                iconSize: [26, 26], iconAnchor: [13, 26],
+            }),
+            interactive: false,
+        }).addTo(map);
+
         _openAdminModal();
     }
 
@@ -2490,10 +2528,34 @@
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) { backdrop.hidden = true; backdrop.style.display = 'none'; }
+        _removeAdminPreviewPin();
+    }
+
+    // Brief non-blocking toast shown after drag-saves and other silent actions.
+    function _showAdminToast(msg, isError) {
+        var t = document.getElementById('fmap-admin-toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'fmap-admin-toast';
+            t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+                'z-index:4000;padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;' +
+                'color:#fff;pointer-events:none;transition:opacity .3s;white-space:nowrap';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.background = isError ? '#dc2626' : '#16a34a';
+        t.style.opacity = '1';
+        clearTimeout(t._hideTimer);
+        t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
     }
 
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
+
+        // Escape key closes the modal from anywhere on the page
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') _closeAdminModal();
+        });
 
         // ── Toggle button ────────────────────────────────────────────────────
         var btn = document.getElementById('fmap-admin-edit-btn');
@@ -2566,7 +2628,8 @@
                     saveBtn.textContent = 'Save';
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
-                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
+                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) {
@@ -2581,15 +2644,37 @@
             });
         }
 
-        // ── Modal delete ──────────────────────────────────────────────────────
+        // ── Modal delete (two-tap confirmation — no blocking confirm dialog) ──
         var delBtn = document.getElementById('fmap-admin-delete');
         if (delBtn) {
+            var _delConfirmPending = false;
+            var _delConfirmTimer   = null;
+
             delBtn.addEventListener('click', function () {
                 var markerId = delBtn.dataset.markerId;
                 if (!markerId) return;
-                if (!confirm('Delete this marker?')) return;
 
-                var statusEl    = document.getElementById('fmap-admin-status');
+                // First tap: ask for confirmation inline
+                if (!_delConfirmPending) {
+                    _delConfirmPending = true;
+                    delBtn.textContent = 'Confirm delete?';
+                    delBtn.style.background = '#991b1b';
+                    // Auto-reset after 3 s if they don't confirm
+                    _delConfirmTimer = setTimeout(function () {
+                        _delConfirmPending = false;
+                        delBtn.textContent = 'Delete';
+                        delBtn.style.background = '#dc2626';
+                    }, 3000);
+                    return;
+                }
+
+                // Second tap: execute delete
+                clearTimeout(_delConfirmTimer);
+                _delConfirmPending = false;
+                delBtn.textContent = 'Delete';
+                delBtn.style.background = '#dc2626';
+
+                var statusEl = document.getElementById('fmap-admin-status');
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 delBtn.disabled = true;
 
@@ -2602,7 +2687,8 @@
                     delBtn.disabled = false;
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = [];
-                    try { sessionStorage.removeItem(_SS_KEY); } catch (e) {}
+                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    _showAdminToast('Marker deleted');
                     scheduleFishingSpotQuery();
                 })
                 .catch(function (e) {
@@ -2614,6 +2700,16 @@
                     }
                 });
             });
+
+            // Reset confirmation state when modal closes
+            var _origCloseAdminModal = _closeAdminModal;
+            _closeAdminModal = function () {
+                _delConfirmPending = false;
+                clearTimeout(_delConfirmTimer);
+                delBtn.textContent = 'Delete';
+                delBtn.style.background = '#dc2626';
+                _origCloseAdminModal();
+            };
         }
 
         // ── Modal close / backdrop ────────────────────────────────────────────
