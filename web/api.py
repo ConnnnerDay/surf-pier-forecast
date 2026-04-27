@@ -2007,9 +2007,12 @@ def map_structures() -> Any:
                 return True
         return False
 
+    def _spot_key(s: dict) -> str:
+        return s.get("id") or f"{s['type']}:{s['lat']}:{s['lng']}"
+
     filtered = [
         s for s in structures
-        if s.get("id") not in suppressed_keys
+        if _spot_key(s) not in suppressed_keys
         and not _is_overridden(s)
     ]
 
