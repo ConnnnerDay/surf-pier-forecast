@@ -5479,6 +5479,68 @@ h2::before {
   color: #fff;
 }
 
+/* ── Spot-type filter bar — map overlay strip at the bottom ── */
+.fmap-spot-filter-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 410;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.45rem 0.75rem 0.5rem;
+  padding-right: 62px; /* clear the Log Catch FAB */
+  background: rgba(10,19,29,0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.fmap-spot-filter-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.fmap-spot-filter-bar .fmap-struct-filters-hint {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fmap-spot-filter-bar-clear {
+  background: none;
+  border: 1px solid rgba(31,168,201,0.35);
+  color: #1fa8c9;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fmap-spot-filter-bar-clear:hover { background: rgba(31,168,201,0.12); border-color: #1fa8c9; }
+.fmap-spot-filter-bar .fmap-struct-error { margin-bottom: 0; }
+.fmap-spot-filter-bar .fmap-struct-filters-pills {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.fmap-spot-filter-bar .fmap-struct-filters-pills::-webkit-scrollbar { display: none; }
+.fmap-spot-filter-bar .fmap-pill--spot-type {
+  min-height: 32px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+[data-theme="light"] .fmap-spot-filter-bar {
+  background: rgba(240,248,252,0.95);
+  border-top-color: rgba(0,0,0,0.1);
+}
+[data-theme="light"] .fmap-spot-filter-bar .fmap-struct-filters-hint { color: rgba(0,0,0,0.45); }
+
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
