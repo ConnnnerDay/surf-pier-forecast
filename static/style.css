@@ -723,7 +723,7 @@ h2::before {
 }
 
 .stat-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1119,7 +1119,7 @@ h2::before {
 }
 
 .tide-type {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1360,7 +1360,7 @@ h2::before {
 }
 
 .solunar-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1577,7 +1577,7 @@ h2::before {
 }
 
 .meta-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2681,7 +2681,8 @@ h2::before {
 
   .lure-filter-chip {
     font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
+    padding: 0.4rem 0.6rem;
+    min-height: 36px;
   }
 
   .lure-result-item {
@@ -2690,7 +2691,8 @@ h2::before {
 
   .lure-result-add-btn {
     font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.4rem 0.65rem;
+    min-height: 36px;
   }
 }
 
@@ -2886,6 +2888,7 @@ h2::before {
 .best-day-callout {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.65rem;
   background: rgba(245,158,11,0.07);
   border: 1px solid rgba(245,158,11,0.3);
@@ -3665,7 +3668,7 @@ h2::before {
 }
 
 .catch-stat-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3946,6 +3949,14 @@ h2::before {
 .safety-badge--caution { color: #d4920b; }
 [data-theme="dark"] .safety-badge--warning { color: #e05830; }
 [data-theme="dark"] .safety-badge--caution { color: #f0b429; }
+
+@media (max-width: 640px) {
+  .gear-summary,
+  .safety-details summary {
+    min-height: 44px;
+    padding: 0.5rem 0;
+  }
+}
 
 /* ---------- Share ---------- */
 
