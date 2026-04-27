@@ -1841,6 +1841,7 @@
             if (err && err.name === 'AbortError') return;
             console.error('[fishing-map] Overpass fallback error:', err);
             showStructError("Couldn\u2019t load structure data; showing basic map markers.");
+            renderFishingSpots([]);
         });
     }
 
