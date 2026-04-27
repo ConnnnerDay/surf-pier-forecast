@@ -85,6 +85,30 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
+/* Remove 300ms tap delay on interactive elements */
+button,
+a,
+summary,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+label[for] {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS auto-zoom when focusing inputs (requires ≥16px font-size) */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
+
 /* ---------- Accessibility ---------- */
 
 .skip-link {
@@ -699,7 +723,7 @@ h2::before {
 }
 
 .stat-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1095,7 +1119,7 @@ h2::before {
 }
 
 .tide-type {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1336,7 +1360,7 @@ h2::before {
 }
 
 .solunar-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1553,7 +1577,7 @@ h2::before {
 }
 
 .meta-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1856,6 +1880,17 @@ h2::before {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .bait-list {
+    grid-template-columns: 1fr;
+  }
+
+  .rig-cards,
+  .lure-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .bait-item {
@@ -2646,7 +2681,8 @@ h2::before {
 
   .lure-filter-chip {
     font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
+    padding: 0.4rem 0.6rem;
+    min-height: 36px;
   }
 
   .lure-result-item {
@@ -2655,7 +2691,8 @@ h2::before {
 
   .lure-result-add-btn {
     font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.4rem 0.65rem;
+    min-height: 36px;
   }
 }
 
@@ -2851,6 +2888,7 @@ h2::before {
 .best-day-callout {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.65rem;
   background: rgba(245,158,11,0.07);
   border: 1px solid rgba(245,158,11,0.3);
@@ -3293,6 +3331,29 @@ h2::before {
   }
 }
 
+@media (max-width: 480px) {
+  /* Inner sections add their own 1rem horizontal padding on top of main's 1rem,
+     creating 2rem total on narrow phones. Zero it out so main handles it. */
+  .forage-section,
+  .spawning-section,
+  .spot-tips-section,
+  .calendar-section,
+  .fishlog-section {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Prevent 280px minmax columns from overflowing a ~300px content area */
+  .forage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Prevent 240px minmax columns from overflowing */
+  .spawning-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Fishing Log ---------- */
 
 .fishlog-section {
@@ -3315,6 +3376,7 @@ h2::before {
 .fishlog-row {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .fishlog-input {
@@ -3419,10 +3481,15 @@ h2::before {
   color: #c0392b;
   font-size: 1.1rem;
   cursor: pointer;
-  padding: 0;
+  padding: 0.25rem 0.35rem;
   line-height: 1;
   opacity: 0.5;
   transition: opacity 0.15s ease;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .fishlog-del:hover {
@@ -3606,7 +3673,7 @@ h2::before {
 }
 
 .catch-stat-label {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3616,6 +3683,21 @@ h2::before {
 @media (max-width: 500px) {
   .catch-stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .fishlog-row {
+    flex-direction: column;
+  }
+
+  .fishlog-input--sm {
+    max-width: none;
+  }
+
+  .fishlog-add-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -3872,6 +3954,14 @@ h2::before {
 .safety-badge--caution { color: #d4920b; }
 [data-theme="dark"] .safety-badge--warning { color: #e05830; }
 [data-theme="dark"] .safety-badge--caution { color: #f0b429; }
+
+@media (max-width: 640px) {
+  .gear-summary,
+  .safety-details summary {
+    min-height: 44px;
+    padding: 0.5rem 0;
+  }
+}
 
 /* ---------- Share ---------- */
 
@@ -5389,6 +5479,68 @@ h2::before {
   color: #fff;
 }
 
+/* ── Spot-type filter bar — map overlay strip at the bottom ── */
+.fmap-spot-filter-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 410;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.45rem 0.75rem 0.5rem;
+  padding-right: 62px; /* clear the Log Catch FAB */
+  background: rgba(10,19,29,0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.fmap-spot-filter-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.fmap-spot-filter-bar .fmap-struct-filters-hint {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fmap-spot-filter-bar-clear {
+  background: none;
+  border: 1px solid rgba(31,168,201,0.35);
+  color: #1fa8c9;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fmap-spot-filter-bar-clear:hover { background: rgba(31,168,201,0.12); border-color: #1fa8c9; }
+.fmap-spot-filter-bar .fmap-struct-error { margin-bottom: 0; }
+.fmap-spot-filter-bar .fmap-struct-filters-pills {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.fmap-spot-filter-bar .fmap-struct-filters-pills::-webkit-scrollbar { display: none; }
+.fmap-spot-filter-bar .fmap-pill--spot-type {
+  min-height: 32px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+[data-theme="light"] .fmap-spot-filter-bar {
+  background: rgba(240,248,252,0.95);
+  border-top-color: rgba(0,0,0,0.1);
+}
+[data-theme="light"] .fmap-spot-filter-bar .fmap-struct-filters-hint { color: rgba(0,0,0,0.45); }
+
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
@@ -5993,8 +6145,10 @@ footer p {
 }
 
 .fav-chip {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  min-height: 32px;
   font-size: 0.7rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
@@ -6977,6 +7131,18 @@ footer p {
   color: #fff;
 }
 
+.profile-preset-clear {
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.45rem 0.6rem;
+  min-height: 36px;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
 .profile-save-btn {
   display: inline-block;
   padding: 0.6rem 2rem;
@@ -7190,16 +7356,18 @@ footer p {
     justify-content: center;
   }
 
-  .alert-headline {
-    font-size: 0.7rem;
-  }
-
   .tide-timeline {
     flex-direction: column;
   }
 
   .tide-point {
     min-width: auto;
+  }
+
+  /* Profile form has inline padding:0 1rem inside main's padding — remove horizontal on mobile */
+  .profile-form {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
@@ -7466,11 +7634,10 @@ footer p {
   height: auto;
 }
 
-/* ---- Mobile: fixed bottom tab bar ---- */
+/* ---- Mobile: iOS safe area clearance ---- */
 @media (max-width: 760px) {
   body {
-    /* make room for the fixed bottom nav */
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .app-nav {
@@ -9914,7 +10081,8 @@ body:not(.forecast-page) main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 1rem;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
   color: var(--text);
   text-decoration: none;
   font-size: 0.88rem;
@@ -10091,7 +10259,7 @@ body.has-app-header main {
 }
 
 .csc-location {
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -10101,11 +10269,13 @@ body.has-app-header main {
 
 .csc-verdict-badge {
   display: block;
-  font-size: 2.6rem;
+  font-size: clamp(1.6rem, 6.5vw, 2.6rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   text-transform: uppercase;
   line-height: 1;
+  overflow-wrap: break-word;
+  word-break: break-word;
   padding: 0;
   border-radius: 0;
   background: none;
@@ -10630,6 +10800,15 @@ body.has-app-header main {
   gap: 0.3rem;
 }
 
+@media (max-width: 480px) {
+  .location-bar-change,
+  .location-bar-fav {
+    padding: 0.4rem 0.65rem;
+    min-height: 36px;
+    touch-action: manipulation;
+  }
+}
+
 /* ---- FAVORITES BAR (in location-bar) ---- */
 
 .location-bar-favs {
@@ -10659,6 +10838,12 @@ body.has-app-header main {
 
   .csc-stat-value {
     font-size: 0.92rem;
+  }
+
+  .collapsible-module summary {
+    font-size: 0.72rem;
+    min-height: 44px;
+    touch-action: manipulation;
   }
 }
 

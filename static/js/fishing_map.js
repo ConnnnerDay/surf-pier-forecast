@@ -21,7 +21,9 @@
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
-    var _spotIconCache        = {};   // type → L.divIcon; icons are immutable so one per type
+    var _spotIconCache        = {};   // type → L.divIcon
+    var _spotIconKeys        = [];   // insertion-ordered keys for LRU eviction
+    var _SPOT_ICON_MAX       = 128;  // cap; evict oldest 32 when full
     // Adjacent-tile pre-fetch queue — background loads for N/S/E/W of the current view
     var _prefetchQueue      = [];    // {s,w,n,e,key} objects waiting for background fetch
     var _prefetchInFlight   = false; // whether a background fetch is running
@@ -39,7 +41,7 @@
     var _elStructErrorMsg     = null; // cached DOM ref — fmap-struct-error-msg
     var activeSpotTypes      = [];   // [] = all types; populated by type-filter pills
     var _spotTypeSaveTimer   = null; // debounce timer for persisting spotTypes
-    var _structLoadCount     = 0;    // pending /api/map/structures requests (spinner ref-count)
+    var _structLoadingGens   = {};   // {reqGen: true} — active requests holding the spinner visible
     var _structReqGen        = 0;    // monotonic counter; stale completions are discarded
     var _structAbort         = null; // AbortController for the live structure fetch
     var _inflightStructKey   = null; // bbox key of the currently in-flight structures fetch
@@ -1012,7 +1014,12 @@
         var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
                                iconSize:   [sz + 4, sz + 4],
                                iconAnchor: [Math.ceil((sz + 4) / 2), Math.ceil((sz + 4) / 2)] });
+        if (_spotIconKeys.length >= _SPOT_ICON_MAX) {
+            var evict = _spotIconKeys.splice(0, 32);
+            for (var ei = 0; ei < evict.length; ei++) delete _spotIconCache[evict[ei]];
+        }
         _spotIconCache[type] = icon;
+        _spotIconKeys.push(type);
         return icon;
     }
 
@@ -1044,8 +1051,16 @@
         // their outlines may straddle the viewport boundary.
         var vS, vN, vW, vE, doCull = false;
         if (vb) {
-            var latPad = (vb.getNorth() - vb.getSouth()) * 0.10;
-            var lngPad = (vb.getEast()  - vb.getWest())  * 0.10;
+            // Scale padding inversely with zoom: at high zoom (street level) the
+            // viewport spans only ~1 km, so a fixed 10% ~= 100 m leaves almost no
+            // buffer against pan pop-in.  At low zoom the viewport already spans
+            // tens of km, so 10% would preload a huge invisible margin for nothing.
+            // Cap at 0.025° (~2.8 km) to prevent unnecessary over-loading, and
+            // floor at 5% so close-in views still get a meaningful look-ahead buffer.
+            var latSpan = vb.getNorth() - vb.getSouth();
+            var lngSpan = vb.getEast()  - vb.getWest();
+            var latPad  = Math.min(latSpan * 0.05, 0.025);
+            var lngPad  = Math.min(lngSpan * 0.05, 0.025);
             vS = vb.getSouth() - latPad;  vN = vb.getNorth() + latPad;
             vW = vb.getWest()  - lngPad;  vE = vb.getEast()  + lngPad;
             doCull = true;
@@ -1061,11 +1076,14 @@
             // The cache always holds all-types results; filtering here avoids a
             // server round-trip when the user toggles type pills.
             if (activeSpotTypes.length && activeSpotTypes.indexOf(f.type) === -1) return false;
-            // Hide types that require a higher zoom level than current, but
-            // only in the all-types view.  When the user has explicitly chosen
-            // types via the filter pills, always show them regardless of zoom.
+            // Hide types that require a higher zoom level than current.
+            // Skip suppression only if the user has *explicitly* enabled this
+            // exact type via a filter pill — that signals intent to see it now.
+            // When a different set of pills is active, or no pills at all, the
+            // minZoom gate still applies so the hint bar stays accurate.
             var typeDef = SPOT_TYPES[f.type];
-            if (!activeSpotTypes.length && typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
+            var explicitlyChosen = activeSpotTypes.indexOf(f.type) !== -1;
+            if (!explicitlyChosen && typeDef && typeDef.minZoom && currentZoom < typeDef.minZoom) {
                 _suppressedTypes[f.type] = true;
                 return false;
             }
@@ -1100,11 +1118,19 @@
                 var geom  = f.geometry;
                 var layer;
 
-                // Closed ring (OSM closed way): first ≈ last coord → filled polygon
-                // Open linestring (river, canal, tidal channel): coloured stroke only
+                // Closed ring (OSM closed way): first ≈ last coord → filled polygon.
+                // Open linestring (river, canal, tidal channel): coloured stroke only.
+                // Use 0.0005° (~55 m) threshold so floating-point drift from server-side
+                // coordinate processing or ring decimation never misclassifies a closed
+                // polygon as an open stroke.  Force the last vertex to exactly equal the
+                // first so Leaflet renders a clean fill without a micro-gap at the seam.
                 var first = geom[0], last = geom[geom.length - 1];
-                var isClosed = Math.abs(first[0] - last[0]) < 0.00002 &&
-                               Math.abs(first[1] - last[1]) < 0.00002;
+                var isClosed = Math.abs(first[0] - last[0]) < 0.0005 &&
+                               Math.abs(first[1] - last[1]) < 0.0005;
+                if (isClosed) {
+                    geom = geom.slice();
+                    geom[geom.length - 1] = geom[0];
+                }
 
                 if (isClosed) {
                     layer = L.polygon(geom, {
@@ -1176,20 +1202,21 @@
     }
 
     // ── Structure-query loading / error UI helpers ────────────────────────────
-    // Use a ref-count so overlapping requests (e.g. rapid pan + type toggle)
-    // don't hide the spinner prematurely when the first of two requests lands.
+    // Track in-flight requests by gen ID (plain object used as a Set).
+    // showStructLoading/hideStructLoading must be called with the same reqGen so
+    // each request owns exactly one slot — no double-decrement or premature hide.
 
-    // Show the inline spinner in the filter bar header.
-    function showStructLoading() {
-        _structLoadCount++;
+    // Register reqGen as holding the spinner open.
+    function showStructLoading(reqGen) {
+        _structLoadingGens[reqGen] = true;
         if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
         if (_elStructSpinner) _elStructSpinner.hidden = false;
     }
 
-    // Decrement the ref-count; hide the spinner only when all requests finish.
-    function hideStructLoading() {
-        _structLoadCount = Math.max(0, _structLoadCount - 1);
-        if (_structLoadCount > 0) return;
+    // Release reqGen's slot; hide spinner only when no active requests remain.
+    function hideStructLoading(reqGen) {
+        delete _structLoadingGens[reqGen];
+        if (Object.keys(_structLoadingGens).length > 0) return;
         if (!_elStructSpinner) _elStructSpinner = document.getElementById('fmap-struct-spinner');
         if (_elStructSpinner) _elStructSpinner.hidden = true;
         _inflightStructKey = null;
@@ -1352,7 +1379,7 @@
         var thisGen = ++_structReqGen;
         _inflightStructKey = key;
 
-        showStructLoading();
+        showStructLoading(thisGen);
         hideStructError();
 
         fetch(url, { signal: _structAbort.signal })
@@ -1362,9 +1389,9 @@
             })
             .then(function (data) {
                 // A newer request has already started — drop this stale result.
-                if (thisGen !== _structReqGen) { hideStructLoading(); return; }
+                if (thisGen !== _structReqGen) { hideStructLoading(thisGen); return; }
 
-                hideStructLoading();
+                hideStructLoading(thisGen);
                 hideStructError();
 
                 // Server signals the viewport is too large — show hint, clear layers.
@@ -1384,9 +1411,9 @@
                 _scheduleAdjacentPrefetch(s, w, n, e);
             })
             .catch(function (err) {
-                if (err.name === 'AbortError') { hideStructLoading(); return; }
+                if (err.name === 'AbortError') { hideStructLoading(thisGen); return; }
                 // Drop response if superseded by a newer request.
-                if (thisGen !== _structReqGen) { hideStructLoading(); return; }
+                if (thisGen !== _structReqGen) { hideStructLoading(thisGen); return; }
                 // Keep spinner visible while Overpass fallback runs;
                 // hideStructLoading() is called inside _queryFishingSpotsFallback().
                 console.warn('[fishing-map] backend structures failed, falling back to Overpass:', err);
@@ -1738,7 +1765,7 @@
         // Always fetch all types so the cached result serves every filter combination.
         var q = _buildFallbackQuery(bbox, []);
         if (!q) {
-            hideStructLoading();
+            hideStructLoading(gen);
             renderFishingSpots([]);
             return;
         }
@@ -1768,7 +1795,7 @@
         tryOverpass(0)
         .then(function (data) {
             // Discard if a newer queryStructures() call has already fired.
-            if (gen !== _structReqGen) { hideStructLoading(); return; }
+            if (gen !== _structReqGen) { hideStructLoading(gen); return; }
 
             var spots = (data.elements || []).map(function (el) {
                 var lat  = el.lat  || (el.center && el.center.lat);
@@ -1803,14 +1830,14 @@
             var deduped = deduplicateSpots(spots);
             _spotCachePut(key, deduped);
             _ssSave();
-            hideStructLoading(); // request chain complete; drop spinner
+            hideStructLoading(gen); // request chain complete; drop spinner
             hideStructError();   // fallback succeeded — dismiss the error banner
             renderFishingSpots(deduped, key);
             // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
             _scheduleAdjacentPrefetch(s, w, n, e);
         })
         .catch(function (err) {
-            hideStructLoading(); // both paths must release the spinner
+            hideStructLoading(gen); // both paths must release the spinner
             if (err && err.name === 'AbortError') return;
             console.error('[fishing-map] Overpass fallback error:', err);
             showStructError("Couldn\u2019t load structure data; showing basic map markers.");
@@ -1931,12 +1958,16 @@
         if (_prefetchQueue.length >= _PREFETCH_MAX_QUEUE) {
             _prefetchQueue.shift();  // drop the oldest pending tile
         }
-        _prefetchQueue.push({ s: s, w: w, n: n, e: e, key: key });
+        _prefetchQueue.push({ s: s, w: w, n: n, e: e, key: key, ts: Date.now() });
     }
+
+    var _PREFETCH_JOB_TTL = 120000; // drop jobs older than 2 minutes (user has moved on)
 
     function _drainPrefetchQueue() {
         if (_prefetchInFlight || _prefetchQueue.length === 0) return;
         var job = _prefetchQueue.shift();
+        // Skip stale jobs: user has likely panned away since this was enqueued.
+        if (Date.now() - job.ts > _PREFETCH_JOB_TTL) { _drainPrefetchQueue(); return; }
         // Skip if the tile was cached between enqueue and drain
         if (spotCache[job.key] || _cachedSupersetOf(job.s, job.w, job.n, job.e)) {
             _drainPrefetchQueue();
