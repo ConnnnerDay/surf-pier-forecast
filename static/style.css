@@ -7051,6 +7051,18 @@ footer p {
   color: #fff;
 }
 
+.profile-preset-clear {
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.45rem 0.6rem;
+  min-height: 36px;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
 .profile-save-btn {
   display: inline-block;
   padding: 0.6rem 2rem;
@@ -7274,6 +7286,12 @@ footer p {
 
   .tide-point {
     min-width: auto;
+  }
+
+  /* Profile form has inline padding:0 1rem inside main's padding — remove horizontal on mobile */
+  .profile-form {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
@@ -10164,7 +10182,7 @@ body.has-app-header main {
 }
 
 .csc-location {
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
