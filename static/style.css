@@ -3481,10 +3481,15 @@ h2::before {
   color: #c0392b;
   font-size: 1.1rem;
   cursor: pointer;
-  padding: 0;
+  padding: 0.25rem 0.35rem;
   line-height: 1;
   opacity: 0.5;
   transition: opacity 0.15s ease;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .fishlog-del:hover {
@@ -6078,8 +6083,10 @@ footer p {
 }
 
 .fav-chip {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  min-height: 32px;
   font-size: 0.7rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
@@ -7285,10 +7292,6 @@ footer p {
     width: 100%;
     max-width: 250px;
     justify-content: center;
-  }
-
-  .alert-headline {
-    font-size: 0.7rem;
   }
 
   .tide-timeline {
@@ -10016,7 +10019,8 @@ body:not(.forecast-page) main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 1rem;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
   color: var(--text);
   text-decoration: none;
   font-size: 0.88rem;
