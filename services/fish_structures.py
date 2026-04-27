@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json as _json
 import logging
+import math as _math
 import time as _time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
@@ -779,8 +780,13 @@ def _deduplicate(spots: list[dict[str, Any]]) -> list[dict[str, Any]]:
         # thresh == 0 → polygon habitat type; skip centroid-proximity dedup
         # so adjacent polygon patches are not erroneously collapsed.
         if thresh > 0:
-            gl = int(spot["lat"] / thresh)
-            gn = int(spot["lng"] / thresh)
+            # Use math.floor (not int) so Southern/Western Hemisphere coordinates
+            # (negative values) map to the correct grid cell.  int() truncates
+            # toward zero: int(-33.501 / 0.002) = -16750, but the correct floor
+            # cell is -16751.  The mismatch lets boundary spots in the Southern
+            # Hemisphere slip past the 3×3 neighbourhood check.
+            gl = _math.floor(spot["lat"] / thresh)
+            gn = _math.floor(spot["lng"] / thresh)
             t = spot["type"]
             # Check the 3×3 neighbourhood (9 cells) to catch spots that sit
             # near a cell boundary and would otherwise slip through.
@@ -854,6 +860,32 @@ def _get_noaa_enc_layer(
         logger.warning("NOAA ENC layer=%s query failed: %s", layer, exc)
         return []
 
+def _polygon_centroid(coords: list[list[float]]) -> tuple[float, float]:
+    """Return the true centroid of a polygon ring using the Shoelace formula.
+
+    Works correctly for concave polygons (bays, peninsulas, horseshoe shapes)
+    where the simple mean-of-vertices places the centroid outside the polygon.
+    Falls back to the mean if the signed area is zero (degenerate ring).
+
+    ``coords`` is a list of ``[x, y]`` (longitude, latitude) pairs.
+    """
+    n = len(coords)
+    area = cx = cy = 0.0
+    for i in range(n):
+        x0, y0 = coords[i][0], coords[i][1]
+        x1, y1 = coords[(i + 1) % n][0], coords[(i + 1) % n][1]
+        cross = x0 * y1 - x1 * y0
+        area += cross
+        cx += (x0 + x1) * cross
+        cy += (y0 + y1) * cross
+    area /= 2.0
+    if abs(area) < 1e-12:
+        # Degenerate ring — fall back to mean of vertices
+        return (sum(p[0] for p in coords) / n, sum(p[1] for p in coords) / n)
+    factor = 1.0 / (6.0 * area)
+    return (cx * factor, cy * factor)
+
+
 def _noaa_features_to_spots(
     features: list[dict[str, Any]],
     spot_type: str,
@@ -861,7 +893,8 @@ def _noaa_features_to_spots(
     """Convert NOAA ENC ArcGIS feature dicts to our ``{lat, lng, type, name}`` format.
 
     Handles both point geometries (``x``/``y``) and polygon geometries
-    (``rings``), using the centroid of the first ring for polygons.
+    (``rings``), using the true Shoelace centroid for polygons so concave
+    coastal shapes (bays, peninsulas) get a centroid inside the polygon.
     """
     spots: list[dict[str, Any]] = []
     for feat in features:
@@ -875,8 +908,7 @@ def _noaa_features_to_spots(
             rings = geom.get("rings", [])
             if rings and rings[0]:
                 coords = rings[0]
-                x = sum(p[0] for p in coords) / len(coords)
-                y = sum(p[1] for p in coords) / len(coords)
+                x, y = _polygon_centroid(coords)
 
         if x is None or y is None:
             continue
@@ -924,14 +956,23 @@ def fetch_osm_structures(
     for el in elements:
         lat = el.get("lat") or (el.get("center") or {}).get("lat")
         lng = el.get("lon") or (el.get("center") or {}).get("lon")
-        # ``out geom;`` omits the ``center`` key for ways — fall back to the
-        # mean of the geometry coordinates so we always have a valid centroid.
+        # ``out geom;`` omits the ``center`` key for ways — compute centroid from
+        # the node ring.  Use the Shoelace formula for closed rings (polygons) so
+        # concave shapes get a centroid that lies inside the polygon; fall back to
+        # the vertex mean for open linestrings (channels, rivers).
         if lat is None or lng is None:
             raw = el.get("geometry") or []
             pts = [(g["lat"], g["lon"]) for g in raw if "lat" in g and "lon" in g]
             if pts:
-                lat = sum(p[0] for p in pts) / len(pts)
-                lng = sum(p[1] for p in pts) / len(pts)
+                first, last = pts[0], pts[-1]
+                is_closed = abs(first[0] - last[0]) < 0.00005 and abs(first[1] - last[1]) < 0.00005
+                if is_closed and len(pts) >= 3:
+                    # Shoelace expects [x, y] = [lng, lat]
+                    lng_c, lat_c = _polygon_centroid([[p[1], p[0]] for p in pts])
+                    lat, lng = lat_c, lng_c
+                else:
+                    lat = sum(p[0] for p in pts) / len(pts)
+                    lng = sum(p[1] for p in pts) / len(pts)
         if not lat or not lng:
             continue
         # Drop way-centroids that Overpass computed outside the user's viewport
