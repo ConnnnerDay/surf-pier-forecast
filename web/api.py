@@ -92,6 +92,7 @@ from storage.sqlite import (
     save_preferences,
     update_custom_marker,
     toggle_map_catch_like,
+    VALID_MARKER_TYPES,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
 from web.helpers import get_session_location
@@ -2775,6 +2776,8 @@ def custom_markers_create() -> Any:
         return jsonify({"error": "lat/lng out of range"}), 400
     name = str(data.get("name", ""))[:120]
     type_ = str(data.get("type", "fishing"))
+    if type_ not in VALID_MARKER_TYPES:
+        return jsonify({"error": f"Invalid type. Valid: {sorted(VALID_MARKER_TYPES)}"}), 400
     description = str(data.get("description", ""))[:500]
     marker = create_custom_marker(lat, lng, name, type_, description, g.user["id"])
     return jsonify(marker), 201
@@ -2788,11 +2791,22 @@ def custom_markers_update(marker_id: int) -> Any:
         return err
 
     data = request.get_json(silent=True) or {}
-    lat = float(data["lat"]) if "lat" in data else None
-    lng = float(data["lng"]) if "lng" in data else None
-    name = str(data["name"])[:120] if "name" in data else None
-    type_ = str(data.get("type")) if "type" in data else None
-    description = str(data["description"])[:500] if "description" in data else None
+    try:
+        lat = float(data["lat"]) if "lat" in data else None
+        lng = float(data["lng"]) if "lng" in data else None
+    except (TypeError, ValueError):
+        return jsonify({"error": "lat and lng must be floats"}), 400
+    if lat is not None and not (-90 <= lat <= 90):
+        return jsonify({"error": "lat out of range (-90 to 90)"}), 400
+    if lng is not None and not (-180 <= lng <= 180):
+        return jsonify({"error": "lng out of range (-180 to 180)"}), 400
+    name = str(data.get("name", ""))[:120] if "name" in data else None
+    description = str(data.get("description", ""))[:500] if "description" in data else None
+    type_: Optional[str] = None
+    if "type" in data:
+        type_ = str(data.get("type") or "")
+        if type_ not in VALID_MARKER_TYPES:
+            return jsonify({"error": f"Invalid type. Valid: {sorted(VALID_MARKER_TYPES)}"}), 400
     updated = update_custom_marker(
         marker_id, lat=lat, lng=lng, name=name, type_=type_, description=description
     )

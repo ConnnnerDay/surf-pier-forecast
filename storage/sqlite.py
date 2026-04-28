@@ -1876,7 +1876,7 @@ def get_recent_public_catches(
 
 # Custom map markers (admin-editable) ----------------------------------------
 
-_VALID_MARKER_TYPES = frozenset(
+VALID_MARKER_TYPES = frozenset(
     {
         "pier",
         "jetty",
@@ -1955,7 +1955,7 @@ def create_custom_marker(
     lat: float, lng: float, name: str, type_: str, description: str, user_id: int
 ) -> dict[str, Any]:
     """Insert a new custom marker and return it."""
-    if type_ not in _VALID_MARKER_TYPES:
+    if type_ not in VALID_MARKER_TYPES:
         type_ = "fishing"
     conn = get_db()
     try:
@@ -2006,7 +2006,7 @@ def update_custom_marker(
         if name is not None:
             updates.append("name = ?")
             params.append(name.strip())
-        if type_ is not None and type_ in _VALID_MARKER_TYPES:
+        if type_ is not None and type_ in VALID_MARKER_TYPES:
             updates.append("type = ?")
             params.append(type_)
         if description is not None:
