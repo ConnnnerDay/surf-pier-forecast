@@ -68,7 +68,7 @@ _VALID_TARGETS = frozenset(
     {"bottom", "pelagic", "structure", "inshore_slam", "gamefish", "anything"}
 )
 _VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
-_VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
+_VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no", "skip"})
 _VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night", "anytime"})
 _VALID_PRIMARY_GOAL = frozenset({"action", "trophy", "relaxing", "exploring"})
 _VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})

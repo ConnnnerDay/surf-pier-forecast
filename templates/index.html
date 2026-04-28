@@ -67,6 +67,19 @@
 <div class="banner">Cached forecast from <span class="iso-timestamp" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
 {% endif %}
 
+{% if profile_incomplete %}
+<div class="banner banner--profile-nudge" id="profile-nudge-banner" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--accent-teal,#0e5f78);color:#fff;padding:0.6rem 1rem;font-size:0.875rem">
+    <span>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-2px;margin-right:0.35rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Set up your fishing profile for personalized species and bait recommendations.
+    </span>
+    <span style="display:flex;align-items:center;gap:0.6rem;white-space:nowrap">
+        <a href="{{ url_for('views.profile') }}" style="color:#fff;font-weight:700;text-decoration:underline">Set up profile</a>
+        <button onclick="document.getElementById('profile-nudge-banner').remove()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
+    </span>
+</div>
+{% endif %}
+
 <main id="main-content" role="main">
 
     <!-- Weather Alerts -->
