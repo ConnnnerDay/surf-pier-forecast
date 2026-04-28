@@ -75,9 +75,22 @@
     </span>
     <span style="display:flex;align-items:center;gap:0.6rem;white-space:nowrap">
         <a href="{{ url_for('views.profile') }}" style="color:#fff;font-weight:700;text-decoration:underline">Set up profile</a>
-        <button onclick="document.getElementById('profile-nudge-banner').remove()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
+        <button onclick="dismissProfileNudge()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
     </span>
 </div>
+<script>
+(function() {
+    if (localStorage.getItem('profile_nudge_dismissed') === '1') {
+        var b = document.getElementById('profile-nudge-banner');
+        if (b) b.remove();
+    }
+})();
+function dismissProfileNudge() {
+    try { localStorage.setItem('profile_nudge_dismissed', '1'); } catch(e) {}
+    var b = document.getElementById('profile-nudge-banner');
+    if (b) b.remove();
+}
+</script>
 {% endif %}
 
 <main id="main-content" role="main">

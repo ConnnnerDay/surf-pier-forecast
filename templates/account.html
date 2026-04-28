@@ -208,7 +208,7 @@
             </div>
 
             <h3 class="section-title">Display Preferences</h3>
-            <form method="post" action="{{ url_for('auth.account_settings') }}" class="auth-form">
+            <form method="post" action="{{ url_for('auth.account_settings') }}" class="auth-form" id="account-settings-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="account-prefs-grid">
                     <div class="auth-field">
@@ -229,28 +229,56 @@
                 <div class="auth-field">
                     <label><input type="checkbox" name="weekly_email" {% if prefs.notification_prefs and prefs.notification_prefs.weekly_email %}checked{% endif %}> Send me a weekly email with the best fishing days</label>
                 </div>
-                <h3 class="section-title" style="margin-top:1rem;">Default Location</h3>
+
+                <hr style="border:none;border-top:1px solid var(--border-light,#e5e9ed);margin:1.25rem 0 1rem">
+                <h3 class="section-title" style="margin-top:0">Default Location</h3>
                 <div class="auth-field">
-                    <label for="default_location_id">Saved Location ID</label>
-                    <input id="default_location_id" name="default_location_id" class="auth-input" value="{{ prefs.location_id or user.default_location_id or '' }}" placeholder="e.g. wrightsville-beach-nc">
+                    <label for="default_location_id">Saved Location</label>
+                    <div style="display:flex;gap:0.5rem;align-items:center">
+                        <input id="default_location_id" name="default_location_id" class="auth-input" style="flex:1"
+                               value="{{ prefs.location_id or user.default_location_id or '' }}"
+                               placeholder="e.g. wrightsville-beach-nc">
+                        {% set current_loc_id = prefs.location_id or user.default_location_id or '' %}
+                        {% if current_loc_id %}
+                        <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap">Current: <strong>{{ current_loc_id }}</strong></span>
+                        {% endif %}
+                    </div>
                     <span class="section-sub" style="display:block;margin-top:0.3rem;">
                         This location loads automatically when you open the app.
-                        <a href="{{ url_for('views.setup') }}">Browse locations to find the ID &rarr;</a>
+                        <a href="{{ url_for('views.setup') }}">Browse &amp; find location IDs &rarr;</a>
                     </span>
                 </div>
+
+                <hr style="border:none;border-top:1px solid var(--border-light,#e5e9ed);margin:1.25rem 0 1rem">
+                <h3 class="section-title" style="margin-top:0">Pinned Locations</h3>
                 <div class="auth-field">
-                    <label for="favorites_csv">Pinned Locations <span style="font-weight:400;color:var(--text-muted)">(location IDs, comma-separated)</span></label>
+                    <label for="favorites_csv">Location IDs <span style="font-weight:400;color:var(--text-muted)">(comma-separated)</span></label>
                     <input id="favorites_csv" name="favorites_csv" class="auth-input"
                            value="{{ prefs.favorites|join(',') }}"
                            placeholder="e.g. wrightsville-beach-nc,folly-beach-sc"
                            aria-describedby="favorites-hint">
                     <span id="favorites-hint" class="section-sub" style="display:block;margin-top:0.3rem;">
                         Pinned locations appear as quick-switch chips on the forecast.
-                        <a href="{{ url_for('views.setup') }}">Find location IDs on the setup page &rarr;</a>
+                        {% if prefs.favorites %}
+                        <strong>{{ prefs.favorites|length }} pinned</strong> &mdash;
+                        {% endif %}
+                        <a href="{{ url_for('views.setup') }}">Find IDs on the setup page &rarr;</a>
                     </span>
                 </div>
-                <button type="submit" class="auth-btn">Save Settings</button>
+
+                <button type="submit" class="auth-btn" id="account-save-btn">Save Settings</button>
+                <div id="account-save-inline" style="display:none;margin-top:0.5rem;font-size:0.85rem;font-weight:600;color:#2a7d6e" role="status" aria-live="polite"></div>
             </form>
+            <script>
+            (function() {
+                var form = document.getElementById('account-settings-form');
+                if (!form) return;
+                form.addEventListener('submit', function(e) {
+                    var btn = document.getElementById('account-save-btn');
+                    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+                });
+            })();
+            </script>
 
             <!-- Activity & Stats (collapsed by default) -->
             <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
