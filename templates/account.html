@@ -442,6 +442,101 @@
             </details>
             {% endif %}
 
+            {% if has_password %}
+            <!-- Password Change -->
+            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden"
+                     {% if pw_section_open %}open{% endif %}>
+                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
+                    <span style="display:flex;align-items:center;gap:0.5rem">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Change Password
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <div style="padding:1rem">
+                    {% if pw_error %}
+                    <div class="setup-error" role="alert" style="margin-bottom:0.75rem">{{ pw_error }}</div>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('auth.change_password_route') }}" class="auth-form" id="pw-change-form" style="margin:0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <div class="auth-field">
+                            <label for="current_password">Current Password</label>
+                            <div class="auth-input-wrap">
+                                <input type="password" id="current_password" name="current_password" class="auth-input"
+                                       autocomplete="current-password" required placeholder="Your current password">
+                                <button type="button" class="auth-show-pw" onclick="togglePwVis('current_password',this)" aria-label="Show password" title="Show/hide">&#128065;</button>
+                            </div>
+                        </div>
+                        <div class="auth-field">
+                            <label for="new_password">New Password</label>
+                            <div class="auth-input-wrap">
+                                <input type="password" id="new_password" name="new_password" class="auth-input"
+                                       autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"
+                                       aria-describedby="pw-new-reqs">
+                                <button type="button" class="auth-show-pw" onclick="togglePwVis('new_password',this)" aria-label="Show password" title="Show/hide">&#128065;</button>
+                            </div>
+                            <ul id="pw-new-reqs" class="pw-reqs" aria-label="Password requirements" style="margin-top:0.35rem">
+                                <li id="nr-len"  class="pw-req">At least 8 characters</li>
+                                <li id="nr-up"   class="pw-req">One uppercase letter</li>
+                                <li id="nr-low"  class="pw-req">One lowercase letter</li>
+                                <li id="nr-num"  class="pw-req">One number</li>
+                            </ul>
+                        </div>
+                        <div class="auth-field">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <div class="auth-input-wrap">
+                                <input type="password" id="confirm_password" name="confirm_password" class="auth-input"
+                                       autocomplete="new-password" minlength="8" required placeholder="Repeat new password"
+                                       aria-describedby="pw-confirm-hint">
+                                <button type="button" class="auth-show-pw" onclick="togglePwVis('confirm_password',this)" aria-label="Show password" title="Show/hide">&#128065;</button>
+                            </div>
+                            <span id="pw-confirm-hint" class="pw-match-hint" aria-live="polite"></span>
+                        </div>
+                        <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)">Update Password</button>
+                    </form>
+                </div>
+            </details>
+            {% endif %}
+
+            <!-- Danger Zone -->
+            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid #f5c6c2;border-radius:10px;overflow:hidden"
+                     {% if danger_section_open %}open{% endif %}>
+                <summary style="padding:0.75rem 1rem;background:#fdf0ef;font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;color:#c0392b">
+                    <span style="display:flex;align-items:center;gap:0.5rem">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Danger Zone
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <div style="padding:1rem">
+                    <p style="margin:0 0 0.75rem;font-size:0.875rem;color:var(--muted,#5c6b73)">
+                        Permanently delete your account and all associated data — catches, photos, preferences, and settings. <strong>This cannot be undone.</strong>
+                    </p>
+                    {% if delete_error %}
+                    <div class="setup-error" role="alert" style="margin-bottom:0.75rem">{{ delete_error }}</div>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('auth.delete_account_route') }}" id="delete-account-form"
+                          onsubmit="return confirmDelete(event)">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        {% if has_password %}
+                        <div class="auth-field">
+                            <label for="delete_password">Confirm your password to delete</label>
+                            <input type="password" id="delete_password" name="password" class="auth-input"
+                                   autocomplete="current-password" required placeholder="Your password">
+                        </div>
+                        {% else %}
+                        <p style="font-size:0.85rem;color:var(--muted);margin:0 0 0.75rem">You sign in via {{ social_accounts[0].provider|capitalize if social_accounts else 'social login' }}. Type <strong>DELETE</strong> to confirm.</p>
+                        <div class="auth-field">
+                            <input type="text" name="confirm_text" class="auth-input" placeholder="Type DELETE to confirm"
+                                   autocomplete="off" pattern="DELETE" required>
+                        </div>
+                        <input type="hidden" name="password" value="">
+                        {% endif %}
+                        <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)">Delete My Account</button>
+                    </form>
+                </div>
+            </details>
+
             <div class="account-actions account-footer-actions">
                 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -662,6 +757,66 @@
 
         updateUI();
     })();
+    </script>
+    <script>
+    function togglePwVis(id, btn) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.style.opacity = input.type === 'text' ? '1' : '0.55';
+    }
+
+    // Password strength indicators for the change-password form
+    (function() {
+        var pw = document.getElementById('new_password');
+        var cf = document.getElementById('confirm_password');
+        var hint = document.getElementById('pw-confirm-hint');
+        if (!pw) return;
+
+        function setReq(id, ok) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('pw-req--ok', ok);
+            el.classList.toggle('pw-req--fail', pw.value.length > 0 && !ok);
+        }
+
+        pw.addEventListener('input', function() {
+            var v = pw.value;
+            setReq('nr-len', v.length >= 8);
+            setReq('nr-up',  /[A-Z]/.test(v));
+            setReq('nr-low', /[a-z]/.test(v));
+            setReq('nr-num', /\d/.test(v));
+            if (cf && cf.value) checkMatch();
+        });
+
+        function checkMatch() {
+            if (!cf || !hint) return;
+            if (!cf.value) { hint.textContent = ''; return; }
+            var match = pw.value === cf.value;
+            hint.textContent = match ? '✓ Passwords match' : '✗ Passwords do not match';
+            hint.style.color = match ? 'var(--sea-green,#2a7d6e)' : '#c0392b';
+        }
+        if (cf) cf.addEventListener('input', checkMatch);
+
+        var form = document.getElementById('pw-change-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (pw.value !== (cf ? cf.value : '')) {
+                    e.preventDefault();
+                    if (hint) { hint.textContent = '✗ Passwords do not match'; hint.style.color = '#c0392b'; }
+                    if (cf) cf.focus();
+                }
+            });
+        }
+    })();
+
+    function confirmDelete(e) {
+        if (!window.confirm('Are you sure? This will permanently delete your account and all your data. This cannot be undone.')) {
+            e.preventDefault();
+            return false;
+        }
+        return true;
+    }
     </script>
 </body>
 </html>

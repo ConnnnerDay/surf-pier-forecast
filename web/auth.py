@@ -1049,6 +1049,7 @@ def account() -> Any:
     favorites = [loc_obj for loc_obj in favorites if loc_obj]
     recent_logs = get_recent_logs(uid, limit=5)
     creds = get_account_credentials_cached(uid)
+    has_password = bool(get_user_password_hash(uid))
     return render_template(
         "account.html",
         prefs=prefs,
@@ -1057,6 +1058,7 @@ def account() -> Any:
         favorite_locations=favorites,
         passkeys=creds["passkeys"],
         social_accounts=creds["social_accounts"],
+        has_password=has_password,
     )
 
 
@@ -1116,7 +1118,9 @@ def change_password_route() -> Any:
             favorite_locations=[],
             passkeys=creds["passkeys"],
             social_accounts=creds["social_accounts"],
+            has_password=True,
             pw_error=msg,
+            pw_section_open=True,
         )
 
     if _account_action_is_rate_limited():
@@ -1167,7 +1171,9 @@ def delete_account_route() -> Any:
             favorite_locations=[],
             passkeys=creds["passkeys"],
             social_accounts=creds["social_accounts"],
+            has_password=bool(get_user_password_hash(uid)),
             delete_error=msg,
+            danger_section_open=True,
         )
 
     if _account_action_is_rate_limited():
