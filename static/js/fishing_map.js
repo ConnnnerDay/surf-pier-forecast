@@ -2286,6 +2286,10 @@
         if (_communityAbort) { _communityAbort.abort(); }
         _communityAbort = new AbortController();
 
+        // Clear immediately so pins from the previous viewport don't linger
+        // if the new fetch fails or takes a long time.
+        communityLayer.clearLayers();
+
         var b    = map.getBounds();
         var sw   = b.getSouthWest();
         var ne   = b.getNorthEast();
@@ -2298,7 +2302,6 @@
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (data) {
                 communityData = data.catches || [];
-                communityLayer.clearLayers();
                 communityData.forEach(function (c) {
                     if (!c.lat || !c.lng) return;
                     var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
@@ -2321,6 +2324,9 @@
             .catch(function (err) {
                 if (err && err.name === 'AbortError') return; // superseded by newer fetch
                 console.warn('[fishing-map] loadCommunityPins failed:', err);
+                communityData = [];
+                var badge = document.getElementById('fmap-community-badge');
+                if (badge) badge.style.display = 'none';
             });
     }
 
