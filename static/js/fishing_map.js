@@ -630,6 +630,7 @@
         Promise.all(promises)
         .then(function (arrays) {
             if (thisAiGen !== _aiReqGen) return;
+            if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); return; }
             // Merge and deduplicate by lat+lng (same node can appear in multiple types)
             var seen = {};
             var features = [];
