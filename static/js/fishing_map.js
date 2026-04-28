@@ -134,6 +134,7 @@
     var precipAbort     = null;
     var ndfdTempAbort   = null;
     var buoyAbort       = null;
+    var _catchDetailAbort = null;
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -629,6 +630,7 @@
         Promise.all(promises)
         .then(function (arrays) {
             if (thisAiGen !== _aiReqGen) return;
+            if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); return; }
             // Merge and deduplicate by lat+lng (same node can appear in multiple types)
             var seen = {};
             var features = [];
@@ -1406,6 +1408,7 @@
                 var spots = data.structures || [];
                 _spotCachePut(key, spots);
                 _ssSave();
+                _lastRenderedSpotKey = null;  // force re-render even if key matches stale state
                 renderFishingSpots(spots, key);
                 // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
                 _scheduleAdjacentPrefetch(s, w, n, e);
@@ -1560,6 +1563,7 @@
         if (has('tidal_flat')) {
             h.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
                    'way["natural"="wetland"]["wetland"="tidal_flat"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="tidal_flats"](' + bbox + ');',
                    'way["natural"="wetland"]["wetland"="mudflat"](' + bbox + ');',
                    'way["natural"="mud"](' + bbox + ');');
         }
@@ -1567,11 +1571,13 @@
             h.push('way["natural"="beach"](' + bbox + ');',
                    'node["natural"="beach"](' + bbox + ');',
                    'way["leisure"="beach"](' + bbox + ');',
+                   'node["leisure"="beach"](' + bbox + ');',
                    'way["natural"="sand"]["access"!="private"](' + bbox + ');');
         }
         if (has('oyster_reef')) {
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["produce"="oysters"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["aquaculture"="oyster"](' + bbox + ');',
                    'way["natural"="reef"]["reef:type"="oyster"](' + bbox + ');',
@@ -1841,6 +1847,7 @@
             if (err && err.name === 'AbortError') return;
             console.error('[fishing-map] Overpass fallback error:', err);
             showStructError("Couldn\u2019t load structure data; showing basic map markers.");
+            renderFishingSpots([]);
         });
     }
 
@@ -2282,6 +2289,10 @@
         if (_communityAbort) { _communityAbort.abort(); }
         _communityAbort = new AbortController();
 
+        // Clear immediately so pins from the previous viewport don't linger
+        // if the new fetch fails or takes a long time.
+        communityLayer.clearLayers();
+
         var b    = map.getBounds();
         var sw   = b.getSouthWest();
         var ne   = b.getNorthEast();
@@ -2294,7 +2305,6 @@
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function (data) {
                 communityData = data.catches || [];
-                communityLayer.clearLayers();
                 communityData.forEach(function (c) {
                     if (!c.lat || !c.lng) return;
                     var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
@@ -2317,11 +2327,13 @@
             .catch(function (err) {
                 if (err && err.name === 'AbortError') return; // superseded by newer fetch
                 console.warn('[fishing-map] loadCommunityPins failed:', err);
+                communityData = [];
+                var badge = document.getElementById('fmap-community-badge');
+                if (badge) badge.style.display = 'none';
             });
     }
 
     function scheduleCommunityLoad() {
-        if (!communityLayerOn) return;
         clearTimeout(communityTimer);
         communityTimer = setTimeout(loadCommunityPins, 700);
     }
@@ -2339,21 +2351,23 @@
                 if (communityLayerOn) {
                     communityLayer.addTo(map);
                     loadCommunityPins();
+                    map.on('moveend zoomend', scheduleCommunityLoad);
                 } else {
                     map.removeLayer(communityLayer);
                     communityLayer.clearLayers();
+                    map.off('moveend zoomend', scheduleCommunityLoad);
                 }
             });
         }
-
-        // Reload community pins on map move
-        map.on('moveend zoomend', scheduleCommunityLoad);
     }
 
     // ─── Community catch detail drawer ────────────────────────────────────────
 
     function openCatchDetail(c) {
         if (!els.catchDetail) return;
+
+        if (_catchDetailAbort) { try { _catchDetailAbort.abort(); } catch (e) {} }
+        _catchDetailAbort = new AbortController();
 
         // Title: use explicit title if set, otherwise fall back to species name
         els.catchDetailTitle.textContent = c.title ? c.title : c.species;
@@ -2380,8 +2394,9 @@
         els.catchDetailBody.innerHTML = bodyHtml;
 
         // Load comments
+        var _myAbort = _catchDetailAbort;
         els.catchDetailComments.innerHTML = '<div style="opacity:.5;font-size:.75rem;padding:.4rem 0">Loading comments…</div>';
-        fetch('/api/map/catches/' + c.id + '/comments')
+        fetch('/api/map/catches/' + c.id + '/comments', { signal: _myAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 var comments = data.comments || [];
@@ -2417,7 +2432,8 @@
                     });
                 }
             })
-            .catch(function () {
+            .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 els.catchDetailComments.innerHTML = '';
             });
 
@@ -3088,6 +3104,8 @@
 
     // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
 
+    function onSstViewport() { scheduleSstQuery(); }
+
     function wireSstLayer() {
         if (!map) return;
         sstLayer = L.layerGroup();
@@ -3101,16 +3119,14 @@
                 if (sstLayerOn) {
                     sstLayer.addTo(map);
                     scheduleSstQuery();
+                    map.on('moveend zoomend', onSstViewport);
                 } else {
                     map.removeLayer(sstLayer);
                     sstLayer.clearLayers();
+                    map.off('moveend zoomend', onSstViewport);
                 }
             });
         }
-
-        map.on('moveend zoomend', function () {
-            if (sstLayerOn) scheduleSstQuery();
-        });
     }
 
     function scheduleSstQuery() {
@@ -3200,6 +3216,8 @@
 
     // ─── Wildfire + Smoke overlay (ArcGIS Live Feeds) ─────────────────────────
 
+    function onWildfireViewport() { scheduleWildfireQuery(); }
+
     function wireWildfireLayer() {
         if (!map) return;
         wildfireLayer = L.layerGroup();
@@ -3213,16 +3231,14 @@
                 if (wildfireOn) {
                     wildfireLayer.addTo(map);
                     scheduleWildfireQuery();
+                    map.on('moveend zoomend', onWildfireViewport);
                 } else {
                     map.removeLayer(wildfireLayer);
                     wildfireLayer.clearLayers();
+                    map.off('moveend zoomend', onWildfireViewport);
                 }
             });
         }
-
-        map.on('moveend zoomend', function () {
-            if (wildfireOn) scheduleWildfireQuery();
-        });
     }
 
     function scheduleWildfireQuery() {
@@ -3973,6 +3989,8 @@
 
     // ─── Marine Warnings overlay (ArcGIS Live Feeds) ─────────────────────────
 
+    function onMarineWarnViewport() { scheduleMarineWarnFetch(); }
+
     function wireMarineWarnings() {
         if (!map) return;
         marineWarnLayer = L.layerGroup();
@@ -3986,16 +4004,14 @@
                 if (marineWarnOn) {
                     marineWarnLayer.addTo(map);
                     scheduleMarineWarnFetch();
+                    map.on('moveend zoomend', onMarineWarnViewport);
                 } else {
                     map.removeLayer(marineWarnLayer);
                     marineWarnLayer.clearLayers();
+                    map.off('moveend zoomend', onMarineWarnViewport);
                 }
             });
         }
-
-        map.on('moveend zoomend', function () {
-            if (marineWarnOn) scheduleMarineWarnFetch();
-        });
     }
 
     function scheduleMarineWarnFetch() {
@@ -4202,6 +4218,8 @@
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
 
+    function onAqiViewport() { clearTimeout(aqiTimer); aqiTimer = setTimeout(doFetchAqi, 700); }
+
     function wireAqiLayer() {
         if (!map) return;
         aqiLayer = L.layerGroup();
@@ -4212,11 +4230,17 @@
                 aqiOn = !aqiOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', aqiOn);
                 btn.setAttribute('aria-pressed', aqiOn ? 'true' : 'false');
-                if (aqiOn) { aqiLayer.addTo(map); doFetchAqi(); }
-                else { map.removeLayer(aqiLayer); aqiLayer.clearLayers(); }
+                if (aqiOn) {
+                    aqiLayer.addTo(map);
+                    doFetchAqi();
+                    map.on('moveend zoomend', onAqiViewport);
+                } else {
+                    map.removeLayer(aqiLayer);
+                    aqiLayer.clearLayers();
+                    map.off('moveend zoomend', onAqiViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (aqiOn) { clearTimeout(aqiTimer); aqiTimer = setTimeout(doFetchAqi, 700); } });
     }
 
     function doFetchAqi() {
@@ -4262,6 +4286,8 @@
 
     // ─── US Drought Monitor overlay (ArcGIS Live Feeds) ──────────────────────
 
+    function onDroughtViewport() { clearTimeout(droughtTimer); droughtTimer = setTimeout(doFetchDrought, 800); }
+
     function wireDroughtLayer() {
         if (!map) return;
         droughtLayer = L.layerGroup();
@@ -4272,11 +4298,17 @@
                 droughtOn = !droughtOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', droughtOn);
                 btn.setAttribute('aria-pressed', droughtOn ? 'true' : 'false');
-                if (droughtOn) { droughtLayer.addTo(map); doFetchDrought(); }
-                else { map.removeLayer(droughtLayer); droughtLayer.clearLayers(); }
+                if (droughtOn) {
+                    droughtLayer.addTo(map);
+                    doFetchDrought();
+                    map.on('moveend zoomend', onDroughtViewport);
+                } else {
+                    map.removeLayer(droughtLayer);
+                    droughtLayer.clearLayers();
+                    map.off('moveend zoomend', onDroughtViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (droughtOn) { clearTimeout(droughtTimer); droughtTimer = setTimeout(doFetchDrought, 800); } });
     }
 
     function doFetchDrought() {
@@ -4317,6 +4349,8 @@
 
     // ─── NDFD Precipitation overlay (ArcGIS Live Feeds) ──────────────────────
 
+    function onPrecipViewport() { clearTimeout(precipTimer); precipTimer = setTimeout(doFetchPrecip, 800); }
+
     function wirePrecipLayer() {
         if (!map) return;
         precipLayer = L.layerGroup();
@@ -4327,11 +4361,17 @@
                 precipOn = !precipOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', precipOn);
                 btn.setAttribute('aria-pressed', precipOn ? 'true' : 'false');
-                if (precipOn) { precipLayer.addTo(map); doFetchPrecip(); }
-                else { map.removeLayer(precipLayer); precipLayer.clearLayers(); }
+                if (precipOn) {
+                    precipLayer.addTo(map);
+                    doFetchPrecip();
+                    map.on('moveend zoomend', onPrecipViewport);
+                } else {
+                    map.removeLayer(precipLayer);
+                    precipLayer.clearLayers();
+                    map.off('moveend zoomend', onPrecipViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (precipOn) { clearTimeout(precipTimer); precipTimer = setTimeout(doFetchPrecip, 800); } });
     }
 
     function doFetchPrecip() {
@@ -4381,6 +4421,8 @@
 
     // ─── NDFD Temperature polygons overlay (ArcGIS Live Feeds) ──────────────
 
+    function onNdfdTempViewport() { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
+
     function wireNdfdTempLayer() {
         if (!map) return;
         ndfdTempLayer = L.layerGroup();
@@ -4391,13 +4433,17 @@
                 ndfdTempOn = !ndfdTempOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', ndfdTempOn);
                 btn.setAttribute('aria-pressed', ndfdTempOn ? 'true' : 'false');
-                if (ndfdTempOn) { ndfdTempLayer.addTo(map); doFetchNdfdTemp(); }
-                else { map.removeLayer(ndfdTempLayer); ndfdTempLayer.clearLayers(); }
+                if (ndfdTempOn) {
+                    ndfdTempLayer.addTo(map);
+                    doFetchNdfdTemp();
+                    map.on('moveend zoomend', onNdfdTempViewport);
+                } else {
+                    map.removeLayer(ndfdTempLayer);
+                    ndfdTempLayer.clearLayers();
+                    map.off('moveend zoomend', onNdfdTempViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () {
-            if (ndfdTempOn) { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
-        });
     }
 
     function doFetchNdfdTemp() {
@@ -4450,6 +4496,8 @@
 
     // ─── NDBC Buoy overlay (ArcGIS Live Feeds) ────────────────────────────────
 
+    function onBuoyViewport() { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); }
+
     function wireBuoyLayer() {
         if (!map) return;
         buoyLayer = L.layerGroup();
@@ -4460,11 +4508,17 @@
                 buoyOn = !buoyOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', buoyOn);
                 btn.setAttribute('aria-pressed', buoyOn ? 'true' : 'false');
-                if (buoyOn) { buoyLayer.addTo(map); doFetchBuoys(); }
-                else { map.removeLayer(buoyLayer); buoyLayer.clearLayers(); }
+                if (buoyOn) {
+                    buoyLayer.addTo(map);
+                    doFetchBuoys();
+                    map.on('moveend zoomend', onBuoyViewport);
+                } else {
+                    map.removeLayer(buoyLayer);
+                    buoyLayer.clearLayers();
+                    map.off('moveend zoomend', onBuoyViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (buoyOn) { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); } });
     }
 
     function doFetchBuoys() {
@@ -4525,6 +4579,8 @@
     var hfradarTimer  = null;
     var hfradarAbort  = null;
 
+    function onHfradarViewport() { clearTimeout(hfradarTimer); hfradarTimer = setTimeout(doFetchHfradar, 700); }
+
     function wireHfradarLayer() {
         if (!map) return;
         hfradarLayer = L.layerGroup();
@@ -4535,13 +4591,17 @@
                 hfradarOn = !hfradarOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', hfradarOn);
                 btn.setAttribute('aria-pressed', hfradarOn ? 'true' : 'false');
-                if (hfradarOn) { hfradarLayer.addTo(map); doFetchHfradar(); }
-                else { map.removeLayer(hfradarLayer); hfradarLayer.clearLayers(); }
+                if (hfradarOn) {
+                    hfradarLayer.addTo(map);
+                    doFetchHfradar();
+                    map.on('moveend zoomend', onHfradarViewport);
+                } else {
+                    map.removeLayer(hfradarLayer);
+                    hfradarLayer.clearLayers();
+                    map.off('moveend zoomend', onHfradarViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () {
-            if (hfradarOn) { clearTimeout(hfradarTimer); hfradarTimer = setTimeout(doFetchHfradar, 700); }
-        });
     }
 
     function doFetchHfradar() {

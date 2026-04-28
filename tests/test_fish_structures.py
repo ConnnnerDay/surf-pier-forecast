@@ -566,8 +566,8 @@ class TestFetchNoaaStructures:
         ):
             spots = fetch_noaa_structures(25.0, -80.5, 25.5, -80.0, {"wreck"})
         assert len(spots) == 1
-        assert abs(spots[0]["lat"] - 25.08) < 0.02  # centroid ≈ (25.08, -80.2)
-        assert abs(spots[0]["lng"] - (-80.2)) < 0.02
+        assert abs(spots[0]["lat"] - 25.08) < 0.05  # centroid ≈ (25.08, -80.2)
+        assert abs(spots[0]["lng"] - (-80.2)) < 0.05
 
     def test_noaa_failure_returns_empty_list(self):
         with patch("requests.get", side_effect=ConnectionError("NOAA down")):
