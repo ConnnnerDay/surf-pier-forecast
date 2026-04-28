@@ -134,6 +134,7 @@
     var precipAbort     = null;
     var ndfdTempAbort   = null;
     var buoyAbort       = null;
+    var _catchDetailAbort = null;
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -2365,6 +2366,9 @@
     function openCatchDetail(c) {
         if (!els.catchDetail) return;
 
+        if (_catchDetailAbort) { try { _catchDetailAbort.abort(); } catch (e) {} }
+        _catchDetailAbort = new AbortController();
+
         // Title: use explicit title if set, otherwise fall back to species name
         els.catchDetailTitle.textContent = c.title ? c.title : c.species;
         var dateStr = c.caught_at ? new Date(c.caught_at.indexOf('Z') === -1
@@ -2390,8 +2394,9 @@
         els.catchDetailBody.innerHTML = bodyHtml;
 
         // Load comments
+        var _myAbort = _catchDetailAbort;
         els.catchDetailComments.innerHTML = '<div style="opacity:.5;font-size:.75rem;padding:.4rem 0">Loading comments…</div>';
-        fetch('/api/map/catches/' + c.id + '/comments')
+        fetch('/api/map/catches/' + c.id + '/comments', { signal: _myAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 var comments = data.comments || [];
@@ -2427,7 +2432,8 @@
                     });
                 }
             })
-            .catch(function () {
+            .catch(function (err) {
+                if (err && err.name === 'AbortError') return;
                 els.catchDetailComments.innerHTML = '';
             });
 
@@ -3098,6 +3104,8 @@
 
     // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
 
+    function onSstViewport() { scheduleSstQuery(); }
+
     function wireSstLayer() {
         if (!map) return;
         sstLayer = L.layerGroup();
@@ -3111,16 +3119,14 @@
                 if (sstLayerOn) {
                     sstLayer.addTo(map);
                     scheduleSstQuery();
+                    map.on('moveend zoomend', onSstViewport);
                 } else {
                     map.removeLayer(sstLayer);
                     sstLayer.clearLayers();
+                    map.off('moveend zoomend', onSstViewport);
                 }
             });
         }
-
-        map.on('moveend zoomend', function () {
-            if (sstLayerOn) scheduleSstQuery();
-        });
     }
 
     function scheduleSstQuery() {
@@ -3210,6 +3216,8 @@
 
     // ─── Wildfire + Smoke overlay (ArcGIS Live Feeds) ─────────────────────────
 
+    function onWildfireViewport() { scheduleWildfireQuery(); }
+
     function wireWildfireLayer() {
         if (!map) return;
         wildfireLayer = L.layerGroup();
@@ -3223,16 +3231,14 @@
                 if (wildfireOn) {
                     wildfireLayer.addTo(map);
                     scheduleWildfireQuery();
+                    map.on('moveend zoomend', onWildfireViewport);
                 } else {
                     map.removeLayer(wildfireLayer);
                     wildfireLayer.clearLayers();
+                    map.off('moveend zoomend', onWildfireViewport);
                 }
             });
         }
-
-        map.on('moveend zoomend', function () {
-            if (wildfireOn) scheduleWildfireQuery();
-        });
     }
 
     function scheduleWildfireQuery() {
@@ -3983,6 +3989,8 @@
 
     // ─── Marine Warnings overlay (ArcGIS Live Feeds) ─────────────────────────
 
+    function onMarineWarnViewport() { scheduleMarineWarnFetch(); }
+
     function wireMarineWarnings() {
         if (!map) return;
         marineWarnLayer = L.layerGroup();
@@ -3996,16 +4004,14 @@
                 if (marineWarnOn) {
                     marineWarnLayer.addTo(map);
                     scheduleMarineWarnFetch();
+                    map.on('moveend zoomend', onMarineWarnViewport);
                 } else {
                     map.removeLayer(marineWarnLayer);
                     marineWarnLayer.clearLayers();
+                    map.off('moveend zoomend', onMarineWarnViewport);
                 }
             });
         }
-
-        map.on('moveend zoomend', function () {
-            if (marineWarnOn) scheduleMarineWarnFetch();
-        });
     }
 
     function scheduleMarineWarnFetch() {
@@ -4391,6 +4397,8 @@
 
     // ─── NDFD Temperature polygons overlay (ArcGIS Live Feeds) ──────────────
 
+    function onNdfdTempViewport() { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
+
     function wireNdfdTempLayer() {
         if (!map) return;
         ndfdTempLayer = L.layerGroup();
@@ -4401,13 +4409,17 @@
                 ndfdTempOn = !ndfdTempOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', ndfdTempOn);
                 btn.setAttribute('aria-pressed', ndfdTempOn ? 'true' : 'false');
-                if (ndfdTempOn) { ndfdTempLayer.addTo(map); doFetchNdfdTemp(); }
-                else { map.removeLayer(ndfdTempLayer); ndfdTempLayer.clearLayers(); }
+                if (ndfdTempOn) {
+                    ndfdTempLayer.addTo(map);
+                    doFetchNdfdTemp();
+                    map.on('moveend zoomend', onNdfdTempViewport);
+                } else {
+                    map.removeLayer(ndfdTempLayer);
+                    ndfdTempLayer.clearLayers();
+                    map.off('moveend zoomend', onNdfdTempViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () {
-            if (ndfdTempOn) { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
-        });
     }
 
     function doFetchNdfdTemp() {
@@ -4535,6 +4547,8 @@
     var hfradarTimer  = null;
     var hfradarAbort  = null;
 
+    function onHfradarViewport() { clearTimeout(hfradarTimer); hfradarTimer = setTimeout(doFetchHfradar, 700); }
+
     function wireHfradarLayer() {
         if (!map) return;
         hfradarLayer = L.layerGroup();
@@ -4545,13 +4559,17 @@
                 hfradarOn = !hfradarOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', hfradarOn);
                 btn.setAttribute('aria-pressed', hfradarOn ? 'true' : 'false');
-                if (hfradarOn) { hfradarLayer.addTo(map); doFetchHfradar(); }
-                else { map.removeLayer(hfradarLayer); hfradarLayer.clearLayers(); }
+                if (hfradarOn) {
+                    hfradarLayer.addTo(map);
+                    doFetchHfradar();
+                    map.on('moveend zoomend', onHfradarViewport);
+                } else {
+                    map.removeLayer(hfradarLayer);
+                    hfradarLayer.clearLayers();
+                    map.off('moveend zoomend', onHfradarViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () {
-            if (hfradarOn) { clearTimeout(hfradarTimer); hfradarTimer = setTimeout(doFetchHfradar, 700); }
-        });
     }
 
     function doFetchHfradar() {

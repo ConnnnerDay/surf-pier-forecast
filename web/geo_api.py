@@ -386,7 +386,7 @@ def geo_habitats() -> Any:
 
     habitat_type = request.args.get("habitat_type", "general")
     if habitat_type not in _VALID_HABITAT_TYPES:
-        habitat_type = "general"
+        return _err(f"Invalid habitat_type. Valid values: {sorted(_VALID_HABITAT_TYPES)}", 400)
 
     features = fetch_ai_habitats(south, west, north, east, habitat_type)
     resp = _ok({"features": features, "count": len(features)})
