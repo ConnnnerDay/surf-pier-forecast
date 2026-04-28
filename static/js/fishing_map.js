@@ -1407,6 +1407,7 @@
                 var spots = data.structures || [];
                 _spotCachePut(key, spots);
                 _ssSave();
+                _lastRenderedSpotKey = null;  // force re-render even if key matches stale state
                 renderFishingSpots(spots, key);
                 // hint is updated inside renderFishingSpots via _updateZoomSuppressedHint
                 _scheduleAdjacentPrefetch(s, w, n, e);

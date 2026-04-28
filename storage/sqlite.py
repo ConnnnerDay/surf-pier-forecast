@@ -2101,15 +2101,19 @@ def get_suppressed_spots() -> list[dict[str, Any]]:
 
 def add_suppressed_spot(
     spot_key: str, lat: float, lng: float, type_: str, name: str, user_id: Optional[int]
-) -> dict[str, Any]:
-    """Suppress a spot by its key; returns the new row dict (or the existing one)."""
+) -> tuple[dict[str, Any], bool]:
+    """Suppress a spot by its key.
+
+    Returns (row_dict, created) where created is False when the spot_key already existed.
+    """
     conn = get_db()
     try:
-        conn.execute(
+        cur = conn.execute(
             "INSERT OR IGNORE INTO suppressed_map_spots "
             "(spot_key, lat, lng, type, name, suppressed_by) VALUES (?, ?, ?, ?, ?, ?)",
             (spot_key, lat, lng, type_, name.strip(), user_id),
         )
+        created = cur.rowcount == 1
         row = conn.execute(
             "SELECT id, spot_key, lat, lng, type, name, suppressed_by, created_at "
             "FROM suppressed_map_spots WHERE spot_key = ?",
@@ -2128,7 +2132,7 @@ def add_suppressed_spot(
         "name": row["name"],
         "suppressed_by": row["suppressed_by"],
         "created_at": row["created_at"],
-    }
+    }, created
 
 
 def remove_suppressed_spot(suppression_id: int) -> bool:

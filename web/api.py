@@ -2853,8 +2853,8 @@ def suppress_spot_create() -> Any:
 
     type_ = str(data.get("type", ""))[:60]
     name = str(data.get("name", ""))[:200]
-    row = add_suppressed_spot(spot_key, lat, lng, type_, name, g.user["id"])
-    return jsonify(row), 201
+    row, created = add_suppressed_spot(spot_key, lat, lng, type_, name, g.user["id"])
+    return jsonify(row), 201 if created else 200
 
 
 @bp.route("/api/map/suppress-spot/<int:suppression_id>", methods=["DELETE"])
