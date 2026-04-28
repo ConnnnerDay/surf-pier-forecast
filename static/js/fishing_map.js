@@ -2334,7 +2334,6 @@
     }
 
     function scheduleCommunityLoad() {
-        if (!communityLayerOn) return;
         clearTimeout(communityTimer);
         communityTimer = setTimeout(loadCommunityPins, 700);
     }
@@ -2352,15 +2351,14 @@
                 if (communityLayerOn) {
                     communityLayer.addTo(map);
                     loadCommunityPins();
+                    map.on('moveend zoomend', scheduleCommunityLoad);
                 } else {
                     map.removeLayer(communityLayer);
                     communityLayer.clearLayers();
+                    map.off('moveend zoomend', scheduleCommunityLoad);
                 }
             });
         }
-
-        // Reload community pins on map move
-        map.on('moveend zoomend', scheduleCommunityLoad);
     }
 
     // ─── Community catch detail drawer ────────────────────────────────────────
