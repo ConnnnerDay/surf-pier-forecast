@@ -1560,6 +1560,7 @@
         if (has('tidal_flat')) {
             h.push('way["natural"="wetland"]["wetland"="tidalflat"](' + bbox + ');',
                    'way["natural"="wetland"]["wetland"="tidal_flat"](' + bbox + ');',
+                   'way["natural"="wetland"]["wetland"="tidal_flats"](' + bbox + ');',
                    'way["natural"="wetland"]["wetland"="mudflat"](' + bbox + ');',
                    'way["natural"="mud"](' + bbox + ');');
         }
@@ -1567,11 +1568,13 @@
             h.push('way["natural"="beach"](' + bbox + ');',
                    'node["natural"="beach"](' + bbox + ');',
                    'way["leisure"="beach"](' + bbox + ');',
+                   'node["leisure"="beach"](' + bbox + ');',
                    'way["natural"="sand"]["access"!="private"](' + bbox + ');');
         }
         if (has('oyster_reef')) {
             h.push('node["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["produce"="oyster"](' + bbox + ');',
+                   'way["landuse"="aquaculture"]["produce"="oysters"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["product"="oysters"](' + bbox + ');',
                    'way["landuse"="aquaculture"]["aquaculture"="oyster"](' + bbox + ');',
                    'way["natural"="reef"]["reef:type"="oyster"](' + bbox + ');',
