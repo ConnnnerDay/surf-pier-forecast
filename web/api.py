@@ -685,10 +685,20 @@ def regulations_refresh_v1() -> Any:
         return _json_error(ApiError("rate_limited", "Too many requests", status=429))
     _reg_refresh_record_attempt()
 
-    state = request.args.get("state", "").strip().upper() or None
+    _VALID_STATES = frozenset({
+        "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN",
+        "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV",
+        "NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN",
+        "TX","UT","VT","VA","WA","WV","WI","WY",
+    })
+    state_raw = request.args.get("state", "").strip().upper() or None
+    if state_raw and state_raw not in _VALID_STATES:
+        return jsonify(error_envelope("invalid_state", f"Unknown state code: {state_raw}")), 400
+    state = state_raw
     try:
         removed = _reg_invalidate_cache(state)
     except Exception:
+        logger.exception("regulations_refresh failed state=%s", state)
         removed = 0
     return jsonify(success_envelope({"invalidated": removed, "state": state}))
 
@@ -809,8 +819,8 @@ def _save_upload(file_storage, user_id: int) -> tuple[str, str]:
     os.makedirs(user_dir, exist_ok=True)
     try:
         os.chmod(user_dir, 0o700)
-    except OSError:
-        pass
+    except OSError as _e:
+        logger.warning("upload: chmod 700 failed for dir %s: %s", user_dir, _e)
 
     filename = f"{uuid.uuid4()}{ext}"
     abs_path = os.path.join(user_dir, filename)
@@ -818,8 +828,8 @@ def _save_upload(file_storage, user_id: int) -> tuple[str, str]:
         fh.write(data)
     try:
         os.chmod(abs_path, 0o600)
-    except OSError:
-        pass
+    except OSError as _e:
+        logger.warning("upload: chmod 600 failed for file %s: %s", abs_path, _e)
 
     rel_path = f"uploads/{user_id}/{filename}"
     return rel_path, abs_path

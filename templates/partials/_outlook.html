@@ -41,4 +41,6 @@
                 {% endfor %}
             </div>
         </section>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:0.875rem;padding:0.5rem 0">3-day outlook data is temporarily unavailable. <a href="?force_refresh=1" style="color:var(--accent-teal,#0e5f78)">Try refreshing.</a></p>
         {% endif %}

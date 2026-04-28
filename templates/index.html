@@ -67,6 +67,32 @@
 <div class="banner">Cached forecast from <span class="iso-timestamp" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
 {% endif %}
 
+{% if profile_incomplete %}
+<div class="banner banner--profile-nudge" id="profile-nudge-banner" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--accent-teal,#0e5f78);color:#fff;padding:0.6rem 1rem;font-size:0.875rem">
+    <span>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-2px;margin-right:0.35rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Set up your fishing profile for personalized species and bait recommendations.
+    </span>
+    <span style="display:flex;align-items:center;gap:0.6rem;white-space:nowrap">
+        <a href="{{ url_for('views.profile') }}" style="color:#fff;font-weight:700;text-decoration:underline">Set up profile</a>
+        <button onclick="dismissProfileNudge()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
+    </span>
+</div>
+<script>
+(function() {
+    if (localStorage.getItem('profile_nudge_dismissed') === '1') {
+        var b = document.getElementById('profile-nudge-banner');
+        if (b) b.remove();
+    }
+})();
+function dismissProfileNudge() {
+    try { localStorage.setItem('profile_nudge_dismissed', '1'); } catch(e) {}
+    var b = document.getElementById('profile-nudge-banner');
+    if (b) b.remove();
+}
+</script>
+{% endif %}
+
 <main id="main-content" role="main">
 
     <!-- Weather Alerts -->
@@ -148,6 +174,24 @@
     <div id="full-species-panel" class="full-species-list" aria-label="Full species forecast" hidden>
         {% include 'partials/_species.html' %}
     </div>
+    </div><!-- /.section-block whats-biting -->
+    {% else %}
+    <div class="section-block" data-section-id="whats-biting" data-section-label="What's Biting" data-required="1">
+    <section class="top-species-section" aria-label="Top species biting now">
+        <div class="top-species-header">
+            <h2>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/><path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/><path d="M6.5 12h11"/><path d="M17.5 12c1.5 1.5 3 2.5 4.5 2.5-.5-1.5-.5-3.5 0-5-1.5 0-3 1-4.5 2.5z"/></svg>
+                What&rsquo;s Biting
+            </h2>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin:0.75rem 0;padding:0 0.5rem">
+            Species data is temporarily unavailable &mdash; check back shortly or
+            <a href="?force_refresh=1" style="color:var(--accent-teal,#0e5f78);text-decoration:underline">refresh the forecast</a>.
+            {% if profile %}
+            Your fishing profile is applied; results will appear once data loads.
+            {% endif %}
+        </p>
+    </section>
     </div><!-- /.section-block whats-biting -->
     {% endif %}
 

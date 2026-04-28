@@ -158,7 +158,7 @@
                 <div style="display:flex;flex-direction:column;gap:1rem">
                     <div>
                         <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Live bait <span style="font-weight:400;color:var(--text-muted)">— shrimp, mullet, menhaden</span></p>
-                        <div style="display:flex;gap:0.5rem">
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                             <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
                                 <input type="radio" name="live_bait" value="yes">
                                 <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
@@ -171,11 +171,15 @@
                                 <input type="radio" name="live_bait" value="no">
                                 <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
                             </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="live_bait" value="skip">
+                                <span class="chip-body" style="justify-content:center;text-align:center;color:var(--text-muted)"><strong>N/A</strong></span>
+                            </label>
                         </div>
                     </div>
                     <div>
                         <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Cut / natural bait <span style="font-weight:400;color:var(--text-muted)">— shrimp, squid, sand fleas, Fishbites</span></p>
-                        <div style="display:flex;gap:0.5rem">
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                             <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
                                 <input type="radio" name="cut_bait" value="yes">
                                 <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
@@ -188,11 +192,15 @@
                                 <input type="radio" name="cut_bait" value="no">
                                 <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
                             </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="cut_bait" value="skip">
+                                <span class="chip-body" style="justify-content:center;text-align:center;color:var(--text-muted)"><strong>N/A</strong></span>
+                            </label>
                         </div>
                     </div>
                     <div>
                         <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Lures &amp; artificials <span style="font-weight:400;color:var(--text-muted)">— jigs, plugs, soft plastics, topwater</span></p>
-                        <div style="display:flex;gap:0.5rem">
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                             <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
                                 <input type="radio" name="lures" value="yes">
                                 <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
@@ -204,6 +212,10 @@
                             <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
                                 <input type="radio" name="lures" value="no">
                                 <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                            </label>
+                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                                <input type="radio" name="lures" value="skip">
+                                <span class="chip-body" style="justify-content:center;text-align:center;color:var(--text-muted)"><strong>N/A</strong></span>
                             </label>
                         </div>
                     </div>
@@ -218,6 +230,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="experience" value="beginner">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22V12"/><path d="M12 12C12 8.5 9.5 6.5 6 6.5"/><path d="M12 12C12 8.5 14.5 6.5 18 6.5"/></svg>
                             <strong>Beginner</strong>
                             <span class="chip-desc">New to saltwater fishing</span>
                         </span>
@@ -225,6 +238,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="experience" value="intermediate">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 18h20M7 18a5 5 0 0 1 10 0"/><path d="M12 6v3M4.2 9.2l2.1 2.1M19.8 9.2l-2.1 2.1"/></svg>
                             <strong>Intermediate</strong>
                             <span class="chip-desc">I fish regularly and know the basics</span>
                         </span>
@@ -232,6 +246,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="experience" value="experienced">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                             <strong>Experienced</strong>
                             <span class="chip-desc">Seasoned angler, show me everything</span>
                         </span>
@@ -319,6 +334,14 @@
                             <span class="chip-desc">After dark</span>
                         </span>
                     </label>
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="anytime">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <strong>Any time / Flexible</strong>
+                            <span class="chip-desc">No preference — I fish whenever</span>
+                        </span>
+                    </label>
                 </div>
             </section>
 
@@ -329,6 +352,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="primary_goal" value="action">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 8c-3.3 0-6 1.8-6 4s2.7 4 6 4 6-1.8 6-4-2.7-4-6-4z"/><path d="M18 9.5l2.5-2.5M18 14.5l2.5 2.5"/><circle cx="10" cy="11.5" r="1" fill="currentColor"/></svg>
                             <strong>Fill the cooler</strong>
                             <span class="chip-desc">I want maximum bites and action</span>
                         </span>
@@ -336,6 +360,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="primary_goal" value="trophy">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 21h8M12 17v4"/><path d="M5 4h14v5a7 7 0 0 1-14 0V4z"/><path d="M5 9H3a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4"/><path d="M19 9h2a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
                             <strong>Trophy hunting</strong>
                             <span class="chip-desc">Quality over quantity — I'm after the big ones</span>
                         </span>
@@ -343,6 +368,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="primary_goal" value="relaxing">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
                             <strong>Just relaxing</strong>
                             <span class="chip-desc">Low pressure, casual fishing</span>
                         </span>
@@ -350,6 +376,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="primary_goal" value="exploring">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
                             <strong>Exploring &amp; variety</strong>
                             <span class="chip-desc">I like trying new spots and species</span>
                         </span>
@@ -365,6 +392,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="condition_tolerance" value="calm">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 14c2-1 4-1.5 6-1.5s4 1.5 6 1.5 4-1.5 6-1.5"/><path d="M2 18c2-1 4-1.5 6-1.5s4 1.5 6 1.5 4-1.5 6-1.5"/></svg>
                             <strong>Calm only</strong>
                             <span class="chip-desc">Flat water, winds under 10 mph</span>
                         </span>
@@ -372,6 +400,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="condition_tolerance" value="moderate">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
                             <strong>Moderate</strong>
                             <span class="chip-desc">Some wind and chop is fine (10–20 mph)</span>
                         </span>
@@ -379,6 +408,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="condition_tolerance" value="rough">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                             <strong>Whatever it takes</strong>
                             <span class="chip-desc">Rough conditions don't stop me</span>
                         </span>
@@ -426,7 +456,8 @@
                     <label class="profile-chip">
                         <input type="radio" name="tide_preference" value="any">
                         <span class="chip-body">
-                            <strong>No preference</strong>
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 10h20M2 14h20"/></svg>
+                            <strong>No preference / Any</strong>
                             <span class="chip-desc">Tides don't dictate my schedule</span>
                         </span>
                     </label>
@@ -440,6 +471,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="session_frequency" value="weekly">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                             <strong>Weekly or more</strong>
                             <span class="chip-desc">Fishing is a regular part of my life</span>
                         </span>
@@ -447,6 +479,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="session_frequency" value="monthly">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                             <strong>A few times a month</strong>
                             <span class="chip-desc">I get out when I can</span>
                         </span>
@@ -454,6 +487,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="session_frequency" value="occasional">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3-7 3z"/></svg>
                             <strong>Occasionally</strong>
                             <span class="chip-desc">Seasonal or a handful of trips a year</span>
                         </span>
@@ -468,6 +502,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="catch_release" value="always">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22V12"/><path d="M2 12h20"/><path d="M7 17l-5-5 5-5"/></svg>
                             <strong>Always</strong>
                             <span class="chip-desc">I release everything I catch</span>
                         </span>
@@ -475,6 +510,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="catch_release" value="sometimes">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             <strong>Sometimes</strong>
                             <span class="chip-desc">I keep legal fish when conditions are right</span>
                         </span>
@@ -482,6 +518,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="catch_release" value="keep">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><line x1="7" y1="2" x2="7" y2="11"/><path d="M21 15V2"/><path d="M18.5 2a2.5 2.5 0 0 1 2.5 2.5v1a2.5 2.5 0 0 1-5 0v-1A2.5 2.5 0 0 1 18.5 2z"/></svg>
                             <strong>I keep what I catch</strong>
                             <span class="chip-desc">Fresh fish for the table is the goal</span>
                         </span>
@@ -490,7 +527,8 @@
             </section>
 
             <div class="profile-actions profile-actions--sticky">
-                <button type="submit" class="profile-save-btn">Save &amp; View Forecast</button>
+                <div id="profile-save-error" style="display:none;color:#c0392b;font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;padding:0.5rem 0.75rem;background:#fdf0ef;border:1px solid #f5c6c2;border-radius:6px" role="alert"></div>
+                <button type="submit" id="profile-save-btn" class="profile-save-btn">Save &amp; View Forecast</button>
                 <a href="{{ url_for('views.index') }}" class="profile-skip">Skip for now</a>
             </div>
         </form>
@@ -669,36 +707,62 @@
 
     // Server-side profile (authoritative, account-backed)
     var _serverProfile = {{ (prefs.fishing_profile or {}) | tojson }};
+    var _DRAFT_KEY = 'profile_draft';
 
-    // Pre-fill from the profile stored on the signed-in account.
-    (function() {
-        var existing = (_serverProfile && Object.keys(_serverProfile).length) ? _serverProfile : null;
-        if (!existing) return;
-
-        // fishing_types (plural, canonical key); also accept legacy fishing_type (singular)
+    function _applyProfileToForm(existing) {
+        if (!existing || !Object.keys(existing).length) return;
         var types = existing.fishing_types || existing.fishing_type || [];
         types.forEach(function(t) {
             var el = document.querySelector('input[name="fishing_type"][value="' + t + '"]');
             if (el) el.checked = true;
         });
-        // Radio fields — including new ones
         ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'tide_preference', 'session_frequency', 'catch_release'].forEach(function(name) {
             if (existing[name]) {
                 var el = document.querySelector('input[name="' + name + '"][value="' + existing[name] + '"]');
                 if (el) el.checked = true;
             }
         });
-        // Target checkboxes
         (existing.targets || []).forEach(function(t) {
             var el = document.querySelector('input[name="targets"][value="' + t + '"]');
             if (el) el.checked = true;
         });
-        // Preferred times checkboxes
         (existing.preferred_times || []).forEach(function(t) {
             var el = document.querySelector('input[name="preferred_times"][value="' + t + '"]');
             if (el) el.checked = true;
         });
+    }
+
+    // Pre-fill: server profile takes priority; fall back to localStorage draft.
+    (function() {
+        var serverHasData = _serverProfile && Object.keys(_serverProfile).length > 0;
+        if (serverHasData) {
+            _applyProfileToForm(_serverProfile);
+        } else {
+            try {
+                var raw = localStorage.getItem(_DRAFT_KEY);
+                if (raw) _applyProfileToForm(JSON.parse(raw));
+            } catch (e) {}
+        }
     })();
+
+    // Auto-save draft to localStorage on every form change (server profile absent = unsaved state).
+    function _saveDraft() {
+        try {
+            var draft = {};
+            draft.fishing_types = [];
+            document.querySelectorAll('input[name="fishing_type"]:checked').forEach(function(el) { draft.fishing_types.push(el.value); });
+            ['live_bait', 'cut_bait', 'lures', 'experience', 'primary_goal', 'condition_tolerance', 'tide_preference', 'session_frequency', 'catch_release'].forEach(function(name) {
+                var el = document.querySelector('input[name="' + name + '"]:checked');
+                if (el) draft[name] = el.value;
+            });
+            draft.targets = [];
+            document.querySelectorAll('input[name="targets"]:checked').forEach(function(el) { draft.targets.push(el.value); });
+            draft.preferred_times = [];
+            document.querySelectorAll('input[name="preferred_times"]:checked').forEach(function(el) { draft.preferred_times.push(el.value); });
+            localStorage.setItem(_DRAFT_KEY, JSON.stringify(draft));
+        } catch (e) {}
+    }
+    document.getElementById('profile-form').addEventListener('change', _saveDraft);
 
     function updateProfileProgress() {
         var total = 10;
@@ -730,15 +794,28 @@
     });
     updateProfileProgress();
 
+    // "Any time / Flexible" is mutually exclusive with specific time slots
+    (function () {
+        var anyEl = document.querySelector('input[name="preferred_times"][value="anytime"]');
+        if (!anyEl) return;
+        var specificEls = document.querySelectorAll('input[name="preferred_times"]:not([value="anytime"])');
+        anyEl.addEventListener('change', function () {
+            if (anyEl.checked) specificEls.forEach(function (el) { el.checked = false; });
+            updateProfileProgress();
+        });
+        specificEls.forEach(function (el) {
+            el.addEventListener('change', function () {
+                if (el.checked) anyEl.checked = false;
+                updateProfileProgress();
+            });
+        });
+    }());
+
     function saveProfile(e) {
         e.preventDefault();
 
         var profile = {
             fishing_types: [],
-            live_bait: 'sometimes',
-            cut_bait: 'yes',
-            lures: 'sometimes',
-            experience: 'intermediate',
             targets: [],
             preferred_times: [],
             completed: true,
@@ -750,11 +827,8 @@
         document.querySelectorAll('input[name="fishing_type"]:checked').forEach(function(el) {
             profile.fishing_types.push(el.value);
         });
-        if (profile.fishing_types.length === 0) {
-            profile.fishing_types = ['surf', 'pier'];
-        }
 
-        // Radio selections
+        // Radio selections (only set if user made an explicit choice)
         var liveBait = document.querySelector('input[name="live_bait"]:checked');
         if (liveBait) profile.live_bait = liveBait.value;
 
@@ -771,9 +845,6 @@
         document.querySelectorAll('input[name="targets"]:checked').forEach(function(el) {
             profile.targets.push(el.value);
         });
-        if (profile.targets.length === 0) {
-            profile.targets = ['anything'];
-        }
 
         // Preferred times checkboxes
         document.querySelectorAll('input[name="preferred_times"]:checked').forEach(function(el) {
@@ -813,12 +884,23 @@
         if (profile.lures) params.set('lures', profile.lures);
         var dashboardUrl = '{{ url_for("views.index") }}' + (params.toString() ? '?' + params.toString() : '');
 
+        var saveBtn = document.getElementById('profile-save-btn');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
         fetch('{{ url_for("api.profile_v1") }}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fishing_profile: profile })
-        }).finally(function() {
+        }).then(function(r) {
+            if (!r.ok) return r.json().then(function(d) { throw new Error((d.error && d.error.message) || 'Save failed'); });
+            return r.json();
+        }).then(function() {
+            try { localStorage.removeItem(_DRAFT_KEY); } catch(e) {}
             window.location.href = dashboardUrl;
+        }).catch(function(err) {
+            var el = document.getElementById('profile-save-error');
+            if (el) { el.textContent = err.message || 'Could not save profile. Please try again.'; el.style.display = ''; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Profile'; }
         });
         return false;
     }

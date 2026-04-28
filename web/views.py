@@ -491,6 +491,12 @@ def _render_forecast(
         except Exception:
             pass
 
+    profile_incomplete = bool(
+        g.user
+        and not stored_profile.get("completed")
+        and not stored_profile.get("fishing_types")
+    )
+
     return render_template(
         "index.html",
         forecast=forecast,
@@ -502,6 +508,7 @@ def _render_forecast(
         caught_species=caught_species,
         location_lat=location.get("lat", 0),
         location_lng=location.get("lng", 0),
+        profile_incomplete=profile_incomplete,
     )
 
 

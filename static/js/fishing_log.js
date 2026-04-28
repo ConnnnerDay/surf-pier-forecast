@@ -6,6 +6,9 @@
   var loggedIn = section.dataset.loggedIn === '1';
   var LOG_KEY = 'fishlog_' + currentLocId;
 
+  // Index of the entry currently being edited (-1 = add-new mode)
+  var _editingIndex = -1;
+
   function getLog() {
     try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; }
     catch (e) { return []; }
@@ -22,6 +25,55 @@
   }
 
   var MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8 MB per photo
+
+  // ── Toast notification ────────────────────────────────────────────────────
+  function showToast(msg, isError) {
+    var existing = document.getElementById('fishlog-toast');
+    if (existing) existing.remove();
+    var el = document.createElement('div');
+    el.id = 'fishlog-toast';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.style.cssText = [
+      'position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%)',
+      'background:' + (isError ? '#c0392b' : '#0e5f78'),
+      'color:#fff;padding:0.6rem 1.2rem;border-radius:24px',
+      'font-size:0.875rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.25)',
+      'z-index:9999;white-space:nowrap;pointer-events:none',
+      'opacity:0;transition:opacity .2s'
+    ].join(';');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function() { el.style.opacity = '1'; });
+    setTimeout(function() {
+      el.style.opacity = '0';
+      setTimeout(function() { if (el.parentNode) el.remove(); }, 250);
+    }, 2600);
+  }
+
+  // ── Validation shake ──────────────────────────────────────────────────────
+  function shakeInput(input) {
+    input.setAttribute('aria-invalid', 'true');
+    input.style.transition = 'none';
+    input.style.outline = '2px solid #c0392b';
+    var keyframes = [0, -6, 5, -4, 3, -2, 0];
+    var i = 0;
+    function step() {
+      if (i >= keyframes.length) {
+        input.style.transform = '';
+        return;
+      }
+      input.style.transform = 'translateX(' + keyframes[i] + 'px)';
+      i++;
+      setTimeout(step, 40);
+    }
+    step();
+    input.focus();
+    setTimeout(function() {
+      input.style.outline = '';
+      input.removeAttribute('aria-invalid');
+    }, 2000);
+  }
 
   function readPhotos(files) {
     var validFiles = Array.prototype.slice.call(files || []).filter(function (file) {
@@ -124,7 +176,7 @@
     empty.style.display = 'none';
     var html = '';
     entries.forEach(function (e, i) {
-      html += '<div class="fishlog-entry">';
+      html += '<div class="fishlog-entry" data-index="' + i + '">';
       html += '<div class="fishlog-entry-main">';
       html += '<strong class="fishlog-species">' + esc(e.species) + '</strong>';
       if (e.size) html += ' <span class="fishlog-size">' + esc(e.size) + '</span>';
@@ -141,12 +193,76 @@
       html += '</div>';
       html += '<div class="fishlog-entry-meta">';
       html += '<span class="fishlog-date">' + esc(e.date) + '</span>';
+      html += '<div class="fishlog-entry-actions">';
+      html += '<button class="fishlog-edit" data-index="' + i + '" title="Edit" aria-label="Edit this catch entry">';
+      html += '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+      html += '</button>';
       html += '<button class="fishlog-del" data-index="' + i + '" title="Remove" aria-label="Remove this catch entry">&times;</button>';
+      html += '</div>';
       html += '</div></div>';
     });
 
     container.innerHTML = html;
     renderCatchStats(entries);
+  }
+
+  function cancelEdit() {
+    _editingIndex = -1;
+    var btn = document.getElementById('fishlog-add-btn');
+    var cancelBtn = document.getElementById('fishlog-cancel-btn');
+    if (btn) { btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add'; }
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    var speciesInput = document.getElementById('log-species');
+    var sizeInput = document.getElementById('log-size');
+    var notesInput = document.getElementById('log-notes');
+    var photosInput = document.getElementById('log-photos');
+    if (speciesInput) speciesInput.value = '';
+    if (sizeInput) sizeInput.value = '';
+    if (notesInput) notesInput.value = '';
+    if (photosInput) photosInput.value = '';
+    window._capturedPhotos = [];
+    var help = document.getElementById('fishlog-photo-help');
+    if (help) { help.textContent = 'You can add multiple photos per catch.'; help.style.color = ''; }
+    // Remove highlight from any entry being edited
+    document.querySelectorAll('.fishlog-entry--editing').forEach(function(el) { el.classList.remove('fishlog-entry--editing'); });
+  }
+
+  function startEdit(index) {
+    var entries = getLog();
+    var entry = entries[index];
+    if (!entry) return;
+    _editingIndex = index;
+
+    var speciesInput = document.getElementById('log-species');
+    var sizeInput = document.getElementById('log-size');
+    var notesInput = document.getElementById('log-notes');
+    var photosInput = document.getElementById('log-photos');
+    if (speciesInput) speciesInput.value = entry.species || '';
+    if (sizeInput) sizeInput.value = entry.size || '';
+    if (notesInput) notesInput.value = entry.notes || '';
+    if (photosInput) photosInput.value = '';
+    window._capturedPhotos = [];
+
+    var btn = document.getElementById('fishlog-add-btn');
+    var cancelBtn = document.getElementById('fishlog-cancel-btn');
+    if (btn) btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Save';
+    if (cancelBtn) cancelBtn.style.display = '';
+
+    var help = document.getElementById('fishlog-photo-help');
+    if (help) {
+      var photoCount = (entry.photos || []).length;
+      help.textContent = photoCount
+        ? photoCount + ' existing photo' + (photoCount === 1 ? '' : 's') + '. Upload new ones to replace.'
+        : 'You can add multiple photos per catch.';
+      help.style.color = photoCount ? 'var(--ocean, #0e5f78)' : '';
+    }
+
+    // Highlight the entry being edited
+    document.querySelectorAll('.fishlog-entry').forEach(function(el) { el.classList.remove('fishlog-entry--editing'); });
+    var entryEl = document.querySelector('.fishlog-entry[data-index="' + index + '"]');
+    if (entryEl) entryEl.classList.add('fishlog-entry--editing');
+
+    if (speciesInput) speciesInput.focus();
   }
 
   function addLogEntry() {
@@ -156,7 +272,11 @@
     var photosInput = document.getElementById('log-photos');
 
     var species = speciesInput.value.trim();
-    if (!species) return;
+    if (!species) {
+      shakeInput(speciesInput);
+      showToast('Enter the species you caught', true);
+      return;
+    }
     var size = sizeInput.value.trim();
     var notes = notesInput.value.trim();
 
@@ -175,44 +295,77 @@
       }
     }
 
-    // Merge in-app captured photos with any chosen from the file picker
     var capturedPhotos = window._capturedPhotos || [];
     window._capturedPhotos = [];
 
     readPhotos(photosInput.files).then(function (pickerPhotos) {
-      var photos = capturedPhotos.concat(pickerPhotos).slice(0, 8);
+      var newPhotos = capturedPhotos.concat(pickerPhotos).slice(0, 8);
       var entries = getLog();
-      var now = new Date();
-      entries.unshift({
-        species: species,
-        size: size,
-        notes: notes,
-        photos: photos,
-        date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
-      if (entries.length > 50) entries = entries.slice(0, 50);
-      saveLog(entries);
+      var isEdit = _editingIndex >= 0 && _editingIndex < entries.length;
 
-      speciesInput.value = '';
-      sizeInput.value = '';
-      notesInput.value = '';
-      photosInput.value = '';
-      var help = document.getElementById('fishlog-photo-help');
-      if (help) { help.textContent = 'You can add multiple photos per catch.'; help.style.color = ''; }
-      renderLog();
+      if (isEdit) {
+        var existing = entries[_editingIndex];
+        // Keep existing photos if no new ones were supplied
+        var photos = newPhotos.length ? newPhotos : (existing.photos || []);
+        entries[_editingIndex] = {
+          species: species,
+          size: size,
+          notes: notes,
+          photos: photos,
+          date: existing.date
+        };
+        saveLog(entries);
+        cancelEdit();
+        renderLog();
+        showToast('Catch updated');
 
-      if (loggedIn && currentLocId) {
-        var ctrl = new AbortController();
-        var tid = setTimeout(function() { ctrl.abort(); }, 10000);
-        fetch('/api/log?location=' + encodeURIComponent(currentLocId), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ species: species, size: size, notes: notes }),
-          signal: ctrl.signal
-        }).then(function() { clearTimeout(tid); }).catch(function (err) {
-          clearTimeout(tid);
-          console.error('Failed to sync log entry to server:', err);
+        if (loggedIn && currentLocId) {
+          var ctrl = new AbortController();
+          var tid = setTimeout(function() { ctrl.abort(); }, 10000);
+          fetch('/api/log?location=' + encodeURIComponent(currentLocId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ species: species, size: size, notes: notes }),
+            signal: ctrl.signal
+          }).then(function() { clearTimeout(tid); }).catch(function (err) {
+            clearTimeout(tid);
+            console.error('Failed to sync log entry to server:', err);
+          });
+        }
+      } else {
+        var now = new Date();
+        entries.unshift({
+          species: species,
+          size: size,
+          notes: notes,
+          photos: newPhotos,
+          date: now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
+        if (entries.length > 50) entries = entries.slice(0, 50);
+        saveLog(entries);
+
+        speciesInput.value = '';
+        sizeInput.value = '';
+        notesInput.value = '';
+        photosInput.value = '';
+        var help = document.getElementById('fishlog-photo-help');
+        if (help) { help.textContent = 'You can add multiple photos per catch.'; help.style.color = ''; }
+        renderLog();
+        showToast('Catch logged!');
+
+        if (loggedIn && currentLocId) {
+          var ctrl2 = new AbortController();
+          var tid2 = setTimeout(function() { ctrl2.abort(); }, 10000);
+          fetch('/api/log?location=' + encodeURIComponent(currentLocId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ species: species, size: size, notes: notes }),
+            signal: ctrl2.signal
+          }).then(function() { clearTimeout(tid2); }).catch(function (err) {
+            clearTimeout(tid2);
+            console.error('Failed to sync log entry to server:', err);
+          });
+        }
       }
     });
   }
@@ -222,6 +375,7 @@
     var entry = entries[index];
     var name = entry ? entry.species : 'this entry';
     if (!window.confirm('Remove "' + name + '" from your log?')) return;
+    if (_editingIndex === index) cancelEdit();
     entries.splice(index, 1);
     saveLog(entries);
     renderLog();
@@ -261,7 +415,6 @@
     var canvas = document.getElementById('camera-canvas');
     if (!cameraBtn || !modal || !preview || !canvas) return;
 
-    // Show camera button only if getUserMedia is available
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       cameraBtn.hidden = false;
     } else {
@@ -285,9 +438,14 @@
           modal.hidden = false;
           captureBtn.focus();
         })
-        .catch(function () {
-          // Permission denied or no camera — silently fall back to file picker
-          document.getElementById('log-photos').click();
+        .catch(function (err) {
+          var help = document.getElementById('fishlog-photo-help');
+          if (err && err.name === 'NotAllowedError') {
+            if (help) { help.textContent = 'Camera access denied — choose a photo from your library instead.'; help.style.color = '#c0392b'; }
+            setTimeout(function() { if (help) { help.textContent = 'You can add multiple photos per catch.'; help.style.color = ''; } }, 4000);
+          } else {
+            document.getElementById('log-photos').click();
+          }
         });
     }
 
@@ -305,11 +463,9 @@
 
       canvas.toBlob(function (blob) {
         if (!blob) return;
-        // Convert blob to data URL and inject it into the pending photos list
         var reader = new FileReader();
         reader.onload = function (ev) {
           var dataUrl = ev.target.result;
-          // Store captured photo in a staging area for addLogEntry to pick up
           if (!window._capturedPhotos) window._capturedPhotos = [];
           window._capturedPhotos.push(dataUrl);
           var help = document.getElementById('fishlog-photo-help');
@@ -331,10 +487,7 @@
       if (e.key === 'Escape' && !modal.hidden) closeCamera();
     });
 
-    // Always stop the camera stream when leaving the page so the browser
-    // camera-in-use indicator doesn't stay on after navigation.
     window.addEventListener('pagehide', stopStream);
-    // Also stop when the tab is hidden (switching apps on mobile).
     document.addEventListener('visibilitychange', function () {
       if (document.hidden && !modal.hidden) closeCamera();
     });
@@ -349,11 +502,33 @@
 
   document.getElementById('fishlog-add-btn').addEventListener('click', addLogEntry);
   document.getElementById('fishlog-export-btn').addEventListener('click', exportLogCSV);
+
   document.getElementById('fishlog-entries').addEventListener('click', function (e) {
-    if (!e.target.classList.contains('fishlog-del')) return;
-    var idx = Number(e.target.getAttribute('data-index'));
-    if (!Number.isNaN(idx)) deleteLog(idx);
+    var delBtn = e.target.closest('.fishlog-del');
+    if (delBtn) {
+      var idx = Number(delBtn.getAttribute('data-index'));
+      if (!Number.isNaN(idx)) deleteLog(idx);
+      return;
+    }
+    var editBtn = e.target.closest('.fishlog-edit');
+    if (editBtn) {
+      var idx2 = Number(editBtn.getAttribute('data-index'));
+      if (!Number.isNaN(idx2)) startEdit(idx2);
+    }
   });
+
+  // Cancel-edit button (injected into the form)
+  (function() {
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.id = 'fishlog-cancel-btn';
+    cancelBtn.className = 'fishlog-cancel-btn';
+    cancelBtn.style.display = 'none';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', cancelEdit);
+    var addBtn = document.getElementById('fishlog-add-btn');
+    if (addBtn && addBtn.parentNode) addBtn.parentNode.insertBefore(cancelBtn, addBtn.nextSibling);
+  })();
 
   renderLog();
 })();

@@ -30,7 +30,8 @@
                     {% if google_login_enabled or apple_login_enabled %}
                     <div class="landing-social-btns">
                         {% if google_login_enabled %}
-                        <a href="{{ url_for('auth.google_login') }}" class="landing-social-btn landing-social-btn--google">
+                        <a href="{{ url_for('auth.google_login') }}" class="landing-social-btn landing-social-btn--google"
+                           onclick="event.preventDefault(); openOAuthPopup(this.href)">
                             <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
                                 <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
                                 <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
@@ -41,7 +42,8 @@
                         </a>
                         {% endif %}
                         {% if apple_login_enabled %}
-                        <a href="{{ url_for('auth.apple_login') }}" class="landing-social-btn landing-social-btn--apple">
+                        <a href="{{ url_for('auth.apple_login') }}" class="landing-social-btn landing-social-btn--apple"
+                           onclick="event.preventDefault(); openOAuthPopup(this.href)">
                             <svg width="18" height="20" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor">
                                 <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
                             </svg>
@@ -91,5 +93,26 @@
     <footer class="landing-footer">
         <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
+    <script>
+    function openOAuthPopup(url) {
+        var w = 500, h = 620;
+        var left = Math.round((screen.width  - w) / 2);
+        var top  = Math.round((screen.height - h) / 2);
+        var popup = window.open(
+            url + '?mode=popup', 'oauth_popup',
+            'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top +
+            ',scrollbars=yes,resizable=yes,toolbar=0,menubar=0,location=0'
+        );
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            window.location.href = url;
+            return;
+        }
+        window.addEventListener('message', function onMessage(e) {
+            if (e.origin !== window.location.origin) return;
+            window.removeEventListener('message', onMessage);
+            if (e.data && e.data.ok) window.location.href = e.data.redirect || '/';
+        });
+    }
+    </script>
 </body>
 </html>
