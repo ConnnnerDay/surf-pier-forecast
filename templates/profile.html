@@ -218,6 +218,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="experience" value="beginner">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22V12"/><path d="M12 12C12 8.5 9.5 6.5 6 6.5"/><path d="M12 12C12 8.5 14.5 6.5 18 6.5"/></svg>
                             <strong>Beginner</strong>
                             <span class="chip-desc">New to saltwater fishing</span>
                         </span>
@@ -225,6 +226,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="experience" value="intermediate">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 18h20M7 18a5 5 0 0 1 10 0"/><path d="M12 6v3M4.2 9.2l2.1 2.1M19.8 9.2l-2.1 2.1"/></svg>
                             <strong>Intermediate</strong>
                             <span class="chip-desc">I fish regularly and know the basics</span>
                         </span>
@@ -232,6 +234,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="experience" value="experienced">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                             <strong>Experienced</strong>
                             <span class="chip-desc">Seasoned angler, show me everything</span>
                         </span>
@@ -319,6 +322,14 @@
                             <span class="chip-desc">After dark</span>
                         </span>
                     </label>
+                    <label class="profile-chip">
+                        <input type="checkbox" name="preferred_times" value="anytime">
+                        <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <strong>Any time / Flexible</strong>
+                            <span class="chip-desc">No preference — I fish whenever</span>
+                        </span>
+                    </label>
                 </div>
             </section>
 
@@ -365,6 +376,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="condition_tolerance" value="calm">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 14c2-1 4-1.5 6-1.5s4 1.5 6 1.5 4-1.5 6-1.5"/><path d="M2 18c2-1 4-1.5 6-1.5s4 1.5 6 1.5 4-1.5 6-1.5"/></svg>
                             <strong>Calm only</strong>
                             <span class="chip-desc">Flat water, winds under 10 mph</span>
                         </span>
@@ -372,6 +384,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="condition_tolerance" value="moderate">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/><path d="M2 17c2-3 4-5 6-5s4 5 6 5 4-5 6-5"/></svg>
                             <strong>Moderate</strong>
                             <span class="chip-desc">Some wind and chop is fine (10–20 mph)</span>
                         </span>
@@ -379,6 +392,7 @@
                     <label class="profile-chip">
                         <input type="radio" name="condition_tolerance" value="rough">
                         <span class="chip-body">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                             <strong>Whatever it takes</strong>
                             <span class="chip-desc">Rough conditions don't stop me</span>
                         </span>
@@ -426,7 +440,8 @@
                     <label class="profile-chip">
                         <input type="radio" name="tide_preference" value="any">
                         <span class="chip-body">
-                            <strong>No preference</strong>
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 10h20M2 14h20"/></svg>
+                            <strong>No preference / Any</strong>
                             <span class="chip-desc">Tides don't dictate my schedule</span>
                         </span>
                     </label>
@@ -729,6 +744,23 @@
         el.addEventListener('change', updateProfileProgress);
     });
     updateProfileProgress();
+
+    // "Any time / Flexible" is mutually exclusive with specific time slots
+    (function () {
+        var anyEl = document.querySelector('input[name="preferred_times"][value="anytime"]');
+        if (!anyEl) return;
+        var specificEls = document.querySelectorAll('input[name="preferred_times"]:not([value="anytime"])');
+        anyEl.addEventListener('change', function () {
+            if (anyEl.checked) specificEls.forEach(function (el) { el.checked = false; });
+            updateProfileProgress();
+        });
+        specificEls.forEach(function (el) {
+            el.addEventListener('change', function () {
+                if (el.checked) anyEl.checked = false;
+                updateProfileProgress();
+            });
+        });
+    }());
 
     function saveProfile(e) {
         e.preventDefault();
