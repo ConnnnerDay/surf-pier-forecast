@@ -175,6 +175,24 @@ function dismissProfileNudge() {
         {% include 'partials/_species.html' %}
     </div>
     </div><!-- /.section-block whats-biting -->
+    {% else %}
+    <div class="section-block" data-section-id="whats-biting" data-section-label="What's Biting" data-required="1">
+    <section class="top-species-section" aria-label="Top species biting now">
+        <div class="top-species-header">
+            <h2>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/><path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/><path d="M6.5 12h11"/><path d="M17.5 12c1.5 1.5 3 2.5 4.5 2.5-.5-1.5-.5-3.5 0-5-1.5 0-3 1-4.5 2.5z"/></svg>
+                What&rsquo;s Biting
+            </h2>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin:0.75rem 0;padding:0 0.5rem">
+            Species data is temporarily unavailable &mdash; check back shortly or
+            <a href="?force_refresh=1" style="color:var(--accent-teal,#0e5f78);text-decoration:underline">refresh the forecast</a>.
+            {% if profile %}
+            Your fishing profile is applied; results will appear once data loads.
+            {% endif %}
+        </p>
+    </section>
+    </div><!-- /.section-block whats-biting -->
     {% endif %}
 
     <!-- ============================================================
