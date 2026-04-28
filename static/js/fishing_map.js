@@ -4220,6 +4220,8 @@
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
 
+    function onAqiViewport() { clearTimeout(aqiTimer); aqiTimer = setTimeout(doFetchAqi, 700); }
+
     function wireAqiLayer() {
         if (!map) return;
         aqiLayer = L.layerGroup();
@@ -4230,11 +4232,17 @@
                 aqiOn = !aqiOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', aqiOn);
                 btn.setAttribute('aria-pressed', aqiOn ? 'true' : 'false');
-                if (aqiOn) { aqiLayer.addTo(map); doFetchAqi(); }
-                else { map.removeLayer(aqiLayer); aqiLayer.clearLayers(); }
+                if (aqiOn) {
+                    aqiLayer.addTo(map);
+                    doFetchAqi();
+                    map.on('moveend zoomend', onAqiViewport);
+                } else {
+                    map.removeLayer(aqiLayer);
+                    aqiLayer.clearLayers();
+                    map.off('moveend zoomend', onAqiViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (aqiOn) { clearTimeout(aqiTimer); aqiTimer = setTimeout(doFetchAqi, 700); } });
     }
 
     function doFetchAqi() {
@@ -4280,6 +4288,8 @@
 
     // ─── US Drought Monitor overlay (ArcGIS Live Feeds) ──────────────────────
 
+    function onDroughtViewport() { clearTimeout(droughtTimer); droughtTimer = setTimeout(doFetchDrought, 800); }
+
     function wireDroughtLayer() {
         if (!map) return;
         droughtLayer = L.layerGroup();
@@ -4290,11 +4300,17 @@
                 droughtOn = !droughtOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', droughtOn);
                 btn.setAttribute('aria-pressed', droughtOn ? 'true' : 'false');
-                if (droughtOn) { droughtLayer.addTo(map); doFetchDrought(); }
-                else { map.removeLayer(droughtLayer); droughtLayer.clearLayers(); }
+                if (droughtOn) {
+                    droughtLayer.addTo(map);
+                    doFetchDrought();
+                    map.on('moveend zoomend', onDroughtViewport);
+                } else {
+                    map.removeLayer(droughtLayer);
+                    droughtLayer.clearLayers();
+                    map.off('moveend zoomend', onDroughtViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (droughtOn) { clearTimeout(droughtTimer); droughtTimer = setTimeout(doFetchDrought, 800); } });
     }
 
     function doFetchDrought() {
@@ -4335,6 +4351,8 @@
 
     // ─── NDFD Precipitation overlay (ArcGIS Live Feeds) ──────────────────────
 
+    function onPrecipViewport() { clearTimeout(precipTimer); precipTimer = setTimeout(doFetchPrecip, 800); }
+
     function wirePrecipLayer() {
         if (!map) return;
         precipLayer = L.layerGroup();
@@ -4345,11 +4363,17 @@
                 precipOn = !precipOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', precipOn);
                 btn.setAttribute('aria-pressed', precipOn ? 'true' : 'false');
-                if (precipOn) { precipLayer.addTo(map); doFetchPrecip(); }
-                else { map.removeLayer(precipLayer); precipLayer.clearLayers(); }
+                if (precipOn) {
+                    precipLayer.addTo(map);
+                    doFetchPrecip();
+                    map.on('moveend zoomend', onPrecipViewport);
+                } else {
+                    map.removeLayer(precipLayer);
+                    precipLayer.clearLayers();
+                    map.off('moveend zoomend', onPrecipViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (precipOn) { clearTimeout(precipTimer); precipTimer = setTimeout(doFetchPrecip, 800); } });
     }
 
     function doFetchPrecip() {
@@ -4474,6 +4498,8 @@
 
     // ─── NDBC Buoy overlay (ArcGIS Live Feeds) ────────────────────────────────
 
+    function onBuoyViewport() { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); }
+
     function wireBuoyLayer() {
         if (!map) return;
         buoyLayer = L.layerGroup();
@@ -4484,11 +4510,17 @@
                 buoyOn = !buoyOn;
                 btn.classList.toggle('fmap-ctrl-btn--active', buoyOn);
                 btn.setAttribute('aria-pressed', buoyOn ? 'true' : 'false');
-                if (buoyOn) { buoyLayer.addTo(map); doFetchBuoys(); }
-                else { map.removeLayer(buoyLayer); buoyLayer.clearLayers(); }
+                if (buoyOn) {
+                    buoyLayer.addTo(map);
+                    doFetchBuoys();
+                    map.on('moveend zoomend', onBuoyViewport);
+                } else {
+                    map.removeLayer(buoyLayer);
+                    buoyLayer.clearLayers();
+                    map.off('moveend zoomend', onBuoyViewport);
+                }
             });
         }
-        map.on('moveend zoomend', function () { if (buoyOn) { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); } });
     }
 
     function doFetchBuoys() {
