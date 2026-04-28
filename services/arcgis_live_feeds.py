@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 _HTTP: requests.Session = requests.Session()
 _HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16, max_retries=0))
 _HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=0))
+_HTTP.headers.update({"User-Agent": "surf-pier-forecast/1.0 (+https://github.com/connnnerday/surf-pier-forecast)"})
 
 _BASE = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services"
 
