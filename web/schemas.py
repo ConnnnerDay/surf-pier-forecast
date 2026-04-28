@@ -69,7 +69,7 @@ _VALID_TARGETS = frozenset(
 )
 _VALID_EXPERIENCE = frozenset({"beginner", "intermediate", "experienced"})
 _VALID_BAIT_PREF = frozenset({"yes", "sometimes", "no"})
-_VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night"})
+_VALID_PREFERRED_TIMES = frozenset({"dawn", "morning", "afternoon", "evening", "night", "anytime"})
 _VALID_PRIMARY_GOAL = frozenset({"action", "trophy", "relaxing", "exploring"})
 _VALID_CONDITION_TOLERANCE = frozenset({"calm", "moderate", "rough"})
 _VALID_TIDE_PREFERENCE = frozenset({"incoming", "outgoing", "high", "low", "any"})
