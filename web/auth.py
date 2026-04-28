@@ -1562,6 +1562,27 @@ def _verify_apple_id_token(token: str, client_id: str) -> Optional[dict[str, Any
 
 
 # ---------------------------------------------------------------------------
+# OAuth shared helpers
+# ---------------------------------------------------------------------------
+
+
+def _oauth_done(popup: bool, *, redirect_to: str = "", error: str = "") -> Any:
+    """Return the appropriate response for OAuth success or failure.
+
+    In popup mode the browser window was opened by JS so we render a tiny
+    page that postMessages the result back to the opener and closes itself.
+    In redirect mode we do a normal HTTP redirect or re-render the login page.
+    """
+    if error:
+        if popup:
+            return render_template("oauth_popup_done.html", ok=False, error=error)
+        return render_template("login.html", error=error)
+    if popup:
+        return render_template("oauth_popup_done.html", ok=True, redirect=redirect_to)
+    return redirect(redirect_to)
+
+
+# ---------------------------------------------------------------------------
 # Google OAuth 2.0
 # ---------------------------------------------------------------------------
 
@@ -1583,6 +1604,7 @@ def google_login() -> Any:
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
     session["oauth_provider"] = "google"
+    session["oauth_popup"] = request.args.get("mode") == "popup"
     params = {
         "client_id": client_id,
         "redirect_uri": url_for("auth.google_callback", _external=True),
@@ -1601,22 +1623,22 @@ def google_callback() -> Any:
     if g.user is not None:
         return redirect(url_for("views.index"))
 
+    popup = session.pop("oauth_popup", False)
+
     if request.args.get("error"):
-        return render_template("login.html", error="Google sign-in was cancelled.")
+        session.pop("oauth_state", None)
+        session.pop("oauth_provider", None)
+        return _oauth_done(popup, error="Google sign-in was cancelled.")
 
     state = request.args.get("state", "")
     stored_state = session.pop("oauth_state", None)
     stored_provider = session.pop("oauth_provider", None)
     if not state or state != stored_state or stored_provider != "google":
-        return render_template(
-            "login.html", error="Login session expired. Please try again."
-        )
+        return _oauth_done(popup, error="Login session expired. Please try again.")
 
     code = request.args.get("code", "")
     if not code:
-        return render_template(
-            "login.html", error="Google sign-in failed. Please try again."
-        )
+        return _oauth_done(popup, error="Google sign-in failed. Please try again.")
 
     client_id = os.environ.get("GOOGLE_CLIENT_ID", "")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
@@ -1636,15 +1658,13 @@ def google_callback() -> Any:
         token_data = token_resp.json()
     except Exception as exc:
         logger.error("google_oauth.token_exchange_failed: %s", exc)
-        return render_template(
-            "login.html", error="Could not complete Google sign-in. Please try again."
+        return _oauth_done(
+            popup, error="Could not complete Google sign-in. Please try again."
         )
 
     if "error" in token_data or "access_token" not in token_data:
         logger.warning("google_oauth.token_error: %s", token_data.get("error"))
-        return render_template(
-            "login.html", error="Google sign-in failed. Please try again."
-        )
+        return _oauth_done(popup, error="Google sign-in failed. Please try again.")
 
     try:
         userinfo_resp = _requests.get(
@@ -1655,8 +1675,8 @@ def google_callback() -> Any:
         userinfo = userinfo_resp.json()
     except Exception as exc:
         logger.error("google_oauth.userinfo_failed: %s", exc)
-        return render_template(
-            "login.html", error="Could not retrieve Google profile. Please try again."
+        return _oauth_done(
+            popup, error="Could not retrieve Google profile. Please try again."
         )
 
     provider_uid = userinfo.get("sub", "")
@@ -1666,17 +1686,13 @@ def google_callback() -> Any:
     avatar_url = userinfo.get("picture") or None
 
     if not provider_uid:
-        return render_template(
-            "login.html", error="Google sign-in failed: missing user ID."
-        )
+        return _oauth_done(popup, error="Google sign-in failed: missing user ID.")
 
     user_id, is_new = _social_login_or_create(
         "google", provider_uid, email, display_name, avatar_url
     )
     if user_id is None:
-        return render_template(
-            "login.html", error="Could not create account. Please try again."
-        )
+        return _oauth_done(popup, error="Could not create account. Please try again.")
 
     logger.info(
         "security.social_login provider=google user_id=%s new=%s ip=%s",
@@ -1687,7 +1703,8 @@ def google_callback() -> Any:
     _establish_session(user_id)
     # New accounts go to location setup first; after picking a location the
     # before_request hook will redirect them to the profile wizard automatically.
-    return redirect(url_for("views.setup") if is_new else url_for("views.index"))
+    dest = url_for("views.setup") if is_new else url_for("views.index")
+    return _oauth_done(popup, redirect_to=dest)
 
 
 # ---------------------------------------------------------------------------
@@ -1764,6 +1781,7 @@ def apple_login() -> Any:
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
     session["oauth_provider"] = "apple"
+    session["oauth_popup"] = request.args.get("mode") == "popup"
     params = {
         "client_id": client_id,
         "redirect_uri": url_for("auth.apple_callback", _external=True),
@@ -1785,31 +1803,30 @@ def apple_callback() -> Any:
     if g.user is not None:
         return redirect(url_for("views.index"))
 
+    popup = session.pop("oauth_popup", False)
+
     if request.values.get("error"):
-        return render_template("login.html", error="Apple Sign In was cancelled.")
+        session.pop("oauth_state", None)
+        session.pop("oauth_provider", None)
+        return _oauth_done(popup, error="Apple Sign In was cancelled.")
 
     state = request.values.get("state", "")
     stored_state = session.pop("oauth_state", None)
     stored_provider = session.pop("oauth_provider", None)
     if not state or state != stored_state or stored_provider != "apple":
-        return render_template(
-            "login.html", error="Login session expired. Please try again."
-        )
+        return _oauth_done(popup, error="Login session expired. Please try again.")
 
     code = request.values.get("code", "")
     if not code:
-        return render_template(
-            "login.html", error="Apple Sign In failed. Please try again."
-        )
+        return _oauth_done(popup, error="Apple Sign In failed. Please try again.")
 
     client_id = os.environ.get("APPLE_CLIENT_ID", "")
     try:
         client_secret = _generate_apple_client_secret()
     except Exception as exc:
         logger.error("apple_oauth.client_secret_failed: %s", exc)
-        return render_template(
-            "login.html",
-            error="Apple Sign In is misconfigured. Please contact support.",
+        return _oauth_done(
+            popup, error="Apple Sign In is misconfigured. Please contact support."
         )
 
     try:
@@ -1828,35 +1845,29 @@ def apple_callback() -> Any:
         token_data = token_resp.json()
     except Exception as exc:
         logger.error("apple_oauth.token_exchange_failed: %s", exc)
-        return render_template(
-            "login.html", error="Could not complete Apple Sign In. Please try again."
+        return _oauth_done(
+            popup, error="Could not complete Apple Sign In. Please try again."
         )
 
     if "error" in token_data or "id_token" not in token_data:
         logger.warning("apple_oauth.token_error: %s", token_data.get("error"))
-        return render_template(
-            "login.html", error="Apple Sign In failed. Please try again."
-        )
+        return _oauth_done(popup, error="Apple Sign In failed. Please try again.")
 
     payload = _verify_apple_id_token(token_data["id_token"], client_id)
     if not payload:
-        return render_template(
-            "login.html", error="Apple Sign In failed: could not read token."
+        return _oauth_done(
+            popup, error="Apple Sign In failed: could not read token."
         )
 
     provider_uid = payload.get("sub", "")
     email = payload.get("email") or None
 
     if not provider_uid:
-        return render_template(
-            "login.html", error="Apple Sign In failed: missing user ID."
-        )
+        return _oauth_done(popup, error="Apple Sign In failed: missing user ID.")
 
     user_id, is_new = _social_login_or_create("apple", provider_uid, email, None, None)
     if user_id is None:
-        return render_template(
-            "login.html", error="Could not create account. Please try again."
-        )
+        return _oauth_done(popup, error="Could not create account. Please try again.")
 
     logger.info(
         "security.social_login provider=apple user_id=%s new=%s ip=%s",
@@ -1867,4 +1878,5 @@ def apple_callback() -> Any:
     _establish_session(user_id)
     # New accounts go to location setup first; after picking a location the
     # before_request hook will redirect them to the profile wizard automatically.
-    return redirect(url_for("views.setup") if is_new else url_for("views.index"))
+    dest = url_for("views.setup") if is_new else url_for("views.index")
+    return _oauth_done(popup, redirect_to=dest)
