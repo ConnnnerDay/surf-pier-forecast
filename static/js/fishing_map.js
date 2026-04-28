@@ -1406,6 +1406,14 @@
                 }
 
                 var spots = data.structures || [];
+
+                if (data.fetch_failed && spots.length === 0) {
+                    showStructLoading(thisGen);
+                    showStructError("Loading structure data from backup source…");
+                    _queryFishingSpotsFallback(s, w, n, e, key, thisGen, _structAbort ? _structAbort.signal : null);
+                    return;
+                }
+
                 _spotCachePut(key, spots);
                 _ssSave();
                 _lastRenderedSpotKey = null;  // force re-render even if key matches stale state

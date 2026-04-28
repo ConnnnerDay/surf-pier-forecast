@@ -21,6 +21,7 @@ _session = requests.Session()
 _adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
 _session.mount("https://", _adapter)
 _session.mount("http://", _adapter)
+_session.headers.update({"User-Agent": "surf-pier-forecast/1.0 (+https://github.com/connnnerday/surf-pier-forecast)"})
 
 
 def get(

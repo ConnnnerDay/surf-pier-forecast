@@ -1979,7 +1979,7 @@ def map_structures() -> Any:
                 )
             ), 400
 
-    structures = find_fish_structures(south, west, north, east, active_types)
+    structures, fetch_failed = find_fish_structures(south, west, north, east, active_types)
 
     # ── Load suppressed spots and custom markers ──────────────────────────────
     try:
@@ -2029,7 +2029,15 @@ def map_structures() -> Any:
 
     all_structures = filtered + custom
 
-    resp = jsonify({"structures": all_structures, "count": len(all_structures)})
+    payload: dict = {"structures": all_structures, "count": len(all_structures)}
+    # Signal to the client that the OSM/Overpass source failed so it can fall
+    # back to querying Overpass directly from the browser rather than silently
+    # showing an empty map.  Only set when the primary source was unreachable
+    # AND no custom markers fill the gap.
+    if fetch_failed and not custom:
+        payload["fetch_failed"] = True
+
+    resp = jsonify(payload)
     # Structure data (OSM/NOAA) and admin custom markers are user-agnostic, so
     # shared/browser caching is safe.  30-minute TTL matches the server-side
     # in-memory cache; stale-while-revalidate lets the browser serve a cached

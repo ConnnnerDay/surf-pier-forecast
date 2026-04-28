@@ -1184,7 +1184,7 @@ def find_fish_structures(
     north: float,
     east: float,
     types: Optional[set[str]] = None,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], bool]:
     """Identify fish-holding structures within a map bounding box.
 
     Queries OpenStreetMap (via Overpass API) and NOAA ENC (for wrecks and
@@ -1202,7 +1202,11 @@ def find_fish_structures(
 
     Returns
     -------
-    JSON-serialisable list of dicts, each containing:
+    (structures, fetch_failed) where structures is a JSON-serialisable list of
+    dicts and fetch_failed is True when the primary OSM/Overpass source could
+    not be reached (so the client can attempt its own Overpass fallback).
+
+    Each structure dict contains:
 
     =========  =======  ================================================
     Key        Type     Description
@@ -1221,7 +1225,7 @@ def find_fish_structures(
         set(VALID_TYPES) if types is None else (set(types) & VALID_TYPES)
     )
     if not active_types:
-        return []
+        return [], False
 
     # ── Cache check  ─────────────────────────────────────────────────────────
     key = _cache_key(south, west, north, east, active_types)
@@ -1234,7 +1238,7 @@ def find_fish_structures(
                 key,
                 cached.get("failed"),
             )
-            return cached["data"]
+            return cached["data"], cached.get("failed", False)
 
     # ── Fetch from sources in parallel  ──────────────────────────────────────
     # OSM (Overpass) and NOAA ENC run concurrently so neither blocks the other.
@@ -1313,7 +1317,7 @@ def find_fish_structures(
         _cache_evict()
     _CACHE[key] = {"ts": _time.time(), "data": deduped, "failed": fetch_failed}
 
-    return deduped
+    return deduped, fetch_failed
 
 
 # ── AI Habitat Spot Finder ────────────────────────────────────────────────────

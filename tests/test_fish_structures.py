@@ -599,9 +599,10 @@ class TestFindFishStructures:
                 return_value=noaa_spots,
             ),
         ):
-            result = find_fish_structures(25.0, -80.5, 25.5, -80.0)
+            result, failed = find_fish_structures(25.0, -80.5, 25.5, -80.0)
 
         assert len(result) == 2
+        assert failed is False
         types_returned = {s["type"] for s in result}
         assert types_returned == {"pier", "wreck"}
 
@@ -623,7 +624,7 @@ class TestFindFishStructures:
                 return_value=noaa_spots,
             ),
         ):
-            result = find_fish_structures(25.0, -80.5, 25.5, -80.0)
+            result, _ = find_fish_structures(25.0, -80.5, 25.5, -80.0)
 
         assert len(result) == 1
         assert result[0]["name"] == "Urca de Lima"
@@ -639,7 +640,7 @@ class TestFindFishStructures:
             ),
             patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
         ):
-            result = find_fish_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
+            result, _ = find_fish_structures(25.0, -80.5, 25.5, -80.0, {"pier"})
 
         assert all(s["type"] == "pier" for s in result)
 
@@ -648,7 +649,7 @@ class TestFindFishStructures:
             patch("services.fish_structures.fetch_osm_structures", return_value=[]),
             patch("services.fish_structures.fetch_noaa_structures", return_value=[]),
         ):
-            result = find_fish_structures(25.0, -80.5, 25.5, -80.0, {"not_a_type"})
+            result, _ = find_fish_structures(25.0, -80.5, 25.5, -80.0, {"not_a_type"})
         assert result == []
 
     def test_none_types_uses_all_valid_types(self):
@@ -676,7 +677,7 @@ class TestFindFishStructures:
                     "services.fish_structures.fetch_noaa_structures", return_value=[]
                 ),
             ):
-                result = find_fish_structures(25.0, -80.5, 25.5, -80.0, {spot_type})
+                result, _ = find_fish_structures(25.0, -80.5, 25.5, -80.0, {spot_type})
             assert len(result) == 1, f"Expected a result for type '{spot_type}'"
             assert STRUCTURE_TIPS.get(spot_type), (
                 f"Missing STRUCTURE_TIPS entry for type '{spot_type}'"
@@ -743,7 +744,7 @@ class TestMapStructuresEndpoint:
         assert len(data["structures"]) == 2
 
     def test_types_filter_forwarded_to_service(self, client):
-        with patch("web.api.find_fish_structures", return_value=[]) as mock_fn:
+        with patch("web.api.find_fish_structures", return_value=([], False)) as mock_fn:
             r = client.get(
                 _structures_url(
                     south=25.0, west=-80.5, north=25.5, east=-80.0, types="pier,jetty"
@@ -782,7 +783,7 @@ class TestMapStructuresEndpoint:
         assert r.status_code == 400
 
     def test_mixed_valid_invalid_types_uses_valid_subset(self, client):
-        with patch("web.api.find_fish_structures", return_value=[]) as mock_fn:
+        with patch("web.api.find_fish_structures", return_value=([], False)) as mock_fn:
             r = client.get(
                 _structures_url(
                     south=25.0,
@@ -797,7 +798,7 @@ class TestMapStructuresEndpoint:
         assert called_types == {"pier"}
 
     def test_empty_result_returns_200_with_empty_list(self, client):
-        with patch("web.api.find_fish_structures", return_value=[]):
+        with patch("web.api.find_fish_structures", return_value=([], False)):
             r = client.get(
                 _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
             )
@@ -807,7 +808,7 @@ class TestMapStructuresEndpoint:
 
     def test_response_structure_fields_present(self, client):
         spots = [{"lat": 25.1, "lng": -80.2, "type": "reef", "name": "Reef X"}]
-        with patch("web.api.find_fish_structures", return_value=spots):
+        with patch("web.api.find_fish_structures", return_value=(spots, False)):
             r = client.get(
                 _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
             )
@@ -837,7 +838,7 @@ class TestMapStructuresEndpoint:
         mock_fn.assert_not_called()
 
     def test_valid_viewport_does_not_set_zoom_required(self, client):
-        with patch("services.fish_structures.find_fish_structures", return_value=[]):
+        with patch("services.fish_structures.find_fish_structures", return_value=([], False)):
             r = client.get(
                 _structures_url(south=25.0, west=-80.5, north=25.5, east=-80.0)
             )
@@ -855,7 +856,8 @@ _SPOT = {"lat": 25.1, "lng": -80.2, "type": "pier", "name": "City Pier"}
 
 class TestFindFishStructuresCache:
     def _call(self, types=None):
-        return find_fish_structures(*_BBOX, types)
+        spots, _ = find_fish_structures(*_BBOX, types)
+        return spots
 
     def test_cache_hit_skips_network_on_second_call(self):
         with (
