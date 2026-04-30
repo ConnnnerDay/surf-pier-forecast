@@ -375,21 +375,26 @@ def create_app() -> Flask:
             )
         return response
 
+    _COMPRESSIBLE = ("application/json", "text/html", "text/css", "application/javascript", "text/javascript")
+
     @app.after_request
     def _gzip_response(response: Any) -> Any:
-        """Compress JSON API responses when the client supports gzip.
+        """Compress text responses when the client supports gzip.
 
-        Structure and fishing-map payloads are repetitive JSON that typically
-        compresses 85-90 %, cutting 80-200 KB responses down to 10-25 KB.
+        JSON and HTML are the biggest wins: repetitive JSON compresses 85-90 %
+        (80-200 KB → 10-25 KB); the rendered dashboard HTML compresses ~75 %
+        (~120 KB → ~30 KB).  CSS and JS also benefit if not already compressed
+        at the proxy layer.
         Uses Python's built-in gzip (compresslevel=6) — no extra dependencies.
-        Skips already-encoded, non-JSON, small (<500 B), or streaming responses.
+        Skips already-encoded, small (<500 B), or streaming responses.
         """
+        ct = (response.content_type or "").split(";")[0].strip()
         if (
             response.direct_passthrough
             or response.status_code != 200
             or "Content-Encoding" in response.headers
             or "gzip" not in request.headers.get("Accept-Encoding", "")
-            or not (response.content_type or "").startswith("application/json")
+            or ct not in _COMPRESSIBLE
         ):
             return response
         data = response.get_data()
@@ -401,6 +406,7 @@ def create_app() -> Flask:
         response.set_data(compressed)
         response.headers["Content-Encoding"] = "gzip"
         response.headers["Content-Length"] = len(compressed)
+        response.headers["Vary"] = "Accept-Encoding"
         response.headers.pop("Content-MD5", None)
         return response
 
