@@ -62,6 +62,7 @@ from regulations import get_official_regulations_url as _get_official_regulation
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
 
+
 # -- Setup endpoint rate limiting --------------------------------------------
 # Zip-code lookup and coordinate searches hit external geocoding services.
 # Limit each IP to 30 requests per 10 minutes to prevent abuse.
@@ -118,17 +119,28 @@ def _convert_wind_text_units(text: str, wind_units: str) -> str:
 
 
 def _apply_wind_unit_preference(forecast: dict[str, Any], wind_units: str) -> None:
-    """Mutate wind labels in a forecast to match a user's preferred wind units."""
+    """Update wind labels in a forecast to match a user's preferred wind units.
+
+    Operates on isolated copies of the conditions dict and each outlook day so
+    the in-process caches (_MEM_CACHE, _PERSONALIZE_CACHE) are never mutated.
+    """
     if wind_units != "mph":
         return
 
-    conditions = forecast.get("conditions") or {}
-    if conditions.get("wind"):
+    conditions = forecast.get("conditions")
+    if conditions and conditions.get("wind"):
+        conditions = dict(conditions)
         conditions["wind"] = _convert_wind_text_units(conditions["wind"], wind_units)
+        forecast["conditions"] = conditions
 
-    for day in forecast.get("outlook") or []:
-        if day.get("wind"):
-            day["wind"] = _convert_wind_text_units(day["wind"], wind_units)
+    if forecast.get("outlook"):
+        new_outlook = []
+        for day in forecast["outlook"]:
+            if day.get("wind"):
+                day = dict(day)
+                day["wind"] = _convert_wind_text_units(day["wind"], wind_units)
+            new_outlook.append(day)
+        forecast["outlook"] = new_outlook
 
 
 def _fetch_cam_status(url: str) -> None:
