@@ -42,7 +42,7 @@ from domain.forecast import (
     recompute_current_uv,
     build_trip_setup,
 )
-from services.forecast_refresh import enqueue_forecast_refresh
+from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing as _is_refreshing
 from services.nws import _KT_TO_MPH
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -395,6 +395,18 @@ def _render_forecast(
         is_stale = bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
 
     if forecast is None:
+        # If a background job is already generating this forecast (e.g. pre-warmed
+        # by setup_select), show a lightweight polling page instead of blocking the
+        # request thread for 15-20 s.
+        if _is_refreshing(loc_id):
+            logger.info("cache.miss.background_running location_id=%s", loc_id)
+            status_url = url_for("api.forecast_status_v1", location_id=loc_id)
+            dest_url = request.url
+            return render_template(
+                "forecast_loading.html",
+                status_url=status_url,
+                dest_url=dest_url,
+            )
         logger.info("cache.miss location_id=%s", loc_id)
         try:
             forecast = generate_forecast(location)
@@ -659,6 +671,7 @@ def setup_select(location_id: str) -> Any:
         return redirect(url_for("views.setup"))
     session["location_id"] = location_id
     session.permanent = True
+    enqueue_forecast_refresh(location_id, user_id=None)
     if g.user:
         save_preferences(
             g.user["id"], location_id=location_id, default_location_id=location_id
