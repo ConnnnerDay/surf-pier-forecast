@@ -56,6 +56,7 @@ from domain.species import (
     _OFFSHORE_DIRS_WEST,
     _ONSHORE_DIRS_EAST,
     _ONSHORE_DIRS_WEST,
+    _build_profile_filter,
     _get_technique_tip,
     _score_species,
     _species_matches_profile,
@@ -811,6 +812,8 @@ def build_multiday_outlook(
         high_ft = min(high_ft, 12.0)
         return (low_ft, high_ft)
 
+    _profile_filter = _build_profile_filter(fishing_types, targets)
+
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
         future = now + timedelta(days=offset_days)
@@ -1002,7 +1005,7 @@ def build_multiday_outlook(
                 and outlook_fish_region not in sp["regions"]
             ):
                 continue
-            if not _species_matches_profile(sp["name"], fishing_types, targets):
+            if not _profile_filter(sp["name"]):
                 continue
             s = _score_species(
                 sp,

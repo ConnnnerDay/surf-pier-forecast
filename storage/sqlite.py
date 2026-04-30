@@ -16,6 +16,28 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# In-process TTL cache for get_preferences
+# ---------------------------------------------------------------------------
+# Prefs change only on explicit profile/settings saves (save_preferences).
+# Caching avoids a SQLite round-trip + 3× JSON parses on every authenticated
+# page render.  Invalidated immediately on write so changes take effect at
+# the next request.
+_PREFS_CACHE: dict[int, tuple[float, dict[str, Any]]] = {}
+_PREFS_CACHE_TTL: int = 300  # 5 minutes
+_PREFS_CACHE_MAX: int = 512
+
+# ---------------------------------------------------------------------------
+# Short-lived per-request user cache for get_user
+# ---------------------------------------------------------------------------
+# On a dashboard load the browser fires ~12 async API requests in parallel;
+# each triggers a before_request that calls get_user once.  A 15-second TTL
+# collapses all of those into a single DB hit while keeping the session_version
+# invalidation lag negligible for a fishing-forecast context.
+_USER_CACHE: dict[int, tuple[float, dict[str, Any]]] = {}
+_USER_CACHE_TTL: int = 15  # seconds
+_USER_CACHE_MAX: int = 512
+
 # Dummy hash used in authenticate_user to ensure a constant-time password check
 # is always performed, regardless of whether the username exists.  This
 # prevents an attacker from enumerating valid usernames by measuring how long
@@ -212,6 +234,10 @@ def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH, timeout=2.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
+    # Use memory for temporary tables (avoids disk I/O for intermediate results).
+    conn.execute("PRAGMA temp_store=MEMORY")
+    # Memory-map up to 128 MB of the DB file for faster sequential reads.
+    conn.execute("PRAGMA mmap_size=134217728")
     return conn
 
 
@@ -565,6 +591,9 @@ def authenticate_user(username: str, password: str) -> Optional[dict[str, Any]]:
 
 
 def get_user(user_id: int) -> Optional[dict[str, Any]]:
+    entry = _USER_CACHE.get(user_id)
+    if entry and _time.time() - entry[0] < _USER_CACHE_TTL:
+        return entry[1]
     conn = get_db()
     try:
         row = conn.execute(
@@ -576,8 +605,9 @@ def get_user(user_id: int) -> Optional[dict[str, Any]]:
     finally:
         conn.close()
     if not row:
+        _USER_CACHE.pop(user_id, None)
         return None
-    return {
+    result: dict[str, Any] = {
         "id": row["id"],
         "username": row["username"],
         "email": row["email"],
@@ -588,6 +618,10 @@ def get_user(user_id: int) -> Optional[dict[str, Any]]:
         "avatar_url": row["avatar_url"],
         "is_admin": bool(row["is_admin"]),
     }
+    if len(_USER_CACHE) >= _USER_CACHE_MAX:
+        _USER_CACHE.pop(next(iter(_USER_CACHE)))
+    _USER_CACHE[user_id] = (_time.time(), result)
+    return result
 
 
 def get_user_by_email(email: str) -> Optional[dict[str, Any]]:
@@ -682,6 +716,7 @@ def confirm_email(user_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _USER_CACHE.pop(user_id, None)
 
 
 def bump_session_version(user_id: int) -> int:
@@ -704,6 +739,7 @@ def bump_session_version(user_id: int) -> int:
         return row["session_version"] if row else 0
     finally:
         conn.close()
+    _USER_CACHE.pop(user_id, None)
 
 
 def change_password(user_id: int, new_password: str) -> int:
@@ -732,6 +768,7 @@ def change_password(user_id: int, new_password: str) -> int:
         return row["session_version"] if row else 0
     finally:
         conn.close()
+    _USER_CACHE.pop(user_id, None)
 
 
 def get_user_password_hash(user_id: int) -> Optional[str]:
@@ -785,6 +822,10 @@ def delete_user(user_id: int) -> None:
 
 
 def get_preferences(user_id: int) -> dict[str, Any]:
+    entry = _PREFS_CACHE.get(user_id)
+    if entry and _time.time() - entry[0] < _PREFS_CACHE_TTL:
+        return entry[1]
+
     conn = get_db()
     try:
         row = conn.execute(
@@ -834,7 +875,7 @@ def get_preferences(user_id: int) -> dict[str, Any]:
             )
             notification_prefs = {}
 
-    return {
+    result = {
         "location_id": row["location_id"],
         "theme": row["theme"] or "light",
         "units": row["units"] or "F",
@@ -845,9 +886,16 @@ def get_preferences(user_id: int) -> dict[str, Any]:
         "favorites": favorites,
         "timezone": row["timezone"] or "",
     }
+    if len(_PREFS_CACHE) >= _PREFS_CACHE_MAX:
+        _PREFS_CACHE.pop(next(iter(_PREFS_CACHE)))
+    _PREFS_CACHE[user_id] = (_time.time(), result)
+    return result
 
 
 def save_preferences(user_id: int, **kwargs: Any) -> None:
+    _PREFS_CACHE.pop(user_id, None)  # invalidate before write
+    if "default_location_id" in kwargs:
+        _USER_CACHE.pop(user_id, None)
     conn = get_db()
     try:
         conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (user_id,))
