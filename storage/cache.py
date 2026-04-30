@@ -20,6 +20,7 @@ from storage.sqlite import (
     delete_forecast_cache,
     load_forecast,
     load_forecast_cache_for_user,
+    prune_forecast_cache,
     save_forecast_cache,
 )
 from utils import norm_user_id as _norm_user_id
@@ -92,6 +93,18 @@ def load_cached_forecast(
             return None
         _migrate_json_to_db(location_id, result, normalized_uid)
     return result
+
+
+def prune_old_forecasts(max_age_days: int = 7) -> int:
+    """Remove forecast_cache rows older than max_age_days. Returns rows deleted."""
+    try:
+        removed = prune_forecast_cache(max_age_days)
+        if removed:
+            logger.info("cache.pruned rows=%d max_age_days=%d", removed, max_age_days)
+        return removed
+    except Exception as exc:
+        logger.warning("cache.prune_failed: %s", exc)
+        return 0
 
 
 def save_forecast(

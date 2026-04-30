@@ -56,6 +56,7 @@ from flask import (
 import werkzeug
 
 from storage.sqlite import init_db, get_user
+from storage.cache import prune_old_forecasts as _prune_old_forecasts
 from web.auth import bp as auth_bp
 from web.api import (
     bp as api_bp,
@@ -537,6 +538,14 @@ def create_app() -> Flask:
             )
 
     _threading.Thread(target=_prewarm_fishing_map_cache, daemon=True).start()
+
+    def _prune_cache() -> None:
+        try:
+            _prune_old_forecasts(max_age_days=7)
+        except Exception as _exc:
+            logging.getLogger(__name__).debug("cache prune failed (non-fatal): %s", _exc)
+
+    _threading.Thread(target=_prune_cache, daemon=True).start()
 
     return app
 

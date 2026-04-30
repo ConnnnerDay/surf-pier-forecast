@@ -13176,3 +13176,34 @@ body.dark .wq-species-item,
 body.dark .wq-hdx-item {
   border-bottom-color: rgba(255,255,255,0.08);
 }
+
+/* ── Skeleton loading shimmer ─────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-grid {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  overflow: hidden;
+}
+.skeleton-row {
+  flex: 1 0 3.5rem;
+  height: 4rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 25%,
+    var(--border-light) 50%,
+    var(--bg-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.section-unavailable {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.4rem 0;
+  margin: 0;
+}

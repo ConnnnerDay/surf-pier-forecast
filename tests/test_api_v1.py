@@ -32,8 +32,10 @@ def test_v1_forecast_envelope(client, monkeypatch):
     sample = {"generated_at": "2026-03-03T10:00:00", "conditions": {"verdict": "Good"}}
 
     monkeypatch.setattr(
-        "web.api.load_cached_forecast", lambda loc_id, user_id=None: sample
+        "web.api.load_cached_forecast",
+        lambda loc_id, user_id=None, include_stale=False: sample,
     )
+    monkeypatch.setattr("web.api.enqueue_forecast_refresh", lambda *a, **kw: None)
 
     resp = client.get("/api/v1/forecast?location_id=wrightsville-beach-nc")
     assert resp.status_code == 200

@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS forecast_cache (
 );
 CREATE INDEX IF NOT EXISTS idx_forecast_cache_updated
 ON forecast_cache(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_forecast_cache_generated_at
+ON forecast_cache(generated_at);
 
 CREATE TABLE IF NOT EXISTS catch_log (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -127,6 +129,8 @@ CREATE INDEX IF NOT EXISTS idx_map_catches_bbox
 ON map_catches(lat, lng);
 CREATE INDEX IF NOT EXISTS idx_map_catches_bbox_time
 ON map_catches(lat, lng, caught_at DESC);
+CREATE INDEX IF NOT EXISTS idx_map_catches_public_time_geo
+ON map_catches(is_public, caught_at DESC, lat, lng);
 
 CREATE TABLE IF NOT EXISTS map_catch_comments (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1237,6 +1241,24 @@ def delete_forecast_cache(user_id: int, location_id: str) -> bool:
     finally:
         conn.close()
     return deleted
+
+
+def prune_forecast_cache(max_age_days: int = 7) -> int:
+    """Delete forecast_cache rows whose generated_at is older than max_age_days.
+
+    Returns the number of rows removed.  Safe to call at startup — the DELETE
+    is indexed on generated_at and completes in milliseconds even on large DBs.
+    """
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "DELETE FROM forecast_cache WHERE generated_at < datetime('now', ?)",
+            (f"-{max_age_days} days",),
+        )
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
 
 
 def load_forecast(location_id: str) -> Optional[dict[str, Any]]:
