@@ -574,6 +574,7 @@ class TestCategoriesInRankingPayload:
             "categories": ["panfish"],  # override: should produce panfish not game_fish
         }
         monkeypatch.setattr("domain.species.SPECIES_DB", [fake_sp])
+        monkeypatch.setattr("domain.species._SPECIES_BY_COAST", {"east": [fake_sp]})
 
         ranking = build_species_ranking(month=10, water_temp=65, coast="east")
         assert len(ranking) == 1

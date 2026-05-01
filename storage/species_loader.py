@@ -140,3 +140,10 @@ SPECIES_DB: list[dict[str, Any]] = load_species_db()
 
 # Pre-built name → entry index so callers don't rebuild it per call.
 SPECIES_DB_MAP: dict[str, dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
+
+# Species partitioned by coast — avoids iterating ~895 entries to get ~300-580.
+SPECIES_DB_BY_COAST: dict[str, list[dict[str, Any]]] = {}
+for _sp in SPECIES_DB:
+    _coast = _sp.get("coast", "east")
+    SPECIES_DB_BY_COAST.setdefault(_coast, []).append(_sp)
+del _sp, _coast

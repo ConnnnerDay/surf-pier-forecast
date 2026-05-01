@@ -56,6 +56,7 @@ from domain.species import (
     _OFFSHORE_DIRS_WEST,
     _ONSHORE_DIRS_EAST,
     _ONSHORE_DIRS_WEST,
+    _SPECIES_BY_COAST,
     _build_profile_filter,
     _get_technique_tip,
     _score_species,
@@ -813,6 +814,9 @@ def build_multiday_outlook(
         return (low_ft, high_ft)
 
     _profile_filter = _build_profile_filter(fishing_types, targets)
+    coast = _derive_coast(location)
+    _coast_species = _SPECIES_BY_COAST.get(coast, []) if coast else []
+    outlook_fish_region = (location or {}).get("fish_region", "")
 
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
@@ -952,7 +956,6 @@ def build_multiday_outlook(
                 wave_range = wave_avg
 
         # --- Region + water temperature context ---
-        coast = _derive_coast(location)
         if location:
             monthly_temps = get_monthly_water_temps(location)
             future_water_temp = float(monthly_temps[future_month])
@@ -993,12 +996,9 @@ def build_multiday_outlook(
 
         # --- Top species for this day ---
         wind_coast = "west" if coast == "west" else "east"
-        outlook_fish_region = (location or {}).get("fish_region", "")
         top_species_names: list[str] = []
         species_scores: list[tuple[str, float]] = []
-        for sp in SPECIES_DB:
-            if coast is None or sp.get("coast", "east") != coast:
-                continue
+        for sp in _coast_species:
             if (
                 outlook_fish_region
                 and "regions" in sp

@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 
 from locations import get_monthly_water_temps
 from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
-from storage.species_loader import SPECIES_DB, SPECIES_DB_MAP
+from storage.species_loader import SPECIES_DB, SPECIES_DB_BY_COAST, SPECIES_DB_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -724,6 +724,14 @@ _NUISANCE_SPECIES: set = {
     "Pigfish",  # Marginal grunt bycatch
     "Ribbonfish (Atlantic cutlassfish)",  # Occasional pier bycatch, not a target
     "Hogchoker",  # Tiny flatfish, no sport or food value
+}
+
+# Coast-partitioned species lists with nuisance species pre-removed.
+# Eliminates the coast + nuisance checks from the ~900-entry hot-path loops in
+# build_species_ranking and build_multiday_outlook (called 4× per forecast).
+_SPECIES_BY_COAST: dict[str, list[dict[str, Any]]] = {
+    coast: [sp for sp in sps if sp["name"] not in _NUISANCE_SPECIES]
+    for coast, sps in SPECIES_DB_BY_COAST.items()
 }
 
 # ---------------------------------------------------------------------------
@@ -3474,14 +3482,7 @@ def build_species_ranking(
     # Pre-compute profile filter once so set unions aren't rebuilt per species.
     _profile_filter = _build_profile_filter(fishing_types, targets)
     scored = []
-    for sp in SPECIES_DB:
-        # Skip species from a different coast/region; also skip all species
-        # when coast is None (unknown location — do not show any species).
-        if coast is None or sp.get("coast", "east") != coast:
-            continue
-        # Skip nuisance/bycatch species that aren't worth targeting
-        if sp["name"] in _NUISANCE_SPECIES:
-            continue
+    for sp in _SPECIES_BY_COAST.get(coast, []) if coast else []:
         # Skip species not found in this geographic region
         if fish_region and "regions" in sp and fish_region not in sp["regions"]:
             continue
