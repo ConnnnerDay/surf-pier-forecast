@@ -817,6 +817,7 @@ def build_multiday_outlook(
     coast = _derive_coast(location)
     _coast_species = _SPECIES_BY_COAST.get(coast, []) if coast else []
     outlook_fish_region = (location or {}).get("fish_region", "")
+    _monthly_temps = get_monthly_water_temps(location) if location else None
 
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
@@ -956,9 +957,8 @@ def build_multiday_outlook(
                 wave_range = wave_avg
 
         # --- Region + water temperature context ---
-        if location:
-            monthly_temps = get_monthly_water_temps(location)
-            future_water_temp = float(monthly_temps[future_month])
+        if _monthly_temps is not None:
+            future_water_temp = float(_monthly_temps[future_month])
         else:
             future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
 

@@ -4954,6 +4954,13 @@ SPAWNING_DATA: list[Dict] = [
     },
 ]
 
+# SPAWNING_DATA pre-bucketed by coast — eliminates the coast filter from the
+# build_spawning_report hot loop (109 entries → 8-71 depending on coast).
+_SPAWNING_BY_COAST: dict[str, list[Dict]] = {}
+for _se in SPAWNING_DATA:
+    _SPAWNING_BY_COAST.setdefault(_se["coast"], []).append(_se)
+del _se
+
 def _format_spawn_window(spawn_months: list[int]) -> str:
     """Format a list of spawn months into a human-readable string.
 
@@ -5047,11 +5054,7 @@ def build_spawning_report(
     """
     results: list[dict[str, Any]] = []
 
-    for entry in SPAWNING_DATA:
-        # Also filters out all entries when coast is None (unknown location).
-        if coast is None or entry["coast"] != coast:
-            continue
-
+    for entry in _SPAWNING_BY_COAST.get(coast, []) if coast else []:
         spawn_months = entry["spawn_months"]
         temp_low = entry["spawn_temp_low"]
         temp_high = entry["spawn_temp_high"]
