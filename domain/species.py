@@ -5011,6 +5011,10 @@ def _format_spawn_window(spawn_months: list[int]) -> str:
     # Multiple gaps — list months individually
     return ", ".join(_MA[m] for m in sm)
 
+_SPAWN_STATUS_ORDER: dict[str, int] = {
+    "spawning": 0, "pre_spawn": 1, "temp_pending": 2, "post_spawn": 3
+}
+
 def build_spawning_report(
     month: int,
     water_temp: float,
@@ -5052,6 +5056,14 @@ def build_spawning_report(
     Passing ``None`` returns an empty list — the coast must be known to
     avoid showing wrong-region spawning data.
     """
+    _LEGACY_MAP = {
+        "legal": "open",
+        "catch_and_release": "catch_release",
+        "restricted": "restricted",
+        "out_of_season": "catch_release",
+        "prohibited": "catch_release",
+        "unknown": "unknown",
+    }
     results: list[dict[str, Any]] = []
 
     for entry in _SPAWNING_BY_COAST.get(coast, []) if coast else []:
@@ -5110,16 +5122,6 @@ def build_spawning_report(
         if should_hide_from_forecast(regulation_status):
             continue
 
-        # Preserve legacy legal_status field for backward-compatibility with
-        # templates that still reference it (e.g. the "Verify seasonal rules" badge).
-        _LEGACY_MAP = {
-            "legal": "open",
-            "catch_and_release": "catch_release",
-            "restricted": "restricted",
-            "out_of_season": "catch_release",
-            "prohibited": "catch_release",
-            "unknown": "unknown",
-        }
         legal_status = _LEGACY_MAP.get(regulation_status, "unknown")
 
         # Resolve display categories from the canonical dict (or JSON field).
@@ -5146,9 +5148,7 @@ def build_spawning_report(
             }
         )
 
-    # Sort priority: spawning → pre_spawn → temp_pending → post_spawn; alpha within group
-    _STATUS_ORDER = {"spawning": 0, "pre_spawn": 1, "temp_pending": 2, "post_spawn": 3}
-    results.sort(key=lambda x: (_STATUS_ORDER.get(x["status"], 9), x["name"]))
+    results.sort(key=lambda x: (_SPAWN_STATUS_ORDER.get(x["status"], 9), x["name"]))
     return results
 
 _MONTH_ABBR = [
