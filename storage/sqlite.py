@@ -238,6 +238,10 @@ def get_db() -> sqlite3.Connection:
     conn.execute("PRAGMA temp_store=MEMORY")
     # Memory-map up to 128 MB of the DB file for faster sequential reads.
     conn.execute("PRAGMA mmap_size=134217728")
+    # In WAL mode synchronous=NORMAL is safe: committed transactions survive OS
+    # crashes (the WAL file is synced before the commit returns) while removing
+    # the extra fsync that FULL mode adds after every write.
+    conn.execute("PRAGMA synchronous=NORMAL")
     return conn
 
 
