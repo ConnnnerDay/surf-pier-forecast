@@ -137,3 +137,6 @@ def load_species_db(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
 
 # Module-level singleton — loaded once at import time.
 SPECIES_DB: list[dict[str, Any]] = load_species_db()
+
+# Pre-built name → entry index so callers don't rebuild it per call.
+SPECIES_DB_MAP: dict[str, dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}

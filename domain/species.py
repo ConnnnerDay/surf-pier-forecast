@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 
 from locations import get_monthly_water_temps
 from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
-from storage.species_loader import SPECIES_DB
+from storage.species_loader import SPECIES_DB, SPECIES_DB_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -5292,8 +5292,7 @@ def build_species_calendar(
     Temperature feasibility is also considered: months where the regional
     average water temp falls outside the species' temp range are marked empty.
     """
-    # Build a name → SPECIES_DB entry lookup
-    db_map: dict[str, dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
+    db_map = SPECIES_DB_MAP  # pre-built at import; ~900 entries, never changes
 
     # Get regional water temps (12 months) for temp filtering
     monthly_temps: dict[int, float] = {}
