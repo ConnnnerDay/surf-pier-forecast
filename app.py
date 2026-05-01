@@ -116,6 +116,10 @@ def create_app() -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = (
         16 * 1024 * 1024
     )  # 16 MB hard limit for file uploads
+    # Allow browsers to cache unversioned static files for 1 hour.
+    # The service worker catches post-deploy staleness for offline users;
+    # online users get fresh assets within one cache TTL after a deploy.
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 3600
 
     # Session cookie hardening.
     # SECURE: only transmit the cookie over HTTPS.  Guarded by is_secure check
