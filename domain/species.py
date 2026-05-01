@@ -5119,7 +5119,7 @@ def build_spawning_report(
         legal_status = _LEGACY_MAP.get(regulation_status, "unknown")
 
         # Resolve display categories from the canonical dict (or JSON field).
-        spawn_sp = next((s for s in SPECIES_DB if s["name"] == entry["name"]), None)
+        spawn_sp = SPECIES_DB_MAP.get(entry["name"])
         sp_categories: list[str] = (
             (spawn_sp.get("categories") if spawn_sp else None)
             or _SPECIES_CATEGORIES.get(entry["name"])
