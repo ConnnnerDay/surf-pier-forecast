@@ -56,6 +56,7 @@ from domain.species import (
     _OFFSHORE_DIRS_WEST,
     _ONSHORE_DIRS_EAST,
     _ONSHORE_DIRS_WEST,
+    _build_profile_filter,
     _get_technique_tip,
     _score_species,
     _species_matches_profile,
@@ -71,6 +72,37 @@ from domain.species import (
 logger = logging.getLogger(__name__)
 
 FORECAST_VERSION = "v1.0.0"
+
+# In-process cache for personalize_forecast results.
+# Key: (loc_id, generated_at, hour, profile_tuple).  Hour-level granularity
+# matches the technique-tip and gear-checklist inputs; generated_at invalidates
+# when a fresh forecast arrives; profile_tuple covers all profile fields.
+_PERSONALIZE_CACHE: dict[tuple, dict] = {}
+_PERSONALIZE_CACHE_MAX = 64
+
+def _profile_cache_key(forecast: dict, location: dict | None, profile: dict) -> tuple:
+    """Build a hashable cache key for a personalized forecast."""
+    loc_id = (location or {}).get("id", "")
+    generated_at = forecast.get("generated_at", "")
+    tz_name = (location or {}).get("timezone", "America/New_York")
+    try:
+        import zoneinfo
+        tz = zoneinfo.ZoneInfo(tz_name)
+    except Exception:
+        from datetime import timezone
+        tz = timezone.utc
+    from datetime import datetime
+    hour = datetime.now(tz).hour
+
+    def _freeze(v: object) -> object:
+        if isinstance(v, list):
+            return tuple(v)
+        return v
+
+    profile_tuple = tuple(
+        sorted((_freeze(k), _freeze(v)) for k, v in profile.items())
+    )
+    return (loc_id, generated_at, hour, profile_tuple)
 
 # Shared pool for all forecast requests.  Creating a new executor per request
 # wastes time spawning/tearing down threads; a module-level pool keeps workers
@@ -780,6 +812,8 @@ def build_multiday_outlook(
         high_ft = min(high_ft, 12.0)
         return (low_ft, high_ft)
 
+    _profile_filter = _build_profile_filter(fishing_types, targets)
+
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
         future = now + timedelta(days=offset_days)
@@ -971,7 +1005,7 @@ def build_multiday_outlook(
                 and outlook_fish_region not in sp["regions"]
             ):
                 continue
-            if not _species_matches_profile(sp["name"], fishing_types, targets):
+            if not _profile_filter(sp["name"]):
                 continue
             s = _score_species(
                 sp,
@@ -2911,7 +2945,16 @@ def personalize_forecast(
     Re-runs species ranking with profile filters and rebuilds the
     species-dependent sections (rigs, baits, bite alerts, gear checklist,
     calendar).  Conditions data, tides, weather, etc. remain unchanged.
+
+    Results are cached in _PERSONALIZE_CACHE keyed by
+    (loc_id, generated_at, hour, profile_tuple) so repeat renders within
+    the same hour return immediately without re-running species scoring.
     """
+    cache_key = _profile_cache_key(forecast, location, profile)
+    cached = _PERSONALIZE_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
     fishing_types = profile.get("fishing_types")
     targets = profile.get("targets")
     experience = profile.get("experience") or ""
@@ -3149,6 +3192,9 @@ def personalize_forecast(
             cond_copy["verdict_for_angler"] = angler_verdict
             forecast["conditions"] = cond_copy
 
+    if len(_PERSONALIZE_CACHE) >= _PERSONALIZE_CACHE_MAX:
+        _PERSONALIZE_CACHE.pop(next(iter(_PERSONALIZE_CACHE)))
+    _PERSONALIZE_CACHE[cache_key] = forecast
     return forecast
 
 def _parse_time_str(s: str) -> float:

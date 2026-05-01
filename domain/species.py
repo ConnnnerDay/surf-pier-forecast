@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from locations import get_monthly_water_temps
 from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
@@ -3332,6 +3332,110 @@ def _retention_prohibited(regulation: dict[str, str], month: int = 0) -> bool:
 
     return False
 
+def _build_profile_filter(
+    fishing_types: Optional[list[str]],
+    targets: Optional[list[str]],
+) -> Callable[[str], bool]:
+    """Pre-compute profile-derived sets once and return an O(1) per-species filter.
+
+    Called once per forecast run by build_species_ranking so the set unions and
+    boolean flags are not rebuilt for every one of the ~900 species.
+    """
+    _apply_ft = bool(fishing_types and "all" not in fishing_types)
+    if _apply_ft:
+        ft = fishing_types  # type: ignore[assignment]
+        has_surf = "surf" in ft
+        has_pier = "pier" in ft
+        has_inshore = "inshore" in ft
+        has_offshore = "offshore" in ft
+        has_jetty = "jetty" in ft
+        has_bridge = "bridge" in ft
+        has_wade = "wade" in ft
+        has_kayak = "kayak" in ft
+        has_charter = "charter" in ft
+        has_fly = "fly" in ft
+
+        effective_pier = has_pier or has_jetty or has_bridge
+        effective_inshore = has_inshore or has_wade or has_fly
+        effective_offshore = has_offshore or has_charter or has_kayak
+
+        only_charter = has_charter and not (
+            has_surf or has_pier or has_inshore or has_offshore
+            or has_jetty or has_bridge or has_wade or has_kayak or has_fly
+        )
+        only_fly = has_fly and not (
+            has_surf or has_pier or has_inshore or has_offshore
+            or has_jetty or has_bridge or has_wade or has_kayak or has_charter
+        )
+
+        _primary_union: set[str] = (
+            _SURF_SPECIES | _PIER_SPECIES | _INSHORE_SPECIES | _JETTY_SPECIES
+            | _BRIDGE_SPECIES | _WADE_SPECIES | _KAYAK_SPECIES
+            | _CHARTER_SPECIES | _FLY_SPECIES
+        )
+        _accessible: set[str] = set()
+        if has_surf:
+            _accessible |= _SURF_SPECIES
+        if effective_pier:
+            _accessible |= _PIER_SPECIES
+        if has_jetty or has_pier:
+            _accessible |= _JETTY_SPECIES
+        if has_bridge or has_pier or effective_inshore:
+            _accessible |= _BRIDGE_SPECIES
+        if effective_inshore:
+            _accessible |= _INSHORE_SPECIES
+        if has_wade or effective_inshore:
+            _accessible |= _WADE_SPECIES
+        if has_kayak:
+            _accessible |= _KAYAK_SPECIES
+        if has_charter:
+            _accessible |= _CHARTER_SPECIES
+        if has_fly or effective_inshore:
+            _accessible |= _FLY_SPECIES
+    else:
+        effective_offshore = True
+        only_charter = False
+        only_fly = False
+        _primary_union = set()
+        _accessible = set()
+
+    _apply_tgt = bool(targets and "anything" not in targets)
+    if _apply_tgt:
+        tgt_union: set[str] = set()
+        if "bottom" in targets:  # type: ignore[operator]
+            tgt_union |= _BOTTOM_SPECIES
+        if "pelagic" in targets:  # type: ignore[operator]
+            tgt_union |= _PELAGIC_SPECIES
+        if "structure" in targets:  # type: ignore[operator]
+            tgt_union |= _STRUCTURE_SPECIES
+        if "gamefish" in targets:  # type: ignore[operator]
+            tgt_union |= _GAMEFISH_SPECIES
+        if "inshore_slam" in targets:  # type: ignore[operator]
+            tgt_union |= _INSHORE_SLAM_SPECIES
+    else:
+        tgt_union = set()
+
+    def _filter(sp_name: str) -> bool:
+        if _apply_ft:
+            if not effective_offshore and sp_name in _OFFSHORE_ONLY_SPECIES:
+                return False
+            if only_charter and sp_name not in _CHARTER_SPECIES:
+                return False
+            if only_fly and sp_name not in _FLY_SPECIES:
+                return False
+            if (
+                sp_name in _primary_union
+                and sp_name not in _accessible
+                and sp_name not in _OFFSHORE_ONLY_SPECIES
+            ):
+                return False
+        if _apply_tgt and sp_name not in tgt_union:
+            return False
+        return True
+
+    return _filter
+
+
 def build_species_ranking(
     month: int,
     water_temp: float,
@@ -3367,6 +3471,8 @@ def build_species_ranking(
     """
     # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
     wind_coast = "west" if coast == "west" else "east"
+    # Pre-compute profile filter once so set unions aren't rebuilt per species.
+    _profile_filter = _build_profile_filter(fishing_types, targets)
     scored = []
     for sp in SPECIES_DB:
         # Skip species from a different coast/region; also skip all species
@@ -3380,7 +3486,7 @@ def build_species_ranking(
         if fish_region and "regions" in sp and fish_region not in sp["regions"]:
             continue
         # Skip species that don't match user's fishing profile
-        if not _species_matches_profile(sp["name"], fishing_types, targets):
+        if not _profile_filter(sp["name"]):
             continue
         s = _score_species(
             sp,

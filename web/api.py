@@ -316,9 +316,14 @@ def _v1_forecast_payload(query: ForecastQuery) -> dict[str, Any]:
         save_forecast(forecast_data, loc_id, user_id=user_id)
         logger.info("cache.regenerated location_id=%s", loc_id)
     else:
-        forecast_data = load_cached_forecast(loc_id, user_id=user_id)
+        forecast_data = load_cached_forecast(loc_id, user_id=user_id, include_stale=True)
         if forecast_data:
-            logger.info("cache.hit location_id=%s", loc_id)
+            age = _forecast_age_minutes(forecast_data)
+            if age is not None and age > CACHE_MAX_AGE_HOURS * 60:
+                logger.info("cache.stale_served location_id=%s", loc_id)
+                enqueue_forecast_refresh(loc_id, user_id=user_id)
+            else:
+                logger.info("cache.hit location_id=%s", loc_id)
         else:
             logger.info("cache.miss location_id=%s", loc_id)
             forecast_data = generate_forecast(location)
@@ -331,6 +336,7 @@ def _v1_forecast_payload(query: ForecastQuery) -> dict[str, Any]:
     return {
         "location_id": loc_id,
         "force_refresh": query.force_refresh,
+        "is_refreshing": is_refreshing(loc_id, user_id=user_id),
         "forecast": forecast_data,
     }
 

@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    {% include 'partials/_head_fonts.html' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
@@ -67,31 +65,6 @@
 <div class="banner">Cached forecast from <span class="iso-timestamp" data-iso="{{ forecast.generated_at }}">{{ forecast.generated_at }}</span></div>
 {% endif %}
 
-{% if profile_incomplete %}
-<div class="banner banner--profile-nudge" id="profile-nudge-banner" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--accent-teal,#0e5f78);color:#fff;padding:0.6rem 1rem;font-size:0.875rem">
-    <span>
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-2px;margin-right:0.35rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Set up your fishing profile for personalized species and bait recommendations.
-    </span>
-    <span style="display:flex;align-items:center;gap:0.6rem;white-space:nowrap">
-        <a href="{{ url_for('views.profile') }}" style="color:#fff;font-weight:700;text-decoration:underline">Set up profile</a>
-        <button onclick="dismissProfileNudge()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
-    </span>
-</div>
-<script>
-(function() {
-    if (localStorage.getItem('profile_nudge_dismissed') === '1') {
-        var b = document.getElementById('profile-nudge-banner');
-        if (b) b.remove();
-    }
-})();
-function dismissProfileNudge() {
-    try { localStorage.setItem('profile_nudge_dismissed', '1'); } catch(e) {}
-    var b = document.getElementById('profile-nudge-banner');
-    if (b) b.remove();
-}
-</script>
-{% endif %}
 
 <main id="main-content" role="main">
 
@@ -175,6 +148,31 @@ function dismissProfileNudge() {
         {% include 'partials/_species.html' %}
     </div>
     </div><!-- /.section-block whats-biting -->
+    {% if profile_incomplete %}
+    <div class="banner banner--profile-nudge" id="profile-nudge-banner" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--accent-teal,#0e5f78);color:#fff;padding:0.6rem 1rem;font-size:0.875rem;margin:0 0 0.5rem">
+        <span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-2px;margin-right:0.35rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Set up your fishing profile for personalized species and bait recommendations.
+        </span>
+        <span style="display:flex;align-items:center;gap:0.6rem;white-space:nowrap">
+            <a href="{{ url_for('views.profile') }}" style="color:#fff;font-weight:700;text-decoration:underline">Set up profile</a>
+            <button onclick="dismissProfileNudge()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
+        </span>
+    </div>
+    <script>
+    (function() {
+        if (localStorage.getItem('profile_nudge_dismissed') === '1') {
+            var b = document.getElementById('profile-nudge-banner');
+            if (b) b.remove();
+        }
+    })();
+    function dismissProfileNudge() {
+        try { localStorage.setItem('profile_nudge_dismissed', '1'); } catch(e) {}
+        var b = document.getElementById('profile-nudge-banner');
+        if (b) b.remove();
+    }
+    </script>
+    {% endif %}
     {% else %}
     <div class="section-block" data-section-id="whats-biting" data-section-label="What's Biting" data-required="1">
     <section class="top-species-section" aria-label="Top species biting now">
@@ -266,7 +264,7 @@ function dismissProfileNudge() {
     </div><!-- /.section-block next-3-days -->
 
     <!-- NDFD Wind Forecast (ArcGIS Live Feed) — populated client-side -->
-    <div class="section-block" data-section-id="wind-outlook" data-section-label="Wind Outlook" id="wind-outlook-block" style="display:none">
+    <div class="section-block" data-section-id="wind-outlook" data-section-label="Wind Outlook" id="wind-outlook-block">
     <details class="collapsible-module" id="wind-outlook-details">
         <summary>
             <span class="collapsible-module-title">
@@ -278,13 +276,13 @@ function dismissProfileNudge() {
         </summary>
         <div class="collapsible-module-body">
             <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; 3-hour intervals</p>
-            <div id="wind-outlook-grid" class="wind-outlook-grid"></div>
+            <div id="wind-outlook-grid" class="wind-outlook-grid"><div class="skeleton-grid"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div></div>
         </div>
     </details>
     </div><!-- /.section-block wind-outlook -->
 
     <!-- NDFD Daily Temperature 5-day strip (ArcGIS Live Feed) — populated client-side -->
-    <div class="section-block" data-section-id="temp-forecast" data-section-label="5-Day Temperatures" id="temp-forecast-block" style="display:none">
+    <div class="section-block" data-section-id="temp-forecast" data-section-label="5-Day Temperatures" id="temp-forecast-block">
     <details class="collapsible-module" id="temp-forecast-details">
         <summary>
             <span class="collapsible-module-title">
@@ -296,26 +294,10 @@ function dismissProfileNudge() {
         </summary>
         <div class="collapsible-module-body">
             <p class="wind-outlook-source">Source: NOAA National Digital Forecast Database via ArcGIS Living Atlas &middot; Daily high/low</p>
-            <div id="temp-forecast-grid" class="temp-forecast-grid"></div>
+            <div id="temp-forecast-grid" class="temp-forecast-grid"><div class="skeleton-grid"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div></div>
         </div>
     </details>
     </div><!-- /.section-block temp-forecast -->
-
-    <!-- Tides -->
-    <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
-    <details class="collapsible-module">
-        <summary>
-            <span class="collapsible-module-title">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
-                Today's Tides
-            </span>
-            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="collapsible-module-body">
-            {% include 'partials/_tides.html' %}
-        </div>
-    </details>
-    </div><!-- /.section-block todays-tides -->
 
     <!-- Solunar Times -->
     <div class="section-block" data-section-id="peak-feeding" data-section-label="Peak Feeding Times">
@@ -332,6 +314,22 @@ function dismissProfileNudge() {
         </div>
     </details>
     </div><!-- /.section-block peak-feeding -->
+
+    <!-- Tides -->
+    <div class="section-block" data-section-id="todays-tides" data-section-label="Today's Tides">
+    <details class="collapsible-module">
+        <summary>
+            <span class="collapsible-module-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+                Today's Tides
+            </span>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="collapsible-module-body">
+            {% include 'partials/_tides.html' %}
+        </div>
+    </details>
+    </div><!-- /.section-block todays-tides -->
 
     <!-- Fishing Plan (rigs, tips, bait) -->
     <div class="section-block" data-section-id="rigs-tips" data-section-label="Rigs &amp; Tips">
@@ -1620,10 +1618,15 @@ function syncToServer() {
     if (favs.length) payload.favorites = favs;
     if (CURRENT_LOC_ID) payload.location_id = CURRENT_LOC_ID;
     if (Object.keys(payload).length === 0) return;
+    var payloadStr = JSON.stringify(payload);
+    // Skip the round-trip when preferences haven't changed since last sync.
+    if (localStorage.getItem('_prefs_sync_hash') === payloadStr) return;
     fetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: payloadStr
+    }).then(function(r) {
+        if (r.ok) localStorage.setItem('_prefs_sync_hash', payloadStr);
     }).catch(function() {});
 }
 syncToServer();
@@ -2352,6 +2355,8 @@ if ('serviceWorker' in navigator) {
     })();
 
     // ── NDFD Wind + Precipitation Forecast collapsible section ───────────────
+    var windBlock = document.getElementById('wind-outlook-block');
+    var windGrid  = document.getElementById('wind-outlook-grid');
     if (lat && lng) Promise.all([
         fetch('/api/weather/wind-forecast?lat='   + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
         fetch('/api/weather/precip-forecast?lat=' + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
@@ -2359,10 +2364,13 @@ if ('serviceWorker' in navigator) {
     .then(function (results) {
         var windData   = results[0];
         var precipData = results[1];
-        if (!windData || !windData.periods || !windData.periods.length) return;
+        if (!windData || !windData.periods || !windData.periods.length) {
+            if (windBlock) windBlock.style.display = 'none';
+            return;
+        }
 
-        var block = document.getElementById('wind-outlook-block');
-        var grid  = document.getElementById('wind-outlook-grid');
+        var block = windBlock;
+        var grid  = windGrid;
         if (!block || !grid) return;
 
         var COMPASS_ARROWS = {
@@ -2437,15 +2445,22 @@ if ('serviceWorker' in navigator) {
 
         block.style.display = '';
     })
-    .catch(function () {});
+    .catch(function () {
+        if (windGrid) windGrid.innerHTML = '<p class="section-unavailable">Wind forecast unavailable</p>';
+    });
 
     // ── NDFD Daily Temperature 5-day strip ───────────────────────────────────
+    var tempBlock = document.getElementById('temp-forecast-block');
+    var tempGrid  = document.getElementById('temp-forecast-grid');
     if (lat && lng) fetch('/api/weather/temp-forecast?lat=' + lat + '&lng=' + lng)
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
-            if (!data || !data.days || !data.days.length) return;
-            var block = document.getElementById('temp-forecast-block');
-            var grid  = document.getElementById('temp-forecast-grid');
+            if (!data || !data.days || !data.days.length) {
+                if (tempBlock) tempBlock.style.display = 'none';
+                return;
+            }
+            var block = tempBlock;
+            var grid  = tempGrid;
             var sub   = document.getElementById('temp-forecast-sub');
             if (!block || !grid) return;
 
@@ -2486,7 +2501,9 @@ if ('serviceWorker' in navigator) {
             }
             block.style.display = '';
         })
-        .catch(function () {});
+        .catch(function () {
+            if (tempGrid) tempGrid.innerHTML = '<p class="section-unavailable">Temperature forecast unavailable</p>';
+        });
 
 })();
 </script>

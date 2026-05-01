@@ -45,6 +45,7 @@ from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 _TIMEOUT_HDX: tuple[float, float] = (5, 20)
 _TIMEOUT_FAO: tuple[float, float] = (5, 15)
@@ -53,7 +54,8 @@ logger = logging.getLogger(__name__)
 
 # ── HTTP session ──────────────────────────────────────────────────────────────
 _HTTP: requests.Session = requests.Session()
-_HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4))
+_HDX_RETRY = Retry(total=1, backoff_factor=0.5, status_forcelist=[502, 503, 504], raise_on_status=False)
+_HTTP.mount("https://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=_HDX_RETRY))
 
 # ── In-process cache ──────────────────────────────────────────────────────────
 _CACHE: dict[str, dict[str, Any]] = {}

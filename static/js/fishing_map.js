@@ -5485,7 +5485,21 @@
         els.logError       = document.getElementById('fmap-log-error');
         els.logSubmit      = document.getElementById('fmap-log-submit');
         if (!els.mapEl) return;
-        boot();
+        // Defer Leaflet CDN fetch + map init until the section enters the
+        // viewport.  Users who never scroll to the map skip the ~158 KB
+        // Leaflet download entirely.  rootMargin: '300px' means init starts
+        // just before the section reaches the visible area.
+        if (window.IntersectionObserver) {
+            var _mapObs = new window.IntersectionObserver(function (entries) {
+                if (entries[0].isIntersecting) {
+                    _mapObs.disconnect();
+                    boot();
+                }
+            }, { rootMargin: '300px' });
+            _mapObs.observe(root);
+        } else {
+            boot();
+        }
     }
 
     if (document.readyState === 'loading') {

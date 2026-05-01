@@ -20,6 +20,7 @@ from storage.sqlite import (
     delete_forecast_cache,
     load_forecast,
     load_forecast_cache_for_user,
+    prune_forecast_cache,
     save_forecast_cache,
 )
 from utils import norm_user_id as _norm_user_id
@@ -29,6 +30,15 @@ logger = logging.getLogger(__name__)
 # Maximum age (in hours) before a cached forecast is considered stale
 # and automatically refreshed on the next page load.
 CACHE_MAX_AGE_HOURS = 4
+
+# ---------------------------------------------------------------------------
+# In-process parsed-forecast memory cache
+# ---------------------------------------------------------------------------
+# Avoids re-reading and re-parsing the large forecast JSON blob from SQLite
+# on every dashboard render.  Key: (location_id, normalized_user_id).
+# Value: parsed forecast dict.  Invalidated on save/delete and on stale check.
+_MEM_CACHE: dict[tuple[str, int], dict[str, Any]] = {}
+_MEM_CACHE_MAX = 32
 
 # Legacy JSON cache directory (kept for migration / fallback reads)
 CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -58,7 +68,7 @@ def load_cached_forecast(
     user_id: Optional[int] = None,
     include_stale: bool = False,
 ) -> Optional[dict[str, Any]]:
-    """Load the cached forecast, trying SQLite first then JSON fallback.
+    """Load the cached forecast, trying in-process memory then SQLite then JSON.
 
     By default stale entries are treated as cache misses and removed from the
     hot cache table. Set ``include_stale=True`` when callers want to render a
@@ -68,21 +78,38 @@ def load_cached_forecast(
         return _load_json_fallback(location_id)
 
     normalized_uid = _norm_user_id(user_id)
+    mem_key = (location_id, normalized_uid)
+
+    # Fast path: in-process memory cache (avoids SQLite + json.loads on every render)
+    mem_hit = _MEM_CACHE.get(mem_key)
+    if mem_hit is not None:
+        if _is_stale(mem_hit):
+            if include_stale:
+                return mem_hit
+            # Evict from memory; DB eviction happens below
+            _MEM_CACHE.pop(mem_key, None)
+        else:
+            return mem_hit
+
     # Combined query: one connection handles user-specific + anonymous fallback.
     result = load_forecast_cache_for_user(normalized_uid, location_id)
 
     if result is not None:
         if _is_stale(result):
             if include_stale:
+                _mem_cache_set(mem_key, result)
                 return result
             delete_forecast_cache(normalized_uid, location_id)
+            _MEM_CACHE.pop((location_id, normalized_uid), None)
             return None
+        _mem_cache_set(mem_key, result)
         return result
 
     # Backward-compatible fallback to historical forecasts table
     result = load_forecast(location_id)
     if result is not None:
         if include_stale or not _is_stale(result):
+            _mem_cache_set(mem_key, result)
             return result
 
     # Fallback: try legacy JSON file and migrate it to DB if found
@@ -90,8 +117,29 @@ def load_cached_forecast(
     if result is not None:
         if _is_stale(result) and not include_stale:
             return None
+        _mem_cache_set(mem_key, result)
         _migrate_json_to_db(location_id, result, normalized_uid)
     return result
+
+
+def prune_old_forecasts(max_age_days: int = 7) -> int:
+    """Remove forecast_cache rows older than max_age_days. Returns rows deleted."""
+    try:
+        removed = prune_forecast_cache(max_age_days)
+        if removed:
+            logger.info("cache.pruned rows=%d max_age_days=%d", removed, max_age_days)
+            _MEM_CACHE.clear()
+        return removed
+    except Exception as exc:
+        logger.warning("cache.prune_failed: %s", exc)
+        return 0
+
+
+def _mem_cache_set(key: tuple[str, int], data: dict[str, Any]) -> None:
+    """Insert or update a parsed forecast in the in-process memory cache."""
+    if key not in _MEM_CACHE and len(_MEM_CACHE) >= _MEM_CACHE_MAX:
+        _MEM_CACHE.pop(next(iter(_MEM_CACHE)))
+    _MEM_CACHE[key] = data
 
 
 def save_forecast(
@@ -102,13 +150,18 @@ def save_forecast(
         _save_json(data, location_id)
         return
 
+    normalized_uid = _norm_user_id(user_id)
     try:
-        save_forecast_cache(_norm_user_id(user_id), location_id, data)
+        save_forecast_cache(normalized_uid, location_id, data)
     except Exception as exc:
         logger.warning(
             "DB write failed for %s, writing JSON fallback: %s", location_id, exc
         )
         _save_json(data, location_id)
+
+    # Update the in-process memory cache so the next render sees fresh data
+    # without a DB round-trip.
+    _mem_cache_set((location_id, normalized_uid), data)
 
 
 # ---------------------------------------------------------------------------

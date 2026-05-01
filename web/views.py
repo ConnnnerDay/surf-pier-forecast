@@ -42,7 +42,7 @@ from domain.forecast import (
     recompute_current_uv,
     build_trip_setup,
 )
-from services.forecast_refresh import enqueue_forecast_refresh
+from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing as _is_refreshing
 from services.nws import _KT_TO_MPH
 from storage.cache import (
     CACHE_MAX_AGE_HOURS,
@@ -61,6 +61,7 @@ from regulations import get_official_regulations_url as _get_official_regulation
 
 bp = Blueprint("views", __name__)
 logger = logging.getLogger(__name__)
+
 
 # -- Setup endpoint rate limiting --------------------------------------------
 # Zip-code lookup and coordinate searches hit external geocoding services.
@@ -118,17 +119,28 @@ def _convert_wind_text_units(text: str, wind_units: str) -> str:
 
 
 def _apply_wind_unit_preference(forecast: dict[str, Any], wind_units: str) -> None:
-    """Mutate wind labels in a forecast to match a user's preferred wind units."""
+    """Update wind labels in a forecast to match a user's preferred wind units.
+
+    Operates on isolated copies of the conditions dict and each outlook day so
+    the in-process caches (_MEM_CACHE, _PERSONALIZE_CACHE) are never mutated.
+    """
     if wind_units != "mph":
         return
 
-    conditions = forecast.get("conditions") or {}
-    if conditions.get("wind"):
+    conditions = forecast.get("conditions")
+    if conditions and conditions.get("wind"):
+        conditions = dict(conditions)
         conditions["wind"] = _convert_wind_text_units(conditions["wind"], wind_units)
+        forecast["conditions"] = conditions
 
-    for day in forecast.get("outlook") or []:
-        if day.get("wind"):
-            day["wind"] = _convert_wind_text_units(day["wind"], wind_units)
+    if forecast.get("outlook"):
+        new_outlook = []
+        for day in forecast["outlook"]:
+            if day.get("wind"):
+                day = dict(day)
+                day["wind"] = _convert_wind_text_units(day["wind"], wind_units)
+            new_outlook.append(day)
+        forecast["outlook"] = new_outlook
 
 
 def _fetch_cam_status(url: str) -> None:
@@ -395,6 +407,18 @@ def _render_forecast(
         is_stale = bool(age is not None and age > CACHE_MAX_AGE_HOURS * 60)
 
     if forecast is None:
+        # If a background job is already generating this forecast (e.g. pre-warmed
+        # by setup_select), show a lightweight polling page instead of blocking the
+        # request thread for 15-20 s.
+        if _is_refreshing(loc_id):
+            logger.info("cache.miss.background_running location_id=%s", loc_id)
+            status_url = url_for("api.forecast_status_v1", location_id=loc_id)
+            dest_url = request.url
+            return render_template(
+                "forecast_loading.html",
+                status_url=status_url,
+                dest_url=dest_url,
+            )
         logger.info("cache.miss location_id=%s", loc_id)
         try:
             forecast = generate_forecast(location)
@@ -659,6 +683,7 @@ def setup_select(location_id: str) -> Any:
         return redirect(url_for("views.setup"))
     session["location_id"] = location_id
     session.permanent = True
+    enqueue_forecast_refresh(location_id, user_id=None)
     if g.user:
         save_preferences(
             g.user["id"], location_id=location_id, default_location_id=location_id

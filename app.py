@@ -56,6 +56,7 @@ from flask import (
 import werkzeug
 
 from storage.sqlite import init_db, get_user
+from storage.cache import prune_old_forecasts as _prune_old_forecasts
 from web.auth import bp as auth_bp
 from web.api import (
     bp as api_bp,
@@ -374,21 +375,26 @@ def create_app() -> Flask:
             )
         return response
 
+    _COMPRESSIBLE = ("application/json", "text/html", "text/css", "application/javascript", "text/javascript")
+
     @app.after_request
     def _gzip_response(response: Any) -> Any:
-        """Compress JSON API responses when the client supports gzip.
+        """Compress text responses when the client supports gzip.
 
-        Structure and fishing-map payloads are repetitive JSON that typically
-        compresses 85-90 %, cutting 80-200 KB responses down to 10-25 KB.
+        JSON and HTML are the biggest wins: repetitive JSON compresses 85-90 %
+        (80-200 KB → 10-25 KB); the rendered dashboard HTML compresses ~75 %
+        (~120 KB → ~30 KB).  CSS and JS also benefit if not already compressed
+        at the proxy layer.
         Uses Python's built-in gzip (compresslevel=6) — no extra dependencies.
-        Skips already-encoded, non-JSON, small (<500 B), or streaming responses.
+        Skips already-encoded, small (<500 B), or streaming responses.
         """
+        ct = (response.content_type or "").split(";")[0].strip()
         if (
             response.direct_passthrough
             or response.status_code != 200
             or "Content-Encoding" in response.headers
             or "gzip" not in request.headers.get("Accept-Encoding", "")
-            or not (response.content_type or "").startswith("application/json")
+            or ct not in _COMPRESSIBLE
         ):
             return response
         data = response.get_data()
@@ -400,6 +406,7 @@ def create_app() -> Flask:
         response.set_data(compressed)
         response.headers["Content-Encoding"] = "gzip"
         response.headers["Content-Length"] = len(compressed)
+        response.headers["Vary"] = "Accept-Encoding"
         response.headers.pop("Content-MD5", None)
         return response
 
@@ -537,6 +544,14 @@ def create_app() -> Flask:
             )
 
     _threading.Thread(target=_prewarm_fishing_map_cache, daemon=True).start()
+
+    def _prune_cache() -> None:
+        try:
+            _prune_old_forecasts(max_age_days=7)
+        except Exception as _exc:
+            logging.getLogger(__name__).debug("cache prune failed (non-fatal): %s", _exc)
+
+    _threading.Thread(target=_prune_cache, daemon=True).start()
 
     return app
 

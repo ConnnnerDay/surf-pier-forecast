@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Forecast &mdash; Surf &amp; Pier Fishing Forecast</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .loading-card {
+            max-width: 26rem;
+            margin: 3rem auto;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-card);
+        }
+        .loading-card h2 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+        .loading-card p  { margin: 0 0 1.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .spinner {
+            display: inline-block;
+            width: 2.5rem; height: 2.5rem;
+            border: 3px solid var(--border-light);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-subtle);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            animation: progress 20s linear forwards;
+        }
+        @keyframes progress { from { width: 0%; } to { width: 95%; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Surf &amp; Pier Fishing Outlook</h1>
+        </div>
+    </header>
+    {% include 'partials/_main_nav.html' %}
+
+    <main>
+        <div class="loading-card">
+            <div class="spinner" aria-hidden="true"></div>
+            <h2>Building your forecast</h2>
+            <p>Pulling live conditions from buoys, tides, and weather stations&hellip;</p>
+            <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+        </div>
+    </main>
+
+    <script>
+    (function () {
+        var STATUS_URL = {{ status_url | tojson }};
+        var DEST_URL   = {{ dest_url  | tojson }};
+        var POLL_MS    = 2000;
+        var MAX_POLLS  = 30;  /* 60 s safety cap — fall through to sync render */
+        var polls = 0;
+
+        function poll() {
+            polls++;
+            if (polls > MAX_POLLS) {
+                window.location.href = DEST_URL;
+                return;
+            }
+            fetch(STATUS_URL)
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    var refreshing = data && data.data && data.data.is_refreshing;
+                    var hasData    = data && data.data && data.data.last_generated_at;
+                    if (hasData && !refreshing) {
+                        window.location.href = DEST_URL;
+                    } else {
+                        setTimeout(poll, POLL_MS);
+                    }
+                })
+                .catch(function () { setTimeout(poll, POLL_MS * 2); });
+        }
+
+        setTimeout(poll, POLL_MS);
+    })();
+    </script>
+</body>
+</html>

@@ -36,6 +36,7 @@ from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from services.nws import _KT_TO_MPH
 
@@ -47,8 +48,12 @@ logger = logging.getLogger(__name__)
 # requests.get(), saving ~50-200 ms of handshake overhead per call.
 
 _HTTP: requests.Session = requests.Session()
-_HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16, max_retries=0))
-_HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=0))
+# Retry once on transient gateway errors (502/503/504); 429 is NOT retried to
+# avoid amplifying rate-limit pressure.  backoff_factor=0.5 adds a 0.5 s pause
+# before the single retry.
+_ARCGIS_RETRY = Retry(total=1, backoff_factor=0.5, status_forcelist=[502, 503, 504], raise_on_status=False)
+_HTTP.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16, max_retries=_ARCGIS_RETRY))
+_HTTP.mount("http://", HTTPAdapter(pool_connections=2, pool_maxsize=4, max_retries=_ARCGIS_RETRY))
 _HTTP.headers.update({"User-Agent": "surf-pier-forecast/1.0 (+https://github.com/connnnerday/surf-pier-forecast)"})
 
 _BASE = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services"
