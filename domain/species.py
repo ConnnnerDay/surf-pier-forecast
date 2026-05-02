@@ -3481,6 +3481,10 @@ def build_species_ranking(
     wind_coast = "west" if coast == "west" else "east"
     # Pre-compute profile filter once so set unions aren't rebuilt per species.
     _profile_filter = _build_profile_filter(fishing_types, targets)
+    # Pre-compute explanation constants — season and cold/warm flag are identical
+    # for every species in this call, so compute them once instead of per-species.
+    _season = _get_season(month)
+    _is_cold = water_temp < 65
     scored = []
     for sp in _SPECIES_BY_COAST.get(coast, []) if coast else []:
         # Skip species not found in this geographic region
@@ -3500,7 +3504,11 @@ def build_species_ranking(
             coast=wind_coast,
         )
         if s >= SPECIES_SCORE_THRESHOLD:
-            explanation = _get_explanation(sp, month, water_temp)
+            overrides = SEASONAL_EXPLANATIONS.get(sp["name"])
+            if overrides and _season in overrides:
+                explanation = overrides[_season]
+            else:
+                explanation = sp["explanation_cold"] if _is_cold else sp["explanation_warm"]
             scored.append((s, sp, explanation))
 
     scored.sort(key=lambda x: x[0], reverse=True)
