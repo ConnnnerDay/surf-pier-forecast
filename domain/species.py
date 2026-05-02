@@ -2976,9 +2976,9 @@ def _score_species(
         # _d/_r is always in [0,1] when water_temp is in (ideal_high, temp_max]
         score += (50.0 * (1 - _d / _r)) if _r > 0 else 25.0
 
-    if month in sp["peak_months"]:
+    if month in sp["_peak_months_set"]:
         score += 30.0
-    elif month in sp["good_months"]:
+    elif month in sp["_good_months_set"]:
         score += 15.0
 
     # --- Dynamic conditions modifiers ---

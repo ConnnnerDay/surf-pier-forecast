@@ -564,6 +564,8 @@ class TestCategoriesInRankingPayload:
             "temp_ideal_high": 75,
             "peak_months": [9, 10],
             "good_months": [3, 4],
+            "_peak_months_set": frozenset([9, 10]),
+            "_good_months_set": frozenset([3, 4]),
             "bait": "Cut bait",
             "rig": "Fish finder",
             "hook_size": "3/0",

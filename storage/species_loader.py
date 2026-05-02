@@ -138,6 +138,13 @@ def load_species_db(path: pathlib.Path | None = None) -> list[dict[str, Any]]:
 # Module-level singleton — loaded once at import time.
 SPECIES_DB: list[dict[str, Any]] = load_species_db()
 
+# Pre-compute frozenset versions of month fields for O(1) membership checks.
+# The original list fields are kept unchanged for external consumers (API, templates).
+# These internal fields use the "_" prefix to signal they are not part of the schema.
+for _sp in SPECIES_DB:
+    _sp["_peak_months_set"] = frozenset(_sp["peak_months"])
+    _sp["_good_months_set"] = frozenset(_sp["good_months"])
+
 # Pre-built name → entry index so callers don't rebuild it per call.
 SPECIES_DB_MAP: dict[str, dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
 
