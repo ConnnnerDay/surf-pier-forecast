@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures as _cf
 import logging
 import math
+import operator as _operator
 import os
 import re
 import time
@@ -1013,7 +1014,7 @@ def build_multiday_outlook(
             )
             if s > 20:
                 species_scores.append((sp["name"], s))
-        species_scores.sort(key=lambda x: x[1], reverse=True)
+        species_scores.sort(key=_operator.itemgetter(1), reverse=True)
         top_species_names = [name for name, _ in species_scores[:5]]
 
         days.append(

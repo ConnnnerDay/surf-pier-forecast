@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import operator as _operator
 import re
 from typing import Any, Callable, Optional
 
@@ -3161,6 +3162,14 @@ _OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
 _ONSHORE_DIRS = _ONSHORE_DIRS_EAST
 _OFFSHORE_DIRS = _OFFSHORE_DIRS_EAST
 
+# Union of all species that appear in at least one conditions modifier set.
+# Used for a fast early-return in the _modifier closure: ~90% of species are in
+# none of these sets, so this single lookup avoids 5-9 unnecessary lookups per call.
+_ANY_MODIFIER_SPECIES: frozenset = frozenset(
+    _ONSHORE_WIND_SPECIES | _CALM_WATER_SPECIES | _ROUGH_SURF_SPECIES
+    | _LOW_LIGHT_SPECIES | _DAYTIME_SPECIES
+)
+
 def _conditions_modifier(
     sp: dict[str, Any],
     wind_dir: Optional[str],
@@ -3262,6 +3271,8 @@ def _build_conditions_modifier(
     is_midday = 10 <= hour <= 15
 
     def _modifier(name: str) -> float:
+        if name not in _ANY_MODIFIER_SPECIES:
+            return 0.0
         mod = 0.0
 
         if wind_dir:
@@ -3584,7 +3595,7 @@ def build_species_ranking(
                 explanation = sp["explanation_cold"] if _is_cold else sp["explanation_warm"]
             scored.append((s, sp, explanation))
 
-    scored.sort(key=lambda x: x[0], reverse=True)
+    scored.sort(key=_operator.itemgetter(0), reverse=True)
 
     # Max possible raw score: 50 (temp) + 30 (season) + 15 (conditions) = 95
     _MAX_RAW_SCORE = 95.0
@@ -3699,7 +3710,7 @@ def build_bait_ranking(
 
         scored_baits.append((bait_score, {"bait": bait_entry["bait"], "notes": notes}))
 
-    scored_baits.sort(key=lambda x: x[0], reverse=True)
+    scored_baits.sort(key=_operator.itemgetter(0), reverse=True)
 
     deduped_rankings: list[dict[str, str]] = []
     seen_baits: set[str] = set()
@@ -3998,7 +4009,7 @@ def build_lure_recommendations(
             )
         )
 
-    scored_lures.sort(key=lambda x: x[0], reverse=True)
+    scored_lures.sort(key=_operator.itemgetter(0), reverse=True)
     return [entry for _, entry in scored_lures]
 
 # ---------------------------------------------------------------------------
