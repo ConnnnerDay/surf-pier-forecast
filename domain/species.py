@@ -2968,11 +2968,13 @@ def _score_species(
     elif water_temp < ideal_low:
         _d = ideal_low - water_temp
         _r = ideal_low - sp["temp_min"]
-        score += max(0.0, 50.0 * (1 - _d / _r)) if _r > 0 else 25.0
+        # _d/_r is always in [0,1] when water_temp is in [temp_min, ideal_low)
+        score += (50.0 * (1 - _d / _r)) if _r > 0 else 25.0
     else:
         _d = water_temp - ideal_high
         _r = sp["temp_max"] - ideal_high
-        score += max(0.0, 50.0 * (1 - _d / _r)) if _r > 0 else 25.0
+        # _d/_r is always in [0,1] when water_temp is in (ideal_high, temp_max]
+        score += (50.0 * (1 - _d / _r)) if _r > 0 else 25.0
 
     if month in sp["peak_months"]:
         score += 30.0
