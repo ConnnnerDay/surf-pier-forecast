@@ -38,6 +38,17 @@ _USER_CACHE: dict[int, tuple[float, dict[str, Any]]] = {}
 _USER_CACHE_TTL: int = 15  # seconds
 _USER_CACHE_MAX: int = 512
 
+# ---------------------------------------------------------------------------
+# Short-lived cache for get_log_stats
+# ---------------------------------------------------------------------------
+# get_log_stats fires 2 queries on every dashboard render (one per logged-in
+# user).  The result is only used for badge display so 2-minute staleness is
+# acceptable.  Invalidated on add/delete so the badge updates after a new catch
+# is logged in the same session.
+_LOG_STATS_CACHE: dict[tuple[int, str], tuple[float, dict[str, Any]]] = {}
+_LOG_STATS_CACHE_TTL: int = 120  # 2 minutes
+_LOG_STATS_CACHE_MAX: int = 256
+
 # Dummy hash used in authenticate_user to ensure a constant-time password check
 # is always performed, regardless of whether the username exists.  This
 # prevents an attacker from enumerating valid usernames by measuring how long
@@ -1034,6 +1045,7 @@ def add_log_entry(
         entry_id = cur.lastrowid or 0
     finally:
         conn.close()
+    _LOG_STATS_CACHE.pop((user_id, location_id), None)
     return entry_id
 
 
@@ -1047,6 +1059,8 @@ def delete_log_entry(user_id: int, entry_id: int) -> bool:
         ok = cur.rowcount > 0
     finally:
         conn.close()
+    for k in [k for k in _LOG_STATS_CACHE if k[0] == user_id]:
+        _LOG_STATS_CACHE.pop(k, None)
     return ok
 
 
@@ -1109,7 +1123,13 @@ def get_log_stats(user_id: int, location_id: str) -> dict[str, Any]:
     """Return aggregate statistics for a user's catch log at a location.
 
     Uses a single query with a CTE to avoid 4 separate roundtrips to SQLite.
+    Results are cached for 2 minutes so repeated dashboard renders don't re-query.
     """
+    cache_key = (user_id, location_id)
+    entry = _LOG_STATS_CACHE.get(cache_key)
+    if entry and _time.time() - entry[0] < _LOG_STATS_CACHE_TTL:
+        return entry[1]
+
     conn = get_db()
     try:
         # One pass over the table for all aggregates.
@@ -1144,7 +1164,7 @@ def get_log_stats(user_id: int, location_id: str) -> dict[str, Any]:
     )
     last_date = last_date_raw[:10] if last_date_raw else None
 
-    return {
+    result = {
         "total": total,
         "unique_species": len(species_rows),
         "top_species": species_rows[0]["species"] if species_rows else None,
@@ -1154,6 +1174,10 @@ def get_log_stats(user_id: int, location_id: str) -> dict[str, Any]:
         ],
         "monthly_counts": monthly_counts,
     }
+    if len(_LOG_STATS_CACHE) >= _LOG_STATS_CACHE_MAX:
+        _LOG_STATS_CACHE.pop(next(iter(_LOG_STATS_CACHE)))
+    _LOG_STATS_CACHE[cache_key] = (_time.time(), result)
+    return result
 
 
 def get_recent_logs(user_id: int, limit: int = 5) -> list[dict[str, Any]]:

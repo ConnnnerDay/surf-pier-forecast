@@ -25,12 +25,14 @@ def _clear_in_process_caches():
     """
     _sqlite._PREFS_CACHE.clear()
     _sqlite._USER_CACHE.clear()
+    _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
     yield
     # Also clear after in case a test leaves behind entries that bleed forward.
     _sqlite._PREFS_CACHE.clear()
     _sqlite._USER_CACHE.clear()
+    _sqlite._LOG_STATS_CACHE.clear()
     _cache._MEM_CACHE.clear()
     _forecast._PERSONALIZE_CACHE.clear()
 
