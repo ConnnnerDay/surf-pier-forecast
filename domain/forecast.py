@@ -813,6 +813,7 @@ def build_multiday_outlook(
     _coast_species = _SPECIES_BY_COAST.get(coast, []) if coast else []
     outlook_fish_region = (location or {}).get("fish_region", "")
     _monthly_temps = get_monthly_water_temps(location) if location else None
+    wind_coast = "west" if coast == "west" else "east"
 
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
@@ -990,7 +991,6 @@ def build_multiday_outlook(
             verdict = "Unknown"
 
         # --- Top species for this day ---
-        wind_coast = "west" if coast == "west" else "east"
         _day_cond_modifier = _build_conditions_modifier(
             None, wind_range, wave_range, 12, wind_coast
         )
