@@ -1,11 +1,13 @@
 // Service Worker for Surf & Pier Fishing Forecast
-// v4: Push notifications + geolocation-driven condition alerts.
+// v5: Static assets now served with mtime-versioned URLs (?v=<mtime>).
+//     Templates use surl() helper so browsers cache CSS/JS for 1 year.
+//     Unversioned style.css removed from PRECACHE — versioned URLs are
+//     cached dynamically on first use via the fetch handler below.
 //     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v4';
+var CACHE_NAME = 'fishforecast-v5';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
-  '/static/style.css',
   '/static/icons/icon-192.svg',
   OFFLINE_URL,
 ];
