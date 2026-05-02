@@ -86,13 +86,7 @@ def _profile_cache_key(forecast: dict, location: dict | None, profile: dict) -> 
     loc_id = (location or {}).get("id", "")
     generated_at = forecast.get("generated_at", "")
     tz_name = (location or {}).get("timezone", "America/New_York")
-    try:
-        import zoneinfo
-        tz = zoneinfo.ZoneInfo(tz_name)
-    except Exception:
-        from datetime import timezone
-        tz = timezone.utc
-    from datetime import datetime
+    tz = _safe_zone(tz_name)
     hour = datetime.now(tz).hour
 
     def _freeze(v: object) -> object:
