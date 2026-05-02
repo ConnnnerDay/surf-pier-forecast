@@ -57,6 +57,7 @@ from domain.species import (
     _ONSHORE_DIRS_EAST,
     _ONSHORE_DIRS_WEST,
     _SPECIES_BY_COAST,
+    _build_conditions_modifier,
     _build_profile_filter,
     _get_technique_tip,
     _score_species,
@@ -990,6 +991,9 @@ def build_multiday_outlook(
 
         # --- Top species for this day ---
         wind_coast = "west" if coast == "west" else "east"
+        _day_cond_modifier = _build_conditions_modifier(
+            None, wind_range, wave_range, 12, wind_coast
+        )
         top_species_names: list[str] = []
         species_scores: list[tuple[str, float]] = []
         for sp in _coast_species:
@@ -1005,11 +1009,7 @@ def build_multiday_outlook(
                 sp,
                 future_month,
                 future_water_temp,
-                wind_dir=None,
-                wind_range=wind_range,
-                wave_range=wave_range,
-                hour=12,
-                coast=wind_coast,
+                _cond_modifier=_day_cond_modifier,
             )
             if s > 20:
                 species_scores.append((sp["name"], s))

@@ -2943,6 +2943,7 @@ def _score_species(
     wave_range: Optional[tuple[float, float]] = None,
     hour: int = 12,
     coast: str = "east",
+    _cond_modifier: Optional["Callable[[str], float]"] = None,
 ) -> float:
     """Compute a bite-likelihood score for a species given current conditions.
 
@@ -2954,6 +2955,10 @@ def _score_species(
     - Conditions modifier (-5 to +15): wind direction, wind speed,
       wave height, and time-of-day adjustments.
     - Presence penalty (-100): water temp outside survivable range.
+
+    When *_cond_modifier* is supplied (a pre-built closure from
+    _build_conditions_modifier), it replaces the _conditions_modifier call so
+    wind/wave constants are not recomputed per species.
     """
     score = 0.0
 
@@ -2975,7 +2980,10 @@ def _score_species(
         score += 15.0
 
     # --- Dynamic conditions modifiers ---
-    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
+    if _cond_modifier is not None:
+        score += _cond_modifier(sp["name"])
+    else:
+        score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
 
     return score
 
@@ -3226,6 +3234,75 @@ def _conditions_modifier(
         modifier += 3.0 if is_midday else (-1.0 if is_low_light else 0.0)
 
     return modifier
+
+
+def _build_conditions_modifier(
+    wind_dir: Optional[str],
+    wind_range: Optional[tuple[float, float]],
+    wave_range: Optional[tuple[float, float]],
+    hour: int,
+    coast: str = "east",
+) -> "Callable[[str], float]":
+    """Return a per-species conditions modifier with all constants pre-evaluated.
+
+    Calling this once per scoring loop (instead of recomputing wind/wave averages
+    and boolean flags inside _conditions_modifier for every species) eliminates
+    ~5 repeated arithmetic operations × 572 species per build_species_ranking call.
+    """
+    onshore_dirs = _ONSHORE_DIRS_WEST if coast == "west" else _ONSHORE_DIRS_EAST
+    offshore_dirs = _OFFSHORE_DIRS_WEST if coast == "west" else _OFFSHORE_DIRS_EAST
+    is_onshore = bool(wind_dir and wind_dir in onshore_dirs)
+    is_offshore = bool(wind_dir and wind_dir in offshore_dirs)
+    wind_avg: Optional[float] = (
+        (wind_range[0] + wind_range[1]) / 2.0 if wind_range else None
+    )
+    wave_avg: Optional[float] = (
+        (wave_range[0] + wave_range[1]) / 2.0 if wave_range else None
+    )
+    is_low_light = hour < 7 or hour > 18
+    is_midday = 10 <= hour <= 15
+
+    def _modifier(name: str) -> float:
+        mod = 0.0
+
+        if wind_dir:
+            if name in _ONSHORE_WIND_SPECIES:
+                mod += 5.0 if is_onshore else (-3.0 if is_offshore else 0.0)
+            elif name in _CALM_WATER_SPECIES:
+                mod += 5.0 if is_offshore else (-3.0 if is_onshore else 0.0)
+
+        if wind_avg is not None:
+            if name in _ROUGH_SURF_SPECIES:
+                if 10 <= wind_avg <= 18:
+                    mod += 3.0
+                elif wind_avg < 5:
+                    mod -= 2.0
+            elif name in _CALM_WATER_SPECIES:
+                if wind_avg < 8:
+                    mod += 3.0
+                elif wind_avg > 15:
+                    mod -= 2.0
+
+        if wave_avg is not None:
+            if name in _ROUGH_SURF_SPECIES:
+                if 2 <= wave_avg <= 5:
+                    mod += 4.0
+                elif wave_avg < 1:
+                    mod -= 1.0
+            elif name in _CALM_WATER_SPECIES:
+                if wave_avg < 2:
+                    mod += 4.0
+                elif wave_avg > 4:
+                    mod -= 2.0
+
+        if name in _LOW_LIGHT_SPECIES:
+            mod += 3.0 if is_low_light else (-1.0 if is_midday else 0.0)
+        elif name in _DAYTIME_SPECIES:
+            mod += 3.0 if is_midday else (-1.0 if is_low_light else 0.0)
+
+        return mod
+
+    return _modifier
 
 # Minimum score to include a species in the forecast.
 # This filters out species that technically survive but aren't really biting.
@@ -3479,10 +3556,11 @@ def build_species_ranking(
     """
     # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
     wind_coast = "west" if coast == "west" else "east"
-    # Pre-compute profile filter once so set unions aren't rebuilt per species.
+    # Pre-compute per-run constants to avoid repeating the same work per species.
     _profile_filter = _build_profile_filter(fishing_types, targets)
-    # Pre-compute explanation constants — season and cold/warm flag are identical
-    # for every species in this call, so compute them once instead of per-species.
+    _cond_modifier = _build_conditions_modifier(
+        wind_dir, wind_range, wave_range, hour, wind_coast
+    )
     _season = _get_season(month)
     _is_cold = water_temp < 65
     scored = []
@@ -3497,11 +3575,7 @@ def build_species_ranking(
             sp,
             month,
             water_temp,
-            wind_dir=wind_dir,
-            wind_range=wind_range,
-            wave_range=wave_range,
-            hour=hour,
-            coast=wind_coast,
+            _cond_modifier=_cond_modifier,
         )
         if s >= SPECIES_SCORE_THRESHOLD:
             overrides = SEASONAL_EXPLANATIONS.get(sp["name"])
