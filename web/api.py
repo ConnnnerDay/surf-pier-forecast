@@ -2166,6 +2166,40 @@ def weather_air_quality() -> Any:
     return resp
 
 
+@bp.route("/api/weather/env-context", methods=["GET"])
+def weather_env_context() -> Any:
+    """Return air-quality + drought data for a location in one round trip.
+
+    Fetches both ArcGIS feeds in parallel server-side, saving one HTTP RTT vs
+    calling /api/weather/air-quality and /api/weather/drought separately.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "aqi": {...} | null, "drought": {...} | null }
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    with _cf.ThreadPoolExecutor(max_workers=2) as pool:
+        fut_aqi    = pool.submit(fetch_air_quality, lat, lng)
+        fut_drought = pool.submit(fetch_drought, lat, lng)
+        try: aqi_result = fut_aqi.result(timeout=20)
+        except Exception: aqi_result = None
+        try: drought_result = fut_drought.result(timeout=20)
+        except Exception: drought_result = None
+
+    resp = jsonify({"aqi": aqi_result, "drought": drought_result})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+    return resp
+
+
 @bp.route("/api/weather/wind-forecast", methods=["GET"])
 def weather_wind_forecast() -> Any:
     """Return NDFD wind forecast (speed/direction/gust) for a location.

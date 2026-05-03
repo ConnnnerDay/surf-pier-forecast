@@ -2144,45 +2144,44 @@ if ('serviceWorker' in navigator) {
             hideCard(document.getElementById(id));
         });
     } else {
-        // ── Air Quality stat card ─────────────────────────────────────────────
+        // ── Air Quality + Drought stat cards (one combined request) ───────────
         (function () {
-            var card  = document.getElementById('aqi-stat-card');
-            var valEl = document.getElementById('aqi-stat-value');
-            var detEl = document.getElementById('aqi-stat-detail');
-            fetch('/api/weather/air-quality?lat=' + lat + '&lng=' + lng)
+            var aqiCard   = document.getElementById('aqi-stat-card');
+            var aqiVal    = document.getElementById('aqi-stat-value');
+            var aqiDet    = document.getElementById('aqi-stat-detail');
+            var drtCard   = document.getElementById('drought-stat-card');
+            var drtVal    = document.getElementById('drought-stat-value');
+            var drtDet    = document.getElementById('drought-stat-detail');
+            fetch('/api/weather/env-context?lat=' + lat + '&lng=' + lng)
                 .then(function (r) { return r.ok ? r.json() : null; })
                 .then(function (data) {
-                    if (!data || !data.aqi) { hideCard(card); return; }
-                    var aqi = data.aqi;
-                    valEl.innerHTML =
-                        '<span class="aqi-badge" style="background:' + aqi.color + '">' +
-                        aqi.category + '</span>';
-                    var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
-                    detEl.innerHTML =
-                        aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
-                    showCard(card);
-                })
-                .catch(function () { hideCard(card); });
-        })();
+                    if (!data) { hideCard(aqiCard); hideCard(drtCard); return; }
 
-        // ── US Drought Monitor stat card ──────────────────────────────────────
-        (function () {
-            var card  = document.getElementById('drought-stat-card');
-            var valEl = document.getElementById('drought-stat-value');
-            var detEl = document.getElementById('drought-stat-detail');
-            fetch('/api/weather/drought?lat=' + lat + '&lng=' + lng)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data || data.drought === null || data.drought === undefined) { hideCard(card); return; }
+                    var aqi = data.aqi;
+                    if (aqi) {
+                        aqiVal.innerHTML =
+                            '<span class="aqi-badge" style="background:' + aqi.color + '">' +
+                            aqi.category + '</span>';
+                        var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
+                        aqiDet.innerHTML =
+                            aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
+                        showCard(aqiCard);
+                    } else {
+                        hideCard(aqiCard);
+                    }
+
                     var d = data.drought;
-                    if (!d || d.dm === -1) { hideCard(card); return; }
-                    valEl.innerHTML =
-                        '<span class="drought-badge" style="background:' + d.color + ';color:' +
-                        (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
-                    detEl.textContent = d.label + (d.date ? ' · ' + d.date : '');
-                    showCard(card);
+                    if (d && d.dm !== -1) {
+                        drtVal.innerHTML =
+                            '<span class="drought-badge" style="background:' + d.color + ';color:' +
+                            (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
+                        drtDet.textContent = d.label + (d.date ? ' · ' + d.date : '');
+                        showCard(drtCard);
+                    } else {
+                        hideCard(drtCard);
+                    }
                 })
-                .catch(function () { hideCard(card); });
+                .catch(function () { hideCard(aqiCard); hideCard(drtCard); });
         })();
 
         // ── Nearest NDBC buoy stat card ───────────────────────────────────────
