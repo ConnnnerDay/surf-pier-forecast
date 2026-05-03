@@ -5822,6 +5822,42 @@ h2::before {
   margin-bottom: 0.15rem;
   line-height: 1.25;
 }
+.fmap-spot-detail-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.4);
+  min-width: 72px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.fmap-spot-detail-value {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.4;
+}
+.fmap-spot-detail-tip {
+  font-style: italic;
+  color: rgba(255,255,255,0.6);
+}
+.fmap-spot-score-num {
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.fmap-spot-score-denom {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-left: 1px;
+}
+.fmap-spot-score .fmap-spot-score-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-left: 6px;
+}
 [data-theme="light"] .fmap-spot-detail {
   background: #f0f8fc;
   border-top-color: #0e6e8c;
@@ -5830,6 +5866,9 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-row { color: rgba(0,0,0,0.65); }
 [data-theme="light"] .fmap-spot-detail-row strong { color: rgba(0,0,0,0.85); }
 [data-theme="light"] .fmap-spot-detail-name { color: #0b2836; }
+[data-theme="light"] .fmap-spot-detail-label { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .fmap-spot-detail-value { color: rgba(0,0,0,0.75); }
+[data-theme="light"] .fmap-spot-detail-tip { color: rgba(0,0,0,0.5); }
 
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {

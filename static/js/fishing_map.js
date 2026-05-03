@@ -113,6 +113,7 @@
     // ─── Spot detail panel state ──────────────────────────────────────────────
     var _activeSpotData    = null;   // currently shown spot object
     var _favoriteSpotKeys  = {};     // persisted in localStorage
+    var _LABEL_TO_GRADE    = {Excellent: 'excellent', Good: 'good', Fair: 'fair', Slow: 'slow'};
 
     // ─── Category filter tabs ────────────────────────────────────────────────
     // The flat pill list is replaced by 4 high-level category tabs.
@@ -5490,12 +5491,16 @@
                 var cat = tab.getAttribute('data-cat');
                 var isSame = _activeCategory === cat;
                 // Deselect all tabs
-                tabs.forEach(function (t) { t.setAttribute('aria-pressed', 'false'); });
+                tabs.forEach(function (t) {
+                    t.setAttribute('aria-pressed', 'false');
+                    t.classList.remove('fmap-cat-tab--active');
+                });
                 if (isSame) {
                     // Toggle off — show all
                     _applyCategory(null);
                 } else {
                     tab.setAttribute('aria-pressed', 'true');
+                    tab.classList.add('fmap-cat-tab--active');
                     _applyCategory(cat);
                 }
             });
@@ -5544,24 +5549,31 @@
             });
         }
 
-        // Render 24 bars in the chart SVG container
+        // Render 24 bars in the chart SVG container, with a cursor at the selected hour
         function renderChart() {
             if (!_scoreData || !chartEl) return;
             var hours = _scoreData.hours || [];
             var maxScore = 10;
-            var barW = 100 / 24;
-            var svg = '<svg viewBox="0 0 240 40" preserveAspectRatio="none" ' +
+            var W = 240, H = 44;
+            var barW = W / 24;
+            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
                       'aria-hidden="true" style="width:100%;height:100%">';
             var scoreColors = {Excellent:'#22c55e', Good:'#84cc16', Fair:'#f59e0b', Slow:'#ef4444'};
             hours.forEach(function (h, i) {
                 var color = scoreColors[h.label] || '#64748b';
-                var barH  = (h.score / maxScore) * 36;
+                var barH  = Math.max(2, (h.score / maxScore) * (H - 4));
                 var x     = i * barW;
-                var y     = 40 - barH;
+                var y     = H - barH;
+                var isSelected = (i === _tideSliderHour);
                 svg += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' +
                        (barW - 1) + '" height="' + barH +
-                       '" fill="' + color + '" opacity="0.85" rx="1"/>';
+                       '" fill="' + color + '" opacity="' + (isSelected ? '1' : '0.55') +
+                       '" rx="1"/>';
             });
+            // Cursor line at selected hour
+            var cx = (_tideSliderHour + 0.5) * barW;
+            svg += '<line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + H +
+                   '" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.7"/>';
             svg += '</svg>';
             chartEl.innerHTML = svg;
         }
@@ -5570,14 +5582,18 @@
         function updateSliderDisplay() {
             if (!_scoreData) return;
             var hours = _scoreData.hours || [];
-            var h = hours[_tideSliderHour] || {};
-            var score = h.score || 0;
-            var label = h.label || '';
-            if (scoreEl) scoreEl.textContent = score;
+            var hData = hours[_tideSliderHour] || {};
+            var score = hData.score || 0;
+            var label = hData.label || '';
+            var grade = _LABEL_TO_GRADE[label] || 'fair';
+
+            if (scoreEl) {
+                scoreEl.textContent = score;
+                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
+            }
             if (labelEl) {
                 labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label fmap-tide-score-label--' +
-                    (label || 'fair').toLowerCase();
+                labelEl.className = 'fmap-tide-score-label';
             }
             if (hourEl) {
                 var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
@@ -5586,6 +5602,8 @@
             }
             // Re-colour spot icons on the map by score
             _recolourSpotsByScore(score);
+            // Refresh chart to move the cursor
+            renderChart();
         }
 
         // Tint all currently visible spot markers to reflect the strike score
@@ -5645,10 +5663,19 @@
             catch(e) {}
         }
 
+        var nameEl = document.getElementById('fmap-spot-detail-name');
+
         // Called by renderFishingSpots() when a spot marker is clicked
         window._fmapShowSpotDetail = function (spotData) {
             _activeSpotData = spotData;
             var key = (spotData.type || 'spot') + ':' + spotData.lat + ':' + spotData.lng;
+
+            // Spot name
+            if (nameEl) {
+                nameEl.textContent = spotData.name ||
+                    ((spotData.type || 'Fishing spot').replace(/_/g, ' ')
+                        .replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
+            }
 
             if (coordsEl) {
                 coordsEl.textContent = spotData.lat.toFixed(5) + ', ' +
@@ -5663,25 +5690,28 @@
             // Strike score for the current slider hour
             var currentScore = 0;
             var currentLabel = '';
+            var currentGrade = 'fair';
             if (_scoreData) {
                 var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
                 currentScore = hd.score || 0;
                 currentLabel = hd.label || '';
+                currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
             }
             if (scoreEl) {
-                scoreEl.textContent = currentScore + '/10 — ' + currentLabel;
-                scoreEl.className = 'fmap-spot-score fmap-spot-score--' +
-                    (currentLabel || 'fair').toLowerCase();
+                scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
+                    '</span><span class="fmap-spot-score-denom">/10</span>' +
+                    (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '');
+                scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
             }
 
-            // Best times today (Excellent/Good hours from score data)
+            // Best times today (hours scoring ≥ 7)
             if (bestTimesEl && _scoreData) {
                 var bestHours = (_scoreData.hours || [])
                     .filter(function (h) { return h.score >= 7; })
                     .map(function (h) {
-                        var ampm = h.hour < 12 ? 'AM' : 'PM';
-                        var h12  = h.hour % 12 || 12;
-                        return h12 + 'AM'.replace('AM', ampm);
+                        var ap = h.hour < 12 ? 'AM' : 'PM';
+                        var h12 = h.hour % 12 || 12;
+                        return h12 + ap;
                     });
                 bestTimesEl.textContent = bestHours.length
                     ? bestHours.slice(0, 6).join(', ')
@@ -5689,19 +5719,30 @@
             }
 
             // Fishing tip from the spot
-            if (tipEl) tipEl.textContent = spotData.tip || '';
+            if (tipEl) {
+                var tipRow = document.getElementById('fmap-spot-tip-row');
+                tipEl.textContent = spotData.tip || '';
+                if (tipRow) tipRow.style.display = spotData.tip ? '' : 'none';
+            }
 
-            // Regulation info (species from type)
+            // Regulation info keyed by spot type
             if (regEl) {
-                regEl.textContent = '';
-                // Simple hint based on spot type
                 var regHints = {
-                    reef:   'Check reef fish size/bag limits for your state.',
-                    wreck:  'Verify artificial reef fishing regulations.',
-                    pier:   'Pier fishing permit may be required at some locations.',
-                    bridge: 'Bridge fishing: check local ordinance for permitted zones.',
+                    reef:         'Check reef fish size/bag limits for your state.',
+                    wreck:        'Verify artificial reef fishing regulations.',
+                    pier:         'A pier fishing permit may be required at some locations.',
+                    bridge:       'Check local ordinance for permitted bridge fishing zones.',
+                    jetty:        'Verify jetty access and any posted size/bag limits.',
+                    seawall:      'Confirm public fishing access before casting.',
+                    saltmarsh:    'Catch-and-release encouraged in sensitive marsh areas.',
+                    mangrove:     'Mangrove areas may have seasonal closures — check regs.',
+                    oyster_reef:  'Oyster reef areas may be closed to harvest — check regs.',
+                    grass_flat:   'Avoid anchoring in seagrass — use poles or anchor off-flat.',
                 };
-                regEl.textContent = regHints[spotData.type] || '';
+                var reg = regHints[spotData.type] || '';
+                regEl.textContent = reg;
+                var regRow = document.getElementById('fmap-spot-reg-row');
+                if (regRow) regRow.style.display = reg ? '' : 'none';
             }
 
             // Favorite button state
