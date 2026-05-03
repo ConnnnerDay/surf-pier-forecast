@@ -993,7 +993,7 @@ def build_multiday_outlook(
 
         # --- Top species for this day ---
         _day_cond_modifier = _build_conditions_modifier(
-            None, wind_range, wave_range, 12, wind_coast
+            wind_dir_day or None, wind_range, wave_range, 12, wind_coast
         )
         top_species_names: list[str] = []
         species_scores: list[tuple[str, float]] = []
