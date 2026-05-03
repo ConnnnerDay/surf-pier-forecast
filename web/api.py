@@ -26,7 +26,7 @@ from flask import (
     url_for,
 )
 
-from domain.forecast import build_share_text, generate_forecast
+from domain.forecast import build_share_text, generate_forecast, compute_hourly_strike_score
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
 from locations import COASTAL_LOCATIONS, get_location, get_water_temp
 from storage.reg_scraper import invalidate_cache as _reg_invalidate_cache
@@ -65,7 +65,7 @@ from services.arcgis_live_feeds import (
     fetch_wildfire_incidents,
     fetch_wind_forecast,
 )
-from services.fish_structures import VALID_TYPES, find_fish_structures
+from services.fish_structures import VALID_TYPES, find_fish_structures, fetch_ai_habitats
 from storage.sqlite import (
     add_log_entry,
     add_map_catch,
@@ -3058,3 +3058,212 @@ def suppress_spot_list() -> Any:
 
     spots = get_suppressed_spots()
     return jsonify({"suppressions": spots, "count": len(spots)})
+
+
+# ── Map scoring — hourly strike score ────────────────────────────────────────
+# In-process cache: (lat_r, lng_r, date_str) → {"ts": float, "data": dict}
+# lat/lng are rounded to 2 decimal places (~1 km resolution) to maximise
+# cache hit rate while staying location-specific enough to be useful.
+_SCORE_CACHE: dict[tuple, dict] = {}
+_SCORE_CACHE_MAX = 64
+_SCORE_CACHE_TTL = 1800  # 30 minutes
+_score_cache_lock = threading.Lock()
+
+
+def _score_cache_get(key: tuple) -> Optional[dict]:
+    with _score_cache_lock:
+        entry = _SCORE_CACHE.get(key)
+    if entry and (time.time() - entry["ts"]) < _SCORE_CACHE_TTL:
+        return entry["data"]
+    return None
+
+
+def _score_cache_set(key: tuple, data: dict) -> None:
+    with _score_cache_lock:
+        if len(_SCORE_CACHE) >= _SCORE_CACHE_MAX:
+            oldest = min(_SCORE_CACHE, key=lambda k: _SCORE_CACHE[k]["ts"])
+            _SCORE_CACHE.pop(oldest, None)
+        _SCORE_CACHE[key] = {"ts": time.time(), "data": data}
+
+
+@bp.route("/api/v1/map/score", methods=["GET"])
+def map_score() -> Any:
+    """Return hourly bite-likelihood scores (1–10) for a location.
+
+    Query params
+    ------------
+    lat  : float   – Latitude (required)
+    lng  : float   – Longitude (required)
+    date : str     – ISO date ``YYYY-MM-DD`` (optional; defaults to today)
+    tz   : str     – IANA timezone name (optional; defaults to America/New_York)
+
+    Returns
+    -------
+    JSON::
+
+        {
+          "ok": true,
+          "data": {
+            "hours": [{"hour": 0, "score": 4, "label": "Fair",
+                       "factors": {"tide": "falling", "solunar": "none",
+                                   "wind_mph": 8, "wave_ft": 2,
+                                   "water_temp_f": 72}}, ...],
+            "date": "2026-05-03",
+            "location": {"lat": 34.21, "lng": -77.80},
+            "moon_phase": "Waxing Gibbous",
+            "solunar_rating": "Good",
+            "water_temp_f": 72.0
+          }
+        }
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+
+    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        return jsonify(error_envelope("invalid_params", "lat/lng out of range")), 400
+
+    date_str = request.args.get("date", "").strip()[:10] or None
+    tz_name  = request.args.get("tz", "America/New_York").strip()[:60]
+
+    # Resolve location for station IDs (best-effort, non-fatal if missing)
+    location = get_session_location() or None
+
+    cache_key = (round(lat, 2), round(lng, 2), date_str or "today", tz_name[:20])
+    cached = _score_cache_get(cache_key)
+    if cached is not None:
+        resp = jsonify({"ok": True, "data": cached})
+        resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+        resp.headers["X-Cache"] = "HIT"
+        return resp
+
+    try:
+        result = compute_hourly_strike_score(
+            lat=lat, lng=lng,
+            date_str=date_str,
+            tz_name=tz_name,
+            location=location,
+        )
+    except Exception as exc:
+        logger.warning("map_score failed lat=%s lng=%s: %s", lat, lng, exc, exc_info=True)
+        return jsonify(error_envelope("score_error", "Could not compute score")), 503
+
+    _score_cache_set(cache_key, result)
+    resp = jsonify({"ok": True, "data": result})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    resp.headers["X-Cache"] = "MISS"
+    return resp
+
+
+# ── Map habitats — consolidated all-types fetch ───────────────────────────────
+# In-process cache: (south_r, west_r, north_r, east_r) → {"ts": float, "data": list}
+_HABITATS_CACHE: dict[tuple, dict] = {}
+_HABITATS_CACHE_MAX = 32
+_HABITATS_CACHE_TTL = 1800  # 30 minutes
+_habitats_cache_lock = threading.Lock()
+
+_ALL_HABITAT_TYPES = [
+    "surf", "kelp", "mangrove", "grassflat", "estuary",
+    "reef", "bottom", "general", "pelagic", "tidalflat",
+]
+
+
+def _habitats_cache_get(key: tuple) -> Optional[list]:
+    with _habitats_cache_lock:
+        entry = _HABITATS_CACHE.get(key)
+    if entry and (time.time() - entry["ts"]) < _HABITATS_CACHE_TTL:
+        return entry["data"]
+    return None
+
+
+def _habitats_cache_set(key: tuple, data: list) -> None:
+    with _habitats_cache_lock:
+        if len(_HABITATS_CACHE) >= _HABITATS_CACHE_MAX:
+            oldest = min(_HABITATS_CACHE, key=lambda k: _HABITATS_CACHE[k]["ts"])
+            _HABITATS_CACHE.pop(oldest, None)
+        _HABITATS_CACHE[key] = {"ts": time.time(), "data": data}
+
+
+@bp.route("/api/v1/map/habitats", methods=["GET"])
+def map_habitats_v1() -> Any:
+    """Return AI habitat features for a bounding box (all types merged).
+
+    Fetches all fishing-relevant habitat types concurrently and returns a
+    single deduplicated feature list — eliminates the 10 separate
+    ``/api/v1/geo/habitats?habitat_type=X`` calls the old client issued.
+
+    Query params
+    ------------
+    south, west, north, east : float  – Viewport bounding box (required)
+    types : str  – Comma-separated subset of habitat types to include (optional).
+                   Defaults to all types.
+
+    Returns
+    -------
+    JSON: { "ok": true, "data": { "features": [...], "count": N } }
+    """
+    try:
+        south = float(request.args["south"])
+        west  = float(request.args["west"])
+        north = float(request.args["north"])
+        east  = float(request.args["east"])
+    except (KeyError, ValueError, TypeError):
+        return jsonify(
+            error_envelope("invalid_params", "south, west, north, east required")
+        ), 400
+
+    if not (-90 <= south < north <= 90 and -180 <= west <= 180 and -180 <= east <= 180):
+        return jsonify(error_envelope("invalid_params", "Invalid bbox")), 400
+
+    if (north - south) > 10 or abs(east - west) > 10:
+        return jsonify(error_envelope("invalid_params", "Bbox too large (max 10°)")), 400
+
+    # Optional type filter
+    types_param = request.args.get("types", "").strip()
+    if types_param:
+        requested = [t.strip() for t in types_param.split(",") if t.strip()]
+        active_types = [t for t in requested if t in _ALL_HABITAT_TYPES]
+        if not active_types:
+            return jsonify(error_envelope("invalid_params", "No valid habitat types")), 400
+    else:
+        active_types = _ALL_HABITAT_TYPES
+
+    cache_key = (round(south, 2), round(west, 2), round(north, 2), round(east, 2),
+                 ",".join(sorted(active_types)))
+    cached = _habitats_cache_get(cache_key)
+    if cached is not None:
+        resp = jsonify({"ok": True, "data": {"features": cached, "count": len(cached)}})
+        resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+        resp.headers["X-Cache"] = "HIT"
+        return resp
+
+    # Fetch all habitat types concurrently
+    def _fetch(htype: str) -> list:
+        try:
+            return fetch_ai_habitats(south, west, north, east, htype) or []
+        except Exception:
+            return []
+
+    all_features: list[dict] = []
+    seen_ids: set[str] = set()
+
+    with _cf.ThreadPoolExecutor(max_workers=min(len(active_types), 8)) as pool:
+        futures = {pool.submit(_fetch, t): t for t in active_types}
+        for fut in _cf.as_completed(futures, timeout=20):
+            try:
+                feats = fut.result()
+                for f in feats:
+                    fid = f.get("id") or f"{f.get('lat')},{f.get('lng')},{f.get('osmType')}"
+                    if fid not in seen_ids:
+                        seen_ids.add(fid)
+                        all_features.append(f)
+            except Exception:
+                pass
+
+    _habitats_cache_set(cache_key, all_features)
+    resp = jsonify({"ok": True, "data": {"features": all_features, "count": len(all_features)}})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    resp.headers["X-Cache"] = "MISS"
+    return resp

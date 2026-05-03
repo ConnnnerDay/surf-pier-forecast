@@ -5591,6 +5591,246 @@ h2::before {
 }
 [data-theme="light"] .fmap-spot-filter-bar .fmap-struct-filters-hint { color: rgba(0,0,0,0.45); }
 
+/* ── Category filter tabs (Structures / Habitats / Amenities / My Spots) ── */
+.fmap-cat-tabs {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.fmap-cat-tabs::-webkit-scrollbar { display: none; }
+.fmap-cat-tab {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13);
+  color: rgba(255,255,255,0.65);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.22rem 0.7rem;
+  border-radius: 20px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+.fmap-cat-tab:hover {
+  background: rgba(31,168,201,0.18);
+  border-color: rgba(31,168,201,0.5);
+  color: #fff;
+}
+.fmap-cat-tab--active {
+  background: rgba(31,168,201,0.25);
+  border-color: #1fa8c9;
+  color: #fff;
+}
+[data-theme="light"] .fmap-cat-tab {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.15);
+  color: rgba(0,0,0,0.55);
+}
+[data-theme="light"] .fmap-cat-tab--active {
+  background: rgba(14,110,140,0.12);
+  border-color: #0e6e8c;
+  color: #0e6e8c;
+}
+
+/* ── Tide chart / strike-score bar ── */
+.fmap-tide-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 409;
+  background: rgba(10,19,29,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0.5rem 0.75rem 0.55rem;
+  padding-right: 62px;
+}
+.fmap-tide-bar-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.fmap-tide-chart-wrap {
+  position: relative;
+}
+.fmap-tide-chart {
+  width: 100%;
+  height: 44px;
+  overflow: hidden;
+}
+.fmap-tide-chart svg { width: 100%; height: 100%; display: block; }
+.fmap-tide-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.15);
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+.fmap-tide-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1fa8c9;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+.fmap-tide-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1fa8c9;
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+.fmap-tide-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fmap-tide-score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0 5px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+.fmap-tide-score-badge--excellent { background: #16a34a; }
+.fmap-tide-score-badge--good      { background: #65a30d; }
+.fmap-tide-score-badge--fair      { background: #d97706; }
+.fmap-tide-score-badge--slow      { background: #dc2626; }
+.fmap-tide-score-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.6);
+}
+.fmap-tide-hour {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.45);
+  margin-left: auto;
+}
+.fmap-tide-moon {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
+}
+[data-theme="light"] .fmap-tide-bar {
+  background: rgba(240,248,252,0.95);
+  border-top-color: rgba(0,0,0,0.1);
+}
+[data-theme="light"] .fmap-tide-slider { background: rgba(0,0,0,0.15); }
+[data-theme="light"] .fmap-tide-score-label,
+[data-theme="light"] .fmap-tide-hour,
+[data-theme="light"] .fmap-tide-moon { color: rgba(0,0,0,0.45); }
+
+/* ── Spot detail panel ── */
+.fmap-spot-detail {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 415;
+  background: #0b2836;
+  border-top: 2px solid #1fa8c9;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+  padding: 0.8rem 1rem 1rem;
+  transition: transform 0.2s ease;
+}
+.fmap-spot-detail[hidden] { display: none !important; }
+.fmap-spot-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.fmap-spot-detail-type-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(31,168,201,0.2);
+  color: #1fa8c9;
+  border: 1px solid rgba(31,168,201,0.35);
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+.fmap-spot-detail-coords {
+  font-size: 0.67rem;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  font-family: monospace;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fmap-spot-detail-coords:hover { color: #1fa8c9; }
+.fmap-spot-detail-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.fmap-spot-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.fmap-spot-score {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #22c55e;
+}
+.fmap-spot-score--slow { color: #ef4444; }
+.fmap-spot-score--fair { color: #f59e0b; }
+.fmap-spot-score--good { color: #3b82f6; }
+.fmap-spot-score--excellent { color: #22c55e; }
+.fmap-spot-detail-row {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  display: flex;
+  gap: 0.3rem;
+  align-items: flex-start;
+}
+.fmap-spot-detail-row strong {
+  color: rgba(255,255,255,0.9);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.fmap-spot-detail-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.15rem;
+  line-height: 1.25;
+}
+[data-theme="light"] .fmap-spot-detail {
+  background: #f0f8fc;
+  border-top-color: #0e6e8c;
+}
+[data-theme="light"] .fmap-spot-detail-coords { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .fmap-spot-detail-row { color: rgba(0,0,0,0.65); }
+[data-theme="light"] .fmap-spot-detail-row strong { color: rgba(0,0,0,0.85); }
+[data-theme="light"] .fmap-spot-detail-name { color: #0b2836; }
+
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
