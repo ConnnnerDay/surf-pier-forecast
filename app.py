@@ -310,6 +310,7 @@ def create_app() -> Flask:
         return token
 
     _static_root = _pathlib.Path(app.static_folder or "static")
+    _surl_cache: dict[str, str] = {}
 
     def _surl(filename: str) -> str:
         """Return a versioned static URL for cache busting.
@@ -318,13 +319,21 @@ def create_app() -> Flask:
         up to 1 year (SEND_FILE_MAX_AGE_DEFAULT).  When the file on disk
         changes, its mtime changes and the new URL busts the old cache entry.
         Falls back to a plain ``url_for`` URL if the file cannot be stat'd.
+
+        Results are cached in-process so repeated calls (one per page render)
+        don't stat the filesystem every time.
         """
+        cached = _surl_cache.get(filename)
+        if cached is not None:
+            return cached
         base = url_for("static", filename=filename)
         try:
             mtime = int((_static_root / filename).stat().st_mtime)
-            return f"{base}?v={mtime}"
+            result = f"{base}?v={mtime}"
         except OSError:
-            return base
+            result = base
+        _surl_cache[filename] = result
+        return result
 
     @app.context_processor
     def _inject_user() -> dict[str, Any]:
