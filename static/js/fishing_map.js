@@ -114,6 +114,7 @@
     var _activeSpotData    = null;   // currently shown spot object
     var _favoriteSpotKeys  = {};     // persisted in localStorage
     var _LABEL_TO_GRADE    = {Excellent: 'excellent', Good: 'good', Fair: 'fair', Slow: 'slow'};
+    var _favSpotsLayer     = null;   // Leaflet layer for user's saved favorite pins
 
     // ─── Category filter tabs ────────────────────────────────────────────────
     // The flat pill list is replaced by 4 high-level category tabs.
@@ -1205,6 +1206,12 @@
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
+
+        // Apply current strike-score tint to newly created markers
+        if (_scoreData) {
+            var _curHour = (_scoreData.hours || [])[_tideSliderHour] || {};
+            _recolourSpotsByScore(_curHour.score || 0);
+        }
 
         // Update the filter hint to surface any types hidden by minZoom.
         _updateZoomSuppressedHint(_suppressedTypes);
@@ -5372,6 +5379,7 @@
                 wireCategoryFilterTabs();
                 wireTideChart();
                 wireSpotDetailPanel();
+                _syncBottomBarLayout();
                 restoreLayerState();
                 // Restore cached structure data from the previous page view so
                 // markers appear instantly on refresh instead of waiting for Overpass.
@@ -5463,6 +5471,81 @@
         updateAdvBadge();
     }
 
+    // ─── Bottom bar layout ────────────────────────────────────────────────────
+    // The filter bar and tide bar are both absolute-positioned at bottom:0.
+    // We measure the filter bar's actual rendered height and set a CSS custom
+    // property so the tide bar stacks directly above it without overlap.
+    function _syncBottomBarLayout() {
+        var fb = document.getElementById('fmap-spot-filter-bar');
+        if (!fb) return;
+        function _apply() {
+            var h = fb.offsetHeight;
+            if (h > 0) {
+                document.documentElement.style.setProperty('--fmap-filter-bar-h', h + 'px');
+            }
+        }
+        _apply();
+        // Re-measure if the filter bar resizes (e.g. font scale, category-tab wrap)
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(_apply).observe(fb);
+        }
+    }
+
+    // ─── Score-based marker tinting ───────────────────────────────────────────
+    // Defined at module scope so renderFishingSpots can call it after each render.
+    function _recolourSpotsByScore(score) {
+        if (!fishingSpotLayer) return;
+        var color = score >= 8 ? '#22c55e' :
+                    score >= 6 ? '#84cc16' :
+                    score >= 4 ? '#f59e0b' : '#ef4444';
+        fishingSpotLayer.eachLayer(function (layer) {
+            if (layer._icon) {
+                layer._icon.style.borderColor = color;
+                layer._icon.style.boxShadow   = '0 0 6px ' + color + '88';
+            }
+        });
+    }
+
+    // ─── Favorite spot pins ("My Spots" category) ────────────────────────────
+    // Renders golden star markers from the _favoriteSpotKeys localStorage store
+    // whenever the "My Spots" category tab is active.
+    function renderFavoriteSpots() {
+        if (!map) return;
+        // Create the layer once; add it above fishingSpotLayer
+        if (!_favSpotsLayer) {
+            _favSpotsLayer = L.layerGroup().addTo(map);
+        }
+        _favSpotsLayer.clearLayers();
+        var keys = Object.keys(_favoriteSpotKeys || {});
+        if (!keys.length) return;
+        keys.forEach(function (k) {
+            var sp = _favoriteSpotKeys[k];
+            if (!sp || !sp.lat || !sp.lng) return;
+            var icon = L.divIcon({
+                className: 'fmap-fav-pin-wrap',
+                html: '<div class="fmap-fav-pin" title="' + esc(sp.name || 'Saved spot') +
+                      '"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"' +
+                      ' stroke="none" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5' +
+                      ' 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>' +
+                      '</svg></div>',
+                iconSize:   [22, 22],
+                iconAnchor: [11, 11],
+            });
+            var m = L.marker([sp.lat, sp.lng], { icon: icon, zIndexOffset: 200 });
+            m.bindTooltip('<strong>' + esc(sp.name || spotTypeLabel(sp.type) || 'Saved spot') +
+                          '</strong><br><small>' + sp.lat.toFixed(4) + ', ' + sp.lng.toFixed(4) +
+                          '</small>', { className: 'fmap-tooltip', direction: 'top', offset: [0,-8] });
+            (function (spotData) {
+                m.on('click', function () {
+                    if (typeof window._fmapShowSpotDetail === 'function') {
+                        window._fmapShowSpotDetail(spotData);
+                    }
+                });
+            }({ lat: sp.lat, lng: sp.lng, name: sp.name, type: sp.type || 'fishing' }));
+            _favSpotsLayer.addLayer(m);
+        });
+    }
+
     // ─── Init ─────────────────────────────────────────────────────────────────
     // ─── Category filter tabs ─────────────────────────────────────────────────
     // Replaces the flat 22-pill list with 4 high-level category tabs:
@@ -5475,13 +5558,24 @@
 
         function _applyCategory(cat) {
             _activeCategory = cat;
-            // Compute the union of spot types for the selected category
-            var types = cat ? (_CATEGORY_TYPES[cat] || []) : [];
-            // Update activeSpotTypes used by the existing structure rendering
+            var isMine = (cat === 'my_spots');
+            // "My Spots" renders from saved favorites, not OSM types
+            var types = (cat && !isMine) ? (_CATEGORY_TYPES[cat] || []) : [];
             activeSpotTypes = types.slice();
-            // Re-render with new filter
+            // Show/hide the favorites layer
+            if (_favSpotsLayer) {
+                if (isMine) _favSpotsLayer.addTo(map);
+                else if (map.hasLayer(_favSpotsLayer)) map.removeLayer(_favSpotsLayer);
+            }
+            if (isMine) {
+                // Render favorite pins; hide OSM structures and AI habitats
+                renderFavoriteSpots();
+                fishingSpotLayer && fishingSpotLayer.clearLayers();
+                aiPickLayer && aiPickLayer.clearLayers();
+                return;
+            }
+            // Restore OSM spots and AI habitats for non-mine categories
             renderFishingSpots(_lastRenderedSpotKey ? (spotCache[_lastRenderedSpotKey] || []) : []);
-            // Update AI habitat layer
             var cachedAI = aiCache[_lastRenderedSpotKey || ''] || [];
             if (aiPickLayer) renderAIHabitatSpots(cachedAI);
         }
@@ -5604,20 +5698,6 @@
             _recolourSpotsByScore(score);
             // Refresh chart to move the cursor
             renderChart();
-        }
-
-        // Tint all currently visible spot markers to reflect the strike score
-        function _recolourSpotsByScore(score) {
-            if (!fishingSpotLayer) return;
-            var color = score >= 8 ? '#22c55e' :
-                        score >= 6 ? '#84cc16' :
-                        score >= 4 ? '#f59e0b' : '#ef4444';
-            fishingSpotLayer.eachLayer(function (layer) {
-                if (layer._icon) {
-                    layer._icon.style.borderColor = color;
-                    layer._icon.style.boxShadow   = '0 0 6px ' + color + '88';
-                }
-            });
         }
 
         // Wire the range slider
@@ -5785,6 +5865,8 @@
                 favBtn.setAttribute('aria-pressed', !isFav ? 'true' : 'false');
                 favBtn.title = !isFav ? 'Remove from favorites' : 'Save as favorite';
                 showToast(!isFav ? 'Spot saved to favorites' : 'Spot removed from favorites');
+                // Keep My Spots layer current if it's active
+                if (_activeCategory === 'my_spots') renderFavoriteSpots();
             });
         }
     }
