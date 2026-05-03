@@ -3950,3 +3950,255 @@ def build_trip_setup(
         "rows": rows,
         "species_names": [sp["name"] for sp in working],
     }
+
+
+# ---------------------------------------------------------------------------
+# Hourly strike-score engine
+# ---------------------------------------------------------------------------
+# Produces a 1-10 bite-likelihood score for each hour of the day, combining
+# tide transitions, solunar periods, wind, waves and water temperature.
+# Used by the /api/v1/map/score endpoint to colour-code spot icons.
+# ---------------------------------------------------------------------------
+
+def compute_hourly_strike_score(
+    lat: float,
+    lng: float,
+    date_str: Optional[str] = None,
+    tz_name: str = "America/New_York",
+    location: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Compute a bite-likelihood score (1–10) for each hour of the given day.
+
+    Returns::
+
+        {
+          "hours": [
+            {"hour": 0, "score": 4, "label": "Fair",
+             "factors": {"tide": "falling", "solunar": "none",
+                         "wind_mph": 8, "wave_ft": 2, "water_temp_f": 72}},
+            ...
+          ],
+          "date": "2026-05-03",
+          "location": {"lat": 34.21, "lng": -77.80},
+          "moon_phase": "Waxing Gibbous",
+          "solunar_rating": "Good",
+        }
+
+    Scores are capped to [1, 10].  Factors are included for UI tooltips.
+    """
+    tz = _safe_zone(tz_name)
+    now = datetime.now(tz)
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=tz)
+        except ValueError:
+            target_date = now
+    else:
+        target_date = now
+
+    date_label = target_date.strftime("%Y-%m-%d")
+    month = target_date.month
+
+    # ── Fetch data concurrently ───────────────────────────────────────────────
+    coops_id = (location or {}).get("coops_station", WATER_TEMP_STATION)
+
+    def _fetch_tides():
+        try:
+            tides = fetch_tide_predictions(coops_id, tz_name) or []
+            date_key = target_date.strftime("%Y%m%d")
+            return [t for t in tides if t.get("date_str") == date_key]
+        except Exception:
+            return []
+
+    def _fetch_solunar():
+        try:
+            return compute_solunar_times(target_date, lat, lng, tz_name)
+        except Exception:
+            return {}
+
+    def _fetch_conditions():
+        try:
+            return get_marine_conditions(month, location)
+        except Exception:
+            return _seasonal_averages(month)
+
+    def _fetch_water_temp():
+        try:
+            return get_water_temp(coops_id)
+        except Exception:
+            return None
+
+    with _cf.ThreadPoolExecutor(max_workers=4) as pool:
+        fut_tides = pool.submit(_fetch_tides)
+        fut_sol   = pool.submit(_fetch_solunar)
+        fut_cond  = pool.submit(_fetch_conditions)
+        fut_temp  = pool.submit(_fetch_water_temp)
+
+        today_tides = fut_tides.result(timeout=12)
+        sol_data    = fut_sol.result(timeout=5)
+        wind_range, wave_range, _ = fut_cond.result(timeout=12)
+        water_temp_f = fut_temp.result(timeout=8)
+
+    # Fall back to monthly average water temperature
+    if not water_temp_f:
+        if location:
+            temps = get_monthly_water_temps(location)
+            water_temp_f = temps[month - 1] if temps else MONTHLY_AVG_WATER_TEMP_F[month]
+        else:
+            water_temp_f = MONTHLY_AVG_WATER_TEMP_F[month]
+
+    # ── Pre-compute solunar windows ───────────────────────────────────────────
+    # Returns sets of (hour, minute) tuples that fall inside each window.
+    def _parse_period_hours(periods: list[dict]) -> list[tuple[float, float]]:
+        """Return [(start_frac, end_frac)] for each period (fractional hours 0-24)."""
+        results = []
+        for p in periods:
+            def _to_frac(s: str) -> float:
+                parts = s.replace(":", " ").replace("AM", "").replace("PM", "").split()
+                h = int(parts[0]); m = int(parts[1])
+                is_pm = "PM" in s
+                if h == 12:
+                    h = 0 if not is_pm else 12
+                elif is_pm:
+                    h += 12
+                return h + m / 60.0
+            try:
+                results.append((_to_frac(p["start"]), _to_frac(p["end"])))
+            except Exception:
+                pass
+        return results
+
+    major_windows = _parse_period_hours(sol_data.get("major_periods", []))
+    minor_windows = _parse_period_hours(sol_data.get("minor_periods", []))
+
+    def _solunar_boost(hour_frac: float) -> float:
+        for s, e in major_windows:
+            span = (e - s) % 24
+            if span == 0:
+                span = 2.0
+            # Handle midnight wrap
+            if s <= hour_frac <= e or (e < s and (hour_frac >= s or hour_frac <= e)):
+                return 2.0
+        for s, e in minor_windows:
+            if s <= hour_frac <= e or (e < s and (hour_frac >= s or hour_frac <= e)):
+                return 1.0
+        return 0.0
+
+    # ── Pre-compute tide state per hour ───────────────────────────────────────
+    # Tide events list: [{hour: float, type: 'High'|'Low', ...}] sorted by hour
+    def _tide_factor(hour_frac: float) -> tuple[str, float]:
+        """Return (tide_state_label, score_modifier)."""
+        if not today_tides:
+            return "unknown", 0.0
+        events = sorted(today_tides, key=lambda t: t.get("hour", 0))
+        # Locate the surrounding pair of events
+        prev_e = None
+        next_e = None
+        for i, ev in enumerate(events):
+            if ev.get("hour", 0) <= hour_frac:
+                prev_e = ev
+            else:
+                next_e = ev
+                break
+        if prev_e is None and next_e is not None:
+            # Before first tide event
+            state = "falling" if next_e.get("type") == "Low" else "rising"
+            hrs_to = next_e.get("hour", 6) - hour_frac
+            return state, 1.5 if hrs_to <= 1.5 else 1.0
+        if next_e is None and prev_e is not None:
+            # After last tide event
+            state = "falling" if prev_e.get("type") == "High" else "rising"
+            hrs_since = hour_frac - prev_e.get("hour", 18)
+            return state, 1.5 if hrs_since <= 1.5 else 0.5
+        if prev_e is None and next_e is None:
+            return "unknown", 0.0
+        # Within a tidal period
+        hrs_since = hour_frac - prev_e.get("hour", 0)
+        hrs_to    = next_e.get("hour", 6) - hour_frac
+        state     = "rising" if next_e.get("type") == "High" else "falling"
+        # Transition bonus: within 1.5 hrs of a tide event
+        if hrs_since <= 1.5 or hrs_to <= 1.5:
+            return state + " (transition)", 2.0
+        return state, 1.0
+
+    # ── Wind / wave constant modifiers ───────────────────────────────────────
+    avg_wind = (wind_range[0] + wind_range[1]) / 2 if wind_range else 10.0
+    avg_wave = (wave_range[0] + wave_range[1]) / 2 if wave_range else 2.0
+
+    if avg_wind <= 5:
+        wind_mod = 0.5   # calm / glassy — conditions OK but less bite activity
+    elif avg_wind <= 15:
+        wind_mod = 1.0   # ideal moderate breeze
+    elif avg_wind <= 25:
+        wind_mod = 0.0   # breezy — still fishable
+    else:
+        wind_mod = -2.0  # rough — tough conditions
+
+    if avg_wave <= 1:
+        wave_mod = 0.5
+    elif avg_wave <= 3:
+        wave_mod = 1.0   # ideal chop
+    elif avg_wave <= 5:
+        wave_mod = 0.0
+    else:
+        wave_mod = -1.5  # rough seas
+
+    # ── Water-temp base modifier ──────────────────────────────────────────────
+    # Broad seasonal comfort: 65-85°F is prime for most coastal species.
+    if 65 <= water_temp_f <= 85:
+        temp_mod = 0.5
+    elif 55 <= water_temp_f < 65 or 85 < water_temp_f <= 90:
+        temp_mod = 0.0
+    else:
+        temp_mod = -0.5  # cold or very hot water suppresses bite
+
+    # ── Moon phase modifier ───────────────────────────────────────────────────
+    sol_rating = sol_data.get("rating", "Fair")
+    phase_mod = {"Excellent": 0.5, "Good": 0.25, "Fair": 0.0, "Poor": -0.25}.get(
+        sol_rating, 0.0
+    )
+
+    # ── Build hourly scores ───────────────────────────────────────────────────
+    hours_out = []
+    for h in range(24):
+        hour_frac = h + 0.5  # midpoint of the hour
+        tide_state, tide_mod = _tide_factor(hour_frac)
+        sol_boost = _solunar_boost(hour_frac)
+
+        raw = 4.0 + tide_mod + sol_boost + wind_mod + wave_mod + temp_mod + phase_mod
+        score = max(1, min(10, round(raw)))
+
+        if score >= 8:
+            label = "Excellent"
+        elif score >= 6:
+            label = "Good"
+        elif score >= 4:
+            label = "Fair"
+        else:
+            label = "Slow"
+
+        hours_out.append({
+            "hour": h,
+            "score": score,
+            "label": label,
+            "factors": {
+                "tide": tide_state,
+                "solunar": (
+                    "major" if sol_boost >= 2.0 else
+                    "minor" if sol_boost >= 1.0 else
+                    "none"
+                ),
+                "wind_mph": round(avg_wind, 1),
+                "wave_ft":  round(avg_wave, 1),
+                "water_temp_f": round(water_temp_f, 1),
+            },
+        })
+
+    return {
+        "hours": hours_out,
+        "date": date_label,
+        "location": {"lat": lat, "lng": lng},
+        "moon_phase": sol_data.get("moon_phase", "Unknown"),
+        "solunar_rating": sol_rating,
+        "water_temp_f": round(water_temp_f, 1),
+    }

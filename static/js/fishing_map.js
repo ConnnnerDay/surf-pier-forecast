@@ -68,7 +68,11 @@
     var pendingCatchMarker = null;   // temporary L.marker shown before submit
     var IS_LOGGED_IN      = !!(window.IS_LOGGED_IN || false);
 
-    // ─── ArcGIS Live Feeds state ──────────────────────────────────────────────
+    // ─── Fishing-relevant Live Feeds state ───────────────────────────────────
+    // Kept: marine warnings, storm tracker, recent storms, SST, buoys, HF Radar,
+    // METAR, tropical outlook.  Non-fishing overlays (wildfire, drought, AQI,
+    // sea ice, seismic, terminator, stream gauges, storm reports, NDFD
+    // precipitation/temperature) have been removed.
     var marineWarnOn      = false;   // marine warnings overlay active
     var marineWarnLayer   = null;    // L.layerGroup for warning polygons
     var marineWarnTimer   = null;    // debounce for viewport-based reload
@@ -79,62 +83,49 @@
     var sstLayerOn        = false;   // SST station overlay active
     var sstLayer          = null;    // L.layerGroup for SST markers
     var sstQueryTimer     = null;    // debounce for viewport reload
-    var wildfireOn        = false;   // wildfire + smoke overlay active
-    var wildfireLayer     = null;    // L.layerGroup for fire + smoke
-    var wildfireTimer     = null;    // debounce for viewport reload
-    var seaIceOn          = false;   // sea ice extent overlay active
-    var seaIceLayer       = null;    // L.layerGroup for ice boundary
-    var seismicOn         = false;   // USGS seismic overlay active
-    var seismicLayer      = null;    // L.layerGroup for quake markers
-    var seismicTimer      = null;    // debounce for viewport reload
     var metarOn           = false;   // METAR surface obs overlay active
     var metarLayer        = null;    // L.layerGroup for METAR stations
     var metarTimer        = null;    // debounce for viewport reload
-    var terminatorOn      = false;   // Day/Night terminator overlay active
-    var terminatorLayer   = null;    // L.layerGroup for shadow polygon
-    var terminatorInterval = null;   // setInterval for auto-refresh
-    var gaugeOn           = false;   // Stream gauge overlay active
-    var gaugeLayer        = null;    // L.layerGroup for gauge markers
-    var gaugeTimer        = null;    // debounce for viewport reload
-    var stormRptOn        = false;   // Storm reports overlay active
-    var stormRptLayer     = null;    // L.layerGroup for storm report markers
-    var stormRptTimer     = null;    // debounce for viewport reload
+    var buoyOn            = false;   // NDBC buoy overlay active
+    var buoyLayer         = null;    // L.layerGroup for buoy markers
+    var buoyTimer         = null;    // debounce for viewport reload
 
-    // ─── New overlay state (AQI, Drought, Precipitation, NDBC Buoys) ────────────
-    var aqiOn           = false;   // AQI/PM2.5 stations overlay active
-    var aqiLayer        = null;    // L.layerGroup for AQI markers
-    var aqiTimer        = null;    // debounce for viewport reload
-    var droughtOn       = false;   // US Drought Monitor overlay active
-    var droughtLayer    = null;    // L.layerGroup for drought polygons
-    var droughtTimer    = null;    // debounce for viewport reload
-    var precipOn        = false;   // NDFD Precipitation overlay active
-    var precipLayer     = null;    // L.layerGroup for precip polygons
-    var precipTimer     = null;    // debounce for viewport reload
-    var ndfdTempOn      = false;   // NDFD Temperature overlay active
-    var ndfdTempLayer   = null;    // L.layerGroup for temperature polygons
-    var ndfdTempTimer   = null;    // debounce for viewport reload
-    var buoyOn          = false;   // NDBC buoy overlay active
-    var buoyLayer       = null;    // L.layerGroup for buoy markers
-    var buoyTimer       = null;    // debounce for viewport reload
+    // ─── Basemap state ────────────────────────────────────────────────────────
+    // Three-way toggle: satellite → nautical (OpenSeaMap) → street
+    // Promoted to module scope so tileerror fallback can update the button.
+    var _basemapMode    = 'satellite'; // 'satellite' | 'nautical' | 'street'
+    var _isSatellite    = true;        // kept for backward compat checks
+    var _nauticalLayer  = null;        // OpenSeaMap overlay (shown on nautical mode)
 
-    // Basemap toggle state — promoted to module scope so the tileerror fallback
-    // in initMap() can keep the button in sync when satellite tiles are unavailable.
-    var _isSatellite    = true;
-
-    // Per-layer AbortControllers — cancel in-flight requests when viewport changes
+    // ─── Per-layer AbortControllers ───────────────────────────────────────────
     var sstAbort        = null;
-    var wildfireAbort   = null;
-    var seismicAbort    = null;
     var metarAbort      = null;
-    var gaugeAbort      = null;
-    var stormRptAbort   = null;
     var marineWarnAbort = null;
-    var aqiAbort        = null;
-    var droughtAbort    = null;
-    var precipAbort     = null;
-    var ndfdTempAbort   = null;
     var buoyAbort       = null;
     var _catchDetailAbort = null;
+
+    // ─── Tide chart / time-slider state ──────────────────────────────────────
+    var _tideSliderHour    = new Date().getHours(); // 0-23 selected hour
+    var _scoreData         = null;   // cached /api/v1/map/score response
+    var _scoreAbort        = null;   // AbortController for score fetch
+    var _tideChartTimer    = null;   // debounce for re-fetch on location change
+
+    // ─── Spot detail panel state ──────────────────────────────────────────────
+    var _activeSpotData    = null;   // currently shown spot object
+    var _favoriteSpotKeys  = {};     // persisted in localStorage
+
+    // ─── Category filter tabs ────────────────────────────────────────────────
+    // The flat pill list is replaced by 4 high-level category tabs.
+    // Each tab shows/hides the spot types belonging to that category.
+    var _CATEGORY_TYPES = {
+        structures: ['pier', 'jetty', 'bridge', 'seawall', 'point', 'reef',
+                     'wreck', 'shoal', 'buoy'],
+        habitats:   ['grass_flat', 'tidal_flat', 'saltmarsh', 'mangrove',
+                     'kelp', 'oyster_reef', 'inlet', 'beach'],
+        amenities:  ['marina', 'boat_ramp', 'fishing_shop', 'dive_site'],
+        my_spots:   ['fishing']    // custom / user-logged spots
+    };
+    var _activeCategory = null; // null = all categories visible
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -180,6 +171,15 @@
     var TILE_SATELLITE = {
         url:  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         opts: { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA', maxZoom: 19 }
+    };
+    var TILE_NAUTICAL = {
+        url:  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        opts: { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', subdomains: 'abc', maxZoom: 19 }
+    };
+    // OpenSeaMap nautical overlay added on top of OSM street tiles
+    var TILE_OPENSEAMAP = {
+        url:  'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+        opts: { attribution: '&copy; <a href="https://www.openseamap.org">OpenSeaMap</a>', maxZoom: 18, opacity: 0.85 }
     };
     var TILE_STREET = {
         url:  'https://{s}.basemaps.cartocdn.com/dark_matter_no_labels/{z}/{x}/{y}{r}.png',
@@ -252,23 +252,27 @@
 
     // ─── Map overlay controls ─────────────────────────────────────────────────
 
-    // Sync the basemap toggle button's icon, classes, and labels to _isSatellite.
-    // Called from both wireMapControls() and the tileerror fallback in initMap().
+    // Sync the basemap toggle button to _basemapMode.
+    // Three-way cycle: satellite → nautical → street → satellite
     function _syncBasemapBtn() {
-        var btn     = document.getElementById('fmap-basemap-btn');
-        var iconSat = document.getElementById('fmap-basemap-icon-sat');
-        var iconMap = document.getElementById('fmap-basemap-icon-map');
+        var btn      = document.getElementById('fmap-basemap-btn');
+        var iconSat  = document.getElementById('fmap-basemap-icon-sat');
+        var iconNaut = document.getElementById('fmap-basemap-icon-naut');
+        var iconMap  = document.getElementById('fmap-basemap-icon-map');
         if (!btn) return;
-        btn.classList.toggle('fmap-ctrl-btn--active', _isSatellite);
-        if (_isSatellite) {
-            btn.title = 'Satellite · click for Street map';
-            btn.setAttribute('aria-label', 'Basemap: Satellite. Click to switch to Street map');
-        } else {
-            btn.title = 'Street map · click for Satellite';
-            btn.setAttribute('aria-label', 'Basemap: Street map. Click to switch to Satellite');
-        }
-        if (iconSat) iconSat.hidden = !_isSatellite;
-        if (iconMap) iconMap.hidden =  _isSatellite;
+        _isSatellite = (_basemapMode === 'satellite');
+        btn.classList.toggle('fmap-ctrl-btn--active', _basemapMode !== 'street');
+        var labels = {
+            satellite: { title: 'Satellite · click for Nautical', aria: 'Basemap: Satellite. Click for Nautical' },
+            nautical:  { title: 'Nautical · click for Street',    aria: 'Basemap: Nautical. Click for Street' },
+            street:    { title: 'Street map · click for Satellite', aria: 'Basemap: Street. Click for Satellite' }
+        };
+        var l = labels[_basemapMode] || labels.satellite;
+        btn.title = l.title;
+        btn.setAttribute('aria-label', l.aria);
+        if (iconSat)  iconSat.hidden  = (_basemapMode !== 'satellite');
+        if (iconNaut) iconNaut.hidden = (_basemapMode !== 'nautical');
+        if (iconMap)  iconMap.hidden  = (_basemapMode !== 'street');
     }
 
     function wireMapControls() {
@@ -312,19 +316,34 @@
             });
         }
 
-        // Basemap toggle — satellite (default) ↔ dark street
+        // Basemap toggle — three-way cycle: satellite → nautical → street
         var basemapBtn = document.getElementById('fmap-basemap-btn');
         if (basemapBtn) {
             basemapBtn.addEventListener('click', function () {
                 if (!map) return;
-                _isSatellite = !_isSatellite;
-                // Add new layer before removing old to avoid blank-tile flash
-                var newLayer = L.tileLayer(
-                    _isSatellite ? TILE_SATELLITE.url : TILE_STREET.url,
-                    _isSatellite ? TILE_SATELLITE.opts : TILE_STREET.opts
-                ).addTo(map);
+                var modes = ['satellite', 'nautical', 'street'];
+                var idx = modes.indexOf(_basemapMode);
+                _basemapMode = modes[(idx + 1) % modes.length];
+
+                var cfg = _basemapMode === 'satellite' ? TILE_SATELLITE :
+                          _basemapMode === 'nautical'  ? TILE_NAUTICAL  : TILE_STREET;
+
+                // Add new base layer before removing old to avoid blank-tile flash
+                var newLayer = L.tileLayer(cfg.url, cfg.opts).addTo(map);
                 map.removeLayer(activeTileLayer);
                 activeTileLayer = newLayer;
+
+                // OpenSeaMap seamark overlay — only shown in nautical mode
+                if (_basemapMode === 'nautical') {
+                    if (!_nauticalLayer) {
+                        _nauticalLayer = L.tileLayer(TILE_OPENSEAMAP.url, TILE_OPENSEAMAP.opts);
+                    }
+                    if (!map.hasLayer(_nauticalLayer)) _nauticalLayer.addTo(map);
+                } else {
+                    if (_nauticalLayer && map.hasLayer(_nauticalLayer)) {
+                        map.removeLayer(_nauticalLayer);
+                    }
+                }
                 _syncBasemapBtn();
             });
         }
@@ -1167,11 +1186,17 @@
             m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
-            // In admin mode, clicking an OSM/NOAA spot offers Hide + Override actions
+            // Click handler: admin mode gets spot actions; everyone else gets
+            // the spot detail panel with strike score and best-time information.
             (function (spot) {
                 m.on('click', function () {
-                    if (!adminEditMode) return;
-                    _openAdminSpotActions(spot, m);
+                    if (adminEditMode) {
+                        _openAdminSpotActions(spot, m);
+                        return;
+                    }
+                    if (typeof window._fmapShowSpotDetail === 'function') {
+                        window._fmapShowSpotDetail(spot);
+                    }
                 });
             }(f));
             fishingSpotLayer.addLayer(m);
@@ -4732,27 +4757,22 @@
     }
 
     // ─── Layers popup panel ───────────────────────────────────────────────────
-    // IDs of all layer-row buttons inside the popup (must match the HTML ids).
+    // Only fishing-relevant layers remain.  Non-fishing layers (wildfire, drought,
+    // AQI, sea ice, seismic, terminator, stream gauges, storm reports, NDFD
+    // precipitation/temperature) have been removed from the map UI.
     var LAYER_BTN_IDS = [
         'fmap-marine-warn-btn', 'fmap-storm-tracker-btn', 'fmap-recent-storms-btn',
-        'fmap-storm-rpt-btn', 'fmap-tropical-btn',
-        'fmap-sst-btn', 'fmap-sea-ice-btn', 'fmap-wildfire-btn', 'fmap-seismic-btn',
-        'fmap-drought-btn', 'fmap-precip-btn', 'fmap-ndfd-temp-btn',
-        'fmap-buoy-btn', 'fmap-hfradar-btn',
-        'fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn'
+        'fmap-tropical-btn',
+        'fmap-sst-btn', 'fmap-buoy-btn', 'fmap-hfradar-btn', 'fmap-metar-btn'
     ];
-    var LS_LAYERS_KEY   = 'fmap_layers_v3';   // bumped to clear old saved state
-    var LS_SECTIONS_KEY = 'fmap_sections_v1'; // stores array of collapsed section ids
+    var LS_LAYERS_KEY   = 'fmap_layers_v4';   // bumped — clears old non-fishing state
+    var LS_SECTIONS_KEY = 'fmap_sections_v2';
 
     // Map from section data-section value → layer button IDs it contains
     var SECTION_LAYER_MAP = {
         weather: ['fmap-marine-warn-btn', 'fmap-storm-tracker-btn',
-                  'fmap-recent-storms-btn', 'fmap-storm-rpt-btn', 'fmap-tropical-btn'],
-        ocean:   ['fmap-sst-btn', 'fmap-sea-ice-btn',
-                  'fmap-wildfire-btn', 'fmap-seismic-btn',
-                  'fmap-drought-btn', 'fmap-precip-btn', 'fmap-ndfd-temp-btn',
-                  'fmap-buoy-btn', 'fmap-hfradar-btn'],
-        obs:     ['fmap-metar-btn', 'fmap-gauge-btn', 'fmap-terminator-btn', 'fmap-aqi-btn']
+                  'fmap-recent-storms-btn', 'fmap-tropical-btn'],
+        ocean:   ['fmap-sst-btn', 'fmap-buoy-btn', 'fmap-hfradar-btn', 'fmap-metar-btn']
     };
 
     function _saveLayerState() {
@@ -4767,9 +4787,6 @@
 
     // ─── Per-layer opacity controls ───────────────────────────────────────────
     var _OPACITY_DEFAULTS = {
-        'fmap-drought-btn':   30,
-        'fmap-precip-btn':    35,
-        'fmap-ndfd-temp-btn': 28,
         'fmap-tropical-btn':  20,
     };
     var _layerOpacities = {};
@@ -4780,10 +4797,7 @@
 
     function _getPolygonLayers() {
         return {
-            'fmap-drought-btn':   droughtLayer,
-            'fmap-precip-btn':    precipLayer,
-            'fmap-ndfd-temp-btn': ndfdTempLayer,
-            'fmap-tropical-btn':  tropicalLayer,
+            'fmap-tropical-btn': tropicalLayer,
         };
     }
 
@@ -5347,23 +5361,16 @@
                 wireAdminMode();
                 wireLayersPopup();
                 wireSstLayer();
-                wireWildfireLayer();
-                wireSeaIceLayer();
-                wireSeismicLayer();
                 wireMetarLayer();
-                wireTerminatorLayer();
-                wireGaugeLayer();
-                wireStormReportsLayer();
                 wireRecentStorms();
                 wireMarineWarnings();
                 wireStormTracker();
-                wireAqiLayer();
-                wireDroughtLayer();
-                wirePrecipLayer();
-                wireNdfdTempLayer();
                 wireBuoyLayer();
                 wireHfradarLayer();
                 wireTropicalOutlook();
+                wireCategoryFilterTabs();
+                wireTideChart();
+                wireSpotDetailPanel();
                 restoreLayerState();
                 // Restore cached structure data from the previous page view so
                 // markers appear instantly on refresh instead of waiting for Overpass.
@@ -5456,6 +5463,291 @@
     }
 
     // ─── Init ─────────────────────────────────────────────────────────────────
+    // ─── Category filter tabs ─────────────────────────────────────────────────
+    // Replaces the flat 22-pill list with 4 high-level category tabs:
+    // Structures | Habitats | Amenities | My Spots
+    // Clicking a tab shows only spots in that category; clicking the active tab
+    // again shows all types.
+    function wireCategoryFilterTabs() {
+        var tabs = document.querySelectorAll('.fmap-cat-tab');
+        if (!tabs.length) return;
+
+        function _applyCategory(cat) {
+            _activeCategory = cat;
+            // Compute the union of spot types for the selected category
+            var types = cat ? (_CATEGORY_TYPES[cat] || []) : [];
+            // Update activeSpotTypes used by the existing structure rendering
+            activeSpotTypes = types.slice();
+            // Re-render with new filter
+            renderFishingSpots(_lastRenderedSpotKey ? (spotCache[_lastRenderedSpotKey] || []) : []);
+            // Update AI habitat layer
+            var cachedAI = aiCache[_lastRenderedSpotKey || ''] || [];
+            if (aiPickLayer) renderAIHabitatSpots(cachedAI);
+        }
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var cat = tab.getAttribute('data-cat');
+                var isSame = _activeCategory === cat;
+                // Deselect all tabs
+                tabs.forEach(function (t) { t.setAttribute('aria-pressed', 'false'); });
+                if (isSame) {
+                    // Toggle off — show all
+                    _applyCategory(null);
+                } else {
+                    tab.setAttribute('aria-pressed', 'true');
+                    _applyCategory(cat);
+                }
+            });
+        });
+    }
+
+    // ─── Tide chart + time slider ─────────────────────────────────────────────
+    // Fetches /api/v1/map/score for the saved location and renders a 24-bar
+    // chart.  A range slider lets the user drag to a specific hour; at each
+    // position the spot icons are recoloured (green=Excellent…red=Slow) and
+    // the strike score badge is updated.
+    function wireTideChart() {
+        var chartEl   = document.getElementById('fmap-tide-chart');
+        var sliderEl  = document.getElementById('fmap-tide-slider');
+        var scoreEl   = document.getElementById('fmap-tide-score');
+        var labelEl   = document.getElementById('fmap-tide-score-label');
+        var hourEl    = document.getElementById('fmap-tide-hour');
+        var moonEl    = document.getElementById('fmap-tide-moon');
+        if (!chartEl || !sliderEl) return;
+
+        // Fetch scores for the map's saved location
+        function fetchScores() {
+            var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : null;
+            var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : null;
+            if (!lat || !lng) return;
+
+            if (_scoreAbort) _scoreAbort.abort();
+            _scoreAbort = new AbortController();
+            fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
+                signal: _scoreAbort.signal
+            })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d || !d.ok) return;
+                _scoreData = d.data;
+                renderChart();
+                updateSliderDisplay();
+                if (moonEl) {
+                    moonEl.textContent = (_scoreData.moon_phase || '') +
+                        ' · ' + (_scoreData.solunar_rating || '');
+                }
+            })
+            .catch(function (err) {
+                if (err && err.name !== 'AbortError')
+                    console.warn('[fishing-map] score fetch failed:', err);
+            });
+        }
+
+        // Render 24 bars in the chart SVG container
+        function renderChart() {
+            if (!_scoreData || !chartEl) return;
+            var hours = _scoreData.hours || [];
+            var maxScore = 10;
+            var barW = 100 / 24;
+            var svg = '<svg viewBox="0 0 240 40" preserveAspectRatio="none" ' +
+                      'aria-hidden="true" style="width:100%;height:100%">';
+            var scoreColors = {Excellent:'#22c55e', Good:'#84cc16', Fair:'#f59e0b', Slow:'#ef4444'};
+            hours.forEach(function (h, i) {
+                var color = scoreColors[h.label] || '#64748b';
+                var barH  = (h.score / maxScore) * 36;
+                var x     = i * barW;
+                var y     = 40 - barH;
+                svg += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' +
+                       (barW - 1) + '" height="' + barH +
+                       '" fill="' + color + '" opacity="0.85" rx="1"/>';
+            });
+            svg += '</svg>';
+            chartEl.innerHTML = svg;
+        }
+
+        // Update the badge and hour label for the current slider position
+        function updateSliderDisplay() {
+            if (!_scoreData) return;
+            var hours = _scoreData.hours || [];
+            var h = hours[_tideSliderHour] || {};
+            var score = h.score || 0;
+            var label = h.label || '';
+            if (scoreEl) scoreEl.textContent = score;
+            if (labelEl) {
+                labelEl.textContent = label;
+                labelEl.className = 'fmap-tide-score-label fmap-tide-score-label--' +
+                    (label || 'fair').toLowerCase();
+            }
+            if (hourEl) {
+                var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
+                var h12  = _tideSliderHour % 12 || 12;
+                hourEl.textContent = h12 + ':00 ' + ampm;
+            }
+            // Re-colour spot icons on the map by score
+            _recolourSpotsByScore(score);
+        }
+
+        // Tint all currently visible spot markers to reflect the strike score
+        function _recolourSpotsByScore(score) {
+            if (!fishingSpotLayer) return;
+            var color = score >= 8 ? '#22c55e' :
+                        score >= 6 ? '#84cc16' :
+                        score >= 4 ? '#f59e0b' : '#ef4444';
+            fishingSpotLayer.eachLayer(function (layer) {
+                if (layer._icon) {
+                    layer._icon.style.borderColor = color;
+                    layer._icon.style.boxShadow   = '0 0 6px ' + color + '88';
+                }
+            });
+        }
+
+        // Wire the range slider
+        sliderEl.min   = 0;
+        sliderEl.max   = 23;
+        sliderEl.value = _tideSliderHour;
+        sliderEl.addEventListener('input', function () {
+            _tideSliderHour = parseInt(this.value, 10) || 0;
+            updateSliderDisplay();
+        });
+
+        // Initial fetch — debounce if location changes
+        fetchScores();
+        clearTimeout(_tideChartTimer);
+        _tideChartTimer = setTimeout(fetchScores, 300);
+    }
+
+    // ─── Spot detail panel ────────────────────────────────────────────────────
+    // Shows when the user clicks a spot marker.  Displays: name, type, coords,
+    // current strike score, predicted best times, regulation info, and a
+    // "Save as favorite" toggle.
+    function wireSpotDetailPanel() {
+        var panel      = document.getElementById('fmap-spot-detail');
+        var closeBtn   = document.getElementById('fmap-spot-detail-close');
+        var favBtn     = document.getElementById('fmap-spot-detail-fav');
+        var coordsEl   = document.getElementById('fmap-spot-detail-coords');
+        var typeEl     = document.getElementById('fmap-spot-detail-type');
+        var scoreEl    = document.getElementById('fmap-spot-detail-score');
+        var bestTimesEl = document.getElementById('fmap-spot-detail-best-times');
+        var tipEl      = document.getElementById('fmap-spot-detail-tip');
+        var regEl      = document.getElementById('fmap-spot-detail-regs');
+
+        if (!panel) return;
+
+        // Load persisted favorites from localStorage
+        try {
+            var _favRaw = localStorage.getItem('fmap_fav_spots_v1');
+            _favoriteSpotKeys = _favRaw ? JSON.parse(_favRaw) : {};
+        } catch(e) { _favoriteSpotKeys = {}; }
+
+        function _saveFavorites() {
+            try { localStorage.setItem('fmap_fav_spots_v1', JSON.stringify(_favoriteSpotKeys)); }
+            catch(e) {}
+        }
+
+        // Called by renderFishingSpots() when a spot marker is clicked
+        window._fmapShowSpotDetail = function (spotData) {
+            _activeSpotData = spotData;
+            var key = (spotData.type || 'spot') + ':' + spotData.lat + ':' + spotData.lng;
+
+            if (coordsEl) {
+                coordsEl.textContent = spotData.lat.toFixed(5) + ', ' +
+                                       spotData.lng.toFixed(5);
+                coordsEl.href = 'https://maps.google.com/?q=' + spotData.lat + ',' + spotData.lng;
+            }
+            if (typeEl) {
+                var t = spotData.type || '';
+                typeEl.textContent = (t.charAt(0).toUpperCase() + t.slice(1)).replace(/_/g, ' ');
+            }
+
+            // Strike score for the current slider hour
+            var currentScore = 0;
+            var currentLabel = '';
+            if (_scoreData) {
+                var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
+                currentScore = hd.score || 0;
+                currentLabel = hd.label || '';
+            }
+            if (scoreEl) {
+                scoreEl.textContent = currentScore + '/10 — ' + currentLabel;
+                scoreEl.className = 'fmap-spot-score fmap-spot-score--' +
+                    (currentLabel || 'fair').toLowerCase();
+            }
+
+            // Best times today (Excellent/Good hours from score data)
+            if (bestTimesEl && _scoreData) {
+                var bestHours = (_scoreData.hours || [])
+                    .filter(function (h) { return h.score >= 7; })
+                    .map(function (h) {
+                        var ampm = h.hour < 12 ? 'AM' : 'PM';
+                        var h12  = h.hour % 12 || 12;
+                        return h12 + 'AM'.replace('AM', ampm);
+                    });
+                bestTimesEl.textContent = bestHours.length
+                    ? bestHours.slice(0, 6).join(', ')
+                    : 'No peak windows today';
+            }
+
+            // Fishing tip from the spot
+            if (tipEl) tipEl.textContent = spotData.tip || '';
+
+            // Regulation info (species from type)
+            if (regEl) {
+                regEl.textContent = '';
+                // Simple hint based on spot type
+                var regHints = {
+                    reef:   'Check reef fish size/bag limits for your state.',
+                    wreck:  'Verify artificial reef fishing regulations.',
+                    pier:   'Pier fishing permit may be required at some locations.',
+                    bridge: 'Bridge fishing: check local ordinance for permitted zones.',
+                };
+                regEl.textContent = regHints[spotData.type] || '';
+            }
+
+            // Favorite button state
+            if (favBtn) {
+                var isFav = !!_favoriteSpotKeys[key];
+                favBtn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+                favBtn.title = isFav ? 'Remove from favorites' : 'Save as favorite';
+            }
+
+            panel.hidden = false;
+            panel.classList.add('fmap-spot-detail--open');
+        };
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                panel.hidden = true;
+                panel.classList.remove('fmap-spot-detail--open');
+                _activeSpotData = null;
+            });
+        }
+
+        if (favBtn) {
+            favBtn.addEventListener('click', function () {
+                if (!_activeSpotData) return;
+                var key = (_activeSpotData.type || 'spot') + ':' +
+                          _activeSpotData.lat + ':' + _activeSpotData.lng;
+                var isFav = !!_favoriteSpotKeys[key];
+                if (isFav) {
+                    delete _favoriteSpotKeys[key];
+                } else {
+                    _favoriteSpotKeys[key] = {
+                        type: _activeSpotData.type,
+                        name: _activeSpotData.name || '',
+                        lat:  _activeSpotData.lat,
+                        lng:  _activeSpotData.lng,
+                        savedAt: Date.now()
+                    };
+                }
+                _saveFavorites();
+                favBtn.setAttribute('aria-pressed', !isFav ? 'true' : 'false');
+                favBtn.title = !isFav ? 'Remove from favorites' : 'Save as favorite';
+                showToast(!isFav ? 'Spot saved to favorites' : 'Spot removed from favorites');
+            });
+        }
+    }
+
     function init() {
         var root = document.getElementById('fmap-root');
         if (!root) return;
