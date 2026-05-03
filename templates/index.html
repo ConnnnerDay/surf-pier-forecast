@@ -2354,16 +2354,54 @@ if ('serviceWorker' in navigator) {
             .catch(function () { hideCard(card); });
     })();
 
-    // ── NDFD Wind + Precipitation Forecast collapsible section ───────────────
+    // ── NDFD Wind + Precipitation + Temperature Forecast (single combined request) ──
     var windBlock = document.getElementById('wind-outlook-block');
     var windGrid  = document.getElementById('wind-outlook-grid');
-    if (lat && lng) Promise.all([
-        fetch('/api/weather/wind-forecast?lat='   + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
-        fetch('/api/weather/precip-forecast?lat=' + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
-    ])
-    .then(function (results) {
-        var windData   = results[0];
-        var precipData = results[1];
+    var tempBlock = document.getElementById('temp-forecast-block');
+    var tempGrid  = document.getElementById('temp-forecast-grid');
+    if (lat && lng) fetch('/api/weather/combined-forecast?lat=' + lat + '&lng=' + lng)
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (combined) {
+        if (!combined) { combined = {}; }
+        var windData   = combined.wind;
+        var precipData = combined.precip;
+        var tempData   = combined.temp;
+
+        // ── Render temperature strip ────────────────────────────────────────
+        if (tempData && tempData.days && tempData.days.length) {
+            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            var sub = document.getElementById('temp-forecast-sub');
+            var tHtml = '';
+            tempData.days.forEach(function (d) {
+                var dayLabel = '';
+                if (d.date) {
+                    try {
+                        var parts = d.date.split('-');
+                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
+                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
+                    } catch(e) { dayLabel = d.date; }
+                }
+                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
+                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
+                var hiColor = d.max_f >= 90 ? '#ef4444' : d.max_f >= 80 ? '#f97316'
+                            : d.max_f >= 70 ? '#eab308' : d.max_f >= 55 ? '#22c55e'
+                            : d.max_f >= 40 ? '#38bdf8' : '#818cf8';
+                tHtml += '<div class="temp-fc-cell"><span class="temp-fc-day">' + dayLabel + '</span>'
+                       + '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>'
+                       + '<span class="temp-fc-lo">' + loStr + '</span></div>';
+            });
+            if (tempGrid) tempGrid.innerHTML = tHtml;
+            if (sub && tempData.days[0]) {
+                var d0 = tempData.days[0];
+                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '')
+                                + (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
+            }
+            if (tempBlock) tempBlock.style.display = '';
+        } else {
+            if (tempBlock) tempBlock.style.display = 'none';
+        }
+
+        // ── Render wind + precip grid ────────────────────────────────────────
         if (!windData || !windData.periods || !windData.periods.length) {
             if (windBlock) windBlock.style.display = 'none';
             return;
@@ -2449,61 +2487,6 @@ if ('serviceWorker' in navigator) {
         if (windGrid) windGrid.innerHTML = '<p class="section-unavailable">Wind forecast unavailable</p>';
     });
 
-    // ── NDFD Daily Temperature 5-day strip ───────────────────────────────────
-    var tempBlock = document.getElementById('temp-forecast-block');
-    var tempGrid  = document.getElementById('temp-forecast-grid');
-    if (lat && lng) fetch('/api/weather/temp-forecast?lat=' + lat + '&lng=' + lng)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-            if (!data || !data.days || !data.days.length) {
-                if (tempBlock) tempBlock.style.display = 'none';
-                return;
-            }
-            var block = tempBlock;
-            var grid  = tempGrid;
-            var sub   = document.getElementById('temp-forecast-sub');
-            if (!block || !grid) return;
-
-            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            var html = '';
-            data.days.forEach(function (d) {
-                var dayLabel = '';
-                if (d.date) {
-                    try {
-                        // Parse as UTC date to avoid timezone shift on date-only strings
-                        var parts = d.date.split('-');
-                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
-                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
-                    } catch(e) { dayLabel = d.date; }
-                }
-                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
-                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
-                // Color-code high temp
-                var hiColor = d.max_f >= 90 ? '#ef4444'
-                            : d.max_f >= 80 ? '#f97316'
-                            : d.max_f >= 70 ? '#eab308'
-                            : d.max_f >= 55 ? '#22c55e'
-                            : d.max_f >= 40 ? '#38bdf8'
-                            : '#818cf8';
-                html +=
-                    '<div class="temp-fc-cell">' +
-                    '<span class="temp-fc-day">' + dayLabel + '</span>' +
-                    '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>' +
-                    '<span class="temp-fc-lo">' + loStr + '</span>' +
-                    '</div>';
-            });
-            grid.innerHTML = html;
-
-            if (sub && data.days[0]) {
-                var d0 = data.days[0];
-                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '') +
-                                  (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
-            }
-            block.style.display = '';
-        })
-        .catch(function () {
-            if (tempGrid) tempGrid.innerHTML = '<p class="section-unavailable">Temperature forecast unavailable</p>';
-        });
 
 })();
 </script>

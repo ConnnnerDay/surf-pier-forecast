@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import datetime
 import json as _json_mod
 import logging
@@ -2377,6 +2378,61 @@ def weather_temp_forecast() -> Any:
 
     days = fetch_temp_forecast(lat, lng)
     resp = jsonify({"days": days})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/weather/combined-forecast", methods=["GET"])
+def weather_combined_forecast() -> Any:
+    """Fetch wind, precipitation, and temperature forecasts in a single request.
+
+    Bundles the three NDFD forecast endpoints so the dashboard can make one
+    round trip instead of three.  All three upstream calls run concurrently
+    on the server side via a thread pool.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "wind": { "periods": [...], "count": N },
+            "precip": { "periods": [...], "count": N },
+            "temp": { "days": [...] } }
+
+    Any individual fetch that fails returns null for that key so the client
+    can still render the data it received.
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    with _cf.ThreadPoolExecutor(max_workers=3) as pool:
+        fut_wind   = pool.submit(fetch_wind_forecast, lat, lng)
+        fut_precip = pool.submit(fetch_precip_forecast, lat, lng)
+        fut_temp   = pool.submit(fetch_temp_forecast, lat, lng)
+
+        try:
+            wind_periods = fut_wind.result(timeout=20)
+        except Exception:
+            wind_periods = None
+        try:
+            precip_periods = fut_precip.result(timeout=20)
+        except Exception:
+            precip_periods = None
+        try:
+            temp_days = fut_temp.result(timeout=20)
+        except Exception:
+            temp_days = None
+
+    payload: dict[str, Any] = {
+        "wind":   {"periods": wind_periods, "count": len(wind_periods)} if wind_periods is not None else None,
+        "precip": {"periods": precip_periods, "count": len(precip_periods)} if precip_periods is not None else None,
+        "temp":   {"days": temp_days} if temp_days is not None else None,
+    }
+    resp = jsonify(payload)
     resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
     return resp
 
