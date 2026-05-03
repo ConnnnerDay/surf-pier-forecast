@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import datetime
 import json as _json_mod
 import logging
@@ -2165,6 +2166,40 @@ def weather_air_quality() -> Any:
     return resp
 
 
+@bp.route("/api/weather/env-context", methods=["GET"])
+def weather_env_context() -> Any:
+    """Return air-quality + drought data for a location in one round trip.
+
+    Fetches both ArcGIS feeds in parallel server-side, saving one HTTP RTT vs
+    calling /api/weather/air-quality and /api/weather/drought separately.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "aqi": {...} | null, "drought": {...} | null }
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    with _cf.ThreadPoolExecutor(max_workers=2) as pool:
+        fut_aqi    = pool.submit(fetch_air_quality, lat, lng)
+        fut_drought = pool.submit(fetch_drought, lat, lng)
+        try: aqi_result = fut_aqi.result(timeout=20)
+        except Exception: aqi_result = None
+        try: drought_result = fut_drought.result(timeout=20)
+        except Exception: drought_result = None
+
+    resp = jsonify({"aqi": aqi_result, "drought": drought_result})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+    return resp
+
+
 @bp.route("/api/weather/wind-forecast", methods=["GET"])
 def weather_wind_forecast() -> Any:
     """Return NDFD wind forecast (speed/direction/gust) for a location.
@@ -2377,6 +2412,61 @@ def weather_temp_forecast() -> Any:
 
     days = fetch_temp_forecast(lat, lng)
     resp = jsonify({"days": days})
+    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/weather/combined-forecast", methods=["GET"])
+def weather_combined_forecast() -> Any:
+    """Fetch wind, precipitation, and temperature forecasts in a single request.
+
+    Bundles the three NDFD forecast endpoints so the dashboard can make one
+    round trip instead of three.  All three upstream calls run concurrently
+    on the server side via a thread pool.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: { "wind": { "periods": [...], "count": N },
+            "precip": { "periods": [...], "count": N },
+            "temp": { "days": [...] } }
+
+    Any individual fetch that fails returns null for that key so the client
+    can still render the data it received.
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    with _cf.ThreadPoolExecutor(max_workers=3) as pool:
+        fut_wind   = pool.submit(fetch_wind_forecast, lat, lng)
+        fut_precip = pool.submit(fetch_precip_forecast, lat, lng)
+        fut_temp   = pool.submit(fetch_temp_forecast, lat, lng)
+
+        try:
+            wind_periods = fut_wind.result(timeout=20)
+        except Exception:
+            wind_periods = None
+        try:
+            precip_periods = fut_precip.result(timeout=20)
+        except Exception:
+            precip_periods = None
+        try:
+            temp_days = fut_temp.result(timeout=20)
+        except Exception:
+            temp_days = None
+
+    payload: dict[str, Any] = {
+        "wind":   {"periods": wind_periods, "count": len(wind_periods)} if wind_periods is not None else None,
+        "precip": {"periods": precip_periods, "count": len(precip_periods)} if precip_periods is not None else None,
+        "temp":   {"days": temp_days} if temp_days is not None else None,
+    }
+    resp = jsonify(payload)
     resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
     return resp
 
@@ -2712,6 +2802,71 @@ def map_buoys() -> Any:
 
     buoys = fetch_ndbc_buoys(south, west, north, east)
     resp = jsonify({"buoys": buoys, "count": len(buoys)})
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
+
+
+@bp.route("/api/map/stat-cards", methods=["GET"])
+def map_stat_cards() -> Any:
+    """Return all live stat-card data for a location in one round trip.
+
+    Fetches buoys, METAR, wildfires, stream-gauges, and tropical outlook
+    in parallel server-side.  The client previously fired five independent
+    requests; this endpoint reduces that to one.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: {
+        "buoys":   { "buoys": [...], "count": N },
+        "metar":   { "stations": [...], "count": N },
+        "fires":   { "fires": [...], "count": N },
+        "gauges":  { "gauges": [...], "count": N },
+        "tropical": { "areas": [...], "count": N }
+    }
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    # Bbox pads match what each stat-card JS block previously used.
+    def _bbox(pad: float) -> tuple[float, float, float, float]:
+        return lat - pad, lng - pad, lat + pad, lng + pad
+
+    b_s, b_w, b_n, b_e = _bbox(3.0)   # buoys
+    m_s, m_w, m_n, m_e = _bbox(1.5)   # metar
+    f_s, f_w, f_n, f_e = _bbox(2.5)   # fires
+    g_s, g_w, g_n, g_e = _bbox(1.5)   # stream gauges
+
+    with _cf.ThreadPoolExecutor(max_workers=5) as pool:
+        fut_buoys    = pool.submit(fetch_ndbc_buoys, b_s, b_w, b_n, b_e)
+        fut_metar    = pool.submit(fetch_metar_stations, m_s, m_w, m_n, m_e)
+        fut_fires    = pool.submit(fetch_wildfire_incidents, f_s, f_w, f_n, f_e)
+        fut_gauges   = pool.submit(fetch_stream_gauges, g_s, g_w, g_n, g_e)
+        fut_tropical = pool.submit(fetch_tropical_outlook)
+        try: buoys    = fut_buoys.result(timeout=20)
+        except Exception: buoys = []
+        try: stations = fut_metar.result(timeout=20)
+        except Exception: stations = []
+        try: fires    = fut_fires.result(timeout=20)
+        except Exception: fires = []
+        try: gauges   = fut_gauges.result(timeout=20)
+        except Exception: gauges = []
+        try: areas    = fut_tropical.result(timeout=20)
+        except Exception: areas = []
+
+    resp = jsonify({
+        "buoys":    {"buoys": buoys, "count": len(buoys)},
+        "metar":    {"stations": stations, "count": len(stations)},
+        "fires":    {"fires": fires, "count": len(fires)},
+        "gauges":   {"gauges": gauges, "count": len(gauges)},
+        "tropical": {"areas": areas, "count": len(areas)},
+    })
     resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
     return resp
 

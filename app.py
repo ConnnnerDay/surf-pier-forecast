@@ -25,6 +25,7 @@ import gzip as _gzip
 import hmac
 import logging
 import os
+import pathlib as _pathlib
 import secrets
 import threading as _threading
 import time as _time
@@ -116,6 +117,11 @@ def create_app() -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = (
         16 * 1024 * 1024
     )  # 16 MB hard limit for file uploads
+    # Static files are served with mtime-versioned URLs (via surl() template
+    # helper) so browsers can cache them for 1 year without worrying about
+    # stale assets after a deploy.  The ?v=<mtime> query parameter changes
+    # whenever a file is modified, busting the cache automatically.
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 365 * 24 * 3600
 
     # Session cookie hardening.
     # SECURE: only transmit the cookie over HTTPS.  Guarded by is_secure check
@@ -303,6 +309,32 @@ def create_app() -> Flask:
             session["csrf_token"] = token
         return token
 
+    _static_root = _pathlib.Path(app.static_folder or "static")
+    _surl_cache: dict[str, str] = {}
+
+    def _surl(filename: str) -> str:
+        """Return a versioned static URL for cache busting.
+
+        Appends ``?v=<mtime>`` to the URL so that browsers cache the file for
+        up to 1 year (SEND_FILE_MAX_AGE_DEFAULT).  When the file on disk
+        changes, its mtime changes and the new URL busts the old cache entry.
+        Falls back to a plain ``url_for`` URL if the file cannot be stat'd.
+
+        Results are cached in-process so repeated calls (one per page render)
+        don't stat the filesystem every time.
+        """
+        cached = _surl_cache.get(filename)
+        if cached is not None:
+            return cached
+        base = url_for("static", filename=filename)
+        try:
+            mtime = int((_static_root / filename).stat().st_mtime)
+            result = f"{base}?v={mtime}"
+        except OSError:
+            result = base
+        _surl_cache[filename] = result
+        return result
+
     @app.context_processor
     def _inject_user() -> dict[str, Any]:
         """Make ``user``, CSRF token, and social-login flags available in every template."""
@@ -311,6 +343,7 @@ def create_app() -> Flask:
             "csrf_token": _get_csrf_token(),
             "google_login_enabled": bool(os.environ.get("GOOGLE_CLIENT_ID")),
             "apple_login_enabled": bool(os.environ.get("APPLE_CLIENT_ID")),
+            "surl": _surl,
         }
 
     # -- Security response headers -----------------------------------------

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
+import operator as _operator
 import re
 from typing import Any, Callable, Optional
 
 from locations import get_monthly_water_temps
 from regulations import classify_legality, lookup_regulation, should_hide_from_forecast
-from storage.species_loader import SPECIES_DB
+from storage.species_loader import SPECIES_DB, SPECIES_DB_BY_COAST, SPECIES_DB_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -724,6 +725,14 @@ _NUISANCE_SPECIES: set = {
     "Pigfish",  # Marginal grunt bycatch
     "Ribbonfish (Atlantic cutlassfish)",  # Occasional pier bycatch, not a target
     "Hogchoker",  # Tiny flatfish, no sport or food value
+}
+
+# Coast-partitioned species lists with nuisance species pre-removed.
+# Eliminates the coast + nuisance checks from the ~900-entry hot-path loops in
+# build_species_ranking and build_multiday_outlook (called 4× per forecast).
+_SPECIES_BY_COAST: dict[str, list[dict[str, Any]]] = {
+    coast: [sp for sp in sps if sp["name"] not in _NUISANCE_SPECIES]
+    for coast, sps in SPECIES_DB_BY_COAST.items()
 }
 
 # ---------------------------------------------------------------------------
@@ -2921,11 +2930,6 @@ BAIT_DB: list[dict[str, Any]] = [
     },
 ]
 
-def _temp_distance_score(distance: float, range_size: float) -> float:
-    """Score how far a temperature is from the edge of the ideal range (0–50)."""
-    return max(0.0, 50.0 * (1 - distance / range_size)) if range_size > 0 else 25.0
-
-
 def _score_species(
     sp: dict[str, Any],
     month: int,
@@ -2935,6 +2939,7 @@ def _score_species(
     wave_range: Optional[tuple[float, float]] = None,
     hour: int = 12,
     coast: str = "east",
+    _cond_modifier: Optional["Callable[[str], float]"] = None,
 ) -> float:
     """Compute a bite-likelihood score for a species given current conditions.
 
@@ -2946,6 +2951,10 @@ def _score_species(
     - Conditions modifier (-5 to +15): wind direction, wind speed,
       wave height, and time-of-day adjustments.
     - Presence penalty (-100): water temp outside survivable range.
+
+    When *_cond_modifier* is supplied (a pre-built closure from
+    _build_conditions_modifier), it replaces the _conditions_modifier call so
+    wind/wave constants are not recomputed per species.
     """
     score = 0.0
 
@@ -2957,17 +2966,26 @@ def _score_species(
     if ideal_low <= water_temp <= ideal_high:
         score += 50.0
     elif water_temp < ideal_low:
-        score += _temp_distance_score(ideal_low - water_temp, ideal_low - sp["temp_min"])
+        _d = ideal_low - water_temp
+        _r = ideal_low - sp["temp_min"]
+        # _d/_r is always in [0,1] when water_temp is in [temp_min, ideal_low)
+        score += (50.0 * (1 - _d / _r)) if _r > 0 else 25.0
     else:
-        score += _temp_distance_score(water_temp - ideal_high, sp["temp_max"] - ideal_high)
+        _d = water_temp - ideal_high
+        _r = sp["temp_max"] - ideal_high
+        # _d/_r is always in [0,1] when water_temp is in (ideal_high, temp_max]
+        score += (50.0 * (1 - _d / _r)) if _r > 0 else 25.0
 
-    if month in sp["peak_months"]:
+    if month in sp["_peak_months_set"]:
         score += 30.0
-    elif month in sp["good_months"]:
+    elif month in sp["_good_months_set"]:
         score += 15.0
 
     # --- Dynamic conditions modifiers ---
-    score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
+    if _cond_modifier is not None:
+        score += _cond_modifier(sp["name"])
+    else:
+        score += _conditions_modifier(sp, wind_dir, wind_range, wave_range, hour, coast)
 
     return score
 
@@ -3146,6 +3164,14 @@ _OFFSHORE_DIRS_WEST: set = {"E", "NE", "SE", "ENE", "ESE", "NNE", "SSE"}
 _ONSHORE_DIRS = _ONSHORE_DIRS_EAST
 _OFFSHORE_DIRS = _OFFSHORE_DIRS_EAST
 
+# Union of all species that appear in at least one conditions modifier set.
+# Used for a fast early-return in the _modifier closure: ~90% of species are in
+# none of these sets, so this single lookup avoids 5-9 unnecessary lookups per call.
+_ANY_MODIFIER_SPECIES: frozenset = frozenset(
+    _ONSHORE_WIND_SPECIES | _CALM_WATER_SPECIES | _ROUGH_SURF_SPECIES
+    | _LOW_LIGHT_SPECIES | _DAYTIME_SPECIES
+)
+
 def _conditions_modifier(
     sp: dict[str, Any],
     wind_dir: Optional[str],
@@ -3218,6 +3244,77 @@ def _conditions_modifier(
         modifier += 3.0 if is_midday else (-1.0 if is_low_light else 0.0)
 
     return modifier
+
+
+def _build_conditions_modifier(
+    wind_dir: Optional[str],
+    wind_range: Optional[tuple[float, float]],
+    wave_range: Optional[tuple[float, float]],
+    hour: int,
+    coast: str = "east",
+) -> "Callable[[str], float]":
+    """Return a per-species conditions modifier with all constants pre-evaluated.
+
+    Calling this once per scoring loop (instead of recomputing wind/wave averages
+    and boolean flags inside _conditions_modifier for every species) eliminates
+    ~5 repeated arithmetic operations × 572 species per build_species_ranking call.
+    """
+    onshore_dirs = _ONSHORE_DIRS_WEST if coast == "west" else _ONSHORE_DIRS_EAST
+    offshore_dirs = _OFFSHORE_DIRS_WEST if coast == "west" else _OFFSHORE_DIRS_EAST
+    is_onshore = bool(wind_dir and wind_dir in onshore_dirs)
+    is_offshore = bool(wind_dir and wind_dir in offshore_dirs)
+    wind_avg: Optional[float] = (
+        (wind_range[0] + wind_range[1]) / 2.0 if wind_range else None
+    )
+    wave_avg: Optional[float] = (
+        (wave_range[0] + wave_range[1]) / 2.0 if wave_range else None
+    )
+    is_low_light = hour < 7 or hour > 18
+    is_midday = 10 <= hour <= 15
+
+    def _modifier(name: str) -> float:
+        if name not in _ANY_MODIFIER_SPECIES:
+            return 0.0
+        mod = 0.0
+
+        if wind_dir:
+            if name in _ONSHORE_WIND_SPECIES:
+                mod += 5.0 if is_onshore else (-3.0 if is_offshore else 0.0)
+            elif name in _CALM_WATER_SPECIES:
+                mod += 5.0 if is_offshore else (-3.0 if is_onshore else 0.0)
+
+        if wind_avg is not None:
+            if name in _ROUGH_SURF_SPECIES:
+                if 10 <= wind_avg <= 18:
+                    mod += 3.0
+                elif wind_avg < 5:
+                    mod -= 2.0
+            elif name in _CALM_WATER_SPECIES:
+                if wind_avg < 8:
+                    mod += 3.0
+                elif wind_avg > 15:
+                    mod -= 2.0
+
+        if wave_avg is not None:
+            if name in _ROUGH_SURF_SPECIES:
+                if 2 <= wave_avg <= 5:
+                    mod += 4.0
+                elif wave_avg < 1:
+                    mod -= 1.0
+            elif name in _CALM_WATER_SPECIES:
+                if wave_avg < 2:
+                    mod += 4.0
+                elif wave_avg > 4:
+                    mod -= 2.0
+
+        if name in _LOW_LIGHT_SPECIES:
+            mod += 3.0 if is_low_light else (-1.0 if is_midday else 0.0)
+        elif name in _DAYTIME_SPECIES:
+            mod += 3.0 if is_midday else (-1.0 if is_low_light else 0.0)
+
+        return mod
+
+    return _modifier
 
 # Minimum score to include a species in the forecast.
 # This filters out species that technically survive but aren't really biting.
@@ -3471,17 +3568,15 @@ def build_species_ranking(
     """
     # For wind scoring, Hawaii uses "east" wind patterns (NE trades)
     wind_coast = "west" if coast == "west" else "east"
-    # Pre-compute profile filter once so set unions aren't rebuilt per species.
+    # Pre-compute per-run constants to avoid repeating the same work per species.
     _profile_filter = _build_profile_filter(fishing_types, targets)
+    _cond_modifier = _build_conditions_modifier(
+        wind_dir, wind_range, wave_range, hour, wind_coast
+    )
+    _season = _get_season(month)
+    _is_cold = water_temp < 65
     scored = []
-    for sp in SPECIES_DB:
-        # Skip species from a different coast/region; also skip all species
-        # when coast is None (unknown location — do not show any species).
-        if coast is None or sp.get("coast", "east") != coast:
-            continue
-        # Skip nuisance/bycatch species that aren't worth targeting
-        if sp["name"] in _NUISANCE_SPECIES:
-            continue
+    for sp in _SPECIES_BY_COAST.get(coast, []) if coast else []:
         # Skip species not found in this geographic region
         if fish_region and "regions" in sp and fish_region not in sp["regions"]:
             continue
@@ -3492,17 +3587,17 @@ def build_species_ranking(
             sp,
             month,
             water_temp,
-            wind_dir=wind_dir,
-            wind_range=wind_range,
-            wave_range=wave_range,
-            hour=hour,
-            coast=wind_coast,
+            _cond_modifier=_cond_modifier,
         )
         if s >= SPECIES_SCORE_THRESHOLD:
-            explanation = _get_explanation(sp, month, water_temp)
+            overrides = SEASONAL_EXPLANATIONS.get(sp["name"])
+            if overrides and _season in overrides:
+                explanation = overrides[_season]
+            else:
+                explanation = sp["explanation_cold"] if _is_cold else sp["explanation_warm"]
             scored.append((s, sp, explanation))
 
-    scored.sort(key=lambda x: x[0], reverse=True)
+    scored.sort(key=_operator.itemgetter(0), reverse=True)
 
     # Max possible raw score: 50 (temp) + 30 (season) + 15 (conditions) = 95
     _MAX_RAW_SCORE = 95.0
@@ -3617,7 +3712,7 @@ def build_bait_ranking(
 
         scored_baits.append((bait_score, {"bait": bait_entry["bait"], "notes": notes}))
 
-    scored_baits.sort(key=lambda x: x[0], reverse=True)
+    scored_baits.sort(key=_operator.itemgetter(0), reverse=True)
 
     deduped_rankings: list[dict[str, str]] = []
     seen_baits: set[str] = set()
@@ -3916,7 +4011,7 @@ def build_lure_recommendations(
             )
         )
 
-    scored_lures.sort(key=lambda x: x[0], reverse=True)
+    scored_lures.sort(key=_operator.itemgetter(0), reverse=True)
     return [entry for _, entry in scored_lures]
 
 # ---------------------------------------------------------------------------
@@ -4953,6 +5048,13 @@ SPAWNING_DATA: list[Dict] = [
     },
 ]
 
+# SPAWNING_DATA pre-bucketed by coast — eliminates the coast filter from the
+# build_spawning_report hot loop (109 entries → 8-71 depending on coast).
+_SPAWNING_BY_COAST: dict[str, list[Dict]] = {}
+for _se in SPAWNING_DATA:
+    _SPAWNING_BY_COAST.setdefault(_se["coast"], []).append(_se)
+del _se
+
 def _format_spawn_window(spawn_months: list[int]) -> str:
     """Format a list of spawn months into a human-readable string.
 
@@ -5003,6 +5105,10 @@ def _format_spawn_window(spawn_months: list[int]) -> str:
     # Multiple gaps — list months individually
     return ", ".join(_MA[m] for m in sm)
 
+_SPAWN_STATUS_ORDER: dict[str, int] = {
+    "spawning": 0, "pre_spawn": 1, "temp_pending": 2, "post_spawn": 3
+}
+
 def build_spawning_report(
     month: int,
     water_temp: float,
@@ -5044,13 +5150,17 @@ def build_spawning_report(
     Passing ``None`` returns an empty list — the coast must be known to
     avoid showing wrong-region spawning data.
     """
+    _LEGACY_MAP = {
+        "legal": "open",
+        "catch_and_release": "catch_release",
+        "restricted": "restricted",
+        "out_of_season": "catch_release",
+        "prohibited": "catch_release",
+        "unknown": "unknown",
+    }
     results: list[dict[str, Any]] = []
 
-    for entry in SPAWNING_DATA:
-        # Also filters out all entries when coast is None (unknown location).
-        if coast is None or entry["coast"] != coast:
-            continue
-
+    for entry in _SPAWNING_BY_COAST.get(coast, []) if coast else []:
         spawn_months = entry["spawn_months"]
         temp_low = entry["spawn_temp_low"]
         temp_high = entry["spawn_temp_high"]
@@ -5106,20 +5216,10 @@ def build_spawning_report(
         if should_hide_from_forecast(regulation_status):
             continue
 
-        # Preserve legacy legal_status field for backward-compatibility with
-        # templates that still reference it (e.g. the "Verify seasonal rules" badge).
-        _LEGACY_MAP = {
-            "legal": "open",
-            "catch_and_release": "catch_release",
-            "restricted": "restricted",
-            "out_of_season": "catch_release",
-            "prohibited": "catch_release",
-            "unknown": "unknown",
-        }
         legal_status = _LEGACY_MAP.get(regulation_status, "unknown")
 
         # Resolve display categories from the canonical dict (or JSON field).
-        spawn_sp = next((s for s in SPECIES_DB if s["name"] == entry["name"]), None)
+        spawn_sp = SPECIES_DB_MAP.get(entry["name"])
         sp_categories: list[str] = (
             (spawn_sp.get("categories") if spawn_sp else None)
             or _SPECIES_CATEGORIES.get(entry["name"])
@@ -5142,9 +5242,7 @@ def build_spawning_report(
             }
         )
 
-    # Sort priority: spawning → pre_spawn → temp_pending → post_spawn; alpha within group
-    _STATUS_ORDER = {"spawning": 0, "pre_spawn": 1, "temp_pending": 2, "post_spawn": 3}
-    results.sort(key=lambda x: (_STATUS_ORDER.get(x["status"], 9), x["name"]))
+    results.sort(key=lambda x: (_SPAWN_STATUS_ORDER.get(x["status"], 9), x["name"]))
     return results
 
 _MONTH_ABBR = [
@@ -5292,8 +5390,7 @@ def build_species_calendar(
     Temperature feasibility is also considered: months where the regional
     average water temp falls outside the species' temp range are marked empty.
     """
-    # Build a name → SPECIES_DB entry lookup
-    db_map: dict[str, dict[str, Any]] = {sp["name"]: sp for sp in SPECIES_DB}
+    db_map = SPECIES_DB_MAP  # pre-built at import; ~900 entries, never changes
 
     # Get regional water temps (12 months) for temp filtering
     monthly_temps: dict[int, float] = {}

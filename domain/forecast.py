@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures as _cf
 import logging
 import math
+import operator as _operator
 import os
 import re
 import time
@@ -56,6 +57,8 @@ from domain.species import (
     _OFFSHORE_DIRS_WEST,
     _ONSHORE_DIRS_EAST,
     _ONSHORE_DIRS_WEST,
+    _SPECIES_BY_COAST,
+    _build_conditions_modifier,
     _build_profile_filter,
     _get_technique_tip,
     _score_species,
@@ -85,13 +88,7 @@ def _profile_cache_key(forecast: dict, location: dict | None, profile: dict) -> 
     loc_id = (location or {}).get("id", "")
     generated_at = forecast.get("generated_at", "")
     tz_name = (location or {}).get("timezone", "America/New_York")
-    try:
-        import zoneinfo
-        tz = zoneinfo.ZoneInfo(tz_name)
-    except Exception:
-        from datetime import timezone
-        tz = timezone.utc
-    from datetime import datetime
+    tz = _safe_zone(tz_name)
     hour = datetime.now(tz).hour
 
     def _freeze(v: object) -> object:
@@ -813,6 +810,11 @@ def build_multiday_outlook(
         return (low_ft, high_ft)
 
     _profile_filter = _build_profile_filter(fishing_types, targets)
+    coast = _derive_coast(location)
+    _coast_species = _SPECIES_BY_COAST.get(coast, []) if coast else []
+    outlook_fish_region = (location or {}).get("fish_region", "")
+    _monthly_temps = get_monthly_water_temps(location) if location else None
+    wind_coast = "west" if coast == "west" else "east"
 
     days = []
     for offset_days in range(1, 4):  # tomorrow, day after, day 3
@@ -952,10 +954,8 @@ def build_multiday_outlook(
                 wave_range = wave_avg
 
         # --- Region + water temperature context ---
-        coast = _derive_coast(location)
-        if location:
-            monthly_temps = get_monthly_water_temps(location)
-            future_water_temp = float(monthly_temps[future_month])
+        if _monthly_temps is not None:
+            future_water_temp = float(_monthly_temps[future_month])
         else:
             future_water_temp = float(MONTHLY_AVG_WATER_TEMP_F[future_month])
 
@@ -992,13 +992,12 @@ def build_multiday_outlook(
             verdict = "Unknown"
 
         # --- Top species for this day ---
-        wind_coast = "west" if coast == "west" else "east"
-        outlook_fish_region = (location or {}).get("fish_region", "")
+        _day_cond_modifier = _build_conditions_modifier(
+            wind_dir_day or None, wind_range, wave_range, 12, wind_coast
+        )
         top_species_names: list[str] = []
         species_scores: list[tuple[str, float]] = []
-        for sp in SPECIES_DB:
-            if coast is None or sp.get("coast", "east") != coast:
-                continue
+        for sp in _coast_species:
             if (
                 outlook_fish_region
                 and "regions" in sp
@@ -1011,15 +1010,11 @@ def build_multiday_outlook(
                 sp,
                 future_month,
                 future_water_temp,
-                wind_dir=None,
-                wind_range=wind_range,
-                wave_range=wave_range,
-                hour=12,
-                coast=wind_coast,
+                _cond_modifier=_day_cond_modifier,
             )
             if s > 20:
                 species_scores.append((sp["name"], s))
-        species_scores.sort(key=lambda x: x[1], reverse=True)
+        species_scores.sort(key=_operator.itemgetter(1), reverse=True)
         top_species_names = [name for name, _ in species_scores[:5]]
 
         days.append(

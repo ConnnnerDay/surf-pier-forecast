@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     {% include 'partials/_head_fonts.html' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="stylesheet" href="{{ surl('style.css') }}">
+    <link rel="manifest" href="{{ surl('manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.svg') }}">
+    <link rel="apple-touch-icon" href="{{ surl('icons/icon-192.svg') }}">
     <script>
     (function() {
         var t = localStorage.getItem('theme');
@@ -29,6 +29,11 @@
     <meta property="og:image" content="{{ url_for('static', filename='icons/icon-192.svg', _external=True) }}">
     {% if share_id %}<meta property="og:url" content="{{ url_for('views.shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
     <meta name="twitter:card" content="summary">
+    {% if location_lat and location_lng %}
+    <link rel="preload" as="fetch" crossorigin href="/api/weather/env-context?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    <link rel="preload" as="fetch" crossorigin href="/api/weather/combined-forecast?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    <link rel="preload" as="fetch" crossorigin href="/api/map/stat-cards?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    {% endif %}
 </head>
 <body class="forecast-page has-app-header">
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -2084,10 +2089,10 @@ if ('serviceWorker' in navigator) {
     } catch (e) {}
 })();
 </script>
-<script src="{{ url_for('static', filename='js/collapsibles.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/layout-editor.js') }}" defer></script>
+<script src="{{ surl('js/collapsibles.js') }}" defer></script>
+<script src="{{ surl('js/layout-editor.js') }}" defer></script>
 <script>window.IS_LOGGED_IN = {{ 'true' if g.user else 'false' }};</script>
-<script src="{{ url_for('static', filename='js/fishing_map.js') }}" defer></script>
+<script src="{{ surl('js/fishing_map.js') }}" defer></script>
 
 <script>
 /* ── Auto-detected location toast ────────────────────────────────────────── */
@@ -2140,230 +2145,224 @@ if ('serviceWorker' in navigator) {
     if (!lat || !lng) {
         // No location — immediately hide all location-dependent live cards
         ['aqi-stat-card','drought-stat-card','ndbc-stat-card',
-         'gauge-stat-card','metar-stat-card','wildfire-stat-card'].forEach(function (id) {
+         'gauge-stat-card','metar-stat-card','wildfire-stat-card','tropical-stat-card'].forEach(function (id) {
             hideCard(document.getElementById(id));
         });
     } else {
-        // ── Air Quality stat card ─────────────────────────────────────────────
+        // ── Air Quality + Drought stat cards (one combined request) ───────────
         (function () {
-            var card  = document.getElementById('aqi-stat-card');
-            var valEl = document.getElementById('aqi-stat-value');
-            var detEl = document.getElementById('aqi-stat-detail');
-            fetch('/api/weather/air-quality?lat=' + lat + '&lng=' + lng)
+            var aqiCard   = document.getElementById('aqi-stat-card');
+            var aqiVal    = document.getElementById('aqi-stat-value');
+            var aqiDet    = document.getElementById('aqi-stat-detail');
+            var drtCard   = document.getElementById('drought-stat-card');
+            var drtVal    = document.getElementById('drought-stat-value');
+            var drtDet    = document.getElementById('drought-stat-detail');
+            fetch('/api/weather/env-context?lat=' + lat + '&lng=' + lng)
                 .then(function (r) { return r.ok ? r.json() : null; })
                 .then(function (data) {
-                    if (!data || !data.aqi) { hideCard(card); return; }
+                    if (!data) { hideCard(aqiCard); hideCard(drtCard); return; }
+
                     var aqi = data.aqi;
-                    valEl.innerHTML =
-                        '<span class="aqi-badge" style="background:' + aqi.color + '">' +
-                        aqi.category + '</span>';
-                    var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
-                    detEl.innerHTML =
-                        aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
-                    showCard(card);
-                })
-                .catch(function () { hideCard(card); });
-        })();
-
-        // ── US Drought Monitor stat card ──────────────────────────────────────
-        (function () {
-            var card  = document.getElementById('drought-stat-card');
-            var valEl = document.getElementById('drought-stat-value');
-            var detEl = document.getElementById('drought-stat-detail');
-            fetch('/api/weather/drought?lat=' + lat + '&lng=' + lng)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data || data.drought === null || data.drought === undefined) { hideCard(card); return; }
-                    var d = data.drought;
-                    if (!d || d.dm === -1) { hideCard(card); return; }
-                    valEl.innerHTML =
-                        '<span class="drought-badge" style="background:' + d.color + ';color:' +
-                        (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
-                    detEl.textContent = d.label + (d.date ? ' · ' + d.date : '');
-                    showCard(card);
-                })
-                .catch(function () { hideCard(card); });
-        })();
-
-        // ── Nearest NDBC buoy stat card ───────────────────────────────────────
-        (function () {
-            var card  = document.getElementById('ndbc-stat-card');
-            var valEl = document.getElementById('ndbc-stat-value');
-            var detEl = document.getElementById('ndbc-stat-detail');
-            var pad = 3.0;
-            var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
-            var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
-            fetch('/api/map/buoys?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data || !data.buoys || !data.buoys.length) { hideCard(card); return; }
-                    var best = null, bestD = Infinity;
-                    data.buoys.forEach(function (b) {
-                        var d = Math.pow(b.lat - lat, 2) + Math.pow(b.lng - lng, 2);
-                        if (d < bestD) { bestD = d; best = b; }
-                    });
-                    if (!best) { hideCard(card); return; }
-                    if (best.wave_ht_ft != null) {
-                        valEl.textContent = best.wave_ht_ft.toFixed(1) + ' ft waves';
-                    } else if (best.water_temp_f != null) {
-                        valEl.textContent = best.water_temp_f.toFixed(1) + '\u00b0F water';
+                    if (aqi) {
+                        aqiVal.innerHTML =
+                            '<span class="aqi-badge" style="background:' + aqi.color + '">' +
+                            aqi.category + '</span>';
+                        var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
+                        aqiDet.innerHTML =
+                            aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
+                        showCard(aqiCard);
                     } else {
-                        valEl.textContent = best.name || best.id;
+                        hideCard(aqiCard);
                     }
-                    var parts = [];
-                    if (best.wave_ht_ft != null && best.water_temp_f != null)
-                        parts.push(best.water_temp_f.toFixed(0) + '\u00b0F water');
-                    if (best.wind_kt != null)
-                        parts.push((best.wind_dir || '') + ' ' + best.wind_kt.toFixed(0) + ' kt wind');
-                    if (best.period_s != null)
-                        parts.push(best.period_s.toFixed(0) + 's period');
-                    parts.push((Math.sqrt(bestD) * 111).toFixed(0) + ' km away');
-                    detEl.textContent = parts.join(' · ');
-                    showCard(card);
-                })
-                .catch(function () { hideCard(card); });
-        })();
 
-        // ── Nearest METAR station stat card ───────────────────────────────────
-        (function () {
-            var card  = document.getElementById('metar-stat-card');
-            var valEl = document.getElementById('metar-stat-value');
-            var detEl = document.getElementById('metar-stat-detail');
-            var pad = 1.5;
-            var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
-            var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
-            fetch('/api/map/metar?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data || !data.stations || !data.stations.length) { hideCard(card); return; }
-                    var best = null, bestD = Infinity;
-                    data.stations.forEach(function (st) {
-                        var d = Math.pow(st.lat - lat, 2) + Math.pow(st.lng - lng, 2);
-                        if (d < bestD) { bestD = d; best = st; }
-                    });
-                    if (!best) { hideCard(card); return; }
-                    var catColor = best.cat_color || '#9ca3af';
-                    var catLabel = best.flight_cat || '—';
-                    var visStr   = '';
-                    if (best.visibility_m != null) {
-                        var visMi = best.visibility_m / 1609.34;
-                        visStr = visMi >= 10 ? '10+ mi vis' :
-                                 (visMi >= 1 ? visMi.toFixed(1) + ' mi vis' : best.visibility_m + 'm vis');
+                    var d = data.drought;
+                    if (d && d.dm !== -1) {
+                        drtVal.innerHTML =
+                            '<span class="drought-badge" style="background:' + d.color + ';color:' +
+                            (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
+                        drtDet.textContent = d.label + (d.date ? ' · ' + d.date : '');
+                        showCard(drtCard);
+                    } else {
+                        hideCard(drtCard);
                     }
-                    valEl.innerHTML =
-                        '<span class="drought-badge" style="background:' + catColor + ';color:#fff">' +
-                        catLabel + '</span>' +
-                        (visStr ? ' <small style="opacity:.75">' + visStr + '</small>' : '');
-                    var parts = [];
-                    if (best.weather && best.weather !== 'N/A') parts.push(best.weather);
-                    else if (best.sky && best.sky !== 'N/A') parts.push(best.sky);
-                    if (best.temp_f != null) parts.push(best.temp_f.toFixed(0) + '°F');
-                    if (best.icao) parts.push(best.icao);
-                    parts.push((Math.sqrt(bestD) * 111).toFixed(0) + ' km away');
-                    detEl.textContent = parts.join(' · ');
-                    showCard(card);
                 })
-                .catch(function () { hideCard(card); });
+                .catch(function () { hideCard(aqiCard); hideCard(drtCard); });
         })();
 
-        // ── Active wildfires nearby stat card ─────────────────────────────────
+        // ── Buoys, METAR, Wildfires, Gauges, Tropical (one combined request) ─────
         (function () {
-            var card  = document.getElementById('wildfire-stat-card');
-            var valEl = document.getElementById('wildfire-stat-value');
-            var detEl = document.getElementById('wildfire-stat-detail');
-            var pad = 2.5;
-            var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
-            var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
-            fetch('/api/map/wildfires?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data || !data.fires || !data.fires.length) { hideCard(card); return; }
-                    var fires = data.fires;
-                    var largest = fires.reduce(function (a, b) { return (b.acres || 0) > (a.acres || 0) ? b : a; }, fires[0]);
-                    var totalAcres = fires.reduce(function (s, f) { return s + (f.acres || 0); }, 0);
-                    valEl.innerHTML =
-                        '<span class="drought-badge" style="background:#f97316;color:#fff">' +
-                        fires.length + (fires.length === 1 ? ' fire' : ' fires') + '</span>';
-                    var detail = totalAcres > 0
-                        ? (totalAcres >= 1000 ? (totalAcres / 1000).toFixed(0) + 'k' : totalAcres.toFixed(0)) + ' total acres'
-                        : '';
-                    if (largest && largest.name) detail += (detail ? ' · ' : '') + largest.name;
-                    detEl.textContent = detail || 'active wildfires in area';
-                    showCard(card);
-                })
-                .catch(function () { hideCard(card); });
-        })();
+            var buoyCard = document.getElementById('ndbc-stat-card');
+            var buoyVal  = document.getElementById('ndbc-stat-value');
+            var buoyDet  = document.getElementById('ndbc-stat-detail');
+            var metCard  = document.getElementById('metar-stat-card');
+            var metVal   = document.getElementById('metar-stat-value');
+            var metDet   = document.getElementById('metar-stat-detail');
+            var fireCard = document.getElementById('wildfire-stat-card');
+            var fireVal  = document.getElementById('wildfire-stat-value');
+            var fireDet  = document.getElementById('wildfire-stat-detail');
+            var gaugeCard = document.getElementById('gauge-stat-card');
+            var gaugeVal  = document.getElementById('gauge-stat-value');
+            var gaugeDet  = document.getElementById('gauge-stat-detail');
+            var tropCard = document.getElementById('tropical-stat-card');
+            var tropVal  = document.getElementById('tropical-stat-value');
+            var tropDet  = document.getElementById('tropical-stat-detail');
 
-        // ── Nearest stream gauge (flood stage) stat card ──────────────────────
-        (function () {
-            var card  = document.getElementById('gauge-stat-card');
-            var valEl = document.getElementById('gauge-stat-value');
-            var detEl = document.getElementById('gauge-stat-detail');
-            var pad = 1.5;
-            var s = (lat - pad).toFixed(4), n = (lat + pad).toFixed(4);
-            var w = (lng - pad).toFixed(4), e = (lng + pad).toFixed(4);
-            fetch('/api/map/stream-gauges?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data || !data.gauges || !data.gauges.length) { hideCard(card); return; }
-                    var best = null, bestD = Infinity;
-                    data.gauges.forEach(function (g) {
-                        if (g.status_class === undefined || g.status_class === null) return;
-                        var d = Math.pow(g.lat - lat, 2) + Math.pow(g.lng - lng, 2);
-                        if (d < bestD) { bestD = d; best = g; }
-                    });
-                    if (!best) { hideCard(card); return; }
-                    var sc    = best.status_class || 0;
-                    var color = best.status_color || '#9ca3af';
-                    var label = best.status || 'Normal';
-                    valEl.innerHTML =
-                        '<span class="drought-badge" style="background:' + color + ';color:' +
-                        (sc >= 2 ? '#fff' : '#1a1a1a') + '">' + label + '</span>';
-                    var detail = best.name ? best.name.substring(0, 28) : best.id;
-                    if (best.stage_ft != null) detail += ' · ' + best.stage_ft.toFixed(1) + ' ft';
-                    detail += ' · ' + (Math.sqrt(bestD) * 111).toFixed(0) + ' km away';
-                    detEl.textContent = detail;
-                    showCard(card);
-                })
-                .catch(function () { hideCard(card); });
-        })();
-    }
-
-    // ── Tropical Outlook stat card (no location required) ────────────────────
-    (function () {
-        var card  = document.getElementById('tropical-stat-card');
-        var valEl = document.getElementById('tropical-stat-value');
-        var detEl = document.getElementById('tropical-stat-detail');
-        fetch('/api/map/tropical-outlook')
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!data || !data.areas || !data.areas.length) { hideCard(card); return; }
+            function renderTropical(data) {
+                if (!data || !data.areas || !data.areas.length) { hideCard(tropCard); return; }
                 var areas = data.areas;
                 var high  = areas.filter(function (a) { return a.probability === 'high'; }).length;
                 var med   = areas.filter(function (a) { return a.probability === 'medium'; }).length;
                 var total = areas.length;
                 var topColor = high ? '#ef4444' : med ? '#f97316' : '#eab308';
                 var topLabel = high ? 'High' : med ? 'Medium' : 'Low';
-                valEl.innerHTML =
-                    '<span class="drought-badge" style="background:' + topColor + ';color:#fff">' +
-                    topLabel + '</span>';
-                detEl.textContent = total + ' active area' + (total !== 1 ? 's' : '') +
+                tropVal.innerHTML = '<span class="drought-badge" style="background:' + topColor + ';color:#fff">' + topLabel + '</span>';
+                tropDet.textContent = total + ' active area' + (total !== 1 ? 's' : '') +
                     (high ? ' · ' + high + ' high prob' : med ? ' · ' + med + ' medium prob' : '');
-                showCard(card);
-            })
-            .catch(function () { hideCard(card); });
-    })();
+                showCard(tropCard);
+            }
 
-    // ── NDFD Wind + Precipitation Forecast collapsible section ───────────────
+            fetch('/api/map/stat-cards?lat=' + lat + '&lng=' + lng)
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (!data) {
+                        [buoyCard, metCard, fireCard, gaugeCard, tropCard].forEach(hideCard);
+                        return;
+                    }
+
+                    // ── Buoy ──────────────────────────────────────────────────
+                    var buoys = data.buoys && data.buoys.buoys;
+                    if (buoys && buoys.length) {
+                        var best = null, bestD = Infinity;
+                        buoys.forEach(function (b) {
+                            var d = Math.pow(b.lat - lat, 2) + Math.pow(b.lng - lng, 2);
+                            if (d < bestD) { bestD = d; best = b; }
+                        });
+                        if (best) {
+                            if (best.wave_ht_ft != null) buoyVal.textContent = best.wave_ht_ft.toFixed(1) + ' ft waves';
+                            else if (best.water_temp_f != null) buoyVal.textContent = best.water_temp_f.toFixed(1) + '\u00b0F water';
+                            else buoyVal.textContent = best.name || best.id;
+                            var bparts = [];
+                            if (best.wave_ht_ft != null && best.water_temp_f != null) bparts.push(best.water_temp_f.toFixed(0) + '\u00b0F water');
+                            if (best.wind_kt != null) bparts.push((best.wind_dir || '') + ' ' + best.wind_kt.toFixed(0) + ' kt wind');
+                            if (best.period_s != null) bparts.push(best.period_s.toFixed(0) + 's period');
+                            bparts.push((Math.sqrt(bestD) * 111).toFixed(0) + ' km away');
+                            buoyDet.textContent = bparts.join(' \u00b7 ');
+                            showCard(buoyCard);
+                        } else { hideCard(buoyCard); }
+                    } else { hideCard(buoyCard); }
+
+                    // ── METAR ─────────────────────────────────────────────────
+                    var stations = data.metar && data.metar.stations;
+                    if (stations && stations.length) {
+                        var best = null, bestD = Infinity;
+                        stations.forEach(function (st) {
+                            var d = Math.pow(st.lat - lat, 2) + Math.pow(st.lng - lng, 2);
+                            if (d < bestD) { bestD = d; best = st; }
+                        });
+                        if (best) {
+                            var catColor = best.cat_color || '#9ca3af';
+                            metVal.innerHTML = '<span class="drought-badge" style="background:' + catColor + ';color:#fff">' + (best.flight_cat || best.cat || 'N/A') + '</span>';
+                            var mparts = [];
+                            if (best.temp_f != null) mparts.push(best.temp_f.toFixed(0) + '\u00b0F');
+                            if (best.wind_kt != null) mparts.push((best.wind_dir || '') + ' ' + best.wind_kt.toFixed(0) + ' kt');
+                            if (best.vis_mi != null) mparts.push(best.vis_mi.toFixed(0) + ' mi vis');
+                            mparts.push((Math.sqrt(bestD) * 111).toFixed(0) + ' km away');
+                            metDet.textContent = mparts.join(' \u00b7 ');
+                            showCard(metCard);
+                        } else { hideCard(metCard); }
+                    } else { hideCard(metCard); }
+
+                    // ── Wildfires ─────────────────────────────────────────────
+                    var fires = data.fires && data.fires.fires;
+                    if (fires && fires.length) {
+                        var largest = fires.reduce(function (a, b) { return (b.acres || 0) > (a.acres || 0) ? b : a; }, fires[0]);
+                        var totalAcres = fires.reduce(function (s, f) { return s + (f.acres || 0); }, 0);
+                        fireVal.innerHTML = '<span class="drought-badge" style="background:#f97316;color:#fff">' + fires.length + (fires.length === 1 ? ' fire' : ' fires') + '</span>';
+                        var fdet = totalAcres > 0 ? (totalAcres >= 1000 ? (totalAcres / 1000).toFixed(0) + 'k' : totalAcres.toFixed(0)) + ' total acres' : '';
+                        if (largest && largest.name) fdet += (fdet ? ' \u00b7 ' : '') + largest.name;
+                        fireDet.textContent = fdet || 'active wildfires in area';
+                        showCard(fireCard);
+                    } else { hideCard(fireCard); }
+
+                    // ── Stream Gauge ──────────────────────────────────────────
+                    var gauges = data.gauges && data.gauges.gauges;
+                    if (gauges && gauges.length) {
+                        var best = null, bestD = Infinity;
+                        gauges.forEach(function (g) {
+                            if (g.status_class === undefined || g.status_class === null) return;
+                            var d = Math.pow(g.lat - lat, 2) + Math.pow(g.lng - lng, 2);
+                            if (d < bestD) { bestD = d; best = g; }
+                        });
+                        if (best) {
+                            var sc = best.status_class || 0;
+                            var color = best.status_color || '#9ca3af';
+                            var label = best.status || 'Normal';
+                            gaugeVal.innerHTML = '<span class="drought-badge" style="background:' + color + ';color:' + (sc >= 2 ? '#fff' : '#1a1a1a') + '">' + label + '</span>';
+                            var gdet = best.name ? best.name.substring(0, 28) : best.id;
+                            if (best.stage_ft != null) gdet += ' \u00b7 ' + best.stage_ft.toFixed(1) + ' ft';
+                            gdet += ' \u00b7 ' + (Math.sqrt(bestD) * 111).toFixed(0) + ' km away';
+                            gaugeDet.textContent = gdet;
+                            showCard(gaugeCard);
+                        } else { hideCard(gaugeCard); }
+                    } else { hideCard(gaugeCard); }
+
+                    // ── Tropical Outlook ──────────────────────────────────────
+                    renderTropical(data.tropical);
+                })
+                .catch(function () {
+                    [buoyCard, metCard, fireCard, gaugeCard, tropCard].forEach(hideCard);
+                });
+        })();
+    }
+
+    // ── NDFD Wind + Precipitation + Temperature Forecast (single combined request) ──
     var windBlock = document.getElementById('wind-outlook-block');
     var windGrid  = document.getElementById('wind-outlook-grid');
-    if (lat && lng) Promise.all([
-        fetch('/api/weather/wind-forecast?lat='   + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
-        fetch('/api/weather/precip-forecast?lat=' + lat + '&lng=' + lng).then(function (r) { return r.ok ? r.json() : null; }),
-    ])
-    .then(function (results) {
-        var windData   = results[0];
-        var precipData = results[1];
+    var tempBlock = document.getElementById('temp-forecast-block');
+    var tempGrid  = document.getElementById('temp-forecast-grid');
+    if (lat && lng) fetch('/api/weather/combined-forecast?lat=' + lat + '&lng=' + lng)
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (combined) {
+        if (!combined) { combined = {}; }
+        var windData   = combined.wind;
+        var precipData = combined.precip;
+        var tempData   = combined.temp;
+
+        // ── Render temperature strip ────────────────────────────────────────
+        if (tempData && tempData.days && tempData.days.length) {
+            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            var sub = document.getElementById('temp-forecast-sub');
+            var tHtml = '';
+            tempData.days.forEach(function (d) {
+                var dayLabel = '';
+                if (d.date) {
+                    try {
+                        var parts = d.date.split('-');
+                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
+                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
+                    } catch(e) { dayLabel = d.date; }
+                }
+                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
+                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
+                var hiColor = d.max_f >= 90 ? '#ef4444' : d.max_f >= 80 ? '#f97316'
+                            : d.max_f >= 70 ? '#eab308' : d.max_f >= 55 ? '#22c55e'
+                            : d.max_f >= 40 ? '#38bdf8' : '#818cf8';
+                tHtml += '<div class="temp-fc-cell"><span class="temp-fc-day">' + dayLabel + '</span>'
+                       + '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>'
+                       + '<span class="temp-fc-lo">' + loStr + '</span></div>';
+            });
+            if (tempGrid) tempGrid.innerHTML = tHtml;
+            if (sub && tempData.days[0]) {
+                var d0 = tempData.days[0];
+                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '')
+                                + (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
+            }
+            if (tempBlock) tempBlock.style.display = '';
+        } else {
+            if (tempBlock) tempBlock.style.display = 'none';
+        }
+
+        // ── Render wind + precip grid ────────────────────────────────────────
         if (!windData || !windData.periods || !windData.periods.length) {
             if (windBlock) windBlock.style.display = 'none';
             return;
@@ -2449,61 +2448,6 @@ if ('serviceWorker' in navigator) {
         if (windGrid) windGrid.innerHTML = '<p class="section-unavailable">Wind forecast unavailable</p>';
     });
 
-    // ── NDFD Daily Temperature 5-day strip ───────────────────────────────────
-    var tempBlock = document.getElementById('temp-forecast-block');
-    var tempGrid  = document.getElementById('temp-forecast-grid');
-    if (lat && lng) fetch('/api/weather/temp-forecast?lat=' + lat + '&lng=' + lng)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-            if (!data || !data.days || !data.days.length) {
-                if (tempBlock) tempBlock.style.display = 'none';
-                return;
-            }
-            var block = tempBlock;
-            var grid  = tempGrid;
-            var sub   = document.getElementById('temp-forecast-sub');
-            if (!block || !grid) return;
-
-            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            var html = '';
-            data.days.forEach(function (d) {
-                var dayLabel = '';
-                if (d.date) {
-                    try {
-                        // Parse as UTC date to avoid timezone shift on date-only strings
-                        var parts = d.date.split('-');
-                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
-                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
-                    } catch(e) { dayLabel = d.date; }
-                }
-                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
-                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
-                // Color-code high temp
-                var hiColor = d.max_f >= 90 ? '#ef4444'
-                            : d.max_f >= 80 ? '#f97316'
-                            : d.max_f >= 70 ? '#eab308'
-                            : d.max_f >= 55 ? '#22c55e'
-                            : d.max_f >= 40 ? '#38bdf8'
-                            : '#818cf8';
-                html +=
-                    '<div class="temp-fc-cell">' +
-                    '<span class="temp-fc-day">' + dayLabel + '</span>' +
-                    '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>' +
-                    '<span class="temp-fc-lo">' + loStr + '</span>' +
-                    '</div>';
-            });
-            grid.innerHTML = html;
-
-            if (sub && data.days[0]) {
-                var d0 = data.days[0];
-                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '') +
-                                  (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
-            }
-            block.style.display = '';
-        })
-        .catch(function () {
-            if (tempGrid) tempGrid.innerHTML = '<p class="section-unavailable">Temperature forecast unavailable</p>';
-        });
 
 })();
 </script>

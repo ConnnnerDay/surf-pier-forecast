@@ -28,22 +28,29 @@ _session.headers.update({"User-Agent": "surf-pier-forecast/1.0 (+https://github.
 # background refreshes for the same location overlap (each fires 20+ GET requests).
 # Only 2xx responses are cached; TTL is short enough that stale data isn't a concern
 # given the 4-hour forecast TTL.
-_RESPONSE_CACHE: dict[str, tuple[float, int, bytes, Optional[str]]] = {}
+_RESPONSE_CACHE: dict[tuple, tuple[float, int, bytes, Optional[str]]] = {}
 _RESPONSE_CACHE_TTL = 600  # 10 minutes
 _RESPONSE_CACHE_MAX = 128
 _RESPONSE_CACHE_LOCK = threading.Lock()
 _RESPONSE_CACHE_MAX_BYTES = 512 * 1024  # skip caching responses > 512 KB
 
 
-def _cache_get(url: str) -> Optional[requests.Response]:
+def _cache_key(url: str, headers: Optional[dict[str, str]]) -> tuple:
+    if not headers:
+        return (url,)
+    return (url, tuple(sorted(headers.items())))
+
+
+def _cache_get(url: str, headers: Optional[dict[str, str]]) -> Optional[requests.Response]:
+    key = _cache_key(url, headers)
     with _RESPONSE_CACHE_LOCK:
-        entry = _RESPONSE_CACHE.get(url)
+        entry = _RESPONSE_CACHE.get(key)
     if entry is None:
         return None
     cached_at, status_code, content, encoding = entry
     if time.time() - cached_at > _RESPONSE_CACHE_TTL:
         with _RESPONSE_CACHE_LOCK:
-            _RESPONSE_CACHE.pop(url, None)
+            _RESPONSE_CACHE.pop(key, None)
         return None
     resp = requests.models.Response()
     resp.status_code = status_code
@@ -52,15 +59,16 @@ def _cache_get(url: str) -> Optional[requests.Response]:
     return resp
 
 
-def _cache_set(url: str, response: requests.Response) -> None:
+def _cache_set(url: str, headers: Optional[dict[str, str]], response: requests.Response) -> None:
     content = response.content
     if len(content) > _RESPONSE_CACHE_MAX_BYTES:
         return
+    key = _cache_key(url, headers)
     with _RESPONSE_CACHE_LOCK:
         if len(_RESPONSE_CACHE) >= _RESPONSE_CACHE_MAX:
             oldest = min(_RESPONSE_CACHE, key=lambda k: _RESPONSE_CACHE[k][0])
             _RESPONSE_CACHE.pop(oldest, None)
-        _RESPONSE_CACHE[url] = (time.time(), response.status_code, content, response.encoding)
+        _RESPONSE_CACHE[key] = (time.time(), response.status_code, content, response.encoding)
 
 
 def get(
@@ -77,8 +85,8 @@ def get(
     if retries < 0:
         raise ValueError(f"retries must be >= 0, got {retries}")
 
-    if use_cache and not headers:
-        cached = _cache_get(url)
+    if use_cache:
+        cached = _cache_get(url, headers)
         if cached is not None:
             logger.debug("external_call.cache_hit endpoint=%s", endpoint)
             return cached
@@ -109,8 +117,8 @@ def get(
                 latency_ms,
                 attempt,
             )
-            if use_cache and not headers and 200 <= status < 300:
-                _cache_set(url, response)
+            if use_cache and 200 <= status < 300:
+                _cache_set(url, headers, response)
             return response
         except requests.RequestException as exc:
             latency_ms = round((time.perf_counter() - start) * 1000, 1)
