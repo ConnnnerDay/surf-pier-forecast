@@ -2806,6 +2806,71 @@ def map_buoys() -> Any:
     return resp
 
 
+@bp.route("/api/map/stat-cards", methods=["GET"])
+def map_stat_cards() -> Any:
+    """Return all live stat-card data for a location in one round trip.
+
+    Fetches buoys, METAR, wildfires, stream-gauges, and tropical outlook
+    in parallel server-side.  The client previously fired five independent
+    requests; this endpoint reduces that to one.
+
+    Query params: lat, lng
+
+    Returns
+    -------
+    JSON: {
+        "buoys":   { "buoys": [...], "count": N },
+        "metar":   { "stations": [...], "count": N },
+        "fires":   { "fires": [...], "count": N },
+        "gauges":  { "gauges": [...], "count": N },
+        "tropical": { "areas": [...], "count": N }
+    }
+    """
+    try:
+        lat = float(request.args["lat"])
+        lng = float(request.args["lng"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required floats")
+        ), 400
+
+    # Bbox pads match what each stat-card JS block previously used.
+    def _bbox(pad: float) -> tuple[float, float, float, float]:
+        return lat - pad, lng - pad, lat + pad, lng + pad
+
+    b_s, b_w, b_n, b_e = _bbox(3.0)   # buoys
+    m_s, m_w, m_n, m_e = _bbox(1.5)   # metar
+    f_s, f_w, f_n, f_e = _bbox(2.5)   # fires
+    g_s, g_w, g_n, g_e = _bbox(1.5)   # stream gauges
+
+    with _cf.ThreadPoolExecutor(max_workers=5) as pool:
+        fut_buoys    = pool.submit(fetch_ndbc_buoys, b_s, b_w, b_n, b_e)
+        fut_metar    = pool.submit(fetch_metar_stations, m_s, m_w, m_n, m_e)
+        fut_fires    = pool.submit(fetch_wildfire_incidents, f_s, f_w, f_n, f_e)
+        fut_gauges   = pool.submit(fetch_stream_gauges, g_s, g_w, g_n, g_e)
+        fut_tropical = pool.submit(fetch_tropical_outlook)
+        try: buoys    = fut_buoys.result(timeout=20)
+        except Exception: buoys = []
+        try: stations = fut_metar.result(timeout=20)
+        except Exception: stations = []
+        try: fires    = fut_fires.result(timeout=20)
+        except Exception: fires = []
+        try: gauges   = fut_gauges.result(timeout=20)
+        except Exception: gauges = []
+        try: areas    = fut_tropical.result(timeout=20)
+        except Exception: areas = []
+
+    resp = jsonify({
+        "buoys":    {"buoys": buoys, "count": len(buoys)},
+        "metar":    {"stations": stations, "count": len(stations)},
+        "fires":    {"fires": fires, "count": len(fires)},
+        "gauges":   {"gauges": gauges, "count": len(gauges)},
+        "tropical": {"areas": areas, "count": len(areas)},
+    })
+    resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
+    return resp
+
+
 @bp.route("/api/map/hfradar", methods=["GET"])
 def map_hfradar() -> Any:
     """Return NOAA HF Radar surface current vectors for the bounding box.
