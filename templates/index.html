@@ -29,6 +29,11 @@
     <meta property="og:image" content="{{ url_for('static', filename='icons/icon-192.svg', _external=True) }}">
     {% if share_id %}<meta property="og:url" content="{{ url_for('views.shared_forecast', location_id=share_id, _external=True) }}">{% endif %}
     <meta name="twitter:card" content="summary">
+    {% if location_lat and location_lng %}
+    <link rel="preload" as="fetch" crossorigin href="/api/weather/env-context?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    <link rel="preload" as="fetch" crossorigin href="/api/weather/combined-forecast?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    <link rel="preload" as="fetch" crossorigin href="/api/map/stat-cards?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    {% endif %}
 </head>
 <body class="forecast-page has-app-header">
 <a href="#main-content" class="skip-link">Skip to main content</a>
