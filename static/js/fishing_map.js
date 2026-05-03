@@ -634,32 +634,30 @@
         var thisAiGen = ++_aiReqGen;
         var thisKey   = key;
 
-        // Fetch all needed habitat types in parallel, then merge results.
+        // Single consolidated request: /api/v1/map/habitats handles parallel
+        // per-type fetching and deduplication server-side.
         var bboxParams = 'south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
-        var promises = habitatTypes.map(function (ht) {
-            var url = '/api/v1/geo/habitats?' + bboxParams + '&habitat_type=' + ht;
-            return fetch(url, { signal: _aiAbort.signal })
-                .then(function (r) { return r.ok ? r.json() : { data: { features: [] } }; })
-                .then(function (data) {
-                    return ((data.data && data.data.features) || []).map(function (f) {
-                        return { lat: f.lat, lng: f.lng, name: f.name || '', osmType: f.osm_type || 'general', score: f.score || 0, geometry: f.geometry || null };
-                    });
-                })
-                .catch(function () { return []; });
-        });
+        var url = '/api/v1/map/habitats?' + bboxParams;
+        // If a subset of types is active, tell the server — saves work on both ends.
+        if (habitatTypes && habitatTypes.length < 10) {
+            url += '&types=' + habitatTypes.join(',');
+        }
 
-        Promise.all(promises)
-        .then(function (arrays) {
+        fetch(url, { signal: _aiAbort.signal })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (resp) {
             if (thisAiGen !== _aiReqGen) return;
             if (!map || map.getZoom() < 10) { aiPickLayer.clearLayers(); return; }
-            // Merge and deduplicate by lat+lng (same node can appear in multiple types)
-            var seen = {};
-            var features = [];
-            arrays.forEach(function (arr) {
-                arr.forEach(function (f) {
-                    var dedupeKey = Math.round(f.lat * 10000) + ',' + Math.round(f.lng * 10000);
-                    if (!seen[dedupeKey]) { seen[dedupeKey] = true; features.push(f); }
-                });
+            var raw = (resp && resp.ok && resp.data && resp.data.features) || [];
+            var features = raw.map(function (f) {
+                return {
+                    lat:      f.lat,
+                    lng:      f.lng,
+                    name:     f.name || '',
+                    osmType:  f.osm_type || f.osmType || 'general',
+                    score:    f.score || 0,
+                    geometry: f.geometry || null,
+                };
             });
             features.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
             _aiCachePut(thisKey, features);
@@ -5517,7 +5515,11 @@
         }
         _favSpotsLayer.clearLayers();
         var keys = Object.keys(_favoriteSpotKeys || {});
-        if (!keys.length) return;
+        if (!keys.length) {
+            _renderFavEmptyState();
+            return;
+        }
+        _hideFavEmptyState();
         keys.forEach(function (k) {
             var sp = _favoriteSpotKeys[k];
             if (!sp || !sp.lat || !sp.lng) return;
@@ -5575,6 +5577,7 @@
                 return;
             }
             // Restore OSM spots and AI habitats for non-mine categories
+            _hideFavEmptyState();
             renderFishingSpots(_lastRenderedSpotKey ? (spotCache[_lastRenderedSpotKey] || []) : []);
             var cachedAI = aiCache[_lastRenderedSpotKey || ''] || [];
             if (aiPickLayer) renderAIHabitatSpots(cachedAI);
@@ -5698,6 +5701,10 @@
             _recolourSpotsByScore(score);
             // Refresh chart to move the cursor
             renderChart();
+            // If the spot detail panel is open, refresh its score display
+            if (_activeSpotData && typeof window._fmapShowSpotDetail === 'function') {
+                window._fmapShowSpotDetail(_activeSpotData);
+            }
         }
 
         // Wire the range slider
@@ -5869,6 +5876,39 @@
                 if (_activeCategory === 'my_spots') renderFavoriteSpots();
             });
         }
+
+        // Click on the map (not a marker) closes the panel
+        if (map) {
+            map.on('click', function () {
+                if (!panel.hidden) {
+                    panel.hidden = true;
+                    panel.classList.remove('fmap-spot-detail--open');
+                    _activeSpotData = null;
+                }
+            });
+        }
+    }
+
+    // Shows an inline empty-state hint inside the favorites layer when no spots are saved.
+    function _renderFavEmptyState() {
+        var el = document.getElementById('fmap-fav-empty');
+        if (!el) {
+            var mapWrap = document.querySelector('.fmap-map-wrap');
+            if (!mapWrap) return;
+            el = document.createElement('div');
+            el.id = 'fmap-fav-empty';
+            el.className = 'fmap-fav-empty';
+            el.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
+                '<p>No saved spots yet</p>' +
+                '<small>Tap any spot marker, then press <strong>&#9733;</strong> to save it here.</small>';
+            mapWrap.appendChild(el);
+        }
+        el.hidden = false;
+    }
+
+    function _hideFavEmptyState() {
+        var el = document.getElementById('fmap-fav-empty');
+        if (el) el.hidden = true;
     }
 
     function init() {

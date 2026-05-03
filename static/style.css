@@ -5695,7 +5695,7 @@ h2::before {
   border: 2px solid #fff;
   cursor: pointer;
 }
-.fmap-tide-meta {
+.fmap-tide-score-wrap {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -5869,6 +5869,40 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-label { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .fmap-spot-detail-value { color: rgba(0,0,0,0.75); }
 [data-theme="light"] .fmap-spot-detail-tip { color: rgba(0,0,0,0.5); }
+
+/* ── My Spots empty state ── */
+.fmap-fav-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 408;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(10,19,29,0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  text-align: center;
+  color: rgba(255,255,255,0.55);
+  pointer-events: none;
+  max-width: 220px;
+}
+.fmap-fav-empty[hidden] { display: none !important; }
+.fmap-fav-empty svg { opacity: 0.4; }
+.fmap-fav-empty p { margin: 0; font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.75); }
+.fmap-fav-empty small { font-size: 0.72rem; line-height: 1.4; }
+.fmap-fav-empty strong { color: #fbbf24; }
+[data-theme="light"] .fmap-fav-empty {
+  background: rgba(240,248,252,0.92);
+  border-color: rgba(0,0,0,0.1);
+  color: rgba(0,0,0,0.5);
+}
+[data-theme="light"] .fmap-fav-empty p { color: rgba(0,0,0,0.7); }
 
 /* ── Favorite spot pin markers (My Spots category) ── */
 .fmap-fav-pin-wrap { background: transparent; border: none; }
