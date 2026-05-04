@@ -4673,6 +4673,7 @@
             // "My Spots" renders from saved favorites, not OSM types
             var types = (cat && !isMine) ? (_CATEGORY_TYPES[cat] || []) : [];
             activeSpotTypes = types.slice();
+            updateAdvBadge();
             // Show/hide the favorites layer
             if (_favSpotsLayer) {
                 if (isMine) _favSpotsLayer.addTo(map);
