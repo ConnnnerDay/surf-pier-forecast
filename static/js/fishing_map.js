@@ -4785,6 +4785,9 @@
         }
 
         // Update the badge and hour label for the current slider position
+        var _metaRowEl  = document.getElementById('fmap-tide-meta-row');
+        var _waterTempEl = document.getElementById('fmap-tide-water-temp');
+
         function updateSliderDisplay() {
             if (!_scoreData) return;
             var hours = _scoreData.hours || [];
@@ -4792,6 +4795,7 @@
             var score = hData.score || 0;
             var label = hData.label || '';
             var grade = _LABEL_TO_GRADE[label] || 'fair';
+            var fac   = hData.factors || {};
 
             if (scoreEl) {
                 scoreEl.textContent = score;
@@ -4805,6 +4809,15 @@
                 var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
                 var h12  = _tideSliderHour % 12 || 12;
                 hourEl.textContent = h12 + ':00 ' + ampm;
+            }
+            // Water temp + tide state in the meta row
+            if (_waterTempEl && _metaRowEl) {
+                var parts = [];
+                if (fac.water_temp_f != null) parts.push(fac.water_temp_f + '°F');
+                if (fac.tide)                 parts.push(fac.tide + ' tide');
+                if (fac.wind_mph != null)     parts.push(fac.wind_mph + ' mph wind');
+                _waterTempEl.textContent = parts.join(' · ');
+                _metaRowEl.hidden = !parts.length;
             }
             // Re-colour spot icons on the map by score
             _recolourSpotsByScore(score);
@@ -4906,15 +4919,15 @@
                 var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
                 var fac = hd2.factors || {};
                 var chips = [];
-                if (fac.tide)           chips.push({ icon: '🌊', text: fac.tide });
+                if (fac.tide)             chips.push({ icon: '🌊', text: fac.tide });
                 if (fac.solunar && fac.solunar !== 'none')
-                                        chips.push({ icon: '🌙', text: fac.solunar });
+                                          chips.push({ icon: '🌙', text: fac.solunar });
                 if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
                 if (fac.wave_ft  != null) chips.push({ icon: '〰', text: fac.wave_ft + ' ft' });
                 if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
                 if (chips.length) {
                     condEl.innerHTML = chips.map(function (c) {
-                        return '<span class="fmap-cond-chip">' + c.icon + ' ' + c.text + '</span>';
+                        return '<span class="fmap-cond-chip">' + c.icon + ' ' + esc(String(c.text)) + '</span>';
                     }).join('');
                     condEl.hidden = false;
                 } else {

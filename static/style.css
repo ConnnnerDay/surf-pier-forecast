@@ -5730,6 +5730,12 @@ h2::before {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.4);
 }
+.fmap-tide-meta-row {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  margin-top: 1px;
+}
+[data-theme="light"] .fmap-tide-meta-row { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .fmap-tide-bar {
   background: rgba(240,248,252,0.95);
   border-top-color: rgba(0,0,0,0.1);
