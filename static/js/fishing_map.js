@@ -4599,13 +4599,15 @@
     // Defined at module scope so renderFishingSpots can call it after each render.
     function _recolourSpotsByScore(score) {
         if (!fishingSpotLayer) return;
-        var color = score >= 8 ? '#22c55e' :
-                    score >= 6 ? '#84cc16' :
-                    score >= 4 ? '#f59e0b' : '#ef4444';
+        var color = score >= 8 ? '#4ade80' :
+                    score >= 6 ? '#a3e635' :
+                    score >= 4 ? '#fbbf24' : '#f87171';
         fishingSpotLayer.eachLayer(function (layer) {
-            if (layer._icon) {
-                layer._icon.style.borderColor = color;
-                layer._icon.style.boxShadow   = '0 0 6px ' + color + '88';
+            if (!layer._icon) return;
+            var dot = layer._icon.querySelector('.fmap-spot-dot');
+            if (dot) {
+                dot.style.borderColor = color;
+                dot.style.boxShadow   = '0 0 7px ' + color + '77';
             }
         });
     }
@@ -4762,7 +4764,7 @@
             var barW = W / 24;
             var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
                       'aria-hidden="true" style="width:100%;height:100%">';
-            var scoreColors = {Excellent:'#22c55e', Good:'#84cc16', Fair:'#f59e0b', Slow:'#ef4444'};
+            var scoreColors = {Excellent:'#4ade80', Good:'#a3e635', Fair:'#fbbf24', Slow:'#f87171'};
             hours.forEach(function (h, i) {
                 var color = scoreColors[h.label] || '#64748b';
                 var barH  = Math.max(2, (h.score / maxScore) * (H - 4));
