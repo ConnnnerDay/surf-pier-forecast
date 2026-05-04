@@ -2600,6 +2600,8 @@
 
     function closeLogModal() {
         if (els.logModal) els.logModal.hidden = true;
+        if (els.logSubmit) els.logSubmit.disabled = false;
+        if (els.logError)  els.logError.hidden  = true;
         exitLogMode();
     }
 
@@ -2614,6 +2616,13 @@
         if (closeBtn) closeBtn.addEventListener('click', closeLogModal);
         var cancelBtn = document.getElementById('fmap-log-cancel');
         if (cancelBtn) cancelBtn.addEventListener('click', closeLogModal);
+
+        // Escape key closes the log modal
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && els.logModal && !els.logModal.hidden) {
+                closeLogModal();
+            }
+        });
 
         // Map click in log mode — place pin
         if (map) {
