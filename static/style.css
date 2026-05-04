@@ -5755,15 +5755,30 @@ h2::before {
   background: #0b2836;
   border-top: 2px solid #1fa8c9;
   box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
-  padding: 0.8rem 1rem 1rem;
-  transition: transform 0.2s ease;
+  max-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  visibility: hidden;
+  transform: translateY(100%);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0s linear 0.22s;
+  pointer-events: none;
 }
-.fmap-spot-detail[hidden] { display: none !important; }
+.fmap-spot-detail--open {
+  visibility: visible;
+  transform: translateY(0);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0s linear 0s;
+  pointer-events: auto;
+}
 .fmap-spot-detail-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.8rem 1rem 0.5rem;
+  background: #0b2836;
 }
 .fmap-spot-detail-type-badge {
   font-size: 0.62rem;
@@ -5798,6 +5813,10 @@ h2::before {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  padding: 0 1rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
 }
 .fmap-spot-score {
   font-size: 2rem;
@@ -5868,6 +5887,7 @@ h2::before {
   background: #f0f8fc;
   border-top-color: #0e6e8c;
 }
+[data-theme="light"] .fmap-spot-detail-header { background: #f0f8fc; }
 [data-theme="light"] .fmap-spot-detail-coords { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .fmap-spot-detail-row { color: rgba(0,0,0,0.65); }
 [data-theme="light"] .fmap-spot-detail-row strong { color: rgba(0,0,0,0.85); }

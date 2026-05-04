@@ -4944,17 +4944,31 @@
                 }
             }
 
-            // Best times today (hours scoring ≥ 7)
+            // Best times today (hours scoring ≥ 7) — group consecutive runs
+            if (bestTimesEl && !_scoreData) {
+                bestTimesEl.textContent = 'Loading…';
+            }
             if (bestTimesEl && _scoreData) {
-                var bestHours = (_scoreData.hours || [])
+                var goodHourNums = (_scoreData.hours || [])
                     .filter(function (h) { return h.score >= 7; })
-                    .map(function (h) {
-                        var ap = h.hour < 12 ? 'AM' : 'PM';
-                        var h12 = h.hour % 12 || 12;
-                        return h12 + ap;
-                    });
-                bestTimesEl.textContent = bestHours.length
-                    ? bestHours.slice(0, 6).join(', ')
+                    .map(function (h) { return h.hour; });
+                var rangeStrs = [];
+                var i = 0;
+                while (i < goodHourNums.length) {
+                    var start = goodHourNums[i];
+                    var end   = start;
+                    while (i + 1 < goodHourNums.length && goodHourNums[i + 1] === goodHourNums[i] + 1) {
+                        i++; end = goodHourNums[i];
+                    }
+                    function _fmt(h) {
+                        var ap = h < 12 ? 'AM' : 'PM';
+                        return (h % 12 || 12) + ap;
+                    }
+                    rangeStrs.push(start === end ? _fmt(start) : _fmt(start) + '–' + _fmt(end));
+                    i++;
+                }
+                bestTimesEl.textContent = rangeStrs.length
+                    ? rangeStrs.slice(0, 4).join(', ')
                     : 'No peak windows today';
             }
 
@@ -4992,16 +5006,18 @@
                 favBtn.title = isFav ? 'Remove from favorites' : 'Save as favorite';
             }
 
-            panel.hidden = false;
+            panel.setAttribute('aria-hidden', 'false');
             panel.classList.add('fmap-spot-detail--open');
         };
 
+        function _closePanel() {
+            panel.classList.remove('fmap-spot-detail--open');
+            panel.setAttribute('aria-hidden', 'true');
+            _activeSpotData = null;
+        }
+
         if (closeBtn) {
-            closeBtn.addEventListener('click', function () {
-                panel.hidden = true;
-                panel.classList.remove('fmap-spot-detail--open');
-                _activeSpotData = null;
-            });
+            closeBtn.addEventListener('click', _closePanel);
         }
 
         if (favBtn) {
@@ -5033,10 +5049,8 @@
         // Click on the map (not a marker) closes the panel
         if (map) {
             map.on('click', function () {
-                if (!panel.hidden) {
-                    panel.hidden = true;
-                    panel.classList.remove('fmap-spot-detail--open');
-                    _activeSpotData = null;
+                if (panel.classList.contains('fmap-spot-detail--open')) {
+                    _closePanel();
                 }
             });
         }
