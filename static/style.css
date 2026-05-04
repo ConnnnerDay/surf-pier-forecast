@@ -6256,6 +6256,11 @@ h2::before {
   color: #1fa8c9;
   margin-right: 0.35rem;
 }
+.fmap-catch-comment-time {
+  float: right;
+  opacity: 0.38;
+  font-size: 0.65rem;
+}
 .fmap-catch-detail-actions {
   display: flex;
   gap: 0.5rem;

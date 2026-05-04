@@ -2379,6 +2379,13 @@
         if (!map) return;
         communityLayer = L.layerGroup();
 
+        // Escape key closes the catch detail drawer
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && els.catchDetail && !els.catchDetail.hidden) {
+                closeCatchDetail();
+            }
+        });
+
         var btn = document.getElementById('fmap-community-layer-btn');
         if (btn) {
             btn.addEventListener('click', function () {
@@ -2439,9 +2446,9 @@
                 var comments = data.comments || [];
                 var html = '';
                 comments.forEach(function (cm) {
-                    html += '<div class="fmap-catch-comment"><span class="fmap-catch-comment-author">' +
-                        esc(cm.angler_name) + '</span>' + esc(cm.body) +
-                        '<span style="float:right;opacity:.4;font-size:.65rem">' + timeAgo(cm.created_at) + '</span></div>';
+                    html += '<div class="fmap-catch-comment"><span class="fmap-catch-comment-time">' +
+                        timeAgo(cm.created_at) + '</span><span class="fmap-catch-comment-author">' +
+                        esc(cm.angler_name) + '</span>' + esc(cm.body) + '</div>';
                 });
                 if (!html) html = '<div style="opacity:.4;font-size:.75rem;padding:.4rem 0">No comments yet</div>';
                 // Add comment form if logged in
