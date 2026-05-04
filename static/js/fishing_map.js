@@ -4768,6 +4768,7 @@
             var maxScore = 10;
             var W = 240, H = 44;
             var barW = W / 24;
+            var nowHour = new Date().getHours();
             var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
                       'aria-hidden="true" style="width:100%;height:100%">';
             var scoreColors = {Excellent:'#4ade80', Good:'#a3e635', Fair:'#fbbf24', Slow:'#f87171'};
@@ -4782,6 +4783,9 @@
                        '" fill="' + color + '" opacity="' + (isSelected ? '1' : '0.55') +
                        '" rx="1"/>';
             });
+            // Small dot marking current real-time hour
+            var ncx = (nowHour + 0.5) * barW;
+            svg += '<circle cx="' + ncx + '" cy="3.5" r="2.2" fill="rgba(255,255,255,0.55)"/>';
             // Cursor line at selected hour
             var cx = (_tideSliderHour + 0.5) * barW;
             svg += '<line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + H +
