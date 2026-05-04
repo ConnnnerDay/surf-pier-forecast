@@ -5870,6 +5870,29 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-value { color: rgba(0,0,0,0.75); }
 [data-theme="light"] .fmap-spot-detail-tip { color: rgba(0,0,0,0.5); }
 
+/* ── Conditions chips ── */
+.fmap-spot-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 6px;
+}
+.fmap-cond-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.75);
+  white-space: nowrap;
+}
+[data-theme="light"] .fmap-cond-chip {
+  background: rgba(0,0,0,0.06);
+  color: rgba(0,0,0,0.6);
+}
+
 /* ── My Spots empty state ── */
 .fmap-fav-empty {
   position: absolute;
@@ -5925,7 +5948,7 @@ h2::before {
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
-  bottom: 14px;
+  bottom: calc(var(--fmap-filter-bar-h, 68px) + var(--fmap-tide-bar-h, 88px) + 14px);
   right: 14px;
   z-index: 420;
   display: flex;

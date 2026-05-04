@@ -3255,300 +3255,6 @@
 
     // ─── Wildfire + Smoke overlay (ArcGIS Live Feeds) ─────────────────────────
 
-    function onWildfireViewport() { scheduleWildfireQuery(); }
-
-    function wireWildfireLayer() {
-        if (!map) return;
-        wildfireLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-wildfire-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                wildfireOn = !wildfireOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', wildfireOn);
-                btn.setAttribute('aria-pressed', wildfireOn ? 'true' : 'false');
-                if (wildfireOn) {
-                    wildfireLayer.addTo(map);
-                    scheduleWildfireQuery();
-                    map.on('moveend zoomend', onWildfireViewport);
-                } else {
-                    map.removeLayer(wildfireLayer);
-                    wildfireLayer.clearLayers();
-                    map.off('moveend zoomend', onWildfireViewport);
-                }
-            });
-        }
-    }
-
-    function scheduleWildfireQuery() {
-        clearTimeout(wildfireTimer);
-        wildfireTimer = setTimeout(doFetchWildfires, 700);
-    }
-
-    function doFetchWildfires() {
-        if (!wildfireOn || !map) return;
-        if (wildfireAbort) { try { wildfireAbort.abort(); } catch (e) {} }
-        wildfireAbort = new AbortController();
-        var sig = wildfireAbort.signal;
-        var b  = map.getBounds();
-        var sw = b.getSouthWest();
-        var ne = b.getNorthEast();
-        var bbox = 'south=' + sw.lat.toFixed(3) +
-                   '&west='  + sw.lng.toFixed(3) +
-                   '&north=' + ne.lat.toFixed(3) +
-                   '&east='  + ne.lng.toFixed(3);
-
-        Promise.all([
-            fetch('/api/map/wildfires?' + bbox, { signal: sig }).then(function (r) { return r.ok ? r.json() : {fires:[], count:0}; }),
-            fetch('/api/map/smoke?'     + bbox, { signal: sig }).then(function (r) { return r.ok ? r.json() : {polygons:[], count:0}; }),
-        ])
-        .then(function (results) {
-            if (!wildfireOn || !map) return;
-            wildfireLayer.clearLayers();
-            var fires   = results[0].fires    || [];
-            var polys   = results[1].polygons || [];
-
-            // Smoke polygons (rendered first, below fire markers)
-            polys.forEach(function (p) {
-                if (!p.rings || !p.rings.length) return;
-                p.rings.forEach(function (ring) {
-                    L.polygon(ring, {
-                        color:       p.fill,
-                        fillColor:   p.fill,
-                        fillOpacity: p.opacity,
-                        weight:      0,
-                    })
-                    .bindTooltip('<strong>Smoke:</strong> ' + esc(p.label) +
-                        (p.valid_from ? '<br><small>' + _sstFmtDate(p.valid_from) + '</small>' : ''),
-                        { direction: 'top', className: 'fmap-tooltip' })
-                    .addTo(wildfireLayer);
-                });
-            });
-
-            // Fire incident markers
-            fires.forEach(function (f) {
-                var sizeClass = f.acres > 50000 ? 'fmap-fire-dot--xl'
-                              : f.acres > 10000 ? 'fmap-fire-dot--lg'
-                              : f.acres > 1000  ? 'fmap-fire-dot--md'
-                              : 'fmap-fire-dot--sm';
-                var icon = L.divIcon({
-                    className: '',
-                    html: '<div class="fmap-fire-dot ' + sizeClass + '" title="' + esc(f.name) + '">🔥</div>',
-                    iconSize:    [24, 24],
-                    iconAnchor:  [12, 12],
-                    popupAnchor: [0, -14],
-                });
-                L.marker([f.lat, f.lng], { icon: icon })
-                    .bindPopup(_firePopup(f), { maxWidth: 280 })
-                    .addTo(wildfireLayer);
-            });
-        })
-        .catch(function (err) {
-            if (err && err.name === 'AbortError') return;
-            console.warn('[fishing-map] wildfire/smoke fetch failed:', err);
-        });
-    }
-
-    function _firePopup(f) {
-        var containment = f.contained_pct > 0
-            ? '<br><span class="fmap-fire-contain">' + Math.round(f.contained_pct) + '% contained</span>'
-            : '<br><span class="fmap-fire-contain fmap-fire-contain--0">Uncontained</span>';
-        var acres = f.acres > 0
-            ? '<br><small>' + f.acres.toLocaleString() + ' acres</small>'
-            : '';
-        var cause = f.cause ? '<br><small>Cause: ' + esc(f.cause) + '</small>' : '';
-        var loc   = [f.county, f.state].filter(Boolean).join(', ');
-        return (
-            '<div class="fmap-fire-popup">' +
-            '<strong>🔥 ' + esc(f.name) + '</strong>' +
-            (loc ? '<br><small style="opacity:.7">' + esc(loc) + '</small>' : '') +
-            acres + containment + cause +
-            (f.age_days ? '<br><small style="opacity:.55">Day ' + f.age_days + '</small>' : '') +
-            '</div>'
-        );
-    }
-
-    // ─── Sea Ice Extent overlay (ArcGIS Live Feeds / NSIDC) ──────────────────
-
-    function wireSeaIceLayer() {
-        if (!map) return;
-        seaIceLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-sea-ice-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                seaIceOn = !seaIceOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', seaIceOn);
-                btn.setAttribute('aria-pressed', seaIceOn ? 'true' : 'false');
-                if (seaIceOn) {
-                    seaIceLayer.addTo(map);
-                    doFetchSeaIce();
-                } else {
-                    map.removeLayer(seaIceLayer);
-                    seaIceLayer.clearLayers();
-                }
-            });
-        }
-    }
-
-    function doFetchSeaIce() {
-        if (!seaIceOn || !map) return;
-        fetch('/api/map/sea-ice')
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!seaIceOn || !map) return;  // layer turned off while loading
-                if (!data || !data.sea_ice) {
-                    showToast('Sea ice data unavailable');
-                    return;
-                }
-                var ice = data.sea_ice;
-                seaIceLayer.clearLayers();
-
-                var MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                var label = MONTH_SHORT[ice.month] + ' ' + ice.year;
-
-                (ice.rings || []).forEach(function (ring) {
-                    L.polygon(ring, {
-                        color:       '#bfdbfe',
-                        fillColor:   '#bfdbfe',
-                        fillOpacity: 0.30,
-                        weight:      1.5,
-                        opacity:     0.7,
-                    })
-                    .bindPopup(
-                        '<div class="fmap-ice-popup"><strong>Arctic Sea Ice</strong>' +
-                        '<br><em>' + label + '</em>' +
-                        '<br><small>Extent: ' + ice.extent_mkm2 + ' M km²</small>' +
-                        '<br><small>Area: ' + ice.area_mkm2 + ' M km²</small>' +
-                        '<br><small style="opacity:.5">Source: NSIDC via ArcGIS Live Feeds</small>' +
-                        '</div>',
-                        { maxWidth: 220 }
-                    )
-                    .addTo(seaIceLayer);
-                });
-
-                if (ice.rings && ice.rings.length) {
-                    showToast('Arctic sea ice: ' + label + ' — ' + ice.extent_mkm2 + ' M km²');
-                    // Fly to Arctic region
-                    if (map.getZoom() < 4) map.setView([75, 0], 3);
-                } else {
-                    showToast('No sea ice data for current period');
-                }
-            })
-            .catch(function (err) {
-                console.warn('[fishing-map] sea ice fetch failed:', err);
-                showToast('Sea ice data unavailable');
-            });
-    }
-
-    // ─── USGS Seismic overlay (ArcGIS Live Feeds) ────────────────────────────
-
-    function wireSeismicLayer() {
-        if (!map) return;
-        seismicLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-seismic-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                seismicOn = !seismicOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', seismicOn);
-                btn.setAttribute('aria-pressed', seismicOn ? 'true' : 'false');
-                if (seismicOn) {
-                    seismicLayer.addTo(map);
-                    doFetchSeismic();
-                    map.on('moveend zoomend', onSeismicViewport);
-                } else {
-                    map.removeLayer(seismicLayer);
-                    seismicLayer.clearLayers();
-                    map.off('moveend zoomend', onSeismicViewport);
-                }
-            });
-        }
-    }
-
-    function onSeismicViewport() {
-        clearTimeout(seismicTimer);
-        seismicTimer = setTimeout(doFetchSeismic, 600);
-    }
-
-    function doFetchSeismic() {
-        if (!seismicOn || !map) return;
-        if (seismicAbort) { try { seismicAbort.abort(); } catch (e) {} }
-        seismicAbort = new AbortController();
-        var b = map.getBounds();
-        var url = '/api/map/seismic?south=' + b.getSouth().toFixed(4) +
-                  '&west='  + b.getWest().toFixed(4)  +
-                  '&north=' + b.getNorth().toFixed(4) +
-                  '&east='  + b.getEast().toFixed(4);
-
-        fetch(url, { signal: seismicAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!seismicOn || !map || !data) return;
-                seismicLayer.clearLayers();
-
-                var events = data.events || [];
-                if (!events.length) {
-                    showToast('No M2.5+ earthquakes in this area');
-                    return;
-                }
-
-                events.forEach(function (ev) {
-                    // Scale radius by magnitude: M2.5→5px, M5→12px, M7→22px
-                    var r = Math.max(5, Math.min(28, Math.pow(ev.mag, 2.2)));
-                    var color = ev.alert_color || (ev.tsunami ? '#E53E3E' : '#E97316');
-                    var circle = L.circleMarker([ev.lat, ev.lng], {
-                        radius:      r,
-                        color:       color,
-                        fillColor:   color,
-                        fillOpacity: ev.mag >= 5 ? 0.75 : 0.55,
-                        weight:      ev.mag >= 5 ? 2 : 1,
-                        className:   'fmap-seismic-dot',
-                    });
-
-                    var timeStr = '';
-                    if (ev.time) {
-                        try {
-                            var d = new Date(ev.time);
-                            timeStr = d.toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
-                        } catch (e) {}
-                    }
-                    var tsTag = ev.tsunami
-                        ? '<span class="fmap-seismic-tag fmap-seismic-tag--tsunami">TSUNAMI ALERT</span>'
-                        : '';
-                    var alertTag = ev.alert
-                        ? '<span class="fmap-seismic-tag" style="background:' + color + '20;color:' + color + '">' + ev.alert.toUpperCase() + '</span>'
-                        : '';
-
-                    circle.bindPopup(
-                        '<div class="fmap-seismic-popup">' +
-                        tsTag + alertTag +
-                        '<strong>M' + ev.mag.toFixed(1) + ' — ' + (ev.event_type || 'earthquake') + '</strong>' +
-                        '<div class="fmap-seismic-place">' + (ev.place || '') + '</div>' +
-                        (timeStr ? '<div class="fmap-seismic-time">' + timeStr + '</div>' : '') +
-                        '<div class="fmap-seismic-meta">' +
-                        'Depth: ' + ev.depth_km.toFixed(1) + ' km' +
-                        (ev.hours_old ? ' · ' + ev.hours_old + 'h ago' : '') +
-                        '</div>' +
-                        (ev.sig ? '<div class="fmap-seismic-sig">Significance: ' + ev.sig + '</div>' : '') +
-                        '<div class="fmap-seismic-source">USGS via ArcGIS Live Feeds</div>' +
-                        '</div>',
-                        { maxWidth: 260 }
-                    );
-
-                    circle.addTo(seismicLayer);
-                });
-
-                var bigOnes = events.filter(function (e) { return e.mag >= 5; }).length;
-                showToast(events.length + ' earthquake' + (events.length !== 1 ? 's' : '') +
-                          (bigOnes ? ' · ' + bigOnes + ' M5+' : ''));
-            })
-            .catch(function (err) {
-                if (err && err.name === 'AbortError') return;
-                console.warn('[fishing-map] seismic fetch failed:', err);
-            });
-    }
-
     // ─── NOAA METAR Surface Observations overlay (ArcGIS Live Feeds) ─────────
 
     function wireMetarLayer() {
@@ -3660,270 +3366,6 @@
             });
     }
 
-    // ─── Day/Night Terminator overlay (ArcGIS Live Feeds) ────────────────────
-
-    function wireTerminatorLayer() {
-        if (!map) return;
-        terminatorLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-terminator-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                terminatorOn = !terminatorOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', terminatorOn);
-                btn.setAttribute('aria-pressed', terminatorOn ? 'true' : 'false');
-                if (terminatorOn) {
-                    terminatorLayer.addTo(map);
-                    doFetchTerminator();
-                    // Refresh every 5 minutes while active
-                    terminatorInterval = setInterval(doFetchTerminator, 5 * 60 * 1000);
-                } else {
-                    map.removeLayer(terminatorLayer);
-                    terminatorLayer.clearLayers();
-                    clearInterval(terminatorInterval);
-                    terminatorInterval = null;
-                }
-            });
-        }
-    }
-
-    function doFetchTerminator() {
-        if (!terminatorOn || !map) return;
-        fetch('/api/map/terminator')
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!terminatorOn || !map || !data || !data.terminator) return;
-                var t = data.terminator;
-                terminatorLayer.clearLayers();
-
-                var timeStr = '';
-                if (t.timestamp) {
-                    try { timeStr = new Date(t.timestamp).toLocaleTimeString([], {hour:'numeric', minute:'2-digit', timeZoneName:'short'}); }
-                    catch(e) {}
-                }
-
-                (t.rings || []).forEach(function (ring) {
-                    L.polygon(ring, {
-                        color:       '#1e3a5f',
-                        fillColor:   '#0f172a',
-                        fillOpacity: 0.38,
-                        weight:      1,
-                        opacity:     0.6,
-                        interactive: false,
-                    }).addTo(terminatorLayer);
-                });
-
-                // Invisible clickable line along the boundary for a popup
-                if (t.rings && t.rings[0] && t.rings[0].length) {
-                    L.polyline(t.rings[0], { weight: 0, opacity: 0 })
-                      .bindPopup(
-                        '<div class="fmap-terminator-popup"><strong>Day / Night Boundary</strong>' +
-                        (timeStr ? '<br><small>As of ' + timeStr + '</small>' : '') +
-                        '<br><small style="opacity:.5">Source: ArcGIS Live Feeds</small></div>',
-                        { maxWidth: 200 }
-                      )
-                      .addTo(terminatorLayer);
-                }
-            })
-            .catch(function (err) {
-                console.warn('[fishing-map] terminator fetch failed:', err);
-            });
-    }
-
-    // ─── Live Stream Gauges overlay (ArcGIS Live Feeds / USGS-NWS) ───────────
-
-    function wireGaugeLayer() {
-        if (!map) return;
-        gaugeLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-gauge-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                gaugeOn = !gaugeOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', gaugeOn);
-                btn.setAttribute('aria-pressed', gaugeOn ? 'true' : 'false');
-                if (gaugeOn) {
-                    gaugeLayer.addTo(map);
-                    doFetchGauges();
-                    map.on('moveend zoomend', onGaugeViewport);
-                } else {
-                    map.removeLayer(gaugeLayer);
-                    gaugeLayer.clearLayers();
-                    map.off('moveend zoomend', onGaugeViewport);
-                }
-            });
-        }
-    }
-
-    function onGaugeViewport() {
-        clearTimeout(gaugeTimer);
-        gaugeTimer = setTimeout(doFetchGauges, 600);
-    }
-
-    function doFetchGauges() {
-        if (!gaugeOn || !map) return;
-        if (map.getZoom() < 6) { gaugeLayer.clearLayers(); return; }
-        if (gaugeAbort) { try { gaugeAbort.abort(); } catch (e) {} }
-        gaugeAbort = new AbortController();
-        var b   = map.getBounds();
-        var url = '/api/map/stream-gauges?south=' + b.getSouth().toFixed(4) +
-                  '&west='  + b.getWest().toFixed(4) +
-                  '&north=' + b.getNorth().toFixed(4) +
-                  '&east='  + b.getEast().toFixed(4);
-
-        fetch(url, { signal: gaugeAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!gaugeOn || !map || !data) return;
-                gaugeLayer.clearLayers();
-                var gauges = data.gauges || [];
-
-                gauges.forEach(function (g) {
-                    var color = g.status_color || '#22c55e';
-                    var icon  = _cachedDivIcon('gauge|' + color, {
-                        className: '',
-                        html: '<div class="fmap-gauge-dot" style="background:' + color + '"></div>',
-                        iconSize:   [14, 14],
-                        iconAnchor: [7, 7],
-                    });
-
-                    var stageStr = g.stage_ft != null ? g.stage_ft.toFixed(2) + ' ft' : '–';
-                    var flowStr  = g.flow_cfs  != null ? g.flow_cfs.toFixed(0)  + ' cfs' : '–';
-                    var updStr   = '';
-                    if (g.updated) {
-                        try { updStr = new Date(g.updated).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}); }
-                        catch(e) {}
-                    }
-
-                    var marker = L.marker([g.lat, g.lng], { icon: icon });
-                    marker.bindPopup(
-                        '<div class="fmap-gauge-popup">' +
-                        '<strong>' + (g.name || g.id) + '</strong>' +
-                        '<div class="fmap-gauge-status" style="color:' + color + '">' + g.status + '</div>' +
-                        '<table class="fmap-gauge-table">' +
-                        '<tr><td>Stage</td><td>' + stageStr + '</td></tr>' +
-                        '<tr><td>Flow</td><td>'  + flowStr  + '</td></tr>' +
-                        (g.status_24h ? '<tr><td>24 h</td><td>' + g.status_24h + '</td></tr>' : '') +
-                        (g.status_48h ? '<tr><td>48 h</td><td>' + g.status_48h + '</td></tr>' : '') +
-                        (g.status_72h ? '<tr><td>72 h</td><td>' + g.status_72h + '</td></tr>' : '') +
-                        (updStr ? '<tr><td>Updated</td><td>' + updStr + '</td></tr>' : '') +
-                        '</table>' +
-                        (g.graph_url ? '<a href="' + g.graph_url + '" target="_blank" rel="noopener" class="fmap-gauge-link">View hydrograph ↗</a>' : '') +
-                        '<div class="fmap-gauge-source">USGS/NWS via ArcGIS Live Feeds</div>' +
-                        '</div>',
-                        { maxWidth: 260 }
-                    );
-                    marker.addTo(gaugeLayer);
-                });
-
-                var flooding = gauges.filter(function (g) { return g.status_class >= 2; }).length;
-                showToast(gauges.length + ' gauge' + (gauges.length !== 1 ? 's' : '') +
-                          (flooding ? ' · ' + flooding + ' flooding' : ''));
-            })
-            .catch(function (err) {
-                if (err && err.name === 'AbortError') return;
-                console.warn('[fishing-map] gauge fetch failed:', err);
-            });
-    }
-
-    // ─── NOAA Storm Reports overlay (ArcGIS Live Feeds) ──────────────────────
-
-    function wireStormReportsLayer() {
-        if (!map) return;
-        stormRptLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-storm-rpt-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                stormRptOn = !stormRptOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', stormRptOn);
-                btn.setAttribute('aria-pressed', stormRptOn ? 'true' : 'false');
-                if (stormRptOn) {
-                    stormRptLayer.addTo(map);
-                    doFetchStormReports();
-                    map.on('moveend zoomend', onStormRptViewport);
-                } else {
-                    map.removeLayer(stormRptLayer);
-                    stormRptLayer.clearLayers();
-                    map.off('moveend zoomend', onStormRptViewport);
-                }
-            });
-        }
-    }
-
-    function onStormRptViewport() {
-        clearTimeout(stormRptTimer);
-        stormRptTimer = setTimeout(doFetchStormReports, 700);
-    }
-
-    function doFetchStormReports() {
-        if (!stormRptOn || !map) return;
-        if (stormRptAbort) { try { stormRptAbort.abort(); } catch (e) {} }
-        stormRptAbort = new AbortController();
-        var b   = map.getBounds();
-        var url = '/api/map/storm-reports?south=' + b.getSouth().toFixed(4) +
-                  '&west='  + b.getWest().toFixed(4) +
-                  '&north=' + b.getNorth().toFixed(4) +
-                  '&east='  + b.getEast().toFixed(4);
-
-        fetch(url, { signal: stormRptAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!stormRptOn || !map || !data) return;
-                stormRptLayer.clearLayers();
-                var reports = data.reports || [];
-
-                var ICONS = { hail: '🌨', tornado: '🌪', wind: '💨' };
-                reports.forEach(function (rpt) {
-                    var color    = rpt.color || '#facc15';
-                    var rptEmoji = ICONS[rpt.type] || '⚡';
-                    var icon  = _cachedDivIcon('srpt|' + color + '|' + (rpt.type || ''), {
-                        className: '',
-                        html: '<div class="fmap-storm-rpt-dot" style="background:' + color + '">' +
-                              rptEmoji + '</div>',
-                        iconSize:   [22, 22],
-                        iconAnchor: [11, 11],
-                    });
-
-                    var timeStr = '';
-                    if (rpt.time) {
-                        try { timeStr = new Date(rpt.time).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short'}); }
-                        catch(e) {}
-                    }
-
-                    var marker = L.marker([rpt.lat, rpt.lng], { icon: icon });
-                    var rptTypeLabel = rpt.type ? rpt.type.charAt(0).toUpperCase() + rpt.type.slice(1) : 'Report';
-                    marker.bindPopup(
-                        '<div class="fmap-storm-rpt-popup">' +
-                        '<strong>' + (ICONS[rpt.type] || '') + ' ' +
-                        esc(rptTypeLabel) +
-                        (rpt.magnitude ? ' · ' + esc(String(rpt.magnitude)) : '') + '</strong>' +
-                        (rpt.location ? '<div>' + esc(rpt.location) + (rpt.state ? ', ' + esc(rpt.state) : '') + '</div>' : '') +
-                        (timeStr ? '<div class="fmap-storm-rpt-time">' + timeStr + '</div>' : '') +
-                        (rpt.comments ? '<div class="fmap-storm-rpt-comments">' + esc(rpt.comments) + '</div>' : '') +
-                        '<div class="fmap-storm-rpt-source">NOAA via ArcGIS Live Feeds · 24h</div>' +
-                        '</div>',
-                        { maxWidth: 260 }
-                    );
-                    marker.addTo(stormRptLayer);
-                });
-
-                var types = {};
-                reports.forEach(function (r) { var k = r.type || 'unknown'; types[k] = (types[k] || 0) + 1; });
-                var summary = Object.keys(types).map(function (t) {
-                    return types[t] + ' ' + t;
-                }).join(', ');
-                showToast(reports.length
-                    ? 'Storm reports: ' + summary
-                    : 'No storm reports in past 24 h');
-            })
-            .catch(function (err) {
-                if (err && err.name === 'AbortError') return;
-                console.warn('[fishing-map] storm reports fetch failed:', err);
-            });
-    }
-
-    // ─── Recent Hurricane Tracks overlay (ArcGIS Live Feeds) ─────────────────
 
     function wireRecentStorms() {
         if (!map) return;
@@ -4257,286 +3699,6 @@
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
 
-    function onAqiViewport() { clearTimeout(aqiTimer); aqiTimer = setTimeout(doFetchAqi, 700); }
-
-    function wireAqiLayer() {
-        if (!map) return;
-        aqiLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-aqi-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                aqiOn = !aqiOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', aqiOn);
-                btn.setAttribute('aria-pressed', aqiOn ? 'true' : 'false');
-                if (aqiOn) {
-                    aqiLayer.addTo(map);
-                    doFetchAqi();
-                    map.on('moveend zoomend', onAqiViewport);
-                } else {
-                    map.removeLayer(aqiLayer);
-                    aqiLayer.clearLayers();
-                    map.off('moveend zoomend', onAqiViewport);
-                }
-            });
-        }
-    }
-
-    function doFetchAqi() {
-        if (!aqiOn || !map) return;
-        if (map.getZoom() < 5) { aqiLayer.clearLayers(); return; }
-        if (aqiAbort) { try { aqiAbort.abort(); } catch (e) {} }
-        aqiAbort = new AbortController();
-        var b   = map.getBounds();
-        var url = '/api/map/air-quality?south=' + b.getSouth().toFixed(3) +
-                  '&west='  + b.getWest().toFixed(3) +
-                  '&north=' + b.getNorth().toFixed(3) +
-                  '&east='  + b.getEast().toFixed(3);
-
-        fetch(url, { signal: aqiAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!aqiOn || !map || !data) return;
-                aqiLayer.clearLayers();
-                (data.stations || []).forEach(function (s) {
-                    // title attr excluded from icon HTML so icons are cacheable by color.
-                    // Station name is available in the popup bindPopup below.
-                    var icon = _cachedDivIcon('aqi|' + s.color, {
-                        className: '',
-                        html: '<div class="fmap-aqi-dot" style="background:' + s.color + '"></div>',
-                        iconSize: [14, 14], iconAnchor: [7, 7],
-                    });
-                    var updStr = '';
-                    if (s.updated) { try { updStr = new Date(s.updated).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); } catch(e) {} }
-                    L.marker([s.lat, s.lng], { icon: icon })
-                     .bindPopup('<div class="fmap-aqi-popup">' +
-                        '<strong>' + esc(s.name || 'AQI Station') + '</strong>' +
-                        '<div class="fmap-aqi-val" style="color:' + s.color + '">' + s.pm25 + ' µg/m³</div>' +
-                        '<div class="fmap-aqi-cat" style="background:' + s.color + '">' + esc(s.category) + '</div>' +
-                        (updStr ? '<div style="opacity:.5;font-size:.72rem;margin-top:4px">' + updStr + '</div>' : '') +
-                        '<div style="opacity:.4;font-size:.68rem;margin-top:3px">OpenAQ PM2.5 via ArcGIS Live Feeds</div>' +
-                        '</div>', { maxWidth: 220 })
-                     .addTo(aqiLayer);
-                });
-                if (!data.stations || !data.stations.length) showToast('No AQI stations in view');
-            })
-            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] AQI fetch failed:', err); });
-    }
-
-    // ─── US Drought Monitor overlay (ArcGIS Live Feeds) ──────────────────────
-
-    function onDroughtViewport() { clearTimeout(droughtTimer); droughtTimer = setTimeout(doFetchDrought, 800); }
-
-    function wireDroughtLayer() {
-        if (!map) return;
-        droughtLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-drought-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                droughtOn = !droughtOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', droughtOn);
-                btn.setAttribute('aria-pressed', droughtOn ? 'true' : 'false');
-                if (droughtOn) {
-                    droughtLayer.addTo(map);
-                    doFetchDrought();
-                    map.on('moveend zoomend', onDroughtViewport);
-                } else {
-                    map.removeLayer(droughtLayer);
-                    droughtLayer.clearLayers();
-                    map.off('moveend zoomend', onDroughtViewport);
-                }
-            });
-        }
-    }
-
-    function doFetchDrought() {
-        if (!droughtOn || !map) return;
-        if (droughtAbort) { try { droughtAbort.abort(); } catch (e) {} }
-        droughtAbort = new AbortController();
-        var b   = map.getBounds();
-        var url = '/api/map/drought?south=' + b.getSouth().toFixed(3) +
-                  '&west='  + b.getWest().toFixed(3) +
-                  '&north=' + b.getNorth().toFixed(3) +
-                  '&east='  + b.getEast().toFixed(3);
-
-        fetch(url, { signal: droughtAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!droughtOn || !map || !data) return;
-                droughtLayer.clearLayers();
-                (data.polygons || []).forEach(function (p) {
-                    if (!p.rings || !p.rings.length) return;
-                    p.rings.forEach(function (ring) {
-                        L.polygon(ring, {
-                            color:       p.color,
-                            fillColor:   p.color,
-                            fillOpacity: _getLayerOpacity('fmap-drought-btn') / 100,
-                            weight:      1,
-                            opacity:     0.6,
-                            interactive: true,
-                        }).bindTooltip('<strong>' + esc(p.code) + ' – ' + esc(p.label) + '</strong>' +
-                                       '<br><small style="opacity:.65">US Drought Monitor</small>',
-                                       { sticky: true, opacity: 0.92 })
-                          .addTo(droughtLayer);
-                    });
-                });
-                if (!data.polygons || !data.polygons.length) showToast('No drought data in view (CONUS only)');
-            })
-            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] drought fetch failed:', err); });
-    }
-
-    // ─── NDFD Precipitation overlay (ArcGIS Live Feeds) ──────────────────────
-
-    function onPrecipViewport() { clearTimeout(precipTimer); precipTimer = setTimeout(doFetchPrecip, 800); }
-
-    function wirePrecipLayer() {
-        if (!map) return;
-        precipLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-precip-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                precipOn = !precipOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', precipOn);
-                btn.setAttribute('aria-pressed', precipOn ? 'true' : 'false');
-                if (precipOn) {
-                    precipLayer.addTo(map);
-                    doFetchPrecip();
-                    map.on('moveend zoomend', onPrecipViewport);
-                } else {
-                    map.removeLayer(precipLayer);
-                    precipLayer.clearLayers();
-                    map.off('moveend zoomend', onPrecipViewport);
-                }
-            });
-        }
-    }
-
-    function doFetchPrecip() {
-        if (!precipOn || !map) return;
-        if (precipAbort) { try { precipAbort.abort(); } catch (e) {} }
-        precipAbort = new AbortController();
-        var b   = map.getBounds();
-        var url = '/api/map/precipitation?south=' + b.getSouth().toFixed(3) +
-                  '&west='  + b.getWest().toFixed(3) +
-                  '&north=' + b.getNorth().toFixed(3) +
-                  '&east='  + b.getEast().toFixed(3);
-
-        fetch(url, { signal: precipAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!precipOn || !map || !data) return;
-                precipLayer.clearLayers();
-                (data.polygons || []).forEach(function (p) {
-                    var label = p.label || 'Precipitation';
-                    if (!p.rings || !p.rings.length) return;
-                    var timeStr = '';
-                    if (p.from_time) {
-                        try {
-                            var d = new Date(p.from_time);
-                            timeStr = d.toLocaleDateString([], {month:'short',day:'numeric'}) + ' ' +
-                                      d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
-                        } catch(e) {}
-                    }
-                    p.rings.forEach(function (ring) {
-                        L.polygon(ring, {
-                            color:       p.color,
-                            fillColor:   p.color,
-                            fillOpacity: _getLayerOpacity('fmap-precip-btn') / 100,
-                            weight:      1,
-                            opacity:     0.5,
-                        }).bindTooltip('<strong>Precip: ' + esc(label) + '</strong>' +
-                                       (timeStr ? '<br><small>' + timeStr + '</small>' : '') +
-                                       '<br><small style="opacity:.65">NOAA NDFD · 6-hr forecast</small>',
-                                       { sticky: true, opacity: 0.92 })
-                          .addTo(precipLayer);
-                    });
-                });
-                if (!data.polygons || !data.polygons.length) showToast('No precipitation forecast in view');
-            })
-            .catch(function (err) { if (err && err.name !== 'AbortError') console.warn('[fishing-map] precip fetch failed:', err); });
-    }
-
-    // ─── NDFD Temperature polygons overlay (ArcGIS Live Feeds) ──────────────
-
-    function onNdfdTempViewport() { clearTimeout(ndfdTempTimer); ndfdTempTimer = setTimeout(doFetchNdfdTemp, 800); }
-
-    function wireNdfdTempLayer() {
-        if (!map) return;
-        ndfdTempLayer = L.layerGroup();
-
-        var btn = document.getElementById('fmap-ndfd-temp-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                ndfdTempOn = !ndfdTempOn;
-                btn.classList.toggle('fmap-ctrl-btn--active', ndfdTempOn);
-                btn.setAttribute('aria-pressed', ndfdTempOn ? 'true' : 'false');
-                if (ndfdTempOn) {
-                    ndfdTempLayer.addTo(map);
-                    doFetchNdfdTemp();
-                    map.on('moveend zoomend', onNdfdTempViewport);
-                } else {
-                    map.removeLayer(ndfdTempLayer);
-                    ndfdTempLayer.clearLayers();
-                    map.off('moveend zoomend', onNdfdTempViewport);
-                }
-            });
-        }
-    }
-
-    function doFetchNdfdTemp() {
-        if (!ndfdTempOn || !map) return;
-        if (ndfdTempAbort) { try { ndfdTempAbort.abort(); } catch (e) {} }
-        ndfdTempAbort = new AbortController();
-        var b   = map.getBounds();
-        var url = '/api/map/temperature?south=' + b.getSouth().toFixed(3) +
-                  '&west='  + b.getWest().toFixed(3) +
-                  '&north=' + b.getNorth().toFixed(3) +
-                  '&east='  + b.getEast().toFixed(3);
-
-        fetch(url, { signal: ndfdTempAbort.signal })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!ndfdTempOn || !map || !data) return;
-                ndfdTempLayer.clearLayers();
-                // Render max temperature polygons by default; min as dashed overlay
-                var tempOpacity = _getLayerOpacity('fmap-ndfd-temp-btn') / 100;
-                var layers = [
-                    { key: 'max', opacity: tempOpacity,       weight: 0.5, label: 'High' },
-                    { key: 'min', opacity: tempOpacity * 0.5, weight: 0,   label: 'Low',  dash: '4 3' },
-                ];
-                var total = 0;
-                layers.forEach(function (cfg) {
-                    (data[cfg.key] || []).forEach(function (p) {
-                        if (!p.rings || !p.rings.length) return;
-                        total++;
-                        var tip = '<strong>' + cfg.label + ' Temp: ' + p.temp_f + '°F</strong>' +
-                                  (p.period ? '<br><small>' + p.period + '</small>' : '') +
-                                  '<br><small style="opacity:.65">NOAA NDFD · daily forecast</small>';
-                        p.rings.forEach(function (ring) {
-                            L.polygon(ring, {
-                                color:        p.color,
-                                fillColor:    p.color,
-                                fillOpacity:  cfg.opacity,
-                                weight:       cfg.weight,
-                                dashArray:    cfg.dash || null,
-                            }).bindTooltip(tip, { sticky: true, opacity: 0.92 })
-                              .addTo(ndfdTempLayer);
-                        });
-                    });
-                });
-                if (!total) showToast('No temperature data in view');
-            })
-            .catch(function (err) {
-                if (err && err.name !== 'AbortError') console.warn('[fishing-map] ndfd-temp fetch failed:', err);
-            });
-    }
-
-    // ─── NDBC Buoy overlay (ArcGIS Live Feeds) ────────────────────────────────
-
-    function onBuoyViewport() { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); }
-
     function wireBuoyLayer() {
         if (!map) return;
         buoyLayer = L.layerGroup();
@@ -4866,47 +4028,6 @@
     var legendCollapsed = false;
 
     var _LEGEND_SPECS = {
-        drought: {
-            label: 'Drought (NDMC)',
-            items: [
-                { color: '#FFFF00', text: 'D0 Abnormally Dry' },
-                { color: '#FCD37F', text: 'D1 Moderate' },
-                { color: '#FFAA00', text: 'D2 Severe' },
-                { color: '#E60000', text: 'D3 Extreme' },
-                { color: '#730000', text: 'D4 Exceptional', dark: true },
-            ]
-        },
-        aqi: {
-            label: 'Air Quality (PM2.5)',
-            items: [
-                { color: '#22c55e', text: 'Good',                    dark: true },
-                { color: '#eab308', text: 'Moderate' },
-                { color: '#f97316', text: 'Unhealthy · Sensitive',   dark: true },
-                { color: '#ef4444', text: 'Unhealthy',               dark: true },
-                { color: '#a855f7', text: 'Very Unhealthy',          dark: true },
-                { color: '#7c3aed', text: 'Hazardous',               dark: true },
-            ]
-        },
-        precip: {
-            label: 'Precipitation (NDFD)',
-            items: [
-                { color: '#c6e3f5', text: 'Light' },
-                { color: '#74b9e8', text: 'Moderate' },
-                { color: '#2563eb', text: 'Heavy',   dark: true },
-                { color: '#1e3a8a', text: 'Extreme', dark: true },
-            ]
-        },
-        'ndfd-temp': {
-            label: 'Temp Forecast (°F High)',
-            items: [
-                { color: '#3b82f6', text: '<32°F (freeze)', dark: true },
-                { color: '#06b6d4', text: '32–50°F',        dark: true },
-                { color: '#34d399', text: '50–65°F',        dark: true },
-                { color: '#fbbf24', text: '65–80°F' },
-                { color: '#f97316', text: '80–95°F',        dark: true },
-                { color: '#ef4444', text: '>95°F',          dark: true },
-            ]
-        },
         hfradar: {
             label: 'Currents (cm/s)',
             items: [
@@ -4934,27 +4055,14 @@
                 { color: '#c084fc', text: 'LIFR — fog/obscured', dark: true },
             ]
         },
-        seismic: {
-            label: 'Earthquakes',
-            items: [
-                { color: '#fde68a', text: 'M 2.5–3.5' },
-                { color: '#f59e0b', text: 'M 3.5–5.0' },
-                { color: '#ef4444', text: 'M 5.0+',    dark: true },
-            ]
-        },
     };
 
     // Map from layer key → the boolean var that tracks "is this layer on?"
     function _legendLayerOn(key) {
         switch (key) {
-            case 'drought':   return droughtOn;
-            case 'aqi':       return aqiOn;
-            case 'precip':    return precipOn;
-            case 'ndfd-temp': return ndfdTempOn;
             case 'hfradar':   return hfradarOn;
             case 'tropical':  return tropicalOn;
             case 'metar':     return metarOn;
-            case 'seismic':   return seismicOn;
             default:          return false;
         }
     }
@@ -5475,17 +4583,18 @@
     // property so the tide bar stacks directly above it without overlap.
     function _syncBottomBarLayout() {
         var fb = document.getElementById('fmap-spot-filter-bar');
-        if (!fb) return;
+        var tb = document.getElementById('fmap-tide-bar');
         function _apply() {
-            var h = fb.offsetHeight;
-            if (h > 0) {
-                document.documentElement.style.setProperty('--fmap-filter-bar-h', h + 'px');
-            }
+            var fh = fb ? fb.offsetHeight : 0;
+            var th = tb ? tb.offsetHeight : 0;
+            if (fh > 0) document.documentElement.style.setProperty('--fmap-filter-bar-h', fh + 'px');
+            if (th > 0) document.documentElement.style.setProperty('--fmap-tide-bar-h',   th + 'px');
         }
         _apply();
-        // Re-measure if the filter bar resizes (e.g. font scale, category-tab wrap)
         if (typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(_apply).observe(fb);
+            var ro = new ResizeObserver(_apply);
+            if (fb) ro.observe(fb);
+            if (tb) ro.observe(tb);
         }
     }
 
@@ -5727,15 +4836,16 @@
     // current strike score, predicted best times, regulation info, and a
     // "Save as favorite" toggle.
     function wireSpotDetailPanel() {
-        var panel      = document.getElementById('fmap-spot-detail');
-        var closeBtn   = document.getElementById('fmap-spot-detail-close');
-        var favBtn     = document.getElementById('fmap-spot-detail-fav');
-        var coordsEl   = document.getElementById('fmap-spot-detail-coords');
-        var typeEl     = document.getElementById('fmap-spot-detail-type');
-        var scoreEl    = document.getElementById('fmap-spot-detail-score');
-        var bestTimesEl = document.getElementById('fmap-spot-detail-best-times');
-        var tipEl      = document.getElementById('fmap-spot-detail-tip');
-        var regEl      = document.getElementById('fmap-spot-detail-regs');
+        var panel        = document.getElementById('fmap-spot-detail');
+        var closeBtn     = document.getElementById('fmap-spot-detail-close');
+        var favBtn       = document.getElementById('fmap-spot-detail-fav');
+        var coordsEl     = document.getElementById('fmap-spot-detail-coords');
+        var typeEl       = document.getElementById('fmap-spot-detail-type');
+        var scoreEl      = document.getElementById('fmap-spot-detail-score');
+        var condEl       = document.getElementById('fmap-spot-conditions');
+        var bestTimesEl  = document.getElementById('fmap-spot-detail-best-times');
+        var tipEl        = document.getElementById('fmap-spot-detail-tip');
+        var regEl        = document.getElementById('fmap-spot-detail-regs');
 
         if (!panel) return;
 
@@ -5789,6 +4899,27 @@
                     '</span><span class="fmap-spot-score-denom">/10</span>' +
                     (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '');
                 scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
+            }
+
+            // Conditions chips for the current hour
+            if (condEl) {
+                var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
+                var fac = hd2.factors || {};
+                var chips = [];
+                if (fac.tide)           chips.push({ icon: '🌊', text: fac.tide });
+                if (fac.solunar && fac.solunar !== 'none')
+                                        chips.push({ icon: '🌙', text: fac.solunar });
+                if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
+                if (fac.wave_ft  != null) chips.push({ icon: '〰', text: fac.wave_ft + ' ft' });
+                if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
+                if (chips.length) {
+                    condEl.innerHTML = chips.map(function (c) {
+                        return '<span class="fmap-cond-chip">' + c.icon + ' ' + c.text + '</span>';
+                    }).join('');
+                    condEl.hidden = false;
+                } else {
+                    condEl.hidden = true;
+                }
             }
 
             // Best times today (hours scoring ≥ 7)
