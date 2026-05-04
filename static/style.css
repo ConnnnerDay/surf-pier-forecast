@@ -5827,7 +5827,7 @@ h2::before {
   font-size: 2rem;
   font-weight: 900;
   line-height: 1;
-  color: #22c55e;
+  color: rgba(255,255,255,0.5);
 }
 .fmap-spot-score--slow { color: #f87171; }
 .fmap-spot-score--fair { color: #fbbf24; }

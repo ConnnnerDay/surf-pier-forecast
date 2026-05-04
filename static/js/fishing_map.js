@@ -4815,7 +4815,7 @@
             if (_waterTempEl && _metaRowEl) {
                 var parts = [];
                 if (fac.water_temp_f != null) parts.push(fac.water_temp_f + '°F');
-                if (fac.tide)                 parts.push(fac.tide + ' tide');
+                if (fac.tide)                 parts.push(String(fac.tide).replace(/\s*\(.*\)/, '') + ' tide');
                 if (fac.wind_mph != null)     parts.push(fac.wind_mph + ' mph wind');
                 _waterTempEl.textContent = parts.join(' · ');
                 _metaRowEl.hidden = !parts.length;
@@ -4928,7 +4928,7 @@
                 var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
                 var fac = hd2.factors || {};
                 var chips = [];
-                if (fac.tide)             chips.push({ icon: '🌊', text: fac.tide });
+                if (fac.tide)             chips.push({ icon: '🌊', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
                 if (fac.solunar && fac.solunar !== 'none')
                                           chips.push({ icon: '🌙', text: fac.solunar });
                 if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
