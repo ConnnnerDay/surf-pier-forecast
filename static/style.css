@@ -4334,7 +4334,7 @@ h2::before {
 /* ── Zoom-in hint overlay ── */
 .fmap-zoom-hint {
   position: absolute;
-  bottom: 2.2rem;
+  bottom: calc(var(--fmap-filter-bar-h, 68px) + var(--fmap-tide-bar-h, 88px) + 0.6rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: 450;
@@ -4859,7 +4859,7 @@ h2::before {
   .fmap-layers-popup {
     position: absolute;
     top: auto;
-    bottom: 0.5rem;
+    bottom: calc(var(--fmap-filter-bar-h, 68px) + var(--fmap-tide-bar-h, 88px) + 0.5rem);
     right: 0.5rem;
     left: 0.5rem;
     width: auto;
@@ -4873,7 +4873,7 @@ h2::before {
     top: auto;
     right: 0.5rem;
     left: 0.5rem;
-    bottom: 0.5rem;
+    bottom: calc(var(--fmap-filter-bar-h, 68px) + var(--fmap-tide-bar-h, 88px) + 0.5rem);
     width: auto;
   }
 }
