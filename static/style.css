@@ -5721,6 +5721,13 @@ h2::before {
 .fmap-tide-score-badge--good      { background: #65a30d; }
 .fmap-tide-score-badge--fair      { background: #d97706; }
 .fmap-tide-score-badge--slow      { background: #dc2626; }
+.fmap-tide-score--loading {
+  animation: fmap-score-pulse 1.1s ease-in-out infinite;
+}
+@keyframes fmap-score-pulse {
+  0%, 100% { opacity: 0.28; }
+  50%       { opacity: 0.65; }
+}
 .fmap-tide-score-label {
   font-size: 0.7rem;
   font-weight: 600;

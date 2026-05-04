@@ -4735,21 +4735,27 @@
 
             if (_scoreAbort) _scoreAbort.abort();
             _scoreAbort = new AbortController();
+            // Show loading pulse on the badge while the request is in flight
+            if (scoreEl) scoreEl.classList.add('fmap-tide-score--loading');
             fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
                 signal: _scoreAbort.signal
             })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (d) {
-                if (!d || !d.ok) return;
+                if (!d || !d.ok) {
+                    if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
+                    return;
+                }
                 _scoreData = d.data;
                 renderChart();
-                updateSliderDisplay();
+                updateSliderDisplay(); // replaces scoreEl className, clearing the loading class
                 if (moonEl) {
                     moonEl.textContent = (_scoreData.moon_phase || '') +
                         ' · ' + (_scoreData.solunar_rating || '');
                 }
             })
             .catch(function (err) {
+                if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
                 if (err && err.name !== 'AbortError')
                     console.warn('[fishing-map] score fetch failed:', err);
             });
