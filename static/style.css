@@ -5719,8 +5719,13 @@ h2::before {
 .fmap-tide-score-badge--slow      { background: #dc2626; }
 .fmap-tide-score-label {
   font-size: 0.7rem;
+  font-weight: 600;
   color: rgba(255,255,255,0.6);
 }
+.fmap-tide-score-label--excellent { color: #4ade80; }
+.fmap-tide-score-label--good      { color: #a3e635; }
+.fmap-tide-score-label--fair      { color: #fbbf24; }
+.fmap-tide-score-label--slow      { color: #f87171; }
 .fmap-tide-hour {
   font-size: 0.7rem;
   color: rgba(255,255,255,0.45);
@@ -5824,10 +5829,10 @@ h2::before {
   line-height: 1;
   color: #22c55e;
 }
-.fmap-spot-score--slow { color: #ef4444; }
-.fmap-spot-score--fair { color: #f59e0b; }
-.fmap-spot-score--good { color: #3b82f6; }
-.fmap-spot-score--excellent { color: #22c55e; }
+.fmap-spot-score--slow { color: #f87171; }
+.fmap-spot-score--fair { color: #fbbf24; }
+.fmap-spot-score--good { color: #a3e635; }
+.fmap-spot-score--excellent { color: #4ade80; }
 .fmap-spot-detail-row {
   font-size: 0.75rem;
   color: rgba(255,255,255,0.7);

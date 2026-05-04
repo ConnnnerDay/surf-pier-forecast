@@ -4804,7 +4804,7 @@
             }
             if (labelEl) {
                 labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label';
+                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
             }
             if (hourEl) {
                 var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
