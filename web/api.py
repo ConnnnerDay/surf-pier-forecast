@@ -3255,7 +3255,9 @@ def map_habitats_v1() -> Any:
             try:
                 feats = fut.result()
                 for f in feats:
-                    fid = f.get("id") or f"{f.get('lat')},{f.get('lng')},{f.get('osmType')}"
+                    # fetch_ai_habitats returns snake_case osm_type; fall back to osmType
+                    osm_type_val = f.get("osm_type") or f.get("osmType") or ""
+                    fid = f.get("id") or f"{f.get('lat')},{f.get('lng')},{osm_type_val}"
                     if fid not in seen_ids:
                         seen_ids.add(fid)
                         all_features.append(f)
