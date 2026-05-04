@@ -4859,6 +4859,32 @@
             updateSliderDisplay();
         });
 
+        // Hover over chart bars to preview that hour's score (desktop)
+        chartEl.addEventListener('mousemove', function (e) {
+            if (!_scoreData) return;
+            var rect = chartEl.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            if (x < 0 || x > rect.width) return;
+            var hoverHour = Math.min(23, Math.max(0, Math.floor(x / rect.width * 24)));
+            var hData = (_scoreData.hours || [])[hoverHour] || {};
+            var label = hData.label || '';
+            var grade = _LABEL_TO_GRADE[label] || 'fair';
+            if (scoreEl) {
+                scoreEl.textContent = hData.score || 0;
+                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
+            }
+            if (labelEl) {
+                labelEl.textContent = label;
+                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
+            }
+            if (hourEl) {
+                var ap = hoverHour < 12 ? 'AM' : 'PM';
+                hourEl.textContent = (hoverHour % 12 || 12) + ':00 ' + ap;
+            }
+        });
+        // Restore selected-hour display when mouse leaves the chart
+        chartEl.addEventListener('mouseleave', updateSliderDisplay);
+
         // Initial fetch — debounce if location changes
         fetchScores();
         clearTimeout(_tideChartTimer);
