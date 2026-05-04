@@ -4902,17 +4902,25 @@
             var currentScore = 0;
             var currentLabel = '';
             var currentGrade = 'fair';
+            var hasScore = false;
             if (_scoreData) {
                 var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
                 currentScore = hd.score || 0;
                 currentLabel = hd.label || '';
                 currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
+                hasScore = true;
             }
             if (scoreEl) {
-                scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
-                    '</span><span class="fmap-spot-score-denom">/10</span>' +
-                    (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '');
-                scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
+                if (!hasScore) {
+                    scoreEl.innerHTML = '<span class="fmap-spot-score-num" style="opacity:.4">–</span>' +
+                        '<span class="fmap-spot-score-denom">/10</span>';
+                    scoreEl.className = 'fmap-spot-score';
+                } else {
+                    scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
+                        '</span><span class="fmap-spot-score-denom">/10</span>' +
+                        (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '');
+                    scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
+                }
             }
 
             // Conditions chips for the current hour
