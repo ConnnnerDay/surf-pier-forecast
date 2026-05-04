@@ -4521,6 +4521,16 @@ h2::before {
   background: rgba(14,95,120,0.9);
 }
 
+/* ── Favorite button pressed state ── */
+.fmap-spot-detail-header .fmap-ctrl-btn[aria-pressed="true"] {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.5);
+  background: rgba(220,38,38,0.15);
+}
+.fmap-spot-detail-header .fmap-ctrl-btn[aria-pressed="true"]:hover {
+  background: rgba(220,38,38,0.25);
+}
+
 /* ── Layers popup panel ── */
 .fmap-layers-popup {
   position: absolute;
