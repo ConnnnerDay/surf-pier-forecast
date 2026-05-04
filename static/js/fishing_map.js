@@ -4809,6 +4809,8 @@
                 var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
                 var h12  = _tideSliderHour % 12 || 12;
                 hourEl.textContent = h12 + ':00 ' + ampm;
+                sliderEl.setAttribute('aria-valuetext',
+                    h12 + ':00 ' + ampm + (label ? ' — ' + label : ''));
             }
             // Water temp + tide state in the meta row
             if (_waterTempEl && _metaRowEl) {
@@ -4835,6 +4837,19 @@
         sliderEl.value = _tideSliderHour;
         sliderEl.addEventListener('input', function () {
             _tideSliderHour = parseInt(this.value, 10) || 0;
+            updateSliderDisplay();
+        });
+
+        // Click anywhere on the chart to jump to that hour
+        chartEl.style.cursor = 'pointer';
+        chartEl.title = 'Click to select hour';
+        chartEl.addEventListener('click', function (e) {
+            if (!_scoreData) return;
+            var rect = chartEl.getBoundingClientRect();
+            if (!rect.width) return;
+            var hour = Math.min(23, Math.max(0, Math.floor((e.clientX - rect.left) / rect.width * 24)));
+            _tideSliderHour = hour;
+            sliderEl.value  = hour;
             updateSliderDisplay();
         });
 
