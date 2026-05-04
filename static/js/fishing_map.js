@@ -4873,8 +4873,8 @@
 
         var nameEl = document.getElementById('fmap-spot-detail-name');
 
-        // Updates only the score and conditions chips — called both on panel open
-        // and when the time slider changes while the panel is open.
+        // Updates score, conditions chips, and best times — called both on panel
+        // open and whenever the time slider moves or new score data arrives.
         function _refreshPanelScore() {
             var hasScore = !!_scoreData;
             var currentScore = 0, currentLabel = '', currentGrade = 'fair';
@@ -4915,6 +4915,30 @@
                     condEl.hidden = true;
                 }
             }
+            // Best times — doesn't change with slider but must update when score
+            // data arrives after the panel was already open.
+            if (bestTimesEl) {
+                if (!_scoreData) {
+                    bestTimesEl.textContent = 'Loading…';
+                } else {
+                    var goodHourNums = (_scoreData.hours || [])
+                        .filter(function (h) { return h.score >= 7; })
+                        .map(function (h) { return h.hour; });
+                    var rangeStrs = [];
+                    var j = 0;
+                    while (j < goodHourNums.length) {
+                        var rs = goodHourNums[j], re = rs;
+                        while (j + 1 < goodHourNums.length && goodHourNums[j + 1] === goodHourNums[j] + 1) {
+                            j++; re = goodHourNums[j];
+                        }
+                        rangeStrs.push(rs === re ? _fmtHour(rs) : _fmtHour(rs) + '–' + _fmtHour(re));
+                        j++;
+                    }
+                    bestTimesEl.textContent = rangeStrs.length
+                        ? rangeStrs.slice(0, 4).join(', ')
+                        : 'No peak windows today';
+                }
+            }
         }
         window._fmapRefreshPanelScore = _refreshPanelScore;
 
@@ -4937,34 +4961,11 @@
             if (typeEl) {
                 var t = spotData.type || '';
                 typeEl.textContent = (t.charAt(0).toUpperCase() + t.slice(1)).replace(/_/g, ' ');
+                typeEl.setAttribute('data-type', t);
             }
 
-            // Score + conditions (slider-dependent — delegate to shared helper)
+            // Score, conditions chips, and best times (delegate to shared helper)
             _refreshPanelScore();
-
-            // Best times today (hours scoring ≥ 7) — group consecutive runs
-            if (bestTimesEl && !_scoreData) {
-                bestTimesEl.textContent = 'Loading…';
-            }
-            if (bestTimesEl && _scoreData) {
-                var goodHourNums = (_scoreData.hours || [])
-                    .filter(function (h) { return h.score >= 7; })
-                    .map(function (h) { return h.hour; });
-                var rangeStrs = [];
-                var i = 0;
-                while (i < goodHourNums.length) {
-                    var start = goodHourNums[i];
-                    var end   = start;
-                    while (i + 1 < goodHourNums.length && goodHourNums[i + 1] === goodHourNums[i] + 1) {
-                        i++; end = goodHourNums[i];
-                    }
-                    rangeStrs.push(start === end ? _fmtHour(start) : _fmtHour(start) + '–' + _fmtHour(end));
-                    i++;
-                }
-                bestTimesEl.textContent = rangeStrs.length
-                    ? rangeStrs.slice(0, 4).join(', ')
-                    : 'No peak windows today';
-            }
 
             // Fishing tip from the spot
             if (tipEl) {
@@ -5002,17 +5003,41 @@
 
             panel.setAttribute('aria-hidden', 'false');
             panel.classList.add('fmap-spot-detail--open');
+            // Move focus to the close button after slide-in completes
+            if (closeBtn) setTimeout(function () { closeBtn.focus(); }, 230);
         };
+
+        var _panelPrevFocus = null;
+
+        // Wrap to capture the triggering element so focus returns to it on close
+        (function () {
+            var _inner = window._fmapShowSpotDetail;
+            window._fmapShowSpotDetail = function (spotData) {
+                _panelPrevFocus = document.activeElement || null;
+                _inner(spotData);
+            };
+        }());
 
         function _closePanel() {
             panel.classList.remove('fmap-spot-detail--open');
             panel.setAttribute('aria-hidden', 'true');
             _activeSpotData = null;
+            if (_panelPrevFocus && typeof _panelPrevFocus.focus === 'function') {
+                _panelPrevFocus.focus({ preventScroll: true });
+                _panelPrevFocus = null;
+            }
         }
 
         if (closeBtn) {
             closeBtn.addEventListener('click', _closePanel);
         }
+
+        // Escape key closes the panel
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && panel.classList.contains('fmap-spot-detail--open')) {
+                _closePanel();
+            }
+        });
 
         if (favBtn) {
             favBtn.addEventListener('click', function () {

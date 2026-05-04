@@ -5797,6 +5797,29 @@ h2::before {
   padding: 2px 6px;
   flex-shrink: 0;
 }
+/* rocky/offshore structures */
+.fmap-spot-detail-type-badge[data-type="reef"],
+.fmap-spot-detail-type-badge[data-type="wreck"] {
+  background: rgba(234,88,12,0.2);
+  color: #f97316;
+  border-color: rgba(234,88,12,0.35);
+}
+/* coastal barriers */
+.fmap-spot-detail-type-badge[data-type="jetty"],
+.fmap-spot-detail-type-badge[data-type="seawall"] {
+  background: rgba(99,102,241,0.2);
+  color: #818cf8;
+  border-color: rgba(99,102,241,0.35);
+}
+/* vegetated/soft-bottom habitat */
+.fmap-spot-detail-type-badge[data-type="saltmarsh"],
+.fmap-spot-detail-type-badge[data-type="mangrove"],
+.fmap-spot-detail-type-badge[data-type="oyster_reef"],
+.fmap-spot-detail-type-badge[data-type="grass_flat"] {
+  background: rgba(34,197,94,0.2);
+  color: #22c55e;
+  border-color: rgba(34,197,94,0.35);
+}
 .fmap-spot-detail-coords {
   font-size: 0.67rem;
   color: rgba(255,255,255,0.4);
