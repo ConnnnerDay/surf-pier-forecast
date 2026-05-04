@@ -5307,7 +5307,7 @@ h2::before {
 /* ── Toast notification ── */
 .fmap-toast {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: calc(var(--fmap-filter-bar-h, 0px) + var(--fmap-tide-bar-h, 0px) + 1.5rem);
   left: 50%;
   transform: translateX(-50%) translateY(1rem);
   opacity: 0;
