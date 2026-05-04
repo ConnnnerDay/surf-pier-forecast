@@ -5768,6 +5768,7 @@ h2::before {
   margin-top: 1px;
 }
 [data-theme="light"] .fmap-tide-meta-row { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .fmap-tide-hour-labels span { color: rgba(0,0,0,0.3); }
 [data-theme="light"] .fmap-tide-bar {
   background: rgba(240,248,252,0.95);
   border-top-color: rgba(0,0,0,0.1);
@@ -5953,6 +5954,7 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-label { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .fmap-spot-detail-value { color: rgba(0,0,0,0.75); }
 [data-theme="light"] .fmap-spot-detail-tip { color: rgba(0,0,0,0.5); }
+[data-theme="light"] .fmap-spot-score { color: rgba(0,0,0,0.35); }
 
 /* ── Conditions chips ── */
 .fmap-spot-conditions {
