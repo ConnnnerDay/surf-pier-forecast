@@ -5842,10 +5842,19 @@ h2::before {
 .fmap-spot-detail-type-badge[data-type="saltmarsh"],
 .fmap-spot-detail-type-badge[data-type="mangrove"],
 .fmap-spot-detail-type-badge[data-type="oyster_reef"],
-.fmap-spot-detail-type-badge[data-type="grass_flat"] {
+.fmap-spot-detail-type-badge[data-type="grass_flat"],
+.fmap-spot-detail-type-badge[data-type="tidal_flat"],
+.fmap-spot-detail-type-badge[data-type="kelp"] {
   background: rgba(34,197,94,0.2);
   color: #22c55e;
   border-color: rgba(34,197,94,0.35);
+}
+/* sandy/shoreline */
+.fmap-spot-detail-type-badge[data-type="beach"],
+.fmap-spot-detail-type-badge[data-type="shoal"] {
+  background: rgba(251,191,36,0.18);
+  color: #fbbf24;
+  border-color: rgba(251,191,36,0.35);
 }
 .fmap-spot-detail-coords {
   font-size: 0.67rem;
@@ -5889,11 +5898,6 @@ h2::before {
   display: flex;
   gap: 0.3rem;
   align-items: flex-start;
-}
-.fmap-spot-detail-row strong {
-  color: rgba(255,255,255,0.9);
-  min-width: 80px;
-  flex-shrink: 0;
 }
 .fmap-spot-detail-name {
   font-size: 0.9rem;
@@ -5945,7 +5949,6 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-header { background: #f0f8fc; }
 [data-theme="light"] .fmap-spot-detail-coords { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .fmap-spot-detail-row { color: rgba(0,0,0,0.65); }
-[data-theme="light"] .fmap-spot-detail-row strong { color: rgba(0,0,0,0.85); }
 [data-theme="light"] .fmap-spot-detail-name { color: #0b2836; }
 [data-theme="light"] .fmap-spot-detail-label { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .fmap-spot-detail-value { color: rgba(0,0,0,0.75); }
