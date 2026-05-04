@@ -29,7 +29,7 @@
     var _prefetchInFlight   = false; // whether a background fetch is running
     var _PREFETCH_DELAY     = 5000;  // ms between background fetches (Overpass rate-limit)
     var _PREFETCH_MAX_QUEUE = 8;     // max queued tiles (drops oldest if exceeded)
-    // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
+    // Shared cache for overlay icons (SST, METAR, buoy).
     // These layers clear and redraw on every fetch; caching the icon objects avoids
     // re-running L.divIcon() for every marker on every refresh.
     // Key format is layer-prefix + variant (e.g. 'sst|#22c55e|72').
@@ -69,10 +69,8 @@
     var IS_LOGGED_IN      = !!(window.IS_LOGGED_IN || false);
 
     // ─── Fishing-relevant Live Feeds state ───────────────────────────────────
-    // Kept: marine warnings, storm tracker, recent storms, SST, buoys, HF Radar,
-    // METAR, tropical outlook.  Non-fishing overlays (wildfire, drought, AQI,
-    // sea ice, seismic, terminator, stream gauges, storm reports, NDFD
-    // precipitation/temperature) have been removed.
+    // Active overlays: marine warnings, storm tracker, recent storms, SST,
+    // buoys, HF Radar, METAR, tropical outlook.
     var marineWarnOn      = false;   // marine warnings overlay active
     var marineWarnLayer   = null;    // L.layerGroup for warning polygons
     var marineWarnTimer   = null;    // debounce for viewport-based reload
@@ -115,6 +113,10 @@
     var _favoriteSpotKeys  = {};     // persisted in localStorage
     var _LABEL_TO_GRADE    = {Excellent: 'excellent', Good: 'good', Fair: 'fair', Slow: 'slow'};
     var _favSpotsLayer     = null;   // Leaflet layer for user's saved favorite pins
+
+    function _fmtHour(h) {
+        return (h % 12 || 12) + (h < 12 ? 'AM' : 'PM');
+    }
 
     // ─── Category filter tabs ────────────────────────────────────────────────
     // The flat pill list is replaced by 4 high-level category tabs.
@@ -2172,10 +2174,6 @@
         if (!els.loading) return;
         els.loading.style.opacity = '0';
         setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
-    }
-
-    // ─── Filter wiring ────────────────────────────────────────────────────────
-    function wireFilters() {
     }
 
     // ─── Utilities ────────────────────────────────────────────────────────────
@@ -4465,7 +4463,6 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                wireFilters();
                 wireMapControls();
                 wireSpotTypeFilters();
                 wireCommunityLayer();
@@ -4824,9 +4821,9 @@
             _recolourSpotsByScore(score);
             // Refresh chart to move the cursor
             renderChart();
-            // If the spot detail panel is open, refresh its score display
-            if (_activeSpotData && typeof window._fmapShowSpotDetail === 'function') {
-                window._fmapShowSpotDetail(_activeSpotData);
+            // If the spot detail panel is open, refresh only its score + conditions
+            if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
+                window._fmapRefreshPanelScore();
             }
         }
 
@@ -4876,39 +4873,16 @@
 
         var nameEl = document.getElementById('fmap-spot-detail-name');
 
-        // Called by renderFishingSpots() when a spot marker is clicked
-        window._fmapShowSpotDetail = function (spotData) {
-            _activeSpotData = spotData;
-            var key = (spotData.type || 'spot') + ':' + spotData.lat + ':' + spotData.lng;
-
-            // Spot name
-            if (nameEl) {
-                nameEl.textContent = spotData.name ||
-                    ((spotData.type || 'Fishing spot').replace(/_/g, ' ')
-                        .replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
-            }
-
-            if (coordsEl) {
-                coordsEl.textContent = spotData.lat.toFixed(5) + ', ' +
-                                       spotData.lng.toFixed(5);
-                coordsEl.href = 'https://maps.google.com/?q=' + spotData.lat + ',' + spotData.lng;
-            }
-            if (typeEl) {
-                var t = spotData.type || '';
-                typeEl.textContent = (t.charAt(0).toUpperCase() + t.slice(1)).replace(/_/g, ' ');
-            }
-
-            // Strike score for the current slider hour
-            var currentScore = 0;
-            var currentLabel = '';
-            var currentGrade = 'fair';
-            var hasScore = false;
-            if (_scoreData) {
+        // Updates only the score and conditions chips — called both on panel open
+        // and when the time slider changes while the panel is open.
+        function _refreshPanelScore() {
+            var hasScore = !!_scoreData;
+            var currentScore = 0, currentLabel = '', currentGrade = 'fair';
+            if (hasScore) {
                 var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
                 currentScore = hd.score || 0;
                 currentLabel = hd.label || '';
                 currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
-                hasScore = true;
             }
             if (scoreEl) {
                 if (!hasScore) {
@@ -4922,8 +4896,6 @@
                     scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
                 }
             }
-
-            // Conditions chips for the current hour
             if (condEl) {
                 var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
                 var fac = hd2.factors || {};
@@ -4943,6 +4915,32 @@
                     condEl.hidden = true;
                 }
             }
+        }
+        window._fmapRefreshPanelScore = _refreshPanelScore;
+
+        // Called by renderFishingSpots() when a spot marker is clicked
+        window._fmapShowSpotDetail = function (spotData) {
+            _activeSpotData = spotData;
+            var key = (spotData.type || 'spot') + ':' + spotData.lat + ':' + spotData.lng;
+
+            // Static fields — name, coords, type (don't change with the slider)
+            if (nameEl) {
+                nameEl.textContent = spotData.name ||
+                    ((spotData.type || 'Fishing spot').replace(/_/g, ' ')
+                        .replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
+            }
+            if (coordsEl) {
+                coordsEl.textContent = spotData.lat.toFixed(5) + ', ' +
+                                       spotData.lng.toFixed(5);
+                coordsEl.href = 'https://maps.google.com/?q=' + spotData.lat + ',' + spotData.lng;
+            }
+            if (typeEl) {
+                var t = spotData.type || '';
+                typeEl.textContent = (t.charAt(0).toUpperCase() + t.slice(1)).replace(/_/g, ' ');
+            }
+
+            // Score + conditions (slider-dependent — delegate to shared helper)
+            _refreshPanelScore();
 
             // Best times today (hours scoring ≥ 7) — group consecutive runs
             if (bestTimesEl && !_scoreData) {
@@ -4960,11 +4958,7 @@
                     while (i + 1 < goodHourNums.length && goodHourNums[i + 1] === goodHourNums[i] + 1) {
                         i++; end = goodHourNums[i];
                     }
-                    function _fmt(h) {
-                        var ap = h < 12 ? 'AM' : 'PM';
-                        return (h % 12 || 12) + ap;
-                    }
-                    rangeStrs.push(start === end ? _fmt(start) : _fmt(start) + '–' + _fmt(end));
+                    rangeStrs.push(start === end ? _fmtHour(start) : _fmtHour(start) + '–' + _fmtHour(end));
                     i++;
                 }
                 bestTimesEl.textContent = rangeStrs.length
