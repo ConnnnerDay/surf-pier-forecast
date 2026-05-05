@@ -5135,10 +5135,23 @@
             closeBtn.addEventListener('click', _closePanel);
         }
 
-        // Escape key closes the panel
+        // Escape key closes the panel; Tab is trapped within while open
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && panel.classList.contains('fmap-spot-detail--open')) {
-                _closePanel();
+            if (!panel.classList.contains('fmap-spot-detail--open')) return;
+            if (e.key === 'Escape') { _closePanel(); return; }
+            if (e.key !== 'Tab') return;
+            var focusable = Array.prototype.slice.call(
+                panel.querySelectorAll(
+                    'a[href],button:not([disabled]),input:not([disabled]),' +
+                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+                )
+            );
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
             }
         });
 
