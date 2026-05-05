@@ -2201,10 +2201,14 @@
         var then = new Date(dateStr.indexOf('Z') === -1 ? dateStr + 'Z' : dateStr);
         var now  = new Date();
         var secs = Math.floor((now - then) / 1000);
-        if (secs < 60)   return 'just now';
-        if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+        if (secs < 60)    return 'just now';
+        if (secs < 3600)  return Math.floor(secs / 60) + 'm ago';
         if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
-        return Math.floor(secs / 86400) + 'd ago';
+        var days = Math.floor(secs / 86400);
+        if (days < 7)   return days + 'd ago';
+        if (days < 30)  return Math.floor(days / 7) + 'w ago';
+        if (days < 365) return Math.floor(days / 30) + 'mo ago';
+        return Math.floor(days / 365) + 'y ago';
     }
 
     // ─── Advanced filters ─────────────────────────────────────────────────────
@@ -5044,9 +5048,9 @@
                     condEl.hidden = true;
                 }
             }
-            // Best times — doesn't change with slider but must update when score
-            // data arrives after the panel was already open.
-            if (bestTimesEl) {
+            // Best times — doesn't change with slider; skip re-render if already current.
+            if (bestTimesEl && bestTimesEl._scoreRef !== _scoreData) {
+                bestTimesEl._scoreRef = _scoreData;
                 if (!_scoreData) {
                     bestTimesEl.textContent = 'Loading…';
                 } else {
@@ -5088,6 +5092,8 @@
         window._fmapShowSpotDetail = function (spotData) {
             _activeSpotData = spotData;
             var key = (spotData.type || 'spot') + ':' + spotData.lat + ':' + spotData.lng;
+            // Reset the best-times cache so it re-renders for the new spot
+            if (bestTimesEl) bestTimesEl._scoreRef = undefined;
 
             // Static fields — name, coords, type (don't change with the slider)
             if (nameEl) {
