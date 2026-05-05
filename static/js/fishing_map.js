@@ -110,6 +110,7 @@
 
     // ─── Spot detail panel state ──────────────────────────────────────────────
     var _activeSpotData    = null;   // currently shown spot object
+    var _activeSpotMarker  = null;   // Leaflet marker for the currently open spot
     var _favoriteSpotKeys  = {};     // persisted in localStorage
     var _LABEL_TO_GRADE    = {Excellent: 'excellent', Good: 'good', Fair: 'fair', Slow: 'slow'};
     var _favSpotsLayer     = null;   // Leaflet layer for user's saved favorite pins
@@ -1207,17 +1208,18 @@
             );
             // Click handler: admin mode gets spot actions; everyone else gets
             // the spot detail panel with strike score and best-time information.
-            (function (spot) {
-                m.on('click', function () {
+            (function (spot, marker) {
+                marker.on('click', function () {
                     if (adminEditMode) {
-                        _openAdminSpotActions(spot, m);
+                        _openAdminSpotActions(spot, marker);
                         return;
                     }
                     if (typeof window._fmapShowSpotDetail === 'function') {
+                        _activeSpotMarker = marker;
                         window._fmapShowSpotDetail(spot);
                     }
                 });
-            }(f));
+            }(f, m));
             fishingSpotLayer.addLayer(m);
         });
 
@@ -5157,14 +5159,24 @@
 
         var _panelPrevFocus = null;
 
-        // Wrap to capture the triggering element so focus returns to it on close
+        // Wrap to capture focus origin and activate the spot's map marker
         (function () {
             var _inner = window._fmapShowSpotDetail;
             window._fmapShowSpotDetail = function (spotData) {
+                // Clear previous active marker
+                _setMarkerActive(_activeSpotMarker, false);
+                // Highlight the new marker (_activeSpotMarker set by click handler)
+                _setMarkerActive(_activeSpotMarker, true);
                 _panelPrevFocus = document.activeElement || null;
                 _inner(spotData);
             };
         }());
+
+        function _setMarkerActive(marker, on) {
+            if (!marker || !marker._icon) return;
+            var dot = marker._icon.querySelector('.fmap-spot-dot');
+            if (dot) dot.classList.toggle('fmap-spot-dot--active', on);
+        }
 
         function _closePanel() {
             panel.style.transform = '';
@@ -5172,6 +5184,8 @@
             panel.classList.remove('fmap-spot-detail--open');
             panel.setAttribute('aria-hidden', 'true');
             _activeSpotData = null;
+            _setMarkerActive(_activeSpotMarker, false);
+            _activeSpotMarker = null;
             if (_panelPrevFocus && typeof _panelPrevFocus.focus === 'function') {
                 _panelPrevFocus.focus({ preventScroll: true });
                 _panelPrevFocus = null;
@@ -5255,6 +5269,7 @@
         if (logHereBtn) {
             logHereBtn.addEventListener('click', function () {
                 if (!_activeSpotData) return;
+                if (!IS_LOGGED_IN) { showToast('Sign in to log catches on the map'); return; }
                 var lat      = _activeSpotData.lat;
                 var lng      = _activeSpotData.lng;
                 var spotName = _activeSpotData.name || ''; // capture before _closePanel clears it
