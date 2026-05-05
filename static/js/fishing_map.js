@@ -5080,13 +5080,15 @@
                     var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
                     var trendClass = delta >= 1.5 ? 'fmap-score-trend--up' :
                                      delta <= -1.5 ? 'fmap-score-trend--down' : '';
-                    var trendTitle = trendArrow
-                        ? 'title="Score in 2h: ' + futureScore + '/10"'
+                    var trendDirection = delta >= 1.5 ? 'Improving' : delta <= -1.5 ? 'Declining' : '';
+                    var trendAttrs = trendArrow
+                        ? 'title="Score in 2h: ' + futureScore + '/10"' +
+                          ' aria-label="' + trendDirection + ' — score in 2h: ' + futureScore + '/10"'
                         : '';
                     scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
                         '</span><span class="fmap-spot-score-denom">/10</span>' +
                         (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '') +
-                        (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '" ' + trendTitle + '>' + trendArrow + '</span>' : '');
+                        (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '" ' + trendAttrs + '>' + trendArrow + '</span>' : '');
                     scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
                 }
             }
@@ -5102,7 +5104,9 @@
                 if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
                 if (chips.length) {
                     condEl.innerHTML = chips.map(function (c) {
-                        return '<span class="fmap-cond-chip">' + c.icon + ' ' + esc(String(c.text)) + '</span>';
+                        return '<span class="fmap-cond-chip">' +
+                            '<span aria-hidden="true">' + c.icon + '</span> ' +
+                            esc(String(c.text)) + '</span>';
                     }).join('');
                     condEl.hidden = false;
                 } else {
