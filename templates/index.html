@@ -741,7 +741,7 @@
                         <svg id="fmap-basemap-icon-map" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
-                    <button type="button" id="fmap-map-fullscreen" class="fmap-ctrl-btn" title="Toggle fullscreen map" aria-label="Toggle fullscreen map">
+                    <button type="button" id="fmap-map-fullscreen" class="fmap-ctrl-btn" title="Toggle fullscreen map" aria-label="Toggle fullscreen map" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
@@ -1137,7 +1137,7 @@
 
         <!-- ── Bottom toolbar ── -->
         <div class="fmap-toolbar">
-            <button type="button" id="fmap-fullscreen-btn" class="fmap-toolbar-btn">
+            <button type="button" id="fmap-fullscreen-btn" class="fmap-toolbar-btn" aria-pressed="false">
                 <svg id="fmap-fs-icon-expand" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                 <svg id="fmap-fs-icon-shrink" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
                 <span id="fmap-fs-label">Expand Map</span>

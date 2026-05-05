@@ -4648,6 +4648,9 @@
             if (fsLabel) fsLabel.textContent = isFullscreen ? 'Shrink Map' : 'Expand Map';
             if (fsIconExpand) fsIconExpand.style.display = isFullscreen ? 'none' : '';
             if (fsIconShrink) fsIconShrink.style.display = isFullscreen ? '' : 'none';
+            var pressed = isFullscreen ? 'true' : 'false';
+            if (fsToolbarBtn) fsToolbarBtn.setAttribute('aria-pressed', pressed);
+            if (fsMapBtn) fsMapBtn.setAttribute('aria-pressed', pressed);
             // Lock/unlock body scroll and update map size
             document.body.style.overflow = isFullscreen ? 'hidden' : '';
             setTimeout(function () { if (map) map.invalidateSize(); }, 300);
