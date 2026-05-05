@@ -4847,9 +4847,10 @@
             if (hourEl) {
                 var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
                 var h12  = _tideSliderHour % 12 || 12;
-                hourEl.textContent = h12 + ':00 ' + ampm;
+                var isNow = _tideSliderHour === new Date().getHours();
+                hourEl.textContent = h12 + ':00 ' + ampm + (isNow ? ' · Now' : '');
                 sliderEl.setAttribute('aria-valuetext',
-                    h12 + ':00 ' + ampm + (label ? ' — ' + label : ''));
+                    h12 + ':00 ' + ampm + (isNow ? ', current hour' : '') + (label ? ' — ' + label : ''));
             }
             // Water temp + tide state in the meta row
             if (_waterTempEl && _metaRowEl) {
