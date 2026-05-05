@@ -2494,8 +2494,9 @@
                 // Add comment form if logged in
                 var commentForm = IS_LOGGED_IN
                     ? '<div class="fmap-catch-comment-form">' +
-                      '<input type="text" class="fmap-catch-comment-input" placeholder="Add a comment…" maxlength="500">' +
-                      '<button class="fmap-catch-comment-post" data-catch-id="' + c.id + '">Post</button></div>'
+                      '<input type="text" class="fmap-catch-comment-input" placeholder="Add a comment…"' +
+                      ' aria-label="Add a comment" maxlength="500">' +
+                      '<button class="fmap-catch-comment-post" aria-label="Post comment" data-catch-id="' + c.id + '">Post</button></div>'
                     : '';
                 els.catchDetailComments.innerHTML = html + commentForm;
 
