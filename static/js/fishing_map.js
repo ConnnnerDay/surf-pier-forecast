@@ -2625,7 +2625,10 @@
             var banner = document.createElement('div');
             banner.id = 'fmap-log-banner';
             banner.className = 'fmap-log-mode-banner';
-            banner.textContent = 'Tap the map to place your catch pin \u2014 tap again to cancel';
+            banner.setAttribute('role', 'alert');
+            banner.setAttribute('aria-live', 'assertive');
+            var _tc = window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
+            banner.textContent = _tc + ' the map to place your catch pin \u2014 ' + _tc.toLowerCase() + ' again to cancel';
             if (wrap) wrap.appendChild(banner);
         }
     }

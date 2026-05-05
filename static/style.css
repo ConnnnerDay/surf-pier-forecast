@@ -6508,7 +6508,12 @@ h2::before {
   z-index: 1200;
   pointer-events: none;
   white-space: nowrap;
+  max-width: calc(100% - 2rem);
+  text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+@media (max-width: 400px) {
+  .fmap-log-mode-banner { white-space: normal; font-size: 0.74rem; }
 }
 
 /* ── Light mode overrides for new elements ── */
