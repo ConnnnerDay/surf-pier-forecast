@@ -4529,6 +4529,11 @@ h2::before {
 .fmap-ctrl-btn--active:hover {
   background: rgba(14,95,120,0.9);
 }
+/* Focus ring visible on dark map background */
+.fmap-ctrl-btn:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
+}
 
 /* ── Favorite button pressed state ── */
 .fmap-spot-detail-header .fmap-ctrl-btn[aria-pressed="true"] {
@@ -5330,6 +5335,10 @@ h2::before {
   color: #f87171;
   border-color: rgba(239,68,68,0.4);
 }
+.fmap-detail-close:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
+}
 
 /* ── Toast notification ── */
 .fmap-toast {
@@ -5434,6 +5443,10 @@ h2::before {
   background: rgba(14,95,120,0.18);
   color: var(--text-primary, #e8f0f5);
   border-color: rgba(31,168,201,0.35);
+}
+.fmap-toolbar-btn:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
 }
 
 /* ── Light theme extras ── */
@@ -5652,6 +5665,10 @@ h2::before {
   background: rgba(31,168,201,0.25);
   border-color: #1fa8c9;
   color: #fff;
+}
+.fmap-cat-tab:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
 }
 [data-theme="light"] .fmap-cat-tab {
   background: rgba(0,0,0,0.05);
@@ -6063,6 +6080,10 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-log-btn:hover {
   background: rgba(14,110,140,0.14);
 }
+.fmap-spot-detail-log-btn:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
+}
 
 /* ── Conditions chips ── */
 .fmap-spot-conditions {
@@ -6301,6 +6322,10 @@ h2::before {
   transition: background 0.15s;
 }
 .fmap-modal-cancel-btn:hover { background: rgba(255,255,255,0.07); }
+.fmap-modal-cancel-btn:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
+}
 .fmap-modal-submit-btn {
   display: inline-flex;
   align-items: center;
@@ -6316,6 +6341,10 @@ h2::before {
   transition: background 0.15s;
 }
 .fmap-modal-submit-btn:hover { background: #1fa8c9; }
+.fmap-modal-submit-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
 .fmap-modal-submit-btn:disabled { opacity: 0.55; cursor: default; }
 
 /* ── Community catch detail drawer extra styles ── */
