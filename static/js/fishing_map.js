@@ -2160,7 +2160,8 @@
     function saveFilters() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
-                spotTypes: activeSpotTypes.slice()
+                spotTypes: activeSpotTypes.slice(),
+                category:  _activeCategory || null
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -2177,6 +2178,15 @@
             if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
+            }
+            // Restore active category tab (deferred until wireCategoryFilterTabs runs)
+            if (f.category) {
+                var _tryRestoreCat = function () {
+                    var tab = document.querySelector('.fmap-cat-tab[data-cat="' + f.category + '"]');
+                    if (tab) tab.click();
+                };
+                // Tabs are wired in boot() shortly after loadFilters; defer one tick
+                setTimeout(_tryRestoreCat, 0);
             }
             updateAdvBadge();
         } catch (e) {
@@ -4780,6 +4790,7 @@
                     tab.classList.add('fmap-cat-tab--active');
                     _applyCategory(cat);
                 }
+                saveFilters();
             });
         });
     }
