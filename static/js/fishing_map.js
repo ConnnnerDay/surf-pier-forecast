@@ -2530,12 +2530,15 @@
             });
 
         // Action buttons: like + delete (own catches)
+        var _likeCt = c.likes_count || 0;
         var actionsHtml = '';
-        actionsHtml += '<button class="fmap-catch-action-btn fmap-like-btn" data-catch-id="' + c.id + '">' +
-            '\u2764\uFE0F ' + (c.likes_count || 0) + ' likes</button>';
+        actionsHtml += '<button class="fmap-catch-action-btn fmap-like-btn" data-catch-id="' + c.id + '"' +
+            ' aria-label="Like this catch (' + _likeCt + ' like' + (_likeCt !== 1 ? 's' : '') + ')">' +
+            '<span aria-hidden="true">\u2764\uFE0F</span> ' + _likeCt + ' like' + (_likeCt !== 1 ? 's' : '') + '</button>';
         if (c.mine) {
-            actionsHtml += '<button class="fmap-catch-action-btn fmap-catch-action-btn--delete fmap-delete-btn" data-catch-id="' + c.id + '">' +
-                '\uD83D\uDDD1 Delete</button>';
+            actionsHtml += '<button class="fmap-catch-action-btn fmap-catch-action-btn--delete fmap-delete-btn" data-catch-id="' + c.id + '"' +
+                ' aria-label="Delete this catch">' +
+                '<span aria-hidden="true">\uD83D\uDDD1</span> Delete</button>';
         }
         els.catchDetailActions.innerHTML = actionsHtml;
 
@@ -2549,9 +2552,11 @@
                 })
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function (d) {
-                    likeBtn.textContent = '\u2764\uFE0F ' + d.likes_count + ' likes';
+                    var _lc = d.likes_count;
+                    likeBtn.innerHTML = '<span aria-hidden="true">\u2764\uFE0F</span> ' + _lc + ' like' + (_lc !== 1 ? 's' : '');
+                    likeBtn.setAttribute('aria-label', 'Like this catch (' + _lc + ' like' + (_lc !== 1 ? 's' : '') + ')');
                     likeBtn.classList.toggle('fmap-catch-action-btn--liked', d.liked);
-                    c.likes_count = d.likes_count;
+                    c.likes_count = _lc;
                 })
                 .catch(function () { showToast('Could not update like.'); });
             });
@@ -5096,15 +5101,15 @@
                 var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
                 var fac = hd2.factors || {};
                 var chips = [];
-                if (fac.tide)             chips.push({ icon: '🌊', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
+                if (fac.tide)             chips.push({ icon: '🌊', title: 'Tide', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
                 if (fac.solunar && fac.solunar !== 'none')
-                                          chips.push({ icon: '🌙', text: fac.solunar.charAt(0).toUpperCase() + fac.solunar.slice(1) });
-                if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
-                if (fac.wave_ft  != null) chips.push({ icon: '≋', text: fac.wave_ft + ' ft' });
-                if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
+                                          chips.push({ icon: '🌙', title: 'Solunar', text: fac.solunar.charAt(0).toUpperCase() + fac.solunar.slice(1) });
+                if (fac.wind_mph != null) chips.push({ icon: '💨', title: 'Wind speed', text: fac.wind_mph + ' mph' });
+                if (fac.wave_ft  != null) chips.push({ icon: '≋', title: 'Wave height', text: fac.wave_ft + ' ft' });
+                if (fac.water_temp_f != null) chips.push({ icon: '🌡', title: 'Water temperature', text: fac.water_temp_f + '°F' });
                 if (chips.length) {
                     condEl.innerHTML = chips.map(function (c) {
-                        return '<span class="fmap-cond-chip">' +
+                        return '<span class="fmap-cond-chip"' + (c.title ? ' title="' + c.title + ': ' + esc(String(c.text)) + '"' : '') + '>' +
                             '<span aria-hidden="true">' + c.icon + '</span> ' +
                             esc(String(c.text)) + '</span>';
                     }).join('');
