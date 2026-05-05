@@ -2682,7 +2682,7 @@
 
     function closeLogModal() {
         if (els.logModal) els.logModal.hidden = true;
-        if (els.logSubmit) els.logSubmit.disabled = false;
+        if (els.logSubmit) { els.logSubmit.disabled = false; els.logSubmit.setAttribute('aria-busy', 'false'); }
         if (els.logError)  els.logError.hidden  = true;
         exitLogMode();
         if (_logModalPrevFocus && typeof _logModalPrevFocus.focus === 'function') {
@@ -2760,7 +2760,7 @@
                     payload.caught_at = els.logCaughtAt.value + ':00';
                 }
 
-                if (els.logSubmit) els.logSubmit.disabled = true;
+                if (els.logSubmit) { els.logSubmit.disabled = true; els.logSubmit.setAttribute('aria-busy', 'true'); }
 
                 fetch('/api/map/catches', {
                     method: 'POST',
@@ -2771,7 +2771,7 @@
                 .then(function (data) {
                     if (data.error) {
                         if (els.logError) { els.logError.textContent = data.error; els.logError.hidden = false; }
-                        if (els.logSubmit) els.logSubmit.disabled = false;
+                        if (els.logSubmit) { els.logSubmit.disabled = false; els.logSubmit.setAttribute('aria-busy', 'false'); }
                         return;
                     }
                     showToast('Catch logged! \uD83C\uDFAF');
@@ -2780,7 +2780,7 @@
                 })
                 .catch(function () {
                     if (els.logError) { els.logError.textContent = 'Could not save catch. Please try again.'; els.logError.hidden = false; }
-                    if (els.logSubmit) els.logSubmit.disabled = false;
+                    if (els.logSubmit) { els.logSubmit.disabled = false; els.logSubmit.setAttribute('aria-busy', 'false'); }
                 });
             });
         }

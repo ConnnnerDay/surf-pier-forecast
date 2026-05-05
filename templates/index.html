@@ -1121,10 +1121,11 @@
                             Share publicly with the community
                         </label>
                     </div>
-                    <div id="fmap-log-error" class="fmap-log-error" hidden></div>
+                    <div id="fmap-log-error" class="fmap-log-error" role="alert" aria-live="assertive" hidden></div>
                     <div class="fmap-modal-footer">
                         <button type="button" id="fmap-log-cancel" class="fmap-modal-cancel-btn">Cancel</button>
-                        <button type="submit" id="fmap-log-submit" class="fmap-modal-submit-btn">
+                        <button type="submit" id="fmap-log-submit" class="fmap-modal-submit-btn"
+                                aria-busy="false" aria-describedby="fmap-log-error">
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                             Log Catch
                         </button>
