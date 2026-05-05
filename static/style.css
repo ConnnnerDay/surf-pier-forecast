@@ -6006,6 +6006,48 @@ h2::before {
 [data-theme="light"] .fmap-spot-detail-value { color: rgba(0,0,0,0.75); }
 [data-theme="light"] .fmap-spot-detail-tip { color: rgba(0,0,0,0.5); }
 [data-theme="light"] .fmap-spot-score { color: rgba(0,0,0,0.35); }
+/* regulation value — amber tint to signal "check before you fish" */
+.fmap-spot-detail-regs {
+  color: rgba(251,191,36,0.85);
+}
+[data-theme="light"] .fmap-spot-detail-regs {
+  color: #92620a;
+}
+/* Log-here quick-action row */
+.fmap-spot-detail-log-row {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+[data-theme="light"] .fmap-spot-detail-log-row {
+  border-top-color: rgba(0,0,0,0.08);
+}
+.fmap-spot-detail-log-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid rgba(31,168,201,0.35);
+  background: rgba(31,168,201,0.1);
+  color: #1fa8c9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.fmap-spot-detail-log-btn:hover {
+  background: rgba(31,168,201,0.18);
+  border-color: rgba(31,168,201,0.55);
+}
+[data-theme="light"] .fmap-spot-detail-log-btn {
+  border-color: rgba(14,110,140,0.3);
+  background: rgba(14,110,140,0.07);
+  color: #0e6e8c;
+}
+[data-theme="light"] .fmap-spot-detail-log-btn:hover {
+  background: rgba(14,110,140,0.14);
+}
 
 /* ── Conditions chips ── */
 .fmap-spot-conditions {

@@ -4579,9 +4579,15 @@
         btn.addEventListener('click', function () {
             var base = window.location.origin + window.location.pathname;
             var params = new URLSearchParams(window.location.search);
-            // Encode current fishing map state into URL hash
             var hashParts = [];
             if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
+            // Include current map center + zoom so the shared link opens to the same view
+            if (map) {
+                var c = map.getCenter();
+                hashParts.push('lat=' + c.lat.toFixed(5));
+                hashParts.push('lng=' + c.lng.toFixed(5));
+                hashParts.push('z=' + map.getZoom());
+            }
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -4599,17 +4605,27 @@
         var hash = window.location.hash;
         if (!hash || hash.indexOf('#fmap=') !== 0) return;
         var raw = hash.slice(6); // strip '#fmap='
+        var params = {};
         raw.split('&').forEach(function (part) {
             var eq = part.indexOf('=');
             if (eq === -1) return;
-            var k = part.slice(0, eq);
-            var v = decodeURIComponent(part.slice(eq + 1));
-            if (k === 'types' && v) {
-                var requested = v.split(',').map(function (t) { return t.trim(); })
-                                 .filter(function (t) { return t && SPOT_TYPES[t]; });
-                if (requested.length) _applySpotTypeUI(requested);
-            }
+            params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1));
         });
+        if (params.types) {
+            var requested = params.types.split(',').map(function (t) { return t.trim(); })
+                             .filter(function (t) { return t && SPOT_TYPES[t]; });
+            if (requested.length) _applySpotTypeUI(requested);
+        }
+        // Restore shared map view (center + zoom)
+        if (map && params.lat && params.lng) {
+            var lat = parseFloat(params.lat);
+            var lng = parseFloat(params.lng);
+            var z   = params.z ? parseInt(params.z, 10) : null;
+            if (!isNaN(lat) && !isNaN(lng)) {
+                if (z && !isNaN(z)) map.setView([lat, lng], z, { animate: false });
+                else map.panTo([lat, lng], { animate: false });
+            }
+        }
         updateAdvBadge();
     }
 
@@ -5200,6 +5216,28 @@
                 showToast(!isFav ? 'Spot saved to favorites' : 'Spot removed from favorites');
                 // Keep My Spots layer current if it's active
                 if (_activeCategory === 'my_spots') renderFavoriteSpots();
+            });
+        }
+
+        // "Log a catch here" quick action — opens the log modal at the spot's coords
+        var logHereBtn = document.getElementById('fmap-spot-detail-log');
+        if (logHereBtn) {
+            logHereBtn.addEventListener('click', function () {
+                if (!_activeSpotData) return;
+                var lat = _activeSpotData.lat, lng = _activeSpotData.lng;
+                _closePanel();
+                // Place a temporary pin and open the log form
+                if (pendingCatchMarker && map) map.removeLayer(pendingCatchMarker);
+                if (map) {
+                    pendingCatchMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'fmap-community-pin-wrap',
+                            html: '<span class="fmap-community-pin fmap-community-pin--mine"></span>',
+                            iconSize: [22, 28], iconAnchor: [11, 26]
+                        })
+                    }).addTo(map);
+                }
+                openLogModal(lat, lng);
             });
         }
 
