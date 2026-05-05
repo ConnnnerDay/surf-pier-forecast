@@ -2465,8 +2465,9 @@
         var bodyHtml = '';
         // Catch photo
         if (c.image_url) {
+            var _photoAlt = c.species ? esc(c.species) + ' catch photo' : 'Catch photo';
             bodyHtml += '<div class="fmap-catch-photo-wrap">' +
-                '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="Catch photo" ' +
+                '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="' + _photoAlt + '" ' +
                 'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
                 '</div>';
         }
@@ -2638,10 +2639,14 @@
         pendingCatchLatLng = null;
     }
 
+    var _logModalPrevFocus = null;
     function openLogModal(lat, lng) {
+        _logModalPrevFocus = document.activeElement || null;
         pendingCatchLatLng = { lat: lat, lng: lng };
         if (els.logCoords) {
-            els.logCoords.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            var _coordStr = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            els.logCoords.textContent = _coordStr;
+            els.logCoords.setAttribute('aria-label', 'Logging catch at coordinates ' + _coordStr);
         }
         if (els.logForm) els.logForm.reset();
         if (els.logPublic) els.logPublic.checked = true;
@@ -2663,6 +2668,10 @@
         if (els.logSubmit) els.logSubmit.disabled = false;
         if (els.logError)  els.logError.hidden  = true;
         exitLogMode();
+        if (_logModalPrevFocus && typeof _logModalPrevFocus.focus === 'function') {
+            _logModalPrevFocus.focus({ preventScroll: true });
+            _logModalPrevFocus = null;
+        }
     }
 
     function wireLogCatch() {
