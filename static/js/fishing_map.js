@@ -118,6 +118,23 @@
         return (h % 12 || 12) + (h < 12 ? 'AM' : 'PM');
     }
 
+    // Shared Tab-key focus trap used by all three dialogs.
+    // Call from a keydown handler after confirming the dialog is open.
+    var _FOCUSABLE_SEL = 'a[href],button:not([disabled]),input:not([disabled]),' +
+                         'select:not([disabled]),textarea:not([disabled]),' +
+                         '[tabindex]:not([tabindex="-1"])';
+    function _trapFocusOnTab(container, e) {
+        if (e.key !== 'Tab') return;
+        var focusable = Array.prototype.slice.call(container.querySelectorAll(_FOCUSABLE_SEL));
+        if (!focusable.length) return;
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+    }
+
     // ─── Category filter tabs ────────────────────────────────────────────────
     // The flat pill list is replaced by 4 high-level category tabs.
     // Each tab shows/hides the spot types belonging to that category.
@@ -2628,20 +2645,7 @@
         document.addEventListener('keydown', function (e) {
             if (!els.logModal || els.logModal.hidden) return;
             if (e.key === 'Escape') { closeLogModal(); return; }
-            if (e.key !== 'Tab') return;
-            var focusable = Array.prototype.slice.call(
-                els.logModal.querySelectorAll(
-                    'a[href],button:not([disabled]),input:not([disabled]),' +
-                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
-                )
-            );
-            if (!focusable.length) return;
-            var first = focusable[0], last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault(); last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault(); first.focus();
-            }
+            _trapFocusOnTab(els.logModal, e);
         });
 
         // Map click in log mode — place pin
@@ -2997,27 +3001,14 @@
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
 
         // Escape closes modal; Tab trapped within while visible
+        var _adminModalEl = document.getElementById('fmap-admin-modal');
         document.addEventListener('keydown', function (e) {
-            var modal = document.getElementById('fmap-admin-modal');
-            if (!modal || modal.hidden) {
+            if (!_adminModalEl || _adminModalEl.hidden) {
                 if (e.key === 'Escape') _closeAdminModal();
                 return;
             }
             if (e.key === 'Escape') { _closeAdminModal(); return; }
-            if (e.key !== 'Tab') return;
-            var focusable = Array.prototype.slice.call(
-                modal.querySelectorAll(
-                    'a[href],button:not([disabled]),input:not([disabled]),' +
-                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
-                )
-            );
-            if (!focusable.length) return;
-            var first = focusable[0], last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault(); last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault(); first.focus();
-            }
+            _trapFocusOnTab(_adminModalEl, e);
         });
 
         // ── Toggle button ────────────────────────────────────────────────────
@@ -5165,7 +5156,10 @@
             if (dy > 80) {
                 panel.style.transition = 'transform 0.2s ease-in';
                 panel.style.transform = 'translateY(100%)';
-                setTimeout(_closePanel, 200);
+                var _swipeTarget = _activeSpotData;
+                setTimeout(function () {
+                    if (_activeSpotData === _swipeTarget) _closePanel();
+                }, 200);
             } else {
                 panel.style.transition = '';
                 panel.style.transform = '';
@@ -5180,20 +5174,7 @@
         document.addEventListener('keydown', function (e) {
             if (!panel.classList.contains('fmap-spot-detail--open')) return;
             if (e.key === 'Escape') { _closePanel(); return; }
-            if (e.key !== 'Tab') return;
-            var focusable = Array.prototype.slice.call(
-                panel.querySelectorAll(
-                    'a[href],button:not([disabled]),input:not([disabled]),' +
-                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
-                )
-            );
-            if (!focusable.length) return;
-            var first = focusable[0], last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault(); last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault(); first.focus();
-            }
+            _trapFocusOnTab(panel, e);
         });
 
         if (favBtn) {
