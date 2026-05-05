@@ -4854,9 +4854,10 @@
                        '" fill="' + color + '" opacity="' + (isSelected ? '1' : '0.55') +
                        '" rx="1"/>';
             });
-            // Small dot marking current real-time hour
+            // Triangle/chevron marking current real-time hour at top of chart
             var ncx = (nowHour + 0.5) * barW;
-            svg += '<circle cx="' + ncx + '" cy="3.5" r="2.2" fill="rgba(255,255,255,0.55)"/>';
+            svg += '<polygon points="' + ncx + ',0 ' + (ncx - 3) + ',5 ' + (ncx + 3) + ',5"' +
+                   ' fill="rgba(255,255,255,0.8)"/>';
             // Cursor line at selected hour
             var cx = (_tideSliderHour + 0.5) * barW;
             svg += '<line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + H +
