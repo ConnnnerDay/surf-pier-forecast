@@ -4410,6 +4410,10 @@ h2::before {
 .fmap-spot-wrap:hover .fmap-spot-dot {
   transform: scale(1.35);
 }
+.fmap-spot-dot-svg {
+  pointer-events: none;
+  flex-shrink: 0;
+}
 .fmap-spot-dot-lbl {
   font-size: 13px;
   font-weight: 400;

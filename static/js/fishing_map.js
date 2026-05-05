@@ -1039,7 +1039,7 @@
             inner = '<svg viewBox="0 0 14 14" width="' + svgW + '" height="' + svgW + '"' +
                     ' stroke="rgba(255,255,255,0.95)" fill="none"' +
                     ' stroke-linecap="round" stroke-linejoin="round"' +
-                    ' aria-hidden="true" style="' + innerRot + 'pointer-events:none;flex-shrink:0">' +
+                    ' aria-hidden="true" class="fmap-spot-dot-svg"' + (innerRot ? ' style="' + innerRot + '"' : '') + '>' +
                     svgPaths + '</svg>';
         } else {
             // Fallback for any type not yet in SPOT_SVGS
@@ -4923,8 +4923,7 @@
             var W = 240, H = 44;
             var barW = W / 24;
             var nowHour = new Date().getHours();
-            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
-                      'aria-hidden="true" style="width:100%;height:100%">';
+            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">';
             var scoreColors = {Excellent:'#4ade80', Good:'#a3e635', Fair:'#fbbf24', Slow:'#f87171'};
             hours.forEach(function (h, i) {
                 var color = scoreColors[h.label] || '#64748b';
