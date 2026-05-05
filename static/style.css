@@ -468,6 +468,17 @@ h2::before {
   line-height: 1.35;
 }
 
+.section-no-data {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0.75rem 0;
+  padding: 0 0.5rem;
+}
+.section-no-data a {
+  color: var(--accent-teal, #0e5f78);
+  text-decoration: underline;
+}
+
 /* ---------- Verdict hero ---------- */
 
 .verdict-hero {
@@ -6329,6 +6340,7 @@ h2::before {
   display: block;
   margin-bottom: 10px;
 }
+.fmap-admin-label--last { margin-bottom: 14px; }
 .fmap-admin-input {
   width: 100%;
   margin-top: 3px;
@@ -12612,6 +12624,7 @@ details[open] .collapsible-module-body {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+.layout-toast a { color: inherit; text-decoration: underline; }
 
 /* ── Inline geolocation loading indicator ────────────────────────────────── */
 .setup-geo-loading {

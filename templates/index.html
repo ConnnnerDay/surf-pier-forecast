@@ -188,9 +188,9 @@
                 What&rsquo;s Biting
             </h2>
         </div>
-        <p style="color:var(--text-muted);font-size:0.9rem;margin:0.75rem 0;padding:0 0.5rem">
+        <p class="section-no-data">
             Species data is temporarily unavailable &mdash; check back shortly or
-            <a href="?force_refresh=1" style="color:var(--accent-teal,#0e5f78);text-decoration:underline">refresh the forecast</a>.
+            <a href="?force_refresh=1">refresh the forecast</a>.
             {% if profile %}
             Your fishing profile is applied; results will appear once data loads.
             {% endif %}
@@ -1030,7 +1030,7 @@
                             <option value="fishing_shop">Bait &amp; Tackle</option>
                         </select>
                     </label>
-                    <label class="fmap-admin-label" style="margin-bottom:14px">Description / tip
+                    <label class="fmap-admin-label fmap-admin-label--last">Description / tip
                         <textarea id="fmap-admin-desc" rows="3" maxlength="500" placeholder="Fishing tip shown in tooltip" class="fmap-admin-input"></textarea>
                     </label>
                     <p id="fmap-admin-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
@@ -2074,7 +2074,7 @@ if ('serviceWorker' in navigator) {
         toast.className = 'layout-toast';
         toast.setAttribute('role', 'status');
         toast.setAttribute('aria-live', 'polite');
-        toast.innerHTML = 'Auto-detected: ' + detected + ' &nbsp;·&nbsp; <a href="{{ url_for("views.setup") }}" style="color:inherit;text-decoration:underline">Change</a>';
+        toast.innerHTML = 'Auto-detected: ' + detected + ' &nbsp;·&nbsp; <a href="{{ url_for("views.setup") }}">Change</a>';
         document.body.appendChild(toast);
 
         // Two rAF frames to ensure the element is in the DOM before transitioning.
