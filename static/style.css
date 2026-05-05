@@ -5940,7 +5940,7 @@ h2::before {
   align-items: flex-start;
 }
 .fmap-spot-detail-name {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #fff;
   margin-bottom: 0.15rem;
