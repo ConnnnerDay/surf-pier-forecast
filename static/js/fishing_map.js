@@ -2499,9 +2499,10 @@
                 var postBtn = els.catchDetailComments.querySelector('.fmap-catch-comment-post');
                 var commentInput = els.catchDetailComments.querySelector('.fmap-catch-comment-input');
                 if (postBtn && commentInput) {
-                    postBtn.addEventListener('click', function () {
+                    function _postComment() {
                         var body = commentInput.value.trim();
                         if (!body) return;
+                        postBtn.disabled = true;
                         fetch('/api/map/catches/' + c.id + '/comments', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -2509,7 +2510,14 @@
                         })
                         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                         .then(function () { openCatchDetail(c); })
-                        .catch(function () { showToast('Could not post comment.'); });
+                        .catch(function () {
+                            postBtn.disabled = false;
+                            showToast('Could not post comment.');
+                        });
+                    }
+                    postBtn.addEventListener('click', _postComment);
+                    commentInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _postComment(); }
                     });
                 }
             })
