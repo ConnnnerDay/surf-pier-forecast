@@ -2996,9 +2996,28 @@
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
 
-        // Escape key closes the modal from anywhere on the page
+        // Escape closes modal; Tab trapped within while visible
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') _closeAdminModal();
+            var modal = document.getElementById('fmap-admin-modal');
+            if (!modal || modal.hidden) {
+                if (e.key === 'Escape') _closeAdminModal();
+                return;
+            }
+            if (e.key === 'Escape') { _closeAdminModal(); return; }
+            if (e.key !== 'Tab') return;
+            var focusable = Array.prototype.slice.call(
+                modal.querySelectorAll(
+                    'a[href],button:not([disabled]),input:not([disabled]),' +
+                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+                )
+            );
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
+            }
         });
 
         // ── Toggle button ────────────────────────────────────────────────────
