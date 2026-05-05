@@ -1148,11 +1148,11 @@
             var sym = SPOT_LABELS[f.type] || '';
             var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
-                '<br><span style="opacity:0.75;font-size:0.7rem">' +
-                (sym ? '<span style="font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;margin-right:3px">' + sym + '</span>' : '') +
+                '<br><span class="fmap-tooltip-sub">' +
+                (sym ? '<span class="fmap-tooltip-sym">' + sym + '</span>' : '') +
                 esc(spotTypeLabel(f.type)) + '</span>' +
                 (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '') +
-                '<br><span style="opacity:0.45;font-size:0.65rem;margin-top:2px;display:block">' +
+                '<br><span class="fmap-tooltip-meta">' +
                 esc(srcLabel) + (coordStr ? ' · ' + coordStr : '') + '</span>';
 
             // Habitat area features with geometry → area overlay
