@@ -4654,6 +4654,10 @@ h2::before {
 .fmap-layers-section-hdr:hover {
   background: rgba(255,255,255,0.04);
 }
+.fmap-layers-section-hdr:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: -2px;
+}
 .fmap-layers-section-hdr-label {
   flex: 1;
   font-size: 0.67rem;
@@ -4724,6 +4728,10 @@ h2::before {
 }
 .fmap-layer-row:hover {
   background: rgba(255,255,255,0.06);
+}
+.fmap-layer-row:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: -2px;
 }
 /* Active state — row is ON */
 .fmap-layer-row.fmap-ctrl-btn--active {
