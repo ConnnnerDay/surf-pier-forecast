@@ -4972,9 +4972,17 @@
                         '<span class="fmap-spot-score-denom">/10</span>';
                     scoreEl.className = 'fmap-spot-score';
                 } else {
+                    // Trend: compare current hour to 2 hours ahead
+                    var futureHour = Math.min(23, _tideSliderHour + 2);
+                    var futureScore = ((_scoreData.hours || [])[futureHour] || {}).score || 0;
+                    var delta = futureScore - currentScore;
+                    var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
+                    var trendClass = delta >= 1.5 ? 'fmap-score-trend--up' :
+                                     delta <= -1.5 ? 'fmap-score-trend--down' : '';
                     scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
                         '</span><span class="fmap-spot-score-denom">/10</span>' +
-                        (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '');
+                        (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '') +
+                        (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '">' + trendArrow + '</span>' : '');
                     scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
                 }
             }

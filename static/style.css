@@ -5982,6 +5982,14 @@ h2::before {
   opacity: 0.85;
   margin-left: 6px;
 }
+.fmap-score-trend {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-left: 4px;
+  opacity: 0.7;
+}
+.fmap-score-trend--up   { color: #4ade80; }
+.fmap-score-trend--down { color: #f87171; }
 [data-theme="light"] .fmap-spot-detail {
   background: #f0f8fc;
   border-top-color: #0e6e8c;
