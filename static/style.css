@@ -343,6 +343,12 @@ header .subtitle {
   line-height: 1;
   font-size: 1.1rem;
 }
+.banner--profile-nudge-dismiss:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 2px;
+  opacity: 1;
+}
 
 /* ---------- Main ---------- */
 
@@ -6380,6 +6386,10 @@ textarea.fmap-admin-input { resize: vertical; }
 }
 .fmap-admin-action-btn--hide     { background: #991b1b; }
 .fmap-admin-action-btn--override { background: #1d4ed8; }
+.fmap-admin-action-btn:focus-visible,
+.fmap-admin-modal-close:focus-visible,
+.fmap-admin-delete-btn:focus-visible,
+.fmap-admin-save-btn:focus-visible  { outline: 2px solid #1fa8c9; outline-offset: 2px; }
 .fmap-admin-action-status {
   font-size: 0.75rem;
   margin-top: 5px;
@@ -12109,6 +12119,7 @@ details[open] .collapsible-module-body {
   flex-shrink: 0;
 }
 .install-banner-close:hover { color: var(--text, #1a2533); }
+.install-banner-close:focus-visible { outline: 2px solid var(--ocean, #0e5f78); outline-offset: 2px; border-radius: 3px; }
 
 /* ── Pack for Today card ───────────────────────────────────────────────── */
 .trip-setup-section {
