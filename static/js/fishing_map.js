@@ -2509,6 +2509,7 @@
                         var body = commentInput.value.trim();
                         if (!body) return;
                         postBtn.disabled = true;
+                        postBtn.setAttribute('aria-busy', 'true');
                         fetch('/api/map/catches/' + c.id + '/comments', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -2518,6 +2519,7 @@
                         .then(function () { openCatchDetail(c); })
                         .catch(function () {
                             postBtn.disabled = false;
+                            postBtn.setAttribute('aria-busy', 'false');
                             showToast('Could not post comment.');
                         });
                     }
@@ -2549,6 +2551,8 @@
         if (likeBtn) {
             likeBtn.addEventListener('click', function () {
                 if (!IS_LOGGED_IN) { showToast('Sign in to like catches'); return; }
+                likeBtn.disabled = true;
+                likeBtn.setAttribute('aria-busy', 'true');
                 fetch('/api/map/catches/' + c.id + '/like', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
@@ -2560,8 +2564,14 @@
                     likeBtn.setAttribute('aria-label', 'Like this catch (' + _lc + ' like' + (_lc !== 1 ? 's' : '') + ')');
                     likeBtn.classList.toggle('fmap-catch-action-btn--liked', d.liked);
                     c.likes_count = _lc;
+                    likeBtn.disabled = false;
+                    likeBtn.setAttribute('aria-busy', 'false');
                 })
-                .catch(function () { showToast('Could not update like.'); });
+                .catch(function () {
+                    showToast('Could not update like.');
+                    likeBtn.disabled = false;
+                    likeBtn.setAttribute('aria-busy', 'false');
+                });
             });
         }
 
