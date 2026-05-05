@@ -5131,7 +5131,8 @@
                 if (fac.water_temp_f != null) chips.push({ icon: '🌡', title: 'Water temperature', text: fac.water_temp_f + '°F' });
                 if (chips.length) {
                     condEl.innerHTML = chips.map(function (c) {
-                        return '<span class="fmap-cond-chip"' + (c.title ? ' title="' + c.title + ': ' + esc(String(c.text)) + '"' : '') + '>' +
+                        var chipLabel = c.title ? c.title + ': ' + String(c.text) : String(c.text);
+                        return '<span class="fmap-cond-chip" title="' + esc(chipLabel) + '" aria-label="' + esc(chipLabel) + '">' +
                             '<span aria-hidden="true">' + c.icon + '</span> ' +
                             esc(String(c.text)) + '</span>';
                     }).join('');

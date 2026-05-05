@@ -1925,7 +1925,9 @@ if ('serviceWorker' in navigator) {
     var closeBtn = document.getElementById('reg-modal-close');
     if (!modal) return;
 
+    var _regPrevFocus = null;
     function openRegs(btn) {
+        _regPrevFocus = document.activeElement || null;
         var card = btn.closest('[data-reg-min-size], [data-reg-bag-limit], [data-reg-season]');
         if (!card) return;
         var species = card.getAttribute('data-species-name') || 'Species';
@@ -1966,11 +1968,26 @@ if ('serviceWorker' in navigator) {
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (_regPrevFocus && typeof _regPrevFocus.focus === 'function') {
+            _regPrevFocus.focus({ preventScroll: true });
+            _regPrevFocus = null;
+        }
     }
 
     if (closeBtn) closeBtn.addEventListener('click', closeRegs);
     modal.addEventListener('click', function(e) { if (e.target === modal) closeRegs(); });
-    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !modal.hidden) closeRegs(); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.hidden) { closeRegs(); return; }
+        if (e.key === 'Tab' && !modal.hidden) {
+            var card = modal.querySelector('.reg-modal__card');
+            if (!card) return;
+            var focusable = Array.prototype.slice.call(card.querySelectorAll('button,a,[tabindex="0"]'));
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    });
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-open-regs]');
         if (btn) { e.preventDefault(); openRegs(btn); }
