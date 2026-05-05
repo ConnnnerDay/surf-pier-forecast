@@ -4295,7 +4295,13 @@
         if (searchInput) {
             searchInput.addEventListener('input', function () { _applyLayerSearch(searchInput.value); });
             searchInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') { searchInput.value = ''; _applyLayerSearch(''); }
+                if (e.key === 'Escape' && searchInput.value) {
+                    // Clear search text first; stop propagation so the
+                    // document-level handler doesn't also close the popup.
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    _applyLayerSearch('');
+                }
             });
         }
 
