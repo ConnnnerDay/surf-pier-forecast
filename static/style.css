@@ -4329,6 +4329,10 @@ h2::before {
   height: 10px;
   border-radius: 3px;
   border: 2px solid rgba(255,255,255,0.82);
+  transition: transform 0.12s ease;
+}
+.fmap-spot-wrap:hover .fmap-spot-dot {
+  transform: scale(1.35);
 }
 
 /* ── Zoom-in hint overlay ── */
@@ -4529,6 +4533,14 @@ h2::before {
 }
 .fmap-spot-detail-header .fmap-ctrl-btn[aria-pressed="true"]:hover {
   background: rgba(220,38,38,0.25);
+}
+[data-theme="light"] .fmap-spot-detail-header .fmap-ctrl-btn[aria-pressed="true"] {
+  color: #dc2626;
+  border-color: rgba(220,38,38,0.4);
+  background: rgba(220,38,38,0.1);
+}
+[data-theme="light"] .fmap-spot-detail-header .fmap-ctrl-btn[aria-pressed="true"]:hover {
+  background: rgba(220,38,38,0.18);
 }
 
 /* ── Layers popup panel ── */
