@@ -5159,16 +5159,20 @@
 
         var _panelPrevFocus = null;
 
-        // Wrap to capture focus origin and activate the spot's map marker
+        // Wrap to capture focus origin and scroll panel to top on each open
         (function () {
             var _inner = window._fmapShowSpotDetail;
+            var _prevMarker = null;
             window._fmapShowSpotDetail = function (spotData) {
-                // Clear previous active marker
-                _setMarkerActive(_activeSpotMarker, false);
-                // Highlight the new marker (_activeSpotMarker set by click handler)
-                _setMarkerActive(_activeSpotMarker, true);
+                // _activeSpotMarker was already set by the click handler to the NEW marker
+                _setMarkerActive(_prevMarker, false);      // clear previous
+                _setMarkerActive(_activeSpotMarker, true); // highlight new
+                _prevMarker = _activeSpotMarker;
                 _panelPrevFocus = document.activeElement || null;
                 _inner(spotData);
+                // Scroll the panel body to the top so repeated opens feel fresh
+                var body = panel.querySelector('.fmap-spot-detail-body');
+                if (body) body.scrollTop = 0;
             };
         }());
 
