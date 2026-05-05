@@ -4997,7 +4997,8 @@
 
         // Click anywhere on the chart to jump to that hour
         chartEl.style.cursor = 'pointer';
-        chartEl.title = 'Click to select hour';
+        chartEl.title = window.matchMedia('(pointer: coarse)').matches
+            ? 'Tap to select hour' : 'Click to select hour';
         chartEl.addEventListener('click', function (e) {
             if (!_scoreData) return;
             var rect = chartEl.getBoundingClientRect();
