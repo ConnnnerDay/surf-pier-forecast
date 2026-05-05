@@ -5003,7 +5003,7 @@
                 var chips = [];
                 if (fac.tide)             chips.push({ icon: '🌊', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
                 if (fac.solunar && fac.solunar !== 'none')
-                                          chips.push({ icon: '🌙', text: fac.solunar });
+                                          chips.push({ icon: '🌙', text: fac.solunar.charAt(0).toUpperCase() + fac.solunar.slice(1) });
                 if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
                 if (fac.wave_ft  != null) chips.push({ icon: '≋', text: fac.wave_ft + ' ft' });
                 if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
