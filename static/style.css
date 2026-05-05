@@ -5815,6 +5815,19 @@ h2::before {
               visibility 0s linear 0s;
   pointer-events: auto;
 }
+.fmap-spot-detail-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.18);
+  margin: 7px auto 0;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+}
+[data-theme="light"] .fmap-spot-detail-handle {
+  background: rgba(0,0,0,0.15);
+}
 .fmap-spot-detail-header {
   display: flex;
   align-items: center;

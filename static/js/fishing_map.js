@@ -5088,6 +5088,8 @@
         }());
 
         function _closePanel() {
+            panel.style.transform = '';
+            panel.style.transition = '';
             panel.classList.remove('fmap-spot-detail--open');
             panel.setAttribute('aria-hidden', 'true');
             _activeSpotData = null;
@@ -5096,6 +5098,38 @@
                 _panelPrevFocus = null;
             }
         }
+
+        // Swipe-down to dismiss on touch devices
+        var _swipeStartY = 0, _swipeActive = false;
+        var _swipeZone = panel.querySelector('.fmap-spot-detail-handle') ||
+                         panel.querySelector('.fmap-spot-detail-header');
+        if (_swipeZone) {
+            _swipeZone.addEventListener('touchstart', function (e) {
+                if (!panel.classList.contains('fmap-spot-detail--open')) return;
+                _swipeStartY = e.touches[0].clientY;
+                _swipeActive = true;
+                panel.style.transition = 'none';
+            }, { passive: true });
+        }
+        document.addEventListener('touchmove', function (e) {
+            if (!_swipeActive) return;
+            var dy = e.touches[0].clientY - _swipeStartY;
+            if (dy < 0) return;
+            panel.style.transform = 'translateY(' + dy + 'px)';
+        }, { passive: true });
+        document.addEventListener('touchend', function (e) {
+            if (!_swipeActive) return;
+            _swipeActive = false;
+            var dy = e.changedTouches[0].clientY - _swipeStartY;
+            if (dy > 80) {
+                panel.style.transition = 'transform 0.2s ease-in';
+                panel.style.transform = 'translateY(100%)';
+                setTimeout(_closePanel, 200);
+            } else {
+                panel.style.transition = '';
+                panel.style.transform = '';
+            }
+        }, { passive: true });
 
         if (closeBtn) {
             closeBtn.addEventListener('click', _closePanel);
