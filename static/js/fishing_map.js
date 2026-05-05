@@ -5006,10 +5006,13 @@
                     var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
                     var trendClass = delta >= 1.5 ? 'fmap-score-trend--up' :
                                      delta <= -1.5 ? 'fmap-score-trend--down' : '';
+                    var trendTitle = trendArrow
+                        ? 'title="Score in 2h: ' + futureScore + '/10"'
+                        : '';
                     scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
                         '</span><span class="fmap-spot-score-denom">/10</span>' +
                         (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '') +
-                        (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '">' + trendArrow + '</span>' : '');
+                        (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '" ' + trendTitle + '>' + trendArrow + '</span>' : '');
                     scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
                 }
             }
@@ -5038,7 +5041,8 @@
                 if (!_scoreData) {
                     bestTimesEl.textContent = 'Loading…';
                 } else {
-                    var goodHourNums = (_scoreData.hours || [])
+                    var hours = _scoreData.hours || [];
+                    var goodHourNums = hours
                         .filter(function (h) { return h.score >= 7; })
                         .map(function (h) { return h.hour; });
                     var rangeStrs = [];
@@ -5051,9 +5055,21 @@
                         rangeStrs.push(rs === re ? _fmtHour(rs) : _fmtHour(rs) + '–' + _fmtHour(re));
                         j++;
                     }
-                    bestTimesEl.textContent = rangeStrs.length
+                    var bestText = rangeStrs.length
                         ? rangeStrs.slice(0, 4).join(', ')
                         : 'No peak windows today';
+                    // Render a mini 24-bar sparkline so the user can see peak windows at a glance
+                    var scoreColors = { Excellent: '#4ade80', Good: '#a3e635', Fair: '#fbbf24', Slow: '#f87171' };
+                    var barSvg = '<svg class="fmap-best-times-spark" viewBox="0 0 48 8" ' +
+                                 'preserveAspectRatio="none" aria-hidden="true" width="48" height="8">';
+                    hours.forEach(function (h, i) {
+                        var fill = scoreColors[h.label] || '#334155';
+                        var opacity = h.score >= 7 ? '1' : '0.3';
+                        barSvg += '<rect x="' + (i * 2) + '" y="0" width="1.6" height="8" ' +
+                                  'fill="' + fill + '" opacity="' + opacity + '" rx="0.4"/>';
+                    });
+                    barSvg += '</svg>';
+                    bestTimesEl.innerHTML = barSvg + '<span>' + esc(bestText) + '</span>';
                 }
             }
         }
@@ -5224,7 +5240,9 @@
         if (logHereBtn) {
             logHereBtn.addEventListener('click', function () {
                 if (!_activeSpotData) return;
-                var lat = _activeSpotData.lat, lng = _activeSpotData.lng;
+                var lat      = _activeSpotData.lat;
+                var lng      = _activeSpotData.lng;
+                var spotName = _activeSpotData.name || ''; // capture before _closePanel clears it
                 _closePanel();
                 // Place a temporary pin and open the log form
                 if (pendingCatchMarker && map) map.removeLayer(pendingCatchMarker);
@@ -5238,6 +5256,10 @@
                     }).addTo(map);
                 }
                 openLogModal(lat, lng);
+                // Pre-fill the catch title with the spot name
+                if (spotName && els.logTitle && !els.logTitle.value) {
+                    els.logTitle.value = spotName;
+                }
             });
         }
 

@@ -5964,6 +5964,16 @@ h2::before {
   font-size: 0.75rem;
   color: rgba(255,255,255,0.8);
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+/* Mini sparkline inside the Best times row */
+.fmap-best-times-spark {
+  flex-shrink: 0;
+  border-radius: 2px;
+  overflow: hidden;
 }
 .fmap-spot-detail-tip {
   font-style: italic;
