@@ -6432,6 +6432,7 @@ h2::before {
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .fmap-catch-action-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.fmap-catch-action-btn:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
 .fmap-catch-action-btn--liked { color: #f87171; border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.1); }
 .fmap-catch-action-btn--delete { color: #f87171; }
 .fmap-catch-action-btn--delete:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
@@ -6465,6 +6466,11 @@ h2::before {
   cursor: pointer;
 }
 .fmap-catch-comment-post:hover { background: #1fa8c9; }
+.fmap-catch-comment-post:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.fmap-catch-comment-post:disabled { opacity: 0.55; cursor: default; }
 
 /* ── Log mode crosshair cursor ── */
 .fmap-log-mode-active .fmap-map-el { cursor: crosshair !important; }
