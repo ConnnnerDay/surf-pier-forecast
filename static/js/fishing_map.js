@@ -2499,7 +2499,7 @@
                 var commentForm = IS_LOGGED_IN
                     ? '<div class="fmap-catch-comment-form">' +
                       '<input type="text" class="fmap-catch-comment-input" placeholder="Add a comment…"' +
-                      ' aria-label="Add a comment" maxlength="500">' +
+                      ' aria-label="Add a comment" maxlength="500" autocomplete="off" enterkeyhint="send">' +
                       '<button class="fmap-catch-comment-post" aria-label="Post comment" data-catch-id="' + c.id + '">Post</button></div>'
                     : '';
                 els.catchDetailComments.innerHTML = html + commentForm;
@@ -2938,8 +2938,8 @@
     function _openAdminModal() {
         var modal    = document.getElementById('fmap-admin-modal');
         var backdrop = document.getElementById('fmap-admin-backdrop');
-        if (modal)    { modal.hidden    = false; }
-        if (backdrop) { backdrop.hidden = false; backdrop.style.display = ''; }
+        if (modal)    modal.hidden    = false;
+        if (backdrop) backdrop.hidden = false;
         var statusEl = document.getElementById('fmap-admin-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     }
@@ -2948,7 +2948,7 @@
         var modal    = document.getElementById('fmap-admin-modal');
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (modal)    modal.hidden    = true;
-        if (backdrop) { backdrop.hidden = true; backdrop.style.display = 'none'; }
+        if (backdrop) backdrop.hidden = true;
         _removeAdminPreviewPin();
     }
 
@@ -2979,17 +2979,13 @@
         var name    = esc(spot.name || spotTypeLabel(spot.type));
 
         var html =
-            '<div style="min-width:160px">' +
-            '<strong style="font-size:.85rem">' + name + '</strong>' +
-            '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
-            '<button id="fmap-spot-hide-btn" style="' +
-            'padding:4px 10px;border:none;border-radius:5px;' +
-            'background:#991b1b;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Hide</button>' +
-            '<button id="fmap-spot-override-btn" style="' +
-            'padding:4px 10px;border:none;border-radius:5px;' +
-            'background:#1d4ed8;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Override</button>' +
+            '<div class="fmap-admin-action-popup">' +
+            '<strong class="fmap-admin-action-title">' + name + '</strong>' +
+            '<div class="fmap-admin-action-btns">' +
+            '<button id="fmap-spot-hide-btn" class="fmap-admin-action-btn fmap-admin-action-btn--hide">Hide</button>' +
+            '<button id="fmap-spot-override-btn" class="fmap-admin-action-btn fmap-admin-action-btn--override">Override</button>' +
             '</div>' +
-            '<div id="fmap-spot-action-status" style="font-size:.75rem;margin-top:5px;color:#f87171"></div>' +
+            '<div id="fmap-spot-action-status" class="fmap-admin-action-status"></div>' +
             '</div>';
 
         marker.bindPopup(html, { closeButton: true, maxWidth: 220 }).openPopup();
@@ -3786,7 +3782,7 @@
             '<strong>' + esc(s.name) + '</strong>' +
             '<br><em>' + esc(s.category) + '</em>' +
             (detail ? '<br><small>' + detail + '</small>' : '') +
-            '<br><small style="opacity:.6">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
+            '<br><small class="fmap-popup-source">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
             '</div>'
         );
     }
@@ -5089,7 +5085,7 @@
             }
             if (scoreEl) {
                 if (!hasScore) {
-                    scoreEl.innerHTML = '<span class="fmap-spot-score-num" style="opacity:.4">–</span>' +
+                    scoreEl.innerHTML = '<span class="fmap-spot-score-num fmap-spot-score-num--empty">–</span>' +
                         '<span class="fmap-spot-score-denom">/10</span>';
                     scoreEl.className = 'fmap-spot-score fmap-tide-score--loading';
                 } else {

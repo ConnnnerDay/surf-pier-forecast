@@ -783,7 +783,7 @@
                     {# ── Filter search bar ── #}
                     <div class="fmap-layers-search-wrap">
                         <svg class="fmap-layers-search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" aria-label="Search live data layers">
+                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" inputmode="search" aria-label="Search live data layers">
                     </div>
                     {# ── Quick preset pills — fishing-relevant only ── #}
                     <div class="fmap-layers-presets" aria-label="Layer presets">
@@ -986,34 +986,25 @@
 
                 {# Admin marker edit modal — only rendered to admins #}
                 {% if g.user and g.user.get('is_admin') %}
-                <div id="fmap-admin-backdrop" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.45)" hidden></div>
-                <div id="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-admin-modal-title"
-                     style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3001;
-                            background:var(--surface,#1e293b);border:1px solid var(--border,#334155);
-                            border-radius:12px;padding:20px 24px 18px;min-width:min(300px,90vw);max-width:90vw;
-                            box-shadow:0 8px 32px rgba(0,0,0,.55);color:var(--text,#e2e8f0)" hidden>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                        <strong id="fmap-admin-modal-title" style="font-size:1rem">Edit Marker</strong>
-                        <button id="fmap-admin-modal-close" type="button" aria-label="Close"
-                                style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:inherit;line-height:1;padding:0 2px">✕</button>
+                <div id="fmap-admin-backdrop" class="fmap-admin-backdrop" hidden></div>
+                <div id="fmap-admin-modal" class="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-admin-modal-title" hidden>
+                    <div class="fmap-admin-modal-hdr">
+                        <strong id="fmap-admin-modal-title" class="fmap-admin-modal-title">Edit Marker</strong>
+                        <button id="fmap-admin-modal-close" type="button" class="fmap-admin-modal-close" aria-label="Close">✕</button>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-                        <label style="font-size:.8rem;opacity:.7">Lat
-                            <input id="fmap-admin-lat" type="number" step="any"
-                                   style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                    <div class="fmap-admin-coord-grid">
+                        <label class="fmap-admin-label">Lat
+                            <input id="fmap-admin-lat" type="number" step="any" class="fmap-admin-input" inputmode="decimal">
                         </label>
-                        <label style="font-size:.8rem;opacity:.7">Lng
-                            <input id="fmap-admin-lng" type="number" step="any"
-                                   style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                        <label class="fmap-admin-label">Lng
+                            <input id="fmap-admin-lng" type="number" step="any" class="fmap-admin-input" inputmode="decimal">
                         </label>
                     </div>
-                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:10px">Name
-                        <input id="fmap-admin-name" type="text" maxlength="120" placeholder="Optional"
-                               style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit;box-sizing:border-box">
+                    <label class="fmap-admin-label">Name
+                        <input id="fmap-admin-name" type="text" maxlength="120" placeholder="Optional" class="fmap-admin-input" autocomplete="off">
                     </label>
-                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:10px">Type
-                        <select id="fmap-admin-type"
-                                style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                    <label class="fmap-admin-label">Type
+                        <select id="fmap-admin-type" class="fmap-admin-input">
                             <option value="pier">Pier</option>
                             <option value="jetty">Jetty</option>
                             <option value="bridge">Bridge</option>
@@ -1038,17 +1029,13 @@
                             <option value="fishing_shop">Bait &amp; Tackle</option>
                         </select>
                     </label>
-                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:14px">Description / tip
-                        <textarea id="fmap-admin-desc" rows="3" maxlength="500" placeholder="Fishing tip shown in tooltip"
-                                  style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit;resize:vertical;box-sizing:border-box"></textarea>
+                    <label class="fmap-admin-label" style="margin-bottom:14px">Description / tip
+                        <textarea id="fmap-admin-desc" rows="3" maxlength="500" placeholder="Fishing tip shown in tooltip" class="fmap-admin-input"></textarea>
                     </label>
-                    <p id="fmap-admin-status" role="status" aria-live="polite"
-                       style="font-size:.8rem;margin:4px 0 10px;min-height:1.1em;text-align:right"></p>
-                    <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
-                        <button id="fmap-admin-delete" type="button" hidden
-                                style="background:#dc2626;color:#fff;border:none;border-radius:7px;padding:7px 14px;cursor:pointer;font-size:.85rem">Delete</button>
-                        <button id="fmap-admin-save" type="button"
-                                style="background:#2563eb;color:#fff;border:none;border-radius:7px;padding:7px 18px;cursor:pointer;font-size:.85rem;font-weight:600">Save</button>
+                    <p id="fmap-admin-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
+                    <div class="fmap-admin-footer">
+                        <button id="fmap-admin-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
+                        <button id="fmap-admin-save" type="button" class="fmap-admin-save-btn">Save</button>
                     </div>
                 </div>
                 {% endif %}
@@ -1077,7 +1064,7 @@
                     </div>
                 </div>
                 <div id="fmap-catch-detail-body" class="fmap-catch-detail-body"></div>
-                <div id="fmap-catch-detail-comments" class="fmap-catch-comments" aria-live="polite" aria-label="Comments"></div>
+                <div id="fmap-catch-detail-comments" class="fmap-catch-comments" aria-live="polite" aria-label="Comments" tabindex="0"></div>
                 <div id="fmap-catch-detail-actions" class="fmap-catch-detail-actions"></div>
             </div>
         </div>
@@ -1096,20 +1083,20 @@
                 <form id="fmap-log-form" class="fmap-log-form" novalidate>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-species">Species <span class="fmap-req">*</span></label>
-                        <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100">
+                        <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100" enterkeyhint="next">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-title">Title / headline</label>
-                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120">
+                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120" autocomplete="off" enterkeyhint="next">
                     </div>
                     <div class="fmap-log-row fmap-log-row--2col">
                         <div>
                             <label class="fmap-log-label" for="fmap-log-weight">Weight (lb)</label>
-                            <input type="number" id="fmap-log-weight" class="fmap-log-input" placeholder="0.0" min="0" max="9999" step="0.1">
+                            <input type="number" id="fmap-log-weight" class="fmap-log-input" placeholder="0.0" min="0" max="9999" step="0.1" inputmode="decimal" enterkeyhint="next">
                         </div>
                         <div>
                             <label class="fmap-log-label" for="fmap-log-length">Length (in)</label>
-                            <input type="number" id="fmap-log-length" class="fmap-log-input" placeholder="0" min="0" max="999" step="0.5">
+                            <input type="number" id="fmap-log-length" class="fmap-log-input" placeholder="0" min="0" max="999" step="0.5" inputmode="decimal" enterkeyhint="next">
                         </div>
                     </div>
                     <div class="fmap-log-row">
@@ -1118,15 +1105,15 @@
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-bait">Bait / Lure</label>
-                        <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80">
+                        <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80" autocomplete="off" enterkeyhint="next">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-notes">Notes</label>
-                        <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2"></textarea>
+                        <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2" enterkeyhint="next"></textarea>
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-image-url">Photo URL <span class="fmap-log-hint">(https://)</span></label>
-                        <input type="url" id="fmap-log-image-url" class="fmap-log-input" placeholder="https://…" maxlength="500">
+                        <input type="url" id="fmap-log-image-url" class="fmap-log-input" placeholder="https://…" maxlength="500" inputmode="url" enterkeyhint="done">
                     </div>
                     <div class="fmap-log-row fmap-log-row--check">
                         <label class="fmap-log-check-label">
