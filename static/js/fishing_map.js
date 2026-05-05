@@ -1045,10 +1045,8 @@
             // Fallback for any type not yet in SPOT_SVGS
             var lbl = SPOT_LABELS[type] || '';
             if (lbl) {
-                inner = '<span style="font-size:' + (isHabitat ? '10' : '13') + 'px;font-weight:400;' +
-                        'color:rgba(255,255,255,0.97);' +
-                        'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-                        'line-height:1;pointer-events:none;' + innerRot + '">' + lbl + '</span>';
+                inner = '<span class="fmap-spot-dot-lbl' + (isHabitat ? ' fmap-spot-dot-lbl--habitat' : '') + '"' +
+                        (innerRot ? ' style="' + innerRot + '"' : '') + '>' + lbl + '</span>';
             }
         }
         var html = '<span class="fmap-spot-dot" style="background:' + color +

@@ -4364,6 +4364,16 @@ h2::before {
 .fmap-spot-wrap:hover .fmap-spot-dot {
   transform: scale(1.35);
 }
+.fmap-spot-dot-lbl {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.97);
+  font-family: system-ui, 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
+  line-height: 1;
+  pointer-events: none;
+}
+.fmap-spot-dot-lbl--habitat { font-size: 10px; }
+
 .fmap-spot-dot--active {
   transform: scale(1.55) !important;
   border-color: #fff !important;
