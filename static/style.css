@@ -13828,3 +13828,39 @@ body.dark .wq-hdx-item {
   padding: 0.4rem 0;
   margin: 0;
 }
+
+/* ── Reduced motion: disable non-essential animations on the fishing map ── */
+@media (prefers-reduced-motion: reduce) {
+  .fmap-spot-detail,
+  .fmap-spot-detail--open {
+    transition: visibility 0s !important;
+    transform: none !important;
+  }
+  .fmap-spot-detail--open {
+    visibility: visible;
+  }
+  .fmap-layers-popup {
+    animation: none !important;
+  }
+  .fmap-toast {
+    transition: none !important;
+  }
+  .fmap-tide-score--loading,
+  .fmap-ai-pulse,
+  .fmap-spot-dot,
+  .fmap-log-fab,
+  .fmap-community-pin,
+  .fmap-fav-pin {
+    animation: none !important;
+    transition: none !important;
+  }
+  .fmap-spot-dot:hover,
+  .fmap-fav-pin:hover,
+  .fmap-community-pin:hover {
+    transform: none !important;
+  }
+  .fmap-struct-spinner,
+  .fmap-layers-section-hdr::after {
+    animation: none !important;
+  }
+}
