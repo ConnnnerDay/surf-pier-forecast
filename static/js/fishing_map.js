@@ -2362,10 +2362,11 @@
                 communityData.forEach(function (c) {
                     if (!c.lat || !c.lng) return;
                     var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
+                    var _tapOrClick = window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
                     m.bindTooltip(
                         '<strong>' + esc(c.species) + '</strong><br>' +
                         '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
-                        '<br><span style="opacity:.4;font-size:.65rem">Tap to view catch details</span>',
+                        '<br><span style="opacity:.4;font-size:.65rem">' + _tapOrClick + ' to view catch details</span>',
                         { className: 'fmap-tooltip', direction: 'top', offset: [0, -6] }
                     );
                     m.on('click', function () { openCatchDetail(c); });
