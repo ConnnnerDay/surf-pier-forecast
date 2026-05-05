@@ -2579,6 +2579,7 @@
         var x     = btn.querySelector('.fmap-log-fab-x');
         var label = btn.querySelector('.fmap-log-fab-label');
         btn.classList.toggle('fmap-log-fab--active', active);
+        btn.setAttribute('aria-label', active ? 'Cancel log mode' : 'Log a catch on the map');
         if (plus)  plus.hidden  = active;
         if (x)     x.hidden     = !active;
         if (label) label.textContent = active ? 'Cancel' : 'Log Catch';

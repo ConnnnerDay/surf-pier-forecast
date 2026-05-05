@@ -6190,6 +6190,10 @@ h2::before {
   box-shadow: 0 5px 14px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.7);
 }
 .fmap-log-fab:active { transform: translateY(0); }
+.fmap-log-fab:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
 .fmap-log-fab--active {
   background: #dc2626;
   box-shadow: 0 3px 10px rgba(0,0,0,0.45), 0 0 0 1px rgba(220,38,38,0.6);
