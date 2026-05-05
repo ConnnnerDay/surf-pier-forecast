@@ -5139,6 +5139,13 @@
                     mangrove:     'Mangrove areas may have seasonal closures — check regs.',
                     oyster_reef:  'Oyster reef areas may be closed to harvest — check regs.',
                     grass_flat:   'Avoid anchoring in seagrass — use poles or anchor off-flat.',
+                    tidal_flat:   'Some tidal flats are closed to shellfish harvest — check local regs.',
+                    inlet:        'Some inlets have restricted access or no-wake zones — verify before launching.',
+                    beach:        'Check local ordinances for surf fishing access and license requirements.',
+                    kelp:         'Kelp harvest and some rockfish species may be restricted — check state regs.',
+                    shoal:        'Verify local regulations for bottom fishing and minimum size limits.',
+                    point:        'Check for posted access restrictions on public vs. private headlands.',
+                    dive_site:    'Spearfishing may be prohibited at marine reserves — check before diving.',
                 };
                 var reg = regHints[spotData.type] || '';
                 regEl.textContent = reg;
