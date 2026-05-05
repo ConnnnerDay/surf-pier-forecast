@@ -375,6 +375,8 @@
     function showToast(msg) {
         var t = document.createElement('div');
         t.className = 'fmap-toast';
+        t.setAttribute('role', 'status');
+        t.setAttribute('aria-live', 'polite');
         t.textContent = msg;
         document.body.appendChild(t);
         requestAnimationFrame(function () {
@@ -4275,18 +4277,20 @@
             var lq = q.toLowerCase().trim();
             var allRows  = popup.querySelectorAll('.fmap-layer-row');
             var sections = popup.querySelectorAll('.fmap-layers-section');
+            var anyVisible = false;
             allRows.forEach(function (row) {
                 var nameEl = row.querySelector('.fmap-layer-row-name');
                 var descEl = row.querySelector('.fmap-layer-row-desc');
                 var text = ((nameEl ? nameEl.textContent : '') + ' ' + (descEl ? descEl.textContent : '')).toLowerCase();
                 var show = !lq || text.indexOf(lq) !== -1;
                 row.style.display = show ? '' : 'none';
+                if (show) anyVisible = true;
             });
             // Hide section headers when all their rows are hidden; show otherwise.
             // Sections with no .fmap-layer-row elements (e.g. Spot Filters) are always shown.
             sections.forEach(function (sec) {
                 var allSectionRows = sec.querySelectorAll('.fmap-layer-row');
-                if (!allSectionRows.length) { sec.style.display = ''; return; }
+                if (!allSectionRows.length) { sec.style.display = lq ? 'none' : ''; return; }
                 var visibleRows = Array.prototype.filter.call(allSectionRows, function (r) {
                     return r.style.display !== 'none';
                 });
@@ -4298,6 +4302,18 @@
                     if (hdr) hdr.setAttribute('aria-expanded', 'true');
                 }
             });
+            // Show/hide no-results state
+            var noResultsEl = popup.querySelector('.fmap-layers-no-results');
+            if (!noResultsEl && lq && !anyVisible) {
+                noResultsEl = document.createElement('p');
+                noResultsEl.className = 'fmap-layers-no-results';
+                var body = popup.querySelector('.fmap-layers-popup-body');
+                if (body) body.appendChild(noResultsEl);
+            }
+            if (noResultsEl) {
+                noResultsEl.textContent = lq && !anyVisible ? 'No layers match "' + q.trim() + '"' : '';
+                noResultsEl.style.display = lq && !anyVisible ? '' : 'none';
+            }
         }
 
         if (searchInput) {

@@ -4632,6 +4632,15 @@ h2::before {
   overflow-y: auto;
 }
 
+.fmap-layers-no-results {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+}
+[data-theme="light"] .fmap-layers-no-results { color: rgba(0,0,0,0.4); }
+
 /* Collapsible section wrapper */
 .fmap-layers-section {
   border-bottom: 1px solid rgba(255,255,255,0.05);
