@@ -191,6 +191,10 @@
     if (themeLabel) themeLabel.textContent = isDark ? 'Dark' : 'Light';
     if (iconDark) iconDark.style.display = isDark ? '' : 'none';
     if (iconLight) iconLight.style.display = isDark ? 'none' : '';
+    if (themeBtn) {
+      themeBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      themeBtn.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+    }
   }
 
   if (themeBtn) {
