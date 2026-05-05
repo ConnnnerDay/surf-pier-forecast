@@ -5737,6 +5737,10 @@ h2::before {
   border: 2px solid #fff;
   cursor: pointer;
 }
+@media (pointer: coarse) {
+  .fmap-tide-slider::-webkit-slider-thumb { width: 22px; height: 22px; }
+  .fmap-tide-slider::-moz-range-thumb    { width: 22px; height: 22px; }
+}
 .fmap-tide-score-wrap {
   display: flex;
   align-items: center;
