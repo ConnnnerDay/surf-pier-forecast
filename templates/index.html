@@ -684,12 +684,14 @@
                     <div class="fmap-spot-detail-header">
                         <span class="fmap-spot-detail-type-badge" id="fmap-spot-detail-type"></span>
                         <a class="fmap-spot-detail-coords" id="fmap-spot-detail-coords"
-                           href="#" target="_blank" rel="noopener noreferrer" title="Open in Google Maps">
+                           href="#" target="_blank" rel="noopener noreferrer" title="Open in Google Maps"
+                           aria-label="Open spot location in Google Maps">
                             ––
                         </a>
                         <div class="fmap-spot-detail-actions">
                             <button type="button" id="fmap-spot-detail-fav" class="fmap-ctrl-btn"
-                                    aria-pressed="false" title="Save as favorite">
+                                    aria-pressed="false" title="Save as favorite"
+                                    aria-label="Save as favorite">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                             </button>
                             <button type="button" id="fmap-spot-detail-close" class="fmap-ctrl-btn"
@@ -785,11 +787,15 @@
                     </div>
                     {# ── Quick preset pills — fishing-relevant only ── #}
                     <div class="fmap-layers-presets" aria-label="Layer presets">
-                        <button type="button" class="fmap-preset-pill" data-preset="weather" title="Toggle Marine Safety layers">
+                        <button type="button" class="fmap-preset-pill" data-preset="weather"
+                                title="Toggle Marine Safety layers" aria-pressed="false"
+                                aria-label="Toggle Marine Safety layers">
                             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
                             Safety
                         </button>
-                        <button type="button" class="fmap-preset-pill" data-preset="ocean" title="Toggle Ocean &amp; Conditions layers">
+                        <button type="button" class="fmap-preset-pill" data-preset="ocean"
+                                title="Toggle Ocean &amp; Conditions layers" aria-pressed="false"
+                                aria-label="Toggle Ocean and Conditions layers">
                             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h20M2 12c3-4 5-4 10 0s7 4 10 0M2 12c3 4 5 4 10 0s7-4 10 0"/></svg>
                             Conditions
                         </button>

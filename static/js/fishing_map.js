@@ -4456,6 +4456,7 @@
 
                 // Mark pill as active if turning on, inactive if turning off
                 pill.classList.toggle('fmap-preset-pill--active', !allOn);
+                pill.setAttribute('aria-pressed', !allOn ? 'true' : 'false');
             });
         });
 
@@ -4469,6 +4470,7 @@
                     return b && b.getAttribute('aria-pressed') === 'true';
                 });
                 pill.classList.toggle('fmap-preset-pill--active', anyOn);
+                pill.setAttribute('aria-pressed', anyOn ? 'true' : 'false');
             });
         }
 
@@ -4846,8 +4848,13 @@
                 renderChart();
                 updateSliderDisplay(); // replaces scoreEl className, clearing the loading class
                 if (moonEl) {
-                    moonEl.textContent = (_scoreData.moon_phase || '') +
-                        ' · ' + (_scoreData.solunar_rating || '');
+                    var _solRating = (_scoreData.solunar_rating || '').toLowerCase();
+                    var _solClass  = _solRating === 'major' ? 'fmap-tide-sol--major'
+                                   : _solRating === 'minor' ? 'fmap-tide-sol--minor'
+                                   : 'fmap-tide-sol--none';
+                    moonEl.innerHTML = esc(_scoreData.moon_phase || '') +
+                        ' <span class="fmap-tide-sol ' + _solClass + '">· ' +
+                        esc(_scoreData.solunar_rating || '') + '</span>';
                 }
             })
             .catch(function (err) {
@@ -5182,7 +5189,9 @@
             if (favBtn) {
                 var isFav = !!_favoriteSpotKeys[key];
                 favBtn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
-                favBtn.title = isFav ? 'Remove from favorites' : 'Save as favorite';
+                var _favLabel = isFav ? 'Remove from favorites' : 'Save as favorite';
+                favBtn.title = _favLabel;
+                favBtn.setAttribute('aria-label', _favLabel);
             }
 
             panel.setAttribute('aria-hidden', 'false');
@@ -5294,8 +5303,10 @@
                     };
                 }
                 _saveFavorites();
+                var _newFavLabel = !isFav ? 'Remove from favorites' : 'Save as favorite';
                 favBtn.setAttribute('aria-pressed', !isFav ? 'true' : 'false');
-                favBtn.title = !isFav ? 'Remove from favorites' : 'Save as favorite';
+                favBtn.title = _newFavLabel;
+                favBtn.setAttribute('aria-label', _newFavLabel);
                 showToast(!isFav ? 'Spot saved to favorites' : 'Spot removed from favorites');
                 // Keep My Spots layer current if it's active
                 if (_activeCategory === 'my_spots') renderFavoriteSpots();

@@ -5619,6 +5619,7 @@ h2::before {
   transition: background 0.15s, border-color 0.15s;
 }
 .fmap-spot-filter-bar-clear:hover { background: rgba(31,168,201,0.12); border-color: #1fa8c9; }
+.fmap-spot-filter-bar-clear:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
 .fmap-spot-filter-bar .fmap-struct-error { margin-bottom: 0; }
 .fmap-spot-filter-bar .fmap-struct-filters-pills {
   flex-wrap: nowrap;
@@ -5818,6 +5819,13 @@ h2::before {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.4);
 }
+.fmap-tide-sol { color: inherit; }
+.fmap-tide-sol--major { color: #fbbf24; }
+.fmap-tide-sol--minor { color: rgba(255,255,255,0.65); }
+.fmap-tide-sol--none  { color: rgba(255,255,255,0.3); }
+[data-theme="light"] .fmap-tide-sol--major { color: #b45309; }
+[data-theme="light"] .fmap-tide-sol--minor { color: rgba(0,0,0,0.55); }
+[data-theme="light"] .fmap-tide-sol--none  { color: rgba(0,0,0,0.3); }
 .fmap-tide-meta-row {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.45);
@@ -13300,6 +13308,10 @@ body:not([data-theme="dark"]) .fmap-legend-swatch { border-color: rgba(0,0,0,0.1
 .fmap-preset-pill--active:hover {
   background: rgba(56,192,255,0.22);
   border-color: rgba(56,192,255,0.55);
+}
+.fmap-preset-pill:focus-visible {
+  outline: 2px solid #1fa8c9;
+  outline-offset: 2px;
 }
 [data-theme="light"] .fmap-preset-pill,
 body:not([data-theme="dark"]) .fmap-preset-pill {
