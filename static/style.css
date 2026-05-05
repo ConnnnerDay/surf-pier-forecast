@@ -5336,12 +5336,12 @@ h2::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   border: 1px solid var(--border-light, #2a3f4d);
   background: transparent;
   color: var(--text-muted, #8a9ba8);
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
@@ -5667,7 +5667,7 @@ h2::before {
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0.22rem 0.7rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 20px;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
