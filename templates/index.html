@@ -485,22 +485,23 @@
             <section class="calendar-section">
                 <p class="section-sub">Monthly availability at {{ forecast.location_name or 'this location' }}</p>
                 <div class="calendar-table-wrap">
-                    <table class="calendar-table">
+                    <table class="calendar-table" aria-label="Monthly species availability calendar">
                         <thead>
                             <tr>
-                                <th class="cal-species-col">Species</th>
-                                {% for m in ['J','F','M','A','M','J','J','A','S','O','N','D'] %}<th class="cal-month-col">{{ m }}</th>{% endfor %}
+                                <th class="cal-species-col" scope="col">Species</th>
+                                {% set full_months = ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+                                {% for i in range(12) %}<th class="cal-month-col" scope="col" abbr="{{ full_months[i] }}">{{ ['J','F','M','A','M','J','J','A','S','O','N','D'][i] }}</th>{% endfor %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for sp in forecast.calendar %}
                             <tr>
-                                <td class="cal-species-name">{{ sp.name }}</td>
+                                <td class="cal-species-name" scope="row">{{ sp.name }}</td>
                                 {% for mo in sp.months %}
                                 <td>
-                                    {% if mo.level == 'peak' %}<span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak"></span>
-                                    {% elif mo.level == 'good' %}<span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good"></span>
-                                    {% else %}<span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off"></span>{% endif %}
+                                    {% if mo.level == 'peak' %}<span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak" aria-label="{{ mo.abbr }}: Peak"></span>
+                                    {% elif mo.level == 'good' %}<span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good" aria-label="{{ mo.abbr }}: Good"></span>
+                                    {% else %}<span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off" aria-label="{{ mo.abbr }}: Off season"></span>{% endif %}
                                 </td>
                                 {% endfor %}
                             </tr>
