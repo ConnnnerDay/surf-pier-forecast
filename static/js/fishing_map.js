@@ -580,7 +580,7 @@
                   });
             poly.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
-                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
             );
             aiPickLayer.addLayer(poly);
@@ -602,7 +602,7 @@
             var m = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
-                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
@@ -2383,8 +2383,8 @@
                     var _tapOrClick = window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
                     m.bindTooltip(
                         '<strong>' + esc(c.species) + '</strong><br>' +
-                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
-                        '<br><span style="opacity:.4;font-size:.65rem">' + _tapOrClick + ' to view catch details</span>',
+                        '<span class="fmap-tooltip-sub">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
+                        '<span class="fmap-tooltip-meta">' + _tapOrClick + ' to view catch details</span>',
                         { className: 'fmap-tooltip', direction: 'top', offset: [0, -6] }
                     );
                     m.on('click', function () { openCatchDetail(c); });
@@ -2479,7 +2479,7 @@
 
         // Load comments
         var _myAbort = _catchDetailAbort;
-        els.catchDetailComments.innerHTML = '<div class="fmap-catch-no-comments" style="opacity:.5">Loading comments…</div>';
+        els.catchDetailComments.innerHTML = '<div class="fmap-catch-no-comments">Loading comments…</div>';
         fetch('/api/map/catches/' + c.id + '/comments', { signal: _myAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
@@ -2866,15 +2866,15 @@
                     var tip = spot.description || STRUCTURE_TIPS[spot.type] || '';
                     m.bindPopup(
                         '<strong>' + esc(spot.name || spotTypeLabel(spot.type)) + '</strong>' +
-                        (tip ? '<br><span style="opacity:.8">' + esc(tip) + '</span>' : '')
+                        (tip ? '<br><span class="fmap-tooltip-sub">' + esc(tip) + '</span>' : '')
                     ).openPopup();
                 }
             });
 
             m.bindTooltip(
                 '<strong>' + esc(spot.name || spotTypeLabel(spot.type)) + '</strong>' +
-                '<br><span style="opacity:.7">' + esc(spotTypeLabel(spot.type)) + '</span>' +
-                (adminEditMode ? '<br><em style="opacity:.6">click to edit</em>' : ''),
+                '<br><span class="fmap-tooltip-sub">' + esc(spotTypeLabel(spot.type)) + '</span>' +
+                (adminEditMode ? '<br><em class="fmap-tooltip-sub">click to edit</em>' : ''),
                 { direction: 'top', offset: [0, -8], className: 'fmap-tooltip' }
             );
 
@@ -3336,14 +3336,14 @@
             '<strong>' + esc(s.name || 'SST Station') + '</strong>' +
             '<br><span class="fmap-sst-temp">' + temp + '</span>' +
             (anomaly ? '<br><small class="fmap-sst-anomaly">' + esc(anomaly) + '</small>' : '') +
-            (dhw     ? '<br><small style="opacity:.65">' + esc(dhw) + '</small>' : '') +
+            (dhw     ? '<br><small class="fmap-popup-meta">' + esc(dhw) + '</small>' : '') +
             (s.alert > 0
                 ? '<br><span class="fmap-sst-alert" style="background:' + s.alert_color + '">' +
                   esc(s.alert_label) + '</span>'
                 : '') +
-            (s.updated ? '<br><small style="opacity:.45">Updated: ' +
+            (s.updated ? '<br><small class="fmap-popup-meta">Updated: ' +
                 _sstFmtDate(s.updated) + '</small>' : '') +
-            '<br><small style="opacity:.4">Source: NOAA CoRIS via ArcGIS Live Feeds</small>' +
+            '<br><small class="fmap-popup-source">Source: NOAA CoRIS via ArcGIS Live Feeds</small>' +
             '</div>'
         );
     }
@@ -3561,10 +3561,10 @@
         return (
             '<div class="fmap-storm-popup">' +
             '<strong>' + esc(t.name) + '</strong>' +
-            (t.basin ? ' <small style="opacity:.6">(' + esc(t.basin) + ')</small>' : '') +
+            (t.basin ? ' <small class="fmap-popup-meta">(' + esc(t.basin) + ')</small>' : '') +
             '<br><em>' + esc(t.category) + '</em>' +
             (dates ? '<br><small>' + dates + '</small>' : '') +
-            '<br><small style="opacity:.5">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
+            '<br><small class="fmap-popup-source">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
             '</div>'
         );
     }
@@ -3857,7 +3857,7 @@
                     L.marker([b.lat, b.lng], { icon: icon })
                      .bindPopup('<div class="fmap-buoy-popup">' +
                         '<strong>' + esc(b.id ? b.id + (b.name ? ' – ' + b.name : '') : b.name || 'NDBC Buoy') + '</strong>' +
-                        (updStr ? '<div style="opacity:.5;font-size:.72rem">' + updStr + '</div>' : '') +
+                        (updStr ? '<div class="fmap-popup-meta">' + updStr + '</div>' : '') +
                         '<table class="fmap-gauge-table">' +
                         '<tr><td>Water Temp</td><td><span style="color:' + clr + '">' + wt + '</span></td></tr>' +
                         '<tr><td>Wave Height</td><td>' + wh + '</td></tr>' +
@@ -3865,7 +3865,7 @@
                         '<tr><td>Wind</td><td>' + ws + (b.wind_dir != null ? ' @ ' + b.wind_dir + '°' : '') + '</td></tr>' +
                         (b.pressure_mb != null ? '<tr><td>Pressure</td><td>' + b.pressure_mb + ' mb</td></tr>' : '') +
                         '</table>' +
-                        '<div style="opacity:.4;font-size:.68rem;margin-top:3px">NDBC via ArcGIS Live Feeds</div>' +
+                        '<div class="fmap-popup-source">NDBC via ArcGIS Live Feeds</div>' +
                         '</div>', { maxWidth: 260 })
                      .addTo(buoyLayer);
                 });
@@ -3949,8 +3949,8 @@
                      .bindTooltip(
                         '<strong>Ocean Current</strong>' +
                         (kts ? '<br>' + kts + (v.dir_deg != null ? ' from ' + v.dir_deg + '°' : '') : '') +
-                        (updStr ? '<br><small style="opacity:.6">' + updStr + '</small>' : '') +
-                        '<br><small style="opacity:.5">NOAA HF Radar</small>',
+                        (updStr ? '<br><small class="fmap-tooltip-sub">' + updStr + '</small>' : '') +
+                        '<br><small class="fmap-tooltip-sub">NOAA HF Radar</small>',
                         { sticky: true, opacity: 0.93, direction: 'top' }
                      )
                      .addTo(hfradarLayer);
@@ -4010,9 +4010,9 @@
                             '<strong>Tropical Development Area</strong>' +
                             '<div class="fmap-tropical-prob" style="color:' + a.color + '">' +
                             esc(a.prob_label || a.probability) + ' probability</div>' +
-                            '<div style="font-size:.75rem;opacity:.7;margin-top:2px">Basin: ' + esc(a.basin) + '</div>' +
-                            (a.discussion ? '<p style="font-size:.74rem;margin:6px 0 2px;opacity:.85">' + esc(a.discussion) + '</p>' : '') +
-                            '<div style="font-size:.68rem;opacity:.45;margin-top:4px">NHC Tropical Weather Outlook · ArcGIS Live Feeds</div>' +
+                            '<div class="fmap-popup-meta">Basin: ' + esc(a.basin) + '</div>' +
+                            (a.discussion ? '<p class="fmap-tropical-discussion">' + esc(a.discussion) + '</p>' : '') +
+                            '<div class="fmap-popup-source">NHC Tropical Weather Outlook · ArcGIS Live Feeds</div>' +
                             '</div>',
                             { maxWidth: 280 }
                         ).addTo(tropicalLayer);

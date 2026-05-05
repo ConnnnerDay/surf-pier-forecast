@@ -4283,6 +4283,22 @@ h2::before {
   margin-top: 2px;
   display: block;
 }
+.fmap-popup-meta {
+  opacity: 0.55;
+  font-size: 0.72rem;
+  display: block;
+}
+.fmap-popup-source {
+  opacity: 0.4;
+  font-size: 0.68rem;
+  margin-top: 3px;
+  display: block;
+}
+.fmap-tropical-discussion {
+  font-size: 0.74rem;
+  margin: 6px 0 2px;
+  opacity: 0.85;
+}
 
 /* ── AI Habitat pick markers ── */
 .fmap-ai-wrap {
