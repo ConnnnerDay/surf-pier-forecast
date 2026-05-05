@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     {% include 'partials/_head_fonts.html' %}
     <link rel="stylesheet" href="{{ surl('style.css') }}">
@@ -783,7 +784,7 @@
                     {# ── Filter search bar ── #}
                     <div class="fmap-layers-search-wrap">
                         <svg class="fmap-layers-search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" inputmode="search" aria-label="Search live data layers">
+                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" inputmode="search" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="Search live data layers">
                     </div>
                     {# ── Quick preset pills — fishing-relevant only ── #}
                     <div class="fmap-layers-presets" aria-label="Layer presets">
@@ -1083,11 +1084,11 @@
                 <form id="fmap-log-form" class="fmap-log-form" novalidate>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-species">Species <span class="fmap-req">*</span></label>
-                        <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100" enterkeyhint="next">
+                        <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100" enterkeyhint="next" autocapitalize="words" spellcheck="false">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-title">Title / headline</label>
-                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120" autocomplete="off" enterkeyhint="next">
+                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120" autocomplete="off" enterkeyhint="next" autocapitalize="sentences">
                     </div>
                     <div class="fmap-log-row fmap-log-row--2col">
                         <div>
@@ -1105,11 +1106,11 @@
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-bait">Bait / Lure</label>
-                        <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80" autocomplete="off" enterkeyhint="next">
+                        <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80" autocomplete="off" enterkeyhint="next" autocapitalize="none" spellcheck="false">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-notes">Notes</label>
-                        <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2" enterkeyhint="next"></textarea>
+                        <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2" enterkeyhint="next" autocapitalize="sentences"></textarea>
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-image-url">Photo URL <span class="fmap-log-hint">(https://)</span></label>
