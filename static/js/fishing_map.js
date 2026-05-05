@@ -2581,6 +2581,8 @@
         }
 
         els.catchDetail.hidden = false;
+        var _cdInner = els.catchDetail.querySelector('.fmap-detail-inner');
+        if (_cdInner) _cdInner.scrollTop = 0;
 
         var closeBtn = document.getElementById('fmap-catch-detail-close');
         if (closeBtn) {
@@ -2667,7 +2669,11 @@
                 now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
                 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
         }
-        if (els.logModal) els.logModal.hidden = false;
+        if (els.logModal) {
+            els.logModal.hidden = false;
+            var _lmInner = els.logModal.querySelector('.fmap-modal-inner');
+            if (_lmInner) _lmInner.scrollTop = 0;
+        }
         if (els.logSpecies) els.logSpecies.focus();
         if (els.logError) els.logError.hidden = true;
     }
