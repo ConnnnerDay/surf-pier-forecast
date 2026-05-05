@@ -2624,10 +2624,23 @@
         var cancelBtn = document.getElementById('fmap-log-cancel');
         if (cancelBtn) cancelBtn.addEventListener('click', closeLogModal);
 
-        // Escape key closes the log modal
+        // Escape closes the log modal; Tab is trapped within while open
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && els.logModal && !els.logModal.hidden) {
-                closeLogModal();
+            if (!els.logModal || els.logModal.hidden) return;
+            if (e.key === 'Escape') { closeLogModal(); return; }
+            if (e.key !== 'Tab') return;
+            var focusable = Array.prototype.slice.call(
+                els.logModal.querySelectorAll(
+                    'a[href],button:not([disabled]),input:not([disabled]),' +
+                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+                )
+            );
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
             }
         });
 
