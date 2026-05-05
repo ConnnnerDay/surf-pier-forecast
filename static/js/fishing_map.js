@@ -2397,11 +2397,11 @@
         if (!map) return;
         communityLayer = L.layerGroup();
 
-        // Escape key closes the catch detail drawer
+        // Escape key closes the catch detail drawer; Tab is trapped within while open
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && els.catchDetail && !els.catchDetail.hidden) {
-                closeCatchDetail();
-            }
+            if (!els.catchDetail || els.catchDetail.hidden) return;
+            if (e.key === 'Escape') { closeCatchDetail(); return; }
+            _trapFocusOnTab(els.catchDetail, e);
         });
 
         var btn = document.getElementById('fmap-community-layer-btn');
@@ -2425,8 +2425,11 @@
 
     // ─── Community catch detail drawer ────────────────────────────────────────
 
+    var _catchDetailPrevFocus = null;
+
     function openCatchDetail(c) {
         if (!els.catchDetail) return;
+        _catchDetailPrevFocus = document.activeElement || null;
 
         if (_catchDetailAbort) { try { _catchDetailAbort.abort(); } catch (e) {} }
         _catchDetailAbort = new AbortController();
@@ -2549,11 +2552,16 @@
         var closeBtn = document.getElementById('fmap-catch-detail-close');
         if (closeBtn) {
             closeBtn.onclick = closeCatchDetail;
+            setTimeout(function () { closeBtn.focus(); }, 50);
         }
     }
 
     function closeCatchDetail() {
         if (els.catchDetail) els.catchDetail.hidden = true;
+        if (_catchDetailPrevFocus && typeof _catchDetailPrevFocus.focus === 'function') {
+            _catchDetailPrevFocus.focus({ preventScroll: true });
+            _catchDetailPrevFocus = null;
+        }
     }
 
     // ─── Log Catch mode ───────────────────────────────────────────────────────
