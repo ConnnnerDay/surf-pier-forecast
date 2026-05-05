@@ -6418,15 +6418,35 @@ h2::before {
   font-size: 0.77rem;
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
+.fmap-catch-comment-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.1rem;
+}
 .fmap-catch-comment-author {
   font-weight: 700;
   color: #1fa8c9;
-  margin-right: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .fmap-catch-comment-time {
-  float: right;
   opacity: 0.38;
   font-size: 0.65rem;
+  flex-shrink: 0;
+}
+.fmap-catch-comment-body {
+  color: rgba(255,255,255,0.8);
+  line-height: 1.4;
+}
+[data-theme="light"] .fmap-catch-comment-body { color: rgba(0,0,0,0.7); }
+.fmap-catch-no-comments {
+  opacity: 0.4;
+  font-size: 0.75rem;
+  padding: 0.4rem 0;
 }
 .fmap-catch-detail-actions {
   display: flex;

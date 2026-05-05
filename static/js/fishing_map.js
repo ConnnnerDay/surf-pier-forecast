@@ -2479,18 +2479,22 @@
 
         // Load comments
         var _myAbort = _catchDetailAbort;
-        els.catchDetailComments.innerHTML = '<div style="opacity:.5;font-size:.75rem;padding:.4rem 0">Loading comments…</div>';
+        els.catchDetailComments.innerHTML = '<div class="fmap-catch-no-comments" style="opacity:.5">Loading comments…</div>';
         fetch('/api/map/catches/' + c.id + '/comments', { signal: _myAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 var comments = data.comments || [];
                 var html = '';
                 comments.forEach(function (cm) {
-                    html += '<div class="fmap-catch-comment"><span class="fmap-catch-comment-time">' +
-                        timeAgo(cm.created_at) + '</span><span class="fmap-catch-comment-author">' +
-                        esc(cm.angler_name) + '</span>' + esc(cm.body) + '</div>';
+                    html += '<div class="fmap-catch-comment">' +
+                        '<div class="fmap-catch-comment-hdr">' +
+                        '<span class="fmap-catch-comment-author">' + esc(cm.angler_name) + '</span>' +
+                        '<span class="fmap-catch-comment-time">' + timeAgo(cm.created_at) + '</span>' +
+                        '</div>' +
+                        '<div class="fmap-catch-comment-body">' + esc(cm.body) + '</div>' +
+                        '</div>';
                 });
-                if (!html) html = '<div style="opacity:.4;font-size:.75rem;padding:.4rem 0">No comments yet</div>';
+                if (!html) html = '<div class="fmap-catch-no-comments">No comments yet</div>';
                 // Add comment form if logged in
                 var commentForm = IS_LOGGED_IN
                     ? '<div class="fmap-catch-comment-form">' +
