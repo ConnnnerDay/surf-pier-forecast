@@ -4981,7 +4981,7 @@
                 if (!hasScore) {
                     scoreEl.innerHTML = '<span class="fmap-spot-score-num" style="opacity:.4">–</span>' +
                         '<span class="fmap-spot-score-denom">/10</span>';
-                    scoreEl.className = 'fmap-spot-score';
+                    scoreEl.className = 'fmap-spot-score fmap-tide-score--loading';
                 } else {
                     // Trend: compare current hour to 2 hours ahead
                     var futureHour = Math.min(23, _tideSliderHour + 2);
@@ -5005,7 +5005,7 @@
                 if (fac.solunar && fac.solunar !== 'none')
                                           chips.push({ icon: '🌙', text: fac.solunar });
                 if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
-                if (fac.wave_ft  != null) chips.push({ icon: '〰', text: fac.wave_ft + ' ft' });
+                if (fac.wave_ft  != null) chips.push({ icon: '≋', text: fac.wave_ft + ' ft' });
                 if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
                 if (chips.length) {
                     condEl.innerHTML = chips.map(function (c) {

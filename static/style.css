@@ -5945,6 +5945,10 @@ h2::before {
   color: #fff;
   margin-bottom: 0.15rem;
   line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .fmap-spot-detail-label {
   font-size: 0.68rem;
