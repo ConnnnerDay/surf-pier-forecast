@@ -303,6 +303,46 @@ header .subtitle {
   text-align: center;
   border-bottom: 1px solid #FDE68A;
 }
+.banner--profile-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--accent-teal, #0e5f78);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  font-weight: normal;
+  text-align: left;
+  border-bottom: none;
+  margin: 0 0 0.5rem;
+}
+.banner--profile-nudge-icon {
+  vertical-align: -2px;
+  margin-right: 0.35rem;
+}
+.banner--profile-nudge-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.banner--profile-nudge-link {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.banner--profile-nudge-dismiss {
+  background: none;
+  border: none;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-size: 1.1rem;
+}
 
 /* ---------- Main ---------- */
 
@@ -4539,6 +4579,7 @@ h2::before {
 }
 
 .fmap-ctrl-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
