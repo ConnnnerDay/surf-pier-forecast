@@ -11141,6 +11141,7 @@ body:not(.forecast-page) main {
   padding: 0.5rem 1rem;
   flex-shrink: 0;
 }
+.menu-footer form { margin: 0; }
 
 .menu-logout-btn {
   display: flex;
@@ -13529,6 +13530,8 @@ body:not([data-theme="dark"]) .fmap-layers-pin-btn[aria-pressed="true"] {
 }
 .fmap-legend-collapse-btn:hover,
 .fmap-legend-expand-btn:hover { color: rgba(255,255,255,0.85); }
+.fmap-legend-collapse-btn:focus-visible,
+.fmap-legend-expand-btn:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
 .fmap-legend-collapsed {
   padding: 5px 8px;
 }

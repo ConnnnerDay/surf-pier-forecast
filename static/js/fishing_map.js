@@ -4205,7 +4205,7 @@
         var html = '<div class="fmap-legend-inner">' +
             '<div class="fmap-legend-header">' +
             '<span class="fmap-legend-title-main">Legend</span>' +
-            '<button class="fmap-legend-collapse-btn" title="Collapse legend">' +
+            '<button class="fmap-legend-collapse-btn" title="Collapse legend" aria-label="Collapse legend">' +
             '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">' +
             '<polyline points="18 15 12 9 6 15"/></svg></button></div>';
 
