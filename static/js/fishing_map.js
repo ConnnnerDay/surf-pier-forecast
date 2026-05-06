@@ -2810,11 +2810,7 @@
         var color = (SPOT_TYPES[type] || SPOT_TYPES.fishing).color;
         return L.divIcon({
             className: 'fmap-spot-wrap',
-            html: '<span style="display:flex;align-items:center;justify-content:center;' +
-                  'width:22px;height:22px;border-radius:50%;background:' + color + ';' +
-                  'border:2.5px dashed #fff;box-shadow:0 0 8px ' + color + '88;' +
-                  'font-size:9px;font-weight:800;color:rgba(255,255,255,0.95);' +
-                  'font-family:system-ui,sans-serif;cursor:pointer">✎</span>',
+            html: '<span class="fmap-edit-pin" style="--edit-c:' + color + '">✎</span>',
             iconSize:   [22, 22],
             iconAnchor: [11, 11],
         });
@@ -2916,10 +2912,7 @@
         _adminPreviewPin = L.marker([lat, lng], {
             icon: L.divIcon({
                 className: 'fmap-spot-wrap',
-                html: '<span style="display:flex;align-items:center;justify-content:center;' +
-                      'width:26px;height:26px;border-radius:50%;background:#2563eb;' +
-                      'border:3px solid #fff;box-shadow:0 0 12px #2563eb99;' +
-                      'font-size:15px;animation:fmap-pulse 1s ease-in-out infinite alternate">📍</span>',
+                html: '<span class="fmap-preview-pin">📍</span>',
                 iconSize: [26, 26], iconAnchor: [13, 26],
             }),
             interactive: false,
@@ -3676,7 +3669,7 @@
         var badge = document.getElementById('fmap-marine-warn-badge');
         if (!badge) return;
         badge.textContent = count;
-        badge.style.display = count > 0 ? '' : 'none';
+        badge.hidden = count <= 0;
     }
 
     // ─── Storm Tracker overlay (ArcGIS Live Feeds) ────────────────────────────
@@ -3799,7 +3792,7 @@
         var badge = document.getElementById('fmap-storm-badge');
         if (!badge) return;
         badge.textContent = count;
-        badge.style.display = count > 0 ? '' : 'none';
+        badge.hidden = count <= 0;
     }
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
@@ -4258,7 +4251,7 @@
         });
         if (badge) {
             badge.textContent = total;
-            badge.style.display = total > 0 ? '' : 'none';
+            badge.hidden = total <= 0;
         }
         if (clearBtn) clearBtn.hidden = total === 0;
 
@@ -4646,8 +4639,8 @@
             isFullscreen = !isFullscreen;
             if (mapWrap) mapWrap.classList.toggle('fmap-map-wrap--fullscreen', isFullscreen);
             if (fsLabel) fsLabel.textContent = isFullscreen ? 'Shrink Map' : 'Expand Map';
-            if (fsIconExpand) fsIconExpand.style.display = isFullscreen ? 'none' : '';
-            if (fsIconShrink) fsIconShrink.style.display = isFullscreen ? '' : 'none';
+            if (fsIconExpand) fsIconExpand.hidden = isFullscreen;
+            if (fsIconShrink) fsIconShrink.hidden = !isFullscreen;
             var pressed = isFullscreen ? 'true' : 'false';
             if (fsToolbarBtn) fsToolbarBtn.setAttribute('aria-pressed', pressed);
             if (fsMapBtn) fsMapBtn.setAttribute('aria-pressed', pressed);

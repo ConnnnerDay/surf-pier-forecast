@@ -85,6 +85,8 @@
   box-sizing: border-box;
 }
 
+[hidden] { display: none !important; }
+
 html {
   overflow-x: hidden;
 }
@@ -4192,6 +4194,11 @@ h2::before {
   box-shadow: 0 0 6px #a78bfa88;
   animation: fmap-ai-pulse 3s ease-in-out infinite;
 }
+/* AI Pick legend — habitat type color overrides */
+.fmap-legend-dot--ai-reef      { background: #f59e0b; box-shadow: 0 0 6px #f59e0b88; }
+.fmap-legend-dot--ai-channel   { background: #38bdf8; box-shadow: 0 0 6px #38bdf888; }
+.fmap-legend-dot--ai-saltmarsh { background: #34d399; box-shadow: 0 0 6px #34d39988; }
+.fmap-legend-dot--ai-shoal     { background: #94a3b8; box-shadow: 0 0 6px #94a3b888; }
 /* Separator between habitat area and structure icon sections */
 .fmap-legend-sep {
   display: inline-block;
@@ -6411,6 +6418,37 @@ textarea.fmap-admin-input { resize: vertical; }
   font-size: 0.75rem;
   margin-top: 5px;
   color: #f87171;
+}
+
+/* Admin marker icons (edit-mode pin and new-spot preview pin) */
+.fmap-edit-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--edit-c, #2563eb);
+  border: 2.5px dashed #fff;
+  box-shadow: 0 0 8px var(--edit-c, #2563eb);
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+}
+.fmap-preview-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 0 12px #2563eb99;
+  font-size: 15px;
+  animation: fmap-pulse 1s ease-in-out infinite alternate;
 }
 
 /* ── Log Catch floating action button ── */
