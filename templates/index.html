@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     {% include 'partials/_head_fonts.html' %}
     <link rel="stylesheet" href="{{ surl('style.css') }}">
@@ -52,14 +53,14 @@
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2"/></svg>
                 Change
             </a>
-            <button class="location-bar-fav" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites">
+            <button class="location-bar-fav" id="fav-toggle" onclick="toggleFavorite()" title="Save to favorites" aria-label="Save to favorites" aria-pressed="false">
                 <svg class="fav-icon fav-icon--off" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="2" style="display:none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <svg class="fav-icon fav-icon--on" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 Save
             </button>
         </div>
     </div>
-    <div class="location-bar-inner" id="favorites-bar-wrap" style="display:none">
+    <div class="location-bar-inner" id="favorites-bar-wrap" hidden>
         <div class="location-bar-favs" id="favorites-bar"></div>
     </div>
 </div>
@@ -79,7 +80,7 @@
     {% set ns = namespace(seen=[], top_severity='moderate') %}
     {% for alert in all_alerts %}{% if alert.event not in ns.seen %}{% set ns.seen = ns.seen + [alert.event] %}{% if alert.severity|lower in ('extreme','warning','severe') %}{% set ns.top_severity = alert.severity|lower %}{% endif %}{% endif %}{% endfor %}
     {% set unique_count = ns.seen|length %}
-    <div class="alerts-banner alerts-banner--collapsed alert-{{ ns.top_severity }}" style="margin:0.75rem 1rem" role="region" aria-label="Weather alerts">
+    <div class="alerts-banner alerts-banner--collapsed alert-{{ ns.top_severity }}" role="region" aria-label="Weather alerts">
         <button class="alerts-summary-btn" type="button" onclick="toggleAlerts(this)" aria-expanded="false" aria-controls="alerts-detail">
             <span class="alerts-summary-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
             <span class="alerts-summary-text">{% if unique_count == 1 %}{{ ns.seen[0] }}{% else %}{{ unique_count }} weather alerts &mdash; {{ ns.seen[0] }}{% if unique_count > 1 %} + {{ unique_count - 1 }} more{% endif %}{% endif %}</span>
@@ -154,14 +155,14 @@
     </div>
     </div><!-- /.section-block whats-biting -->
     {% if profile_incomplete %}
-    <div class="banner banner--profile-nudge" id="profile-nudge-banner" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;background:var(--accent-teal,#0e5f78);color:#fff;padding:0.6rem 1rem;font-size:0.875rem;margin:0 0 0.5rem">
+    <div class="banner banner--profile-nudge" id="profile-nudge-banner">
         <span>
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="vertical-align:-2px;margin-right:0.35rem"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" class="banner--profile-nudge-icon"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             Set up your fishing profile for personalized species and bait recommendations.
         </span>
-        <span style="display:flex;align-items:center;gap:0.6rem;white-space:nowrap">
-            <a href="{{ url_for('views.profile') }}" style="color:#fff;font-weight:700;text-decoration:underline">Set up profile</a>
-            <button onclick="dismissProfileNudge()" aria-label="Dismiss" style="background:none;border:none;color:#fff;opacity:0.7;cursor:pointer;padding:0;line-height:1;font-size:1.1rem">&times;</button>
+        <span class="banner--profile-nudge-actions">
+            <a href="{{ url_for('views.profile') }}" class="banner--profile-nudge-link">Set up profile</a>
+            <button onclick="dismissProfileNudge()" aria-label="Dismiss" class="banner--profile-nudge-dismiss">&times;</button>
         </span>
     </div>
     <script>
@@ -187,9 +188,9 @@
                 What&rsquo;s Biting
             </h2>
         </div>
-        <p style="color:var(--text-muted);font-size:0.9rem;margin:0.75rem 0;padding:0 0.5rem">
+        <p class="section-no-data">
             Species data is temporarily unavailable &mdash; check back shortly or
-            <a href="?force_refresh=1" style="color:var(--accent-teal,#0e5f78);text-decoration:underline">refresh the forecast</a>.
+            <a href="?force_refresh=1">refresh the forecast</a>.
             {% if profile %}
             Your fishing profile is applied; results will appear once data loads.
             {% endif %}
@@ -484,22 +485,23 @@
             <section class="calendar-section">
                 <p class="section-sub">Monthly availability at {{ forecast.location_name or 'this location' }}</p>
                 <div class="calendar-table-wrap">
-                    <table class="calendar-table">
+                    <table class="calendar-table" aria-label="Monthly species availability calendar">
                         <thead>
                             <tr>
-                                <th class="cal-species-col">Species</th>
-                                {% for m in ['J','F','M','A','M','J','J','A','S','O','N','D'] %}<th class="cal-month-col">{{ m }}</th>{% endfor %}
+                                <th class="cal-species-col" scope="col">Species</th>
+                                {% set full_months = ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+                                {% for i in range(12) %}<th class="cal-month-col" scope="col" abbr="{{ full_months[i] }}">{{ ['J','F','M','A','M','J','J','A','S','O','N','D'][i] }}</th>{% endfor %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for sp in forecast.calendar %}
                             <tr>
-                                <td class="cal-species-name">{{ sp.name }}</td>
+                                <td class="cal-species-name" scope="row">{{ sp.name }}</td>
                                 {% for mo in sp.months %}
                                 <td>
-                                    {% if mo.level == 'peak' %}<span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak"></span>
-                                    {% elif mo.level == 'good' %}<span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good"></span>
-                                    {% else %}<span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off"></span>{% endif %}
+                                    {% if mo.level == 'peak' %}<span class="cal-dot cal-dot--peak" title="{{ mo.abbr }}: Peak" aria-label="{{ mo.abbr }}: Peak"></span>
+                                    {% elif mo.level == 'good' %}<span class="cal-dot cal-dot--good" title="{{ mo.abbr }}: Good" aria-label="{{ mo.abbr }}: Good"></span>
+                                    {% else %}<span class="cal-dot cal-dot--off" title="{{ mo.abbr }}: Off" aria-label="{{ mo.abbr }}: Off season"></span>{% endif %}
                                 </td>
                                 {% endfor %}
                             </tr>
@@ -603,52 +605,52 @@
                         <button type="button" id="fmap-struct-error-dismiss" class="fmap-struct-error-dismiss" aria-label="Dismiss error message">&#x2715;</button>
                     </div>
                     {# Four high-level category tabs replace the flat 22-pill list #}
-                    <div class="fmap-cat-tabs" role="list" aria-label="Filter spot categories">
-                        <button type="button" role="listitem" class="fmap-cat-tab" data-cat="structures"
+                    <div class="fmap-cat-tabs" role="group" aria-label="Filter spot categories">
+                        <button type="button" class="fmap-cat-tab" data-cat="structures"
                                 aria-pressed="false" aria-label="Show only fishing structures">
                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="17" y="5" width="4" height="16"/></svg>
                             Structures
                         </button>
-                        <button type="button" role="listitem" class="fmap-cat-tab" data-cat="habitats"
+                        <button type="button" class="fmap-cat-tab" data-cat="habitats"
                                 aria-pressed="false" aria-label="Show only habitat areas">
                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12c0-4.97 4.03-9 9-9"/><path d="M21 12c0 4.97-4.03 9-9 9"/><path d="M12 3c2 4 2 14 0 18"/><path d="M3 12h18"/></svg>
                             Habitats
                         </button>
-                        <button type="button" role="listitem" class="fmap-cat-tab" data-cat="amenities"
+                        <button type="button" class="fmap-cat-tab" data-cat="amenities"
                                 aria-pressed="false" aria-label="Show only amenities">
                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
                             Amenities
                         </button>
-                        <button type="button" role="listitem" class="fmap-cat-tab" data-cat="my_spots"
+                        <button type="button" class="fmap-cat-tab" data-cat="my_spots"
                                 aria-pressed="false" aria-label="Show only my saved spots">
                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                             My Spots
                         </button>
                     </div>
                     {# Hidden individual type pills — still used by existing JS rendering logic #}
-                    <div class="fmap-struct-filters-pills" id="fmap-struct-filters" role="list" aria-label="Filter visible spot types" hidden>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="pier" aria-pressed="false"><span class="fmap-pill-sym">⊥</span>Pier</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="jetty" aria-pressed="false"><span class="fmap-pill-sym">≡</span>Jetty</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="bridge" aria-pressed="false"><span class="fmap-pill-sym">∩</span>Bridge</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="seawall" aria-pressed="false"><span class="fmap-pill-sym">▬</span>Seawall</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="point" aria-pressed="false"><span class="fmap-pill-sym">△</span>Point</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="reef" aria-pressed="false"><span class="fmap-pill-sym">≈</span>Reef</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="wreck" aria-pressed="false"><span class="fmap-pill-sym">✕</span>Wreck</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="shoal" aria-pressed="false"><span class="fmap-pill-sym">〜</span>Shoal</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="buoy" aria-pressed="false"><span class="fmap-pill-sym">◎</span>Buoy</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="grass_flat" aria-pressed="false"><span class="fmap-pill-sym">≋</span>Grass Flat</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="tidal_flat" aria-pressed="false"><span class="fmap-pill-sym">⊟</span>Tidal Flat</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="saltmarsh" aria-pressed="false"><span class="fmap-pill-sym">Ψ</span>Saltmarsh</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="mangrove" aria-pressed="false"><span class="fmap-pill-sym">⊕</span>Mangrove</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="kelp" aria-pressed="false"><span class="fmap-pill-sym">⇑</span>Kelp Forest</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="oyster_reef" aria-pressed="false"><span class="fmap-pill-sym">◌</span>Oyster Reef</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="inlet" aria-pressed="false"><span class="fmap-pill-sym">⇢</span>Inlet</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="beach" aria-pressed="false"><span class="fmap-pill-sym">∿</span>Beach</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="marina" aria-pressed="false"><span class="fmap-pill-sym">⚓</span>Marina</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="boat_ramp" aria-pressed="false"><span class="fmap-pill-sym">▽</span>Boat Ramp</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing_shop" aria-pressed="false"><span class="fmap-pill-sym">⚙</span>Bait &amp; Tackle</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="dive_site" aria-pressed="false"><span class="fmap-pill-sym">✚</span>Dive Site</button>
-                        <button type="button" role="listitem" class="fmap-pill fmap-pill--spot-type" data-type="fishing" aria-pressed="false"><span class="fmap-pill-sym">✦</span>Fishing Spot</button>
+                    <div class="fmap-struct-filters-pills" id="fmap-struct-filters" role="group" aria-label="Filter visible spot types" hidden>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="pier" aria-pressed="false"><span class="fmap-pill-sym">⊥</span>Pier</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="jetty" aria-pressed="false"><span class="fmap-pill-sym">≡</span>Jetty</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="bridge" aria-pressed="false"><span class="fmap-pill-sym">∩</span>Bridge</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="seawall" aria-pressed="false"><span class="fmap-pill-sym">▬</span>Seawall</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="point" aria-pressed="false"><span class="fmap-pill-sym">△</span>Point</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="reef" aria-pressed="false"><span class="fmap-pill-sym">≈</span>Reef</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="wreck" aria-pressed="false"><span class="fmap-pill-sym">✕</span>Wreck</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="shoal" aria-pressed="false"><span class="fmap-pill-sym">〜</span>Shoal</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="buoy" aria-pressed="false"><span class="fmap-pill-sym">◎</span>Buoy</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="grass_flat" aria-pressed="false"><span class="fmap-pill-sym">≋</span>Grass Flat</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="tidal_flat" aria-pressed="false"><span class="fmap-pill-sym">⊟</span>Tidal Flat</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="saltmarsh" aria-pressed="false"><span class="fmap-pill-sym">Ψ</span>Saltmarsh</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="mangrove" aria-pressed="false"><span class="fmap-pill-sym">⊕</span>Mangrove</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="kelp" aria-pressed="false"><span class="fmap-pill-sym">⇑</span>Kelp Forest</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="oyster_reef" aria-pressed="false"><span class="fmap-pill-sym">◌</span>Oyster Reef</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="inlet" aria-pressed="false"><span class="fmap-pill-sym">⇢</span>Inlet</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="beach" aria-pressed="false"><span class="fmap-pill-sym">∿</span>Beach</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="marina" aria-pressed="false"><span class="fmap-pill-sym">⚓</span>Marina</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="boat_ramp" aria-pressed="false"><span class="fmap-pill-sym">▽</span>Boat Ramp</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="fishing_shop" aria-pressed="false"><span class="fmap-pill-sym">⚙</span>Bait &amp; Tackle</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="dive_site" aria-pressed="false"><span class="fmap-pill-sym">✚</span>Dive Site</button>
+                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="fishing" aria-pressed="false"><span class="fmap-pill-sym">✦</span>Fishing Spot</button>
                     </div>
                 </div>
 
@@ -657,6 +659,9 @@
                     <div class="fmap-tide-bar-inner">
                         <div class="fmap-tide-chart-wrap">
                             <div class="fmap-tide-chart" id="fmap-tide-chart" aria-hidden="true"></div>
+                            <div class="fmap-tide-hour-labels" aria-hidden="true">
+                                <span>12a</span><span>6a</span><span>12p</span><span>6p</span>
+                            </div>
                             <input type="range" id="fmap-tide-slider" class="fmap-tide-slider"
                                    min="0" max="23" value="12"
                                    aria-label="Select hour for strike score">
@@ -667,21 +672,28 @@
                             <span class="fmap-tide-hour" id="fmap-tide-hour">Now</span>
                         </div>
                         <div class="fmap-tide-moon" id="fmap-tide-moon"></div>
+                        <div class="fmap-tide-meta-row" id="fmap-tide-meta-row" hidden>
+                            <span class="fmap-tide-water-temp" id="fmap-tide-water-temp"></span>
+                        </div>
                     </div>
                 </div>
 
                 {# ── Spot detail panel ── #}
                 <div id="fmap-spot-detail" class="fmap-spot-detail" role="dialog"
-                     aria-label="Spot details" hidden>
+                     aria-modal="true" aria-labelledby="fmap-spot-detail-name"
+                     aria-hidden="true">
+                    <div class="fmap-spot-detail-handle" aria-hidden="true"></div>
                     <div class="fmap-spot-detail-header">
                         <span class="fmap-spot-detail-type-badge" id="fmap-spot-detail-type"></span>
                         <a class="fmap-spot-detail-coords" id="fmap-spot-detail-coords"
-                           href="#" target="_blank" rel="noopener" title="Open in Google Maps">
+                           href="#" target="_blank" rel="noopener noreferrer" title="Open in Google Maps"
+                           aria-label="Open spot location in Google Maps">
                             ––
                         </a>
                         <div class="fmap-spot-detail-actions">
                             <button type="button" id="fmap-spot-detail-fav" class="fmap-ctrl-btn"
-                                    aria-pressed="false" title="Save as favorite">
+                                    aria-pressed="false" title="Save as favorite"
+                                    aria-label="Save as favorite">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                             </button>
                             <button type="button" id="fmap-spot-detail-close" class="fmap-ctrl-btn"
@@ -704,7 +716,13 @@
                         </div>
                         <div class="fmap-spot-detail-row" id="fmap-spot-reg-row">
                             <span class="fmap-spot-detail-label">Regulations</span>
-                            <span id="fmap-spot-detail-regs" class="fmap-spot-detail-value"></span>
+                            <span id="fmap-spot-detail-regs" class="fmap-spot-detail-value fmap-spot-detail-regs"></span>
+                        </div>
+                        <div class="fmap-spot-detail-log-row">
+                            <button type="button" id="fmap-spot-detail-log" class="fmap-spot-detail-log-btn">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                Log a catch here
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -724,7 +742,7 @@
                         <svg id="fmap-basemap-icon-map" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
-                    <button type="button" id="fmap-map-fullscreen" class="fmap-ctrl-btn" title="Toggle fullscreen map" aria-label="Toggle fullscreen map">
+                    <button type="button" id="fmap-map-fullscreen" class="fmap-ctrl-btn" title="Toggle fullscreen map" aria-label="Toggle fullscreen map" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
@@ -733,9 +751,9 @@
                     </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Layers popup trigger — opens spot filters + live data layers panel #}
-                    <button type="button" id="fmap-layers-popup-btn" class="fmap-ctrl-btn" title="Map layers &amp; filters" aria-label="Open map layers and filters" aria-pressed="false" style="position:relative">
+                    <button type="button" id="fmap-layers-popup-btn" class="fmap-ctrl-btn" title="Map layers &amp; filters" aria-label="Open map layers and filters" aria-pressed="false">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                        <span id="fmap-layers-active-badge" class="fmap-layer-badge" style="display:none"></span>
+                        <span id="fmap-layers-active-badge" class="fmap-layer-badge" hidden></span>
                     </button>
                     <div class="fmap-ctrl-divider"></div>
                     {# Admin-only edit markers button — hidden for everyone else via JS #}
@@ -767,15 +785,19 @@
                     {# ── Filter search bar ── #}
                     <div class="fmap-layers-search-wrap">
                         <svg class="fmap-layers-search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" aria-label="Search live data layers">
+                        <input id="fmap-layers-search" type="search" class="fmap-layers-search" placeholder="Search layers…" autocomplete="off" inputmode="search" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="Search live data layers">
                     </div>
                     {# ── Quick preset pills — fishing-relevant only ── #}
                     <div class="fmap-layers-presets" aria-label="Layer presets">
-                        <button type="button" class="fmap-preset-pill" data-preset="weather" title="Toggle Marine Safety layers">
+                        <button type="button" class="fmap-preset-pill" data-preset="weather"
+                                title="Toggle Marine Safety layers" aria-pressed="false"
+                                aria-label="Toggle Marine Safety layers">
                             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
                             Safety
                         </button>
-                        <button type="button" class="fmap-preset-pill" data-preset="ocean" title="Toggle Ocean &amp; Conditions layers">
+                        <button type="button" class="fmap-preset-pill" data-preset="ocean"
+                                title="Toggle Ocean &amp; Conditions layers" aria-pressed="false"
+                                aria-label="Toggle Ocean and Conditions layers">
                             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12h20M2 12c3-4 5-4 10 0s7 4 10 0M2 12c3 4 5 4 10 0s7-4 10 0"/></svg>
                             Conditions
                         </button>
@@ -821,10 +843,10 @@
                                         <span class="fmap-legend-dot fmap-legend-dot--tackle">⚙</span><span class="fmap-legend-text">Bait &amp; Tackle</span>
                                         <span class="fmap-legend-sep" aria-hidden="true"></span>
                                         <span class="fmap-legend-section-label">AI Picks</span>
-                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b88"></span><span class="fmap-legend-text">Reef</span>
-                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick" style="background:#38bdf8;box-shadow:0 0 6px #38bdf888"></span><span class="fmap-legend-text">Channel</span>
-                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick" style="background:#34d399;box-shadow:0 0 6px #34d39988"></span><span class="fmap-legend-text">Saltmarsh</span>
-                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick" style="background:#94a3b8;box-shadow:0 0 6px #94a3b888"></span><span class="fmap-legend-text">Shoal</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick fmap-legend-dot--ai-reef"></span><span class="fmap-legend-text">Reef</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick fmap-legend-dot--ai-channel"></span><span class="fmap-legend-text">Channel</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick fmap-legend-dot--ai-saltmarsh"></span><span class="fmap-legend-text">Saltmarsh</span>
+                                        <span class="fmap-legend-dot fmap-legend-dot--ai-pick fmap-legend-dot--ai-shoal"></span><span class="fmap-legend-text">Shoal</span>
                                         <span class="fmap-legend-dot fmap-legend-dot--ai-pick"></span><span class="fmap-legend-text">Other habitat</span>
                                     </div>
                                 </div>
@@ -848,7 +870,7 @@
                                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                     </span>
                                     <span class="fmap-layer-row-text">
-                                        <span class="fmap-layer-row-name">Marine Warnings <span id="fmap-marine-warn-badge" class="fmap-layer-badge fmap-layer-badge--inline" style="display:none"></span></span>
+                                        <span class="fmap-layer-row-name">Marine Warnings <span id="fmap-marine-warn-badge" class="fmap-layer-badge fmap-layer-badge--inline" hidden></span></span>
                                         <span class="fmap-layer-row-desc">NWS watches, warnings &amp; advisories</span>
                                     </span>
                                     <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
@@ -861,7 +883,7 @@
                                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M12 12h.01"/></svg>
                                     </span>
                                     <span class="fmap-layer-row-text">
-                                        <span class="fmap-layer-row-name">Storm Tracker <span id="fmap-storm-badge" class="fmap-layer-badge fmap-layer-badge--inline" style="display:none"></span></span>
+                                        <span class="fmap-layer-row-name">Storm Tracker <span id="fmap-storm-badge" class="fmap-layer-badge fmap-layer-badge--inline" hidden></span></span>
                                         <span class="fmap-layer-row-desc">Active tropical cyclone tracks · NHC/JTWC</span>
                                     </span>
                                     <span class="fmap-layer-row-toggle" aria-hidden="true"><span class="fmap-layer-row-toggle-knob"></span></span>
@@ -966,34 +988,25 @@
 
                 {# Admin marker edit modal — only rendered to admins #}
                 {% if g.user and g.user.get('is_admin') %}
-                <div id="fmap-admin-backdrop" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.45)" hidden></div>
-                <div id="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-admin-modal-title"
-                     style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3001;
-                            background:var(--surface,#1e293b);border:1px solid var(--border,#334155);
-                            border-radius:12px;padding:20px 24px 18px;min-width:min(300px,90vw);max-width:90vw;
-                            box-shadow:0 8px 32px rgba(0,0,0,.55);color:var(--text,#e2e8f0)" hidden>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                        <strong id="fmap-admin-modal-title" style="font-size:1rem">Edit Marker</strong>
-                        <button id="fmap-admin-modal-close" type="button" aria-label="Close"
-                                style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:inherit;line-height:1;padding:0 2px">✕</button>
+                <div id="fmap-admin-backdrop" class="fmap-admin-backdrop" hidden></div>
+                <div id="fmap-admin-modal" class="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-admin-modal-title" hidden>
+                    <div class="fmap-admin-modal-hdr">
+                        <strong id="fmap-admin-modal-title" class="fmap-admin-modal-title">Edit Marker</strong>
+                        <button id="fmap-admin-modal-close" type="button" class="fmap-admin-modal-close" aria-label="Close">✕</button>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-                        <label style="font-size:.8rem;opacity:.7">Lat
-                            <input id="fmap-admin-lat" type="number" step="any"
-                                   style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                    <div class="fmap-admin-coord-grid">
+                        <label class="fmap-admin-label">Lat
+                            <input id="fmap-admin-lat" type="number" step="any" class="fmap-admin-input" inputmode="decimal">
                         </label>
-                        <label style="font-size:.8rem;opacity:.7">Lng
-                            <input id="fmap-admin-lng" type="number" step="any"
-                                   style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                        <label class="fmap-admin-label">Lng
+                            <input id="fmap-admin-lng" type="number" step="any" class="fmap-admin-input" inputmode="decimal">
                         </label>
                     </div>
-                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:10px">Name
-                        <input id="fmap-admin-name" type="text" maxlength="120" placeholder="Optional"
-                               style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit;box-sizing:border-box">
+                    <label class="fmap-admin-label">Name
+                        <input id="fmap-admin-name" type="text" maxlength="120" placeholder="Optional" class="fmap-admin-input" autocomplete="off">
                     </label>
-                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:10px">Type
-                        <select id="fmap-admin-type"
-                                style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit">
+                    <label class="fmap-admin-label">Type
+                        <select id="fmap-admin-type" class="fmap-admin-input">
                             <option value="pier">Pier</option>
                             <option value="jetty">Jetty</option>
                             <option value="bridge">Bridge</option>
@@ -1018,17 +1031,13 @@
                             <option value="fishing_shop">Bait &amp; Tackle</option>
                         </select>
                     </label>
-                    <label style="font-size:.8rem;opacity:.7;display:block;margin-bottom:14px">Description / tip
-                        <textarea id="fmap-admin-desc" rows="3" maxlength="500" placeholder="Fishing tip shown in tooltip"
-                                  style="width:100%;margin-top:3px;padding:5px 8px;border-radius:6px;border:1px solid var(--border,#475569);background:var(--input-bg,#0f172a);color:inherit;resize:vertical;box-sizing:border-box"></textarea>
+                    <label class="fmap-admin-label fmap-admin-label--last">Description / tip
+                        <textarea id="fmap-admin-desc" rows="3" maxlength="500" placeholder="Fishing tip shown in tooltip" class="fmap-admin-input"></textarea>
                     </label>
-                    <p id="fmap-admin-status" role="status" aria-live="polite"
-                       style="font-size:.8rem;margin:4px 0 10px;min-height:1.1em;text-align:right"></p>
-                    <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
-                        <button id="fmap-admin-delete" type="button" hidden
-                                style="background:#dc2626;color:#fff;border:none;border-radius:7px;padding:7px 14px;cursor:pointer;font-size:.85rem">Delete</button>
-                        <button id="fmap-admin-save" type="button"
-                                style="background:#2563eb;color:#fff;border:none;border-radius:7px;padding:7px 18px;cursor:pointer;font-size:.85rem;font-weight:600">Save</button>
+                    <p id="fmap-admin-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
+                    <div class="fmap-admin-footer">
+                        <button id="fmap-admin-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
+                        <button id="fmap-admin-save" type="button" class="fmap-admin-save-btn">Save</button>
                     </div>
                 </div>
                 {% endif %}
@@ -1044,7 +1053,8 @@
         </div><!-- /.fmap-body -->
 
         <!-- ── Community catch detail drawer ── -->
-        <div id="fmap-catch-detail" class="fmap-detail fmap-catch-detail" hidden aria-live="polite">
+        <div id="fmap-catch-detail" class="fmap-detail fmap-catch-detail" hidden
+             role="dialog" aria-modal="true" aria-labelledby="fmap-catch-detail-title">
             <div class="fmap-detail-inner">
                 <div class="fmap-detail-top">
                     <div class="fmap-detail-topleft">
@@ -1056,7 +1066,7 @@
                     </div>
                 </div>
                 <div id="fmap-catch-detail-body" class="fmap-catch-detail-body"></div>
-                <div id="fmap-catch-detail-comments" class="fmap-catch-comments"></div>
+                <div id="fmap-catch-detail-comments" class="fmap-catch-comments" aria-live="polite" aria-label="Comments" tabindex="0"></div>
                 <div id="fmap-catch-detail-actions" class="fmap-catch-detail-actions"></div>
             </div>
         </div>
@@ -1075,20 +1085,20 @@
                 <form id="fmap-log-form" class="fmap-log-form" novalidate>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-species">Species <span class="fmap-req">*</span></label>
-                        <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100">
+                        <input type="text" id="fmap-log-species" class="fmap-log-input" placeholder="e.g. Striped bass" autocomplete="off" required maxlength="100" enterkeyhint="next" autocapitalize="words" spellcheck="false">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-title">Title / headline</label>
-                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120">
+                        <input type="text" id="fmap-log-title" class="fmap-log-input" placeholder="e.g. Monster striper at dawn" maxlength="120" autocomplete="off" enterkeyhint="next" autocapitalize="sentences">
                     </div>
                     <div class="fmap-log-row fmap-log-row--2col">
                         <div>
                             <label class="fmap-log-label" for="fmap-log-weight">Weight (lb)</label>
-                            <input type="number" id="fmap-log-weight" class="fmap-log-input" placeholder="0.0" min="0" max="9999" step="0.1">
+                            <input type="number" id="fmap-log-weight" class="fmap-log-input" placeholder="0.0" min="0" max="9999" step="0.1" inputmode="decimal" enterkeyhint="next">
                         </div>
                         <div>
                             <label class="fmap-log-label" for="fmap-log-length">Length (in)</label>
-                            <input type="number" id="fmap-log-length" class="fmap-log-input" placeholder="0" min="0" max="999" step="0.5">
+                            <input type="number" id="fmap-log-length" class="fmap-log-input" placeholder="0" min="0" max="999" step="0.5" inputmode="decimal" enterkeyhint="next">
                         </div>
                     </div>
                     <div class="fmap-log-row">
@@ -1097,15 +1107,15 @@
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-bait">Bait / Lure</label>
-                        <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80">
+                        <input type="text" id="fmap-log-bait" class="fmap-log-input" placeholder="e.g. live shrimp, gulp shrimp" maxlength="80" autocomplete="off" enterkeyhint="next" autocapitalize="none" spellcheck="false">
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-notes">Notes</label>
-                        <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2"></textarea>
+                        <textarea id="fmap-log-notes" class="fmap-log-input fmap-log-textarea" placeholder="Conditions, depth, rig…" maxlength="500" rows="2" enterkeyhint="next" autocapitalize="sentences"></textarea>
                     </div>
                     <div class="fmap-log-row">
                         <label class="fmap-log-label" for="fmap-log-image-url">Photo URL <span class="fmap-log-hint">(https://)</span></label>
-                        <input type="url" id="fmap-log-image-url" class="fmap-log-input" placeholder="https://…" maxlength="500">
+                        <input type="url" id="fmap-log-image-url" class="fmap-log-input" placeholder="https://…" maxlength="500" inputmode="url" enterkeyhint="done">
                     </div>
                     <div class="fmap-log-row fmap-log-row--check">
                         <label class="fmap-log-check-label">
@@ -1113,10 +1123,11 @@
                             Share publicly with the community
                         </label>
                     </div>
-                    <div id="fmap-log-error" class="fmap-log-error" hidden></div>
+                    <div id="fmap-log-error" class="fmap-log-error" role="alert" aria-live="assertive" hidden></div>
                     <div class="fmap-modal-footer">
                         <button type="button" id="fmap-log-cancel" class="fmap-modal-cancel-btn">Cancel</button>
-                        <button type="submit" id="fmap-log-submit" class="fmap-modal-submit-btn">
+                        <button type="submit" id="fmap-log-submit" class="fmap-modal-submit-btn"
+                                aria-busy="false" aria-describedby="fmap-log-error">
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                             Log Catch
                         </button>
@@ -1127,9 +1138,9 @@
 
         <!-- ── Bottom toolbar ── -->
         <div class="fmap-toolbar">
-            <button type="button" id="fmap-fullscreen-btn" class="fmap-toolbar-btn">
+            <button type="button" id="fmap-fullscreen-btn" class="fmap-toolbar-btn" aria-pressed="false">
                 <svg id="fmap-fs-icon-expand" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                <svg id="fmap-fs-icon-shrink" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                <svg id="fmap-fs-icon-shrink" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
                 <span id="fmap-fs-label">Expand Map</span>
             </button>
             <button type="button" id="fmap-share-btn" class="fmap-toolbar-btn">
@@ -1160,7 +1171,7 @@
                 <span>Print</span>
             </button>
         </div>
-        <div id="share-toast" class="share-toast" style="display:none;" role="status" aria-live="polite">Copied!</div>
+        <div id="share-toast" class="share-toast" hidden role="status" aria-live="polite">Copied!</div>
     </section>
 
     <section class="refresh">
@@ -1168,8 +1179,8 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <button type="submit" id="refresh-btn">
                 <span id="refresh-btn-label">Refresh Forecast</span>
-                <span id="refresh-btn-spinner" style="display:none;" aria-hidden="true">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="spin-icon" style="vertical-align:-2px; margin-right:0.25rem;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <span id="refresh-btn-spinner" hidden aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="spin-icon" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                     Refreshing&hellip;
                 </span>
             </button>
@@ -1257,20 +1268,20 @@ function renderFavorites() {
     var toggle = document.getElementById('fav-toggle');
     if (toggle) {
         toggle.classList.toggle('fav-toggle--active', isFav);
-        var iconOff = toggle.querySelector('.fav-icon--off');
-        var iconOn  = toggle.querySelector('.fav-icon--on');
-        if (iconOff) iconOff.style.display = isFav ? 'none' : '';
-        if (iconOn)  iconOn.style.display  = isFav ? '' : 'none';
+        var _favToggleLabel = isFav ? 'Remove from favorites' : 'Save to favorites';
+        toggle.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+        toggle.setAttribute('aria-label', _favToggleLabel);
+        toggle.title = _favToggleLabel;
     }
     var bar = document.getElementById('favorites-bar');
     var wrap = document.getElementById('favorites-bar-wrap');
     if (!bar) return;
     if (favs.length === 0) {
         bar.innerHTML = '';
-        if (wrap) wrap.style.display = 'none';
+        if (wrap) wrap.hidden = true;
         return;
     }
-    if (wrap) wrap.style.display = '';
+    if (wrap) wrap.hidden = false;
     var html = '';
     favs.forEach(function(f) {
         var active = f.id === CURRENT_LOC_ID ? ' fav-chip--active' : '';
@@ -1455,8 +1466,8 @@ function showToast(msg) {
     var t = document.getElementById('share-toast');
     if (!t) return;
     t.textContent = msg;
-    t.style.display = 'block';
-    setTimeout(function() { t.style.display = 'none'; }, 2200);
+    t.hidden = false;
+    setTimeout(function() { t.hidden = true; }, 2200);
 }
 
 /* ---- Share ---- */
@@ -1595,8 +1606,8 @@ function handleRefreshSubmit(form) {
     var label = document.getElementById('refresh-btn-label');
     var spinner = document.getElementById('refresh-btn-spinner');
     if (btn) btn.disabled = true;
-    if (label) label.style.display = 'none';
-    if (spinner) spinner.style.display = 'inline';
+    if (label) label.hidden = true;
+    if (spinner) spinner.hidden = false;
 }
 
 (function() {
@@ -1842,7 +1853,7 @@ if ('serviceWorker' in navigator) {
         banner.className = 'install-banner';
         banner.setAttribute('role', 'status');
         banner.innerHTML =
-            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink:0"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><rect x="3" y="17" width="18" height="4" rx="2"/></svg>' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><rect x="3" y="17" width="18" height="4" rx="2"/></svg>' +
             '<span>Add to home screen for offline access at the water</span>' +
             '<button class="install-banner-btn" id="install-yes">Install</button>' +
             '<button class="install-banner-close" id="install-dismiss" aria-label="Dismiss">&times;</button>';
@@ -1915,7 +1926,9 @@ if ('serviceWorker' in navigator) {
     var closeBtn = document.getElementById('reg-modal-close');
     if (!modal) return;
 
+    var _regPrevFocus = null;
     function openRegs(btn) {
+        _regPrevFocus = document.activeElement || null;
         var card = btn.closest('[data-reg-min-size], [data-reg-bag-limit], [data-reg-season]');
         if (!card) return;
         var species = card.getAttribute('data-species-name') || 'Species';
@@ -1935,13 +1948,13 @@ if ('serviceWorker' in navigator) {
         if (minSize) html += '<div><span class="reg-label">Min. Size</span><span class="reg-value">' + esc(minSize) + '</span></div>';
         if (bagLimit) html += '<div><span class="reg-label">Bag Limit</span><span class="reg-value">' + esc(bagLimit) + '</span></div>';
         if (season) html += '<div><span class="reg-label">Season</span><span class="reg-value">' + esc(season) + '</span></div>';
-        if (notes) html += '<div style="grid-column:1/-1"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
+        if (notes) html += '<div class="reg-modal__grid-full"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
         html += '</div>';
         if (regOfficialSource) {
             html += '<div class="reg-source"><a href="' + esc(regOfficialSource) + '" target="_blank" rel="noopener noreferrer">Official Source ↗</a></div>';
         }
         if (lastUpdated) {
-            html += '<p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Updated: ' + esc(lastUpdated) + '</p>';
+            html += '<p class="reg-updated">Updated: ' + esc(lastUpdated) + '</p>';
         }
 
         document.getElementById('reg-modal-title').textContent = species + ' — Regulations';
@@ -1956,11 +1969,26 @@ if ('serviceWorker' in navigator) {
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (_regPrevFocus && typeof _regPrevFocus.focus === 'function') {
+            _regPrevFocus.focus({ preventScroll: true });
+            _regPrevFocus = null;
+        }
     }
 
     if (closeBtn) closeBtn.addEventListener('click', closeRegs);
     modal.addEventListener('click', function(e) { if (e.target === modal) closeRegs(); });
-    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !modal.hidden) closeRegs(); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.hidden) { closeRegs(); return; }
+        if (e.key === 'Tab' && !modal.hidden) {
+            var card = modal.querySelector('.reg-modal__card');
+            if (!card) return;
+            var focusable = Array.prototype.slice.call(card.querySelectorAll('button,a,[tabindex="0"]'));
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    });
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-open-regs]');
         if (btn) { e.preventDefault(); openRegs(btn); }
@@ -2043,7 +2071,7 @@ if ('serviceWorker' in navigator) {
         toast.className = 'layout-toast';
         toast.setAttribute('role', 'status');
         toast.setAttribute('aria-live', 'polite');
-        toast.innerHTML = 'Auto-detected: ' + detected + ' &nbsp;·&nbsp; <a href="{{ url_for("views.setup") }}" style="color:inherit;text-decoration:underline">Change</a>';
+        toast.innerHTML = 'Auto-detected: ' + detected + ' &nbsp;·&nbsp; <a href="{{ url_for("views.setup") }}">Change</a>';
         document.body.appendChild(toast);
 
         // Two rAF frames to ensure the element is in the DOM before transitioning.

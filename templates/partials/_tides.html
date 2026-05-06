@@ -1,7 +1,7 @@
         <!-- Tide predictions -->
         {% if forecast.tides %}
         <section class="tide-section">
-            <p class="section-sub" style="margin-bottom:0.5rem">High &amp; low tide times from NOAA predictions</p>
+            <p class="section-sub">High &amp; low tide times from NOAA predictions</p>
             {% if forecast.tide_state %}
             {% set _ts2 = (forecast.tide_state or '')|lower|trim %}
             <div class="tide-state-banner tide-state-banner--{{ 'rising' if _ts2 == 'rising' else ('slack' if _ts2 == 'slack' else 'falling') }}">
@@ -77,6 +77,6 @@
 
         </section>
         {% else %}
-        <p style="color:var(--text-muted);font-size:0.875rem;padding:0.5rem 0">Tide data is temporarily unavailable for this location. <a href="?force_refresh=1" style="color:var(--accent-teal,#0e5f78)">Try refreshing.</a></p>
+        <p class="section-no-data">Tide data is temporarily unavailable for this location. <a href="?force_refresh=1">Try refreshing.</a></p>
         {% endif %}
 

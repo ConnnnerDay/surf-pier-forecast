@@ -51,7 +51,7 @@
         {% endif %}
 
         <!-- Search section — primary entry point -->
-        <section class="setup-section" style="padding-bottom:0">
+        <section class="setup-section setup-section--flush-bottom">
             <h2>Find your spot</h2>
             <p class="section-sub" id="geo-subtitle">Search by city, beach name, or zip code</p>
             <div class="location-search-bar" id="loc-search-bar">
@@ -67,13 +67,13 @@
                 </button>
             </div>
             <!-- Shown only when browser will prompt for geolocation permission -->
-            <button type="button" class="geo-use-location-btn" id="geo-use-btn" style="display:none"
+            <button type="button" class="geo-use-location-btn" id="geo-use-btn" hidden
                     aria-label="Use my device location to find the nearest fishing spot">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
                 Use My Location
             </button>
             {% if error %}
-            <div class="setup-error" role="alert" style="margin-top:0.75rem">{{ error }}</div>
+            <div class="setup-error" role="alert">{{ error }}</div>
             {% endif %}
             <div class="location-search-results" id="loc-search-results" role="listbox" aria-live="polite"></div>
         </section>
@@ -349,7 +349,7 @@
                 if (subtitle) subtitle.textContent = 'Nearest supported location to you:';
                 var resultsEl = document.getElementById('loc-search-results');
                 if (!resultsEl) return;
-                var html = '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
+                var html = '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '">';
                 html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
                 html += '<button type="submit" class="location-search-result-item location-search-result-item--suggested">';
                 html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span>';
@@ -370,7 +370,7 @@
                     var resultsEl = document.getElementById('loc-search-results');
 
                     if (subtitle) subtitle.textContent = 'Detecting your location\u2026';
-                    if (useBtn) useBtn.style.display = 'none';
+                    if (useBtn) useBtn.hidden = true;
                     /* Inline spinner — no full-screen overlay needed since we no longer auto-submit */
                     if (resultsEl) {
                         resultsEl.innerHTML = '<div class="setup-geo-loading" role="status">' +
@@ -406,7 +406,7 @@
                         } else if (result.state === 'prompt') {
                             var subtitle = document.getElementById('geo-subtitle');
                             if (subtitle) subtitle.textContent = 'Use your device location to find your nearest spot';
-                            if (useBtn) useBtn.style.display = '';
+                            if (useBtn) useBtn.hidden = false;
                         }
                     }).catch(function () {
                         _runGeoDetect();
@@ -430,7 +430,7 @@
                         if (geoSuggestion) {
                             showGeoSuggestion(geoSuggestion);
                         } else {
-                            resultsEl.innerHTML = '<p class="setup-help" style="color:var(--text-muted);padding:0.5rem 0">Try a city name, beach name, or zip code &mdash; or pick on the map below.</p>';
+                            resultsEl.innerHTML = '<p class="setup-help">Try a city name, beach name, or zip code &mdash; or pick on the map below.</p>';
                         }
                         return;
                     }
@@ -460,14 +460,14 @@
                             document.body.appendChild(zipSearchForm);
                             zipSearchForm.submit();
                         } else {
-                            resultsEl.innerHTML = '<p class="setup-help" style="color:var(--text-muted)">No locations match &ldquo;' + esc2(q) + '&rdquo;. Try a zip code or browse below.</p>';
+                            resultsEl.innerHTML = '<p class="setup-help">No locations match &ldquo;' + esc2(q) + '&rdquo;. Try a zip code or browse below.</p>';
                         }
                         return;
                     }
 
                     var html = '';
                     matches.forEach(function (loc) {
-                        html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '" style="margin:0">';
+                        html += '<form method="post" action="/setup/select/' + encodeURIComponent(loc.id) + '">';
                         html += '<input type="hidden" name="csrf_token" value="{{ csrf_token }}">';
                         html += '<button type="submit" class="location-search-result-item" role="option">';
                         html += '<div><span class="location-search-result-name">' + esc2(loc.name) + '</span></div>';

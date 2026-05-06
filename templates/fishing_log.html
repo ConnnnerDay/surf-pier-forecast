@@ -45,7 +45,7 @@
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Choose Photo
                         </label>
-                        <input type="file" id="log-photos" accept="image/*" capture="environment" multiple style="display:none">
+                        <input type="file" id="log-photos" accept="image/*" capture="environment" multiple hidden>
                     </div>
                     <p class="fishlog-photo-help" id="fishlog-photo-help">You can add multiple photos per catch.</p>
                 </div>
@@ -60,17 +60,17 @@
                             </button>
                             <button type="button" id="camera-close-btn" class="camera-close-btn" aria-label="Close camera">&times;</button>
                         </div>
-                        <canvas id="camera-canvas" style="display:none"></canvas>
+                        <canvas id="camera-canvas" hidden></canvas>
                     </div>
                 </div>
             </div>
 
             <div class="fishlog-entries" id="fishlog-entries" aria-live="polite"></div>
-            <div class="fishlog-empty" id="fishlog-empty" style="display:none;">
+            <div class="fishlog-empty" id="fishlog-empty" hidden>
                 <p>No catches logged yet. Record your first catch above!</p>
             </div>
 
-            <div class="catch-stats" id="catch-stats" style="display:none;">
+            <div class="catch-stats" id="catch-stats" hidden>
                 <div class="catch-stats-grid">
                     <div class="catch-stat">
                         <span class="catch-stat-value" id="stat-total">0</span>
@@ -98,7 +98,7 @@
                     Export CSV
                 </button>
             </div>
-            <div class="personal-bests" id="personal-bests" style="display:none;">
+            <div class="personal-bests" id="personal-bests" hidden>
                 <h4 class="pb-title">Personal Bests</h4>
                 <div class="pb-list" id="pb-list"></div>
             </div>

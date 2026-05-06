@@ -29,7 +29,7 @@
     var _prefetchInFlight   = false; // whether a background fetch is running
     var _PREFETCH_DELAY     = 5000;  // ms between background fetches (Overpass rate-limit)
     var _PREFETCH_MAX_QUEUE = 8;     // max queued tiles (drops oldest if exceeded)
-    // Shared cache for overlay icons (SST, gauge, AQI, METAR, buoy, storm report).
+    // Shared cache for overlay icons (SST, METAR, buoy).
     // These layers clear and redraw on every fetch; caching the icon objects avoids
     // re-running L.divIcon() for every marker on every refresh.
     // Key format is layer-prefix + variant (e.g. 'sst|#22c55e|72').
@@ -69,10 +69,8 @@
     var IS_LOGGED_IN      = !!(window.IS_LOGGED_IN || false);
 
     // ─── Fishing-relevant Live Feeds state ───────────────────────────────────
-    // Kept: marine warnings, storm tracker, recent storms, SST, buoys, HF Radar,
-    // METAR, tropical outlook.  Non-fishing overlays (wildfire, drought, AQI,
-    // sea ice, seismic, terminator, stream gauges, storm reports, NDFD
-    // precipitation/temperature) have been removed.
+    // Active overlays: marine warnings, storm tracker, recent storms, SST,
+    // buoys, HF Radar, METAR, tropical outlook.
     var marineWarnOn      = false;   // marine warnings overlay active
     var marineWarnLayer   = null;    // L.layerGroup for warning polygons
     var marineWarnTimer   = null;    // debounce for viewport-based reload
@@ -112,9 +110,31 @@
 
     // ─── Spot detail panel state ──────────────────────────────────────────────
     var _activeSpotData    = null;   // currently shown spot object
+    var _activeSpotMarker  = null;   // Leaflet marker for the currently open spot
     var _favoriteSpotKeys  = {};     // persisted in localStorage
     var _LABEL_TO_GRADE    = {Excellent: 'excellent', Good: 'good', Fair: 'fair', Slow: 'slow'};
     var _favSpotsLayer     = null;   // Leaflet layer for user's saved favorite pins
+
+    function _fmtHour(h) {
+        return (h % 12 || 12) + (h < 12 ? 'AM' : 'PM');
+    }
+
+    // Shared Tab-key focus trap used by all three dialogs.
+    // Call from a keydown handler after confirming the dialog is open.
+    var _FOCUSABLE_SEL = 'a[href],button:not([disabled]),input:not([disabled]),' +
+                         'select:not([disabled]),textarea:not([disabled]),' +
+                         '[tabindex]:not([tabindex="-1"])';
+    function _trapFocusOnTab(container, e) {
+        if (e.key !== 'Tab') return;
+        var focusable = Array.prototype.slice.call(container.querySelectorAll(_FOCUSABLE_SEL));
+        if (!focusable.length) return;
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+    }
 
     // ─── Category filter tabs ────────────────────────────────────────────────
     // The flat pill list is replaced by 4 high-level category tabs.
@@ -355,6 +375,8 @@
     function showToast(msg) {
         var t = document.createElement('div');
         t.className = 'fmap-toast';
+        t.setAttribute('role', 'status');
+        t.setAttribute('aria-live', 'polite');
         t.textContent = msg;
         document.body.appendChild(t);
         requestAnimationFrame(function () {
@@ -461,11 +483,7 @@
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
         var sym   = (SPOT_LABELS && SPOT_LABELS[osmType]) || _AI_OSMT_SYM[osmType] || '✦';
-        var html  =
-            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';' +
-            'display:flex;align-items:center;justify-content:center;' +
-            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-            'font-size:10px;line-height:1">' + sym + '</span>';
+        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + color + '">' + sym + '</span>';
         var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [18, 18], iconAnchor: [9, 9] });
         _spotIconCache[cacheKey] = icon;
         return icon;
@@ -558,7 +576,7 @@
                   });
             poly.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
-                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
             );
             aiPickLayer.addLayer(poly);
@@ -580,7 +598,7 @@
             var m = L.marker([f.lat, f.lng], { icon: makeAIPickIcon(osmType) });
             m.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
-                '<span style="opacity:.8">' + esc(info.tip) + '</span>',
+                '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             aiPickLayer.addLayer(m);
@@ -1017,16 +1035,14 @@
             inner = '<svg viewBox="0 0 14 14" width="' + svgW + '" height="' + svgW + '"' +
                     ' stroke="rgba(255,255,255,0.95)" fill="none"' +
                     ' stroke-linecap="round" stroke-linejoin="round"' +
-                    ' aria-hidden="true" style="' + innerRot + 'pointer-events:none;flex-shrink:0">' +
+                    ' aria-hidden="true" class="fmap-spot-dot-svg"' + (innerRot ? ' style="' + innerRot + '"' : '') + '>' +
                     svgPaths + '</svg>';
         } else {
             // Fallback for any type not yet in SPOT_SVGS
             var lbl = SPOT_LABELS[type] || '';
             if (lbl) {
-                inner = '<span style="font-size:' + (isHabitat ? '10' : '13') + 'px;font-weight:400;' +
-                        'color:rgba(255,255,255,0.97);' +
-                        'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-                        'line-height:1;pointer-events:none;' + innerRot + '">' + lbl + '</span>';
+                inner = '<span class="fmap-spot-dot-lbl' + (isHabitat ? ' fmap-spot-dot-lbl--habitat' : '') + '"' +
+                        (innerRot ? ' style="' + innerRot + '"' : '') + '>' + lbl + '</span>';
             }
         }
         var html = '<span class="fmap-spot-dot" style="background:' + color +
@@ -1126,11 +1142,11 @@
             var sym = SPOT_LABELS[f.type] || '';
             var tooltipHtml =
                 '<strong>' + esc(name) + '</strong>' +
-                '<br><span style="opacity:0.75;font-size:0.7rem">' +
-                (sym ? '<span style="font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;margin-right:3px">' + sym + '</span>' : '') +
+                '<br><span class="fmap-tooltip-sub">' +
+                (sym ? '<span class="fmap-tooltip-sym">' + sym + '</span>' : '') +
                 esc(spotTypeLabel(f.type)) + '</span>' +
                 (tip ? '<br><span class="fmap-struct-tip">' + esc(tip) + '</span>' : '') +
-                '<br><span style="opacity:0.45;font-size:0.65rem;margin-top:2px;display:block">' +
+                '<br><span class="fmap-tooltip-meta">' +
                 esc(srcLabel) + (coordStr ? ' · ' + coordStr : '') + '</span>';
 
             // Habitat area features with geometry → area overlay
@@ -1188,17 +1204,18 @@
             );
             // Click handler: admin mode gets spot actions; everyone else gets
             // the spot detail panel with strike score and best-time information.
-            (function (spot) {
-                m.on('click', function () {
+            (function (spot, marker) {
+                marker.on('click', function () {
                     if (adminEditMode) {
-                        _openAdminSpotActions(spot, m);
+                        _openAdminSpotActions(spot, marker);
                         return;
                     }
                     if (typeof window._fmapShowSpotDetail === 'function') {
+                        _activeSpotMarker = marker;
                         window._fmapShowSpotDetail(spot);
                     }
                 });
-            }(f));
+            }(f, m));
             fishingSpotLayer.addLayer(m);
         });
 
@@ -2139,7 +2156,8 @@
     function saveFilters() {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify({
-                spotTypes: activeSpotTypes.slice()
+                spotTypes: activeSpotTypes.slice(),
+                category:  _activeCategory || null
             }));
         } catch (e) {
             console.warn('[fishing-map] saveFilters failed:', e);
@@ -2156,6 +2174,15 @@
             if (Array.isArray(f.spotTypes) && f.spotTypes.length && !activeSpotTypes.length) {
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
+            }
+            // Restore active category tab (deferred until wireCategoryFilterTabs runs)
+            if (f.category) {
+                var _tryRestoreCat = function () {
+                    var tab = document.querySelector('.fmap-cat-tab[data-cat="' + f.category + '"]');
+                    if (tab) tab.click();
+                };
+                // Tabs are wired in boot() shortly after loadFilters; defer one tick
+                setTimeout(_tryRestoreCat, 0);
             }
             updateAdvBadge();
         } catch (e) {
@@ -2174,10 +2201,6 @@
         setTimeout(function () { if (els.loading) els.loading.style.pointerEvents = 'none'; }, 300);
     }
 
-    // ─── Filter wiring ────────────────────────────────────────────────────────
-    function wireFilters() {
-    }
-
     // ─── Utilities ────────────────────────────────────────────────────────────
 
 
@@ -2186,10 +2209,14 @@
         var then = new Date(dateStr.indexOf('Z') === -1 ? dateStr + 'Z' : dateStr);
         var now  = new Date();
         var secs = Math.floor((now - then) / 1000);
-        if (secs < 60)   return 'just now';
-        if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+        if (secs < 60)    return 'just now';
+        if (secs < 3600)  return Math.floor(secs / 60) + 'm ago';
         if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
-        return Math.floor(secs / 86400) + 'd ago';
+        var days = Math.floor(secs / 86400);
+        if (days < 7)   return days + 'd ago';
+        if (days < 30)  return Math.floor(days / 7) + 'w ago';
+        if (days < 365) return Math.floor(days / 30) + 'mo ago';
+        return Math.floor(days / 365) + 'y ago';
     }
 
     // ─── Advanced filters ─────────────────────────────────────────────────────
@@ -2347,10 +2374,11 @@
                 communityData.forEach(function (c) {
                     if (!c.lat || !c.lng) return;
                     var m = L.marker([c.lat, c.lng], { icon: makeCommunityPin(c.mine) });
+                    var _tapOrClick = window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
                     m.bindTooltip(
                         '<strong>' + esc(c.species) + '</strong><br>' +
-                        '<span style="opacity:.8">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
-                        '<br><span style="opacity:.4;font-size:.65rem">Tap to view catch details</span>',
+                        '<span class="fmap-tooltip-sub">' + esc(c.angler_name) + ' &bull; ' + timeAgo(c.caught_at) + '</span>' +
+                        '<span class="fmap-tooltip-meta">' + _tapOrClick + ' to view catch details</span>',
                         { className: 'fmap-tooltip', direction: 'top', offset: [0, -6] }
                     );
                     m.on('click', function () { openCatchDetail(c); });
@@ -2381,6 +2409,13 @@
         if (!map) return;
         communityLayer = L.layerGroup();
 
+        // Escape key closes the catch detail drawer; Tab is trapped within while open
+        document.addEventListener('keydown', function (e) {
+            if (!els.catchDetail || els.catchDetail.hidden) return;
+            if (e.key === 'Escape') { closeCatchDetail(); return; }
+            _trapFocusOnTab(els.catchDetail, e);
+        });
+
         var btn = document.getElementById('fmap-community-layer-btn');
         if (btn) {
             btn.addEventListener('click', function () {
@@ -2402,8 +2437,11 @@
 
     // ─── Community catch detail drawer ────────────────────────────────────────
 
+    var _catchDetailPrevFocus = null;
+
     function openCatchDetail(c) {
         if (!els.catchDetail) return;
+        _catchDetailPrevFocus = document.activeElement || null;
 
         if (_catchDetailAbort) { try { _catchDetailAbort.abort(); } catch (e) {} }
         _catchDetailAbort = new AbortController();
@@ -2421,8 +2459,9 @@
         var bodyHtml = '';
         // Catch photo
         if (c.image_url) {
+            var _photoAlt = c.species ? esc(c.species) + ' catch photo' : 'Catch photo';
             bodyHtml += '<div class="fmap-catch-photo-wrap">' +
-                '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="Catch photo" ' +
+                '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="' + _photoAlt + '" ' +
                 'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
                 '</div>';
         }
@@ -2434,32 +2473,39 @@
 
         // Load comments
         var _myAbort = _catchDetailAbort;
-        els.catchDetailComments.innerHTML = '<div style="opacity:.5;font-size:.75rem;padding:.4rem 0">Loading comments…</div>';
+        els.catchDetailComments.innerHTML = '<div class="fmap-catch-no-comments">Loading comments…</div>';
         fetch('/api/map/catches/' + c.id + '/comments', { signal: _myAbort.signal })
             .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(function (data) {
                 var comments = data.comments || [];
                 var html = '';
                 comments.forEach(function (cm) {
-                    html += '<div class="fmap-catch-comment"><span class="fmap-catch-comment-author">' +
-                        esc(cm.angler_name) + '</span>' + esc(cm.body) +
-                        '<span style="float:right;opacity:.4;font-size:.65rem">' + timeAgo(cm.created_at) + '</span></div>';
+                    html += '<div class="fmap-catch-comment">' +
+                        '<div class="fmap-catch-comment-hdr">' +
+                        '<span class="fmap-catch-comment-author">' + esc(cm.angler_name) + '</span>' +
+                        '<span class="fmap-catch-comment-time">' + timeAgo(cm.created_at) + '</span>' +
+                        '</div>' +
+                        '<div class="fmap-catch-comment-body">' + esc(cm.body) + '</div>' +
+                        '</div>';
                 });
-                if (!html) html = '<div style="opacity:.4;font-size:.75rem;padding:.4rem 0">No comments yet</div>';
+                if (!html) html = '<div class="fmap-catch-no-comments">No comments yet</div>';
                 // Add comment form if logged in
                 var commentForm = IS_LOGGED_IN
                     ? '<div class="fmap-catch-comment-form">' +
-                      '<input type="text" class="fmap-catch-comment-input" placeholder="Add a comment…" maxlength="500">' +
-                      '<button class="fmap-catch-comment-post" data-catch-id="' + c.id + '">Post</button></div>'
+                      '<input type="text" class="fmap-catch-comment-input" placeholder="Add a comment…"' +
+                      ' aria-label="Add a comment" maxlength="500" autocomplete="off" enterkeyhint="send">' +
+                      '<button class="fmap-catch-comment-post" aria-label="Post comment" data-catch-id="' + c.id + '">Post</button></div>'
                     : '';
                 els.catchDetailComments.innerHTML = html + commentForm;
 
                 var postBtn = els.catchDetailComments.querySelector('.fmap-catch-comment-post');
                 var commentInput = els.catchDetailComments.querySelector('.fmap-catch-comment-input');
                 if (postBtn && commentInput) {
-                    postBtn.addEventListener('click', function () {
+                    function _postComment() {
                         var body = commentInput.value.trim();
                         if (!body) return;
+                        postBtn.disabled = true;
+                        postBtn.setAttribute('aria-busy', 'true');
                         fetch('/api/map/catches/' + c.id + '/comments', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -2467,7 +2513,15 @@
                         })
                         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                         .then(function () { openCatchDetail(c); })
-                        .catch(function () { showToast('Could not post comment.'); });
+                        .catch(function () {
+                            postBtn.disabled = false;
+                            postBtn.setAttribute('aria-busy', 'false');
+                            showToast('Could not post comment.');
+                        });
+                    }
+                    postBtn.addEventListener('click', _postComment);
+                    commentInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _postComment(); }
                     });
                 }
             })
@@ -2477,12 +2531,15 @@
             });
 
         // Action buttons: like + delete (own catches)
+        var _likeCt = c.likes_count || 0;
         var actionsHtml = '';
-        actionsHtml += '<button class="fmap-catch-action-btn fmap-like-btn" data-catch-id="' + c.id + '">' +
-            '\u2764\uFE0F ' + (c.likes_count || 0) + ' likes</button>';
+        actionsHtml += '<button class="fmap-catch-action-btn fmap-like-btn" data-catch-id="' + c.id + '"' +
+            ' aria-label="Like this catch (' + _likeCt + ' like' + (_likeCt !== 1 ? 's' : '') + ')">' +
+            '<span aria-hidden="true">\u2764\uFE0F</span> ' + _likeCt + ' like' + (_likeCt !== 1 ? 's' : '') + '</button>';
         if (c.mine) {
-            actionsHtml += '<button class="fmap-catch-action-btn fmap-catch-action-btn--delete fmap-delete-btn" data-catch-id="' + c.id + '">' +
-                '\uD83D\uDDD1 Delete</button>';
+            actionsHtml += '<button class="fmap-catch-action-btn fmap-catch-action-btn--delete fmap-delete-btn" data-catch-id="' + c.id + '"' +
+                ' aria-label="Delete this catch">' +
+                '<span aria-hidden="true">\uD83D\uDDD1</span> Delete</button>';
         }
         els.catchDetailActions.innerHTML = actionsHtml;
 
@@ -2490,17 +2547,27 @@
         if (likeBtn) {
             likeBtn.addEventListener('click', function () {
                 if (!IS_LOGGED_IN) { showToast('Sign in to like catches'); return; }
+                likeBtn.disabled = true;
+                likeBtn.setAttribute('aria-busy', 'true');
                 fetch('/api/map/catches/' + c.id + '/like', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 })
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function (d) {
-                    likeBtn.textContent = '\u2764\uFE0F ' + d.likes_count + ' likes';
+                    var _lc = d.likes_count;
+                    likeBtn.innerHTML = '<span aria-hidden="true">\u2764\uFE0F</span> ' + _lc + ' like' + (_lc !== 1 ? 's' : '');
+                    likeBtn.setAttribute('aria-label', 'Like this catch (' + _lc + ' like' + (_lc !== 1 ? 's' : '') + ')');
                     likeBtn.classList.toggle('fmap-catch-action-btn--liked', d.liked);
-                    c.likes_count = d.likes_count;
+                    c.likes_count = _lc;
+                    likeBtn.disabled = false;
+                    likeBtn.setAttribute('aria-busy', 'false');
                 })
-                .catch(function () { showToast('Could not update like.'); });
+                .catch(function () {
+                    showToast('Could not update like.');
+                    likeBtn.disabled = false;
+                    likeBtn.setAttribute('aria-busy', 'false');
+                });
             });
         }
 
@@ -2522,15 +2589,22 @@
         }
 
         els.catchDetail.hidden = false;
+        var _cdInner = els.catchDetail.querySelector('.fmap-detail-inner');
+        if (_cdInner) _cdInner.scrollTop = 0;
 
         var closeBtn = document.getElementById('fmap-catch-detail-close');
         if (closeBtn) {
             closeBtn.onclick = closeCatchDetail;
+            setTimeout(function () { closeBtn.focus(); }, 50);
         }
     }
 
     function closeCatchDetail() {
         if (els.catchDetail) els.catchDetail.hidden = true;
+        if (_catchDetailPrevFocus && typeof _catchDetailPrevFocus.focus === 'function') {
+            _catchDetailPrevFocus.focus({ preventScroll: true });
+            _catchDetailPrevFocus = null;
+        }
     }
 
     // ─── Log Catch mode ───────────────────────────────────────────────────────
@@ -2542,6 +2616,7 @@
         var x     = btn.querySelector('.fmap-log-fab-x');
         var label = btn.querySelector('.fmap-log-fab-label');
         btn.classList.toggle('fmap-log-fab--active', active);
+        btn.setAttribute('aria-label', active ? 'Cancel log mode' : 'Log a catch on the map');
         if (plus)  plus.hidden  = active;
         if (x)     x.hidden     = !active;
         if (label) label.textContent = active ? 'Cancel' : 'Log Catch';
@@ -2561,7 +2636,10 @@
             var banner = document.createElement('div');
             banner.id = 'fmap-log-banner';
             banner.className = 'fmap-log-mode-banner';
-            banner.textContent = 'Tap the map to place your catch pin \u2014 tap again to cancel';
+            banner.setAttribute('role', 'alert');
+            banner.setAttribute('aria-live', 'assertive');
+            var _tc = window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
+            banner.textContent = _tc + ' the map to place your catch pin \u2014 ' + _tc.toLowerCase() + ' again to cancel';
             if (wrap) wrap.appendChild(banner);
         }
     }
@@ -2580,10 +2658,14 @@
         pendingCatchLatLng = null;
     }
 
+    var _logModalPrevFocus = null;
     function openLogModal(lat, lng) {
+        _logModalPrevFocus = document.activeElement || null;
         pendingCatchLatLng = { lat: lat, lng: lng };
         if (els.logCoords) {
-            els.logCoords.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            var _coordStr = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            els.logCoords.textContent = _coordStr;
+            els.logCoords.setAttribute('aria-label', 'Logging catch at coordinates ' + _coordStr);
         }
         if (els.logForm) els.logForm.reset();
         if (els.logPublic) els.logPublic.checked = true;
@@ -2595,14 +2677,24 @@
                 now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
                 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
         }
-        if (els.logModal) els.logModal.hidden = false;
+        if (els.logModal) {
+            els.logModal.hidden = false;
+            var _lmInner = els.logModal.querySelector('.fmap-modal-inner');
+            if (_lmInner) _lmInner.scrollTop = 0;
+        }
         if (els.logSpecies) els.logSpecies.focus();
         if (els.logError) els.logError.hidden = true;
     }
 
     function closeLogModal() {
         if (els.logModal) els.logModal.hidden = true;
+        if (els.logSubmit) { els.logSubmit.disabled = false; els.logSubmit.setAttribute('aria-busy', 'false'); }
+        if (els.logError)  els.logError.hidden  = true;
         exitLogMode();
+        if (_logModalPrevFocus && typeof _logModalPrevFocus.focus === 'function') {
+            _logModalPrevFocus.focus({ preventScroll: true });
+            _logModalPrevFocus = null;
+        }
     }
 
     function wireLogCatch() {
@@ -2616,6 +2708,13 @@
         if (closeBtn) closeBtn.addEventListener('click', closeLogModal);
         var cancelBtn = document.getElementById('fmap-log-cancel');
         if (cancelBtn) cancelBtn.addEventListener('click', closeLogModal);
+
+        // Escape closes the log modal; Tab is trapped within while open
+        document.addEventListener('keydown', function (e) {
+            if (!els.logModal || els.logModal.hidden) return;
+            if (e.key === 'Escape') { closeLogModal(); return; }
+            _trapFocusOnTab(els.logModal, e);
+        });
 
         // Map click in log mode — place pin
         if (map) {
@@ -2667,7 +2766,7 @@
                     payload.caught_at = els.logCaughtAt.value + ':00';
                 }
 
-                if (els.logSubmit) els.logSubmit.disabled = true;
+                if (els.logSubmit) { els.logSubmit.disabled = true; els.logSubmit.setAttribute('aria-busy', 'true'); }
 
                 fetch('/api/map/catches', {
                     method: 'POST',
@@ -2678,7 +2777,7 @@
                 .then(function (data) {
                     if (data.error) {
                         if (els.logError) { els.logError.textContent = data.error; els.logError.hidden = false; }
-                        if (els.logSubmit) els.logSubmit.disabled = false;
+                        if (els.logSubmit) { els.logSubmit.disabled = false; els.logSubmit.setAttribute('aria-busy', 'false'); }
                         return;
                     }
                     showToast('Catch logged! \uD83C\uDFAF');
@@ -2687,7 +2786,7 @@
                 })
                 .catch(function () {
                     if (els.logError) { els.logError.textContent = 'Could not save catch. Please try again.'; els.logError.hidden = false; }
-                    if (els.logSubmit) els.logSubmit.disabled = false;
+                    if (els.logSubmit) { els.logSubmit.disabled = false; els.logSubmit.setAttribute('aria-busy', 'false'); }
                 });
             });
         }
@@ -2707,11 +2806,7 @@
         var color = (SPOT_TYPES[type] || SPOT_TYPES.fishing).color;
         return L.divIcon({
             className: 'fmap-spot-wrap',
-            html: '<span style="display:flex;align-items:center;justify-content:center;' +
-                  'width:22px;height:22px;border-radius:50%;background:' + color + ';' +
-                  'border:2.5px dashed #fff;box-shadow:0 0 8px ' + color + '88;' +
-                  'font-size:9px;font-weight:800;color:rgba(255,255,255,0.95);' +
-                  'font-family:system-ui,sans-serif;cursor:pointer">✎</span>',
+            html: '<span class="fmap-edit-pin" style="--edit-c:' + color + '">✎</span>',
             iconSize:   [22, 22],
             iconAnchor: [11, 11],
         });
@@ -2771,15 +2866,15 @@
                     var tip = spot.description || STRUCTURE_TIPS[spot.type] || '';
                     m.bindPopup(
                         '<strong>' + esc(spot.name || spotTypeLabel(spot.type)) + '</strong>' +
-                        (tip ? '<br><span style="opacity:.8">' + esc(tip) + '</span>' : '')
+                        (tip ? '<br><span class="fmap-tooltip-sub">' + esc(tip) + '</span>' : '')
                     ).openPopup();
                 }
             });
 
             m.bindTooltip(
                 '<strong>' + esc(spot.name || spotTypeLabel(spot.type)) + '</strong>' +
-                '<br><span style="opacity:.7">' + esc(spotTypeLabel(spot.type)) + '</span>' +
-                (adminEditMode ? '<br><em style="opacity:.6">click to edit</em>' : ''),
+                '<br><span class="fmap-tooltip-sub">' + esc(spotTypeLabel(spot.type)) + '</span>' +
+                (adminEditMode ? '<br><em class="fmap-tooltip-sub">click to edit</em>' : ''),
                 { direction: 'top', offset: [0, -8], className: 'fmap-tooltip' }
             );
 
@@ -2813,10 +2908,7 @@
         _adminPreviewPin = L.marker([lat, lng], {
             icon: L.divIcon({
                 className: 'fmap-spot-wrap',
-                html: '<span style="display:flex;align-items:center;justify-content:center;' +
-                      'width:26px;height:26px;border-radius:50%;background:#2563eb;' +
-                      'border:3px solid #fff;box-shadow:0 0 12px #2563eb99;' +
-                      'font-size:15px;animation:fmap-pulse 1s ease-in-out infinite alternate">📍</span>',
+                html: '<span class="fmap-preview-pin">📍</span>',
                 iconSize: [26, 26], iconAnchor: [13, 26],
             }),
             interactive: false,
@@ -2843,8 +2935,8 @@
     function _openAdminModal() {
         var modal    = document.getElementById('fmap-admin-modal');
         var backdrop = document.getElementById('fmap-admin-backdrop');
-        if (modal)    { modal.hidden    = false; }
-        if (backdrop) { backdrop.hidden = false; backdrop.style.display = ''; }
+        if (modal)    modal.hidden    = false;
+        if (backdrop) backdrop.hidden = false;
         var statusEl = document.getElementById('fmap-admin-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     }
@@ -2853,7 +2945,7 @@
         var modal    = document.getElementById('fmap-admin-modal');
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (modal)    modal.hidden    = true;
-        if (backdrop) { backdrop.hidden = true; backdrop.style.display = 'none'; }
+        if (backdrop) backdrop.hidden = true;
         _removeAdminPreviewPin();
     }
 
@@ -2884,17 +2976,13 @@
         var name    = esc(spot.name || spotTypeLabel(spot.type));
 
         var html =
-            '<div style="min-width:160px">' +
-            '<strong style="font-size:.85rem">' + name + '</strong>' +
-            '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
-            '<button id="fmap-spot-hide-btn" style="' +
-            'padding:4px 10px;border:none;border-radius:5px;' +
-            'background:#991b1b;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Hide</button>' +
-            '<button id="fmap-spot-override-btn" style="' +
-            'padding:4px 10px;border:none;border-radius:5px;' +
-            'background:#1d4ed8;color:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Override</button>' +
+            '<div class="fmap-admin-action-popup">' +
+            '<strong class="fmap-admin-action-title">' + name + '</strong>' +
+            '<div class="fmap-admin-action-btns">' +
+            '<button id="fmap-spot-hide-btn" class="fmap-admin-action-btn fmap-admin-action-btn--hide">Hide</button>' +
+            '<button id="fmap-spot-override-btn" class="fmap-admin-action-btn fmap-admin-action-btn--override">Override</button>' +
             '</div>' +
-            '<div id="fmap-spot-action-status" style="font-size:.75rem;margin-top:5px;color:#f87171"></div>' +
+            '<div id="fmap-spot-action-status" class="fmap-admin-action-status"></div>' +
             '</div>';
 
         marker.bindPopup(html, { closeButton: true, maxWidth: 220 }).openPopup();
@@ -2969,9 +3057,15 @@
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
 
-        // Escape key closes the modal from anywhere on the page
+        // Escape closes modal; Tab trapped within while visible
+        var _adminModalEl = document.getElementById('fmap-admin-modal');
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') _closeAdminModal();
+            if (!_adminModalEl || _adminModalEl.hidden) {
+                if (e.key === 'Escape') _closeAdminModal();
+                return;
+            }
+            if (e.key === 'Escape') { _closeAdminModal(); return; }
+            _trapFocusOnTab(_adminModalEl, e);
         });
 
         // ── Toggle button ────────────────────────────────────────────────────
@@ -3235,14 +3329,14 @@
             '<strong>' + esc(s.name || 'SST Station') + '</strong>' +
             '<br><span class="fmap-sst-temp">' + temp + '</span>' +
             (anomaly ? '<br><small class="fmap-sst-anomaly">' + esc(anomaly) + '</small>' : '') +
-            (dhw     ? '<br><small style="opacity:.65">' + esc(dhw) + '</small>' : '') +
+            (dhw     ? '<br><small class="fmap-popup-meta">' + esc(dhw) + '</small>' : '') +
             (s.alert > 0
                 ? '<br><span class="fmap-sst-alert" style="background:' + s.alert_color + '">' +
                   esc(s.alert_label) + '</span>'
                 : '') +
-            (s.updated ? '<br><small style="opacity:.45">Updated: ' +
+            (s.updated ? '<br><small class="fmap-popup-meta">Updated: ' +
                 _sstFmtDate(s.updated) + '</small>' : '') +
-            '<br><small style="opacity:.4">Source: NOAA CoRIS via ArcGIS Live Feeds</small>' +
+            '<br><small class="fmap-popup-source">Source: NOAA CoRIS via ArcGIS Live Feeds</small>' +
             '</div>'
         );
     }
@@ -3338,14 +3432,14 @@
                         (st.name && st.icao ? '<div class="fmap-metar-name">' + st.name + '</div>' : '') +
                         (timeStr ? '<div class="fmap-metar-time">' + timeStr + '</div>' : '') +
                         '<table class="fmap-metar-table">' +
-                        '<tr><td>Temp</td><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
-                        '<tr><td>Wind</td><td>' + windStr + '</td></tr>' +
-                        (st.humidity != null ? '<tr><td>Humidity</td><td>' + st.humidity + '%</td></tr>' : '') +
-                        (st.pressure_mb != null ? '<tr><td>Pressure</td><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
-                        '<tr><td>Visibility</td><td>' + visStr + '</td></tr>' +
-                        (st.sky ? '<tr><td>Sky</td><td>' + st.sky + '</td></tr>' : '') +
-                        (st.weather ? '<tr><td>Wx</td><td>' + st.weather + '</td></tr>' : '') +
-                        (st.flight_cat ? '<tr><td>Flight cat</td><td><span style="color:' + catColor + ';font-weight:700">' + st.flight_cat + '</span></td></tr>' : '') +
+                        '<tr><th scope="row">Temp</th><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
+                        '<tr><th scope="row">Wind</th><td>' + windStr + '</td></tr>' +
+                        (st.humidity != null ? '<tr><th scope="row">Humidity</th><td>' + st.humidity + '%</td></tr>' : '') +
+                        (st.pressure_mb != null ? '<tr><th scope="row">Pressure</th><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
+                        '<tr><th scope="row">Visibility</th><td>' + visStr + '</td></tr>' +
+                        (st.sky ? '<tr><th scope="row">Sky</th><td>' + st.sky + '</td></tr>' : '') +
+                        (st.weather ? '<tr><th scope="row">Wx</th><td>' + st.weather + '</td></tr>' : '') +
+                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span class="fmap-metar-cat" style="color:' + catColor + '">' + st.flight_cat + '</span></td></tr>' : '') +
                         '</table>' +
                         '<div class="fmap-metar-source">NOAA METAR via ArcGIS Live Feeds</div>' +
                         '</div>',
@@ -3460,10 +3554,10 @@
         return (
             '<div class="fmap-storm-popup">' +
             '<strong>' + esc(t.name) + '</strong>' +
-            (t.basin ? ' <small style="opacity:.6">(' + esc(t.basin) + ')</small>' : '') +
+            (t.basin ? ' <small class="fmap-popup-meta">(' + esc(t.basin) + ')</small>' : '') +
             '<br><em>' + esc(t.category) + '</em>' +
             (dates ? '<br><small>' + dates + '</small>' : '') +
-            '<br><small style="opacity:.5">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
+            '<br><small class="fmap-popup-source">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
             '</div>'
         );
     }
@@ -3571,7 +3665,7 @@
         var badge = document.getElementById('fmap-marine-warn-badge');
         if (!badge) return;
         badge.textContent = count;
-        badge.style.display = count > 0 ? '' : 'none';
+        badge.hidden = count <= 0;
     }
 
     // ─── Storm Tracker overlay (ArcGIS Live Feeds) ────────────────────────────
@@ -3685,7 +3779,7 @@
             '<strong>' + esc(s.name) + '</strong>' +
             '<br><em>' + esc(s.category) + '</em>' +
             (detail ? '<br><small>' + detail + '</small>' : '') +
-            '<br><small style="opacity:.6">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
+            '<br><small class="fmap-popup-source">Source: NHC/JTWC via ArcGIS Live Feeds</small>' +
             '</div>'
         );
     }
@@ -3694,7 +3788,7 @@
         var badge = document.getElementById('fmap-storm-badge');
         if (!badge) return;
         badge.textContent = count;
-        badge.style.display = count > 0 ? '' : 'none';
+        badge.hidden = count <= 0;
     }
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
@@ -3756,15 +3850,15 @@
                     L.marker([b.lat, b.lng], { icon: icon })
                      .bindPopup('<div class="fmap-buoy-popup">' +
                         '<strong>' + esc(b.id ? b.id + (b.name ? ' – ' + b.name : '') : b.name || 'NDBC Buoy') + '</strong>' +
-                        (updStr ? '<div style="opacity:.5;font-size:.72rem">' + updStr + '</div>' : '') +
+                        (updStr ? '<div class="fmap-popup-meta">' + updStr + '</div>' : '') +
                         '<table class="fmap-gauge-table">' +
-                        '<tr><td>Water Temp</td><td><span style="color:' + clr + '">' + wt + '</span></td></tr>' +
-                        '<tr><td>Wave Height</td><td>' + wh + '</td></tr>' +
-                        '<tr><td>Wave Period</td><td>' + pr + '</td></tr>' +
-                        '<tr><td>Wind</td><td>' + ws + (b.wind_dir != null ? ' @ ' + b.wind_dir + '°' : '') + '</td></tr>' +
-                        (b.pressure_mb != null ? '<tr><td>Pressure</td><td>' + b.pressure_mb + ' mb</td></tr>' : '') +
+                        '<tr><th scope="row">Water Temp</th><td><span style="color:' + clr + '">' + wt + '</span></td></tr>' +
+                        '<tr><th scope="row">Wave Height</th><td>' + wh + '</td></tr>' +
+                        '<tr><th scope="row">Wave Period</th><td>' + pr + '</td></tr>' +
+                        '<tr><th scope="row">Wind</th><td>' + ws + (b.wind_dir != null ? ' @ ' + b.wind_dir + '°' : '') + '</td></tr>' +
+                        (b.pressure_mb != null ? '<tr><th scope="row">Pressure</th><td>' + b.pressure_mb + ' mb</td></tr>' : '') +
                         '</table>' +
-                        '<div style="opacity:.4;font-size:.68rem;margin-top:3px">NDBC via ArcGIS Live Feeds</div>' +
+                        '<div class="fmap-popup-source">NDBC via ArcGIS Live Feeds</div>' +
                         '</div>', { maxWidth: 260 })
                      .addTo(buoyLayer);
                 });
@@ -3848,8 +3942,8 @@
                      .bindTooltip(
                         '<strong>Ocean Current</strong>' +
                         (kts ? '<br>' + kts + (v.dir_deg != null ? ' from ' + v.dir_deg + '°' : '') : '') +
-                        (updStr ? '<br><small style="opacity:.6">' + updStr + '</small>' : '') +
-                        '<br><small style="opacity:.5">NOAA HF Radar</small>',
+                        (updStr ? '<br><small class="fmap-tooltip-sub">' + updStr + '</small>' : '') +
+                        '<br><small class="fmap-tooltip-sub">NOAA HF Radar</small>',
                         { sticky: true, opacity: 0.93, direction: 'top' }
                      )
                      .addTo(hfradarLayer);
@@ -3909,9 +4003,9 @@
                             '<strong>Tropical Development Area</strong>' +
                             '<div class="fmap-tropical-prob" style="color:' + a.color + '">' +
                             esc(a.prob_label || a.probability) + ' probability</div>' +
-                            '<div style="font-size:.75rem;opacity:.7;margin-top:2px">Basin: ' + esc(a.basin) + '</div>' +
-                            (a.discussion ? '<p style="font-size:.74rem;margin:6px 0 2px;opacity:.85">' + esc(a.discussion) + '</p>' : '') +
-                            '<div style="font-size:.68rem;opacity:.45;margin-top:4px">NHC Tropical Weather Outlook · ArcGIS Live Feeds</div>' +
+                            '<div class="fmap-popup-meta">Basin: ' + esc(a.basin) + '</div>' +
+                            (a.discussion ? '<p class="fmap-tropical-discussion">' + esc(a.discussion) + '</p>' : '') +
+                            '<div class="fmap-popup-source">NHC Tropical Weather Outlook · ArcGIS Live Feeds</div>' +
                             '</div>',
                             { maxWidth: 280 }
                         ).addTo(tropicalLayer);
@@ -4111,7 +4205,7 @@
         var html = '<div class="fmap-legend-inner">' +
             '<div class="fmap-legend-header">' +
             '<span class="fmap-legend-title-main">Legend</span>' +
-            '<button class="fmap-legend-collapse-btn" title="Collapse legend">' +
+            '<button class="fmap-legend-collapse-btn" title="Collapse legend" aria-label="Collapse legend">' +
             '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">' +
             '<polyline points="18 15 12 9 6 15"/></svg></button></div>';
 
@@ -4121,10 +4215,8 @@
                     '<div class="fmap-legend-section-title">' + spec.label + '</div>' +
                     '<div class="fmap-legend-items">';
             spec.items.forEach(function (item) {
-                var txtColor = item.dark ? '#fff' : '#111';
                 html += '<span class="fmap-legend-item">' +
-                        '<span class="fmap-legend-swatch" style="background:' + item.color +
-                        ';color:' + txtColor + '"></span>' +
+                        '<span class="fmap-legend-swatch" style="background:' + item.color + '"></span>' +
                         '<span class="fmap-legend-label">' + item.text + '</span></span>';
             });
             html += '</div></div>';
@@ -4153,7 +4245,7 @@
         });
         if (badge) {
             badge.textContent = total;
-            badge.style.display = total > 0 ? '' : 'none';
+            badge.hidden = total <= 0;
         }
         if (clearBtn) clearBtn.hidden = total === 0;
 
@@ -4204,18 +4296,20 @@
             var lq = q.toLowerCase().trim();
             var allRows  = popup.querySelectorAll('.fmap-layer-row');
             var sections = popup.querySelectorAll('.fmap-layers-section');
+            var anyVisible = false;
             allRows.forEach(function (row) {
                 var nameEl = row.querySelector('.fmap-layer-row-name');
                 var descEl = row.querySelector('.fmap-layer-row-desc');
                 var text = ((nameEl ? nameEl.textContent : '') + ' ' + (descEl ? descEl.textContent : '')).toLowerCase();
                 var show = !lq || text.indexOf(lq) !== -1;
                 row.style.display = show ? '' : 'none';
+                if (show) anyVisible = true;
             });
             // Hide section headers when all their rows are hidden; show otherwise.
             // Sections with no .fmap-layer-row elements (e.g. Spot Filters) are always shown.
             sections.forEach(function (sec) {
                 var allSectionRows = sec.querySelectorAll('.fmap-layer-row');
-                if (!allSectionRows.length) { sec.style.display = ''; return; }
+                if (!allSectionRows.length) { sec.style.display = lq ? 'none' : ''; return; }
                 var visibleRows = Array.prototype.filter.call(allSectionRows, function (r) {
                     return r.style.display !== 'none';
                 });
@@ -4227,12 +4321,30 @@
                     if (hdr) hdr.setAttribute('aria-expanded', 'true');
                 }
             });
+            // Show/hide no-results state
+            var noResultsEl = popup.querySelector('.fmap-layers-no-results');
+            if (!noResultsEl && lq && !anyVisible) {
+                noResultsEl = document.createElement('p');
+                noResultsEl.className = 'fmap-layers-no-results';
+                var body = popup.querySelector('.fmap-layers-popup-body');
+                if (body) body.appendChild(noResultsEl);
+            }
+            if (noResultsEl) {
+                noResultsEl.textContent = lq && !anyVisible ? 'No layers match "' + q.trim() + '"' : '';
+                noResultsEl.style.display = lq && !anyVisible ? '' : 'none';
+            }
         }
 
         if (searchInput) {
             searchInput.addEventListener('input', function () { _applyLayerSearch(searchInput.value); });
             searchInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') { searchInput.value = ''; _applyLayerSearch(''); }
+                if (e.key === 'Escape' && searchInput.value) {
+                    // Clear search text first; stop propagation so the
+                    // document-level handler doesn't also close the popup.
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    _applyLayerSearch('');
+                }
             });
         }
 
@@ -4379,6 +4491,7 @@
 
                 // Mark pill as active if turning on, inactive if turning off
                 pill.classList.toggle('fmap-preset-pill--active', !allOn);
+                pill.setAttribute('aria-pressed', !allOn ? 'true' : 'false');
             });
         });
 
@@ -4392,6 +4505,7 @@
                     return b && b.getAttribute('aria-pressed') === 'true';
                 });
                 pill.classList.toggle('fmap-preset-pill--active', anyOn);
+                pill.setAttribute('aria-pressed', anyOn ? 'true' : 'false');
             });
         }
 
@@ -4465,7 +4579,6 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                wireFilters();
                 wireMapControls();
                 wireSpotTypeFilters();
                 wireCommunityLayer();
@@ -4520,8 +4633,11 @@
             isFullscreen = !isFullscreen;
             if (mapWrap) mapWrap.classList.toggle('fmap-map-wrap--fullscreen', isFullscreen);
             if (fsLabel) fsLabel.textContent = isFullscreen ? 'Shrink Map' : 'Expand Map';
-            if (fsIconExpand) fsIconExpand.style.display = isFullscreen ? 'none' : '';
-            if (fsIconShrink) fsIconShrink.style.display = isFullscreen ? '' : 'none';
+            if (fsIconExpand) fsIconExpand.hidden = isFullscreen;
+            if (fsIconShrink) fsIconShrink.hidden = !isFullscreen;
+            var pressed = isFullscreen ? 'true' : 'false';
+            if (fsToolbarBtn) fsToolbarBtn.setAttribute('aria-pressed', pressed);
+            if (fsMapBtn) fsMapBtn.setAttribute('aria-pressed', pressed);
             // Lock/unlock body scroll and update map size
             document.body.style.overflow = isFullscreen ? 'hidden' : '';
             setTimeout(function () { if (map) map.invalidateSize(); }, 300);
@@ -4543,9 +4659,15 @@
         btn.addEventListener('click', function () {
             var base = window.location.origin + window.location.pathname;
             var params = new URLSearchParams(window.location.search);
-            // Encode current fishing map state into URL hash
             var hashParts = [];
             if (activeSpotTypes.length) hashParts.push('types=' + activeSpotTypes.slice().sort().join(','));
+            // Include current map center + zoom so the shared link opens to the same view
+            if (map) {
+                var c = map.getCenter();
+                hashParts.push('lat=' + c.lat.toFixed(5));
+                hashParts.push('lng=' + c.lng.toFixed(5));
+                hashParts.push('z=' + map.getZoom());
+            }
             var url = base + (params.toString() ? '?' + params.toString() : '') +
                       (hashParts.length ? '#fmap=' + hashParts.join('&') : '');
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -4563,17 +4685,27 @@
         var hash = window.location.hash;
         if (!hash || hash.indexOf('#fmap=') !== 0) return;
         var raw = hash.slice(6); // strip '#fmap='
+        var params = {};
         raw.split('&').forEach(function (part) {
             var eq = part.indexOf('=');
             if (eq === -1) return;
-            var k = part.slice(0, eq);
-            var v = decodeURIComponent(part.slice(eq + 1));
-            if (k === 'types' && v) {
-                var requested = v.split(',').map(function (t) { return t.trim(); })
-                                 .filter(function (t) { return t && SPOT_TYPES[t]; });
-                if (requested.length) _applySpotTypeUI(requested);
-            }
+            params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1));
         });
+        if (params.types) {
+            var requested = params.types.split(',').map(function (t) { return t.trim(); })
+                             .filter(function (t) { return t && SPOT_TYPES[t]; });
+            if (requested.length) _applySpotTypeUI(requested);
+        }
+        // Restore shared map view (center + zoom)
+        if (map && params.lat && params.lng) {
+            var lat = parseFloat(params.lat);
+            var lng = parseFloat(params.lng);
+            var z   = params.z ? parseInt(params.z, 10) : null;
+            if (!isNaN(lat) && !isNaN(lng)) {
+                if (z && !isNaN(z)) map.setView([lat, lng], z, { animate: false });
+                else map.panTo([lat, lng], { animate: false });
+            }
+        }
         updateAdvBadge();
     }
 
@@ -4602,13 +4734,15 @@
     // Defined at module scope so renderFishingSpots can call it after each render.
     function _recolourSpotsByScore(score) {
         if (!fishingSpotLayer) return;
-        var color = score >= 8 ? '#22c55e' :
-                    score >= 6 ? '#84cc16' :
-                    score >= 4 ? '#f59e0b' : '#ef4444';
+        var color = score >= 8 ? '#4ade80' :
+                    score >= 6 ? '#a3e635' :
+                    score >= 4 ? '#fbbf24' : '#f87171';
         fishingSpotLayer.eachLayer(function (layer) {
-            if (layer._icon) {
-                layer._icon.style.borderColor = color;
-                layer._icon.style.boxShadow   = '0 0 6px ' + color + '88';
+            if (!layer._icon) return;
+            var dot = layer._icon.querySelector('.fmap-spot-dot');
+            if (dot) {
+                dot.style.borderColor = color;
+                dot.style.boxShadow   = '0 0 7px ' + color + '77';
             }
         });
     }
@@ -4673,6 +4807,7 @@
             // "My Spots" renders from saved favorites, not OSM types
             var types = (cat && !isMine) ? (_CATEGORY_TYPES[cat] || []) : [];
             activeSpotTypes = types.slice();
+            updateAdvBadge();
             // Show/hide the favorites layer
             if (_favSpotsLayer) {
                 if (isMine) _favSpotsLayer.addTo(map);
@@ -4709,6 +4844,7 @@
                     tab.classList.add('fmap-cat-tab--active');
                     _applyCategory(cat);
                 }
+                saveFilters();
             });
         });
     }
@@ -4735,21 +4871,32 @@
 
             if (_scoreAbort) _scoreAbort.abort();
             _scoreAbort = new AbortController();
+            // Show loading pulse on the badge while the request is in flight
+            if (scoreEl) scoreEl.classList.add('fmap-tide-score--loading');
             fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
                 signal: _scoreAbort.signal
             })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (d) {
-                if (!d || !d.ok) return;
+                if (!d || !d.ok) {
+                    if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
+                    return;
+                }
                 _scoreData = d.data;
                 renderChart();
-                updateSliderDisplay();
+                updateSliderDisplay(); // replaces scoreEl className, clearing the loading class
                 if (moonEl) {
-                    moonEl.textContent = (_scoreData.moon_phase || '') +
-                        ' · ' + (_scoreData.solunar_rating || '');
+                    var _solRating = (_scoreData.solunar_rating || '').toLowerCase();
+                    var _solClass  = _solRating === 'major' ? 'fmap-tide-sol--major'
+                                   : _solRating === 'minor' ? 'fmap-tide-sol--minor'
+                                   : 'fmap-tide-sol--none';
+                    moonEl.innerHTML = esc(_scoreData.moon_phase || '') +
+                        ' <span class="fmap-tide-sol ' + _solClass + '">· ' +
+                        esc(_scoreData.solunar_rating || '') + '</span>';
                 }
             })
             .catch(function (err) {
+                if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
                 if (err && err.name !== 'AbortError')
                     console.warn('[fishing-map] score fetch failed:', err);
             });
@@ -4762,9 +4909,9 @@
             var maxScore = 10;
             var W = 240, H = 44;
             var barW = W / 24;
-            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
-                      'aria-hidden="true" style="width:100%;height:100%">';
-            var scoreColors = {Excellent:'#22c55e', Good:'#84cc16', Fair:'#f59e0b', Slow:'#ef4444'};
+            var nowHour = new Date().getHours();
+            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">';
+            var scoreColors = {Excellent:'#4ade80', Good:'#a3e635', Fair:'#fbbf24', Slow:'#f87171'};
             hours.forEach(function (h, i) {
                 var color = scoreColors[h.label] || '#64748b';
                 var barH  = Math.max(2, (h.score / maxScore) * (H - 4));
@@ -4776,6 +4923,10 @@
                        '" fill="' + color + '" opacity="' + (isSelected ? '1' : '0.55') +
                        '" rx="1"/>';
             });
+            // Triangle/chevron marking current real-time hour at top of chart
+            var ncx = (nowHour + 0.5) * barW;
+            svg += '<polygon points="' + ncx + ',0 ' + (ncx - 3) + ',5 ' + (ncx + 3) + ',5"' +
+                   ' fill="rgba(255,255,255,0.8)"/>';
             // Cursor line at selected hour
             var cx = (_tideSliderHour + 0.5) * barW;
             svg += '<line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + H +
@@ -4785,6 +4936,9 @@
         }
 
         // Update the badge and hour label for the current slider position
+        var _metaRowEl  = document.getElementById('fmap-tide-meta-row');
+        var _waterTempEl = document.getElementById('fmap-tide-water-temp');
+
         function updateSliderDisplay() {
             if (!_scoreData) return;
             var hours = _scoreData.hours || [];
@@ -4792,6 +4946,7 @@
             var score = hData.score || 0;
             var label = hData.label || '';
             var grade = _LABEL_TO_GRADE[label] || 'fair';
+            var fac   = hData.factors || {};
 
             if (scoreEl) {
                 scoreEl.textContent = score;
@@ -4799,20 +4954,32 @@
             }
             if (labelEl) {
                 labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label';
+                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
             }
             if (hourEl) {
                 var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
                 var h12  = _tideSliderHour % 12 || 12;
-                hourEl.textContent = h12 + ':00 ' + ampm;
+                var isNow = _tideSliderHour === new Date().getHours();
+                hourEl.textContent = h12 + ':00 ' + ampm + (isNow ? ' · Now' : '');
+                sliderEl.setAttribute('aria-valuetext',
+                    h12 + ':00 ' + ampm + (isNow ? ', current hour' : '') + (label ? ' — ' + label : ''));
+            }
+            // Water temp + tide state in the meta row
+            if (_waterTempEl && _metaRowEl) {
+                var parts = [];
+                if (fac.water_temp_f != null) parts.push(fac.water_temp_f + '°F');
+                if (fac.tide)                 parts.push(String(fac.tide).replace(/\s*\(.*\)/, '') + ' tide');
+                if (fac.wind_mph != null)     parts.push(fac.wind_mph + ' mph wind');
+                _waterTempEl.textContent = parts.join(' · ');
+                _metaRowEl.hidden = !parts.length;
             }
             // Re-colour spot icons on the map by score
             _recolourSpotsByScore(score);
             // Refresh chart to move the cursor
             renderChart();
-            // If the spot detail panel is open, refresh its score display
-            if (_activeSpotData && typeof window._fmapShowSpotDetail === 'function') {
-                window._fmapShowSpotDetail(_activeSpotData);
+            // If the spot detail panel is open, refresh only its score + conditions
+            if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
+                window._fmapRefreshPanelScore();
             }
         }
 
@@ -4824,6 +4991,46 @@
             _tideSliderHour = parseInt(this.value, 10) || 0;
             updateSliderDisplay();
         });
+
+        // Click anywhere on the chart to jump to that hour
+        chartEl.style.cursor = 'pointer';
+        chartEl.title = window.matchMedia('(pointer: coarse)').matches
+            ? 'Tap to select hour' : 'Click to select hour';
+        chartEl.addEventListener('click', function (e) {
+            if (!_scoreData) return;
+            var rect = chartEl.getBoundingClientRect();
+            if (!rect.width) return;
+            var hour = Math.min(23, Math.max(0, Math.floor((e.clientX - rect.left) / rect.width * 24)));
+            _tideSliderHour = hour;
+            sliderEl.value  = hour;
+            updateSliderDisplay();
+        });
+
+        // Hover over chart bars to preview that hour's score (desktop)
+        chartEl.addEventListener('mousemove', function (e) {
+            if (!_scoreData) return;
+            var rect = chartEl.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            if (x < 0 || x > rect.width) return;
+            var hoverHour = Math.min(23, Math.max(0, Math.floor(x / rect.width * 24)));
+            var hData = (_scoreData.hours || [])[hoverHour] || {};
+            var label = hData.label || '';
+            var grade = _LABEL_TO_GRADE[label] || 'fair';
+            if (scoreEl) {
+                scoreEl.textContent = hData.score || 0;
+                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
+            }
+            if (labelEl) {
+                labelEl.textContent = label;
+                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
+            }
+            if (hourEl) {
+                var ap = hoverHour < 12 ? 'AM' : 'PM';
+                hourEl.textContent = (hoverHour % 12 || 12) + ':00 ' + ap;
+            }
+        });
+        // Restore selected-hour display when mouse leaves the chart
+        chartEl.addEventListener('mouseleave', updateSliderDisplay);
 
         // Initial fetch — debounce if location changes
         fetchScores();
@@ -4862,18 +5069,117 @@
 
         var nameEl = document.getElementById('fmap-spot-detail-name');
 
+        // Updates score, conditions chips, and best times — called both on panel
+        // open and whenever the time slider moves or new score data arrives.
+        function _refreshPanelScore() {
+            var hasScore = !!_scoreData;
+            var currentScore = 0, currentLabel = '', currentGrade = 'fair';
+            if (hasScore) {
+                var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
+                currentScore = hd.score || 0;
+                currentLabel = hd.label || '';
+                currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
+            }
+            if (scoreEl) {
+                if (!hasScore) {
+                    scoreEl.innerHTML = '<span class="fmap-spot-score-num fmap-spot-score-num--empty">–</span>' +
+                        '<span class="fmap-spot-score-denom">/10</span>';
+                    scoreEl.className = 'fmap-spot-score fmap-tide-score--loading';
+                } else {
+                    // Trend: compare current hour to 2 hours ahead
+                    var futureHour = Math.min(23, _tideSliderHour + 2);
+                    var futureScore = ((_scoreData.hours || [])[futureHour] || {}).score || 0;
+                    var delta = futureScore - currentScore;
+                    var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
+                    var trendClass = delta >= 1.5 ? 'fmap-score-trend--up' :
+                                     delta <= -1.5 ? 'fmap-score-trend--down' : '';
+                    var trendDirection = delta >= 1.5 ? 'Improving' : delta <= -1.5 ? 'Declining' : '';
+                    var trendAttrs = trendArrow
+                        ? 'title="Score in 2h: ' + futureScore + '/10"' +
+                          ' aria-label="' + trendDirection + ' — score in 2h: ' + futureScore + '/10"'
+                        : '';
+                    scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
+                        '</span><span class="fmap-spot-score-denom">/10</span>' +
+                        (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '') +
+                        (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '" ' + trendAttrs + '>' + trendArrow + '</span>' : '');
+                    scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
+                }
+            }
+            if (condEl) {
+                var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
+                var fac = hd2.factors || {};
+                var chips = [];
+                if (fac.tide)             chips.push({ icon: '🌊', title: 'Tide', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
+                if (fac.solunar && fac.solunar !== 'none')
+                                          chips.push({ icon: '🌙', title: 'Solunar', text: fac.solunar.charAt(0).toUpperCase() + fac.solunar.slice(1) });
+                if (fac.wind_mph != null) chips.push({ icon: '💨', title: 'Wind speed', text: fac.wind_mph + ' mph' });
+                if (fac.wave_ft  != null) chips.push({ icon: '≋', title: 'Wave height', text: fac.wave_ft + ' ft' });
+                if (fac.water_temp_f != null) chips.push({ icon: '🌡', title: 'Water temperature', text: fac.water_temp_f + '°F' });
+                if (chips.length) {
+                    condEl.innerHTML = chips.map(function (c) {
+                        var chipLabel = c.title ? c.title + ': ' + String(c.text) : String(c.text);
+                        return '<span class="fmap-cond-chip" title="' + esc(chipLabel) + '" aria-label="' + esc(chipLabel) + '">' +
+                            '<span aria-hidden="true">' + c.icon + '</span> ' +
+                            esc(String(c.text)) + '</span>';
+                    }).join('');
+                    condEl.hidden = false;
+                } else {
+                    condEl.hidden = true;
+                }
+            }
+            // Best times — doesn't change with slider; skip re-render if already current.
+            if (bestTimesEl && bestTimesEl._scoreRef !== _scoreData) {
+                bestTimesEl._scoreRef = _scoreData;
+                if (!_scoreData) {
+                    bestTimesEl.textContent = 'Loading…';
+                } else {
+                    var hours = _scoreData.hours || [];
+                    var goodHourNums = hours
+                        .filter(function (h) { return h.score >= 7; })
+                        .map(function (h) { return h.hour; });
+                    var rangeStrs = [];
+                    var j = 0;
+                    while (j < goodHourNums.length) {
+                        var rs = goodHourNums[j], re = rs;
+                        while (j + 1 < goodHourNums.length && goodHourNums[j + 1] === goodHourNums[j] + 1) {
+                            j++; re = goodHourNums[j];
+                        }
+                        rangeStrs.push(rs === re ? _fmtHour(rs) : _fmtHour(rs) + '–' + _fmtHour(re));
+                        j++;
+                    }
+                    var bestText = rangeStrs.length
+                        ? rangeStrs.slice(0, 4).join(', ')
+                        : 'No peak windows today';
+                    // Render a mini 24-bar sparkline so the user can see peak windows at a glance
+                    var scoreColors = { Excellent: '#4ade80', Good: '#a3e635', Fair: '#fbbf24', Slow: '#f87171' };
+                    var barSvg = '<svg class="fmap-best-times-spark" viewBox="0 0 48 8" ' +
+                                 'preserveAspectRatio="none" aria-hidden="true" width="48" height="8">';
+                    hours.forEach(function (h, i) {
+                        var fill = scoreColors[h.label] || '#334155';
+                        var opacity = h.score >= 7 ? '1' : '0.3';
+                        barSvg += '<rect x="' + (i * 2) + '" y="0" width="1.6" height="8" ' +
+                                  'fill="' + fill + '" opacity="' + opacity + '" rx="0.4"/>';
+                    });
+                    barSvg += '</svg>';
+                    bestTimesEl.innerHTML = barSvg + '<span>' + esc(bestText) + '</span>';
+                }
+            }
+        }
+        window._fmapRefreshPanelScore = _refreshPanelScore;
+
         // Called by renderFishingSpots() when a spot marker is clicked
         window._fmapShowSpotDetail = function (spotData) {
             _activeSpotData = spotData;
             var key = (spotData.type || 'spot') + ':' + spotData.lat + ':' + spotData.lng;
+            // Reset the best-times cache so it re-renders for the new spot
+            if (bestTimesEl) bestTimesEl._scoreRef = undefined;
 
-            // Spot name
+            // Static fields — name, coords, type (don't change with the slider)
             if (nameEl) {
                 nameEl.textContent = spotData.name ||
                     ((spotData.type || 'Fishing spot').replace(/_/g, ' ')
                         .replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
             }
-
             if (coordsEl) {
                 coordsEl.textContent = spotData.lat.toFixed(5) + ', ' +
                                        spotData.lng.toFixed(5);
@@ -4882,59 +5188,11 @@
             if (typeEl) {
                 var t = spotData.type || '';
                 typeEl.textContent = (t.charAt(0).toUpperCase() + t.slice(1)).replace(/_/g, ' ');
+                typeEl.setAttribute('data-type', t);
             }
 
-            // Strike score for the current slider hour
-            var currentScore = 0;
-            var currentLabel = '';
-            var currentGrade = 'fair';
-            if (_scoreData) {
-                var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
-                currentScore = hd.score || 0;
-                currentLabel = hd.label || '';
-                currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
-            }
-            if (scoreEl) {
-                scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
-                    '</span><span class="fmap-spot-score-denom">/10</span>' +
-                    (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '');
-                scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
-            }
-
-            // Conditions chips for the current hour
-            if (condEl) {
-                var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
-                var fac = hd2.factors || {};
-                var chips = [];
-                if (fac.tide)           chips.push({ icon: '🌊', text: fac.tide });
-                if (fac.solunar && fac.solunar !== 'none')
-                                        chips.push({ icon: '🌙', text: fac.solunar });
-                if (fac.wind_mph != null) chips.push({ icon: '💨', text: fac.wind_mph + ' mph' });
-                if (fac.wave_ft  != null) chips.push({ icon: '〰', text: fac.wave_ft + ' ft' });
-                if (fac.water_temp_f != null) chips.push({ icon: '🌡', text: fac.water_temp_f + '°F' });
-                if (chips.length) {
-                    condEl.innerHTML = chips.map(function (c) {
-                        return '<span class="fmap-cond-chip">' + c.icon + ' ' + c.text + '</span>';
-                    }).join('');
-                    condEl.hidden = false;
-                } else {
-                    condEl.hidden = true;
-                }
-            }
-
-            // Best times today (hours scoring ≥ 7)
-            if (bestTimesEl && _scoreData) {
-                var bestHours = (_scoreData.hours || [])
-                    .filter(function (h) { return h.score >= 7; })
-                    .map(function (h) {
-                        var ap = h.hour < 12 ? 'AM' : 'PM';
-                        var h12 = h.hour % 12 || 12;
-                        return h12 + ap;
-                    });
-                bestTimesEl.textContent = bestHours.length
-                    ? bestHours.slice(0, 6).join(', ')
-                    : 'No peak windows today';
-            }
+            // Score, conditions chips, and best times (delegate to shared helper)
+            _refreshPanelScore();
 
             // Fishing tip from the spot
             if (tipEl) {
@@ -4956,6 +5214,13 @@
                     mangrove:     'Mangrove areas may have seasonal closures — check regs.',
                     oyster_reef:  'Oyster reef areas may be closed to harvest — check regs.',
                     grass_flat:   'Avoid anchoring in seagrass — use poles or anchor off-flat.',
+                    tidal_flat:   'Some tidal flats are closed to shellfish harvest — check local regs.',
+                    inlet:        'Some inlets have restricted access or no-wake zones — verify before launching.',
+                    beach:        'Check local ordinances for surf fishing access and license requirements.',
+                    kelp:         'Kelp harvest and some rockfish species may be restricted — check state regs.',
+                    shoal:        'Verify local regulations for bottom fishing and minimum size limits.',
+                    point:        'Check for posted access restrictions on public vs. private headlands.',
+                    dive_site:    'Spearfishing may be prohibited at marine reserves — check before diving.',
                 };
                 var reg = regHints[spotData.type] || '';
                 regEl.textContent = reg;
@@ -4967,20 +5232,101 @@
             if (favBtn) {
                 var isFav = !!_favoriteSpotKeys[key];
                 favBtn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
-                favBtn.title = isFav ? 'Remove from favorites' : 'Save as favorite';
+                var _favLabel = isFav ? 'Remove from favorites' : 'Save as favorite';
+                favBtn.title = _favLabel;
+                favBtn.setAttribute('aria-label', _favLabel);
             }
 
-            panel.hidden = false;
+            panel.setAttribute('aria-hidden', 'false');
             panel.classList.add('fmap-spot-detail--open');
+            // Move focus to the close button after slide-in completes
+            if (closeBtn) setTimeout(function () { closeBtn.focus(); }, 230);
         };
 
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function () {
-                panel.hidden = true;
-                panel.classList.remove('fmap-spot-detail--open');
-                _activeSpotData = null;
-            });
+        var _panelPrevFocus = null;
+
+        // Wrap to capture focus origin and scroll panel to top on each open
+        (function () {
+            var _inner = window._fmapShowSpotDetail;
+            var _prevMarker = null;
+            window._fmapShowSpotDetail = function (spotData) {
+                // _activeSpotMarker was already set by the click handler to the NEW marker
+                _setMarkerActive(_prevMarker, false);      // clear previous
+                _setMarkerActive(_activeSpotMarker, true); // highlight new
+                _prevMarker = _activeSpotMarker;
+                _panelPrevFocus = document.activeElement || null;
+                _inner(spotData);
+                // Scroll the panel body to the top so repeated opens feel fresh
+                var body = panel.querySelector('.fmap-spot-detail-body');
+                if (body) body.scrollTop = 0;
+            };
+        }());
+
+        function _setMarkerActive(marker, on) {
+            if (!marker || !marker._icon) return;
+            var dot = marker._icon.querySelector('.fmap-spot-dot');
+            if (dot) dot.classList.toggle('fmap-spot-dot--active', on);
         }
+
+        function _closePanel() {
+            panel.style.transform = '';
+            panel.style.transition = '';
+            panel.classList.remove('fmap-spot-detail--open');
+            panel.setAttribute('aria-hidden', 'true');
+            _activeSpotData = null;
+            _setMarkerActive(_activeSpotMarker, false);
+            _activeSpotMarker = null;
+            if (_panelPrevFocus && typeof _panelPrevFocus.focus === 'function') {
+                _panelPrevFocus.focus({ preventScroll: true });
+                _panelPrevFocus = null;
+            }
+        }
+
+        // Swipe-down to dismiss on touch devices
+        var _swipeStartY = 0, _swipeActive = false;
+        var _swipeZone = panel.querySelector('.fmap-spot-detail-handle') ||
+                         panel.querySelector('.fmap-spot-detail-header');
+        if (_swipeZone) {
+            _swipeZone.addEventListener('touchstart', function (e) {
+                if (!panel.classList.contains('fmap-spot-detail--open')) return;
+                _swipeStartY = e.touches[0].clientY;
+                _swipeActive = true;
+                panel.style.transition = 'none';
+            }, { passive: true });
+        }
+        document.addEventListener('touchmove', function (e) {
+            if (!_swipeActive) return;
+            var dy = e.touches[0].clientY - _swipeStartY;
+            if (dy < 0) return;
+            panel.style.transform = 'translateY(' + dy + 'px)';
+        }, { passive: true });
+        document.addEventListener('touchend', function (e) {
+            if (!_swipeActive) return;
+            _swipeActive = false;
+            var dy = e.changedTouches[0].clientY - _swipeStartY;
+            if (dy > 80) {
+                panel.style.transition = 'transform 0.2s ease-in';
+                panel.style.transform = 'translateY(100%)';
+                var _swipeTarget = _activeSpotData;
+                setTimeout(function () {
+                    if (_activeSpotData === _swipeTarget) _closePanel();
+                }, 200);
+            } else {
+                panel.style.transition = '';
+                panel.style.transform = '';
+            }
+        }, { passive: true });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', _closePanel);
+        }
+
+        // Escape key closes the panel; Tab is trapped within while open
+        document.addEventListener('keydown', function (e) {
+            if (!panel.classList.contains('fmap-spot-detail--open')) return;
+            if (e.key === 'Escape') { _closePanel(); return; }
+            _trapFocusOnTab(panel, e);
+        });
 
         if (favBtn) {
             favBtn.addEventListener('click', function () {
@@ -5000,21 +5346,50 @@
                     };
                 }
                 _saveFavorites();
+                var _newFavLabel = !isFav ? 'Remove from favorites' : 'Save as favorite';
                 favBtn.setAttribute('aria-pressed', !isFav ? 'true' : 'false');
-                favBtn.title = !isFav ? 'Remove from favorites' : 'Save as favorite';
+                favBtn.title = _newFavLabel;
+                favBtn.setAttribute('aria-label', _newFavLabel);
                 showToast(!isFav ? 'Spot saved to favorites' : 'Spot removed from favorites');
                 // Keep My Spots layer current if it's active
                 if (_activeCategory === 'my_spots') renderFavoriteSpots();
             });
         }
 
+        // "Log a catch here" quick action — opens the log modal at the spot's coords
+        var logHereBtn = document.getElementById('fmap-spot-detail-log');
+        if (logHereBtn) {
+            logHereBtn.addEventListener('click', function () {
+                if (!_activeSpotData) return;
+                if (!IS_LOGGED_IN) { showToast('Sign in to log catches on the map'); return; }
+                var lat      = _activeSpotData.lat;
+                var lng      = _activeSpotData.lng;
+                var spotName = _activeSpotData.name || ''; // capture before _closePanel clears it
+                _closePanel();
+                // Place a temporary pin and open the log form
+                if (pendingCatchMarker && map) map.removeLayer(pendingCatchMarker);
+                if (map) {
+                    pendingCatchMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'fmap-community-pin-wrap',
+                            html: '<span class="fmap-community-pin fmap-community-pin--mine"></span>',
+                            iconSize: [22, 28], iconAnchor: [11, 26]
+                        })
+                    }).addTo(map);
+                }
+                openLogModal(lat, lng);
+                // Pre-fill the catch title with the spot name
+                if (spotName && els.logTitle && !els.logTitle.value) {
+                    els.logTitle.value = spotName;
+                }
+            });
+        }
+
         // Click on the map (not a marker) closes the panel
         if (map) {
             map.on('click', function () {
-                if (!panel.hidden) {
-                    panel.hidden = true;
-                    panel.classList.remove('fmap-spot-detail--open');
-                    _activeSpotData = null;
+                if (panel.classList.contains('fmap-spot-detail--open')) {
+                    _closePanel();
                 }
             });
         }
@@ -5029,9 +5404,11 @@
             el = document.createElement('div');
             el.id = 'fmap-fav-empty';
             el.className = 'fmap-fav-empty';
+            var _tapOrClickFav = window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
+            el.setAttribute('role', 'status');
             el.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
                 '<p>No saved spots yet</p>' +
-                '<small>Tap any spot marker, then press <strong>&#9733;</strong> to save it here.</small>';
+                '<small>' + _tapOrClickFav + ' any spot marker, then press <strong>Save as favorite</strong> to save it here.</small>';
             mapWrap.appendChild(el);
         }
         el.hidden = false;

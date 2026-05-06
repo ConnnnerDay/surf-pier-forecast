@@ -112,11 +112,11 @@
 
     var sorted = Object.values(bests).sort(function (a, b) { return b.size - a.size; });
     if (!sorted.length) {
-      pbEl.style.display = 'none';
+      pbEl.hidden = true;
       return;
     }
 
-    pbEl.style.display = 'block';
+    pbEl.hidden = false;
     var html = '';
     sorted.forEach(function (pb) {
       html += '<div class="pb-entry">';
@@ -131,7 +131,7 @@
   function renderCatchStats(entries) {
     var statsEl = document.getElementById('catch-stats');
     if (!statsEl || !entries.length) return;
-    statsEl.style.display = 'block';
+    statsEl.hidden = false;
 
     document.getElementById('stat-total').textContent = entries.length;
 
@@ -166,14 +166,14 @@
     var statsEl = document.getElementById('catch-stats');
     if (!entries.length) {
       container.innerHTML = '';
-      empty.style.display = 'block';
-      if (statsEl) statsEl.style.display = 'none';
+      empty.hidden = false;
+      if (statsEl) statsEl.hidden = true;
       var pb = document.getElementById('personal-bests');
-      if (pb) pb.style.display = 'none';
+      if (pb) pb.hidden = true;
       return;
     }
 
-    empty.style.display = 'none';
+    empty.hidden = true;
     var html = '';
     entries.forEach(function (e, i) {
       html += '<div class="fishlog-entry" data-index="' + i + '">';

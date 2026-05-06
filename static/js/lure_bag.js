@@ -333,7 +333,7 @@
     if (searchInput) {
       searchInput.addEventListener('input', function () {
         searchQuery = searchInput.value;
-        if (clearBtn) clearBtn.style.display = searchQuery ? '' : 'none';
+        if (clearBtn) clearBtn.hidden = !searchQuery;
         renderResults();
       });
     }
@@ -342,7 +342,7 @@
       clearBtn.addEventListener('click', function () {
         searchQuery = '';
         if (searchInput) searchInput.value = '';
-        clearBtn.style.display = 'none';
+        clearBtn.hidden = true;
         renderResults();
       });
     }
