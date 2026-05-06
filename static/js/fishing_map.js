@@ -3443,14 +3443,14 @@
                         (st.name && st.icao ? '<div class="fmap-metar-name">' + st.name + '</div>' : '') +
                         (timeStr ? '<div class="fmap-metar-time">' + timeStr + '</div>' : '') +
                         '<table class="fmap-metar-table">' +
-                        '<tr><td>Temp</td><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
-                        '<tr><td>Wind</td><td>' + windStr + '</td></tr>' +
-                        (st.humidity != null ? '<tr><td>Humidity</td><td>' + st.humidity + '%</td></tr>' : '') +
-                        (st.pressure_mb != null ? '<tr><td>Pressure</td><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
-                        '<tr><td>Visibility</td><td>' + visStr + '</td></tr>' +
-                        (st.sky ? '<tr><td>Sky</td><td>' + st.sky + '</td></tr>' : '') +
-                        (st.weather ? '<tr><td>Wx</td><td>' + st.weather + '</td></tr>' : '') +
-                        (st.flight_cat ? '<tr><td>Flight cat</td><td><span style="color:' + catColor + ';font-weight:700">' + st.flight_cat + '</span></td></tr>' : '') +
+                        '<tr><th scope="row">Temp</th><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
+                        '<tr><th scope="row">Wind</th><td>' + windStr + '</td></tr>' +
+                        (st.humidity != null ? '<tr><th scope="row">Humidity</th><td>' + st.humidity + '%</td></tr>' : '') +
+                        (st.pressure_mb != null ? '<tr><th scope="row">Pressure</th><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
+                        '<tr><th scope="row">Visibility</th><td>' + visStr + '</td></tr>' +
+                        (st.sky ? '<tr><th scope="row">Sky</th><td>' + st.sky + '</td></tr>' : '') +
+                        (st.weather ? '<tr><th scope="row">Wx</th><td>' + st.weather + '</td></tr>' : '') +
+                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span style="color:' + catColor + ';font-weight:700">' + st.flight_cat + '</span></td></tr>' : '') +
                         '</table>' +
                         '<div class="fmap-metar-source">NOAA METAR via ArcGIS Live Feeds</div>' +
                         '</div>',
@@ -3863,11 +3863,11 @@
                         '<strong>' + esc(b.id ? b.id + (b.name ? ' – ' + b.name : '') : b.name || 'NDBC Buoy') + '</strong>' +
                         (updStr ? '<div class="fmap-popup-meta">' + updStr + '</div>' : '') +
                         '<table class="fmap-gauge-table">' +
-                        '<tr><td>Water Temp</td><td><span style="color:' + clr + '">' + wt + '</span></td></tr>' +
-                        '<tr><td>Wave Height</td><td>' + wh + '</td></tr>' +
-                        '<tr><td>Wave Period</td><td>' + pr + '</td></tr>' +
-                        '<tr><td>Wind</td><td>' + ws + (b.wind_dir != null ? ' @ ' + b.wind_dir + '°' : '') + '</td></tr>' +
-                        (b.pressure_mb != null ? '<tr><td>Pressure</td><td>' + b.pressure_mb + ' mb</td></tr>' : '') +
+                        '<tr><th scope="row">Water Temp</th><td><span style="color:' + clr + '">' + wt + '</span></td></tr>' +
+                        '<tr><th scope="row">Wave Height</th><td>' + wh + '</td></tr>' +
+                        '<tr><th scope="row">Wave Period</th><td>' + pr + '</td></tr>' +
+                        '<tr><th scope="row">Wind</th><td>' + ws + (b.wind_dir != null ? ' @ ' + b.wind_dir + '°' : '') + '</td></tr>' +
+                        (b.pressure_mb != null ? '<tr><th scope="row">Pressure</th><td>' + b.pressure_mb + ' mb</td></tr>' : '') +
                         '</table>' +
                         '<div class="fmap-popup-source">NDBC via ArcGIS Live Feeds</div>' +
                         '</div>', { maxWidth: 260 })

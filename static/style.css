@@ -5372,9 +5372,7 @@ h2::before {
 .fmap-metar-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
 .fmap-metar-name  { font-size: 0.74rem; opacity: 0.7; margin-bottom: 2px; }
 .fmap-metar-time  { font-size: 0.72rem; opacity: 0.55; margin-bottom: 6px; }
-.fmap-metar-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 4px; }
-.fmap-metar-table td { padding: 1px 4px 1px 0; }
-.fmap-metar-table td:first-child { opacity: 0.65; white-space: nowrap; width: 76px; }
+.fmap-metar-table th { white-space: nowrap; }
 .fmap-metar-source { font-size: 0.7rem; opacity: 0.4; margin-top: 4px; }
 
 /* ── Day/Night Terminator overlay ── */
@@ -5392,9 +5390,12 @@ h2::before {
 .fmap-gauge-popup { font-size: 0.82rem; min-width: 180px; }
 .fmap-gauge-popup strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
 .fmap-gauge-status { font-weight: 700; font-size: 0.82rem; margin-bottom: 5px; }
-.fmap-gauge-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 4px; }
-.fmap-gauge-table td { padding: 1px 4px 1px 0; }
-.fmap-gauge-table td:first-child { opacity: 0.65; width: 70px; }
+.fmap-gauge-table,
+.fmap-metar-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 4px; }
+.fmap-gauge-table td, .fmap-gauge-table th,
+.fmap-metar-table td, .fmap-metar-table th { padding: 1px 4px 1px 0; text-align: left; font-weight: normal; }
+.fmap-gauge-table th,
+.fmap-metar-table th { opacity: 0.65; width: 70px; }
 .fmap-gauge-link {
   display: inline-block;
   font-size: 0.75rem;
