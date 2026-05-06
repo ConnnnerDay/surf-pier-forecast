@@ -58,7 +58,7 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
             placeholder="Search by name, brand, or color&hellip;"
             autocomplete="off"
             spellcheck="false">
-        <button class="lure-search-clear" id="lure-search-clear" type="button" aria-label="Clear search" style="display:none">
+        <button class="lure-search-clear" id="lure-search-clear" type="button" aria-label="Clear search" hidden>
             <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
         </button>
     </div>
@@ -118,7 +118,7 @@ window._lureData = {{ forecast.lure_recommendations | tojson }};
         </div>
         <div id="lure-bag-items">
             <div class="lure-bag-empty" id="lure-bag-empty">
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="opacity:.35"><path d="M6 2L3 6v14h14V6l-3-4z"/><line x1="3" y1="6" x2="17" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="lure-bag-empty-icon"><path d="M6 2L3 6v14h14V6l-3-4z"/><line x1="3" y1="6" x2="17" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <p>Add lures from the search above &mdash; we&rsquo;ll show you which active fish you can target today</p>
             </div>
         </div>

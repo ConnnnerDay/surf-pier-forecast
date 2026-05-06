@@ -1,13 +1,13 @@
         <!-- Conditions grid -->
         <section class="conditions-section">
-            <div class="csc-verdict-bar" style="margin-bottom:0.5rem">
+            <div class="csc-verdict-bar">
                 <div class="csc-verdict-info">
-                    <p class="csc-location" style="margin:0 0 0.25rem">Today&rsquo;s Forecast</p>
+                    <p class="csc-location">Today&rsquo;s Forecast</p>
                     {% if forecast.conditions.verdict %}
                     <span class="verdict-badge verdict-{{ forecast.conditions.verdict|lower|replace(' ', '-') }} csc-verdict-badge">{{ forecast.conditions.verdict }}</span>
                     {% endif %}
                     {% if forecast.conditions.summary %}
-                    <p class="csc-verdict-summary" style="margin:0.25rem 0 0">{{ forecast.conditions.summary }}</p>
+                    <p class="csc-verdict-summary">{{ forecast.conditions.summary }}</p>
                     {% endif %}
                 </div>
                 <button class="csc-share-btn" type="button" aria-label="Share forecast" onclick="shareConditions(this)">
@@ -74,7 +74,7 @@
                         {% set _wdir = (forecast.conditions.wind_dir or '') | upper %}
                         {% set _wdrot = {'N':180,'NNE':202,'NE':225,'ENE':247,'E':270,'ESE':292,'SE':315,'SSE':337,'S':0,'SSW':22,'SW':45,'WSW':67,'W':90,'WNW':112,'NW':135,'NNW':157} %}
                         {% if _wdir in _wdrot %}
-                        <svg class="wind-dir-arrow" viewBox="0 0 10 14" width="10" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ _wdrot[_wdir] }}deg);display:inline-block;vertical-align:-1px;margin-right:2px" aria-hidden="true"><path d="M5 12V2M2 5l3-3 3 3"/></svg>
+                        <svg class="wind-dir-arrow" viewBox="0 0 10 14" width="10" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ _wdrot[_wdir] }}deg)" aria-hidden="true"><path d="M5 12V2M2 5l3-3 3 3"/></svg>
                         {% endif %}
                         {{ forecast.conditions.wind }}
                     </span>

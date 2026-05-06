@@ -1,7 +1,7 @@
 {% if forecast.spawning %}
 <section class="spawning-section">
     <h2>
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:0.3rem;" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-hdr-svg" aria-hidden="true">
             <path d="M6.5 12c0 0-3.5-3-4.5-6 3 0 5.5 1.5 7 3"/>
             <path d="M6.5 12c0 0-3.5 3-4.5 6 3 0 5.5-1.5 7-3"/>
             <path d="M6.5 12h11"/>
@@ -95,5 +95,5 @@
     </div>
 </section>
 {% else %}
-<p style="color:var(--text-muted);font-size:0.875rem;padding:0.5rem 0">No spawning activity data available for this area right now.</p>
+<p class="section-no-data">No spawning activity data available for this area right now.</p>
 {% endif %}

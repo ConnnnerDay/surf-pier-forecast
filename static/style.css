@@ -402,6 +402,15 @@ h2::before {
   font-style: italic;
 }
 
+/* Section header icon — small decorative SVG in h2/summary */
+.section-hdr-svg { vertical-align: -3px; margin-right: 0.3rem; }
+
+/* Wind direction arrow in conditions stat — layout in CSS, transform stays inline */
+.wind-dir-arrow { display: inline-block; vertical-align: -1px; margin-right: 2px; }
+
+/* Lure bag empty state icon */
+.lure-bag-empty-icon { opacity: 0.35; }
+
 /* ---------- Card base ---------- */
 
 .card {
@@ -1120,6 +1129,7 @@ h2::before {
   background: rgba(0,119,182,0.08);
   border-color: rgba(0,119,182,0.2);
 }
+.tide-section .section-sub { margin-bottom: 0.5rem; }
 
 .tide-timeline {
   display: flex;
@@ -1617,6 +1627,7 @@ h2::before {
   font-style: italic;
   font-family: 'Instrument Serif', Georgia, serif;
 }
+.species-tip svg { flex-shrink: 0; }
 
 .species-meta {
   display: grid;
@@ -11214,7 +11225,7 @@ body.has-app-header main {
 
 .csc-verdict-bar {
   padding: 0.85rem 1rem 0.75rem;
-  margin: -0.85rem -1rem 0.65rem;
+  margin: -0.85rem -1rem 0.5rem;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: flex-start;
@@ -11238,7 +11249,7 @@ body.has-app-header main {
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: rgba(255,255,255,0.45);
-  margin: 0 0 0.1rem;
+  margin: 0 0 0.25rem;
 }
 
 .csc-verdict-badge {
@@ -11287,7 +11298,7 @@ body.has-app-header main {
 .csc-verdict-summary {
   font-size: 0.82rem;
   color: rgba(255,255,255,0.65);
-  margin: 0.2rem 0 0;
+  margin: 0.25rem 0 0;
   line-height: 1.45;
   font-weight: 400;
   font-family: 'Instrument Serif', Georgia, serif;
