@@ -7015,6 +7015,7 @@ footer p {
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
 }
+.error-message > svg { margin-bottom: 0.5rem; }
 
 .error-message h2 {
   margin-bottom: 0.5rem;
@@ -7323,6 +7324,7 @@ footer p {
   box-shadow: var(--shadow-sm);
   padding: 0.85rem 1rem;
 }
+.setup-section--flush-bottom { padding-bottom: 0; }
 
 .zip-form {
   margin: 0.75rem 0 0;
@@ -7384,8 +7386,19 @@ footer p {
 
 .setup-help {
   margin-top: 0.75rem;
+  padding: 0.5rem 0;
   color: var(--text-muted);
   font-size: 0.82rem;
+}
+/* JS-generated location result forms must have no default margin */
+#loc-search-results form { margin: 0; }
+
+/* WebAuthn (passkey) section styles */
+#webauthn-section .social-divider { margin: 0.75rem 0; }
+.webauthn-error {
+  margin-top: 0.5rem;
+  color: #c0392b;
+  font-size: 0.85rem;
 }
 
 /* Inline confirm bar shown below map when user clicks open ocean */
