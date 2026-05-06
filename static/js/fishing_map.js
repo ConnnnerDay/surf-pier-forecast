@@ -483,11 +483,7 @@
         if (_spotIconCache[cacheKey]) return _spotIconCache[cacheKey];
         var color = AI_PICK_COLORS[osmType] || AI_PICK_COLORS.general;
         var sym   = (SPOT_LABELS && SPOT_LABELS[osmType]) || _AI_OSMT_SYM[osmType] || '✦';
-        var html  =
-            '<span class="fmap-ai-dot" style="--ai-c:' + color + ';' +
-            'display:flex;align-items:center;justify-content:center;' +
-            'font-family:system-ui,\'Segoe UI Symbol\',\'Apple Symbols\',sans-serif;' +
-            'font-size:10px;line-height:1">' + sym + '</span>';
+        var html  = '<span class="fmap-ai-dot" style="--ai-c:' + color + '">' + sym + '</span>';
         var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [18, 18], iconAnchor: [9, 9] });
         _spotIconCache[cacheKey] = icon;
         return icon;
@@ -3443,7 +3439,7 @@
                         '<tr><th scope="row">Visibility</th><td>' + visStr + '</td></tr>' +
                         (st.sky ? '<tr><th scope="row">Sky</th><td>' + st.sky + '</td></tr>' : '') +
                         (st.weather ? '<tr><th scope="row">Wx</th><td>' + st.weather + '</td></tr>' : '') +
-                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span style="color:' + catColor + ';font-weight:700">' + st.flight_cat + '</span></td></tr>' : '') +
+                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span class="fmap-metar-cat" style="color:' + catColor + '">' + st.flight_cat + '</span></td></tr>' : '') +
                         '</table>' +
                         '<div class="fmap-metar-source">NOAA METAR via ArcGIS Live Feeds</div>' +
                         '</div>',
@@ -4219,10 +4215,8 @@
                     '<div class="fmap-legend-section-title">' + spec.label + '</div>' +
                     '<div class="fmap-legend-items">';
             spec.items.forEach(function (item) {
-                var txtColor = item.dark ? '#fff' : '#111';
                 html += '<span class="fmap-legend-item">' +
-                        '<span class="fmap-legend-swatch" style="background:' + item.color +
-                        ';color:' + txtColor + '"></span>' +
+                        '<span class="fmap-legend-swatch" style="background:' + item.color + '"></span>' +
                         '<span class="fmap-legend-label">' + item.text + '</span></span>';
             });
             html += '</div></div>';
