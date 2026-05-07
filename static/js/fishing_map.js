@@ -937,10 +937,10 @@
 
         // Fishing: 8-pointed asterisk = generic access / catch spot
         fishing:
-            '<line x1="7" y1="1.5" x2="7" y2="12.5" stroke-width="1.5"/>' +
-            '<line x1="1.5" y1="7" x2="12.5" y2="7" stroke-width="1.5"/>' +
-            '<line x1="3" y1="3" x2="11" y2="11" stroke-width="1.5"/>' +
-            '<line x1="11" y1="3" x2="3" y2="11" stroke-width="1.5"/>',
+            // Rod body from handle (2,13) to tip (11.5,2); line + lure dangling from tip
+            '<line x1="2" y1="13" x2="11.5" y2="2" stroke-width="2.2" stroke-linecap="round"/>' +
+            '<path d="M11.5 2 Q13.2 7 10.5 11" stroke-width="1" fill="none" opacity="0.85"/>' +
+            '<circle cx="10.5" cy="11.5" r="1.2" fill="rgba(255,255,255,0.88)" stroke-width="1"/>',
 
         // Fishing shop: shopping-bag silhouette with handle = bait & tackle
         fishing_shop:
@@ -1037,6 +1037,18 @@
         seawall:      'Seawalls create hard current edges and shadow lines — stripers, bluefish, snook, and tarpon patrol the base of the wall on tide changes. Night fishing near lit walls is consistently productive.'
     };
 
+    // Infer a water-type color variant for fishing-spot markers from the spot name.
+    // Saltwater keywords → warm orange icon; freshwater keywords → cool blue icon;
+    // no name or ambiguous → default teal (SPOT_TYPES.fishing.color).
+    var _SALT_RE  = /\b(ocean|sea|surf|pier|beach|tidal|coastal|saltwater|bay|gulf|atlantic|pacific|harbor|harbour|inlet|jetty|sound|estuary|brackish)\b/i;
+    var _FRESH_RE = /\b(lake|pond|river|creek|stream|reservoir|freshwater|canal|brook|bayou|dam|falls?|spring)\b/i;
+    function _fishingVariant(name) {
+        if (!name) return 'fishing';
+        if (_SALT_RE.test(name))  return 'fishing_salt';
+        if (_FRESH_RE.test(name)) return 'fishing_fresh';
+        return 'fishing';
+    }
+
     function spotTypeLabel(type) {
         return (SPOT_TYPES[type] || {}).label || 'Fishing Spot';
     }
@@ -1049,8 +1061,12 @@
         // the same viewport (100–300 markers) skip the HTML string build and
         // L.divIcon() object creation entirely after the first render.
         if (_spotIconCache[type]) return _spotIconCache[type];
-        var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
-        var color     = def.color;
+        // fishing_salt / fishing_fresh share the base 'fishing' shape but different colors.
+        var baseType  = (type === 'fishing_salt' || type === 'fishing_fresh') ? 'fishing' : type;
+        var def       = SPOT_TYPES[baseType] || SPOT_TYPES.fishing;
+        var color     = type === 'fishing_salt'  ? '#f97316'  // warm orange  — saltwater/coastal
+                      : type === 'fishing_fresh' ? '#38bdf8'  // cool sky-blue — freshwater/inland
+                      : def.color;
         var isHabitat = def.habitat;
         // Habitat = rotating diamond with no inner graphic.
         // Structure = 22px filled circle with an inline SVG icon centred inside.
@@ -1061,7 +1077,7 @@
         var innerRot = isHabitat ? 'transform:rotate(-45deg);' : '';
         var svgW = isHabitat ? 10 : 14;
         var inner = '';
-        var svgPaths = SPOT_SVGS[type];
+        var svgPaths = SPOT_SVGS[baseType];
         if (svgPaths) {
             // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
             // stroke/fill inherited from the <svg> root; individual paths may
@@ -1073,13 +1089,13 @@
                     svgPaths + '</svg>';
         } else {
             // Fallback for any type not yet in SPOT_SVGS
-            var lbl = SPOT_LABELS[type] || '';
+            var lbl = SPOT_LABELS[baseType] || '';
             if (lbl) {
                 inner = '<span class="fmap-spot-dot-lbl' + (isHabitat ? ' fmap-spot-dot-lbl--habitat' : '') + '"' +
                         (innerRot ? ' style="' + innerRot + '"' : '') + '>' + lbl + '</span>';
             }
         }
-        var ringHtml = (type === 'wreck') ? '<span class="fmap-wreck-ring"></span>' : '';
+        var ringHtml = (baseType === 'wreck') ? '<span class="fmap-wreck-ring"></span>' : '';
         var html = ringHtml +
                    '<span class="fmap-spot-dot" style="background:' + color +
                    ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
@@ -1245,7 +1261,9 @@
 
             // Point / structure features → icon marker (pier, buoy, wreck, etc.)
             if (!f.lat || !f.lng) return;
-            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
+            // Fishing spots get a water-type color variant derived from the spot name.
+            var _iconType = (f.type === 'fishing') ? _fishingVariant(f.name || '') : f.type;
+            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(_iconType) });
             // Prefer the tip that came from the server; local table is the fallback
             m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
