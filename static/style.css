@@ -4487,6 +4487,22 @@ h2::before {
 }
 .fmap-spot-dot-lbl--habitat { font-size: 10px; }
 
+/* Permanent name callout for piers, jetties, and wrecks at zoom ≥ 13 */
+.fmap-spot-label.leaflet-tooltip {
+  background: rgba(15, 23, 42, 0.82);
+  border: none;
+  border-radius: 3px;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 2px 6px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+  pointer-events: none;
+}
+.fmap-spot-label.leaflet-tooltip::before { display: none; }
+
 .fmap-spot-dot--active {
   transform: scale(1.55) !important;
   border-color: #fff !important;

@@ -1270,6 +1270,18 @@
             m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
+            // Zoom-adaptive name label: pier, jetty, and wreck markers show the
+            // spot name as a permanent callout at zoom 13+.  No extra event listener
+            // needed — renderFishingSpots already re-renders when zoom changes.
+            if (currentZoom >= 13 && f.name &&
+                (f.type === 'pier' || f.type === 'jetty' || f.type === 'wreck')) {
+                m.bindTooltip(f.name, {
+                    permanent:  true,
+                    direction:  'right',
+                    offset:     [14, 0],
+                    className:  'fmap-spot-label'
+                });
+            }
             // Click handler: admin mode gets spot actions; everyone else gets
             // the spot detail panel with strike score and best-time information.
             (function (spot, marker) {
