@@ -62,7 +62,7 @@
         {% endif %}
         <h1>{{ user.display_name or user.username }}</h1>
         {% if user.display_name and user.display_name != user.username %}
-        <p class="page-subtitle" style="opacity:0.75;font-size:0.9rem">@{{ user.username }}</p>
+        <p class="page-subtitle page-subtitle--muted">@{{ user.username }}</p>
         {% endif %}
         <p class="page-subtitle">Account Settings</p>
     </div>
@@ -83,22 +83,22 @@
             </div>
             {% endif %}
             {% if not user.email_confirmed %}
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.875rem;" role="alert">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#e6a817" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:0.05rem" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div class="account-unverified" role="alert">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#e6a817" stroke-width="2" stroke-linecap="round" class="account-unverified-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <div>
                     <strong>Email not verified.</strong>
                     {% if user.email %}
                     Check your inbox at <strong>{{ user.email }}</strong> for a verification link.
                     {% endif %}
-                    <form method="post" action="{{ url_for('auth.resend_verification') }}" style="display:inline;margin-left:0.4rem">
+                    <form method="post" action="{{ url_for('auth.resend_verification') }}" class="account-resend-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                        <button type="submit" style="background:none;border:none;padding:0;color:#0e5f78;text-decoration:underline;cursor:pointer;font-size:inherit;">Resend verification email</button>
+                        <button type="submit" class="account-resend-btn">Resend verification email</button>
                     </form>
                 </div>
             </div>
             {% endif %}
-            <div class="account-heading" style="margin-bottom:1rem">
-                <p class="account-subtitle" style="margin:0">Manage your location preferences, account settings, and fishing activity.</p>
+            <div class="account-heading">
+                <p class="account-subtitle">Manage your location preferences, account settings, and fishing activity.</p>
             </div>
 
             <div class="quick-links">
@@ -106,15 +106,15 @@
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
                     View Forecast
                 </a>
-                <a href="{{ url_for('views.setup') }}" class="auth-btn quick-link-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)">
+                <a href="{{ url_for('views.setup') }}" class="auth-btn auth-btn--teal quick-link-btn">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.91 12.63M4.93 4.93A10 10 0 0 0 3.02 17.56M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                     Change Location
                 </a>
-                <a href="{{ url_for('views.profile') }}" class="auth-btn quick-link-btn" style="background:linear-gradient(135deg,#5a6e8a,#3d5068)">
+                <a href="{{ url_for('views.profile') }}" class="auth-btn auth-btn--slate quick-link-btn">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 4l-6 3-6-3v10l6 3 6-3V4z"/></svg>
                     Edit Fishing Profile
                 </a>
-                <a href="{{ url_for('views.fishing_log') }}" class="auth-btn quick-link-btn" style="background:linear-gradient(135deg,#6e5a3d,#504029)">
+                <a href="{{ url_for('views.fishing_log') }}" class="auth-btn auth-btn--brown quick-link-btn">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     Fishing Log
                 </a>
@@ -128,12 +128,12 @@
                             <span class="account-label">Account Type</span>
                             <span class="account-value">
                                 {% if user.is_admin %}
-                                <span style="display:inline-flex;align-items:center;gap:0.3rem;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.03em">
+                                <span class="passkey-badge--active">
                                     <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                                     Admin
                                 </span>
                                 {% else %}
-                                <span style="display:inline-flex;align-items:center;gap:0.3rem;background:var(--surface,#f1f5f9);color:var(--text-muted,#64748b);font-size:0.72rem;font-weight:600;padding:2px 9px;border-radius:20px;border:1px solid var(--border,#e2e8f0)">
+                                <span class="passkey-badge--inactive">
                                     Free
                                 </span>
                                 {% endif %}
@@ -166,9 +166,9 @@
                 } %}
                 {% set exp_labels = {'beginner': 'Beginner', 'intermediate': 'Intermediate', 'experienced': 'Experienced'} %}
                 <div class="summary-card">
-                    <h3 style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
+                    <h3 class="account-section-h3">
                         Fishing Profile
-                        <a href="{{ url_for('views.profile') }}" style="font-size:0.78rem;font-weight:600;color:var(--ocean);text-decoration:none;white-space:nowrap">Edit &rarr;</a>
+                        <a href="{{ url_for('views.profile') }}" class="account-section-edit-link">Edit &rarr;</a>
                     </h3>
                     {% if fp and fp.get('completed') %}
                     <div class="account-details compact">
@@ -176,7 +176,7 @@
                         {% if ftypes %}
                         <div class="account-row">
                             <span class="account-label">Style</span>
-                            <span class="account-value" style="text-align:right">
+                            <span class="account-value account-value--right">
                                 {% for t in ftypes %}{{ type_labels.get(t, t)|title }}{% if not loop.last %}, {% endif %}{% endfor %}
                             </span>
                         </div>
@@ -192,15 +192,15 @@
                         {% set tgt_labels = {'bottom': 'Bottom fish', 'pelagic': 'Pelagics', 'structure': 'Structure', 'inshore_slam': 'Inshore slam', 'gamefish': 'Big game', 'anything': 'Whatever bites'} %}
                         <div class="account-row">
                             <span class="account-label">Targets</span>
-                            <span class="account-value" style="text-align:right">
+                            <span class="account-value account-value--right">
                                 {% for t in targets %}{{ tgt_labels.get(t, t) }}{% if not loop.last %}, {% endif %}{% endfor %}
                             </span>
                         </div>
                         {% endif %}
                     </div>
                     {% else %}
-                    <p style="font-size:0.85rem;color:var(--muted,#5c6b73);margin:0.25rem 0 0.5rem">Profile not set up yet.</p>
-                    <a href="{{ url_for('views.profile') }}" class="auth-btn" style="display:block;text-align:center;text-decoration:none;font-size:0.85rem;padding:0.45rem 1rem">Set Up Profile</a>
+                    <p class="account-profile-empty">Profile not set up yet.</p>
+                    <a href="{{ url_for('views.profile') }}" class="auth-btn account-profile-setup-btn">Set Up Profile</a>
                     {% endif %}
                 </div>
             </div>
@@ -228,34 +228,34 @@
                     <label><input type="checkbox" name="weekly_email" {% if prefs.notification_prefs and prefs.notification_prefs.weekly_email %}checked{% endif %}> Send me a weekly email with the best fishing days</label>
                 </div>
 
-                <hr style="border:none;border-top:1px solid var(--border-light,#e5e9ed);margin:1.25rem 0 1rem">
-                <h3 class="section-title" style="margin-top:0">Default Location</h3>
+                <hr class="account-hr">
+                <h3 class="section-title account-section-title-flush">Default Location</h3>
                 <div class="auth-field">
                     <label for="default_location_id">Saved Location</label>
-                    <div style="display:flex;gap:0.5rem;align-items:center">
-                        <input id="default_location_id" name="default_location_id" class="auth-input" style="flex:1"
+                    <div class="account-loc-row">
+                        <input id="default_location_id" name="default_location_id" class="auth-input account-loc-input"
                                value="{{ prefs.location_id or user.default_location_id or '' }}"
                                placeholder="e.g. wrightsville-beach-nc">
                         {% set current_loc_id = prefs.location_id or user.default_location_id or '' %}
                         {% if current_loc_id %}
-                        <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap">Current: <strong>{{ current_loc_id }}</strong></span>
+                        <span class="account-loc-hint">Current: <strong>{{ current_loc_id }}</strong></span>
                         {% endif %}
                     </div>
-                    <span class="section-sub" style="display:block;margin-top:0.3rem;">
+                    <span class="section-sub account-section-sub-block">
                         This location loads automatically when you open the app.
                         <a href="{{ url_for('views.setup') }}">Browse &amp; find location IDs &rarr;</a>
                     </span>
                 </div>
 
-                <hr style="border:none;border-top:1px solid var(--border-light,#e5e9ed);margin:1.25rem 0 1rem">
-                <h3 class="section-title" style="margin-top:0">Pinned Locations</h3>
+                <hr class="account-hr">
+                <h3 class="section-title account-section-title-flush">Pinned Locations</h3>
                 <div class="auth-field">
-                    <label for="favorites_csv">Location IDs <span style="font-weight:400;color:var(--text-muted)">(comma-separated)</span></label>
+                    <label for="favorites_csv">Location IDs <span class="account-fav-label-hint">(comma-separated)</span></label>
                     <input id="favorites_csv" name="favorites_csv" class="auth-input"
                            value="{{ prefs.favorites|join(',') }}"
                            placeholder="e.g. wrightsville-beach-nc,folly-beach-sc"
                            aria-describedby="favorites-hint">
-                    <span id="favorites-hint" class="section-sub" style="display:block;margin-top:0.3rem;">
+                    <span id="favorites-hint" class="section-sub account-section-sub-block">
                         Pinned locations appear as quick-switch chips on the forecast.
                         {% if prefs.favorites %}
                         <strong>{{ prefs.favorites|length }} pinned</strong> &mdash;
@@ -265,7 +265,7 @@
                 </div>
 
                 <button type="submit" class="auth-btn" id="account-save-btn">Save Settings</button>
-                <div id="account-save-inline" style="display:none;margin-top:0.5rem;font-size:0.85rem;font-weight:600;color:#2a7d6e" role="status" aria-live="polite"></div>
+                <div id="account-save-inline" class="account-save-msg" hidden role="status" aria-live="polite"></div>
             </form>
             <script>
             (function() {
@@ -279,15 +279,15 @@
             </script>
 
             <!-- Activity & Stats (collapsed by default) -->
-            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
-                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between" onclick="">
-                    <span style="display:flex;align-items:center;gap:0.5rem">
+            <details class="account-stats-details">
+                <summary>
+                    <span class="account-summary-inner">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
                         Fishing Activity &amp; Stats
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div style="padding:1rem">
+                <div class="account-stats-body">
                     <div class="dashboard-metrics">
                         <div class="metric-card">
                             <span class="metric-value">{{ recent_logs|length }}</span>
@@ -314,12 +314,12 @@
                             <form class="photo-upload-form" data-entry-id="{{ entry.id }}">
                                 <label class="photo-upload-label">
                                     {% if not entry.photo1_path %}Add photo{% else %}Replace photo{% endif %}
-                                    <input type="file" name="photo1" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
+                                    <input type="file" name="photo1" accept="image/jpeg,image/png,image/webp" class="photo-file-input" hidden>
                                 </label>
                                 {% if entry.photo1_path and not entry.photo2_path %}
                                 <label class="photo-upload-label">
                                     Add 2nd photo
-                                    <input type="file" name="photo2" accept="image/jpeg,image/png,image/webp" class="photo-file-input" style="display:none">
+                                    <input type="file" name="photo2" accept="image/jpeg,image/png,image/webp" class="photo-file-input" hidden>
                                 </label>
                                 {% endif %}
                             </form>
@@ -332,108 +332,107 @@
                     {% endif %}
 
                     {% if favorite_locations %}
-                    <h4 style="margin:0.75rem 0 0.4rem;font-size:0.9rem">Favorite Locations</h4>
+                    <h4 class="account-section-h4">Favorite Locations</h4>
                     <ul class="favorites-list">
                         {% for loc in favorite_locations %}
                         <li>
-                            <a href="{{ url_for('views.shared_forecast', location_id=loc.id) }}" style="color:var(--ocean);text-decoration:none;">{{ loc.name }}, {{ loc.state }}</a>
+                            <a href="{{ url_for('views.shared_forecast', location_id=loc.id) }}" class="account-fav-link">{{ loc.name }}, {{ loc.state }}</a>
                         </li>
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <p class="section-sub" style="margin-top:0.5rem;">No pinned locations yet. <a href="{{ url_for('views.setup') }}">Add locations from the setup page.</a></p>
+                    <p class="section-sub">No pinned locations yet. <a href="{{ url_for('views.setup') }}">Add locations from the setup page.</a></p>
                     {% endif %}
                 </div>
             </details>
 
             <!-- Passkey / biometric login management -->
-            <details id="passkey-section" class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
-                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
-                    <span style="display:flex;align-items:center;gap:0.5rem">
+            <details id="passkey-section" class="account-stats-details">
+                <summary>
+                    <span class="account-summary-inner">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 1a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4S8 7.21 8 5a4 4 0 0 1 4-4z"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/><path d="M18 9l2 2 4-4"/></svg>
                         Face ID / Touch ID (Passkeys)
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div style="padding:1rem">
-                    <p style="margin:0 0 0.75rem;font-size:0.875rem;color:var(--muted,#5c6b73)">Set up Face ID or Touch ID to sign back in instantly — no password needed.</p>
+                <div class="account-stats-body">
+                    <p class="passkey-intro">Set up Face ID or Touch ID to sign back in instantly — no password needed.</p>
                     {% if passkeys %}
-                    <div style="margin-bottom:0.75rem">
+                    <div class="passkey-list">
                         {% for pk in passkeys %}
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border,#eee)">
-                            <span style="font-size:0.875rem">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:0.3rem" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                {{ pk.name }} <span style="font-size:0.78rem;color:var(--muted,#5c6b73)">&mdash; added {{ pk.created_at[:10] }}</span>
+                        <div class="passkey-item">
+                            <span class="passkey-item-name">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="passkey-item-icon" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                {{ pk.name }} <span class="passkey-item-date">&mdash; added {{ pk.created_at[:10] }}</span>
                             </span>
-                            <button type="button" class="delete-passkey-btn" data-id="{{ pk.credential_id }}"
-                                    style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:0.8rem;padding:0.2rem 0.4rem">Remove</button>
+                            <button type="button" class="delete-passkey-btn passkey-remove-btn" data-id="{{ pk.credential_id }}">Remove</button>
                         </div>
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p id="passkey-none-msg" style="font-size:0.85rem;color:var(--muted,#5c6b73);margin:0 0 0.75rem">No passkeys registered yet.</p>
+                    <p id="passkey-none-msg" class="passkey-none-msg">No passkeys registered yet.</p>
                     {% endif %}
-                    <button type="button" id="register-passkey-btn" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)" disabled>
+                    <button type="button" id="register-passkey-btn" class="auth-btn auth-btn--teal" disabled>
                         Set Up Face ID / Touch ID
                     </button>
-                    <div id="passkey-msg" style="margin-top:0.5rem;font-size:0.85rem;display:none"></div>
+                    <div id="passkey-msg" class="passkey-status-msg" hidden></div>
                 </div>
             </details>
 
             <!-- Fishing condition alerts (push notifications) -->
-            <details id="alerts-section" class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
-                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
-                    <span style="display:flex;align-items:center;gap:0.5rem">
+            <details id="alerts-section" class="account-stats-details">
+                <summary>
+                    <span class="account-summary-inner">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                         Fishing Condition Alerts
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div style="padding:1rem">
-                    <p style="margin:0 0 0.75rem;font-size:0.875rem;color:var(--muted,#5c6b73)">
+                <div class="account-stats-body">
+                    <p class="notif-intro">
                         Get a notification when conditions look great at your saved location &mdash; right when you open the app.
                     </p>
-                    <div id="notif-status" style="font-size:0.85rem;margin-bottom:0.75rem;color:var(--muted,#5c6b73)">Checking&hellip;</div>
-                    <button type="button" id="enable-alerts-btn" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)" hidden>
+                    <div id="notif-status" class="notif-status">Checking&hellip;</div>
+                    <button type="button" id="enable-alerts-btn" class="auth-btn auth-btn--teal" hidden>
                         Enable Alerts
                     </button>
-                    <button type="button" id="disable-alerts-btn" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)" hidden>
+                    <button type="button" id="disable-alerts-btn" class="auth-btn auth-btn--danger" hidden>
                         Disable Alerts
                     </button>
-                    <div id="alerts-msg" style="margin-top:0.5rem;font-size:0.82rem;display:none"></div>
+                    <div id="alerts-msg" class="notif-msg" hidden></div>
                 </div>
             </details>
 
             {% if social_accounts %}
             <!-- Connected social accounts -->
-            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
-                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
-                    <span style="display:flex;align-items:center;gap:0.5rem">
+            <details class="account-stats-details">
+                <summary>
+                    <span class="account-summary-inner">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                         Connected Accounts
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div style="padding:1rem">
+                <div class="account-stats-body">
                     {% for acct in social_accounts %}
-                    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border-light)">
+                    <div class="social-account-row">
                         {% if acct.provider == 'google' %}
-                        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" style="flex-shrink:0">
+                        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" class="social-account-icon">
                             <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
                             <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
                             <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
                             <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
                         </svg>
-                        <span style="font-size:0.9rem"><strong>Google</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
+                        <span class="social-account-name"><strong>Google</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
                         {% elif acct.provider == 'apple' %}
-                        <svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor" style="flex-shrink:0">
+                        <svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true" fill="currentColor" class="social-account-icon">
                             <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.8 0 109.6-49 192.7-49 31.1 0 108.2 2.6 168.7 75.3zm-174.6-144.5c7.7-37.7 35.7-69 65.5-88.3 30.5-19.9 71.5-33.3 104.2-33.3-3.8 50.3-21.8 97.8-52.3 130.5-31.1 33.3-70.9 54.5-114.2 54.5-2.6 0-5.1-.1-7.7-.3 1.4-21.4 4.5-42.6 4.5-63.1z"/>
                         </svg>
-                        <span style="font-size:0.9rem"><strong>Apple</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
+                        <span class="social-account-name"><strong>Apple</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
                         {% else %}
-                        <span style="font-size:0.9rem"><strong>{{ acct.provider|capitalize }}</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
+                        <span class="social-account-name"><strong>{{ acct.provider|capitalize }}</strong>{% if acct.email %} &mdash; {{ acct.email }}{% endif %}</span>
                         {% endif %}
-                        <span style="margin-left:auto;font-size:0.78rem;color:var(--text-muted)">since {{ acct.created_at[:10] }}</span>
+                        <span class="social-account-since">since {{ acct.created_at[:10] }}</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -442,20 +441,19 @@
 
             {% if has_password %}
             <!-- Password Change -->
-            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid var(--border-light);border-radius:10px;overflow:hidden"
-                     {% if pw_section_open %}open{% endif %}>
-                <summary style="padding:0.75rem 1rem;background:var(--bg-subtle);font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
-                    <span style="display:flex;align-items:center;gap:0.5rem">
+            <details class="account-stats-details" {% if pw_section_open %}open{% endif %}>
+                <summary>
+                    <span class="account-summary-inner">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         Change Password
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div style="padding:1rem">
+                <div class="account-stats-body">
                     {% if pw_error %}
-                    <div class="setup-error" role="alert" style="margin-bottom:0.75rem">{{ pw_error }}</div>
+                    <div class="setup-error setup-error--mb" role="alert">{{ pw_error }}</div>
                     {% endif %}
-                    <form method="post" action="{{ url_for('auth.change_password_route') }}" class="auth-form" id="pw-change-form" style="margin:0">
+                    <form method="post" action="{{ url_for('auth.change_password_route') }}" class="auth-form pw-change-form" id="pw-change-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <div class="auth-field">
                             <label for="current_password">Current Password</label>
@@ -473,7 +471,7 @@
                                        aria-describedby="pw-new-reqs">
                                 <button type="button" class="auth-show-pw" onclick="togglePwVis('new_password',this)" aria-label="Show password" title="Show/hide">&#128065;</button>
                             </div>
-                            <ul id="pw-new-reqs" class="pw-reqs" aria-label="Password requirements" style="margin-top:0.35rem">
+                            <ul id="pw-new-reqs" class="pw-reqs" aria-label="Password requirements">
                                 <li id="nr-len"  class="pw-req">At least 8 characters</li>
                                 <li id="nr-up"   class="pw-req">One uppercase letter</li>
                                 <li id="nr-low"  class="pw-req">One lowercase letter</li>
@@ -490,28 +488,27 @@
                             </div>
                             <span id="pw-confirm-hint" class="pw-match-hint" aria-live="polite"></span>
                         </div>
-                        <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#2a7d6e,#1a5c50)">Update Password</button>
+                        <button type="submit" class="auth-btn auth-btn--teal">Update Password</button>
                     </form>
                 </div>
             </details>
             {% endif %}
 
             <!-- Danger Zone -->
-            <details class="account-stats-details" style="margin-bottom:1rem;border:1px solid #f5c6c2;border-radius:10px;overflow:hidden"
-                     {% if danger_section_open %}open{% endif %}>
-                <summary style="padding:0.75rem 1rem;background:#fdf0ef;font-weight:600;font-size:0.93rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;color:#c0392b">
-                    <span style="display:flex;align-items:center;gap:0.5rem">
+            <details class="account-stats-details account-stats-details--danger" {% if danger_section_open %}open{% endif %}>
+                <summary>
+                    <span class="account-summary-inner">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         Danger Zone
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                 </summary>
-                <div style="padding:1rem">
-                    <p style="margin:0 0 0.75rem;font-size:0.875rem;color:var(--muted,#5c6b73)">
+                <div class="account-stats-body">
+                    <p class="delete-intro">
                         Permanently delete your account and all associated data — catches, photos, preferences, and settings. <strong>This cannot be undone.</strong>
                     </p>
                     {% if delete_error %}
-                    <div class="setup-error" role="alert" style="margin-bottom:0.75rem">{{ delete_error }}</div>
+                    <div class="setup-error setup-error--mb" role="alert">{{ delete_error }}</div>
                     {% endif %}
                     <form method="post" action="{{ url_for('auth.delete_account_route') }}" id="delete-account-form"
                           onsubmit="return confirmDelete(event)">
@@ -523,22 +520,22 @@
                                    autocomplete="current-password" required placeholder="Your password">
                         </div>
                         {% else %}
-                        <p style="font-size:0.85rem;color:var(--muted);margin:0 0 0.75rem">You sign in via {{ social_accounts[0].provider|capitalize if social_accounts else 'social login' }}. Type <strong>DELETE</strong> to confirm.</p>
+                        <p class="delete-social-hint">You sign in via {{ social_accounts[0].provider|capitalize if social_accounts else 'social login' }}. Type <strong>DELETE</strong> to confirm.</p>
                         <div class="auth-field">
                             <input type="text" name="confirm_text" class="auth-input" placeholder="Type DELETE to confirm"
                                    autocomplete="off" pattern="DELETE" required>
                         </div>
                         <input type="hidden" name="password" value="">
                         {% endif %}
-                        <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030)">Delete My Account</button>
+                        <button type="submit" class="auth-btn auth-btn--danger">Delete My Account</button>
                     </form>
                 </div>
             </details>
 
             <div class="account-actions account-footer-actions">
-                <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:0.5rem">
+                <form method="post" action="{{ url_for('auth.logout') }}" class="account-logout-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <button type="submit" class="auth-btn" style="background:linear-gradient(135deg,#8b4545,#6b3030);width:100%">Log Out</button>
+                    <button type="submit" class="auth-btn auth-btn--danger account-logout-btn">Log Out</button>
                 </form>
             </div>
         </section>
@@ -573,7 +570,7 @@
                 var el = document.getElementById('passkey-msg');
                 el.textContent = text;
                 el.style.color = isError ? '#c0392b' : '#2a7d6e';
-                el.style.display = '';
+                el.hidden = !text;
             }
 
             // Wire up remove buttons rendered server-side
@@ -695,7 +692,7 @@
             if (!msgEl) return;
             msgEl.textContent = text;
             msgEl.style.color = isError ? '#c0392b' : 'var(--ocean,#0e5f78)';
-            msgEl.style.display = text ? '' : 'none';
+            msgEl.hidden = !text;
         }
 
         function updateUI() {

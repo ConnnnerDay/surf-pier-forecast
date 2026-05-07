@@ -11967,25 +11967,175 @@ body.has-app-header main {
 
 /* ---- ACCOUNT PAGE: STATS COLLAPSE ---- */
 
+/* ── Account page: card-style collapsible panels ── */
 .account-stats-details {
-  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  overflow: hidden;
 }
-
-.account-stats-details summary {
-  font-size: 0.88rem;
+.account-stats-details--danger { border-color: #f5c6c2; }
+.account-stats-details > summary {
+  padding: 0.75rem 1rem;
+  background: var(--bg-subtle);
   font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.93rem;
   cursor: pointer;
-  padding: 0.5rem 0;
-  user-select: none;
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: space-between;
+  user-select: none;
 }
+.account-stats-details--danger > summary { background: #fdf0ef; color: #c0392b; }
+.account-stats-details > summary::-webkit-details-marker { display: none; }
+.account-summary-inner { display: flex; align-items: center; gap: 0.5rem; }
+.account-stats-body { padding: 1rem; }
 
-.account-stats-details summary::-webkit-details-marker {
-  display: none;
+/* Email not verified warning banner */
+.account-unverified {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+.account-unverified-icon { flex-shrink: 0; margin-top: 0.05rem; }
+.account-resend-form { display: inline; margin-left: 0.4rem; }
+.account-resend-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ocean, #0e5f78);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+.account-heading { margin-bottom: 1rem; }
+.account-subtitle { margin: 0; }
+.account-value--right { text-align: right; }
+.account-section-h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.account-section-edit-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ocean);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.account-profile-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.5rem;
+}
+.account-profile-setup-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+}
+.account-hr {
+  border: none;
+  border-top: 1px solid var(--border-light, #e5e9ed);
+  margin: 1.25rem 0 1rem;
+}
+.account-section-title-flush { margin-top: 0; }
+.account-loc-row { display: flex; gap: 0.5rem; align-items: center; }
+.account-loc-input { flex: 1; }
+.account-loc-hint { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+.account-section-sub-block { display: block; margin-top: 0.3rem; }
+.account-fav-label-hint { font-weight: 400; color: var(--text-muted); }
+.account-save-msg { margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #2a7d6e; }
+/* Passkey panel */
+.passkey-intro { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-muted); }
+.passkey-list { margin-bottom: 0.75rem; }
+.passkey-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border-light, #eee);
+}
+.passkey-item-name { font-size: 0.875rem; }
+.passkey-item-icon { vertical-align: middle; margin-right: 0.3rem; }
+.passkey-item-date { font-size: 0.78rem; color: var(--text-muted); }
+.passkey-remove-btn {
+  background: none;
+  border: none;
+  color: #c0392b;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+}
+.passkey-none-msg { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.passkey-status-msg { margin-top: 0.5rem; font-size: 0.85rem; }
+/* Notifications / alerts panel */
+.notif-intro { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-muted); }
+.notif-status { font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-muted); }
+.notif-msg { margin-top: 0.5rem; font-size: 0.82rem; }
+/* Connected accounts panel */
+.social-account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.social-account-icon { flex-shrink: 0; }
+.social-account-name { font-size: 0.9rem; }
+.social-account-since { margin-left: auto; font-size: 0.78rem; color: var(--text-muted); }
+/* Password change panel */
+.pw-change-form { margin: 0; }
+.setup-error--mb { margin-bottom: 0.75rem; }
+/* Delete account panel */
+.delete-intro { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-muted); }
+.delete-social-hint { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.account-logout-form { margin-top: 0.5rem; }
+.account-logout-btn { width: 100%; }
+/* Quick-link button gradient variants */
+.auth-btn--teal   { background: linear-gradient(135deg, #2a7d6e, #1a5c50); }
+.auth-btn--slate  { background: linear-gradient(135deg, #5a6e8a, #3d5068); }
+.auth-btn--brown  { background: linear-gradient(135deg, #6e5a3d, #504029); }
+.auth-btn--danger { background: linear-gradient(135deg, #8b4545, #6b3030); }
+/* Page hero username line */
+.page-subtitle--muted { opacity: 0.75; font-size: 0.9rem; }
+/* Fishing stats panel sub-elements */
+.account-section-h4 { margin: 0.75rem 0 0.4rem; font-size: 0.9rem; }
+.account-fav-link { color: var(--ocean); text-decoration: none; }
+.account-stats-body .section-sub { margin-top: 0.5rem; }
+/* Account type / status badge spans */
+.passkey-badge--active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+.passkey-badge--inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--surface, #f1f5f9);
+  color: var(--text-muted, #64748b);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 /* ---- SPACING IMPROVEMENTS ---- */
