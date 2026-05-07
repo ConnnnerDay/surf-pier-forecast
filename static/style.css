@@ -9601,6 +9601,7 @@ footer p {
   padding: 0.85rem 1rem;
   border: 1px solid var(--border-light);
   border-top: 3px solid var(--coral);
+  margin-top: 0.75rem;
 }
 
 .timeline-label {
@@ -12134,6 +12135,23 @@ body.has-app-header main {
 .auth-btn--slate  { background: linear-gradient(135deg, #5a6e8a, #3d5068); }
 .auth-btn--brown  { background: linear-gradient(135deg, #6e5a3d, #504029); }
 .auth-btn--danger { background: linear-gradient(135deg, #8b4545, #6b3030); }
+/* Conditions partial: tide trend arrow icons */
+.stat-trend-icon { vertical-align: -2px; margin-right: 0.2rem; }
+/* Verify email pages */
+.verify-hero { text-align: center; padding: 1rem 0 0.5rem; }
+.verify-hero--md { text-align: center; padding: 1.5rem 0; }
+.verify-hero-icon { margin-bottom: 1rem; }
+.verify-heading { margin-bottom: 0.4rem; }
+.verify-heading--success { color: #2a7d6e; margin-bottom: 0.5rem; }
+.verify-heading--error { color: #c0392b; margin-bottom: 0.5rem; }
+.verify-hint { color: var(--text-muted); margin-bottom: 0.3rem; }
+.verify-hint--sm { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+.verify-message { color: var(--text-muted); margin-bottom: 1.5rem; }
+.verify-resend-hint { font-size: 0.875rem; color: var(--text-muted); text-align: center; margin-bottom: 0.75rem; }
+.verify-footer-links { margin-top: 1.25rem; text-align: center; font-size: 0.875rem; }
+.verify-link { color: var(--ocean, #0e5f78); }
+.verify-resend-form { margin-bottom: 1rem; }
+.auth-btn--full { width: 100%; }
 /* Page hero username line */
 .page-subtitle--muted { opacity: 0.75; font-size: 0.9rem; }
 /* Fishing stats panel sub-elements */
