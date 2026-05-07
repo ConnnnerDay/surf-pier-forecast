@@ -492,6 +492,23 @@
         return icon;
     }
 
+    // Attach hover-highlight events to a habitat polygon or polyline layer.
+    // Closed polygons brighten fill + thicken border; open polylines just thicken.
+    function _bindPolyHover(layer, isClosed) {
+        var baseWeight      = isClosed ? 2 : 3;
+        var baseFillOpacity = isClosed ? (layer.options.fillOpacity || 0.30) : 0;
+        layer.on('mouseover', function () {
+            layer.setStyle({
+                weight:      baseWeight + 2,
+                fillOpacity: isClosed ? Math.min(baseFillOpacity + 0.25, 0.70) : 0
+            });
+            if (layer.bringToFront) layer.bringToFront();
+        });
+        layer.on('mouseout', function () {
+            layer.setStyle({ weight: baseWeight, fillOpacity: baseFillOpacity });
+        });
+    }
+
     // Render AI habitat picks, filtering to osmTypes that match active filter pills.
     // When no pills are active, renders everything from the general query.
     function renderAIHabitatSpots(features) {
@@ -567,7 +584,8 @@
             var isHuge = (maxLat - minLat) > _viewLatSpan * 0.6 ||
                          (maxLng - minLng) > _viewLngSpan * 0.6;
 
-            var poly    = (closed && !isHuge)
+            var isClosed = closed && !isHuge;
+            var poly    = isClosed
                 ? L.polygon(geom, {
                     color: color, weight: 2, opacity: 0.85,
                     fillColor: color, fillOpacity: 0.25,
@@ -577,6 +595,7 @@
                     color: color, weight: 3, opacity: 0.75,
                     className: 'fmap-habitat-poly'
                   });
+            _bindPolyHover(poly, isClosed);
             poly.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
                 '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
@@ -1193,6 +1212,7 @@
                         className: 'fmap-habitat-poly'
                     });
                 }
+                _bindPolyHover(layer, isClosed);
                 layer.bindTooltip(tooltipHtml,
                     { className: 'fmap-tooltip fmap-tooltip--struct', sticky: true });
                 fishingSpotLayer.addLayer(layer);
