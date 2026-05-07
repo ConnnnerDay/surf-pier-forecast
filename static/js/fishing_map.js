@@ -592,7 +592,8 @@
                     className: 'fmap-habitat-poly'
                   })
                 : L.polyline(geom, {
-                    color: color, weight: 3, opacity: 0.75,
+                    color: color, weight: 3, opacity: 0.85,
+                    dashArray: '10, 6',
                     className: 'fmap-habitat-poly'
                   });
             _bindPolyHover(poly, isClosed);
@@ -1203,12 +1204,13 @@
                     });
                 } else {
                     // Open waterway (tidal channel, river, canal, stream) —
-                    // draw as a coloured stroke so it traces the channel path
-                    // without incorrectly closing the ring into a filled area.
+                    // draw as a dashed coloured stroke so it traces the channel
+                    // path and is visually distinct from solid polygon fills.
                     layer = L.polyline(geom, {
                         color:     color,
                         weight:    3,
-                        opacity:   0.75,
+                        opacity:   0.85,
+                        dashArray: '10, 6',
                         className: 'fmap-habitat-poly'
                     });
                 }
