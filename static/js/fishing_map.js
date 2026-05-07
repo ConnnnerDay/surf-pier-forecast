@@ -584,17 +584,18 @@
             var isHuge = (maxLat - minLat) > _viewLatSpan * 0.6 ||
                          (maxLng - minLng) > _viewLngSpan * 0.6;
 
-            var isClosed = closed && !isHuge;
+            var isClosed  = closed && !isHuge;
+            var aiPolyCls = 'fmap-habitat-poly fmap-habitat-poly--' + osmType;
             var poly    = isClosed
                 ? L.polygon(geom, {
                     color: color, weight: 2, opacity: 0.85,
                     fillColor: color, fillOpacity: 0.25,
-                    className: 'fmap-habitat-poly'
+                    className: aiPolyCls
                   })
                 : L.polyline(geom, {
                     color: color, weight: 3, opacity: 0.85,
                     dashArray: '10, 6',
-                    className: 'fmap-habitat-poly'
+                    className: aiPolyCls
                   });
             _bindPolyHover(poly, isClosed);
             poly.bindTooltip(
@@ -1203,9 +1204,10 @@
 
             // Habitat area features with geometry → area overlay
             if (f.geometry && f.geometry.length >= 3 && POLYGON_HABITAT_TYPES[f.type]) {
-                var color = spotTypeColor(f.type);
-                var geom  = f.geometry;
+                var color    = spotTypeColor(f.type);
+                var geom     = f.geometry;
                 var layer;
+                var polyCls  = 'fmap-habitat-poly fmap-habitat-poly--' + f.type.replace(/_/g, '-');
 
                 // Closed ring (OSM closed way): first ≈ last coord → filled polygon.
                 // Open linestring (river, canal, tidal channel): coloured stroke only.
@@ -1228,7 +1230,7 @@
                         opacity:     0.85,
                         fillColor:   color,
                         fillOpacity: 0.30,
-                        className:   'fmap-habitat-poly'
+                        className:   polyCls
                     });
                 } else {
                     // Open waterway (tidal channel, river, canal, stream) —
@@ -1239,7 +1241,7 @@
                         weight:    3,
                         opacity:   0.85,
                         dashArray: '10, 6',
-                        className: 'fmap-habitat-poly'
+                        className: polyCls
                     });
                 }
                 _bindPolyHover(layer, isClosed);

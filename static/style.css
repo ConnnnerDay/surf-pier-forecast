@@ -4422,6 +4422,15 @@ h2::before {
 .fmap-habitat-poly:hover {
   fill-opacity: 0.55 !important;
 }
+/* Reef: tight dots — hard/rocky bottom (mirrors nautical chart convention) */
+.fmap-habitat-poly--reef {
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+}
+/* Shoal: longer dashes — shallow/sandy area hazard */
+.fmap-habitat-poly--shoal {
+  stroke-dasharray: 9 5;
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {
