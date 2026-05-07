@@ -4431,6 +4431,14 @@ h2::before {
 .fmap-habitat-poly--shoal {
   stroke-dasharray: 9 5;
 }
+/* Saltmarsh: marching-ants border suggests tidal flow */
+.fmap-habitat-poly--saltmarsh {
+  stroke-dasharray: 6 3;
+  animation: fmap-marsh-march 5s linear infinite;
+}
+@keyframes fmap-marsh-march {
+  to { stroke-dashoffset: -9; }
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {
