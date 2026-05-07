@@ -119,6 +119,8 @@ POLYGON_HABITAT_TYPES: frozenset[str] = frozenset(
         "oyster_reef",
         "inlet",
         "kelp",
+        "shoal",
+        "reef",
     }
 )
 
@@ -389,9 +391,11 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
         ]
     if "kelp" in types:
         habitat += [
+            f'way["natural"="kelp_bed"]({bbox});',
             f'way["natural"="wetland"]["wetland"="kelp"]({bbox});',
             f'way["natural"="kelp"]({bbox});',
             f'way["natural"="kelp_forest"]({bbox});',
+            f'node["natural"="kelp_bed"]({bbox});',
             f'node["seamark:type"="kelp"]({bbox});',
         ]
     if "inlet" in types:
@@ -414,17 +418,21 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
 
     # ── Structure point / linear types (centroid only) ───────────────────────
     if "reef" in types:
+        # Way elements carry polygon geometry → habitat set (out geom;).
+        # Node-only features stay in struct (out center;).
+        habitat += [
+            f'way["natural"="reef"]({bbox});',
+            f'way["natural"="coral_reef"]({bbox});',
+            f'way["natural"="coral"]({bbox});',
+            f'way["seamark:type"="artificial_reef"]({bbox});',
+            f'way["landuse"="artificial_reef"]({bbox});',
+        ]
         struct += [
             f'node["natural"="reef"]({bbox});',
-            f'way["natural"="reef"]({bbox});',
             f'node["natural"="coral_reef"]({bbox});',
-            f'way["natural"="coral_reef"]({bbox});',
             f'node["natural"="coral"]({bbox});',
-            f'way["natural"="coral"]({bbox});',
             f'node["seamark:type"="artificial_reef"]({bbox});',
-            f'way["seamark:type"="artificial_reef"]({bbox});',
             f'node["landuse"="artificial_reef"]({bbox});',
-            f'way["landuse"="artificial_reef"]({bbox});',
         ]
     if "wreck" in types:
         struct += [
@@ -434,11 +442,15 @@ def _build_overpass_query(bbox: str, types: set[str]) -> str:
             f'way["seamark:type"="wreck"]({bbox});',
         ]
     if "shoal" in types:
+        # Sandbank/shoal way polygons → habitat set so they render as area overlays.
+        # Node hazards (rocks, obstructions) remain point markers in struct set.
+        habitat += [
+            f'way["natural"="shoal"]({bbox});',
+            f'way["natural"="sandbank"]({bbox});',
+        ]
         struct += [
             f'node["natural"="shoal"]({bbox});',
-            f'way["natural"="shoal"]({bbox});',
             f'node["natural"="sandbank"]({bbox});',
-            f'way["natural"="sandbank"]({bbox});',
             f'node["natural"="rock"]({bbox});',
             f'node["seamark:type"="rock_awash"]({bbox});',
             f'node["seamark:type"="underwater_rock"]({bbox});',
@@ -616,7 +628,7 @@ def _classify_osm_tags(tags: dict[str, Any]) -> Optional[str]:
             return "kelp"
         return None  # unknown wetland subtype — skip
 
-    if natural in ("kelp", "kelp_forest"):
+    if natural in ("kelp", "kelp_forest", "kelp_bed"):
         return "kelp"
     if natural == "seagrass":
         return "grass_flat"
@@ -1346,6 +1358,8 @@ _HABITAT_TAGS: dict[str, list[str]] = {
     "kelp": [
         'way["natural"="kelp_bed"]',
         'node["natural"="kelp_bed"]',
+        'way["natural"="kelp"]',
+        'way["natural"="kelp_forest"]',
         'way["natural"="wetland"]["wetland"="kelp"]',
         'node["natural"="wetland"]["wetland"="kelp"]',
         'way["seamark:type"="kelp_bed"]',
@@ -1462,13 +1476,12 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
     if wet == "seagrass":    return "seagrass"
     if wet == "mangrove":    return "mangrove"
     if wet == "tidalflat":   return "tidalflat"
-    if wet == "kelp":        return "seagrass"
+    if wet == "kelp":        return "kelp"
     if nat == "reef":
-        # kelp-type reef → seagrass so it surfaces under the kelp filter pill
-        if tags.get("reef:type") == "kelp":  return "seagrass"
+        if tags.get("reef:type") == "kelp":  return "kelp"
         return "reef"
     if nat == "coral_reef":  return "reef"
-    if nat == "kelp_bed":    return "seagrass"
+    if nat == "kelp_bed":    return "kelp"
     if nat == "shoal":       return "shoal"
     if nat == "sandbank":    return "shoal"
     if nat == "beach":       return "beach"
@@ -1483,7 +1496,7 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
     if sea == "rock_awash":                   return "shoal"
     if sea == "rock_submerged":               return "shoal"
     if sea in ("beacon_lateral", "buoy_lateral"): return "channel"
-    if sea == "kelp_bed":                     return "seagrass"
+    if sea == "kelp_bed":                     return "kelp"
     if wway in ("tidal_channel", "tidal_creek", "stream", "drain"): return "channel"
     if mm in ("pier", "jetty", "breakwater"): return "reef"
     if tags.get("reef:type") == "coral":      return "reef"

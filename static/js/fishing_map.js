@@ -404,6 +404,7 @@
         reef:      '#f59e0b',
         saltmarsh: '#34d399',
         seagrass:  '#22c55e',
+        kelp:      '#4ade80',
         mangrove:  '#16a34a',
         channel:   '#38bdf8',
         shoal:     '#94a3b8',
@@ -419,6 +420,7 @@
         reef:      { label: 'Reef',        tip: 'Reef edge — grouper, snapper, and bass stack on the upcurrent face. Work the drop with a jig or live bait.' },
         saltmarsh: { label: 'Saltmarsh',   tip: 'Marsh creek mouth — redfish and snook ambush bait washing out on the falling tide. Position at the exit.' },
         seagrass:  { label: 'Seagrass',    tip: 'Seagrass flat — trout, redfish, and flounder push shallow on the flood. Work the edges and any potholes.' },
+        kelp:      { label: 'Kelp Forest', tip: 'Kelp canopy — rockfish, lingcod, and halibut hold along the edge. Drift live bait or a slow-rolled jig through the fronds.' },
         mangrove:  { label: 'Mangrove',    tip: 'Mangrove roots — snook, tarpon, and jack hold in the shadow line. Cast tight to the prop roots.' },
         channel:   { label: 'Channel',     tip: 'Tidal channel — bait funnels through on every tide change. Fish the current seam at the channel edge.' },
         shoal:     { label: 'Shoal',       tip: 'Shoal drop-off — fish hold on the seam between shallow and deep waiting for bait swept off the flat.' },
@@ -465,13 +467,14 @@
         'tidal_flat': 'tidalflat',
         'tidalflat':  'tidalflat',
         'beach':      'beach',
-        'kelp':       'seagrass',
+        'kelp':       'kelp',
         'bay':        'bay',
     };
 
     // Symbols for AI pick osmTypes that don't have SPOT_LABELS entries
     var _AI_OSMT_SYM = {
         seagrass:  '≋',  // matches grass_flat
+        kelp:      '⇑',  // matches kelp filter pill
         channel:   '⇢',  // matches inlet
         tidalflat: '⊟',  // matches tidal_flat
         bay:       '〜',
@@ -766,12 +769,12 @@
         pier:         { label: 'Pier',              color: '#a78bfa', habitat: false, minZoom: 8  },
         jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false, minZoom: 8  },
         bridge:       { label: 'Bridge',            color: '#f97316', habitat: false, minZoom: 8  },
-        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false, minZoom: 8  },
+        reef:         { label: 'Reef',              color: '#f59e0b', habitat: true,  minZoom: 8  },
         oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true,  minZoom: 9  },
         wreck:        { label: 'Wreck',             color: '#d97706', habitat: false, minZoom: 8  },
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
-        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 9  },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: true,  minZoom: 9  },
         point:        { label: 'Point / Headland',  color: '#60a5fa', habitat: false, minZoom: 9  },
         beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
@@ -791,7 +794,8 @@
     // Must match POLYGON_HABITAT_TYPES in services/fish_structures.py.
     var POLYGON_HABITAT_TYPES = {
         saltmarsh: true, mangrove: true, tidal_flat: true,
-        grass_flat: true, beach: true, oyster_reef: true, inlet: true, kelp: true
+        grass_flat: true, beach: true, oyster_reef: true, inlet: true, kelp: true,
+        shoal: true, reef: true
     };
 
     var _MAX_POLYGON_COORDS = 200;
