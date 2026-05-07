@@ -1069,7 +1069,9 @@
                         (innerRot ? ' style="' + innerRot + '"' : '') + '>' + lbl + '</span>';
             }
         }
-        var html = '<span class="fmap-spot-dot" style="background:' + color +
+        var ringHtml = (type === 'wreck') ? '<span class="fmap-wreck-ring"></span>' : '';
+        var html = ringHtml +
+                   '<span class="fmap-spot-dot" style="background:' + color +
                    ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
         var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,

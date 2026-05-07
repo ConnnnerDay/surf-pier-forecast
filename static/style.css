@@ -4430,6 +4430,26 @@ h2::before {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+/* Wreck marker sonar-ping ring */
+.fmap-wreck-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #d97706;
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0;
+  animation: fmap-wreck-ping 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes fmap-wreck-ping {
+  0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 0.85; }
+  80%  { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
 }
 .fmap-spot-dot {
   display: flex;
