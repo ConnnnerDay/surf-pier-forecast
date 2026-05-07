@@ -602,6 +602,16 @@
                 '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
             );
+            // Click opens the spot-detail panel with habitat info and fishing tip.
+            (function (spotData, lyr) {
+                lyr.on('click', function () {
+                    if (typeof window._fmapShowSpotDetail === 'function') {
+                        _activeSpotMarker = null;
+                        window._fmapShowSpotDetail(spotData);
+                    }
+                });
+            }({ type: osmType, lat: f.lat, lng: f.lng,
+                name: f.name || info.label, tip: info.tip }, poly));
             aiPickLayer.addLayer(poly);
         });
 
@@ -1219,6 +1229,16 @@
                 _bindPolyHover(layer, isClosed);
                 layer.bindTooltip(tooltipHtml,
                     { className: 'fmap-tooltip fmap-tooltip--struct', sticky: true });
+                // Click opens the same spot-detail panel used by point markers.
+                (function (spot, lyr) {
+                    lyr.on('click', function () {
+                        if (adminEditMode) return;
+                        if (typeof window._fmapShowSpotDetail === 'function') {
+                            _activeSpotMarker = null;
+                            window._fmapShowSpotDetail(spot);
+                        }
+                    });
+                }({ type: f.type, lat: f.lat, lng: f.lng, name: name, tip: tip }, layer));
                 fishingSpotLayer.addLayer(layer);
                 return;
             }
