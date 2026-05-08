@@ -4450,6 +4450,26 @@ h2::before {
   stroke-dasharray: 3 2 3 7;
   stroke-linecap: round;
 }
+/* Tidal flat: widely spaced dots — open mud/sand surface */
+.fmap-habitat-poly--tidal-flat,
+.fmap-habitat-poly--tidalflat {
+  stroke-dasharray: 1 5;
+  stroke-linecap: round;
+}
+/* Tidal flat centroid ripple marker — water covering/uncovering the flat */
+.fmap-tidal-drop-wrap { background: none; border: none; }
+.fmap-tidal-drop {
+  display: block;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(110,231,183,0.20);
+  border: 1.5px solid rgba(110,231,183,0.75);
+  animation: fmap-tidal-ripple 3.5s ease-out infinite;
+}
+@keyframes fmap-tidal-ripple {
+  0%   { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {

@@ -1258,6 +1258,31 @@
                     });
                 }({ type: f.type, lat: f.lat, lng: f.lng, name: name, tip: tip }, layer));
                 fishingSpotLayer.addLayer(layer);
+
+                // Tidal flat closed polygons: add a centroid ripple marker at zoom 11+
+                // to suggest water covering/uncovering the flat on each tide cycle.
+                // Marker lives in fishingSpotLayer so it's removed when filter is toggled off.
+                if (f.type === 'tidal_flat' && isClosed && currentZoom >= 11) {
+                    var _gC = geom, _sLat = 0, _sLng = 0;
+                    for (var _ci = 0; _ci < _gC.length; _ci++) {
+                        _sLat += _gC[_ci][0];
+                        _sLng += _gC[_ci][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_sLat / _gC.length, _sLng / _gC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-tidal-drop"></span>',
+                                className: 'fmap-tidal-drop-wrap',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            }),
+                            interactive: false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
