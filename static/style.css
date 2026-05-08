@@ -4475,6 +4475,27 @@ h2::before {
   stroke-dasharray: 6 2 2 2;
   stroke-linecap: round;
 }
+/* Kelp: double-dash cluster — frond bunches along the canopy edge */
+.fmap-habitat-poly--kelp {
+  stroke-dasharray: 4 1 4 5;
+  stroke-linecap: round;
+}
+/* Kelp centroid stalk — sways like kelp in current */
+.fmap-kelp-stalk-wrap { background: none; border: none; }
+.fmap-kelp-stalk {
+  display: block;
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(to top, rgba(74,222,128,0.9), rgba(74,222,128,0.25));
+  border-radius: 1px 1px 0 0;
+  margin: 0 auto;
+  transform-origin: bottom center;
+  animation: fmap-kelp-sway 4s ease-in-out infinite;
+}
+@keyframes fmap-kelp-sway {
+  0%, 100% { transform: rotate(-10deg); }
+  50%       { transform: rotate(10deg); }
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {

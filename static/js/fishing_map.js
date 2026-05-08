@@ -1306,6 +1306,29 @@
                     ));
                 }
 
+                // Kelp closed polygons: swaying stalk marker at centroid, zoom 11+.
+                // Kelp grows vertically in current; the CSS animation evokes that motion.
+                if (f.type === 'kelp' && isClosed && currentZoom >= 11) {
+                    var _kGC = geom, _kLat = 0, _kLng = 0;
+                    for (var _ki = 0; _ki < _kGC.length; _ki++) {
+                        _kLat += _kGC[_ki][0];
+                        _kLng += _kGC[_ki][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_kLat / _kGC.length, _kLng / _kGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-kelp-stalk"></span>',
+                                className: 'fmap-kelp-stalk-wrap',
+                                iconSize:   [12, 20],
+                                iconAnchor: [6, 18]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
