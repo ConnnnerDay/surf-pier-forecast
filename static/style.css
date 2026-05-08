@@ -4540,6 +4540,18 @@ h2::before {
   background: rgba(22,163,74,0.82);
   clip-path: polygon(50% 0%, 50% 42%, 18% 100%, 50% 58%, 82% 100%, 50% 42%);
 }
+/* Grass flat centroid — three horizontal bars suggest seagrass blades lying flat */
+.fmap-grassflat-pin-wrap { background: none; border: none; }
+.fmap-grassflat-pin {
+  display: block;
+  width: 12px;
+  height: 2px;
+  background: rgba(34,197,94,0.9);
+  border-radius: 1px;
+  box-shadow:
+    0 4px 0 rgba(34,197,94,0.65),
+    0 8px 0 rgba(34,197,94,0.40);
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {

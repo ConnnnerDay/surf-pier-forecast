@@ -1422,6 +1422,30 @@
                     ));
                 }
 
+                // Grass flat closed polygons: horizontal-bar centroid marker at zoom 11+.
+                // Three stacked horizontal bars suggest seagrass blades lying flat in current,
+                // contrasting with the vertical saltmarsh tuft.
+                if (f.type === 'grass_flat' && isClosed && currentZoom >= 11) {
+                    var _gfGC = geom, _gfLat = 0, _gfLng = 0;
+                    for (var _gfi = 0; _gfi < _gfGC.length; _gfi++) {
+                        _gfLat += _gfGC[_gfi][0];
+                        _gfLng += _gfGC[_gfi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_gfLat / _gfGC.length, _gfLng / _gfGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-grassflat-pin"></span>',
+                                className: 'fmap-grassflat-pin-wrap',
+                                iconSize:   [12, 10],
+                                iconAnchor: [6, 5]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
