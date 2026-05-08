@@ -1283,6 +1283,29 @@
                     ));
                 }
 
+                // Oyster reef closed polygons: centroid circleMarker at zoom 11+.
+                // Static amber dot (no animation) — reefs are fixed hard structures.
+                if (f.type === 'oyster_reef' && isClosed && currentZoom >= 11) {
+                    var _oGC = geom, _oLat = 0, _oLng = 0;
+                    for (var _oi = 0; _oi < _oGC.length; _oi++) {
+                        _oLat += _oGC[_oi][0];
+                        _oLng += _oGC[_oi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.circleMarker(
+                        [_oLat / _oGC.length, _oLng / _oGC.length],
+                        {
+                            radius:      5,
+                            color:       '#f59e0b',
+                            fillColor:   '#f59e0b',
+                            fillOpacity: 0.65,
+                            weight:      2,
+                            opacity:     0.9,
+                            interactive: false,
+                            className:   'fmap-oyster-centroid'
+                        }
+                    ));
+                }
+
                 return;
             }
 
