@@ -4516,6 +4516,21 @@ h2::before {
   border-right: 7px solid transparent;
   border-bottom: 12px solid rgba(148,163,184,0.85);
 }
+/* Saltmarsh centroid grass tuft — spartina stalks rendered as gradient stripes */
+.fmap-marsh-tuft-wrap { background: none; border: none; }
+.fmap-marsh-tuft {
+  display: block;
+  width: 14px;
+  height: 13px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(52,211,153,0.9) 0px,
+    rgba(52,211,153,0.9) 2px,
+    transparent 2px,
+    transparent 5px
+  );
+  border-radius: 1px 1px 0 0;
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {

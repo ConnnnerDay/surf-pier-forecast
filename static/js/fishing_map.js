@@ -1376,6 +1376,29 @@
                     ));
                 }
 
+                // Saltmarsh closed polygons: grass-tuft centroid marker at zoom 11+.
+                // Three vertical stripes via CSS gradient suggest spartina grass stalks.
+                if (f.type === 'saltmarsh' && isClosed && currentZoom >= 11) {
+                    var _mGC = geom, _mLat = 0, _mLng = 0;
+                    for (var _mi = 0; _mi < _mGC.length; _mi++) {
+                        _mLat += _mGC[_mi][0];
+                        _mLng += _mGC[_mi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_mLat / _mGC.length, _mLng / _mGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-marsh-tuft"></span>',
+                                className: 'fmap-marsh-tuft-wrap',
+                                iconSize:   [14, 13],
+                                iconAnchor: [7, 13]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
