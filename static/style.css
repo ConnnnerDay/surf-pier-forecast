@@ -4506,6 +4506,16 @@ h2::before {
   border: 1.5px solid rgba(245,158,11,0.95);
   transform: rotate(45deg);
 }
+/* Shoal centroid triangle — nautical chart shoal hazard convention */
+.fmap-shoal-pin-wrap { background: none; border: none; }
+.fmap-shoal-pin {
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid rgba(148,163,184,0.85);
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {

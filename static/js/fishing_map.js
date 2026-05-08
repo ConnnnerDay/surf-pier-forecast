@@ -1353,6 +1353,29 @@
                     ));
                 }
 
+                // Shoal closed polygons: upward-triangle centroid marker at zoom 11+.
+                // Triangle matches the nautical chart convention for a shoal hazard.
+                if (f.type === 'shoal' && isClosed && currentZoom >= 11) {
+                    var _sGC = geom, _shLat = 0, _shLng = 0;
+                    for (var _si = 0; _si < _sGC.length; _si++) {
+                        _shLat += _sGC[_si][0];
+                        _shLng += _sGC[_si][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_shLat / _sGC.length, _shLng / _sGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-shoal-pin"></span>',
+                                className: 'fmap-shoal-pin-wrap',
+                                iconSize:   [14, 12],
+                                iconAnchor: [7, 6]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
