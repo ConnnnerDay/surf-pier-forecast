@@ -614,6 +614,69 @@
             }({ type: osmType, lat: f.lat, lng: f.lng,
                 name: f.name || info.label, tip: info.tip }, poly));
             aiPickLayer.addLayer(poly);
+
+            // Centroid / midpoint markers for AI-picked habitat polygons —
+            // mirrors the OSM layer by reusing the same CSS icon classes.
+            // currentZoom is local to renderFishingSpots; read zoom from map directly.
+            if (map && Math.floor(map.getZoom()) >= 11) {
+                var _aiIconMap = {
+                    reef:      { html: '<span class="fmap-reef-pin"></span>',
+                                 cls: 'fmap-reef-pin-wrap',      sz: [14,14], anc: [7,7]  },
+                    shoal:     { html: '<span class="fmap-shoal-pin"></span>',
+                                 cls: 'fmap-shoal-pin-wrap',     sz: [14,12], anc: [7,6]  },
+                    saltmarsh: { html: '<span class="fmap-marsh-tuft"></span>',
+                                 cls: 'fmap-marsh-tuft-wrap',    sz: [14,13], anc: [7,13] },
+                    seagrass:  { html: '<span class="fmap-grassflat-pin"></span>',
+                                 cls: 'fmap-grassflat-pin-wrap', sz: [12,10], anc: [6,5]  },
+                    mangrove:  { html: '<span class="fmap-mangrove-pin"></span>',
+                                 cls: 'fmap-mangrove-pin-wrap',  sz: [14,14], anc: [7,7]  },
+                    tidalflat: { html: '<span class="fmap-tidal-drop"></span>',
+                                 cls: 'fmap-tidal-drop-wrap',    sz: [20,20], anc: [10,10]},
+                    kelp:      { html: '<span class="fmap-kelp-stalk"></span>',
+                                 cls: 'fmap-kelp-stalk-wrap',    sz: [12,20], anc: [6,18] },
+                    beach:     { html: '<span class="fmap-beach-pin"></span>',
+                                 cls: 'fmap-beach-pin-wrap',     sz: [14,8],  anc: [7,4]  }
+                };
+                var _aiCfg = _aiIconMap[osmType];
+                if (_aiCfg && isClosed) {
+                    var _aiGC = geom, _aiLat = 0, _aiLng = 0;
+                    for (var _aii = 0; _aii < _aiGC.length; _aii++) {
+                        _aiLat += _aiGC[_aii][0]; _aiLng += _aiGC[_aii][1];
+                    }
+                    aiPickLayer.addLayer(L.marker(
+                        [_aiLat / _aiGC.length, _aiLng / _aiGC.length],
+                        {
+                            icon: L.divIcon({
+                                html:       _aiCfg.html,
+                                className:  _aiCfg.cls,
+                                iconSize:   _aiCfg.sz,
+                                iconAnchor: _aiCfg.anc
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+                // Channel open polylines: bearing arrow at midpoint
+                if (osmType === 'channel' && !isClosed && geom.length >= 3) {
+                    var _aiMid = Math.floor(geom.length / 2);
+                    var _aiP1  = geom[Math.max(0, _aiMid - 1)];
+                    var _aiP2  = geom[Math.min(geom.length - 1, _aiMid + 1)];
+                    var _aiBrg = Math.atan2(_aiP2[1] - _aiP1[1],
+                                           _aiP2[0] - _aiP1[0]) * 180 / Math.PI;
+                    aiPickLayer.addLayer(L.marker(geom[_aiMid], {
+                        icon: L.divIcon({
+                            html:       '<span class="fmap-inlet-arrow" style="transform:rotate(' +
+                                        _aiBrg + 'deg)"></span>',
+                            className:  'fmap-inlet-arrow-wrap',
+                            iconSize:   [10, 10],
+                            iconAnchor: [5, 5]
+                        }),
+                        interactive:  false,
+                        zIndexOffset: -100
+                    }));
+                }
+            }
         });
 
         // Render point markers, up to _AI_POINT_CAP, skipping any point whose
