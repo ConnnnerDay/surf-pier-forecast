@@ -1547,6 +1547,23 @@
                 });
             }(f, m));
             fishingSpotLayer.addLayer(m);
+
+            // Influence-zone halo: L.circle around structure markers at zoom 13+.
+            // Radius reflects the typical fish-holding / casting zone for each type.
+            var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60 };
+            if (_HALO_R[f.type] && currentZoom >= 13) {
+                var _haloColor = spotTypeColor(f.type);
+                fishingSpotLayer.addLayer(L.circle([f.lat, f.lng], {
+                    radius:      _HALO_R[f.type],
+                    color:       _haloColor,
+                    weight:      1,
+                    opacity:     0.45,
+                    fillColor:   _haloColor,
+                    fillOpacity: 0.07,
+                    interactive: false,
+                    className:   'fmap-spot-halo'
+                }));
+            }
         });
 
         // Render admin-created custom markers with edit affordances
