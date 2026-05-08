@@ -1329,6 +1329,30 @@
                     ));
                 }
 
+                // Reef closed polygons: diamond centroid marker at zoom 11+.
+                // Diamond matches the nautical chart convention for a reef hazard.
+                // Distinct from oyster_reef (filled circle) despite sharing the amber color.
+                if (f.type === 'reef' && isClosed && currentZoom >= 11) {
+                    var _rGC = geom, _rLat = 0, _rLng = 0;
+                    for (var _ri = 0; _ri < _rGC.length; _ri++) {
+                        _rLat += _rGC[_ri][0];
+                        _rLng += _rGC[_ri][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_rLat / _rGC.length, _rLng / _rGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-reef-pin"></span>',
+                                className: 'fmap-reef-pin-wrap',
+                                iconSize:   [14, 14],
+                                iconAnchor: [7, 7]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
