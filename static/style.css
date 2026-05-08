@@ -4531,6 +4531,15 @@ h2::before {
   );
   border-radius: 1px 1px 0 0;
 }
+/* Mangrove centroid prop-root fork — trunk splits into two arching roots */
+.fmap-mangrove-pin-wrap { background: none; border: none; }
+.fmap-mangrove-pin {
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: rgba(22,163,74,0.82);
+  clip-path: polygon(50% 0%, 50% 42%, 18% 100%, 50% 58%, 82% 100%, 50% 42%);
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {

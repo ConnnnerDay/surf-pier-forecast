@@ -1399,6 +1399,29 @@
                     ));
                 }
 
+                // Mangrove closed polygons: prop-root fork centroid marker at zoom 11+.
+                // clip-path Y-shape suggests a trunk splitting into arching prop roots.
+                if (f.type === 'mangrove' && isClosed && currentZoom >= 11) {
+                    var _mgGC = geom, _mgLat = 0, _mgLng = 0;
+                    for (var _mgi = 0; _mgi < _mgGC.length; _mgi++) {
+                        _mgLat += _mgGC[_mgi][0];
+                        _mgLng += _mgGC[_mgi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_mgLat / _mgGC.length, _mgLng / _mgGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-mangrove-pin"></span>',
+                                className: 'fmap-mangrove-pin-wrap',
+                                iconSize:   [14, 14],
+                                iconAnchor: [7, 7]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
                 return;
             }
 
