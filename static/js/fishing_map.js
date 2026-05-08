@@ -1446,6 +1446,68 @@
                     ));
                 }
 
+                // Beach closed polygons: wave-arc centroid marker at zoom 11+.
+                if (f.type === 'beach' && isClosed && currentZoom >= 11) {
+                    var _bGC = geom, _bLat = 0, _bLng = 0;
+                    for (var _bi = 0; _bi < _bGC.length; _bi++) {
+                        _bLat += _bGC[_bi][0]; _bLng += _bGC[_bi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_bLat / _bGC.length, _bLng / _bGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-beach-pin"></span>',
+                                className: 'fmap-beach-pin-wrap',
+                                iconSize:   [14, 8],
+                                iconAnchor: [7, 4]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
+                // Inlet closed polygons: small circle at centroid; open channel polylines:
+                // directional arrow at midpoint oriented along the channel bearing.
+                if (f.type === 'inlet' && currentZoom >= 11) {
+                    if (isClosed) {
+                        var _inGC = geom, _inLat = 0, _inLng = 0;
+                        for (var _ini = 0; _ini < _inGC.length; _ini++) {
+                            _inLat += _inGC[_ini][0]; _inLng += _inGC[_ini][1];
+                        }
+                        fishingSpotLayer.addLayer(L.circleMarker(
+                            [_inLat / _inGC.length, _inLng / _inGC.length],
+                            {
+                                radius:      4,
+                                color:       '#38bdf8',
+                                fillColor:   '#38bdf8',
+                                fillOpacity: 0.60,
+                                weight:      1.5,
+                                opacity:     0.9,
+                                interactive: false,
+                                className:   'fmap-inlet-centroid'
+                            }
+                        ));
+                    } else if (geom.length >= 3) {
+                        var _ioMid = Math.floor(geom.length / 2);
+                        var _ioP1  = geom[Math.max(0, _ioMid - 1)];
+                        var _ioP2  = geom[Math.min(geom.length - 1, _ioMid + 1)];
+                        var _ioBrg = Math.atan2(_ioP2[1] - _ioP1[1],
+                                                _ioP2[0] - _ioP1[0]) * 180 / Math.PI;
+                        fishingSpotLayer.addLayer(L.marker(geom[_ioMid], {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-inlet-arrow" style="transform:rotate(' +
+                                      _ioBrg + 'deg)"></span>',
+                                className: 'fmap-inlet-arrow-wrap',
+                                iconSize:   [10, 10],
+                                iconAnchor: [5, 5]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }));
+                    }
+                }
+
                 return;
             }
 
