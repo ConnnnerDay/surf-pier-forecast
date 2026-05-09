@@ -509,6 +509,32 @@
         });
     }
 
+    // Add flow-direction arrows along an open channel/inlet polyline.
+    // Short lines (< 5 pts) get one arrow at the midpoint; longer lines get
+    // arrows at 25%, 50%, and 75% so the direction is clear over the full length.
+    function _addChannelArrows(geom, layer) {
+        var n  = geom.length;
+        var positions = n >= 5
+            ? [Math.floor(n * 0.25), Math.floor(n * 0.5), Math.floor(n * 0.75)]
+            : [Math.floor(n / 2)];
+        positions.forEach(function (idx) {
+            var p1  = geom[Math.max(0, idx - 1)];
+            var p2  = geom[Math.min(n - 1, idx + 1)];
+            var brg = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
+            layer.addLayer(L.marker(geom[idx], {
+                icon: L.divIcon({
+                    html:       '<span class="fmap-inlet-arrow" style="transform:rotate(' +
+                                brg + 'deg)"></span>',
+                    className:  'fmap-inlet-arrow-wrap',
+                    iconSize:   [10, 10],
+                    iconAnchor: [5, 5]
+                }),
+                interactive:  false,
+                zIndexOffset: -100
+            }));
+        });
+    }
+
     // Render AI habitat picks, filtering to osmTypes that match active filter pills.
     // When no pills are active, renders everything from the general query.
     function renderAIHabitatSpots(features) {
@@ -657,24 +683,9 @@
                         }
                     ));
                 }
-                // Channel open polylines: bearing arrow at midpoint
+                // Channel open polylines: bearing arrows via shared helper
                 if (osmType === 'channel' && !isClosed && geom.length >= 3) {
-                    var _aiMid = Math.floor(geom.length / 2);
-                    var _aiP1  = geom[Math.max(0, _aiMid - 1)];
-                    var _aiP2  = geom[Math.min(geom.length - 1, _aiMid + 1)];
-                    var _aiBrg = Math.atan2(_aiP2[1] - _aiP1[1],
-                                           _aiP2[0] - _aiP1[0]) * 180 / Math.PI;
-                    aiPickLayer.addLayer(L.marker(geom[_aiMid], {
-                        icon: L.divIcon({
-                            html:       '<span class="fmap-inlet-arrow" style="transform:rotate(' +
-                                        _aiBrg + 'deg)"></span>',
-                            className:  'fmap-inlet-arrow-wrap',
-                            iconSize:   [10, 10],
-                            iconAnchor: [5, 5]
-                        }),
-                        interactive:  false,
-                        zIndexOffset: -100
-                    }));
+                    _addChannelArrows(geom, aiPickLayer);
                 }
             }
         });
@@ -1552,22 +1563,7 @@
                             }
                         ));
                     } else if (geom.length >= 3) {
-                        var _ioMid = Math.floor(geom.length / 2);
-                        var _ioP1  = geom[Math.max(0, _ioMid - 1)];
-                        var _ioP2  = geom[Math.min(geom.length - 1, _ioMid + 1)];
-                        var _ioBrg = Math.atan2(_ioP2[1] - _ioP1[1],
-                                                _ioP2[0] - _ioP1[0]) * 180 / Math.PI;
-                        fishingSpotLayer.addLayer(L.marker(geom[_ioMid], {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-inlet-arrow" style="transform:rotate(' +
-                                      _ioBrg + 'deg)"></span>',
-                                className: 'fmap-inlet-arrow-wrap',
-                                iconSize:   [10, 10],
-                                iconAnchor: [5, 5]
-                            }),
-                            interactive:  false,
-                            zIndexOffset: -100
-                        }));
+                        _addChannelArrows(geom, fishingSpotLayer);
                     }
                 }
 
@@ -1613,7 +1609,8 @@
 
             // Influence-zone halo: L.circle around structure markers at zoom 13+.
             // Radius reflects the typical fish-holding / casting zone for each type.
-            var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60 };
+            var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
+                            fishing: 40, fishing_salt: 40, fishing_fresh: 40 };
             if (_HALO_R[f.type] && currentZoom >= 13) {
                 var _haloColor = spotTypeColor(f.type);
                 fishingSpotLayer.addLayer(L.circle([f.lat, f.lng], {
