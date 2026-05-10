@@ -1234,7 +1234,7 @@
         var _suppressedTypes = {};
 
         // Render OSM / NOAA spots first
-        spots.filter(function (f) {
+        var filteredSpots = spots.filter(function (f) {
             if (f.custom) return false;
             // Client-side type filter: activeSpotTypes = [] means show all types.
             // The cache always holds all-types results; filtering here avoids a
@@ -1257,7 +1257,15 @@
                 return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
             }
             return true;
-        }).forEach(function (f) {
+        });
+
+        // Grid-based cluster detection for dense point-marker zones.
+        // Each 0.01° cell (~1.1 km) that holds 4+ same-type spots gets a
+        // summary ring drawn after the main forEach. Declared here so the
+        // loop body can write into it.
+        var _clusterGrid = {};
+
+        filteredSpots.forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || 'No details available';
             var srcLabel = f.source === 'noaa' ? 'NOAA ENC'
@@ -1607,6 +1615,15 @@
             }(f, m));
             fishingSpotLayer.addLayer(m);
 
+            // Accumulate point-marker positions for post-render cluster detection.
+            if (_HALO_R[f.type]) {
+                var _cCell = Math.floor(f.lat / 0.01) + ':' + Math.floor(f.lng / 0.01) + ':' + f.type;
+                if (!_clusterGrid[_cCell]) _clusterGrid[_cCell] = { type: f.type, la: 0, ln: 0, n: 0 };
+                _clusterGrid[_cCell].la += f.lat;
+                _clusterGrid[_cCell].ln += f.lng;
+                _clusterGrid[_cCell].n  += 1;
+            }
+
             // Influence-zone halo: L.circle around structure markers at zoom 13+.
             // Radius reflects the typical fish-holding / casting zone for each type.
             var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
@@ -1625,6 +1642,29 @@
                 }));
             }
         });
+
+        // Draw cluster summary rings: cells with 4+ same-type point markers
+        // get a faint L.circle ring at their centroid, visible at zoom 11-14.
+        if (currentZoom >= 11 && currentZoom <= 14) {
+            Object.keys(_clusterGrid).forEach(function (ck) {
+                var cell = _clusterGrid[ck];
+                if (cell.n < 4) return;
+                var clr = spotTypeColor(cell.type);
+                fishingSpotLayer.addLayer(L.circle(
+                    [cell.la / cell.n, cell.ln / cell.n],
+                    {
+                        radius:      350,
+                        color:       clr,
+                        weight:      1,
+                        opacity:     0.40,
+                        fillColor:   clr,
+                        fillOpacity: 0.05,
+                        interactive: false,
+                        className:   'fmap-cluster-ring'
+                    }
+                ));
+            });
+        }
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
@@ -5144,6 +5184,7 @@
         var color = score >= 8 ? '#4ade80' :
                     score >= 6 ? '#a3e635' :
                     score >= 4 ? '#fbbf24' : '#f87171';
+        // Point markers: recolour the dot border
         fishingSpotLayer.eachLayer(function (layer) {
             if (!layer._icon) return;
             var dot = layer._icon.querySelector('.fmap-spot-dot');
@@ -5151,6 +5192,17 @@
                 dot.style.borderColor = color;
                 dot.style.boxShadow   = '0 0 7px ' + color + '77';
             }
+        });
+        // Habitat polygons: scale border opacity with score so high-scoring
+        // areas read as more vivid and low-scoring ones fade back.
+        var borderOpacity = score >= 8 ? 0.95 :
+                            score >= 6 ? 0.75 :
+                            score >= 4 ? 0.55 : 0.35;
+        fishingSpotLayer.eachLayer(function (layer) {
+            if (!layer.setStyle) return;
+            var cls = (layer.options && layer.options.className) || '';
+            if (!cls.includes('fmap-habitat-poly')) return;
+            layer.setStyle({ opacity: borderOpacity });
         });
     }
 
