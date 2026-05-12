@@ -4536,6 +4536,7 @@ h2::before {
   );
   border-radius: 1px 1px 0 0;
 }
+.fmap-marsh-tuft--sm { width: 9px; height: 8px; }
 /* Mangrove centroid prop-root fork — trunk splits into two arching roots */
 .fmap-mangrove-pin-wrap { background: none; border: none; }
 .fmap-mangrove-pin {
@@ -4545,6 +4546,7 @@ h2::before {
   background: rgba(22,163,74,0.82);
   clip-path: polygon(50% 0%, 50% 42%, 18% 100%, 50% 58%, 82% 100%, 50% 42%);
 }
+.fmap-mangrove-pin--sm { width: 9px; height: 9px; }
 /* Grass flat centroid — three horizontal bars suggest seagrass blades lying flat */
 .fmap-grassflat-pin-wrap { background: none; border: none; }
 .fmap-grassflat-pin {
@@ -4556,6 +4558,13 @@ h2::before {
   box-shadow:
     0 4px 0 rgba(34,197,94,0.65),
     0 8px 0 rgba(34,197,94,0.40);
+}
+.fmap-grassflat-pin--sm {
+  width: 8px;
+  height: 1px;
+  box-shadow:
+    0 3px 0 rgba(34,197,94,0.55),
+    0 6px 0 rgba(34,197,94,0.30);
 }
 /* Beach centroid wave arc — half-circle crest suggests a breaking wave */
 .fmap-beach-pin-wrap { background: none; border: none; }

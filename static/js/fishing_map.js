@@ -1522,6 +1522,31 @@
                             zIndexOffset: -100
                         }
                     ));
+                    if (currentZoom >= 14) {
+                        var _smgMinLat=Infinity,_smgMaxLat=-Infinity,_smgMinLng=Infinity,_smgMaxLng=-Infinity;
+                        for (var _smgi=0;_smgi<geom.length;_smgi++){
+                            if(geom[_smgi][0]<_smgMinLat)_smgMinLat=geom[_smgi][0];
+                            if(geom[_smgi][0]>_smgMaxLat)_smgMaxLat=geom[_smgi][0];
+                            if(geom[_smgi][1]<_smgMinLng)_smgMinLng=geom[_smgi][1];
+                            if(geom[_smgi][1]>_smgMaxLng)_smgMaxLng=geom[_smgi][1];
+                        }
+                        var _smgLatSp=(_smgMaxLat-_smgMinLat)*0.70,_smgLngSp=(_smgMaxLng-_smgMinLng)*0.70;
+                        if (_smgLatSp>=0.002||_smgLngSp>=0.002) {
+                            var _smgLatOff=(_smgMaxLat-_smgMinLat)*0.15,_smgLngOff=(_smgMaxLng-_smgMinLng)*0.15;
+                            for(var _smgRow=0;_smgRow<3;_smgRow++){
+                                for(var _smgCol=0;_smgCol<3;_smgCol++){
+                                    if(_smgRow===1&&_smgCol===1)continue;
+                                    var _smgLat=_smgMinLat+_smgLatOff+_smgRow*_smgLatSp/2;
+                                    var _smgLng=_smgMinLng+_smgLngOff+_smgCol*_smgLngSp/2;
+                                    fishingSpotLayer.addLayer(L.marker([_smgLat,_smgLng],{
+                                        icon:L.divIcon({html:'<span class="fmap-marsh-tuft fmap-marsh-tuft--sm"></span>',
+                                            className:'fmap-marsh-tuft-wrap',iconSize:[9,8],iconAnchor:[4,8]}),
+                                        interactive:false,zIndexOffset:-100
+                                    }));
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Mangrove closed polygons: prop-root fork centroid marker at zoom 11+.
@@ -1545,6 +1570,33 @@
                             zIndexOffset: -100
                         }
                     ));
+                    if (currentZoom >= 14) {
+                        var _mgfMinLat=Infinity,_mgfMaxLat=-Infinity,_mgfMinLng=Infinity,_mgfMaxLng=-Infinity;
+                        for (var _mgfi=0;_mgfi<geom.length;_mgfi++){
+                            if(geom[_mgfi][0]<_mgfMinLat)_mgfMinLat=geom[_mgfi][0];
+                            if(geom[_mgfi][0]>_mgfMaxLat)_mgfMaxLat=geom[_mgfi][0];
+                            if(geom[_mgfi][1]<_mgfMinLng)_mgfMinLng=geom[_mgfi][1];
+                            if(geom[_mgfi][1]>_mgfMaxLng)_mgfMaxLng=geom[_mgfi][1];
+                        }
+                        var _mgfLatSp=(_mgfMaxLat-_mgfMinLat)*0.70,_mgfLngSp=(_mgfMaxLng-_mgfMinLng)*0.70;
+                        if (_mgfLatSp>=0.002||_mgfLngSp>=0.002) {
+                            var _mgfLatOff=(_mgfMaxLat-_mgfMinLat)*0.15,_mgfLngOff=(_mgfMaxLng-_mgfMinLng)*0.15;
+                            var _mgfIdx=0;
+                            for(var _mgfRow=0;_mgfRow<3;_mgfRow++){
+                                for(var _mgfCol=0;_mgfCol<3;_mgfCol++){
+                                    if(_mgfRow===1&&_mgfCol===1)continue;
+                                    var _mgfLat=_mgfMinLat+_mgfLatOff+_mgfRow*_mgfLatSp/2;
+                                    var _mgfLng=_mgfMinLng+_mgfLngOff+_mgfCol*_mgfLngSp/2;
+                                    _mgfIdx++;
+                                    fishingSpotLayer.addLayer(L.marker([_mgfLat,_mgfLng],{
+                                        icon:L.divIcon({html:'<span class="fmap-mangrove-pin fmap-mangrove-pin--sm"></span>',
+                                            className:'fmap-mangrove-pin-wrap',iconSize:[9,9],iconAnchor:[4,4]}),
+                                        interactive:false,zIndexOffset:-100
+                                    }));
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Grass flat closed polygons: horizontal-bar centroid marker at zoom 11+.
@@ -1569,6 +1621,31 @@
                             zIndexOffset: -100
                         }
                     ));
+                    if (currentZoom >= 14) {
+                        var _gfgMinLat=Infinity,_gfgMaxLat=-Infinity,_gfgMinLng=Infinity,_gfgMaxLng=-Infinity;
+                        for (var _gfgi=0;_gfgi<geom.length;_gfgi++){
+                            if(geom[_gfgi][0]<_gfgMinLat)_gfgMinLat=geom[_gfgi][0];
+                            if(geom[_gfgi][0]>_gfgMaxLat)_gfgMaxLat=geom[_gfgi][0];
+                            if(geom[_gfgi][1]<_gfgMinLng)_gfgMinLng=geom[_gfgi][1];
+                            if(geom[_gfgi][1]>_gfgMaxLng)_gfgMaxLng=geom[_gfgi][1];
+                        }
+                        var _gfgLatSp=(_gfgMaxLat-_gfgMinLat)*0.70,_gfgLngSp=(_gfgMaxLng-_gfgMinLng)*0.70;
+                        if (_gfgLatSp>=0.002||_gfgLngSp>=0.002) {
+                            var _gfgLatOff=(_gfgMaxLat-_gfgMinLat)*0.15,_gfgLngOff=(_gfgMaxLng-_gfgMinLng)*0.15;
+                            for(var _gfgRow=0;_gfgRow<3;_gfgRow++){
+                                for(var _gfgCol=0;_gfgCol<3;_gfgCol++){
+                                    if(_gfgRow===1&&_gfgCol===1)continue;
+                                    var _gfgLat=_gfgMinLat+_gfgLatOff+_gfgRow*_gfgLatSp/2;
+                                    var _gfgLng=_gfgMinLng+_gfgLngOff+_gfgCol*_gfgLngSp/2;
+                                    fishingSpotLayer.addLayer(L.marker([_gfgLat,_gfgLng],{
+                                        icon:L.divIcon({html:'<span class="fmap-grassflat-pin fmap-grassflat-pin--sm"></span>',
+                                            className:'fmap-grassflat-pin-wrap',iconSize:[8,4],iconAnchor:[4,2]}),
+                                        interactive:false,zIndexOffset:-100
+                                    }));
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Beach closed polygons: wave-arc centroid marker at zoom 11+.
