@@ -4496,6 +4496,11 @@ h2::before {
   0%, 100% { transform: rotate(-10deg); }
   50%       { transform: rotate(10deg); }
 }
+/* Kelp forest grid stalks: smaller variant + phase-shifted animation delays */
+.fmap-kelp-stalk--sm { width: 2px; height: 11px; }
+.fmap-kelp-stalk--p1 { animation-delay: 0.8s; }
+.fmap-kelp-stalk--p2 { animation-delay: 1.6s; }
+
 /* Reef centroid diamond — nautical chart hazard convention */
 .fmap-reef-pin-wrap { background: none; border: none; }
 .fmap-reef-pin {

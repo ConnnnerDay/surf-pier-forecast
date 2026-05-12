@@ -1411,6 +1411,49 @@
                     ));
                 }
 
+                // Kelp forest grid: at zoom >= 14, place 8 small stalks on a 3×3
+                // grid within the inner 70% of the bbox (center skipped — main stalk
+                // already there). Phase classes stagger animation so stalks don't
+                // all sway in lockstep.
+                if (f.type === 'kelp' && isClosed && currentZoom >= 14) {
+                    var _kfMinLat = Infinity, _kfMaxLat = -Infinity;
+                    var _kfMinLng = Infinity, _kfMaxLng = -Infinity;
+                    for (var _kfi = 0; _kfi < geom.length; _kfi++) {
+                        if (geom[_kfi][0] < _kfMinLat) _kfMinLat = geom[_kfi][0];
+                        if (geom[_kfi][0] > _kfMaxLat) _kfMaxLat = geom[_kfi][0];
+                        if (geom[_kfi][1] < _kfMinLng) _kfMinLng = geom[_kfi][1];
+                        if (geom[_kfi][1] > _kfMaxLng) _kfMaxLng = geom[_kfi][1];
+                    }
+                    var _kfLatSp = (_kfMaxLat - _kfMinLat) * 0.70;
+                    var _kfLngSp = (_kfMaxLng - _kfMinLng) * 0.70;
+                    if (_kfLatSp >= 0.002 || _kfLngSp >= 0.002) {
+                        var _kfLatOff = (_kfMaxLat - _kfMinLat) * 0.15;
+                        var _kfLngOff = (_kfMaxLng - _kfMinLng) * 0.15;
+                        var _kfPhases = ['', '--p1', '--p2', '--p1', '--p2', '', '--p2', '--p1'];
+                        var _kfI = 0;
+                        for (var _kfRow = 0; _kfRow < 3; _kfRow++) {
+                            for (var _kfCol = 0; _kfCol < 3; _kfCol++) {
+                                if (_kfRow === 1 && _kfCol === 1) continue;
+                                var _kfLat = _kfMinLat + _kfLatOff + _kfRow * _kfLatSp / 2;
+                                var _kfLng = _kfMinLng + _kfLngOff + _kfCol * _kfLngSp / 2;
+                                var _kfPh  = _kfPhases[_kfI++];
+                                var _kfCls = 'fmap-kelp-stalk fmap-kelp-stalk--sm' +
+                                             (_kfPh ? ' fmap-kelp-stalk' + _kfPh : '');
+                                fishingSpotLayer.addLayer(L.marker([_kfLat, _kfLng], {
+                                    icon: L.divIcon({
+                                        html:       '<span class="' + _kfCls + '"></span>',
+                                        className:  'fmap-kelp-stalk-wrap',
+                                        iconSize:   [8, 12],
+                                        iconAnchor: [4, 12]
+                                    }),
+                                    interactive:  false,
+                                    zIndexOffset: -100
+                                }));
+                            }
+                        }
+                    }
+                }
+
                 // Reef closed polygons: diamond centroid marker at zoom 11+.
                 // Diamond matches the nautical chart convention for a reef hazard.
                 // Distinct from oyster_reef (filled circle) despite sharing the amber color.
