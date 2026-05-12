@@ -21,17 +21,17 @@
 
     <main>
         <!-- Completion progress -->
-        <section class="profile-wizard-card" style="margin:1rem">
+        <section class="profile-wizard-card">
             <div class="profile-wizard-head">
-                <div style="display:flex;align-items:center;justify-content:space-between">
+                <div class="profile-progress-row">
                     <strong>Profile completion</strong>
-                    <span id="profile-progress-label" style="font-size:0.85rem;color:var(--text-muted)">0/10 complete</span>
+                    <span id="profile-progress-label" class="profile-progress-label">0/10 complete</span>
                 </div>
-                <div class="profile-wizard-track" style="margin-top:0.5rem">
-                    <span id="profile-progress-bar" class="profile-wizard-bar" style="width: 0%"></span>
+                <div class="profile-wizard-track">
+                    <span id="profile-progress-bar" class="profile-wizard-bar"></span>
                 </div>
             </div>
-            <div style="display:flex;gap:0.75rem;margin-top:0.75rem;flex-wrap:wrap">
+            <div class="profile-wizard-links">
                 <a href="{{ url_for('views.index') }}" class="profile-back-link">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
                     Back to Forecast
@@ -43,10 +43,10 @@
         </section>
 
         <!-- Quick-start presets -->
-        <section class="profile-wizard-card" style="margin:1rem">
-            <h3 style="margin:0 0 0.5rem;font-size:1rem">Quick-start presets</h3>
-            <p style="margin:0 0 0.75rem;font-size:0.85rem;color:var(--text-muted)">Select one or more that match your style — they combine. Fine-tune everything below.</p>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+        <section class="profile-wizard-card">
+            <h3 class="profile-presets-heading">Quick-start presets</h3>
+            <p class="profile-presets-hint">Select one or more that match your style — they combine. Fine-tune everything below.</p>
+            <div class="profile-presets-grid">
                 <button type="button" class="profile-preset-btn" data-preset="surf_angler" onclick="togglePreset('surf_angler')">Surf Angler</button>
                 <button type="button" class="profile-preset-btn" data-preset="pier_regular" onclick="togglePreset('pier_regular')">Pier Regular</button>
                 <button type="button" class="profile-preset-btn" data-preset="inshore_hunter" onclick="togglePreset('inshore_hunter')">Inshore Slam Hunter</button>
@@ -57,7 +57,7 @@
             </div>
         </section>
 
-        <form id="profile-form" class="profile-form" onsubmit="return saveProfile(event)" style="padding:0 1rem">
+        <form id="profile-form" class="profile-form" onsubmit="return saveProfile(event)">
 
             <p class="profile-group-label">How do you fish?</p>
             <!-- Fishing Type -->
@@ -153,67 +153,67 @@
             <section class="profile-section profile-section--step" data-step="2">
                 <h3 class="profile-question">What do you fish with?</h3>
                 <p class="profile-hint">Tell us how often you use each — shapes bait and rig recommendations</p>
-                <div style="display:flex;flex-direction:column;gap:1rem">
+                <div class="profile-bait-list">
                     <div>
-                        <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Live bait <span style="font-weight:400;color:var(--text-muted)">— shrimp, mullet, menhaden</span></p>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                        <p class="profile-bait-label">Live bait <span class="profile-bait-label-hint">— shrimp, mullet, menhaden</span></p>
+                        <div class="profile-bait-row">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="live_bait" value="yes">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Always</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="live_bait" value="sometimes">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Sometimes</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Sometimes</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="live_bait" value="no">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Never</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="live_bait" value="skip">
-                                <span class="chip-body" style="justify-content:center;text-align:center;color:var(--text-muted)"><strong>N/A</strong></span>
+                                <span class="chip-body chip-body--center chip-body--na"><strong>N/A</strong></span>
                             </label>
                         </div>
                     </div>
                     <div>
-                        <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Cut / natural bait <span style="font-weight:400;color:var(--text-muted)">— shrimp, squid, sand fleas, Fishbites</span></p>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                        <p class="profile-bait-label">Cut / natural bait <span class="profile-bait-label-hint">— shrimp, squid, sand fleas, Fishbites</span></p>
+                        <div class="profile-bait-row">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="cut_bait" value="yes">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Always</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="cut_bait" value="sometimes">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Sometimes</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Sometimes</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="cut_bait" value="no">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Never</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="cut_bait" value="skip">
-                                <span class="chip-body" style="justify-content:center;text-align:center;color:var(--text-muted)"><strong>N/A</strong></span>
+                                <span class="chip-body chip-body--center chip-body--na"><strong>N/A</strong></span>
                             </label>
                         </div>
                     </div>
                     <div>
-                        <p style="margin:0 0 0.4rem;font-size:0.875rem;font-weight:600">Lures &amp; artificials <span style="font-weight:400;color:var(--text-muted)">— jigs, plugs, soft plastics, topwater</span></p>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                        <p class="profile-bait-label">Lures &amp; artificials <span class="profile-bait-label-hint">— jigs, plugs, soft plastics, topwater</span></p>
+                        <div class="profile-bait-row">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="lures" value="yes">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Always</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Always</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="lures" value="sometimes">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Sometimes</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Sometimes</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="lures" value="no">
-                                <span class="chip-body" style="justify-content:center;text-align:center"><strong>Never</strong></span>
+                                <span class="chip-body chip-body--center"><strong>Never</strong></span>
                             </label>
-                            <label class="profile-chip profile-chip--sm" style="flex:1;min-width:0">
+                            <label class="profile-chip profile-chip--sm profile-chip--flex">
                                 <input type="radio" name="lures" value="skip">
-                                <span class="chip-body" style="justify-content:center;text-align:center;color:var(--text-muted)"><strong>N/A</strong></span>
+                                <span class="chip-body chip-body--center chip-body--na"><strong>N/A</strong></span>
                             </label>
                         </div>
                     </div>
@@ -525,14 +525,14 @@
             </section>
 
             <div class="profile-actions profile-actions--sticky">
-                <div id="profile-save-error" style="display:none;color:#c0392b;font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;padding:0.5rem 0.75rem;background:#fdf0ef;border:1px solid #f5c6c2;border-radius:6px" role="alert"></div>
+                <div id="profile-save-error" class="profile-save-error" hidden role="alert"></div>
                 <button type="submit" id="profile-save-btn" class="profile-save-btn">Save &amp; View Forecast</button>
                 <a href="{{ url_for('views.index') }}" class="profile-skip">Skip for now</a>
             </div>
         </form>
     </main>
 
-    <footer style="padding:1.5rem;text-align:center;font-size:0.82rem;color:var(--text-muted)">
+    <footer class="profile-footer">
         <p>Surf &amp; Pier Fishing Outlook</p>
     </footer>
 
@@ -897,7 +897,7 @@
             window.location.href = dashboardUrl;
         }).catch(function(err) {
             var el = document.getElementById('profile-save-error');
-            if (el) { el.textContent = err.message || 'Could not save profile. Please try again.'; el.style.display = ''; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+            if (el) { el.textContent = err.message || 'Could not save profile. Please try again.'; el.hidden = false; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
             if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Profile'; }
         });
         return false;

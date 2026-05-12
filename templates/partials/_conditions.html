@@ -111,11 +111,11 @@
                     {% set _ts = (forecast.tide_state or '')|lower|trim %}
                     <span class="stat-value">
                         {% if _ts == 'rising' %}
-                        <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><path d="M10 4l5 6H5z" fill="var(--ocean)"/></svg>
+                        <svg viewBox="0 0 20 20" width="16" height="16" class="stat-trend-icon"><path d="M10 4l5 6H5z" fill="var(--ocean)"/></svg>
                         {% elif _ts == 'falling' %}
-                        <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><path d="M10 16l5-6H5z" fill="var(--amber)"/></svg>
+                        <svg viewBox="0 0 20 20" width="16" height="16" class="stat-trend-icon"><path d="M10 16l5-6H5z" fill="var(--amber)"/></svg>
                         {% elif _ts == 'slack' %}
-                        <svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-2px; margin-right:0.2rem;"><rect x="4" y="9" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
+                        <svg viewBox="0 0 20 20" width="16" height="16" class="stat-trend-icon"><rect x="4" y="9" width="12" height="2" rx="1" fill="#6b7b8d"/></svg>
                         {% endif %}
                         {{ forecast.tide_state }}
                     </span>
@@ -264,7 +264,7 @@
         </section>
 
         {% if forecast.activity_timeline %}
-        <section class="hourly-timeline-section" style="margin-top: 0.75rem;">
+        <section class="hourly-timeline-section">
             <p class="timeline-label">Fishing Activity</p>
             <div class="activity-timeline">
                 <div class="timeline-bars">

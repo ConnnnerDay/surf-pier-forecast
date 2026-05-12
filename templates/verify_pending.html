@@ -19,22 +19,22 @@
 
     <main>
         <section class="auth-section">
-            <div style="text-align:center;padding:1rem 0 0.5rem;">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#0e5f78" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="margin-bottom:1rem">
+            <div class="verify-hero">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#0e5f78" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" class="verify-hero-icon">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                 </svg>
-                <h2 style="margin-bottom:0.4rem;">Check your inbox</h2>
+                <h2 class="verify-heading">Check your inbox</h2>
                 {% if user and user.email %}
-                <p style="color:var(--muted,#5c6b73);margin-bottom:0.3rem;">
+                <p class="verify-hint">
                     We sent a verification link to <strong>{{ user.email }}</strong>.
                 </p>
                 {% else %}
-                <p style="color:var(--muted,#5c6b73);margin-bottom:0.3rem;">
+                <p class="verify-hint">
                     We sent a verification link to your email address.
                 </p>
                 {% endif %}
-                <p style="color:var(--muted,#5c6b73);font-size:0.875rem;margin-bottom:1.5rem;">
+                <p class="verify-hint--sm">
                     Click the link in the email to activate your account.
                     The link expires in 2&nbsp;hours.
                 </p>
@@ -45,28 +45,28 @@
             {% endif %}
 
             {% if sent %}
-            <div style="display:flex;align-items:center;gap:0.5rem;background:#e8f5e9;color:#2a7d6e;border:1px solid #a5d6a7;border-radius:8px;padding:0.65rem 1rem;font-size:0.875rem;font-weight:600;margin-bottom:1rem;" role="status">
+            <div class="account-save-toast" role="status">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                 Verification email resent! Check your inbox.
             </div>
             {% endif %}
 
             {% if not error %}
-            <p style="font-size:0.875rem;color:var(--muted,#5c6b73);text-align:center;margin-bottom:0.75rem;">
+            <p class="verify-resend-hint">
                 Didn&rsquo;t receive it? Check your spam folder, or resend below.
             </p>
             <form method="post" action="{{ url_for('auth.resend_verification') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="auth-btn" style="width:100%">Resend Verification Email</button>
+                <button type="submit" class="auth-btn auth-btn--full">Resend Verification Email</button>
             </form>
             {% endif %}
 
-            <div style="margin-top:1.25rem;text-align:center;font-size:0.875rem;">
-                <a href="{{ url_for('auth.account') }}" style="color:#0e5f78;">Go to Account Settings</a>
+            <div class="verify-footer-links">
+                <a href="{{ url_for('auth.account') }}" class="verify-link">Go to Account Settings</a>
                 &nbsp;&middot;&nbsp;
-                <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0">
+                <form method="post" action="{{ url_for('auth.logout') }}" class="account-resend-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <button type="submit" style="background:none;border:none;padding:0;color:#0e5f78;text-decoration:underline;cursor:pointer;font-size:inherit;">Log Out</button>
+                    <button type="submit" class="account-resend-btn">Log Out</button>
                 </form>
             </div>
         </section>

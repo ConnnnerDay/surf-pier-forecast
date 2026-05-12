@@ -4422,6 +4422,171 @@ h2::before {
 .fmap-habitat-poly:hover {
   fill-opacity: 0.55 !important;
 }
+/* Reef: tight dots — hard/rocky bottom (mirrors nautical chart convention) */
+.fmap-habitat-poly--reef {
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+}
+/* Shoal: longer dashes — shallow/sandy area hazard */
+.fmap-habitat-poly--shoal {
+  stroke-dasharray: 9 5;
+}
+/* Saltmarsh: marching-ants border suggests tidal flow */
+.fmap-habitat-poly--saltmarsh {
+  stroke-dasharray: 6 3;
+  animation: fmap-marsh-march 5s linear infinite;
+}
+@keyframes fmap-marsh-march {
+  to { stroke-dashoffset: -9; }
+}
+/* Grass flat: dash-dot rhythm suggests alternating grass blades */
+.fmap-habitat-poly--grass-flat,
+.fmap-habitat-poly--seagrass {
+  stroke-dasharray: 5 3 1 3;
+  stroke-linecap: round;
+}
+/* Mangrove: paired short dashes + long gap evokes clustered prop roots */
+.fmap-habitat-poly--mangrove {
+  stroke-dasharray: 3 2 3 7;
+  stroke-linecap: round;
+}
+/* Tidal flat: widely spaced dots — open mud/sand surface */
+.fmap-habitat-poly--tidal-flat,
+.fmap-habitat-poly--tidalflat {
+  stroke-dasharray: 1 5;
+  stroke-linecap: round;
+}
+/* Tidal flat centroid ripple marker — water covering/uncovering the flat */
+.fmap-tidal-drop-wrap { background: none; border: none; }
+.fmap-tidal-drop {
+  display: block;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(110,231,183,0.20);
+  border: 1.5px solid rgba(110,231,183,0.75);
+  animation: fmap-tidal-ripple 3.5s ease-out infinite;
+}
+@keyframes fmap-tidal-ripple {
+  0%   { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+/* Oyster reef: cluster-rhythm dash — long burst, short burst, long gap */
+.fmap-habitat-poly--oyster-reef {
+  stroke-dasharray: 6 2 2 2;
+  stroke-linecap: round;
+}
+/* Kelp: double-dash cluster — frond bunches along the canopy edge */
+.fmap-habitat-poly--kelp {
+  stroke-dasharray: 4 1 4 5;
+  stroke-linecap: round;
+}
+/* Kelp centroid stalk — sways like kelp in current */
+.fmap-kelp-stalk-wrap { background: none; border: none; }
+.fmap-kelp-stalk {
+  display: block;
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(to top, rgba(74,222,128,0.9), rgba(74,222,128,0.25));
+  border-radius: 1px 1px 0 0;
+  margin: 0 auto;
+  transform-origin: bottom center;
+  animation: fmap-kelp-sway 4s ease-in-out infinite;
+}
+@keyframes fmap-kelp-sway {
+  0%, 100% { transform: rotate(-10deg); }
+  50%       { transform: rotate(10deg); }
+}
+/* Kelp forest grid stalks: smaller variant + phase-shifted animation delays */
+.fmap-kelp-stalk--sm { width: 2px; height: 11px; }
+.fmap-kelp-stalk--p1 { animation-delay: 0.8s; }
+.fmap-kelp-stalk--p2 { animation-delay: 1.6s; }
+
+/* Reef centroid diamond — nautical chart hazard convention */
+.fmap-reef-pin-wrap { background: none; border: none; }
+.fmap-reef-pin {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: rgba(245,158,11,0.65);
+  border: 1.5px solid rgba(245,158,11,0.95);
+  transform: rotate(45deg);
+}
+/* Shoal centroid triangle — nautical chart shoal hazard convention */
+.fmap-shoal-pin-wrap { background: none; border: none; }
+.fmap-shoal-pin {
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid rgba(148,163,184,0.85);
+}
+/* Saltmarsh centroid grass tuft — spartina stalks rendered as gradient stripes */
+.fmap-marsh-tuft-wrap { background: none; border: none; }
+.fmap-marsh-tuft {
+  display: block;
+  width: 14px;
+  height: 13px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(52,211,153,0.9) 0px,
+    rgba(52,211,153,0.9) 2px,
+    transparent 2px,
+    transparent 5px
+  );
+  border-radius: 1px 1px 0 0;
+}
+.fmap-marsh-tuft--sm { width: 9px; height: 8px; }
+/* Mangrove centroid prop-root fork — trunk splits into two arching roots */
+.fmap-mangrove-pin-wrap { background: none; border: none; }
+.fmap-mangrove-pin {
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: rgba(22,163,74,0.82);
+  clip-path: polygon(50% 0%, 50% 42%, 18% 100%, 50% 58%, 82% 100%, 50% 42%);
+}
+.fmap-mangrove-pin--sm { width: 9px; height: 9px; }
+/* Grass flat centroid — three horizontal bars suggest seagrass blades lying flat */
+.fmap-grassflat-pin-wrap { background: none; border: none; }
+.fmap-grassflat-pin {
+  display: block;
+  width: 12px;
+  height: 2px;
+  background: rgba(34,197,94,0.9);
+  border-radius: 1px;
+  box-shadow:
+    0 4px 0 rgba(34,197,94,0.65),
+    0 8px 0 rgba(34,197,94,0.40);
+}
+.fmap-grassflat-pin--sm {
+  width: 8px;
+  height: 1px;
+  box-shadow:
+    0 3px 0 rgba(34,197,94,0.55),
+    0 6px 0 rgba(34,197,94,0.30);
+}
+/* Beach centroid wave arc — half-circle crest suggests a breaking wave */
+.fmap-beach-pin-wrap { background: none; border: none; }
+.fmap-beach-pin {
+  display: block;
+  width: 14px;
+  height: 7px;
+  border: 2px solid rgba(251,191,36,0.9);
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
+  background: rgba(251,191,36,0.20);
+}
+/* Inlet arrow — clip-path chevron rotated inline to channel bearing */
+.fmap-inlet-arrow-wrap { background: none; border: none; }
+.fmap-inlet-arrow {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: rgba(56,189,248,0.88);
+  clip-path: polygon(50% 0%, 0% 100%, 50% 68%, 100% 100%);
+  transform-origin: 50% 50%;
+}
 
 /* ── OSM fishing spot markers ── */
 .fmap-spot-wrap {
@@ -4430,6 +4595,26 @@ h2::before {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+/* Wreck marker sonar-ping ring */
+.fmap-wreck-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #d97706;
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0;
+  animation: fmap-wreck-ping 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes fmap-wreck-ping {
+  0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 0.85; }
+  80%  { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
 }
 .fmap-spot-dot {
   display: flex;
@@ -4457,6 +4642,22 @@ h2::before {
   pointer-events: none;
 }
 .fmap-spot-dot-lbl--habitat { font-size: 10px; }
+
+/* Permanent name callout for piers, jetties, and wrecks at zoom ≥ 13 */
+.fmap-spot-label.leaflet-tooltip {
+  background: rgba(15, 23, 42, 0.82);
+  border: none;
+  border-radius: 3px;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 2px 6px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+  pointer-events: none;
+}
+.fmap-spot-label.leaflet-tooltip::before { display: none; }
 
 .fmap-spot-dot--active {
   transform: scale(1.55) !important;
@@ -7208,6 +7409,7 @@ footer p {
   box-shadow: var(--shadow-sm);
   padding: 0.8rem 1rem;
   border: 1px solid var(--border-light);
+  margin: 1rem;
 }
 
 .profile-wizard-head {
@@ -7230,10 +7432,36 @@ footer p {
 .profile-wizard-bar {
   display: block;
   height: 100%;
+  width: 0;
   background: #0D2240;
   border-radius: inherit;
   transition: width 0.2s ease;
 }
+
+.profile-progress-row { display: flex; align-items: center; justify-content: space-between; }
+.profile-progress-label { font-size: 0.85rem; color: var(--text-muted); }
+.profile-wizard-links { display: flex; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap; }
+.profile-presets-heading { margin: 0 0 0.5rem; font-size: 1rem; }
+.profile-presets-hint { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--text-muted); }
+.profile-presets-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.profile-bait-list { display: flex; flex-direction: column; gap: 1rem; }
+.profile-bait-label { margin: 0 0 0.4rem; font-size: 0.875rem; font-weight: 600; }
+.profile-bait-label-hint { font-weight: 400; color: var(--text-muted); }
+.profile-bait-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.profile-chip--flex { flex: 1; min-width: 0; }
+.chip-body--center { justify-content: center; text-align: center; }
+.chip-body--na { color: var(--text-muted); }
+.profile-save-error {
+  color: #c0392b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fdf0ef;
+  border: 1px solid #f5c6c2;
+  border-radius: 6px;
+}
+.profile-footer { padding: 1.5rem; text-align: center; font-size: 0.82rem; color: var(--text-muted); }
 
 .profile-section--step {
   position: relative;
@@ -7988,6 +8216,7 @@ footer p {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 0 1rem;
 }
 
 .profile-section {
@@ -9573,6 +9802,7 @@ footer p {
   padding: 0.85rem 1rem;
   border: 1px solid var(--border-light);
   border-top: 3px solid var(--coral);
+  margin-top: 0.75rem;
 }
 
 .timeline-label {
@@ -11967,25 +12197,192 @@ body.has-app-header main {
 
 /* ---- ACCOUNT PAGE: STATS COLLAPSE ---- */
 
+/* ── Account page: card-style collapsible panels ── */
 .account-stats-details {
-  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  overflow: hidden;
 }
-
-.account-stats-details summary {
-  font-size: 0.88rem;
+.account-stats-details--danger { border-color: #f5c6c2; }
+.account-stats-details > summary {
+  padding: 0.75rem 1rem;
+  background: var(--bg-subtle);
   font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.93rem;
   cursor: pointer;
-  padding: 0.5rem 0;
-  user-select: none;
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: space-between;
+  user-select: none;
 }
+.account-stats-details--danger > summary { background: #fdf0ef; color: #c0392b; }
+.account-stats-details > summary::-webkit-details-marker { display: none; }
+.account-summary-inner { display: flex; align-items: center; gap: 0.5rem; }
+.account-stats-body { padding: 1rem; }
 
-.account-stats-details summary::-webkit-details-marker {
-  display: none;
+/* Email not verified warning banner */
+.account-unverified {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+.account-unverified-icon { flex-shrink: 0; margin-top: 0.05rem; }
+.account-resend-form { display: inline; margin-left: 0.4rem; }
+.account-resend-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ocean, #0e5f78);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+.account-heading { margin-bottom: 1rem; }
+.account-subtitle { margin: 0; }
+.account-value--right { text-align: right; }
+.account-section-h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.account-section-edit-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ocean);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.account-profile-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.5rem;
+}
+.account-profile-setup-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+}
+.account-hr {
+  border: none;
+  border-top: 1px solid var(--border-light, #e5e9ed);
+  margin: 1.25rem 0 1rem;
+}
+.account-section-title-flush { margin-top: 0; }
+.account-loc-row { display: flex; gap: 0.5rem; align-items: center; }
+.account-loc-input { flex: 1; }
+.account-loc-hint { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+.account-section-sub-block { display: block; margin-top: 0.3rem; }
+.account-fav-label-hint { font-weight: 400; color: var(--text-muted); }
+.account-save-msg { margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #2a7d6e; }
+/* Passkey panel */
+.passkey-intro { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-muted); }
+.passkey-list { margin-bottom: 0.75rem; }
+.passkey-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border-light, #eee);
+}
+.passkey-item-name { font-size: 0.875rem; }
+.passkey-item-icon { vertical-align: middle; margin-right: 0.3rem; }
+.passkey-item-date { font-size: 0.78rem; color: var(--text-muted); }
+.passkey-remove-btn {
+  background: none;
+  border: none;
+  color: #c0392b;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+}
+.passkey-none-msg { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.passkey-status-msg { margin-top: 0.5rem; font-size: 0.85rem; }
+/* Notifications / alerts panel */
+.notif-intro { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-muted); }
+.notif-status { font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-muted); }
+.notif-msg { margin-top: 0.5rem; font-size: 0.82rem; }
+/* Connected accounts panel */
+.social-account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.social-account-icon { flex-shrink: 0; }
+.social-account-name { font-size: 0.9rem; }
+.social-account-since { margin-left: auto; font-size: 0.78rem; color: var(--text-muted); }
+/* Password change panel */
+.pw-change-form { margin: 0; }
+.setup-error--mb { margin-bottom: 0.75rem; }
+/* Delete account panel */
+.delete-intro { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--text-muted); }
+.delete-social-hint { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.account-logout-form { margin-top: 0.5rem; }
+.account-logout-btn { width: 100%; }
+/* Quick-link button gradient variants */
+.auth-btn--teal   { background: linear-gradient(135deg, #2a7d6e, #1a5c50); }
+.auth-btn--slate  { background: linear-gradient(135deg, #5a6e8a, #3d5068); }
+.auth-btn--brown  { background: linear-gradient(135deg, #6e5a3d, #504029); }
+.auth-btn--danger { background: linear-gradient(135deg, #8b4545, #6b3030); }
+/* Conditions partial: tide trend arrow icons */
+.stat-trend-icon { vertical-align: -2px; margin-right: 0.2rem; }
+/* Verify email pages */
+.verify-hero { text-align: center; padding: 1rem 0 0.5rem; }
+.verify-hero--md { text-align: center; padding: 1.5rem 0; }
+.verify-hero-icon { margin-bottom: 1rem; }
+.verify-heading { margin-bottom: 0.4rem; }
+.verify-heading--success { color: #2a7d6e; margin-bottom: 0.5rem; }
+.verify-heading--error { color: #c0392b; margin-bottom: 0.5rem; }
+.verify-hint { color: var(--text-muted); margin-bottom: 0.3rem; }
+.verify-hint--sm { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+.verify-message { color: var(--text-muted); margin-bottom: 1.5rem; }
+.verify-resend-hint { font-size: 0.875rem; color: var(--text-muted); text-align: center; margin-bottom: 0.75rem; }
+.verify-footer-links { margin-top: 1.25rem; text-align: center; font-size: 0.875rem; }
+.verify-link { color: var(--ocean, #0e5f78); }
+.verify-resend-form { margin-bottom: 1rem; }
+.auth-btn--full { width: 100%; }
+/* Page hero username line */
+.page-subtitle--muted { opacity: 0.75; font-size: 0.9rem; }
+/* Fishing stats panel sub-elements */
+.account-section-h4 { margin: 0.75rem 0 0.4rem; font-size: 0.9rem; }
+.account-fav-link { color: var(--ocean); text-decoration: none; }
+.account-stats-body .section-sub { margin-top: 0.5rem; }
+/* Account type / status badge spans */
+.passkey-badge--active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+.passkey-badge--inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--surface, #f1f5f9);
+  color: var(--text-muted, #64748b);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 /* ---- SPACING IMPROVEMENTS ---- */

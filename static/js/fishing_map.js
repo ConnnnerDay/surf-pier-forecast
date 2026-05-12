@@ -404,6 +404,7 @@
         reef:      '#f59e0b',
         saltmarsh: '#34d399',
         seagrass:  '#22c55e',
+        kelp:      '#4ade80',
         mangrove:  '#16a34a',
         channel:   '#38bdf8',
         shoal:     '#94a3b8',
@@ -419,6 +420,7 @@
         reef:      { label: 'Reef',        tip: 'Reef edge — grouper, snapper, and bass stack on the upcurrent face. Work the drop with a jig or live bait.' },
         saltmarsh: { label: 'Saltmarsh',   tip: 'Marsh creek mouth — redfish and snook ambush bait washing out on the falling tide. Position at the exit.' },
         seagrass:  { label: 'Seagrass',    tip: 'Seagrass flat — trout, redfish, and flounder push shallow on the flood. Work the edges and any potholes.' },
+        kelp:      { label: 'Kelp Forest', tip: 'Kelp canopy — rockfish, lingcod, and halibut hold along the edge. Drift live bait or a slow-rolled jig through the fronds.' },
         mangrove:  { label: 'Mangrove',    tip: 'Mangrove roots — snook, tarpon, and jack hold in the shadow line. Cast tight to the prop roots.' },
         channel:   { label: 'Channel',     tip: 'Tidal channel — bait funnels through on every tide change. Fish the current seam at the channel edge.' },
         shoal:     { label: 'Shoal',       tip: 'Shoal drop-off — fish hold on the seam between shallow and deep waiting for bait swept off the flat.' },
@@ -465,13 +467,14 @@
         'tidal_flat': 'tidalflat',
         'tidalflat':  'tidalflat',
         'beach':      'beach',
-        'kelp':       'seagrass',
+        'kelp':       'kelp',
         'bay':        'bay',
     };
 
     // Symbols for AI pick osmTypes that don't have SPOT_LABELS entries
     var _AI_OSMT_SYM = {
         seagrass:  '≋',  // matches grass_flat
+        kelp:      '⇑',  // matches kelp filter pill
         channel:   '⇢',  // matches inlet
         tidalflat: '⊟',  // matches tidal_flat
         bay:       '〜',
@@ -487,6 +490,49 @@
         var icon = L.divIcon({ className: 'fmap-ai-wrap', html: html, iconSize: [18, 18], iconAnchor: [9, 9] });
         _spotIconCache[cacheKey] = icon;
         return icon;
+    }
+
+    // Attach hover-highlight events to a habitat polygon or polyline layer.
+    // Closed polygons brighten fill + thicken border; open polylines just thicken.
+    function _bindPolyHover(layer, isClosed) {
+        var baseWeight      = isClosed ? 2 : 3;
+        var baseFillOpacity = isClosed ? (layer.options.fillOpacity || 0.30) : 0;
+        layer.on('mouseover', function () {
+            layer.setStyle({
+                weight:      baseWeight + 2,
+                fillOpacity: isClosed ? Math.min(baseFillOpacity + 0.25, 0.70) : 0
+            });
+            if (layer.bringToFront) layer.bringToFront();
+        });
+        layer.on('mouseout', function () {
+            layer.setStyle({ weight: baseWeight, fillOpacity: baseFillOpacity });
+        });
+    }
+
+    // Add flow-direction arrows along an open channel/inlet polyline.
+    // Short lines (< 5 pts) get one arrow at the midpoint; longer lines get
+    // arrows at 25%, 50%, and 75% so the direction is clear over the full length.
+    function _addChannelArrows(geom, layer) {
+        var n  = geom.length;
+        var positions = n >= 5
+            ? [Math.floor(n * 0.25), Math.floor(n * 0.5), Math.floor(n * 0.75)]
+            : [Math.floor(n / 2)];
+        positions.forEach(function (idx) {
+            var p1  = geom[Math.max(0, idx - 1)];
+            var p2  = geom[Math.min(n - 1, idx + 1)];
+            var brg = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
+            layer.addLayer(L.marker(geom[idx], {
+                icon: L.divIcon({
+                    html:       '<span class="fmap-inlet-arrow" style="transform:rotate(' +
+                                brg + 'deg)"></span>',
+                    className:  'fmap-inlet-arrow-wrap',
+                    iconSize:   [10, 10],
+                    iconAnchor: [5, 5]
+                }),
+                interactive:  false,
+                zIndexOffset: -100
+            }));
+        });
     }
 
     // Render AI habitat picks, filtering to osmTypes that match active filter pills.
@@ -564,22 +610,84 @@
             var isHuge = (maxLat - minLat) > _viewLatSpan * 0.6 ||
                          (maxLng - minLng) > _viewLngSpan * 0.6;
 
-            var poly    = (closed && !isHuge)
+            var isClosed  = closed && !isHuge;
+            var aiPolyCls = 'fmap-habitat-poly fmap-habitat-poly--' + osmType;
+            var poly    = isClosed
                 ? L.polygon(geom, {
                     color: color, weight: 2, opacity: 0.85,
                     fillColor: color, fillOpacity: 0.25,
-                    className: 'fmap-habitat-poly'
+                    className: aiPolyCls
                   })
                 : L.polyline(geom, {
-                    color: color, weight: 3, opacity: 0.75,
-                    className: 'fmap-habitat-poly'
+                    color: color, weight: 3, opacity: 0.85,
+                    dashArray: '10, 6',
+                    className: aiPolyCls
                   });
+            _bindPolyHover(poly, isClosed);
             poly.bindTooltip(
                 '<span class="fmap-ai-tip-label">' + esc(info.label) + '</span>' + name +
                 '<span class="fmap-tooltip-sub">' + esc(info.tip) + '</span>',
                 { className: 'fmap-tooltip fmap-ai-tooltip', sticky: true }
             );
+            // Click opens the spot-detail panel with habitat info and fishing tip.
+            (function (spotData, lyr) {
+                lyr.on('click', function () {
+                    if (typeof window._fmapShowSpotDetail === 'function') {
+                        _activeSpotMarker = null;
+                        window._fmapShowSpotDetail(spotData);
+                    }
+                });
+            }({ type: osmType, lat: f.lat, lng: f.lng,
+                name: f.name || info.label, tip: info.tip }, poly));
             aiPickLayer.addLayer(poly);
+
+            // Centroid / midpoint markers for AI-picked habitat polygons —
+            // mirrors the OSM layer by reusing the same CSS icon classes.
+            // currentZoom is local to renderFishingSpots; read zoom from map directly.
+            if (map && Math.floor(map.getZoom()) >= 11) {
+                var _aiIconMap = {
+                    reef:      { html: '<span class="fmap-reef-pin"></span>',
+                                 cls: 'fmap-reef-pin-wrap',      sz: [14,14], anc: [7,7]  },
+                    shoal:     { html: '<span class="fmap-shoal-pin"></span>',
+                                 cls: 'fmap-shoal-pin-wrap',     sz: [14,12], anc: [7,6]  },
+                    saltmarsh: { html: '<span class="fmap-marsh-tuft"></span>',
+                                 cls: 'fmap-marsh-tuft-wrap',    sz: [14,13], anc: [7,13] },
+                    seagrass:  { html: '<span class="fmap-grassflat-pin"></span>',
+                                 cls: 'fmap-grassflat-pin-wrap', sz: [12,10], anc: [6,5]  },
+                    mangrove:  { html: '<span class="fmap-mangrove-pin"></span>',
+                                 cls: 'fmap-mangrove-pin-wrap',  sz: [14,14], anc: [7,7]  },
+                    tidalflat: { html: '<span class="fmap-tidal-drop"></span>',
+                                 cls: 'fmap-tidal-drop-wrap',    sz: [20,20], anc: [10,10]},
+                    kelp:      { html: '<span class="fmap-kelp-stalk"></span>',
+                                 cls: 'fmap-kelp-stalk-wrap',    sz: [12,20], anc: [6,18] },
+                    beach:     { html: '<span class="fmap-beach-pin"></span>',
+                                 cls: 'fmap-beach-pin-wrap',     sz: [14,8],  anc: [7,4]  }
+                };
+                var _aiCfg = _aiIconMap[osmType];
+                if (_aiCfg && isClosed) {
+                    var _aiGC = geom, _aiLat = 0, _aiLng = 0;
+                    for (var _aii = 0; _aii < _aiGC.length; _aii++) {
+                        _aiLat += _aiGC[_aii][0]; _aiLng += _aiGC[_aii][1];
+                    }
+                    aiPickLayer.addLayer(L.marker(
+                        [_aiLat / _aiGC.length, _aiLng / _aiGC.length],
+                        {
+                            icon: L.divIcon({
+                                html:       _aiCfg.html,
+                                className:  _aiCfg.cls,
+                                iconSize:   _aiCfg.sz,
+                                iconAnchor: _aiCfg.anc
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+                // Channel open polylines: bearing arrows via shared helper
+                if (osmType === 'channel' && !isClosed && geom.length >= 3) {
+                    _addChannelArrows(geom, aiPickLayer);
+                }
+            }
         });
 
         // Render point markers, up to _AI_POINT_CAP, skipping any point whose
@@ -766,12 +874,12 @@
         pier:         { label: 'Pier',              color: '#a78bfa', habitat: false, minZoom: 8  },
         jetty:        { label: 'Jetty',             color: '#818cf8', habitat: false, minZoom: 8  },
         bridge:       { label: 'Bridge',            color: '#f97316', habitat: false, minZoom: 8  },
-        reef:         { label: 'Reef',              color: '#f59e0b', habitat: false, minZoom: 8  },
+        reef:         { label: 'Reef',              color: '#f59e0b', habitat: true,  minZoom: 8  },
         oyster_reef:  { label: 'Oyster Reef',       color: '#f59e0b', habitat: true,  minZoom: 9  },
         wreck:        { label: 'Wreck',             color: '#d97706', habitat: false, minZoom: 8  },
         inlet:        { label: 'Inlet / Channel',   color: '#38bdf8', habitat: true,  minZoom: 8  },
         marina:       { label: 'Marina / Harbor',   color: '#67e8f9', habitat: false, minZoom: 9  },
-        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: false, minZoom: 9  },
+        shoal:        { label: 'Shoal',             color: '#94a3b8', habitat: true,  minZoom: 9  },
         point:        { label: 'Point / Headland',  color: '#60a5fa', habitat: false, minZoom: 9  },
         beach:        { label: 'Beach / Surf Zone', color: '#fbbf24', habitat: false, minZoom: 9  },
         grass_flat:   { label: 'Grass Flat',        color: '#22c55e', habitat: true,  minZoom: 9  },
@@ -791,7 +899,8 @@
     // Must match POLYGON_HABITAT_TYPES in services/fish_structures.py.
     var POLYGON_HABITAT_TYPES = {
         saltmarsh: true, mangrove: true, tidal_flat: true,
-        grass_flat: true, beach: true, oyster_reef: true, inlet: true, kelp: true
+        grass_flat: true, beach: true, oyster_reef: true, inlet: true, kelp: true,
+        shoal: true, reef: true
     };
 
     var _MAX_POLYGON_COORDS = 200;
@@ -903,10 +1012,10 @@
 
         // Fishing: 8-pointed asterisk = generic access / catch spot
         fishing:
-            '<line x1="7" y1="1.5" x2="7" y2="12.5" stroke-width="1.5"/>' +
-            '<line x1="1.5" y1="7" x2="12.5" y2="7" stroke-width="1.5"/>' +
-            '<line x1="3" y1="3" x2="11" y2="11" stroke-width="1.5"/>' +
-            '<line x1="11" y1="3" x2="3" y2="11" stroke-width="1.5"/>',
+            // Rod body from handle (2,13) to tip (11.5,2); line + lure dangling from tip
+            '<line x1="2" y1="13" x2="11.5" y2="2" stroke-width="2.2" stroke-linecap="round"/>' +
+            '<path d="M11.5 2 Q13.2 7 10.5 11" stroke-width="1" fill="none" opacity="0.85"/>' +
+            '<circle cx="10.5" cy="11.5" r="1.2" fill="rgba(255,255,255,0.88)" stroke-width="1"/>',
 
         // Fishing shop: shopping-bag silhouette with handle = bait & tackle
         fishing_shop:
@@ -1003,6 +1112,18 @@
         seawall:      'Seawalls create hard current edges and shadow lines — stripers, bluefish, snook, and tarpon patrol the base of the wall on tide changes. Night fishing near lit walls is consistently productive.'
     };
 
+    // Infer a water-type color variant for fishing-spot markers from the spot name.
+    // Saltwater keywords → warm orange icon; freshwater keywords → cool blue icon;
+    // no name or ambiguous → default teal (SPOT_TYPES.fishing.color).
+    var _SALT_RE  = /\b(ocean|sea|surf|pier|beach|tidal|coastal|saltwater|bay|gulf|atlantic|pacific|harbor|harbour|inlet|jetty|sound|estuary|brackish)\b/i;
+    var _FRESH_RE = /\b(lake|pond|river|creek|stream|reservoir|freshwater|canal|brook|bayou|dam|falls?|spring)\b/i;
+    function _fishingVariant(name) {
+        if (!name) return 'fishing';
+        if (_SALT_RE.test(name))  return 'fishing_salt';
+        if (_FRESH_RE.test(name)) return 'fishing_fresh';
+        return 'fishing';
+    }
+
     function spotTypeLabel(type) {
         return (SPOT_TYPES[type] || {}).label || 'Fishing Spot';
     }
@@ -1015,8 +1136,12 @@
         // the same viewport (100–300 markers) skip the HTML string build and
         // L.divIcon() object creation entirely after the first render.
         if (_spotIconCache[type]) return _spotIconCache[type];
-        var def       = SPOT_TYPES[type] || SPOT_TYPES.fishing;
-        var color     = def.color;
+        // fishing_salt / fishing_fresh share the base 'fishing' shape but different colors.
+        var baseType  = (type === 'fishing_salt' || type === 'fishing_fresh') ? 'fishing' : type;
+        var def       = SPOT_TYPES[baseType] || SPOT_TYPES.fishing;
+        var color     = type === 'fishing_salt'  ? '#f97316'  // warm orange  — saltwater/coastal
+                      : type === 'fishing_fresh' ? '#38bdf8'  // cool sky-blue — freshwater/inland
+                      : def.color;
         var isHabitat = def.habitat;
         // Habitat = rotating diamond with no inner graphic.
         // Structure = 22px filled circle with an inline SVG icon centred inside.
@@ -1027,7 +1152,7 @@
         var innerRot = isHabitat ? 'transform:rotate(-45deg);' : '';
         var svgW = isHabitat ? 10 : 14;
         var inner = '';
-        var svgPaths = SPOT_SVGS[type];
+        var svgPaths = SPOT_SVGS[baseType];
         if (svgPaths) {
             // Inline SVG: crisp at any DPI, no cross-platform Unicode variance.
             // stroke/fill inherited from the <svg> root; individual paths may
@@ -1039,13 +1164,15 @@
                     svgPaths + '</svg>';
         } else {
             // Fallback for any type not yet in SPOT_SVGS
-            var lbl = SPOT_LABELS[type] || '';
+            var lbl = SPOT_LABELS[baseType] || '';
             if (lbl) {
                 inner = '<span class="fmap-spot-dot-lbl' + (isHabitat ? ' fmap-spot-dot-lbl--habitat' : '') + '"' +
                         (innerRot ? ' style="' + innerRot + '"' : '') + '>' + lbl + '</span>';
             }
         }
-        var html = '<span class="fmap-spot-dot" style="background:' + color +
+        var ringHtml = (baseType === 'wreck') ? '<span class="fmap-wreck-ring"></span>' : '';
+        var html = ringHtml +
+                   '<span class="fmap-spot-dot" style="background:' + color +
                    ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
         var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
@@ -1107,7 +1234,7 @@
         var _suppressedTypes = {};
 
         // Render OSM / NOAA spots first
-        spots.filter(function (f) {
+        var filteredSpots = spots.filter(function (f) {
             if (f.custom) return false;
             // Client-side type filter: activeSpotTypes = [] means show all types.
             // The cache always holds all-types results; filtering here avoids a
@@ -1130,7 +1257,15 @@
                 return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
             }
             return true;
-        }).forEach(function (f) {
+        });
+
+        // Grid-based cluster detection for dense point-marker zones.
+        // Each 0.01° cell (~1.1 km) that holds 4+ same-type spots gets a
+        // summary ring drawn after the main forEach. Declared here so the
+        // loop body can write into it.
+        var _clusterGrid = {};
+
+        filteredSpots.forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
             var tip  = f.tip || STRUCTURE_TIPS[f.type] || 'No details available';
             var srcLabel = f.source === 'noaa' ? 'NOAA ENC'
@@ -1151,9 +1286,10 @@
 
             // Habitat area features with geometry → area overlay
             if (f.geometry && f.geometry.length >= 3 && POLYGON_HABITAT_TYPES[f.type]) {
-                var color = spotTypeColor(f.type);
-                var geom  = f.geometry;
+                var color    = spotTypeColor(f.type);
+                var geom     = f.geometry;
                 var layer;
+                var polyCls  = 'fmap-habitat-poly fmap-habitat-poly--' + f.type.replace(/_/g, '-');
 
                 // Closed ring (OSM closed way): first ≈ last coord → filled polygon.
                 // Open linestring (river, canal, tidal channel): coloured stroke only.
@@ -1176,32 +1312,413 @@
                         opacity:     0.85,
                         fillColor:   color,
                         fillOpacity: 0.30,
-                        className:   'fmap-habitat-poly'
+                        className:   polyCls
                     });
                 } else {
                     // Open waterway (tidal channel, river, canal, stream) —
-                    // draw as a coloured stroke so it traces the channel path
-                    // without incorrectly closing the ring into a filled area.
+                    // draw as a dashed coloured stroke so it traces the channel
+                    // path and is visually distinct from solid polygon fills.
                     layer = L.polyline(geom, {
                         color:     color,
                         weight:    3,
-                        opacity:   0.75,
-                        className: 'fmap-habitat-poly'
+                        opacity:   0.85,
+                        dashArray: '10, 6',
+                        className: polyCls
                     });
                 }
+                _bindPolyHover(layer, isClosed);
                 layer.bindTooltip(tooltipHtml,
                     { className: 'fmap-tooltip fmap-tooltip--struct', sticky: true });
+                // Click opens the same spot-detail panel used by point markers.
+                (function (spot, lyr) {
+                    lyr.on('click', function () {
+                        if (adminEditMode) return;
+                        if (typeof window._fmapShowSpotDetail === 'function') {
+                            _activeSpotMarker = null;
+                            window._fmapShowSpotDetail(spot);
+                        }
+                    });
+                }({ type: f.type, lat: f.lat, lng: f.lng, name: name, tip: tip }, layer));
                 fishingSpotLayer.addLayer(layer);
+
+                // Tidal flat closed polygons: add a centroid ripple marker at zoom 11+
+                // to suggest water covering/uncovering the flat on each tide cycle.
+                // Marker lives in fishingSpotLayer so it's removed when filter is toggled off.
+                if (f.type === 'tidal_flat' && isClosed && currentZoom >= 11) {
+                    var _gC = geom, _sLat = 0, _sLng = 0;
+                    for (var _ci = 0; _ci < _gC.length; _ci++) {
+                        _sLat += _gC[_ci][0];
+                        _sLng += _gC[_ci][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_sLat / _gC.length, _sLng / _gC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-tidal-drop"></span>',
+                                className: 'fmap-tidal-drop-wrap',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            }),
+                            interactive: false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
+                // Oyster reef closed polygons: centroid circleMarker at zoom 11+.
+                // Static amber dot (no animation) — reefs are fixed hard structures.
+                if (f.type === 'oyster_reef' && isClosed && currentZoom >= 11) {
+                    var _oGC = geom, _oLat = 0, _oLng = 0;
+                    for (var _oi = 0; _oi < _oGC.length; _oi++) {
+                        _oLat += _oGC[_oi][0];
+                        _oLng += _oGC[_oi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.circleMarker(
+                        [_oLat / _oGC.length, _oLng / _oGC.length],
+                        {
+                            radius:      5,
+                            color:       '#f59e0b',
+                            fillColor:   '#f59e0b',
+                            fillOpacity: 0.65,
+                            weight:      2,
+                            opacity:     0.9,
+                            interactive: false,
+                            className:   'fmap-oyster-centroid'
+                        }
+                    ));
+                }
+
+                // Kelp closed polygons: swaying stalk marker at centroid, zoom 11+.
+                // Kelp grows vertically in current; the CSS animation evokes that motion.
+                if (f.type === 'kelp' && isClosed && currentZoom >= 11) {
+                    var _kGC = geom, _kLat = 0, _kLng = 0;
+                    for (var _ki = 0; _ki < _kGC.length; _ki++) {
+                        _kLat += _kGC[_ki][0];
+                        _kLng += _kGC[_ki][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_kLat / _kGC.length, _kLng / _kGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-kelp-stalk"></span>',
+                                className: 'fmap-kelp-stalk-wrap',
+                                iconSize:   [12, 20],
+                                iconAnchor: [6, 18]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
+                // Kelp forest grid: at zoom >= 14, place 8 small stalks on a 3×3
+                // grid within the inner 70% of the bbox (center skipped — main stalk
+                // already there). Phase classes stagger animation so stalks don't
+                // all sway in lockstep.
+                if (f.type === 'kelp' && isClosed && currentZoom >= 14) {
+                    var _kfMinLat = Infinity, _kfMaxLat = -Infinity;
+                    var _kfMinLng = Infinity, _kfMaxLng = -Infinity;
+                    for (var _kfi = 0; _kfi < geom.length; _kfi++) {
+                        if (geom[_kfi][0] < _kfMinLat) _kfMinLat = geom[_kfi][0];
+                        if (geom[_kfi][0] > _kfMaxLat) _kfMaxLat = geom[_kfi][0];
+                        if (geom[_kfi][1] < _kfMinLng) _kfMinLng = geom[_kfi][1];
+                        if (geom[_kfi][1] > _kfMaxLng) _kfMaxLng = geom[_kfi][1];
+                    }
+                    var _kfLatSp = (_kfMaxLat - _kfMinLat) * 0.70;
+                    var _kfLngSp = (_kfMaxLng - _kfMinLng) * 0.70;
+                    if (_kfLatSp >= 0.002 || _kfLngSp >= 0.002) {
+                        var _kfLatOff = (_kfMaxLat - _kfMinLat) * 0.15;
+                        var _kfLngOff = (_kfMaxLng - _kfMinLng) * 0.15;
+                        var _kfPhases = ['', '--p1', '--p2', '--p1', '--p2', '', '--p2', '--p1'];
+                        var _kfI = 0;
+                        for (var _kfRow = 0; _kfRow < 3; _kfRow++) {
+                            for (var _kfCol = 0; _kfCol < 3; _kfCol++) {
+                                if (_kfRow === 1 && _kfCol === 1) continue;
+                                var _kfLat = _kfMinLat + _kfLatOff + _kfRow * _kfLatSp / 2;
+                                var _kfLng = _kfMinLng + _kfLngOff + _kfCol * _kfLngSp / 2;
+                                var _kfPh  = _kfPhases[_kfI++];
+                                var _kfCls = 'fmap-kelp-stalk fmap-kelp-stalk--sm' +
+                                             (_kfPh ? ' fmap-kelp-stalk' + _kfPh : '');
+                                fishingSpotLayer.addLayer(L.marker([_kfLat, _kfLng], {
+                                    icon: L.divIcon({
+                                        html:       '<span class="' + _kfCls + '"></span>',
+                                        className:  'fmap-kelp-stalk-wrap',
+                                        iconSize:   [8, 12],
+                                        iconAnchor: [4, 12]
+                                    }),
+                                    interactive:  false,
+                                    zIndexOffset: -100
+                                }));
+                            }
+                        }
+                    }
+                }
+
+                // Reef closed polygons: diamond centroid marker at zoom 11+.
+                // Diamond matches the nautical chart convention for a reef hazard.
+                // Distinct from oyster_reef (filled circle) despite sharing the amber color.
+                if (f.type === 'reef' && isClosed && currentZoom >= 11) {
+                    var _rGC = geom, _rLat = 0, _rLng = 0;
+                    for (var _ri = 0; _ri < _rGC.length; _ri++) {
+                        _rLat += _rGC[_ri][0];
+                        _rLng += _rGC[_ri][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_rLat / _rGC.length, _rLng / _rGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-reef-pin"></span>',
+                                className: 'fmap-reef-pin-wrap',
+                                iconSize:   [14, 14],
+                                iconAnchor: [7, 7]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
+                // Shoal closed polygons: upward-triangle centroid marker at zoom 11+.
+                // Triangle matches the nautical chart convention for a shoal hazard.
+                if (f.type === 'shoal' && isClosed && currentZoom >= 11) {
+                    var _sGC = geom, _shLat = 0, _shLng = 0;
+                    for (var _si = 0; _si < _sGC.length; _si++) {
+                        _shLat += _sGC[_si][0];
+                        _shLng += _sGC[_si][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_shLat / _sGC.length, _shLng / _sGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-shoal-pin"></span>',
+                                className: 'fmap-shoal-pin-wrap',
+                                iconSize:   [14, 12],
+                                iconAnchor: [7, 6]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
+                // Saltmarsh closed polygons: grass-tuft centroid marker at zoom 11+.
+                // Three vertical stripes via CSS gradient suggest spartina grass stalks.
+                if (f.type === 'saltmarsh' && isClosed && currentZoom >= 11) {
+                    var _mGC = geom, _mLat = 0, _mLng = 0;
+                    for (var _mi = 0; _mi < _mGC.length; _mi++) {
+                        _mLat += _mGC[_mi][0];
+                        _mLng += _mGC[_mi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_mLat / _mGC.length, _mLng / _mGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-marsh-tuft"></span>',
+                                className: 'fmap-marsh-tuft-wrap',
+                                iconSize:   [14, 13],
+                                iconAnchor: [7, 13]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                    if (currentZoom >= 14) {
+                        var _smgMinLat=Infinity,_smgMaxLat=-Infinity,_smgMinLng=Infinity,_smgMaxLng=-Infinity;
+                        for (var _smgi=0;_smgi<geom.length;_smgi++){
+                            if(geom[_smgi][0]<_smgMinLat)_smgMinLat=geom[_smgi][0];
+                            if(geom[_smgi][0]>_smgMaxLat)_smgMaxLat=geom[_smgi][0];
+                            if(geom[_smgi][1]<_smgMinLng)_smgMinLng=geom[_smgi][1];
+                            if(geom[_smgi][1]>_smgMaxLng)_smgMaxLng=geom[_smgi][1];
+                        }
+                        var _smgLatSp=(_smgMaxLat-_smgMinLat)*0.70,_smgLngSp=(_smgMaxLng-_smgMinLng)*0.70;
+                        if (_smgLatSp>=0.002||_smgLngSp>=0.002) {
+                            var _smgLatOff=(_smgMaxLat-_smgMinLat)*0.15,_smgLngOff=(_smgMaxLng-_smgMinLng)*0.15;
+                            for(var _smgRow=0;_smgRow<3;_smgRow++){
+                                for(var _smgCol=0;_smgCol<3;_smgCol++){
+                                    if(_smgRow===1&&_smgCol===1)continue;
+                                    var _smgLat=_smgMinLat+_smgLatOff+_smgRow*_smgLatSp/2;
+                                    var _smgLng=_smgMinLng+_smgLngOff+_smgCol*_smgLngSp/2;
+                                    fishingSpotLayer.addLayer(L.marker([_smgLat,_smgLng],{
+                                        icon:L.divIcon({html:'<span class="fmap-marsh-tuft fmap-marsh-tuft--sm"></span>',
+                                            className:'fmap-marsh-tuft-wrap',iconSize:[9,8],iconAnchor:[4,8]}),
+                                        interactive:false,zIndexOffset:-100
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Mangrove closed polygons: prop-root fork centroid marker at zoom 11+.
+                // clip-path Y-shape suggests a trunk splitting into arching prop roots.
+                if (f.type === 'mangrove' && isClosed && currentZoom >= 11) {
+                    var _mgGC = geom, _mgLat = 0, _mgLng = 0;
+                    for (var _mgi = 0; _mgi < _mgGC.length; _mgi++) {
+                        _mgLat += _mgGC[_mgi][0];
+                        _mgLng += _mgGC[_mgi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_mgLat / _mgGC.length, _mgLng / _mgGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-mangrove-pin"></span>',
+                                className: 'fmap-mangrove-pin-wrap',
+                                iconSize:   [14, 14],
+                                iconAnchor: [7, 7]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                    if (currentZoom >= 14) {
+                        var _mgfMinLat=Infinity,_mgfMaxLat=-Infinity,_mgfMinLng=Infinity,_mgfMaxLng=-Infinity;
+                        for (var _mgfi=0;_mgfi<geom.length;_mgfi++){
+                            if(geom[_mgfi][0]<_mgfMinLat)_mgfMinLat=geom[_mgfi][0];
+                            if(geom[_mgfi][0]>_mgfMaxLat)_mgfMaxLat=geom[_mgfi][0];
+                            if(geom[_mgfi][1]<_mgfMinLng)_mgfMinLng=geom[_mgfi][1];
+                            if(geom[_mgfi][1]>_mgfMaxLng)_mgfMaxLng=geom[_mgfi][1];
+                        }
+                        var _mgfLatSp=(_mgfMaxLat-_mgfMinLat)*0.70,_mgfLngSp=(_mgfMaxLng-_mgfMinLng)*0.70;
+                        if (_mgfLatSp>=0.002||_mgfLngSp>=0.002) {
+                            var _mgfLatOff=(_mgfMaxLat-_mgfMinLat)*0.15,_mgfLngOff=(_mgfMaxLng-_mgfMinLng)*0.15;
+                            var _mgfIdx=0;
+                            for(var _mgfRow=0;_mgfRow<3;_mgfRow++){
+                                for(var _mgfCol=0;_mgfCol<3;_mgfCol++){
+                                    if(_mgfRow===1&&_mgfCol===1)continue;
+                                    var _mgfLat=_mgfMinLat+_mgfLatOff+_mgfRow*_mgfLatSp/2;
+                                    var _mgfLng=_mgfMinLng+_mgfLngOff+_mgfCol*_mgfLngSp/2;
+                                    _mgfIdx++;
+                                    fishingSpotLayer.addLayer(L.marker([_mgfLat,_mgfLng],{
+                                        icon:L.divIcon({html:'<span class="fmap-mangrove-pin fmap-mangrove-pin--sm"></span>',
+                                            className:'fmap-mangrove-pin-wrap',iconSize:[9,9],iconAnchor:[4,4]}),
+                                        interactive:false,zIndexOffset:-100
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Grass flat closed polygons: horizontal-bar centroid marker at zoom 11+.
+                // Three stacked horizontal bars suggest seagrass blades lying flat in current,
+                // contrasting with the vertical saltmarsh tuft.
+                if (f.type === 'grass_flat' && isClosed && currentZoom >= 11) {
+                    var _gfGC = geom, _gfLat = 0, _gfLng = 0;
+                    for (var _gfi = 0; _gfi < _gfGC.length; _gfi++) {
+                        _gfLat += _gfGC[_gfi][0];
+                        _gfLng += _gfGC[_gfi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_gfLat / _gfGC.length, _gfLng / _gfGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-grassflat-pin"></span>',
+                                className: 'fmap-grassflat-pin-wrap',
+                                iconSize:   [12, 10],
+                                iconAnchor: [6, 5]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                    if (currentZoom >= 14) {
+                        var _gfgMinLat=Infinity,_gfgMaxLat=-Infinity,_gfgMinLng=Infinity,_gfgMaxLng=-Infinity;
+                        for (var _gfgi=0;_gfgi<geom.length;_gfgi++){
+                            if(geom[_gfgi][0]<_gfgMinLat)_gfgMinLat=geom[_gfgi][0];
+                            if(geom[_gfgi][0]>_gfgMaxLat)_gfgMaxLat=geom[_gfgi][0];
+                            if(geom[_gfgi][1]<_gfgMinLng)_gfgMinLng=geom[_gfgi][1];
+                            if(geom[_gfgi][1]>_gfgMaxLng)_gfgMaxLng=geom[_gfgi][1];
+                        }
+                        var _gfgLatSp=(_gfgMaxLat-_gfgMinLat)*0.70,_gfgLngSp=(_gfgMaxLng-_gfgMinLng)*0.70;
+                        if (_gfgLatSp>=0.002||_gfgLngSp>=0.002) {
+                            var _gfgLatOff=(_gfgMaxLat-_gfgMinLat)*0.15,_gfgLngOff=(_gfgMaxLng-_gfgMinLng)*0.15;
+                            for(var _gfgRow=0;_gfgRow<3;_gfgRow++){
+                                for(var _gfgCol=0;_gfgCol<3;_gfgCol++){
+                                    if(_gfgRow===1&&_gfgCol===1)continue;
+                                    var _gfgLat=_gfgMinLat+_gfgLatOff+_gfgRow*_gfgLatSp/2;
+                                    var _gfgLng=_gfgMinLng+_gfgLngOff+_gfgCol*_gfgLngSp/2;
+                                    fishingSpotLayer.addLayer(L.marker([_gfgLat,_gfgLng],{
+                                        icon:L.divIcon({html:'<span class="fmap-grassflat-pin fmap-grassflat-pin--sm"></span>',
+                                            className:'fmap-grassflat-pin-wrap',iconSize:[8,4],iconAnchor:[4,2]}),
+                                        interactive:false,zIndexOffset:-100
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Beach closed polygons: wave-arc centroid marker at zoom 11+.
+                if (f.type === 'beach' && isClosed && currentZoom >= 11) {
+                    var _bGC = geom, _bLat = 0, _bLng = 0;
+                    for (var _bi = 0; _bi < _bGC.length; _bi++) {
+                        _bLat += _bGC[_bi][0]; _bLng += _bGC[_bi][1];
+                    }
+                    fishingSpotLayer.addLayer(L.marker(
+                        [_bLat / _bGC.length, _bLng / _bGC.length],
+                        {
+                            icon: L.divIcon({
+                                html: '<span class="fmap-beach-pin"></span>',
+                                className: 'fmap-beach-pin-wrap',
+                                iconSize:   [14, 8],
+                                iconAnchor: [7, 4]
+                            }),
+                            interactive:  false,
+                            zIndexOffset: -100
+                        }
+                    ));
+                }
+
+                // Inlet closed polygons: small circle at centroid; open channel polylines:
+                // directional arrow at midpoint oriented along the channel bearing.
+                if (f.type === 'inlet' && currentZoom >= 11) {
+                    if (isClosed) {
+                        var _inGC = geom, _inLat = 0, _inLng = 0;
+                        for (var _ini = 0; _ini < _inGC.length; _ini++) {
+                            _inLat += _inGC[_ini][0]; _inLng += _inGC[_ini][1];
+                        }
+                        fishingSpotLayer.addLayer(L.circleMarker(
+                            [_inLat / _inGC.length, _inLng / _inGC.length],
+                            {
+                                radius:      4,
+                                color:       '#38bdf8',
+                                fillColor:   '#38bdf8',
+                                fillOpacity: 0.60,
+                                weight:      1.5,
+                                opacity:     0.9,
+                                interactive: false,
+                                className:   'fmap-inlet-centroid'
+                            }
+                        ));
+                    } else if (geom.length >= 3) {
+                        _addChannelArrows(geom, fishingSpotLayer);
+                    }
+                }
+
                 return;
             }
 
             // Point / structure features → icon marker (pier, buoy, wreck, etc.)
             if (!f.lat || !f.lng) return;
-            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(f.type) });
+            // Fishing spots get a water-type color variant derived from the spot name.
+            var _iconType = (f.type === 'fishing') ? _fishingVariant(f.name || '') : f.type;
+            var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(_iconType) });
             // Prefer the tip that came from the server; local table is the fallback
             m.bindTooltip(tooltipHtml,
                 { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
             );
+            // Zoom-adaptive name label: pier, jetty, and wreck markers show the
+            // spot name as a permanent callout at zoom 13+.  No extra event listener
+            // needed — renderFishingSpots already re-renders when zoom changes.
+            if (currentZoom >= 13 && f.name &&
+                (f.type === 'pier' || f.type === 'jetty' || f.type === 'wreck')) {
+                m.bindTooltip(f.name, {
+                    permanent:  true,
+                    direction:  'right',
+                    offset:     [14, 0],
+                    className:  'fmap-spot-label'
+                });
+            }
             // Click handler: admin mode gets spot actions; everyone else gets
             // the spot detail panel with strike score and best-time information.
             (function (spot, marker) {
@@ -1217,7 +1734,57 @@
                 });
             }(f, m));
             fishingSpotLayer.addLayer(m);
+
+            // Accumulate point-marker positions for post-render cluster detection.
+            if (_HALO_R[f.type]) {
+                var _cCell = Math.floor(f.lat / 0.01) + ':' + Math.floor(f.lng / 0.01) + ':' + f.type;
+                if (!_clusterGrid[_cCell]) _clusterGrid[_cCell] = { type: f.type, la: 0, ln: 0, n: 0 };
+                _clusterGrid[_cCell].la += f.lat;
+                _clusterGrid[_cCell].ln += f.lng;
+                _clusterGrid[_cCell].n  += 1;
+            }
+
+            // Influence-zone halo: L.circle around structure markers at zoom 13+.
+            // Radius reflects the typical fish-holding / casting zone for each type.
+            var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
+                            fishing: 40, fishing_salt: 40, fishing_fresh: 40 };
+            if (_HALO_R[f.type] && currentZoom >= 13) {
+                var _haloColor = spotTypeColor(f.type);
+                fishingSpotLayer.addLayer(L.circle([f.lat, f.lng], {
+                    radius:      _HALO_R[f.type],
+                    color:       _haloColor,
+                    weight:      1,
+                    opacity:     0.45,
+                    fillColor:   _haloColor,
+                    fillOpacity: 0.07,
+                    interactive: false,
+                    className:   'fmap-spot-halo'
+                }));
+            }
         });
+
+        // Draw cluster summary rings: cells with 4+ same-type point markers
+        // get a faint L.circle ring at their centroid, visible at zoom 11-14.
+        if (currentZoom >= 11 && currentZoom <= 14) {
+            Object.keys(_clusterGrid).forEach(function (ck) {
+                var cell = _clusterGrid[ck];
+                if (cell.n < 4) return;
+                var clr = spotTypeColor(cell.type);
+                fishingSpotLayer.addLayer(L.circle(
+                    [cell.la / cell.n, cell.ln / cell.n],
+                    {
+                        radius:      350,
+                        color:       clr,
+                        weight:      1,
+                        opacity:     0.40,
+                        fillColor:   clr,
+                        fillOpacity: 0.05,
+                        interactive: false,
+                        className:   'fmap-cluster-ring'
+                    }
+                ));
+            });
+        }
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
@@ -4737,6 +5304,7 @@
         var color = score >= 8 ? '#4ade80' :
                     score >= 6 ? '#a3e635' :
                     score >= 4 ? '#fbbf24' : '#f87171';
+        // Point markers: recolour the dot border
         fishingSpotLayer.eachLayer(function (layer) {
             if (!layer._icon) return;
             var dot = layer._icon.querySelector('.fmap-spot-dot');
@@ -4744,6 +5312,17 @@
                 dot.style.borderColor = color;
                 dot.style.boxShadow   = '0 0 7px ' + color + '77';
             }
+        });
+        // Habitat polygons: scale border opacity with score so high-scoring
+        // areas read as more vivid and low-scoring ones fade back.
+        var borderOpacity = score >= 8 ? 0.95 :
+                            score >= 6 ? 0.75 :
+                            score >= 4 ? 0.55 : 0.35;
+        fishingSpotLayer.eachLayer(function (layer) {
+            if (!layer.setStyle) return;
+            var cls = (layer.options && layer.options.className) || '';
+            if (!cls.includes('fmap-habitat-poly')) return;
+            layer.setStyle({ opacity: borderOpacity });
         });
     }
 
