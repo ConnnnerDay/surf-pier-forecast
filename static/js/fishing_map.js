@@ -57,6 +57,14 @@
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
     var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
+    // Decorative overlay layer (influence halos + cluster rings) kept separate so
+    // the main fishingSpotLayer can paint without waiting for these circles.
+    var _decorLayer      = null;
+    var _decorRenderGen  = 0;    // guards against stale idle callbacks
+    // Influence-zone radii (metres) — moved to module level to avoid re-creating
+    // the object literal on every pass through the filteredSpots.forEach loop.
+    var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
+                    fishing: 40, fishing_salt: 40, fishing_fresh: 40 };
     var _AI_POLY_CAP     = 150;      // max polygon/polyline overlays rendered by AI layer
     var _AI_POINT_CAP    = 60;       // max point-marker features rendered by AI layer
 
@@ -262,10 +270,11 @@
         });
         activeTileLayer.addTo(map);
 
-        // Layer groups — render order: AI picks → OSM structures
+        // Layer groups — render order: AI picks → OSM structures → decor
         aiPickLayer      = L.layerGroup().addTo(map);
         _aiLsLoad();
         fishingSpotLayer = L.layerGroup().addTo(map);
+        _decorLayer      = L.layerGroup().addTo(map); // halos + cluster rings (deferred)
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
         // caused every event to fire twice, queuing double the debounced requests).
@@ -1296,6 +1305,8 @@
         // summary ring drawn after the main forEach. Declared here so the
         // loop body can write into it.
         var _clusterGrid = {};
+        // Halo data collected during forEach; circles created in idle callback.
+        var _haloData = [];
 
         filteredSpots.forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
@@ -1741,53 +1752,56 @@
                 _clusterGrid[_cCell].n  += 1;
             }
 
-            // Influence-zone halo: L.circle around structure markers at zoom 13+.
-            // Radius reflects the typical fish-holding / casting zone for each type.
-            var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
-                            fishing: 40, fishing_salt: 40, fishing_fresh: 40 };
+            // Accumulate halo data for deferred rendering (_decorLayer idle callback).
             if (_HALO_R[f.type] && currentZoom >= 13) {
-                var _haloColor = spotTypeColor(f.type);
-                fishingSpotLayer.addLayer(L.circle([f.lat, f.lng], {
-                    radius:      _HALO_R[f.type],
-                    color:       _haloColor,
-                    weight:      1,
-                    opacity:     0.45,
-                    fillColor:   _haloColor,
-                    fillOpacity: 0.07,
-                    interactive: false,
-                    className:   'fmap-spot-halo'
-                }));
+                _haloData.push({ lat: f.lat, lng: f.lng, type: f.type });
             }
         });
-
-        // Draw cluster summary rings: cells with 4+ same-type point markers
-        // get a faint L.circle ring at their centroid, visible at zoom 11-14.
-        if (currentZoom >= 11 && currentZoom <= 14) {
-            Object.keys(_clusterGrid).forEach(function (ck) {
-                var cell = _clusterGrid[ck];
-                if (cell.n < 4) return;
-                var clr = spotTypeColor(cell.type);
-                fishingSpotLayer.addLayer(L.circle(
-                    [cell.la / cell.n, cell.ln / cell.n],
-                    {
-                        radius:      350,
-                        color:       clr,
-                        weight:      1,
-                        opacity:     0.40,
-                        fillColor:   clr,
-                        fillOpacity: 0.05,
-                        interactive: false,
-                        className:   'fmap-cluster-ring'
-                    }
-                ));
-            });
-        }
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
 
         // Re-attach now that all markers are built — single composite repaint
         if (_wasOnMap) fishingSpotLayer.addTo(map);
+
+        // Defer decorative circles (influence halos + cluster rings) to idle so
+        // the main markers are visible before we spend time on non-interactive chrome.
+        var _dg = ++_decorRenderGen;
+        var _cgSnap = _clusterGrid, _hdSnap = _haloData, _zSnap = currentZoom;
+        var _idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 80); };
+        _idle(function () {
+            if (_dg !== _decorRenderGen || !_decorLayer || !map) return;
+            var _wasDecorOn = map.hasLayer(_decorLayer);
+            if (_wasDecorOn) _decorLayer.remove();
+            _decorLayer.clearLayers();
+            for (var _hi = 0; _hi < _hdSnap.length; _hi++) {
+                var _h = _hdSnap[_hi], _hc = spotTypeColor(_h.type);
+                _decorLayer.addLayer(L.circle([_h.lat, _h.lng], {
+                    radius:      _HALO_R[_h.type],
+                    color:       _hc,
+                    weight:      1,
+                    opacity:     0.45,
+                    fillColor:   _hc,
+                    fillOpacity: 0.07,
+                    interactive: false,
+                    className:   'fmap-spot-halo'
+                }));
+            }
+            if (_zSnap >= 11 && _zSnap <= 14) {
+                Object.keys(_cgSnap).forEach(function (ck) {
+                    var cell = _cgSnap[ck];
+                    if (cell.n < 4) return;
+                    var clr = spotTypeColor(cell.type);
+                    _decorLayer.addLayer(L.circle(
+                        [cell.la / cell.n, cell.ln / cell.n],
+                        { radius: 350, color: clr, weight: 1, opacity: 0.40,
+                          fillColor: clr, fillOpacity: 0.05, interactive: false,
+                          className: 'fmap-cluster-ring' }
+                    ));
+                });
+            }
+            if (_wasDecorOn) _decorLayer.addTo(map);
+        });
 
         // Apply current strike-score tint to newly created markers
         if (_scoreData) {
