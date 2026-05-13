@@ -23,6 +23,10 @@ pytest -k "test_email" -v             # pattern match
 ruff check .
 ruff format .
 mypy .
+
+# Rebuild minified JS (run after editing static/js/fishing_map.js)
+# Requires: npm install -g terser
+terser static/js/fishing_map.js --compress --mangle --output static/js/fishing_map.min.js
 ```
 
 ## Architecture
