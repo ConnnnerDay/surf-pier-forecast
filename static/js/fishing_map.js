@@ -5860,8 +5860,7 @@
         var root = document.getElementById('fmap-root');
         if (!root) return;
 
-        els.mapEl         = document.getElementById('fishing-map-el');
-        els.loading       = document.getElementById('fmap-loading');
+        els.mapEl         = document.getElementById('fishing-map-el');        els.loading       = document.getElementById('fmap-loading');
         // Community / social elements
         els.catchDetail    = document.getElementById('fmap-catch-detail');
         els.catchDetailTitle = document.getElementById('fmap-catch-detail-title');
@@ -5902,9 +5901,22 @@
         }
     }
 
+    // Start fetching Leaflet immediately on page load — don't wait for the map
+    // section to scroll into view.  By the time the IntersectionObserver fires,
+    // the script is already cached/executing and boot() completes near-instantly.
+    function _prewarmLeaflet() {
+        if (document.getElementById('fmap-root')) {
+            ensureLeafletCss();
+            loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js').catch(function () {
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js').catch(function(){});
+            });
+        }
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function () { _prewarmLeaflet(); init(); });
     } else {
+        _prewarmLeaflet();
         init();
     }
 })();
