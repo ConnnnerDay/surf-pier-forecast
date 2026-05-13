@@ -278,16 +278,20 @@ def _decimate_ring(coords: list[list[float]]) -> list[list[float]]:
 
     Uses uniform Nth-point selection so the ring shape is preserved evenly.
     The first and last points are always kept so closed rings stay closed.
+    Coordinates are rounded to 5 decimal places (~1 m precision) to keep the
+    JSON payload compact without any perceptible loss of polygon accuracy.
     """
     n = len(coords)
     if n <= _MAX_POLYGON_COORDS:
-        return coords
-    # Pick evenly-spaced indices; always include 0 and n-1
-    step = (n - 1) / (_MAX_POLYGON_COORDS - 1)
-    indices = {0, n - 1}
-    for i in range(1, _MAX_POLYGON_COORDS - 1):
-        indices.add(round(i * step))
-    return [coords[i] for i in sorted(indices)]
+        result = coords
+    else:
+        # Pick evenly-spaced indices; always include 0 and n-1
+        step = (n - 1) / (_MAX_POLYGON_COORDS - 1)
+        indices = {0, n - 1}
+        for i in range(1, _MAX_POLYGON_COORDS - 1):
+            indices.add(round(i * step))
+        result = [coords[i] for i in sorted(indices)]
+    return [[round(p[0], 5), round(p[1], 5)] for p in result]
 
 # ── Overpass API endpoints (primary + mirror fallback) ────────────────────────
 _OVERPASS_URLS = [
@@ -1304,6 +1308,13 @@ def find_fish_structures(
         s for s in osm_spots + noaa_spots + esri_spots if s["type"] in active_types
     ]
     deduped = _deduplicate(all_spots)
+    # Round point-marker coordinates to 5 dp (~1 m) to reduce JSON payload size.
+    # Geometry arrays are already rounded in _decimate_ring.
+    for s in deduped:
+        if "lat" in s:
+            s["lat"] = round(s["lat"], 5)
+        if "lng" in s:
+            s["lng"] = round(s["lng"], 5)
     # Tips are not attached server-side — the JS client owns STRUCTURE_TIPS and
     # looks them up locally via ``f.tip || STRUCTURE_TIPS[f.type]``.  Omitting
     # them here shrinks the wire payload and the in-memory cache by ~50 % for
