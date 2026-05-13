@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json as _json
 import logging
+import math as _math
 import os
 import re
 import threading
@@ -521,6 +522,25 @@ def _render_forecast(
         and not stored_profile.get("fishing_types")
     )
 
+    loc_lat = location.get("lat", 0)
+    loc_lng = location.get("lng", 0)
+
+    # Pre-compute the home-corridor structure bbox so the template can emit a
+    # <link rel="preload"> for /api/map/structures before any JS runs.
+    # Must match the rounding in prefetchHomeCorridorStructures() (±1° corridor,
+    # snapped to 0.5° grid).  Uses :g format so 33.0 → "33" not "33.0",
+    # matching JavaScript's default float→string conversion.
+    _struct_preload_url = ""
+    if loc_lat and loc_lng:
+        _R = 1.0
+        _s = _math.floor((loc_lat - _R) * 2) / 2
+        _w = _math.floor((loc_lng - _R) * 2) / 2
+        _n = _math.ceil((loc_lat + _R) * 2) / 2
+        _e = _math.ceil((loc_lng + _R) * 2) / 2
+        _struct_preload_url = (
+            f"/api/map/structures?south={_s:g}&west={_w:g}&north={_n:g}&east={_e:g}"
+        )
+
     return render_template(
         "index.html",
         forecast=forecast,
@@ -530,8 +550,9 @@ def _render_forecast(
         trip_setup=trip_setup,
         favorite_locations=favorite_locations,
         caught_species=caught_species,
-        location_lat=location.get("lat", 0),
-        location_lng=location.get("lng", 0),
+        location_lat=loc_lat,
+        location_lng=loc_lng,
+        struct_preload_url=_struct_preload_url,
         profile_incomplete=profile_incomplete,
     )
 

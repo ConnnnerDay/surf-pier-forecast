@@ -7,6 +7,8 @@
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     {% include 'partials/_head_fonts.html' %}
     <link rel="stylesheet" href="{{ surl('style.css') }}">
+    <link rel="stylesheet" href="{{ surl('leaflet.min.css') }}">
+    <link rel="preload" as="script" href="{{ surl('js/leaflet.min.js') }}">
     <link rel="manifest" href="{{ surl('manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,6 +36,9 @@
     <link rel="preload" as="fetch" crossorigin href="/api/weather/env-context?lat={{ location_lat }}&amp;lng={{ location_lng }}">
     <link rel="preload" as="fetch" crossorigin href="/api/weather/combined-forecast?lat={{ location_lat }}&amp;lng={{ location_lng }}">
     <link rel="preload" as="fetch" crossorigin href="/api/map/stat-cards?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    {% if struct_preload_url %}
+    <link rel="preload" as="fetch" crossorigin href="{{ struct_preload_url }}">
+    {% endif %}
     {% endif %}
     {# Preconnect to map tile and Leaflet CDN origins so DNS+TLS is done before the map boots #}
     <link rel="preconnect" href="https://cdn.jsdelivr.net">

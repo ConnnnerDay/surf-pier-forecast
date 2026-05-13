@@ -57,7 +57,7 @@ _HTTP.headers.update({"User-Agent": "surf-pier-forecast/1.0 (fishing forecast ap
 _CACHE: dict[
     tuple, dict[str, Any]
 ] = {}  # {key: {"ts": float, "data": list, "failed": bool}}
-_CACHE_TTL: int = 1800  # 30 minutes — piers and reefs don't move
+_CACHE_TTL: int = 21600  # 6 hours — piers and reefs don't move
 _CACHE_TTL_FAILED: int = 90  # 90 seconds — retry failed bboxes less aggressively
 _CACHE_MAX: int = 256  # max bbox+types combinations kept in memory
 

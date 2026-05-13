@@ -2049,7 +2049,7 @@ def map_structures() -> Any:
     # shared/browser caching is safe.  30-minute TTL matches the server-side
     # in-memory cache; stale-while-revalidate lets the browser serve a cached
     # response while a background refresh happens, keeping the UI snappy.
-    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+    resp.headers["Cache-Control"] = "public, max-age=21600, stale-while-revalidate=3600"
     return resp
 
 

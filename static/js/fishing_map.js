@@ -5164,38 +5164,44 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                // ── First paint: render cached spots immediately ──
-                // _ssLoad() already ran in _prewarmLeaflet() so spotCache is hot.
-                // Must come before the wire* calls so markers appear as soon as
-                // the map is ready, not after all event-handler setup finishes.
+
+                // ── First paint: render cached spots, then yield ──
+                // spotCache is already populated by _prewarmLeaflet → _ssLoad().
+                // queryStructures() calls renderFishingSpots() synchronously when
+                // the cache is warm, so spots land in the DOM here.  We then
+                // immediately yield with setTimeout(0) so the browser can
+                // composite and paint those markers before the wire* loop runs.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                     typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
                     queryStructures();
                 }
-                // ── Wire UI and overlays (spots already visible above) ──
-                wireMapControls();
-                wireSpotTypeFilters();
-                wireCommunityLayer();
-                wireLogCatch();
-                wireFullscreen();
-                wireShareBtn();
-                wireAdminMode();
-                wireLayersPopup();
-                wireSstLayer();
-                wireMetarLayer();
-                wireRecentStorms();
-                wireMarineWarnings();
-                wireStormTracker();
-                wireBuoyLayer();
-                wireHfradarLayer();
-                wireTropicalOutlook();
-                wireCategoryFilterTabs();
-                _fetchMapScore();
-                wireSpotDetailPanel();
-                _syncBottomBarLayout();
-                restoreLayerState();
-                _hideMainLoading();
-                scheduleAIQuery();
+
+                // ── Wire UI and overlays after browser has had a chance to paint ──
+                setTimeout(function () {
+                    wireMapControls();
+                    wireSpotTypeFilters();
+                    wireCommunityLayer();
+                    wireLogCatch();
+                    wireFullscreen();
+                    wireShareBtn();
+                    wireAdminMode();
+                    wireLayersPopup();
+                    wireSstLayer();
+                    wireMetarLayer();
+                    wireRecentStorms();
+                    wireMarineWarnings();
+                    wireStormTracker();
+                    wireBuoyLayer();
+                    wireHfradarLayer();
+                    wireTropicalOutlook();
+                    wireCategoryFilterTabs();
+                    _fetchMapScore();
+                    wireSpotDetailPanel();
+                    _syncBottomBarLayout();
+                    restoreLayerState();
+                    _hideMainLoading();
+                    scheduleAIQuery();
+                }, 0);
             })
             .catch(function (err) {
                 console.error('[fishing-map] boot error:', err);
