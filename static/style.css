@@ -4623,8 +4623,9 @@ h2::before {
   width: 10px;
   height: 10px;
   border-radius: 3px;
-  border: 2px solid rgba(255,255,255,0.82);
-  transition: transform 0.12s ease;
+  border: 2px solid var(--fmap-score-col, rgba(255,255,255,0.82));
+  box-shadow: 0 0 7px var(--fmap-score-shadow, rgba(0,0,0,0.3));
+  transition: transform 0.12s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .fmap-spot-wrap:hover .fmap-spot-dot {
   transform: scale(1.35);

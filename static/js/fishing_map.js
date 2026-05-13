@@ -150,6 +150,7 @@
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
+    var _mapRoot = null; // cached #fmap-root element for CSS variable updates
 
     // ─── Utilities ───────────────────────────────────────────────────────────
     function esc(s) {
@@ -1183,7 +1184,7 @@
         var ringHtml = (baseType === 'wreck') ? '<span class="fmap-wreck-ring"></span>' : '';
         var html = ringHtml +
                    '<span class="fmap-spot-dot" style="background:' + color +
-                   ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
+                   ';width:' + sz + 'px;height:' + sz + 'px' +
                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
         var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
                                iconSize:   [sz + 4, sz + 4],
@@ -5287,28 +5288,25 @@
     // ─── Score-based marker tinting ───────────────────────────────────────────
     // Defined at module scope so renderFishingSpots can call it after each render.
     function _recolourSpotsByScore(score) {
-        if (!fishingSpotLayer) return;
         var color = score >= 8 ? '#4ade80' :
                     score >= 6 ? '#a3e635' :
                     score >= 4 ? '#fbbf24' : '#f87171';
-        // Point markers: recolour the dot border
-        fishingSpotLayer.eachLayer(function (layer) {
-            if (!layer._icon) return;
-            var dot = layer._icon.querySelector('.fmap-spot-dot');
-            if (dot) {
-                dot.style.borderColor = color;
-                dot.style.boxShadow   = '0 0 7px ' + color + '77';
-            }
-        });
-        // Habitat polygons: scale border opacity with score so high-scoring
-        // areas read as more vivid and low-scoring ones fade back.
+        // Point markers: single CSS variable update instead of per-element DOM mutation.
+        // .fmap-spot-dot uses border-color/box-shadow via var(--fmap-score-col/shadow).
+        if (_mapRoot) {
+            _mapRoot.style.setProperty('--fmap-score-col', color);
+            _mapRoot.style.setProperty('--fmap-score-shadow', color + '77');
+        }
+        // Habitat polygons: Leaflet canvas renderer requires setStyle() — CSS
+        // variables can't reach individual canvas-drawn paths.
+        if (!fishingSpotLayer) return;
         var borderOpacity = score >= 8 ? 0.95 :
                             score >= 6 ? 0.75 :
                             score >= 4 ? 0.55 : 0.35;
         fishingSpotLayer.eachLayer(function (layer) {
             if (!layer.setStyle) return;
             var cls = (layer.options && layer.options.className) || '';
-            if (!cls.includes('fmap-habitat-poly')) return;
+            if (cls.indexOf('fmap-habitat-poly') === -1) return;
             layer.setStyle({ opacity: borderOpacity });
         });
     }
@@ -5854,6 +5852,7 @@
     function init() {
         var root = document.getElementById('fmap-root');
         if (!root) return;
+        _mapRoot = root;
 
         els.mapEl         = document.getElementById('fishing-map-el');        els.loading       = document.getElementById('fmap-loading');
         // Community / social elements
