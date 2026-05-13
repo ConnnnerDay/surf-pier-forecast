@@ -1675,10 +1675,18 @@
             // Fishing spots get a water-type color variant derived from the spot name.
             var _iconType = (f.type === 'fishing') ? _fishingVariant(f.name || '') : f.type;
             var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(_iconType) });
-            // Prefer the tip that came from the server; local table is the fallback
-            m.bindTooltip(tooltipHtml,
-                { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
-            );
+            // Defer tooltip object creation until first hover — avoids creating
+            // a L.Tooltip + 4 Leaflet event listeners for every visible marker
+            // upfront, which adds up for dense areas with 100s of spots.
+            // Permanent labels (pier/jetty/wreck names) must stay eager because
+            // they display without any interaction.
+            (function (mk, html) {
+                mk.once('mouseover', function () {
+                    mk.bindTooltip(html,
+                        { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
+                    ).openTooltip();
+                });
+            }(m, tooltipHtml));
             // Zoom-adaptive name label: pier, jetty, and wreck markers show the
             // spot name as a permanent callout at zoom 13+.  No extra event listener
             // needed — renderFishingSpots already re-renders when zoom changes.
