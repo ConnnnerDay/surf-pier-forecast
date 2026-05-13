@@ -531,6 +531,7 @@ def _render_forecast(
     # snapped to 0.5° grid).  Uses :g format so 33.0 → "33" not "33.0",
     # matching JavaScript's default float→string conversion.
     _struct_preload_url = ""
+    _score_preload_url = ""
     if loc_lat and loc_lng:
         _R = 1.0
         _s = _math.floor((loc_lat - _R) * 2) / 2
@@ -539,6 +540,9 @@ def _render_forecast(
         _e = _math.ceil((loc_lng + _R) * 2) / 2
         _struct_preload_url = (
             f"/api/map/structures?south={_s:g}&west={_w:g}&north={_n:g}&east={_e:g}"
+        )
+        _score_preload_url = (
+            f"/api/v1/map/score?lat={loc_lat:g}&lng={loc_lng:g}"
         )
 
     return render_template(
@@ -553,6 +557,7 @@ def _render_forecast(
         location_lat=loc_lat,
         location_lng=loc_lng,
         struct_preload_url=_struct_preload_url,
+        score_preload_url=_score_preload_url,
         profile_incomplete=profile_incomplete,
     )
 

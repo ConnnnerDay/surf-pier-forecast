@@ -39,6 +39,9 @@
     {% if struct_preload_url %}
     <link rel="preload" as="fetch" crossorigin href="{{ struct_preload_url }}">
     {% endif %}
+    {% if score_preload_url %}
+    <link rel="preload" as="fetch" crossorigin href="{{ score_preload_url }}">
+    {% endif %}
     {% endif %}
     {# Preconnect to map tile and Leaflet CDN origins so DNS+TLS is done before the map boots #}
     <link rel="preconnect" href="https://cdn.jsdelivr.net">

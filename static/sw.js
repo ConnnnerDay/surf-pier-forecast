@@ -5,7 +5,7 @@
 //     cached dynamically on first use via the fetch handler below.
 //     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v6';
+var CACHE_NAME = 'fishforecast-v7';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
   '/static/icons/icon-192.svg',
@@ -109,10 +109,13 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // Stale-while-revalidate for fishing structure overlays.
-  // These change rarely (6h server TTL) and can be large JSON blobs;
-  // serving from SW cache eliminates the network wait on repeat visits.
-  if (event.request.method === 'GET' && event.request.url.includes('/api/map/structures')) {
+  // Stale-while-revalidate for bite-score and structure overlay API calls.
+  // Both are expensive to compute (forecast pipeline / Overpass query) and
+  // change infrequently; the background refresh keeps SW entries in sync
+  // without blocking the main thread on repeat visits.
+  var _swrApis = ['/api/map/structures', '/api/v1/map/score'];
+  if (event.request.method === 'GET' &&
+      _swrApis.some(function(p) { return event.request.url.includes(p); })) {
     event.respondWith(
       caches.open(CACHE_NAME).then(function(cache) {
         return cache.match(event.request).then(function(cached) {
