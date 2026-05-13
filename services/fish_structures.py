@@ -1417,10 +1417,6 @@ _HABITAT_TAGS: dict[str, list[str]] = {
         'node["seamark:type"="obstruction"]',
         'node["seamark:type"="rock_awash"]',
         'node["seamark:type"="rock_submerged"]',
-        'node["man_made"="pier"]["access"!="private"]',
-        'node["man_made"="jetty"]',
-        'way["man_made"="breakwater"]',
-        'node["man_made"="breakwater"]',
     ],
     "bottom": [
         'node["natural"="shoal"]',
@@ -1498,7 +1494,7 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
     if sea in ("beacon_lateral", "buoy_lateral"): return "channel"
     if sea == "kelp_bed":                     return "kelp"
     if wway in ("tidal_channel", "tidal_creek", "stream", "drain"): return "channel"
-    if mm in ("pier", "jetty", "breakwater"): return "reef"
+    if mm in ("pier", "jetty", "breakwater"): return "general"
     if tags.get("reef:type") == "coral":      return "reef"
     # Oyster aquaculture beds → reef so they surface under the oyster_reef filter pill
     # (_PILL_TO_AI_OSMT['oyster_reef'] = 'reef')
