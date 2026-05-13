@@ -5421,13 +5421,41 @@
     }
 
     // ─── Score fetch ──────────────────────────────────────────────────────────
-    // Fetches /api/v1/map/score for the current location and uses the result to
-    // tint spot markers and power the spot detail panel's score/conditions display.
-    // The interactive chart + time slider have been removed — always uses current hour.
+    // Fetches /api/v1/map/score once per 4-hour window (matching server forecast
+    // TTL) and caches the result in localStorage keyed by location.  On subsequent
+    // page loads within that window the cached data is used immediately — no
+    // network round-trip — and spot markers are tinted from the current hour's
+    // pre-computed score in that payload.
+    var _SCORE_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms
+
+    function _scoreLocalKey(lat, lng) {
+        return 'fmap_score_v1_' + parseFloat(lat).toFixed(4) + '_' + parseFloat(lng).toFixed(4);
+    }
+
+    function _applyScoreData(data) {
+        _scoreData = data;
+        var nowHour = new Date().getHours();
+        var hData = (_scoreData.hours || [])[nowHour] || {};
+        _recolourSpotsByScore(hData.score || 0);
+        if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
+            window._fmapRefreshPanelScore();
+        }
+    }
+
     function _fetchMapScore() {
         var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : null;
         var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : null;
         if (!lat || !lng) return;
+
+        // Serve from localStorage cache if still within the 4-hour TTL
+        var cacheKey = _scoreLocalKey(lat, lng);
+        try {
+            var stored = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+            if (stored && stored.ts && (Date.now() - stored.ts) < _SCORE_CACHE_TTL && stored.data) {
+                _applyScoreData(stored.data);
+                return;
+            }
+        } catch(e) {}
 
         if (_scoreAbort) _scoreAbort.abort();
         _scoreAbort = new AbortController();
@@ -5437,13 +5465,9 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
             if (!d || !d.ok) return;
-            _scoreData = d.data;
-            var nowHour = new Date().getHours();
-            var hData = (_scoreData.hours || [])[nowHour] || {};
-            _recolourSpotsByScore(hData.score || 0);
-            if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
-                window._fmapRefreshPanelScore();
-            }
+            _applyScoreData(d.data);
+            try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: d.data })); }
+            catch(e) {}
         })
         .catch(function (err) {
             if (err && err.name !== 'AbortError')
