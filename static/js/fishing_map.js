@@ -1368,12 +1368,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_sLat / _gC.length, _sLng / _gC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-tidal-drop"></span>',
-                                className: 'fmap-tidal-drop-wrap',
-                                iconSize: [20, 20],
-                                iconAnchor: [10, 10]
-                            }),
+                            icon: _cachedDivIcon('c:tidal-drop', {html:'<span class="fmap-tidal-drop"></span>',className:'fmap-tidal-drop-wrap',iconSize:[20,20],iconAnchor:[10,10]}),
                             interactive: false,
                             zIndexOffset: -100
                         }
@@ -1414,12 +1409,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_kLat / _kGC.length, _kLng / _kGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-kelp-stalk"></span>',
-                                className: 'fmap-kelp-stalk-wrap',
-                                iconSize:   [12, 20],
-                                iconAnchor: [6, 18]
-                            }),
+                            icon: _cachedDivIcon('c:kelp-stalk', {html:'<span class="fmap-kelp-stalk"></span>',className:'fmap-kelp-stalk-wrap',iconSize:[12,20],iconAnchor:[6,18]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1455,7 +1445,7 @@
                                 var _kfCls = 'fmap-kelp-stalk fmap-kelp-stalk--sm' +
                                              (_kfPh ? ' fmap-kelp-stalk' + _kfPh : '');
                                 fishingSpotLayer.addLayer(L.marker([_kfLat, _kfLng], {
-                                    icon: L.divIcon({
+                                    icon: _cachedDivIcon('c:kelp-sm' + _kfPh, {
                                         html:       '<span class="' + _kfCls + '"></span>',
                                         className:  'fmap-kelp-stalk-wrap',
                                         iconSize:   [8, 12],
@@ -1481,12 +1471,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_rLat / _rGC.length, _rLng / _rGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-reef-pin"></span>',
-                                className: 'fmap-reef-pin-wrap',
-                                iconSize:   [14, 14],
-                                iconAnchor: [7, 7]
-                            }),
+                            icon: _cachedDivIcon('c:reef-pin', {html:'<span class="fmap-reef-pin"></span>',className:'fmap-reef-pin-wrap',iconSize:[14,14],iconAnchor:[7,7]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1504,12 +1489,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_shLat / _sGC.length, _shLng / _sGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-shoal-pin"></span>',
-                                className: 'fmap-shoal-pin-wrap',
-                                iconSize:   [14, 12],
-                                iconAnchor: [7, 6]
-                            }),
+                            icon: _cachedDivIcon('c:shoal-pin', {html:'<span class="fmap-shoal-pin"></span>',className:'fmap-shoal-pin-wrap',iconSize:[14,12],iconAnchor:[7,6]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1527,12 +1507,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_mLat / _mGC.length, _mLng / _mGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-marsh-tuft"></span>',
-                                className: 'fmap-marsh-tuft-wrap',
-                                iconSize:   [14, 13],
-                                iconAnchor: [7, 13]
-                            }),
+                            icon: _cachedDivIcon('c:marsh-tuft', {html:'<span class="fmap-marsh-tuft"></span>',className:'fmap-marsh-tuft-wrap',iconSize:[14,13],iconAnchor:[7,13]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1554,8 +1529,7 @@
                                     var _smgLat=_smgMinLat+_smgLatOff+_smgRow*_smgLatSp/2;
                                     var _smgLng=_smgMinLng+_smgLngOff+_smgCol*_smgLngSp/2;
                                     fishingSpotLayer.addLayer(L.marker([_smgLat,_smgLng],{
-                                        icon:L.divIcon({html:'<span class="fmap-marsh-tuft fmap-marsh-tuft--sm"></span>',
-                                            className:'fmap-marsh-tuft-wrap',iconSize:[9,8],iconAnchor:[4,8]}),
+                                        icon:_cachedDivIcon('c:marsh-tuft-sm',{html:'<span class="fmap-marsh-tuft fmap-marsh-tuft--sm"></span>',className:'fmap-marsh-tuft-wrap',iconSize:[9,8],iconAnchor:[4,8]}),
                                         interactive:false,zIndexOffset:-100
                                     }));
                                 }
@@ -1575,12 +1549,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_mgLat / _mgGC.length, _mgLng / _mgGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-mangrove-pin"></span>',
-                                className: 'fmap-mangrove-pin-wrap',
-                                iconSize:   [14, 14],
-                                iconAnchor: [7, 7]
-                            }),
+                            icon: _cachedDivIcon('c:mangrove-pin', {html:'<span class="fmap-mangrove-pin"></span>',className:'fmap-mangrove-pin-wrap',iconSize:[14,14],iconAnchor:[7,7]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1604,8 +1573,7 @@
                                     var _mgfLng=_mgfMinLng+_mgfLngOff+_mgfCol*_mgfLngSp/2;
                                     _mgfIdx++;
                                     fishingSpotLayer.addLayer(L.marker([_mgfLat,_mgfLng],{
-                                        icon:L.divIcon({html:'<span class="fmap-mangrove-pin fmap-mangrove-pin--sm"></span>',
-                                            className:'fmap-mangrove-pin-wrap',iconSize:[9,9],iconAnchor:[4,4]}),
+                                        icon:_cachedDivIcon('c:mangrove-pin-sm',{html:'<span class="fmap-mangrove-pin fmap-mangrove-pin--sm"></span>',className:'fmap-mangrove-pin-wrap',iconSize:[9,9],iconAnchor:[4,4]}),
                                         interactive:false,zIndexOffset:-100
                                     }));
                                 }
@@ -1626,12 +1594,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_gfLat / _gfGC.length, _gfLng / _gfGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-grassflat-pin"></span>',
-                                className: 'fmap-grassflat-pin-wrap',
-                                iconSize:   [12, 10],
-                                iconAnchor: [6, 5]
-                            }),
+                            icon: _cachedDivIcon('c:grassflat-pin', {html:'<span class="fmap-grassflat-pin"></span>',className:'fmap-grassflat-pin-wrap',iconSize:[12,10],iconAnchor:[6,5]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1653,8 +1616,7 @@
                                     var _gfgLat=_gfgMinLat+_gfgLatOff+_gfgRow*_gfgLatSp/2;
                                     var _gfgLng=_gfgMinLng+_gfgLngOff+_gfgCol*_gfgLngSp/2;
                                     fishingSpotLayer.addLayer(L.marker([_gfgLat,_gfgLng],{
-                                        icon:L.divIcon({html:'<span class="fmap-grassflat-pin fmap-grassflat-pin--sm"></span>',
-                                            className:'fmap-grassflat-pin-wrap',iconSize:[8,4],iconAnchor:[4,2]}),
+                                        icon:_cachedDivIcon('c:grassflat-pin-sm',{html:'<span class="fmap-grassflat-pin fmap-grassflat-pin--sm"></span>',className:'fmap-grassflat-pin-wrap',iconSize:[8,4],iconAnchor:[4,2]}),
                                         interactive:false,zIndexOffset:-100
                                     }));
                                 }
@@ -1672,12 +1634,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_bLat / _bGC.length, _bLng / _bGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-beach-pin"></span>',
-                                className: 'fmap-beach-pin-wrap',
-                                iconSize:   [14, 8],
-                                iconAnchor: [7, 4]
-                            }),
+                            icon: _cachedDivIcon('c:beach-pin', {html:'<span class="fmap-beach-pin"></span>',className:'fmap-beach-pin-wrap',iconSize:[14,8],iconAnchor:[7,4]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -5176,31 +5133,38 @@
                     queryStructures();
                 }
 
-                // ── Wire UI and overlays after browser has had a chance to paint ──
+                // ── Wire critical UI — runs after browser paints spots ──
                 setTimeout(function () {
                     wireMapControls();
                     wireSpotTypeFilters();
-                    wireCommunityLayer();
-                    wireLogCatch();
-                    wireFullscreen();
-                    wireShareBtn();
-                    wireAdminMode();
-                    wireLayersPopup();
-                    wireSstLayer();
-                    wireMetarLayer();
-                    wireRecentStorms();
-                    wireMarineWarnings();
-                    wireStormTracker();
-                    wireBuoyLayer();
-                    wireHfradarLayer();
-                    wireTropicalOutlook();
                     wireCategoryFilterTabs();
-                    _fetchMapScore();
                     wireSpotDetailPanel();
+                    wireFullscreen();
+                    _fetchMapScore();
                     _syncBottomBarLayout();
-                    restoreLayerState();
                     _hideMainLoading();
-                    scheduleAIQuery();
+
+                    // ── Wire overlays and non-critical features at idle ──
+                    // These require opening the layers panel or log form first,
+                    // so deferring them doesn't affect the initial experience.
+                    var _idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 150); };
+                    _idle(function () {
+                        wireCommunityLayer();
+                        wireLogCatch();
+                        wireShareBtn();
+                        wireAdminMode();
+                        wireLayersPopup();
+                        wireSstLayer();
+                        wireMetarLayer();
+                        wireRecentStorms();
+                        wireMarineWarnings();
+                        wireStormTracker();
+                        wireBuoyLayer();
+                        wireHfradarLayer();
+                        wireTropicalOutlook();
+                        restoreLayerState();
+                        scheduleAIQuery();
+                    });
                 }, 0);
             })
             .catch(function (err) {
