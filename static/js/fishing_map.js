@@ -1269,10 +1269,24 @@
                 _suppressedTypes[f.type] = true;
                 return false;
             }
-            // Cull point markers that lie outside the padded viewport.
-            // Features with a geometry array are polygon habitats — always keep.
-            if (doCull && !f.geometry && f.lat && f.lng) {
-                return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
+            // Cull features outside the padded viewport.
+            if (doCull) {
+                if (f.geometry && f.geometry.length >= 3) {
+                    // Polygon habitat: compute bbox from geometry and check intersection.
+                    // An entirely off-screen polygon creates Leaflet objects for nothing.
+                    var _gS = Infinity, _gN = -Infinity, _gW = Infinity, _gE = -Infinity;
+                    for (var _gi = 0; _gi < f.geometry.length; _gi++) {
+                        var _gc = f.geometry[_gi];
+                        if (_gc[0] < _gS) _gS = _gc[0];
+                        if (_gc[0] > _gN) _gN = _gc[0];
+                        if (_gc[1] < _gW) _gW = _gc[1];
+                        if (_gc[1] > _gE) _gE = _gc[1];
+                    }
+                    // Keep if the geometry bbox intersects the padded viewport.
+                    if (_gN < vS || _gS > vN || _gE < vW || _gW > vE) return false;
+                } else if (f.lat && f.lng) {
+                    return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
+                }
             }
             return true;
         });
