@@ -254,9 +254,6 @@
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true;
-            // Pre-warm adjacent tiles so pan/zoom serve from cache.
-            // _ssLoad() already ran so if cache is warm this returns instantly.
-            setTimeout(prefetchHomeCorridorStructures, 50);
         }
 
         // preferCanvas: use the <canvas> renderer for vector layers by default.
@@ -278,8 +275,9 @@
         activeTileLayer.addTo(map);
 
         // Layer groups — render order: AI picks → OSM structures → decor
+        // _aiLsLoad() already ran in _prewarmLeaflet() before Leaflet finished loading;
+        // aiCache is populated so the layer will render on the first scheduleAIQuery().
         aiPickLayer      = L.layerGroup().addTo(map);
-        _aiLsLoad();
         fishingSpotLayer = L.layerGroup().addTo(map);
         _decorLayer      = L.layerGroup().addTo(map); // halos + cluster rings (deferred)
 
@@ -1910,7 +1908,7 @@
         if (spotCache[key]) return;  // already warm
 
         var url = '/api/map/structures?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
-        fetch(url)
+        return fetch(url)
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (data && data.structures && !data.zoom_required) {
@@ -1936,7 +1934,7 @@
                     }
                 }
             })
-            .catch(function () {});  // silent — regular queryStructures() will still run
+            .catch(function () {});  // silent — queryStructures() will still run after
     }
 
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
@@ -5201,6 +5199,9 @@
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                     typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
                     queryStructures();
+                    // Concurrently pre-warm the home corridor (±1°) so future pans
+                    // serve from cache.  Runs in parallel with the viewport fetch.
+                    prefetchHomeCorridorStructures();
                 }
 
                 // ── Wire critical UI — runs after browser paints spots ──
@@ -5980,9 +5981,20 @@
                     // fallback inside initMap() handles any race on very fast loads.
                     loadFilters();
                     initMap();
+                    // Apply URL-hash type filters before the first render so shared
+                    // links never flash "all types" before narrowing to the hash filter.
+                    restoreFromHash();
                     if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                         typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
-                        queryStructures();
+                        // Await the home-corridor pre-fetch (which uses the page's
+                        // <link rel="preload"> URL) so queryStructures() can serve
+                        // from _cachedSupersetOf() instead of firing a second
+                        // Overpass query for a smaller viewport bbox.
+                        var _cp = prefetchHomeCorridorStructures();
+                        (_cp || Promise.resolve()).then(function () {
+                            queryStructures();
+                            _fetchMapScore();
+                        });
                     }
                 })
                 .catch(function () {});
