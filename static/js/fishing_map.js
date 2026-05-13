@@ -16,7 +16,9 @@
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox key → array of spot objects (all types)
     var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
-    var _SPOT_CACHE_MAX  = 200;      // cap for localStorage budget (~10 MB typical limit)
+    var _spotBoundsCache = {};       // key → [s,w,n,e] floats, avoids re-parsing in _cachedSupersetOf
+    var _SPOT_CACHE_MAX  = 200;      // cap for in-memory budget
+    var _SS_SAVE_MAX     = 10;       // max entries persisted to localStorage (keeps blob small)
     var _ssSaveTimer          = null; // debounce timer for localStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
@@ -1846,10 +1848,13 @@
     // viewport queries from a wider pre-fetched corridor without a new request.
     function _cachedSupersetOf(s, w, n, e) {
         for (var k in spotCache) {
-            var coords = k.split(',');
-            if (coords.length !== 4) continue;
-            var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
-            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
+            var b = _spotBoundsCache[k];
+            if (!b) {
+                var coords = k.split(',');
+                if (coords.length !== 4) continue;
+                b = _spotBoundsCache[k] = [+coords[0], +coords[1], +coords[2], +coords[3]];
+            }
+            if (b[0] <= s && b[1] <= w && b[2] >= n && b[3] >= e) return spotCache[k];
         }
         return null;
     }
@@ -2659,6 +2664,10 @@
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
                     spotCache[k] = e.data;
                     _spotCacheKeys.push(k);
+                    var coords = k.split(',');
+                    if (coords.length === 4) {
+                        _spotBoundsCache[k] = [+coords[0], +coords[1], +coords[2], +coords[3]];
+                    }
                 }
             });
             while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
@@ -2671,17 +2680,28 @@
         try {
             var now = Date.now();
             var obj = {};
-            Object.keys(spotCache).forEach(function (k) {
-                obj[k] = { ts: now, data: spotCache[k] };
-            });
+            // Only persist the most recent _SS_SAVE_MAX entries — keeps the blob
+            // small so both JSON.stringify and the next-session JSON.parse stay fast.
+            // _spotCacheKeys is insertion-ordered; slice(-N) gives the newest N.
+            var keysToSave = _spotCacheKeys.slice(-_SS_SAVE_MAX);
+            for (var i = 0; i < keysToSave.length; i++) {
+                var k = keysToSave[i];
+                if (spotCache[k]) obj[k] = { ts: now, data: spotCache[k] };
+            }
             localStorage.setItem(_SS_KEY, JSON.stringify(obj));
         } catch (e) { /* quota exceeded — silently skip */ }
     }
 
     // Debounced save — coalesce rapid sequential fetches into one write.
+    // Runs at idle priority so JSON.stringify doesn't block animation frames.
+    var _ssIdleHandle = 0;
     function _ssSave() {
         clearTimeout(_ssSaveTimer);
-        _ssSaveTimer = setTimeout(_ssSaveNow, 1500);
+        if (_ssIdleHandle) { try { cancelIdleCallback(_ssIdleHandle); } catch(_){} _ssIdleHandle = 0; }
+        _ssSaveTimer = setTimeout(function () {
+            var _idle = window.requestIdleCallback || function (cb) { cb({ timeRemaining: function(){ return 50; } }); };
+            _ssIdleHandle = _idle(function () { _ssIdleHandle = 0; _ssSaveNow(); }, { timeout: 8000 });
+        }, 1000);
     }
 
     // Write a new entry into spotCache with LRU eviction.
@@ -2692,8 +2712,14 @@
             if (_spotCacheKeys.length >= _SPOT_CACHE_MAX) {
                 var evict = _spotCacheKeys.shift();
                 delete spotCache[evict];
+                delete _spotBoundsCache[evict];
             }
             _spotCacheKeys.push(key);
+            // Pre-parse bounds so _cachedSupersetOf() avoids repeated string splitting.
+            var coords = key.split(',');
+            if (coords.length === 4) {
+                _spotBoundsCache[key] = [+coords[0], +coords[1], +coords[2], +coords[3]];
+            }
         }
         spotCache[key] = data;
     }
