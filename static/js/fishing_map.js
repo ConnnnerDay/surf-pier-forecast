@@ -234,6 +234,13 @@
 
     function initMap() {
         if (mapReady) return;
+        // Fallback lookup so initMap() works when called from _prewarmLeaflet()
+        // before init() has had a chance to populate els.mapEl.
+        var _mapEl = els.mapEl || document.getElementById('fishing-map-el');
+        if (!_mapEl) return;
+        // Keep els.mapEl consistent so subsequent callers never hit the fallback.
+        if (!els.mapEl) els.mapEl = _mapEl;
+        if (!_mapRoot) _mapRoot = document.getElementById('fmap-root');
         mapReady = true;
 
         // If the server provided the saved location's coordinates, use them as the
@@ -256,7 +263,7 @@
         // This is ~3-5x faster than SVG for dense overlays (METAR, AQI, buoys,
         // gauges, HF Radar) because the GPU composites a single bitmap instead of
         // layout/paint for thousands of individual SVG DOM nodes.
-        map = L.map(els.mapEl, { zoomControl: true, preferCanvas: true }).setView(startCenter, startZoom);
+        map = L.map(_mapEl, { zoomControl: true, preferCanvas: true }).setView(startCenter, startZoom);
 
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
@@ -5957,12 +5964,28 @@
     function _prewarmLeaflet() {
         if (document.getElementById('fmap-root')) {
             ensureLeafletCss();
-            loadScript(_LEAFLET_JS_LOCAL)
-                .catch(function () { return loadScript(_LEAFLET_JS_CDN); })
-                .catch(function () { loadScript(_LEAFLET_JS_CDN2).catch(function(){}); });
             // Parse both localStorage caches in parallel with the JS download.
             _ssLoad();
             _aiLsLoad();
+            // When Leaflet is ready, kick off map init + structures query immediately
+            // without waiting for the IntersectionObserver to fire.  By the time the
+            // user scrolls the map into view, spots are already rendered.
+            loadScript(_LEAFLET_JS_LOCAL)
+                .catch(function () { return loadScript(_LEAFLET_JS_CDN); })
+                .catch(function () { return loadScript(_LEAFLET_JS_CDN2); })
+                .then(function () {
+                    if (!window.L) return;
+                    // init() runs synchronously before this callback fires (same
+                    // DOMContentLoaded tick), so els.mapEl is already set.  The
+                    // fallback inside initMap() handles any race on very fast loads.
+                    loadFilters();
+                    initMap();
+                    if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
+                        typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
+                        queryStructures();
+                    }
+                })
+                .catch(function () {});
         }
     }
 
