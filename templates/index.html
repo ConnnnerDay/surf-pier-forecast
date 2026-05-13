@@ -654,30 +654,6 @@
                     </div>
                 </div>
 
-                {# ── Tide chart + time slider ── #}
-                <div class="fmap-tide-bar" id="fmap-tide-bar" aria-label="Tide chart and strike score">
-                    <div class="fmap-tide-bar-inner">
-                        <div class="fmap-tide-chart-wrap">
-                            <div class="fmap-tide-chart" id="fmap-tide-chart" aria-hidden="true"></div>
-                            <div class="fmap-tide-hour-labels" aria-hidden="true">
-                                <span>12a</span><span>6a</span><span>12p</span><span>6p</span>
-                            </div>
-                            <input type="range" id="fmap-tide-slider" class="fmap-tide-slider"
-                                   min="0" max="23" value="12"
-                                   aria-label="Select hour for strike score">
-                        </div>
-                        <div class="fmap-tide-score-wrap">
-                            <span class="fmap-tide-score" id="fmap-tide-score">–</span>
-                            <span class="fmap-tide-score-label" id="fmap-tide-score-label">–</span>
-                            <span class="fmap-tide-hour" id="fmap-tide-hour">Now</span>
-                        </div>
-                        <div class="fmap-tide-moon" id="fmap-tide-moon"></div>
-                        <div class="fmap-tide-meta-row" id="fmap-tide-meta-row" hidden>
-                            <span class="fmap-tide-water-temp" id="fmap-tide-water-temp"></span>
-                        </div>
-                    </div>
-                </div>
-
                 {# ── Spot detail panel ── #}
                 <div id="fmap-spot-detail" class="fmap-spot-detail" role="dialog"
                      aria-modal="true" aria-labelledby="fmap-spot-detail-name"

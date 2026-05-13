@@ -102,8 +102,7 @@
     var buoyAbort       = null;
     var _catchDetailAbort = null;
 
-    // ─── Tide chart / time-slider state ──────────────────────────────────────
-    var _tideSliderHour    = new Date().getHours(); // 0-23 selected hour
+    // ─── Score state ─────────────────────────────────────────────────────────
     var _scoreData         = null;   // cached /api/v1/map/score response
     var _scoreAbort        = null;   // AbortController for score fetch
     var _tideChartTimer    = null;   // debounce for re-fetch on location change
@@ -1791,7 +1790,7 @@
 
         // Apply current strike-score tint to newly created markers
         if (_scoreData) {
-            var _curHour = (_scoreData.hours || [])[_tideSliderHour] || {};
+            var _curHour = (_scoreData.hours || [])[new Date().getHours()] || {};
             _recolourSpotsByScore(_curHour.score || 0);
         }
 
@@ -5163,7 +5162,7 @@
                 wireHfradarLayer();
                 wireTropicalOutlook();
                 wireCategoryFilterTabs();
-                wireTideChart();
+                _fetchMapScore();
                 wireSpotDetailPanel();
                 _syncBottomBarLayout();
                 restoreLayerState();
@@ -5277,23 +5276,16 @@
     }
 
     // ─── Bottom bar layout ────────────────────────────────────────────────────
-    // The filter bar and tide bar are both absolute-positioned at bottom:0.
-    // We measure the filter bar's actual rendered height and set a CSS custom
-    // property so the tide bar stacks directly above it without overlap.
     function _syncBottomBarLayout() {
         var fb = document.getElementById('fmap-spot-filter-bar');
-        var tb = document.getElementById('fmap-tide-bar');
         function _apply() {
             var fh = fb ? fb.offsetHeight : 0;
-            var th = tb ? tb.offsetHeight : 0;
             if (fh > 0) document.documentElement.style.setProperty('--fmap-filter-bar-h', fh + 'px');
-            if (th > 0) document.documentElement.style.setProperty('--fmap-tide-bar-h',   th + 'px');
         }
         _apply();
         if (typeof ResizeObserver !== 'undefined') {
             var ro = new ResizeObserver(_apply);
             if (fb) ro.observe(fb);
-            if (tb) ro.observe(tb);
         }
     }
 
@@ -5428,193 +5420,35 @@
         });
     }
 
-    // ─── Tide chart + time slider ─────────────────────────────────────────────
-    // Fetches /api/v1/map/score for the saved location and renders a 24-bar
-    // chart.  A range slider lets the user drag to a specific hour; at each
-    // position the spot icons are recoloured (green=Excellent…red=Slow) and
-    // the strike score badge is updated.
-    function wireTideChart() {
-        var chartEl   = document.getElementById('fmap-tide-chart');
-        var sliderEl  = document.getElementById('fmap-tide-slider');
-        var scoreEl   = document.getElementById('fmap-tide-score');
-        var labelEl   = document.getElementById('fmap-tide-score-label');
-        var hourEl    = document.getElementById('fmap-tide-hour');
-        var moonEl    = document.getElementById('fmap-tide-moon');
-        if (!chartEl || !sliderEl) return;
+    // ─── Score fetch ──────────────────────────────────────────────────────────
+    // Fetches /api/v1/map/score for the current location and uses the result to
+    // tint spot markers and power the spot detail panel's score/conditions display.
+    // The interactive chart + time slider have been removed — always uses current hour.
+    function _fetchMapScore() {
+        var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : null;
+        var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : null;
+        if (!lat || !lng) return;
 
-        // Fetch scores for the map's saved location
-        function fetchScores() {
-            var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : null;
-            var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : null;
-            if (!lat || !lng) return;
-
-            if (_scoreAbort) _scoreAbort.abort();
-            _scoreAbort = new AbortController();
-            // Show loading pulse on the badge while the request is in flight
-            if (scoreEl) scoreEl.classList.add('fmap-tide-score--loading');
-            fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
-                signal: _scoreAbort.signal
-            })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (d) {
-                if (!d || !d.ok) {
-                    if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
-                    return;
-                }
-                _scoreData = d.data;
-                renderChart();
-                updateSliderDisplay(); // replaces scoreEl className, clearing the loading class
-                if (moonEl) {
-                    var _solRating = (_scoreData.solunar_rating || '').toLowerCase();
-                    var _solClass  = _solRating === 'major' ? 'fmap-tide-sol--major'
-                                   : _solRating === 'minor' ? 'fmap-tide-sol--minor'
-                                   : 'fmap-tide-sol--none';
-                    moonEl.innerHTML = esc(_scoreData.moon_phase || '') +
-                        ' <span class="fmap-tide-sol ' + _solClass + '">· ' +
-                        esc(_scoreData.solunar_rating || '') + '</span>';
-                }
-            })
-            .catch(function (err) {
-                if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
-                if (err && err.name !== 'AbortError')
-                    console.warn('[fishing-map] score fetch failed:', err);
-            });
-        }
-
-        // Render 24 bars in the chart SVG container, with a cursor at the selected hour
-        function renderChart() {
-            if (!_scoreData || !chartEl) return;
-            var hours = _scoreData.hours || [];
-            var maxScore = 10;
-            var W = 240, H = 44;
-            var barW = W / 24;
+        if (_scoreAbort) _scoreAbort.abort();
+        _scoreAbort = new AbortController();
+        fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
+            signal: _scoreAbort.signal
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+            if (!d || !d.ok) return;
+            _scoreData = d.data;
             var nowHour = new Date().getHours();
-            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">';
-            var scoreColors = {Excellent:'#4ade80', Good:'#a3e635', Fair:'#fbbf24', Slow:'#f87171'};
-            hours.forEach(function (h, i) {
-                var color = scoreColors[h.label] || '#64748b';
-                var barH  = Math.max(2, (h.score / maxScore) * (H - 4));
-                var x     = i * barW;
-                var y     = H - barH;
-                var isSelected = (i === _tideSliderHour);
-                svg += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' +
-                       (barW - 1) + '" height="' + barH +
-                       '" fill="' + color + '" opacity="' + (isSelected ? '1' : '0.55') +
-                       '" rx="1"/>';
-            });
-            // Triangle/chevron marking current real-time hour at top of chart
-            var ncx = (nowHour + 0.5) * barW;
-            svg += '<polygon points="' + ncx + ',0 ' + (ncx - 3) + ',5 ' + (ncx + 3) + ',5"' +
-                   ' fill="rgba(255,255,255,0.8)"/>';
-            // Cursor line at selected hour
-            var cx = (_tideSliderHour + 0.5) * barW;
-            svg += '<line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + H +
-                   '" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.7"/>';
-            svg += '</svg>';
-            chartEl.innerHTML = svg;
-        }
-
-        // Update the badge and hour label for the current slider position
-        var _metaRowEl  = document.getElementById('fmap-tide-meta-row');
-        var _waterTempEl = document.getElementById('fmap-tide-water-temp');
-
-        function updateSliderDisplay() {
-            if (!_scoreData) return;
-            var hours = _scoreData.hours || [];
-            var hData = hours[_tideSliderHour] || {};
-            var score = hData.score || 0;
-            var label = hData.label || '';
-            var grade = _LABEL_TO_GRADE[label] || 'fair';
-            var fac   = hData.factors || {};
-
-            if (scoreEl) {
-                scoreEl.textContent = score;
-                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
-            }
-            if (labelEl) {
-                labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
-            }
-            if (hourEl) {
-                var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
-                var h12  = _tideSliderHour % 12 || 12;
-                var isNow = _tideSliderHour === new Date().getHours();
-                hourEl.textContent = h12 + ':00 ' + ampm + (isNow ? ' · Now' : '');
-                sliderEl.setAttribute('aria-valuetext',
-                    h12 + ':00 ' + ampm + (isNow ? ', current hour' : '') + (label ? ' — ' + label : ''));
-            }
-            // Water temp + tide state in the meta row
-            if (_waterTempEl && _metaRowEl) {
-                var parts = [];
-                if (fac.water_temp_f != null) parts.push(fac.water_temp_f + '°F');
-                if (fac.tide)                 parts.push(String(fac.tide).replace(/\s*\(.*\)/, '') + ' tide');
-                if (fac.wind_mph != null)     parts.push(fac.wind_mph + ' mph wind');
-                _waterTempEl.textContent = parts.join(' · ');
-                _metaRowEl.hidden = !parts.length;
-            }
-            // Re-colour spot icons on the map by score
-            _recolourSpotsByScore(score);
-            // Refresh chart to move the cursor
-            renderChart();
-            // If the spot detail panel is open, refresh only its score + conditions
+            var hData = (_scoreData.hours || [])[nowHour] || {};
+            _recolourSpotsByScore(hData.score || 0);
             if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
                 window._fmapRefreshPanelScore();
             }
-        }
-
-        // Wire the range slider
-        sliderEl.min   = 0;
-        sliderEl.max   = 23;
-        sliderEl.value = _tideSliderHour;
-        sliderEl.addEventListener('input', function () {
-            _tideSliderHour = parseInt(this.value, 10) || 0;
-            updateSliderDisplay();
+        })
+        .catch(function (err) {
+            if (err && err.name !== 'AbortError')
+                console.warn('[fishing-map] score fetch failed:', err);
         });
-
-        // Click anywhere on the chart to jump to that hour
-        chartEl.style.cursor = 'pointer';
-        chartEl.title = window.matchMedia('(pointer: coarse)').matches
-            ? 'Tap to select hour' : 'Click to select hour';
-        chartEl.addEventListener('click', function (e) {
-            if (!_scoreData) return;
-            var rect = chartEl.getBoundingClientRect();
-            if (!rect.width) return;
-            var hour = Math.min(23, Math.max(0, Math.floor((e.clientX - rect.left) / rect.width * 24)));
-            _tideSliderHour = hour;
-            sliderEl.value  = hour;
-            updateSliderDisplay();
-        });
-
-        // Hover over chart bars to preview that hour's score (desktop)
-        chartEl.addEventListener('mousemove', function (e) {
-            if (!_scoreData) return;
-            var rect = chartEl.getBoundingClientRect();
-            var x = e.clientX - rect.left;
-            if (x < 0 || x > rect.width) return;
-            var hoverHour = Math.min(23, Math.max(0, Math.floor(x / rect.width * 24)));
-            var hData = (_scoreData.hours || [])[hoverHour] || {};
-            var label = hData.label || '';
-            var grade = _LABEL_TO_GRADE[label] || 'fair';
-            if (scoreEl) {
-                scoreEl.textContent = hData.score || 0;
-                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
-            }
-            if (labelEl) {
-                labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
-            }
-            if (hourEl) {
-                var ap = hoverHour < 12 ? 'AM' : 'PM';
-                hourEl.textContent = (hoverHour % 12 || 12) + ':00 ' + ap;
-            }
-        });
-        // Restore selected-hour display when mouse leaves the chart
-        chartEl.addEventListener('mouseleave', updateSliderDisplay);
-
-        // Initial fetch — debounce if location changes
-        fetchScores();
-        clearTimeout(_tideChartTimer);
-        _tideChartTimer = setTimeout(fetchScores, 300);
     }
 
     // ─── Spot detail panel ────────────────────────────────────────────────────
@@ -5654,7 +5488,7 @@
             var hasScore = !!_scoreData;
             var currentScore = 0, currentLabel = '', currentGrade = 'fair';
             if (hasScore) {
-                var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
+                var hd = (_scoreData.hours || [])[new Date().getHours()] || {};
                 currentScore = hd.score || 0;
                 currentLabel = hd.label || '';
                 currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
@@ -5666,7 +5500,7 @@
                     scoreEl.className = 'fmap-spot-score fmap-tide-score--loading';
                 } else {
                     // Trend: compare current hour to 2 hours ahead
-                    var futureHour = Math.min(23, _tideSliderHour + 2);
+                    var futureHour = Math.min(23, new Date().getHours() + 2);
                     var futureScore = ((_scoreData.hours || [])[futureHour] || {}).score || 0;
                     var delta = futureScore - currentScore;
                     var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
@@ -5685,7 +5519,7 @@
                 }
             }
             if (condEl) {
-                var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
+                var hd2 = _scoreData ? ((_scoreData.hours || [])[new Date().getHours()] || {}) : {};
                 var fac = hd2.factors || {};
                 var chips = [];
                 if (fac.tide)             chips.push({ icon: '🌊', title: 'Tide', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
