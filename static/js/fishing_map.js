@@ -1203,6 +1203,11 @@
             return;
         }
         _lastRenderedSpotKey = renderKey;
+        // Detach from the map before rebuilding so each addLayer() doesn't
+        // trigger an individual Leaflet repaint.  Re-attached at the end for a
+        // single composite draw of all new markers.
+        var _wasOnMap = map && map.hasLayer(fishingSpotLayer);
+        if (_wasOnMap) fishingSpotLayer.remove();
         fishingSpotLayer.clearLayers();
         _customMarkers = [];  // will be repopulated by renderCustomMarkers below
 
@@ -1784,6 +1789,9 @@
 
         // Render admin-created custom markers with edit affordances
         renderCustomMarkers(spots);
+
+        // Re-attach now that all markers are built — single composite repaint
+        if (_wasOnMap) fishingSpotLayer.addTo(map);
 
         // Apply current strike-score tint to newly created markers
         if (_scoreData) {
@@ -5142,10 +5150,10 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                // ── First paint: restore cached spots and render immediately ──
+                // ── First paint: render cached spots immediately ──
+                // _ssLoad() already ran in _prewarmLeaflet() so spotCache is hot.
                 // Must come before the wire* calls so markers appear as soon as
                 // the map is ready, not after all event-handler setup finishes.
-                _ssLoad();
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                     typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
                     queryStructures();
@@ -5896,15 +5904,18 @@
         }
     }
 
-    // Start fetching Leaflet immediately on page load — don't wait for the map
-    // section to scroll into view.  By the time the IntersectionObserver fires,
-    // the script is already cached/executing and boot() completes near-instantly.
+    // Start fetching Leaflet and pre-parsing the spot cache immediately on page
+    // load — don't wait for the map section to scroll into view.  By the time
+    // the IntersectionObserver fires, Leaflet is cached/executing and spotCache
+    // is already populated, so boot() can render spots near-instantly.
     function _prewarmLeaflet() {
         if (document.getElementById('fmap-root')) {
             ensureLeafletCss();
             loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js').catch(function () {
                 loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js').catch(function(){});
             });
+            // Parse the localStorage spot cache now so it's ready when boot() runs.
+            _ssLoad();
         }
     }
 

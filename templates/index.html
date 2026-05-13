@@ -35,6 +35,12 @@
     <link rel="preload" as="fetch" crossorigin href="/api/weather/combined-forecast?lat={{ location_lat }}&amp;lng={{ location_lng }}">
     <link rel="preload" as="fetch" crossorigin href="/api/map/stat-cards?lat={{ location_lat }}&amp;lng={{ location_lng }}">
     {% endif %}
+    {# Preconnect to map tile and Leaflet CDN origins so DNS+TLS is done before the map boots #}
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://server.arcgisonline.com">
+    <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+    <link rel="dns-prefetch" href="https://tiles.openseamap.org">
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 </head>
 <body class="forecast-page has-app-header">
 <a href="#main-content" class="skip-link">Skip to main content</a>
