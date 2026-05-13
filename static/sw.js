@@ -5,7 +5,7 @@
 //     cached dynamically on first use via the fetch handler below.
 //     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v5';
+var CACHE_NAME = 'fishforecast-v6';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
   '/static/icons/icon-192.svg',
@@ -109,7 +109,26 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // Never intercept API requests — always hit the network.
+  // Stale-while-revalidate for fishing structure overlays.
+  // These change rarely (6h server TTL) and can be large JSON blobs;
+  // serving from SW cache eliminates the network wait on repeat visits.
+  if (event.request.method === 'GET' && event.request.url.includes('/api/map/structures')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(function(cache) {
+        return cache.match(event.request).then(function(cached) {
+          var networkFetch = fetch(event.request).then(function(response) {
+            if (response.ok) cache.put(event.request, response.clone());
+            return response;
+          });
+          // Serve stale immediately; background-refresh the cache entry.
+          return cached || networkFetch;
+        });
+      })
+    );
+    return;
+  }
+
+  // Never intercept other API requests — always hit the network.
   if (event.request.url.includes('/api/')) return;
 
   // Cache-first for static assets (CSS, JS, icons, fonts).
