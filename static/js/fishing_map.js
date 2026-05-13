@@ -223,11 +223,8 @@
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true;
-            // Pre-warm the structure cache for the full home corridor so nearby
-            // icons appear immediately and pan/zoom serve from cache.
-            // 500 ms lets the tile request and first moveend query fire first,
-            // while still dispatching while Overpass is busy on the initial fetch.
-            setTimeout(prefetchHomeCorridorStructures, 500);
+            // Pre-warm adjacent tiles so pan/zoom serve from cache.
+            setTimeout(prefetchHomeCorridorStructures, 200);
         }
 
         // preferCanvas: use the <canvas> renderer for vector layers by default.
@@ -5145,6 +5142,15 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
+                // ── First paint: restore cached spots and render immediately ──
+                // Must come before the wire* calls so markers appear as soon as
+                // the map is ready, not after all event-handler setup finishes.
+                _ssLoad();
+                if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
+                    typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
+                    queryStructures();
+                }
+                // ── Wire UI and overlays (spots already visible above) ──
                 wireMapControls();
                 wireSpotTypeFilters();
                 wireCommunityLayer();
@@ -5166,17 +5172,6 @@
                 wireSpotDetailPanel();
                 _syncBottomBarLayout();
                 restoreLayerState();
-                // Restore cached structure data from the previous page view so
-                // markers appear instantly on refresh instead of waiting for Overpass.
-                _ssLoad();
-                // Kick off the structure query immediately when server-provided
-                // coordinates are available — don't wait for the NOAA API round-trip.
-                if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
-                    typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
-                    // Fire immediately (no debounce) — _ssLoad may have already
-                    // populated spotCache, so queryStructures() can render at once.
-                    queryStructures();
-                }
                 _hideMainLoading();
                 scheduleAIQuery();
             })
