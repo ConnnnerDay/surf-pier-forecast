@@ -159,6 +159,15 @@
     }
 
     // ─── Leaflet loader ───────────────────────────────────────────────────────
+    // Local copies of Leaflet are served from /static/ (same origin, no CDN
+    // round-trip).  CDN URLs are kept as fallbacks in case the local files are
+    // somehow unavailable (e.g. a very old cached page referencing a missing file).
+    var _LEAFLET_JS_LOCAL  = '/static/js/leaflet.min.js';
+    var _LEAFLET_CSS_LOCAL = '/static/leaflet.min.css';
+    var _LEAFLET_JS_CDN    = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+    var _LEAFLET_CSS_CDN   = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+    var _LEAFLET_JS_CDN2   = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+
     function loadScript(src) {
         return new Promise(function (res, rej) {
             var ex = document.querySelector('script[src="' + src + '"]');
@@ -171,21 +180,25 @@
         });
     }
     function ensureLeafletCss() {
-        // Guard: skip if Leaflet CSS is already present (idempotent).
         if (document.querySelector('link[rel="stylesheet"][href*="leaflet"]')) return;
         var l = document.createElement('link');
         l.rel = 'stylesheet';
-        l.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+        l.href = _LEAFLET_CSS_LOCAL;
         l.setAttribute('data-leaflet-css', '1');
+        l.onerror = function () {
+            var fb = document.createElement('link');
+            fb.rel = 'stylesheet';
+            fb.href = _LEAFLET_CSS_CDN;
+            document.head.appendChild(fb);
+        };
         document.head.appendChild(l);
     }
     function ensureLeaflet() {
         if (window.L) return Promise.resolve();
         ensureLeafletCss();
-        return loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js')
-            .catch(function () {
-                return loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js');
-            });
+        return loadScript(_LEAFLET_JS_LOCAL)
+            .catch(function () { return loadScript(_LEAFLET_JS_CDN); })
+            .catch(function () { return loadScript(_LEAFLET_JS_CDN2); });
     }
 
     // ─── Map init ─────────────────────────────────────────────────────────────
@@ -224,7 +237,8 @@
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true;
             // Pre-warm adjacent tiles so pan/zoom serve from cache.
-            setTimeout(prefetchHomeCorridorStructures, 200);
+            // _ssLoad() already ran so if cache is warm this returns instantly.
+            setTimeout(prefetchHomeCorridorStructures, 50);
         }
 
         // preferCanvas: use the <canvas> renderer for vector layers by default.
@@ -258,7 +272,7 @@
             scheduleAIQuery();
         });
 
-        setTimeout(function () { if (map) map.invalidateSize(); }, 350);
+        setTimeout(function () { if (map) map.invalidateSize(); }, 100);
 
         // Update the zoom hint immediately so it reflects the starting zoom level
         // (hidden at zoom ≥ 8, i.e. when server coords are used)
@@ -5904,18 +5918,20 @@
         }
     }
 
-    // Start fetching Leaflet and pre-parsing the spot cache immediately on page
-    // load — don't wait for the map section to scroll into view.  By the time
-    // the IntersectionObserver fires, Leaflet is cached/executing and spotCache
-    // is already populated, so boot() can render spots near-instantly.
+    // Start fetching Leaflet and pre-parsing all localStorage caches immediately
+    // on page load — don't wait for the map section to scroll into view.
+    // Leaflet is now served from the same origin so there is no CDN round-trip.
+    // By the time the IntersectionObserver fires everything is ready and boot()
+    // renders cached spots near-instantly.
     function _prewarmLeaflet() {
         if (document.getElementById('fmap-root')) {
             ensureLeafletCss();
-            loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js').catch(function () {
-                loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js').catch(function(){});
-            });
-            // Parse the localStorage spot cache now so it's ready when boot() runs.
+            loadScript(_LEAFLET_JS_LOCAL)
+                .catch(function () { return loadScript(_LEAFLET_JS_CDN); })
+                .catch(function () { loadScript(_LEAFLET_JS_CDN2).catch(function(){}); });
+            // Parse both localStorage caches in parallel with the JS download.
             _ssLoad();
+            _aiLsLoad();
         }
     }
 
