@@ -5426,7 +5426,7 @@
     // page loads within that window the cached data is used immediately — no
     // network round-trip — and spot markers are tinted from the current hour's
     // pre-computed score in that payload.
-    var _SCORE_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+    var _SCORE_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms — matches server forecast TTL
 
     function _scoreLocalKey(lat, lng) {
         return 'fmap_score_v1_' + parseFloat(lat).toFixed(4) + '_' + parseFloat(lng).toFixed(4);
