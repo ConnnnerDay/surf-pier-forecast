@@ -4039,18 +4039,18 @@
                     var marker = L.marker([st.lat, st.lng], { icon: icon });
                     marker.bindPopup(
                         '<div class="fmap-metar-popup">' +
-                        '<strong>' + (st.icao || st.name) + '</strong>' +
-                        (st.name && st.icao ? '<div class="fmap-metar-name">' + st.name + '</div>' : '') +
-                        (timeStr ? '<div class="fmap-metar-time">' + timeStr + '</div>' : '') +
+                        '<strong>' + esc(st.icao || st.name || '') + '</strong>' +
+                        (st.name && st.icao ? '<div class="fmap-metar-name">' + esc(st.name) + '</div>' : '') +
+                        (timeStr ? '<div class="fmap-metar-time">' + esc(timeStr) + '</div>' : '') +
                         '<table class="fmap-metar-table">' +
-                        '<tr><th scope="row">Temp</th><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
-                        '<tr><th scope="row">Wind</th><td>' + windStr + '</td></tr>' +
+                        '<tr><th scope="row">Temp</th><td>' + esc(tempStr) + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
+                        '<tr><th scope="row">Wind</th><td>' + esc(windStr) + '</td></tr>' +
                         (st.humidity != null ? '<tr><th scope="row">Humidity</th><td>' + st.humidity + '%</td></tr>' : '') +
                         (st.pressure_mb != null ? '<tr><th scope="row">Pressure</th><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
-                        '<tr><th scope="row">Visibility</th><td>' + visStr + '</td></tr>' +
-                        (st.sky ? '<tr><th scope="row">Sky</th><td>' + st.sky + '</td></tr>' : '') +
-                        (st.weather ? '<tr><th scope="row">Wx</th><td>' + st.weather + '</td></tr>' : '') +
-                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span class="fmap-metar-cat" style="color:' + catColor + '">' + st.flight_cat + '</span></td></tr>' : '') +
+                        '<tr><th scope="row">Visibility</th><td>' + esc(visStr) + '</td></tr>' +
+                        (st.sky ? '<tr><th scope="row">Sky</th><td>' + esc(st.sky) + '</td></tr>' : '') +
+                        (st.weather ? '<tr><th scope="row">Wx</th><td>' + esc(st.weather) + '</td></tr>' : '') +
+                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span class="fmap-metar-cat" style="color:' + esc(catColor) + '">' + esc(st.flight_cat) + '</span></td></tr>' : '') +
                         '</table>' +
                         '<div class="fmap-metar-source">NOAA METAR via ArcGIS Live Feeds</div>' +
                         '</div>',
@@ -5631,7 +5631,7 @@
                         : '';
                     scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
                         '</span><span class="fmap-spot-score-denom">/10</span>' +
-                        (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '') +
+                        (currentLabel ? ' <span class="fmap-spot-score-label">' + esc(currentLabel) + '</span>' : '') +
                         (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '" ' + trendAttrs + '>' + trendArrow + '</span>' : '');
                     scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
                 }
