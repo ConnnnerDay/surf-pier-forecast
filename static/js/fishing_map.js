@@ -269,10 +269,9 @@
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
         activeTileLayer.once('tileerror', function () {
             // Fall back to street tiles if ESRI is unavailable.
-            // Also update module-level _isSatellite so the basemap button stays in sync.
             map.removeLayer(activeTileLayer);
             activeTileLayer = L.tileLayer(TILE_STREET.url, TILE_STREET.opts).addTo(map);
-            _isSatellite = false;
+            _basemapMode = 'street';
             _syncBasemapBtn();
         });
         activeTileLayer.addTo(map);
