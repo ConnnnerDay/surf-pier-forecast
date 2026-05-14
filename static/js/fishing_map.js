@@ -18,7 +18,7 @@
     var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
     var _spotBoundsCache = {};       // key → [s,w,n,e] floats, avoids re-parsing in _cachedSupersetOf
     var _SPOT_CACHE_MAX  = 200;      // cap for in-memory budget
-    var _SS_SAVE_MAX     = 10;       // max entries persisted to localStorage (keeps blob small)
+    var _SS_SAVE_MAX     = 25;       // max entries persisted to localStorage; ~300 KB uncompressed
     var _ssSaveTimer          = null; // debounce timer for localStorage writes
     var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
@@ -157,6 +157,7 @@
         my_spots:   ['fishing']    // custom / user-logged spots
     };
     var _activeCategory = null; // null = all categories visible
+    var _pendingCategory = null; // set by loadFilters(), consumed by wireCategoryFilterTabs()
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
@@ -2785,15 +2786,11 @@
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
             }
-            // Restore active category tab (deferred until wireCategoryFilterTabs runs)
-            if (f.category) {
-                var _tryRestoreCat = function () {
-                    var tab = document.querySelector('.fmap-cat-tab[data-cat="' + f.category + '"]');
-                    if (tab) tab.click();
-                };
-                // Tabs are wired in boot() shortly after loadFilters; defer one tick
-                setTimeout(_tryRestoreCat, 0);
-            }
+            // Restore active category tab — stored here, applied inside
+            // wireCategoryFilterTabs() once click handlers are in place.
+            // A setTimeout(0) previously raced the prewarm path and fired before
+            // the handlers were wired, silently dropping the restored category.
+            if (f.category) _pendingCategory = f.category;
             updateAdvBadge();
         } catch (e) {
             console.warn('[fishing-map] loadFilters failed:', e);
@@ -5482,6 +5479,17 @@
                 saveFilters();
             });
         });
+
+        // Apply any category saved by loadFilters() now that click handlers are live.
+        // loadFilters() runs before wireCategoryFilterTabs() in both the prewarm and
+        // boot paths; a previous setTimeout(0) raced the prewarm chain and arrived
+        // before these handlers were attached, silently dropping the saved category.
+        if (_pendingCategory) {
+            var _pc = _pendingCategory;
+            _pendingCategory = null;
+            var _pcTab = document.querySelector('.fmap-cat-tab[data-cat="' + _pc + '"]');
+            if (_pcTab) _pcTab.click();
+        }
     }
 
     // ─── Score fetch ──────────────────────────────────────────────────────────
