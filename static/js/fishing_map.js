@@ -30,6 +30,7 @@
     // Adjacent-tile pre-fetch queue — background loads for N/S/E/W of the current view
     var _prefetchQueue      = [];    // {s,w,n,e,key} objects waiting for background fetch
     var _prefetchInFlight   = false; // whether a background fetch is running
+    var _prefetchDrainTimer = null;  // single pending drain timer (prevents stacking)
     var _PREFETCH_DELAY     = 5000;  // ms between background fetches (Overpass rate-limit)
     var _PREFETCH_MAX_QUEUE = 8;     // max queued tiles (drops oldest if exceeded)
     // Shared cache for overlay icons (SST, METAR, buoy).
@@ -1148,11 +1149,13 @@
     // no name or ambiguous → default teal (SPOT_TYPES.fishing.color).
     var _SALT_RE  = /\b(ocean|sea|surf|pier|beach|tidal|coastal|saltwater|bay|gulf|atlantic|pacific|harbor|harbour|inlet|jetty|sound|estuary|brackish)\b/i;
     var _FRESH_RE = /\b(lake|pond|river|creek|stream|reservoir|freshwater|canal|brook|bayou|dam|falls?|spring)\b/i;
+    var _fishingVariantCache = {};
     function _fishingVariant(name) {
         if (!name) return 'fishing';
-        if (_SALT_RE.test(name))  return 'fishing_salt';
-        if (_FRESH_RE.test(name)) return 'fishing_fresh';
-        return 'fishing';
+        if (_fishingVariantCache[name]) return _fishingVariantCache[name];
+        var v = _SALT_RE.test(name) ? 'fishing_salt' : _FRESH_RE.test(name) ? 'fishing_fresh' : 'fishing';
+        _fishingVariantCache[name] = v;
+        return v;
     }
 
     function spotTypeLabel(type) {
@@ -2679,8 +2682,14 @@
             Math.ceil ((n - latStep) * 2) / 2, Math.ceil (e * 2) / 2
         ); // south
 
-        // Start draining after a short delay — let the current render finish first
-        setTimeout(_drainPrefetchQueue, 1500);
+        // Start draining after a short delay — let the current render finish first.
+        // Guard with a single timer so rapid pans don't stack up drain calls.
+        if (!_prefetchDrainTimer) {
+            _prefetchDrainTimer = setTimeout(function () {
+                _prefetchDrainTimer = null;
+                _drainPrefetchQueue();
+            }, 1500);
+        }
     }
 
     // ─── localStorage persistence for spotCache ───────────────────────────────

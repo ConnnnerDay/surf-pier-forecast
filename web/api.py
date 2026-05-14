@@ -1317,7 +1317,14 @@ def fishing_map_data() -> Any:
             resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
             resp.headers["X-Cache"] = "HIT-WAIT"
             return resp
-        # Timed out or spurious wake — fall through to compute ourselves
+        # Timed out or spurious wake — take over as computing thread so the
+        # finally block can clean up _FMAP_INFLIGHT and unblock future waiters.
+        # Without this, the stale event stays registered and every subsequent
+        # request for the same key waits 8 s then also falls through here.
+        with _FMAP_INFLIGHT_LOCK:
+            if _FMAP_INFLIGHT.get(_fmap_key) is _wait_event:
+                _my_event = threading.Event()
+                _FMAP_INFLIGHT[_fmap_key] = _my_event
 
     # -- filter the species DB once -------------------------------------------
     # Use _get_species_lower_index() so .lower() is never called at filter time;
