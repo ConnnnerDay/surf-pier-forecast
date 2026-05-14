@@ -6,7 +6,22 @@
     <meta name="color-scheme" content="dark light">
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     {% include 'partials/_head_fonts.html' %}
-    <link rel="stylesheet" href="{{ surl('style.css') }}">
+    {# Critical CSS — inlined to eliminate render-blocking on style.css.
+       Contains only CSS custom properties (both themes) and the minimum base
+       rules needed to prevent FOUC: body background, header colour, hidden
+       suppression, and box-sizing.  The full style.css loads non-blocking. #}
+    <style>
+    :root{--ocean:#0077B6;--ocean-dark:#023E8A;--ocean-light:#D6EAF5;--sand:#FFFBF0;--sand-dark:#F5E8CE;--coral:#F4543B;--sea-green:#059669;--amber:#D97706;--sky:#0EA5E9;--red:#DC2626;--text:#1C3245;--text-muted:#5B7285;--white:#FAFAF8;--bg-subtle:#EBE8E2;--bg-body:#EDE8DF;--border-light:#D8E3EC;--card-bg:#FAFAF8;--shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--shadow-md:0 4px 12px rgba(0,0,0,.1);--shadow-lg:0 8px 28px rgba(0,0,0,.14);--radius:10px;--radius-sm:6px}
+    [data-theme="dark"]{--ocean:#38C0FF;--ocean-dark:#0EA5E9;--ocean-light:#0D2035;--sand:#0E1824;--sand-dark:#0A1118;--coral:#FF6B4A;--sea-green:#34D399;--amber:#FBBF24;--sky:#7DD3FC;--red:#F87171;--text:#D8EBF8;--text-muted:#7AA3BE;--white:#111E2E;--bg-subtle:#172438;--bg-body:#0A1520;--border-light:#1D3550;--card-bg:#122035;--shadow-sm:0 1px 3px rgba(0,0,0,.35);--shadow-md:0 4px 12px rgba(0,0,0,.45);--shadow-lg:0 8px 28px rgba(0,0,0,.6)}
+    *,*::before,*::after{box-sizing:border-box}
+    [hidden]{display:none!important}
+    html{overflow-x:hidden}
+    body{margin:0;background:var(--bg-body);color:var(--text)}
+    header{background:#0D2240;color:var(--white)}
+    [data-theme="dark"] header{background:#07131F}
+    </style>
+    <link rel="preload" as="style" href="{{ surl('style.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('style.css') }}"></noscript>
     <link rel="stylesheet" href="{{ surl('leaflet.min.css') }}">
     <script src="{{ surl('js/leaflet.min.js') }}" defer></script>
     <link rel="preload" as="script" href="{{ surl('js/fishing_map.min.js') }}">
