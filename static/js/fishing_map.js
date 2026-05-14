@@ -2709,7 +2709,9 @@
                 }
             });
             while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
-                delete spotCache[_spotCacheKeys.shift()];
+                var _evk = _spotCacheKeys.shift();
+                delete spotCache[_evk];
+                delete _spotBoundsCache[_evk];
             }
         } catch (e) { /* quota or parse error — start cold */ }
     }
