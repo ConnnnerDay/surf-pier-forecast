@@ -20,7 +20,8 @@
     var _SPOT_CACHE_MAX  = 200;      // cap for in-memory budget
     var _SS_SAVE_MAX     = 25;       // max entries persisted to localStorage; ~300 KB uncompressed
     var _ssSaveTimer          = null; // debounce timer for localStorage writes
-    var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
+    var _lastRenderedSpotKey  = null; // compound render key of the last renderFishingSpots() call
+    var _lastSpotCacheKey     = null; // plain bbox key corresponding to _lastRenderedSpotKey
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon
@@ -115,6 +116,7 @@
     // ─── Score state ─────────────────────────────────────────────────────────
     var _scoreData         = null;   // cached /api/v1/map/score response
     var _scoreAbort        = null;   // AbortController for score fetch
+    var _scoreHourTimer    = null;   // fires at next hour boundary to re-tint spots
     var _tideChartTimer    = null;   // debounce for re-fetch on location change
 
     // ─── Spot detail panel state ──────────────────────────────────────────────
@@ -1235,6 +1237,7 @@
             return;
         }
         _lastRenderedSpotKey = renderKey;
+        _lastSpotCacheKey    = cacheKey || null;
         // Detach from the map before rebuilding so each addLayer() doesn't
         // trigger an individual Leaflet repaint.  Re-attached at the end for a
         // single composite draw of all new markers.
@@ -3073,7 +3076,7 @@
                 '</div>';
         }
         if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + parseFloat(c.weight_lb).toFixed(1) + ' lb</div>';
-        if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + c.length_in + ' in</div>';
+        if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + esc(String(c.length_in)) + ' in</div>';
         if (c.bait)      bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Bait</span>' + esc(c.bait) + '</div>';
         if (c.notes)     bodyHtml += '<div class="fmap-catch-notes">' + esc(c.notes) + '</div>';
         els.catchDetailBody.innerHTML = bodyHtml;
@@ -5454,8 +5457,9 @@
             }
             // Restore OSM spots and AI habitats for non-mine categories
             _hideFavEmptyState();
-            renderFishingSpots(_lastRenderedSpotKey ? (spotCache[_lastRenderedSpotKey] || []) : []);
-            var cachedAI = aiCache[_lastRenderedSpotKey || ''] || [];
+            var _catSpots = _lastSpotCacheKey ? (spotCache[_lastSpotCacheKey] || []) : [];
+            renderFishingSpots(_catSpots, _lastSpotCacheKey || undefined);
+            var cachedAI = aiCache[_lastSpotCacheKey || ''] || [];
             if (aiPickLayer) renderAIHabitatSpots(cachedAI);
         }
 
@@ -5504,6 +5508,23 @@
         return 'fmap_score_v1_' + parseFloat(lat).toFixed(4) + '_' + parseFloat(lng).toFixed(4);
     }
 
+    function _scheduleHourlyScoreRefresh() {
+        clearTimeout(_scoreHourTimer);
+        var now = new Date();
+        var msToNextHour = (60 - now.getMinutes()) * 60000 - now.getSeconds() * 1000 - now.getMilliseconds() + 50;
+        _scoreHourTimer = setTimeout(function () {
+            if (_scoreData) {
+                var h = new Date().getHours();
+                var hd = (_scoreData.hours || [])[h] || {};
+                _recolourSpotsByScore(hd.score || 0);
+                if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
+                    window._fmapRefreshPanelScore();
+                }
+            }
+            _scheduleHourlyScoreRefresh();
+        }, msToNextHour);
+    }
+
     function _applyScoreData(data) {
         _scoreData = data;
         var nowHour = new Date().getHours();
@@ -5512,6 +5533,7 @@
         if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
             window._fmapRefreshPanelScore();
         }
+        _scheduleHourlyScoreRefresh();
     }
 
     function _fetchMapScore() {

@@ -116,15 +116,23 @@ self.addEventListener('fetch', function(event) {
   var _swrApis = ['/api/map/structures', '/api/v1/map/score'];
   if (event.request.method === 'GET' &&
       _swrApis.some(function(p) { return event.request.url.includes(p); })) {
+    // Keep the SW alive until the background cache write completes so mobile
+    // browsers don't terminate the worker before the update lands.
+    var bgRefresh = caches.open(CACHE_NAME).then(function(cache) {
+      return fetch(event.request).then(function(response) {
+        if (response.ok) cache.put(event.request, response.clone());
+        return response;
+      }).catch(function() { return null; });
+    });
+    event.waitUntil(bgRefresh);
     event.respondWith(
       caches.open(CACHE_NAME).then(function(cache) {
         return cache.match(event.request).then(function(cached) {
-          var networkFetch = fetch(event.request).then(function(response) {
-            if (response.ok) cache.put(event.request, response.clone());
-            return response;
+          if (cached) return cached;
+          // No cached entry — must wait for the network response.
+          return bgRefresh.then(function(r) {
+            return r || new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } });
           });
-          // Serve stale immediately; background-refresh the cache entry.
-          return cached || networkFetch;
         });
       })
     );
