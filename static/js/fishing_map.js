@@ -3456,7 +3456,7 @@
                 .then(function (r) {
                     if (!r.ok) throw new Error('HTTP ' + r.status);
                     // Invalidate cache so panning away and back shows the new position
-                    spotCache = {}; _spotCacheKeys = [];
+                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast('Position saved');
                 })
@@ -3654,7 +3654,7 @@
         .then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             // Bust the local spot cache so the suppressed spot disappears on next render
-            spotCache = {}; _spotCacheKeys = [];
+            spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
             try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
             scheduleFishingSpotQuery();
             cb(null);
@@ -3753,7 +3753,7 @@
                     saveBtn.disabled    = false;
                     saveBtn.textContent = 'Save';
                     _closeAdminModal();
-                    spotCache = {}; _spotCacheKeys = [];
+                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
@@ -3812,7 +3812,7 @@
                 .then(function () {
                     delBtn.disabled = false;
                     _closeAdminModal();
-                    spotCache = {}; _spotCacheKeys = [];
+                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast('Marker deleted');
                     scheduleFishingSpotQuery();
