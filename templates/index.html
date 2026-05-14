@@ -8,7 +8,7 @@
     {% include 'partials/_head_fonts.html' %}
     <link rel="stylesheet" href="{{ surl('style.css') }}">
     <link rel="stylesheet" href="{{ surl('leaflet.min.css') }}">
-    <link rel="preload" as="script" href="{{ surl('js/leaflet.min.js') }}">
+    <script src="{{ surl('js/leaflet.min.js') }}" defer></script>
     <link rel="preload" as="script" href="{{ surl('js/fishing_map.min.js') }}">
     <link rel="manifest" href="{{ surl('manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
