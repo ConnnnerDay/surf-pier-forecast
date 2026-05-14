@@ -4403,6 +4403,8 @@
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
 
+    function onBuoyViewport() { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); }
+
     function wireBuoyLayer() {
         if (!map) return;
         buoyLayer = L.layerGroup();
@@ -4537,7 +4539,9 @@
                     // Draw an arrow rotated to the current direction
                     var rot = v.dir_deg != null ? v.dir_deg : 0;
                     var kts = v.speed_kts != null ? v.speed_kts.toFixed(1) + ' kt' : '';
-                    var icon = L.divIcon({
+                    // Cache key includes color + speed label so identical vectors reuse
+                    // the same L.divIcon object instead of allocating one per vector per fetch.
+                    var icon = _cachedDivIcon('hfradar|' + v.color + '|' + rot + '|' + kts, {
                         className: '',
                         html: '<div class="fmap-hfradar-arrow" style="color:' + v.color +
                               ';transform:rotate(' + rot + 'deg)" title="' + kts + '">' +
@@ -5309,11 +5313,16 @@
         var hash = window.location.hash;
         if (!hash || hash.indexOf('#fmap=') !== 0) return;
         var raw = hash.slice(6); // strip '#fmap='
-        var params = {};
+        // Use Object.create(null) so __proto__ and constructor keys cannot
+        // pollute Object.prototype via a crafted share URL.
+        var params = Object.create(null);
+        var _ALLOWED = { types: 1, lat: 1, lng: 1, z: 1 };
         raw.split('&').forEach(function (part) {
             var eq = part.indexOf('=');
             if (eq === -1) return;
-            params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1));
+            var key = part.slice(0, eq);
+            if (!_ALLOWED[key]) return;
+            params[key] = decodeURIComponent(part.slice(eq + 1));
         });
         if (params.types) {
             var requested = params.types.split(',').map(function (t) { return t.trim(); })

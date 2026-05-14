@@ -553,7 +553,10 @@ def _render_forecast(
         # so _cachedSupersetOf() also finds smaller viewport bbox queries.
         # Falls back to the normal XHR path when the cache is cold.
         _cached = _get_cached_structures(_s, _w, _n, _e)
-        if _cached is not None:
+        # Cap at 400 spots to avoid bloating the HTML on dense urban coastlines
+        # (South Florida, SF Bay etc. can have 500+ structures per corridor).
+        # Above the cap the client falls back to the normal XHR path.
+        if _cached is not None and len(_cached) <= 400:
             _inline_structures = {
                 "key": f"{_s:g},{_w:g},{_n:g},{_e:g}",
                 "data": _cached,
