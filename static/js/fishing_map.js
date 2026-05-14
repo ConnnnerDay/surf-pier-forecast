@@ -176,7 +176,9 @@
     // Local copies of Leaflet are served from /static/ (same origin, no CDN
     // round-trip).  CDN URLs are kept as fallbacks in case the local files are
     // somehow unavailable (e.g. a very old cached page referencing a missing file).
-    var _LEAFLET_JS_LOCAL  = '/static/js/leaflet.min.js';
+    var _LEAFLET_JS_LOCAL  = (typeof LEAFLET_JS_URL !== 'undefined' && LEAFLET_JS_URL)
+        ? LEAFLET_JS_URL
+        : '/static/js/leaflet.min.js';
     var _LEAFLET_CSS_LOCAL = '/static/leaflet.min.css';
     var _LEAFLET_JS_CDN    = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
     var _LEAFLET_CSS_CDN   = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';

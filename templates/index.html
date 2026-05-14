@@ -1225,6 +1225,7 @@ var CURRENT_LOC_LAT = {{ location_lat|tojson }};
 var CURRENT_LOC_LNG = {{ location_lng|tojson }};
 var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
 var MAP_IS_ADMIN  = {{ ('true' if g.user and g.user.get('is_admin') else 'false') }};
+var LEAFLET_JS_URL = {{ surl('js/leaflet.min.js')|tojson }};
 
 function getFavorites() {
     try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
