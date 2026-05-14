@@ -5459,8 +5459,7 @@
             _hideFavEmptyState();
             var _catSpots = _lastSpotCacheKey ? (spotCache[_lastSpotCacheKey] || []) : [];
             renderFishingSpots(_catSpots, _lastSpotCacheKey || undefined);
-            var cachedAI = aiCache[_lastSpotCacheKey || ''] || [];
-            if (aiPickLayer) renderAIHabitatSpots(cachedAI);
+            scheduleAIQuery();
         }
 
         tabs.forEach(function (tab) {
