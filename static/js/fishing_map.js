@@ -1949,6 +1949,7 @@
         var zoom = map.getZoom();
         if (zoom < 8) {
             _lastRenderedSpotKey = null;
+            _lastSpotCacheKey    = null;
             fishingSpotLayer.clearLayers();
             return;
         }
@@ -2039,6 +2040,7 @@
                 // Server signals the viewport is too large — show hint, clear layers.
                 if (data.zoom_required) {
                     _lastRenderedSpotKey = null;
+                    _lastSpotCacheKey    = null;
                     fishingSpotLayer.clearLayers();
                     if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
                     if (_elStructFiltersHint) _elStructFiltersHint.textContent = 'Zoom in further to see structure markers';
