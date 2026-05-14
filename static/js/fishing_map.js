@@ -3063,8 +3063,13 @@
 
         // Title: use explicit title if set, otherwise fall back to species name
         els.catchDetailTitle.textContent = c.title ? c.title : c.species;
-        var dateStr = c.caught_at ? new Date(c.caught_at.indexOf('Z') === -1
-            ? c.caught_at + 'Z' : c.caught_at).toLocaleDateString() : '';
+        var dateStr = '';
+        if (c.caught_at) {
+            try {
+                var _cd = new Date(c.caught_at.indexOf('Z') === -1 ? c.caught_at + 'Z' : c.caught_at);
+                if (!isNaN(_cd)) dateStr = _cd.toLocaleDateString();
+            } catch (e) {}
+        }
         // Show species below the title when a custom title is present
         var speciesTag = (c.title && c.title !== c.species)
             ? ' \u2022 ' + esc(c.species) : '';
@@ -3077,7 +3082,7 @@
             var _photoAlt = c.species ? esc(c.species) + ' catch photo' : 'Catch photo';
             bodyHtml += '<div class="fmap-catch-photo-wrap">' +
                 '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="' + _photoAlt + '" ' +
-                'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+                'loading="lazy" onerror="this.parentNode.style.display=\'none\'" referrerpolicy="no-referrer">' +
                 '</div>';
         }
         if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + parseFloat(c.weight_lb).toFixed(1) + ' lb</div>';
@@ -3958,8 +3963,10 @@
 
     function _sstFmtDate(iso) {
         try {
-            return new Date(iso).toLocaleDateString([], { month:'short', day:'numeric' });
-        } catch (e) { return iso; }
+            var _d = new Date(iso);
+            if (!isNaN(_d)) return _d.toLocaleDateString([], { month:'short', day:'numeric' });
+        } catch (e) {}
+        return '';
     }
 
     // ─── Wildfire + Smoke overlay (ArcGIS Live Feeds) ─────────────────────────
@@ -4161,10 +4168,13 @@
         var dates = '';
         if (t.start_dtg) {
             try {
-                var s = new Date(t.start_dtg).toLocaleDateString([], { month:'short', day:'numeric' });
-                var e = t.end_dtg ? new Date(t.end_dtg).toLocaleDateString([], { month:'short', day:'numeric' }) : '';
-                dates = s + (e ? ' – ' + e : '');
-            } catch (ex) { /* ignore */ }
+                var _ds = new Date(t.start_dtg);
+                var _de = t.end_dtg ? new Date(t.end_dtg) : null;
+                if (!isNaN(_ds)) {
+                    dates = _ds.toLocaleDateString([], { month:'short', day:'numeric' }) +
+                            (_de && !isNaN(_de) ? ' – ' + _de.toLocaleDateString([], { month:'short', day:'numeric' }) : '');
+                }
+            } catch (ex) {}
         }
         return (
             '<div class="fmap-storm-popup">' +
@@ -5609,8 +5619,9 @@
         function _refreshPanelScore() {
             var hasScore = !!_scoreData;
             var currentScore = 0, currentLabel = '', currentGrade = 'fair';
+            var _nowH = new Date().getHours();
             if (hasScore) {
-                var hd = (_scoreData.hours || [])[new Date().getHours()] || {};
+                var hd = (_scoreData.hours || [])[_nowH] || {};
                 currentScore = hd.score || 0;
                 currentLabel = hd.label || '';
                 currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
@@ -5622,7 +5633,7 @@
                     scoreEl.className = 'fmap-spot-score fmap-tide-score--loading';
                 } else {
                     // Trend: compare current hour to 2 hours ahead
-                    var futureHour = Math.min(23, new Date().getHours() + 2);
+                    var futureHour = Math.min(23, _nowH + 2);
                     var futureScore = ((_scoreData.hours || [])[futureHour] || {}).score || 0;
                     var delta = futureScore - currentScore;
                     var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
