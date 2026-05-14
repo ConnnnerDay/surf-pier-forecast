@@ -5968,6 +5968,16 @@
             // Parse both localStorage caches in parallel with the JS download.
             _ssLoad();
             _aiLsLoad();
+            // If the server inlined the home-corridor structures into the page
+            // (warm in-memory cache), seed spotCache immediately — zero XHR needed.
+            // This runs before Leaflet loads so the cache is hot when initMap fires.
+            if (window._FMAP_INLINE_STRUCTS) {
+                var _il = window._FMAP_INLINE_STRUCTS;
+                if (_il && _il.key && Array.isArray(_il.data) && !spotCache[_il.key]) {
+                    _spotCachePut(_il.key, _il.data);
+                }
+                window._FMAP_INLINE_STRUCTS = null; // release the reference
+            }
             // When Leaflet is ready, kick off map init + structures query immediately
             // without waiting for the IntersectionObserver to fire.  By the time the
             // user scrolls the map into view, spots are already rendered.

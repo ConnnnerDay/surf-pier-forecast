@@ -2048,6 +2048,9 @@ if ('serviceWorker' in navigator) {
 <script src="{{ surl('js/collapsibles.js') }}" defer></script>
 <script src="{{ surl('js/layout-editor.js') }}" defer></script>
 <script>window.IS_LOGGED_IN = {{ 'true' if g.user else 'false' }};</script>
+{% if inline_structures %}
+<script>window._FMAP_INLINE_STRUCTS = {{ inline_structures | tojson }};</script>
+{% endif %}
 <script src="{{ surl('js/fishing_map.min.js') }}" defer></script>
 
 <script>

@@ -43,6 +43,7 @@ from domain.forecast import (
     recompute_current_uv,
     build_trip_setup,
 )
+from services.fish_structures import get_cached_structures as _get_cached_structures
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing as _is_refreshing
 from services.nws import _KT_TO_MPH
 from storage.cache import (
@@ -532,6 +533,7 @@ def _render_forecast(
     # matching JavaScript's default float→string conversion.
     _struct_preload_url = ""
     _score_preload_url = ""
+    _inline_structures: dict | None = None
     if loc_lat and loc_lng:
         _R = 1.0
         _s = _math.floor((loc_lat - _R) * 2) / 2
@@ -544,6 +546,18 @@ def _render_forecast(
         _score_preload_url = (
             f"/api/v1/map/score?lat={loc_lat:g}&lng={loc_lng:g}"
         )
+        # Inline the home-corridor structures into the page when the server's
+        # in-memory cache is warm.  The client stores them in spotCache before
+        # any XHR fires, so the first queryStructures() call is a synchronous
+        # cache hit.  The JS key must exactly match prefetchHomeCorridorStructures()
+        # so _cachedSupersetOf() also finds smaller viewport bbox queries.
+        # Falls back to the normal XHR path when the cache is cold.
+        _cached = _get_cached_structures(_s, _w, _n, _e)
+        if _cached is not None:
+            _inline_structures = {
+                "key": f"{_s:g},{_w:g},{_n:g},{_e:g}",
+                "data": _cached,
+            }
 
     return render_template(
         "index.html",
@@ -558,6 +572,7 @@ def _render_forecast(
         location_lng=loc_lng,
         struct_preload_url=_struct_preload_url,
         score_preload_url=_score_preload_url,
+        inline_structures=_inline_structures,
         profile_incomplete=profile_incomplete,
     )
 

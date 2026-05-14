@@ -62,7 +62,7 @@ _CACHE_TTL_FAILED: int = 90  # 90 seconds — retry failed bboxes less aggressiv
 _CACHE_MAX: int = 256  # max bbox+types combinations kept in memory
 
 def _cache_key(
-    south: float, west: float, north: float, east: float, types: set[str]
+    south: float, west: float, north: float, east: float, types: set[str] | None
 ) -> tuple:
     """Stable, hashable cache key rounded to 2 decimal places (~1 km grid)."""
     return (
@@ -70,7 +70,7 @@ def _cache_key(
         round(west, 2),
         round(north, 2),
         round(east, 2),
-        frozenset(types),
+        frozenset(types) if types is not None else frozenset(),
     )
 
 _CACHE_EVICT_INTERVAL: float = 60.0  # seconds between full TTL scans
@@ -103,6 +103,23 @@ def _cache_evict() -> None:
 def cache_clear() -> None:
     """Remove all cached results.  Intended for tests and cache-invalidation hooks."""
     _CACHE.clear()
+
+
+def get_cached_structures(
+    south: float, west: float, north: float, east: float
+) -> list[dict[str, Any]] | None:
+    """Return the cached all-types result for this bbox without triggering a fetch.
+
+    Returns None when the entry is absent or has expired.  Used by the dashboard
+    view to inline the structures JSON directly into the HTML so the client never
+    needs an XHR for warm-cache page loads.
+    """
+    key = _cache_key(south, west, north, east, None)
+    entry = _CACHE.get(key)
+    if entry and not entry.get("failed"):
+        if (_time.time() - entry["ts"]) < _CACHE_TTL:
+            return entry["data"]
+    return None
 
 # ── Habitat types rendered as filled polygon overlays ─────────────────────────
 # These are area features (wetlands, beaches, …) whose OSM ways carry closed
