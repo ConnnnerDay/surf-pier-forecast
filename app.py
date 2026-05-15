@@ -374,17 +374,17 @@ def create_app() -> Flask:
             "interest-cohort=(), geolocation=self, microphone=(), camera=self",
         )
         # Content Security Policy — restrict resource origins to reduce XSS impact.
-        # Google Fonts (style + font) and unpkg.com (Leaflet) are explicit allow-listed
-        # CDNs used by the templates; all other external sources are blocked.
+        # Fonts are now self-hosted (static/fonts/) so fonts.googleapis.com and
+        # fonts.gstatic.com no longer need to be allow-listed.
         # 'unsafe-inline' is required for the existing inline <script> and <style>
         # blocks; if those are ever moved to external files this can be tightened.
         response.headers.setdefault(
             "Content-Security-Policy",
             (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
-                "font-src 'self' https://fonts.gstatic.com; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "font-src 'self'; "
                 "img-src 'self' data: blob: https://lh3.googleusercontent.com "
                 "https://*.tile.openstreetmap.org https://*.openstreetmap.fr "
                 "https://*.basemaps.cartocdn.com "
