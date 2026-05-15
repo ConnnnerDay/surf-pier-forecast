@@ -22,7 +22,8 @@
     </style>
     <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
-    <link rel="stylesheet" href="{{ surl('leaflet.min.css') }}">
+    <link rel="preload" as="style" href="{{ surl('leaflet.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('leaflet.min.css') }}"></noscript>
     <script src="{{ surl('js/leaflet.min.js') }}" defer></script>
     <link rel="preload" as="script" href="{{ surl('js/fishing_map.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/collapsibles.min.js') }}">
