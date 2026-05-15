@@ -14,6 +14,11 @@
     {% include 'partials/_theme_bootstrap.html' %}
     <link rel="preload" as="style" href="{{ surl('leaflet.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ surl('leaflet.min.css') }}"></noscript>
+    <link rel="preload" as="script" href="{{ surl('js/leaflet.min.js') }}" fetchpriority="low">
+    <link rel="preload" as="script" href="{{ surl('js/setup_map.min.js') }}" fetchpriority="low">
+    <link rel="preconnect" href="https://server.arcgisonline.com">
+    <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 </head>
 <body class="has-app-header">
     {% import 'partials/_location_macros.html' as loc_macros with context %}
