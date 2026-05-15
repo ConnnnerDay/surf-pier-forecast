@@ -171,5 +171,9 @@
     updateTide();
     drawSolunarChart();
     setInterval(function () { updateSolunar(); updateTide(); drawSolunarChart(); }, 30000);
-    window.addEventListener('resize', drawSolunarChart);
+    var _resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(drawSolunarChart, 150);
+    }, { passive: true });
 })();
