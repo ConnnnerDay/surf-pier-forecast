@@ -12720,7 +12720,11 @@ details[open] .collapsible-module-body {
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* Section wrapper — invisible by default */
-.section-block { position: relative; }
+.section-block {
+    position: relative;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px;
+}
 
 /* ── Edit FAB ─────────────────────────────────────────────────────────── */
 .layout-edit-fab {
@@ -12819,6 +12823,7 @@ details[open] .collapsible-module-body {
   padding-bottom: 80px; /* clear toolbar */
 }
 .layout-edit-mode .section-block {
+  content-visibility: visible;
   border: 2px dashed rgba(14,95,120,0.22);
   border-radius: 12px;
   margin-bottom: 0.5rem;
