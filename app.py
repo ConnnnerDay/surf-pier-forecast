@@ -22,6 +22,11 @@ No API keys required.  Data cached per-location to ``data/``.
 from __future__ import annotations
 
 import gzip as _gzip
+try:
+    import brotli as _brotli  # optional: pip install brotli
+    _BROTLI_AVAILABLE = True
+except ImportError:
+    _BROTLI_AVAILABLE = False
 import hmac
 import logging
 import os
@@ -412,32 +417,39 @@ def create_app() -> Flask:
 
     @app.after_request
     def _gzip_response(response: Any) -> Any:
-        """Compress text responses when the client supports gzip.
+        """Compress text responses, preferring Brotli over gzip when both are available.
 
-        JSON and HTML are the biggest wins: repetitive JSON compresses 85-90 %
-        (80-200 KB → 10-25 KB); the rendered dashboard HTML compresses ~75 %
-        (~120 KB → ~30 KB).  CSS and JS also benefit if not already compressed
-        at the proxy layer.
-        Uses Python's built-in gzip (compresslevel=6) — no extra dependencies.
-        Skips already-encoded, small (<500 B), or streaming responses.
+        Brotli (br) typically gives 8-15 % better compression than gzip and is
+        supported by all modern browsers.  Falls back to gzip when the client
+        does not advertise br.  Skips already-encoded, small (<500 B), or
+        streaming responses.
         """
         ct = (response.content_type or "").split(";")[0].strip()
         if (
             response.direct_passthrough
             or response.status_code != 200
             or "Content-Encoding" in response.headers
-            or "gzip" not in request.headers.get("Accept-Encoding", "")
             or ct not in _COMPRESSIBLE
         ):
+            return response
+        accept_enc = request.headers.get("Accept-Encoding", "")
+        use_brotli = _BROTLI_AVAILABLE and "br" in accept_enc
+        use_gzip = "gzip" in accept_enc
+        if not use_brotli and not use_gzip:
             return response
         data = response.get_data()
         if len(data) < 500:
             return response
-        compressed = _gzip.compress(data, compresslevel=6)
+        if use_brotli:
+            compressed = _brotli.compress(data, quality=6)
+            encoding = "br"
+        else:
+            compressed = _gzip.compress(data, compresslevel=6)
+            encoding = "gzip"
         if len(compressed) >= len(data):
             return response
         response.set_data(compressed)
-        response.headers["Content-Encoding"] = "gzip"
+        response.headers["Content-Encoding"] = encoding
         response.headers["Content-Length"] = len(compressed)
         response.headers["Vary"] = "Accept-Encoding"
         response.headers.pop("Content-MD5", None)
