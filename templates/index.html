@@ -48,6 +48,9 @@
         }
     })();
     </script>
+    {# Minimal inline CSS: sets body background before style.min.css loads so the
+       page never flashes white. Must stay in sync with :root/dark vars in style.css. #}
+    <style>:root{--bg-body:#EDE8DF}[data-theme="dark"]{--bg-body:#0A1520}body{margin:0;background:var(--bg-body)}</style>
     <meta name="description" content="Surf and pier fishing forecast with real-time conditions, species rankings, tide charts, and solunar times for {{ forecast.location_name or 'your location' }}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="{{ forecast.conditions.verdict }} — {{ forecast.location_name or 'Fishing Forecast' }}">
