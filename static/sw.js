@@ -118,6 +118,7 @@ self.addEventListener('fetch', function(event) {
     '/api/weather/env-context',
     '/api/weather/combined-forecast',
     '/api/map/stat-cards',
+    '/api/v1/geo/environmental',
   ];
   if (event.request.method === 'GET' &&
       _swrApis.some(function(p) { return event.request.url.includes(p); })) {
