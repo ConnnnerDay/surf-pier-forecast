@@ -1231,6 +1231,7 @@ var CURRENT_LOC_LNG = {{ location_lng|tojson }};
 var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
 var MAP_IS_ADMIN  = {{ ('true' if g.user and g.user.get('is_admin') else 'false') }};
 var LEAFLET_JS_URL = {{ surl('js/leaflet.min.js')|tojson }};
+var FMAP_JS_URL    = {{ surl('js/fishing_map.min.js')|tojson }};
 var SERVER_PROFILE = {{ (profile or {})|tojson }};
 var SHARE_ID = {{ share_id|tojson }};
 var SHARE_TEXT_URL = {{ url_for('api.share_text')|tojson }};
@@ -1343,8 +1344,6 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
 {% if inline_structures %}
 <script>window._FMAP_INLINE_STRUCTS = {{ inline_structures | tojson }};</script>
 {% endif %}
-<script src="{{ surl('js/fishing_map.min.js') }}" defer></script>
-
 <script>
 /* ── Auto-detected location toast ────────────────────────────────────────── */
 (function () {

@@ -551,6 +551,34 @@ if ('serviceWorker' in navigator) {
     });
 })();
 
+// Lazy-load the fishing map when the map section enters the viewport.
+// fishing_map.min.js was preloaded in <head> so it's in cache; we just defer
+// execution until the map section is actually visible, saving ~100ms of JS
+// parse+execute time for users who don't scroll to the map immediately.
+(function() {
+    var mapRoot = document.getElementById('fmap-root');
+    if (!mapRoot) return;
+    var loaded = false;
+    function load() {
+        if (loaded) return;
+        loaded = true;
+        var s = document.createElement('script');
+        s.src = FMAP_JS_URL;
+        document.head.appendChild(s);
+    }
+    if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function(entries) {
+            if (entries[0].isIntersecting) {
+                io.disconnect();
+                load();
+            }
+        }, { rootMargin: '400px' }); // start loading 400px before entering viewport
+        io.observe(mapRoot);
+    } else {
+        load();
+    }
+})();
+
 // Render favorites bar now that DOM is ready
 renderFavorites();
 // Fire deferred syncs
