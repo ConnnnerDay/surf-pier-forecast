@@ -20,18 +20,18 @@
     header{background:#0D2240;color:var(--white)}
     [data-theme="dark"] header{background:#07131F}
     </style>
-    <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="{{ surl('style.min.css') }}" fetchpriority="high" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
     <link rel="preload" as="style" href="{{ surl('leaflet.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ surl('leaflet.min.css') }}"></noscript>
-    <script src="{{ surl('js/leaflet.min.js') }}" defer></script>
-    <link rel="preload" as="script" href="{{ surl('js/fishing_map.min.js') }}">
-    <link rel="preload" as="script" href="{{ surl('js/collapsibles.min.js') }}">
-    <link rel="preload" as="script" href="{{ surl('js/layout-editor.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/page.min.js') }}" fetchpriority="high">
     <link rel="preload" as="script" href="{{ surl('js/stat-cards.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/water-conditions.min.js') }}">
     <link rel="preload" as="script" href="{{ surl('js/solunar.min.js') }}">
-    <link rel="preload" as="script" href="{{ surl('js/page.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/collapsibles.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/layout-editor.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/fishing_map.min.js') }}" fetchpriority="low">
+    <script src="{{ surl('js/leaflet.min.js') }}" defer></script>
     <link rel="manifest" href="{{ surl('manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
