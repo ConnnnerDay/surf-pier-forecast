@@ -26,7 +26,11 @@ from flask import (
     url_for,
 )
 
-from domain.forecast import build_share_text, generate_forecast, compute_hourly_strike_score
+from domain.forecast import (
+    build_share_text,
+    generate_forecast,
+    compute_hourly_strike_score,
+)
 from services.forecast_refresh import enqueue_forecast_refresh, is_refreshing
 from locations import COASTAL_LOCATIONS, get_location, get_water_temp
 from storage.reg_scraper import invalidate_cache as _reg_invalidate_cache
@@ -65,20 +69,30 @@ from services.arcgis_live_feeds import (
     fetch_wildfire_incidents,
     fetch_wind_forecast,
 )
-from services.fish_structures import VALID_TYPES, find_fish_structures, fetch_ai_habitats
+from services.fish_structures import (
+    VALID_TYPES,
+    find_fish_structures,
+    fetch_ai_habitats,
+)
 from storage.sqlite import (
     add_log_entry,
     add_map_catch,
     add_map_catch_comment,
     add_suppressed_spot,
     attach_photos_to_entry,
+    create_custom_habitat,
     create_custom_marker,
+    delete_custom_habitat,
     delete_custom_marker,
+    delete_habitat_override,
     delete_log_entry,
     delete_map_catch,
+    get_all_custom_habitats,
     get_community_hotspots,
+    get_custom_habitats_in_bbox,
     get_custom_markers,
     get_entry_photo_paths,
+    get_habitat_overrides,
     get_log_entries,
     get_log_stats,
     get_map_catch,
@@ -91,8 +105,11 @@ from storage.sqlite import (
     remove_suppressed_spot,
     save_page_layout,
     save_preferences,
+    update_custom_habitat,
     update_custom_marker,
+    upsert_habitat_override,
     toggle_map_catch_like,
+    VALID_HABITAT_TYPES,
     VALID_MARKER_TYPES,
 )
 from web.auth import record_refresh_attempt, refresh_is_rate_limited
@@ -317,7 +334,9 @@ def _v1_forecast_payload(query: ForecastQuery) -> dict[str, Any]:
         save_forecast(forecast_data, loc_id, user_id=user_id)
         logger.info("cache.regenerated location_id=%s", loc_id)
     else:
-        forecast_data = load_cached_forecast(loc_id, user_id=user_id, include_stale=True)
+        forecast_data = load_cached_forecast(
+            loc_id, user_id=user_id, include_stale=True
+        )
         if forecast_data:
             age = _forecast_age_minutes(forecast_data)
             if age is not None and age > CACHE_MAX_AGE_HOURS * 60:
@@ -348,7 +367,9 @@ def openapi_spec() -> Any:
     return jsonify(build_openapi_spec())
 
 
-_DEPRECATION_HEADER = "true"  # RFC 8594 §3 — value "true" marks as deprecated without a date
+_DEPRECATION_HEADER = (
+    "true"  # RFC 8594 §3 — value "true" marks as deprecated without a date
+)
 
 
 @bp.route("/api/preferences", methods=["GET", "POST"])
@@ -692,15 +713,65 @@ def regulations_refresh_v1() -> Any:
         return _json_error(ApiError("rate_limited", "Too many requests", status=429))
     _reg_refresh_record_attempt()
 
-    _VALID_STATES = frozenset({
-        "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN",
-        "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV",
-        "NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN",
-        "TX","UT","VT","VA","WA","WV","WI","WY",
-    })
+    _VALID_STATES = frozenset(
+        {
+            "AL",
+            "AK",
+            "AZ",
+            "AR",
+            "CA",
+            "CO",
+            "CT",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "ID",
+            "IL",
+            "IN",
+            "IA",
+            "KS",
+            "KY",
+            "LA",
+            "ME",
+            "MD",
+            "MA",
+            "MI",
+            "MN",
+            "MS",
+            "MO",
+            "MT",
+            "NE",
+            "NV",
+            "NH",
+            "NJ",
+            "NM",
+            "NY",
+            "NC",
+            "ND",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VT",
+            "VA",
+            "WA",
+            "WV",
+            "WI",
+            "WY",
+        }
+    )
     state_raw = request.args.get("state", "").strip().upper() or None
     if state_raw and state_raw not in _VALID_STATES:
-        return jsonify(error_envelope("invalid_state", f"Unknown state code: {state_raw}")), 400
+        return jsonify(
+            error_envelope("invalid_state", f"Unknown state code: {state_raw}")
+        ), 400
     state = state_raw
     try:
         removed = _reg_invalidate_cache(state)
@@ -1080,6 +1151,7 @@ def _get_all_species_names() -> list:
     with _SPECIES_NAMES_LOCK:
         if _SPECIES_NAMES_CACHE is None:
             from storage.species_loader import SPECIES_DB
+
             _SPECIES_NAMES_CACHE = sorted({s["name"] for s in SPECIES_DB})
     return _SPECIES_NAMES_CACHE
 
@@ -1096,6 +1168,7 @@ def _get_species_lower_index() -> "list[tuple[str, frozenset, Any]]":
     with _SPECIES_LOWER_LOCK:
         if _SPECIES_LOWER_INDEX is None:
             from storage.species_loader import SPECIES_DB
+
             _SPECIES_LOWER_INDEX = [
                 (
                     s["name"].lower(),
@@ -1269,7 +1342,8 @@ def fishing_map_data() -> Any:
             _hit_data = {
                 **_cached_response,
                 "locations": [
-                    loc for loc in _cached_response["locations"]
+                    loc
+                    for loc in _cached_response["locations"]
                     if _bsw_lat <= loc["lat"] <= _bne_lat
                     and _bsw_lng <= loc["lng"] <= _bne_lng
                 ],
@@ -1306,7 +1380,8 @@ def fishing_map_data() -> Any:
                 _hit_data = {
                     **_waited_result,
                     "locations": [
-                        loc for loc in _waited_result["locations"]
+                        loc
+                        for loc in _waited_result["locations"]
                         if _bsw_lat <= loc["lat"] <= _bne_lat
                         and _bsw_lng <= loc["lng"] <= _bne_lng
                     ],
@@ -1314,7 +1389,9 @@ def fishing_map_data() -> Any:
             if has_species_q and _hit_data.get("species_names"):
                 _hit_data = {**_hit_data, "species_names": []}
             resp = jsonify(_hit_data)
-            resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
+            resp.headers["Cache-Control"] = (
+                "public, max-age=900, stale-while-revalidate=60"
+            )
             resp.headers["X-Cache"] = "HIT-WAIT"
             return resp
         # Timed out or spurious wake — take over as computing thread so the
@@ -1555,7 +1632,8 @@ def fishing_map_data() -> Any:
         _send_data = {
             **_response_data,
             "locations": [
-                loc for loc in results
+                loc
+                for loc in results
                 if _bsw_lat <= loc["lat"] <= _bne_lat
                 and _bsw_lng <= loc["lng"] <= _bne_lng
             ],
@@ -1570,7 +1648,9 @@ def fishing_map_data() -> Any:
 
 # ── Structure spots (wrecks & reefs from NOAA ENC) ──────────────────────────
 
-_STRUCTURE_CACHE: dict[str, dict[str, Any]] = {}  # {cache_key: {"ts": float, "data": list}}
+_STRUCTURE_CACHE: dict[
+    str, dict[str, Any]
+] = {}  # {cache_key: {"ts": float, "data": list}}
 _STRUCTURE_CACHE_TTL = 3600  # 1 hour — wrecks don't move
 _STRUCTURE_CACHE_MAX = 128  # ~0.02° keys; cap so long-running servers don't leak
 
@@ -1993,7 +2073,9 @@ def map_structures() -> Any:
                 )
             ), 400
 
-    structures, fetch_failed = find_fish_structures(south, west, north, east, active_types)
+    structures, fetch_failed = find_fish_structures(
+        south, west, north, east, active_types
+    )
 
     # ── Load suppressed spots and custom markers ──────────────────────────────
     try:
@@ -2011,7 +2093,9 @@ def map_structures() -> Any:
             and (active_types is None or m["type"] in active_types)
         ]
     except Exception:
-        logger.warning("get_custom_markers() failed in map_structures; skipping custom markers")
+        logger.warning(
+            "get_custom_markers() failed in map_structures; skipping custom markers"
+        )
         custom = []
 
     # ── Filter OSM/NOAA/ESRI spots ────────────────────────────────────────────
@@ -2036,9 +2120,9 @@ def map_structures() -> Any:
         return s.get("id") or f"{s['type']}:{s['lat']}:{s['lng']}"
 
     filtered = [
-        s for s in structures
-        if _spot_key(s) not in suppressed_keys
-        and not _is_overridden(s)
+        s
+        for s in structures
+        if _spot_key(s) not in suppressed_keys and not _is_overridden(s)
     ]
 
     all_structures = filtered + custom
@@ -2195,12 +2279,16 @@ def weather_env_context() -> Any:
         ), 400
 
     with _cf.ThreadPoolExecutor(max_workers=2) as pool:
-        fut_aqi    = pool.submit(fetch_air_quality, lat, lng)
+        fut_aqi = pool.submit(fetch_air_quality, lat, lng)
         fut_drought = pool.submit(fetch_drought, lat, lng)
-        try: aqi_result = fut_aqi.result(timeout=20)
-        except Exception: aqi_result = None
-        try: drought_result = fut_drought.result(timeout=20)
-        except Exception: drought_result = None
+        try:
+            aqi_result = fut_aqi.result(timeout=20)
+        except Exception:
+            aqi_result = None
+        try:
+            drought_result = fut_drought.result(timeout=20)
+        except Exception:
+            drought_result = None
 
     resp = jsonify({"aqi": aqi_result, "drought": drought_result})
     resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=60"
@@ -2451,9 +2539,9 @@ def weather_combined_forecast() -> Any:
         ), 400
 
     with _cf.ThreadPoolExecutor(max_workers=3) as pool:
-        fut_wind   = pool.submit(fetch_wind_forecast, lat, lng)
+        fut_wind = pool.submit(fetch_wind_forecast, lat, lng)
         fut_precip = pool.submit(fetch_precip_forecast, lat, lng)
-        fut_temp   = pool.submit(fetch_temp_forecast, lat, lng)
+        fut_temp = pool.submit(fetch_temp_forecast, lat, lng)
 
         try:
             wind_periods = fut_wind.result(timeout=20)
@@ -2469,9 +2557,13 @@ def weather_combined_forecast() -> Any:
             temp_days = None
 
     payload: dict[str, Any] = {
-        "wind":   {"periods": wind_periods, "count": len(wind_periods)} if wind_periods is not None else None,
-        "precip": {"periods": precip_periods, "count": len(precip_periods)} if precip_periods is not None else None,
-        "temp":   {"days": temp_days} if temp_days is not None else None,
+        "wind": {"periods": wind_periods, "count": len(wind_periods)}
+        if wind_periods is not None
+        else None,
+        "precip": {"periods": precip_periods, "count": len(precip_periods)}
+        if precip_periods is not None
+        else None,
+        "temp": {"days": temp_days} if temp_days is not None else None,
     }
     resp = jsonify(payload)
     resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=120"
@@ -2845,35 +2937,47 @@ def map_stat_cards() -> Any:
     def _bbox(pad: float) -> tuple[float, float, float, float]:
         return lat - pad, lng - pad, lat + pad, lng + pad
 
-    b_s, b_w, b_n, b_e = _bbox(3.0)   # buoys
-    m_s, m_w, m_n, m_e = _bbox(1.5)   # metar
-    f_s, f_w, f_n, f_e = _bbox(2.5)   # fires
-    g_s, g_w, g_n, g_e = _bbox(1.5)   # stream gauges
+    b_s, b_w, b_n, b_e = _bbox(3.0)  # buoys
+    m_s, m_w, m_n, m_e = _bbox(1.5)  # metar
+    f_s, f_w, f_n, f_e = _bbox(2.5)  # fires
+    g_s, g_w, g_n, g_e = _bbox(1.5)  # stream gauges
 
     with _cf.ThreadPoolExecutor(max_workers=5) as pool:
-        fut_buoys    = pool.submit(fetch_ndbc_buoys, b_s, b_w, b_n, b_e)
-        fut_metar    = pool.submit(fetch_metar_stations, m_s, m_w, m_n, m_e)
-        fut_fires    = pool.submit(fetch_wildfire_incidents, f_s, f_w, f_n, f_e)
-        fut_gauges   = pool.submit(fetch_stream_gauges, g_s, g_w, g_n, g_e)
+        fut_buoys = pool.submit(fetch_ndbc_buoys, b_s, b_w, b_n, b_e)
+        fut_metar = pool.submit(fetch_metar_stations, m_s, m_w, m_n, m_e)
+        fut_fires = pool.submit(fetch_wildfire_incidents, f_s, f_w, f_n, f_e)
+        fut_gauges = pool.submit(fetch_stream_gauges, g_s, g_w, g_n, g_e)
         fut_tropical = pool.submit(fetch_tropical_outlook)
-        try: buoys    = fut_buoys.result(timeout=20)
-        except Exception: buoys = []
-        try: stations = fut_metar.result(timeout=20)
-        except Exception: stations = []
-        try: fires    = fut_fires.result(timeout=20)
-        except Exception: fires = []
-        try: gauges   = fut_gauges.result(timeout=20)
-        except Exception: gauges = []
-        try: areas    = fut_tropical.result(timeout=20)
-        except Exception: areas = []
+        try:
+            buoys = fut_buoys.result(timeout=20)
+        except Exception:
+            buoys = []
+        try:
+            stations = fut_metar.result(timeout=20)
+        except Exception:
+            stations = []
+        try:
+            fires = fut_fires.result(timeout=20)
+        except Exception:
+            fires = []
+        try:
+            gauges = fut_gauges.result(timeout=20)
+        except Exception:
+            gauges = []
+        try:
+            areas = fut_tropical.result(timeout=20)
+        except Exception:
+            areas = []
 
-    resp = jsonify({
-        "buoys":    {"buoys": buoys, "count": len(buoys)},
-        "metar":    {"stations": stations, "count": len(stations)},
-        "fires":    {"fires": fires, "count": len(fires)},
-        "gauges":   {"gauges": gauges, "count": len(gauges)},
-        "tropical": {"areas": areas, "count": len(areas)},
-    })
+    resp = jsonify(
+        {
+            "buoys": {"buoys": buoys, "count": len(buoys)},
+            "metar": {"stations": stations, "count": len(stations)},
+            "fires": {"fires": fires, "count": len(fires)},
+            "gauges": {"gauges": gauges, "count": len(gauges)},
+            "tropical": {"areas": areas, "count": len(areas)},
+        }
+    )
     resp.headers["Cache-Control"] = "public, max-age=900, stale-while-revalidate=120"
     return resp
 
@@ -2963,7 +3067,9 @@ def custom_markers_create() -> Any:
     name = str(data.get("name", ""))[:120]
     type_ = str(data.get("type", "fishing"))
     if type_ not in VALID_MARKER_TYPES:
-        return jsonify({"error": f"Invalid type. Valid: {sorted(VALID_MARKER_TYPES)}"}), 400
+        return jsonify(
+            {"error": f"Invalid type. Valid: {sorted(VALID_MARKER_TYPES)}"}
+        ), 400
     description = str(data.get("description", ""))[:500]
     marker = create_custom_marker(lat, lng, name, type_, description, g.user["id"])
     return jsonify(marker), 201
@@ -2987,12 +3093,16 @@ def custom_markers_update(marker_id: int) -> Any:
     if lng is not None and not (-180 <= lng <= 180):
         return jsonify({"error": "lng out of range (-180 to 180)"}), 400
     name = str(data.get("name", ""))[:120] if "name" in data else None
-    description = str(data.get("description", ""))[:500] if "description" in data else None
+    description = (
+        str(data.get("description", ""))[:500] if "description" in data else None
+    )
     type_: Optional[str] = None
     if "type" in data:
         type_ = str(data.get("type") or "")
         if type_ not in VALID_MARKER_TYPES:
-            return jsonify({"error": f"Invalid type. Valid: {sorted(VALID_MARKER_TYPES)}"}), 400
+            return jsonify(
+                {"error": f"Invalid type. Valid: {sorted(VALID_MARKER_TYPES)}"}
+            ), 400
     updated = update_custom_marker(
         marker_id, lat=lat, lng=lng, name=name, type_=type_, description=description
     )
@@ -3067,6 +3177,167 @@ def suppress_spot_list() -> Any:
     return jsonify({"suppressions": spots, "count": len(spots)})
 
 
+# ── Admin: custom habitat CRUD ───────────────────────────────────────────────
+
+
+@bp.route("/api/v1/admin/habitats", methods=["GET"])
+def admin_habitat_list() -> Any:
+    """List all admin-drawn custom habitats (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    habitats = get_all_custom_habitats()
+    return jsonify({"habitats": habitats, "count": len(habitats)})
+
+
+@bp.route("/api/v1/admin/habitats", methods=["POST"])
+def admin_habitat_create_or_update() -> Any:
+    """Create or update a custom habitat feature (admin only).
+
+    Body: { id?, habitat_type, name, description, fill_color, geometry }
+    If ``id`` is present and matches an existing habitat, updates it; otherwise creates.
+    """
+    err = _require_map_admin()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    habitat_id = str(data.get("id") or "").strip() or str(uuid.uuid4())
+
+    habitat_type = str(data.get("habitat_type", "general"))
+    if habitat_type not in VALID_HABITAT_TYPES:
+        return jsonify(
+            {"error": f"Invalid habitat_type. Valid: {sorted(VALID_HABITAT_TYPES)}"}
+        ), 400
+
+    name = str(data.get("name", ""))[:200]
+    description = str(data.get("description", ""))[:1000]
+    fill_color = str(data.get("fill_color", ""))[:20]
+
+    geometry = data.get("geometry")
+    if not isinstance(geometry, dict) or geometry.get("type") not in (
+        "Point",
+        "Polygon",
+    ):
+        return jsonify(
+            {"error": "geometry must be a GeoJSON Point or Polygon object"}
+        ), 400
+
+    # Compute centroid from geometry for bbox queries
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    try:
+        gtype = geometry["type"]
+        coords = geometry["coordinates"]
+        if gtype == "Point":
+            lng, lat = float(coords[0]), float(coords[1])
+        elif gtype == "Polygon":
+            ring = coords[0]
+            lat = sum(c[1] for c in ring) / len(ring)
+            lng = sum(c[0] for c in ring) / len(ring)
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        return jsonify({"error": "Invalid geometry coordinates"}), 400
+
+    if lat is None or not (-90 <= lat <= 90) or lng is None or not (-180 <= lng <= 180):
+        return jsonify({"error": "Centroid lat/lng out of range"}), 400
+
+    # Try update first; fall back to create
+    existing = next(
+        (h for h in get_all_custom_habitats() if h["id"] == habitat_id), None
+    )
+    if existing:
+        updated = update_custom_habitat(
+            habitat_id,
+            habitat_type=habitat_type,
+            name=name,
+            description=description,
+            fill_color=fill_color,
+            geometry=geometry,
+            lat=lat,
+            lng=lng,
+        )
+        return jsonify(updated or {}), 200
+    else:
+        created = create_custom_habitat(
+            habitat_id,
+            habitat_type,
+            name,
+            description,
+            fill_color,
+            geometry,
+            lat,
+            lng,
+            g.user["id"],
+        )
+        return jsonify(created), 201
+
+
+@bp.route("/api/v1/admin/habitats/<string:feature_id>", methods=["DELETE"])
+def admin_habitat_delete(feature_id: str) -> Any:
+    """Soft-delete a custom habitat (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    ok = delete_custom_habitat(feature_id)
+    if not ok:
+        return jsonify({"error": "Habitat not found"}), 404
+    return jsonify({"deleted": feature_id})
+
+
+# ── Admin: habitat overrides CRUD ─────────────────────────────────────────────
+
+
+@bp.route("/api/v1/admin/habitat-overrides", methods=["GET"])
+def admin_habitat_override_list() -> Any:
+    """List all active habitat overrides (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    overrides = get_habitat_overrides()
+    return jsonify({"overrides": list(overrides.values()), "count": len(overrides)})
+
+
+@bp.route("/api/v1/admin/habitat-overrides", methods=["POST"])
+def admin_habitat_override_upsert() -> Any:
+    """Create or update a habitat override for an AI/OSM feature (admin only).
+
+    Body: { feature_key, name?, description?, fill_color? }
+    """
+    err = _require_map_admin()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    feature_key = str(data.get("feature_key", "")).strip()
+    if not feature_key:
+        return jsonify({"error": "feature_key is required"}), 400
+
+    name = str(data.get("name", ""))[:200] if "name" in data else None
+    description = (
+        str(data.get("description", ""))[:1000] if "description" in data else None
+    )
+    fill_color = str(data.get("fill_color", ""))[:20] if "fill_color" in data else None
+
+    row = upsert_habitat_override(
+        feature_key, name, description, fill_color, g.user["id"]
+    )
+    return jsonify(row), 200
+
+
+@bp.route("/api/v1/admin/habitat-overrides/<int:override_id>", methods=["DELETE"])
+def admin_habitat_override_delete(override_id: int) -> Any:
+    """Delete a habitat override (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    ok = delete_habitat_override(override_id)
+    if not ok:
+        return jsonify({"error": "Override not found"}), 404
+    return jsonify({"deleted": override_id})
+
+
 # ── Map scoring — hourly strike score ────────────────────────────────────────
 # In-process cache: (lat_r, lng_r, date_str) → {"ts": float, "data": dict}
 # lat/lng are rounded to 2 decimal places (~1 km resolution) to maximise
@@ -3127,13 +3398,15 @@ def map_score() -> Any:
         lat = float(request.args["lat"])
         lng = float(request.args["lng"])
     except (KeyError, ValueError, TypeError):
-        return jsonify(error_envelope("invalid_params", "lat and lng are required")), 400
+        return jsonify(
+            error_envelope("invalid_params", "lat and lng are required")
+        ), 400
 
     if not (-90 <= lat <= 90 and -180 <= lng <= 180):
         return jsonify(error_envelope("invalid_params", "lat/lng out of range")), 400
 
     date_str = request.args.get("date", "").strip()[:10] or None
-    tz_name  = request.args.get("tz", "America/New_York").strip()[:60]
+    tz_name = request.args.get("tz", "America/New_York").strip()[:60]
 
     # Resolve location for station IDs (best-effort, non-fatal if missing)
     location = get_session_location() or None
@@ -3142,19 +3415,24 @@ def map_score() -> Any:
     cached = _score_cache_get(cache_key)
     if cached is not None:
         resp = jsonify({"ok": True, "data": cached})
-        resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+        resp.headers["Cache-Control"] = (
+            "public, max-age=1800, stale-while-revalidate=60"
+        )
         resp.headers["X-Cache"] = "HIT"
         return resp
 
     try:
         result = compute_hourly_strike_score(
-            lat=lat, lng=lng,
+            lat=lat,
+            lng=lng,
             date_str=date_str,
             tz_name=tz_name,
             location=location,
         )
     except Exception as exc:
-        logger.warning("map_score failed lat=%s lng=%s: %s", lat, lng, exc, exc_info=True)
+        logger.warning(
+            "map_score failed lat=%s lng=%s: %s", lat, lng, exc, exc_info=True
+        )
         return jsonify(error_envelope("score_error", "Could not compute score")), 503
 
     _score_cache_set(cache_key, result)
@@ -3172,8 +3450,16 @@ _HABITATS_CACHE_TTL = 1800  # 30 minutes
 _habitats_cache_lock = threading.Lock()
 
 _ALL_HABITAT_TYPES = [
-    "surf", "kelp", "mangrove", "grassflat", "estuary",
-    "reef", "bottom", "general", "pelagic", "tidalflat",
+    "surf",
+    "kelp",
+    "mangrove",
+    "grassflat",
+    "estuary",
+    "reef",
+    "bottom",
+    "general",
+    "pelagic",
+    "tidalflat",
 ]
 
 
@@ -3213,9 +3499,9 @@ def map_habitats_v1() -> Any:
     """
     try:
         south = float(request.args["south"])
-        west  = float(request.args["west"])
+        west = float(request.args["west"])
         north = float(request.args["north"])
-        east  = float(request.args["east"])
+        east = float(request.args["east"])
     except (KeyError, ValueError, TypeError):
         return jsonify(
             error_envelope("invalid_params", "south, west, north, east required")
@@ -3225,7 +3511,9 @@ def map_habitats_v1() -> Any:
         return jsonify(error_envelope("invalid_params", "Invalid bbox")), 400
 
     if (north - south) > 10 or abs(east - west) > 10:
-        return jsonify(error_envelope("invalid_params", "Bbox too large (max 10°)")), 400
+        return jsonify(
+            error_envelope("invalid_params", "Bbox too large (max 10°)")
+        ), 400
 
     # Optional type filter
     types_param = request.args.get("types", "").strip()
@@ -3233,16 +3521,25 @@ def map_habitats_v1() -> Any:
         requested = [t.strip() for t in types_param.split(",") if t.strip()]
         active_types = [t for t in requested if t in _ALL_HABITAT_TYPES]
         if not active_types:
-            return jsonify(error_envelope("invalid_params", "No valid habitat types")), 400
+            return jsonify(
+                error_envelope("invalid_params", "No valid habitat types")
+            ), 400
     else:
         active_types = _ALL_HABITAT_TYPES
 
-    cache_key = (round(south, 2), round(west, 2), round(north, 2), round(east, 2),
-                 ",".join(sorted(active_types)))
+    cache_key = (
+        round(south, 2),
+        round(west, 2),
+        round(north, 2),
+        round(east, 2),
+        ",".join(sorted(active_types)),
+    )
     cached = _habitats_cache_get(cache_key)
     if cached is not None:
         resp = jsonify({"ok": True, "data": {"features": cached, "count": len(cached)}})
-        resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+        resp.headers["Cache-Control"] = (
+            "public, max-age=1800, stale-while-revalidate=60"
+        )
         resp.headers["X-Cache"] = "HIT"
         return resp
 
@@ -3272,7 +3569,58 @@ def map_habitats_v1() -> Any:
                 pass
 
     _habitats_cache_set(cache_key, all_features)
-    resp = jsonify({"ok": True, "data": {"features": all_features, "count": len(all_features)}})
-    resp.headers["Cache-Control"] = "public, max-age=1800, stale-while-revalidate=60"
+
+    # Apply admin overrides to AI features (name/description/fill_color substitution)
+    overrides = get_habitat_overrides()
+    if overrides:
+        for f in all_features:
+            osm_type_val = f.get("osm_type") or f.get("osmType") or ""
+            fid = f.get("id") or f"{f.get('lat')},{f.get('lng')},{osm_type_val}"
+            ov = overrides.get(str(fid))
+            if ov:
+                if ov.get("name"):
+                    f["override_name"] = ov["name"]
+                if ov.get("description"):
+                    f["override_description"] = ov["description"]
+                if ov.get("fill_color"):
+                    f["override_fill_color"] = ov["fill_color"]
+                f["override_id"] = ov["id"]
+
+    # Merge admin-drawn custom habitats in the same bbox
+    try:
+        custom = get_custom_habitats_in_bbox(south, west, north, east)
+        for h in custom:
+            geom = h.get("geometry") or {}
+            coords = geom.get("coordinates") or []
+            # Convert GeoJSON geometry to the feature format the client expects
+            f_custom: dict[str, Any] = {
+                "id": h["id"],
+                "custom": True,
+                "lat": h["lat"],
+                "lng": h["lng"],
+                "name": h["name"],
+                "description": h["description"],
+                "osm_type": h["habitat_type"],
+                "habitat_type": h["habitat_type"],
+                "fill_color": h.get("fill_color") or "",
+                "score": 0,
+            }
+            # Map GeoJSON polygon coordinates to [[lat, lng], ...] geometry for renderer
+            if geom.get("type") == "Polygon" and coords:
+                ring = coords[0]
+                f_custom["geometry"] = [[c[1], c[0]] for c in ring]
+            elif geom.get("type") == "Point" and coords:
+                f_custom["lat"] = coords[1]
+                f_custom["lng"] = coords[0]
+            all_features.append(f_custom)
+    except Exception:
+        logger.exception(
+            "Failed to merge custom habitats into /api/v1/map/habitats response"
+        )
+
+    resp = jsonify(
+        {"ok": True, "data": {"features": all_features, "count": len(all_features)}}
+    )
+    resp.headers["Cache-Control"] = "no-store"
     resp.headers["X-Cache"] = "MISS"
     return resp

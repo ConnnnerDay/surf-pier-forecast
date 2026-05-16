@@ -6553,6 +6553,54 @@ textarea.fmap-admin-input { resize: vertical; }
   animation: fmap-pulse 1s ease-in-out infinite alternate;
 }
 
+/* Habitat admin modal — color input */
+.fmap-admin-input--color {
+  height: 36px;
+  padding: 2px 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Custom habitat polygon overlay */
+.fmap-custom-habitat-poly {
+  transition: fill-opacity 0.15s;
+}
+.fmap-custom-habitat-badge {
+  font-size: 0.7rem;
+  color: #8b5cf6;
+  font-style: italic;
+}
+
+/* Habitat type filter chips in layers panel */
+.fmap-habitat-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+}
+.fmap-habitat-filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  user-select: none;
+}
+.fmap-habitat-filter-chip input[type="checkbox"] {
+  accent-color: #22c55e;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+.fmap-habitat-filter-chip:hover {
+  color: var(--text, #e2e8f0);
+}
+
+/* Override modal hidden inputs */
+#fmap-override-feature-key,
+#fmap-override-id { display: none; }
+
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
