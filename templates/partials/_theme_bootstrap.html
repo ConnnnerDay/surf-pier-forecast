@@ -1,3 +1,7 @@
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
 (function() {
     var t = localStorage.getItem('theme');
@@ -13,3 +17,4 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function(){});
 }
 </script>
+<style>:root{--bg-body:#EDE8DF}[data-theme="dark"]{--bg-body:#0A1520}body{margin:0;background:var(--bg-body)}</style>

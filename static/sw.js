@@ -5,7 +5,7 @@
 //     cached dynamically on first use via the fetch handler below.
 //     Navigate requests fall back to a branded offline page on network failure.
 //     HTML pages are never cached — they embed session-specific CSRF tokens.
-var CACHE_NAME = 'fishforecast-v5';
+var CACHE_NAME = 'fishforecast-v8';
 var OFFLINE_URL = '/static/offline.html';
 var PRECACHE = [
   '/static/icons/icon-192.svg',
@@ -109,7 +109,43 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // Never intercept API requests — always hit the network.
+  // Stale-while-revalidate for expensive or preloaded API calls.
+  // On repeat visits these are served from cache immediately; the background
+  // fetch keeps the SW entry fresh so the next load gets updated data.
+  var _swrApis = [
+    '/api/map/structures',
+    '/api/v1/map/score',
+    '/api/weather/env-context',
+    '/api/weather/combined-forecast',
+    '/api/map/stat-cards',
+    '/api/v1/geo/environmental',
+  ];
+  if (event.request.method === 'GET' &&
+      _swrApis.some(function(p) { return event.request.url.includes(p); })) {
+    // Keep the SW alive until the background cache write completes so mobile
+    // browsers don't terminate the worker before the update lands.
+    var bgRefresh = caches.open(CACHE_NAME).then(function(cache) {
+      return fetch(event.request).then(function(response) {
+        if (response.ok) cache.put(event.request, response.clone());
+        return response;
+      }).catch(function() { return null; });
+    });
+    event.waitUntil(bgRefresh);
+    event.respondWith(
+      caches.open(CACHE_NAME).then(function(cache) {
+        return cache.match(event.request).then(function(cached) {
+          if (cached) return cached;
+          // No cached entry — must wait for the network response.
+          return bgRefresh.then(function(r) {
+            return r || new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } });
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // Never intercept other API requests — always hit the network.
   if (event.request.url.includes('/api/')) return;
 
   // Cache-first for static assets (CSS, JS, icons, fonts).

@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fishing Log &mdash; Surf &amp; Pier Fishing Forecast</title>
     {% include 'partials/_head_fonts.html' %}
-    <link rel="stylesheet" href="{{ surl('style.css') }}">
+    <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
+    <link rel="preload" as="script" href="{{ surl('js/fishing_log.min.js') }}" fetchpriority="high">
     {% include 'partials/_theme_bootstrap.html' %}
 </head>
 <body class="forecast-page has-app-header">
@@ -105,6 +107,6 @@
         </section>
     </main>
 
-    <script src="{{ surl('js/fishing_log.js') }}" defer></script>
+    <script src="{{ surl('js/fishing_log.min.js') }}" defer></script>
 </body>
 </html>

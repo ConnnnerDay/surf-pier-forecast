@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose Your Location &mdash; Surf &amp; Pier Fishing Forecast</title>
     {% include 'partials/_head_fonts.html' %}
-    <link rel="stylesheet" href="{{ surl('style.css') }}">
+    <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
     <link rel="manifest" href="{{ surl('manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description" content="Choose your coastal fishing location for real-time surf and pier fishing forecasts">
     {% include 'partials/_theme_bootstrap.html' %}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="preload" as="style" href="{{ surl('leaflet.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('leaflet.min.css') }}"></noscript>
+    <link rel="preload" as="script" href="{{ surl('js/leaflet.min.js') }}" fetchpriority="low">
+    <link rel="preload" as="script" href="{{ surl('js/setup_map.min.js') }}" fetchpriority="low">
+    <link rel="preconnect" href="https://server.arcgisonline.com">
+    <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 </head>
 <body class="has-app-header">
     {% import 'partials/_location_macros.html' as loc_macros with context %}
@@ -180,8 +187,8 @@
         <p>Surf &amp; Pier Fishing Outlook &mdash; 70 locations nationwide</p>
     </footer>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
-    <script src="{{ surl('js/setup_map.js') }}"></script>
+    <script src="{{ surl('js/leaflet.min.js') }}" defer></script>
+    <script src="{{ surl('js/setup_map.min.js') }}" defer></script>
     <script>
         (function () {
             var FAV_KEY = 'setup_favorite_locations';

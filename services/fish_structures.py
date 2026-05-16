@@ -57,12 +57,12 @@ _HTTP.headers.update({"User-Agent": "surf-pier-forecast/1.0 (fishing forecast ap
 _CACHE: dict[
     tuple, dict[str, Any]
 ] = {}  # {key: {"ts": float, "data": list, "failed": bool}}
-_CACHE_TTL: int = 1800  # 30 minutes — piers and reefs don't move
+_CACHE_TTL: int = 21600  # 6 hours — piers and reefs don't move
 _CACHE_TTL_FAILED: int = 90  # 90 seconds — retry failed bboxes less aggressively
 _CACHE_MAX: int = 256  # max bbox+types combinations kept in memory
 
 def _cache_key(
-    south: float, west: float, north: float, east: float, types: set[str]
+    south: float, west: float, north: float, east: float, types: set[str] | None
 ) -> tuple:
     """Stable, hashable cache key rounded to 2 decimal places (~1 km grid)."""
     return (
@@ -70,7 +70,7 @@ def _cache_key(
         round(west, 2),
         round(north, 2),
         round(east, 2),
-        frozenset(types),
+        frozenset(types) if types is not None else frozenset(),
     )
 
 _CACHE_EVICT_INTERVAL: float = 60.0  # seconds between full TTL scans
@@ -103,6 +103,23 @@ def _cache_evict() -> None:
 def cache_clear() -> None:
     """Remove all cached results.  Intended for tests and cache-invalidation hooks."""
     _CACHE.clear()
+
+
+def get_cached_structures(
+    south: float, west: float, north: float, east: float
+) -> list[dict[str, Any]] | None:
+    """Return the cached all-types result for this bbox without triggering a fetch.
+
+    Returns None when the entry is absent or has expired.  Used by the dashboard
+    view to inline the structures JSON directly into the HTML so the client never
+    needs an XHR for warm-cache page loads.
+    """
+    key = _cache_key(south, west, north, east, None)
+    entry = _CACHE.get(key)
+    if entry and not entry.get("failed"):
+        if (_time.time() - entry["ts"]) < _CACHE_TTL:
+            return entry["data"]
+    return None
 
 # ── Habitat types rendered as filled polygon overlays ─────────────────────────
 # These are area features (wetlands, beaches, …) whose OSM ways carry closed
@@ -278,16 +295,20 @@ def _decimate_ring(coords: list[list[float]]) -> list[list[float]]:
 
     Uses uniform Nth-point selection so the ring shape is preserved evenly.
     The first and last points are always kept so closed rings stay closed.
+    Coordinates are rounded to 5 decimal places (~1 m precision) to keep the
+    JSON payload compact without any perceptible loss of polygon accuracy.
     """
     n = len(coords)
     if n <= _MAX_POLYGON_COORDS:
-        return coords
-    # Pick evenly-spaced indices; always include 0 and n-1
-    step = (n - 1) / (_MAX_POLYGON_COORDS - 1)
-    indices = {0, n - 1}
-    for i in range(1, _MAX_POLYGON_COORDS - 1):
-        indices.add(round(i * step))
-    return [coords[i] for i in sorted(indices)]
+        result = coords
+    else:
+        # Pick evenly-spaced indices; always include 0 and n-1
+        step = (n - 1) / (_MAX_POLYGON_COORDS - 1)
+        indices = {0, n - 1}
+        for i in range(1, _MAX_POLYGON_COORDS - 1):
+            indices.add(round(i * step))
+        result = [coords[i] for i in sorted(indices)]
+    return [[round(p[0], 5), round(p[1], 5)] for p in result]
 
 # ── Overpass API endpoints (primary + mirror fallback) ────────────────────────
 _OVERPASS_URLS = [
@@ -1304,6 +1325,13 @@ def find_fish_structures(
         s for s in osm_spots + noaa_spots + esri_spots if s["type"] in active_types
     ]
     deduped = _deduplicate(all_spots)
+    # Round point-marker coordinates to 5 dp (~1 m) to reduce JSON payload size.
+    # Geometry arrays are already rounded in _decimate_ring.
+    for s in deduped:
+        if "lat" in s:
+            s["lat"] = round(s["lat"], 5)
+        if "lng" in s:
+            s["lng"] = round(s["lng"], 5)
     # Tips are not attached server-side — the JS client owns STRUCTURE_TIPS and
     # looks them up locally via ``f.tip || STRUCTURE_TIPS[f.type]``.  Omitting
     # them here shrinks the wire payload and the in-memory cache by ~50 % for
@@ -1417,10 +1445,6 @@ _HABITAT_TAGS: dict[str, list[str]] = {
         'node["seamark:type"="obstruction"]',
         'node["seamark:type"="rock_awash"]',
         'node["seamark:type"="rock_submerged"]',
-        'node["man_made"="pier"]["access"!="private"]',
-        'node["man_made"="jetty"]',
-        'way["man_made"="breakwater"]',
-        'node["man_made"="breakwater"]',
     ],
     "bottom": [
         'node["natural"="shoal"]',
@@ -1498,7 +1522,7 @@ def _osm_tags_to_type(tags: dict[str, str]) -> str:
     if sea in ("beacon_lateral", "buoy_lateral"): return "channel"
     if sea == "kelp_bed":                     return "kelp"
     if wway in ("tidal_channel", "tidal_creek", "stream", "drain"): return "channel"
-    if mm in ("pier", "jetty", "breakwater"): return "reef"
+    if mm in ("pier", "jetty", "breakwater"): return "general"
     if tags.get("reef:type") == "coral":      return "reef"
     # Oyster aquaculture beds → reef so they surface under the oyster_reef filter pill
     # (_PILL_TO_AI_OSMT['oyster_reef'] = 'reef')

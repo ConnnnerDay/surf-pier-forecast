@@ -16,9 +16,12 @@
     var spotQueryTimer   = null;     // debounce timer for structure queries
     var spotCache        = {};       // bbox key → array of spot objects (all types)
     var _spotCacheKeys   = [];       // insertion-ordered keys for LRU eviction
-    var _SPOT_CACHE_MAX  = 200;      // cap for localStorage budget (~10 MB typical limit)
+    var _spotBoundsCache = {};       // key → [s,w,n,e] floats, avoids re-parsing in _cachedSupersetOf
+    var _SPOT_CACHE_MAX  = 200;      // cap for in-memory budget
+    var _SS_SAVE_MAX     = 25;       // max entries persisted to localStorage; ~300 KB uncompressed
     var _ssSaveTimer          = null; // debounce timer for localStorage writes
-    var _lastRenderedSpotKey  = null; // cache key of the last renderFishingSpots() call
+    var _lastRenderedSpotKey  = null; // compound render key of the last renderFishingSpots() call
+    var _lastSpotCacheKey     = null; // plain bbox key corresponding to _lastRenderedSpotKey
     var _elStructFiltersHint  = null; // cached DOM ref — fmap-struct-filters-hint
     var _elSpotTypesClear     = null; // cached DOM ref — fmap-spot-types-clear
     var _spotIconCache        = {};   // type → L.divIcon
@@ -27,6 +30,7 @@
     // Adjacent-tile pre-fetch queue — background loads for N/S/E/W of the current view
     var _prefetchQueue      = [];    // {s,w,n,e,key} objects waiting for background fetch
     var _prefetchInFlight   = false; // whether a background fetch is running
+    var _prefetchDrainTimer = null;  // single pending drain timer (prevents stacking)
     var _PREFETCH_DELAY     = 5000;  // ms between background fetches (Overpass rate-limit)
     var _PREFETCH_MAX_QUEUE = 8;     // max queued tiles (drops oldest if exceeded)
     // Shared cache for overlay icons (SST, METAR, buoy).
@@ -55,6 +59,14 @@
     var _aiAbort         = null;     // AbortController for the live AI habitat fetch
     var _AI_LS_KEY       = 'fmap_ai_cache_v1';  // localStorage key for AI picks
     var _AI_LS_TTL       = 21600000;             // 6 hours in ms
+    // Decorative overlay layer (influence halos + cluster rings) kept separate so
+    // the main fishingSpotLayer can paint without waiting for these circles.
+    var _decorLayer      = null;
+    var _decorRenderGen  = 0;    // guards against stale idle callbacks
+    // Influence-zone radii (metres) — moved to module level to avoid re-creating
+    // the object literal on every pass through the filteredSpots.forEach loop.
+    var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
+                    fishing: 40, fishing_salt: 40, fishing_fresh: 40 };
     var _AI_POLY_CAP     = 150;      // max polygon/polyline overlays rendered by AI layer
     var _AI_POINT_CAP    = 60;       // max point-marker features rendered by AI layer
 
@@ -102,10 +114,10 @@
     var buoyAbort       = null;
     var _catchDetailAbort = null;
 
-    // ─── Tide chart / time-slider state ──────────────────────────────────────
-    var _tideSliderHour    = new Date().getHours(); // 0-23 selected hour
+    // ─── Score state ─────────────────────────────────────────────────────────
     var _scoreData         = null;   // cached /api/v1/map/score response
     var _scoreAbort        = null;   // AbortController for score fetch
+    var _scoreHourTimer    = null;   // fires at next hour boundary to re-tint spots
     var _tideChartTimer    = null;   // debounce for re-fetch on location change
 
     // ─── Spot detail panel state ──────────────────────────────────────────────
@@ -148,9 +160,11 @@
         my_spots:   ['fishing']    // custom / user-logged spots
     };
     var _activeCategory = null; // null = all categories visible
+    var _pendingCategory = null; // set by loadFilters(), consumed by wireCategoryFilterTabs()
 
     // ─── DOM refs ─────────────────────────────────────────────────────────────
     var els = {};
+    var _mapRoot = null; // cached #fmap-root element for CSS variable updates
 
     // ─── Utilities ───────────────────────────────────────────────────────────
     function esc(s) {
@@ -160,6 +174,17 @@
     }
 
     // ─── Leaflet loader ───────────────────────────────────────────────────────
+    // Local copies of Leaflet are served from /static/ (same origin, no CDN
+    // round-trip).  CDN URLs are kept as fallbacks in case the local files are
+    // somehow unavailable (e.g. a very old cached page referencing a missing file).
+    var _LEAFLET_JS_LOCAL  = (typeof LEAFLET_JS_URL !== 'undefined' && LEAFLET_JS_URL)
+        ? LEAFLET_JS_URL
+        : '/static/js/leaflet.min.js';
+    var _LEAFLET_CSS_LOCAL = '/static/leaflet.min.css';
+    var _LEAFLET_JS_CDN    = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+    var _LEAFLET_CSS_CDN   = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+    var _LEAFLET_JS_CDN2   = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+
     function loadScript(src) {
         return new Promise(function (res, rej) {
             var ex = document.querySelector('script[src="' + src + '"]');
@@ -172,21 +197,25 @@
         });
     }
     function ensureLeafletCss() {
-        // Guard: skip if Leaflet CSS is already present (idempotent).
         if (document.querySelector('link[rel="stylesheet"][href*="leaflet"]')) return;
         var l = document.createElement('link');
         l.rel = 'stylesheet';
-        l.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+        l.href = _LEAFLET_CSS_LOCAL;
         l.setAttribute('data-leaflet-css', '1');
+        l.onerror = function () {
+            var fb = document.createElement('link');
+            fb.rel = 'stylesheet';
+            fb.href = _LEAFLET_CSS_CDN;
+            document.head.appendChild(fb);
+        };
         document.head.appendChild(l);
     }
     function ensureLeaflet() {
         if (window.L) return Promise.resolve();
         ensureLeafletCss();
-        return loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js')
-            .catch(function () {
-                return loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js');
-            });
+        return loadScript(_LEAFLET_JS_LOCAL)
+            .catch(function () { return loadScript(_LEAFLET_JS_CDN); })
+            .catch(function () { return loadScript(_LEAFLET_JS_CDN2); });
     }
 
     // ─── Map init ─────────────────────────────────────────────────────────────
@@ -211,6 +240,13 @@
 
     function initMap() {
         if (mapReady) return;
+        // Fallback lookup so initMap() works when called from _prewarmLeaflet()
+        // before init() has had a chance to populate els.mapEl.
+        var _mapEl = els.mapEl || document.getElementById('fishing-map-el');
+        if (!_mapEl) return;
+        // Keep els.mapEl consistent so subsequent callers never hit the fallback.
+        if (!els.mapEl) els.mapEl = _mapEl;
+        if (!_mapRoot) _mapRoot = document.getElementById('fmap-root');
         mapReady = true;
 
         // If the server provided the saved location's coordinates, use them as the
@@ -224,35 +260,31 @@
         if (serverLat && serverLng) {
             savedLocationLatLng = { lat: serverLat, lng: serverLng };
             hasAutoZoomed = true;
-            // Pre-warm the structure cache for the full home corridor so nearby
-            // icons appear immediately and pan/zoom serve from cache.
-            // 500 ms lets the tile request and first moveend query fire first,
-            // while still dispatching while Overpass is busy on the initial fetch.
-            setTimeout(prefetchHomeCorridorStructures, 500);
         }
 
         // preferCanvas: use the <canvas> renderer for vector layers by default.
         // This is ~3-5x faster than SVG for dense overlays (METAR, AQI, buoys,
         // gauges, HF Radar) because the GPU composites a single bitmap instead of
         // layout/paint for thousands of individual SVG DOM nodes.
-        map = L.map(els.mapEl, { zoomControl: true, preferCanvas: true }).setView(startCenter, startZoom);
+        map = L.map(_mapEl, { zoomControl: true, preferCanvas: true }).setView(startCenter, startZoom);
 
         // Default: satellite so users can visually see coastline, piers, structure
         activeTileLayer = L.tileLayer(TILE_SATELLITE.url, TILE_SATELLITE.opts);
         activeTileLayer.once('tileerror', function () {
             // Fall back to street tiles if ESRI is unavailable.
-            // Also update module-level _isSatellite so the basemap button stays in sync.
             map.removeLayer(activeTileLayer);
             activeTileLayer = L.tileLayer(TILE_STREET.url, TILE_STREET.opts).addTo(map);
-            _isSatellite = false;
+            _basemapMode = 'street';
             _syncBasemapBtn();
         });
         activeTileLayer.addTo(map);
 
-        // Layer groups — render order: AI picks → OSM structures
+        // Layer groups — render order: AI picks → OSM structures → decor
+        // _aiLsLoad() already ran in _prewarmLeaflet() before Leaflet finished loading;
+        // aiCache is populated so the layer will render on the first scheduleAIQuery().
         aiPickLayer      = L.layerGroup().addTo(map);
-        _aiLsLoad();
         fishingSpotLayer = L.layerGroup().addTo(map);
+        _decorLayer      = L.layerGroup().addTo(map); // halos + cluster rings (deferred)
 
         // Wire zoom/pan → refresh all layers (single handler — duplicate bindings
         // caused every event to fire twice, queuing double the debounced requests).
@@ -262,7 +294,7 @@
             scheduleAIQuery();
         });
 
-        setTimeout(function () { if (map) map.invalidateSize(); }, 350);
+        setTimeout(function () { if (map) map.invalidateSize(); }, 100);
 
         // Update the zoom hint immediately so it reflects the starting zoom level
         // (hidden at zoom ≥ 8, i.e. when server coords are used)
@@ -1117,11 +1149,13 @@
     // no name or ambiguous → default teal (SPOT_TYPES.fishing.color).
     var _SALT_RE  = /\b(ocean|sea|surf|pier|beach|tidal|coastal|saltwater|bay|gulf|atlantic|pacific|harbor|harbour|inlet|jetty|sound|estuary|brackish)\b/i;
     var _FRESH_RE = /\b(lake|pond|river|creek|stream|reservoir|freshwater|canal|brook|bayou|dam|falls?|spring)\b/i;
+    var _fishingVariantCache = {};
     function _fishingVariant(name) {
         if (!name) return 'fishing';
-        if (_SALT_RE.test(name))  return 'fishing_salt';
-        if (_FRESH_RE.test(name)) return 'fishing_fresh';
-        return 'fishing';
+        if (_fishingVariantCache[name]) return _fishingVariantCache[name];
+        var v = _SALT_RE.test(name) ? 'fishing_salt' : _FRESH_RE.test(name) ? 'fishing_fresh' : 'fishing';
+        _fishingVariantCache[name] = v;
+        return v;
     }
 
     function spotTypeLabel(type) {
@@ -1173,7 +1207,7 @@
         var ringHtml = (baseType === 'wreck') ? '<span class="fmap-wreck-ring"></span>' : '';
         var html = ringHtml +
                    '<span class="fmap-spot-dot" style="background:' + color +
-                   ';box-shadow:0 0 7px ' + color + '88;width:' + sz + 'px;height:' + sz + 'px' +
+                   ';width:' + sz + 'px;height:' + sz + 'px' +
                    ';border-radius:' + br + ';flex-shrink:0;' + rot + '">' + inner + '</span>';
         var icon = L.divIcon({ className: 'fmap-spot-wrap', html: html,
                                iconSize:   [sz + 4, sz + 4],
@@ -1207,6 +1241,12 @@
             return;
         }
         _lastRenderedSpotKey = renderKey;
+        _lastSpotCacheKey    = cacheKey || null;
+        // Detach from the map before rebuilding so each addLayer() doesn't
+        // trigger an individual Leaflet repaint.  Re-attached at the end for a
+        // single composite draw of all new markers.
+        var _wasOnMap = map && map.hasLayer(fishingSpotLayer);
+        if (_wasOnMap) fishingSpotLayer.remove();
         fishingSpotLayer.clearLayers();
         _customMarkers = [];  // will be repopulated by renderCustomMarkers below
 
@@ -1251,10 +1291,24 @@
                 _suppressedTypes[f.type] = true;
                 return false;
             }
-            // Cull point markers that lie outside the padded viewport.
-            // Features with a geometry array are polygon habitats — always keep.
-            if (doCull && !f.geometry && f.lat && f.lng) {
-                return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
+            // Cull features outside the padded viewport.
+            if (doCull) {
+                if (f.geometry && f.geometry.length >= 3) {
+                    // Polygon habitat: compute bbox from geometry and check intersection.
+                    // An entirely off-screen polygon creates Leaflet objects for nothing.
+                    var _gS = Infinity, _gN = -Infinity, _gW = Infinity, _gE = -Infinity;
+                    for (var _gi = 0; _gi < f.geometry.length; _gi++) {
+                        var _gc = f.geometry[_gi];
+                        if (_gc[0] < _gS) _gS = _gc[0];
+                        if (_gc[0] > _gN) _gN = _gc[0];
+                        if (_gc[1] < _gW) _gW = _gc[1];
+                        if (_gc[1] > _gE) _gE = _gc[1];
+                    }
+                    // Keep if the geometry bbox intersects the padded viewport.
+                    if (_gN < vS || _gS > vN || _gE < vW || _gW > vE) return false;
+                } else if (f.lat && f.lng) {
+                    return f.lat >= vS && f.lat <= vN && f.lng >= vW && f.lng <= vE;
+                }
             }
             return true;
         });
@@ -1264,6 +1318,8 @@
         // summary ring drawn after the main forEach. Declared here so the
         // loop body can write into it.
         var _clusterGrid = {};
+        // Halo data collected during forEach; circles created in idle callback.
+        var _haloData = [];
 
         filteredSpots.forEach(function (f) {
             var name = f.name || spotTypeLabel(f.type);
@@ -1353,12 +1409,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_sLat / _gC.length, _sLng / _gC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-tidal-drop"></span>',
-                                className: 'fmap-tidal-drop-wrap',
-                                iconSize: [20, 20],
-                                iconAnchor: [10, 10]
-                            }),
+                            icon: _cachedDivIcon('c:tidal-drop', {html:'<span class="fmap-tidal-drop"></span>',className:'fmap-tidal-drop-wrap',iconSize:[20,20],iconAnchor:[10,10]}),
                             interactive: false,
                             zIndexOffset: -100
                         }
@@ -1399,12 +1450,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_kLat / _kGC.length, _kLng / _kGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-kelp-stalk"></span>',
-                                className: 'fmap-kelp-stalk-wrap',
-                                iconSize:   [12, 20],
-                                iconAnchor: [6, 18]
-                            }),
+                            icon: _cachedDivIcon('c:kelp-stalk', {html:'<span class="fmap-kelp-stalk"></span>',className:'fmap-kelp-stalk-wrap',iconSize:[12,20],iconAnchor:[6,18]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1440,7 +1486,7 @@
                                 var _kfCls = 'fmap-kelp-stalk fmap-kelp-stalk--sm' +
                                              (_kfPh ? ' fmap-kelp-stalk' + _kfPh : '');
                                 fishingSpotLayer.addLayer(L.marker([_kfLat, _kfLng], {
-                                    icon: L.divIcon({
+                                    icon: _cachedDivIcon('c:kelp-sm' + _kfPh, {
                                         html:       '<span class="' + _kfCls + '"></span>',
                                         className:  'fmap-kelp-stalk-wrap',
                                         iconSize:   [8, 12],
@@ -1466,12 +1512,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_rLat / _rGC.length, _rLng / _rGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-reef-pin"></span>',
-                                className: 'fmap-reef-pin-wrap',
-                                iconSize:   [14, 14],
-                                iconAnchor: [7, 7]
-                            }),
+                            icon: _cachedDivIcon('c:reef-pin', {html:'<span class="fmap-reef-pin"></span>',className:'fmap-reef-pin-wrap',iconSize:[14,14],iconAnchor:[7,7]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1489,12 +1530,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_shLat / _sGC.length, _shLng / _sGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-shoal-pin"></span>',
-                                className: 'fmap-shoal-pin-wrap',
-                                iconSize:   [14, 12],
-                                iconAnchor: [7, 6]
-                            }),
+                            icon: _cachedDivIcon('c:shoal-pin', {html:'<span class="fmap-shoal-pin"></span>',className:'fmap-shoal-pin-wrap',iconSize:[14,12],iconAnchor:[7,6]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1512,12 +1548,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_mLat / _mGC.length, _mLng / _mGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-marsh-tuft"></span>',
-                                className: 'fmap-marsh-tuft-wrap',
-                                iconSize:   [14, 13],
-                                iconAnchor: [7, 13]
-                            }),
+                            icon: _cachedDivIcon('c:marsh-tuft', {html:'<span class="fmap-marsh-tuft"></span>',className:'fmap-marsh-tuft-wrap',iconSize:[14,13],iconAnchor:[7,13]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1539,8 +1570,7 @@
                                     var _smgLat=_smgMinLat+_smgLatOff+_smgRow*_smgLatSp/2;
                                     var _smgLng=_smgMinLng+_smgLngOff+_smgCol*_smgLngSp/2;
                                     fishingSpotLayer.addLayer(L.marker([_smgLat,_smgLng],{
-                                        icon:L.divIcon({html:'<span class="fmap-marsh-tuft fmap-marsh-tuft--sm"></span>',
-                                            className:'fmap-marsh-tuft-wrap',iconSize:[9,8],iconAnchor:[4,8]}),
+                                        icon:_cachedDivIcon('c:marsh-tuft-sm',{html:'<span class="fmap-marsh-tuft fmap-marsh-tuft--sm"></span>',className:'fmap-marsh-tuft-wrap',iconSize:[9,8],iconAnchor:[4,8]}),
                                         interactive:false,zIndexOffset:-100
                                     }));
                                 }
@@ -1560,12 +1590,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_mgLat / _mgGC.length, _mgLng / _mgGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-mangrove-pin"></span>',
-                                className: 'fmap-mangrove-pin-wrap',
-                                iconSize:   [14, 14],
-                                iconAnchor: [7, 7]
-                            }),
+                            icon: _cachedDivIcon('c:mangrove-pin', {html:'<span class="fmap-mangrove-pin"></span>',className:'fmap-mangrove-pin-wrap',iconSize:[14,14],iconAnchor:[7,7]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1589,8 +1614,7 @@
                                     var _mgfLng=_mgfMinLng+_mgfLngOff+_mgfCol*_mgfLngSp/2;
                                     _mgfIdx++;
                                     fishingSpotLayer.addLayer(L.marker([_mgfLat,_mgfLng],{
-                                        icon:L.divIcon({html:'<span class="fmap-mangrove-pin fmap-mangrove-pin--sm"></span>',
-                                            className:'fmap-mangrove-pin-wrap',iconSize:[9,9],iconAnchor:[4,4]}),
+                                        icon:_cachedDivIcon('c:mangrove-pin-sm',{html:'<span class="fmap-mangrove-pin fmap-mangrove-pin--sm"></span>',className:'fmap-mangrove-pin-wrap',iconSize:[9,9],iconAnchor:[4,4]}),
                                         interactive:false,zIndexOffset:-100
                                     }));
                                 }
@@ -1611,12 +1635,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_gfLat / _gfGC.length, _gfLng / _gfGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-grassflat-pin"></span>',
-                                className: 'fmap-grassflat-pin-wrap',
-                                iconSize:   [12, 10],
-                                iconAnchor: [6, 5]
-                            }),
+                            icon: _cachedDivIcon('c:grassflat-pin', {html:'<span class="fmap-grassflat-pin"></span>',className:'fmap-grassflat-pin-wrap',iconSize:[12,10],iconAnchor:[6,5]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1638,8 +1657,7 @@
                                     var _gfgLat=_gfgMinLat+_gfgLatOff+_gfgRow*_gfgLatSp/2;
                                     var _gfgLng=_gfgMinLng+_gfgLngOff+_gfgCol*_gfgLngSp/2;
                                     fishingSpotLayer.addLayer(L.marker([_gfgLat,_gfgLng],{
-                                        icon:L.divIcon({html:'<span class="fmap-grassflat-pin fmap-grassflat-pin--sm"></span>',
-                                            className:'fmap-grassflat-pin-wrap',iconSize:[8,4],iconAnchor:[4,2]}),
+                                        icon:_cachedDivIcon('c:grassflat-pin-sm',{html:'<span class="fmap-grassflat-pin fmap-grassflat-pin--sm"></span>',className:'fmap-grassflat-pin-wrap',iconSize:[8,4],iconAnchor:[4,2]}),
                                         interactive:false,zIndexOffset:-100
                                     }));
                                 }
@@ -1657,12 +1675,7 @@
                     fishingSpotLayer.addLayer(L.marker(
                         [_bLat / _bGC.length, _bLng / _bGC.length],
                         {
-                            icon: L.divIcon({
-                                html: '<span class="fmap-beach-pin"></span>',
-                                className: 'fmap-beach-pin-wrap',
-                                iconSize:   [14, 8],
-                                iconAnchor: [7, 4]
-                            }),
+                            icon: _cachedDivIcon('c:beach-pin', {html:'<span class="fmap-beach-pin"></span>',className:'fmap-beach-pin-wrap',iconSize:[14,8],iconAnchor:[7,4]}),
                             interactive:  false,
                             zIndexOffset: -100
                         }
@@ -1703,10 +1716,18 @@
             // Fishing spots get a water-type color variant derived from the spot name.
             var _iconType = (f.type === 'fishing') ? _fishingVariant(f.name || '') : f.type;
             var m = L.marker([f.lat, f.lng], { icon: makeFishingSpotIcon(_iconType) });
-            // Prefer the tip that came from the server; local table is the fallback
-            m.bindTooltip(tooltipHtml,
-                { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
-            );
+            // Defer tooltip object creation until first hover — avoids creating
+            // a L.Tooltip + 4 Leaflet event listeners for every visible marker
+            // upfront, which adds up for dense areas with 100s of spots.
+            // Permanent labels (pier/jetty/wreck names) must stay eager because
+            // they display without any interaction.
+            (function (mk, html) {
+                mk.once('mouseover', function () {
+                    mk.bindTooltip(html,
+                        { className: 'fmap-tooltip fmap-tooltip--struct', direction: 'top', offset: [0, -5] }
+                    ).openTooltip();
+                });
+            }(m, tooltipHtml));
             // Zoom-adaptive name label: pier, jetty, and wreck markers show the
             // spot name as a permanent callout at zoom 13+.  No extra event listener
             // needed — renderFishingSpots already re-renders when zoom changes.
@@ -1744,54 +1765,60 @@
                 _clusterGrid[_cCell].n  += 1;
             }
 
-            // Influence-zone halo: L.circle around structure markers at zoom 13+.
-            // Radius reflects the typical fish-holding / casting zone for each type.
-            var _HALO_R = { wreck: 150, pier: 120, jetty: 120, buoy: 60,
-                            fishing: 40, fishing_salt: 40, fishing_fresh: 40 };
+            // Accumulate halo data for deferred rendering (_decorLayer idle callback).
             if (_HALO_R[f.type] && currentZoom >= 13) {
-                var _haloColor = spotTypeColor(f.type);
-                fishingSpotLayer.addLayer(L.circle([f.lat, f.lng], {
-                    radius:      _HALO_R[f.type],
-                    color:       _haloColor,
+                _haloData.push({ lat: f.lat, lng: f.lng, type: f.type });
+            }
+        });
+
+        // Render admin-created custom markers with edit affordances
+        renderCustomMarkers(spots);
+
+        // Re-attach now that all markers are built — single composite repaint
+        if (_wasOnMap) fishingSpotLayer.addTo(map);
+
+        // Defer decorative circles (influence halos + cluster rings) to idle so
+        // the main markers are visible before we spend time on non-interactive chrome.
+        var _dg = ++_decorRenderGen;
+        var _cgSnap = _clusterGrid, _hdSnap = _haloData, _zSnap = currentZoom;
+        var _idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 80); };
+        _idle(function () {
+            if (_dg !== _decorRenderGen || !_decorLayer || !map) return;
+            var _wasDecorOn = map.hasLayer(_decorLayer);
+            if (_wasDecorOn) _decorLayer.remove();
+            _decorLayer.clearLayers();
+            for (var _hi = 0; _hi < _hdSnap.length; _hi++) {
+                var _h = _hdSnap[_hi], _hc = spotTypeColor(_h.type);
+                _decorLayer.addLayer(L.circle([_h.lat, _h.lng], {
+                    radius:      _HALO_R[_h.type],
+                    color:       _hc,
                     weight:      1,
                     opacity:     0.45,
-                    fillColor:   _haloColor,
+                    fillColor:   _hc,
                     fillOpacity: 0.07,
                     interactive: false,
                     className:   'fmap-spot-halo'
                 }));
             }
+            if (_zSnap >= 11 && _zSnap <= 14) {
+                Object.keys(_cgSnap).forEach(function (ck) {
+                    var cell = _cgSnap[ck];
+                    if (cell.n < 4) return;
+                    var clr = spotTypeColor(cell.type);
+                    _decorLayer.addLayer(L.circle(
+                        [cell.la / cell.n, cell.ln / cell.n],
+                        { radius: 350, color: clr, weight: 1, opacity: 0.40,
+                          fillColor: clr, fillOpacity: 0.05, interactive: false,
+                          className: 'fmap-cluster-ring' }
+                    ));
+                });
+            }
+            if (_wasDecorOn) _decorLayer.addTo(map);
         });
-
-        // Draw cluster summary rings: cells with 4+ same-type point markers
-        // get a faint L.circle ring at their centroid, visible at zoom 11-14.
-        if (currentZoom >= 11 && currentZoom <= 14) {
-            Object.keys(_clusterGrid).forEach(function (ck) {
-                var cell = _clusterGrid[ck];
-                if (cell.n < 4) return;
-                var clr = spotTypeColor(cell.type);
-                fishingSpotLayer.addLayer(L.circle(
-                    [cell.la / cell.n, cell.ln / cell.n],
-                    {
-                        radius:      350,
-                        color:       clr,
-                        weight:      1,
-                        opacity:     0.40,
-                        fillColor:   clr,
-                        fillOpacity: 0.05,
-                        interactive: false,
-                        className:   'fmap-cluster-ring'
-                    }
-                ));
-            });
-        }
-
-        // Render admin-created custom markers with edit affordances
-        renderCustomMarkers(spots);
 
         // Apply current strike-score tint to newly created markers
         if (_scoreData) {
-            var _curHour = (_scoreData.hours || [])[_tideSliderHour] || {};
+            var _curHour = (_scoreData.hours || [])[new Date().getHours()] || {};
             _recolourSpotsByScore(_curHour.score || 0);
         }
 
@@ -1862,10 +1889,13 @@
     // viewport queries from a wider pre-fetched corridor without a new request.
     function _cachedSupersetOf(s, w, n, e) {
         for (var k in spotCache) {
-            var coords = k.split(',');
-            if (coords.length !== 4) continue;
-            var cs = +coords[0], cw = +coords[1], cn = +coords[2], ce = +coords[3];
-            if (cs <= s && cw <= w && cn >= n && ce >= e) return spotCache[k];
+            var b = _spotBoundsCache[k];
+            if (!b) {
+                var coords = k.split(',');
+                if (coords.length !== 4) continue;
+                b = _spotBoundsCache[k] = [+coords[0], +coords[1], +coords[2], +coords[3]];
+            }
+            if (b[0] <= s && b[1] <= w && b[2] >= n && b[3] >= e) return spotCache[k];
         }
         return null;
     }
@@ -1886,7 +1916,7 @@
         if (spotCache[key]) return;  // already warm
 
         var url = '/api/map/structures?south=' + s + '&west=' + w + '&north=' + n + '&east=' + e;
-        fetch(url)
+        return fetch(url)
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (data && data.structures && !data.zoom_required) {
@@ -1912,7 +1942,7 @@
                     }
                 }
             })
-            .catch(function () {});  // silent — regular queryStructures() will still run
+            .catch(function () {});  // silent — queryStructures() will still run after
     }
 
     // ── Primary fetch: backend /api/map/structures ────────────────────────────
@@ -1924,6 +1954,7 @@
         var zoom = map.getZoom();
         if (zoom < 8) {
             _lastRenderedSpotKey = null;
+            _lastSpotCacheKey    = null;
             fishingSpotLayer.clearLayers();
             return;
         }
@@ -2014,6 +2045,7 @@
                 // Server signals the viewport is too large — show hint, clear layers.
                 if (data.zoom_required) {
                     _lastRenderedSpotKey = null;
+                    _lastSpotCacheKey    = null;
                     fishingSpotLayer.clearLayers();
                     if (!_elStructFiltersHint) _elStructFiltersHint = document.getElementById('fmap-struct-filters-hint');
                     if (_elStructFiltersHint) _elStructFiltersHint.textContent = 'Zoom in further to see structure markers';
@@ -2650,8 +2682,14 @@
             Math.ceil ((n - latStep) * 2) / 2, Math.ceil (e * 2) / 2
         ); // south
 
-        // Start draining after a short delay — let the current render finish first
-        setTimeout(_drainPrefetchQueue, 1500);
+        // Start draining after a short delay — let the current render finish first.
+        // Guard with a single timer so rapid pans don't stack up drain calls.
+        if (!_prefetchDrainTimer) {
+            _prefetchDrainTimer = setTimeout(function () {
+                _prefetchDrainTimer = null;
+                _drainPrefetchQueue();
+            }, 1500);
+        }
     }
 
     // ─── localStorage persistence for spotCache ───────────────────────────────
@@ -2675,10 +2713,16 @@
                 if (e && e.ts && (now - e.ts) < _SS_TTL && Array.isArray(e.data)) {
                     spotCache[k] = e.data;
                     _spotCacheKeys.push(k);
+                    var coords = k.split(',');
+                    if (coords.length === 4) {
+                        _spotBoundsCache[k] = [+coords[0], +coords[1], +coords[2], +coords[3]];
+                    }
                 }
             });
             while (_spotCacheKeys.length > _SPOT_CACHE_MAX) {
-                delete spotCache[_spotCacheKeys.shift()];
+                var _evk = _spotCacheKeys.shift();
+                delete spotCache[_evk];
+                delete _spotBoundsCache[_evk];
             }
         } catch (e) { /* quota or parse error — start cold */ }
     }
@@ -2687,17 +2731,28 @@
         try {
             var now = Date.now();
             var obj = {};
-            Object.keys(spotCache).forEach(function (k) {
-                obj[k] = { ts: now, data: spotCache[k] };
-            });
+            // Only persist the most recent _SS_SAVE_MAX entries — keeps the blob
+            // small so both JSON.stringify and the next-session JSON.parse stay fast.
+            // _spotCacheKeys is insertion-ordered; slice(-N) gives the newest N.
+            var keysToSave = _spotCacheKeys.slice(-_SS_SAVE_MAX);
+            for (var i = 0; i < keysToSave.length; i++) {
+                var k = keysToSave[i];
+                if (spotCache[k]) obj[k] = { ts: now, data: spotCache[k] };
+            }
             localStorage.setItem(_SS_KEY, JSON.stringify(obj));
         } catch (e) { /* quota exceeded — silently skip */ }
     }
 
     // Debounced save — coalesce rapid sequential fetches into one write.
+    // Runs at idle priority so JSON.stringify doesn't block animation frames.
+    var _ssIdleHandle = 0;
     function _ssSave() {
         clearTimeout(_ssSaveTimer);
-        _ssSaveTimer = setTimeout(_ssSaveNow, 1500);
+        if (_ssIdleHandle) { try { cancelIdleCallback(_ssIdleHandle); } catch(_){} _ssIdleHandle = 0; }
+        _ssSaveTimer = setTimeout(function () {
+            var _idle = window.requestIdleCallback || function (cb) { cb({ timeRemaining: function(){ return 50; } }); };
+            _ssIdleHandle = _idle(function () { _ssIdleHandle = 0; _ssSaveNow(); }, { timeout: 8000 });
+        }, 1000);
     }
 
     // Write a new entry into spotCache with LRU eviction.
@@ -2708,8 +2763,14 @@
             if (_spotCacheKeys.length >= _SPOT_CACHE_MAX) {
                 var evict = _spotCacheKeys.shift();
                 delete spotCache[evict];
+                delete _spotBoundsCache[evict];
             }
             _spotCacheKeys.push(key);
+            // Pre-parse bounds so _cachedSupersetOf() avoids repeated string splitting.
+            var coords = key.split(',');
+            if (coords.length === 4) {
+                _spotBoundsCache[key] = [+coords[0], +coords[1], +coords[2], +coords[3]];
+            }
         }
         spotCache[key] = data;
     }
@@ -2742,15 +2803,11 @@
                 var valid = f.spotTypes.filter(function (t) { return SPOT_TYPES[t]; });
                 if (valid.length) _applySpotTypeUI(valid);
             }
-            // Restore active category tab (deferred until wireCategoryFilterTabs runs)
-            if (f.category) {
-                var _tryRestoreCat = function () {
-                    var tab = document.querySelector('.fmap-cat-tab[data-cat="' + f.category + '"]');
-                    if (tab) tab.click();
-                };
-                // Tabs are wired in boot() shortly after loadFilters; defer one tick
-                setTimeout(_tryRestoreCat, 0);
-            }
+            // Restore active category tab — stored here, applied inside
+            // wireCategoryFilterTabs() once click handlers are in place.
+            // A setTimeout(0) previously raced the prewarm path and fired before
+            // the handlers were wired, silently dropping the restored category.
+            if (f.category) _pendingCategory = f.category;
             updateAdvBadge();
         } catch (e) {
             console.warn('[fishing-map] loadFilters failed:', e);
@@ -3015,8 +3072,13 @@
 
         // Title: use explicit title if set, otherwise fall back to species name
         els.catchDetailTitle.textContent = c.title ? c.title : c.species;
-        var dateStr = c.caught_at ? new Date(c.caught_at.indexOf('Z') === -1
-            ? c.caught_at + 'Z' : c.caught_at).toLocaleDateString() : '';
+        var dateStr = '';
+        if (c.caught_at) {
+            try {
+                var _cd = new Date(c.caught_at.indexOf('Z') === -1 ? c.caught_at + 'Z' : c.caught_at);
+                if (!isNaN(_cd)) dateStr = _cd.toLocaleDateString();
+            } catch (e) {}
+        }
         // Show species below the title when a custom title is present
         var speciesTag = (c.title && c.title !== c.species)
             ? ' \u2022 ' + esc(c.species) : '';
@@ -3029,11 +3091,11 @@
             var _photoAlt = c.species ? esc(c.species) + ' catch photo' : 'Catch photo';
             bodyHtml += '<div class="fmap-catch-photo-wrap">' +
                 '<img src="' + esc(c.image_url) + '" class="fmap-catch-photo" alt="' + _photoAlt + '" ' +
-                'loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+                'loading="lazy" onerror="this.parentNode.style.display=\'none\'" referrerpolicy="no-referrer">' +
                 '</div>';
         }
         if (c.weight_lb) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Weight</span>' + parseFloat(c.weight_lb).toFixed(1) + ' lb</div>';
-        if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + c.length_in + ' in</div>';
+        if (c.length_in) bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Length</span>' + esc(String(c.length_in)) + ' in</div>';
         if (c.bait)      bodyHtml += '<div class="fmap-catch-stat"><span class="fmap-catch-stat-label">Bait</span>' + esc(c.bait) + '</div>';
         if (c.notes)     bodyHtml += '<div class="fmap-catch-notes">' + esc(c.notes) + '</div>';
         els.catchDetailBody.innerHTML = bodyHtml;
@@ -3412,7 +3474,7 @@
                 .then(function (r) {
                     if (!r.ok) throw new Error('HTTP ' + r.status);
                     // Invalidate cache so panning away and back shows the new position
-                    spotCache = {}; _spotCacheKeys = [];
+                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast('Position saved');
                 })
@@ -3610,7 +3672,7 @@
         .then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             // Bust the local spot cache so the suppressed spot disappears on next render
-            spotCache = {}; _spotCacheKeys = [];
+            spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
             try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
             scheduleFishingSpotQuery();
             cb(null);
@@ -3709,7 +3771,7 @@
                     saveBtn.disabled    = false;
                     saveBtn.textContent = 'Save';
                     _closeAdminModal();
-                    spotCache = {}; _spotCacheKeys = [];
+                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
@@ -3768,7 +3830,7 @@
                 .then(function () {
                     delBtn.disabled = false;
                     _closeAdminModal();
-                    spotCache = {}; _spotCacheKeys = [];
+                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast('Marker deleted');
                     scheduleFishingSpotQuery();
@@ -3910,8 +3972,10 @@
 
     function _sstFmtDate(iso) {
         try {
-            return new Date(iso).toLocaleDateString([], { month:'short', day:'numeric' });
-        } catch (e) { return iso; }
+            var _d = new Date(iso);
+            if (!isNaN(_d)) return _d.toLocaleDateString([], { month:'short', day:'numeric' });
+        } catch (e) {}
+        return '';
     }
 
     // ─── Wildfire + Smoke overlay (ArcGIS Live Feeds) ─────────────────────────
@@ -3995,18 +4059,18 @@
                     var marker = L.marker([st.lat, st.lng], { icon: icon });
                     marker.bindPopup(
                         '<div class="fmap-metar-popup">' +
-                        '<strong>' + (st.icao || st.name) + '</strong>' +
-                        (st.name && st.icao ? '<div class="fmap-metar-name">' + st.name + '</div>' : '') +
-                        (timeStr ? '<div class="fmap-metar-time">' + timeStr + '</div>' : '') +
+                        '<strong>' + esc(st.icao || st.name || '') + '</strong>' +
+                        (st.name && st.icao ? '<div class="fmap-metar-name">' + esc(st.name) + '</div>' : '') +
+                        (timeStr ? '<div class="fmap-metar-time">' + esc(timeStr) + '</div>' : '') +
                         '<table class="fmap-metar-table">' +
-                        '<tr><th scope="row">Temp</th><td>' + tempStr + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
-                        '<tr><th scope="row">Wind</th><td>' + windStr + '</td></tr>' +
+                        '<tr><th scope="row">Temp</th><td>' + esc(tempStr) + (st.dew_f != null ? ' · Dew ' + st.dew_f + '°' : '') + '</td></tr>' +
+                        '<tr><th scope="row">Wind</th><td>' + esc(windStr) + '</td></tr>' +
                         (st.humidity != null ? '<tr><th scope="row">Humidity</th><td>' + st.humidity + '%</td></tr>' : '') +
                         (st.pressure_mb != null ? '<tr><th scope="row">Pressure</th><td>' + st.pressure_mb + ' mb</td></tr>' : '') +
-                        '<tr><th scope="row">Visibility</th><td>' + visStr + '</td></tr>' +
-                        (st.sky ? '<tr><th scope="row">Sky</th><td>' + st.sky + '</td></tr>' : '') +
-                        (st.weather ? '<tr><th scope="row">Wx</th><td>' + st.weather + '</td></tr>' : '') +
-                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span class="fmap-metar-cat" style="color:' + catColor + '">' + st.flight_cat + '</span></td></tr>' : '') +
+                        '<tr><th scope="row">Visibility</th><td>' + esc(visStr) + '</td></tr>' +
+                        (st.sky ? '<tr><th scope="row">Sky</th><td>' + esc(st.sky) + '</td></tr>' : '') +
+                        (st.weather ? '<tr><th scope="row">Wx</th><td>' + esc(st.weather) + '</td></tr>' : '') +
+                        (st.flight_cat ? '<tr><th scope="row">Flight cat</th><td><span class="fmap-metar-cat" style="color:' + esc(catColor) + '">' + esc(st.flight_cat) + '</span></td></tr>' : '') +
                         '</table>' +
                         '<div class="fmap-metar-source">NOAA METAR via ArcGIS Live Feeds</div>' +
                         '</div>',
@@ -4113,10 +4177,13 @@
         var dates = '';
         if (t.start_dtg) {
             try {
-                var s = new Date(t.start_dtg).toLocaleDateString([], { month:'short', day:'numeric' });
-                var e = t.end_dtg ? new Date(t.end_dtg).toLocaleDateString([], { month:'short', day:'numeric' }) : '';
-                dates = s + (e ? ' – ' + e : '');
-            } catch (ex) { /* ignore */ }
+                var _ds = new Date(t.start_dtg);
+                var _de = t.end_dtg ? new Date(t.end_dtg) : null;
+                if (!isNaN(_ds)) {
+                    dates = _ds.toLocaleDateString([], { month:'short', day:'numeric' }) +
+                            (_de && !isNaN(_de) ? ' – ' + _de.toLocaleDateString([], { month:'short', day:'numeric' }) : '');
+                }
+            } catch (ex) {}
         }
         return (
             '<div class="fmap-storm-popup">' +
@@ -4360,6 +4427,8 @@
 
     // ─── AQI / PM2.5 overlay (ArcGIS Live Feeds) ──────────────────────────────
 
+    function onBuoyViewport() { clearTimeout(buoyTimer); buoyTimer = setTimeout(doFetchBuoys, 700); }
+
     function wireBuoyLayer() {
         if (!map) return;
         buoyLayer = L.layerGroup();
@@ -4494,7 +4563,9 @@
                     // Draw an arrow rotated to the current direction
                     var rot = v.dir_deg != null ? v.dir_deg : 0;
                     var kts = v.speed_kts != null ? v.speed_kts.toFixed(1) + ' kt' : '';
-                    var icon = L.divIcon({
+                    // Cache key includes color + speed label so identical vectors reuse
+                    // the same L.divIcon object instead of allocating one per vector per fetch.
+                    var icon = _cachedDivIcon('hfradar|' + v.color + '|' + rot + '|' + kts, {
                         className: '',
                         html: '<div class="fmap-hfradar-arrow" style="color:' + v.color +
                               ';transform:rotate(' + rot + 'deg)" title="' + kts + '">' +
@@ -5146,40 +5217,54 @@
                 initMap();
                 restoreFromHash();
                 loadFilters();
-                wireMapControls();
-                wireSpotTypeFilters();
-                wireCommunityLayer();
-                wireLogCatch();
-                wireFullscreen();
-                wireShareBtn();
-                wireAdminMode();
-                wireLayersPopup();
-                wireSstLayer();
-                wireMetarLayer();
-                wireRecentStorms();
-                wireMarineWarnings();
-                wireStormTracker();
-                wireBuoyLayer();
-                wireHfradarLayer();
-                wireTropicalOutlook();
-                wireCategoryFilterTabs();
-                wireTideChart();
-                wireSpotDetailPanel();
-                _syncBottomBarLayout();
-                restoreLayerState();
-                // Restore cached structure data from the previous page view so
-                // markers appear instantly on refresh instead of waiting for Overpass.
-                _ssLoad();
-                // Kick off the structure query immediately when server-provided
-                // coordinates are available — don't wait for the NOAA API round-trip.
+
+                // ── First paint: render cached spots, then yield ──
+                // spotCache is already populated by _prewarmLeaflet → _ssLoad().
+                // queryStructures() calls renderFishingSpots() synchronously when
+                // the cache is warm, so spots land in the DOM here.  We then
+                // immediately yield with setTimeout(0) so the browser can
+                // composite and paint those markers before the wire* loop runs.
                 if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
                     typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
-                    // Fire immediately (no debounce) — _ssLoad may have already
-                    // populated spotCache, so queryStructures() can render at once.
                     queryStructures();
+                    // Concurrently pre-warm the home corridor (±1°) so future pans
+                    // serve from cache.  Runs in parallel with the viewport fetch.
+                    prefetchHomeCorridorStructures();
                 }
-                _hideMainLoading();
-                scheduleAIQuery();
+
+                // ── Wire critical UI — runs after browser paints spots ──
+                setTimeout(function () {
+                    wireMapControls();
+                    wireSpotTypeFilters();
+                    wireCategoryFilterTabs();
+                    wireSpotDetailPanel();
+                    wireFullscreen();
+                    _fetchMapScore();
+                    _syncBottomBarLayout();
+                    _hideMainLoading();
+
+                    // ── Wire overlays and non-critical features at idle ──
+                    // These require opening the layers panel or log form first,
+                    // so deferring them doesn't affect the initial experience.
+                    var _idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 150); };
+                    _idle(function () {
+                        wireCommunityLayer();
+                        wireLogCatch();
+                        wireShareBtn();
+                        wireAdminMode();
+                        wireLayersPopup();
+                        wireSstLayer();
+                        wireMetarLayer();
+                        wireRecentStorms();
+                        wireMarineWarnings();
+                        wireStormTracker();
+                        wireBuoyLayer();
+                        wireHfradarLayer();
+                        wireTropicalOutlook();
+                        restoreLayerState();
+                        scheduleAIQuery();
+                    });
+                }, 0);
             })
             .catch(function (err) {
                 console.error('[fishing-map] boot error:', err);
@@ -5252,11 +5337,16 @@
         var hash = window.location.hash;
         if (!hash || hash.indexOf('#fmap=') !== 0) return;
         var raw = hash.slice(6); // strip '#fmap='
-        var params = {};
+        // Use Object.create(null) so __proto__ and constructor keys cannot
+        // pollute Object.prototype via a crafted share URL.
+        var params = Object.create(null);
+        var _ALLOWED = { types: 1, lat: 1, lng: 1, z: 1 };
         raw.split('&').forEach(function (part) {
             var eq = part.indexOf('=');
             if (eq === -1) return;
-            params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1));
+            var key = part.slice(0, eq);
+            if (!_ALLOWED[key]) return;
+            params[key] = decodeURIComponent(part.slice(eq + 1));
         });
         if (params.types) {
             var requested = params.types.split(',').map(function (t) { return t.trim(); })
@@ -5277,51 +5367,41 @@
     }
 
     // ─── Bottom bar layout ────────────────────────────────────────────────────
-    // The filter bar and tide bar are both absolute-positioned at bottom:0.
-    // We measure the filter bar's actual rendered height and set a CSS custom
-    // property so the tide bar stacks directly above it without overlap.
     function _syncBottomBarLayout() {
         var fb = document.getElementById('fmap-spot-filter-bar');
-        var tb = document.getElementById('fmap-tide-bar');
         function _apply() {
             var fh = fb ? fb.offsetHeight : 0;
-            var th = tb ? tb.offsetHeight : 0;
             if (fh > 0) document.documentElement.style.setProperty('--fmap-filter-bar-h', fh + 'px');
-            if (th > 0) document.documentElement.style.setProperty('--fmap-tide-bar-h',   th + 'px');
         }
         _apply();
         if (typeof ResizeObserver !== 'undefined') {
             var ro = new ResizeObserver(_apply);
             if (fb) ro.observe(fb);
-            if (tb) ro.observe(tb);
         }
     }
 
     // ─── Score-based marker tinting ───────────────────────────────────────────
     // Defined at module scope so renderFishingSpots can call it after each render.
     function _recolourSpotsByScore(score) {
-        if (!fishingSpotLayer) return;
         var color = score >= 8 ? '#4ade80' :
                     score >= 6 ? '#a3e635' :
                     score >= 4 ? '#fbbf24' : '#f87171';
-        // Point markers: recolour the dot border
-        fishingSpotLayer.eachLayer(function (layer) {
-            if (!layer._icon) return;
-            var dot = layer._icon.querySelector('.fmap-spot-dot');
-            if (dot) {
-                dot.style.borderColor = color;
-                dot.style.boxShadow   = '0 0 7px ' + color + '77';
-            }
-        });
-        // Habitat polygons: scale border opacity with score so high-scoring
-        // areas read as more vivid and low-scoring ones fade back.
+        // Point markers: single CSS variable update instead of per-element DOM mutation.
+        // .fmap-spot-dot uses border-color/box-shadow via var(--fmap-score-col/shadow).
+        if (_mapRoot) {
+            _mapRoot.style.setProperty('--fmap-score-col', color);
+            _mapRoot.style.setProperty('--fmap-score-shadow', color + '77');
+        }
+        // Habitat polygons: Leaflet canvas renderer requires setStyle() — CSS
+        // variables can't reach individual canvas-drawn paths.
+        if (!fishingSpotLayer) return;
         var borderOpacity = score >= 8 ? 0.95 :
                             score >= 6 ? 0.75 :
                             score >= 4 ? 0.55 : 0.35;
         fishingSpotLayer.eachLayer(function (layer) {
             if (!layer.setStyle) return;
             var cls = (layer.options && layer.options.className) || '';
-            if (!cls.includes('fmap-habitat-poly')) return;
+            if (cls.indexOf('fmap-habitat-poly') === -1) return;
             layer.setStyle({ opacity: borderOpacity });
         });
     }
@@ -5401,9 +5481,9 @@
             }
             // Restore OSM spots and AI habitats for non-mine categories
             _hideFavEmptyState();
-            renderFishingSpots(_lastRenderedSpotKey ? (spotCache[_lastRenderedSpotKey] || []) : []);
-            var cachedAI = aiCache[_lastRenderedSpotKey || ''] || [];
-            if (aiPickLayer) renderAIHabitatSpots(cachedAI);
+            var _catSpots = _lastSpotCacheKey ? (spotCache[_lastSpotCacheKey] || []) : [];
+            renderFishingSpots(_catSpots, _lastSpotCacheKey || undefined);
+            scheduleAIQuery();
         }
 
         tabs.forEach(function (tab) {
@@ -5426,195 +5506,90 @@
                 saveFilters();
             });
         });
+
+        // Apply any category saved by loadFilters() now that click handlers are live.
+        // loadFilters() runs before wireCategoryFilterTabs() in both the prewarm and
+        // boot paths; a previous setTimeout(0) raced the prewarm chain and arrived
+        // before these handlers were attached, silently dropping the saved category.
+        if (_pendingCategory) {
+            var _pc = _pendingCategory;
+            _pendingCategory = null;
+            var _pcTab = document.querySelector('.fmap-cat-tab[data-cat="' + _pc + '"]');
+            if (_pcTab) _pcTab.click();
+        }
     }
 
-    // ─── Tide chart + time slider ─────────────────────────────────────────────
-    // Fetches /api/v1/map/score for the saved location and renders a 24-bar
-    // chart.  A range slider lets the user drag to a specific hour; at each
-    // position the spot icons are recoloured (green=Excellent…red=Slow) and
-    // the strike score badge is updated.
-    function wireTideChart() {
-        var chartEl   = document.getElementById('fmap-tide-chart');
-        var sliderEl  = document.getElementById('fmap-tide-slider');
-        var scoreEl   = document.getElementById('fmap-tide-score');
-        var labelEl   = document.getElementById('fmap-tide-score-label');
-        var hourEl    = document.getElementById('fmap-tide-hour');
-        var moonEl    = document.getElementById('fmap-tide-moon');
-        if (!chartEl || !sliderEl) return;
+    // ─── Score fetch ──────────────────────────────────────────────────────────
+    // Fetches /api/v1/map/score once per 4-hour window (matching server forecast
+    // TTL) and caches the result in localStorage keyed by location.  On subsequent
+    // page loads within that window the cached data is used immediately — no
+    // network round-trip — and spot markers are tinted from the current hour's
+    // pre-computed score in that payload.
+    var _SCORE_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms — matches server forecast TTL
 
-        // Fetch scores for the map's saved location
-        function fetchScores() {
-            var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : null;
-            var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : null;
-            if (!lat || !lng) return;
+    function _scoreLocalKey(lat, lng) {
+        return 'fmap_score_v1_' + parseFloat(lat).toFixed(4) + '_' + parseFloat(lng).toFixed(4);
+    }
 
-            if (_scoreAbort) _scoreAbort.abort();
-            _scoreAbort = new AbortController();
-            // Show loading pulse on the badge while the request is in flight
-            if (scoreEl) scoreEl.classList.add('fmap-tide-score--loading');
-            fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
-                signal: _scoreAbort.signal
-            })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (d) {
-                if (!d || !d.ok) {
-                    if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
-                    return;
+    function _scheduleHourlyScoreRefresh() {
+        clearTimeout(_scoreHourTimer);
+        var now = new Date();
+        var msToNextHour = (60 - now.getMinutes()) * 60000 - now.getSeconds() * 1000 - now.getMilliseconds() + 50;
+        _scoreHourTimer = setTimeout(function () {
+            if (_scoreData) {
+                var h = new Date().getHours();
+                var hd = (_scoreData.hours || [])[h] || {};
+                _recolourSpotsByScore(hd.score || 0);
+                if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
+                    window._fmapRefreshPanelScore();
                 }
-                _scoreData = d.data;
-                renderChart();
-                updateSliderDisplay(); // replaces scoreEl className, clearing the loading class
-                if (moonEl) {
-                    var _solRating = (_scoreData.solunar_rating || '').toLowerCase();
-                    var _solClass  = _solRating === 'major' ? 'fmap-tide-sol--major'
-                                   : _solRating === 'minor' ? 'fmap-tide-sol--minor'
-                                   : 'fmap-tide-sol--none';
-                    moonEl.innerHTML = esc(_scoreData.moon_phase || '') +
-                        ' <span class="fmap-tide-sol ' + _solClass + '">· ' +
-                        esc(_scoreData.solunar_rating || '') + '</span>';
-                }
-            })
-            .catch(function (err) {
-                if (scoreEl) scoreEl.classList.remove('fmap-tide-score--loading');
-                if (err && err.name !== 'AbortError')
-                    console.warn('[fishing-map] score fetch failed:', err);
-            });
+            }
+            _scheduleHourlyScoreRefresh();
+        }, msToNextHour);
+    }
+
+    function _applyScoreData(data) {
+        _scoreData = data;
+        var nowHour = new Date().getHours();
+        var hData = (_scoreData.hours || [])[nowHour] || {};
+        _recolourSpotsByScore(hData.score || 0);
+        if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
+            window._fmapRefreshPanelScore();
         }
+        _scheduleHourlyScoreRefresh();
+    }
 
-        // Render 24 bars in the chart SVG container, with a cursor at the selected hour
-        function renderChart() {
-            if (!_scoreData || !chartEl) return;
-            var hours = _scoreData.hours || [];
-            var maxScore = 10;
-            var W = 240, H = 44;
-            var barW = W / 24;
-            var nowHour = new Date().getHours();
-            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">';
-            var scoreColors = {Excellent:'#4ade80', Good:'#a3e635', Fair:'#fbbf24', Slow:'#f87171'};
-            hours.forEach(function (h, i) {
-                var color = scoreColors[h.label] || '#64748b';
-                var barH  = Math.max(2, (h.score / maxScore) * (H - 4));
-                var x     = i * barW;
-                var y     = H - barH;
-                var isSelected = (i === _tideSliderHour);
-                svg += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' +
-                       (barW - 1) + '" height="' + barH +
-                       '" fill="' + color + '" opacity="' + (isSelected ? '1' : '0.55') +
-                       '" rx="1"/>';
-            });
-            // Triangle/chevron marking current real-time hour at top of chart
-            var ncx = (nowHour + 0.5) * barW;
-            svg += '<polygon points="' + ncx + ',0 ' + (ncx - 3) + ',5 ' + (ncx + 3) + ',5"' +
-                   ' fill="rgba(255,255,255,0.8)"/>';
-            // Cursor line at selected hour
-            var cx = (_tideSliderHour + 0.5) * barW;
-            svg += '<line x1="' + cx + '" y1="0" x2="' + cx + '" y2="' + H +
-                   '" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.7"/>';
-            svg += '</svg>';
-            chartEl.innerHTML = svg;
-        }
+    function _fetchMapScore() {
+        var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : null;
+        var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : null;
+        if (!lat || !lng) return;
 
-        // Update the badge and hour label for the current slider position
-        var _metaRowEl  = document.getElementById('fmap-tide-meta-row');
-        var _waterTempEl = document.getElementById('fmap-tide-water-temp');
+        // Serve from localStorage cache if still within the 4-hour TTL
+        var cacheKey = _scoreLocalKey(lat, lng);
+        try {
+            var stored = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+            if (stored && stored.ts && (Date.now() - stored.ts) < _SCORE_CACHE_TTL && stored.data) {
+                _applyScoreData(stored.data);
+                return;
+            }
+        } catch(e) {}
 
-        function updateSliderDisplay() {
-            if (!_scoreData) return;
-            var hours = _scoreData.hours || [];
-            var hData = hours[_tideSliderHour] || {};
-            var score = hData.score || 0;
-            var label = hData.label || '';
-            var grade = _LABEL_TO_GRADE[label] || 'fair';
-            var fac   = hData.factors || {};
-
-            if (scoreEl) {
-                scoreEl.textContent = score;
-                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
-            }
-            if (labelEl) {
-                labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
-            }
-            if (hourEl) {
-                var ampm = _tideSliderHour < 12 ? 'AM' : 'PM';
-                var h12  = _tideSliderHour % 12 || 12;
-                var isNow = _tideSliderHour === new Date().getHours();
-                hourEl.textContent = h12 + ':00 ' + ampm + (isNow ? ' · Now' : '');
-                sliderEl.setAttribute('aria-valuetext',
-                    h12 + ':00 ' + ampm + (isNow ? ', current hour' : '') + (label ? ' — ' + label : ''));
-            }
-            // Water temp + tide state in the meta row
-            if (_waterTempEl && _metaRowEl) {
-                var parts = [];
-                if (fac.water_temp_f != null) parts.push(fac.water_temp_f + '°F');
-                if (fac.tide)                 parts.push(String(fac.tide).replace(/\s*\(.*\)/, '') + ' tide');
-                if (fac.wind_mph != null)     parts.push(fac.wind_mph + ' mph wind');
-                _waterTempEl.textContent = parts.join(' · ');
-                _metaRowEl.hidden = !parts.length;
-            }
-            // Re-colour spot icons on the map by score
-            _recolourSpotsByScore(score);
-            // Refresh chart to move the cursor
-            renderChart();
-            // If the spot detail panel is open, refresh only its score + conditions
-            if (_activeSpotData && typeof window._fmapRefreshPanelScore === 'function') {
-                window._fmapRefreshPanelScore();
-            }
-        }
-
-        // Wire the range slider
-        sliderEl.min   = 0;
-        sliderEl.max   = 23;
-        sliderEl.value = _tideSliderHour;
-        sliderEl.addEventListener('input', function () {
-            _tideSliderHour = parseInt(this.value, 10) || 0;
-            updateSliderDisplay();
+        if (_scoreAbort) _scoreAbort.abort();
+        _scoreAbort = new AbortController();
+        fetch('/api/v1/map/score?lat=' + lat + '&lng=' + lng, {
+            signal: _scoreAbort.signal
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+            if (!d || !d.ok) return;
+            _applyScoreData(d.data);
+            try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: d.data })); }
+            catch(e) {}
+        })
+        .catch(function (err) {
+            if (err && err.name !== 'AbortError')
+                console.warn('[fishing-map] score fetch failed:', err);
         });
-
-        // Click anywhere on the chart to jump to that hour
-        chartEl.style.cursor = 'pointer';
-        chartEl.title = window.matchMedia('(pointer: coarse)').matches
-            ? 'Tap to select hour' : 'Click to select hour';
-        chartEl.addEventListener('click', function (e) {
-            if (!_scoreData) return;
-            var rect = chartEl.getBoundingClientRect();
-            if (!rect.width) return;
-            var hour = Math.min(23, Math.max(0, Math.floor((e.clientX - rect.left) / rect.width * 24)));
-            _tideSliderHour = hour;
-            sliderEl.value  = hour;
-            updateSliderDisplay();
-        });
-
-        // Hover over chart bars to preview that hour's score (desktop)
-        chartEl.addEventListener('mousemove', function (e) {
-            if (!_scoreData) return;
-            var rect = chartEl.getBoundingClientRect();
-            var x = e.clientX - rect.left;
-            if (x < 0 || x > rect.width) return;
-            var hoverHour = Math.min(23, Math.max(0, Math.floor(x / rect.width * 24)));
-            var hData = (_scoreData.hours || [])[hoverHour] || {};
-            var label = hData.label || '';
-            var grade = _LABEL_TO_GRADE[label] || 'fair';
-            if (scoreEl) {
-                scoreEl.textContent = hData.score || 0;
-                scoreEl.className = 'fmap-tide-score-badge fmap-tide-score-badge--' + grade;
-            }
-            if (labelEl) {
-                labelEl.textContent = label;
-                labelEl.className = 'fmap-tide-score-label' + (grade ? ' fmap-tide-score-label--' + grade : '');
-            }
-            if (hourEl) {
-                var ap = hoverHour < 12 ? 'AM' : 'PM';
-                hourEl.textContent = (hoverHour % 12 || 12) + ':00 ' + ap;
-            }
-        });
-        // Restore selected-hour display when mouse leaves the chart
-        chartEl.addEventListener('mouseleave', updateSliderDisplay);
-
-        // Initial fetch — debounce if location changes
-        fetchScores();
-        clearTimeout(_tideChartTimer);
-        _tideChartTimer = setTimeout(fetchScores, 300);
     }
 
     // ─── Spot detail panel ────────────────────────────────────────────────────
@@ -5653,8 +5628,9 @@
         function _refreshPanelScore() {
             var hasScore = !!_scoreData;
             var currentScore = 0, currentLabel = '', currentGrade = 'fair';
+            var _nowH = new Date().getHours();
             if (hasScore) {
-                var hd = (_scoreData.hours || [])[_tideSliderHour] || {};
+                var hd = (_scoreData.hours || [])[_nowH] || {};
                 currentScore = hd.score || 0;
                 currentLabel = hd.label || '';
                 currentGrade = _LABEL_TO_GRADE[currentLabel] || 'fair';
@@ -5666,7 +5642,7 @@
                     scoreEl.className = 'fmap-spot-score fmap-tide-score--loading';
                 } else {
                     // Trend: compare current hour to 2 hours ahead
-                    var futureHour = Math.min(23, _tideSliderHour + 2);
+                    var futureHour = Math.min(23, _nowH + 2);
                     var futureScore = ((_scoreData.hours || [])[futureHour] || {}).score || 0;
                     var delta = futureScore - currentScore;
                     var trendArrow = delta >= 1.5 ? '↑' : delta <= -1.5 ? '↓' : '';
@@ -5679,13 +5655,13 @@
                         : '';
                     scoreEl.innerHTML = '<span class="fmap-spot-score-num">' + currentScore +
                         '</span><span class="fmap-spot-score-denom">/10</span>' +
-                        (currentLabel ? ' <span class="fmap-spot-score-label">' + currentLabel + '</span>' : '') +
+                        (currentLabel ? ' <span class="fmap-spot-score-label">' + esc(currentLabel) + '</span>' : '') +
                         (trendArrow ? ' <span class="fmap-score-trend ' + trendClass + '" ' + trendAttrs + '>' + trendArrow + '</span>' : '');
                     scoreEl.className = 'fmap-spot-score fmap-spot-score--' + currentGrade;
                 }
             }
             if (condEl) {
-                var hd2 = _scoreData ? ((_scoreData.hours || [])[_tideSliderHour] || {}) : {};
+                var hd2 = _scoreData ? ((_scoreData.hours || [])[new Date().getHours()] || {}) : {};
                 var fac = hd2.factors || {};
                 var chips = [];
                 if (fac.tide)             chips.push({ icon: '🌊', title: 'Tide', text: String(fac.tide).replace(/\s*\(.*\)/, '') });
@@ -6001,9 +5977,9 @@
     function init() {
         var root = document.getElementById('fmap-root');
         if (!root) return;
+        _mapRoot = root;
 
-        els.mapEl         = document.getElementById('fishing-map-el');
-        els.loading       = document.getElementById('fmap-loading');
+        els.mapEl         = document.getElementById('fishing-map-el');        els.loading       = document.getElementById('fmap-loading');
         // Community / social elements
         els.catchDetail    = document.getElementById('fmap-catch-detail');
         els.catchDetailTitle = document.getElementById('fmap-catch-detail-title');
@@ -6044,9 +6020,64 @@
         }
     }
 
+    // Start fetching Leaflet and pre-parsing all localStorage caches immediately
+    // on page load — don't wait for the map section to scroll into view.
+    // Leaflet is now served from the same origin so there is no CDN round-trip.
+    // By the time the IntersectionObserver fires everything is ready and boot()
+    // renders cached spots near-instantly.
+    function _prewarmLeaflet() {
+        if (document.getElementById('fmap-root')) {
+            ensureLeafletCss();
+            // Parse both localStorage caches in parallel with the JS download.
+            _ssLoad();
+            _aiLsLoad();
+            // If the server inlined the home-corridor structures into the page
+            // (warm in-memory cache), seed spotCache immediately — zero XHR needed.
+            // This runs before Leaflet loads so the cache is hot when initMap fires.
+            if (window._FMAP_INLINE_STRUCTS) {
+                var _il = window._FMAP_INLINE_STRUCTS;
+                if (_il && _il.key && Array.isArray(_il.data) && !spotCache[_il.key]) {
+                    _spotCachePut(_il.key, _il.data);
+                }
+                window._FMAP_INLINE_STRUCTS = null; // release the reference
+            }
+            // When Leaflet is ready, kick off map init + structures query immediately
+            // without waiting for the IntersectionObserver to fire.  By the time the
+            // user scrolls the map into view, spots are already rendered.
+            loadScript(_LEAFLET_JS_LOCAL)
+                .catch(function () { return loadScript(_LEAFLET_JS_CDN); })
+                .catch(function () { return loadScript(_LEAFLET_JS_CDN2); })
+                .then(function () {
+                    if (!window.L) return;
+                    // init() runs synchronously before this callback fires (same
+                    // DOMContentLoaded tick), so els.mapEl is already set.  The
+                    // fallback inside initMap() handles any race on very fast loads.
+                    loadFilters();
+                    initMap();
+                    // Apply URL-hash type filters before the first render so shared
+                    // links never flash "all types" before narrowing to the hash filter.
+                    restoreFromHash();
+                    if (typeof CURRENT_LOC_LAT !== 'undefined' && CURRENT_LOC_LAT &&
+                        typeof CURRENT_LOC_LNG !== 'undefined' && CURRENT_LOC_LNG) {
+                        // Await the home-corridor pre-fetch (which uses the page's
+                        // <link rel="preload"> URL) so queryStructures() can serve
+                        // from _cachedSupersetOf() instead of firing a second
+                        // Overpass query for a smaller viewport bbox.
+                        var _cp = prefetchHomeCorridorStructures();
+                        (_cp || Promise.resolve()).then(function () {
+                            queryStructures();
+                            _fetchMapScore();
+                        });
+                    }
+                })
+                .catch(function () {});
+        }
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function () { _prewarmLeaflet(); init(); });
     } else {
+        _prewarmLeaflet();
         init();
     }
 })();

@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account &mdash; Surf &amp; Pier Fishing Forecast</title>
     {% include 'partials/_head_fonts.html' %}
-    <link rel="stylesheet" href="{{ surl('style.css') }}">
+    <link rel="preload" as="style" href="{{ surl('style.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
     <meta name="theme-color" content="#0e5f78">
     {% include 'partials/_theme_bootstrap.html' %}
     <style>
@@ -305,10 +306,10 @@
                             <span class="log-entry-text">{{ entry.date[:10] }} &mdash; {{ entry.species }}{% if entry.size %} ({{ entry.size }}){% endif %}</span>
                             <div class="log-entry-photos">
                                 {% if entry.photo1_path %}
-                                <img src="/{{ entry.photo1_path }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb">
+                                <img src="/{{ entry.photo1_path }}" alt="{{ entry.species }} catch photo 1" class="catch-thumb" loading="lazy">
                                 {% endif %}
                                 {% if entry.photo2_path %}
-                                <img src="/{{ entry.photo2_path }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb">
+                                <img src="/{{ entry.photo2_path }}" alt="{{ entry.species }} catch photo 2" class="catch-thumb" loading="lazy">
                                 {% endif %}
                             </div>
                             <form class="photo-upload-form" data-entry-id="{{ entry.id }}">

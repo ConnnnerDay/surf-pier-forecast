@@ -22,6 +22,12 @@ No API keys required.  Data cached per-location to ``data/``.
 from __future__ import annotations
 
 import gzip as _gzip
+import mimetypes as _mimetypes
+try:
+    import brotli as _brotli  # optional: pip install brotli
+    _BROTLI_AVAILABLE = True
+except ImportError:
+    _BROTLI_AVAILABLE = False
 import hmac
 import logging
 import os
@@ -161,6 +167,48 @@ def create_app() -> Flask:
     init_db()
 
     # -- Request hooks -----------------------------------------------------
+
+    _STATIC_MAX_AGE = 365 * 24 * 3600
+
+    @app.before_request
+    def _serve_precompressed_static() -> Any:
+        """Serve pre-generated .gz files for large static assets.
+
+        Flask's send_file uses direct_passthrough=True, which bypasses the
+        _gzip_response after_request hook.  Pre-compressed .gz siblings sit next
+        to the originals in static/ and are served here, saving per-request
+        compression CPU and sending 70-82% smaller payloads on the first visit.
+        """
+        if request.method not in {"GET", "HEAD"}:
+            return None
+        if not request.path.startswith("/static/"):
+            return None
+        if "gzip" not in request.headers.get("Accept-Encoding", ""):
+            return None
+        rel = request.path[len("/static/"):]
+        gz_path = _pathlib.Path(app.static_folder or "static") / (rel + ".gz")
+        if not gz_path.is_file():
+            return None
+        mime = _mimetypes.guess_type(rel)[0] or "application/octet-stream"
+        resp = send_from_directory(app.static_folder or "static", rel + ".gz", mimetype=mime)
+        resp.headers["Content-Encoding"] = "gzip"
+        resp.headers["Vary"] = "Accept-Encoding"
+        resp.headers["Cache-Control"] = f"public, max-age={_STATIC_MAX_AGE}, immutable"
+        return resp
+
+    @app.after_request
+    def _static_immutable(response: Any) -> Any:
+        """Add immutable to Cache-Control for versioned static files.
+
+        surl() appends ?v=<mtime> so the URL changes whenever the file changes,
+        making immutable safe: the browser will never re-validate during the 1-year
+        window, eliminating conditional GET round-trips on repeat visits.
+        """
+        if request.endpoint == "static" and response.status_code == 200:
+            cc = response.headers.get("Cache-Control", "")
+            if "max-age" in cc and "immutable" not in cc:
+                response.headers["Cache-Control"] = cc.rstrip(", ") + ", immutable"
+        return response
 
     @app.before_request
     def _load_user() -> None:
@@ -369,17 +417,17 @@ def create_app() -> Flask:
             "interest-cohort=(), geolocation=self, microphone=(), camera=self",
         )
         # Content Security Policy — restrict resource origins to reduce XSS impact.
-        # Google Fonts (style + font) and unpkg.com (Leaflet) are explicit allow-listed
-        # CDNs used by the templates; all other external sources are blocked.
+        # Fonts are now self-hosted (static/fonts/) so fonts.googleapis.com and
+        # fonts.gstatic.com no longer need to be allow-listed.
         # 'unsafe-inline' is required for the existing inline <script> and <style>
         # blocks; if those are ever moved to external files this can be tightened.
         response.headers.setdefault(
             "Content-Security-Policy",
             (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
-                "font-src 'self' https://fonts.gstatic.com; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "font-src 'self'; "
                 "img-src 'self' data: blob: https://lh3.googleusercontent.com "
                 "https://*.tile.openstreetmap.org https://*.openstreetmap.fr "
                 "https://*.basemaps.cartocdn.com "
@@ -412,32 +460,39 @@ def create_app() -> Flask:
 
     @app.after_request
     def _gzip_response(response: Any) -> Any:
-        """Compress text responses when the client supports gzip.
+        """Compress text responses, preferring Brotli over gzip when both are available.
 
-        JSON and HTML are the biggest wins: repetitive JSON compresses 85-90 %
-        (80-200 KB → 10-25 KB); the rendered dashboard HTML compresses ~75 %
-        (~120 KB → ~30 KB).  CSS and JS also benefit if not already compressed
-        at the proxy layer.
-        Uses Python's built-in gzip (compresslevel=6) — no extra dependencies.
-        Skips already-encoded, small (<500 B), or streaming responses.
+        Brotli (br) typically gives 8-15 % better compression than gzip and is
+        supported by all modern browsers.  Falls back to gzip when the client
+        does not advertise br.  Skips already-encoded, small (<500 B), or
+        streaming responses.
         """
         ct = (response.content_type or "").split(";")[0].strip()
         if (
             response.direct_passthrough
             or response.status_code != 200
             or "Content-Encoding" in response.headers
-            or "gzip" not in request.headers.get("Accept-Encoding", "")
             or ct not in _COMPRESSIBLE
         ):
+            return response
+        accept_enc = request.headers.get("Accept-Encoding", "")
+        use_brotli = _BROTLI_AVAILABLE and "br" in accept_enc
+        use_gzip = "gzip" in accept_enc
+        if not use_brotli and not use_gzip:
             return response
         data = response.get_data()
         if len(data) < 500:
             return response
-        compressed = _gzip.compress(data, compresslevel=6)
+        if use_brotli:
+            compressed = _brotli.compress(data, quality=6)
+            encoding = "br"
+        else:
+            compressed = _gzip.compress(data, compresslevel=6)
+            encoding = "gzip"
         if len(compressed) >= len(data):
             return response
         response.set_data(compressed)
-        response.headers["Content-Encoding"] = "gzip"
+        response.headers["Content-Encoding"] = encoding
         response.headers["Content-Length"] = len(compressed)
         response.headers["Vary"] = "Accept-Encoding"
         response.headers.pop("Content-MD5", None)

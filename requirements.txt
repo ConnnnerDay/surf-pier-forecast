@@ -19,6 +19,9 @@ cryptography>=41.0,<45.0
 # .env file support — loads environment variables from .env in dev automatically
 python-dotenv>=1.0,<2.0
 
+# Brotli compression — optional, falls back to gzip if not installed
+brotli>=1.0,<2.0
+
 # ── Geospatial / GIS (spatial clip + coastline overlays) ──────────────────────
 # Requires system libraries before pip install:
 #   Debian/Ubuntu: sudo apt-get install libgdal-dev libgeos-dev libproj-dev

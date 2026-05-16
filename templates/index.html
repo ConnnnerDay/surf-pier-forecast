@@ -6,7 +6,32 @@
     <meta name="color-scheme" content="dark light">
     <title>{{ forecast.location_name or 'Fishing Forecast' }} &mdash; Surf &amp; Pier Forecast</title>
     {% include 'partials/_head_fonts.html' %}
-    <link rel="stylesheet" href="{{ surl('style.css') }}">
+    {# Critical CSS — inlined to eliminate render-blocking on style.css.
+       Contains only CSS custom properties (both themes) and the minimum base
+       rules needed to prevent FOUC: body background, header colour, hidden
+       suppression, and box-sizing.  The full style.css loads non-blocking. #}
+    <style>
+    :root{--ocean:#0077B6;--ocean-dark:#023E8A;--ocean-light:#D6EAF5;--sand:#FFFBF0;--sand-dark:#F5E8CE;--coral:#F4543B;--sea-green:#059669;--amber:#D97706;--sky:#0EA5E9;--red:#DC2626;--text:#1C3245;--text-muted:#5B7285;--white:#FAFAF8;--bg-subtle:#EBE8E2;--bg-body:#EDE8DF;--border-light:#D8E3EC;--card-bg:#FAFAF8;--shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--shadow-md:0 4px 12px rgba(0,0,0,.1);--shadow-lg:0 8px 28px rgba(0,0,0,.14);--radius:10px;--radius-sm:6px}
+    [data-theme="dark"]{--ocean:#38C0FF;--ocean-dark:#0EA5E9;--ocean-light:#0D2035;--sand:#0E1824;--sand-dark:#0A1118;--coral:#FF6B4A;--sea-green:#34D399;--amber:#FBBF24;--sky:#7DD3FC;--red:#F87171;--text:#D8EBF8;--text-muted:#7AA3BE;--white:#111E2E;--bg-subtle:#172438;--bg-body:#0A1520;--border-light:#1D3550;--card-bg:#122035;--shadow-sm:0 1px 3px rgba(0,0,0,.35);--shadow-md:0 4px 12px rgba(0,0,0,.45);--shadow-lg:0 8px 28px rgba(0,0,0,.6)}
+    *,*::before,*::after{box-sizing:border-box}
+    [hidden]{display:none!important}
+    html{overflow-x:hidden}
+    body{margin:0;background:var(--bg-body);color:var(--text)}
+    header{background:#0D2240;color:var(--white)}
+    [data-theme="dark"] header{background:#07131F}
+    </style>
+    <link rel="preload" as="style" href="{{ surl('style.min.css') }}" fetchpriority="high" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('style.min.css') }}"></noscript>
+    <link rel="preload" as="style" href="{{ surl('leaflet.min.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ surl('leaflet.min.css') }}"></noscript>
+    <link rel="preload" as="script" href="{{ surl('js/page.min.js') }}" fetchpriority="high">
+    <link rel="preload" as="script" href="{{ surl('js/stat-cards.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/water-conditions.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/solunar.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/collapsibles.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/layout-editor.min.js') }}">
+    <link rel="preload" as="script" href="{{ surl('js/leaflet.min.js') }}" fetchpriority="low">
+    <link rel="preload" as="script" href="{{ surl('js/fishing_map.min.js') }}" fetchpriority="low">
     <link rel="manifest" href="{{ surl('manifest.json') }}">
     <meta name="theme-color" content="#0a1a24">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,7 +59,20 @@
     <link rel="preload" as="fetch" crossorigin href="/api/weather/env-context?lat={{ location_lat }}&amp;lng={{ location_lng }}">
     <link rel="preload" as="fetch" crossorigin href="/api/weather/combined-forecast?lat={{ location_lat }}&amp;lng={{ location_lng }}">
     <link rel="preload" as="fetch" crossorigin href="/api/map/stat-cards?lat={{ location_lat }}&amp;lng={{ location_lng }}">
+    <link rel="preload" as="fetch" crossorigin href="/api/v1/geo/environmental?lat={{ location_lat }}&amp;lng={{ location_lng }}{% if forecast.location_state %}&amp;state={{ forecast.location_state }}{% endif %}">
+    {% if struct_preload_url and not inline_structures %}
+    <link rel="preload" as="fetch" crossorigin href="{{ struct_preload_url }}">
     {% endif %}
+    {% if score_preload_url %}
+    <link rel="preload" as="fetch" crossorigin href="{{ score_preload_url }}">
+    {% endif %}
+    {% endif %}
+    {# Preconnect to map tile and Leaflet CDN origins so DNS+TLS is done before the map boots #}
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://server.arcgisonline.com">
+    <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+    <link rel="dns-prefetch" href="https://tiles.openseamap.org">
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 </head>
 <body class="forecast-page has-app-header">
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -654,30 +692,6 @@
                     </div>
                 </div>
 
-                {# ── Tide chart + time slider ── #}
-                <div class="fmap-tide-bar" id="fmap-tide-bar" aria-label="Tide chart and strike score">
-                    <div class="fmap-tide-bar-inner">
-                        <div class="fmap-tide-chart-wrap">
-                            <div class="fmap-tide-chart" id="fmap-tide-chart" aria-hidden="true"></div>
-                            <div class="fmap-tide-hour-labels" aria-hidden="true">
-                                <span>12a</span><span>6a</span><span>12p</span><span>6p</span>
-                            </div>
-                            <input type="range" id="fmap-tide-slider" class="fmap-tide-slider"
-                                   min="0" max="23" value="12"
-                                   aria-label="Select hour for strike score">
-                        </div>
-                        <div class="fmap-tide-score-wrap">
-                            <span class="fmap-tide-score" id="fmap-tide-score">–</span>
-                            <span class="fmap-tide-score-label" id="fmap-tide-score-label">–</span>
-                            <span class="fmap-tide-hour" id="fmap-tide-hour">Now</span>
-                        </div>
-                        <div class="fmap-tide-moon" id="fmap-tide-moon"></div>
-                        <div class="fmap-tide-meta-row" id="fmap-tide-meta-row" hidden>
-                            <span class="fmap-tide-water-temp" id="fmap-tide-water-temp"></span>
-                        </div>
-                    </div>
-                </div>
-
                 {# ── Spot detail panel ── #}
                 <div id="fmap-spot-detail" class="fmap-spot-detail" role="dialog"
                      aria-modal="true" aria-labelledby="fmap-spot-detail-name"
@@ -1206,26 +1220,8 @@
 </footer>
 
 <script>
-/* ---- HTML escape helper ---- */
-function esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-/* ---- Alerts collapse/expand ---- */
-function toggleAlerts(btn) {
-    var detail = document.getElementById('alerts-detail');
-    if (!detail) return;
-    var expanded = btn.getAttribute('aria-expanded') === 'true';
-    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-    detail.hidden = expanded;
-    var chevron = btn.querySelector('.alerts-toggle-chevron');
-    if (chevron) chevron.innerHTML = expanded ? '&#9660;' : '&#9650;';
-}
-
-/* ---- Auth state ---- */
+/* ---- Auth + location globals (server-rendered) ---- */
 var LOGGED_IN = {{ 'true' if user else 'false' }};
-
-/* ---- Favorite Locations (localStorage) ---- */
 var FAV_KEY = 'favorite_locations';
 var CURRENT_LOC_ID = {{ (forecast.location_id or '')|tojson }};
 var CURRENT_LOC_STATE = {{ (forecast.location_state or ((forecast.location_name.split(',')[-1].strip()) if forecast.location_name and ',' in forecast.location_name else ''))|tojson }};
@@ -1234,62 +1230,11 @@ var CURRENT_LOC_LAT = {{ location_lat|tojson }};
 var CURRENT_LOC_LNG = {{ location_lng|tojson }};
 var IS_REFRESHING = {{ ('true' if cached == 'refreshing' else 'false') }};
 var MAP_IS_ADMIN  = {{ ('true' if g.user and g.user.get('is_admin') else 'false') }};
-
-function getFavorites() {
-    try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
-    catch(e) { return []; }
-}
-
-function saveFavorites(favs) {
-    localStorage.setItem(FAV_KEY, JSON.stringify(favs));
-    syncToServer();
-}
-
-function isFavorite() {
-    return getFavorites().some(function(f) { return f.id === CURRENT_LOC_ID; });
-}
-
-function toggleFavorite() {
-    var favs = getFavorites();
-    var idx = favs.findIndex(function(f) { return f.id === CURRENT_LOC_ID; });
-    if (idx >= 0) {
-        favs.splice(idx, 1);
-    } else {
-        favs.push({ id: CURRENT_LOC_ID, name: CURRENT_LOC_NAME });
-        if (favs.length > 8) favs = favs.slice(-8);
-    }
-    saveFavorites(favs);
-    renderFavorites();
-}
-
-function renderFavorites() {
-    var favs = getFavorites();
-    var isFav = isFavorite();
-    var toggle = document.getElementById('fav-toggle');
-    if (toggle) {
-        toggle.classList.toggle('fav-toggle--active', isFav);
-        var _favToggleLabel = isFav ? 'Remove from favorites' : 'Save to favorites';
-        toggle.setAttribute('aria-pressed', isFav ? 'true' : 'false');
-        toggle.setAttribute('aria-label', _favToggleLabel);
-        toggle.title = _favToggleLabel;
-    }
-    var bar = document.getElementById('favorites-bar');
-    var wrap = document.getElementById('favorites-bar-wrap');
-    if (!bar) return;
-    if (favs.length === 0) {
-        bar.innerHTML = '';
-        if (wrap) wrap.hidden = true;
-        return;
-    }
-    if (wrap) wrap.hidden = false;
-    var html = '';
-    favs.forEach(function(f) {
-        var active = f.id === CURRENT_LOC_ID ? ' fav-chip--active' : '';
-        var shortName = f.name.split(',')[0];
-        html += '<a href="/f/' + encodeURIComponent(f.id) + '" class="fav-chip' + active + '">' + esc(shortName) + '</a>';
-    });
-    bar.innerHTML = html;
-}
+var LEAFLET_JS_URL = {{ surl('js/leaflet.min.js')|tojson }};
+var FMAP_JS_URL    = {{ surl('js/fishing_map.min.js')|tojson }};
+var SERVER_PROFILE = {{ (profile or {})|tojson }};
+var SHARE_ID = {{ share_id|tojson }};
+var SHARE_TEXT_URL = {{ url_for('api.share_text')|tojson }};
 
 // Seed localStorage favorites from server-stored account data (logged-in users).
 // This ensures favorites appear immediately on first load from a new device.
@@ -1297,7 +1242,8 @@ function renderFavorites() {
 (function() {
     var serverFavs = {{ favorite_locations|tojson }};
     if (serverFavs && serverFavs.length) {
-        var local = getFavorites();
+        var local;
+        try { local = JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch(e) { local = []; }
         var localIds = local.map(function(f) { return f.id; });
         serverFavs.forEach(function(sf) {
             if (localIds.indexOf(sf.id) < 0) {
@@ -1309,317 +1255,12 @@ function renderFavorites() {
 })();
 {% endif %}
 
-renderFavorites();
+// ── Solunar + tide data (logic in solunar.min.js) ─────────────────────────
+window._SOL_MAJOR = {{ (forecast.solunar.major_periods if forecast.solunar else []) | tojson }};
+window._SOL_MINOR = {{ (forecast.solunar.minor_periods if forecast.solunar else []) | tojson }};
+window._TIDES     = {{ (forecast.tides if forecast.tides else []) | tojson }};
 
-/* ---- Fishing Profile ---- */
-var SERVER_PROFILE = {{ (profile or {})|tojson }};
-
-function getProfile() {
-    if (!SERVER_PROFILE || !Object.keys(SERVER_PROFILE).length) return null;
-    return SERVER_PROFILE;
-}
-
-function buildProfileParams(profile) {
-    var params = new URLSearchParams(window.location.search);
-    var ft = (profile.fishing_types || profile.fishing_type || []).join(',');
-    var tg = (profile.targets || []).join(',');
-    if (ft) params.set('fishing_types', ft);
-    else params.delete('fishing_types');
-    if (tg) params.set('targets', tg);
-    else params.delete('targets');
-    return params;
-}
-
-function profileParamsMatch(profile) {
-    var params = new URLSearchParams(window.location.search);
-    var currentFt = params.get('fishing_types') || '';
-    var currentTg = params.get('targets') || '';
-    var expectedFt = (profile.fishing_types || profile.fishing_type || []).join(',');
-    var expectedTg = (profile.targets || []).join(',');
-    return currentFt === expectedFt && currentTg === expectedTg;
-}
-
-function applyBaitFilters() {
-    var profile = getProfile();
-    if (!profile || !profile.completed) return;
-    var liveKeywords = ['live shrimp','live finger','live mullet','live menhaden','live blue runner','live cigar','live crab','live baitfish','live eel','live minnow','live pogies'];
-    var lureKeywords = ['jig','spoon','plug','lure','feather','cedar plug','trolling','dart','artificial','fishbites'];
-    var cutKeywords  = ['cut ','blood','squid','clam','crab piece','shrimp piece','sand flea','fiddler','fresh shrimp','mussel'];
-    function methodScore(pref) { return pref === 'yes' ? 2 : pref === 'sometimes' ? 1 : 0; }
-
-    var baitList = document.querySelector('.bait-list');
-    if (baitList) {
-        var baitItems = Array.prototype.slice.call(baitList.querySelectorAll('.bait-item[data-bait-name]'));
-        baitItems.forEach(function(item, idx) {
-            var name = item.getAttribute('data-bait-name') || '';
-            var isLive = liveKeywords.some(function(k) { return name.indexOf(k) >= 0; });
-            var isLure = lureKeywords.some(function(k) { return name.indexOf(k) >= 0; });
-            var isCut  = cutKeywords.some(function(k)  { return name.indexOf(k) >= 0; });
-            var score = 0;
-            if (isLive) score = Math.max(score, methodScore(profile.live_bait));
-            if (isLure) score = Math.max(score, methodScore(profile.lures));
-            if (isCut)  score = Math.max(score, methodScore(profile.cut_bait));
-            if (!isLive && !isLure && !isCut) score = 1;
-            item._profileScore = score;
-            item._origIndex = idx;
-        });
-        baitItems.sort(function(a,b) {
-            if (b._profileScore !== a._profileScore) return b._profileScore - a._profileScore;
-            return a._origIndex - b._origIndex;
-        });
-        baitItems.forEach(function(item, idx) {
-            baitList.appendChild(item);
-            var numEl = item.querySelector('.bait-num');
-            if (numEl) numEl.textContent = idx + 1;
-        });
-    }
-
-    var speciesCards = document.querySelectorAll('.species-card[data-species-bait]');
-    speciesCards.forEach(function(card) {
-        var baitText = card.getAttribute('data-species-bait') || '';
-        var metaBait = card.querySelector('.meta-item--bait');
-        if (!metaBait) return;
-        var hasLive = liveKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
-        var hasLure = lureKeywords.some(function(k) { return baitText.indexOf(k) >= 0; });
-        var hasCut  = cutKeywords.some(function(k)  { return baitText.indexOf(k) >= 0; });
-        var tips = [];
-        if (hasLive && (profile.live_bait === 'yes' || profile.live_bait === 'sometimes')) tips.push('live bait');
-        if (hasLure && (profile.lures === 'yes' || profile.lures === 'sometimes')) tips.push('lures');
-        if (hasCut  && (profile.cut_bait === 'yes' || profile.cut_bait === 'sometimes')) tips.push('cut bait');
-        if (tips.length > 0) {
-            var badge = document.createElement('span');
-            badge.className = 'personalized-label';
-            badge.textContent = 'Your methods: ' + tips.join(', ');
-            metaBait.appendChild(badge);
-        }
-    });
-}
-
-(function() {
-    var profile = getProfile();
-    if (!profile || !profile.completed) {
-        // Only prompt logged-in users to complete their profile.
-        // Guests (e.g. someone opening a shared link on mobile) should see the
-        // forecast without being bounced to the login/profile flow.
-        if (LOGGED_IN) {
-            var profilePrompted = sessionStorage.getItem('profile_prompted');
-            if (!profilePrompted) {
-                sessionStorage.setItem('profile_prompted', 'true');
-                window.location.href = '/profile';
-                return;
-            }
-        }
-        return;
-    }
-    if (!profileParamsMatch(profile)) {
-        var params = buildProfileParams(profile);
-        var newUrl = window.location.pathname + '?' + params.toString();
-        window.location.replace(newUrl);
-        return;
-    }
-    applyBaitFilters();
-})();
-
-/* ---- Theme toggle (legacy, called by menu) ---- */
-function toggleTheme() {
-    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-        document.documentElement.setAttribute('data-theme', 'light');
-        localStorage.setItem('theme', 'light');
-    } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-    }
-    syncToServer();
-}
-
-/* ---- Unit toggle ---- */
-function applyUnits(unit) {
-    var els = document.querySelectorAll('.unit-temp');
-    els.forEach(function(el) {
-        var f = parseFloat(el.getAttribute('data-f'));
-        if (isNaN(f)) return;
-        if (unit === 'C') {
-            var c = Math.round((f - 32) * 5 / 9);
-            el.innerHTML = c + '&deg;C';
-        } else {
-            el.innerHTML = Math.round(f) + '&deg;F';
-        }
-    });
-}
-
-function toggleUnits() {
-    var current = localStorage.getItem('units') || 'F';
-    var next = current === 'F' ? 'C' : 'F';
-    localStorage.setItem('units', next);
-    applyUnits(next);
-    syncToServer();
-}
-
-(function() {
-    var u = localStorage.getItem('units');
-    if (u === 'C') applyUnits('C');
-})();
-
-/* ---- Toast ---- */
-function showToast(msg) {
-    var t = document.getElementById('share-toast');
-    if (!t) return;
-    t.textContent = msg;
-    t.hidden = false;
-    setTimeout(function() { t.hidden = true; }, 2200);
-}
-
-/* ---- Share ---- */
-function shareLink() {
-    var shareId = {{ share_id|tojson }};
-    var url = window.location.origin + '/f/' + shareId;
-    if (navigator.share) {
-        navigator.share({ title: 'Fishing Forecast', url: url }).catch(function(){});
-    } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(function() { showToast('Link copied!'); });
-    } else {
-        prompt('Copy this link:', url);
-    }
-}
-
-function shareText() {
-    fetch('{{ url_for("api.share_text") }}')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.text) {
-                var url = window.location.origin + '/f/' + data.location_id;
-                var full = data.text + '\n\n' + url;
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(full).then(function() { showToast('Summary copied!'); });
-                } else {
-                    prompt('Copy this summary:', full);
-                }
-            }
-        });
-}
-
-/* ---- Quick-share from verdict bar ---- */
-function shareConditions(btn) {
-    var shareId = {{ share_id|tojson }};
-    var url = shareId ? (window.location.origin + '/f/' + shareId) : window.location.href;
-
-    // Compose share text from visible DOM — works instantly, no fetch needed
-    var loc = (typeof CURRENT_LOC_NAME !== 'undefined' && CURRENT_LOC_NAME)
-        ? CURRENT_LOC_NAME
-        : ((document.querySelector('.location-bar-name') || {}).textContent || '').trim();
-
-    var verdictEl = document.querySelector('.csc-verdict-badge');
-    var verdict = verdictEl ? verdictEl.textContent.trim() : '';
-
-    var windEl = document.querySelector('.wind-direction-context') || document.querySelector('.wind-quality-indicator');
-    var wind = windEl ? windEl.textContent.trim() : '';
-
-    var tempEl = document.querySelector('.unit-temp');
-    var temp = tempEl ? tempEl.textContent.trim() : '';
-
-    // Find the Waves stat card by label text — robust against reordering
-    var wavesCard = Array.prototype.find.call(document.querySelectorAll('.stat-card'), function (c) {
-        var lbl = c.querySelector('.stat-label');
-        return lbl && lbl.textContent.trim() === 'Waves';
-    });
-    var waves = wavesCard ? ((wavesCard.querySelector('.stat-value') || {}).textContent || '').trim() : '';
-
-    var lines = [];
-    if (loc) lines.push(loc + ' fishing forecast');
-    if (verdict) lines.push('Conditions: ' + verdict);
-    if (wind) lines.push('Wind: ' + wind);
-    if (temp) lines.push('Water: ' + temp);
-    if (waves) lines.push('Waves: ' + waves);
-    var text = lines.join('\n');
-
-    var CHECK_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
-
-    function flashSuccess() {
-        if (!btn) return;
-        var orig = btn.innerHTML;
-        btn.innerHTML = CHECK_SVG;
-        btn.style.color = 'var(--sea-green, #1a9c72)';
-        setTimeout(function () { btn.innerHTML = orig; btn.style.color = ''; }, 1800);
-    }
-
-    if (navigator.share) {
-        navigator.share({ title: (loc || 'Fishing') + ' Forecast', text: text, url: url })
-            .then(flashSuccess)
-            .catch(function () {});
-    } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(text + '\n\n' + url).then(function () {
-            flashSuccess();
-            showToast('Forecast copied!');
-        });
-    } else {
-        prompt('Copy this forecast:', text + '\n\n' + url);
-    }
-}
-
-/* ---- Sync localStorage → server ---- */
-function syncToServer() {
-    if (!LOGGED_IN) return;
-    var payload = {};
-    var theme = localStorage.getItem('theme');
-    if (theme) payload.theme = theme;
-    var units = localStorage.getItem('units');
-    if (units) payload.units = units;
-    var profile = getProfile();
-    if (profile) payload.fishing_profile = profile;
-    var favs = getFavorites();
-    if (favs.length) payload.favorites = favs;
-    if (CURRENT_LOC_ID) payload.location_id = CURRENT_LOC_ID;
-    if (Object.keys(payload).length === 0) return;
-    var payloadStr = JSON.stringify(payload);
-    // Skip the round-trip when preferences haven't changed since last sync.
-    if (localStorage.getItem('_prefs_sync_hash') === payloadStr) return;
-    fetch('/api/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payloadStr
-    }).then(function(r) {
-        if (r.ok) localStorage.setItem('_prefs_sync_hash', payloadStr);
-    }).catch(function() {});
-}
-syncToServer();
-
-function syncLogToServer() {
-    if (!LOGGED_IN || !CURRENT_LOC_ID) return;
-    if (typeof getLog !== 'function' || typeof saveLog !== 'function') return;
-    var entries = getLog();
-    if (!entries.length) return;
-    entries.forEach(function(e) {
-        if (e.synced) return;
-        fetch('/api/log?location=' + encodeURIComponent(CURRENT_LOC_ID), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ species: e.species, size: e.size || '', notes: e.notes || '' })
-        }).then(function(r) { if (r.ok) e.synced = true; saveLog(entries); }).catch(function() {});
-    });
-}
-syncLogToServer();
-
-/* ---- Refresh ---- */
-function handleRefreshSubmit(form) {
-    var btn = document.getElementById('refresh-btn');
-    var label = document.getElementById('refresh-btn-label');
-    var spinner = document.getElementById('refresh-btn-spinner');
-    if (btn) btn.disabled = true;
-    if (label) label.hidden = true;
-    if (spinner) spinner.hidden = false;
-}
-
-(function() {
-    var fmt = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
-    document.querySelectorAll('.iso-timestamp').forEach(function(el) {
-        try {
-            var d = new Date(el.dataset.iso);
-            if (!isNaN(d.getTime())) el.textContent = d.toLocaleString(undefined, fmt);
-        } catch(e) {}
-    });
-})();
-
+// ── Refreshing poll — must run immediately when IS_REFRESHING is true ──────
 if (IS_REFRESHING && CURRENT_LOC_ID) {
     (function() {
         var POLL_MS = 3000;
@@ -1637,363 +1278,6 @@ if (IS_REFRESHING && CURRENT_LOC_ID) {
         setTimeout(check, POLL_MS);
     })();
 }
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function(){});
-}
-
-// ── Screen Wake Lock ──────────────────────────────────────────────────────
-// Keep the screen on while the user views the forecast (useful at the pier).
-// The lock is automatically released when the tab is hidden and re-acquired
-// when the user returns.
-(function () {
-    if (!('wakeLock' in navigator)) return;
-    var _lock = null;
-    function acquireLock() {
-        navigator.wakeLock.request('screen').then(function (l) {
-            _lock = l;
-        }).catch(function () {}); // silently ignore — permission may be denied
-    }
-    document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible') acquireLock();
-    });
-    acquireLock();
-})();
-
-// ── Live solunar + tide countdowns ───────────────────────────────────────
-(function () {
-    // Data injected at render time — all times are local 12-hr strings e.g. "6:15 AM"
-    var SOL_MAJOR = {{ (forecast.solunar.major_periods if forecast.solunar else []) | tojson }};
-    var SOL_MINOR = {{ (forecast.solunar.minor_periods if forecast.solunar else []) | tojson }};
-    var TIDES     = {{ (forecast.tides if forecast.tides else []) | tojson }};
-
-    // Parse "6:15 AM" / "12:30 PM" into a Date set to today
-    function parseLocalTime(str) {
-        if (!str) return null;
-        var m = str.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-        if (!m) return null;
-        var h = parseInt(m[1], 10), min = parseInt(m[2], 10), ampm = m[3].toUpperCase();
-        if (ampm === 'AM' && h === 12) h = 0;
-        if (ampm === 'PM' && h !== 12) h += 12;
-        var d = new Date();
-        d.setHours(h, min, 0, 0);
-        return d;
-    }
-
-    function fmtCountdown(ms) {
-        var totalMin = Math.round(ms / 60000);
-        if (totalMin <= 0) return null;
-        if (totalMin < 60) return totalMin + ' min';
-        var h = Math.floor(totalMin / 60), mn = totalMin % 60;
-        return mn > 0 ? h + 'h ' + mn + 'm' : h + 'h';
-    }
-
-    function timeToMinuteOfDay(str) {
-        var d = parseLocalTime(str);
-        if (!d) return null;
-        return (d.getHours() * 60) + d.getMinutes();
-    }
-
-    function drawSolunarChart() {
-        var canvas = document.getElementById('solunar-chart-canvas');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        var rect = canvas.getBoundingClientRect();
-        var width = Math.max(320, Math.floor(rect.width || 0));
-        var height = Math.max(120, Math.floor(rect.height || 0));
-        var dpr = window.devicePixelRatio || 1;
-        if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
-            canvas.width = Math.floor(width * dpr);
-            canvas.height = Math.floor(height * dpr);
-        }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, width, height);
-
-        var left = 14, right = width - 14, top = 18, bottom = height - 22;
-        var usableW = Math.max(1, right - left);
-        var laneH = Math.max(14, bottom - top);
-        function xFromMin(m) { return left + (usableW * (m / 1440)); }
-
-        ctx.fillStyle = 'rgba(255,255,255,0.06)';
-        ctx.fillRect(left, top, usableW, laneH);
-
-        // Hour markers.
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1;
-        for (var h = 0; h <= 24; h += 3) {
-            var x = xFromMin(h * 60);
-            ctx.beginPath();
-            ctx.moveTo(x, top);
-            ctx.lineTo(x, bottom);
-            ctx.stroke();
-        }
-
-        function drawPeriods(periods, fill, alpha) {
-            ctx.fillStyle = fill;
-            ctx.globalAlpha = alpha;
-            periods.forEach(function (p) {
-                var start = timeToMinuteOfDay(p.start);
-                var end = timeToMinuteOfDay(p.end);
-                if (start == null || end == null) return;
-                if (end <= start) end += 1440;
-                var segments = end > 1440
-                    ? [{ s: start, e: 1440 }, { s: 0, e: end - 1440 }]
-                    : [{ s: start, e: end }];
-                segments.forEach(function (seg) {
-                    var x = xFromMin(seg.s), w = Math.max(2, xFromMin(seg.e) - x);
-                    ctx.fillRect(x, top, w, laneH);
-                });
-            });
-            ctx.globalAlpha = 1;
-        }
-
-        drawPeriods(SOL_MINOR, '#38BDF8', 0.45);
-        drawPeriods(SOL_MAJOR, '#F59E0B', 0.82);
-
-        // Current time marker.
-        var now = new Date();
-        var nowMin = now.getHours() * 60 + now.getMinutes();
-        var nx = xFromMin(nowMin);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(nx, top - 5);
-        ctx.lineTo(nx, bottom + 5);
-        ctx.stroke();
-
-        // Labels.
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.font = '11px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-        ctx.fillText('12A', left, height - 7);
-        ctx.fillText('6A', xFromMin(360) - 9, height - 7);
-        ctx.fillText('12P', xFromMin(720) - 11, height - 7);
-        ctx.fillText('6P', xFromMin(1080) - 9, height - 7);
-        ctx.fillText('12A', right - 22, height - 7);
-    }
-
-    // ── Solunar countdown ─────────────────────────────────────────────────
-    var solChip = document.getElementById('sol-countdown');
-    function updateSolunar() {
-        if (!solChip) return;
-        var now = Date.now();
-
-        // Are we inside a major period right now?
-        for (var i = 0; i < SOL_MAJOR.length; i++) {
-            var s = parseLocalTime(SOL_MAJOR[i].start), e = parseLocalTime(SOL_MAJOR[i].end);
-            if (s && e && now >= s.getTime() && now <= e.getTime()) {
-                var rem = fmtCountdown(e.getTime() - now);
-                solChip.textContent = '\u2605 Major feeding window' + (rem ? ' \u2014 ends in ' + rem : ' now!');
-                solChip.className = 'sol-countdown-chip sol-countdown-chip--active';
-                solChip.hidden = false;
-                return;
-            }
-        }
-        // Inside a minor period?
-        for (var j = 0; j < SOL_MINOR.length; j++) {
-            var ms = parseLocalTime(SOL_MINOR[j].start), me = parseLocalTime(SOL_MINOR[j].end);
-            if (ms && me && now >= ms.getTime() && now <= me.getTime()) {
-                var rem2 = fmtCountdown(me.getTime() - now);
-                solChip.textContent = '\u25cf Minor feeding window' + (rem2 ? ' \u2014 ends in ' + rem2 : ' now!');
-                solChip.className = 'sol-countdown-chip sol-countdown-chip--minor-active';
-                solChip.hidden = false;
-                return;
-            }
-        }
-        // Next upcoming period
-        var all = SOL_MAJOR.map(function (p) { return { t: parseLocalTime(p.start), major: true }; })
-                  .concat(SOL_MINOR.map(function (p) { return { t: parseLocalTime(p.start), major: false }; }));
-        all = all.filter(function (p) { return p.t && p.t.getTime() > now; });
-        if (!all.length) { solChip.hidden = true; return; }
-        all.sort(function (a, b) { return a.t - b.t; });
-        var next = all[0], cd = fmtCountdown(next.t.getTime() - now);
-        if (!cd) { solChip.hidden = true; return; }
-        solChip.textContent = (next.major ? '\u2605 Major period' : '\u25cf Minor period') + ' in ' + cd;
-        solChip.className = 'sol-countdown-chip' + (next.major ? '' : ' sol-countdown-chip--minor');
-        solChip.hidden = false;
-    }
-
-    // ── Tide countdown in conditions stat card ────────────────────────────
-    var tideDetail = document.getElementById('tide-next-detail');
-    function updateTide() {
-        if (!tideDetail || !TIDES.length) return;
-        var now = Date.now();
-        var next = null;
-        for (var i = 0; i < TIDES.length; i++) {
-            var t = parseLocalTime(TIDES[i].time);
-            if (t && t.getTime() > now) { next = { tide: TIDES[i], d: t }; break; }
-        }
-        if (!next) { tideDetail.textContent = 'current tidal flow'; return; }
-        var cd = fmtCountdown(next.d.getTime() - now);
-        if (!cd) { tideDetail.textContent = 'current tidal flow'; return; }
-        var htStr = next.tide.height_ft != null ? ' (' + next.tide.height_ft + ' ft)' : '';
-        tideDetail.textContent = next.tide.type + ' tide in ' + cd + htStr;
-    }
-
-    updateSolunar();
-    updateTide();
-    drawSolunarChart();
-    setInterval(function () { updateSolunar(); updateTide(); drawSolunarChart(); }, 30000);
-    window.addEventListener('resize', drawSolunarChart);
-})();
-
-// ── Install-to-homescreen prompt ─────────────────────────────────────────
-// Surfaces the browser's native install prompt as a small bottom banner.
-(function () {
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-    if (window.navigator.standalone) return; // iOS Safari installed
-    var deferredPrompt = null;
-    window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();
-        deferredPrompt = e;
-        if (sessionStorage.getItem('install_nudge_shown')) return;
-        sessionStorage.setItem('install_nudge_shown', '1');
-        var banner = document.createElement('div');
-        banner.className = 'install-banner';
-        banner.setAttribute('role', 'status');
-        banner.innerHTML =
-            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><rect x="3" y="17" width="18" height="4" rx="2"/></svg>' +
-            '<span>Add to home screen for offline access at the water</span>' +
-            '<button class="install-banner-btn" id="install-yes">Install</button>' +
-            '<button class="install-banner-close" id="install-dismiss" aria-label="Dismiss">&times;</button>';
-        document.body.appendChild(banner);
-        requestAnimationFrame(function () { banner.classList.add('install-banner--visible'); });
-        document.getElementById('install-yes').addEventListener('click', function () {
-            banner.remove();
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
-        });
-        document.getElementById('install-dismiss').addEventListener('click', function () {
-            banner.classList.remove('install-banner--visible');
-            setTimeout(function () { banner.remove(); }, 300);
-        });
-    });
-})();
-
-(function() {
-    var REFRESH_MS = 30 * 60 * 1000;
-    var note = document.getElementById('auto-refresh-note');
-    var start = Date.now();
-    function updateCountdown() {
-        var elapsed = Date.now() - start;
-        var remaining = Math.max(0, REFRESH_MS - elapsed);
-        var mins = Math.ceil(remaining / 60000);
-        if (remaining <= 0) { if (note) note.textContent = '— refreshing...'; window.location.reload(); return; }
-        if (note && mins <= 5) { note.textContent = '— auto-refresh in ' + mins + ' min'; }
-    }
-    setInterval(updateCountdown, 30000);
-})();
-
-/* ---- Species Expand/Collapse ---- */
-(function() {
-    var expandBtn = document.getElementById('species-expand-btn');
-    var viewAllBtn = document.getElementById('view-all-species-btn');
-    var panel = document.getElementById('full-species-panel');
-    var icon = document.getElementById('species-btn-icon');
-
-    function expandSpecies() {
-        if (!panel) return;
-        panel.hidden = false;
-        panel.classList.add('full-species-list--visible');
-        if (expandBtn) { expandBtn.setAttribute('aria-expanded','true'); expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg> Collapse Species List'; }
-        if (viewAllBtn) viewAllBtn.setAttribute('aria-expanded','true');
-        applyBaitFilters();
-    }
-
-    function collapseSpecies() {
-        if (!panel) return;
-        panel.hidden = true;
-        panel.classList.remove('full-species-list--visible');
-        if (expandBtn) { expandBtn.setAttribute('aria-expanded','false'); expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg> View Full Species Forecast'; }
-        if (viewAllBtn) viewAllBtn.setAttribute('aria-expanded','false');
-    }
-
-    if (expandBtn) expandBtn.addEventListener('click', function() {
-        var isExpanded = this.getAttribute('aria-expanded') === 'true';
-        isExpanded ? collapseSpecies() : expandSpecies();
-    });
-    if (viewAllBtn) viewAllBtn.addEventListener('click', function() {
-        var isExpanded = this.getAttribute('aria-expanded') === 'true';
-        isExpanded ? collapseSpecies() : expandSpecies();
-    });
-})();
-
-/* ---- Regulations Modal ---- */
-(function() {
-    var modal = document.getElementById('reg-modal');
-    var modalBody = document.getElementById('reg-modal-body');
-    var closeBtn = document.getElementById('reg-modal-close');
-    if (!modal) return;
-
-    var _regPrevFocus = null;
-    function openRegs(btn) {
-        _regPrevFocus = document.activeElement || null;
-        var card = btn.closest('[data-reg-min-size], [data-reg-bag-limit], [data-reg-season]');
-        if (!card) return;
-        var species = card.getAttribute('data-species-name') || 'Species';
-        var minSize = card.getAttribute('data-reg-min-size') || '';
-        var bagLimit = card.getAttribute('data-reg-bag-limit') || '';
-        var season = card.getAttribute('data-reg-season') || '';
-        var notes = card.getAttribute('data-reg-notes') || '';
-        var regOfficialSource = card.getAttribute('data-reg-official-source') || ''; // official_source
-        var isStale = card.getAttribute('data-reg-is-stale') === 'true';
-        var lastUpdated = card.getAttribute('data-reg-last-updated') || '';
-
-        var html = '';
-        if (isStale) {
-            html += '<div class="reg-stale-alert"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Regulation data may be outdated. Verify before fishing.</div>';
-        }
-        html += '<div class="reg-modal__grid">';
-        if (minSize) html += '<div><span class="reg-label">Min. Size</span><span class="reg-value">' + esc(minSize) + '</span></div>';
-        if (bagLimit) html += '<div><span class="reg-label">Bag Limit</span><span class="reg-value">' + esc(bagLimit) + '</span></div>';
-        if (season) html += '<div><span class="reg-label">Season</span><span class="reg-value">' + esc(season) + '</span></div>';
-        if (notes) html += '<div class="reg-modal__grid-full"><span class="reg-label">Notes</span><span class="reg-value">' + esc(notes) + '</span></div>';
-        html += '</div>';
-        if (regOfficialSource) {
-            html += '<div class="reg-source"><a href="' + esc(regOfficialSource) + '" target="_blank" rel="noopener noreferrer">Official Source ↗</a></div>';
-        }
-        if (lastUpdated) {
-            html += '<p class="reg-updated">Updated: ' + esc(lastUpdated) + '</p>';
-        }
-
-        document.getElementById('reg-modal-title').textContent = species + ' — Regulations';
-        modalBody.innerHTML = html;
-        modal.hidden = false;
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        closeBtn.focus();
-    }
-
-    function closeRegs() {
-        modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        if (_regPrevFocus && typeof _regPrevFocus.focus === 'function') {
-            _regPrevFocus.focus({ preventScroll: true });
-            _regPrevFocus = null;
-        }
-    }
-
-    if (closeBtn) closeBtn.addEventListener('click', closeRegs);
-    modal.addEventListener('click', function(e) { if (e.target === modal) closeRegs(); });
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !modal.hidden) { closeRegs(); return; }
-        if (e.key === 'Tab' && !modal.hidden) {
-            var card = modal.querySelector('.reg-modal__card');
-            if (!card) return;
-            var focusable = Array.prototype.slice.call(card.querySelectorAll('button,a,[tabindex="0"]'));
-            if (!focusable.length) return;
-            var first = focusable[0], last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-        }
-    });
-    document.addEventListener('click', function(e) {
-        var btn = e.target.closest('[data-open-regs]');
-        if (btn) { e.preventDefault(); openRegs(btn); }
-    });
-})();
 </script>
 <script>
 // ── Fishing condition alert — fires if the user opted in ──────────────────
@@ -2054,11 +1338,12 @@ if ('serviceWorker' in navigator) {
     } catch (e) {}
 })();
 </script>
-<script src="{{ surl('js/collapsibles.js') }}" defer></script>
-<script src="{{ surl('js/layout-editor.js') }}" defer></script>
+<script src="{{ surl('js/collapsibles.min.js') }}" defer></script>
+<script src="{{ surl('js/layout-editor.min.js') }}" defer></script>
 <script>window.IS_LOGGED_IN = {{ 'true' if g.user else 'false' }};</script>
-<script src="{{ surl('js/fishing_map.js') }}" defer></script>
-
+{% if inline_structures %}
+<script>window._FMAP_INLINE_STRUCTS = {{ inline_structures | tojson }};</script>
+{% endif %}
 <script>
 /* ── Auto-detected location toast ────────────────────────────────────────── */
 (function () {
@@ -2092,395 +1377,8 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 
-<script>
-/* ── ArcGIS Live Feeds: Air Quality, NDFD Wind/Temp, Drought ────────────── */
-(function () {
-    var lat = typeof CURRENT_LOC_LAT !== 'undefined' ? CURRENT_LOC_LAT : 0;
-    var lng = typeof CURRENT_LOC_LNG !== 'undefined' ? CURRENT_LOC_LNG : 0;
-
-    function showCard(card) {
-        if (!card) return;
-        card.classList.remove('stat-card--loading');
-    }
-    function hideCard(card) {
-        if (!card) return;
-        card.hidden = true;
-    }
-
-    if (!lat || !lng) {
-        // No location — immediately hide all location-dependent live cards
-        ['aqi-stat-card','drought-stat-card','ndbc-stat-card',
-         'gauge-stat-card','metar-stat-card','wildfire-stat-card','tropical-stat-card'].forEach(function (id) {
-            hideCard(document.getElementById(id));
-        });
-    } else {
-        // ── Air Quality + Drought stat cards (one combined request) ───────────
-        (function () {
-            var aqiCard   = document.getElementById('aqi-stat-card');
-            var aqiVal    = document.getElementById('aqi-stat-value');
-            var aqiDet    = document.getElementById('aqi-stat-detail');
-            var drtCard   = document.getElementById('drought-stat-card');
-            var drtVal    = document.getElementById('drought-stat-value');
-            var drtDet    = document.getElementById('drought-stat-detail');
-            fetch('/api/weather/env-context?lat=' + lat + '&lng=' + lng)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data) { hideCard(aqiCard); hideCard(drtCard); return; }
-
-                    var aqi = data.aqi;
-                    if (aqi) {
-                        aqiVal.innerHTML =
-                            '<span class="aqi-badge" style="background:' + aqi.color + '">' +
-                            aqi.category + '</span>';
-                        var dist = aqi.distance_km ? ' &middot; ' + aqi.distance_km + ' km' : '';
-                        aqiDet.innerHTML =
-                            aqi.value + ' ' + (aqi.unit || '\u00b5g/m\u00b3') + ' PM2.5' + dist;
-                        showCard(aqiCard);
-                    } else {
-                        hideCard(aqiCard);
-                    }
-
-                    var d = data.drought;
-                    if (d && d.dm !== -1) {
-                        drtVal.innerHTML =
-                            '<span class="drought-badge" style="background:' + d.color + ';color:' +
-                            (d.dm >= 2 ? '#fff' : '#1a1a1a') + '">' + d.code + '</span>';
-                        drtDet.textContent = d.label + (d.date ? ' · ' + d.date : '');
-                        showCard(drtCard);
-                    } else {
-                        hideCard(drtCard);
-                    }
-                })
-                .catch(function () { hideCard(aqiCard); hideCard(drtCard); });
-        })();
-
-        // ── Buoys, METAR, Wildfires, Gauges, Tropical (one combined request) ─────
-        (function () {
-            var buoyCard = document.getElementById('ndbc-stat-card');
-            var buoyVal  = document.getElementById('ndbc-stat-value');
-            var buoyDet  = document.getElementById('ndbc-stat-detail');
-            var metCard  = document.getElementById('metar-stat-card');
-            var metVal   = document.getElementById('metar-stat-value');
-            var metDet   = document.getElementById('metar-stat-detail');
-            var fireCard = document.getElementById('wildfire-stat-card');
-            var fireVal  = document.getElementById('wildfire-stat-value');
-            var fireDet  = document.getElementById('wildfire-stat-detail');
-            var gaugeCard = document.getElementById('gauge-stat-card');
-            var gaugeVal  = document.getElementById('gauge-stat-value');
-            var gaugeDet  = document.getElementById('gauge-stat-detail');
-            var tropCard = document.getElementById('tropical-stat-card');
-            var tropVal  = document.getElementById('tropical-stat-value');
-            var tropDet  = document.getElementById('tropical-stat-detail');
-
-            function renderTropical(data) {
-                if (!data || !data.areas || !data.areas.length) { hideCard(tropCard); return; }
-                var areas = data.areas;
-                var high  = areas.filter(function (a) { return a.probability === 'high'; }).length;
-                var med   = areas.filter(function (a) { return a.probability === 'medium'; }).length;
-                var total = areas.length;
-                var topColor = high ? '#ef4444' : med ? '#f97316' : '#eab308';
-                var topLabel = high ? 'High' : med ? 'Medium' : 'Low';
-                tropVal.innerHTML = '<span class="drought-badge" style="background:' + topColor + ';color:#fff">' + topLabel + '</span>';
-                tropDet.textContent = total + ' active area' + (total !== 1 ? 's' : '') +
-                    (high ? ' · ' + high + ' high prob' : med ? ' · ' + med + ' medium prob' : '');
-                showCard(tropCard);
-            }
-
-            fetch('/api/map/stat-cards?lat=' + lat + '&lng=' + lng)
-                .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (data) {
-                    if (!data) {
-                        [buoyCard, metCard, fireCard, gaugeCard, tropCard].forEach(hideCard);
-                        return;
-                    }
-
-                    // ── Buoy ──────────────────────────────────────────────────
-                    var buoys = data.buoys && data.buoys.buoys;
-                    if (buoys && buoys.length) {
-                        var best = null, bestD = Infinity;
-                        buoys.forEach(function (b) {
-                            var d = Math.pow(b.lat - lat, 2) + Math.pow(b.lng - lng, 2);
-                            if (d < bestD) { bestD = d; best = b; }
-                        });
-                        if (best) {
-                            if (best.wave_ht_ft != null) buoyVal.textContent = best.wave_ht_ft.toFixed(1) + ' ft waves';
-                            else if (best.water_temp_f != null) buoyVal.textContent = best.water_temp_f.toFixed(1) + '\u00b0F water';
-                            else buoyVal.textContent = best.name || best.id;
-                            var bparts = [];
-                            if (best.wave_ht_ft != null && best.water_temp_f != null) bparts.push(best.water_temp_f.toFixed(0) + '\u00b0F water');
-                            if (best.wind_kt != null) bparts.push((best.wind_dir || '') + ' ' + best.wind_kt.toFixed(0) + ' kt wind');
-                            if (best.period_s != null) bparts.push(best.period_s.toFixed(0) + 's period');
-                            bparts.push((Math.sqrt(bestD) * 111).toFixed(0) + ' km away');
-                            buoyDet.textContent = bparts.join(' \u00b7 ');
-                            showCard(buoyCard);
-                        } else { hideCard(buoyCard); }
-                    } else { hideCard(buoyCard); }
-
-                    // ── METAR ─────────────────────────────────────────────────
-                    var stations = data.metar && data.metar.stations;
-                    if (stations && stations.length) {
-                        var best = null, bestD = Infinity;
-                        stations.forEach(function (st) {
-                            var d = Math.pow(st.lat - lat, 2) + Math.pow(st.lng - lng, 2);
-                            if (d < bestD) { bestD = d; best = st; }
-                        });
-                        if (best) {
-                            var catColor = best.cat_color || '#9ca3af';
-                            metVal.innerHTML = '<span class="drought-badge" style="background:' + catColor + ';color:#fff">' + (best.flight_cat || best.cat || 'N/A') + '</span>';
-                            var mparts = [];
-                            if (best.temp_f != null) mparts.push(best.temp_f.toFixed(0) + '\u00b0F');
-                            if (best.wind_kt != null) mparts.push((best.wind_dir || '') + ' ' + best.wind_kt.toFixed(0) + ' kt');
-                            if (best.vis_mi != null) mparts.push(best.vis_mi.toFixed(0) + ' mi vis');
-                            mparts.push((Math.sqrt(bestD) * 111).toFixed(0) + ' km away');
-                            metDet.textContent = mparts.join(' \u00b7 ');
-                            showCard(metCard);
-                        } else { hideCard(metCard); }
-                    } else { hideCard(metCard); }
-
-                    // ── Wildfires ─────────────────────────────────────────────
-                    var fires = data.fires && data.fires.fires;
-                    if (fires && fires.length) {
-                        var largest = fires.reduce(function (a, b) { return (b.acres || 0) > (a.acres || 0) ? b : a; }, fires[0]);
-                        var totalAcres = fires.reduce(function (s, f) { return s + (f.acres || 0); }, 0);
-                        fireVal.innerHTML = '<span class="drought-badge" style="background:#f97316;color:#fff">' + fires.length + (fires.length === 1 ? ' fire' : ' fires') + '</span>';
-                        var fdet = totalAcres > 0 ? (totalAcres >= 1000 ? (totalAcres / 1000).toFixed(0) + 'k' : totalAcres.toFixed(0)) + ' total acres' : '';
-                        if (largest && largest.name) fdet += (fdet ? ' \u00b7 ' : '') + largest.name;
-                        fireDet.textContent = fdet || 'active wildfires in area';
-                        showCard(fireCard);
-                    } else { hideCard(fireCard); }
-
-                    // ── Stream Gauge ──────────────────────────────────────────
-                    var gauges = data.gauges && data.gauges.gauges;
-                    if (gauges && gauges.length) {
-                        var best = null, bestD = Infinity;
-                        gauges.forEach(function (g) {
-                            if (g.status_class === undefined || g.status_class === null) return;
-                            var d = Math.pow(g.lat - lat, 2) + Math.pow(g.lng - lng, 2);
-                            if (d < bestD) { bestD = d; best = g; }
-                        });
-                        if (best) {
-                            var sc = best.status_class || 0;
-                            var color = best.status_color || '#9ca3af';
-                            var label = best.status || 'Normal';
-                            gaugeVal.innerHTML = '<span class="drought-badge" style="background:' + color + ';color:' + (sc >= 2 ? '#fff' : '#1a1a1a') + '">' + label + '</span>';
-                            var gdet = best.name ? best.name.substring(0, 28) : best.id;
-                            if (best.stage_ft != null) gdet += ' \u00b7 ' + best.stage_ft.toFixed(1) + ' ft';
-                            gdet += ' \u00b7 ' + (Math.sqrt(bestD) * 111).toFixed(0) + ' km away';
-                            gaugeDet.textContent = gdet;
-                            showCard(gaugeCard);
-                        } else { hideCard(gaugeCard); }
-                    } else { hideCard(gaugeCard); }
-
-                    // ── Tropical Outlook ──────────────────────────────────────
-                    renderTropical(data.tropical);
-                })
-                .catch(function () {
-                    [buoyCard, metCard, fireCard, gaugeCard, tropCard].forEach(hideCard);
-                });
-        })();
-    }
-
-    // ── NDFD Wind + Precipitation + Temperature Forecast (single combined request) ──
-    var windBlock = document.getElementById('wind-outlook-block');
-    var windGrid  = document.getElementById('wind-outlook-grid');
-    var tempBlock = document.getElementById('temp-forecast-block');
-    var tempGrid  = document.getElementById('temp-forecast-grid');
-    if (lat && lng) fetch('/api/weather/combined-forecast?lat=' + lat + '&lng=' + lng)
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (combined) {
-        if (!combined) { combined = {}; }
-        var windData   = combined.wind;
-        var precipData = combined.precip;
-        var tempData   = combined.temp;
-
-        // ── Render temperature strip ────────────────────────────────────────
-        if (tempData && tempData.days && tempData.days.length) {
-            var DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            var sub = document.getElementById('temp-forecast-sub');
-            var tHtml = '';
-            tempData.days.forEach(function (d) {
-                var dayLabel = '';
-                if (d.date) {
-                    try {
-                        var parts = d.date.split('-');
-                        var dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
-                        dayLabel = DAY_SHORT[dt.getUTCDay()] + '<br><small>' + (dt.getUTCMonth()+1) + '/' + dt.getUTCDate() + '</small>';
-                    } catch(e) { dayLabel = d.date; }
-                }
-                var hiStr = d.max_f !== null && d.max_f !== undefined ? d.max_f + '°' : '–';
-                var loStr = d.min_f !== null && d.min_f !== undefined ? d.min_f + '°' : '–';
-                var hiColor = d.max_f >= 90 ? '#ef4444' : d.max_f >= 80 ? '#f97316'
-                            : d.max_f >= 70 ? '#eab308' : d.max_f >= 55 ? '#22c55e'
-                            : d.max_f >= 40 ? '#38bdf8' : '#818cf8';
-                tHtml += '<div class="temp-fc-cell"><span class="temp-fc-day">' + dayLabel + '</span>'
-                       + '<span class="temp-fc-hi" style="color:' + hiColor + '">' + hiStr + '</span>'
-                       + '<span class="temp-fc-lo">' + loStr + '</span></div>';
-            });
-            if (tempGrid) tempGrid.innerHTML = tHtml;
-            if (sub && tempData.days[0]) {
-                var d0 = tempData.days[0];
-                sub.textContent = (d0.max_f !== null ? 'Hi ' + d0.max_f + '°' : '')
-                                + (d0.min_f !== null ? ' · Lo ' + d0.min_f + '°' : '');
-            }
-            if (tempBlock) tempBlock.style.display = '';
-        } else {
-            if (tempBlock) tempBlock.style.display = 'none';
-        }
-
-        // ── Render wind + precip grid ────────────────────────────────────────
-        if (!windData || !windData.periods || !windData.periods.length) {
-            if (windBlock) windBlock.style.display = 'none';
-            return;
-        }
-
-        var block = windBlock;
-        var grid  = windGrid;
-        if (!block || !grid) return;
-
-        var COMPASS_ARROWS = {
-            N:'↓', NE:'↙', E:'←', SE:'↖', S:'↑', SW:'↗', W:'→', NW:'↘'
-        };
-
-        // Build a lookup of precipitation by approximate start hour
-        var precipByHour = {};
-        if (precipData && precipData.periods) {
-            precipData.periods.forEach(function (pp) {
-                if (pp.from_time) {
-                    try {
-                        var h = new Date(pp.from_time).getTime();
-                        precipByHour[h] = pp;
-                    } catch (e) {}
-                }
-            });
-        }
-
-        // Find the closest precip period (6-h) for each wind period (3-h)
-        function nearestPrecip(isoTime) {
-            if (!isoTime || !Object.keys(precipByHour).length) return null;
-            try {
-                var t   = new Date(isoTime).getTime();
-                var best = null, bestDiff = Infinity;
-                Object.keys(precipByHour).forEach(function (h) {
-                    var diff = Math.abs(t - Number(h));
-                    if (diff < bestDiff) { bestDiff = diff; best = precipByHour[h]; }
-                });
-                // Only associate if within 6 hours
-                return bestDiff <= 6 * 3600 * 1000 ? best : null;
-            } catch (e) { return null; }
-        }
-
-        var html = '';
-        windData.periods.forEach(function (p) {
-            var arrow = COMPASS_ARROWS[p.wind_dir] || '·';
-            var timeStr = '';
-            if (p.interval_start) {
-                try {
-                    var d = new Date(p.interval_start);
-                    timeStr = d.toLocaleString([], { weekday:'short', hour:'numeric' });
-                } catch (e) {}
-            }
-            var speedClass = p.wind_speed >= 25 ? 'wind-fc--gale'
-                           : p.wind_speed >= 15 ? 'wind-fc--strong'
-                           : p.wind_speed >= 8  ? 'wind-fc--moderate'
-                           : 'wind-fc--light';
-            var pp = nearestPrecip(p.interval_start);
-            var rainHtml = pp && pp.rain
-                ? '<span class="wind-fc-rain" title="' + (pp.label || '') + '">🌧</span>'
-                : '';
-            html +=
-                '<div class="wind-fc-cell ' + speedClass + '">' +
-                '<span class="wind-fc-time">' + timeStr + '</span>' +
-                '<span class="wind-fc-arrow" title="' + (p.wind_dir || '') + '">' + arrow + '</span>' +
-                '<span class="wind-fc-dir">' + (p.wind_dir || '–') + '</span>' +
-                '<span class="wind-fc-speed">' + p.wind_speed + ' kt</span>' +
-                (p.wind_gust ? '<span class="wind-fc-gust">G ' + p.wind_gust + '</span>' : '') +
-                rainHtml +
-                '</div>';
-        });
-        grid.innerHTML = html;
-
-        // Update subtitle with first period summary
-        var sub = document.getElementById('wind-outlook-sub');
-        if (sub && windData.periods[0]) {
-            var p0 = windData.periods[0];
-            sub.textContent = (p0.wind_dir || '') + ' ' + p0.wind_speed + ' kt'
-                + (p0.wind_gust ? ' G' + p0.wind_gust : '');
-        }
-
-        block.style.display = '';
-    })
-    .catch(function () {
-        if (windGrid) windGrid.innerHTML = '<p class="section-unavailable">Wind forecast unavailable</p>';
-    });
-
-
-})();
-</script>
-
-<script>
-/* ── Water Conditions ─────────────────────────────────────────────────────────────────────────────────────── */
-(function () {
-    var section    = document.getElementById('wq-section');
-    if (!section) return;
-    var lat        = section.dataset.lat;
-    var lng        = section.dataset.lng;
-    var state      = section.dataset.state || '';
-    var loadingEl  = document.getElementById('wq-loading');
-    var metricsEl  = document.getElementById('wq-metrics-grid');
-    var advisoryEl = document.getElementById('wq-advisory');
-    var advisoryTx = document.getElementById('wq-advisory-text');
-    var sourceEl   = document.getElementById('wq-source');
-
-    function hideSection() {
-        var block = section.closest('.section-block');
-        if (block) block.hidden = true;
-    }
-
-    if (!lat || !lng) { hideSection(); return; }
-
-    var url = '/api/v1/geo/environmental?lat=' + lat + '&lng=' + lng +
-              (state ? '&state=' + encodeURIComponent(state) : '');
-
-    fetch(url)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) {
-            var wq = d && d.data && d.data.water_quality;
-            var metrics = [];
-            if (wq) {
-                if (wq.temp_f        != null) metrics.push({ label: 'Water Temp', value: wq.temp_f + '\u00b0F' });
-                if (wq.turbidity_ntu != null) metrics.push({ label: 'Clarity',    value: wq.turbidity_ntu + ' NTU' });
-                if (wq.do_mg_l       != null) metrics.push({ label: 'Oxygen',     value: wq.do_mg_l + ' mg/L' });
-                if (wq.salinity_ppt  != null) metrics.push({ label: 'Salinity',   value: wq.salinity_ppt + ' ppt' });
-                if (wq.ph            != null) metrics.push({ label: 'pH',         value: wq.ph });
-            }
-            if (!metrics.length) { hideSection(); return; }
-
-            if (metricsEl) {
-                metricsEl.innerHTML = metrics.map(function (m) {
-                    return '<div class="wq-metric">' +
-                        '<span class="wq-metric-value">' + m.value + '</span>' +
-                        '<span class="wq-metric-label">' + m.label + '</span>' +
-                        '</div>';
-                }).join('');
-                metricsEl.hidden = false;
-            }
-
-            if (wq && wq.enterococcus_flag === 'advisory' && advisoryEl && advisoryTx) {
-                advisoryTx.textContent = 'Beach advisory \u2014 enterococcus ' +
-                    (wq.enterococcus_cfu_100ml != null ? wq.enterococcus_cfu_100ml + ' CFU/100\u00a0mL' : 'elevated') +
-                    ' (EPA limit: 104)';
-                advisoryEl.hidden = false;
-            }
-
-            if (sourceEl && wq && wq.source) {
-                sourceEl.textContent = 'Source: ' + wq.source +
-                    (wq.station_count ? ' \u00b7 ' + wq.station_count + ' station' + (wq.station_count > 1 ? 's' : '') : '');
-                sourceEl.hidden = false;
-            }
-
-            if (loadingEl) loadingEl.hidden = true;
-        })
-        .catch(function () { hideSection(); });
-})();
-</script>
+<script src="{{ surl('js/stat-cards.min.js') }}" defer></script>
+<script src="{{ surl('js/water-conditions.min.js') }}" defer></script>
+<script src="{{ surl('js/solunar.min.js') }}" defer></script>
+<script src="{{ surl('js/page.min.js') }}" defer></script>
 </html>

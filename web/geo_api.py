@@ -91,6 +91,7 @@ _BBOX_MAX_DEGREES = 10.0  # reject unreasonably large bboxes
 # 1 hour so repeated page loads hit memory instead of re-running 4 functions.
 _LAYERS_CACHE: dict[str, dict[str, Any]] = {}  # date_key → {"ts": float, "data": dict}
 _LAYERS_CACHE_TTL = 3600  # 1 hour
+_LAYERS_CACHE_LOCK = threading.Lock()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rate limiting helper
@@ -170,12 +171,13 @@ def geo_layers() -> Any:
     date_param = request.args.get("date") or ""
     cache_key = date_param or "default"
 
-    cached = _LAYERS_CACHE.get(cache_key)
-    if cached and (_time.time() - cached["ts"]) < _LAYERS_CACHE_TTL:
-        resp = _ok(cached["data"])
-        resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
-        resp.headers["X-Cache"] = "HIT"
-        return resp
+    with _LAYERS_CACHE_LOCK:
+        cached = _LAYERS_CACHE.get(cache_key)
+        if cached and (_time.time() - cached["ts"]) < _LAYERS_CACHE_TTL:
+            resp = _ok(cached["data"])
+            resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
+            resp.headers["X-Cache"] = "HIT"
+            return resp
 
     layer_data = {
         "base_layers": {
@@ -199,11 +201,12 @@ def geo_layers() -> Any:
         },
     }
 
-    # Evict stale entries before storing the new one (simple LRU: keep ≤10 dates)
-    if len(_LAYERS_CACHE) >= 10:
-        oldest = min(_LAYERS_CACHE, key=lambda k: _LAYERS_CACHE[k]["ts"])
-        _LAYERS_CACHE.pop(oldest, None)
-    _LAYERS_CACHE[cache_key] = {"ts": _time.time(), "data": layer_data}
+    with _LAYERS_CACHE_LOCK:
+        # Evict stale entries before storing the new one (simple LRU: keep ≤10 dates)
+        if len(_LAYERS_CACHE) >= 10:
+            oldest = min(_LAYERS_CACHE, key=lambda k: _LAYERS_CACHE[k]["ts"])
+            _LAYERS_CACHE.pop(oldest, None)
+        _LAYERS_CACHE[cache_key] = {"ts": _time.time(), "data": layer_data}
 
     resp = _ok(layer_data)
     resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=60"
