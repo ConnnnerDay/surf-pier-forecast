@@ -230,6 +230,35 @@ CREATE TABLE IF NOT EXISTS suppressed_map_spots (
 );
 CREATE INDEX IF NOT EXISTS idx_suppressed_spots_bbox
 ON suppressed_map_spots(lat, lng);
+
+CREATE TABLE IF NOT EXISTS custom_habitats (
+    id            TEXT    PRIMARY KEY,
+    habitat_type  TEXT    NOT NULL DEFAULT 'general',
+    name          TEXT    NOT NULL DEFAULT '',
+    description   TEXT    NOT NULL DEFAULT '',
+    fill_color    TEXT    NOT NULL DEFAULT '',
+    geometry_json TEXT    NOT NULL DEFAULT '{}',
+    lat           REAL,
+    lng           REAL,
+    created_by    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    is_deleted    INTEGER NOT NULL DEFAULT 0,
+    created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_custom_habitats_bbox
+ON custom_habitats(lat, lng, is_deleted);
+
+CREATE TABLE IF NOT EXISTS habitat_overrides (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    feature_key TEXT    NOT NULL UNIQUE,
+    name        TEXT,
+    description TEXT,
+    fill_color  TEXT,
+    created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    is_deleted  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -279,6 +308,8 @@ _KNOWN_TABLES = frozenset(
         "map_catch_likes",
         "custom_map_markers",
         "suppressed_map_spots",
+        "custom_habitats",
+        "habitat_overrides",
     }
 )
 
@@ -1379,7 +1410,9 @@ def list_cached_locations() -> list[dict[str, str]]:
 def delete_forecast(location_id: str) -> bool:
     conn = get_db()
     try:
-        cur = conn.execute("DELETE FROM forecasts WHERE location_id = ?", (location_id,))
+        cur = conn.execute(
+            "DELETE FROM forecasts WHERE location_id = ?", (location_id,)
+        )
         conn.commit()
         deleted = cur.rowcount > 0
     finally:
@@ -1444,7 +1477,11 @@ def get_account_credentials(user_id: int) -> dict[str, Any]:
     return {
         "passkeys": [dict(r) for r in passkey_rows],
         "social_accounts": [
-            {"provider": r["provider"], "email": r["email"], "created_at": r["created_at"]}
+            {
+                "provider": r["provider"],
+                "email": r["email"],
+                "created_at": r["created_at"],
+            }
             for r in social_rows
         ],
     }
@@ -1970,8 +2007,6 @@ def get_recent_public_catches(
     ]
 
 
-
-
 # Custom map markers (admin-editable) ----------------------------------------
 
 VALID_MARKER_TYPES = frozenset(
@@ -2030,7 +2065,10 @@ def get_custom_markers() -> list[dict[str, Any]]:
     global _CUSTOM_MARKERS_CACHE, _CUSTOM_MARKERS_TS
     now = _time.monotonic()
     with _CUSTOM_MARKERS_LOCK:
-        if _CUSTOM_MARKERS_CACHE is not None and now - _CUSTOM_MARKERS_TS < _CUSTOM_MARKERS_TTL:
+        if (
+            _CUSTOM_MARKERS_CACHE is not None
+            and now - _CUSTOM_MARKERS_TS < _CUSTOM_MARKERS_TTL
+        ):
             return _CUSTOM_MARKERS_CACHE
 
     conn = get_db()
@@ -2071,7 +2109,9 @@ def create_custom_marker(
     finally:
         conn.close()
     if row is None:
-        raise RuntimeError(f"custom marker INSERT succeeded but SELECT returned no row (lastrowid={cur.lastrowid})")
+        raise RuntimeError(
+            f"custom marker INSERT succeeded but SELECT returned no row (lastrowid={cur.lastrowid})"
+        )
     _invalidate_custom_markers_cache()
     return _marker_row_to_dict(row)
 
@@ -2166,7 +2206,10 @@ def get_suppressed_spots() -> list[dict[str, Any]]:
     global _SUPPRESSED_SPOTS_CACHE, _SUPPRESSED_SPOTS_TS
     now = _time.monotonic()
     with _SUPPRESSED_SPOTS_LOCK:
-        if _SUPPRESSED_SPOTS_CACHE is not None and now - _SUPPRESSED_SPOTS_TS < _SUPPRESSED_SPOTS_TTL:
+        if (
+            _SUPPRESSED_SPOTS_CACHE is not None
+            and now - _SUPPRESSED_SPOTS_TS < _SUPPRESSED_SPOTS_TTL
+        ):
             return _SUPPRESSED_SPOTS_CACHE
 
     conn = get_db()
@@ -2246,4 +2289,355 @@ def remove_suppressed_spot(suppression_id: int) -> bool:
         conn.close()
     if cur.rowcount > 0:
         _invalidate_suppressed_spots_cache()
+    return cur.rowcount > 0
+
+
+# Custom habitats (admin-drawn habitat polygons/points) -----------------------
+
+VALID_HABITAT_TYPES = frozenset(
+    (
+        "surf",
+        "kelp",
+        "mangrove",
+        "grassflat",
+        "estuary",
+        "reef",
+        "bottom",
+        "general",
+        "pelagic",
+        "tidalflat",
+    )
+)
+
+
+def _habitat_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
+    geom: dict[str, Any] = {}
+    try:
+        raw = row["geometry_json"]
+        if raw:
+            geom = json.loads(raw)
+    except (ValueError, TypeError):
+        pass
+    return {
+        "id": row["id"],
+        "habitat_type": row["habitat_type"],
+        "name": row["name"],
+        "description": row["description"],
+        "fill_color": row["fill_color"],
+        "geometry": geom,
+        "lat": row["lat"],
+        "lng": row["lng"],
+        "created_by": row["created_by"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "custom": True,
+    }
+
+
+_CUSTOM_HABITATS_CACHE: Optional[list[dict[str, Any]]] = None
+_CUSTOM_HABITATS_TS: float = 0.0
+_CUSTOM_HABITATS_TTL: float = 300.0
+_CUSTOM_HABITATS_LOCK = _threading.Lock()
+
+
+def _invalidate_custom_habitats_cache() -> None:
+    global _CUSTOM_HABITATS_TS
+    with _CUSTOM_HABITATS_LOCK:
+        _CUSTOM_HABITATS_TS = 0.0
+
+
+def get_all_custom_habitats() -> list[dict[str, Any]]:
+    """Return all non-deleted custom habitats (cached)."""
+    global _CUSTOM_HABITATS_CACHE, _CUSTOM_HABITATS_TS
+    now = _time.monotonic()
+    with _CUSTOM_HABITATS_LOCK:
+        if (
+            _CUSTOM_HABITATS_CACHE is not None
+            and now - _CUSTOM_HABITATS_TS < _CUSTOM_HABITATS_TTL
+        ):
+            return _CUSTOM_HABITATS_CACHE
+
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "created_by, created_at, updated_at FROM custom_habitats WHERE is_deleted = 0 ORDER BY created_at"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    result = [_habitat_row_to_dict(r) for r in rows]
+    with _CUSTOM_HABITATS_LOCK:
+        _CUSTOM_HABITATS_CACHE = result
+        _CUSTOM_HABITATS_TS = _time.monotonic()
+    return result
+
+
+def get_custom_habitats_in_bbox(
+    south: float,
+    west: float,
+    north: float,
+    east: float,
+) -> list[dict[str, Any]]:
+    """Return non-deleted custom habitats whose centroid lies within bbox."""
+    result = []
+    for h in get_all_custom_habitats():
+        lat = h.get("lat")
+        lng = h.get("lng")
+        if lat is None or lng is None:
+            result.append(h)
+            continue
+        if south <= lat <= north and west <= lng <= east:
+            result.append(h)
+    return result
+
+
+def create_custom_habitat(
+    habitat_id: str,
+    habitat_type: str,
+    name: str,
+    description: str,
+    fill_color: str,
+    geometry: dict[str, Any],
+    lat: Optional[float],
+    lng: Optional[float],
+    user_id: int,
+) -> dict[str, Any]:
+    """Insert a new custom habitat; returns the new row dict."""
+    if habitat_type not in VALID_HABITAT_TYPES:
+        habitat_type = "general"
+    geometry_json = json.dumps(geometry)
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO custom_habitats "
+            "(id, habitat_type, name, description, fill_color, geometry_json, lat, lng, created_by) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                habitat_id,
+                habitat_type,
+                name.strip(),
+                description.strip(),
+                fill_color.strip(),
+                geometry_json,
+                lat,
+                lng,
+                user_id,
+            ),
+        )
+        row = conn.execute(
+            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "created_by, created_at, updated_at FROM custom_habitats WHERE id = ?",
+            (habitat_id,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    _invalidate_custom_habitats_cache()
+    return _habitat_row_to_dict(row)
+
+
+def update_custom_habitat(
+    habitat_id: str,
+    habitat_type: Optional[str] = None,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    fill_color: Optional[str] = None,
+    geometry: Optional[dict[str, Any]] = None,
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
+) -> Optional[dict[str, Any]]:
+    """Update fields on an existing custom habitat; returns updated dict or None."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id FROM custom_habitats WHERE id = ? AND is_deleted = 0",
+            (habitat_id,),
+        ).fetchone()
+        if not row:
+            return None
+        updates: list[str] = []
+        params: list[Any] = []
+        if habitat_type is not None and habitat_type in VALID_HABITAT_TYPES:
+            updates.append("habitat_type = ?")
+            params.append(habitat_type)
+        if name is not None:
+            updates.append("name = ?")
+            params.append(name.strip())
+        if description is not None:
+            updates.append("description = ?")
+            params.append(description.strip())
+        if fill_color is not None:
+            updates.append("fill_color = ?")
+            params.append(fill_color.strip())
+        if geometry is not None:
+            updates.append("geometry_json = ?")
+            params.append(json.dumps(geometry))
+        if lat is not None:
+            updates.append("lat = ?")
+            params.append(lat)
+        if lng is not None:
+            updates.append("lng = ?")
+            params.append(lng)
+        updates.append("updated_at = datetime('now')")
+        params.append(habitat_id)
+        conn.execute(
+            f"UPDATE custom_habitats SET {', '.join(updates)} WHERE id = ? AND is_deleted = 0",
+            params,
+        )
+        updated = conn.execute(
+            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "created_by, created_at, updated_at FROM custom_habitats WHERE id = ? AND is_deleted = 0",
+            (habitat_id,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    _invalidate_custom_habitats_cache()
+    return _habitat_row_to_dict(updated) if updated else None
+
+
+def delete_custom_habitat(habitat_id: str) -> bool:
+    """Soft-delete a custom habitat; returns True if a row was affected."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "UPDATE custom_habitats SET is_deleted = 1, updated_at = datetime('now') "
+            "WHERE id = ? AND is_deleted = 0",
+            (habitat_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount > 0:
+        _invalidate_custom_habitats_cache()
+    return cur.rowcount > 0
+
+
+# Habitat overrides (admin-applied name/description/color for AI features) ----
+
+_HABITAT_OVERRIDES_CACHE: Optional[dict[str, dict[str, Any]]] = None
+_HABITAT_OVERRIDES_TS: float = 0.0
+_HABITAT_OVERRIDES_TTL: float = 300.0
+_HABITAT_OVERRIDES_LOCK = _threading.Lock()
+
+
+def _invalidate_habitat_overrides_cache() -> None:
+    global _HABITAT_OVERRIDES_TS
+    with _HABITAT_OVERRIDES_LOCK:
+        _HABITAT_OVERRIDES_TS = 0.0
+
+
+def get_habitat_overrides() -> dict[str, dict[str, Any]]:
+    """Return all active habitat overrides keyed by feature_key."""
+    global _HABITAT_OVERRIDES_CACHE, _HABITAT_OVERRIDES_TS
+    now = _time.monotonic()
+    with _HABITAT_OVERRIDES_LOCK:
+        if (
+            _HABITAT_OVERRIDES_CACHE is not None
+            and now - _HABITAT_OVERRIDES_TS < _HABITAT_OVERRIDES_TTL
+        ):
+            return _HABITAT_OVERRIDES_CACHE
+
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, feature_key, name, description, fill_color, created_by, created_at, updated_at "
+            "FROM habitat_overrides WHERE is_deleted = 0"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    result = {
+        r["feature_key"]: {
+            "id": r["id"],
+            "feature_key": r["feature_key"],
+            "name": r["name"],
+            "description": r["description"],
+            "fill_color": r["fill_color"],
+            "created_by": r["created_by"],
+            "created_at": r["created_at"],
+            "updated_at": r["updated_at"],
+        }
+        for r in rows
+    }
+    with _HABITAT_OVERRIDES_LOCK:
+        _HABITAT_OVERRIDES_CACHE = result
+        _HABITAT_OVERRIDES_TS = _time.monotonic()
+    return result
+
+
+def upsert_habitat_override(
+    feature_key: str,
+    name: Optional[str],
+    description: Optional[str],
+    fill_color: Optional[str],
+    user_id: int,
+) -> dict[str, Any]:
+    """Create or update a habitat override; returns the row dict."""
+    conn = get_db()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM habitat_overrides WHERE feature_key = ?",
+            (feature_key,),
+        ).fetchone()
+        if existing:
+            updates: list[str] = []
+            params: list[Any] = []
+            if name is not None:
+                updates.append("name = ?")
+                params.append(name.strip())
+            if description is not None:
+                updates.append("description = ?")
+                params.append(description.strip())
+            if fill_color is not None:
+                updates.append("fill_color = ?")
+                params.append(fill_color.strip())
+            updates.extend(["is_deleted = 0", "updated_at = datetime('now')"])
+            params.append(feature_key)
+            conn.execute(
+                f"UPDATE habitat_overrides SET {', '.join(updates)} WHERE feature_key = ?",
+                params,
+            )
+        else:
+            conn.execute(
+                "INSERT INTO habitat_overrides (feature_key, name, description, fill_color, created_by) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (feature_key, name, description, fill_color, user_id),
+            )
+        row = conn.execute(
+            "SELECT id, feature_key, name, description, fill_color, created_by, created_at, updated_at "
+            "FROM habitat_overrides WHERE feature_key = ?",
+            (feature_key,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    _invalidate_habitat_overrides_cache()
+    return {
+        "id": row["id"],
+        "feature_key": row["feature_key"],
+        "name": row["name"],
+        "description": row["description"],
+        "fill_color": row["fill_color"],
+        "created_by": row["created_by"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
+def delete_habitat_override(override_id: int) -> bool:
+    """Soft-delete a habitat override; returns True if affected."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "UPDATE habitat_overrides SET is_deleted = 1, updated_at = datetime('now') "
+            "WHERE id = ? AND is_deleted = 0",
+            (override_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount > 0:
+        _invalidate_habitat_overrides_cache()
     return cur.rowcount > 0

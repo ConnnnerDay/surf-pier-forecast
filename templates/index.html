@@ -774,6 +774,12 @@
                     <button type="button" id="fmap-admin-edit-btn" class="fmap-ctrl-btn" title="Edit markers (admin)" aria-label="Toggle admin marker edit mode" aria-pressed="false" hidden>
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
+                    {% if g.user and g.user.get('is_admin') %}
+                    {# Admin-only habitat draw button #}
+                    <button type="button" id="fmap-admin-habitat-btn" class="fmap-ctrl-btn" title="Draw habitat area (admin)" aria-label="Toggle admin habitat draw mode" aria-pressed="false" hidden>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/></svg>
+                    </button>
+                    {% endif %}
                 </div>
 
                 {# ── Layers popup panel — spot filters + live data overlays ──────────── #}
@@ -867,6 +873,56 @@
                                 </div>{# /fmap-filters-inner #}
                             </div>
                         </div>{# /section filters #}
+
+                        {# ── Section: AI Habitat Filters ── #}
+                        <div class="fmap-layers-section" data-section="habitat-filters">
+                            <button type="button" class="fmap-layers-section-hdr" aria-expanded="true">
+                                <span class="fmap-layers-section-hdr-label">AI Habitat Types</span>
+                                <span class="fmap-layers-section-hdr-count" id="fmap-sec-count-habitat-filters"></span>
+                                <svg class="fmap-layers-section-hdr-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="fmap-layers-section-rows">
+                                <div class="fmap-habitat-filter-row" role="group" aria-label="AI Habitat type filters">
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="surf" checked> Surf
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="grassflat" checked> Seagrass
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="estuary" checked> Estuary
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="reef" checked> Reef
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="mangrove" checked> Mangrove
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="kelp" checked> Kelp
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="bottom" checked> Bottom
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="tidalflat" checked> Tidal Flat
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="pelagic" checked> Pelagic
+                                    </label>
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" data-hfilter="general" checked> General
+                                    </label>
+                                </div>
+                                {% if g.user and g.user.get('is_admin') %}
+                                <div class="fmap-habitat-filter-row" style="margin-top:.4rem">
+                                    <label class="fmap-habitat-filter-chip">
+                                        <input type="checkbox" id="fmap-show-custom-habitats" checked> My Habitats
+                                    </label>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>{# /section habitat-filters #}
 
                         {# ── Section: Weather & Marine Safety ── #}
                         <div class="fmap-layers-section" data-section="weather">
@@ -1052,6 +1108,73 @@
                     <div class="fmap-admin-footer">
                         <button id="fmap-admin-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
                         <button id="fmap-admin-save" type="button" class="fmap-admin-save-btn">Save</button>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Admin habitat draw modal — only rendered to admins #}
+                {% if g.user and g.user.get('is_admin') %}
+                <div id="fmap-habitat-backdrop" class="fmap-admin-backdrop" hidden></div>
+                <div id="fmap-habitat-modal" class="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-habitat-modal-title" hidden>
+                    <div class="fmap-admin-modal-hdr">
+                        <strong id="fmap-habitat-modal-title" class="fmap-admin-modal-title">Add Habitat</strong>
+                        <button id="fmap-habitat-modal-close" type="button" class="fmap-admin-modal-close" aria-label="Close">✕</button>
+                    </div>
+                    <label class="fmap-admin-label">Name
+                        <input id="fmap-habitat-name" type="text" maxlength="200" placeholder="e.g. North Flat Seagrass" class="fmap-admin-input" autocomplete="off">
+                    </label>
+                    <label class="fmap-admin-label">Habitat Type
+                        <select id="fmap-habitat-type" class="fmap-admin-input">
+                            <option value="surf">Surf / Beach</option>
+                            <option value="grassflat">Seagrass Flat</option>
+                            <option value="estuary">Estuary / Oyster</option>
+                            <option value="reef">Reef</option>
+                            <option value="mangrove">Mangrove</option>
+                            <option value="kelp">Kelp Forest</option>
+                            <option value="bottom">Bottom / Shoal</option>
+                            <option value="tidalflat">Tidal Flat</option>
+                            <option value="pelagic">Pelagic / Offshore</option>
+                            <option value="general" selected>General</option>
+                        </select>
+                    </label>
+                    <label class="fmap-admin-label">Fill Color
+                        <input id="fmap-habitat-color" type="color" value="#22c55e" class="fmap-admin-input fmap-admin-input--color">
+                    </label>
+                    <label class="fmap-admin-label fmap-admin-label--last">Description / notes
+                        <textarea id="fmap-habitat-desc" rows="3" maxlength="1000" placeholder="Habitat notes or fishing tips" class="fmap-admin-input"></textarea>
+                    </label>
+                    <p id="fmap-habitat-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
+                    <div class="fmap-admin-footer">
+                        <button id="fmap-habitat-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
+                        <button id="fmap-habitat-save" type="button" class="fmap-admin-save-btn">Save</button>
+                    </div>
+                    <p id="fmap-habitat-draw-hint" class="fmap-admin-status" style="margin-top:.5rem;font-size:.78rem;color:var(--text-muted,#6b7280)">
+                        Click map to add polygon vertices. Double-click to finish.
+                    </p>
+                </div>
+
+                {# Admin habitat override modal — for overriding AI feature names/descriptions #}
+                <div id="fmap-override-backdrop" class="fmap-admin-backdrop" hidden></div>
+                <div id="fmap-override-modal" class="fmap-admin-modal" role="dialog" aria-modal="true" aria-labelledby="fmap-override-modal-title" hidden>
+                    <div class="fmap-admin-modal-hdr">
+                        <strong id="fmap-override-modal-title" class="fmap-admin-modal-title">Override AI Feature</strong>
+                        <button id="fmap-override-modal-close" type="button" class="fmap-admin-modal-close" aria-label="Close">✕</button>
+                    </div>
+                    <label class="fmap-admin-label">Name Override
+                        <input id="fmap-override-name" type="text" maxlength="200" placeholder="Leave blank to keep AI name" class="fmap-admin-input" autocomplete="off">
+                    </label>
+                    <label class="fmap-admin-label">Fill Color Override
+                        <input id="fmap-override-color" type="color" value="#22c55e" class="fmap-admin-input fmap-admin-input--color">
+                    </label>
+                    <label class="fmap-admin-label fmap-admin-label--last">Description Override
+                        <textarea id="fmap-override-desc" rows="3" maxlength="1000" placeholder="Leave blank to keep AI description" class="fmap-admin-input"></textarea>
+                    </label>
+                    <input type="hidden" id="fmap-override-feature-key">
+                    <input type="hidden" id="fmap-override-id">
+                    <p id="fmap-override-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
+                    <div class="fmap-admin-footer">
+                        <button id="fmap-override-delete" type="button" class="fmap-admin-delete-btn" hidden>Remove Override</button>
+                        <button id="fmap-override-save" type="button" class="fmap-admin-save-btn">Save Override</button>
                     </div>
                 </div>
                 {% endif %}
