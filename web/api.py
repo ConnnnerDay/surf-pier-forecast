@@ -7,6 +7,7 @@ import datetime
 import json as _json_mod
 import logging
 import os
+import re as _re
 import threading
 import time
 import uuid
@@ -81,14 +82,17 @@ from storage.sqlite import (
     add_suppressed_spot,
     attach_photos_to_entry,
     create_custom_habitat,
+    create_custom_habitat_type,
     create_custom_marker,
     delete_custom_habitat,
+    delete_custom_habitat_type,
     delete_custom_marker,
     delete_habitat_override,
     delete_log_entry,
     delete_map_catch,
     get_all_custom_habitats,
     get_community_hotspots,
+    get_custom_habitat_types,
     get_custom_habitats_in_bbox,
     get_custom_markers,
     get_entry_photo_paths,
@@ -3205,9 +3209,11 @@ def admin_habitat_create_or_update() -> Any:
     habitat_id = str(data.get("id") or "").strip() or str(uuid.uuid4())
 
     habitat_type = str(data.get("habitat_type", "general"))
-    if habitat_type not in VALID_HABITAT_TYPES:
+    custom_type_slugs = {t["slug"] for t in get_custom_habitat_types()}
+    if habitat_type not in VALID_HABITAT_TYPES and habitat_type not in custom_type_slugs:
+        valid_all = sorted(VALID_HABITAT_TYPES | custom_type_slugs)
         return jsonify(
-            {"error": f"Invalid habitat_type. Valid: {sorted(VALID_HABITAT_TYPES)}"}
+            {"error": f"Invalid habitat_type. Valid: {valid_all}"}
         ), 400
 
     name = str(data.get("name", ""))[:200]
@@ -3336,6 +3342,70 @@ def admin_habitat_override_delete(override_id: int) -> Any:
     if not ok:
         return jsonify({"error": "Override not found"}), 404
     return jsonify({"deleted": override_id})
+
+
+# ── Admin: custom habitat types CRUD ──────────────────────────────────────────
+
+
+@bp.route("/api/v1/admin/habitat-types", methods=["GET"])
+def admin_habitat_types_list() -> Any:
+    """List all built-in and admin-defined custom habitat types (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    builtin = [
+        {"slug": t, "name": t.replace("_", " ").title(), "builtin": True}
+        for t in sorted(VALID_HABITAT_TYPES)
+    ]
+    custom = [dict(t, builtin=False) for t in get_custom_habitat_types()]
+    return jsonify({"types": builtin + custom, "count": len(builtin) + len(custom)})
+
+
+@bp.route("/api/v1/admin/habitat-types", methods=["POST"])
+def admin_habitat_type_create() -> Any:
+    """Create a new custom habitat type (admin only).
+
+    Body: { name, slug?, default_color? }
+    """
+    err = _require_map_admin()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()[:80]
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    slug = str(data.get("slug", "")).strip()[:40]
+    if not slug:
+        slug = _re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:40]
+    if not slug or not _re.match(r"^[a-z0-9_]+$", slug):
+        return jsonify({"error": "slug must be lowercase alphanumeric (underscores allowed)"}), 400
+    if slug in VALID_HABITAT_TYPES:
+        return jsonify({"error": f"'{slug}' is a built-in type; choose a different slug"}), 409
+
+    default_color = str(data.get("default_color", "#8b5cf6"))[:20]
+
+    try:
+        row = create_custom_habitat_type(name, slug, default_color, g.user["id"])
+    except Exception as exc:
+        if "UNIQUE" in str(exc):
+            return jsonify({"error": f"Type slug '{slug}' already exists"}), 409
+        raise
+    return jsonify(row), 201
+
+
+@bp.route("/api/v1/admin/habitat-types/<int:type_id>", methods=["DELETE"])
+def admin_habitat_type_delete(type_id: int) -> Any:
+    """Soft-delete a custom habitat type (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    ok = delete_custom_habitat_type(type_id)
+    if not ok:
+        return jsonify({"error": "Type not found"}), 404
+    return jsonify({"deleted": type_id})
 
 
 # ── Map scoring — hourly strike score ────────────────────────────────────────
@@ -3604,6 +3674,7 @@ def map_habitats_v1() -> Any:
                 "habitat_type": h["habitat_type"],
                 "fill_color": h.get("fill_color") or "",
                 "score": 0,
+                "geojson_geometry": geom,  # preserved for client-side vertex editing
             }
             # Map GeoJSON polygon coordinates to [[lat, lng], ...] geometry for renderer
             if geom.get("type") == "Polygon" and coords:

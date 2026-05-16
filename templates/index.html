@@ -779,6 +779,10 @@
                     <button type="button" id="fmap-admin-habitat-btn" class="fmap-ctrl-btn" title="Draw habitat area (admin)" aria-label="Toggle admin habitat draw mode" aria-pressed="false" hidden>
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/></svg>
                     </button>
+                    {# Admin-only habitat management panel button #}
+                    <button type="button" id="fmap-admin-habitats-list-btn" class="fmap-ctrl-btn" title="Manage custom habitats (admin)" aria-label="Open habitat management panel" aria-pressed="false" hidden>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    </button>
                     {% endif %}
                 </div>
 
@@ -1146,6 +1150,7 @@
                     <p id="fmap-habitat-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
                     <div class="fmap-admin-footer">
                         <button id="fmap-habitat-delete" type="button" class="fmap-admin-delete-btn" hidden>Delete</button>
+                        <button id="fmap-habitat-reshape" type="button" class="fmap-admin-reshape-btn" hidden title="Drag polygon vertices to reshape">Reshape</button>
                         <button id="fmap-habitat-save" type="button" class="fmap-admin-save-btn">Save</button>
                     </div>
                     <p id="fmap-habitat-draw-hint" class="fmap-admin-status" style="margin-top:.5rem;font-size:.78rem;color:var(--text-muted,#6b7280)">
@@ -1175,6 +1180,38 @@
                     <div class="fmap-admin-footer">
                         <button id="fmap-override-delete" type="button" class="fmap-admin-delete-btn" hidden>Remove Override</button>
                         <button id="fmap-override-save" type="button" class="fmap-admin-save-btn">Save Override</button>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if g.user and g.user.get('is_admin') %}
+                {# Reshape floating bar — shown while vertex-editing a polygon #}
+                <div id="fmap-habitat-reshape-bar" class="fmap-habitat-reshape-bar" hidden>
+                    <span class="fmap-reshape-hint">Drag vertices to reshape. Shift+click to remove a vertex.</span>
+                    <div class="fmap-reshape-actions">
+                        <button id="fmap-habitat-reshape-done" type="button" class="fmap-admin-save-btn fmap-admin-save-btn--sm">Done</button>
+                        <button id="fmap-habitat-reshape-cancel" type="button" class="fmap-admin-delete-btn fmap-admin-save-btn--sm">Cancel</button>
+                    </div>
+                </div>
+
+                {# Habitat management panel #}
+                <div id="fmap-habitat-panel" class="fmap-habitat-panel" hidden role="complementary" aria-label="Custom habitat management">
+                    <div class="fmap-habitat-panel-hdr">
+                        <strong>Custom Habitats</strong>
+                        <button id="fmap-habitat-panel-close" type="button" class="fmap-admin-modal-close" aria-label="Close panel">✕</button>
+                    </div>
+                    <div id="fmap-habitat-panel-list" class="fmap-habitat-panel-list">
+                        <p class="fmap-habitat-panel-empty">Loading…</p>
+                    </div>
+                    <div class="fmap-habitat-panel-section">
+                        <strong class="fmap-habitat-panel-section-label">Custom Types</strong>
+                        <div id="fmap-habitat-panel-types" class="fmap-habitat-panel-types"></div>
+                        <div class="fmap-habitat-type-form">
+                            <input id="fmap-new-type-name" type="text" maxlength="80" placeholder="Type name" class="fmap-admin-input fmap-admin-input--sm" autocomplete="off">
+                            <input id="fmap-new-type-color" type="color" value="#8b5cf6" class="fmap-admin-input fmap-admin-input--color fmap-admin-input--sm">
+                            <button id="fmap-new-type-add" type="button" class="fmap-admin-save-btn fmap-admin-save-btn--sm">Add</button>
+                        </div>
+                        <p id="fmap-new-type-status" class="fmap-admin-status" role="status" aria-live="polite" style="margin-top:.5rem"></p>
                     </div>
                 </div>
                 {% endif %}
