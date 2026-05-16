@@ -1,10 +1,14 @@
 """Tests for custom habitat admin API and map_habitats_v1 merge.
 
 Covers:
-- Auth guards on admin routes (non-admin → 403, unauthenticated → 403)
+- Auth guards on all admin routes (non-admin → 403, unauthenticated → 403)
 - Create / GET / DELETE lifecycle for custom habitats
 - Habitat override create / list / delete
-- map_habitats_v1 merges custom habitats into bbox results
+- map_habitats_v1 merges custom habitats into bbox results, with geojson_geometry
+- Coordinate format: geojson_geometry uses [lng, lat]; rendered geometry uses [lat, lng]
+- Custom habitat types CRUD, slug uniqueness, built-in slug collision
+- Saving and updating a habitat with a custom type slug
+- Habitat with a deleted custom type remains readable
 - Invalid habitat_type → 400 on admin create route
 - geo_habitats bbox validation (400 on bad params)
 """
@@ -613,5 +617,537 @@ class TestHabitatRoutesExist:
         assert "/api/v1/admin/habitats/<string:feature_id>" in rules
         assert "/api/v1/admin/habitat-overrides" in rules
         assert "/api/v1/admin/habitat-overrides/<int:override_id>" in rules
+        assert "/api/v1/admin/habitat-types" in rules
+        assert "/api/v1/admin/habitat-types/<int:type_id>" in rules
         assert "/api/v1/map/habitats" in rules
         assert "/api/v1/geo/habitats" in rules
+
+
+# ─── geojson_geometry coordinate format preservation ─────────────────────────
+
+
+class TestGeojsonGeometryFormat:
+    """Verify that /api/v1/map/habitats returns both coordinate formats correctly.
+
+    The rendered ``geometry`` field uses [[lat, lng], ...] (Leaflet order) so
+    the JS renderer can pass it directly to L.polygon().
+    The ``geojson_geometry`` field preserves the original GeoJSON [lng, lat]
+    order so the admin save/reshape flow can round-trip the geometry without
+    mixing the two conventions.
+    """
+
+    def _bbox_params(self):
+        return "south=34.20&west=-77.85&north=34.25&east=-77.75"
+
+    def test_geojson_geometry_present_for_polygon(self, client):
+        uid = create_user("gjson1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        geom = _valid_polygon_geometry()
+        explicit_id = str(uuid.uuid4())
+        client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": explicit_id, "habitat_type": "reef",
+                             "name": "Format Test", "geometry": geom}),
+            headers=_headers(),
+        )
+        _sqlite._CUSTOM_HABITATS_TS = 0.0
+
+        with patch("web.api.fetch_ai_habitats", return_value=[]):
+            resp = client.get(f"/api/v1/map/habitats?{self._bbox_params()}")
+
+        features = resp.get_json()["data"]["features"]
+        feat = next((f for f in features if f.get("id") == explicit_id), None)
+        assert feat is not None, "custom habitat not found in response"
+        assert "geojson_geometry" in feat, "geojson_geometry missing from custom feature"
+        gj = feat["geojson_geometry"]
+        assert gj["type"] == "Polygon"
+        assert isinstance(gj["coordinates"], list)
+        assert len(gj["coordinates"]) >= 1
+        # GeoJSON convention: [longitude, latitude]
+        first_coord = gj["coordinates"][0][0]
+        assert first_coord[0] == pytest.approx(-77.80, abs=0.001), \
+            f"geojson_geometry should have lng first, got {first_coord}"
+        assert first_coord[1] == pytest.approx(34.22, abs=0.001), \
+            f"geojson_geometry should have lat second, got {first_coord}"
+
+    def test_rendered_geometry_uses_lat_lng_order(self, client):
+        """The rendered geometry array for Leaflet must be [lat, lng], not [lng, lat]."""
+        uid = create_user("gjson2", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        geom = _valid_polygon_geometry()
+        explicit_id = str(uuid.uuid4())
+        client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": explicit_id, "habitat_type": "reef",
+                             "name": "Leaflet Format", "geometry": geom}),
+            headers=_headers(),
+        )
+        _sqlite._CUSTOM_HABITATS_TS = 0.0
+
+        with patch("web.api.fetch_ai_habitats", return_value=[]):
+            resp = client.get(f"/api/v1/map/habitats?{self._bbox_params()}")
+
+        features = resp.get_json()["data"]["features"]
+        feat = next((f for f in features if f.get("id") == explicit_id), None)
+        assert feat is not None
+        rendered = feat.get("geometry")
+        assert isinstance(rendered, list) and len(rendered) >= 3, \
+            "rendered geometry should be a [[lat,lng],...] array"
+        # Leaflet convention: [latitude, longitude]
+        first = rendered[0]
+        assert first[0] == pytest.approx(34.22, abs=0.001), \
+            f"rendered geometry[0][0] should be lat (~34.22), got {first[0]}"
+        assert first[1] == pytest.approx(-77.80, abs=0.001), \
+            f"rendered geometry[0][1] should be lng (~-77.80), got {first[1]}"
+
+    def test_geojson_geometry_absent_for_point(self, client):
+        """Point habitats get geojson_geometry too (for completeness)."""
+        uid = create_user("gjson3", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        geom = _valid_point_geometry()
+        explicit_id = str(uuid.uuid4())
+        client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": explicit_id, "habitat_type": "general",
+                             "name": "Point Habit", "geometry": geom}),
+            headers=_headers(),
+        )
+        _sqlite._CUSTOM_HABITATS_TS = 0.0
+
+        with patch("web.api.fetch_ai_habitats", return_value=[]):
+            resp = client.get(f"/api/v1/map/habitats?{self._bbox_params()}")
+
+        features = resp.get_json()["data"]["features"]
+        feat = next((f for f in features if f.get("id") == explicit_id), None)
+        assert feat is not None
+        assert "geojson_geometry" in feat
+        gj = feat["geojson_geometry"]
+        assert gj["type"] == "Point"
+        # GeoJSON Point: [lng, lat]
+        assert gj["coordinates"][0] == pytest.approx(-77.795, abs=0.001)
+        assert gj["coordinates"][1] == pytest.approx(34.225, abs=0.001)
+
+    def test_closed_ring_centroid_not_double_weighted(self, client):
+        """Centroid of a closed ring (first == last vertex) must not over-weight the first vertex."""
+        uid = create_user("gjson4", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        # A 3-vertex square; closing vertex repeats first
+        geom = {
+            "type": "Polygon",
+            "coordinates": [[
+                [-77.80, 34.20],
+                [-77.78, 34.20],
+                [-77.78, 34.22],
+                [-77.80, 34.22],
+                [-77.80, 34.20],  # closing vertex == first vertex
+            ]],
+        }
+        explicit_id = str(uuid.uuid4())
+        resp = client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": explicit_id, "habitat_type": "reef",
+                             "name": "Closed Ring", "geometry": geom}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 201
+        data = resp.get_json()
+        # True centroid of a 4-vertex square: lat=(34.20+34.20+34.22+34.22)/4=34.21
+        assert data["lat"] == pytest.approx(34.21, abs=0.005)
+        assert data["lng"] == pytest.approx(-77.79, abs=0.005)
+
+
+# ─── Custom habitat types CRUD ────────────────────────────────────────────────
+
+
+class TestAdminHabitatTypesAuthGuards:
+    def test_anon_get_types_returns_403(self, client):
+        assert client.get("/api/v1/admin/habitat-types").status_code == 403
+
+    def test_anon_post_types_returns_403(self, client):
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Rocky Shore"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 403
+
+    def test_anon_delete_type_returns_403(self, client):
+        assert client.delete("/api/v1/admin/habitat-types/1", headers=_headers()).status_code == 403
+
+    def test_non_admin_get_types_returns_403(self, client):
+        uid = create_user("type_guard1", "pw123456")
+        _login(client, uid)
+        assert client.get("/api/v1/admin/habitat-types").status_code == 403
+
+    def test_non_admin_post_type_returns_403(self, client):
+        uid = create_user("type_guard2", "pw123456")
+        _login(client, uid)
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Rocky Shore"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 403
+
+    def test_non_admin_delete_type_returns_403(self, client):
+        uid = create_user("type_guard3", "pw123456")
+        _login(client, uid)
+        assert client.delete("/api/v1/admin/habitat-types/1", headers=_headers()).status_code == 403
+
+
+class TestCustomHabitatTypes:
+    def test_list_includes_builtin_types(self, client):
+        uid = create_user("ct_list1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        resp = client.get("/api/v1/admin/habitat-types")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        builtin_slugs = {t["slug"] for t in data["types"] if t.get("builtin")}
+        assert "reef" in builtin_slugs
+        assert "surf" in builtin_slugs
+        assert "general" in builtin_slugs
+
+    def test_admin_can_create_custom_type(self, client):
+        uid = create_user("ct_create1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Rocky Shore", "default_color": "#64748b"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert data["name"] == "Rocky Shore"
+        assert data["slug"] == "rocky_shore"
+        assert data["default_color"] == "#64748b"
+        assert "id" in data
+
+    def test_custom_type_slug_auto_generated_from_name(self, client):
+        uid = create_user("ct_slug1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Deep Water Trench"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 201
+        assert resp.get_json()["slug"] == "deep_water_trench"
+
+    def test_explicit_slug_accepted(self, client):
+        uid = create_user("ct_explicit1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "My Type", "slug": "my_type"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 201
+        assert resp.get_json()["slug"] == "my_type"
+
+    def test_duplicate_slug_returns_409(self, client):
+        uid = create_user("ct_dup1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Shoal Flat", "slug": "shoal_flat"}),
+            headers=_headers(),
+        )
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Shoal Flat Again", "slug": "shoal_flat"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 409
+        assert "shoal_flat" in resp.get_json()["error"]
+
+    def test_builtin_slug_collision_returns_409(self, client):
+        uid = create_user("ct_builtin1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Reef", "slug": "reef"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 409
+
+    def test_empty_name_returns_400(self, client):
+        uid = create_user("ct_empty1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": ""}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 400
+
+    def test_invalid_slug_characters_return_400(self, client):
+        uid = create_user("ct_inv_slug1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Bad Slug", "slug": "bad-slug!"}),
+            headers=_headers(),
+        )
+        assert resp.status_code == 400
+
+    def test_admin_can_delete_custom_type(self, client):
+        uid = create_user("ct_del1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        create_resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Temp Type", "slug": "temp_type_del"}),
+            headers=_headers(),
+        )
+        assert create_resp.status_code == 201
+        type_id = create_resp.get_json()["id"]
+
+        del_resp = client.delete(
+            f"/api/v1/admin/habitat-types/{type_id}", headers=_headers()
+        )
+        assert del_resp.status_code == 200
+        assert del_resp.get_json()["deleted"] == type_id
+
+        # Must no longer appear in the list
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+        list_resp = client.get("/api/v1/admin/habitat-types")
+        types = list_resp.get_json()["types"]
+        assert not any(t["id"] == type_id for t in types if not t.get("builtin"))
+
+    def test_delete_nonexistent_type_returns_404(self, client):
+        uid = create_user("ct_del_ne1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        assert (
+            client.delete("/api/v1/admin/habitat-types/999999", headers=_headers()).status_code
+            == 404
+        )
+
+    def test_custom_type_appears_in_list(self, client):
+        uid = create_user("ct_appears1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Wreck Zone", "slug": "wreck_zone"}),
+            headers=_headers(),
+        )
+
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+        resp = client.get("/api/v1/admin/habitat-types")
+        types = resp.get_json()["types"]
+        slugs = {t["slug"] for t in types}
+        assert "wreck_zone" in slugs
+        assert "reef" in slugs  # built-ins still present
+
+
+# ─── Habitats with custom types ───────────────────────────────────────────────
+
+
+class TestHabitatWithCustomType:
+    def test_can_create_habitat_with_custom_type(self, client):
+        uid = create_user("cht_create1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        # Create the custom type first
+        client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Rubble Field", "slug": "rubble_field"}),
+            headers=_headers(),
+        )
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0  # bust after creation
+
+        # Create a habitat using the custom type
+        resp = client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({
+                "habitat_type": "rubble_field",
+                "name": "Test Rubble",
+                "geometry": _valid_polygon_geometry(),
+            }),
+            headers=_headers(),
+        )
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert data["habitat_type"] == "rubble_field"
+
+    def test_unknown_type_slug_still_rejected(self, client):
+        uid = create_user("cht_reject1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        resp = client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({
+                "habitat_type": "totally_unknown_xyz",
+                "geometry": _valid_polygon_geometry(),
+            }),
+            headers=_headers(),
+        )
+        assert resp.status_code == 400
+
+    def test_habitat_with_deleted_type_still_readable(self, client):
+        """Deleting a custom type must not corrupt existing habitats using that type."""
+        uid = create_user("cht_del1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        # Create type and habitat
+        type_resp = client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Ephemeral Reef", "slug": "ephemeral_reef"}),
+            headers=_headers(),
+        )
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+        type_id = type_resp.get_json()["id"]
+
+        hab_id = str(uuid.uuid4())
+        client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({
+                "id": hab_id,
+                "habitat_type": "ephemeral_reef",
+                "name": "Ephemeral Habitat",
+                "geometry": _valid_polygon_geometry(),
+            }),
+            headers=_headers(),
+        )
+
+        # Delete the type
+        client.delete(f"/api/v1/admin/habitat-types/{type_id}", headers=_headers())
+        _sqlite._CUSTOM_HABITATS_TS = 0.0
+
+        # The habitat should still be readable and carry its original type
+        resp = client.get("/api/v1/admin/habitats")
+        habitats = resp.get_json()["habitats"]
+        match = next((h for h in habitats if h["id"] == hab_id), None)
+        assert match is not None, "habitat with deleted type must still appear"
+        assert match["habitat_type"] == "ephemeral_reef"
+
+    def test_update_habitat_with_custom_type(self, client):
+        uid = create_user("cht_upd1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        # Create type
+        client.post(
+            "/api/v1/admin/habitat-types",
+            data=json.dumps({"name": "Ledge", "slug": "ledge"}),
+            headers=_headers(),
+        )
+        _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
+
+        # Create habitat with built-in type, then update to custom type
+        hab_id = str(uuid.uuid4())
+        client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": hab_id, "habitat_type": "reef",
+                             "name": "Ledge Spot", "geometry": _valid_polygon_geometry()}),
+            headers=_headers(),
+        )
+        update_resp = client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": hab_id, "habitat_type": "ledge",
+                             "name": "Ledge Spot", "geometry": _valid_polygon_geometry()}),
+            headers=_headers(),
+        )
+        assert update_resp.status_code == 200
+        assert update_resp.get_json()["habitat_type"] == "ledge"
+
+    def test_reshape_round_trip_valid_geojson(self, client):
+        """Simulate the reshape cycle: create → GET geojson_geometry → re-POST with closed ring."""
+        uid = create_user("cht_rtrip1", "pw123456")
+        _make_admin(uid)
+        _login(client, uid)
+
+        # Create with an open ring (as produced by _finishHabitatDraw)
+        open_ring_geom = {
+            "type": "Polygon",
+            "coordinates": [[
+                [-77.80, 34.22],
+                [-77.79, 34.22],
+                [-77.79, 34.23],
+                [-77.80, 34.23],
+                # Note: NOT closed — no duplicate of first vertex
+            ]],
+        }
+        hab_id = str(uuid.uuid4())
+        create_resp = client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": hab_id, "habitat_type": "reef",
+                             "name": "Open Ring", "geometry": open_ring_geom}),
+            headers=_headers(),
+        )
+        assert create_resp.status_code == 201
+
+        _sqlite._CUSTOM_HABITATS_TS = 0.0
+
+        # Fetch via map endpoint to get geojson_geometry
+        with patch("web.api.fetch_ai_habitats", return_value=[]):
+            map_resp = client.get(
+                "/api/v1/map/habitats?south=34.20&west=-77.85&north=34.25&east=-77.75"
+            )
+        features = map_resp.get_json()["data"]["features"]
+        feat = next((f for f in features if f.get("id") == hab_id), None)
+        assert feat is not None
+        geojson_geom = feat["geojson_geometry"]
+
+        # Simulate reshape: produce a closed ring (as _finishHabitatVertexEdit does)
+        ring = geojson_geom["coordinates"][0]
+        # Detect open ring and close it
+        if ring[0] != ring[-1]:
+            ring = ring + [ring[0]]
+        closed_ring_geom = {"type": "Polygon", "coordinates": [ring]}
+
+        # Re-save (simulates the modal "Save" after reshape)
+        update_resp = client.post(
+            "/api/v1/admin/habitats",
+            data=json.dumps({"id": hab_id, "habitat_type": "reef",
+                             "name": "Reshaped Ring", "geometry": closed_ring_geom}),
+            headers=_headers(),
+        )
+        assert update_resp.status_code == 200, \
+            f"Re-save with closed ring failed: {update_resp.get_json()}"
+
+        # Closed ring centroid should still be computed correctly
+        data = update_resp.get_json()
+        assert data["lat"] == pytest.approx(34.225, abs=0.01)
+        assert data["lng"] == pytest.approx(-77.795, abs=0.01)

@@ -4100,6 +4100,8 @@
 
     function _startHabitatDraw() {
         if (!map) return;
+        // Abandon any in-progress vertex edit so handles are cleaned up
+        if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
@@ -4154,22 +4156,32 @@
     }
 
     function _saveHabitat(habitatId, payload, onSuccess) {
-        var url    = '/api/v1/admin/habitats';
-        var method = 'POST';
+        var url = '/api/v1/admin/habitats';
         if (habitatId) { payload.id = habitatId; }
 
         fetch(url, {
-            method:  method,
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(payload),
         })
-        .then(function (r) { if (!r.ok) throw new Error('Server error ' + r.status); return r.json(); })
+        .then(function (r) {
+            // Surface the server's JSON error message when available
+            if (!r.ok) {
+                return r.json().then(
+                    function (j) { throw new Error(j.error || ('Server error ' + r.status)); },
+                    function ()  { throw new Error('Server error ' + r.status); }
+                );
+            }
+            return r.json();
+        })
         .then(function () {
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
             try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
             _showAdminToast(habitatId ? 'Habitat updated' : 'Habitat added');
             scheduleAIQuery();
+            // Keep the management panel list fresh without requiring a reopen
+            if (_habitatPanelOpen) _loadHabitatPanel();
             if (onSuccess) onSuccess();
         })
         .catch(function (e) {
@@ -4479,6 +4491,7 @@
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
                     _showAdminToast('Habitat deleted');
                     scheduleAIQuery();
+                    if (_habitatPanelOpen) _loadHabitatPanel();
                 })
                 .catch(function (e) {
                     console.error('[admin] delete habitat failed:', e);

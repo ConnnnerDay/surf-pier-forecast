@@ -3239,8 +3239,16 @@ def admin_habitat_create_or_update() -> Any:
             lng, lat = float(coords[0]), float(coords[1])
         elif gtype == "Polygon":
             ring = coords[0]
-            lat = sum(c[1] for c in ring) / len(ring)
-            lng = sum(c[0] for c in ring) / len(ring)
+            # Exclude the closing duplicate vertex that GeoJSON rings may include
+            verts = (
+                ring[:-1]
+                if len(ring) > 1 and ring[0] == ring[-1]
+                else ring
+            )
+            if not verts:
+                raise ValueError("empty ring")
+            lat = sum(c[1] for c in verts) / len(verts)
+            lng = sum(c[0] for c in verts) / len(verts)
     except (KeyError, TypeError, ValueError, ZeroDivisionError):
         return jsonify({"error": "Invalid geometry coordinates"}), 400
 
