@@ -68,6 +68,15 @@
     var _pendingHabitatGeom = null;   // finished geometry waiting for modal save
     var _customHabitats     = [];     // [{id, leaflet, data}] — live custom habitat state
     var _showCustomHabitats = true;   // whether custom habitats are visible
+    // Vertex edit state (polygon reshape mode)
+    var _habitatVertexEditMode = false;
+    var _habitatVertexMarkers  = [];   // draggable L.marker objects at polygon vertices
+    var _habitatVertexPreview  = null; // L.polygon showing reshaped outline
+    var _habitatEditData       = null; // full feature data of habitat being edited
+    // Management panel state
+    var _habitatPanelOpen      = false;
+    // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
+    var _customHabitatTypes    = [];
     // Habitat type filter: null = all; object keyed by type = override
     var habitatFilters      = null;
     // Decorative overlay layer (influence halos + cluster rings) kept separate so
@@ -4027,16 +4036,37 @@
         if (!modal) return;
         document.getElementById('fmap-habitat-modal-title').textContent = 'Edit Habitat';
         document.getElementById('fmap-habitat-name').value  = habitatData.name || '';
-        document.getElementById('fmap-habitat-type').value  = habitatData.habitat_type || habitatData.osm_type || 'general';
+        var typeEl = document.getElementById('fmap-habitat-type');
+        if (typeEl) {
+            typeEl.value = habitatData.habitat_type || habitatData.osm_type || 'general';
+            // If not found (custom type not yet in dropdown options), set it manually
+            if (typeEl.value !== (habitatData.habitat_type || habitatData.osm_type || 'general')) {
+                var opt = document.createElement('option');
+                opt.value = habitatData.habitat_type || habitatData.osm_type || 'general';
+                opt.textContent = opt.value;
+                opt.setAttribute('data-custom', '1');
+                typeEl.appendChild(opt);
+                typeEl.value = opt.value;
+            }
+        }
         document.getElementById('fmap-habitat-color').value = habitatData.fill_color || '#22c55e';
         document.getElementById('fmap-habitat-desc').value  = habitatData.description || '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = habitatData.id;
         var delBtn = document.getElementById('fmap-habitat-delete');
         if (delBtn) { delBtn.hidden = false; delBtn.dataset.habitatId = habitatData.id; }
+        // Show reshape button only for saved polygons (geojson_geometry has type Polygon)
+        var reshapeBtn = document.getElementById('fmap-habitat-reshape');
+        if (reshapeBtn) {
+            var hasPolygon = habitatData.geojson_geometry && habitatData.geojson_geometry.type === 'Polygon';
+            reshapeBtn.hidden = !hasPolygon;
+            reshapeBtn.dataset.habitatId = habitatData.id;
+        }
         var hint = document.getElementById('fmap-habitat-draw-hint');
         if (hint) hint.hidden = true;
-        _pendingHabitatGeom = habitatData.geometry || null;
+        // Use the original GeoJSON geometry for round-tripping back to the server
+        _pendingHabitatGeom = habitatData.geojson_geometry || null;
+        _habitatEditData = habitatData;
         _openHabitatModal();
     }
 
@@ -4052,9 +4082,12 @@
         if (saveBtn) saveBtn.dataset.habitatId = '';
         var delBtn = document.getElementById('fmap-habitat-delete');
         if (delBtn) delBtn.hidden = true;
+        var reshapeBtn = document.getElementById('fmap-habitat-reshape');
+        if (reshapeBtn) reshapeBtn.hidden = true;
         var hint = document.getElementById('fmap-habitat-draw-hint');
         if (hint) hint.hidden = true;
         _pendingHabitatGeom = geometry;
+        _habitatEditData = null;
         _openHabitatModal();
     }
 
@@ -4067,6 +4100,8 @@
 
     function _startHabitatDraw() {
         if (!map) return;
+        // Abandon any in-progress vertex edit so handles are cleaned up
+        if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
@@ -4121,22 +4156,32 @@
     }
 
     function _saveHabitat(habitatId, payload, onSuccess) {
-        var url    = '/api/v1/admin/habitats';
-        var method = 'POST';
+        var url = '/api/v1/admin/habitats';
         if (habitatId) { payload.id = habitatId; }
 
         fetch(url, {
-            method:  method,
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(payload),
         })
-        .then(function (r) { if (!r.ok) throw new Error('Server error ' + r.status); return r.json(); })
+        .then(function (r) {
+            // Surface the server's JSON error message when available
+            if (!r.ok) {
+                return r.json().then(
+                    function (j) { throw new Error(j.error || ('Server error ' + r.status)); },
+                    function ()  { throw new Error('Server error ' + r.status); }
+                );
+            }
+            return r.json();
+        })
         .then(function () {
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
             try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
             _showAdminToast(habitatId ? 'Habitat updated' : 'Habitat added');
             scheduleAIQuery();
+            // Keep the management panel list fresh without requiring a reopen
+            if (_habitatPanelOpen) _loadHabitatPanel();
             if (onSuccess) onSuccess();
         })
         .catch(function (e) {
@@ -4145,6 +4190,208 @@
             if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Save failed — ' + e.message; }
             var saveBtn = document.getElementById('fmap-habitat-save');
             if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+        });
+    }
+
+    // ─── Vertex editing (reshape existing polygon) ────────────────────────────
+
+    function _startHabitatVertexEdit(geojson) {
+        if (!map || !geojson || geojson.type !== 'Polygon') return;
+        _habitatVertexEditMode = true;
+        var ring = geojson.coordinates[0];
+        // GeoJSON rings close by repeating the first vertex — skip the duplicate
+        var verts = (ring.length > 1 &&
+            ring[0][0] === ring[ring.length - 1][0] &&
+            ring[0][1] === ring[ring.length - 1][1])
+            ? ring.slice(0, -1) : ring;
+
+        _habitatVertexMarkers = [];
+        verts.forEach(function (coord) {
+            var m = L.marker([coord[1], coord[0]], {
+                draggable: true,
+                icon: L.divIcon({
+                    className: 'fmap-vertex-handle',
+                    html: '<div class="fmap-vertex-dot"></div>',
+                    iconSize:   [14, 14],
+                    iconAnchor: [7, 7]
+                }),
+                zIndexOffset: 500
+            }).addTo(map);
+            m.on('drag dragend', _updateHabitatVertexPreview);
+            _habitatVertexMarkers.push(m);
+        });
+
+        _updateHabitatVertexPreview();
+        var bar = document.getElementById('fmap-habitat-reshape-bar');
+        if (bar) bar.hidden = false;
+        map.getContainer().style.cursor = 'default';
+    }
+
+    function _updateHabitatVertexPreview() {
+        var coords = _habitatVertexMarkers.map(function (m) {
+            var ll = m.getLatLng();
+            return [ll.lat, ll.lng];
+        });
+        if (!_habitatVertexPreview) {
+            _habitatVertexPreview = L.polygon(coords, {
+                color: '#a855f7', weight: 2.5, dashArray: '6,4', fillOpacity: 0.15
+            });
+            if (map) _habitatVertexPreview.addTo(map);
+        } else {
+            _habitatVertexPreview.setLatLngs(coords);
+        }
+    }
+
+    function _finishHabitatVertexEdit() {
+        var coords = _habitatVertexMarkers.map(function (m) {
+            var ll = m.getLatLng();
+            return [ll.lng, ll.lat]; // GeoJSON [lng, lat]
+        });
+        if (coords.length >= 3) {
+            coords.push(coords[0]); // close the ring
+        }
+        var newGeojson = { type: 'Polygon', coordinates: [coords] };
+        _pendingHabitatGeom = newGeojson;
+        _cancelHabitatVertexEdit();
+        // Re-open the edit modal with the updated geometry
+        if (_habitatEditData) {
+            _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: newGeojson });
+            _openHabitatEditModal(_habitatEditData);
+        }
+    }
+
+    function _cancelHabitatVertexEdit() {
+        _habitatVertexEditMode = false;
+        _habitatVertexMarkers.forEach(function (m) { if (map) map.removeLayer(m); });
+        _habitatVertexMarkers = [];
+        if (_habitatVertexPreview && map) {
+            map.removeLayer(_habitatVertexPreview);
+            _habitatVertexPreview = null;
+        }
+        var bar = document.getElementById('fmap-habitat-reshape-bar');
+        if (bar) bar.hidden = true;
+        if (map) map.getContainer().style.cursor = '';
+    }
+
+    // ─── Habitat management panel ─────────────────────────────────────────────
+
+    function _loadHabitatPanel() {
+        var listEl = document.getElementById('fmap-habitat-panel-list');
+        if (listEl) listEl.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
+
+        fetch('/api/v1/admin/habitats')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) { _renderHabitatPanelList(data.habitats || []); })
+            .catch(function (e) {
+                console.warn('[admin] load habitats failed:', e);
+                if (listEl) listEl.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
+            });
+
+        fetch('/api/v1/admin/habitat-types')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                _customHabitatTypes = (data.types || []).filter(function (t) { return !t.builtin; });
+                _renderHabitatPanelTypes();
+                _updateHabitatTypeDropdown(data.types || []);
+            })
+            .catch(function (e) { console.warn('[admin] load habitat types failed:', e); });
+    }
+
+    function _renderHabitatPanelList(habitats) {
+        var el = document.getElementById('fmap-habitat-panel-list');
+        if (!el) return;
+        if (!habitats.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">No custom habitats yet.</p>';
+            return;
+        }
+        var html = '';
+        habitats.forEach(function (h) {
+            var colorSafe  = esc(h.fill_color || '#8b5cf6');
+            var nameSafe   = esc(h.name || '(unnamed)');
+            var typeSafe   = esc(h.habitat_type || 'general');
+            // Encode habitat data for the edit button without innerHTML injection risk
+            html +=
+                '<div class="fmap-habitat-panel-item">' +
+                '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
+                '<span class="fmap-habitat-panel-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
+                '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
+                '</div>';
+        });
+        el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-habitat-panel-edit').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var hid = btn.dataset.hid;
+                var hData = habitats.filter(function (h) { return h.id === hid; })[0];
+                if (!hData) return;
+                _habitatPanelOpen = false;
+                var panel = document.getElementById('fmap-habitat-panel');
+                if (panel) panel.hidden = true;
+                var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
+                if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
+                _openHabitatEditModal(hData);
+            });
+        });
+    }
+
+    function _renderHabitatPanelTypes() {
+        var el = document.getElementById('fmap-habitat-panel-types');
+        if (!el) return;
+        if (!_customHabitatTypes.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty" style="font-size:.78rem;padding:4px 0">No custom types yet.</p>';
+            return;
+        }
+        var html = '';
+        _customHabitatTypes.forEach(function (t) {
+            html +=
+                '<div class="fmap-habitat-type-item">' +
+                '<span class="fmap-habitat-panel-color" style="background:' + esc(t.default_color || '#8b5cf6') + '"></span>' +
+                '<span class="fmap-habitat-panel-name">' + esc(t.name) + '</span>' +
+                '<code class="fmap-habitat-type-slug">' + esc(t.slug) + '</code>' +
+                '<button class="fmap-habitat-type-del" data-tid="' + t.id + '" aria-label="Remove type ' + esc(t.name) + '">✕</button>' +
+                '</div>';
+        });
+        el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-habitat-type-del').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var tid = btn.dataset.tid;
+                if (!tid) return;
+                fetch('/api/v1/admin/habitat-types/' + encodeURIComponent(tid), { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        _showAdminToast('Type removed');
+                        _loadHabitatPanel();
+                    })
+                    .catch(function (e) {
+                        _showAdminToast('Delete failed', true);
+                        console.error('[admin] delete type failed:', e);
+                    });
+            });
+        });
+    }
+
+    function _updateHabitatTypeDropdown(types) {
+        var sel = document.getElementById('fmap-habitat-type');
+        if (!sel) return;
+        // Remove previously injected custom options
+        Array.prototype.slice.call(sel.querySelectorAll('option[data-custom]'))
+            .forEach(function (o) { sel.removeChild(o); });
+        // Append custom types after the static built-ins
+        var customTypes = types.filter(function (t) { return !t.builtin; });
+        if (!customTypes.length) return;
+        var sep = document.createElement('option');
+        sep.disabled = true;
+        sep.textContent = '──── Custom ────';
+        sep.setAttribute('data-custom', '1');
+        sel.appendChild(sep);
+        customTypes.forEach(function (t) {
+            var o = document.createElement('option');
+            o.value = t.slug;
+            o.textContent = t.name;
+            o.setAttribute('data-custom', '1');
+            sel.appendChild(o);
         });
     }
 
@@ -4244,6 +4491,7 @@
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
                     _showAdminToast('Habitat deleted');
                     scheduleAIQuery();
+                    if (_habitatPanelOpen) _loadHabitatPanel();
                 })
                 .catch(function (e) {
                     console.error('[admin] delete habitat failed:', e);
@@ -4340,6 +4588,137 @@
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
         var overrideBackdrop = document.getElementById('fmap-override-backdrop');
         if (overrideBackdrop) overrideBackdrop.addEventListener('click', _closeOverrideModal);
+
+        // ── Reshape button (in habitat edit modal) ────────────────────────────
+        var reshapeBtn = document.getElementById('fmap-habitat-reshape');
+        if (reshapeBtn) {
+            reshapeBtn.addEventListener('click', function () {
+                if (!_pendingHabitatGeom || _pendingHabitatGeom.type !== 'Polygon') return;
+                _closeHabitatModal();
+                _startHabitatVertexEdit(_pendingHabitatGeom);
+            });
+        }
+
+        // ── Reshape bar done/cancel ───────────────────────────────────────────
+        var reshapeDoneBtn = document.getElementById('fmap-habitat-reshape-done');
+        if (reshapeDoneBtn) {
+            reshapeDoneBtn.addEventListener('click', function () {
+                if (_habitatVertexMarkers.length < 3) {
+                    _showAdminToast('Need at least 3 vertices', true);
+                    return;
+                }
+                _finishHabitatVertexEdit();
+            });
+        }
+
+        var reshapeCancelBtn = document.getElementById('fmap-habitat-reshape-cancel');
+        if (reshapeCancelBtn) {
+            reshapeCancelBtn.addEventListener('click', function () {
+                _cancelHabitatVertexEdit();
+                if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
+            });
+        }
+
+        // Escape closes vertex edit too
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && _habitatVertexEditMode) {
+                _cancelHabitatVertexEdit();
+                if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
+            }
+        });
+
+        // Shift+click on a vertex marker removes it
+        if (map) {
+            map.on('click', function (e) {
+                if (!_habitatVertexEditMode) return;
+                if (e.originalEvent && e.originalEvent.shiftKey) {
+                    // Find the closest vertex marker to the click
+                    var closest = null, minDist = 20; // px threshold
+                    _habitatVertexMarkers.forEach(function (m) {
+                        var mp = map.latLngToContainerPoint(m.getLatLng());
+                        var cp = map.latLngToContainerPoint(e.latlng);
+                        var d = Math.sqrt(Math.pow(mp.x - cp.x, 2) + Math.pow(mp.y - cp.y, 2));
+                        if (d < minDist) { minDist = d; closest = m; }
+                    });
+                    if (closest && _habitatVertexMarkers.length > 3) {
+                        map.removeLayer(closest);
+                        _habitatVertexMarkers = _habitatVertexMarkers.filter(function (m) { return m !== closest; });
+                        _updateHabitatVertexPreview();
+                    }
+                }
+            });
+        }
+
+        // ── Management panel button ───────────────────────────────────────────
+        var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
+        if (listBtn) {
+            listBtn.hidden = false;
+            listBtn.addEventListener('click', function () {
+                _habitatPanelOpen = !_habitatPanelOpen;
+                var panel = document.getElementById('fmap-habitat-panel');
+                if (panel) panel.hidden = !_habitatPanelOpen;
+                listBtn.classList.toggle('fmap-ctrl-btn--active', _habitatPanelOpen);
+                listBtn.setAttribute('aria-pressed', _habitatPanelOpen ? 'true' : 'false');
+                if (_habitatPanelOpen) _loadHabitatPanel();
+            });
+        }
+
+        var panelCloseBtn = document.getElementById('fmap-habitat-panel-close');
+        if (panelCloseBtn) {
+            panelCloseBtn.addEventListener('click', function () {
+                _habitatPanelOpen = false;
+                var panel = document.getElementById('fmap-habitat-panel');
+                if (panel) panel.hidden = true;
+                var lb = document.getElementById('fmap-admin-habitats-list-btn');
+                if (lb) { lb.classList.remove('fmap-ctrl-btn--active'); lb.setAttribute('aria-pressed', 'false'); }
+            });
+        }
+
+        // ── New type form ─────────────────────────────────────────────────────
+        var newTypeAdd = document.getElementById('fmap-new-type-add');
+        if (newTypeAdd) {
+            newTypeAdd.addEventListener('click', function () {
+                var nameEl   = document.getElementById('fmap-new-type-name');
+                var colorEl  = document.getElementById('fmap-new-type-color');
+                var statusEl = document.getElementById('fmap-new-type-status');
+                var name = nameEl ? nameEl.value.trim() : '';
+                if (!name) {
+                    if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Name is required'; }
+                    return;
+                }
+                var color = colorEl ? colorEl.value : '#8b5cf6';
+                newTypeAdd.disabled = true;
+                if (statusEl) { statusEl.style.color = ''; statusEl.textContent = ''; }
+                fetch('/api/v1/admin/habitat-types', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, default_color: color }),
+                })
+                .then(function (r) {
+                    return r.ok ? r.json() : r.json().then(function (e) { throw new Error(e.error || 'HTTP ' + r.status); });
+                })
+                .then(function () {
+                    newTypeAdd.disabled = false;
+                    if (nameEl) nameEl.value = '';
+                    if (statusEl) { statusEl.style.color = '#16a34a'; statusEl.textContent = 'Type added'; }
+                    _showAdminToast('Habitat type added');
+                    _loadHabitatPanel();
+                })
+                .catch(function (e) {
+                    newTypeAdd.disabled = false;
+                    if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = e.message || 'Failed'; }
+                });
+            });
+        }
+
+        // Load types on init so the dropdown is populated immediately
+        fetch('/api/v1/admin/habitat-types')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                _customHabitatTypes = (data.types || []).filter(function (t) { return !t.builtin; });
+                _updateHabitatTypeDropdown(data.types || []);
+            })
+            .catch(function () {});
     }
 
     // Wire habitat type filter checkboxes in the layers panel.

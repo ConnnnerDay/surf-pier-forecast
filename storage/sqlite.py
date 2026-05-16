@@ -259,6 +259,16 @@ CREATE TABLE IF NOT EXISTS habitat_overrides (
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS custom_habitat_types (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT    NOT NULL,
+    slug          TEXT    NOT NULL UNIQUE,
+    default_color TEXT    NOT NULL DEFAULT '#8b5cf6',
+    created_by    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    is_deleted    INTEGER NOT NULL DEFAULT 0,
+    created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -310,6 +320,7 @@ _KNOWN_TABLES = frozenset(
         "suppressed_map_spots",
         "custom_habitats",
         "habitat_overrides",
+        "custom_habitat_types",
     }
 )
 
@@ -2404,8 +2415,6 @@ def create_custom_habitat(
     user_id: int,
 ) -> dict[str, Any]:
     """Insert a new custom habitat; returns the new row dict."""
-    if habitat_type not in VALID_HABITAT_TYPES:
-        habitat_type = "general"
     geometry_json = json.dumps(geometry)
     conn = get_db()
     try:
@@ -2458,7 +2467,7 @@ def update_custom_habitat(
             return None
         updates: list[str] = []
         params: list[Any] = []
-        if habitat_type is not None and habitat_type in VALID_HABITAT_TYPES:
+        if habitat_type is not None:
             updates.append("habitat_type = ?")
             params.append(habitat_type)
         if name is not None:
@@ -2640,4 +2649,101 @@ def delete_habitat_override(override_id: int) -> bool:
         conn.close()
     if cur.rowcount > 0:
         _invalidate_habitat_overrides_cache()
+    return cur.rowcount > 0
+
+
+# Custom habitat types (admin-defined habitat categories) ---------------------
+
+_CUSTOM_HABITAT_TYPES_CACHE: Optional[list[dict[str, Any]]] = None
+_CUSTOM_HABITAT_TYPES_TS: float = 0.0
+_CUSTOM_HABITAT_TYPES_TTL: float = 300.0
+_CUSTOM_HABITAT_TYPES_LOCK = _threading.Lock()
+
+
+def _invalidate_custom_habitat_types_cache() -> None:
+    global _CUSTOM_HABITAT_TYPES_TS
+    with _CUSTOM_HABITAT_TYPES_LOCK:
+        _CUSTOM_HABITAT_TYPES_TS = 0.0
+
+
+def get_custom_habitat_types() -> list[dict[str, Any]]:
+    """Return all active admin-defined custom habitat types (cached)."""
+    global _CUSTOM_HABITAT_TYPES_CACHE, _CUSTOM_HABITAT_TYPES_TS
+    now = _time.monotonic()
+    with _CUSTOM_HABITAT_TYPES_LOCK:
+        if (
+            _CUSTOM_HABITAT_TYPES_CACHE is not None
+            and now - _CUSTOM_HABITAT_TYPES_TS < _CUSTOM_HABITAT_TYPES_TTL
+        ):
+            return _CUSTOM_HABITAT_TYPES_CACHE
+
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, name, slug, default_color, created_by, created_at "
+            "FROM custom_habitat_types WHERE is_deleted = 0 ORDER BY name"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    result = [
+        {
+            "id": r["id"],
+            "name": r["name"],
+            "slug": r["slug"],
+            "default_color": r["default_color"],
+            "created_by": r["created_by"],
+            "created_at": r["created_at"],
+        }
+        for r in rows
+    ]
+    with _CUSTOM_HABITAT_TYPES_LOCK:
+        _CUSTOM_HABITAT_TYPES_CACHE = result
+        _CUSTOM_HABITAT_TYPES_TS = _time.monotonic()
+    return result
+
+
+def create_custom_habitat_type(
+    name: str, slug: str, default_color: str, user_id: int
+) -> dict[str, Any]:
+    """Insert a new custom habitat type; returns the new row dict."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO custom_habitat_types (name, slug, default_color, created_by) "
+            "VALUES (?, ?, ?, ?)",
+            (name.strip(), slug.strip(), default_color.strip(), user_id),
+        )
+        row = conn.execute(
+            "SELECT id, name, slug, default_color, created_by, created_at "
+            "FROM custom_habitat_types WHERE slug = ?",
+            (slug.strip(),),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    _invalidate_custom_habitat_types_cache()
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "slug": row["slug"],
+        "default_color": row["default_color"],
+        "created_by": row["created_by"],
+        "created_at": row["created_at"],
+    }
+
+
+def delete_custom_habitat_type(type_id: int) -> bool:
+    """Soft-delete a custom habitat type; returns True if a row was affected."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "UPDATE custom_habitat_types SET is_deleted = 1 WHERE id = ? AND is_deleted = 0",
+            (type_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount > 0:
+        _invalidate_custom_habitat_types_cache()
     return cur.rowcount > 0

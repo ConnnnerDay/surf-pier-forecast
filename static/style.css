@@ -14534,3 +14534,178 @@ body.dark .wq-hdx-item {
     animation: none !important;
   }
 }
+
+/* ── Vertex edit handle (reshape mode) ── */
+.fmap-vertex-handle {
+  background: none !important;
+  border: none !important;
+}
+.fmap-vertex-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #a855f7;
+  border: 2px solid #fff;
+  box-shadow: 0 0 5px rgba(168,85,247,0.7);
+  cursor: move;
+}
+
+/* ── Reshape floating bar ── */
+.fmap-habitat-reshape-bar {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3500;
+  background: var(--surface, #1e293b);
+  border: 1px solid #a855f7;
+  border-radius: 10px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  font-size: 0.82rem;
+  color: var(--text, #e2e8f0);
+  white-space: nowrap;
+}
+.fmap-habitat-reshape-bar[hidden] { display: none !important; }
+.fmap-reshape-hint { flex: 1; }
+.fmap-reshape-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Habitat management panel ── */
+.fmap-habitat-panel {
+  position: fixed;
+  top: 58px;
+  right: 54px;
+  z-index: 2400;
+  background: var(--surface, #1e293b);
+  border: 1px solid var(--border, #334155);
+  border-radius: 12px;
+  width: min(340px, 90vw);
+  max-height: min(540px, 82vh);
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  color: var(--text, #e2e8f0);
+  overscroll-behavior: contain;
+}
+.fmap-habitat-panel[hidden] { display: none !important; }
+.fmap-habitat-panel-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--border, #334155);
+  position: sticky;
+  top: 0;
+  background: var(--surface, #1e293b);
+  z-index: 1;
+  font-size: 0.9rem;
+}
+.fmap-habitat-panel-list { padding: 6px 0; min-height: 36px; }
+.fmap-habitat-panel-empty {
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b7280);
+  padding: 10px 16px;
+  margin: 0;
+}
+.fmap-habitat-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-bottom: 1px solid rgba(51,65,85,0.4);
+  font-size: 0.83rem;
+}
+.fmap-habitat-panel-item:last-child { border-bottom: none; }
+.fmap-habitat-panel-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.fmap-habitat-panel-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fmap-habitat-panel-type {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  flex-shrink: 0;
+}
+.fmap-habitat-panel-edit {
+  background: none;
+  border: 1px solid var(--border, #475569);
+  color: inherit;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.73rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fmap-habitat-panel-edit:hover { background: var(--border, #334155); }
+.fmap-habitat-panel-section {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border, #334155);
+}
+.fmap-habitat-panel-section-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted, #94a3b8);
+  margin-bottom: 10px;
+}
+.fmap-habitat-panel-types { margin-bottom: 10px; }
+.fmap-habitat-type-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 4px 0;
+}
+.fmap-habitat-type-slug {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+  flex: 1;
+  font-family: monospace;
+}
+.fmap-habitat-type-del {
+  background: none;
+  border: none;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.fmap-habitat-type-del:hover { color: #ef4444; }
+.fmap-habitat-type-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.fmap-admin-input--sm {
+  padding: 4px 6px;
+  font-size: 0.8rem;
+}
+.fmap-admin-save-btn--sm {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.fmap-admin-reshape-btn {
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.fmap-admin-reshape-btn:hover { background: #6d28d9; }
+.fmap-admin-reshape-btn:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
