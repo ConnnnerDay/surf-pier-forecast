@@ -14549,6 +14549,27 @@ body.dark .wq-hdx-item {
   box-shadow: 0 0 5px rgba(168,85,247,0.7);
   cursor: move;
 }
+/* Midpoint insertion handle — smaller, lighter */
+.fmap-midpoint-handle { cursor: pointer !important; }
+.fmap-vertex-dot--mid {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(168,85,247,0.45);
+  border: 1.5px solid rgba(255,255,255,0.7);
+  box-shadow: none;
+  cursor: pointer;
+}
+/* Point-move drag handle — larger, teal accent */
+.fmap-vertex-dot--point {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 8px rgba(14,165,233,0.7);
+  cursor: move;
+}
 
 /* ── Reshape floating bar ── */
 .fmap-habitat-reshape-bar {
@@ -14636,7 +14657,8 @@ body.dark .wq-hdx-item {
   color: var(--text-muted, #6b7280);
   flex-shrink: 0;
 }
-.fmap-habitat-panel-edit {
+.fmap-habitat-panel-edit,
+.fmap-habitat-panel-view {
   background: none;
   border: 1px solid var(--border, #475569);
   color: inherit;
@@ -14646,7 +14668,14 @@ body.dark .wq-hdx-item {
   cursor: pointer;
   flex-shrink: 0;
 }
-.fmap-habitat-panel-edit:hover { background: var(--border, #334155); }
+.fmap-habitat-panel-edit:hover,
+.fmap-habitat-panel-view:hover { background: var(--border, #334155); }
+.fmap-habitat-panel-view {
+  padding: 2px 5px;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: #94a3b8;
+}
 .fmap-habitat-panel-section {
   padding: 14px 16px;
   border-top: 1px solid var(--border, #334155);
