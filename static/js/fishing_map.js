@@ -3754,6 +3754,58 @@
         t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
     }
 
+    // Show an undo-delete toast with a clickable "Undo" button.
+    // onUndo is called if the user clicks within `duration` ms (default 8000).
+    function _showUndoToast(msg, onUndo, duration) {
+        duration = duration || 8000;
+        var existing = document.getElementById('fmap-undo-toast');
+        if (existing) existing.remove();
+        var t = document.createElement('div');
+        t.id = 'fmap-undo-toast';
+        t.innerHTML = '<span>' + esc(msg) + '</span><button id="fmap-undo-toast-btn" type="button">Undo</button>';
+        document.body.appendChild(t);
+        var btn = document.getElementById('fmap-undo-toast-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                clearTimeout(t._hideTimer);
+                t.remove();
+                if (onUndo) onUndo();
+            });
+        }
+        t._hideTimer = setTimeout(function () { t.remove(); }, duration);
+    }
+
+    // Default fill colors per built-in habitat type (mirrors _CUSTOM_HABITAT_COLORS).
+    var _TYPE_DEFAULT_COLORS = {
+        surf: '#fbbf24', grassflat: '#22c55e', estuary: '#34d399',
+        reef: '#f59e0b', mangrove: '#16a34a', kelp: '#4ade80',
+        bottom: '#94a3b8', tidalflat: '#6ee7b7', pelagic: '#38bdf8', general: '#818cf8'
+    };
+
+    // Briefly flash a custom habitat layer on the map to draw the eye.
+    function _highlightHabitatOnMap(hid) {
+        _customHabitats.forEach(function (h) {
+            if (h.id !== hid || !h.leaflet) return;
+            var lyr = h.leaflet;
+            var opts = lyr.options || {};
+            var origFill  = opts.fillOpacity  != null ? opts.fillOpacity  : 0.35;
+            var origWeight = opts.weight != null ? opts.weight : 2.5;
+            var count = 0;
+            var blink = setInterval(function () {
+                count++;
+                if (count % 2 === 0) {
+                    lyr.setStyle({ fillOpacity: origFill, weight: origWeight });
+                } else {
+                    lyr.setStyle({ fillOpacity: Math.min(0.75, origFill + 0.35), weight: origWeight + 2 });
+                }
+                if (count >= 6) {
+                    clearInterval(blink);
+                    lyr.setStyle({ fillOpacity: origFill, weight: origWeight });
+                }
+            }, 210);
+        });
+    }
+
     // ── Admin spot-suppression helpers ──────────────────────────────────────
 
     // Open a compact popup on an OSM/NOAA/ESRI spot offering "Hide" and
@@ -4084,6 +4136,18 @@
         }
         var hint = document.getElementById('fmap-habitat-draw-hint');
         if (hint) hint.hidden = true;
+        // Audit info: show created/updated timestamps when available
+        var auditEl = document.getElementById('fmap-habitat-audit');
+        if (auditEl) {
+            var createdAt = habitatData.created_at ? habitatData.created_at.replace('T', ' ').slice(0, 16) : null;
+            var updatedAt = habitatData.updated_at ? habitatData.updated_at.replace('T', ' ').slice(0, 16) : null;
+            if (createdAt) {
+                auditEl.hidden = false;
+                auditEl.textContent = 'Created ' + createdAt + (updatedAt && updatedAt !== createdAt ? ' · Updated ' + updatedAt : '');
+            } else {
+                auditEl.hidden = true;
+            }
+        }
         // Use the resolved GeoJSON geometry for round-tripping back to the server
         _pendingHabitatGeom = _resolvedGeom;
         _habitatEditData = habitatData;
@@ -4108,6 +4172,8 @@
         if (moveBtn2) moveBtn2.hidden = true;
         var hint = document.getElementById('fmap-habitat-draw-hint');
         if (hint) hint.hidden = true;
+        var auditEl2 = document.getElementById('fmap-habitat-audit');
+        if (auditEl2) auditEl2.hidden = true;
         _pendingHabitatGeom = geometry;
         _habitatEditData = null;
         _openHabitatModal();
@@ -4403,13 +4469,20 @@
 
     // ─── Habitat management panel ─────────────────────────────────────────────
 
+    var _habitatPanelAllData  = [];     // full unfiltered list from server
+    var _habitatPanelSort     = 'date'; // 'date' | 'name' | 'type'
+    var _habitatPanelSearch   = '';     // live search string
+
     function _loadHabitatPanel() {
         var listEl = document.getElementById('fmap-habitat-panel-list');
         if (listEl) listEl.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
 
         fetch('/api/v1/admin/habitats')
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-            .then(function (data) { _renderHabitatPanelList(data.habitats || []); })
+            .then(function (data) {
+                _habitatPanelAllData = data.habitats || [];
+                _applyHabitatPanelFilter();
+            })
             .catch(function (e) {
                 console.warn('[admin] load habitats failed:', e);
                 if (listEl) listEl.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
@@ -4425,27 +4498,51 @@
             .catch(function (e) { console.warn('[admin] load habitat types failed:', e); });
     }
 
+    // Apply current search term and sort order to _habitatPanelAllData and re-render.
+    function _applyHabitatPanelFilter() {
+        var q = _habitatPanelSearch.toLowerCase().trim();
+        var filtered = _habitatPanelAllData.filter(function (h) {
+            if (!q) return true;
+            return (h.name || '').toLowerCase().indexOf(q) !== -1 ||
+                   (h.habitat_type || '').toLowerCase().indexOf(q) !== -1 ||
+                   (h.description || '').toLowerCase().indexOf(q) !== -1;
+        });
+
+        filtered = filtered.slice().sort(function (a, b) {
+            if (_habitatPanelSort === 'name') {
+                return (a.name || '').localeCompare(b.name || '');
+            } else if (_habitatPanelSort === 'type') {
+                return (a.habitat_type || '').localeCompare(b.habitat_type || '');
+            }
+            // Default: date descending (newest first)
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
+
+        _renderHabitatPanelList(filtered);
+    }
+
     function _renderHabitatPanelList(habitats) {
         var el = document.getElementById('fmap-habitat-panel-list');
         if (!el) return;
         if (!habitats.length) {
-            el.innerHTML = '<p class="fmap-habitat-panel-empty">No custom habitats yet.</p>';
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
+                (_habitatPanelSearch ? 'No habitats match your search.' : 'No custom habitats yet.') +
+                '</p>';
             return;
         }
         var html = '';
         habitats.forEach(function (h) {
-            var colorSafe  = esc(h.fill_color || '#8b5cf6');
-            var nameSafe   = esc(h.name || '(unnamed)');
-            var typeSafe   = esc(h.habitat_type || 'general');
-            // Encode habitat data for the edit button without innerHTML injection risk
-            var latStr = (h.lat != null) ? String(h.lat) : '';
-            var lngStr = (h.lng != null) ? String(h.lng) : '';
+            var colorSafe = esc(h.fill_color || '#8b5cf6');
+            var nameSafe  = esc(h.name || '(unnamed)');
+            var typeSafe  = esc(h.habitat_type || 'general');
+            var latStr    = (h.lat != null) ? String(h.lat) : '';
+            var lngStr    = (h.lng != null) ? String(h.lng) : '';
             html +=
                 '<div class="fmap-habitat-panel-item">' +
                 '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
                 '<span class="fmap-habitat-panel-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
-                (latStr ? '<button class="fmap-habitat-panel-view" data-lat="' + latStr + '" data-lng="' + lngStr + '" aria-label="Pan to ' + nameSafe + '" title="Pan to on map">⌖</button>' : '') +
+                (latStr ? '<button class="fmap-habitat-panel-view" data-hid="' + esc(h.id) + '" data-lat="' + latStr + '" data-lng="' + lngStr + '" title="Pan to on map" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
                 '</div>';
         });
@@ -4457,6 +4554,7 @@
                 var lng = parseFloat(btn.dataset.lng);
                 if (!isNaN(lat) && !isNaN(lng) && map) {
                     map.flyTo([lat, lng], Math.max(map.getZoom(), 14));
+                    _highlightHabitatOnMap(btn.dataset.hid);
                 }
             });
         });
@@ -4464,7 +4562,7 @@
         el.querySelectorAll('.fmap-habitat-panel-edit').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var hid = btn.dataset.hid;
-                var hData = habitats.filter(function (h) { return h.id === hid; })[0];
+                var hData = _habitatPanelAllData.filter(function (h) { return h.id === hid; })[0];
                 if (!hData) return;
                 _habitatPanelOpen = false;
                 var panel = document.getElementById('fmap-habitat-panel');
@@ -4472,6 +4570,79 @@
                 var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
                 if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
                 _openHabitatEditModal(hData);
+            });
+        });
+    }
+
+    // ─── Overrides tab ────────────────────────────────────────────────────────
+
+    function _loadOverridesTab() {
+        var el = document.getElementById('fmap-overrides-panel-list');
+        if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
+        fetch('/api/v1/admin/habitat-overrides')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) { _renderOverridesList(data.overrides || []); })
+            .catch(function () {
+                if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
+            });
+    }
+
+    function _renderOverridesList(overrides) {
+        var el = document.getElementById('fmap-overrides-panel-list');
+        if (!el) return;
+        if (!overrides.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">No AI feature overrides yet.<br>' +
+                '<span style="font-size:.75rem;color:var(--text-muted,#6b7280)">Enter admin edit mode and click an AI feature to override its name or colour.</span></p>';
+            return;
+        }
+        var html = '';
+        overrides.forEach(function (ov) {
+            var displayName = esc(ov.name || ov.feature_key || '—');
+            var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
+            var colorStyle  = ov.fill_color ? 'background:' + esc(ov.fill_color) + ';width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px' : '';
+            html +=
+                '<div class="fmap-override-item">' +
+                '<div class="fmap-override-item-row">' +
+                (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
+                '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
+                '<button class="fmap-override-item-del" data-oid="' + esc(String(ov.id)) + '" aria-label="Remove override">Remove</button>' +
+                '</div>' +
+                '<div class="fmap-override-item-key">' + keyShort + '</div>' +
+                '</div>';
+        });
+        el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-override-item-del').forEach(function (btn) {
+            var _confirmFlag = false, _confirmTimer = null;
+            btn.addEventListener('click', function () {
+                var oid = btn.dataset.oid;
+                if (!oid) return;
+                if (!_confirmFlag) {
+                    _confirmFlag = true;
+                    btn.textContent = 'Confirm?';
+                    btn.style.background = 'rgba(220,38,38,.2)';
+                    _confirmTimer = setTimeout(function () {
+                        _confirmFlag = false;
+                        btn.textContent = 'Remove';
+                        btn.style.background = '';
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(_confirmTimer);
+                btn.disabled = true;
+                fetch('/api/v1/admin/habitat-overrides/' + encodeURIComponent(oid), { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        aiCache = {}; _aiCacheKeys = [];
+                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        _showAdminToast('Override removed');
+                        scheduleAIQuery();
+                        _loadOverridesTab();
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        _showAdminToast('Delete failed', true);
+                    });
             });
         });
     }
@@ -4630,9 +4801,21 @@
                     _closeHabitatModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                    _showAdminToast('Habitat deleted');
                     scheduleAIQuery();
                     if (_habitatPanelOpen) _loadHabitatPanel();
+                    // Offer undo for 8 seconds
+                    _showUndoToast('Habitat deleted', function () {
+                        fetch('/api/v1/admin/habitats/' + encodeURIComponent(habitatId) + '/restore', { method: 'POST' })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                _showAdminToast('Habitat restored');
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                scheduleAIQuery();
+                                if (_habitatPanelOpen) _loadHabitatPanel();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                    });
                 })
                 .catch(function (e) {
                     console.error('[admin] delete habitat failed:', e);
@@ -4891,6 +5074,86 @@
                     newTypeAdd.disabled = false;
                     if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = e.message || 'Failed'; }
                 });
+            });
+        }
+
+        // ── Color presets (swatches in the edit modal) ───────────────────────
+        var presetsEl = document.getElementById('fmap-habitat-color-presets');
+        if (presetsEl) {
+            presetsEl.addEventListener('click', function (e) {
+                var sw = e.target.closest('.fmap-color-swatch');
+                if (!sw) return;
+                var colorEl = document.getElementById('fmap-habitat-color');
+                if (colorEl) colorEl.value = sw.dataset.color;
+            });
+        }
+
+        // ── Auto-fill color when habitat type changes ─────────────────────────
+        var typeSelEl = document.getElementById('fmap-habitat-type');
+        if (typeSelEl) {
+            typeSelEl.addEventListener('change', function () {
+                var colorEl2 = document.getElementById('fmap-habitat-color');
+                if (!colorEl2) return;
+                var slug = typeSelEl.value;
+                var suggested = _TYPE_DEFAULT_COLORS[slug];
+                if (!suggested) {
+                    var ct = _customHabitatTypes.filter(function (t) { return t.slug === slug; })[0];
+                    if (ct) suggested = ct.default_color;
+                }
+                if (suggested) colorEl2.value = suggested;
+            });
+        }
+
+        // ── Panel tabs (Habitats / Overrides) ────────────────────────────────
+        document.querySelectorAll('.fmap-panel-tab').forEach(function (tabBtn) {
+            tabBtn.addEventListener('click', function () {
+                var tabName = tabBtn.dataset.tab;
+                document.querySelectorAll('.fmap-panel-tab').forEach(function (b) {
+                    b.classList.toggle('fmap-panel-tab--active', b === tabBtn);
+                    b.setAttribute('aria-selected', b === tabBtn ? 'true' : 'false');
+                });
+                var habTab = document.getElementById('fmap-panel-tab-habitats');
+                var ovTab  = document.getElementById('fmap-panel-tab-overrides');
+                if (habTab) habTab.hidden = (tabName !== 'habitats');
+                if (ovTab)  ovTab.hidden  = (tabName !== 'overrides');
+                if (tabName === 'overrides') _loadOverridesTab();
+            });
+        });
+
+        // ── Habitat search ────────────────────────────────────────────────────
+        var searchEl = document.getElementById('fmap-habitat-search');
+        if (searchEl) {
+            searchEl.addEventListener('input', function () {
+                _habitatPanelSearch = searchEl.value;
+                _applyHabitatPanelFilter();
+            });
+        }
+
+        // ── Habitat sort ──────────────────────────────────────────────────────
+        var sortCycle = ['date', 'name', 'type'];
+        var sortLabels = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑' };
+        var sortBtn = document.getElementById('fmap-habitat-sort-btn');
+        if (sortBtn) {
+            sortBtn.addEventListener('click', function () {
+                var idx = sortCycle.indexOf(_habitatPanelSort);
+                _habitatPanelSort = sortCycle[(idx + 1) % sortCycle.length];
+                sortBtn.textContent = sortLabels[_habitatPanelSort];
+                sortBtn.dataset.sort = _habitatPanelSort;
+                _applyHabitatPanelFilter();
+            });
+        }
+
+        // ── GeoJSON export ────────────────────────────────────────────────────
+        var exportBtn = document.getElementById('fmap-habitat-export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function () {
+                var a = document.createElement('a');
+                a.href = '/api/v1/admin/habitats/export.geojson';
+                a.download = 'custom_habitats.geojson';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                _showAdminToast('Downloading GeoJSON…');
             });
         }
 

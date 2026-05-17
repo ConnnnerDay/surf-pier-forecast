@@ -14738,3 +14738,182 @@ body.dark .wq-hdx-item {
 }
 .fmap-admin-reshape-btn:hover { background: #6d28d9; }
 .fmap-admin-reshape-btn:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
+
+/* ── Habitat edit modal — color presets row ── */
+.fmap-color-presets {
+  display: flex;
+  gap: 5px;
+  padding: 4px 0 8px;
+  flex-wrap: wrap;
+}
+.fmap-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.fmap-color-swatch:hover { transform: scale(1.25); border-color: #fff; }
+.fmap-color-swatch:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
+
+/* ── Habitat edit modal — audit timestamp ── */
+.fmap-habitat-audit {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--border, #334155);
+}
+.fmap-habitat-audit[hidden] { display: none !important; }
+
+/* ── Undo-delete toast (extends the admin toast) ── */
+#fmap-undo-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4100;
+  padding: 8px 14px 8px 18px;
+  border-radius: 8px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #fff;
+  background: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  transition: opacity .3s;
+  white-space: nowrap;
+}
+#fmap-undo-toast[hidden] { display: none !important; }
+#fmap-undo-toast-btn {
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.5);
+  color: #fff;
+  border-radius: 5px;
+  padding: 2px 9px;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+#fmap-undo-toast-btn:hover { background: rgba(255,255,255,0.4); }
+
+/* ── Habitat panel — header redesign (tabs + actions) ── */
+.fmap-habitat-panel-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 0;
+  border-bottom: 1px solid var(--border, #334155);
+  position: sticky;
+  top: 0;
+  background: var(--surface, #1e293b);
+  z-index: 1;
+}
+.fmap-panel-tabs {
+  display: flex;
+  gap: 0;
+  flex: 1;
+}
+.fmap-panel-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted, #94a3b8);
+  padding: 11px 10px 9px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.fmap-panel-tab:hover { color: var(--text, #e2e8f0); }
+.fmap-panel-tab--active {
+  color: var(--text, #e2e8f0);
+  border-bottom-color: #a855f7;
+}
+.fmap-panel-hdr-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.fmap-panel-icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+.fmap-panel-icon-btn:hover { color: var(--text, #e2e8f0); background: var(--border, #334155); }
+.fmap-panel-icon-btn:focus-visible { outline: 2px solid #1fa8c9; outline-offset: 2px; }
+
+/* ── Habitat panel — search + sort controls ── */
+.fmap-panel-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid var(--border, #334155);
+}
+.fmap-panel-search {
+  flex: 1;
+  min-width: 0;
+}
+.fmap-panel-sort-btn {
+  background: none;
+  border: 1px solid var(--border, #475569);
+  color: var(--text-muted, #94a3b8);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 0.73rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.fmap-panel-sort-btn:hover { background: var(--border, #334155); color: var(--text, #e2e8f0); }
+
+/* ── Overrides panel list ── */
+.fmap-override-item {
+  padding: 9px 16px;
+  border-bottom: 1px solid rgba(51,65,85,0.4);
+  font-size: 0.82rem;
+}
+.fmap-override-item:last-child { border-bottom: none; }
+.fmap-override-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.fmap-override-item-name {
+  font-weight: 600;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fmap-override-item-key {
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: var(--text-muted, #6b7280);
+  margin-top: 2px;
+}
+.fmap-override-item-del {
+  background: none;
+  border: 1px solid var(--border, #475569);
+  color: #f87171;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.73rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fmap-override-item-del:hover { background: rgba(220,38,38,0.15); }

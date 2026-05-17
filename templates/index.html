@@ -1144,6 +1144,16 @@
                     <label class="fmap-admin-label">Fill Color
                         <input id="fmap-habitat-color" type="color" value="#22c55e" class="fmap-admin-input fmap-admin-input--color">
                     </label>
+                    <div id="fmap-habitat-color-presets" class="fmap-color-presets" aria-label="Color presets">
+                        <button type="button" class="fmap-color-swatch" data-color="#22c55e" style="background:#22c55e" title="Green"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#4ade80" style="background:#4ade80" title="Lime"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#34d399" style="background:#34d399" title="Emerald"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#38bdf8" style="background:#38bdf8" title="Sky"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#818cf8" style="background:#818cf8" title="Indigo"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
+                        <button type="button" class="fmap-color-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Slate"></button>
+                    </div>
                     <label class="fmap-admin-label fmap-admin-label--last">Description / notes
                         <textarea id="fmap-habitat-desc" rows="3" maxlength="1000" placeholder="Habitat notes or fishing tips" class="fmap-admin-input"></textarea>
                     </label>
@@ -1154,6 +1164,7 @@
                         <button id="fmap-habitat-reshape" type="button" class="fmap-admin-reshape-btn" hidden title="Drag polygon vertices to reshape">Reshape</button>
                         <button id="fmap-habitat-save" type="button" class="fmap-admin-save-btn">Save</button>
                     </div>
+                    <p id="fmap-habitat-audit" class="fmap-habitat-audit" hidden></p>
                     <p id="fmap-habitat-draw-hint" class="fmap-admin-status" style="margin-top:.5rem;font-size:.78rem;color:var(--text-muted,#6b7280)">
                         Click map to add polygon vertices. Double-click to finish.
                     </p>
@@ -1195,24 +1206,47 @@
                     </div>
                 </div>
 
-                {# Habitat management panel #}
+                {# Habitat management panel — tabbed: Habitats / Overrides #}
                 <div id="fmap-habitat-panel" class="fmap-habitat-panel" hidden role="complementary" aria-label="Custom habitat management">
                     <div class="fmap-habitat-panel-hdr">
-                        <strong>Custom Habitats</strong>
-                        <button id="fmap-habitat-panel-close" type="button" class="fmap-admin-modal-close" aria-label="Close panel">✕</button>
-                    </div>
-                    <div id="fmap-habitat-panel-list" class="fmap-habitat-panel-list">
-                        <p class="fmap-habitat-panel-empty">Loading…</p>
-                    </div>
-                    <div class="fmap-habitat-panel-section">
-                        <strong class="fmap-habitat-panel-section-label">Custom Types</strong>
-                        <div id="fmap-habitat-panel-types" class="fmap-habitat-panel-types"></div>
-                        <div class="fmap-habitat-type-form">
-                            <input id="fmap-new-type-name" type="text" maxlength="80" placeholder="Type name" class="fmap-admin-input fmap-admin-input--sm" autocomplete="off">
-                            <input id="fmap-new-type-color" type="color" value="#8b5cf6" class="fmap-admin-input fmap-admin-input--color fmap-admin-input--sm">
-                            <button id="fmap-new-type-add" type="button" class="fmap-admin-save-btn fmap-admin-save-btn--sm">Add</button>
+                        <div class="fmap-panel-tabs" role="tablist">
+                            <button class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats" role="tab" aria-selected="true">Habitats</button>
+                            <button class="fmap-panel-tab" data-tab="overrides" role="tab" aria-selected="false">Overrides</button>
                         </div>
-                        <p id="fmap-new-type-status" class="fmap-admin-status" role="status" aria-live="polite" style="margin-top:.5rem"></p>
+                        <div class="fmap-panel-hdr-actions">
+                            <button id="fmap-habitat-export-btn" type="button" class="fmap-panel-icon-btn" title="Export all as GeoJSON" aria-label="Export habitats as GeoJSON">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                            <button id="fmap-habitat-panel-close" type="button" class="fmap-admin-modal-close" aria-label="Close panel">✕</button>
+                        </div>
+                    </div>
+
+                    {# ── Habitats tab ── #}
+                    <div id="fmap-panel-tab-habitats" role="tabpanel">
+                        <div class="fmap-panel-controls">
+                            <input id="fmap-habitat-search" type="search" placeholder="Search habitats…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search habitats">
+                            <button id="fmap-habitat-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort habitats">Date ↓</button>
+                        </div>
+                        <div id="fmap-habitat-panel-list" class="fmap-habitat-panel-list">
+                            <p class="fmap-habitat-panel-empty">Loading…</p>
+                        </div>
+                        <div class="fmap-habitat-panel-section">
+                            <strong class="fmap-habitat-panel-section-label">Custom Types</strong>
+                            <div id="fmap-habitat-panel-types" class="fmap-habitat-panel-types"></div>
+                            <div class="fmap-habitat-type-form">
+                                <input id="fmap-new-type-name" type="text" maxlength="80" placeholder="Type name" class="fmap-admin-input fmap-admin-input--sm" autocomplete="off">
+                                <input id="fmap-new-type-color" type="color" value="#8b5cf6" class="fmap-admin-input fmap-admin-input--color fmap-admin-input--sm">
+                                <button id="fmap-new-type-add" type="button" class="fmap-admin-save-btn fmap-admin-save-btn--sm">Add</button>
+                            </div>
+                            <p id="fmap-new-type-status" class="fmap-admin-status" role="status" aria-live="polite" style="margin-top:.5rem"></p>
+                        </div>
+                    </div>
+
+                    {# ── Overrides tab ── #}
+                    <div id="fmap-panel-tab-overrides" role="tabpanel" hidden>
+                        <div id="fmap-overrides-panel-list" class="fmap-habitat-panel-list">
+                            <p class="fmap-habitat-panel-empty">Loading…</p>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
