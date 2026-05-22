@@ -3390,10 +3390,10 @@ def admin_habitat_override_upsert() -> Any:
         if isinstance(raw_geom, dict):
             if raw_geom.get("type") != "Polygon":
                 return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
-            geometry = json.dumps(raw_geom)
+            geometry = _json_mod.dumps(raw_geom)
         elif isinstance(raw_geom, str) and raw_geom.strip():
             try:
-                parsed = json.loads(raw_geom)
+                parsed = _json_mod.loads(raw_geom)
                 if parsed.get("type") != "Polygon":
                     return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
                 geometry = raw_geom.strip()

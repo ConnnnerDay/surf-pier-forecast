@@ -744,10 +744,11 @@
                         L.DomEvent.stopPropagation(e);
                         var osm_type_val = rawFeature.osm_type || rawFeature.osmType || '';
                         var fid = rawFeature.id || (rawFeature.lat + ',' + rawFeature.lng + ',' + osm_type_val);
-                        // Resolve current geometry: prefer stored override, else convert AI geometry
+                        // Prefer stored override geometry; fall back to current AI geometry
                         var currentGeom = null;
+                        var geomIsOverride = false;
                         if (rawFeature.override_geometry_json) {
-                            try { currentGeom = JSON.parse(rawFeature.override_geometry_json); } catch (_e) {}
+                            try { currentGeom = JSON.parse(rawFeature.override_geometry_json); geomIsOverride = true; } catch (_e) {}
                         }
                         if (!currentGeom && leafletGeom && leafletGeom.length >= 3) {
                             var ring = leafletGeom.map(function(c) { return [c[1], c[0]]; });
@@ -759,7 +760,8 @@
                             rawFeature.override_name || rawFeature.name || '',
                             rawFeature.override_description || rawFeature.description || '',
                             rawFeature.override_fill_color || '',
-                            currentGeom
+                            currentGeom,
+                            geomIsOverride
                         );
                     } else if (typeof window._fmapShowSpotDetail === 'function') {
                         _activeSpotMarker = null;
@@ -4412,22 +4414,26 @@
             coords.push(coords[0]); // close the ring
         }
         var newGeojson = { type: 'Polygon', coordinates: [coords] };
-        _pendingHabitatGeom = newGeojson;
         var savedOverride = _overrideEditData;
         _cancelHabitatVertexEdit();
         if (savedOverride) {
-            // Reshaping an AI overlay override — re-open override modal with new geometry
+            // Reshaping an AI overlay — re-open override modal; geometry is now explicitly overridden
             _openOverrideModal(
                 savedOverride.featureKey,
                 savedOverride.overrideId,
                 savedOverride.name,
                 savedOverride.desc,
                 savedOverride.color,
-                newGeojson
+                newGeojson,
+                true  // geomIsOverride: user explicitly set this shape
             );
-        } else if (_habitatEditData) {
-            _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: newGeojson });
-            _openHabitatEditModal(_habitatEditData);
+        } else {
+            // Custom habitat reshape — set pending geometry for habitat save
+            _pendingHabitatGeom = newGeojson;
+            if (_habitatEditData) {
+                _habitatEditData = Object.assign({}, _habitatEditData, { geojson_geometry: newGeojson });
+                _openHabitatEditModal(_habitatEditData);
+            }
         }
     }
 
@@ -4912,13 +4918,16 @@
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 overrideSaveBtn.disabled = true;
                 overrideSaveBtn.textContent = 'Saving…';
-                var pendingGeom = _overrideEditData && _overrideEditData.geometry || null;
+                // Only include geometry if the admin explicitly reshaped it or there was
+                // already a stored geometry override (geometryIsOverride=true).
+                var sendGeom = (_overrideEditData && _overrideEditData.geometryIsOverride)
+                    ? _overrideEditData.geometry : null;
                 var payload = {
                     feature_key:   featureKey,
                     name:          (document.getElementById('fmap-override-name') || {}).value || null,
                     description:   (document.getElementById('fmap-override-desc') || {}).value || null,
                     fill_color:    (document.getElementById('fmap-override-color') || {}).value || null,
-                    geometry_json: pendingGeom || null,
+                    geometry_json: sendGeom || null,
                 };
                 fetch('/api/v1/admin/habitat-overrides', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -5031,8 +5040,16 @@
                     _cancelHabitatPointMove();
                     if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
                 } else {
+                    var savedOv = _overrideEditData;
                     _cancelHabitatVertexEdit();
-                    if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
+                    if (savedOv) {
+                        // Restore override modal with original (pre-reshape) geometry
+                        _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
+                            savedOv.name, savedOv.desc, savedOv.color,
+                            savedOv.geometry, savedOv.geometryIsOverride);
+                    } else if (_habitatEditData) {
+                        _openHabitatEditModal(_habitatEditData);
+                    }
                 }
             });
         }
@@ -5044,8 +5061,15 @@
                     _cancelHabitatPointMove();
                     if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
                 } else if (_habitatVertexEditMode) {
+                    var savedOv = _overrideEditData;
                     _cancelHabitatVertexEdit();
-                    if (_habitatEditData) _openHabitatEditModal(_habitatEditData);
+                    if (savedOv) {
+                        _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
+                            savedOv.name, savedOv.desc, savedOv.color,
+                            savedOv.geometry, savedOv.geometryIsOverride);
+                    } else if (_habitatEditData) {
+                        _openHabitatEditModal(_habitatEditData);
+                    }
                 }
             }
         });
@@ -5257,7 +5281,7 @@
         }
     }
 
-    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom) {
+    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom, geomIsOverride) {
         var modal = document.getElementById('fmap-override-modal');
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (!modal) return;
@@ -5276,20 +5300,19 @@
         if (delBtn) delBtn.hidden = !overrideId;
         var statusEl = document.getElementById('fmap-override-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
-        // Store context for reshape and update reshape button visibility
+        // Store context for reshape; geomIsOverride tracks whether geometry should be saved
         _overrideEditData = {
-            featureKey: featureKey,
-            overrideId: overrideId,
-            name: currentName || '',
-            desc: currentDesc || '',
-            color: currentColor || '#22c55e',
-            geometry: currentGeom || null
+            featureKey:       featureKey,
+            overrideId:       overrideId,
+            name:             currentName || '',
+            desc:             currentDesc || '',
+            color:            currentColor || '#22c55e',
+            geometry:         currentGeom || null,
+            geometryIsOverride: !!geomIsOverride
         };
         var reshapeBtn = document.getElementById('fmap-override-reshape');
         if (reshapeBtn) {
-            var hasGeom = currentGeom && currentGeom.type === 'Polygon';
-            reshapeBtn.hidden = !hasGeom;
-            reshapeBtn.textContent = hasGeom ? 'Edit Shape' : 'Edit Shape';
+            reshapeBtn.hidden = !(currentGeom && currentGeom.type === 'Polygon');
         }
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
