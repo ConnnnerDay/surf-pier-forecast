@@ -109,6 +109,7 @@ from storage.sqlite import (
     remove_suppressed_spot,
     save_page_layout,
     save_preferences,
+    undelete_custom_habitat,
     update_custom_habitat,
     update_custom_marker,
     upsert_habitat_override,
@@ -3297,6 +3298,55 @@ def admin_habitat_delete(feature_id: str) -> Any:
     if not ok:
         return jsonify({"error": "Habitat not found"}), 404
     return jsonify({"deleted": feature_id})
+
+
+@bp.route("/api/v1/admin/habitats/<string:feature_id>/restore", methods=["POST"])
+def admin_habitat_restore(feature_id: str) -> Any:
+    """Restore a soft-deleted custom habitat (admin only).
+
+    Used by the client-side "Undo" button shown briefly after a deletion.
+    Returns the restored habitat dict or 404 if not found / not deleted.
+    """
+    err = _require_map_admin()
+    if err:
+        return err
+    restored = undelete_custom_habitat(feature_id)
+    if not restored:
+        return jsonify({"error": "Habitat not found or not currently deleted"}), 404
+    return jsonify(restored), 200
+
+
+@bp.route("/api/v1/admin/habitats/export.geojson", methods=["GET"])
+def admin_habitat_export() -> Any:
+    """Download all custom habitats as a GeoJSON FeatureCollection (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+    habitats = get_all_custom_habitats()
+    features = []
+    for h in habitats:
+        geom = h.get("geometry") or {}
+        if not geom or not geom.get("type"):
+            continue
+        features.append(
+            {
+                "type": "Feature",
+                "id": h["id"],
+                "geometry": geom,
+                "properties": {
+                    "name": h.get("name", ""),
+                    "description": h.get("description", ""),
+                    "habitat_type": h.get("habitat_type", "general"),
+                    "fill_color": h.get("fill_color", ""),
+                    "created_at": h.get("created_at", ""),
+                    "updated_at": h.get("updated_at", ""),
+                },
+            }
+        )
+    collection: dict[str, Any] = {"type": "FeatureCollection", "features": features}
+    resp = jsonify(collection)
+    resp.headers["Content-Disposition"] = 'attachment; filename="custom_habitats.geojson"'
+    return resp
 
 
 # ── Admin: habitat overrides CRUD ─────────────────────────────────────────────

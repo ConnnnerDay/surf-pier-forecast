@@ -2523,6 +2523,29 @@ def delete_custom_habitat(habitat_id: str) -> bool:
     return cur.rowcount > 0
 
 
+def undelete_custom_habitat(habitat_id: str) -> Optional[dict[str, Any]]:
+    """Restore a soft-deleted custom habitat; returns the row dict or None if not found."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "UPDATE custom_habitats SET is_deleted = 0, updated_at = datetime('now') "
+            "WHERE id = ? AND is_deleted = 1",
+            (habitat_id,),
+        )
+        if cur.rowcount == 0:
+            return None
+        row = conn.execute(
+            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "created_by, created_at, updated_at FROM custom_habitats WHERE id = ?",
+            (habitat_id,),
+        ).fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+    _invalidate_custom_habitats_cache()
+    return _habitat_row_to_dict(row) if row else None
+
+
 # Habitat overrides (admin-applied name/description/color for AI features) ----
 
 _HABITAT_OVERRIDES_CACHE: Optional[dict[str, dict[str, Any]]] = None
