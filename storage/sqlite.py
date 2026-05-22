@@ -374,14 +374,57 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
         )
     if "is_admin" not in user_cols:
         conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
-    # Grant admin rights to accounts listed in ADMIN_USERS (comma-separated).
-    # Runs every startup so the flag is applied even if accounts were created
-    # after the is_admin column was added. Set ADMIN_USERS=yourusername in .env.
-    _admin_env = os.environ.get("ADMIN_USERS", "").strip()
-    for _admin_name in [u.strip() for u in _admin_env.split(",") if u.strip()]:
+
+    # Seed the built-in admin account (dev / local use).
+    _ADMIN_USERNAME = "admin"
+    _ADMIN_PASSWORD = "admin"
+    _ADMIN_LOCATION = "wrightsville-beach-nc"
+    _ADMIN_PROFILE = json.dumps({
+        "completed": True,
+        "fishing_types": ["surf", "pier", "bridge"],
+        "live_bait": "sometimes",
+        "cut_bait": "yes",
+        "lures": "no",
+        "experience": "intermediate",
+        "targets": [],
+        "preferred_times": ["anytime"],
+        "primary_goal": "exploring",
+        "condition_tolerance": "moderate",
+        "tide_preference": "any",
+        "session_frequency": "monthly",
+        "catch_release": "sometimes",
+    })
+    _admin_row = conn.execute(
+        "SELECT id FROM users WHERE username = ? COLLATE NOCASE",
+        (_ADMIN_USERNAME,),
+    ).fetchone()
+    if _admin_row is None:
+        _admin_pw = generate_password_hash(_ADMIN_PASSWORD, method="scrypt")
+        _admin_cur = conn.execute(
+            "INSERT INTO users (username, password_hash, email_confirmed, is_admin, is_anonymous)"
+            " VALUES (?, ?, 1, 1, 0)",
+            (_ADMIN_USERNAME, _admin_pw),
+        )
+        _admin_id = _admin_cur.lastrowid
+        conn.execute("INSERT OR IGNORE INTO profiles (user_id) VALUES (?)", (_admin_id,))
+        conn.execute("INSERT OR IGNORE INTO locations (user_id) VALUES (?)", (_admin_id,))
         conn.execute(
-            "UPDATE users SET is_admin = 1 WHERE username = ? COLLATE NOCASE",
-            (_admin_name,),
+            "UPDATE profiles SET fishing_profile = ?, updated_at = datetime('now') WHERE user_id = ?",
+            (_ADMIN_PROFILE, _admin_id),
+        )
+        conn.execute(
+            "UPDATE locations SET location_id = ?, updated_at = datetime('now') WHERE user_id = ?",
+            (_ADMIN_LOCATION, _admin_id),
+        )
+        conn.execute(
+            "UPDATE users SET default_location_id = ? WHERE id = ?",
+            (_ADMIN_LOCATION, _admin_id),
+        )
+    else:
+        # Ensure existing admin account always has is_admin=1.
+        conn.execute(
+            "UPDATE users SET is_admin = 1 WHERE id = ?",
+            (_admin_row["id"],),
         )
 
     # Create custom_map_markers if it didn't exist before the SCHEMA ran it.
