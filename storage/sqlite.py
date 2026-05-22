@@ -421,11 +421,16 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
             (_ADMIN_LOCATION, _admin_id),
         )
     else:
-        # Ensure existing admin account always has is_admin=1.
+        _admin_id = _admin_row["id"]
         conn.execute(
             "UPDATE users SET is_admin = 1 WHERE id = ?",
-            (_admin_row["id"],),
+            (_admin_id,),
         )
+    # Revoke admin from every other account so only the seeded admin has it.
+    conn.execute(
+        "UPDATE users SET is_admin = 0 WHERE id != ?",
+        (_admin_id,),
+    )
 
     # Create custom_map_markers if it didn't exist before the SCHEMA ran it.
     conn.executescript(

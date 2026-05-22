@@ -629,69 +629,6 @@
                     Zoom in to see fishing spots, habitat areas &amp; structure
                 </div>
 
-                {# ── Category filter tabs — replaces flat 22-pill list ── #}
-                <div id="fmap-spot-filter-bar" class="fmap-spot-filter-bar" role="region" aria-label="Filter map spot types">
-                    <div class="fmap-spot-filter-bar-row">
-                        <span class="fmap-struct-filters-hint" id="fmap-struct-filters-hint">All spots visible &mdash; tap to filter</span>
-                        <span id="fmap-struct-spinner" class="fmap-struct-spinner" role="status" aria-label="Loading structure markers" hidden>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                        </span>
-                        <button type="button" id="fmap-spot-types-clear" class="fmap-spot-filter-bar-clear" aria-label="Show all spot types" title="Show all spot types" hidden>Clear</button>
-                    </div>
-                    <div id="fmap-struct-error" class="fmap-struct-error" role="status" aria-live="polite" hidden>
-                        <span id="fmap-struct-error-msg" class="fmap-struct-error-msg">Couldn't load structure data; showing basic map markers.</span>
-                        <button type="button" id="fmap-struct-error-dismiss" class="fmap-struct-error-dismiss" aria-label="Dismiss error message">&#x2715;</button>
-                    </div>
-                    {# Four high-level category tabs replace the flat 22-pill list #}
-                    <div class="fmap-cat-tabs" role="group" aria-label="Filter spot categories">
-                        <button type="button" class="fmap-cat-tab" data-cat="structures"
-                                aria-pressed="false" aria-label="Show only fishing structures">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="17" y="5" width="4" height="16"/></svg>
-                            Structures
-                        </button>
-                        <button type="button" class="fmap-cat-tab" data-cat="habitats"
-                                aria-pressed="false" aria-label="Show only habitat areas">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12c0-4.97 4.03-9 9-9"/><path d="M21 12c0 4.97-4.03 9-9 9"/><path d="M12 3c2 4 2 14 0 18"/><path d="M3 12h18"/></svg>
-                            Habitats
-                        </button>
-                        <button type="button" class="fmap-cat-tab" data-cat="amenities"
-                                aria-pressed="false" aria-label="Show only amenities">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.1 11.5 7.4 11.8a1 1 0 0 0 1.2 0C12.9 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
-                            Amenities
-                        </button>
-                        <button type="button" class="fmap-cat-tab" data-cat="my_spots"
-                                aria-pressed="false" aria-label="Show only my saved spots">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                            My Spots
-                        </button>
-                    </div>
-                    {# Hidden individual type pills — still used by existing JS rendering logic #}
-                    <div class="fmap-struct-filters-pills" id="fmap-struct-filters" role="group" aria-label="Filter visible spot types" hidden>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="pier" aria-pressed="false"><span class="fmap-pill-sym">⊥</span>Pier</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="jetty" aria-pressed="false"><span class="fmap-pill-sym">≡</span>Jetty</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="bridge" aria-pressed="false"><span class="fmap-pill-sym">∩</span>Bridge</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="seawall" aria-pressed="false"><span class="fmap-pill-sym">▬</span>Seawall</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="point" aria-pressed="false"><span class="fmap-pill-sym">△</span>Point</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="reef" aria-pressed="false"><span class="fmap-pill-sym">≈</span>Reef</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="wreck" aria-pressed="false"><span class="fmap-pill-sym">✕</span>Wreck</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="shoal" aria-pressed="false"><span class="fmap-pill-sym">〜</span>Shoal</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="buoy" aria-pressed="false"><span class="fmap-pill-sym">◎</span>Buoy</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="grass_flat" aria-pressed="false"><span class="fmap-pill-sym">≋</span>Grass Flat</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="tidal_flat" aria-pressed="false"><span class="fmap-pill-sym">⊟</span>Tidal Flat</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="saltmarsh" aria-pressed="false"><span class="fmap-pill-sym">Ψ</span>Saltmarsh</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="mangrove" aria-pressed="false"><span class="fmap-pill-sym">⊕</span>Mangrove</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="kelp" aria-pressed="false"><span class="fmap-pill-sym">⇑</span>Kelp Forest</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="oyster_reef" aria-pressed="false"><span class="fmap-pill-sym">◌</span>Oyster Reef</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="inlet" aria-pressed="false"><span class="fmap-pill-sym">⇢</span>Inlet</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type fmap-pill--habitat" data-type="beach" aria-pressed="false"><span class="fmap-pill-sym">∿</span>Beach</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="marina" aria-pressed="false"><span class="fmap-pill-sym">⚓</span>Marina</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="boat_ramp" aria-pressed="false"><span class="fmap-pill-sym">▽</span>Boat Ramp</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="fishing_shop" aria-pressed="false"><span class="fmap-pill-sym">⚙</span>Bait &amp; Tackle</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="dive_site" aria-pressed="false"><span class="fmap-pill-sym">✚</span>Dive Site</button>
-                        <button type="button" class="fmap-pill fmap-pill--spot-type" data-type="fishing" aria-pressed="false"><span class="fmap-pill-sym">✦</span>Fishing Spot</button>
-                    </div>
-                </div>
-
                 {# ── Spot detail panel ── #}
                 <div id="fmap-spot-detail" class="fmap-spot-detail" role="dialog"
                      aria-modal="true" aria-labelledby="fmap-spot-detail-name"

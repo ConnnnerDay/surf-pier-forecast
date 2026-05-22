@@ -4669,7 +4669,7 @@ h2::before {
 /* ── Zoom-in hint overlay ── */
 .fmap-zoom-hint {
   position: absolute;
-  bottom: calc(var(--fmap-filter-bar-h, 68px) + 0.6rem);
+  bottom: calc(var(--fmap-filter-bar-h, 0px) + 0.6rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: 450;
@@ -5235,7 +5235,7 @@ h2::before {
   .fmap-layers-popup {
     position: absolute;
     top: auto;
-    bottom: calc(var(--fmap-filter-bar-h, 68px) + 0.5rem);
+    bottom: calc(var(--fmap-filter-bar-h, 0px) + 0.5rem);
     right: 0.5rem;
     left: 0.5rem;
     width: auto;
@@ -5249,7 +5249,7 @@ h2::before {
     top: auto;
     right: 0.5rem;
     left: 0.5rem;
-    bottom: calc(var(--fmap-filter-bar-h, 68px) + 0.5rem);
+    bottom: calc(var(--fmap-filter-bar-h, 0px) + 0.5rem);
     width: auto;
   }
 }
@@ -6604,7 +6604,7 @@ textarea.fmap-admin-input { resize: vertical; }
 /* ── Log Catch floating action button ── */
 .fmap-log-fab {
   position: absolute;
-  bottom: calc(var(--fmap-filter-bar-h, 68px) + 14px);
+  bottom: calc(var(--fmap-filter-bar-h, 0px) + 14px);
   right: 14px;
   z-index: 420;
   display: flex;

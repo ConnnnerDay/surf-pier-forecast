@@ -861,9 +861,10 @@
                 (adminEditMode ? '<br><em class="fmap-tooltip-sub">click to edit</em>' : '');
 
             var lyr;
-            if (f.geometry && f.geometry.length >= 3) {
-                // Polygon
-                lyr = L.polygon(f.geometry, {
+            if (f.geometry && f.geometry.type === 'Polygon' && f.geometry.coordinates) {
+                // Polygon — convert GeoJSON [lng,lat] ring to Leaflet [lat,lng]
+                var ring = f.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
+                lyr = L.polygon(ring, {
                     color: color, weight: 2.5, opacity: 1,
                     fillColor: color, fillOpacity: 0.35,
                     dashArray: adminEditMode ? '6,4' : null,
