@@ -695,11 +695,14 @@
             if (f.override_geometry_json) {
                 try {
                     var _ovGeom = JSON.parse(f.override_geometry_json);
-                    if (_ovGeom && _ovGeom.type === 'Polygon' && _ovGeom.coordinates) {
+                    if (_ovGeom && _ovGeom.type === 'Polygon' &&
+                            Array.isArray(_ovGeom.coordinates) && _ovGeom.coordinates[0] &&
+                            _ovGeom.coordinates[0].length >= 3) {
                         geom = _ovGeom.coordinates[0].map(function(c) { return [c[1], c[0]]; });
                     }
                 } catch (_e) {}
             }
+            if (!geom || geom.length < 2) return; // skip degenerate geometry
             var first   = geom[0];
             var last    = geom[geom.length - 1];
             var closed  = Math.abs(first[0] - last[0]) < 0.00002 &&
@@ -4994,6 +4997,49 @@
 
         var overrideCloseBtn = document.getElementById('fmap-override-modal-close');
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
+
+        var overrideClearShapeBtn = document.getElementById('fmap-override-clear-shape');
+        if (overrideClearShapeBtn) {
+            var _clrConfirm = false, _clrTimer = null;
+            overrideClearShapeBtn.addEventListener('click', function () {
+                if (!_clrConfirm) {
+                    _clrConfirm = true;
+                    overrideClearShapeBtn.textContent = 'Confirm clear?';
+                    _clrTimer = setTimeout(function () {
+                        _clrConfirm = false;
+                        overrideClearShapeBtn.textContent = 'Clear Shape Override';
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(_clrTimer);
+                _clrConfirm = false;
+                overrideClearShapeBtn.textContent = 'Clear Shape Override';
+                var featureKey = (document.getElementById('fmap-override-feature-key') || {}).value || '';
+                if (!featureKey) return;
+                overrideClearShapeBtn.disabled = true;
+                // Send geometry_json: null to explicitly clear stored geometry
+                fetch('/api/v1/admin/habitat-overrides', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        feature_key:  featureKey,
+                        geometry_json: null,
+                    }),
+                })
+                .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                .then(function () {
+                    overrideClearShapeBtn.disabled = false;
+                    _closeOverrideModal();
+                    aiCache = {}; _aiCacheKeys = [];
+                    try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                    _showAdminToast('Shape override cleared — AI geometry restored');
+                    scheduleAIQuery();
+                })
+                .catch(function (e) {
+                    overrideClearShapeBtn.disabled = false;
+                    _showAdminToast('Clear failed — ' + e.message, true);
+                });
+            });
+        }
         var overrideBackdrop = document.getElementById('fmap-override-backdrop');
         if (overrideBackdrop) overrideBackdrop.addEventListener('click', _closeOverrideModal);
 
@@ -5311,9 +5357,9 @@
             geometryIsOverride: !!geomIsOverride
         };
         var reshapeBtn = document.getElementById('fmap-override-reshape');
-        if (reshapeBtn) {
-            reshapeBtn.hidden = !(currentGeom && currentGeom.type === 'Polygon');
-        }
+        if (reshapeBtn) reshapeBtn.hidden = !(currentGeom && currentGeom.type === 'Polygon');
+        var clearShapeBtn = document.getElementById('fmap-override-clear-shape');
+        if (clearShapeBtn) clearShapeBtn.hidden = !geomIsOverride; // only when a shape is actually stored
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
     }

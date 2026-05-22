@@ -3384,24 +3384,37 @@ def admin_habitat_override_upsert() -> Any:
     )
     fill_color = str(data.get("fill_color", ""))[:20] if "fill_color" in data else None
 
-    geometry: Optional[str] = None
-    raw_geom = data.get("geometry_json")
-    if raw_geom is not None:
-        if isinstance(raw_geom, dict):
+    # geometry_json: None means "key absent — don't touch stored value"
+    #                "" / null in body means "explicitly clear stored geometry"
+    #                a Polygon object/string means "store this shape"
+    geometry: Optional[str] = None        # None = don't update column
+    geometry_clear = False                 # True = set column to NULL
+    if "geometry_json" in data:
+        raw_geom = data["geometry_json"]
+        if raw_geom is None or raw_geom == "":
+            geometry_clear = True          # explicit clear
+        elif isinstance(raw_geom, dict):
             if raw_geom.get("type") != "Polygon":
                 return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
+            coords = raw_geom.get("coordinates")
+            if not coords or not coords[0] or len(coords[0]) < 3:
+                return jsonify({"error": "geometry_json Polygon must have at least 3 vertices"}), 400
             geometry = _json_mod.dumps(raw_geom)
         elif isinstance(raw_geom, str) and raw_geom.strip():
             try:
                 parsed = _json_mod.loads(raw_geom)
-                if parsed.get("type") != "Polygon":
+                if not isinstance(parsed, dict) or parsed.get("type") != "Polygon":
                     return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
+                coords = parsed.get("coordinates")
+                if not coords or not coords[0] or len(coords[0]) < 3:
+                    return jsonify({"error": "geometry_json Polygon must have at least 3 vertices"}), 400
                 geometry = raw_geom.strip()
-            except (ValueError, AttributeError):
+            except ValueError:
                 return jsonify({"error": "geometry_json is not valid JSON"}), 400
 
     row = upsert_habitat_override(
-        feature_key, name, description, fill_color, g.user["id"], geometry
+        feature_key, name, description, fill_color, g.user["id"],
+        geometry, geometry_clear=geometry_clear
     )
     return jsonify(row), 200
 

@@ -6497,6 +6497,8 @@ textarea.fmap-admin-input { resize: vertical; }
   text-align: center;
 }
 .fmap-admin-secondary-btn:hover { background: #4b5563; }
+.fmap-admin-secondary-btn--danger { color: #fca5a5; border-color: #7f1d1d; }
+.fmap-admin-secondary-btn--danger:hover { background: #7f1d1d; color: #fff; }
 .fmap-admin-delete-btn {
   background: #dc2626;
   color: #fff;

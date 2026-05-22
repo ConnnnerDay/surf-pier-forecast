@@ -2659,8 +2659,14 @@ def upsert_habitat_override(
     fill_color: Optional[str],
     user_id: int,
     geometry: Optional[str] = None,
+    geometry_clear: bool = False,
 ) -> dict[str, Any]:
-    """Create or update a habitat override; returns the row dict."""
+    """Create or update a habitat override; returns the row dict.
+
+    geometry=None (default) → don't touch the geometry_json column.
+    geometry_clear=True → explicitly set geometry_json to NULL.
+    geometry=<json string> → store/replace the geometry.
+    """
     conn = get_db()
     try:
         existing = conn.execute(
@@ -2679,7 +2685,9 @@ def upsert_habitat_override(
             if fill_color is not None:
                 updates.append("fill_color = ?")
                 params.append(fill_color.strip())
-            if geometry is not None:
+            if geometry_clear:
+                updates.append("geometry_json = NULL")
+            elif geometry is not None:
                 updates.append("geometry_json = ?")
                 params.append(geometry)
             updates.extend(["is_deleted = 0", "updated_at = datetime('now')"])
