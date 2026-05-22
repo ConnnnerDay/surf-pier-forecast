@@ -729,8 +729,9 @@
             );
             // Click opens the spot-detail panel; admin in edit mode gets an override popup.
             (function (spotData, rawFeature, lyr) {
-                lyr.on('click', function () {
+                lyr.on('click', function (e) {
                     if (adminEditMode && typeof MAP_IS_ADMIN !== 'undefined' && MAP_IS_ADMIN) {
+                        L.DomEvent.stopPropagation(e);
                         var osm_type_val = rawFeature.osm_type || rawFeature.osmType || '';
                         var fid = rawFeature.id || (rawFeature.lat + ',' + rawFeature.lng + ',' + osm_type_val);
                         _openOverrideModal(
@@ -818,8 +819,9 @@
                 { className: 'fmap-tooltip fmap-ai-tooltip', direction: 'top', offset: [0, -7] }
             );
             (function (rawFeature, marker) {
-                marker.on('click', function () {
+                marker.on('click', function (e) {
                     if (adminEditMode && typeof MAP_IS_ADMIN !== 'undefined' && MAP_IS_ADMIN) {
+                        L.DomEvent.stopPropagation(e);
                         var osm_type_val = rawFeature.osm_type || rawFeature.osmType || '';
                         var fid = rawFeature.id || (rawFeature.lat + ',' + rawFeature.lng + ',' + osm_type_val);
                         _openOverrideModal(
@@ -885,8 +887,9 @@
             });
 
             (function (hData, hLyr) {
-                hLyr.on('click', function () {
+                hLyr.on('click', function (e) {
                     if (adminEditMode) {
+                        L.DomEvent.stopPropagation(e);
                         _openHabitatEditModal(hData);
                     } else if (typeof window._fmapShowSpotDetail === 'function') {
                         _activeSpotMarker = null;
@@ -3647,8 +3650,9 @@
                 });
             });
 
-            m.on('click', function () {
+            m.on('click', function (e) {
                 if (adminEditMode) {
+                    L.DomEvent.stopPropagation(e);
                     _openAdminEditPanel(spot);
                 } else {
                     var tip = spot.description || STRUCTURE_TIPS[spot.type] || '';
