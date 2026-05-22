@@ -40,6 +40,8 @@ def _clear_in_process_caches():
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
     _sqlite._SUPPRESSED_SPOTS_CACHE = None
     _sqlite._SUPPRESSED_SPOTS_TS = 0.0
+    _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
+    _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
     _api._HABITATS_CACHE.clear()
     yield
     # Also clear after in case a test leaves behind entries that bleed forward.
@@ -56,6 +58,8 @@ def _clear_in_process_caches():
     _sqlite._HABITAT_OVERRIDES_TS = 0.0
     _sqlite._SUPPRESSED_SPOTS_CACHE = None
     _sqlite._SUPPRESSED_SPOTS_TS = 0.0
+    _sqlite._CUSTOM_HABITAT_TYPES_CACHE = None
+    _sqlite._CUSTOM_HABITAT_TYPES_TS = 0.0
     _api._HABITATS_CACHE.clear()
 
 
