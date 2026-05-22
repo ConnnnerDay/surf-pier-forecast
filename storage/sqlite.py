@@ -484,6 +484,10 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     if "photo2_path" not in catch_log_cols:
         conn.execute("ALTER TABLE catch_log ADD COLUMN photo2_path TEXT")
 
+    override_cols = set(_column_names(conn, "habitat_overrides"))
+    if "geometry_json" not in override_cols:
+        conn.execute("ALTER TABLE habitat_overrides ADD COLUMN geometry_json TEXT")
+
     # Legacy user preferences -> profiles + locations
     if _table_exists(conn, "user_preferences"):
         conn.execute(
@@ -2622,7 +2626,7 @@ def get_habitat_overrides() -> dict[str, dict[str, Any]]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, feature_key, name, description, fill_color, created_by, created_at, updated_at "
+            "SELECT id, feature_key, name, description, fill_color, geometry_json, created_by, created_at, updated_at "
             "FROM habitat_overrides WHERE is_deleted = 0"
         ).fetchall()
     finally:
@@ -2635,6 +2639,7 @@ def get_habitat_overrides() -> dict[str, dict[str, Any]]:
             "name": r["name"],
             "description": r["description"],
             "fill_color": r["fill_color"],
+            "geometry_json": r["geometry_json"],
             "created_by": r["created_by"],
             "created_at": r["created_at"],
             "updated_at": r["updated_at"],
@@ -2653,6 +2658,7 @@ def upsert_habitat_override(
     description: Optional[str],
     fill_color: Optional[str],
     user_id: int,
+    geometry: Optional[str] = None,
 ) -> dict[str, Any]:
     """Create or update a habitat override; returns the row dict."""
     conn = get_db()
@@ -2673,6 +2679,9 @@ def upsert_habitat_override(
             if fill_color is not None:
                 updates.append("fill_color = ?")
                 params.append(fill_color.strip())
+            if geometry is not None:
+                updates.append("geometry_json = ?")
+                params.append(geometry)
             updates.extend(["is_deleted = 0", "updated_at = datetime('now')"])
             params.append(feature_key)
             conn.execute(
@@ -2681,12 +2690,12 @@ def upsert_habitat_override(
             )
         else:
             conn.execute(
-                "INSERT INTO habitat_overrides (feature_key, name, description, fill_color, created_by) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (feature_key, name, description, fill_color, user_id),
+                "INSERT INTO habitat_overrides (feature_key, name, description, fill_color, geometry_json, created_by) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (feature_key, name, description, fill_color, geometry, user_id),
             )
         row = conn.execute(
-            "SELECT id, feature_key, name, description, fill_color, created_by, created_at, updated_at "
+            "SELECT id, feature_key, name, description, fill_color, geometry_json, created_by, created_at, updated_at "
             "FROM habitat_overrides WHERE feature_key = ?",
             (feature_key,),
         ).fetchone()
@@ -2700,6 +2709,7 @@ def upsert_habitat_override(
         "name": row["name"],
         "description": row["description"],
         "fill_color": row["fill_color"],
+        "geometry_json": row["geometry_json"],
         "created_by": row["created_by"],
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],

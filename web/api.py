@@ -3366,7 +3366,8 @@ def admin_habitat_override_list() -> Any:
 def admin_habitat_override_upsert() -> Any:
     """Create or update a habitat override for an AI/OSM feature (admin only).
 
-    Body: { feature_key, name?, description?, fill_color? }
+    Body: { feature_key, name?, description?, fill_color?, geometry_json? }
+    geometry_json must be a JSON-encoded GeoJSON Polygon string if provided.
     """
     err = _require_map_admin()
     if err:
@@ -3383,8 +3384,24 @@ def admin_habitat_override_upsert() -> Any:
     )
     fill_color = str(data.get("fill_color", ""))[:20] if "fill_color" in data else None
 
+    geometry: Optional[str] = None
+    raw_geom = data.get("geometry_json")
+    if raw_geom is not None:
+        if isinstance(raw_geom, dict):
+            if raw_geom.get("type") != "Polygon":
+                return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
+            geometry = json.dumps(raw_geom)
+        elif isinstance(raw_geom, str) and raw_geom.strip():
+            try:
+                parsed = json.loads(raw_geom)
+                if parsed.get("type") != "Polygon":
+                    return jsonify({"error": "geometry_json must be a GeoJSON Polygon"}), 400
+                geometry = raw_geom.strip()
+            except (ValueError, AttributeError):
+                return jsonify({"error": "geometry_json is not valid JSON"}), 400
+
     row = upsert_habitat_override(
-        feature_key, name, description, fill_color, g.user["id"]
+        feature_key, name, description, fill_color, g.user["id"], geometry
     )
     return jsonify(row), 200
 
@@ -3698,7 +3715,7 @@ def map_habitats_v1() -> Any:
 
     _habitats_cache_set(cache_key, all_features)
 
-    # Apply admin overrides to AI features (name/description/fill_color substitution)
+    # Apply admin overrides to AI features (name/description/fill_color/geometry)
     overrides = get_habitat_overrides()
     if overrides:
         for f in all_features:
@@ -3712,6 +3729,8 @@ def map_habitats_v1() -> Any:
                     f["override_description"] = ov["description"]
                 if ov.get("fill_color"):
                     f["override_fill_color"] = ov["fill_color"]
+                if ov.get("geometry_json"):
+                    f["override_geometry_json"] = ov["geometry_json"]
                 f["override_id"] = ov["id"]
 
     # Merge admin-drawn custom habitats in the same bbox

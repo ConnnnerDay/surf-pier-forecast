@@ -1126,9 +1126,12 @@
                     <input type="hidden" id="fmap-override-feature-key">
                     <input type="hidden" id="fmap-override-id">
                     <p id="fmap-override-status" class="fmap-admin-status" role="status" aria-live="polite"></p>
-                    <div class="fmap-admin-footer">
-                        <button id="fmap-override-delete" type="button" class="fmap-admin-delete-btn" hidden>Remove Override</button>
-                        <button id="fmap-override-save" type="button" class="fmap-admin-save-btn">Save Override</button>
+                    <div class="fmap-admin-footer fmap-admin-footer--col">
+                        <button id="fmap-override-reshape" type="button" class="fmap-admin-secondary-btn" hidden>Edit Shape</button>
+                        <div class="fmap-admin-footer-row">
+                            <button id="fmap-override-delete" type="button" class="fmap-admin-delete-btn" hidden>Remove Override</button>
+                            <button id="fmap-override-save" type="button" class="fmap-admin-save-btn">Save Override</button>
+                        </div>
                     </div>
                 </div>
                 {% endif %}

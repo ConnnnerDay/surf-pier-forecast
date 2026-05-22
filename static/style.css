@@ -6474,6 +6474,29 @@ textarea.fmap-admin-input { resize: vertical; }
   justify-content: flex-end;
   align-items: center;
 }
+.fmap-admin-footer--col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.fmap-admin-footer-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+.fmap-admin-secondary-btn {
+  background: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  border-radius: 7px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  width: 100%;
+  text-align: center;
+}
+.fmap-admin-secondary-btn:hover { background: #4b5563; }
 .fmap-admin-delete-btn {
   background: #dc2626;
   color: #fff;
