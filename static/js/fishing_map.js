@@ -4691,6 +4691,91 @@
         });
     }
 
+    // ─── Suppressed spots tab ─────────────────────────────────────────────────
+
+    function _loadSuppressedTab() {
+        var el = document.getElementById('fmap-suppressed-panel-list');
+        if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
+        fetch('/api/map/suppress-spot')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) { _renderSuppressedList(data.suppressions || []); })
+            .catch(function () {
+                if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
+            });
+    }
+
+    function _renderSuppressedList(suppressions) {
+        var el = document.getElementById('fmap-suppressed-panel-list');
+        if (!el) return;
+        if (!suppressions.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">No suppressed spots.<br>' +
+                '<span style="font-size:.75rem;color:var(--text-muted,#6b7280)">In admin edit mode, click any spot and choose “Hide” to remove it from the map.</span></p>';
+            return;
+        }
+        var html = '';
+        suppressions.forEach(function (s) {
+            var nameSafe = esc(s.name || s.spot_key || '—');
+            var typeSafe = esc(s.type || '');
+            var sid      = esc(String(s.id));
+            var lat      = parseFloat(s.lat), lng = parseFloat(s.lng);
+            var hasCoords = !isNaN(lat) && !isNaN(lng);
+            html +=
+                '<div class="fmap-override-item">' +
+                '<div class="fmap-override-item-row">' +
+                '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⦿</button>' : '') +
+                '<button class="fmap-suppressed-item-unhide" data-sid="' + sid + '" aria-label="Un-hide ' + nameSafe + '">Unhide</button>' +
+                '</div>' +
+                (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
+                '</div>';
+        });
+        el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
+                if (!isNaN(lat) && !isNaN(lng)) _map.setView([lat, lng], Math.max(_map.getZoom(), 16));
+            });
+        });
+
+        el.querySelectorAll('.fmap-suppressed-item-unhide').forEach(function (btn) {
+            var _confirmFlag = false, _confirmTimer = null;
+            btn.addEventListener('click', function () {
+                var sid = btn.dataset.sid;
+                if (!sid) return;
+                if (!_confirmFlag) {
+                    _confirmFlag = true;
+                    btn.textContent = 'Confirm?';
+                    btn.classList.add('fmap-suppressed-item-unhide--confirm');
+                    _confirmTimer = setTimeout(function () {
+                        _confirmFlag = false;
+                        btn.textContent = 'Unhide';
+                        btn.classList.remove('fmap-suppressed-item-unhide--confirm');
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(_confirmTimer);
+                btn.disabled = true;
+                fetch('/api/map/suppress-spot/' + encodeURIComponent(sid), { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        aiCache = {}; _aiCacheKeys = [];
+                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        _showAdminToast('Spot un-hidden');
+                        scheduleAIQuery();
+                        _loadSuppressedTab();
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        btn.textContent = 'Unhide';
+                        btn.classList.remove('fmap-suppressed-item-unhide--confirm');
+                        _confirmFlag = false;
+                        _showAdminToast('Unhide failed', true);
+                    });
+            });
+        });
+    }
+
     function _renderHabitatPanelTypes() {
         var el = document.getElementById('fmap-habitat-panel-types');
         if (!el) return;
@@ -5231,7 +5316,7 @@
             });
         }
 
-        // ── Panel tabs (Habitats / Overrides) ────────────────────────────────
+        // ── Panel tabs (Habitats / Overrides / Suppressed) ───────────────────
         document.querySelectorAll('.fmap-panel-tab').forEach(function (tabBtn) {
             tabBtn.addEventListener('click', function () {
                 var tabName = tabBtn.dataset.tab;
@@ -5241,9 +5326,12 @@
                 });
                 var habTab = document.getElementById('fmap-panel-tab-habitats');
                 var ovTab  = document.getElementById('fmap-panel-tab-overrides');
+                var supTab = document.getElementById('fmap-panel-tab-suppressed');
                 if (habTab) habTab.hidden = (tabName !== 'habitats');
                 if (ovTab)  ovTab.hidden  = (tabName !== 'overrides');
-                if (tabName === 'overrides') _loadOverridesTab();
+                if (supTab) supTab.hidden = (tabName !== 'suppressed');
+                if (tabName === 'overrides')  _loadOverridesTab();
+                if (tabName === 'suppressed') _loadSuppressedTab();
             });
         });
 

@@ -1153,6 +1153,7 @@
                         <div class="fmap-panel-tabs" role="tablist">
                             <button class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats" role="tab" aria-selected="true">Habitats</button>
                             <button class="fmap-panel-tab" data-tab="overrides" role="tab" aria-selected="false">Overrides</button>
+                            <button class="fmap-panel-tab" data-tab="suppressed" role="tab" aria-selected="false">Suppressed</button>
                         </div>
                         <div class="fmap-panel-hdr-actions">
                             <button id="fmap-habitat-export-btn" type="button" class="fmap-panel-icon-btn" title="Export all as GeoJSON" aria-label="Export habitats as GeoJSON">
@@ -1186,6 +1187,13 @@
                     {# ── Overrides tab ── #}
                     <div id="fmap-panel-tab-overrides" role="tabpanel" hidden>
                         <div id="fmap-overrides-panel-list" class="fmap-habitat-panel-list">
+                            <p class="fmap-habitat-panel-empty">Loading…</p>
+                        </div>
+                    </div>
+
+                    {# ── Suppressed spots tab ── #}
+                    <div id="fmap-panel-tab-suppressed" role="tabpanel" hidden>
+                        <div id="fmap-suppressed-panel-list" class="fmap-habitat-panel-list">
                             <p class="fmap-habitat-panel-empty">Loading…</p>
                         </div>
                     </div>
