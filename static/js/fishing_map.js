@@ -4834,15 +4834,37 @@
                     return;
                 }
                 clearTimeout(_confirmTimer);
+                // Snapshot for undo before the request
+                var _undoOv = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
                 btn.disabled = true;
                 fetch('/api/v1/admin/habitat-overrides/' + encodeURIComponent(oid), { method: 'DELETE' })
                     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                     .then(function () {
                         aiCache = {}; _aiCacheKeys = [];
                         try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                        _showAdminToast('Override removed');
                         scheduleAIQuery();
                         _loadOverridesTab();
+                        if (_undoOv && _undoOv.feature_key) {
+                            _showUndoToast('Override removed', function () {
+                                var geomForUndo = null;
+                                try { if (_undoOv.geometry_json) geomForUndo = JSON.parse(_undoOv.geometry_json); } catch (_e) {}
+                                fetch('/api/v1/admin/habitat-overrides', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ feature_key: _undoOv.feature_key, name: _undoOv.name || null, description: _undoOv.description || null, fill_color: _undoOv.fill_color || null, geometry_json: geomForUndo }),
+                                })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    aiCache = {}; _aiCacheKeys = [];
+                                    try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                    _showAdminToast('Override restored');
+                                    scheduleAIQuery();
+                                    _loadOverridesTab();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
+                        } else {
+                            _showAdminToast('Override removed');
+                        }
                     })
                     .catch(function () {
                         btn.disabled = false;
@@ -5271,6 +5293,15 @@
                 overrideDelBtn.textContent = 'Remove Override';
                 overrideDelBtn.style.background = '#dc2626';
                 overrideDelBtn.disabled = true;
+                // Snapshot for undo before the request
+                var _undoOvData = _overrideEditData ? {
+                    feature_key: _overrideEditData.featureKey,
+                    name:        _overrideEditData.name,
+                    description: _overrideEditData.desc,
+                    fill_color:  _overrideEditData.color,
+                    geometry:    _overrideEditData.geometry,
+                    geomIsOverride: _overrideEditData.geometryIsOverride
+                } : null;
                 fetch('/api/v1/admin/habitat-overrides/' + encodeURIComponent(overrideId), { method: 'DELETE' })
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function () {
@@ -5278,9 +5309,33 @@
                     _closeOverrideModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                    _showAdminToast('Override removed');
                     scheduleAIQuery();
                     _refreshActivePanelTab();
+                    if (_undoOvData && _undoOvData.feature_key) {
+                        _showUndoToast('Override removed', function () {
+                            fetch('/api/v1/admin/habitat-overrides', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    feature_key:   _undoOvData.feature_key,
+                                    name:          _undoOvData.name || null,
+                                    description:   _undoOvData.description || null,
+                                    fill_color:    _undoOvData.fill_color || null,
+                                    geometry_json: _undoOvData.geomIsOverride ? _undoOvData.geometry : null,
+                                }),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                _showAdminToast('Override restored');
+                                scheduleAIQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Override removed');
+                    }
                 })
                 .catch(function (e) {
                     overrideDelBtn.disabled = false;
