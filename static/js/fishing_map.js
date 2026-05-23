@@ -5028,30 +5028,31 @@
         el.innerHTML = html;
 
         el.querySelectorAll('.fmap-habitat-type-del').forEach(function (btn) {
-            var _confirm = false, _timer = null;
             btn.addEventListener('click', function () {
                 var tid = btn.dataset.tid;
                 if (!tid) return;
-                if (!_confirm) {
-                    _confirm = true;
-                    btn.textContent = '?';
-                    btn.title = 'Click again to confirm';
-                    _timer = setTimeout(function () {
-                        _confirm = false;
-                        btn.textContent = '✕';
-                        btn.title = 'Remove type ' + (btn.getAttribute('aria-label') || '').replace('Remove type ', '');
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_timer);
-                _confirm = false;
-                btn.textContent = '✕';
+                var _undoType = _customHabitatTypes.filter(function (t) { return String(t.id) === tid; })[0];
                 btn.disabled = true;
                 fetch('/api/v1/admin/habitat-types/' + encodeURIComponent(tid), { method: 'DELETE' })
                     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                     .then(function () {
-                        _showAdminToast('Type removed');
                         _loadHabitatPanel();
+                        if (_undoType) {
+                            _showUndoToast('Type "' + (_undoType.name || '') + '" removed', function () {
+                                fetch('/api/v1/admin/habitat-types', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ name: _undoType.name, default_color: _undoType.default_color }),
+                                })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Type restored');
+                                    _loadHabitatPanel();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
+                        } else {
+                            _showAdminToast('Type removed');
+                        }
                     })
                     .catch(function (e) {
                         btn.disabled = false;
