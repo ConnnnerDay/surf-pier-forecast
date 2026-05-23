@@ -1163,11 +1163,11 @@
                 {# Habitat management panel — tabbed: Habitats / Overrides #}
                 <div id="fmap-habitat-panel" class="fmap-habitat-panel" hidden role="complementary" aria-label="Custom habitat management">
                     <div class="fmap-habitat-panel-hdr">
-                        <div class="fmap-panel-tabs" role="tablist">
-                            <button class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats" role="tab" aria-selected="true">Habitats</button>
-                            <button class="fmap-panel-tab" data-tab="overrides" role="tab" aria-selected="false">Overrides</button>
-                            <button class="fmap-panel-tab" data-tab="suppressed" role="tab" aria-selected="false">Suppressed</button>
-                            <button class="fmap-panel-tab" data-tab="markers" role="tab" aria-selected="false">Markers</button>
+                        <div class="fmap-panel-tabs" role="tablist" aria-label="Admin panel sections">
+                            <button id="fmap-tab-btn-habitats"  class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats"  role="tab" aria-selected="true"  aria-controls="fmap-panel-tab-habitats">Habitats</button>
+                            <button id="fmap-tab-btn-overrides" class="fmap-panel-tab"                        data-tab="overrides" role="tab" aria-selected="false" aria-controls="fmap-panel-tab-overrides">Overrides</button>
+                            <button id="fmap-tab-btn-suppressed" class="fmap-panel-tab"                       data-tab="suppressed" role="tab" aria-selected="false" aria-controls="fmap-panel-tab-suppressed">Suppressed</button>
+                            <button id="fmap-tab-btn-markers"   class="fmap-panel-tab"                        data-tab="markers"   role="tab" aria-selected="false" aria-controls="fmap-panel-tab-markers">Markers</button>
                         </div>
                         <div class="fmap-panel-hdr-actions">
                             <button id="fmap-habitat-export-btn" type="button" class="fmap-panel-icon-btn" title="Export all as GeoJSON" aria-label="Export habitats as GeoJSON">
@@ -1178,7 +1178,7 @@
                     </div>
 
                     {# ── Habitats tab ── #}
-                    <div id="fmap-panel-tab-habitats" role="tabpanel">
+                    <div id="fmap-panel-tab-habitats" role="tabpanel" aria-labelledby="fmap-tab-btn-habitats">
                         <div class="fmap-panel-controls">
                             <input id="fmap-habitat-search" type="search" placeholder="Search habitats…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search habitats">
                             <button id="fmap-habitat-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort habitats">Date ↓</button>
@@ -1199,7 +1199,7 @@
                     </div>
 
                     {# ── Overrides tab ── #}
-                    <div id="fmap-panel-tab-overrides" role="tabpanel" hidden>
+                    <div id="fmap-panel-tab-overrides" role="tabpanel" aria-labelledby="fmap-tab-btn-overrides" hidden>
                         <div class="fmap-panel-controls">
                             <input id="fmap-overrides-search" type="search" placeholder="Search overrides…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search overrides">
                             <button id="fmap-overrides-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort overrides">Date ↓</button>
@@ -1210,7 +1210,7 @@
                     </div>
 
                     {# ── Custom markers tab ── #}
-                    <div id="fmap-panel-tab-markers" role="tabpanel" hidden>
+                    <div id="fmap-panel-tab-markers" role="tabpanel" aria-labelledby="fmap-tab-btn-markers" hidden>
                         <div class="fmap-panel-controls">
                             <input id="fmap-markers-search" type="search" placeholder="Search markers…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search custom markers">
                             <button id="fmap-markers-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort markers">Date ↓</button>
@@ -1221,7 +1221,7 @@
                     </div>
 
                     {# ── Suppressed spots tab ── #}
-                    <div id="fmap-panel-tab-suppressed" role="tabpanel" hidden>
+                    <div id="fmap-panel-tab-suppressed" role="tabpanel" aria-labelledby="fmap-tab-btn-suppressed" hidden>
                         <div class="fmap-panel-controls">
                             <input id="fmap-suppressed-search" type="search" placeholder="Search suppressed…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search suppressed spots">
                             <button id="fmap-suppressed-sort-btn" type="button" class="fmap-panel-sort-btn" data-sort="date" aria-label="Sort suppressed spots">Date ↓</button>
