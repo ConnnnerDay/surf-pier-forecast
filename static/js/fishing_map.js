@@ -3761,6 +3761,8 @@
         if (backdrop) backdrop.hidden = false;
         var statusEl = document.getElementById('fmap-admin-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        var nameEl = document.getElementById('fmap-admin-name');
+        if (nameEl) setTimeout(function () { nameEl.focus(); }, 30);
     }
 
     function _closeAdminModal() {
@@ -3786,7 +3788,7 @@
         t.style.background = isError ? '#dc2626' : '#16a34a';
         t.style.opacity = '1';
         clearTimeout(t._hideTimer);
-        t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, 2200);
+        t._hideTimer = setTimeout(function () { t.style.opacity = '0'; }, isError ? 4500 : 2200);
     }
 
     // Show an undo-delete toast with a clickable "Undo" button.
@@ -4152,6 +4154,9 @@
         if (backdrop) backdrop.hidden = false;
         var statusEl = document.getElementById('fmap-habitat-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        // Focus the name field so the user can type immediately
+        var nameEl = document.getElementById('fmap-habitat-name');
+        if (nameEl) setTimeout(function () { nameEl.focus(); }, 30);
     }
 
     function _closeHabitatModal() {
@@ -4675,6 +4680,11 @@
                 if (panel) panel.hidden = true;
                 var listBtn = document.getElementById('fmap-admin-habitats-list-btn');
                 if (listBtn) { listBtn.classList.remove('fmap-ctrl-btn--active'); listBtn.setAttribute('aria-pressed', 'false'); }
+                // Pan the map to the habitat so it's visible while editing
+                if (map && hData.lat != null && hData.lng != null) {
+                    map.flyTo([hData.lat, hData.lng], Math.max(map.getZoom(), 14));
+                    _highlightHabitatOnMap(hid);
+                }
                 _openHabitatEditModal(hData);
             });
         });
@@ -4841,7 +4851,7 @@
         el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng) && map) map.setView([lat, lng], Math.max(map.getZoom(), 16));
+                if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 16));
             });
         });
 
@@ -5605,6 +5615,9 @@
         if (clearShapeBtn) clearShapeBtn.hidden = !geomIsOverride; // only when a shape is actually stored
         if (modal) modal.hidden = false;
         if (backdrop) backdrop.hidden = false;
+        // Focus the name field so the user can type immediately
+        var _nameEl = document.getElementById('fmap-override-name');
+        if (_nameEl) setTimeout(function () { _nameEl.focus(); }, 30);
     }
 
     function _closeOverrideModal() {

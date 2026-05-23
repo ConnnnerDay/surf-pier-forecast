@@ -3378,11 +3378,11 @@ def admin_habitat_override_upsert() -> Any:
     if not feature_key:
         return jsonify({"error": "feature_key is required"}), 400
 
-    name = str(data.get("name", ""))[:200] if "name" in data else None
+    name = str(data.get("name") or "").strip()[:200] if "name" in data else None
     description = (
-        str(data.get("description", ""))[:1000] if "description" in data else None
+        str(data.get("description") or "").strip()[:1000] if "description" in data else None
     )
-    fill_color = str(data.get("fill_color", ""))[:20] if "fill_color" in data else None
+    fill_color = str(data.get("fill_color") or "").strip()[:20] if "fill_color" in data else None
 
     # geometry_json: None means "key absent — don't touch stored value"
     #                "" / null in body means "explicitly clear stored geometry"
