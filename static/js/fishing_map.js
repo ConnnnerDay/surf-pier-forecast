@@ -4514,6 +4514,8 @@
         _habitatMidpointMarkers.forEach(function (m) { if (map) map.removeLayer(m); });
         _habitatMidpointMarkers = [];
         var n = _habitatVertexMarkers.length;
+        var vcEl = document.getElementById('fmap-reshape-vertex-count');
+        if (vcEl) vcEl.textContent = n + ' vert' + (n === 1 ? 'ex' : 'ices');
         if (n < 2 || !map) return;
         for (var _mi = 0; _mi < n; _mi++) {
             var _a = _habitatVertexMarkers[_mi].getLatLng();

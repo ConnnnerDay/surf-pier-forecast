@@ -14617,6 +14617,12 @@ body.dark .wq-hdx-item {
 }
 .fmap-habitat-reshape-bar[hidden] { display: none !important; }
 .fmap-reshape-hint { flex: 1; }
+.fmap-reshape-vertex-count {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  flex-shrink: 0;
+  padding: 0 6px;
+}
 .fmap-reshape-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 /* ── Habitat management panel ── */
