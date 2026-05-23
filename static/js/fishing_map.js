@@ -6253,6 +6253,8 @@
         if (colorEl) colorEl.value = currentColor || '#22c55e';
         var keyEl = document.getElementById('fmap-override-feature-key');
         if (keyEl) keyEl.value = featureKey || '';
+        var keyDisplay = document.getElementById('fmap-override-key-display');
+        if (keyDisplay) keyDisplay.textContent = featureKey || '';
         var idEl = document.getElementById('fmap-override-id');
         if (idEl) idEl.value = overrideId || '';
         var delBtn = document.getElementById('fmap-override-delete');

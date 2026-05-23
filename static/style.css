@@ -6468,6 +6468,16 @@ textarea.fmap-admin-input { resize: vertical; }
   min-height: 1.1em;
   text-align: right;
 }
+.fmap-admin-feature-key {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  margin: -6px 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fmap-admin-feature-key:empty { display: none; }
 .fmap-admin-footer {
   display: flex;
   gap: 8px;
