@@ -5745,6 +5745,22 @@
                 _updateHabitatTypeDropdown(data.types || []);
             })
             .catch(function () {});
+
+        // ── Unsaved-changes guard ─────────────────────────────────────────────
+        // Browser shows a generic "Leave site?" dialog when the admin navigates
+        // away mid-edit so unsaved form data is not silently discarded.
+        window.addEventListener('beforeunload', function (e) {
+            var modalOpen =
+                (_getHidden('fmap-habitat-modal')  === false) ||
+                (_getHidden('fmap-admin-modal')    === false) ||
+                (_getHidden('fmap-override-modal') === false) ||
+                _habitatDrawMode || _habitatVertexEditMode || _habitatPointMoveMode;
+            if (modalOpen) e.returnValue = '';
+        });
+        function _getHidden(id) {
+            var el = document.getElementById(id);
+            return el ? el.hidden : true;
+        }
     }
 
     // Wire habitat type filter checkboxes in the layers panel.
