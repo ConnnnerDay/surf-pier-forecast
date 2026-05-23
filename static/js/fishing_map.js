@@ -5294,6 +5294,7 @@
                 '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
                 (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" data-mid="' + mid + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-markers-panel-edit fmap-override-item-edit" data-mid="' + mid + '" aria-label="Edit ' + nameSafe + '">Edit</button>' +
+                '<button class="fmap-markers-panel-del fmap-override-item-del" data-mid="' + mid + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
                 '</div>' +
                 (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
                 (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
@@ -5322,6 +5323,38 @@
                     _highlightCustomMarker(mid);
                 }
                 _openAdminEditPanel(marker);
+            });
+        });
+
+        el.querySelectorAll('.fmap-markers-panel-del').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var mid = btn.dataset.mid;
+                if (!mid) return;
+                btn.disabled = true;
+                fetch('/api/map/custom-markers/' + mid, { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                        scheduleFishingSpotQuery();
+                        _loadMarkersTab();
+                        _showUndoToast('Marker deleted', function () {
+                            fetch('/api/map/custom-markers/' + mid + '/restore', { method: 'POST' })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Marker restored');
+                                    spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                    try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                    scheduleFishingSpotQuery();
+                                    _loadMarkersTab();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        _showAdminToast('Delete failed', true);
+                    });
             });
         });
     }
