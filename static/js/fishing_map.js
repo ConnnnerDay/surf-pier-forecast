@@ -4433,6 +4433,7 @@
                 zIndexOffset: 500
             }).addTo(map);
             m.on('drag dragend', _updateHabitatVertexPreview);
+            m.on('dragend', _updateMidpointMarkers);
             _wireVertexDelete(m);
             _habitatVertexMarkers.push(m);
         });
@@ -4458,6 +4459,7 @@
             _habitatVertexMarkers.splice(idx, 1);
             if (map) map.removeLayer(m);
             _updateHabitatVertexPreview();
+            _updateMidpointMarkers();
         });
     }
 
@@ -4517,9 +4519,11 @@
                         zIndexOffset: 500
                     }).addTo(map);
                     newM.on('drag dragend', _updateHabitatVertexPreview);
+                    newM.on('dragend', _updateMidpointMarkers);
                     _wireVertexDelete(newM);
                     _habitatVertexMarkers.splice(insertAfter + 1, 0, newM);
                     _updateHabitatVertexPreview();
+                    _updateMidpointMarkers();
                 });
                 _habitatMidpointMarkers.push(mm);
             }(_mi));
@@ -5528,6 +5532,7 @@
                         map.removeLayer(closest);
                         _habitatVertexMarkers = _habitatVertexMarkers.filter(function (m) { return m !== closest; });
                         _updateHabitatVertexPreview();
+                        _updateMidpointMarkers();
                     }
                 }
             });
