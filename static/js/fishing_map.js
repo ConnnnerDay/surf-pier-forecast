@@ -6047,7 +6047,10 @@
                 var sw = e.target.closest('.fmap-color-swatch');
                 if (!sw) return;
                 var colorEl = document.getElementById('fmap-override-color');
-                if (colorEl) colorEl.value = sw.dataset.color;
+                if (colorEl) {
+                    colorEl.value = sw.dataset.color;
+                    colorEl.dispatchEvent(new Event('input'));
+                }
             });
         }
 
@@ -6137,12 +6140,16 @@
             ovSearchEl.addEventListener('input', function () {
                 _overridesPanelSearch = ovSearchEl.value;
                 _renderOverridesList(_overridesPanelData);
+                var lEl = document.getElementById('fmap-overrides-panel-list');
+                if (lEl) lEl.scrollTop = 0;
             });
             ovSearchEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     ovSearchEl.value = '';
                     _overridesPanelSearch = '';
                     _renderOverridesList(_overridesPanelData);
+                    var lEl = document.getElementById('fmap-overrides-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
                     ovSearchEl.blur();
                 }
             });
@@ -6154,12 +6161,16 @@
             searchEl.addEventListener('input', function () {
                 _habitatPanelSearch = searchEl.value;
                 _applyHabitatPanelFilter();
+                var lEl = document.getElementById('fmap-habitat-panel-list');
+                if (lEl) lEl.scrollTop = 0;
             });
             searchEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     searchEl.value = '';
                     _habitatPanelSearch = '';
                     _applyHabitatPanelFilter();
+                    var lEl = document.getElementById('fmap-habitat-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
                     searchEl.blur();
                 }
             });
@@ -6171,12 +6182,16 @@
             supSearchEl.addEventListener('input', function () {
                 _suppressedPanelSearch = supSearchEl.value;
                 _renderSuppressedList(_suppressedPanelData);
+                var lEl = document.getElementById('fmap-suppressed-panel-list');
+                if (lEl) lEl.scrollTop = 0;
             });
             supSearchEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     supSearchEl.value = '';
                     _suppressedPanelSearch = '';
                     _renderSuppressedList(_suppressedPanelData);
+                    var lEl = document.getElementById('fmap-suppressed-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
                     supSearchEl.blur();
                 }
             });
@@ -6188,12 +6203,16 @@
             mkrSearchEl.addEventListener('input', function () {
                 _markersPanelSearch = mkrSearchEl.value;
                 _renderMarkersList(_markersPanelData);
+                var lEl = document.getElementById('fmap-markers-panel-list');
+                if (lEl) lEl.scrollTop = 0;
             });
             mkrSearchEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     mkrSearchEl.value = '';
                     _markersPanelSearch = '';
                     _renderMarkersList(_markersPanelData);
+                    var lEl = document.getElementById('fmap-markers-panel-list');
+                    if (lEl) lEl.scrollTop = 0;
                     mkrSearchEl.blur();
                 }
             });
