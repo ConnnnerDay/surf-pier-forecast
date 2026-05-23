@@ -3873,14 +3873,25 @@
                 hideBtn.addEventListener('click', function () {
                     hideBtn.disabled = true;
                     hideBtn.textContent = '…';
-                    _suppressSpot(spot, spotKey, function (err) {
+                    _suppressSpot(spot, spotKey, function (err, suppressionId) {
                         if (err) {
                             if (statusEl) statusEl.textContent = 'Failed: ' + err;
                             hideBtn.disabled = false;
                             hideBtn.textContent = 'Hide';
                         } else {
                             marker.closePopup();
-                            _showAdminToast('Spot hidden');
+                            _showUndoToast('Spot hidden', function () {
+                                fetch('/api/map/suppress-spot/' + encodeURIComponent(suppressionId), { method: 'DELETE' })
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function () {
+                                        _showAdminToast('Spot restored');
+                                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                        scheduleFishingSpotQuery();
+                                        _refreshActivePanelTab();
+                                    })
+                                    .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
                         }
                     });
                 });
@@ -3905,7 +3916,8 @@
         });
     }
 
-    // Call POST /api/map/suppress-spot for a spot; cb(null) on success, cb(errMsg) on failure.
+    // Call POST /api/map/suppress-spot for a spot.
+    // Callback: cb(null, suppressionId) on success, cb(errMsg) on failure.
     function _suppressSpot(spot, spotKey, cb) {
         fetch('/api/map/suppress-spot', {
             method:  'POST',
@@ -3920,12 +3932,15 @@
         })
         .then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function (data) {
             // Bust the local spot cache so the suppressed spot disappears on next render
             spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
             try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
             scheduleFishingSpotQuery();
             _refreshActivePanelTab();
-            cb(null);
+            cb(null, data.id);
         })
         .catch(function (err) {
             console.warn('[admin] suppress spot failed:', err);
