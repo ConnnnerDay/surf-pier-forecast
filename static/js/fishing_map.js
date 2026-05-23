@@ -4699,6 +4699,7 @@
             return (b.created_at || '').localeCompare(a.created_at || '');
         });
 
+        _setTabCount('habitats', filtered.length, _habitatPanelAllData.length);
         _renderHabitatPanelList(filtered);
     }
 
@@ -4770,11 +4771,17 @@
         else _loadHabitatPanel();
     }
 
-    function _setTabCount(tabName, count) {
+    function _setTabCount(tabName, count, total) {
         var labels = { habitats: 'Habitats', overrides: 'Overrides', suppressed: 'Suppressed' };
         var btn = document.querySelector('.fmap-panel-tab[data-tab="' + tabName + '"]');
         if (!btn) return;
-        btn.textContent = labels[tabName] + (count !== null ? ' (' + count + ')' : '');
+        var suffix = '';
+        if (count !== null) {
+            suffix = (total != null && total !== count)
+                ? ' (' + count + '/' + total + ')'
+                : ' (' + count + ')';
+        }
+        btn.textContent = labels[tabName] + suffix;
     }
 
     function _loadOverridesTab() {
@@ -4802,6 +4809,7 @@
                    (ov.feature_key || '').toLowerCase().indexOf(q) !== -1 ||
                    (ov.description || '').toLowerCase().indexOf(q) !== -1;
         }) : overrides;
+        _setTabCount('overrides', filtered.length, overrides.length);
         if (!filtered.length) {
             el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
                 (q ? 'No overrides match your search.' :
