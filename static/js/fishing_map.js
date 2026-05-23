@@ -3665,9 +3665,10 @@
                 })
                 .then(function (r) {
                     if (!r.ok) throw new Error('HTTP ' + r.status);
-                    // Invalidate cache so panning away and back shows the new position
+                    // Invalidate cache and refresh so the new position is loaded from server
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                    scheduleFishingSpotQuery();
                     _showAdminToast('Position saved');
                 })
                 .catch(function (err) {
@@ -5478,6 +5479,12 @@
 
         // ── New type form ─────────────────────────────────────────────────────
         var newTypeAdd = document.getElementById('fmap-new-type-add');
+        var newTypeNameEl = document.getElementById('fmap-new-type-name');
+        if (newTypeNameEl && newTypeAdd) {
+            newTypeNameEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !newTypeAdd.disabled) newTypeAdd.click();
+            });
+        }
         if (newTypeAdd) {
             newTypeAdd.addEventListener('click', function () {
                 var nameEl   = document.getElementById('fmap-new-type-name');
@@ -5501,7 +5508,7 @@
                 })
                 .then(function () {
                     newTypeAdd.disabled = false;
-                    if (nameEl) nameEl.value = '';
+                    if (nameEl) { nameEl.value = ''; nameEl.focus(); }
                     if (statusEl) { statusEl.style.color = '#16a34a'; statusEl.textContent = 'Type added'; }
                     _showAdminToast('Habitat type added');
                     _loadHabitatPanel();
