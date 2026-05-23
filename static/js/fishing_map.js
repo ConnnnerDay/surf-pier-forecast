@@ -4604,6 +4604,8 @@
                             name:         prevData.name         || '',
                             description:  prevData.description  || '',
                             fill_color:   prevData.fill_color   || '',
+                            fill_opacity: prevData.fill_opacity != null ? prevData.fill_opacity : 0.35,
+                            stroke_weight: prevData.stroke_weight != null ? prevData.stroke_weight : 2.5,
                             geometry:     prevData.geometry,
                         }),
                     })
@@ -4945,6 +4947,7 @@
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
                 (latStr ? '<button class="fmap-habitat-panel-view" data-hid="' + esc(h.id) + '" data-lat="' + latStr + '" data-lng="' + lngStr + '" title="Pan to on map" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
+                '<button class="fmap-habitat-panel-del fmap-override-item-del" data-hid="' + esc(h.id) + '" aria-label="Delete ' + nameSafe + '">Delete</button>' +
                 (descShort ? '<span class="fmap-habitat-panel-desc">' + descShort + '</span>' : '') +
                 '</div>';
         });
@@ -4978,6 +4981,38 @@
                     _highlightHabitatOnMap(hid);
                 }
                 _openHabitatEditModal(hData);
+            });
+        });
+
+        el.querySelectorAll('.fmap-habitat-panel-del').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var hid = btn.dataset.hid;
+                if (!hid) return;
+                btn.disabled = true;
+                fetch('/api/v1/admin/habitats/' + encodeURIComponent(hid), { method: 'DELETE' })
+                    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(function () {
+                        aiCache = {}; _aiCacheKeys = [];
+                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        scheduleAIQuery();
+                        _loadHabitatPanel();
+                        _showUndoToast('Habitat deleted', function () {
+                            fetch('/api/v1/admin/habitats/' + encodeURIComponent(hid) + '/restore', { method: 'POST' })
+                                .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                .then(function () {
+                                    _showAdminToast('Habitat restored');
+                                    aiCache = {}; _aiCacheKeys = [];
+                                    try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                    scheduleAIQuery();
+                                    _loadHabitatPanel();
+                                })
+                                .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        _showAdminToast('Delete failed', true);
+                    });
             });
         });
     }
