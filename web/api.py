@@ -87,6 +87,7 @@ from storage.sqlite import (
     delete_custom_habitat,
     delete_custom_habitat_type,
     delete_custom_marker,
+    restore_custom_marker,
     delete_habitat_override,
     delete_log_entry,
     delete_map_catch,
@@ -3127,6 +3128,19 @@ def custom_markers_delete(marker_id: int) -> Any:
     if not ok:
         return jsonify({"error": "Marker not found"}), 404
     return jsonify({"deleted": marker_id})
+
+
+@bp.route("/api/map/custom-markers/<int:marker_id>/restore", methods=["POST"])
+def custom_markers_restore(marker_id: int) -> Any:
+    """Restore a soft-deleted custom marker (admin only)."""
+    err = _require_map_admin()
+    if err:
+        return err
+
+    ok = restore_custom_marker(marker_id)
+    if not ok:
+        return jsonify({"error": "Marker not found or not deleted"}), 404
+    return jsonify({"restored": marker_id})
 
 
 @bp.route("/api/map/suppress-spot", methods=["POST"])

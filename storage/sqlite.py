@@ -2250,6 +2250,23 @@ def delete_custom_marker(marker_id: int) -> bool:
     return cur.rowcount > 0
 
 
+def restore_custom_marker(marker_id: int) -> bool:
+    """Un-delete a soft-deleted custom marker; returns True if a row was affected."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "UPDATE custom_map_markers SET is_deleted = 0, updated_at = datetime('now') "
+            "WHERE id = ? AND is_deleted = 1",
+            (marker_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount > 0:
+        _invalidate_custom_markers_cache()
+    return cur.rowcount > 0
+
+
 # Suppressed map spots (admin-hidden OSM/NOAA spots) -------------------------
 
 _SUPPRESSED_SPOTS_CACHE: Optional[list[dict[str, Any]]] = None

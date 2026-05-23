@@ -4020,7 +4020,12 @@
                     body:    JSON.stringify(payload),
                 })
                 .then(function (r) {
-                    if (!r.ok) throw new Error('Server error ' + r.status);
+                    if (!r.ok) {
+                        return r.json().then(
+                            function (j) { throw new Error(j.error || ('Server error ' + r.status)); },
+                            function ()  { throw new Error('Server error ' + r.status); }
+                        );
+                    }
                     return r.json();
                 })
                 .then(function () {
@@ -4088,8 +4093,19 @@
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
-                    _showAdminToast('Marker deleted');
                     scheduleFishingSpotQuery();
+                    // Offer undo for 8 seconds
+                    _showUndoToast('Marker deleted', function () {
+                        fetch('/api/map/custom-markers/' + markerId + '/restore', { method: 'POST' })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                _showAdminToast('Marker restored');
+                                spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                scheduleFishingSpotQuery();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                    });
                 })
                 .catch(function (e) {
                     console.error('[admin] delete marker failed:', e);
