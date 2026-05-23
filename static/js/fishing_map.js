@@ -4197,6 +4197,17 @@
         if (latInput) latInput.addEventListener('input', _updatePreviewPinFromInputs);
         if (lngInput) lngInput.addEventListener('input', _updatePreviewPinFromInputs);
 
+        // ── Auto-fill description from STRUCTURE_TIPS when type changes ─────────
+        var adminTypeEl = document.getElementById('fmap-admin-type');
+        var adminDescEl = document.getElementById('fmap-admin-desc');
+        if (adminTypeEl && adminDescEl) {
+            adminTypeEl.addEventListener('change', function () {
+                if (adminDescEl.value.trim()) return; // don't overwrite the admin's text
+                var tip = STRUCTURE_TIPS[adminTypeEl.value] || '';
+                if (tip) adminDescEl.value = tip;
+            });
+        }
+
         // Enter key in single-line inputs submits the marker modal
         var adminNameInput = document.getElementById('fmap-admin-name');
         [latInput, lngInput, adminNameInput].forEach(function (el) {
