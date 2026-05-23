@@ -4333,6 +4333,7 @@
             return r.json();
         })
         .then(function () {
+            _pendingHabitatGeom = null; // clear before close so the "discarded" toast doesn't fire
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
             try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
@@ -4992,6 +4993,7 @@
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function () {
                     delBtn.disabled = false;
+                    _pendingHabitatGeom = null; // clear before close so discarded-toast doesn't fire
                     _closeHabitatModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
