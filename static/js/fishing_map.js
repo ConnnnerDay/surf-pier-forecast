@@ -5662,6 +5662,19 @@
             });
         }
 
+        // ── Live color preview: update the map polygon as the admin picks a color ─
+        var habitatColorEl = document.getElementById('fmap-habitat-color');
+        if (habitatColorEl) {
+            habitatColorEl.addEventListener('input', function () {
+                if (!_habitatEditData) return; // only for existing habitats, not new draws
+                var hid = _habitatEditData.id;
+                _customHabitats.forEach(function (h) {
+                    if (h.id !== hid || !h.leaflet) return;
+                    h.leaflet.setStyle({ fillColor: habitatColorEl.value, color: habitatColorEl.value });
+                });
+            });
+        }
+
         // ── Auto-fill color when habitat type changes ─────────────────────────
         var typeSelEl = document.getElementById('fmap-habitat-type');
         if (typeSelEl) {
