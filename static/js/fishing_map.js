@@ -3667,15 +3667,28 @@
                 })
                 .then(function (r) {
                     if (!r.ok) throw new Error('HTTP ' + r.status);
-                    // Invalidate cache and refresh so the new position is loaded from server
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     scheduleFishingSpotQuery();
-                    _showAdminToast('Position saved');
+                    _showUndoToast('Position saved', function () {
+                        fetch('/api/map/custom-markers/' + spot.id, {
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lat: prevLat, lng: prevLng }),
+                        })
+                        .then(function (r) {
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            spot.lat = prevLat; spot.lng = prevLng;
+                            m.setLatLng([prevLat, prevLng]);
+                            spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                            try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                            _showAdminToast('Position reverted');
+                            scheduleFishingSpotQuery();
+                        })
+                        .catch(function () { _showAdminToast('Revert failed', true); });
+                    });
                 })
                 .catch(function (err) {
                     console.warn('[admin] drag-save failed:', err);
-                    // Revert marker and data to the original position
                     spot.lat = prevLat;
                     spot.lng = prevLng;
                     m.setLatLng([prevLat, prevLng]);
