@@ -4172,6 +4172,17 @@
         }
         if (latInput) latInput.addEventListener('input', _updatePreviewPinFromInputs);
         if (lngInput) lngInput.addEventListener('input', _updatePreviewPinFromInputs);
+
+        // Enter key in single-line inputs submits the marker modal
+        var adminNameInput = document.getElementById('fmap-admin-name');
+        [latInput, lngInput, adminNameInput].forEach(function (el) {
+            if (!el) return;
+            el.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var sb = document.getElementById('fmap-admin-save');
+                if (sb && !sb.disabled) sb.click();
+            });
+        });
     }
 
     // ─── Admin habitat drawing / editing ─────────────────────────────────────
@@ -5134,6 +5145,16 @@
             _cancelHabitatDraw();
         });
 
+        // Enter in habitat name field triggers save
+        var habitatNameInput = document.getElementById('fmap-habitat-name');
+        if (habitatNameInput) {
+            habitatNameInput.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var sb = document.getElementById('fmap-habitat-save');
+                if (sb && !sb.disabled) sb.click();
+            });
+        }
+
         // Escape closes habitat modal; Backspace/Delete undoes last draw vertex
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
@@ -5267,13 +5288,21 @@
         var overrideCloseBtn = document.getElementById('fmap-override-modal-close');
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
 
-        // ESC closes the override modal
+        // ESC closes the override modal; Enter in name field saves
         var _overrideModalEl = document.getElementById('fmap-override-modal');
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && _overrideModalEl && !_overrideModalEl.hidden) {
                 _closeOverrideModal();
             }
         });
+        var overrideNameInput = document.getElementById('fmap-override-name');
+        if (overrideNameInput) {
+            overrideNameInput.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var sb = document.getElementById('fmap-override-save');
+                if (sb && !sb.disabled) sb.click();
+            });
+        }
 
         var overrideClearShapeBtn = document.getElementById('fmap-override-clear-shape');
         if (overrideClearShapeBtn) {
@@ -5537,6 +5566,14 @@
             searchEl.addEventListener('input', function () {
                 _habitatPanelSearch = searchEl.value;
                 _applyHabitatPanelFilter();
+            });
+            searchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    searchEl.value = '';
+                    _habitatPanelSearch = '';
+                    _applyHabitatPanelFilter();
+                    searchEl.blur();
+                }
             });
         }
 
