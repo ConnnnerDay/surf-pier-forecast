@@ -4827,10 +4827,11 @@
                 fetch('/api/map/suppress-spot/' + encodeURIComponent(sid), { method: 'DELETE' })
                     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                     .then(function () {
-                        aiCache = {}; _aiCacheKeys = [];
-                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        // Suppressed spots are in the fishing spot layer, not the AI overlay
+                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                         _showAdminToast('Spot un-hidden');
-                        scheduleAIQuery();
+                        scheduleFishingSpotQuery();
                         _loadSuppressedTab();
                     })
                     .catch(function () {
