@@ -4496,8 +4496,9 @@
         if (_habitatDrawPreview) map.removeLayer(_habitatDrawPreview);
         if (_habitatDrawVerts.length >= 2) {
             var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
+            var _pColor = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
             _habitatDrawPreview = L.polygon(previewCoords, {
-                color: '#8b5cf6', weight: 2, dashArray: '6,4', fillOpacity: 0.15
+                color: _pColor, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColor
             }).addTo(map);
         }
 
@@ -5541,8 +5542,9 @@
                 if (_habitatDrawPreview && map) { map.removeLayer(_habitatDrawPreview); _habitatDrawPreview = null; }
                 if (_habitatDrawVerts.length >= 2) {
                     var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
+                    var _pColorB = (document.getElementById('fmap-habitat-color') || {}).value || '#8b5cf6';
                     _habitatDrawPreview = L.polygon(previewCoords, {
-                        color: '#8b5cf6', weight: 2, dashArray: '6,4', fillOpacity: 0.15
+                        color: _pColorB, weight: 2, dashArray: '6,4', fillOpacity: 0.18, fillColor: _pColorB
                     }).addTo(map);
                 }
                 _showAdminToast('Last vertex removed (' + _habitatDrawVerts.length + ' remaining)');
@@ -5983,12 +5985,19 @@
         var habitatColorEl = document.getElementById('fmap-habitat-color');
         if (habitatColorEl) {
             habitatColorEl.addEventListener('input', function () {
-                if (!_habitatEditData) return; // only for existing habitats, not new draws
-                var hid = _habitatEditData.id;
-                _customHabitats.forEach(function (h) {
-                    if (h.id !== hid || !h.leaflet) return;
-                    h.leaflet.setStyle({ fillColor: habitatColorEl.value, color: habitatColorEl.value });
-                });
+                var c = habitatColorEl.value;
+                // Live-update the draw preview polygon when in draw mode
+                if (_habitatDrawMode && _habitatDrawPreview) {
+                    _habitatDrawPreview.setStyle({ color: c, fillColor: c });
+                }
+                // Live-update the existing habitat polygon when editing
+                if (_habitatEditData) {
+                    var hid = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== hid || !h.leaflet) return;
+                        h.leaflet.setStyle({ fillColor: c, color: c });
+                    });
+                }
             });
         }
 
