@@ -3623,9 +3623,10 @@
     // Renders custom markers returned by /api/map/structures as draggable,
     // and wires a toolbar button + modal for add / edit / delete.
 
-    var adminEditMode    = false;
-    var _customMarkers   = [];  // [{id, leaflet, data}] — live custom marker state
-    var _adminPreviewPin = null; // temporary L.marker shown while the add modal is open
+    var adminEditMode       = false;
+    var _customMarkers     = [];  // [{id, leaflet, data}] — live custom marker state
+    var _adminPreviewPin   = null; // temporary L.marker shown while the add modal is open
+    var _markerEditOriginal = null; // snapshot of marker data when edit modal opens (for undo)
 
     function _customMarkerIcon(type, editMode) {
         if (!editMode) return makeFishingSpotIcon(type);
@@ -3743,6 +3744,7 @@
         document.getElementById('fmap-admin-desc').value = '';
         document.getElementById('fmap-admin-delete').hidden = true;
         document.getElementById('fmap-admin-save').dataset.markerId = '';
+        _markerEditOriginal = null;
 
         // Show a temporary pin so the admin can see exactly where the marker will land
         _removeAdminPreviewPin();
@@ -3767,6 +3769,14 @@
         document.getElementById('fmap-admin-type').value = spot.type || 'fishing';
         document.getElementById('fmap-admin-desc').value = spot.description || '';
         document.getElementById('fmap-admin-save').dataset.markerId = spot.id;
+        _markerEditOriginal = {
+            id:          spot.id,
+            lat:         spot.lat,
+            lng:         spot.lng,
+            name:        spot.name        || '',
+            type:        spot.type        || 'fishing',
+            description: spot.description || '',
+        };
         var delBtn = document.getElementById('fmap-admin-delete');
         delBtn.hidden = false;
         delBtn.dataset.markerId = spot.id;
@@ -4094,6 +4104,16 @@
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
                 var markerId  = saveBtn.dataset.markerId;
+                var _prevMarkerData = (markerId && _markerEditOriginal && String(_markerEditOriginal.id) === String(markerId))
+                    ? {
+                        id:          _markerEditOriginal.id,
+                        lat:         _markerEditOriginal.lat,
+                        lng:         _markerEditOriginal.lng,
+                        name:        _markerEditOriginal.name,
+                        type:        _markerEditOriginal.type,
+                        description: _markerEditOriginal.description,
+                    }
+                    : null;
                 var statusEl  = document.getElementById('fmap-admin-status');
                 var lat = parseFloat(document.getElementById('fmap-admin-lat').value);
                 var lng = parseFloat(document.getElementById('fmap-admin-lng').value);
@@ -4135,9 +4155,34 @@
                     _closeAdminModal();
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
-                    _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
                     _refreshActivePanelTab();
+                    if (_prevMarkerData) {
+                        _showUndoToast('Marker updated', function () {
+                            fetch('/api/map/custom-markers/' + _prevMarkerData.id, {
+                                method:  'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    lat:         _prevMarkerData.lat,
+                                    lng:         _prevMarkerData.lng,
+                                    name:        _prevMarkerData.name,
+                                    type:        _prevMarkerData.type,
+                                    description: _prevMarkerData.description,
+                                }),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                _showAdminToast('Marker reverted');
+                                spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                scheduleFishingSpotQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Revert failed', true); });
+                        });
+                    } else {
+                        _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
+                    }
                 })
                 .catch(function (e) {
                     console.error('[admin] save marker failed:', e);
