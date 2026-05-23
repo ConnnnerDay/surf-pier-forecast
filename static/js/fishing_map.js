@@ -3749,6 +3749,8 @@
         document.getElementById('fmap-admin-delete').hidden = true;
         document.getElementById('fmap-admin-save').dataset.markerId = '';
         _markerEditOriginal = null;
+        var _auditEl = document.getElementById('fmap-admin-audit');
+        if (_auditEl) _auditEl.hidden = true;
 
         // Show a temporary pin so the admin can see exactly where the marker will land
         _removeAdminPreviewPin();
@@ -3784,6 +3786,17 @@
         var delBtn = document.getElementById('fmap-admin-delete');
         delBtn.hidden = false;
         delBtn.dataset.markerId = spot.id;
+        var auditEl = document.getElementById('fmap-admin-audit');
+        if (auditEl) {
+            var ca = spot.created_at ? String(spot.created_at).replace('T', ' ').slice(0, 16) : null;
+            var ua = spot.updated_at ? String(spot.updated_at).replace('T', ' ').slice(0, 16) : null;
+            if (ca) {
+                auditEl.hidden = false;
+                auditEl.textContent = 'Added ' + ca + (ua && ua !== ca ? ' · Updated ' + ua : '');
+            } else {
+                auditEl.hidden = true;
+            }
+        }
         _openAdminModal();
     }
 
