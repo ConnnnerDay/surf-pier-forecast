@@ -74,9 +74,10 @@
     var _habitatVertexPreview  = null; // L.polygon showing reshaped outline
     var _habitatEditData       = null; // full feature data of habitat being edited
     var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
-    // Two-step confirm state for override modal buttons — module-level so _closeOverrideModal can reset them
-    var _ovDelConfirm = false, _ovDelTimer = null;
-    var _clrConfirm   = false, _clrTimer   = null;
+    // Two-step confirm state — module-level so close handlers can reset them
+    var _ovDelConfirm = false, _ovDelTimer = null;  // override delete
+    var _clrConfirm   = false, _clrTimer   = null;  // override clear-shape
+    var _hDelConfirm  = false, _hDelTimer  = null;  // habitat delete
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
@@ -4211,6 +4212,10 @@
             _showAdminToast('Drawn shape discarded — save next time to keep it.');
         }
         _pendingHabitatGeom = null;
+        // Reset habitat delete confirm state so reopening always starts fresh
+        clearTimeout(_hDelTimer); _hDelConfirm = false;
+        var hDelBtn = document.getElementById('fmap-habitat-delete');
+        if (hDelBtn) { hDelBtn.textContent = 'Delete'; hDelBtn.style.background = '#dc2626'; hDelBtn.disabled = false; }
     }
 
     function _openHabitatEditModal(habitatData) {
@@ -5080,7 +5085,6 @@
         // ── Habitat modal delete ──────────────────────────────────────────────
         var delBtn = document.getElementById('fmap-habitat-delete');
         if (delBtn) {
-            var _hDelConfirm = false, _hDelTimer = null;
             delBtn.addEventListener('click', function () {
                 var habitatId = delBtn.dataset.habitatId;
                 if (!habitatId) return;
