@@ -4262,7 +4262,7 @@
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
-        _showAdminToast('Click to add vertices. Double-click to finish polygon.');
+        _showAdminToast('Click to add vertices; Backspace to undo last. Double-click to finish.');
     }
 
     function _cancelHabitatDraw() {
@@ -5052,12 +5052,28 @@
             _cancelHabitatDraw();
         });
 
-        // Escape closes habitat modal too
+        // Escape closes habitat modal; Backspace/Delete undoes last draw vertex
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 var hModal = document.getElementById('fmap-habitat-modal');
                 if (hModal && !hModal.hidden) { _closeHabitatModal(); _cancelHabitatDraw(); }
                 else if (_habitatDrawMode) _cancelHabitatDraw();
+            } else if ((e.key === 'Backspace' || e.key === 'Delete') && _habitatDrawMode) {
+                // Undo last vertex during polygon draw (don't interfere with text inputs)
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+                if (_habitatDrawVerts.length === 0) return;
+                e.preventDefault();
+                _habitatDrawVerts.pop();
+                var lastMarker = _habitatDrawMarkers.pop();
+                if (lastMarker && map) map.removeLayer(lastMarker);
+                if (_habitatDrawPreview && map) { map.removeLayer(_habitatDrawPreview); _habitatDrawPreview = null; }
+                if (_habitatDrawVerts.length >= 2) {
+                    var previewCoords = _habitatDrawVerts.concat([_habitatDrawVerts[0]]);
+                    _habitatDrawPreview = L.polygon(previewCoords, {
+                        color: '#8b5cf6', weight: 2, dashArray: '6,4', fillOpacity: 0.15
+                    }).addTo(map);
+                }
+                _showAdminToast('Last vertex removed (' + _habitatDrawVerts.length + ' remaining)');
             }
         });
 
