@@ -1165,6 +1165,7 @@
                             <button class="fmap-panel-tab fmap-panel-tab--active" data-tab="habitats" role="tab" aria-selected="true">Habitats</button>
                             <button class="fmap-panel-tab" data-tab="overrides" role="tab" aria-selected="false">Overrides</button>
                             <button class="fmap-panel-tab" data-tab="suppressed" role="tab" aria-selected="false">Suppressed</button>
+                            <button class="fmap-panel-tab" data-tab="markers" role="tab" aria-selected="false">Markers</button>
                         </div>
                         <div class="fmap-panel-hdr-actions">
                             <button id="fmap-habitat-export-btn" type="button" class="fmap-panel-icon-btn" title="Export all as GeoJSON" aria-label="Export habitats as GeoJSON">
@@ -1201,6 +1202,16 @@
                             <input id="fmap-overrides-search" type="search" placeholder="Search overrides…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search overrides">
                         </div>
                         <div id="fmap-overrides-panel-list" class="fmap-habitat-panel-list">
+                            <p class="fmap-habitat-panel-empty">Loading…</p>
+                        </div>
+                    </div>
+
+                    {# ── Custom markers tab ── #}
+                    <div id="fmap-panel-tab-markers" role="tabpanel" hidden>
+                        <div class="fmap-panel-controls">
+                            <input id="fmap-markers-search" type="search" placeholder="Search markers…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search custom markers">
+                        </div>
+                        <div id="fmap-markers-panel-list" class="fmap-habitat-panel-list">
                             <p class="fmap-habitat-panel-empty">Loading…</p>
                         </div>
                     </div>

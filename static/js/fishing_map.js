@@ -81,6 +81,8 @@
     var _overridesPanelSearch  = ''; // live search string for overrides tab
     var _suppressedPanelSearch = ''; // live search string for suppressed tab
     var _suppressedPanelData   = []; // cached suppressed list for search
+    var _markersPanelSearch    = ''; // live search string for markers tab
+    var _markersPanelData      = []; // cached markers list for search
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
     // Point-move state (drag a Point habitat to a new location)
@@ -4073,6 +4075,7 @@
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     _showAdminToast(markerId ? 'Marker updated' : 'Marker added');
                     scheduleFishingSpotQuery();
+                    _refreshActivePanelTab();
                 })
                 .catch(function (e) {
                     console.error('[admin] save marker failed:', e);
@@ -4106,6 +4109,7 @@
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     scheduleFishingSpotQuery();
+                    _refreshActivePanelTab();
                     _showUndoToast('Marker deleted', function () {
                         fetch('/api/map/custom-markers/' + markerId + '/restore', { method: 'POST' })
                             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
@@ -4114,6 +4118,7 @@
                                 spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                                 try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                                 scheduleFishingSpotQuery();
+                                _refreshActivePanelTab();
                             })
                             .catch(function () { _showAdminToast('Restore failed', true); });
                     });
@@ -4757,11 +4762,12 @@
         if (!_habitatPanelOpen) return;
         if (_habitatPanelActiveTab === 'overrides')  _loadOverridesTab();
         else if (_habitatPanelActiveTab === 'suppressed') _loadSuppressedTab();
+        else if (_habitatPanelActiveTab === 'markers') _loadMarkersTab();
         else _loadHabitatPanel();
     }
 
     function _setTabCount(tabName, count, total) {
-        var labels = { habitats: 'Habitats', overrides: 'Overrides', suppressed: 'Suppressed' };
+        var labels = { habitats: 'Habitats', overrides: 'Overrides', suppressed: 'Suppressed', markers: 'Markers' };
         var btn = document.querySelector('.fmap-panel-tab[data-tab="' + tabName + '"]');
         if (!btn) return;
         var suffix = '';
@@ -5004,6 +5010,77 @@
                         btn.disabled = false;
                         _showAdminToast('Unhide failed', true);
                     });
+            });
+        });
+    }
+
+    // ─── Markers tab ──────────────────────────────────────────────────────────
+
+    function _loadMarkersTab() {
+        var el = document.getElementById('fmap-markers-panel-list');
+        if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
+        fetch('/api/map/custom-markers')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (data) {
+                _renderMarkersList(data.markers || []);
+            })
+            .catch(function () {
+                if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
+            });
+    }
+
+    function _renderMarkersList(markers) {
+        var el = document.getElementById('fmap-markers-panel-list');
+        if (!el) return;
+        _markersPanelData = markers;
+        var q = _markersPanelSearch.toLowerCase().trim();
+        var filtered = q ? markers.filter(function (m) {
+            return (m.name || '').toLowerCase().indexOf(q) !== -1 ||
+                   (m.type || '').toLowerCase().indexOf(q) !== -1 ||
+                   (m.description || '').toLowerCase().indexOf(q) !== -1;
+        }) : markers;
+        _setTabCount('markers', filtered.length, markers.length);
+        if (!filtered.length) {
+            el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
+                (q ? 'No markers match your search.' :
+                    'No custom markers yet.<br><span style="font-size:.75rem;color:var(--text-muted,#6b7280)">In admin edit mode, click anywhere on the map to place a custom marker.</span>') +
+                '</p>';
+            return;
+        }
+        var html = '';
+        filtered.forEach(function (m) {
+            var nameSafe = esc(m.name || spotTypeLabel(m.type) || '—');
+            var typeSafe = esc(m.type || '');
+            var mid      = esc(String(m.id));
+            var lat      = parseFloat(m.lat), lng = parseFloat(m.lng);
+            var hasCoords = !isNaN(lat) && !isNaN(lng);
+            var descShort = m.description ? esc(String(m.description).slice(0, 80)) + (m.description.length > 80 ? '…' : '') : '';
+            html +=
+                '<div class="fmap-override-item">' +
+                '<div class="fmap-override-item-row">' +
+                '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
+                '<button class="fmap-markers-panel-edit fmap-override-item-edit" data-mid="' + mid + '" aria-label="Edit ' + nameSafe + '">Edit</button>' +
+                '</div>' +
+                (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
+                (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
+                '</div>';
+        });
+        el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
+                if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 16));
+            });
+        });
+
+        el.querySelectorAll('.fmap-markers-panel-edit').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var mid = btn.dataset.mid;
+                var marker = _markersPanelData.filter(function (m) { return String(m.id) === mid; })[0];
+                if (!marker) return;
+                _openAdminEditPanel(marker);
             });
         });
     }
@@ -5668,7 +5745,7 @@
             });
         }
 
-        // ── Panel tabs (Habitats / Overrides / Suppressed) ───────────────────
+        // ── Panel tabs (Habitats / Overrides / Suppressed / Markers) ─────────
         document.querySelectorAll('.fmap-panel-tab').forEach(function (tabBtn) {
             tabBtn.addEventListener('click', function () {
                 var tabName = tabBtn.dataset.tab;
@@ -5680,11 +5757,28 @@
                 var habTab = document.getElementById('fmap-panel-tab-habitats');
                 var ovTab  = document.getElementById('fmap-panel-tab-overrides');
                 var supTab = document.getElementById('fmap-panel-tab-suppressed');
+                var mkrTab = document.getElementById('fmap-panel-tab-markers');
                 if (habTab) habTab.hidden = (tabName !== 'habitats');
                 if (ovTab)  ovTab.hidden  = (tabName !== 'overrides');
                 if (supTab) supTab.hidden = (tabName !== 'suppressed');
+                if (mkrTab) mkrTab.hidden = (tabName !== 'markers');
                 if (tabName === 'overrides')  _loadOverridesTab();
                 if (tabName === 'suppressed') _loadSuppressedTab();
+                if (tabName === 'markers')    _loadMarkersTab();
+            });
+            // Arrow key navigation between tabs (ARIA tablist pattern)
+            tabBtn.addEventListener('keydown', function (e) {
+                var tabs = Array.prototype.slice.call(document.querySelectorAll('.fmap-panel-tab'));
+                var idx = tabs.indexOf(tabBtn);
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    var next = tabs[(idx + 1) % tabs.length];
+                    next.focus(); next.click();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    var prev = tabs[(idx - 1 + tabs.length) % tabs.length];
+                    prev.focus(); prev.click();
+                }
             });
         });
 
@@ -5735,6 +5829,23 @@
                     _suppressedPanelSearch = '';
                     _renderSuppressedList(_suppressedPanelData);
                     supSearchEl.blur();
+                }
+            });
+        }
+
+        // ── Markers search ────────────────────────────────────────────────────
+        var mkrSearchEl = document.getElementById('fmap-markers-search');
+        if (mkrSearchEl) {
+            mkrSearchEl.addEventListener('input', function () {
+                _markersPanelSearch = mkrSearchEl.value;
+                _renderMarkersList(_markersPanelData);
+            });
+            mkrSearchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    mkrSearchEl.value = '';
+                    _markersPanelSearch = '';
+                    _renderMarkersList(_markersPanelData);
+                    mkrSearchEl.blur();
                 }
             });
         }
