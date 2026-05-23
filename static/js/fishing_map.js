@@ -5209,6 +5209,10 @@
                         try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                         scheduleFishingSpotQuery();
                         _loadSuppressedTab();
+                        // Pan to the spot so the admin can see it re-appear
+                        if (_undoSup && !isNaN(parseFloat(_undoSup.lat)) && !isNaN(parseFloat(_undoSup.lng)) && map) {
+                            map.flyTo([parseFloat(_undoSup.lat), parseFloat(_undoSup.lng)], Math.max(map.getZoom(), 15));
+                        }
                         if (_undoSup && _undoSup.spot_key) {
                             _showUndoToast('Spot un-hidden', function () {
                                 fetch('/api/map/suppress-spot', {
