@@ -5078,7 +5078,8 @@
                 _openOverrideModal(
                     ov.feature_key, String(ov.id),
                     ov.name || '', ov.description || '', ov.fill_color || '',
-                    geom, !!ov.geometry_json
+                    geom, !!ov.geometry_json,
+                    ov.created_at, ov.updated_at
                 );
             });
         });
@@ -5637,6 +5638,14 @@
                 };
                 _closeOverrideModal();
                 _overrideEditData = snap; // restore after close
+                // Fit the map to the polygon so vertices are always visible
+                if (map && snap.geometry.coordinates && snap.geometry.coordinates[0]) {
+                    try {
+                        var _ring = snap.geometry.coordinates[0];
+                        var _bounds = L.latLngBounds(_ring.map(function (c) { return [c[1], c[0]]; }));
+                        if (_bounds.isValid()) map.fitBounds(_bounds.pad(0.3), { maxZoom: 17, animate: true });
+                    } catch (_fe) {}
+                }
                 _startHabitatVertexEdit(snap.geometry);
                 _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
             });
@@ -5865,6 +5874,14 @@
                 var _geomToReshape = _pendingHabitatGeom;
                 _pendingHabitatGeom = null; // prevent discarded-toast on close (add-mode)
                 _closeHabitatModal();
+                // Fit the map to the polygon so vertices are always visible
+                if (map && _geomToReshape.coordinates && _geomToReshape.coordinates[0]) {
+                    try {
+                        var _hring = _geomToReshape.coordinates[0];
+                        var _hbounds = L.latLngBounds(_hring.map(function (c) { return [c[1], c[0]]; }));
+                        if (_hbounds.isValid()) map.fitBounds(_hbounds.pad(0.3), { maxZoom: 17, animate: true });
+                    } catch (_hfe) {}
+                }
                 _startHabitatVertexEdit(_geomToReshape);
                 _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
             });
@@ -6342,7 +6359,7 @@
         }
     }
 
-    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom, geomIsOverride) {
+    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom, geomIsOverride, createdAt, updatedAt) {
         var modal = document.getElementById('fmap-override-modal');
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (!modal) return;
@@ -6363,6 +6380,17 @@
         if (delBtn) delBtn.hidden = !overrideId;
         var statusEl = document.getElementById('fmap-override-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        var auditEl = document.getElementById('fmap-override-audit');
+        if (auditEl) {
+            var ca = createdAt ? String(createdAt).replace('T', ' ').slice(0, 16) : null;
+            var ua = updatedAt ? String(updatedAt).replace('T', ' ').slice(0, 16) : null;
+            if (ca) {
+                auditEl.hidden = false;
+                auditEl.textContent = 'Added ' + ca + (ua && ua !== ca ? ' · Updated ' + ua : '');
+            } else {
+                auditEl.hidden = true;
+            }
+        }
         // Store context for reshape; geomIsOverride tracks whether geometry should be saved
         _overrideEditData = {
             featureKey:       featureKey,
@@ -6396,6 +6424,8 @@
         if (clrBtn) clrBtn.disabled = false;
         var statusEl = document.getElementById('fmap-override-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+        var auditEl = document.getElementById('fmap-override-audit');
+        if (auditEl) auditEl.hidden = true;
     }
 
     // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
