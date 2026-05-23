@@ -1140,7 +1140,7 @@
                 {% if g.user and g.user.get('is_admin') %}
                 {# Reshape floating bar — shown while vertex-editing a polygon #}
                 <div id="fmap-habitat-reshape-bar" class="fmap-habitat-reshape-bar" hidden>
-                    <span class="fmap-reshape-hint">Drag vertices to reshape. Shift+click to remove a vertex.</span>
+                    <span class="fmap-reshape-hint">Drag vertices to reshape · Right-click or Shift+click to remove a vertex · Click midpoint to add one</span>
                     <div class="fmap-reshape-actions">
                         <button id="fmap-habitat-reshape-done" type="button" class="fmap-admin-save-btn fmap-admin-save-btn--sm">Done</button>
                         <button id="fmap-habitat-reshape-cancel" type="button" class="fmap-admin-delete-btn fmap-admin-save-btn--sm">Cancel</button>
@@ -1186,6 +1186,9 @@
 
                     {# ── Overrides tab ── #}
                     <div id="fmap-panel-tab-overrides" role="tabpanel" hidden>
+                        <div class="fmap-panel-controls">
+                            <input id="fmap-overrides-search" type="search" placeholder="Search overrides…" class="fmap-admin-input fmap-admin-input--sm fmap-panel-search" autocomplete="off" aria-label="Search overrides">
+                        </div>
                         <div id="fmap-overrides-panel-list" class="fmap-habitat-panel-list">
                             <p class="fmap-habitat-panel-empty">Loading…</p>
                         </div>
