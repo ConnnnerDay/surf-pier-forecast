@@ -3627,6 +3627,7 @@
     var _customMarkers     = [];  // [{id, leaflet, data}] — live custom marker state
     var _adminPreviewPin   = null; // temporary L.marker shown while the add modal is open
     var _markerEditOriginal = null; // snapshot of marker data when edit modal opens (for undo)
+    var _currentUndoFn     = null; // fn stored by _showUndoToast; triggered by Ctrl+Z
 
     function _customMarkerIcon(type, editMode) {
         if (!editMode) return makeFishingSpotIcon(type);
@@ -3800,6 +3801,7 @@
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
         _removeAdminPreviewPin();
+        _markerEditOriginal = null;
     }
 
     // Brief non-blocking toast shown after drag-saves and other silent actions.
@@ -3831,6 +3833,7 @@
         duration = duration || 8000;
         var existing = document.getElementById('fmap-undo-toast');
         if (existing) existing.remove();
+        _currentUndoFn = onUndo || null;
         var t = document.createElement('div');
         t.id = 'fmap-undo-toast';
         t.setAttribute('role', 'status');
@@ -3843,11 +3846,28 @@
             btn.addEventListener('click', function () {
                 clearTimeout(t._hideTimer);
                 t.remove();
+                _currentUndoFn = null;
                 if (onUndo) onUndo();
             });
         }
-        t._hideTimer = setTimeout(function () { t.remove(); }, duration);
+        t._hideTimer = setTimeout(function () { t.remove(); _currentUndoFn = null; }, duration);
     }
+
+    // Ctrl+Z / Cmd+Z fires the current undo toast action if one is pending.
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+        // Don't intercept Ctrl+Z when a text input has focus — let the browser handle it.
+        var tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        var toast = document.getElementById('fmap-undo-toast');
+        if (!toast || !_currentUndoFn) return;
+        e.preventDefault();
+        var fn = _currentUndoFn;
+        _currentUndoFn = null;
+        clearTimeout(toast._hideTimer);
+        toast.remove();
+        fn();
+    });
 
     // Default fill colors per built-in habitat type (mirrors _CUSTOM_HABITAT_COLORS).
     var _TYPE_DEFAULT_COLORS = {
