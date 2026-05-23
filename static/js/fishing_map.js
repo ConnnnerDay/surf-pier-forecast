@@ -4438,7 +4438,7 @@
         _openHabitatAddModal(geometry);
     }
 
-    function _saveHabitat(habitatId, payload, onSuccess) {
+    function _saveHabitat(habitatId, payload, onSuccess, prevData) {
         var url = '/api/v1/admin/habitats';
         if (habitatId) { payload.id = habitatId; }
 
@@ -4462,11 +4462,36 @@
             _closeHabitatModal();
             aiCache = {}; _aiCacheKeys = [];
             try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-            _showAdminToast(habitatId ? 'Habitat updated' : 'Habitat added');
             scheduleAIQuery();
-            // Keep the management panel list fresh without requiring a reopen
             if (_habitatPanelOpen) _loadHabitatPanel();
             if (onSuccess) onSuccess();
+            // Offer undo for habitat edits (not new adds)
+            if (habitatId && prevData) {
+                _showUndoToast('Habitat updated', function () {
+                    fetch('/api/v1/admin/habitats', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id:           habitatId,
+                            habitat_type: prevData.habitat_type || 'general',
+                            name:         prevData.name         || '',
+                            description:  prevData.description  || '',
+                            fill_color:   prevData.fill_color   || '',
+                            geometry:     prevData.geometry,
+                        }),
+                    })
+                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                    .then(function () {
+                        aiCache = {}; _aiCacheKeys = [];
+                        try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                        _showAdminToast('Habitat reverted');
+                        scheduleAIQuery();
+                        if (_habitatPanelOpen) _loadHabitatPanel();
+                    })
+                    .catch(function () { _showAdminToast('Revert failed', true); });
+                });
+            } else {
+                _showAdminToast(habitatId ? 'Habitat updated' : 'Habitat added');
+            }
         })
         .catch(function (e) {
             console.error('[admin] save habitat failed:', e);
@@ -5303,13 +5328,21 @@
                     _lastHabitatType  = payload.habitat_type;
                     _lastHabitatColor = payload.fill_color;
                 }
+                // Snapshot previous state for undo when editing an existing habitat
+                var _prevHabData = (habitatId && _habitatEditData) ? {
+                    habitat_type: _habitatEditData.habitat_type || _habitatEditData.osm_type || 'general',
+                    name:         _habitatEditData.name || '',
+                    description:  _habitatEditData.description || '',
+                    fill_color:   _habitatEditData.fill_color || '',
+                    geometry:     _habitatEditData.geojson_geometry || _habitatEditData.geometry || null,
+                } : null;
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving…';
                 _saveHabitat(habitatId || null, payload, function () {
                     saveBtn.disabled = false;
                     saveBtn.textContent = 'Save';
-                });
+                }, _prevHabData);
             });
         }
 
