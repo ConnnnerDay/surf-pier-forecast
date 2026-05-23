@@ -85,6 +85,9 @@
     var _markersPanelData      = []; // cached markers list for search
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
+    // Remembered last-used type/color for successive habitat additions
+    var _lastHabitatType  = null;
+    var _lastHabitatColor = null;
     // Point-move state (drag a Point habitat to a new location)
     var _habitatPointMoveMode   = false;
     var _habitatPointMoveMarker = null;
@@ -4326,9 +4329,11 @@
         var modal = document.getElementById('fmap-habitat-modal');
         if (!modal) return;
         document.getElementById('fmap-habitat-modal-title').textContent = 'Add Habitat';
+        var _addType  = _lastHabitatType  || 'general';
+        var _addColor = _lastHabitatColor || _TYPE_DEFAULT_COLORS[_addType] || '#818cf8';
         document.getElementById('fmap-habitat-name').value  = '';
-        document.getElementById('fmap-habitat-type').value  = 'general';
-        document.getElementById('fmap-habitat-color').value = '#22c55e';
+        document.getElementById('fmap-habitat-type').value  = _addType;
+        document.getElementById('fmap-habitat-color').value = _addColor;
         document.getElementById('fmap-habitat-desc').value  = '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = '';
@@ -5266,6 +5271,11 @@
                     fill_color:   document.getElementById('fmap-habitat-color').value,
                     geometry:     _pendingHabitatGeom,
                 };
+                // Remember type + color for successive "Add Habitat" draws
+                if (!habitatId) {
+                    _lastHabitatType  = payload.habitat_type;
+                    _lastHabitatColor = payload.fill_color;
+                }
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving…';
