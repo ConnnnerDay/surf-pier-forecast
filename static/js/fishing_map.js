@@ -3795,6 +3795,9 @@
         if (!t) {
             t = document.createElement('div');
             t.id = 'fmap-admin-toast';
+            t.setAttribute('role', 'status');
+            t.setAttribute('aria-live', 'polite');
+            t.setAttribute('aria-atomic', 'true');
             t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
                 'z-index:4000;padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;' +
                 'color:#fff;pointer-events:none;transition:opacity .3s;white-space:nowrap';
@@ -3815,6 +3818,9 @@
         if (existing) existing.remove();
         var t = document.createElement('div');
         t.id = 'fmap-undo-toast';
+        t.setAttribute('role', 'status');
+        t.setAttribute('aria-live', 'assertive');
+        t.setAttribute('aria-atomic', 'true');
         t.innerHTML = '<span>' + esc(msg) + '</span><button id="fmap-undo-toast-btn" type="button">Undo</button>';
         document.body.appendChild(t);
         var btn = document.getElementById('fmap-undo-toast-btn');
@@ -4716,6 +4722,7 @@
     function _renderHabitatPanelList(habitats) {
         var el = document.getElementById('fmap-habitat-panel-list');
         if (!el) return;
+        var savedScroll = el.scrollTop;
         if (!habitats.length) {
             el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
                 (_habitatPanelSearch ? 'No habitats match your search.' : 'No custom habitats yet.') +
@@ -4742,6 +4749,7 @@
                 '</div>';
         });
         el.innerHTML = html;
+        el.scrollTop = savedScroll;
 
         el.querySelectorAll('.fmap-habitat-panel-view').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -4816,6 +4824,7 @@
     function _renderOverridesList(overrides) {
         var el = document.getElementById('fmap-overrides-panel-list');
         if (!el) return;
+        var savedScroll = el.scrollTop;
         _overridesPanelData = overrides; // cache for edit buttons (always full list)
         var q = _overridesPanelSearch.toLowerCase().trim();
         var filtered = q ? overrides.filter(function (ov) {
@@ -4863,6 +4872,7 @@
                 '</div>';
         });
         el.innerHTML = html;
+        el.scrollTop = savedScroll;
 
         el.querySelectorAll('.fmap-override-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -4951,6 +4961,7 @@
     function _renderSuppressedList(suppressions) {
         var el = document.getElementById('fmap-suppressed-panel-list');
         if (!el) return;
+        var savedScroll = el.scrollTop;
         _suppressedPanelData = suppressions;
         var q = _suppressedPanelSearch.toLowerCase().trim();
         var filtered = q ? suppressions.filter(function (s) {
@@ -4984,6 +4995,7 @@
                 '</div>';
         });
         el.innerHTML = html;
+        el.scrollTop = savedScroll;
 
         el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -5051,6 +5063,7 @@
     function _renderMarkersList(markers) {
         var el = document.getElementById('fmap-markers-panel-list');
         if (!el) return;
+        var savedScroll = el.scrollTop;
         _markersPanelData = markers;
         var q = _markersPanelSearch.toLowerCase().trim();
         var filtered = q ? markers.filter(function (m) {
@@ -5086,6 +5099,7 @@
                 '</div>';
         });
         el.innerHTML = html;
+        el.scrollTop = savedScroll;
 
         el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
