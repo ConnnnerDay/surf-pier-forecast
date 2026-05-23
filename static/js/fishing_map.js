@@ -4705,13 +4705,16 @@
             var typeSafe  = esc(h.habitat_type || 'general');
             var latStr    = (h.lat != null) ? String(h.lat) : '';
             var lngStr    = (h.lng != null) ? String(h.lng) : '';
+            var descShort = h.description ? esc(String(h.description).slice(0, 80)) + (h.description.length > 80 ? '…' : '') : '';
+            var titleText = h.description ? nameSafe + '&#10;' + esc(String(h.description).slice(0, 200)) : nameSafe;
             html +=
                 '<div class="fmap-habitat-panel-item">' +
                 '<span class="fmap-habitat-panel-color" style="background:' + colorSafe + '"></span>' +
-                '<span class="fmap-habitat-panel-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
+                '<span class="fmap-habitat-panel-name" title="' + titleText + '">' + nameSafe + '</span>' +
                 '<span class="fmap-habitat-panel-type">' + typeSafe + '</span>' +
                 (latStr ? '<button class="fmap-habitat-panel-view" data-hid="' + esc(h.id) + '" data-lat="' + latStr + '" data-lng="' + lngStr + '" title="Pan to on map" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-habitat-panel-edit" data-hid="' + esc(h.id) + '">Edit</button>' +
+                (descShort ? '<span class="fmap-habitat-panel-desc">' + descShort + '</span>' : '') +
                 '</div>';
         });
         el.innerHTML = html;
