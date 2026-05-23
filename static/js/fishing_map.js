@@ -4315,7 +4315,7 @@
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
-        _showAdminToast('Click to add vertices; Backspace to undo last. Double-click to finish.');
+        _showAdminToast('Click to place vertices · Backspace to undo · Enter or double-click to finish');
     }
 
     function _cancelHabitatDraw() {
@@ -4346,7 +4346,7 @@
         }
 
         var n = _habitatDrawVerts.length;
-        var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · double-click to finish';
+        var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · Enter or double-click to finish';
         _showAdminToast(n + (n === 1 ? ' vertex' : ' vertices') + suffix);
     }
 
@@ -5222,6 +5222,9 @@
                 var hModal = document.getElementById('fmap-habitat-modal');
                 if (hModal && !hModal.hidden) { _closeHabitatModal(); _cancelHabitatDraw(); }
                 else if (_habitatDrawMode) _cancelHabitatDraw();
+            } else if (e.key === 'Enter' && _habitatDrawMode) {
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+                if (_habitatDrawVerts.length >= 3) { e.preventDefault(); _finishHabitatDraw(); }
             } else if ((e.key === 'Backspace' || e.key === 'Delete') && _habitatDrawMode) {
                 // Undo last vertex during polygon draw (don't interfere with text inputs)
                 if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
