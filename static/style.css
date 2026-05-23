@@ -14931,6 +14931,17 @@ body.dark .wq-hdx-item {
   color: var(--text-muted, #6b7280);
   margin-top: 2px;
 }
+.fmap-override-item-edit {
+  background: none;
+  border: 1px solid var(--border, #475569);
+  color: inherit;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.73rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fmap-override-item-edit:hover { background: var(--border, #334155); }
 .fmap-override-item-del {
   background: none;
   border: 1px solid var(--border, #475569);
@@ -14942,6 +14953,17 @@ body.dark .wq-hdx-item {
   flex-shrink: 0;
 }
 .fmap-override-item-del:hover { background: rgba(220,38,38,0.15); }
+.fmap-override-geom-badge {
+  display: inline-block;
+  background: rgba(139,92,246,0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 0.67rem;
+  vertical-align: middle;
+  margin-left: 4px;
+}
 
 /* ── Suppressed spots panel ── */
 .fmap-suppressed-item-pan {

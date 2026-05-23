@@ -80,6 +80,7 @@
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
+    var _overridesPanelData    = []; // cached override list for panel edit buttons
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
     // Point-move state (drag a Point habitat to a new location)
@@ -4585,6 +4586,7 @@
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 _habitatPanelAllData = data.habitats || [];
+                _setTabCount('habitats', _habitatPanelAllData.length);
                 _applyHabitatPanelFilter();
             })
             .catch(function (e) {
@@ -4688,12 +4690,23 @@
         else _loadHabitatPanel();
     }
 
+    function _setTabCount(tabName, count) {
+        var labels = { habitats: 'Habitats', overrides: 'Overrides', suppressed: 'Suppressed' };
+        var btn = document.querySelector('.fmap-panel-tab[data-tab="' + tabName + '"]');
+        if (!btn) return;
+        btn.textContent = labels[tabName] + (count !== null ? ' (' + count + ')' : '');
+    }
+
     function _loadOverridesTab() {
         var el = document.getElementById('fmap-overrides-panel-list');
         if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
         fetch('/api/v1/admin/habitat-overrides')
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-            .then(function (data) { _renderOverridesList(data.overrides || []); })
+            .then(function (data) {
+                var list = data.overrides || [];
+                _setTabCount('overrides', list.length);
+                _renderOverridesList(list);
+            })
             .catch(function () {
                 if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
             });
@@ -4702,6 +4715,7 @@
     function _renderOverridesList(overrides) {
         var el = document.getElementById('fmap-overrides-panel-list');
         if (!el) return;
+        _overridesPanelData = overrides; // cache for edit buttons
         if (!overrides.length) {
             el.innerHTML = '<p class="fmap-habitat-panel-empty">No AI feature overrides yet.<br>' +
                 '<span style="font-size:.75rem;color:var(--text-muted,#6b7280)">Enter admin edit mode and click an AI feature to override its name or colour.</span></p>';
@@ -4712,17 +4726,38 @@
             var displayName = esc(ov.name || ov.feature_key || '—');
             var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
             var colorStyle  = ov.fill_color ? 'background:' + esc(ov.fill_color) + ';width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px' : '';
+            var oid         = esc(String(ov.id));
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
                 (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
-                '<button class="fmap-override-item-del" data-oid="' + esc(String(ov.id)) + '" aria-label="Remove override">Remove</button>' +
+                '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
+                '<button class="fmap-override-item-del" data-oid="' + oid + '" aria-label="Remove override">Remove</button>' +
                 '</div>' +
-                '<div class="fmap-override-item-key">' + keyShort + '</div>' +
+                '<div class="fmap-override-item-key">' + keyShort +
+                (ov.geometry_json ? ' <span class="fmap-override-geom-badge" title="Custom shape stored">reshaped</span>' : '') +
+                '</div>' +
                 '</div>';
         });
         el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-override-item-edit').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var oid = btn.dataset.oid;
+                var ov = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
+                if (!ov) return;
+                var geom = null;
+                if (ov.geometry_json) {
+                    try { geom = JSON.parse(ov.geometry_json); } catch (_e) {}
+                }
+                _openOverrideModal(
+                    ov.feature_key, String(ov.id),
+                    ov.name || '', ov.description || '', ov.fill_color || '',
+                    geom, !!ov.geometry_json
+                );
+            });
+        });
 
         el.querySelectorAll('.fmap-override-item-del').forEach(function (btn) {
             var _confirmFlag = false, _confirmTimer = null;
@@ -4766,7 +4801,11 @@
         if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
         fetch('/api/map/suppress-spot')
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-            .then(function (data) { _renderSuppressedList(data.suppressions || []); })
+            .then(function (data) {
+                var list = data.suppressions || [];
+                _setTabCount('suppressed', list.length);
+                _renderSuppressedList(list);
+            })
             .catch(function () {
                 if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Failed to load.</p>';
             });
@@ -5535,7 +5574,7 @@
         var modal = document.getElementById('fmap-override-modal');
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (!modal) return;
-        document.getElementById('fmap-override-modal-title').textContent = 'Override AI Feature';
+        document.getElementById('fmap-override-modal-title').textContent = overrideId ? 'Edit AI Override' : 'Override AI Feature';
         var nameEl = document.getElementById('fmap-override-name');
         if (nameEl) nameEl.value = currentName || '';
         var descEl = document.getElementById('fmap-override-desc');
