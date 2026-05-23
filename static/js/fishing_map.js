@@ -3846,6 +3846,27 @@
         });
     }
 
+    // Return {lat, lng} centroid for a GeoJSON Point or Polygon; null otherwise.
+    function _centroidOfGeom(geom) {
+        if (!geom) return null;
+        if (geom.type === 'Point' && geom.coordinates) {
+            return { lat: geom.coordinates[1], lng: geom.coordinates[0] };
+        }
+        if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
+            var ring = geom.coordinates[0];
+            var n = ring.length;
+            // Exclude the closing duplicate vertex
+            if (n > 1 &&
+                ring[0][0] === ring[n - 1][0] &&
+                ring[0][1] === ring[n - 1][1]) { n--; }
+            if (n === 0) return null;
+            var sumLng = 0, sumLat = 0;
+            for (var i = 0; i < n; i++) { sumLng += ring[i][0]; sumLat += ring[i][1]; }
+            return { lat: sumLat / n, lng: sumLng / n };
+        }
+        return null;
+    }
+
     // ── Admin spot-suppression helpers ──────────────────────────────────────
 
     // Open a compact popup on an OSM/NOAA/ESRI spot offering "Hide" and
@@ -4794,11 +4815,21 @@
             var keyShort    = esc(String(ov.feature_key || '').slice(0, 40));
             var colorStyle  = ov.fill_color ? 'background:' + esc(ov.fill_color) + ';width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px' : '';
             var oid         = esc(String(ov.id));
+            // Compute centroid for pan-to button when a custom shape is stored
+            var panAttrs = '';
+            if (ov.geometry_json) {
+                try {
+                    var geom = typeof ov.geometry_json === 'string' ? JSON.parse(ov.geometry_json) : ov.geometry_json;
+                    var c = _centroidOfGeom(geom);
+                    if (c) panAttrs = ' data-lat="' + c.lat + '" data-lng="' + c.lng + '"';
+                } catch (_e) {}
+            }
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
                 (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
+                (panAttrs ? '<button class="fmap-override-item-pan" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⦿</button>' : '') +
                 '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
                 '<button class="fmap-override-item-del" data-oid="' + oid + '" aria-label="Remove override">Remove</button>' +
                 '</div>' +
@@ -4808,6 +4839,13 @@
                 '</div>';
         });
         el.innerHTML = html;
+
+        el.querySelectorAll('.fmap-override-item-pan').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
+                if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
+            });
+        });
 
         el.querySelectorAll('.fmap-override-item-edit').forEach(function (btn) {
             btn.addEventListener('click', function () {
