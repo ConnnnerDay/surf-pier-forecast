@@ -5432,7 +5432,7 @@
                 if (panel) panel.hidden = !_habitatPanelOpen;
                 listBtn.classList.toggle('fmap-ctrl-btn--active', _habitatPanelOpen);
                 listBtn.setAttribute('aria-pressed', _habitatPanelOpen ? 'true' : 'false');
-                if (_habitatPanelOpen) _loadHabitatPanel();
+                if (_habitatPanelOpen) _refreshActivePanelTab();
             });
         }
 

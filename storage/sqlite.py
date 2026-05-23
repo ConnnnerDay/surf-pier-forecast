@@ -2089,7 +2089,11 @@ VALID_MARKER_TYPES = frozenset(
         "tidal_flat",
         "saltmarsh",
         "mangrove",
+        "kelp",
         "buoy",
+        "boat_ramp",
+        "dive_site",
+        "seawall",
         "fishing",
         "fishing_shop",
     }
