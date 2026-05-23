@@ -3798,11 +3798,13 @@
             t.setAttribute('role', 'status');
             t.setAttribute('aria-live', 'polite');
             t.setAttribute('aria-atomic', 'true');
-            t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+            t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);' +
                 'z-index:4000;padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;' +
                 'color:#fff;pointer-events:none;transition:opacity .3s;white-space:nowrap';
             document.body.appendChild(t);
         }
+        // Stack above undo toast if it's visible
+        t.style.bottom = document.getElementById('fmap-undo-toast') ? '136px' : '80px';
         t.textContent = msg;
         t.style.background = isError ? '#dc2626' : '#16a34a';
         t.style.opacity = '1';
@@ -3951,8 +3953,23 @@
                     if (nameEl) nameEl.value = spot.name || spotTypeLabel(spot.type);
                     if (typeEl) typeEl.value = spot.type || 'fishing';
                     // Also suppress the original so there's no duplicate
-                    _suppressSpot(spot, spotKey, function (err) {
-                        if (err) _showAdminToast('Could not hide original spot — it may still appear on the map', true);
+                    _suppressSpot(spot, spotKey, function (err, suppressionId) {
+                        if (err) {
+                            _showAdminToast('Could not hide original spot — it may still appear on the map', true);
+                        } else {
+                            _showUndoToast('Original spot hidden', function () {
+                                fetch('/api/map/suppress-spot/' + encodeURIComponent(suppressionId), { method: 'DELETE' })
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function () {
+                                        _showAdminToast('Original spot restored');
+                                        spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
+                                        try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
+                                        scheduleFishingSpotQuery();
+                                        _refreshActivePanelTab();
+                                    })
+                                    .catch(function () { _showAdminToast('Restore failed', true); });
+                            });
+                        }
                     });
                 });
             }
@@ -4861,7 +4878,7 @@
                 '<div class="fmap-override-item-row">' +
                 (colorStyle ? '<span style="' + colorStyle + '"></span>' : '') +
                 '<span class="fmap-override-item-name" title="' + displayName + '">' + displayName + '</span>' +
-                (panAttrs ? '<button class="fmap-override-item-pan" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⦿</button>' : '') +
+                (panAttrs ? '<button class="fmap-override-item-pan" aria-label="Pan to ' + displayName + '"' + panAttrs + '>⌖</button>' : '') +
                 '<button class="fmap-override-item-edit" data-oid="' + oid + '" aria-label="Edit override for ' + displayName + '">Edit</button>' +
                 '<button class="fmap-override-item-del" data-oid="' + oid + '" aria-label="Remove override">Remove</button>' +
                 '</div>' +
@@ -4988,7 +5005,7 @@
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
                 '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
-                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⦿</button>' : '') +
+                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-suppressed-item-unhide" data-sid="' + sid + '" aria-label="Un-hide ' + nameSafe + '">Unhide</button>' +
                 '</div>' +
                 (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
