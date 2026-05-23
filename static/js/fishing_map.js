@@ -3890,7 +3890,9 @@
                     if (nameEl) nameEl.value = spot.name || spotTypeLabel(spot.type);
                     if (typeEl) typeEl.value = spot.type || 'fishing';
                     // Also suppress the original so there's no duplicate
-                    _suppressSpot(spot, spotKey, function () {});
+                    _suppressSpot(spot, spotKey, function (err) {
+                        if (err) _showAdminToast('Could not hide original spot — it may still appear on the map', true);
+                    });
                 });
             }
         });
@@ -3984,9 +3986,15 @@
             saveBtn.addEventListener('click', function () {
                 var markerId  = saveBtn.dataset.markerId;
                 var statusEl  = document.getElementById('fmap-admin-status');
+                var lat = parseFloat(document.getElementById('fmap-admin-lat').value);
+                var lng = parseFloat(document.getElementById('fmap-admin-lng').value);
+                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Invalid coordinates'; }
+                    return;
+                }
                 var payload   = {
-                    lat:         parseFloat(document.getElementById('fmap-admin-lat').value),
-                    lng:         parseFloat(document.getElementById('fmap-admin-lng').value),
+                    lat:         lat,
+                    lng:         lng,
                     name:        document.getElementById('fmap-admin-name').value.trim(),
                     type:        document.getElementById('fmap-admin-type').value,
                     description: document.getElementById('fmap-admin-desc').value.trim(),
@@ -4102,6 +4110,29 @@
 
         var backdrop = document.getElementById('fmap-admin-backdrop');
         if (backdrop) backdrop.addEventListener('click', _closeAdminModal);
+
+        // ── Live preview pin while editing coordinates manually ────────────────
+        var latInput = document.getElementById('fmap-admin-lat');
+        var lngInput = document.getElementById('fmap-admin-lng');
+        function _updatePreviewPinFromInputs() {
+            var lat = parseFloat(latInput.value);
+            var lng = parseFloat(lngInput.value);
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+            if (_adminPreviewPin) {
+                _adminPreviewPin.setLatLng([lat, lng]);
+            } else {
+                _adminPreviewPin = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'fmap-spot-wrap',
+                        html: '<span class="fmap-preview-pin">📍</span>',
+                        iconSize: [26, 26], iconAnchor: [13, 26],
+                    }),
+                    interactive: false,
+                }).addTo(map);
+            }
+        }
+        if (latInput) latInput.addEventListener('input', _updatePreviewPinFromInputs);
+        if (lngInput) lngInput.addEventListener('input', _updatePreviewPinFromInputs);
     }
 
     // ─── Admin habitat drawing / editing ─────────────────────────────────────
@@ -4122,7 +4153,11 @@
         var backdrop = document.getElementById('fmap-habitat-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
+        if (_pendingHabitatGeom && !_habitatEditData) {
+            _showAdminToast('Drawn shape discarded — save next time to keep it.');
+        }
         _pendingHabitatGeom = null;
+        _habitatEditData    = null;
     }
 
     function _openHabitatEditModal(habitatData) {
@@ -4734,7 +4769,7 @@
         el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng)) _map.setView([lat, lng], Math.max(_map.getZoom(), 16));
+                if (!isNaN(lat) && !isNaN(lng) && map) map.setView([lat, lng], Math.max(map.getZoom(), 16));
             });
         });
 
