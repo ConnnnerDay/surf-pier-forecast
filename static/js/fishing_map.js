@@ -5439,10 +5439,19 @@
         var overrideSaveBtn = document.getElementById('fmap-override-save');
         if (overrideSaveBtn) {
             overrideSaveBtn.addEventListener('click', function () {
-                var featureKey = (document.getElementById('fmap-override-feature-key') || {}).value || '';
+                var featureKey  = (document.getElementById('fmap-override-feature-key') || {}).value || '';
+                var overrideId  = (document.getElementById('fmap-override-id') || {}).value || '';
                 if (!featureKey) return;
                 var statusEl = document.getElementById('fmap-override-status');
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
+                // Snapshot previous state for undo (only when editing an existing override)
+                var _prevOvData = (overrideId && _overrideEditData) ? {
+                    feature_key: _overrideEditData.featureKey,
+                    name:        _overrideEditData.name || null,
+                    description: _overrideEditData.desc || null,
+                    fill_color:  _overrideEditData.color || null,
+                    geometry:    _overrideEditData.geometryIsOverride ? _overrideEditData.geometry : null,
+                } : null;
                 overrideSaveBtn.disabled = true;
                 overrideSaveBtn.textContent = 'Saving…';
                 // Only include geometry if the admin explicitly reshaped it or there was
@@ -5467,9 +5476,33 @@
                     _closeOverrideModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                    _showAdminToast('Override saved');
                     scheduleAIQuery();
                     _refreshActivePanelTab();
+                    if (_prevOvData) {
+                        _showUndoToast('Override saved', function () {
+                            fetch('/api/v1/admin/habitat-overrides', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    feature_key:   _prevOvData.feature_key,
+                                    name:          _prevOvData.name,
+                                    description:   _prevOvData.description,
+                                    fill_color:    _prevOvData.fill_color,
+                                    geometry_json: _prevOvData.geometry,
+                                }),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                _showAdminToast('Override reverted');
+                                scheduleAIQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Revert failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Override saved');
+                    }
                 })
                 .catch(function (e) {
                     overrideSaveBtn.disabled = false;
