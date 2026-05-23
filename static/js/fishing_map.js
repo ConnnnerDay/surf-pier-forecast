@@ -5239,8 +5239,13 @@
             });
         }
 
-        // Escape closes habitat modal; Backspace/Delete undoes last draw vertex
+        // Escape closes habitat modal; Tab trapped within; Backspace/Delete undoes last draw vertex
+        var _habitatModalEl = document.getElementById('fmap-habitat-modal');
         document.addEventListener('keydown', function (e) {
+            if (_habitatModalEl && !_habitatModalEl.hidden) {
+                if (e.key === 'Escape') { _closeHabitatModal(); _cancelHabitatDraw(); return; }
+                if (e.key === 'Tab') { _trapFocusOnTab(_habitatModalEl, e); return; }
+            }
             if (e.key === 'Escape') {
                 var hModal = document.getElementById('fmap-habitat-modal');
                 if (hModal && !hModal.hidden) { _closeHabitatModal(); _cancelHabitatDraw(); }
@@ -5405,11 +5410,12 @@
         var overrideCloseBtn = document.getElementById('fmap-override-modal-close');
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
 
-        // ESC closes the override modal; Enter in name field saves
+        // ESC closes the override modal; Tab trapped within; Enter in name field saves
         var _overrideModalEl = document.getElementById('fmap-override-modal');
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && _overrideModalEl && !_overrideModalEl.hidden) {
-                _closeOverrideModal();
+            if (_overrideModalEl && !_overrideModalEl.hidden) {
+                if (e.key === 'Escape') { _closeOverrideModal(); return; }
+                if (e.key === 'Tab') { _trapFocusOnTab(_overrideModalEl, e); return; }
             }
         });
         var overrideNameInput = document.getElementById('fmap-override-name');
