@@ -76,6 +76,7 @@
     var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
     // Management panel state
     var _habitatPanelOpen      = false;
+    var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
     // Point-move state (drag a Point habitat to a new location)
@@ -3917,6 +3918,7 @@
             spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
             try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
             scheduleFishingSpotQuery();
+            _refreshActivePanelTab();
             cb(null);
         })
         .catch(function (err) {
@@ -4655,6 +4657,14 @@
 
     // ─── Overrides tab ────────────────────────────────────────────────────────
 
+    // Refresh whichever panel tab is currently visible (if the panel is open).
+    function _refreshActivePanelTab() {
+        if (!_habitatPanelOpen) return;
+        if (_habitatPanelActiveTab === 'overrides')  _loadOverridesTab();
+        else if (_habitatPanelActiveTab === 'suppressed') _loadSuppressedTab();
+        else _loadHabitatPanel();
+    }
+
     function _loadOverridesTab() {
         var el = document.getElementById('fmap-overrides-panel-list');
         if (el) el.innerHTML = '<p class="fmap-habitat-panel-empty">Loading…</p>';
@@ -4831,9 +4841,25 @@
         el.innerHTML = html;
 
         el.querySelectorAll('.fmap-habitat-type-del').forEach(function (btn) {
+            var _confirm = false, _timer = null;
             btn.addEventListener('click', function () {
                 var tid = btn.dataset.tid;
                 if (!tid) return;
+                if (!_confirm) {
+                    _confirm = true;
+                    btn.textContent = '?';
+                    btn.title = 'Click again to confirm';
+                    _timer = setTimeout(function () {
+                        _confirm = false;
+                        btn.textContent = '✕';
+                        btn.title = 'Remove type ' + (btn.getAttribute('aria-label') || '').replace('Remove type ', '');
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(_timer);
+                _confirm = false;
+                btn.textContent = '✕';
+                btn.disabled = true;
                 fetch('/api/v1/admin/habitat-types/' + encodeURIComponent(tid), { method: 'DELETE' })
                     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                     .then(function () {
@@ -4841,6 +4867,7 @@
                         _loadHabitatPanel();
                     })
                     .catch(function (e) {
+                        btn.disabled = false;
                         _showAdminToast('Delete failed', true);
                         console.error('[admin] delete type failed:', e);
                     });
@@ -5065,6 +5092,7 @@
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
                     _showAdminToast('Override saved');
                     scheduleAIQuery();
+                    _refreshActivePanelTab();
                 })
                 .catch(function (e) {
                     overrideSaveBtn.disabled = false;
@@ -5106,6 +5134,7 @@
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
                     _showAdminToast('Override removed');
                     scheduleAIQuery();
+                    _refreshActivePanelTab();
                 })
                 .catch(function (e) {
                     overrideDelBtn.disabled = false;
@@ -5153,6 +5182,7 @@
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
                     _showAdminToast('Shape override cleared — AI geometry restored');
                     scheduleAIQuery();
+                    _refreshActivePanelTab();
                 })
                 .catch(function (e) {
                     overrideClearShapeBtn.disabled = false;
@@ -5355,6 +5385,7 @@
         document.querySelectorAll('.fmap-panel-tab').forEach(function (tabBtn) {
             tabBtn.addEventListener('click', function () {
                 var tabName = tabBtn.dataset.tab;
+                _habitatPanelActiveTab = tabName;
                 document.querySelectorAll('.fmap-panel-tab').forEach(function (b) {
                     b.classList.toggle('fmap-panel-tab--active', b === tabBtn);
                     b.setAttribute('aria-selected', b === tabBtn ? 'true' : 'false');
