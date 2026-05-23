@@ -4257,8 +4257,9 @@
 
     function _startHabitatDraw() {
         if (!map) return;
-        // Abandon any in-progress vertex edit so handles are cleaned up
+        // Abandon any in-progress vertex/point edit so handles are cleaned up
         if (_habitatVertexEditMode) _cancelHabitatVertexEdit();
+        if (_habitatPointMoveMode) _cancelHabitatPointMove();
         _habitatDrawMode = true;
         _clearHabitatDraw();
         map.getContainer().style.cursor = 'crosshair';
@@ -5184,6 +5185,14 @@
 
         var overrideCloseBtn = document.getElementById('fmap-override-modal-close');
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
+
+        // ESC closes the override modal
+        var _overrideModalEl = document.getElementById('fmap-override-modal');
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && _overrideModalEl && !_overrideModalEl.hidden) {
+                _closeOverrideModal();
+            }
+        });
 
         var overrideClearShapeBtn = document.getElementById('fmap-override-clear-shape');
         if (overrideClearShapeBtn) {
