@@ -3234,6 +3234,10 @@ def admin_habitat_create_or_update() -> Any:
     name = str(data.get("name", ""))[:200]
     description = str(data.get("description", ""))[:1000]
     fill_color = str(data.get("fill_color", ""))[:20]
+    raw_fo = data.get("fill_opacity")
+    fill_opacity = max(0.0, min(1.0, float(raw_fo))) if raw_fo is not None else 0.35
+    raw_sw = data.get("stroke_weight")
+    stroke_weight = max(0.5, min(10.0, float(raw_sw))) if raw_sw is not None else 2.5
 
     geometry = data.get("geometry")
     if not isinstance(geometry, dict) or geometry.get("type") not in (
@@ -3281,6 +3285,8 @@ def admin_habitat_create_or_update() -> Any:
             name=name,
             description=description,
             fill_color=fill_color,
+            fill_opacity=fill_opacity,
+            stroke_weight=stroke_weight,
             geometry=geometry,
             lat=lat,
             lng=lng,
@@ -3297,6 +3303,8 @@ def admin_habitat_create_or_update() -> Any:
             lat,
             lng,
             g.user["id"],
+            fill_opacity=fill_opacity,
+            stroke_weight=stroke_weight,
         )
         return jsonify(created), 201
 
@@ -3397,6 +3405,12 @@ def admin_habitat_override_upsert() -> Any:
         str(data.get("description") or "").strip()[:1000] if "description" in data else None
     )
     fill_color = str(data.get("fill_color") or "").strip()[:20] if "fill_color" in data else None
+    fill_opacity: Optional[float] = None
+    if "fill_opacity" in data and data.get("fill_opacity") is not None:
+        fill_opacity = max(0.0, min(1.0, float(data["fill_opacity"])))
+    stroke_weight: Optional[float] = None
+    if "stroke_weight" in data and data.get("stroke_weight") is not None:
+        stroke_weight = max(0.5, min(10.0, float(data["stroke_weight"])))
 
     # geometry_json: None means "key absent — don't touch stored value"
     #                "" / null in body means "explicitly clear stored geometry"
@@ -3428,7 +3442,8 @@ def admin_habitat_override_upsert() -> Any:
 
     row = upsert_habitat_override(
         feature_key, name, description, fill_color, g.user["id"],
-        geometry, geometry_clear=geometry_clear
+        geometry, geometry_clear=geometry_clear,
+        fill_opacity=fill_opacity, stroke_weight=stroke_weight,
     )
     return jsonify(row), 200
 
@@ -3756,6 +3771,10 @@ def map_habitats_v1() -> Any:
                     f["override_description"] = ov["description"]
                 if ov.get("fill_color"):
                     f["override_fill_color"] = ov["fill_color"]
+                if ov.get("fill_opacity") is not None:
+                    f["override_fill_opacity"] = ov["fill_opacity"]
+                if ov.get("stroke_weight") is not None:
+                    f["override_stroke_weight"] = ov["stroke_weight"]
                 if ov.get("geometry_json"):
                     f["override_geometry_json"] = ov["geometry_json"]
                 f["override_id"] = ov["id"]
@@ -3777,6 +3796,8 @@ def map_habitats_v1() -> Any:
                 "osm_type": h["habitat_type"],
                 "habitat_type": h["habitat_type"],
                 "fill_color": h.get("fill_color") or "",
+                "fill_opacity": h.get("fill_opacity"),
+                "stroke_weight": h.get("stroke_weight"),
                 "score": 0,
                 "geojson_geometry": geom,  # preserved for client-side vertex editing
             }

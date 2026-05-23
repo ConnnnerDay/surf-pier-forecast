@@ -15045,3 +15045,29 @@ body.dark .wq-hdx-item {
   border-color: rgba(250,204,21,0.5);
   color: #fde047;
 }
+
+.fmap-admin-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+.fmap-admin-slider-label {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  white-space: nowrap;
+  min-width: 82px;
+}
+.fmap-admin-slider {
+  flex: 1;
+  accent-color: var(--primary, #6366f1);
+  cursor: pointer;
+  min-width: 0;
+}
+.fmap-admin-slider-val {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

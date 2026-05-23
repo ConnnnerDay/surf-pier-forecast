@@ -735,15 +735,17 @@
                          (maxLng - minLng) > _viewLngSpan * 0.6;
 
             var isClosed  = closed && !isHuge;
+            var _aiFillOp  = (f.override_fill_opacity  != null) ? parseFloat(f.override_fill_opacity)  : 0.25;
+            var _aiWeight  = (f.override_stroke_weight != null) ? parseFloat(f.override_stroke_weight) : (isClosed ? 2 : 3);
             var aiPolyCls = 'fmap-habitat-poly fmap-habitat-poly--' + osmType;
             var poly    = isClosed
                 ? L.polygon(geom, {
-                    color: color, weight: 2, opacity: 0.85,
-                    fillColor: color, fillOpacity: 0.25,
+                    color: color, weight: _aiWeight, opacity: 0.85,
+                    fillColor: color, fillOpacity: _aiFillOp,
                     className: aiPolyCls
                   })
                 : L.polyline(geom, {
-                    color: color, weight: 3, opacity: 0.85,
+                    color: color, weight: _aiWeight, opacity: 0.85,
                     dashArray: '10, 6',
                     className: aiPolyCls
                   });
@@ -777,7 +779,10 @@
                             rawFeature.override_description || rawFeature.description || '',
                             rawFeature.override_fill_color || '',
                             currentGeom,
-                            geomIsOverride
+                            geomIsOverride,
+                            null, null,
+                            rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : null,
+                            rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : null
                         );
                     } else if (typeof window._fmapShowSpotDetail === 'function') {
                         _activeSpotMarker = null;
@@ -867,7 +872,11 @@
                             rawFeature.override_id ? String(rawFeature.override_id) : '',
                             rawFeature.override_name || rawFeature.name || '',
                             rawFeature.override_description || rawFeature.description || '',
-                            rawFeature.override_fill_color || ''
+                            rawFeature.override_fill_color || '',
+                            null, false,
+                            null, null,
+                            rawFeature.override_fill_opacity != null ? rawFeature.override_fill_opacity : null,
+                            rawFeature.override_stroke_weight != null ? rawFeature.override_stroke_weight : null
                         );
                     }
                 });
@@ -900,13 +909,15 @@
                 '<br><span class="fmap-tooltip-sub fmap-custom-habitat-badge">Custom</span>' +
                 (adminEditMode ? '<br><em class="fmap-tooltip-sub">click to edit</em>' : '');
 
+            var _cFillOp  = (f.fill_opacity  != null) ? parseFloat(f.fill_opacity)  : 0.35;
+            var _cStrokeW = (f.stroke_weight != null) ? parseFloat(f.stroke_weight) : 2.5;
             var lyr;
             if (f.geometry && f.geometry.type === 'Polygon' && f.geometry.coordinates) {
                 // Polygon — convert GeoJSON [lng,lat] ring to Leaflet [lat,lng]
                 var ring = f.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
                 lyr = L.polygon(ring, {
-                    color: color, weight: 2.5, opacity: 1,
-                    fillColor: color, fillOpacity: 0.35,
+                    color: color, weight: _cStrokeW, opacity: 1,
+                    fillColor: color, fillOpacity: _cFillOp,
                     dashArray: adminEditMode ? '6,4' : null,
                     className: 'fmap-custom-habitat-poly'
                 });
@@ -914,8 +925,8 @@
             } else {
                 // Point marker
                 lyr = L.circleMarker([f.lat, f.lng], {
-                    radius: 9, color: color, weight: 2.5,
-                    fillColor: color, fillOpacity: 0.6,
+                    radius: 9, color: color, weight: _cStrokeW,
+                    fillColor: color, fillOpacity: _cFillOp,
                     className: 'fmap-custom-habitat-pt'
                 });
             }
@@ -4402,6 +4413,18 @@
             }
         }
         document.getElementById('fmap-habitat-color').value = habitatData.fill_color || '#22c55e';
+        var _hFoEl = document.getElementById('fmap-habitat-fill-opacity');
+        if (_hFoEl) {
+            _hFoEl.value = (habitatData.fill_opacity != null) ? habitatData.fill_opacity : 0.35;
+            var _hFoOut = document.getElementById('fmap-habitat-fill-opacity-val');
+            if (_hFoOut) _hFoOut.value = parseFloat(_hFoEl.value);
+        }
+        var _hSwEl = document.getElementById('fmap-habitat-stroke-weight');
+        if (_hSwEl) {
+            _hSwEl.value = (habitatData.stroke_weight != null) ? habitatData.stroke_weight : 2.5;
+            var _hSwOut = document.getElementById('fmap-habitat-stroke-weight-val');
+            if (_hSwOut) _hSwOut.value = parseFloat(_hSwEl.value);
+        }
         document.getElementById('fmap-habitat-desc').value  = habitatData.description || '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = habitatData.id;
@@ -4451,6 +4474,10 @@
         document.getElementById('fmap-habitat-name').value  = '';
         document.getElementById('fmap-habitat-type').value  = _addType;
         document.getElementById('fmap-habitat-color').value = _addColor;
+        var _aFoEl = document.getElementById('fmap-habitat-fill-opacity');
+        if (_aFoEl) { _aFoEl.value = 0.35; var _aFoOut = document.getElementById('fmap-habitat-fill-opacity-val'); if (_aFoOut) _aFoOut.value = 0.35; }
+        var _aSwEl = document.getElementById('fmap-habitat-stroke-weight');
+        if (_aSwEl) { _aSwEl.value = 2.5; var _aSwOut = document.getElementById('fmap-habitat-stroke-weight-val'); if (_aSwOut) _aSwOut.value = 2.5; }
         document.getElementById('fmap-habitat-desc').value  = '';
         var saveBtn = document.getElementById('fmap-habitat-save');
         if (saveBtn) saveBtn.dataset.habitatId = '';
@@ -4750,7 +4777,10 @@
                 savedOverride.desc,
                 savedOverride.color,
                 newGeojson,
-                true  // geomIsOverride: user explicitly set this shape
+                true,  // geomIsOverride: user explicitly set this shape
+                null, null,
+                savedOverride.fill_opacity,
+                savedOverride.stroke_weight
             );
         } else {
             // Custom habitat reshape — set pending geometry for habitat save
@@ -5079,7 +5109,8 @@
                     ov.feature_key, String(ov.id),
                     ov.name || '', ov.description || '', ov.fill_color || '',
                     geom, !!ov.geometry_json,
-                    ov.created_at, ov.updated_at
+                    ov.created_at, ov.updated_at,
+                    ov.fill_opacity, ov.stroke_weight
                 );
             });
         });
@@ -5104,7 +5135,7 @@
                                 try { if (_undoOv.geometry_json) geomForUndo = JSON.parse(_undoOv.geometry_json); } catch (_e) {}
                                 fetch('/api/v1/admin/habitat-overrides', {
                                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ feature_key: _undoOv.feature_key, name: _undoOv.name || null, description: _undoOv.description || null, fill_color: _undoOv.fill_color || null, geometry_json: geomForUndo }),
+                                    body: JSON.stringify({ feature_key: _undoOv.feature_key, name: _undoOv.name || null, description: _undoOv.description || null, fill_color: _undoOv.fill_color || null, fill_opacity: _undoOv.fill_opacity, stroke_weight: _undoOv.stroke_weight, geometry_json: geomForUndo }),
                                 })
                                 .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
                                 .then(function () {
@@ -5490,11 +5521,13 @@
                     return;
                 }
                 var payload = {
-                    habitat_type: document.getElementById('fmap-habitat-type').value,
-                    name:         document.getElementById('fmap-habitat-name').value.trim(),
-                    description:  document.getElementById('fmap-habitat-desc').value.trim(),
-                    fill_color:   document.getElementById('fmap-habitat-color').value,
-                    geometry:     _pendingHabitatGeom,
+                    habitat_type:  document.getElementById('fmap-habitat-type').value,
+                    name:          document.getElementById('fmap-habitat-name').value.trim(),
+                    description:   document.getElementById('fmap-habitat-desc').value.trim(),
+                    fill_color:    document.getElementById('fmap-habitat-color').value,
+                    fill_opacity:  parseFloat((document.getElementById('fmap-habitat-fill-opacity') || {}).value || 0.35),
+                    stroke_weight: parseFloat((document.getElementById('fmap-habitat-stroke-weight') || {}).value || 2.5),
+                    geometry:      _pendingHabitatGeom,
                 };
                 // Remember type + color for successive "Add Habitat" draws
                 if (!habitatId) {
@@ -5503,11 +5536,13 @@
                 }
                 // Snapshot previous state for undo when editing an existing habitat
                 var _prevHabData = (habitatId && _habitatEditData) ? {
-                    habitat_type: _habitatEditData.habitat_type || _habitatEditData.osm_type || 'general',
-                    name:         _habitatEditData.name || '',
-                    description:  _habitatEditData.description || '',
-                    fill_color:   _habitatEditData.fill_color || '',
-                    geometry:     _habitatEditData.geojson_geometry || _habitatEditData.geometry || null,
+                    habitat_type:  _habitatEditData.habitat_type || _habitatEditData.osm_type || 'general',
+                    name:          _habitatEditData.name || '',
+                    description:   _habitatEditData.description || '',
+                    fill_color:    _habitatEditData.fill_color || '',
+                    fill_opacity:  _habitatEditData.fill_opacity != null ? _habitatEditData.fill_opacity : 0.35,
+                    stroke_weight: _habitatEditData.stroke_weight != null ? _habitatEditData.stroke_weight : 2.5,
+                    geometry:      _habitatEditData.geojson_geometry || _habitatEditData.geometry || null,
                 } : null;
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 saveBtn.disabled = true;
@@ -5661,11 +5696,13 @@
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 // Snapshot previous state for undo (only when editing an existing override)
                 var _prevOvData = (overrideId && _overrideEditData) ? {
-                    feature_key: _overrideEditData.featureKey,
-                    name:        _overrideEditData.name || null,
-                    description: _overrideEditData.desc || null,
-                    fill_color:  _overrideEditData.color || null,
-                    geometry:    _overrideEditData.geometryIsOverride ? _overrideEditData.geometry : null,
+                    feature_key:   _overrideEditData.featureKey,
+                    name:          _overrideEditData.name || null,
+                    description:   _overrideEditData.desc || null,
+                    fill_color:    _overrideEditData.color || null,
+                    fill_opacity:  _overrideEditData.fill_opacity,
+                    stroke_weight: _overrideEditData.stroke_weight,
+                    geometry:      _overrideEditData.geometryIsOverride ? _overrideEditData.geometry : null,
                 } : null;
                 overrideSaveBtn.disabled = true;
                 overrideSaveBtn.textContent = 'Saving…';
@@ -5678,6 +5715,8 @@
                     name:          (document.getElementById('fmap-override-name') || {}).value || null,
                     description:   (document.getElementById('fmap-override-desc') || {}).value || null,
                     fill_color:    (document.getElementById('fmap-override-color') || {}).value || null,
+                    fill_opacity:  parseFloat((document.getElementById('fmap-override-fill-opacity') || {}).value || 0.25),
+                    stroke_weight: parseFloat((document.getElementById('fmap-override-stroke-weight') || {}).value || 2),
                     geometry_json: sendGeom || null,
                 };
                 fetch('/api/v1/admin/habitat-overrides', {
@@ -5702,6 +5741,8 @@
                                     name:          _prevOvData.name,
                                     description:   _prevOvData.description,
                                     fill_color:    _prevOvData.fill_color,
+                                    fill_opacity:  _prevOvData.fill_opacity,
+                                    stroke_weight: _prevOvData.stroke_weight,
                                     geometry_json: _prevOvData.geometry,
                                 }),
                             })
@@ -5735,11 +5776,13 @@
                 overrideDelBtn.disabled = true;
                 // Snapshot for undo before the request
                 var _undoOvData = _overrideEditData ? {
-                    feature_key: _overrideEditData.featureKey,
-                    name:        _overrideEditData.name,
-                    description: _overrideEditData.desc,
-                    fill_color:  _overrideEditData.color,
-                    geometry:    _overrideEditData.geometry,
+                    feature_key:   _overrideEditData.featureKey,
+                    name:          _overrideEditData.name,
+                    description:   _overrideEditData.desc,
+                    fill_color:    _overrideEditData.color,
+                    fill_opacity:  _overrideEditData.fill_opacity,
+                    stroke_weight: _overrideEditData.stroke_weight,
+                    geometry:      _overrideEditData.geometry,
                     geomIsOverride: _overrideEditData.geometryIsOverride
                 } : null;
                 fetch('/api/v1/admin/habitat-overrides/' + encodeURIComponent(overrideId), { method: 'DELETE' })
@@ -5760,6 +5803,8 @@
                                     name:          _undoOvData.name || null,
                                     description:   _undoOvData.description || null,
                                     fill_color:    _undoOvData.fill_color || null,
+                                    fill_opacity:  _undoOvData.fill_opacity,
+                                    stroke_weight: _undoOvData.stroke_weight,
                                     geometry_json: _undoOvData.geomIsOverride ? _undoOvData.geometry : null,
                                 }),
                             })
@@ -5866,6 +5911,22 @@
         var overrideBackdrop = document.getElementById('fmap-override-backdrop');
         if (overrideBackdrop) overrideBackdrop.addEventListener('click', _closeOverrideModal);
 
+        // ── Override fill-opacity / stroke-weight sliders ─────────────────────
+        var _ovFoSlider = document.getElementById('fmap-override-fill-opacity');
+        if (_ovFoSlider) {
+            _ovFoSlider.addEventListener('input', function () {
+                var _ovFoOut2 = document.getElementById('fmap-override-fill-opacity-val');
+                if (_ovFoOut2) _ovFoOut2.value = parseFloat(_ovFoSlider.value);
+            });
+        }
+        var _ovSwSlider = document.getElementById('fmap-override-stroke-weight');
+        if (_ovSwSlider) {
+            _ovSwSlider.addEventListener('input', function () {
+                var _ovSwOut2 = document.getElementById('fmap-override-stroke-weight-val');
+                if (_ovSwOut2) _ovSwOut2.value = parseFloat(_ovSwSlider.value);
+            });
+        }
+
         // ── Reshape button (in habitat edit modal) ────────────────────────────
         var reshapeBtn = document.getElementById('fmap-habitat-reshape');
         if (reshapeBtn) {
@@ -5926,7 +5987,9 @@
                         // Restore override modal with original (pre-reshape) geometry
                         _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
                             savedOv.name, savedOv.desc, savedOv.color,
-                            savedOv.geometry, savedOv.geometryIsOverride);
+                            savedOv.geometry, savedOv.geometryIsOverride,
+                            null, null,
+                            savedOv.fill_opacity, savedOv.stroke_weight);
                     } else if (_habitatEditData) {
                         _openHabitatEditModal(_habitatEditData);
                     }
@@ -5946,7 +6009,9 @@
                     if (savedOv) {
                         _openOverrideModal(savedOv.featureKey, savedOv.overrideId,
                             savedOv.name, savedOv.desc, savedOv.color,
-                            savedOv.geometry, savedOv.geometryIsOverride);
+                            savedOv.geometry, savedOv.geometryIsOverride,
+                            null, null,
+                            savedOv.fill_opacity, savedOv.stroke_weight);
                     } else if (_habitatEditData) {
                         _openHabitatEditModal(_habitatEditData);
                     }
@@ -6071,6 +6136,24 @@
             });
         }
 
+        // ── Override fill-opacity slider ──────────────────────────────────────
+        var _ovFoSlider = document.getElementById('fmap-override-fill-opacity');
+        if (_ovFoSlider) {
+            _ovFoSlider.addEventListener('input', function () {
+                var _ovFoOut = document.getElementById('fmap-override-fill-opacity-val');
+                if (_ovFoOut) _ovFoOut.value = parseFloat(_ovFoSlider.value);
+            });
+        }
+
+        // ── Override stroke-weight slider ─────────────────────────────────────
+        var _ovSwSlider = document.getElementById('fmap-override-stroke-weight');
+        if (_ovSwSlider) {
+            _ovSwSlider.addEventListener('input', function () {
+                var _ovSwOut = document.getElementById('fmap-override-stroke-weight-val');
+                if (_ovSwOut) _ovSwOut.value = parseFloat(_ovSwSlider.value);
+            });
+        }
+
         // ── Live color preview: update the map polygon as the admin picks a color ─
         var habitatColorEl = document.getElementById('fmap-habitat-color');
         if (habitatColorEl) {
@@ -6090,6 +6173,40 @@
                     _customHabitats.forEach(function (h) {
                         if (h.id !== hid || !h.leaflet) return;
                         h.leaflet.setStyle({ fillColor: c, color: c });
+                    });
+                }
+            });
+        }
+
+        // ── Habitat fill-opacity slider ───────────────────────────────────────
+        var _foSlider = document.getElementById('fmap-habitat-fill-opacity');
+        if (_foSlider) {
+            _foSlider.addEventListener('input', function () {
+                var _foOut = document.getElementById('fmap-habitat-fill-opacity-val');
+                if (_foOut) _foOut.value = parseFloat(_foSlider.value);
+                // Live-preview: update the map layer if editing an existing habitat
+                if (_habitatEditData) {
+                    var _hid = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== _hid || !h.leaflet) return;
+                        h.leaflet.setStyle({ fillOpacity: parseFloat(_foSlider.value) });
+                    });
+                }
+            });
+        }
+
+        // ── Habitat stroke-weight slider ──────────────────────────────────────
+        var _swSlider = document.getElementById('fmap-habitat-stroke-weight');
+        if (_swSlider) {
+            _swSlider.addEventListener('input', function () {
+                var _swOut = document.getElementById('fmap-habitat-stroke-weight-val');
+                if (_swOut) _swOut.value = parseFloat(_swSlider.value);
+                // Live-preview: update the map layer if editing an existing habitat
+                if (_habitatEditData) {
+                    var _hid2 = _habitatEditData.id;
+                    _customHabitats.forEach(function (h) {
+                        if (h.id !== _hid2 || !h.leaflet) return;
+                        h.leaflet.setStyle({ weight: parseFloat(_swSlider.value) });
                     });
                 }
             });
@@ -6359,7 +6476,7 @@
         }
     }
 
-    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom, geomIsOverride, createdAt, updatedAt) {
+    function _openOverrideModal(featureKey, overrideId, currentName, currentDesc, currentColor, currentGeom, geomIsOverride, createdAt, updatedAt, fillOpacity, strokeWeight) {
         var modal = document.getElementById('fmap-override-modal');
         var backdrop = document.getElementById('fmap-override-backdrop');
         if (!modal) return;
@@ -6391,6 +6508,18 @@
                 auditEl.hidden = true;
             }
         }
+        var _ovFoEl = document.getElementById('fmap-override-fill-opacity');
+        if (_ovFoEl) {
+            _ovFoEl.value = (fillOpacity != null) ? fillOpacity : 0.25;
+            var _ovFoOut = document.getElementById('fmap-override-fill-opacity-val');
+            if (_ovFoOut) _ovFoOut.value = parseFloat(_ovFoEl.value);
+        }
+        var _ovSwEl = document.getElementById('fmap-override-stroke-weight');
+        if (_ovSwEl) {
+            _ovSwEl.value = (strokeWeight != null) ? strokeWeight : 2;
+            var _ovSwOut = document.getElementById('fmap-override-stroke-weight-val');
+            if (_ovSwOut) _ovSwOut.value = parseFloat(_ovSwEl.value);
+        }
         // Store context for reshape; geomIsOverride tracks whether geometry should be saved
         _overrideEditData = {
             featureKey:       featureKey,
@@ -6398,6 +6527,8 @@
             name:             currentName || '',
             desc:             currentDesc || '',
             color:            currentColor || '#22c55e',
+            fill_opacity:     fillOpacity != null ? fillOpacity : null,
+            stroke_weight:    strokeWeight != null ? strokeWeight : null,
             geometry:         currentGeom || null,
             geometryIsOverride: !!geomIsOverride
         };

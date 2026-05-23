@@ -237,6 +237,8 @@ CREATE TABLE IF NOT EXISTS custom_habitats (
     name          TEXT    NOT NULL DEFAULT '',
     description   TEXT    NOT NULL DEFAULT '',
     fill_color    TEXT    NOT NULL DEFAULT '',
+    fill_opacity  REAL    NOT NULL DEFAULT 0.35,
+    stroke_weight REAL    NOT NULL DEFAULT 2.5,
     geometry_json TEXT    NOT NULL DEFAULT '{}',
     lat           REAL,
     lng           REAL,
@@ -253,7 +255,9 @@ CREATE TABLE IF NOT EXISTS habitat_overrides (
     feature_key TEXT    NOT NULL UNIQUE,
     name        TEXT,
     description TEXT,
-    fill_color  TEXT,
+    fill_color    TEXT,
+    fill_opacity  REAL,
+    stroke_weight REAL,
     created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
     is_deleted  INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
@@ -487,6 +491,20 @@ def _run_migrations(conn: sqlite3.Connection) -> None:
     override_cols = set(_column_names(conn, "habitat_overrides"))
     if "geometry_json" not in override_cols:
         conn.execute("ALTER TABLE habitat_overrides ADD COLUMN geometry_json TEXT")
+
+    custom_habitat_cols = set(_column_names(conn, "custom_habitats"))
+    if "fill_opacity" not in custom_habitat_cols:
+        conn.execute(
+            "ALTER TABLE custom_habitats ADD COLUMN fill_opacity REAL NOT NULL DEFAULT 0.35"
+        )
+    if "stroke_weight" not in custom_habitat_cols:
+        conn.execute(
+            "ALTER TABLE custom_habitats ADD COLUMN stroke_weight REAL NOT NULL DEFAULT 2.5"
+        )
+    if "fill_opacity" not in override_cols:
+        conn.execute("ALTER TABLE habitat_overrides ADD COLUMN fill_opacity REAL")
+    if "stroke_weight" not in override_cols:
+        conn.execute("ALTER TABLE habitat_overrides ADD COLUMN stroke_weight REAL")
 
     # Legacy user preferences -> profiles + locations
     if _table_exists(conn, "user_preferences"):
@@ -2408,6 +2426,8 @@ def _habitat_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
         "name": row["name"],
         "description": row["description"],
         "fill_color": row["fill_color"],
+        "fill_opacity": row["fill_opacity"] if row["fill_opacity"] is not None else 0.35,
+        "stroke_weight": row["stroke_weight"] if row["stroke_weight"] is not None else 2.5,
         "geometry": geom,
         "lat": row["lat"],
         "lng": row["lng"],
@@ -2444,7 +2464,7 @@ def get_all_custom_habitats() -> list[dict[str, Any]]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "SELECT id, habitat_type, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, lat, lng, "
             "created_by, created_at, updated_at FROM custom_habitats WHERE is_deleted = 0 ORDER BY created_at"
         ).fetchall()
     finally:
@@ -2486,6 +2506,8 @@ def create_custom_habitat(
     lat: Optional[float],
     lng: Optional[float],
     user_id: int,
+    fill_opacity: float = 0.35,
+    stroke_weight: float = 2.5,
 ) -> dict[str, Any]:
     """Insert a new custom habitat; returns the new row dict."""
     geometry_json = json.dumps(geometry)
@@ -2493,14 +2515,16 @@ def create_custom_habitat(
     try:
         conn.execute(
             "INSERT INTO custom_habitats "
-            "(id, habitat_type, name, description, fill_color, geometry_json, lat, lng, created_by) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "(id, habitat_type, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, lat, lng, created_by) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 habitat_id,
                 habitat_type,
                 name.strip(),
                 description.strip(),
                 fill_color.strip(),
+                fill_opacity,
+                stroke_weight,
                 geometry_json,
                 lat,
                 lng,
@@ -2508,7 +2532,7 @@ def create_custom_habitat(
             ),
         )
         row = conn.execute(
-            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "SELECT id, habitat_type, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, lat, lng, "
             "created_by, created_at, updated_at FROM custom_habitats WHERE id = ?",
             (habitat_id,),
         ).fetchone()
@@ -2525,6 +2549,8 @@ def update_custom_habitat(
     name: Optional[str] = None,
     description: Optional[str] = None,
     fill_color: Optional[str] = None,
+    fill_opacity: Optional[float] = None,
+    stroke_weight: Optional[float] = None,
     geometry: Optional[dict[str, Any]] = None,
     lat: Optional[float] = None,
     lng: Optional[float] = None,
@@ -2552,6 +2578,12 @@ def update_custom_habitat(
         if fill_color is not None:
             updates.append("fill_color = ?")
             params.append(fill_color.strip())
+        if fill_opacity is not None:
+            updates.append("fill_opacity = ?")
+            params.append(fill_opacity)
+        if stroke_weight is not None:
+            updates.append("stroke_weight = ?")
+            params.append(stroke_weight)
         if geometry is not None:
             updates.append("geometry_json = ?")
             params.append(json.dumps(geometry))
@@ -2568,7 +2600,7 @@ def update_custom_habitat(
             params,
         )
         updated = conn.execute(
-            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "SELECT id, habitat_type, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, lat, lng, "
             "created_by, created_at, updated_at FROM custom_habitats WHERE id = ? AND is_deleted = 0",
             (habitat_id,),
         ).fetchone()
@@ -2608,7 +2640,7 @@ def undelete_custom_habitat(habitat_id: str) -> Optional[dict[str, Any]]:
         if cur.rowcount == 0:
             return None
         row = conn.execute(
-            "SELECT id, habitat_type, name, description, fill_color, geometry_json, lat, lng, "
+            "SELECT id, habitat_type, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, lat, lng, "
             "created_by, created_at, updated_at FROM custom_habitats WHERE id = ?",
             (habitat_id,),
         ).fetchone()
@@ -2647,7 +2679,7 @@ def get_habitat_overrides() -> dict[str, dict[str, Any]]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, feature_key, name, description, fill_color, geometry_json, created_by, created_at, updated_at "
+            "SELECT id, feature_key, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, created_by, created_at, updated_at "
             "FROM habitat_overrides WHERE is_deleted = 0"
         ).fetchall()
     finally:
@@ -2660,6 +2692,8 @@ def get_habitat_overrides() -> dict[str, dict[str, Any]]:
             "name": r["name"],
             "description": r["description"],
             "fill_color": r["fill_color"],
+            "fill_opacity": r["fill_opacity"],
+            "stroke_weight": r["stroke_weight"],
             "geometry_json": r["geometry_json"],
             "created_by": r["created_by"],
             "created_at": r["created_at"],
@@ -2681,6 +2715,8 @@ def upsert_habitat_override(
     user_id: int,
     geometry: Optional[str] = None,
     geometry_clear: bool = False,
+    fill_opacity: Optional[float] = None,
+    stroke_weight: Optional[float] = None,
 ) -> dict[str, Any]:
     """Create or update a habitat override; returns the row dict.
 
@@ -2706,6 +2742,12 @@ def upsert_habitat_override(
             if fill_color is not None:
                 updates.append("fill_color = ?")
                 params.append(fill_color.strip())
+            if fill_opacity is not None:
+                updates.append("fill_opacity = ?")
+                params.append(fill_opacity)
+            if stroke_weight is not None:
+                updates.append("stroke_weight = ?")
+                params.append(stroke_weight)
             if geometry_clear:
                 updates.append("geometry_json = NULL")
             elif geometry is not None:
@@ -2719,12 +2761,12 @@ def upsert_habitat_override(
             )
         else:
             conn.execute(
-                "INSERT INTO habitat_overrides (feature_key, name, description, fill_color, geometry_json, created_by) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (feature_key, name, description, fill_color, geometry, user_id),
+                "INSERT INTO habitat_overrides (feature_key, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, created_by) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (feature_key, name, description, fill_color, fill_opacity, stroke_weight, geometry, user_id),
             )
         row = conn.execute(
-            "SELECT id, feature_key, name, description, fill_color, geometry_json, created_by, created_at, updated_at "
+            "SELECT id, feature_key, name, description, fill_color, fill_opacity, stroke_weight, geometry_json, created_by, created_at, updated_at "
             "FROM habitat_overrides WHERE feature_key = ?",
             (feature_key,),
         ).fetchone()
@@ -2738,6 +2780,8 @@ def upsert_habitat_override(
         "name": row["name"],
         "description": row["description"],
         "fill_color": row["fill_color"],
+        "fill_opacity": row["fill_opacity"],
+        "stroke_weight": row["stroke_weight"],
         "geometry_json": row["geometry_json"],
         "created_by": row["created_by"],
         "created_at": row["created_at"],

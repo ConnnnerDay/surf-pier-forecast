@@ -1092,6 +1092,16 @@
                         <button type="button" class="fmap-color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
                         <button type="button" class="fmap-color-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Slate"></button>
                     </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-habitat-fill-opacity">Fill opacity</label>
+                        <input id="fmap-habitat-fill-opacity" type="range" min="0.05" max="1" step="0.05" value="0.35" class="fmap-admin-slider" aria-label="Fill opacity">
+                        <output id="fmap-habitat-fill-opacity-val" class="fmap-admin-slider-val" for="fmap-habitat-fill-opacity">0.35</output>
+                    </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-habitat-stroke-weight">Stroke weight</label>
+                        <input id="fmap-habitat-stroke-weight" type="range" min="0.5" max="8" step="0.5" value="2.5" class="fmap-admin-slider" aria-label="Stroke weight">
+                        <output id="fmap-habitat-stroke-weight-val" class="fmap-admin-slider-val" for="fmap-habitat-stroke-weight">2.5</output>
+                    </div>
                     <label class="fmap-admin-label fmap-admin-label--last">Description / notes
                         <textarea id="fmap-habitat-desc" rows="3" maxlength="1000" placeholder="Habitat notes or fishing tips" class="fmap-admin-input"></textarea>
                     </label>
@@ -1132,6 +1142,16 @@
                         <button type="button" class="fmap-color-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
                         <button type="button" class="fmap-color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
                         <button type="button" class="fmap-color-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Slate"></button>
+                    </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-override-fill-opacity">Fill opacity</label>
+                        <input id="fmap-override-fill-opacity" type="range" min="0.05" max="1" step="0.05" value="0.25" class="fmap-admin-slider" aria-label="Fill opacity">
+                        <output id="fmap-override-fill-opacity-val" class="fmap-admin-slider-val" for="fmap-override-fill-opacity">0.25</output>
+                    </div>
+                    <div class="fmap-admin-slider-row">
+                        <label class="fmap-admin-slider-label" for="fmap-override-stroke-weight">Stroke weight</label>
+                        <input id="fmap-override-stroke-weight" type="range" min="0.5" max="8" step="0.5" value="2" class="fmap-admin-slider" aria-label="Stroke weight">
+                        <output id="fmap-override-stroke-weight-val" class="fmap-admin-slider-val" for="fmap-override-stroke-weight">2</output>
                     </div>
                     <label class="fmap-admin-label fmap-admin-label--last">Description Override
                         <textarea id="fmap-override-desc" rows="3" maxlength="1000" placeholder="Leave blank to keep AI description" class="fmap-admin-input"></textarea>
