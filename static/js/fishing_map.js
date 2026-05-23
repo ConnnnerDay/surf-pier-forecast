@@ -5317,6 +5317,10 @@
                 var mid = btn.dataset.mid;
                 var marker = _markersPanelData.filter(function (m) { return String(m.id) === mid; })[0];
                 if (!marker) return;
+                if (map && !isNaN(parseFloat(marker.lat)) && !isNaN(parseFloat(marker.lng))) {
+                    map.flyTo([parseFloat(marker.lat), parseFloat(marker.lng)], Math.max(map.getZoom(), 15));
+                    _highlightCustomMarker(mid);
+                }
                 _openAdminEditPanel(marker);
             });
         });
