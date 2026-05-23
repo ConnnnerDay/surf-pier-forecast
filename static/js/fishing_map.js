@@ -4086,40 +4086,15 @@
             });
         }
 
-        // ── Modal delete (two-tap confirmation — no blocking confirm dialog) ──
+        // ── Modal delete ──────────────────────────────────────────────────────
         var delBtn = document.getElementById('fmap-admin-delete');
         if (delBtn) {
-            var _delConfirmPending = false;
-            var _delConfirmTimer   = null;
-
             delBtn.addEventListener('click', function () {
                 var markerId = delBtn.dataset.markerId;
                 if (!markerId) return;
-
-                // First tap: ask for confirmation inline
-                if (!_delConfirmPending) {
-                    _delConfirmPending = true;
-                    delBtn.textContent = 'Confirm delete?';
-                    delBtn.style.background = '#991b1b';
-                    // Auto-reset after 3 s if they don't confirm
-                    _delConfirmTimer = setTimeout(function () {
-                        _delConfirmPending = false;
-                        delBtn.textContent = 'Delete';
-                        delBtn.style.background = '#dc2626';
-                    }, 3000);
-                    return;
-                }
-
-                // Second tap: execute delete
-                clearTimeout(_delConfirmTimer);
-                _delConfirmPending = false;
-                delBtn.textContent = 'Delete';
-                delBtn.style.background = '#dc2626';
-
                 var statusEl = document.getElementById('fmap-admin-status');
                 if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 delBtn.disabled = true;
-
                 fetch('/api/map/custom-markers/' + markerId, { method: 'DELETE' })
                 .then(function (r) {
                     if (!r.ok) throw new Error('Server error ' + r.status);
@@ -4131,7 +4106,6 @@
                     spotCache = {}; _spotCacheKeys = []; _spotBoundsCache = {};
                     try { localStorage.removeItem(_SS_KEY); } catch (_e) {}
                     scheduleFishingSpotQuery();
-                    // Offer undo for 8 seconds
                     _showUndoToast('Marker deleted', function () {
                         fetch('/api/map/custom-markers/' + markerId + '/restore', { method: 'POST' })
                             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
@@ -4153,16 +4127,6 @@
                     }
                 });
             });
-
-            // Reset confirmation state when modal closes
-            var _origCloseAdminModal = _closeAdminModal;
-            _closeAdminModal = function () {
-                _delConfirmPending = false;
-                clearTimeout(_delConfirmTimer);
-                delBtn.textContent = 'Delete';
-                delBtn.style.background = '#dc2626';
-                _origCloseAdminModal();
-            };
         }
 
         // ── Modal close / backdrop ────────────────────────────────────────────
@@ -4239,12 +4203,17 @@
         var backdrop = document.getElementById('fmap-habitat-backdrop');
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
-        if (_pendingHabitatGeom && !_habitatEditData) {
-            _showAdminToast('Drawn shape discarded — save next time to keep it.');
-        }
+        var _savedGeom = _pendingHabitatGeom;
+        var _wasNewDraw = !_habitatEditData && !!_pendingHabitatGeom;
         _pendingHabitatGeom = null;
         var hDelBtn = document.getElementById('fmap-habitat-delete');
         if (hDelBtn) hDelBtn.disabled = false;
+        if (_wasNewDraw) {
+            _showUndoToast('Drawn shape discarded', function () {
+                _habitatEditData = null;
+                _openHabitatAddModal(_savedGeom);
+            });
+        }
     }
 
     function _openHabitatEditModal(habitatData) {
@@ -4375,6 +4344,10 @@
                 color: '#8b5cf6', weight: 2, dashArray: '6,4', fillOpacity: 0.15
             }).addTo(map);
         }
+
+        var n = _habitatDrawVerts.length;
+        var suffix = n < 3 ? ' · need ' + (3 - n) + ' more' : ' · double-click to finish';
+        _showAdminToast(n + (n === 1 ? ' vertex' : ' vertices') + suffix);
     }
 
     function _finishHabitatDraw() {
