@@ -79,10 +79,13 @@
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
     var _overridesPanelData    = []; // cached override list for panel edit buttons
     var _overridesPanelSearch  = ''; // live search string for overrides tab
+    var _overridesPanelSort    = 'date'; // 'date' | 'name'
     var _suppressedPanelSearch = ''; // live search string for suppressed tab
     var _suppressedPanelData   = []; // cached suppressed list for search
+    var _suppressedPanelSort   = 'date'; // 'date' | 'name' | 'type'
     var _markersPanelSearch    = ''; // live search string for markers tab
     var _markersPanelData      = []; // cached markers list for search
+    var _markersPanelSort      = 'date'; // 'date' | 'name' | 'type'
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
     // Remembered last-used type/color for successive habitat additions
@@ -4960,7 +4963,11 @@
             return (ov.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (ov.feature_key || '').toLowerCase().indexOf(q) !== -1 ||
                    (ov.description || '').toLowerCase().indexOf(q) !== -1;
-        }) : overrides;
+        }) : overrides.slice();
+        filtered.sort(function (a, b) {
+            if (_overridesPanelSort === 'name') return (a.name || a.feature_key || '').localeCompare(b.name || b.feature_key || '');
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
         _setTabCount('overrides', filtered.length, overrides.length);
         if (!filtered.length) {
             el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
@@ -5097,7 +5104,12 @@
             return (s.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (s.spot_key || '').toLowerCase().indexOf(q) !== -1 ||
                    (s.type || '').toLowerCase().indexOf(q) !== -1;
-        }) : suppressions;
+        }) : suppressions.slice();
+        filtered.sort(function (a, b) {
+            if (_suppressedPanelSort === 'name') return (a.name || '').localeCompare(b.name || '');
+            if (_suppressedPanelSort === 'type') return (a.type || '').localeCompare(b.type || '');
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
         _setTabCount('suppressed', filtered.length, suppressions.length);
         if (!filtered.length) {
             el.innerHTML = '<p class=”fmap-habitat-panel-empty”>' +
@@ -5206,7 +5218,12 @@
             return (m.name || '').toLowerCase().indexOf(q) !== -1 ||
                    (m.type || '').toLowerCase().indexOf(q) !== -1 ||
                    (m.description || '').toLowerCase().indexOf(q) !== -1;
-        }) : markers;
+        }) : markers.slice();
+        filtered.sort(function (a, b) {
+            if (_markersPanelSort === 'name') return (a.name || '').localeCompare(b.name || '');
+            if (_markersPanelSort === 'type') return (a.type || '').localeCompare(b.type || '');
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
         _setTabCount('markers', filtered.length, markers.length);
         if (!filtered.length) {
             el.innerHTML = '<p class="fmap-habitat-panel-empty">' +
@@ -6081,8 +6098,9 @@
         }
 
         // ── Habitat sort ──────────────────────────────────────────────────────
-        var sortCycle = ['date', 'name', 'type'];
-        var sortLabels = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑' };
+        var sortCycle   = ['date', 'name', 'type'];
+        var sortCycle2  = ['date', 'name'];          // overrides: no "type" concept
+        var sortLabels  = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑' };
         var sortBtn = document.getElementById('fmap-habitat-sort-btn');
         if (sortBtn) {
             sortBtn.addEventListener('click', function () {
@@ -6091,6 +6109,42 @@
                 sortBtn.textContent = sortLabels[_habitatPanelSort];
                 sortBtn.dataset.sort = _habitatPanelSort;
                 _applyHabitatPanelFilter();
+            });
+        }
+
+        // ── Overrides sort ────────────────────────────────────────────────────
+        var ovSortBtn = document.getElementById('fmap-overrides-sort-btn');
+        if (ovSortBtn) {
+            ovSortBtn.addEventListener('click', function () {
+                var idx = sortCycle2.indexOf(_overridesPanelSort);
+                _overridesPanelSort = sortCycle2[(idx + 1) % sortCycle2.length];
+                ovSortBtn.textContent = sortLabels[_overridesPanelSort];
+                ovSortBtn.dataset.sort = _overridesPanelSort;
+                _renderOverridesList(_overridesPanelData);
+            });
+        }
+
+        // ── Suppressed sort ───────────────────────────────────────────────────
+        var supSortBtn = document.getElementById('fmap-suppressed-sort-btn');
+        if (supSortBtn) {
+            supSortBtn.addEventListener('click', function () {
+                var idx = sortCycle.indexOf(_suppressedPanelSort);
+                _suppressedPanelSort = sortCycle[(idx + 1) % sortCycle.length];
+                supSortBtn.textContent = sortLabels[_suppressedPanelSort];
+                supSortBtn.dataset.sort = _suppressedPanelSort;
+                _renderSuppressedList(_suppressedPanelData);
+            });
+        }
+
+        // ── Markers sort ──────────────────────────────────────────────────────
+        var mkrSortBtn = document.getElementById('fmap-markers-sort-btn');
+        if (mkrSortBtn) {
+            mkrSortBtn.addEventListener('click', function () {
+                var idx = sortCycle.indexOf(_markersPanelSort);
+                _markersPanelSort = sortCycle[(idx + 1) % sortCycle.length];
+                mkrSortBtn.textContent = sortLabels[_markersPanelSort];
+                mkrSortBtn.dataset.sort = _markersPanelSort;
+                _renderMarkersList(_markersPanelData);
             });
         }
 
