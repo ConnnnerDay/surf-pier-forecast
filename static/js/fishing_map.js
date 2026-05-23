@@ -3872,6 +3872,25 @@
         fn();
     });
 
+    // '/' focuses the search input of the active admin panel tab.
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (!_habitatPanelOpen) return;
+        var tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        var tabSearchIds = {
+            habitats:   'fmap-habitat-search',
+            overrides:  'fmap-overrides-search',
+            suppressed: 'fmap-suppressed-search',
+            markers:    'fmap-markers-search',
+        };
+        var searchEl = document.getElementById(tabSearchIds[_habitatPanelActiveTab] || 'fmap-habitat-search');
+        if (!searchEl) return;
+        e.preventDefault();
+        searchEl.focus();
+        searchEl.select();
+    });
+
     // Default fill colors per built-in habitat type (mirrors _CUSTOM_HABITAT_COLORS).
     var _TYPE_DEFAULT_COLORS = {
         surf: '#fbbf24', grassflat: '#22c55e', estuary: '#34d399',
