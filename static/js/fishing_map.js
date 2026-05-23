@@ -3975,7 +3975,7 @@
     function wireAdminMode() {
         if (typeof MAP_IS_ADMIN === 'undefined' || !MAP_IS_ADMIN) return;
 
-        // Escape closes modal; Tab trapped within while visible
+        // Escape closes modal; Tab trapped within; Ctrl+S / Cmd+S saves
         var _adminModalEl = document.getElementById('fmap-admin-modal');
         document.addEventListener('keydown', function (e) {
             if (!_adminModalEl || _adminModalEl.hidden) {
@@ -3983,6 +3983,12 @@
                 return;
             }
             if (e.key === 'Escape') { _closeAdminModal(); return; }
+            if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                var sb = document.getElementById('fmap-admin-save');
+                if (sb && !sb.disabled) sb.click();
+                return;
+            }
             _trapFocusOnTab(_adminModalEl, e);
         });
 
@@ -5289,11 +5295,17 @@
             });
         }
 
-        // Escape closes habitat modal; Tab trapped within; Backspace/Delete undoes last draw vertex
+        // Escape closes habitat modal; Tab trapped within; Ctrl+S saves; Backspace/Delete undoes last draw vertex
         var _habitatModalEl = document.getElementById('fmap-habitat-modal');
         document.addEventListener('keydown', function (e) {
             if (_habitatModalEl && !_habitatModalEl.hidden) {
                 if (e.key === 'Escape') { _closeHabitatModal(); _cancelHabitatDraw(); return; }
+                if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    var sb = document.getElementById('fmap-habitat-save');
+                    if (sb && !sb.disabled) sb.click();
+                    return;
+                }
                 if (e.key === 'Tab') { _trapFocusOnTab(_habitatModalEl, e); return; }
             }
             if (e.key === 'Escape') {
@@ -5447,11 +5459,17 @@
         var overrideCloseBtn = document.getElementById('fmap-override-modal-close');
         if (overrideCloseBtn) overrideCloseBtn.addEventListener('click', _closeOverrideModal);
 
-        // ESC closes the override modal; Tab trapped within; Enter in name field saves
+        // ESC closes the override modal; Tab trapped within; Ctrl+S / Enter saves
         var _overrideModalEl = document.getElementById('fmap-override-modal');
         document.addEventListener('keydown', function (e) {
             if (_overrideModalEl && !_overrideModalEl.hidden) {
                 if (e.key === 'Escape') { _closeOverrideModal(); return; }
+                if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    var sb = document.getElementById('fmap-override-save');
+                    if (sb && !sb.disabled) sb.click();
+                    return;
+                }
                 if (e.key === 'Tab') { _trapFocusOnTab(_overrideModalEl, e); return; }
             }
         });
