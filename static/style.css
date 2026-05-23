@@ -14964,6 +14964,14 @@ body.dark .wq-hdx-item {
   flex-shrink: 0;
 }
 .fmap-override-item-pan:hover { color: var(--text, #e2e8f0); background: var(--border, #334155); }
+.fmap-override-item-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .fmap-override-geom-badge {
   display: inline-block;
   background: rgba(139,92,246,0.15);

@@ -4832,6 +4832,7 @@
                     if (c) panAttrs = ' data-lat="' + c.lat + '" data-lng="' + c.lng + '"';
                 } catch (_e) {}
             }
+            var descShort = ov.description ? esc(String(ov.description).slice(0, 80)) + (ov.description.length > 80 ? '…' : '') : '';
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
@@ -4844,6 +4845,7 @@
                 '<div class="fmap-override-item-key">' + keyShort +
                 (ov.geometry_json ? ' <span class="fmap-override-geom-badge" title="Custom shape stored">reshaped</span>' : '') +
                 '</div>' +
+                (descShort ? '<div class="fmap-override-item-desc">' + descShort + '</div>' : '') +
                 '</div>';
         });
         el.innerHTML = html;
