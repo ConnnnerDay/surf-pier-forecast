@@ -74,15 +74,13 @@
     var _habitatVertexPreview  = null; // L.polygon showing reshaped outline
     var _habitatEditData       = null; // full feature data of habitat being edited
     var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
-    // Two-step confirm state — module-level so close handlers can reset them
-    var _ovDelConfirm = false, _ovDelTimer = null;  // override delete
-    var _clrConfirm   = false, _clrTimer   = null;  // override clear-shape
-    var _hDelConfirm  = false, _hDelTimer  = null;  // habitat delete
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
     var _overridesPanelData    = []; // cached override list for panel edit buttons
     var _overridesPanelSearch  = ''; // live search string for overrides tab
+    var _suppressedPanelSearch = ''; // live search string for suppressed tab
+    var _suppressedPanelData   = []; // cached suppressed list for search
     // Admin-defined custom habitat types (slugs not in VALID_HABITAT_TYPES)
     var _customHabitatTypes    = [];
     // Point-move state (drag a Point habitat to a new location)
@@ -4245,10 +4243,8 @@
             _showAdminToast('Drawn shape discarded — save next time to keep it.');
         }
         _pendingHabitatGeom = null;
-        // Reset habitat delete confirm state so reopening always starts fresh
-        clearTimeout(_hDelTimer); _hDelConfirm = false;
         var hDelBtn = document.getElementById('fmap-habitat-delete');
-        if (hDelBtn) { hDelBtn.textContent = 'Delete'; hDelBtn.style.background = '#dc2626'; hDelBtn.disabled = false; }
+        if (hDelBtn) hDelBtn.disabled = false;
     }
 
     function _openHabitatEditModal(habitatData) {
@@ -4888,22 +4884,9 @@
         });
 
         el.querySelectorAll('.fmap-override-item-del').forEach(function (btn) {
-            var _confirmFlag = false, _confirmTimer = null;
             btn.addEventListener('click', function () {
                 var oid = btn.dataset.oid;
                 if (!oid) return;
-                if (!_confirmFlag) {
-                    _confirmFlag = true;
-                    btn.textContent = 'Confirm?';
-                    btn.style.background = 'rgba(220,38,38,.2)';
-                    _confirmTimer = setTimeout(function () {
-                        _confirmFlag = false;
-                        btn.textContent = 'Remove';
-                        btn.style.background = '';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_confirmTimer);
                 // Snapshot for undo before the request
                 var _undoOv = _overridesPanelData.filter(function (o) { return String(o.id) === oid; })[0];
                 btn.disabled = true;
@@ -4953,7 +4936,6 @@
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (data) {
                 var list = data.suppressions || [];
-                _setTabCount('suppressed', list.length);
                 _renderSuppressedList(list);
             })
             .catch(function () {
@@ -4964,13 +4946,23 @@
     function _renderSuppressedList(suppressions) {
         var el = document.getElementById('fmap-suppressed-panel-list');
         if (!el) return;
-        if (!suppressions.length) {
-            el.innerHTML = '<p class="fmap-habitat-panel-empty">No suppressed spots.<br>' +
-                '<span style="font-size:.75rem;color:var(--text-muted,#6b7280)">In admin edit mode, click any spot and choose “Hide” to remove it from the map.</span></p>';
+        _suppressedPanelData = suppressions;
+        var q = _suppressedPanelSearch.toLowerCase().trim();
+        var filtered = q ? suppressions.filter(function (s) {
+            return (s.name || '').toLowerCase().indexOf(q) !== -1 ||
+                   (s.spot_key || '').toLowerCase().indexOf(q) !== -1 ||
+                   (s.type || '').toLowerCase().indexOf(q) !== -1;
+        }) : suppressions;
+        _setTabCount('suppressed', filtered.length, suppressions.length);
+        if (!filtered.length) {
+            el.innerHTML = '<p class=”fmap-habitat-panel-empty”>' +
+                (q ? 'No suppressed spots match your search.' :
+                    'No suppressed spots.<br><span style=”font-size:.75rem;color:var(--text-muted,#6b7280)”>In admin edit mode, click any spot and choose “Hide” to remove it from the map.</span>') +
+                '</p>';
             return;
         }
         var html = '';
-        suppressions.forEach(function (s) {
+        filtered.forEach(function (s) {
             var nameSafe = esc(s.name || s.spot_key || '—');
             var typeSafe = esc(s.type || '');
             var sid      = esc(String(s.id));
@@ -5182,21 +5174,6 @@
             delBtn.addEventListener('click', function () {
                 var habitatId = delBtn.dataset.habitatId;
                 if (!habitatId) return;
-                if (!_hDelConfirm) {
-                    _hDelConfirm = true;
-                    delBtn.textContent = 'Confirm delete?';
-                    delBtn.style.background = '#991b1b';
-                    _hDelTimer = setTimeout(function () {
-                        _hDelConfirm = false;
-                        delBtn.textContent = 'Delete';
-                        delBtn.style.background = '#dc2626';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_hDelTimer);
-                _hDelConfirm = false;
-                delBtn.textContent = 'Delete';
-                delBtn.style.background = '#dc2626';
                 delBtn.disabled = true;
 
                 fetch('/api/v1/admin/habitats/' + encodeURIComponent(habitatId), { method: 'DELETE' })
@@ -5353,22 +5330,6 @@
             overrideDelBtn.addEventListener('click', function () {
                 var overrideId = (document.getElementById('fmap-override-id') || {}).value || '';
                 if (!overrideId) return;
-                // Two-step confirmation (same pattern as habitat delete)
-                if (!_ovDelConfirm) {
-                    _ovDelConfirm = true;
-                    overrideDelBtn.textContent = 'Confirm remove?';
-                    overrideDelBtn.style.background = '#991b1b';
-                    _ovDelTimer = setTimeout(function () {
-                        _ovDelConfirm = false;
-                        overrideDelBtn.textContent = 'Remove Override';
-                        overrideDelBtn.style.background = '#dc2626';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_ovDelTimer);
-                _ovDelConfirm = false;
-                overrideDelBtn.textContent = 'Remove Override';
-                overrideDelBtn.style.background = '#dc2626';
                 overrideDelBtn.disabled = true;
                 // Snapshot for undo before the request
                 var _undoOvData = _overrideEditData ? {
@@ -5445,28 +5406,20 @@
         var overrideClearShapeBtn = document.getElementById('fmap-override-clear-shape');
         if (overrideClearShapeBtn) {
             overrideClearShapeBtn.addEventListener('click', function () {
-                if (!_clrConfirm) {
-                    _clrConfirm = true;
-                    overrideClearShapeBtn.textContent = 'Confirm clear?';
-                    _clrTimer = setTimeout(function () {
-                        _clrConfirm = false;
-                        overrideClearShapeBtn.textContent = 'Clear Shape Override';
-                    }, 3000);
-                    return;
-                }
-                clearTimeout(_clrTimer);
-                _clrConfirm = false;
-                overrideClearShapeBtn.textContent = 'Clear Shape Override';
                 var featureKey = (document.getElementById('fmap-override-feature-key') || {}).value || '';
                 if (!featureKey) return;
+                // Snapshot geometry for undo before clearing
+                var _undoGeom = _overrideEditData ? _overrideEditData.geometry : null;
+                var _undoData = _overrideEditData ? {
+                    feature_key: _overrideEditData.featureKey,
+                    name:        _overrideEditData.name || null,
+                    description: _overrideEditData.desc || null,
+                    fill_color:  _overrideEditData.color || null,
+                } : null;
                 overrideClearShapeBtn.disabled = true;
-                // Send geometry_json: null to explicitly clear stored geometry
                 fetch('/api/v1/admin/habitat-overrides', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        feature_key:  featureKey,
-                        geometry_json: null,
-                    }),
+                    body: JSON.stringify({ feature_key: featureKey, geometry_json: null }),
                 })
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function () {
@@ -5474,9 +5427,27 @@
                     _closeOverrideModal();
                     aiCache = {}; _aiCacheKeys = [];
                     try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
-                    _showAdminToast('Shape override cleared — AI geometry restored');
                     scheduleAIQuery();
                     _refreshActivePanelTab();
+                    if (_undoGeom && _undoData) {
+                        _showUndoToast('Shape cleared — AI geometry restored', function () {
+                            fetch('/api/v1/admin/habitat-overrides', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(Object.assign({}, _undoData, { geometry_json: _undoGeom })),
+                            })
+                            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                            .then(function () {
+                                aiCache = {}; _aiCacheKeys = [];
+                                try { localStorage.removeItem(_AI_LS_KEY); } catch (_e) {}
+                                _showAdminToast('Custom shape restored');
+                                scheduleAIQuery();
+                                _refreshActivePanelTab();
+                            })
+                            .catch(function () { _showAdminToast('Restore failed', true); });
+                        });
+                    } else {
+                        _showAdminToast('Shape override cleared — AI geometry restored');
+                    }
                 })
                 .catch(function (e) {
                     overrideClearShapeBtn.disabled = false;
@@ -5766,6 +5737,23 @@
             });
         }
 
+        // ── Suppressed search ─────────────────────────────────────────────────
+        var supSearchEl = document.getElementById('fmap-suppressed-search');
+        if (supSearchEl) {
+            supSearchEl.addEventListener('input', function () {
+                _suppressedPanelSearch = supSearchEl.value;
+                _renderSuppressedList(_suppressedPanelData);
+            });
+            supSearchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    supSearchEl.value = '';
+                    _suppressedPanelSearch = '';
+                    _renderSuppressedList(_suppressedPanelData);
+                    supSearchEl.blur();
+                }
+            });
+        }
+
         // ── Habitat sort ──────────────────────────────────────────────────────
         var sortCycle = ['date', 'name', 'type'];
         var sortLabels = { date: 'Date ↓', name: 'Name ↑', type: 'Type ↑' };
@@ -5899,13 +5887,10 @@
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
         _overrideEditData = null;
-        // Reset two-step confirmation state so next open starts clean
-        clearTimeout(_ovDelTimer); _ovDelConfirm = false;
-        clearTimeout(_clrTimer);   _clrConfirm   = false;
         var delBtn = document.getElementById('fmap-override-delete');
-        if (delBtn) { delBtn.textContent = 'Remove Override'; delBtn.style.background = '#dc2626'; delBtn.disabled = false; }
+        if (delBtn) delBtn.disabled = false;
         var clrBtn = document.getElementById('fmap-override-clear-shape');
-        if (clrBtn) { clrBtn.textContent = 'Clear Shape Override'; clrBtn.disabled = false; }
+        if (clrBtn) clrBtn.disabled = false;
         var statusEl = document.getElementById('fmap-override-status');
         if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     }
