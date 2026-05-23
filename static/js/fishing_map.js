@@ -5649,7 +5649,10 @@
                 var sw = e.target.closest('.fmap-color-swatch');
                 if (!sw) return;
                 var colorEl = document.getElementById('fmap-habitat-color');
-                if (colorEl) colorEl.value = sw.dataset.color;
+                if (colorEl) {
+                    colorEl.value = sw.dataset.color;
+                    colorEl.dispatchEvent(new Event('input')); // trigger live preview
+                }
             });
         }
         var ovPresetsEl = document.getElementById('fmap-override-color-presets');
@@ -5687,7 +5690,10 @@
                     var ct = _customHabitatTypes.filter(function (t) { return t.slug === slug; })[0];
                     if (ct) suggested = ct.default_color;
                 }
-                if (suggested) colorEl2.value = suggested;
+                if (suggested) {
+                    colorEl2.value = suggested;
+                    colorEl2.dispatchEvent(new Event('input')); // trigger live preview
+                }
             });
         }
 
