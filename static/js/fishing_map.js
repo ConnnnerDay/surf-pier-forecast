@@ -3870,6 +3870,23 @@
         });
     }
 
+    // Briefly bounce a custom marker's icon to draw the eye after pan-to.
+    function _highlightCustomMarker(mid) {
+        var found = _customMarkers.filter(function (cm) { return String(cm.id) === String(mid); })[0];
+        if (!found || !found.leaflet) return;
+        var el = found.leaflet.getElement();
+        if (!el) {
+            // Marker not yet in DOM (map still panning); retry once after animation
+            setTimeout(function () {
+                var el2 = found.leaflet.getElement();
+                if (el2) { el2.classList.add('fmap-marker-pulse'); setTimeout(function () { el2.classList.remove('fmap-marker-pulse'); }, 1200); }
+            }, 700);
+            return;
+        }
+        el.classList.add('fmap-marker-pulse');
+        setTimeout(function () { el.classList.remove('fmap-marker-pulse'); }, 1200);
+    }
+
     // Return {lat, lng} centroid for a GeoJSON Point or Polygon; null otherwise.
     function _centroidOfGeom(geom) {
         if (!geom) return null;
@@ -5001,11 +5018,12 @@
         }
         var html = '';
         filtered.forEach(function (s) {
-            var nameSafe = esc(s.name || s.spot_key || '—');
-            var typeSafe = esc(s.type || '');
-            var sid      = esc(String(s.id));
-            var lat      = parseFloat(s.lat), lng = parseFloat(s.lng);
-            var hasCoords = !isNaN(lat) && !isNaN(lng);
+            var nameSafe   = esc(s.name || s.spot_key || '—');
+            var typeSafe   = esc(s.type || '');
+            var sid        = esc(String(s.id));
+            var lat        = parseFloat(s.lat), lng = parseFloat(s.lng);
+            var hasCoords  = !isNaN(lat) && !isNaN(lng);
+            var hiddenDate = s.created_at ? esc(String(s.created_at).slice(0, 10)) : '';
             html +=
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
@@ -5013,7 +5031,13 @@
                 (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-suppressed-item-unhide" data-sid="' + sid + '" aria-label="Un-hide ' + nameSafe + '">Unhide</button>' +
                 '</div>' +
-                (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
+                (typeSafe || hiddenDate
+                    ? '<div class="fmap-override-item-key">' +
+                      (typeSafe ? typeSafe : '') +
+                      (typeSafe && hiddenDate ? ' · ' : '') +
+                      (hiddenDate ? 'hidden ' + hiddenDate : '') +
+                      '</div>'
+                    : '') +
                 '</div>';
         });
         el.innerHTML = html;
@@ -5113,7 +5137,7 @@
                 '<div class="fmap-override-item">' +
                 '<div class="fmap-override-item-row">' +
                 '<span class="fmap-override-item-name" title="' + nameSafe + '">' + nameSafe + '</span>' +
-                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
+                (hasCoords ? '<button class="fmap-suppressed-item-pan" data-lat="' + lat + '" data-lng="' + lng + '" data-mid="' + mid + '" title="Pan to location" aria-label="Pan to ' + nameSafe + '">⌖</button>' : '') +
                 '<button class="fmap-markers-panel-edit fmap-override-item-edit" data-mid="' + mid + '" aria-label="Edit ' + nameSafe + '">Edit</button>' +
                 '</div>' +
                 (typeSafe ? '<div class="fmap-override-item-key">' + typeSafe + '</div>' : '') +
@@ -5126,7 +5150,10 @@
         el.querySelectorAll('.fmap-suppressed-item-pan').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var lat = parseFloat(btn.dataset.lat), lng = parseFloat(btn.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo([lat, lng], Math.max(map.getZoom(), 16));
+                if (!isNaN(lat) && !isNaN(lng) && map) {
+                    map.flyTo([lat, lng], Math.max(map.getZoom(), 16));
+                    if (btn.dataset.mid) _highlightCustomMarker(btn.dataset.mid);
+                }
             });
         });
 
