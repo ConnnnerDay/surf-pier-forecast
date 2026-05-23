@@ -5628,13 +5628,22 @@
             });
         }
 
-        // ── Color presets (swatches in the edit modal) ───────────────────────
+        // ── Color presets (swatches in habitat and override modals) ─────────
         var presetsEl = document.getElementById('fmap-habitat-color-presets');
         if (presetsEl) {
             presetsEl.addEventListener('click', function (e) {
                 var sw = e.target.closest('.fmap-color-swatch');
                 if (!sw) return;
                 var colorEl = document.getElementById('fmap-habitat-color');
+                if (colorEl) colorEl.value = sw.dataset.color;
+            });
+        }
+        var ovPresetsEl = document.getElementById('fmap-override-color-presets');
+        if (ovPresetsEl) {
+            ovPresetsEl.addEventListener('click', function (e) {
+                var sw = e.target.closest('.fmap-color-swatch');
+                if (!sw) return;
+                var colorEl = document.getElementById('fmap-override-color');
                 if (colorEl) colorEl.value = sw.dataset.color;
             });
         }
