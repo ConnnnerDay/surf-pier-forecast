@@ -4939,9 +4939,20 @@
     // Refresh whichever panel tab is currently visible (if the panel is open).
     function _refreshActivePanelTab() {
         if (!_habitatPanelOpen) return;
-        if (_habitatPanelActiveTab === 'overrides')  _loadOverridesTab();
-        else if (_habitatPanelActiveTab === 'suppressed') _loadSuppressedTab();
-        else if (_habitatPanelActiveTab === 'markers') _loadMarkersTab();
+        // Sync visual tab button and content panel visibility to _habitatPanelActiveTab.
+        var tab = _habitatPanelActiveTab || 'habitats';
+        document.querySelectorAll('.fmap-panel-tab').forEach(function (btn) {
+            var isActive = btn.dataset.tab === tab;
+            btn.classList.toggle('fmap-panel-tab--active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        ['habitats', 'overrides', 'suppressed', 'markers'].forEach(function (name) {
+            var el = document.getElementById('fmap-panel-tab-' + name);
+            if (el) el.hidden = (name !== tab);
+        });
+        if (tab === 'overrides')  _loadOverridesTab();
+        else if (tab === 'suppressed') _loadSuppressedTab();
+        else if (tab === 'markers') _loadMarkersTab();
         else _loadHabitatPanel();
     }
 
