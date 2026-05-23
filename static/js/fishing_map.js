@@ -4663,13 +4663,18 @@
             var ll = m.getLatLng();
             return [ll.lat, ll.lng];
         });
+        var _reshapeColor = (_habitatEditData && _habitatEditData.fill_color)
+            ? _habitatEditData.fill_color
+            : ((document.getElementById('fmap-habitat-color') || {}).value || '#a855f7');
         if (!_habitatVertexPreview) {
             _habitatVertexPreview = L.polygon(coords, {
-                color: '#a855f7', weight: 2.5, dashArray: '6,4', fillOpacity: 0.15
+                color: _reshapeColor, fillColor: _reshapeColor,
+                weight: 2.5, dashArray: '6,4', fillOpacity: 0.18
             });
             if (map) _habitatVertexPreview.addTo(map);
         } else {
             _habitatVertexPreview.setLatLngs(coords);
+            _habitatVertexPreview.setStyle({ color: _reshapeColor, fillColor: _reshapeColor });
         }
         _updateMidpointMarkers();
     }
@@ -6054,6 +6059,10 @@
                 // Live-update the draw preview polygon when in draw mode
                 if (_habitatDrawMode && _habitatDrawPreview) {
                     _habitatDrawPreview.setStyle({ color: c, fillColor: c });
+                }
+                // Live-update the reshape vertex preview polygon
+                if (_habitatVertexEditMode && _habitatVertexPreview) {
+                    _habitatVertexPreview.setStyle({ color: c, fillColor: c });
                 }
                 // Live-update the existing habitat polygon when editing
                 if (_habitatEditData) {
