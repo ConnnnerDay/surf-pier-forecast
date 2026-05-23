@@ -74,6 +74,9 @@
     var _habitatVertexPreview  = null; // L.polygon showing reshaped outline
     var _habitatEditData       = null; // full feature data of habitat being edited
     var _overrideEditData      = null; // {featureKey,overrideId,name,desc,color,geometry} for AI override reshape
+    // Two-step confirm state for override modal buttons — module-level so _closeOverrideModal can reset them
+    var _ovDelConfirm = false, _ovDelTimer = null;
+    var _clrConfirm   = false, _clrTimer   = null;
     // Management panel state
     var _habitatPanelOpen      = false;
     var _habitatPanelActiveTab = 'habitats'; // 'habitats' | 'overrides' | 'suppressed'
@@ -4951,7 +4954,7 @@
                     fill_color:   document.getElementById('fmap-habitat-color').value,
                     geometry:     _pendingHabitatGeom,
                 };
-                if (statusEl) { statusEl.textContent = ''; }
+                if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving…';
                 _saveHabitat(habitatId || null, payload, function () {
@@ -5104,7 +5107,6 @@
 
         var overrideDelBtn = document.getElementById('fmap-override-delete');
         if (overrideDelBtn) {
-            var _ovDelConfirm = false, _ovDelTimer = null;
             overrideDelBtn.addEventListener('click', function () {
                 var overrideId = (document.getElementById('fmap-override-id') || {}).value || '';
                 if (!overrideId) return;
@@ -5149,7 +5151,6 @@
 
         var overrideClearShapeBtn = document.getElementById('fmap-override-clear-shape');
         if (overrideClearShapeBtn) {
-            var _clrConfirm = false, _clrTimer = null;
             overrideClearShapeBtn.addEventListener('click', function () {
                 if (!_clrConfirm) {
                     _clrConfirm = true;
@@ -5524,6 +5525,15 @@
         if (modal)    modal.hidden    = true;
         if (backdrop) backdrop.hidden = true;
         _overrideEditData = null;
+        // Reset two-step confirmation state so next open starts clean
+        clearTimeout(_ovDelTimer); _ovDelConfirm = false;
+        clearTimeout(_clrTimer);   _clrConfirm   = false;
+        var delBtn = document.getElementById('fmap-override-delete');
+        if (delBtn) { delBtn.textContent = 'Remove Override'; delBtn.style.background = '#dc2626'; delBtn.disabled = false; }
+        var clrBtn = document.getElementById('fmap-override-clear-shape');
+        if (clrBtn) { clrBtn.textContent = 'Clear Shape Override'; clrBtn.disabled = false; }
+        var statusEl = document.getElementById('fmap-override-status');
+        if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     }
 
     // ─── SST Stations overlay (ArcGIS Live Feeds / NOAA CoRIS) ──────────────
