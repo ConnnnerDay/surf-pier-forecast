@@ -4162,7 +4162,6 @@
             _showAdminToast('Drawn shape discarded — save next time to keep it.');
         }
         _pendingHabitatGeom = null;
-        _habitatEditData    = null;
     }
 
     function _openHabitatEditModal(habitatData) {
@@ -4377,6 +4376,7 @@
                 zIndexOffset: 500
             }).addTo(map);
             m.on('drag dragend', _updateHabitatVertexPreview);
+            _wireVertexDelete(m);
             _habitatVertexMarkers.push(m);
         });
 
@@ -4385,6 +4385,23 @@
         var bar = document.getElementById('fmap-habitat-reshape-bar');
         if (bar) bar.hidden = false;
         map.getContainer().style.cursor = 'default';
+    }
+
+    // Right-click (or long-press via contextmenu) on a vertex to remove it.
+    // Requires ≥ 4 vertices so the polygon retains its minimum of 3 after deletion.
+    function _wireVertexDelete(m) {
+        m.on('contextmenu', function (e) {
+            L.DomEvent.stop(e);
+            if (_habitatVertexMarkers.length <= 3) {
+                _showAdminToast('Polygon must keep at least 3 vertices', true);
+                return;
+            }
+            var idx = _habitatVertexMarkers.indexOf(m);
+            if (idx === -1) return;
+            _habitatVertexMarkers.splice(idx, 1);
+            if (map) map.removeLayer(m);
+            _updateHabitatVertexPreview();
+        });
     }
 
     function _updateHabitatVertexPreview() {
@@ -4441,6 +4458,7 @@
                         zIndexOffset: 500
                     }).addTo(map);
                     newM.on('drag dragend', _updateHabitatVertexPreview);
+                    _wireVertexDelete(newM);
                     _habitatVertexMarkers.splice(insertAfter + 1, 0, newM);
                     _updateHabitatVertexPreview();
                 });
@@ -5060,7 +5078,7 @@
                 _closeOverrideModal();
                 _overrideEditData = snap; // restore after close
                 _startHabitatVertexEdit(snap.geometry);
-                _showAdminToast('Drag vertices to reshape. Click Done when finished.');
+                _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
             });
         }
 
@@ -5201,8 +5219,11 @@
         if (reshapeBtn) {
             reshapeBtn.addEventListener('click', function () {
                 if (!_pendingHabitatGeom || _pendingHabitatGeom.type !== 'Polygon') return;
+                var _geomToReshape = _pendingHabitatGeom;
+                _pendingHabitatGeom = null; // prevent discarded-toast on close (add-mode)
                 _closeHabitatModal();
-                _startHabitatVertexEdit(_pendingHabitatGeom);
+                _startHabitatVertexEdit(_geomToReshape);
+                _showAdminToast('Drag vertices to reshape; right-click a vertex to delete it. Click Done when finished.');
             });
         }
 
